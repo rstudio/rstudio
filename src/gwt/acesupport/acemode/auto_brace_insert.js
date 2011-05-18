@@ -61,14 +61,15 @@ define("mode/auto_brace_insert", function(require, exports, module)
    (function()
    {
       this.$complements = {
-         "(": ")",
-         "[": "]",
-         '"': '"',
-         "'": "'"
-      };
+               "(": ")",
+               "[": "]",
+               '"': '"',
+               "'": "'",
+               "{": "}"
+            };
+      this.$reOpen = /^[(["'{]$/;
+      this.$reClose = /^[)\]"'}]$/;
 
-      this.$reOpen = /^[(["']$/;
-      this.$reClose = /^[)\]"']$/;
       // reStop is the set of characters before which we allow ourselves to
       // automatically insert a closing paren. If any other character
       // immediately follows the cursor we will NOT do the insert.
@@ -97,6 +98,14 @@ define("mode/auto_brace_insert", function(require, exports, module)
             }
          }
 
+         var prevChar = null;
+         if (typing)
+         {
+            var rangeBegin = this.$moveLeft(session.doc, position);
+            prevChar = session.doc.getTextRange(Range.fromPoints(rangeBegin,
+                                                                 position));
+         }
+
          var endPos = __insert.call(session, position, text);
          // Is this an open paren?
          if (typing && this.$reOpen.test(text)) {
@@ -108,6 +117,15 @@ define("mode/auto_brace_insert", function(require, exports, module)
             var nextChar = session.doc.getTextRange(nextCharRng);
             if (this.$reStop.test(nextChar) || nextChar.length == 0) {
                session.doc.insert(endPos, this.$complements[text]);
+               session.selection.moveCursorTo(endPos.row, endPos.column, false);
+            }
+         }
+         else if (typing && text === "\n") {
+            var rangeEnd = this.$moveRight(session.doc, endPos);
+            if (prevChar == "{" && "}" == session.doc.getTextRange(Range.fromPoints(endPos, rangeEnd)))
+            {
+               var indent = this.$getIndent(session.doc.getLine(endPos.row - 1));
+               session.doc.insert(endPos, "\n" + indent);
                session.selection.moveCursorTo(endPos.row, endPos.column, false);
             }
          }
@@ -146,6 +164,43 @@ define("mode/auto_brace_insert", function(require, exports, module)
          if (secondaryDeletion)
             editor.session.remove(secondaryDeletion);
          editor.clearSelection();
+      };
+
+      this.$moveLeft = function(doc, pos)
+      {
+         if (pos.row == 0 && pos.column == 0)
+            return pos;
+
+         var row = pos.row;
+         var col = pos.column;
+
+         if (col)
+            col--;
+         else
+         {
+            row--;
+            col = doc.getLine(row).length;
+         }
+         return {row: row, column: col};
+      };
+
+      this.$moveRight = function(doc, pos)
+      {
+         var row = pos.row;
+         var col = pos.column;
+
+         if (doc.getLine(row).length != col)
+            col++;
+         else
+         {
+            row++;
+            col = 0;
+         }
+
+         if (row >= doc.getLength())
+            return pos;
+         else
+            return {row: row, column: col};
       };
    }).call(TextMode.prototype);
 
