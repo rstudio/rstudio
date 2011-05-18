@@ -30,6 +30,12 @@ public class VirtualConsole
       if (StringUtil.isNullOrEmpty(data))
          return;
 
+      if (CONTROL_SPECIAL.match(data, 0) == null)
+      {
+         text(data);
+         return;
+      }
+
       int tail = 0;
       Match match = CONTROL.match(data, 0);
       while (match != null)
@@ -114,4 +120,5 @@ public class VirtualConsole
    private final StringBuilder o = new StringBuilder();
    private int pos = 0;
    private static final Pattern CONTROL = Pattern.create("[\r\b\n]");
+   private static final Pattern CONTROL_SPECIAL = Pattern.create("[\r\b]");
 }
