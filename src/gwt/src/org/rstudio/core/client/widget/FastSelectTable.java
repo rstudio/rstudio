@@ -40,13 +40,15 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    public interface ItemCodec<T, TItemOutput, TItemOutput2>
    {
       TableRowElement getRowForItem(T entry);
-      void onRowsInserted(TableSectionElement tbody);
+      void onRowsChanged(TableSectionElement tbody);
       TItemOutput getOutputForRow(TableRowElement row);
       TItemOutput2 getOutputForRow2(TableRowElement row);
       boolean isValueRow(TableRowElement row);
       boolean hasNonValueRows();
 
       Integer logicalOffsetToPhysicalOffset(TableElement table, int offset);
+      Integer physicalOffsetToLogicalOffset(TableElement table, int offset);
+      int getLogicalRowCount(TableElement table);
    }
 
    public FastSelectTable(ItemCodec<TItemInput, TItemOutput, TItemOutput2> codec,
@@ -299,7 +301,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       else
          getElement().appendChild(tbody);
 
-      codec_.onRowsInserted(tbody);
+      codec_.onRowsChanged(tbody);
    }
 
    protected void addToTop(TableSectionElement tbody)
@@ -312,7 +314,56 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       table_.setInnerText("");
       selectedRows_.clear();
    }
+   
+   public int getRowCount()
+   {
+      return codec_.getLogicalRowCount(table_);
+   }
+   
+   public void removeTopRows(int rowCount)
+   {
+      if (rowCount <= 0)
+         return;
 
+      NodeList<TableSectionElement> tBodies = table_.getTBodies();
+      for (int i = 0; i < tBodies.getLength(); i++)
+      {
+         rowCount = removeTopRows(tBodies.getItem(i), rowCount);
+         if (rowCount == 0)
+            return;
+      }
+   }
+
+   private int removeTopRows(TableSectionElement tbody, int rowCount)
+   {
+      while (rowCount > 0 && tbody.getRows().getLength() >= 0)
+      {
+         TableRowElement topRow = tbody.getRows().getItem(0);
+         if (codec_.isValueRow(topRow))
+            rowCount--;
+         selectedRows_.remove(topRow);
+         topRow.removeFromParent();
+      }
+
+      if (tbody.getRows().getLength() > 0)
+         codec_.onRowsChanged(tbody);
+      else
+         tbody.removeFromParent();
+
+      return rowCount;
+   }
+
+   public ArrayList<Integer> getSelectedRowIndexes()
+   {
+      sortSelectedRows();
+
+      ArrayList<Integer> results = new ArrayList<Integer>();
+      for (TableRowElement row : selectedRows_)
+         results.add(codec_.physicalOffsetToLogicalOffset(table_,
+                                                          row.getRowIndex()));
+      return results;
+   }
+   
    private boolean isSelected(TableRowElement tr)
    {
       return tr.getClassName().contains(selectedClassName_);

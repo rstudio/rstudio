@@ -24,6 +24,7 @@ import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.WorkbenchHelper;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
 import org.rstudio.studio.client.server.ServerError;
@@ -166,7 +167,7 @@ public class Workspace
    {
       view_.bringToFront();
       globalDisplay_.showYesNoMessage(
-         GlobalDisplay.MSG_QUESTION,
+         GlobalDisplay.MSG_WARNING,
          "Confirm Clear Workspace",
          "Are you sure you want to remove all objects from the workspace?",
   
@@ -285,8 +286,9 @@ public class Workspace
    private void sendWorkspaceCommandToConsole(String command, 
                                               FileSystemItem workspaceFile)
    {
-      String code = command + "(\"" + workspaceFile.getPath() + "\")";
-      eventBus_.fireEvent(new SendToConsoleEvent(code, true));
+      WorkbenchHelper.sendFileCommandToConsole(command, 
+                                                    workspaceFile, 
+                                                    eventBus_);
    }
    
    

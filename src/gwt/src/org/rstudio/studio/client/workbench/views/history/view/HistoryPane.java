@@ -45,6 +45,7 @@ import org.rstudio.studio.client.workbench.views.history.History.SearchBoxDispla
 import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsEvent;
 import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsHandler;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
+import org.rstudio.studio.client.workbench.views.history.view.HistoryEntryItemCodec.TimestampMode;
 
 import java.util.ArrayList;
 
@@ -116,7 +117,7 @@ public class HistoryPane extends WorkbenchPane
          }
       });
 
-      commandList_ = createHistoryTable(false);
+      commandList_ = createHistoryTable(TimestampMode.NONE);
       vpanel.add(commandList_);
 
       recentScrollPanel_ = new BottomScrollPanel();
@@ -131,7 +132,7 @@ public class HistoryPane extends WorkbenchPane
       searchLabel_ = new Label();
       searchLabel_.setHeight("");
       searchResults_ = new HistoryTableWithToolbar(
-            createHistoryTable(true),
+            createHistoryTable(TimestampMode.ITEM),
             new Widget[] {
                   searchLabel_
             },
@@ -144,7 +145,7 @@ public class HistoryPane extends WorkbenchPane
 
       contextLabel_ = new Label();
       contextResults_ = new HistoryTableWithToolbar(
-            createHistoryTable(false),
+            createHistoryTable(TimestampMode.GROUP),
             new Widget[] {
                   new SmallButton(commands_.historyDismissContext()),
                   contextLabel_
@@ -304,13 +305,13 @@ public class HistoryPane extends WorkbenchPane
       recentScrollPanel_.scrollToBottom();
    }
 
-   private HistoryTable createHistoryTable(boolean alwaysTimestamp)
+   private HistoryTable createHistoryTable(TimestampMode timestampMode)
    {
       HistoryTable table = new HistoryTable(
             styles_.command(),
             styles_.timestamp(),
             styles_.selected(),
-            alwaysTimestamp,
+            timestampMode,
             commands_);
       table.setSize("100%", "100%");
       table.addClickHandler(new ClickHandler()
@@ -331,17 +332,37 @@ public class HistoryPane extends WorkbenchPane
       return table;
    }
 
-   public void setRecentCommands(ArrayList<HistoryEntry> entries)
+   public void setRecentCommands(ArrayList<HistoryEntry> entries,
+                                 boolean scrollToBottom)
    {
       commandList_.clear();
       commandList_.addItems(entries, true);
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      if (scrollToBottom)
       {
-         public void execute()
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
-            recentScrollPanel_.scrollToBottom();
-         }
-      });
+            public void execute()
+            {
+               recentScrollPanel_.scrollToBottom();
+            }
+         });
+      }
+   }
+   
+   public void truncateRecentCommands(int maxCommands)
+   {
+      commandList_.removeTopRows(
+            Math.max(0, commandList_.getRowCount() - maxCommands));
+   }
+   
+   public ArrayList<Integer> getRecentCommandsSelectedRowIndexes()
+   {
+      return commandList_.getSelectedRowIndexes();
+   }
+   
+   public int getRecentCommandsRowsDisplayed()
+   {
+      return commandList_.getRowCount();
    }
 
    public void setMoreCommands(long moreCommands)
@@ -409,6 +430,16 @@ public class HistoryPane extends WorkbenchPane
             searchWidget_.fireEvent(event);
          }
       };
+   }
+   
+   public int getRecentCommandsScrollPosition()
+   {
+      return recentScrollPanel_.getVerticalScrollPosition();
+   }
+   
+   public void setRecentCommandsScrollPosition(int scrollPosition)
+   {
+      recentScrollPanel_.setVerticalScrollPosition(scrollPosition);
    }
 
    private HasHistory getActiveHistory()
@@ -539,14 +570,20 @@ public class HistoryPane extends WorkbenchPane
          }
       });
 
-      return new Toolbar(new Widget[] {
-            commands_.historySendToConsole().createToolbarButton(),
-            commands_.historySendToSource().createToolbarButton(),
-           // commands_.historyRemoveEntries().createToolbarButton(),
-            commands_.clearHistory().createToolbarButton()
-      }, new Widget[] {
-            searchWidget_
-      });
+      Toolbar toolbar = new Toolbar();
+      toolbar.addLeftWidget(commands_.loadHistory().createToolbarButton());
+      toolbar.addLeftWidget(commands_.saveHistory().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.historySendToConsole().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.historySendToSource().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.historyRemoveEntries().createToolbarButton());
+      toolbar.addLeftWidget(commands_.clearHistory().createToolbarButton());
+      
+      toolbar.addRightWidget(searchWidget_);
+      
+      return toolbar;
    }
 
    public HandlerRegistration addSelectionCommitHandler(

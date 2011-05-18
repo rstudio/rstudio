@@ -27,6 +27,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
@@ -119,7 +120,22 @@ public class ShellPane extends Composite implements Shell.Display,
 
       secondaryInputHandler.setInput(editor);
 
+      scrollToBottomCommand_ = new TimeBufferedCommand(5)
+      {
+         @Override
+         protected void performAction(boolean shouldSchedulePassive)
+         {
+            if (!DomUtils.selectionExists())
+               scrollPanel_.scrollToBottom();
+         }
+      };
+
       initWidget(scrollPanel_) ;
+   }
+
+   private void scrollToBottomAsync()
+   {
+      scrollToBottomCommand_.nudge();
    }
 
    @Override
@@ -139,15 +155,13 @@ public class ShellPane extends Composite implements Shell.Display,
    public void consoleWriteError(String error)
    {
       output(error, styles_.error(), false);
-      if (!DomUtils.selectionExists())
-         scrollPanel_.scrollToBottom();
+      scrollToBottomAsync();
    }
 
    public void consoleWriteOutput(String output)
    {
       output(output, styles_.output(), false);
-      if (!DomUtils.selectionExists())
-         scrollPanel_.scrollToBottom();
+      scrollToBottomAsync();
    }
 
    public void consoleWriteInput(String input)
@@ -155,15 +169,13 @@ public class ShellPane extends Composite implements Shell.Display,
       pendingInput_.setText("");
       pendingInput_.setVisible(false);
       output(input, styles_.input() + KEYWORD_CLASS_NAME, false);
-      if (!DomUtils.selectionExists())
-         scrollPanel_.scrollToBottom();
+      scrollToBottomAsync();
    }
 
    public void consoleWritePrompt(String prompt)
    {
       output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false);
-      if (!DomUtils.selectionExists())
-         scrollPanel_.scrollToBottom();
+      scrollToBottomAsync();
    }
 
    public void consolePrompt(String prompt)
@@ -587,6 +599,7 @@ public class ShellPane extends Composite implements Shell.Display,
    private final VerticalPanel verticalPanel_ ;
    private final ClickableScrollPanel scrollPanel_ ;
    private ConsoleResources.ConsoleStyles styles_;
+   private final TimeBufferedCommand scrollToBottomCommand_;
 
    private static final String KEYWORD_CLASS_NAME = " ace_keyword";
 }

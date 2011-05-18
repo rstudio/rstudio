@@ -359,28 +359,45 @@ Error getHistoryItems(const json::JsonRpcRequest& request,
    return Success();
 }
 
+void enqueConsoleResetHistoryEvent(bool preserveUIContext)
+{
+   json::Array historyJson;
+   r::session::consoleHistory().asJson(&historyJson);
+   json::Object resetJson;
+   resetJson["history"] = historyJson;
+   resetJson["preserve_ui_context"] = preserveUIContext;
+   ClientEvent event(client_events::kConsoleResetHistory, resetJson);
+   module_context::enqueClientEvent(event);
+}
+
 Error removeHistoryItems(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
    // get indexes
-   json::Array indexesJson;
-   Error error = json::readParam(request.params, 0, &indexesJson);
+   json::Array bottomIndexesJson;
+   Error error = json::readParam(request.params, 0, &bottomIndexesJson);
    if (error)
       return error;
 
-   // convert to vector of ints and sort them (ascending)
+   // convert to top indexes
+   int historySize = r::session::consoleHistory().size();
    std::vector<int> indexes;
-   for (std::size_t i=0; i<indexesJson.size(); i++)
-   {
-      const json::Value& value = indexesJson[i];
+   for (std::size_t i=0; i<bottomIndexesJson.size(); i++)
+   {  
+      const json::Value& value = bottomIndexesJson[i];
       if (json::isType<int>(value))
-         indexes.push_back(value.get_int());
+      {
+         int bottomIndex = value.get_int();
+         int topIndex = historySize - 1 - bottomIndex;
+         indexes.push_back(topIndex);
+      }
    }
-   std::sort(indexes.begin(), indexes.end());
 
-   // remove the indexes in reverse order (so removal doesn't affect
-   // the validity of the other indexes)
+   // remove them
+   r::session::consoleHistory().remove(indexes);
 
+   // enque event
+   enqueConsoleResetHistoryEvent(true);
 
    return Success();
 }
@@ -390,9 +407,7 @@ Error clearHistory(const json::JsonRpcRequest& request,
 {
    r::session::consoleHistory().clear();
 
-   json::Array historyJson;
-   ClientEvent event(client_events::kConsoleResetHistory, historyJson);
-   module_context::enqueClientEvent(event);
+   enqueConsoleResetHistoryEvent(false);
 
    return Success();
 }

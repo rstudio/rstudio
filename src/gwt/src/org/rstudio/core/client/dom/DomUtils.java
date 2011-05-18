@@ -14,7 +14,8 @@ package org.rstudio.core.client.dom;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.*;
-import com.google.gwt.user.client.DOM;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.*;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
@@ -56,6 +57,10 @@ public class DomUtils
    {
       return trimLines(element.getChildNodes(), linesToTrim);
    }
+
+   public static native void scrollToBottom(Element element) /*-{
+      element.scrollTop = element.scrollHeight;
+   }-*/;
 
    private static final Pattern NEWLINE = Pattern.create("\\n");
    private static int trimLines(NodeList<Node> nodes, final int linesToTrim)
