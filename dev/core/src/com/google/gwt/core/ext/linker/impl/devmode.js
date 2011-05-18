@@ -314,7 +314,8 @@ function pluginConnectionError(codeServer) {
   if ($errFn) {
     $errFn($moduleName);
   } else {
-    alert("Plugin failed to connect to Development Mode server at " + codeServer);
+    __gwt_displayGlassMessage("Plugin failed to connect to Development Mode server at " + codeServer,
+        "Follow the underlying troubleshooting instructions");
     loadIframe("http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM");
   }
 }

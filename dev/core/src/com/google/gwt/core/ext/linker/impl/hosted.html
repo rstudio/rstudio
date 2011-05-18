@@ -295,7 +295,8 @@ gwtOnLoad = function(errFn, modName, modBase){
       if (errFn) {
         errFn(modName);
       } else {
-        alert("Plugin failed to connect to Development Mode server at " + $hosted);
+        __gwt_displayGlassMessage("Plugin failed to connect to Development Mode server at " + $hosted,
+            "Follow the underlying troubleshooting instructions");
         loadIframe("http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM");
       }
     }
