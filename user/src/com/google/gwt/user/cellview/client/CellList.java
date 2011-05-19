@@ -57,9 +57,15 @@ import java.util.Set;
  * <dl>
  * <dt>Trivial example</dt>
  * <dd>{@example com.google.gwt.examples.cellview.CellListExample}</dd>
- * <dt>ValueUpdater example</dt>
+ * <dt>Handling user input with ValueUpdater</dt>
  * <dd>{@example com.google.gwt.examples.cellview.CellListValueUpdaterExample}</dd>
- * <dt>Key provider example</dt>
+ * <dt>Pushing data with List Data Provider (backed by {@link List})</dt>
+ * <dd>{@example com.google.gwt.examples.view.ListDataProviderExample}</dd>
+ * <dt>Pushing data asynchronously with Async Data Provider</dt>
+ * <dd>{@example com.google.gwt.examples.view.AsyncDataProviderExample}</dd>
+ * <dt>Writing a custom data provider</dt>
+ * <dd>{@example com.google.gwt.examples.view.RangeChangeHandlerExample}</dd>
+ * <dt>Using a key provider to track objects as they change</dt>
  * <dd>{@example com.google.gwt.examples.view.KeyProviderExample}</dd>
  * </dl>
  * </p>
