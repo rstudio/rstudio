@@ -168,7 +168,7 @@ public class ShellPane extends Composite implements Shell.Display,
    {
       pendingInput_.setText("");
       pendingInput_.setVisible(false);
-      output(input, styles_.input() + KEYWORD_CLASS_NAME, false);
+      output(input, styles_.command() + KEYWORD_CLASS_NAME, false);
       scrollToBottomAsync();
    }
 

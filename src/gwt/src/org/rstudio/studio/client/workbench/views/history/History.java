@@ -272,13 +272,18 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
       view_.getSearchBox().addValueChangeHandler(searchCommand_);
 
       view_.getRecentCommandsWidget().getKeyTarget().addKeyDownHandler(
-            new KeyHandler(commands.historySendToConsole(), null, null));
+            new KeyHandler(commands.historySendToConsole(), 
+                           commands.historySendToSource(),
+                           null, 
+                           null));
       view_.getSearchResultsWidget().getKeyTarget().addKeyDownHandler(
             new KeyHandler(commands.historySendToConsole(),
+                           commands.historySendToSource(),
                            commands.historyDismissResults(),
                            commands.historyShowContext()));
       view_.getCommandContextWidget().getKeyTarget().addKeyDownHandler(
             new KeyHandler(commands.historySendToConsole(),
+                           commands.historySendToSource(),
                            commands.historyDismissContext(),
                            null));
 
@@ -338,38 +343,57 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
 
    private class KeyHandler implements KeyDownHandler
    {
-      private KeyHandler(Command accept, Command left, Command right)
+      private KeyHandler(Command accept, 
+                         Command shiftAccept,
+                         Command left, 
+                         Command right)
       {
          this.accept_ = accept;
+         this.shiftAccept_ = shiftAccept;
          this.left_ = left;
          this.right_ = right;
       }
 
       public void onKeyDown(KeyDownEvent event)
       {
-         if (event.isAnyModifierKeyDown() || !view_.isCommandTableFocused())
+         if (!view_.isCommandTableFocused())
             return;
-
+         
          boolean handled = false;
-         switch (event.getNativeKeyCode())
+         
+         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
          {
-            case KeyCodes.KEY_ENTER:
+            if (event.isShiftKeyDown())
+            {
+               if (shiftAccept_ != null)
+                  shiftAccept_.execute();
+               handled = true;
+            }
+            else if (!event.isAnyModifierKeyDown())
+            {
                if (accept_ != null)
                   accept_.execute();
                handled = true;
-               break;
-            case KeyCodes.KEY_ESCAPE:
-            case KeyCodes.KEY_LEFT:
-               if (left_ != null)
-                  left_.execute();
-               handled = true;
-               break;
-            case KeyCodes.KEY_RIGHT:
-               if (right_ != null)
-                  right_.execute();
-               handled = true;
-               break;
+            }
          }
+         else if (!event.isAnyModifierKeyDown())
+         {
+            switch (event.getNativeKeyCode())
+            {
+               case KeyCodes.KEY_ESCAPE:
+               case KeyCodes.KEY_LEFT:
+                  if (left_ != null)
+                     left_.execute();
+                  handled = true;
+                  break;
+               case KeyCodes.KEY_RIGHT:
+                  if (right_ != null)
+                     right_.execute();
+                  handled = true;
+                  break;
+            }
+         }
+         
          if (handled)
          {
             event.preventDefault();
@@ -378,6 +402,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
       }
 
       private final Command accept_;
+      private final Command shiftAccept_;
       private final Command left_;
       private final Command right_;
    }
