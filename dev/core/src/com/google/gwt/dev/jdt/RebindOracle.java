@@ -28,9 +28,8 @@ public interface RebindOracle {
    * caller must ensure that the result type is instantiable.
    * 
    * @return the substitute type name, which may be the requested type itself;
-   *         this method must not return <code>null</code> if sourceTypeName
-   *         is not <code>null</code>
+   *         this method must not return <code>null</code> if sourceTypeName is
+   *         not <code>null</code>
    */
-  String rebind(TreeLogger logger, String sourceTypeName)
-      throws UnableToCompleteException;
+  String rebind(TreeLogger logger, String sourceTypeName) throws UnableToCompleteException;
 }

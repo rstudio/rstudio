@@ -42,6 +42,24 @@ import java.util.zip.GZIPOutputStream;
 public class SizeMapRecorder {
 
   /**
+   * A human-accessible type and description of a program reference. These are
+   * produced by
+   * {@link SizeMapRecorder#typedProgramReference(JsName, JavaToJavaScriptMap)}
+   * and used by
+   * {@link SizeMapRecorder#recordMap(TreeLogger, OutputStream, SizeBreakdown[], JavaToJavaScriptMap)}
+   * .
+   */
+  private static class TypedProgramReference {
+    public final String description;
+    public final String type;
+
+    public TypedProgramReference(String type, String description) {
+      this.type = type;
+      this.description = description;
+    }
+  }
+
+  /**
    * Sorts by JsName.getIdent().
    */
   private static final Comparator<JsName> JSNAME_SORT = new Comparator<JsName>() {
@@ -51,29 +69,11 @@ public class SizeMapRecorder {
   };
 
   /**
-   * A human-accessible type and description of a program reference. These are
-   * produced by
-   * {@link SizeMapRecorder#typedProgramReference(JsName, JavaToJavaScriptMap)}
-   * and used by
-   * {@link SizeMapRecorder#recordMap(TreeLogger, OutputStream, SizeBreakdown[], JavaToJavaScriptMap)}
-   * .
-   */
-  private static class TypedProgramReference {
-    public final String type;
-    public final String description;
-
-    public TypedProgramReference(String type, String description) {
-      this.type = type;
-      this.description = description;
-    }
-  }
-
-  /**
    * Returns the hexadecimal representation of a character.
    */
   public static StringBuilder charToHex(char c) {
-    char hexDigit[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-      'A', 'B', 'C', 'D', 'E', 'F' };
+    char hexDigit[] =
+        {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
     StringBuilder toReturn = new StringBuilder();
     byte charByte = (byte) (c >>> 8);
     toReturn.append(hexDigit[(charByte >> 4) & 0x0F]);
@@ -106,8 +106,8 @@ public class SizeMapRecorder {
    *     &amp;apos;
    * @param builder a StringBuilder to be appended with the output.
    */
-  public static void escapeXml(String code, int start, int end,
-      boolean quoteApostrophe, StringBuilder builder) {
+  public static void escapeXml(String code, int start, int end, boolean quoteApostrophe,
+      StringBuilder builder) {
     // See http://www.w3.org/TR/2006/REC-xml11-20060816/#charsets.
     int lastIndex = 0;
     int len = end - start;
@@ -129,12 +129,12 @@ public class SizeMapRecorder {
           builder.append("(invalid xml character: \\u" + charToHex(c[i]) + ")");
         }
         lastIndex = i + 1;
-      } else if (((c[i] >= '\u007F') && (c[i] <= '\u0084')) ||
-            ((c[i] >= '\u0086') && (c[i] <= '\u009F')) ||
-            ((c[i] >= '\uD800') && (c[i] <= '\uDBFF')) || 
-            ((c[i] >= '\uDC00') && (c[i] <= '\uDFFF')) ||
-            ((c[i] >= '\uFDD0') && (c[i] <= '\uFDDF')) ||
-            (c[i] == '\u00A0') || (c[i] == '\uFFFF') || (c[i] == '\uFFFE')) {
+      } else if (((c[i] >= '\u007F') && (c[i] <= '\u0084'))
+          || ((c[i] >= '\u0086') && (c[i] <= '\u009F'))
+          || ((c[i] >= '\uD800') && (c[i] <= '\uDBFF'))
+          || ((c[i] >= '\uDC00') && (c[i] <= '\uDFFF'))
+          || ((c[i] >= '\uFDD0') && (c[i] <= '\uFDDF')) || (c[i] == '\u00A0') || (c[i] == '\uFFFF')
+          || (c[i] == '\uFFFE')) {
         builder.append(c, lastIndex, i - lastIndex);
         builder.append("(invalid xml character: \\u" + charToHex(c[i]) + ")");
         lastIndex = i + 1;
@@ -172,9 +172,8 @@ public class SizeMapRecorder {
   /**
    * @param logger a TreeLogger
    */
-  public static void recordMap(TreeLogger logger, OutputStream out,
-      SizeBreakdown[] sizeBreakdowns, JavaToJavaScriptMap jjsmap,
-      Map<JsName, String> obfuscateMap) throws IOException {
+  public static void recordMap(TreeLogger logger, OutputStream out, SizeBreakdown[] sizeBreakdowns,
+      JavaToJavaScriptMap jjsmap, Map<JsName, String> obfuscateMap) throws IOException {
     out = new GZIPOutputStream(out);
     Writer writer = new OutputStreamWriter(out, Util.DEFAULT_ENCODING);
 
@@ -182,18 +181,16 @@ public class SizeMapRecorder {
     writer.append("<sizemaps>\n");
 
     for (int i = 0; i < sizeBreakdowns.length; i++) {
-      writer.append("<sizemap fragment=\"" + i + "\" " + "size=\""
-          + sizeBreakdowns[i].getSize() + "\">\n");
+      writer.append("<sizemap fragment=\"" + i + "\" " + "size=\"" + sizeBreakdowns[i].getSize()
+          + "\">\n");
       Map<JsName, Integer> sizeMap = new TreeMap<JsName, Integer>(JSNAME_SORT);
       sizeMap.putAll(sizeBreakdowns[i].getSizeMap());
       for (Entry<JsName, Integer> sizeMapEntry : sizeMap.entrySet()) {
         JsName name = sizeMapEntry.getKey();
         int size = sizeMapEntry.getValue();
-        TypedProgramReference typedRef = typedProgramReference(name, jjsmap,
-            obfuscateMap);
-        writer.append("  <size " + "type=\"" + escapeXml(typedRef.type)
-            + "\" " + "ref=\"" + escapeXml(typedRef.description) + "\" "
-            + "size=\"" + size + "\"/>\n");
+        TypedProgramReference typedRef = typedProgramReference(name, jjsmap, obfuscateMap);
+        writer.append("  <size " + "type=\"" + escapeXml(typedRef.type) + "\" " + "ref=\""
+            + escapeXml(typedRef.description) + "\" " + "size=\"" + size + "\"/>\n");
       }
       writer.append("</sizemap>\n");
     }

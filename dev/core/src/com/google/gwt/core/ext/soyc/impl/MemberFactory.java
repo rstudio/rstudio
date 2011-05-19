@@ -33,16 +33,16 @@ import java.util.Map;
 public class MemberFactory {
   private final Map<Class<?>, Map<?, ?>> map = new IdentityHashMap<Class<?>, Map<?, ?>>();
 
+  public StandardClassMember get(JDeclaredType type) {
+    return getOrCreate(type, StandardClassMember.class, JDeclaredType.class);
+  }
+
   public StandardFieldMember get(JField field) {
     return getOrCreate(field, StandardFieldMember.class, JField.class);
   }
 
   public StandardMethodMember get(JMethod method) {
     return getOrCreate(method, StandardMethodMember.class, JMethod.class);
-  }
-
-  public StandardClassMember get(JDeclaredType type) {
-    return getOrCreate(type, StandardClassMember.class, JDeclaredType.class);
   }
 
   @SuppressWarnings("unchecked")
@@ -74,12 +74,10 @@ public class MemberFactory {
     V toReturn = elementMap.get(key);
     if (toReturn == null) {
       try {
-        Constructor<V> ctor = implClazz.getConstructor(MemberFactory.class,
-            constructorParam);
+        Constructor<V> ctor = implClazz.getConstructor(MemberFactory.class, constructorParam);
         toReturn = ctor.newInstance(this, key);
       } catch (NoSuchMethodException e) {
-        throw new RuntimeException(implClazz.getName()
-            + " must declare a two-arg (MemberFactory, "
+        throw new RuntimeException(implClazz.getName() + " must declare a two-arg (MemberFactory, "
             + constructorParam.getName() + ") constructor", e);
       } catch (IllegalArgumentException e) {
         // Error on the part of this type

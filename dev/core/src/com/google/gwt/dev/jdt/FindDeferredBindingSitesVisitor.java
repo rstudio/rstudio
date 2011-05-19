@@ -54,9 +54,9 @@ public class FindDeferredBindingSitesVisitor extends SafeASTVisitor {
     }
   }
 
+  public static final String ASYNC_MAGIC_METHOD = "runAsync";
   public static final String MAGIC_CLASS = "com.google.gwt.core.client.GWT";
   public static final String REBIND_MAGIC_METHOD = "create";
-  public static final String ASYNC_MAGIC_METHOD = "runAsync";
 
   public static void reportRebindProblem(MessageSendSite site, String message) {
     MessageSend messageSend = site.messageSend;
@@ -97,21 +97,18 @@ public class FindDeferredBindingSitesVisitor extends SafeASTVisitor {
     Expression[] args = messageSend.arguments;
     if (rebindMagicMethod) {
       if (args.length != 1) {
-        reportRebindProblem(site,
-            "GWT.create() should take exactly one argument");
+        reportRebindProblem(site, "GWT.create() should take exactly one argument");
         return;
       }
 
       if (!(args[0] instanceof ClassLiteralAccess)) {
-        reportRebindProblem(site,
-            "Only class literals may be used as arguments to GWT.create()");
+        reportRebindProblem(site, "Only class literals may be used as arguments to GWT.create()");
         return;
       }
     } else {
       assert asyncMagicMethod;
       if (args.length != 1 && args.length != 2) {
-        reportRebindProblem(site,
-            "GWT.runAsync() should take one or two arguments");
+        reportRebindProblem(site, "GWT.runAsync() should take one or two arguments");
         return;
       }
       if (args.length == 2) {

@@ -60,8 +60,7 @@ public class RunAsyncNameTest extends JJSTestBase {
       builder.setLowestLogLevel(TreeLogger.ERROR);
       builder.expectError("Errors in '/mock/test/EntryPoint.java'", null);
       builder.expectError(
-          "Line 5: Only class literals may be used to name a call to GWT.runAsync()",
-          null);
+          "Line 5: Only class literals may be used to name a call to GWT.runAsync()", null);
       builder.expectError("Cannot proceed due to previous errors", null);
       logger = builder.createLogger();
       this.logger = logger;

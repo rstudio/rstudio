@@ -51,8 +51,7 @@ import java.util.TreeSet;
  */
 public class JavaAstConstructor {
 
-  public static final MockJavaResource ARRAY = new MockJavaResource(
-      "com.google.gwt.lang.Array") {
+  public static final MockJavaResource ARRAY = new MockJavaResource("com.google.gwt.lang.Array") {
     @Override
     public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
@@ -64,8 +63,7 @@ public class JavaAstConstructor {
       return code;
     }
   };
-  public static final MockJavaResource CAST = new MockJavaResource(
-      "com.google.gwt.lang.Cast") {
+  public static final MockJavaResource CAST = new MockJavaResource("com.google.gwt.lang.Cast") {
     @Override
     public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
@@ -81,8 +79,7 @@ public class JavaAstConstructor {
       return code;
     }
   };
-  public static final MockJavaResource CLASS = new MockJavaResource(
-      "java.lang.Class") {
+  public static final MockJavaResource CLASS = new MockJavaResource("java.lang.Class") {
     @Override
     public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
@@ -112,8 +109,7 @@ public class JavaAstConstructor {
       return code;
     }
   };
-  public static final MockJavaResource ENUM = new MockJavaResource(
-      "java.lang.Enum") {
+  public static final MockJavaResource ENUM = new MockJavaResource("java.lang.Enum") {
     @Override
     public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
@@ -135,22 +131,22 @@ public class JavaAstConstructor {
       return code;
     }
   };
-  public static final MockJavaResource GWT = new MockJavaResource(
-      "com.google.gwt.core.client.GWT") {
-    @Override
-    public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("package com.google.gwt.core.client;\n");
-      code.append("public final class GWT {\n");
-      code.append("  public boolean isClient() { return true; };\n");
-      code.append("  public boolean isProdMode() { return true; };\n");
-      code.append("  public boolean isScript() { return true; };\n");
-      code.append("  public static void runAsync(RunAsyncCallback callback) { }\n");
-      code.append("  public static void runAsync(Class<?> name, RunAsyncCallback callback) { }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
+  public static final MockJavaResource GWT =
+      new MockJavaResource("com.google.gwt.core.client.GWT") {
+        @Override
+        public CharSequence getContent() {
+          StringBuffer code = new StringBuffer();
+          code.append("package com.google.gwt.core.client;\n");
+          code.append("public final class GWT {\n");
+          code.append("  public boolean isClient() { return true; };\n");
+          code.append("  public boolean isProdMode() { return true; };\n");
+          code.append("  public boolean isScript() { return true; };\n");
+          code.append("  public static void runAsync(RunAsyncCallback callback) { }\n");
+          code.append("  public static void runAsync(Class<?> name, RunAsyncCallback callback) { }\n");
+          code.append("}\n");
+          return code;
+        }
+      };
   public static final MockJavaResource RUNASYNCCALLBACK = new MockJavaResource(
       "com.google.gwt.core.client.RunAsyncCallback") {
     @Override
@@ -161,8 +157,7 @@ public class JavaAstConstructor {
       return code;
     }
   };
-  public static final MockJavaResource STATS = new MockJavaResource(
-      "com.google.gwt.lang.Stats") {
+  public static final MockJavaResource STATS = new MockJavaResource("com.google.gwt.lang.Stats") {
     @Override
     public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
@@ -174,23 +169,21 @@ public class JavaAstConstructor {
     }
   };
 
-  public static JProgram construct(TreeLogger logger, CompilationState state,
-      String... entryPoints) throws UnableToCompleteException {
-    return construct(logger, state, TypeLinker.NULL_TYPE_LINKER,
-        entryPoints);
+  public static JProgram construct(TreeLogger logger, CompilationState state, String... entryPoints)
+      throws UnableToCompleteException {
+    return construct(logger, state, TypeLinker.NULL_TYPE_LINKER, entryPoints);
   }
 
-  public static JProgram construct(TreeLogger logger, CompilationState state,
-      TypeLinker linker, String... entryPoints)
-      throws UnableToCompleteException {
+  public static JProgram construct(TreeLogger logger, CompilationState state, TypeLinker linker,
+      String... entryPoints) throws UnableToCompleteException {
     Set<String> allRootTypes = new TreeSet<String>(Arrays.asList(entryPoints));
     for (MockJavaResource resource : getCompilerTypes()) {
       allRootTypes.add(resource.getTypeName());
     }
 
-    CompilationResults units = 
-        BasicWebModeCompiler.getCompilationUnitDeclarations(logger, state,
-        linker, allRootTypes.toArray(new String[allRootTypes.size()]));
+    CompilationResults units =
+        BasicWebModeCompiler.getCompilationUnitDeclarations(logger, state, linker, allRootTypes
+            .toArray(new String[allRootTypes.size()]));
 
     CompilationUnitDeclaration[] goldenCuds = units.compiledUnits;
 
@@ -219,8 +212,7 @@ public class JavaAstConstructor {
      * JSNI.
      */
     TypeMap typeMap = new TypeMap(jprogram);
-    TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap,
-        units, jsProgram, linker);
+    TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap, units, jsProgram, linker);
 
     // BuildTypeMap can uncover syntactic JSNI errors; report & abort
     JavaToJavaScriptCompiler.checkForErrors(logger, goldenCuds, true);
@@ -263,8 +255,7 @@ public class JavaAstConstructor {
     // Replace the basic Class and Enum with a compiler-specific one.
     result.remove(JavaResourceBase.CLASS);
     result.remove(JavaResourceBase.ENUM);
-    Collections.addAll(result, ARRAY, CAST, CLASS, CLASSLITERALHOLDER, ENUM, GWT,
-        RUNASYNCCALLBACK);
+    Collections.addAll(result, ARRAY, CAST, CLASS, CLASSLITERALHOLDER, ENUM, GWT, RUNASYNCCALLBACK);
     return result.toArray(new MockJavaResource[result.size()]);
   }
 }

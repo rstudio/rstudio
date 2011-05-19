@@ -70,8 +70,8 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
   }
 
   private void addAsyncLoader(final int sp) {
-    sourceOracle.addOrReplace(new MockJavaResource(
-        "com.google.gwt.lang.asyncloaders.AsyncLoader" + sp) {
+    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.asyncloaders.AsyncLoader"
+        + sp) {
       @Override
       public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
@@ -88,16 +88,15 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
 
     addSnippetImport("com.google.gwt.lang.asyncloaders.AsyncLoader" + sp);
 
-    sourceOracle.addOrReplace(new MockJavaResource(
-        "com.google.gwt.lang.asyncloaders.AsyncLoader" + sp
-            + FragmentLoaderCreator.CALLBACK_LIST_SUFFIX) {
+    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.asyncloaders.AsyncLoader"
+        + sp + FragmentLoaderCreator.CALLBACK_LIST_SUFFIX) {
       @Override
       public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package com.google.gwt.lang.asyncloaders;\n");
         code.append("import com.google.gwt.core.client.RunAsyncCallback;");
-        code.append("public class AsyncLoader" + sp
-            + FragmentLoaderCreator.CALLBACK_LIST_SUFFIX + "{\n");
+        code.append("public class AsyncLoader" + sp + FragmentLoaderCreator.CALLBACK_LIST_SUFFIX
+            + "{\n");
         code.append("  RunAsyncCallback callback;\n");
         code.append("}\n");
         return code;

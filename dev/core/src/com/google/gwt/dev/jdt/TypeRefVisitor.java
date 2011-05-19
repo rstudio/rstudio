@@ -144,11 +144,9 @@ public abstract class TypeRefVisitor extends SafeASTVisitor {
   }
 
   @Override
-  public boolean visit(CompilationUnitDeclaration cud,
-      CompilationUnitScope scope) {
+  public boolean visit(CompilationUnitDeclaration cud, CompilationUnitScope scope) {
     if (this.cud != cud) {
-      throw new IllegalStateException(
-          "I will only visit the cud I was initialized with");
+      throw new IllegalStateException("I will only visit the cud I was initialized with");
     }
     return true;
   }

@@ -78,7 +78,7 @@ public class StoryRecorder {
   private int curHighestFragment = 0;
 
   private OutputStream gzipStream;
-  
+
   private String[] js;
 
   /**
@@ -90,18 +90,20 @@ public class StoryRecorder {
    * This is a class field for convenience, but it should be deleted at the end
    * of the constructor.
    */
-  private transient Map<Correlation, Member> membersByCorrelation = new IdentityHashMap<Correlation, Member>();
-  
+  private transient Map<Correlation, Member> membersByCorrelation =
+      new IdentityHashMap<Correlation, Member>();
+
   /**
    * This is a class field for convenience, but it should be deleted at the end
    * of the constructor.
    */
-  private transient Map<SourceInfo, StoryImpl> storyCache = new IdentityHashMap<SourceInfo, StoryImpl>();
-  private Map<Story, Integer> storyIds = new HashMap<Story, Integer>();
+  private transient Map<SourceInfo, StoryImpl> storyCache =
+      new IdentityHashMap<SourceInfo, StoryImpl>();
+  private final Map<Story, Integer> storyIds = new HashMap<Story, Integer>();
 
   private StoryRecorder() {
   }
-  
+
   protected void recordStoriesImpl(TreeLogger logger, OutputStream out,
       List<Map<Range, SourceInfo>> sourceInfoMaps, String[] js) {
 
@@ -120,8 +122,7 @@ public class StoryRecorder {
       MemberFactory memberFactory = new MemberFactory();
 
       // Record what we've seen so far
-      TreeSet<ClassMember> classesMutable = new TreeSet<ClassMember>(
-          Member.SOURCE_NAME_COMPARATOR);
+      TreeSet<ClassMember> classesMutable = new TreeSet<ClassMember>(Member.SOURCE_NAME_COMPARATOR);
       Set<SourceInfo> sourceInfoSeen = new HashSet<SourceInfo>();
 
       builder.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<soyc>\n<stories>\n");
@@ -129,9 +130,8 @@ public class StoryRecorder {
       int fragment = 0;
       for (Map<Range, SourceInfo> sourceInfoMap : sourceInfoMaps) {
         lastEnd = 0;
-        analyzeFragment(memberFactory, classesMutable, sourceInfoMap,
-            sourceInfoSeen, fragment++);
-        
+        analyzeFragment(memberFactory, classesMutable, sourceInfoMap, sourceInfoSeen, fragment++);
+
         // Flush output to improve memory locality
         flushOutput();
       }
@@ -153,17 +153,15 @@ public class StoryRecorder {
       logger.log(TreeLogger.ERROR, "Could not write dependency file.", e);
     }
   }
-  
-  private void analyzeFragment(MemberFactory memberFactory,
-      TreeSet<ClassMember> classesMutable,
-      Map<Range, SourceInfo> sourceInfoMap, Set<SourceInfo> sourceInfoSeen,
-      int fragment) throws IOException {
+
+  private void analyzeFragment(MemberFactory memberFactory, TreeSet<ClassMember> classesMutable,
+      Map<Range, SourceInfo> sourceInfoMap, Set<SourceInfo> sourceInfoSeen, int fragment)
+      throws IOException {
     /*
      * We want to iterate over the Ranges so that enclosing Ranges come before
      * their enclosed Ranges...
      */
-    Range[] dependencyOrder = sourceInfoMap.keySet().toArray(
-        new Range[sourceInfoMap.size()]);
+    Range[] dependencyOrder = sourceInfoMap.keySet().toArray(new Range[sourceInfoMap.size()]);
     Arrays.sort(dependencyOrder, Range.DEPENDENCY_ORDER_COMPARATOR);
 
     Stack<RangeInfo> dependencyScope = new Stack<RangeInfo>();
@@ -264,7 +262,7 @@ public class StoryRecorder {
         builder.append("<by idref=\"");
         builder.append(correlation.getSourceName());
         builder.append("\"/>\n");
-        
+
         flushOutput();
       }
       builder.append("</correlations>\n");
@@ -300,8 +298,7 @@ public class StoryRecorder {
    * the right length, possibly sub-dividing the super-enclosing Range in the
    * process.
    */
-  private void popAndRecord(Stack<RangeInfo> dependencyScope, int fragment)
-      throws IOException {
+  private void popAndRecord(Stack<RangeInfo> dependencyScope, int fragment) throws IOException {
     RangeInfo rangeInfo = dependencyScope.pop();
     Range toStore = rangeInfo.range;
 
@@ -325,15 +322,14 @@ public class StoryRecorder {
      * sub-range previously stored.
      */
     if (lastEnd < toStore.getEnd()) {
-      Range newRange = new Range(Math.max(lastEnd, toStore.getStart()),
-          toStore.getEnd());
+      Range newRange = new Range(Math.max(lastEnd, toStore.getStart()), toStore.getEnd());
       recordStory(rangeInfo.info, fragment, newRange.length(), newRange);
       lastEnd += newRange.length();
     }
   }
 
-  private void recordStory(SourceInfo info, int fragment, int length,
-      Range range) throws IOException {
+  private void recordStory(SourceInfo info, int fragment, int length, Range range)
+      throws IOException {
     assert info != null;
     assert storyCache != null;
 
@@ -343,8 +339,7 @@ public class StoryRecorder {
 
     StoryImpl theStory;
     if (!storyCache.containsKey(info)) {
-      SortedSet<Member> members = new TreeSet<Member>(
-          Member.TYPE_AND_SOURCE_NAME_COMPARATOR);
+      SortedSet<Member> members = new TreeSet<Member>(Member.TYPE_AND_SOURCE_NAME_COMPARATOR);
       for (Correlation c : info.getCorrelations()) {
         Member m = membersByCorrelation.get(c);
         if (m != null) {
@@ -358,8 +353,7 @@ public class StoryRecorder {
         literalType = literalCorrelation.getLiteral().getDescription();
       }
 
-      theStory = new StoryImpl(storyCache.size(), members, literalType,
-          fragment, length);
+      theStory = new StoryImpl(storyCache.size(), members, literalType, fragment, length);
       storyCache.put(info, theStory);
     } else {
       // Use a copy-constructed instance

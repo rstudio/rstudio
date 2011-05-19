@@ -36,8 +36,8 @@ public class StoryImpl implements Story {
    */
   public static final Comparator<Story> ID_COMPARATOR = new StoryImplComparator();
 
-  private final int id;
   private final int fragment;
+  private final int id;
   private final int length;
   private final String literalDescription;
   private final SortedSet<Member> members;
@@ -46,8 +46,8 @@ public class StoryImpl implements Story {
    * Standard constructor. This constructor will create unmodifiable versions of
    * the collections passed into it.
    */
-  public StoryImpl(int id, SortedSet<Member> members,
-      String literalDescription, int fragment, int length) {
+  public StoryImpl(int id, SortedSet<Member> members, String literalDescription, int fragment,
+      int length) {
     assert members != null;
     assert fragment >= 0;
     assert length > 0;
@@ -56,8 +56,7 @@ public class StoryImpl implements Story {
     this.id = id;
     this.fragment = fragment;
     this.length = length;
-    this.literalDescription = literalDescription == null ? null
-        : literalDescription.intern();
+    this.literalDescription = literalDescription == null ? null : literalDescription.intern();
     this.members = members;
   }
 

@@ -882,10 +882,8 @@ public class CodeSplitter {
       }
     }
     if (logger.isLoggable(TreeLogger.DEBUG)) {
-      logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies by moving "
-          + numFixups
-          + " strings in class literal constructors to fragment 0, out of "
-          + numClassLitStrings);
+      logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies by moving " + numFixups
+          + " strings in class literal constructors to fragment 0, out of " + numClassLitStrings);
     }
   }
 
@@ -908,10 +906,8 @@ public class CodeSplitter {
     }
 
     if (logger.isLoggable(TreeLogger.DEBUG)) {
-      logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies by moving "
-          + numFixups
-          + " strings used to initialize fields to fragment 0, out of "
-          + +numFieldStrings);
+      logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies by moving " + numFixups
+          + " strings used to initialize fields to fragment 0, out of " + +numFieldStrings);
     }
   }
 
@@ -941,9 +937,8 @@ public class CodeSplitter {
 
     if (logger.isLoggable(TreeLogger.DEBUG)) {
       logger.log(TreeLogger.DEBUG,
-          "Fixed up load-order dependencies for instance methods by moving "
-          + numFixups + " types to fragment 0, out of "
-          + jprogram.getDeclaredTypes().size());
+          "Fixed up load-order dependencies for instance methods by moving " + numFixups
+              + " types to fragment 0, out of " + jprogram.getDeclaredTypes().size());
     }
   }
 
@@ -967,10 +962,8 @@ public class CodeSplitter {
     }
 
     if (logger.isLoggable(TreeLogger.DEBUG)) {
-      logger.log(TreeLogger.DEBUG,
-          "Fixed up load-order dependencies on supertypes by moving " + numFixups
-          + " types to fragment 0, out of "
-          + jprogram.getDeclaredTypes().size());
+      logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies on supertypes by moving "
+          + numFixups + " types to fragment 0, out of " + jprogram.getDeclaredTypes().size());
     }
   }
 

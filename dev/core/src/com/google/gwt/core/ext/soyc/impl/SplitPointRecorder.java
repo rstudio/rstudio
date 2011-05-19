@@ -36,15 +36,13 @@ public class SplitPointRecorder {
   /**
    * Used to record (runAsync) split points of a program.
    */
-  public static void recordSplitPoints(JProgram jprogram, OutputStream out,
-      TreeLogger logger) {
+  public static void recordSplitPoints(JProgram jprogram, OutputStream out, TreeLogger logger) {
 
-    logger = logger.branch(TreeLogger.TRACE,
-        "Creating split point map file for the compile report");
+    logger =
+        logger.branch(TreeLogger.TRACE, "Creating split point map file for the compile report");
 
     try {
-      OutputStreamWriter writer = new OutputStreamWriter(new GZIPOutputStream(
-          out), "UTF-8");
+      OutputStreamWriter writer = new OutputStreamWriter(new GZIPOutputStream(out), "UTF-8");
       PrintWriter pw = new PrintWriter(writer);
       HtmlTextOutput htmlOut = new HtmlTextOutput(pw, false);
       String curLine = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
@@ -67,13 +65,11 @@ public class SplitPointRecorder {
         for (int sp = 1; sp <= splitPointMap.size(); sp++) {
           String location = splitPointMap.get(sp);
           assert location != null;
-          curLine = "<splitpoint id=\"" + sp + "\" location=\"" + location
-              + "\"/>";
+          curLine = "<splitpoint id=\"" + sp + "\" location=\"" + location + "\"/>";
           htmlOut.printRaw(curLine);
           htmlOut.newline();
           if (logger.isLoggable(TreeLogger.TRACE)) {
-            logger.log(TreeLogger.TRACE, "Assigning split point #" + sp
-                + " in method " + location);
+            logger.log(TreeLogger.TRACE, "Assigning split point #" + sp + " in method " + location);
           }
         }
         htmlOut.indentOut();
@@ -133,12 +129,10 @@ public class SplitPointRecorder {
       if (replacement.getName() != null) {
         methodDescription = replacement.getName();
       } else {
-        methodDescription = "@"
-            + fullMethodDescription(replacement.getEnclosingMethod());
+        methodDescription = "@" + fullMethodDescription(replacement.getEnclosingMethod());
         if (counts.containsKey(methodDescription)) {
           counts.put(methodDescription, counts.get(methodDescription) + 1);
-          methodDescription += "#"
-              + Integer.toString(counts.get(methodDescription));
+          methodDescription += "#" + Integer.toString(counts.get(methodDescription));
         } else {
           counts.put(methodDescription, 1);
         }

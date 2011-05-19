@@ -23,8 +23,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 /**
  * An implementation of MethodMember.
  */
-public class StandardMethodMember extends AbstractMemberWithDependencies
-    implements MethodMember {
+public class StandardMethodMember extends AbstractMemberWithDependencies implements MethodMember {
   private final ClassMember enclosing;
   private final String sourceName;
 

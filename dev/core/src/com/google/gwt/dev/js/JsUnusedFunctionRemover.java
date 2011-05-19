@@ -36,8 +36,6 @@ import java.util.Map;
  * Removes JsFunctions that are never referenced in the program.
  */
 public class JsUnusedFunctionRemover {
-  public static final String NAME = JsUnusedFunctionRemover.class.getSimpleName();
-
   /**
    * Finds all functions in the program.
    */
@@ -93,16 +91,18 @@ public class JsUnusedFunctionRemover {
     }
   }
 
+  public static final String NAME = JsUnusedFunctionRemover.class.getSimpleName();
+
   public static OptimizerStats exec(JsProgram program) {
-    Event optimizeJsEvent = SpeedTracerLogger.start(
-        CompilerEventType.OPTIMIZE_JS, "optimizer", NAME);
+    Event optimizeJsEvent =
+        SpeedTracerLogger.start(CompilerEventType.OPTIMIZE_JS, "optimizer", NAME);
     OptimizerStats stats = new JsUnusedFunctionRemover(program).execImpl();
     optimizeJsEvent.end("didChange", "" + stats.didChange());
     return stats;
   }
 
-  private final Map<JsName, JsFunction> toRemove = new HashMap<JsName, JsFunction>();
   private final JsProgram program;
+  private final Map<JsName, JsFunction> toRemove = new HashMap<JsName, JsFunction>();
 
   public JsUnusedFunctionRemover(JsProgram program) {
     this.program = program;

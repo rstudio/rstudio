@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -138,24 +138,27 @@ public abstract class AbstractCompiler {
      */
     private class CompilerImpl extends Compiler {
 
+      private Map<String, BinaryTypeBinding> bindings;
       private Set<CompilationUnitDeclaration> cuds;
-      private Map<String,BinaryTypeBinding> bindings;
       private long jdtProcessNanos;
 
-      public CompilerImpl(INameEnvironment environment,
-          IErrorHandlingPolicy policy, CompilerOptions compilerOptions,
-          ICompilerRequestor requestor, IProblemFactory problemFactory) {
+      public CompilerImpl(INameEnvironment environment, IErrorHandlingPolicy policy,
+          CompilerOptions compilerOptions, ICompilerRequestor requestor,
+          IProblemFactory problemFactory) {
         super(environment, policy, compilerOptions, requestor, problemFactory);
       }
 
       @Override
-      public void accept(IBinaryType binaryType, PackageBinding packageBinding, AccessRestriction accessRestriction) {
+      public void accept(IBinaryType binaryType, PackageBinding packageBinding,
+          AccessRestriction accessRestriction) {
         // Do the same thing as super.accept(), but record the BinaryTypeBinding
         // that is generated from lookupEnvironment.
         if (this.options.verbose) {
-          out.println(Messages.bind(Messages.compilation_loadBinary, new String(binaryType.getName())));
+          out.println(Messages.bind(Messages.compilation_loadBinary, new String(binaryType
+              .getName())));
         }
-        BinaryTypeBinding binding = lookupEnvironment.createBinaryTypeFrom(binaryType, packageBinding, accessRestriction);
+        BinaryTypeBinding binding =
+            lookupEnvironment.createBinaryTypeFrom(binaryType, packageBinding, accessRestriction);
         String name = CharOperation.toString(binding.compoundName);
         if (bindings != null) {
           bindings.put(name, binding);
@@ -164,8 +167,8 @@ public abstract class AbstractCompiler {
 
       @Override
       public void compile(ICompilationUnit[] sourceUnits) {
-        SpeedTracerLogger.Event compileEvent = SpeedTracerLogger.start(
-            CompilerEventType.JDT_COMPILER_SANDBOX);
+        SpeedTracerLogger.Event compileEvent =
+            SpeedTracerLogger.start(CompilerEventType.JDT_COMPILER_SANDBOX);
         try {
           super.compile(sourceUnits);
         } finally {
@@ -236,16 +239,15 @@ public abstract class AbstractCompiler {
 
         ICompilationUnit cu = unit.compilationResult.compilationUnit;
         String loc = String.valueOf(cu.getFileName());
-        TreeLogger branch = logger.branch(TreeLogger.SPAM,
-            "Scanning for additional dependencies: " + loc, null);
+        TreeLogger branch =
+            logger.branch(TreeLogger.SPAM, "Scanning for additional dependencies: " + loc, null);
 
         // Examine the cud for magic types.
         //
         String[] typeNames = outer.doFindAdditionalTypesUsingJsni(branch, unit);
         addAdditionalTypes(branch, typeNames);
 
-        typeNames = outer.doFindAdditionalTypesUsingArtificialRescues(branch,
-            unit);
+        typeNames = outer.doFindAdditionalTypesUsingArtificialRescues(branch, unit);
         addAdditionalTypes(branch, typeNames);
 
         typeNames = outer.doFindAdditionalTypesUsingRebinds(branch, unit);
@@ -278,9 +280,8 @@ public abstract class AbstractCompiler {
         }
       }
 
-      private void compile(ICompilationUnit[] units,
-          Set<CompilationUnitDeclaration> cuds,
-          Map<String,BinaryTypeBinding> bindings) {
+      private void compile(ICompilationUnit[] units, Set<CompilationUnitDeclaration> cuds,
+          Map<String, BinaryTypeBinding> bindings) {
         this.bindings = bindings;
         this.cuds = cuds;
         compile(units);
@@ -351,8 +352,8 @@ public abstract class AbstractCompiler {
 
       public NameEnvironmentAnswer findType(char[][] compoundTypeName) {
         String qname = CharOperation.toString(compoundTypeName);
-        TreeLogger branch = logger.branch(TreeLogger.SPAM,
-            "Compiler is asking about '" + qname + "'", null);
+        TreeLogger branch =
+            logger.branch(TreeLogger.SPAM, "Compiler is asking about '" + qname + "'", null);
 
         if (isPackage(qname)) {
           branch.log(TreeLogger.SPAM, "Found to be a package", null);
@@ -377,8 +378,7 @@ public abstract class AbstractCompiler {
           return new NameEnvironmentAnswer(icu, null);
         } else {
           ClassLoader classLoader = getClassLoader();
-          URL resourceURL = classLoader.getResource(className.replace('.', '/')
-              + ".class");
+          URL resourceURL = classLoader.getResource(className.replace('.', '/') + ".class");
           if (resourceURL != null) {
             /*
              * We know that there is a .class file that matches the name that we
@@ -534,29 +534,27 @@ public abstract class AbstractCompiler {
     }
   }
 
-  private static final Comparator<CompilationUnitDeclaration> CUD_COMPARATOR = new Comparator<CompilationUnitDeclaration>() {
+  private static final Comparator<CompilationUnitDeclaration> CUD_COMPARATOR =
+      new Comparator<CompilationUnitDeclaration>() {
 
-    public int compare(CompilationUnitDeclaration cud1,
-        CompilationUnitDeclaration cud2) {
-      ICompilationUnit cu1 = cud1.compilationResult().getCompilationUnit();
-      ICompilationUnit cu2 = cud2.compilationResult().getCompilationUnit();
-      char[][] package1 = cu1.getPackageName();
-      char[][] package2 = cu2.getPackageName();
-      for (int i = 0, c = Math.min(package1.length, package2.length); i < c; ++i) {
-        int result = CharArrayComparator.INSTANCE.compare(package1[i],
-            package2[i]);
-        if (result != 0) {
-          return result;
+        public int compare(CompilationUnitDeclaration cud1, CompilationUnitDeclaration cud2) {
+          ICompilationUnit cu1 = cud1.compilationResult().getCompilationUnit();
+          ICompilationUnit cu2 = cud2.compilationResult().getCompilationUnit();
+          char[][] package1 = cu1.getPackageName();
+          char[][] package2 = cu2.getPackageName();
+          for (int i = 0, c = Math.min(package1.length, package2.length); i < c; ++i) {
+            int result = CharArrayComparator.INSTANCE.compare(package1[i], package2[i]);
+            if (result != 0) {
+              return result;
+            }
+          }
+          int result = package2.length - package1.length;
+          if (result != 0) {
+            return result;
+          }
+          return CharArrayComparator.INSTANCE.compare(cu1.getMainTypeName(), cu2.getMainTypeName());
         }
-      }
-      int result = package2.length - package1.length;
-      if (result != 0) {
-        return result;
-      }
-      return CharArrayComparator.INSTANCE.compare(cu1.getMainTypeName(),
-          cu2.getMainTypeName());
-    }
-  };
+      };
 
   public static CompilerOptions getCompilerOptions() {
     CompilerOptions options = JdtCompiler.getCompilerOptions();
@@ -567,29 +565,28 @@ public abstract class AbstractCompiler {
     return options;
   }
 
-  private Sandbox sandbox;
   protected CompilationState compilationState;
+  private Sandbox sandbox;
 
-  protected AbstractCompiler(CompilationState compilationState,
-      boolean doGenerateBytes) {
+  protected AbstractCompiler(CompilationState compilationState, boolean doGenerateBytes) {
     this.compilationState = compilationState;
     this.sandbox = new Sandbox(this, doGenerateBytes);
   }
 
-  protected final CompilationResults compile(TreeLogger logger,
-      ICompilationUnit[] units) {
+  protected final CompilationResults compile(TreeLogger logger, ICompilationUnit[] units) {
 
     // Any additional compilation units that are found to be needed will be
     // pulled in while processing compilation units. See CompilerImpl.process().
     //
     sandbox.logger = logger;
     try {
-      Set<CompilationUnitDeclaration> cuds = new TreeSet<CompilationUnitDeclaration>(CUD_COMPARATOR);
-      LinkedHashMap<String,BinaryTypeBinding> bindings =
-          new LinkedHashMap<String,BinaryTypeBinding>();
+      Set<CompilationUnitDeclaration> cuds =
+          new TreeSet<CompilationUnitDeclaration>(CUD_COMPARATOR);
+      LinkedHashMap<String, BinaryTypeBinding> bindings =
+          new LinkedHashMap<String, BinaryTypeBinding>();
       sandbox.compiler.compile(units, cuds, bindings);
-      return new CompilationResults(cuds.toArray(
-          new CompilationUnitDeclaration[cuds.size()]), bindings);
+      return new CompilationResults(cuds.toArray(new CompilationUnitDeclaration[cuds.size()]),
+          bindings);
     } finally {
       sandbox.clear();
       sandbox = null;
@@ -600,8 +597,8 @@ public abstract class AbstractCompiler {
    * @param logger a {@link TreeLogger}
    * @param cud a {@link CompilationUnitDeclaration}
    */
-  protected String[] doFindAdditionalTypesUsingArtificialRescues(
-      TreeLogger logger, CompilationUnitDeclaration cud) {
+  protected String[] doFindAdditionalTypesUsingArtificialRescues(TreeLogger logger,
+      CompilationUnitDeclaration cud) {
     return Empty.STRINGS;
   }
 

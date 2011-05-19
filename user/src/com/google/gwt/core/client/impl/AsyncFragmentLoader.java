@@ -36,28 +36,27 @@ import com.google.gwt.core.client.JavaScriptObject;
  * 
  * <p>
  * Since the precise way to load code depends on the linker, linkers should
- * specify a rebind of {@link LoadingStrategy}.  The default rebind is
+ * specify a rebind of {@link LoadingStrategy}. The default rebind is
  * {@link XhrLoadingStrategy}.
  */
 public class AsyncFragmentLoader {
   /**
-   * An interface for handlers of load completion.  On a failed download,
-   * this callback should be invoked or else the requested download will
-   * hang indefinitely.  On a successful download, it's optional to call
-   * this method.  If it is called at all, it must be called after
-   * the downloaded code has been installed, so that {@link AsyncFragmentLoader}
-   * can distinguish successful from unsuccessful downloads.
-   */
-  public static interface LoadTerminatedHandler {
-    void loadTerminated(Throwable reason);
-  }
-
-  /**
    * A strategy for loading code fragments.
    */
   public interface LoadingStrategy {
-    void startLoadingFragment(int fragment,
-        LoadTerminatedHandler loadTerminatedHandler);
+    void startLoadingFragment(int fragment, LoadTerminatedHandler loadTerminatedHandler);
+  }
+
+  /**
+   * An interface for handlers of load completion. On a failed download, this
+   * callback should be invoked or else the requested download will hang
+   * indefinitely. On a successful download, it's optional to call this method.
+   * If it is called at all, it must be called after the downloaded code has
+   * been installed, so that {@link AsyncFragmentLoader} can distinguish
+   * successful from unsuccessful downloads.
+   */
+  public static interface LoadTerminatedHandler {
+    void loadTerminated(Throwable reason);
   }
 
   /**
@@ -69,8 +68,7 @@ public class AsyncFragmentLoader {
      * so that they can be optional. A value of <code>null</code> for either one
      * means that they are not specified.
      */
-    void logEventProgress(String eventGroup, String type, int fragment,
-        int size);
+    void logEventProgress(String eventGroup, String type, int fragment, int size);
   }
 
   /**
@@ -101,11 +99,10 @@ public class AsyncFragmentLoader {
       return $stats(data);
     }-*/;
 
-    public void logEventProgress(String eventGroup, String type,
-        int fragment, int size) {
+    public void logEventProgress(String eventGroup, String type, int fragment, int size) {
       @SuppressWarnings("unused")
-      boolean toss = isStatsAvailable()
-          && stats(createStatsEvent(eventGroup, type, fragment, size));
+      boolean toss =
+          isStatsAvailable() && stats(createStatsEvent(eventGroup, type, fragment, size));
     }
 
     private native JavaScriptObject createStatsEvent(String eventGroup,
@@ -139,8 +136,7 @@ public class AsyncFragmentLoader {
     private final int statusCode;
 
     public HttpDownloadFailure(String url, int statusCode, String statusText) {
-      super("Download of " + url + " failed with status " + statusCode + "("
-          + statusText + ")");
+      super("Download of " + url + " failed with status " + statusCode + "(" + statusText + ")");
       this.statusCode = statusCode;
     }
 
@@ -150,8 +146,8 @@ public class AsyncFragmentLoader {
   }
 
   /**
-   * An exception indicating than at HTTP download succeeded, but installing
-   * its body failed.
+   * An exception indicating than at HTTP download succeeded, but installing its
+   * body failed.
    */
   static class HttpInstallFailure extends RuntimeException {
     public HttpInstallFailure(String url, String text, Throwable rootCause) {
@@ -209,7 +205,7 @@ public class AsyncFragmentLoader {
    */
   private class ResetAfterDownloadFailure implements LoadTerminatedHandler {
     private final int fragment;
-    
+
     public ResetAfterDownloadFailure(int myFragment) {
       this.fragment = myFragment;
     }
@@ -260,15 +256,14 @@ public class AsyncFragmentLoader {
   }
 
   /**
-   * The standard instance of AsyncFragmentLoader used in a web browser.  If
-   * not in GWT (i.e our vanilla JUnit tests, or if referenced in a server
-   * context), this filed is {@code null}.  In GWT, the parameters to this call
-   * are rewritten by {@link com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs}.  So
-   * this must be a method call of exactly two arguments, or that magic fails.
+   * The standard instance of AsyncFragmentLoader used in a web browser. If not
+   * in GWT (i.e our vanilla JUnit tests, or if referenced in a server context),
+   * this filed is {@code null}. In GWT, the parameters to this call are
+   * rewritten by {@link com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs}. So this
+   * must be a method call of exactly two arguments, or that magic fails.
    */
-  public static AsyncFragmentLoader BROWSER_LOADER =
-    makeBrowserLoader(1, new int[] {});
-  
+  public static AsyncFragmentLoader BROWSER_LOADER = makeBrowserLoader(1, new int[]{});
+
   /**
    * A helper static method that invokes
    * BROWSER_LOADER.leftoversFragmentHasLoaded(). Such a call is generated by
@@ -281,16 +276,15 @@ public class AsyncFragmentLoader {
 
   /**
    * Creates the loader stored as {@link #BROWSER_LOADER}.
+   * 
    * @returns {@code null} if not in GWT client code, where
-   *   {@link GWT#create(Class)} cannot be used, or a fragment loader for
-   *   the user's application otherwise.
+   *          {@link GWT#create(Class)} cannot be used, or a fragment loader for
+   *          the user's application otherwise.
    */
-  private static AsyncFragmentLoader makeBrowserLoader(int numFragments,
-      int initialLoad[]) {
+  private static AsyncFragmentLoader makeBrowserLoader(int numFragments, int initialLoad[]) {
     if (GWT.isClient()) {
-      return new AsyncFragmentLoader(numFragments, initialLoad,
-          (LoadingStrategy) GWT.create(LoadingStrategy.class),
-          (Logger) GWT.create(Logger.class));
+      return new AsyncFragmentLoader(numFragments, initialLoad, (LoadingStrategy) GWT
+          .create(LoadingStrategy.class), (Logger) GWT.create(Logger.class));
     } else {
       return null;
     }
@@ -306,8 +300,8 @@ public class AsyncFragmentLoader {
    * loaded. This array will hold the initial sequence of bases followed by the
    * leftovers fragment. It is filled in by
    * {@link com.google.gwt.dev.jjs.impl.CodeSplitter} modifying the initializer
-   * to {@link #BROWSER_LOADER}. The list does <em>not</em> include the leftovers
-   * fragment, which must be loaded once all of these are finished.
+   * to {@link #BROWSER_LOADER}. The list does <em>not</em> include the
+   * leftovers fragment, which must be loaded once all of these are finished.
    */
   private final int[] initialLoadSequence;
 
@@ -410,7 +404,7 @@ public class AsyncFragmentLoader {
   }
 
   public boolean isAlreadyLoaded(int splitPoint) {
-   return isLoaded[splitPoint];
+    return isLoaded[splitPoint];
   }
 
   public boolean isLoading(int splitPoint) {
@@ -464,8 +458,7 @@ public class AsyncFragmentLoader {
    * queue will be removed later.
    */
   private void clearRequestsAlreadyLoaded() {
-    while (requestedExclusives.size() > 0
-        && isLoaded[requestedExclusives.peek()]) {
+    while (requestedExclusives.size() > 0 && isLoaded[requestedExclusives.peek()]) {
       int offset = requestedExclusives.remove();
       if (offset < pendingDownloadErrorHandlers.length) {
         pendingDownloadErrorHandlers[offset] = null;
@@ -480,16 +473,15 @@ public class AsyncFragmentLoader {
   }
 
   private String downloadGroup(int fragment) {
-    return (fragment == leftoversFragment()) ? LwmLabels.LEFTOVERS_DOWNLOAD
-        : LwmLabels.downloadGroupForExclusive(fragment);
+    return (fragment == leftoversFragment()) ? LwmLabels.LEFTOVERS_DOWNLOAD : LwmLabels
+        .downloadGroupForExclusive(fragment);
   }
 
   /**
    * Return whether all initial fragments have completed loading.
    */
   private boolean haveInitialFragmentsLoaded() {
-    return remainingInitialFragments != null
-        && remainingInitialFragments.size() == 0;
+    return remainingInitialFragments != null && remainingInitialFragments.size() == 0;
   }
 
   /**
@@ -497,8 +489,7 @@ public class AsyncFragmentLoader {
    */
   private void initializeRemainingInitialFragments() {
     if (remainingInitialFragments == null) {
-      remainingInitialFragments = new BoundedIntQueue(
-          initialLoadSequence.length + 1);
+      remainingInitialFragments = new BoundedIntQueue(initialLoadSequence.length + 1);
       for (int sp : initialLoadSequence) {
         remainingInitialFragments.add(sp);
       }
@@ -544,8 +535,7 @@ public class AsyncFragmentLoader {
    * <code>fragment</code> and <code>size</code> objects are allowed to be
    * <code>null</code>.
    */
-  private void logEventProgress(String eventGroup, String type, int fragment,
-      int size) {
+  private void logEventProgress(String eventGroup, String type, int fragment, int size) {
     logger.logEventProgress(eventGroup, type, fragment, size);
   }
 
@@ -558,8 +548,7 @@ public class AsyncFragmentLoader {
     assert (fragmentLoading < 0);
     fragmentLoading = fragment;
     logDownloadStart(fragment);
-    loadingStrategy.startLoadingFragment(fragment,
-        new ResetAfterDownloadFailure(fragment));
+    loadingStrategy.startLoadingFragment(fragment, new ResetAfterDownloadFailure(fragment));
   }
 
   /**

@@ -70,8 +70,8 @@ public class FindJsniRefVisitor extends SafeASTVisitor {
     return false;
   }
 
-  private void findJsniRefsAccurately(MethodDeclaration methodDeclaration,
-      String jsniCode) throws InternalCompilerException {
+  private void findJsniRefsAccurately(MethodDeclaration methodDeclaration, String jsniCode)
+      throws InternalCompilerException {
     JsProgram jsProgram = new JsProgram();
 
     String syntheticFnHeader = "function(";
@@ -91,8 +91,7 @@ public class FindJsniRefVisitor extends SafeASTVisitor {
     StringReader sr = new StringReader(syntheticFnHeader + '\n' + jsniCode);
     try {
       // start at -1 to avoid counting our synthetic header
-      List<JsStatement> result = JsParser.parse(SourceOrigin.UNKNOWN,
-          jsProgram.getScope(), sr);
+      List<JsStatement> result = JsParser.parse(SourceOrigin.UNKNOWN, jsProgram.getScope(), sr);
       new JsVisitor() {
         @Override
         public void endVisit(JsNameRef x, JsContext ctx) {
@@ -111,8 +110,9 @@ public class FindJsniRefVisitor extends SafeASTVisitor {
 
   private String getJSNICode(MethodDeclaration methodDeclaration) {
     char[] source = methodDeclaration.compilationResult().getCompilationUnit().getContents();
-    String jsniCode = String.valueOf(source, methodDeclaration.bodyStart,
-        methodDeclaration.bodyEnd - methodDeclaration.bodyStart + 1);
+    String jsniCode =
+        String.valueOf(source, methodDeclaration.bodyStart, methodDeclaration.bodyEnd
+            - methodDeclaration.bodyStart + 1);
     int startPos = jsniCode.indexOf(JsniCollector.JSNI_BLOCK_START);
     int endPos = jsniCode.lastIndexOf(JsniCollector.JSNI_BLOCK_END);
     if (startPos < 0 || endPos < 0) {

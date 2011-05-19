@@ -260,8 +260,7 @@ public class JavaToJavaScriptCompiler {
     PropertyOracle[] propertyOracles = permutation.getPropertyOracles();
     int permutationId = permutation.getId();
     if (logger.isLoggable(TreeLogger.INFO)) {
-      logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId
-          + "...");
+      logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId + "...");
     }
     long permStart = System.currentTimeMillis();
     try {
@@ -455,8 +454,7 @@ public class JavaToJavaScriptCompiler {
 
       logTrackingStats(logger);
       if (logger.isLoggable(TreeLogger.TRACE)) {
-        logger.log(TreeLogger.TRACE,
-            "Permutation took " + (System.currentTimeMillis() - permStart)
+        logger.log(TreeLogger.TRACE, "Permutation took " + (System.currentTimeMillis() - permStart)
             + " ms");
       }
       return toReturn;

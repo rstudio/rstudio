@@ -36,9 +36,9 @@ import java.util.zip.GZIPOutputStream;
 public class DependencyRecorder implements MultipleDependencyGraphRecorder {
   /**
    * DependencyRecorder is not allowed to throw checked exceptions, because if
-   * it did then {@link com.google.gwt.dev.jjs.impl.CodeSplitter} and {@link ControlFlowAnalyzer} would
-   * throw exceptions all over the place. Instead, this class throws
-   * NestedIOExceptions that wrap them.
+   * it did then {@link com.google.gwt.dev.jjs.impl.CodeSplitter} and
+   * {@link ControlFlowAnalyzer} would throw exceptions all over the place.
+   * Instead, this class throws NestedIOExceptions that wrap them.
    */
   public static class NestedIOException extends RuntimeException {
     public NestedIOException(IOException e) {
@@ -72,15 +72,13 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
   /**
    * Used to record the dependencies of a specific method.
    */
-  public void methodIsLiveBecause(JMethod liveMethod,
-      ArrayList<JMethod> dependencyChain) {
+  public void methodIsLiveBecause(JMethod liveMethod, ArrayList<JMethod> dependencyChain) {
     printMethodDependency(dependencyChain);
   }
 
   public void open() {
     try {
-      this.writer = new OutputStreamWriter(new GZIPOutputStream(finalOutput),
-          "UTF-8");
+      this.writer = new OutputStreamWriter(new GZIPOutputStream(finalOutput), "UTF-8");
     } catch (UnsupportedEncodingException e) {
       throw new InternalCompilerException("UTF-8 is an unsupported encoding", e);
     } catch (IOException e) {
@@ -107,8 +105,7 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
    */
   protected void recordDependenciesImpl(TreeLogger logger, JProgram jprogram) {
 
-    logger = logger.branch(TreeLogger.DEBUG,
-        "Creating dependencies file for the compile report");
+    logger = logger.branch(TreeLogger.DEBUG, "Creating dependencies file for the compile report");
 
     ControlFlowAnalyzer dependencyAnalyzer = new ControlFlowAnalyzer(jprogram);
     dependencyAnalyzer.setDependencyRecorder(this);

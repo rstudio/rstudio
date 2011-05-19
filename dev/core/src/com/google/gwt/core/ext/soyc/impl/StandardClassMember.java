@@ -32,8 +32,7 @@ import java.util.TreeSet;
  * unmodifiable collections since it is exposed directly to user code via the
  * Linker API.
  */
-public class StandardClassMember extends AbstractMemberWithDependencies
-    implements ClassMember {
+public class StandardClassMember extends AbstractMemberWithDependencies implements ClassMember {
   private final MemberFactory factory;
   private final SortedSet<FieldMember> fields = new TreeSet<FieldMember>(
       Member.SOURCE_NAME_COMPARATOR);
@@ -112,8 +111,7 @@ public class StandardClassMember extends AbstractMemberWithDependencies
     Set<JDeclaredType> toTraverse = new HashSet<JDeclaredType>();
     toTraverse.add(type);
 
-    SortedSet<ClassMember> overrides = new TreeSet<ClassMember>(
-        Member.SOURCE_NAME_COMPARATOR);
+    SortedSet<ClassMember> overrides = new TreeSet<ClassMember>(Member.SOURCE_NAME_COMPARATOR);
 
     while (!toTraverse.isEmpty()) {
       JDeclaredType currentType = toTraverse.iterator().next();

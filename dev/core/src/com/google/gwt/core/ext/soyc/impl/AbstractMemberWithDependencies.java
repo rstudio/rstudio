@@ -25,11 +25,12 @@ import java.util.TreeSet;
 /**
  * Provides a common implementation of HasDependencies.
  */
-public abstract class AbstractMemberWithDependencies extends AbstractMember
-    implements HasDependencies {
+public abstract class AbstractMemberWithDependencies extends AbstractMember implements
+    HasDependencies {
   private final SortedSet<Member> dependencies = new TreeSet<Member>(
       Member.TYPE_AND_SOURCE_NAME_COMPARATOR);
-  private final SortedSet<Member> dependenciesView = Collections.unmodifiableSortedSet(dependencies);
+  private final SortedSet<Member> dependenciesView = Collections
+      .unmodifiableSortedSet(dependencies);
 
   /**
    * Add a dependency.

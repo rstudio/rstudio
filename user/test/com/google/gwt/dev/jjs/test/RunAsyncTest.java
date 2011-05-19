@@ -110,8 +110,8 @@ public class RunAsyncTest extends GWTTestCase {
 
   public void testUnhandledExceptions() {
     // Create an exception that will be thrown from an onSuccess method
-    final RuntimeException toThrow = new RuntimeException(
-        "Should be caught by the uncaught exception handler");
+    final RuntimeException toThrow =
+        new RuntimeException("Should be caught by the uncaught exception handler");
 
     // save the original handler
     final UncaughtExceptionHandler originalHandler = GWT.getUncaughtExceptionHandler();
