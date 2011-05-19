@@ -147,7 +147,7 @@ void UserSettings::setCRANMirror(const CRANMirror& mirror)
 
 bool UserSettings::alwaysSaveHistory() const
 {
-   return settings_.getBool(kAlwaysSaveHistory, true);
+   return settings_.getBool(kAlwaysSaveHistory, false);
 }
 
 void UserSettings::setAlwaysSaveHistory(bool alwaysSave)
@@ -157,7 +157,7 @@ void UserSettings::setAlwaysSaveHistory(bool alwaysSave)
 
 bool UserSettings::useGlobalHistory() const
 {
-   return settings_.getBool(kUseGlobalHistory, true);
+   return settings_.getBool(kUseGlobalHistory, false);
 }
 
 void UserSettings::setUseGlobalHistory(bool useGlobal)
@@ -167,7 +167,7 @@ void UserSettings::setUseGlobalHistory(bool useGlobal)
 
 bool UserSettings::removeHistoryDuplicates() const
 {
-   return settings_.getBool(kRemoveHistoryDuplicates, true);
+   return settings_.getBool(kRemoveHistoryDuplicates, false);
 }
 
 
@@ -179,7 +179,7 @@ void UserSettings::setRemoveHistoryDuplicates(bool removeDuplicates)
    r::session::consoleHistory().setRemoveDuplicates(removeDuplicates);
 }
 
-void UserSettings::setInitialWorkingDirectory(const core::FilePath& filePath)
+void UserSettings::setInitialWorkingDirectory(const FilePath& filePath)
 {
    setWorkingDirectoryValue(kInitialWorkingDirectory, filePath);
 }

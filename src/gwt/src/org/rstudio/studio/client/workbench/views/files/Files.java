@@ -29,8 +29,8 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.WorkbenchHelper;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserHandler;
@@ -121,12 +121,14 @@ public class Files
                 Commands commands,
                 Provider<FilesCopy> pFilesCopy,
                 Provider<FilesUpload> pFilesUpload,
-                FileTypeRegistry fileTypeRegistry)
+                FileTypeRegistry fileTypeRegistry,
+                ConsoleDispatcher consoleDispatcher)
    {
       super(view);
       view_ = view ;
       view_.setObserver(new DisplayObserver());
       fileTypeRegistry_ = fileTypeRegistry;
+      consoleDispatcher_ = consoleDispatcher;
       
       eventBus_ = eventBus;
       server_ = server;
@@ -520,7 +522,7 @@ public class Files
    @Handler
    void onSyncWorkingDir()
    {
-      WorkbenchHelper.sendSetWdToConsole(currentPath_, eventBus_);
+      consoleDispatcher_.executeSetWd(currentPath_);
    }
 
    @Handler
@@ -573,6 +575,7 @@ public class Files
 
    private final Display view_ ;
    private final FileTypeRegistry fileTypeRegistry_;
+   private final ConsoleDispatcher consoleDispatcher_;
    private final FilesServerOperations server_;
    private final EventBus eventBus_;
    private final GlobalDisplay globalDisplay_ ;

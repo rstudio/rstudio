@@ -39,7 +39,7 @@ public class HistoryPrefs extends JavaScriptObject
    
    public native final boolean getRemoveDuplicates() /*-{
       if (this.remove_duplicates === undefined)
-         return true;
+         return false;
       else
          return this.remove_duplicates;
    }-*/;

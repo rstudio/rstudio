@@ -18,13 +18,12 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.files.FilenameTransform;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.WorkbenchHelper;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
 import org.rstudio.studio.client.server.ServerError;
@@ -72,6 +71,7 @@ public class Workspace
                     GlobalDisplay globalDisplay,
                     FileDialogs fileDialogs,
                     WorkbenchContext workbenchContext,
+                    ConsoleDispatcher consoleDispatcher,
                     RemoteFileSystemContext fsContext,
                     Commands commands,
                     Binder binder)
@@ -84,6 +84,7 @@ public class Workspace
       server_ = server;
       globalDisplay_ = globalDisplay ;
       workbenchContext_ = workbenchContext;
+      consoleDispatcher_ = consoleDispatcher;
       fsContext_ = fsContext;
       objects_ = view_.getWorkspaceObjectTable();
 
@@ -187,34 +188,10 @@ public class Workspace
    void onSaveWorkspace()
    {
       view_.bringToFront();
-      fileDialogs_.saveFile(
-            "Save Workspace",
-            fsContext_,
-            workbenchContext_.getCurrentWorkingDir(),
-            new FilenameTransform()
-            {
-               public String transform(String filename)
-               {
-                  // auto-append .RData if that isn't the extension
-                  String ext = FileSystemItem.getExtensionFromPath(filename);
-                  return ext.equalsIgnoreCase(".rdata")
-                        ? filename
-                        : filename + ".RData";
-               }
-            },
-            new ProgressOperationWithInput<FileSystemItem>()
-            {
-               public void execute(
-                     FileSystemItem input,
-                     ProgressIndicator indicator)
-               {
-                  if (input == null)
-                     return;
-                  
-                  sendWorkspaceCommandToConsole("save.image", input);
-                  indicator.onCompleted();
-               }
-            });
+      
+      consoleDispatcher_.saveFileAsThenExecuteCommand("Save Workspace As",
+                                                      ".RData",
+                                                      "save.image");
    }
 
   
@@ -228,21 +205,7 @@ public class Workspace
    void onLoadWorkspace()
    {
       view_.bringToFront();
-      fileDialogs_.openFile(
-            "Load Workspace",
-            fsContext_,
-            workbenchContext_.getCurrentWorkingDir(),
-            new ProgressOperationWithInput<FileSystemItem>()
-            {
-               public void execute(FileSystemItem input, ProgressIndicator indicator)
-               {
-                  if (input == null)
-                     return;
-                  
-                  sendWorkspaceCommandToConsole("load", input);
-                  indicator.onCompleted();
-               }
-            });
+      consoleDispatcher_.chooseFileThenExecuteCommand("Load Workspace", "load");
    }
 
 
@@ -265,9 +228,9 @@ public class Workspace
             new ProgressOperation() {
                 public void execute(ProgressIndicator indicator)
                 {
-                   sendWorkspaceCommandToConsole(
-                         "load", 
-                         FileSystemItem.createFile(dataFilePath));
+                   consoleDispatcher_.executeCommand(
+                                  "load", 
+                                  FileSystemItem.createFile(dataFilePath));
                    
                    indicator.onCompleted();
                 }
@@ -280,17 +243,8 @@ public class Workspace
    {
       FileSystemItem cwd = workbenchContext_.getCurrentWorkingDir();
       FileSystemItem wsPath = FileSystemItem.createFile(cwd.completePath(".RData"));
-      sendWorkspaceCommandToConsole(command, wsPath);
+      consoleDispatcher_.executeCommand(command, wsPath);
    }
-   
-   private void sendWorkspaceCommandToConsole(String command, 
-                                              FileSystemItem workspaceFile)
-   {
-      WorkbenchHelper.sendFileCommandToConsole(command, 
-                                                    workspaceFile, 
-                                                    eventBus_);
-   }
-   
    
    
    void onImportDatasetFromFile()
@@ -537,5 +491,6 @@ public class Workspace
    private final WorkspaceObjectTable objects_;
    private final WorkbenchContext workbenchContext_;
    private final RemoteFileSystemContext fsContext_;
+   private final ConsoleDispatcher consoleDispatcher_;
    private final FileDialogs fileDialogs_;
 }

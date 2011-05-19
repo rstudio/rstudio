@@ -75,7 +75,7 @@ public class FileTypeRegistry
       register("README", TEXT, icons.iconText());
       register("*.r", R, icons.iconRdoc());
       register(".rprofile", R, icons.iconRprofile());
-      register(".rhistory", R, icons.iconRhistory());
+      register("*.rhistory", R, icons.iconRhistory());
       register("*.rnw", SWEAVE, icons.iconRsweave());
       register("*.snw", SWEAVE, icons.iconRsweave());
       register("*.nw", SWEAVE, icons.iconRsweave());
