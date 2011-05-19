@@ -320,7 +320,7 @@ public class HistoryPane extends WorkbenchPane
          {
             if (doubleClick_.checkForDoubleClick(event.getNativeEvent()))
             {
-               if (event.getNativeEvent().getAltKey())
+               if (event.getNativeEvent().getShiftKey())
                   commands_.historySendToSource().execute();
                else
                   commands_.historySendToConsole().execute();
