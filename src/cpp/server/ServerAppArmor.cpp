@@ -33,7 +33,7 @@ bool isAvailable()
    return false;
 }
 
-Error initialize()
+Error enable()
 {
    return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 }
