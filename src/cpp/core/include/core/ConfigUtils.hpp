@@ -26,6 +26,7 @@ namespace config_utils {
    
 typedef std::map<std::string,std::string> Variables;
 
+void extractVariables(const std::string& vars, Variables* pVariables);
 Error extractVariables(const FilePath& file, Variables* pVariables);
 
 } // namespace config_utils

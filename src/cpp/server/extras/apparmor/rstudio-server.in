@@ -22,16 +22,8 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      owner /tmp/** rw,
      /tmp/rsession/streams/** rw,
 
-     /usr/local/lib/lib*so* mr,
-
-     ${CMAKE_INSTALL_PREFIX}/bin/*.so mr,
      ${CMAKE_INSTALL_PREFIX}/bin/rsession ux,
-
      ${CMAKE_INSTALL_PREFIX}/www/** r,
-
-     /etc/rstudio/*.conf r,
-     /etc/rstudio/offline r,
-     /etc/rstudio/secure-cookie-key rw,
 
      # PAM authentication
      #include <abstractions/authentication>

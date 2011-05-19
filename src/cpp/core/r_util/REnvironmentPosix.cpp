@@ -357,6 +357,59 @@ bool detectRLocations(const FilePath& rScriptPath,
    return true;
 }
 
+bool detectRLocationsUsingR(const FilePath& rScriptPath,
+                            FilePath* pHomePath,
+                            FilePath* pLibPath,
+                            config_utils::Variables* pScriptVars,
+                            std::string* pErrMsg)
+{
+   // eliminate a potentially conflicting R_HOME before calling R
+   // (the normal semantics of invoking the R script are that it overwrites
+   // R_HOME and prints a warning -- this warning is co-mingled with the
+   // output of R and messes up our parsing)
+   core::system::setenv("R_HOME", "");
+
+   // call R to determine the locations
+   std::string output;
+   std::string command = rScriptPath.absolutePath() +
+     " --slave --vanilla -e \"cat(paste("
+            "'R_HOME=',R.home(),"
+            "'\\nR_SHARE_DIR=',R.home('share'), "
+            "'\\nR_INCLUDE_DIR=',R.home('include'), "
+            "'\\nR_DOC_DIR=', R.home('doc'), '\\n', sep=''))\"";
+   Error error = core::system::captureCommand(command, &output);
+   if (error)
+   {
+      LOG_ERROR(error);
+      *pErrMsg = "Error calling R script (" + rScriptPath.absolutePath() +
+                 "), " + error.summary();
+      return false;
+   }
+
+   // parse them
+   config_utils::extractVariables(output, pScriptVars);
+
+   // get home and lib path
+   config_utils::Variables::const_iterator it = pScriptVars->find("R_HOME");
+   if (it != pScriptVars->end())
+   {
+      // get R home
+      *pHomePath = FilePath(it->second);
+
+      // get R lib path
+      *pLibPath = FilePath(*pHomePath).complete("lib");
+
+      return true;
+   }
+   else
+   {
+      *pErrMsg = "Unable to find R_HOME via " + rScriptPath.absolutePath() +
+                 "; R output was: " + output;
+      LOG_ERROR_MESSAGE(*pErrMsg);
+      return false;
+   }
+}
+
 } // anonymous namespace
 
 
@@ -422,6 +475,7 @@ bool detectREnvironment(const FilePath& whichRScript,
    // detect R locations
    FilePath rHomePath, rLibPath;
    config_utils::Variables scriptVars;
+#ifdef __APPLE__
    if (!detectRLocations(rScriptPath,
                          &rHomePath,
                          &rLibPath,
@@ -430,6 +484,16 @@ bool detectREnvironment(const FilePath& whichRScript,
    {
       return false;
    }
+#else
+   if (!detectRLocationsUsingR(rScriptPath,
+                               &rHomePath,
+                               &rLibPath,
+                               &scriptVars,
+                               pErrMsg))
+   {
+      return false;
+   }
+#endif
 
 
    // set R home path
