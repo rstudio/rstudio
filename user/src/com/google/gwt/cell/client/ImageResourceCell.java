@@ -16,10 +16,7 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 
 /**
  * An {@link AbstractCell} used to render an {@link ImageResource}.
@@ -32,19 +29,21 @@ import com.google.gwt.user.client.ui.AbstractImagePrototype;
  * URL before returning it from {@link ImageResource#getURL()}.
  */
 public class ImageResourceCell extends AbstractCell<ImageResource> {
+  private static ImageResourceRenderer renderer;
   
   /**
    * Construct a new ImageResourceCell.
    */
   public ImageResourceCell() {
+    if (renderer == null) {
+      renderer = new ImageResourceRenderer();
+    }
   }
 
   @Override
   public void render(Context context, ImageResource value, SafeHtmlBuilder sb) {
     if (value != null) {
-      SafeHtml html = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(
-          value).getHTML());
-      sb.append(html);
+      sb.append(renderer.render(value));
     }
   }
 }
