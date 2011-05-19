@@ -116,6 +116,9 @@ public class TouchScrollTest extends GWTTestCase {
    */
   private static class CustomTouchScroller extends TouchScroller {
 
+    private boolean setupBustClickHandlerCalled;
+    private boolean removeBustClickHandlerCalled;
+    private boolean removeAttachHandlerCalled;
     private boolean onDragEndCalled;
     private boolean onDragMoveCalled;
     private boolean onDragStartCalled;
@@ -140,6 +143,21 @@ public class TouchScrollTest extends GWTTestCase {
       onDragStartCalled = false;
     }
 
+    public void assertSetupBustClickHandlerCalled(boolean expected) {
+      assertEquals(expected, setupBustClickHandlerCalled);
+      setupBustClickHandlerCalled = false;
+    }
+
+    public void assertRemoveBustClickHandlerCalled(boolean expected) {
+      assertEquals(expected, removeBustClickHandlerCalled);
+      removeBustClickHandlerCalled = false;
+    }
+
+    public void assertRemoveAttachHandlerCalled(boolean expected) {
+      assertEquals(expected, removeAttachHandlerCalled);
+      removeAttachHandlerCalled = false;
+    }
+
     @Override
     protected void onDragEnd(TouchEvent<?> event) {
       assertFalse("onDragEnd called twice", onDragEndCalled);
@@ -159,6 +177,24 @@ public class TouchScrollTest extends GWTTestCase {
       assertFalse("onDragStart called twice", onDragStartCalled);
       super.onDragStart(event);
       onDragStartCalled = true;
+    }
+
+    @Override
+    protected void setupBustClickHandler() {
+      super.setupBustClickHandler();
+      setupBustClickHandlerCalled = true;
+    }
+
+    @Override
+    protected void removeBustClickHandler() {
+      super.removeBustClickHandler();
+      removeBustClickHandlerCalled = true;
+    }
+
+    @Override
+    protected void removeAttachHandler() {
+      super.removeAttachHandler();
+      removeAttachHandlerCalled = true;
     }
   }
 
@@ -339,6 +375,32 @@ public class TouchScrollTest extends GWTTestCase {
     scroller.assertOnDragEndCalled(true);
     assertFalse(scroller.isTouching());
     assertFalse(scroller.isDragging());
+  }
+
+  /**
+   * Test that the bust click/attach event handler is removed from the old
+   * widget.
+   */
+  public void testHandlersRemovedFromOldWidget() {
+    CustomScrollPanel newScrollPanel = new CustomScrollPanel();
+
+    // Initial state.
+    scroller.assertRemoveBustClickHandlerCalled(true);
+    scroller.assertRemoveAttachHandlerCalled(true);
+
+    // Replace the old widget (scrollPanel) with the new widget (newScrollPanel)
+    scroller.setTargetWidget(newScrollPanel);
+
+    // Verify that the bust click handler and attach event handler are removed.
+    scroller.assertRemoveBustClickHandlerCalled(true);
+    scroller.assertRemoveAttachHandlerCalled(true);
+
+    // Remove the old widget (scrollPanel) from the root panel.
+    RootPanel.get().remove(scrollPanel);
+
+    // Verify that removing the old widget doesn't cause removeBustClickHandler
+    // from being called.
+    scroller.assertRemoveBustClickHandlerCalled(false);
   }
 
   /**
@@ -530,6 +592,27 @@ public class TouchScrollTest extends GWTTestCase {
     scroller.assertOnDragStartCalled(false);
     assertTrue(scroller.isTouching());
     assertFalse(scroller.isDragging());
+  }
+
+  /**
+   * Test that the setupBustClickHandler is called when the widget is detached
+   * and re-attached.
+   */
+  public void testSetupBustClickHandler() {
+    // Initial state.
+    scroller.assertRemoveBustClickHandlerCalled(true);
+    scroller.assertRemoveAttachHandlerCalled(true);
+    scroller.assertSetupBustClickHandlerCalled(true);
+
+    RootPanel.get().remove(scrollPanel);
+
+    // Verify that the bust click handler is removed.
+    scroller.assertRemoveBustClickHandlerCalled(true);
+
+    RootPanel.get().add(scrollPanel);
+
+    // Verify that the bust click handler is setup.
+    scroller.assertSetupBustClickHandlerCalled(true);
   }
 
   @Override

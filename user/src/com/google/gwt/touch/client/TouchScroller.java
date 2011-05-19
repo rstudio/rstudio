@@ -30,6 +30,7 @@ import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchMoveHandler;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.dom.client.TouchStartHandler;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -41,6 +42,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasScrolling;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -125,6 +127,7 @@ public class TouchScroller {
       });
     }
 
+    @Override
     public boolean execute() {
       /*
        * Stop the command if another touch event starts or if momentum is
@@ -154,6 +157,22 @@ public class TouchScroller {
        * want to respect the end position that the momentum returns.
        */
       setWidgetScrollPosition(state.getPosition());
+
+      /*
+       * If the scroll position reached the min/max of the scrollable area,
+       * finish the momentum command.
+       */
+      int hPos = (int) state.getPosition().getX();
+      int hMin = widget.getMinimumHorizontalScrollPosition();
+      int hMax = widget.getMaximumHorizontalScrollPosition();
+      int vMin = widget.getMinimumVerticalScrollPosition();
+      int vMax = widget.getMaximumVerticalScrollPosition();
+      int vPos = (int) state.getPosition().getY();
+      if ((vMax <= vPos || vMin >= vPos) && (hMax <= hPos || hMin >= hPos)) {
+        finish();
+        return false;
+      }
+
       return notDone;
     }
 
@@ -167,8 +186,27 @@ public class TouchScroller {
       }
       if (this == momentumCommand) {
         momentumCommand = null;
-        setBustNextClick(false);
       }
+    }
+  }
+
+  /**
+   * The command used to remove touch points that occurred while the scrolling
+   * momentum is active. Only the touch points that occurred before
+   * TIME_THRESHOLD get to be removed.
+   */
+  private class MomentumTouchRemovalCommand implements RepeatingCommand {
+    @Override
+    public boolean execute() {
+      double currentTime = Duration.currentTimeMillis();
+      Iterator<TemporalPoint> iter = touchPositionsDuringMomentum.iterator();
+      while (iter.hasNext()) {
+        TemporalPoint point = iter.next();
+        if (currentTime - point.getTime() >= TIME_THRESHOLD) {
+          iter.remove();
+        }
+      }
+      return !touchPositionsDuringMomentum.isEmpty();
     }
   }
 
@@ -192,6 +230,20 @@ public class TouchScroller {
    * Minimum movement of touch required to be considered a drag.
    */
   private static final double MIN_TRACKING_FOR_DRAG = 5;
+
+  /**
+   * The threshold for how close the time of a click event has to be to that of
+   * a touch event for us to consider those events to be related; that is,
+   * caused by the same user action (tap).
+   */
+  private static final int TIME_THRESHOLD = 2500;
+
+  /**
+   * The threshold for how close the coordinates of a click event has to be to
+   * those of a touch event for us to consider those events to be related;
+   * that is, caused by the same user action (tap).
+   */
+  private static final int DISTANCE_THRESHOLD = 25;
 
   /**
    * The number of milliseconds per animation frame.
@@ -262,7 +314,12 @@ public class TouchScroller {
   /**
    * The registration for the preview handler used to bust click events.
    */
-  private HandlerRegistration bustClickHandler;
+  private HandlerRegistration bustClickHandlerReg;
+
+  /**
+   * The registration for the attach event handler.
+   */
+  private HandlerRegistration attachHandlerReg;
 
   /**
    * A boolean indicating that we are in a drag sequence. Dragging occurs after
@@ -273,7 +330,8 @@ public class TouchScroller {
   /**
    * Registrations for the handlers added to the widget.
    */
-  private final List<HandlerRegistration> handlerRegs = new ArrayList<HandlerRegistration>();
+  private final List<HandlerRegistration> handlerRegs =
+      new ArrayList<HandlerRegistration>();
 
   /**
    * The last (most recent) touch position. We need to keep track of this when
@@ -311,6 +369,26 @@ public class TouchScroller {
    * occurred very close to each other at the end of a long gesture.
    */
   private TemporalPoint recentTouchPositionOnDeck;
+
+  /**
+   * The coordinate of the most recent touch event that triggered scrolling.
+   */
+  private TemporalPoint recentScrollTriggeringTouchPosition =
+      new TemporalPoint();
+
+  /**
+   * The coordinates of the touch positions while the momentum is active. The
+   * points stored in this array will be removed after TIME_THRESHOLD.
+   */
+  private List<TemporalPoint> touchPositionsDuringMomentum =
+      new ArrayList<TemporalPoint>();
+
+  /**
+   * The repeating command used to remove the touch points that were added to
+   * touchPositionsDuringMomentum after TIME_THRESHOLD.
+   */
+  private RepeatingCommand momentumTouchRemovalCommand =
+      new MomentumTouchRemovalCommand();
 
   /**
    * The position of the scrollable when the first touch occured.
@@ -387,21 +465,37 @@ public class TouchScroller {
 
     // Cancel drag and momentum.
     cancelAll();
-    setBustNextClick(false);
 
     // Release the old widget.
-    if (this.widget != null) {
-      for (HandlerRegistration reg : handlerRegs) {
-        reg.removeHandler();
-      }
-      handlerRegs.clear();
+    for (HandlerRegistration reg : handlerRegs) {
+      reg.removeHandler();
     }
+    handlerRegs.clear();
+    removeAttachHandler();
+    removeBustClickHandler();
 
     // Attach to the new widget.
     this.widget = widget;
     if (widget != null) {
+      if (widget.asWidget().isAttached()) {
+        setupBustClickHandler();
+      }
+
+      // Make sure to add/remove the bust click handler if the widget is attached/detached.
+      attachHandlerReg = widget.asWidget().addAttachHandler(new AttachEvent.Handler() {
+        @Override
+        public void onAttachOrDetach(AttachEvent event) {
+          if (event.isAttached()) {
+            setupBustClickHandler();
+          } else {
+            removeBustClickHandler();
+          }
+        }
+      });
+
       // Add touch start handler.
       handlerRegs.add(widget.asWidget().addDomHandler(new TouchStartHandler() {
+        @Override
         public void onTouchStart(TouchStartEvent event) {
           TouchScroller.this.onTouchStart(event);
         }
@@ -409,6 +503,7 @@ public class TouchScroller {
 
       // Add touch move handler.
       handlerRegs.add(widget.asWidget().addDomHandler(new TouchMoveHandler() {
+        @Override
         public void onTouchMove(TouchMoveEvent event) {
           TouchScroller.this.onTouchMove(event);
         }
@@ -416,6 +511,7 @@ public class TouchScroller {
 
       // Add touch end handler.
       handlerRegs.add(widget.asWidget().addDomHandler(new TouchEndHandler() {
+        @Override
         public void onTouchEnd(TouchEndEvent event) {
           TouchScroller.this.onTouchEnd(event);
         }
@@ -423,6 +519,7 @@ public class TouchScroller {
 
       // Add touch cancel handler.
       handlerRegs.add(widget.asWidget().addDomHandler(new TouchCancelHandler() {
+        @Override
         public void onTouchCancel(TouchCancelEvent event) {
           TouchScroller.this.onTouchCancel(event);
         }
@@ -515,7 +612,7 @@ public class TouchScroller {
 
   /**
    * Called when the user moves a touch.
-   * 
+   *
    * @param event the touch event
    */
   protected void onTouchMove(TouchEvent<?> event) {
@@ -534,6 +631,9 @@ public class TouchScroller {
       double absDiffX = Math.abs(diff.getX());
       double absDiffY = Math.abs(diff.getY());
       if (absDiffX > MIN_TRACKING_FOR_DRAG || absDiffY > MIN_TRACKING_FOR_DRAG) {
+        recentScrollTriggeringTouchPosition.setTemporalPoint(
+            recentTouchPosition.getPoint(), recentTouchPosition.getTime());
+
         /*
          * Check if we should defer to native scrolling. If the scrollable
          * widget is already scrolled as far as it will go, then we don't want
@@ -624,19 +724,16 @@ public class TouchScroller {
    * @param event the touch event
    */
   protected void onTouchStart(TouchEvent<?> event) {
+    // Touch start event always precedes the click event. So this
+    // recentScrollTriggeringTouchPosition gets reset before a click event
+    // occurs. That's why we don't need to compare the time of the ghost click
+    // and the recentScrollTriggeringTouchPosition.
+    recentScrollTriggeringTouchPosition.setTemporalPoint(null, 0);
+
     // Ignore the touch if there is already a touch happening.
     if (touching) {
       return;
     }
-
-    /*
-     * If the user touches the screen while momentum is scrolling, bust the next
-     * click event. They probably want to pause the momentum, not click an item.
-     */
-    setBustNextClick(isMomentumActive());
-
-    cancelAll();
-    touching = true;
 
     // Record the starting touch position.
     Touch touch = getTouchFromEvent(event);
@@ -646,8 +743,24 @@ public class TouchScroller {
     lastTouchPosition.setTemporalPoint(startTouchPosition, startTouchTime);
     recentTouchPositionOnDeck = null;
 
+    /**
+     * If the user touches the screen while the scrolling momentum is active,
+     * add the touch point to an array so that the later click events can be
+     * compared to the points in the array and busted if it shouldn't be
+     * considered as click.
+     */
+    if (isMomentumActive()) {
+      touchPositionsDuringMomentum.add(
+          new TemporalPoint(startTouchPosition, startTouchTime));
+      Scheduler.get().scheduleFixedDelay(
+          momentumTouchRemovalCommand, TIME_THRESHOLD);
+    }
+
     // Record the starting scroll position.
     startScrollPosition = getWidgetScrollPosition();
+
+    cancelAll();
+    touching = true;
   }
 
   /**
@@ -714,6 +827,60 @@ public class TouchScroller {
   }
 
   /**
+   * Removes the attach handler. Visible for testing.
+   */
+  void removeAttachHandler() {
+    if (attachHandlerReg != null) {
+      attachHandlerReg.removeHandler();
+      attachHandlerReg = null;
+    }
+  }
+
+  /**
+   * Removes the bust click handler. Visible for testing.
+   */
+  void removeBustClickHandler() {
+    if (bustClickHandlerReg != null) {
+      bustClickHandlerReg.removeHandler();
+      bustClickHandlerReg = null;
+    }
+  }
+
+  /**
+   * Sets up the bust click handler. Visible for testing.
+   */
+  void setupBustClickHandler() {
+    removeBustClickHandler();
+    bustClickHandlerReg = Event.addNativePreviewHandler(new NativePreviewHandler() {
+      @Override
+      public void onPreviewNativeEvent(NativePreviewEvent event) {
+        if (Event.ONCLICK == event.getTypeInt()) {
+          Point clickPoint = new Point(
+              event.getNativeEvent().getClientX(),
+              event.getNativeEvent().getClientY());
+
+          /*
+           * In mobile browsers, when the user touches on the screen, drag
+           * his finger across and take his finger off, the browser fires a
+           * click event at the position where the touch start happen. This
+           * click event is called "ghost click". This click is not intended by
+           * the user and thus needs to be busted.
+           * Also, while the panel is scrolling, if the user taps on the screen
+           * we want to stop the scrolling and bust the click event that's fired
+           * because the user probably didn't mean to click on something.
+           */
+          if (isClickScrollTriggeringTouch(clickPoint) ||
+              isClickTouchPositionDuringMomentum(clickPoint)) {
+            event.cancel();
+            event.getNativeEvent().stopPropagation();
+            event.getNativeEvent().preventDefault();
+          }
+        }
+      }
+    });
+  }
+
+  /**
    * Cancel all existing touch, drag, and momentum.
    */
   private void cancelAll() {
@@ -730,29 +897,60 @@ public class TouchScroller {
   }
 
   /**
-   * Set whether or not we should bust the next click.
-   * 
-   * @param doBust true to bust the next click, false not to
+   * Tests if the given points fall within the threshold from each other.
+   *
+   * @param point1 first point
+   * @param point2 second point
+   * @return true if the points fall within the threshold from each other
    */
-  private void setBustNextClick(boolean doBust) {
-    if (doBust && bustClickHandler == null) {
-      bustClickHandler = Event.addNativePreviewHandler(new NativePreviewHandler() {
-        public void onPreviewNativeEvent(NativePreviewEvent event) {
-          if (Event.ONCLICK == event.getTypeInt()) {
-            event.getNativeEvent().stopPropagation();
-            event.getNativeEvent().preventDefault();
-            setBustNextClick(false);
-          }
-        }
-      });
-    } else if (!doBust && bustClickHandler != null) {
-      bustClickHandler.removeHandler();
-      bustClickHandler = null;
-    }
+  private boolean hitTest(Point point1, Point point2) {
+    Point diff = point1.minus(point2);
+    double absDiffX = Math.abs(diff.getX());
+    double absDiffY = Math.abs(diff.getY());
+    return (absDiffX <= DISTANCE_THRESHOLD) && (absDiffY <= DISTANCE_THRESHOLD);
   }
 
   /**
-   * Set the scroll position of the widget.
+   * Checks if the click event is related to the touch event that has triggered
+   * scrolling. Such click events occur as a result of ghost click (i.e. click
+   * event that is fired at the touch start position after the touch end
+   * happens) and should be busted.
+   *
+   * @param clickPoint point of the click event
+   * @return true if clickPoint is the same as the recent scroll triggering
+   *     touch
+   */
+  private boolean isClickScrollTriggeringTouch(Point clickPoint) {
+    if (recentScrollTriggeringTouchPosition.getPoint() != null) {
+      return hitTest(
+          clickPoint, recentScrollTriggeringTouchPosition.getPoint());
+    }
+    return false;
+  }
+
+  /**
+   * Checks if the click event point is related to the touch positions
+   * during the recent momentum scrolling.
+   *
+   * @param clickPoint point of the click event
+   * @return true if clickPoint is the same as one of the touch positions during
+   *     the recent momentum scrolling
+   */
+  private boolean isClickTouchPositionDuringMomentum(Point clickPoint) {
+    double currentTime = Duration.currentTimeMillis();
+    boolean same = false;
+    for (TemporalPoint point : touchPositionsDuringMomentum) {
+      if (currentTime - point.getTime() <= TIME_THRESHOLD &&
+          hitTest(clickPoint, point.getPoint())) {
+        same = true;
+        break;
+      }
+    }
+    return same;
+  }
+
+  /**
+   * Sets the scroll position of the widget.
    * 
    * @param position the new position
    */
