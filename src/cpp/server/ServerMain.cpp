@@ -40,6 +40,7 @@
 #include <server/ServerUriHandlers.hpp>
 
 #include "ServerAddins.hpp"
+#include "ServerAppArmor.hpp"
 #include "ServerBrowser.hpp"
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
@@ -190,7 +191,6 @@ void setBlockingDefault(const http::UriHandlerFunction& handler)
   s_pHttpServer->setBlockingDefaultHandler(handler);
 }
 
-
 } // namespace uri_handlers
 } // namespace server
 
@@ -292,6 +292,14 @@ int main(int argc, char * const argv[])
             if (error)
                return core::system::exitFailure(error, ERROR_LOCATION);
          }
+      }
+
+      // enable apparmor profile
+      if (options.serverEnableAppArmor())
+      {
+         error = app_armor::enable();
+         if (error)
+            return core::system::exitFailure(error, ERROR_LOCATION);
       }
 
       // give up root privilige if requested

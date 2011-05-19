@@ -57,6 +57,8 @@ public:
    }
    
    bool serverDaemonize() const { return serverDaemonize_; }
+
+   bool serverEnableAppArmor() const { return serverEnableAppArmor_; }
       
    // www 
    std::string wwwAddress() const
@@ -135,6 +137,7 @@ private:
    std::string serverWorkingDir_;
    std::string serverUser_;
    bool serverDaemonize_;
+   bool serverEnableAppArmor_;
    bool serverOffline_;
    std::string wwwAddress_ ;
    std::string wwwPort_ ;

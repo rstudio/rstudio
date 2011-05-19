@@ -22,6 +22,8 @@
 #include <server/util/system/System.hpp>
 #include <server/util/system/User.hpp>
 
+#include "ServerAppArmor.hpp"
+
 using namespace core ;
 
 namespace server {
@@ -73,7 +75,11 @@ ProgramStatus Options::read(int argc, char * const argv[])
          "program user")
       ("server-daemonize",
          value<bool>(&serverDaemonize_)->default_value(1),
-         "run program as daemon");
+         "run program as daemon")
+      ("server-enable-app-armor",
+         value<bool>(&serverEnableAppArmor_)->default_value(1),
+         "enable app armor profile");
+
    
    // www - web server options
    options_description www("www") ;
@@ -168,6 +174,14 @@ ProgramStatus Options::read(int argc, char * const argv[])
             return ProgramStatus::exitFailure();
          }
       }
+   }
+
+   // disable app-armor if we aren't running as a daemon or don't have
+   // a profile available
+   if (serverEnableAppArmor_)
+   {
+      if (!serverDaemonize_ || !app_armor::isAvailable())
+         serverEnableAppArmor_ = false;
    }
 
    // convert relative paths by completing from the system installation
