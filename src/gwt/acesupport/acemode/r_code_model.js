@@ -207,7 +207,7 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
          var index = this.$binarySearch(start);
          if (index >= 0)
          {
-            return this.$children.addChild(label, start);
+            return this.$children[index].addChild(label, start);
          }
          else
          {
