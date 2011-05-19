@@ -311,6 +311,52 @@ std::string resolveRPath(const FilePath& rHomePath, const std::string& path)
    return resolvedPath;
 }
 
+bool detectRLocations(const FilePath& rScriptPath,
+                      FilePath* pHomePath,
+                      FilePath* pLibPath,
+                      config_utils::Variables* pScriptVars,
+                      std::string* pErrMsg)
+{
+   // scan R script for other locations and append them to our vars
+   Error error = config_utils::extractVariables(rScriptPath, pScriptVars);
+   if (error)
+   {
+      LOG_ERROR(error);
+      *pErrMsg = "Error reading R script (" + rScriptPath.absolutePath() +
+                 "), " + error.summary();
+      return false;
+   }
+
+   // get r home path
+   std::string rHome, rLib;
+   if (!getRHomeAndLibPath(rScriptPath, *pScriptVars, &rHome, &rLib, pErrMsg))
+      return false;
+
+   // validate: error if we got no output
+   if (rHome.empty())
+   {
+      *pErrMsg = "Unable to determine R home directory";
+      LOG_ERROR(systemError(boost::system::errc::not_supported,
+                            *pErrMsg,
+                            ERROR_LOCATION));
+      return false;
+   }
+
+   // validate: error if `R RHOME` yields file that doesn't exist
+   *pHomePath = FilePath(rHome);
+   if (!pHomePath->exists())
+   {
+      *pErrMsg = "R home path (" + rHome + ") not found";
+      LOG_ERROR(pathNotFoundError(*pErrMsg, ERROR_LOCATION));
+      return false;
+   }
+
+   // get lib path
+   *pLibPath = FilePath(rLib);
+
+   return true;
+}
+
 } // anonymous namespace
 
 
@@ -324,6 +370,8 @@ bool detectREnvironment(const FilePath& ldPathsScript,
                              pVars,
                              pErrMsg);
 }
+
+
 
 bool detectREnvironment(const FilePath& whichRScript,
                         const FilePath& ldPathsScript,
@@ -371,40 +419,18 @@ bool detectREnvironment(const FilePath& whichRScript,
       return false;
    }
 
-   // scan R script for other locations and append them to our vars
+   // detect R locations
+   FilePath rHomePath, rLibPath;
    config_utils::Variables scriptVars;
-   Error error = config_utils::extractVariables(rScriptPath, &scriptVars);
-   if (error)
+   if (!detectRLocations(rScriptPath,
+                         &rHomePath,
+                         &rLibPath,
+                         &scriptVars,
+                         pErrMsg))
    {
-      LOG_ERROR(error);
-      *pErrMsg = "Error reading R script (" + rScriptPath.absolutePath() +
-                 "), " + error.summary();
       return false;
    }
 
-   // get r home path
-   std::string rHome, rLib;
-   if (!getRHomeAndLibPath(rScriptPath, scriptVars, &rHome, &rLib, pErrMsg))
-      return false;
-
-   // validate: error if we got no output
-   if (rHome.empty())
-   {
-      *pErrMsg = "Unable to determine R home directory";
-      LOG_ERROR(systemError(boost::system::errc::not_supported,
-                            *pErrMsg,
-                            ERROR_LOCATION));
-      return false;
-   }
-
-   // validate: error if `R RHOME` yields file that doesn't exist
-   FilePath rHomePath(rHome);
-   if (!rHomePath.exists())
-   {
-      *pErrMsg = "R home path (" + rHome + ") not found";
-      LOG_ERROR(pathNotFoundError(*pErrMsg, ERROR_LOCATION));
-      return false;
-   }
 
    // set R home path
    pVars->push_back(std::make_pair("R_HOME", rHomePath.absolutePath()));
@@ -421,7 +447,6 @@ bool detectREnvironment(const FilePath& whichRScript,
                                                 scriptVars["R_DOC_DIR"])));
 
    // determine library path (existing + r lib dir + r extra lib dirs)
-   FilePath rLibPath(rLib);
    std::string libraryPath = core::system::getenv(kLibraryPathEnvVariable);
    if (!libraryPath.empty())
       libraryPath.append(":");
