@@ -233,7 +233,7 @@ bool detectRLocations(const std::string& rScriptPath,
             "R.home('home'),"
             "R.home('share'),"
             "R.home('include'),"
-            "R.home('doc'), sep=':'))\"";
+            "R.home('doc'),sep=':'))\"";
    Error error = core::system::captureCommand(command, &output);
    if (error)
    {
@@ -243,6 +243,7 @@ bool detectRLocations(const std::string& rScriptPath,
       LOG_ERROR_MESSAGE(*pErrMsg);
       return false;
    }
+   boost::algorithm::trim(output);
 
    if (output.empty())
    {
