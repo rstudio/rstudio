@@ -4,6 +4,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
 
   #include <abstractions/base>
   #include <abstractions/nameservice>
+  #include <abstractions/authentication>
 
   capability sys_resource,
   
@@ -24,11 +25,6 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
 
      ${CMAKE_INSTALL_PREFIX}/bin/rsession ux,
      ${CMAKE_INSTALL_PREFIX}/www/** r,
-
-     # PAM authentication
-     #include <abstractions/authentication>
-     /proc/filesystems r,
-     /sbin/unix_chkpwd ix,
   }   
 }
 
