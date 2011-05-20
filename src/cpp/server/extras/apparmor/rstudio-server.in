@@ -6,6 +6,8 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   #include <abstractions/nameservice>
   #include <abstractions/authentication>
 
+  capability setgid,
+  capability setuid,
   capability sys_resource,
   
   / rw,
