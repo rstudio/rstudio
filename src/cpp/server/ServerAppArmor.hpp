@@ -25,7 +25,7 @@ namespace app_armor {
    
 bool isAvailable();
 
-core::Error enable();
+core::Error changeToRestricted();
 
 } // namespace app_armor
 } // namespace server
