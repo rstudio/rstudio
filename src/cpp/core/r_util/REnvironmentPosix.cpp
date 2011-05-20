@@ -229,11 +229,11 @@ bool detectRLocations(const std::string& rScriptPath,
    // call R to determine the locations
    std::string output;
    std::string command = rScriptPath +
-     " --slave --vanilla -e 'cat(paste("
-            "R.home(\"home\"),"
-            "R.home(\"share\"),"
-            "R.home(\"include\"),"
-            "R.home(\"doc\"), sep=\":\"))'";
+     " --slave --vanilla -e \"cat(paste("
+            "R.home('home'),"
+            "R.home('share'),"
+            "R.home('include'),"
+            "R.home('doc'), sep=':'))\"";
    Error error = core::system::captureCommand(command, &output);
    if (error)
    {
@@ -243,7 +243,6 @@ bool detectRLocations(const std::string& rScriptPath,
       LOG_ERROR_MESSAGE(*pErrMsg);
       return false;
    }
-   boost::algorithm::trim(output);
 
    if (output.empty())
    {
