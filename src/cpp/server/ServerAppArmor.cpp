@@ -33,7 +33,7 @@ bool isAvailable()
    return false;
 }
 
-Error enable()
+Error changeToRestricted()
 {
    return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 }
@@ -57,7 +57,7 @@ bool isAvailable()
    return FilePath("/etc/apparmor.d/rstudio-server").exists();
 }
 
-Error enable()
+Error changeToRestricted()
 {
    // dynamically load libapparmor
    void* pLibAA = ::dlopen("libapparmor.so.1", RTLD_NOW);
@@ -80,9 +80,8 @@ Error enable()
       return error;
    }
 
-   // change to enabled (and pass 0 to make sure we can't ever change back to
-   // the root profile)
-   if (pChangeHat("enabled", 0) == -1)
+   // change to restricted (pass 0 to ensure we can't revert to root profile)
+   if (pChangeHat("restricted", 0) == -1)
       return systemError(errno, ERROR_LOCATION);
 
    return Success();

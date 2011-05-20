@@ -10,7 +10,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   / rw,
   /** rwmklix,
 
-  ^enabled {
+  ^restricted {
      #include <abstractions/base>
      #include <abstractions/nameservice>
 

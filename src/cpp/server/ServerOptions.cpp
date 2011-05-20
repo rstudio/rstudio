@@ -176,14 +176,6 @@ ProgramStatus Options::read(int argc, char * const argv[])
       }
    }
 
-   // disable app-armor if we aren't running as a daemon or don't have
-   // a profile available
-   if (serverEnableAppArmor_)
-   {
-      if (!serverDaemonize_ || !app_armor::isAvailable())
-         serverEnableAppArmor_ = false;
-   }
-
    // convert relative paths by completing from the system installation
    // path (this allows us to be relocatable)
    resolvePath(installPath, &wwwLocalPath_);
