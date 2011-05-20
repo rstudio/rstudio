@@ -68,7 +68,6 @@ bool prepareEnvironment(Options& options)
                                              &errMsg);
    if (!success)
    {
-      LOG_ERROR_MESSAGE(errMsg);
       showRNotFoundError(errMsg);
       return false;
    }
