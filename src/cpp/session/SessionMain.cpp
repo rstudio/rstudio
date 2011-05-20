@@ -1890,7 +1890,8 @@ int main (int argc, char * const argv[])
       rOptions.serverMode = serverMode;
       rOptions.autoReloadSource = options.autoReloadSource();
       rOptions.shellEscape = options.rShellEscape();
-      rOptions.restoreWorkspace = userSettings().loadRData();
+      rOptions.restoreWorkspace = userSettings().loadRData() ||
+                                  !options.initialEnvironmentFileOverride().empty();
       // save action
       int saveAction = userSettings().saveAction();
       if (saveAction == r::session::kSaveActionSave)
