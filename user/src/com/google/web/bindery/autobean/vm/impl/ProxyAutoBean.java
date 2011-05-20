@@ -15,14 +15,15 @@
  */
 package com.google.web.bindery.autobean.vm.impl;
 
+import com.google.gwt.core.client.impl.WeakMapping;
 import com.google.web.bindery.autobean.shared.AutoBean;
 import com.google.web.bindery.autobean.shared.AutoBeanFactory;
 import com.google.web.bindery.autobean.shared.AutoBeanUtils;
 import com.google.web.bindery.autobean.shared.AutoBeanVisitor;
 import com.google.web.bindery.autobean.shared.impl.AbstractAutoBean;
 import com.google.web.bindery.autobean.vm.Configuration;
-import com.google.gwt.core.client.impl.WeakMapping;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -66,7 +67,7 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
       Class<?>... extraInterfaces) {
     Class<?>[] intfs;
     if (extraInterfaces == null) {
-      intfs = new Class<?>[]{intf};
+      intfs = new Class<?>[] {intf};
     } else {
       intfs = new Class<?>[extraInterfaces.length + 1];
       intfs[0] = intf;
@@ -116,7 +117,25 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   private final Class<T> beanType;
   private final Configuration configuration;
   private final Data data;
-  private final T shim;
+  /**
+   * Because the shim and the ProxyAutoBean are related through WeakMapping, we
+   * need to ensure that the ProxyAutoBean doesn't artificially extend the
+   * lifetime of the shim. If there are no external references to the shim, it's
+   * ok if it's deallocated, since it has no interesting state.
+   * 
+   * <pre>
+   * 
+   * -----------------        --------------
+   * | ProxyAutoBean |        |    Shim    |
+   * |               | <------+-bean       |
+   * |          shim-+---X--->|____________|
+   * |_______________|              ^
+   *         ^                      |
+   *         |                      X
+   *         |______ WeakMapping ___|
+   * </pre>
+   */
+  private WeakReference<T> shim;
 
   // These constructors mirror the generated constructors.
   @SuppressWarnings("unchecked")
@@ -125,7 +144,6 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
     this.beanType = (Class<T>) beanType;
     this.configuration = configuration;
     this.data = calculateData(beanType);
-    this.shim = createShim();
   }
 
   @SuppressWarnings("unchecked")
@@ -135,12 +153,16 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
     this.beanType = (Class<T>) beanType;
     this.configuration = configuration;
     this.data = calculateData(beanType);
-    this.shim = createShim();
   }
 
   @Override
   public T as() {
-    return shim;
+    T toReturn = shim == null ? null : shim.get();
+    if (toReturn == null) {
+      toReturn = createShim();
+      shim = new WeakReference<T>(toReturn);
+    }
+    return toReturn;
   }
 
   public Configuration getConfiguration() {
@@ -241,7 +263,7 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
       Object value;
       try {
         getter.setAccessible(true);
-        value = getter.invoke(shim);
+        value = getter.invoke(as());
       } catch (IllegalArgumentException e) {
         throw new RuntimeException(e);
       } catch (IllegalAccessException e) {
