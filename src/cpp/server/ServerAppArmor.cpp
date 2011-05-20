@@ -90,7 +90,7 @@ Error enforceRestricted()
    }
 
    // create magic token
-   unsigned int magicToken = random::uniformRandomInteger<unsigned long>();
+   unsigned int magicToken = core::random::uniformRandomInteger<unsigned long>();
 
    // dynamically load libapparmor
    void* pLibAA = ::dlopen("libapparmor.so.1", RTLD_NOW);
