@@ -297,7 +297,7 @@ int main(int argc, char * const argv[])
       // enable apparmor profile
       if (options.serverEnableAppArmor() && app_armor::isAvailable())
       {
-         error = app_armor::changeToRestricted();
+         error = app_armor::enforceRestricted();
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
       }

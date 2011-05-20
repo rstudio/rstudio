@@ -35,6 +35,8 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 
+#include "ServerAppArmor.hpp"
+
 
 // NOTE: Mac OS X supports PAM but ships with it in a locked-down config
 // which will cause all passwords to be rejected. To make it work run:
@@ -273,9 +275,19 @@ bool pamLogin(const std::string& username, const std::string& password)
       // Close the unused reading end
       posixcall(boost::bind(::close, pfd[0]));
 
+      // restore root privillege
       if (util::system::realUserIsRoot())
       {
          Error error = util::system::restorePriv();
+         if (error)
+            LOG_ERROR(error);
+         // intentionally failing forward
+      }
+
+      // lift app-armor restrictions
+      if (app_armor::isEnforcingRestricted())
+      {
+         Error error = app_armor::dropRestricted();
          if (error)
             LOG_ERROR(error);
          // intentionally failing forward
