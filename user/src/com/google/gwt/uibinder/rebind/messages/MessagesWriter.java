@@ -16,6 +16,9 @@
 package com.google.gwt.uibinder.rebind.messages;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.i18n.client.Messages;
 import com.google.gwt.uibinder.rebind.IndentedWriter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
@@ -49,6 +52,7 @@ public class MessagesWriter {
   private final List<MessageWriter> messages = new ArrayList<MessageWriter>();
   private final String generatedFrom;
 
+  private String baseInterface;
   private String defaultLocale;
   private String messagesPrefix;
   private String generateKeys;
@@ -57,7 +61,9 @@ public class MessagesWriter {
   private Map<XMLElement, Collection<AttributeMessage>> elemToAttributeMessages =
       new HashMap<XMLElement, Collection<AttributeMessage>>();
 
-  public MessagesWriter(String nameSpaceUri, MortalLogger mortalLogger, String generatedFrom,
+  private TypeOracle oracle;
+
+  public MessagesWriter(TypeOracle oracle, String nameSpaceUri, MortalLogger mortalLogger, String generatedFrom,
       String packageName, String uiBinderImplClassName) {
     this.messagesNamespaceURI = nameSpaceUri;
     this.generatedFrom = generatedFrom;
@@ -67,6 +73,9 @@ public class MessagesWriter {
     this.messagesClassName = uiBinderImplClassName.replaceAll("_", "") + "GenMessages";
 
     this.logger = mortalLogger;
+    this.oracle = oracle;
+
+    baseInterface = Messages.class.getCanonicalName();
   }
 
   /**
@@ -150,11 +159,31 @@ public class MessagesWriter {
   /**
    * Expected to be called with the root element, to allow configuration from
    * various messages related attributes.
+   * 
+   * @throws UnableToCompleteException 
    */
-  public void findMessagesConfig(XMLElement elem) {
+  public void findMessagesConfig(XMLElement elem) throws UnableToCompleteException {
     String prefix = elem.lookupPrefix(getMessagesUri());
     if (prefix != null) {
       messagesPrefix = prefix;
+      String baseInterfaceAttr = elem.consumeRawAttribute(getMessagesPrefix() + ":baseInterface");
+      if (baseInterfaceAttr != null) {
+        JClassType baseInterfaceType = oracle.findType(baseInterfaceAttr);
+        if (baseInterfaceType == null) {
+          logger.die(elem, "Could not find class %s", baseInterfaceAttr);
+        }
+        if (baseInterfaceType.isInterface() == null) {
+          logger.die(elem, "%s must be an interface", baseInterfaceAttr);
+        }
+        JClassType msgType = oracle.findType(Messages.class.getCanonicalName());
+        if (msgType == null) {
+          throw new RuntimeException("Internal Error: Messages interface not found");
+        }
+        if (!msgType.isAssignableFrom(baseInterfaceType)) {
+          logger.die(elem, "Interface %s must extend Messages", baseInterfaceAttr);
+        }
+        baseInterface = baseInterfaceAttr;
+      }
       defaultLocale = consumeMessageAttribute("defaultLocale", elem);
       generateKeys = consumeMessageAttribute("generateKeys", elem);
       generate =
@@ -240,13 +269,12 @@ public class MessagesWriter {
     }
 
     // Imports.
-    writer.write("import com.google.gwt.i18n.client.Messages;");
     writer.write("import static com.google.gwt.i18n.client.LocalizableResource.*;");
     writer.newline();
 
     // Open interface.
     genInterfaceAnnotations(writer);
-    writer.write("public interface %s extends Messages {", getMessagesClassName());
+    writer.write("public interface %s extends %s {", getMessagesClassName(), baseInterface);
     writer.newline();
     writer.indent();
 

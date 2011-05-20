@@ -110,7 +110,7 @@ class ElementParserTester {
 
     fieldManager = new FieldManager(types, logger, false);
     JClassType baseType = types.findType("my.Ui.BaseClass");
-    MessagesWriter messages = new MessagesWriter(BINDER_URI, logger,
+    MessagesWriter messages = new MessagesWriter(types, BINDER_URI, logger,
         templatePath, baseType.getPackage().getName(), implName);
 
     writer = new MockUiBinderWriter(baseType, implName, templatePath, types,

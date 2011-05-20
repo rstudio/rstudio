@@ -158,7 +158,7 @@ public class UiBinderGenerator extends Generator {
 
     MortalLogger logger = new MortalLogger(treeLogger);
     String templatePath = deduceTemplateFile(logger, interfaceType);
-    MessagesWriter messages = new MessagesWriter(BINDER_URI, logger,
+    MessagesWriter messages = new MessagesWriter(oracle, BINDER_URI, logger,
         templatePath, interfaceType.getPackage().getName(), implName);
 
     boolean useLazyWidgetBuilders = useLazyWidgetBuilders(logger, propertyOracle);
