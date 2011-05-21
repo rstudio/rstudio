@@ -13,6 +13,8 @@
 
 project (SERVER)
 
+add_subdirectory(pam)
+
 # include files
 file(GLOB_RECURSE SERVER_HEADER_FILES "*.h*")
 
@@ -88,11 +90,10 @@ check_function_exists(setresuid HAVE_SETRESUID)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 find_package(OpenSSL REQUIRED QUIET)
-find_package(PAM REQUIRED QUIET)
 
 # include directories and libraries
-set(SERVER_SYSTEM_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIRS} ${PAM_INCLUDE_DIR})
-set(SERVER_SYSTEM_LIBRARIES ${OPENSSL_LIBRARIES} ${PAM_LIBRARIES})
+set(SERVER_SYSTEM_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIRS})
+set(SERVER_SYSTEM_LIBRARIES ${OPENSSL_LIBRARIES})
 
 set(SERVER_SOURCE_FILES ${SERVER_SOURCE_FILES}
    util/system/PosixCrypto.cpp

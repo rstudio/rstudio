@@ -25,6 +25,9 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      owner /tmp/** rw,
      /tmp/rsession/streams/** rw,
 
+     /bin/dash ix,
+     ${CMAKE_INSTALL_PREFIX}/bin/rserver-pam Ux,
+     
      ${CMAKE_INSTALL_PREFIX}/bin/rsession ux,
      ${CMAKE_INSTALL_PREFIX}/www/** r,
   }   

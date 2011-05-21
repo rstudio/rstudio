@@ -92,6 +92,11 @@ public:
       return std::string(authRequiredUserGroup_.c_str());
    }
 
+   std::string authPamHelperPath() const
+   {
+      return std::string(authPamHelperPath_.c_str());
+   }
+
    // rsession
    std::string rsessionWhichR() const
    {
@@ -145,6 +150,7 @@ private:
    int wwwThreadPoolSize_;
    bool authValidateUsers_;
    std::string authRequiredUserGroup_;
+   std::string authPamHelperPath_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;

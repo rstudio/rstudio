@@ -133,7 +133,10 @@ ProgramStatus Options::read(int argc, char * const argv[])
         "validate that authenticated users exist on the target system")
       ("auth-required-user-group",
         value<std::string>(&authRequiredUserGroup_)->default_value(""),
-        "limit to users belonging to the specified group");
+        "limit to users belonging to the specified group")
+      ("auth-pam-helper-path",
+        value<std::string>(&authPamHelperPath_)->default_value("bin/rserver-pam"),
+       "path to PAM helper binary");
 
    // define program options
    FilePath defaultConfigPath("/etc/rstudio/rserver.conf");
@@ -179,6 +182,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
    // convert relative paths by completing from the system installation
    // path (this allows us to be relocatable)
    resolvePath(installPath, &wwwLocalPath_);
+   resolvePath(installPath, &authPamHelperPath_);
    resolvePath(installPath, &rsessionPath_);
    resolvePath(installPath, &rldpathPath_);
    resolvePath(installPath, &rsessionConfigFile_);

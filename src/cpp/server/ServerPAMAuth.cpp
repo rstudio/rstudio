@@ -12,11 +12,6 @@
  */
 #include "ServerPAMAuth.hpp"
 
-#include <security/pam_appl.h>
-#include <sys/wait.h>
-
-#include <boost/regex.hpp>
-
 #include <core/Error.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -35,286 +30,57 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 
-#include "ServerAppArmor.hpp"
-
-
-// NOTE: Mac OS X supports PAM but ships with it in a locked-down config
-// which will cause all passwords to be rejected. To make it work run:
-//
-//   sudo cp /etc/pam.d/ftpd /etc/pam.d/rstudio
-//
-// That configures PAM to send rstudio through the same authentication
-// stack as ftpd uses, which is similar to us.
-
-using namespace core;
 
 namespace server {
 namespace pam_auth {
 
 namespace {
 
-class MemoryPool : boost::noncopyable {
+// TODO: ensure runs under app armor
+// TOOD: ensure pam helper runs to non-crash exit for failure case
+// TODO: block stdin case in pam helper
+// TODO: make sure it works on redhat
 
-   typedef boost::function<void*(size_t)> Alloc;
-   typedef boost::function<void(void*)> Free;
-
-public:
-   MemoryPool(Alloc allocFunc = ::malloc, Free freeFunc = ::free) :
-      alloc_(allocFunc),
-      free_(freeFunc)
-   {}
-
-   ~MemoryPool()
-   {
-      try
-      {
-         for (size_t i = 0; i < buffers_.size(); i++)
-         {
-            free_(buffers_.at(i));
-         }
-      }
-      catch(...)
-      {
-      }
-   }
-
-   void* alloc(size_t size)
-   {
-      void* p = alloc_(size);
-      if (p)
-         buffers_.push_back(p);
-      return p;
-   }
-
-   void relinquishOwnership()
-   {
-      buffers_.clear();
-   }
-
-private:
-   std::vector<void*> buffers_;
-   Alloc alloc_;
-   Free free_;
-};
-
-int conv(int num_msg,
-         const struct pam_message** msg,
-         struct pam_response** resp,
-         void * appdata_ptr)
-{
-   try
-   {
-      MemoryPool pool;
-
-      // resp will be freed by the caller
-      *resp = static_cast<pam_response*>(pool.alloc(sizeof(pam_response) * num_msg));
-      if (!*resp)
-         return PAM_BUF_ERR;
-
-      ::memset(*resp, 0, sizeof(pam_response) * num_msg);
-
-      for (int i = 0; i < num_msg; i++)
-      {
-         const pam_message* input = msg[i];
-         std::string msgText = input->msg;
-
-         switch (input->msg_style)
-         {
-         case PAM_PROMPT_ECHO_OFF:
-         {
-            boost::regex passwordRegex("\\bpassword:\\s*$",
-                                       boost::regex_constants::icase);
-            boost::smatch match;
-            if (regex_search(msgText, match, passwordRegex))
-            {
-               resp[i]->resp_retcode = 0;
-               char* password = static_cast<char*>(appdata_ptr);
-               // respBuf will be freed by the caller
-               char* respBuf = static_cast<char*>(pool.alloc(strlen(password) + 1));
-               resp[i]->resp = ::strcpy(respBuf, password);
-            }
-            else
-               return PAM_CONV_ERR;
-            break;
-         }
-         case PAM_PROMPT_ECHO_ON:
-         case PAM_ERROR_MSG:
-         case PAM_TEXT_INFO:
-         default:
-            return PAM_CONV_ERR;
-         }
-      }
-
-      // The caller will free all the memory we allocated
-      pool.relinquishOwnership();
-
-      return PAM_SUCCESS;
-   }
-   CATCH_UNEXPECTED_EXCEPTION
-   return PAM_CONV_ERR;
-}
-
-// Low-level C++ wrapper around PAM API.
-class PAMAuth
-{
-public:
-    explicit PAMAuth(bool silent) :
-          defaultFlags_(silent ? PAM_SILENT : 0),
-          pamh_(NULL),
-          status_(PAM_SUCCESS)
-    {
-    }
-
-    virtual ~PAMAuth()
-    {
-       if (pamh_)
-       {
-          ::pam_end(pamh_, status_ | (defaultFlags_ & PAM_SILENT));
-       }
-    }
-
-    std::pair<int, const std::string> lastError()
-    {
-       return std::pair<int, const std::string>(
-             status_,
-             std::string(::pam_strerror(pamh_, status_)));
-    }
-
-    int login(const std::string& username,
-              const std::string& password)
-    {
-       struct pam_conv myConv;
-       myConv.conv = conv;
-       myConv.appdata_ptr = const_cast<void*>(static_cast<const void*>(password.c_str()));
-       status_ = ::pam_start("rstudio",
-                             username.c_str(),
-                             &myConv,
-                             &pamh_);
-       if (status_ != PAM_SUCCESS)
-       {
-          LOG_ERROR_MESSAGE("pam_start failed: " + lastError().second);
-          return status_;
-       }
-
-       status_ = ::pam_authenticate(pamh_, defaultFlags_);
-       if (status_ != PAM_SUCCESS)
-       {
-          if (status_ != PAM_AUTH_ERR)
-             LOG_ERROR_MESSAGE("pam_authenticate failed: " + lastError().second);
-          return status_;
-       }
-
-       status_ = ::pam_acct_mgmt(pamh_, defaultFlags_);
-       if (status_ != PAM_SUCCESS)
-       {
-          LOG_ERROR_MESSAGE("pam_acct_mgmt failed: " + lastError().second);
-          return status_;
-       }
-
-       return PAM_SUCCESS;
- }
-
-private:
-    int defaultFlags_;
-    pam_handle_t* pamh_;
-    int status_;
-};
-
-bool doPamLogin(const std::string& username, const std::string& password)
-{
-   return PAM_SUCCESS == PAMAuth(false).login(username, password);
-}
-
-// Handles error logging and EINTR retrying. Only for use with
-// functions that return -1 on error and set errno.
-int posixcall(boost::function<ssize_t()> func)
-{
-   while (true)
-   {
-      int result;
-      if ((result = func()) == -1)
-      {
-         if (errno == EINTR)
-            continue;
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
-         return result;
-      }
-      return result;
-   }
-}
+// TODO: then can change hat permanently
 
 bool pamLogin(const std::string& username, const std::string& password)
 {
-   // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
-   // running with geteuid != getuid, as is the case when we temporarily
-   // drop privileges. Restoring privileges fixes the problem but we
-   // don't want to do that in the (multithreaded) server process. Fork
-   // a child instead.
-
-   // We use an anonymous pipe to communicate the results because waitpid
-   // doesn't go well with our child process cleanup strategy and signal
-   // blocking of the background threads.
-
-   // On successful login, one byte is written to the pipe--otherwise,
-   // the pipe is closed without writing.
-
-   int pfd[2];
-   if (posixcall(boost::bind(::pipe, pfd)) == -1)
-      return false;
-
-   pid_t pid = posixcall(::fork);
-
-   if (pid == -1)
+   // get path to pam helper
+   FilePath pamHelperPath(server::options().authPamHelperPath());
+   if (!pamHelperPath.exists())
    {
+      LOG_ERROR_MESSAGE("PAM helper binary does not exist at " +
+                        pamHelperPath.absolutePath());
       return false;
    }
-   else if (pid == 0)
+
+   // execute pam helper
+   std::string command = pamHelperPath.absolutePath() + " " + username;
+   FILE* fp = ::popen(command.c_str(), "w");
+   if (fp == NULL)
    {
-      // Forked child process
-
-      // Close the unused reading end
-      posixcall(boost::bind(::close, pfd[0]));
-
-      // restore root privillege
-      if (util::system::realUserIsRoot())
-      {
-         Error error = util::system::restorePriv();
-         if (error)
-            LOG_ERROR(error);
-         // intentionally failing forward
-      }
-
-      // lift app-armor restrictions
-      if (app_armor::isEnforcingRestricted())
-      {
-         Error error = app_armor::dropRestricted();
-         if (error)
-            LOG_ERROR(error);
-         // intentionally failing forward
-      }
-
-      if (doPamLogin(username, password))
-         posixcall(boost::bind(::write, pfd[1], "1", 1));
-      posixcall(boost::bind(::close, pfd[1]));
-
-      _exit(0);
-
-      // should never get here, but need return stmt to satisfy compiler
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
       return false;
    }
+
+   // write password to stdin then flush
+   if (::fputs((password + "\n").c_str(), fp) == EOF)
+   {
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      return false;
+   }
+   if (::fflush(fp) == EOF)
+   {
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      // purposely failing forward...
+   }
+
+   // close file and inspect status
+   int status = ::pclose(fp);
+   if (WIFEXITED(status))
+      return WEXITSTATUS(status) == EXIT_SUCCESS;
    else
-   {
-      // Parent process
-
-      // Close the unused writing end, very important--otherwise the ::read
-      // call to come will block forever!
-      posixcall(boost::bind(::close, pfd[1]));
-
-      char buf;
-      size_t bytesRead = posixcall(boost::bind(::read, pfd[0], &buf, 1));
-      posixcall(boost::bind(::close, pfd[0]));
-      return bytesRead > 0;
-   }
+      return false;
 }
 
 
