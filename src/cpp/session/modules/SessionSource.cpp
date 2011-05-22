@@ -489,7 +489,7 @@ Error setSourceDocumentOnSave(const json::JsonRpcRequest& request,
 {
    // params
    std::string id ;
-   bool value ;
+   bool value = false;
    Error error = json::readParams(request.params, &id, &value);
    if (error)
       return error ;
