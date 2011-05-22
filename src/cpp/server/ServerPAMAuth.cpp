@@ -42,6 +42,10 @@ namespace pam_auth {
 namespace {
 
 
+// TODO: don't re-assume priv on ubuntu
+
+// TODO: comments on intentionally failing forward in child
+
 // TODO: make sure inputs into pam helper are bounded
 // TODO: block tty case in pam helper
 
@@ -98,6 +102,16 @@ bool pamLogin(const std::string& username, const std::string& password)
    // child
    else if (pid == 0)
    {
+      // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
+      // running with geteuid != getuid (as is the case when we temporarily
+      // drop privileges). So restore privilliges in the child
+      if (util::system::realUserIsRoot())
+      {
+         Error error = util::system::restorePriv();
+         if (error)
+            LOG_ERROR(error);
+      }
+
       // close unused pipes
       posixcall(boost::bind(::close, fdInput[WRITE]), ERROR_LOCATION);
       posixcall(boost::bind(::close, fdOutput[READ]), ERROR_LOCATION);
