@@ -21,10 +21,10 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
                                             HasClickHandlers
 {
    String getText() ;
-   void setText(String string) ;
+   void setInputText(String string) ;
    boolean hasSelection() ;
    InputEditorSelection getSelection() ;
-   void beginSetSelection(InputEditorSelection selection, Command callback) ;
+   void setSelection(InputEditorSelection selection) ;
    Rectangle getCursorBounds() ;
    Rectangle getBounds() ;
    void setFocus(boolean focused) ;
@@ -40,4 +40,7 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
 
    InputEditorSelection getStart();
    InputEditorSelection getEnd();
+
+   int getCurrentLineNum();
+   int getCurrentLineCount();
 }

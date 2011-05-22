@@ -152,3 +152,5 @@ color:#5A525F;
 .ace_xml_pe {
   
 }
+.nocolor.ace_editor .ace_line span {color:#794938 !important;}
+.ace_bracket {margin: 0 !important; border: 0 !important; background-color: rgba(75, 75, 126, 0.50);}

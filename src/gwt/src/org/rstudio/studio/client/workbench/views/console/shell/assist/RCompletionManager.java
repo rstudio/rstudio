@@ -349,35 +349,31 @@ public class RCompletionManager implements CompletionManager
          // Move range to beginning of token; we want to place the popup there.
          final String token = completions.token ;
 
-         input_.beginSetSelection(new InputEditorSelection(
+         input_.setSelection(new InputEditorSelection(
                selection_.getStart().movePosition(-token.length(), true),
-               selection_.getEnd()), new Command()
+               selection_.getEnd()));
+
+         Rectangle rect = input_.getCursorBounds() ;
+         input_.setSelection(selection_) ;
+
+         token_ = token ;
+
+         if (results.length == 1
+             && canAutoAccept_
+             && StringUtil.isNullOrEmpty(results[0].pkgName))
          {
-            public void execute()
-            {
-               Rectangle rect = input_.getCursorBounds() ;
-               input_.beginSetSelection(selection_, null) ;
+            onSelection(results[0]);
+         }
+         else
+         {
+            if (results.length == 1 && canAutoAccept_)
+               applyValue(results[0].name);
 
-               token_ = token ;
-
-               if (results.length == 1
-                   && canAutoAccept_
-                   && StringUtil.isNullOrEmpty(results[0].pkgName))
-               {
-                  onSelection(results[0]);
-               }
-               else
-               {
-                  if (results.length == 1 && canAutoAccept_)
-                     applyValue(results[0].name);
-
-                  popup_.showCompletionValues(
-                        results,
-                        new PopupPositioner(rect, popup_),
-                        !helpStrategy_.isNull()) ;
-               }
-            }
-         });
+            popup_.showCompletionValues(
+                  results,
+                  new PopupPositioner(rect, popup_),
+                  !helpStrategy_.isNull()) ;
+         }
       }
 
       private void initializeHelpStrategy(CompletionResult completions)
@@ -426,33 +422,25 @@ public class RCompletionManager implements CompletionManager
       {
          // Move range to beginning of token
          input_.setFocus(true) ;
-         input_.beginSetSelection(new InputEditorSelection(
+         input_.setSelection(new InputEditorSelection(
                selection_.getStart().movePosition(-token_.length(), true),
-               selection_.getEnd()), new Command()
-         {
-            public void execute()
-            {
-               // Replace the token with the full completion
-               input_.replaceSelection(value, false) ;
-               final int delta = value.length() - token_.length();
-               input_.beginSetSelection(new InputEditorSelection(
-                     selection_.getStart().movePosition(delta, true)), new Command()
-               {
-                  public void execute()
-                  {
-                     /* In some cases, applyValue can be called more than once
-                      * as part of the same completion instance--specifically,
-                      * if there's only one completion candidate and it is in
-                      * a package. To make sure that the selection movement
-                      * logic works the second time, we need to reset the
-                      * selection. 
-                      */
-                     token_ = value;
-                     selection_ = input_.getSelection();
-                  }
-               });
-            }
-         });
+               selection_.getEnd()));
+
+         // Replace the token with the full completion
+         input_.replaceSelection(value, false) ;
+         final int delta = value.length() - token_.length();
+         input_.setSelection(new InputEditorSelection(
+               selection_.getStart().movePosition(delta, true)));
+
+         /* In some cases, applyValue can be called more than once
+          * as part of the same completion instance--specifically,
+          * if there's only one completion candidate and it is in
+          * a package. To make sure that the selection movement
+          * logic works the second time, we need to reset the
+          * selection.
+          */
+         token_ = value;
+         selection_ = input_.getSelection();
       }
 
       private final int requiredInvalidateCount_ ;

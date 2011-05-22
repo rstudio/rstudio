@@ -32,11 +32,6 @@ public class BrowseCap
       return false;
    }
 
-   public boolean emulatedHomeAndEnd()
-   {
-      return false;
-   }
-
    public boolean aceVerticalScrollBarIssue()
    {
       return false;

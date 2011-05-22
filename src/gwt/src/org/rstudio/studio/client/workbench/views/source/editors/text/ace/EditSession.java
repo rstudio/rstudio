@@ -78,4 +78,8 @@ public class EditSession extends JavaScriptObject
    public native final int documentToScreenRow(Position position) /*-{
       return this.documentToScreenRow(position.row, position.column);
    }-*/;
+
+   public native final int getScreenLength() /*-{
+      return this.getScreenLength();
+   }-*/;
 }

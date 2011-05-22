@@ -25,6 +25,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.VirtualConsole;
@@ -32,41 +33,72 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.PlainTextEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 public class ShellPane extends Composite implements Shell.Display,
                                                     RequiresResize
 {
    @Inject
-   public ShellPane(PlainTextEditor editor)
+   public ShellPane(AceEditor editor, UIPrefs uiPrefs)
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
 
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
 
-      output_ = new PreWidget() ;
-      output_.setStylePrimaryName(styles_.output()) ;
+      output_ = new PreWidget();
+      output_.setStylePrimaryName(styles_.output());
       output_.addClickHandler(secondaryInputHandler);
+
+      pendingInput_ = new PreWidget();
+      pendingInput_.setStyleName(styles_.output());
+      pendingInput_.addClickHandler(secondaryInputHandler);
 
       prompt_ = new HTML() ;
       prompt_.setStylePrimaryName(styles_.prompt()) ;
       prompt_.addStyleName(KEYWORD_CLASS_NAME);
 
       input_ = editor ;
+      input_.setShowLineNumbers(false);
+      input_.setShowPrintMargin(false);
+      input_.setFileType(FileTypeRegistry.R, true);
+      input_.setUseWrapMode(true);
+      input_.setPadding(0);
+      input_.autoHeight();
+      final Widget inputWidget = input_.toWidget();
       input_.addClickHandler(secondaryInputHandler) ;
-      input_.setStylePrimaryName(styles_.input());
-      input_.addStyleName(KEYWORD_CLASS_NAME);
+      inputWidget.addStyleName(styles_.input());
+      input_.addCursorChangedHandler(new CursorChangedHandler()
+      {
+         public void onCursorChanged(CursorChangedEvent event)
+         {
+            input_.scrollToCursor(scrollPanel_, 8);
+         }
+      });
+      uiPrefs.syntaxColorConsole().bind(new CommandWithArg<Boolean>()
+      {
+         public void execute(Boolean arg)
+         {
+            if (arg)
+               inputWidget.removeStyleName("nocolor");
+            else
+               inputWidget.addStyleName("nocolor");
+         }
+      });
 
       inputLine_ = new DockPanel();
       inputLine_.setHorizontalAlignment(DockPanel.ALIGN_LEFT);
       inputLine_.setVerticalAlignment(DockPanel.ALIGN_TOP);
       inputLine_.add(prompt_, DockPanel.WEST);
       inputLine_.setCellWidth(prompt_, "1");
-      inputLine_.add(input_, DockPanel.CENTER);
-      inputLine_.setCellWidth(input_, "100%");
+      inputLine_.add(input_.toWidget(), DockPanel.CENTER);
+      inputLine_.setCellWidth(input_.toWidget(), "100%");
       inputLine_.setWidth("100%");
 
       verticalPanel_ = new VerticalPanel() ;
@@ -75,6 +107,7 @@ public class ShellPane extends Composite implements Shell.Display,
       verticalPanel_.addStyleName("ace_line");
       FontSizer.applyNormalFontSize(verticalPanel_);
       verticalPanel_.add(output_) ;
+      verticalPanel_.add(pendingInput_) ;
       verticalPanel_.add(inputLine_) ;
       verticalPanel_.setWidth("100%") ;
 
@@ -113,6 +146,7 @@ public class ShellPane extends Composite implements Shell.Display,
       {
          public void execute()
          {
+            input_.autoHeight();
             scrollPanel_.scrollToBottom();
          }
       });
@@ -132,6 +166,8 @@ public class ShellPane extends Composite implements Shell.Display,
 
    public void consoleWriteInput(String input)
    {
+      pendingInput_.setText("");
+      pendingInput_.setVisible(false);
       output(input, styles_.command() + KEYWORD_CLASS_NAME, false);
       scrollToBottomAsync();
    }
@@ -153,7 +189,7 @@ public class ShellPane extends Composite implements Shell.Display,
 
       // Deal gracefully with multi-line prompts
       int promptLines = StringUtil.notNull(prompt).split("\\n").length;
-      input_.getElement().getStyle().setPaddingTop((promptLines - 1) * 15,
+      input_.toWidget().getElement().getStyle().setPaddingTop((promptLines - 1) * 15,
                                                    Unit.PX);
    }
 
@@ -385,15 +421,15 @@ public class ShellPane extends Composite implements Shell.Display,
                break;
          }
          input_.setFocus(true);
-         delegateEvent(input_, event);
+         delegateEvent(input_.toWidget(), event);
       }
 
-      public void setInput(PlainTextEditor input)
+      public void setInput(AceEditor input)
       {
          input_ = input;
       }
 
-      private PlainTextEditor input_;
+      private AceEditor input_;
    }
 
    private boolean isInputOnscreen()
@@ -462,23 +498,29 @@ public class ShellPane extends Composite implements Shell.Display,
       // parse out the command text
       @SuppressWarnings("unused")
       String promptText = prompt_.getElement().getInnerText();
-      String commandText = input_.getText();
-      input_.setText("");
+      String commandText = input_.getCode();
+      input_.setInputText("");
       prompt_.setHTML("");
-/*
-      output(promptText, styles_.prompt() + " " + KEYWORD_CLASS_NAME, false);
-      output(commandText + "\n",
-             styles_.command() + " " + KEYWORD_CLASS_NAME, 
-             false);
-*/
+
+      SpanElement pendingPrompt = Document.get().createSpanElement();
+      pendingPrompt.setInnerText(promptText);
+      pendingPrompt.setClassName(styles_.prompt() + " " + KEYWORD_CLASS_NAME);
+
+      SpanElement pendingInput = Document.get().createSpanElement();
+      pendingInput.setInnerText(StringUtil.notNull(commandText).split("\n")[0] + "\n");
+      pendingInput.setClassName(styles_.command() + " " + KEYWORD_CLASS_NAME);
+      pendingInput_.getElement().appendChild(pendingPrompt);
+      pendingInput_.getElement().appendChild(pendingInput);
+      pendingInput_.setVisible(true);
+
       ensureInputVisible();
 
       return commandText ;
    }
 
-   public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
+   public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
-      return input_.addKeyDownHandler(handler) ;
+      return input_.addCapturingKeyDownHandler(handler) ;
    }
 
    public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
@@ -546,12 +588,13 @@ public class ShellPane extends Composite implements Shell.Display,
    private int maxLines_ = -1;
    private boolean cleared_ = false;
    private final PreWidget output_ ;
+   private PreWidget pendingInput_ ;
    // Save a reference to the most recent output text node in case the
    // next bit of output contains \b or \r control characters
    private Text trailingOutput_ ;
    private VirtualConsole trailingOutputConsole_ ;
    private final HTML prompt_ ;
-   private final PlainTextEditor input_ ; 
+   private final AceEditor input_ ;
    private final DockPanel inputLine_ ;
    private final VerticalPanel verticalPanel_ ;
    private final ClickableScrollPanel scrollPanel_ ;

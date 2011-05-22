@@ -18,8 +18,11 @@ import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -34,18 +37,23 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Curs
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
                  HasValueChangeHandlers<Void>,
-                 HasKeyDownHandlers
+                 HasKeyDownHandlers,
+                 HasKeyPressHandlers
 {
    public AceEditorWidget()
    {
       initWidget(new HTML());
       FontSizer.applyNormalFontSize(this);
       setSize("100%", "100%");
+
+      capturingHandlers_ = new HandlerManager(this);
+      addEventListener(getElement(), "keydown", capturingHandlers_);
+      addEventListener(getElement(), "keyup", capturingHandlers_);
+      addEventListener(getElement(), "keypress", capturingHandlers_);
 
       addStyleName("loading");
 
@@ -159,11 +167,47 @@ public class AceEditorWidget extends Composite
       return addHandler(handler, KeyDownEvent.getType());
    }
 
+   public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
+   {
+      return addHandler(handler, KeyPressEvent.getType());
+   }
+
+   public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
+   {
+      return capturingHandlers_.addHandler(KeyDownEvent.getType(), handler);
+   }
+
+   public HandlerRegistration addCapturingKeyPressHandler(KeyPressHandler handler)
+   {
+      return capturingHandlers_.addHandler(KeyPressEvent.getType(), handler);
+   }
+
+   public HandlerRegistration addCapturingKeyUpHandler(KeyUpHandler handler)
+   {
+      return capturingHandlers_.addHandler(KeyUpEvent.getType(), handler);
+   }
+
+   private static native void addEventListener(Element element,
+                                        String event,
+                                        HasHandlers handlers) /*-{
+      var listener = $entry(function(e) {
+         @com.google.gwt.event.dom.client.DomEvent::fireNativeEvent(Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/event/shared/HasHandlers;Lcom/google/gwt/dom/client/Element;)(e, handlers, element);
+      });
+      element.addEventListener(event, listener, true);
+
+   }-*/;
+
    public void forceResize()
    {
       editor_.getRenderer().onResize(true);
    }
 
+   public void autoHeight()
+   {
+      editor_.autoHeight();
+   }
+
    private final AceEditorNative editor_;
+   private final HandlerManager capturingHandlers_;
    private boolean initToEmptyString_ = true;
 }

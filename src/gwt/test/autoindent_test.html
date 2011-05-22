@@ -3,6 +3,7 @@
 <head>
   <script type="text/javascript" src="../tools/ace/build_support/mini_require.js"></script>
   <script type="text/javascript" src="../tools/ace/build/src/ace.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
@@ -180,6 +181,7 @@ else
 var RCodeModel = require('mode/r_code_model').RCodeModel;
 var Document = require('ace/document').Document;
 var RMode = require('mode/r').Mode;
+require('mode/auto_brace_insert').setInsertMatching(true);
 
 function doIndentTest(el) {
   var doc = new Document('');

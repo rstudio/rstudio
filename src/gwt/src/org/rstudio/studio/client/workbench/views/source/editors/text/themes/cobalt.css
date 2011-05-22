@@ -55,7 +55,7 @@
 
 .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.34);
 }
 
 .ace_marker-layer .ace_active_line {
@@ -64,7 +64,7 @@
 
        
 .ace_invisible {
-  color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.34);
 }
 
 .ace_keyword {
@@ -148,3 +148,9 @@ color:#0088FF;
 .ace_xml_pe {
   
 }
+
+.ace_collab.ace_user1 {
+     
+}
+.nocolor.ace_editor .ace_line span {color:#FF9D00 !important;}
+.ace_bracket {margin: 0 !important; border: 0 !important; background-color: rgba(255, 255, 255, 0.34);}

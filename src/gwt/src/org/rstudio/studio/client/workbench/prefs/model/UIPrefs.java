@@ -76,6 +76,11 @@ public class UIPrefs extends Prefs
       return bool("soft_wrap_r_files", false);
    }
 
+   public PrefValue<Boolean> syntaxColorConsole()
+   {
+      return bool("syntax_color_console", false);
+   }
+
    public PrefValue<Double> fontSize()
    {
       return dbl("font_size_points", 10.0);

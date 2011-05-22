@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialo
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotResources;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettingsDialog;
@@ -106,7 +107,13 @@ public class RStudio implements EntryPoint
 
          public void onSuccess()
          {
-            load(dismissProgressAnimation);
+            AceEditor.load(new Command()
+            {
+               public void execute()
+               {
+                  load(dismissProgressAnimation);
+               }
+            });
          }
       });
    }

@@ -337,6 +337,9 @@ public class DomUtils
          child = child.offsetParent ;
       }
 
+      if (!child)
+         return;
+
       // padding
       top -= padding;
       height += padding*2;

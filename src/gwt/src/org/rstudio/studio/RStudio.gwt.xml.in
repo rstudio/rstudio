@@ -48,34 +48,6 @@
          <when-property-is name="user.agent" value="ie8" />
       </any>
    </replace-with>
-   
-   <replace-with class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImpl">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImpl" />
-   </replace-with>
-   <replace-with class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImplFirefox">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImpl" />
-      <any>
-         <when-property-is name="user.agent" value="gecko1_8" />
-      </any>
-   </replace-with>
-   <replace-with class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImplIE8">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImpl" />
-      <any>
-         <when-property-is name="user.agent" value="ie8" />
-      </any>
-   </replace-with>
-
-   <replace-with class="org.rstudio.studio.client.workbench.views.console.shell.editor.impl.TextareaPasteStrategy">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.console.shell.editor.PasteStrategy" />
-   </replace-with>
-   <replace-with class="org.rstudio.studio.client.workbench.views.console.shell.editor.impl.PostProcessPasteStrategy">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.console.shell.editor.PasteStrategy" />
-      <when-property-is name="user.agent" value="gecko1_8"/>
-   </replace-with>
-   <replace-with class="org.rstudio.studio.client.workbench.views.console.shell.editor.impl.InterceptPasteStrategy">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.console.shell.editor.PasteStrategy" />
-      <when-property-is name="user.agent" value="ie8"/>
-   </replace-with>
 
    <replace-with class="org.rstudio.studio.client.common.impl.WebWindowOpener">
       <when-type-is class="org.rstudio.studio.client.common.WindowOpener" />

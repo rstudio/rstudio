@@ -18,8 +18,9 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
-import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -38,6 +39,7 @@ import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -46,6 +48,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.HistoryCom
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 
 import java.util.ArrayList;
 
@@ -63,8 +66,7 @@ public class Shell implements ConsoleInputHandler,
    {
    }
 
-   public interface Display extends HasKeyDownHandlers, 
-                                    HasKeyPressHandlers
+   public interface Display extends HasKeyPressHandlers
    {
       void consoleWriteError(String string) ;
       void consoleWriteOutput(String output) ;
@@ -82,6 +84,8 @@ public class Shell implements ConsoleInputHandler,
       void playbackActions(RpcObjectList<ConsoleAction> actions);
 
       void setMaxOutputLines(int maxLines);
+
+      HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler);
    }
 
    @Inject
@@ -90,7 +94,8 @@ public class Shell implements ConsoleInputHandler,
                 Display display,
                 Session session,
                 GlobalDisplay globalDisplay,
-                Commands commands)
+                Commands commands,
+                UIPrefs uiPrefs)
    {
       super() ;
 
@@ -108,7 +113,9 @@ public class Shell implements ConsoleInputHandler,
       keyPressPreviewHandlers_ = new ArrayList<KeyPressPreviewHandler>() ;
 
       InputKeyDownHandler handler = new InputKeyDownHandler() ;
-      view_.addKeyDownHandler(handler) ;
+      // This needs to be a capturing key down handler or else Ace will have
+      // handled the event before we had a chance to prevent it
+      view_.addCapturingKeyDownHandler(handler) ;
       view_.addKeyPressHandler(handler) ;
       
       eventBus.addHandler(ConsoleInputEvent.TYPE, this); 
@@ -131,6 +138,11 @@ public class Shell implements ConsoleInputHandler,
 
       addKeyDownPreviewHandler(new HistoryCompletionManager(
             view_.getInputEditorDisplay(), server));
+
+      uiPrefs.insertMatching().bind(new CommandWithArg<Boolean>() {
+         public void execute(Boolean arg) {
+            AceEditorNative.setInsertMatching(arg);
+         }});
 
       sessionInit(session);
    }
@@ -261,7 +273,7 @@ public class Shell implements ConsoleInputHandler,
             && initialInput_ != null
             && initialInput_.length() > 0)
       {
-         view_.getInputEditorDisplay().setText(initialInput_);
+         view_.getInputEditorDisplay().setInputText(initialInput_);
          view_.ensureInputVisible();
       }
 
@@ -319,7 +331,7 @@ public class Shell implements ConsoleInputHandler,
    {
       InputEditorDisplay display = view_.getInputEditorDisplay();
       display.clear();
-      display.setText(event.getCode());
+      display.setInputText(event.getCode());
       if (event.shouldExecute())
          processCommandEntry();
       else
@@ -355,22 +367,28 @@ public class Shell implements ConsoleInputHandler,
             event.preventDefault();
 
          int modifiers = KeyboardShortcut.getModifierValue(event.getNativeEvent());
-         
-         if (event.isUpArrow())
-         {
-            event.preventDefault();
-            event.stopPropagation();
 
-            navigateHistory(-1);
-         }
-         else if (event.isDownArrow())
+         if (event.isUpArrow() && modifiers == 0)
          {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            navigateHistory(1);
+            if (input_.getCurrentLineNum() == 0)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+
+               navigateHistory(-1);
+            }
          }
-         else if (keyCode == KeyCodes.KEY_ENTER)
+         else if (event.isDownArrow() && modifiers == 0)
+         {
+            if (input_.getCurrentLineNum() == input_.getCurrentLineCount() - 1)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+
+               navigateHistory(1);
+            }
+         }
+         else if (keyCode == KeyCodes.KEY_ENTER && modifiers == 0)
          {
             event.preventDefault();
             event.stopPropagation();
@@ -378,7 +396,7 @@ public class Shell implements ConsoleInputHandler,
             restoreFocus_ = true;
             processCommandEntry();
          }
-         else if (keyCode == KeyCodes.KEY_ESCAPE)
+         else if (keyCode == KeyCodes.KEY_ESCAPE && modifiers == 0)
          {
             event.preventDefault();
 
@@ -411,34 +429,6 @@ public class Shell implements ConsoleInputHandler,
              
             input_.clear();
          }
-         else if (BrowseCap.INSTANCE.emulatedHomeAndEnd()
-                  && keyCode == KeyCodes.KEY_HOME
-                  && modifiers == KeyboardShortcut.NONE)
-         {
-            InputEditorUtil.moveSelectionToLineStart(input_);
-            event.preventDefault();
-         }
-         else if (BrowseCap.INSTANCE.emulatedHomeAndEnd()
-                  && keyCode == KeyCodes.KEY_HOME
-                  && modifiers == KeyboardShortcut.SHIFT)
-         {
-            InputEditorUtil.extendSelectionToLineStart(input_);
-            event.preventDefault();
-         }
-         else if (BrowseCap.INSTANCE.emulatedHomeAndEnd()
-                  && keyCode == KeyCodes.KEY_END
-                  && modifiers == KeyboardShortcut.NONE)
-         {
-            InputEditorUtil.moveSelectionToLineEnd(input_);
-            event.preventDefault();
-         }
-         else if (BrowseCap.INSTANCE.emulatedHomeAndEnd()
-                  && keyCode == KeyCodes.KEY_END
-                  && modifiers == KeyboardShortcut.SHIFT)
-         {
-            InputEditorUtil.extendSelectionToLineEnd(input_);
-            event.preventDefault();
-         }
          else
          {
             int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
@@ -461,22 +451,6 @@ public class Shell implements ConsoleInputHandler,
                   case 'Y':
                      event.preventDefault();
                      InputEditorUtil.pasteYanked(input_);
-                     break;
-               }
-            }
-            else if (mod == KeyboardShortcut.META)
-            {
-               switch (keyCode)
-               {
-                  case KeyCodes.KEY_LEFT:
-                     event.preventDefault();
-                     event.stopPropagation();
-                     InputEditorUtil.moveSelectionToLineStart(input_);
-                     break;
-                  case KeyCodes.KEY_RIGHT:
-                     event.preventDefault();
-                     event.stopPropagation();
-                     InputEditorUtil.moveSelectionToLineEnd(input_);
                      break;
                }
             }
@@ -525,9 +499,10 @@ public class Shell implements ConsoleInputHandler,
          historyTail_ = input_.getText();
       }
 
-      input_.setText(newPos < history_.size() ? history_.get(newPos)
-                     : historyTail_ != null ? historyTail_
-                     : "");
+      input_.setInputText(
+            newPos < history_.size() ? history_.get(newPos) :
+            historyTail_ != null ? historyTail_ :
+            "");
       historyPos_ = newPos;
 
       view_.ensureInputVisible();

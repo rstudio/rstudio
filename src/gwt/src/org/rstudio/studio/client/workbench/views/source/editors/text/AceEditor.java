@@ -27,12 +27,13 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
@@ -54,9 +55,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 
 public class AceEditor implements DocDisplay, InputEditorDisplay
 {
@@ -132,16 +131,21 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    public void setFileType(TextFileType fileType)
    {
-      fileType_ = fileType;
-      updateLanguage();
+      setFileType(fileType, false);
    }
 
-   private void updateLanguage()
+   public void setFileType(TextFileType fileType, boolean suppressCompletion)
+   {
+      fileType_ = fileType;
+      updateLanguage(suppressCompletion);
+   }
+
+   private void updateLanguage(boolean suppressCompletion)
    {
       if (fileType_ == null)
          return;
 
-      if (fileType_.getEditorLanguage().useRCompletion())
+      if (!suppressCompletion && fileType_.getEditorLanguage().useRCompletion())
       {
          completionManager_ = new RCompletionManager(this,
                                                      new CompletionPopupPanel(),
@@ -240,9 +244,10 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
             getSession().getSelection().getCursor().getRow());
    }
 
-   public void setText(String string)
+   public void setInputText(String string)
    {
       setCode(string, false);
+      getSession().getSelection().moveCursorFileEnd();
    }
 
    public boolean hasSelection()
@@ -265,15 +270,12 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
             getSession().getSelection().getRange());
    }
 
-   public void beginSetSelection(InputEditorSelection selection,
-                                 Command callback)
+   public void setSelection(InputEditorSelection selection)
    {
       AceInputEditorPosition start = (AceInputEditorPosition)selection.getStart();
       AceInputEditorPosition end = (AceInputEditorPosition)selection.getEnd();
       getSession().getSelection().setSelectionRange(Range.fromPoints(
             start.getValue(), end.getValue()));
-      if (callback != null)
-         callback.execute();
    }
 
    public Rectangle getCursorBounds()
@@ -366,6 +368,17 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
             .getStart()
             .getRow();
       return getSession().getLine(row);
+   }
+
+   public int getCurrentLineNum()
+   {
+      Position pos = getCursorPosition();
+      return getSession().documentToScreenRow(pos);
+   }
+
+   public int getCurrentLineCount()
+   {
+      return getSession().getScreenLength();
    }
 
    public void replaceCode(String code)
@@ -514,6 +527,14 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       getSession().setUseSoftTabs(on);
    }
 
+   /**
+    * Warning: This will be overridden whenever the file type is set
+    */
+   public void setUseWrapMode(boolean useWrapMode)
+   {
+      getSession().setUseWrapMode(useWrapMode);
+   }
+
    public void setTabSize(int tabSize)
    {
       getSession().setTabSize(tabSize);
@@ -522,6 +543,11 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public void setShowPrintMargin(boolean on)
    {
       widget_.getEditor().getRenderer().setShowPrintMargin(on);
+   }
+
+   public void setPadding(int padding)
+   {
+      widget_.getEditor().getRenderer().setPadding(padding);
    }
 
    public void setPrintMarginColumn(int column)
@@ -575,6 +601,21 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return handlers_.addHandler(ValueChangeEvent.getType(), handler);
    }
 
+   public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
+   {
+      return widget_.addCapturingKeyDownHandler(handler);
+   }
+
+   public HandlerRegistration addCapturingKeyPressHandler(KeyPressHandler handler)
+   {
+      return widget_.addCapturingKeyPressHandler(handler);
+   }
+
+   public HandlerRegistration addCapturingKeyUpHandler(KeyUpHandler handler)
+   {
+      return widget_.addCapturingKeyUpHandler(handler);
+   }
+
    public void fireEvent(GwtEvent<?> event)
    {
       handlers_.fireEvent(event);
@@ -613,6 +654,24 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
    {
       return widget_.addKeyDownHandler(handler);
+   }
+
+   public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
+   {
+      return widget_.addKeyPressHandler(handler);
+   }
+
+   public void autoHeight()
+   {
+      widget_.autoHeight();
+   }
+
+   public void scrollToCursor(ScrollPanel scrollPanel, int padding)
+   {
+      DomUtils.ensureVisibleVert(
+            scrollPanel.getElement(),
+            widget_.getEditor().getRenderer().getCursorElement(),
+            padding);
    }
 
    private final HandlerManager handlers_ = new HandlerManager(this);

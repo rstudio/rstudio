@@ -158,4 +158,23 @@ public class AceEditorNative extends JavaScriptObject {
    public final native void scrollToLine(int line, boolean center) /*-{
       this.scrollToLine(line, center);
    }-*/;
+
+   public final native void autoHeight() /*-{
+      var editor = this;
+      function updateEditorHeight() {
+         editor.container.style.height = (Math.max(1, editor.getSession().getScreenLength()) * editor.renderer.lineHeight) + 'px';
+         editor.resize();
+         editor.renderer.scrollToY(0);
+         editor.renderer.scrollToX(0);
+      }
+      if (!editor.autoHeightAttached) {
+         editor.autoHeightAttached = true;
+         editor.getSession().getDocument().on("change", updateEditorHeight);
+      }
+      updateEditorHeight();
+   }-*/;
+
+   public static native void setInsertMatching(boolean insertMatching) /*-{
+      $wnd.require("mode/auto_brace_insert").setInsertMatching(insertMatching);
+   }-*/;
 }

@@ -22,7 +22,8 @@ git merge \
     origin/bugfix-selecttostartend \
     origin/patch-advanced-indent \
     origin/bugfix-isfullwidth-perf \
-    origin/patch-solarized \
+    origin/patch-solarized2 \
+    origin/patch-invisible-colors \
 
 
 make clean

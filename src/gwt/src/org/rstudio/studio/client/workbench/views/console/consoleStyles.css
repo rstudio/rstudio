@@ -2,11 +2,12 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external popupContent;
+@external ace_sb;
 
 .console {
    font-family: fixedWidthFont;
    padding-left: 6px;
-   padding-bottom: 4px;
+   padding-bottom: 8px;
    line-height: 16px;
    border: none;
    outline: none;
@@ -29,12 +30,12 @@
 
 .error {}
 
-.input, .input span, .input div {
-   border: none;
-   outline: none;
+.input.ace_editor {
+   position: relative !important;
 }
-.input {
-   padding-bottom: 12px;
+.input .ace_sb {
+   display: none;
+   width: 0 !important;
 }
 
 .console .prompt {

@@ -24,16 +24,12 @@ public class InputEditorUtil
       {
          selection = selection.extendToLineEnd();
 
-         editor.beginSetSelection(selection, new Command()
-         {
-            public void execute()
-            {
-               editor.setFocus(true) ;
-               String yanked = editor.replaceSelection("", true);
-               if (saveValue)
-                  lastYanked = yanked;
-            }
-         });
+         editor.setSelection(selection);
+
+         editor.setFocus(true) ;
+         String yanked = editor.replaceSelection("", true);
+         if (saveValue)
+            lastYanked = yanked;
       }
    }
 
@@ -45,16 +41,12 @@ public class InputEditorUtil
       {
          selection = selection.extendToLineStart();
 
-         editor.beginSetSelection(selection, new Command()
-         {
-            public void execute()
-            {
-               editor.setFocus(true) ;
-               String yanked = editor.replaceSelection("", true);
-               if (saveValue)
-                  lastYanked = yanked;
-            }
-         });
+         editor.setSelection(selection);
+
+         editor.setFocus(true) ;
+         String yanked = editor.replaceSelection("", true);
+         if (saveValue)
+            lastYanked = yanked;
       }
    }
 
@@ -64,72 +56,6 @@ public class InputEditorUtil
       {
          editor.replaceSelection(lastYanked, true);
       }
-   }
-
-   public static boolean moveSelectionToLineStart(InputEditorDisplay editor)
-   {
-      InputEditorSelection selection = editor.getSelection();
-
-      // In Firefox, sometimes PlainTextEditor can't find the selection
-      // (see bug 302 - "Command line editing - When a former line is
-      // recalled with the up arrow, the CNTL-a command will not bring
-      // the cursor to the start of the line until the left-arrow
-      // or a mouse click is used to move one or more characters to
-      // the left."
-      if (selection == null)
-         selection = editor.getStart();
-
-      InputEditorPosition lineStart = selection.getStart()
-            .movePosition(0, false);
-      editor.beginSetSelection(new InputEditorSelection(lineStart), null);
-      return true;
-   }
-
-   public static boolean moveSelectionToLineEnd(InputEditorDisplay editor)
-   {
-      InputEditorSelection selection = editor.getSelection();
-
-      // In Firefox, sometimes PlainTextEditor can't find the selection
-      // (see bug 302 - "Command line editing - When a former line is
-      // recalled with the up arrow, the CNTL-a command will not bring
-      // the cursor to the start of the line until the left-arrow
-      // or a mouse click is used to move one or more characters to
-      // the left."
-      if (selection == null)
-         selection = editor.getEnd();
-
-      InputEditorPosition lineEnd = selection.getEnd()
-            .movePosition(selection.getEnd().getLineLength(), false);
-      editor.beginSetSelection(new InputEditorSelection(lineEnd), null);
-      return true;
-   }
-
-   public static void extendSelectionToLineStart(InputEditorDisplay editor)
-   {
-      InputEditorSelection selection = editor.getSelection();
-
-      if (selection == null)
-         selection = editor.getStart();
-
-      InputEditorPosition lineStart = selection.getStart()
-            .movePosition(0, false);
-      editor.beginSetSelection(
-            new InputEditorSelection(lineStart,
-                                     selection.getEnd()), null);
-   }
-
-   public static void extendSelectionToLineEnd(InputEditorDisplay editor)
-   {
-      InputEditorSelection selection = editor.getSelection();
-
-      if (selection == null)
-         selection = editor.getEnd();
-
-      InputEditorPosition lineEnd = selection.getEnd()
-            .movePosition(selection.getEnd().getLineLength(), false);
-      editor.beginSetSelection(
-            new InputEditorSelection(selection.getStart(),
-                                     lineEnd), null);
    }
 
    private static String lastYanked;
