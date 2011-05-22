@@ -84,8 +84,12 @@ foreach(SERVER_ADDIN_TEMPLATE_FILE ${SERVER_ADDIN_TEMPLATE_FILES})
                   COPYONLY)
 endforeach()
 
-
 # platform introspection
+set(PAM_RESTORE_PREV TRUE)
+if(${RSTUDIO_LSB_RELEASE} STREQUAL "ubuntu" OR
+   ${RSTUDIO_LSB_RELEASE} STREQUAL "debian")
+   set(PAM_RESTORE_PRIV FALSE)
+endif()
 check_function_exists(setresuid HAVE_SETRESUID)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/config.h)

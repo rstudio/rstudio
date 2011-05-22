@@ -102,6 +102,19 @@ if(UNIX)
    endif()
 endif()
 
+# detect lsb release
+if (UNIX AND NOT APPLE)
+   if(NOT RSTUDIO_LSB_RELEASE)
+      execute_process(COMMAND /usr/bin/lsb_release "--id" "--short"
+                      OUTPUT_VARIABLE RSTUDIO_LSB_RELEASE)
+      if (RSTUDIO_LSB_RELEASE)
+         string(TOLOWER  ${RSTUDIO_LSB_RELEASE} RSTUDIO_LSB_RELEASE)
+         set(RSTUDIO_LSB_RELEASE ${RSTUDIO_LSB_RELEASE} CACHE STRING "LSB release")
+         message(STATUS "LSB release: ${RSTUDIO_LSB_RELEASE}")
+      endif()
+   endif()
+endif()
+
 # make sure the CMAKE_INSTALL_PREFIX uses a cmake style path
 file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
 
