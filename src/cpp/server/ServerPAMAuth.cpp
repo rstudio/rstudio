@@ -12,7 +12,12 @@
  */
 #include "ServerPAMAuth.hpp"
 
+#include <sys/wait.h>
+
 #include <core/Error.hpp>
+#include <core/system/System.hpp>
+#include <core/system/ProcessArgs.hpp>
+
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
@@ -36,12 +41,33 @@ namespace pam_auth {
 
 namespace {
 
-// TODO: ensure runs under app armor
-// TOOD: ensure pam helper runs to non-crash exit for failure case
-// TODO: block stdin case in pam helper
+
+// TODO: make sure inputs into pam helper are bounded
+// TODO: block tty case in pam helper
+
 // TODO: make sure it works on redhat
 
 // TODO: then can change hat permanently
+
+
+// Handles error logging and EINTR retrying. Only for use with
+// functions that return -1 on error and set errno.
+int posixcall(boost::function<ssize_t()> func, const ErrorLocation& location)
+{
+   while (true)
+   {
+      int result;
+      if ((result = func()) == -1)
+      {
+         if (errno == EINTR)
+            continue;
+         LOG_ERROR(systemError(errno, location));
+         return result;
+      }
+      return result;
+   }
+}
+
 
 bool pamLogin(const std::string& username, const std::string& password)
 {
@@ -54,33 +80,98 @@ bool pamLogin(const std::string& username, const std::string& password)
       return false;
    }
 
-   // execute pam helper
-   std::string command = pamHelperPath.absolutePath() + " " + username;
-   FILE* fp = ::popen(command.c_str(), "w");
-   if (fp == NULL)
-   {
-      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+   // create pipes
+   const int READ = 0;
+   const int WRITE = 1;
+   int fdInput[2];
+   if (posixcall(boost::bind(::pipe, fdInput), ERROR_LOCATION) == -1)
       return false;
+   int fdOutput[2];
+   if (posixcall(boost::bind(::pipe, fdOutput), ERROR_LOCATION) == -1)
+      return false;
+
+   // fork
+   pid_t pid = posixcall(::fork, ERROR_LOCATION);
+   if (pid == -1)
+      return false;
+
+   // child
+   else if (pid == 0)
+   {
+      // close unused pipes
+      posixcall(boost::bind(::close, fdInput[WRITE]), ERROR_LOCATION);
+      posixcall(boost::bind(::close, fdOutput[READ]), ERROR_LOCATION);
+
+      // clear the child signal mask
+      Error error = core::system::clearSignalMask();
+      if (error)
+         LOG_ERROR(error);
+
+      // wire standard streams
+      posixcall(boost::bind(::dup2, fdInput[READ], STDIN_FILENO),
+                ERROR_LOCATION);
+      posixcall(boost::bind(::dup2, fdOutput[WRITE], STDOUT_FILENO),
+                ERROR_LOCATION);
+
+      // close all open file descriptors other than std streams
+      error = core::system::closeNonStdFileDescriptors();
+      if (error)
+         LOG_ERROR(error);
+
+      // build username args (on heap so they stay around after exec)
+      // and execute pam helper
+      using core::system::ProcessArgs;
+      std::vector<std::string> args;
+      args.push_back(pamHelperPath.absolutePath());
+      args.push_back(username);
+      ProcessArgs* pProcessArgs = new ProcessArgs(args);
+      ::execv(pamHelperPath.absolutePath().c_str(), pProcessArgs->args()) ;
+
+      // in the normal case control should never return from execv (it starts
+      // anew at main of the process pointed to by path). therefore, if we get
+      // here then there was an error
+      LOG_ERROR(systemError(errno, ERROR_LOCATION)) ;
+      ::exit(EXIT_FAILURE) ;
    }
 
-   // write password to stdin then flush
-   if (::fputs((password + "\n").c_str(), fp) == EOF)
-   {
-      LOG_ERROR(systemError(errno, ERROR_LOCATION));
-      return false;
-   }
-   if (::fflush(fp) == EOF)
-   {
-      LOG_ERROR(systemError(errno, ERROR_LOCATION));
-      // purposely failing forward...
-   }
-
-   // close file and inspect status
-   int status = ::pclose(fp);
-   if (WIFEXITED(status))
-      return WEXITSTATUS(status) == EXIT_SUCCESS;
+   // parent
    else
-      return false;
+   {
+      // close unused pipes
+      posixcall(boost::bind(::close, fdInput[READ]), ERROR_LOCATION);
+      posixcall(boost::bind(::close, fdOutput[WRITE]), ERROR_LOCATION);
+
+      // write the password to standard input then close the pipe
+      std::string input = password ;
+      std::size_t written = posixcall(boost::bind(::write,
+                                                   fdInput[WRITE],
+                                                   input.c_str(),
+                                                   input.length()),
+                                      ERROR_LOCATION);
+      posixcall(boost::bind(::close, fdInput[WRITE]), ERROR_LOCATION);
+
+      // check for correct bytes written
+      if (written != static_cast<std::size_t>(input.length()))
+      {
+         // first close stdout pipe
+         posixcall(boost::bind(::close, fdOutput[READ]), ERROR_LOCATION);
+
+         // log error and return false
+         LOG_ERROR_MESSAGE("Error writing to pam helper stdin");
+         return false;
+      }
+
+      // read the response from standard output
+      char buf;
+      size_t bytesRead = posixcall(boost::bind(::read, fdOutput[READ], &buf, 1),
+                                   ERROR_LOCATION);
+      posixcall(boost::bind(::close, fdOutput[READ]), ERROR_LOCATION);
+
+      // return true if bytes were read
+      return bytesRead > 0;
+   }
+
+   return false;
 }
 
 

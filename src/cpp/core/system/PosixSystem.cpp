@@ -463,12 +463,14 @@ Error closeFileDescriptorsFrom(int fdStart)
    return Success();
 }
 
+
+} // anonymous namespace
+
+
 Error closeNonStdFileDescriptors()
 {
    return closeFileDescriptorsFrom(STDERR_FILENO+1);
 }
-
-} // anonymous namespace
 
 
 Error executeInterruptableChildProcess(

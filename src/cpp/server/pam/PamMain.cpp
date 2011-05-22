@@ -213,8 +213,6 @@ int main(int argc, char * const argv[])
       // initialize log
       initializeSystemLog("rserver-pam", core::system::kLogLevelWarning);
 
-      // TODO: validate that real user is root?
-
       // read username from command line
       if (argc < 2)
          return EXIT_FAILURE;
@@ -226,9 +224,9 @@ int main(int argc, char * const argv[])
 
       // verify password
       if (PAMAuth(false).login(username, password) == PAM_SUCCESS)
-         return EXIT_SUCCESS;
-      else
-         return EXIT_FAILURE;
+         std::cout << '1' ;
+
+      return EXIT_SUCCESS;
    }
    CATCH_UNEXPECTED_EXCEPTION
    
