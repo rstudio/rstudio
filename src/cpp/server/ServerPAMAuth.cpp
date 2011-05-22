@@ -41,6 +41,7 @@ namespace pam_auth {
 
 namespace {
 
+// TODO: verify that we never leak a file descriptor
 
 // TODO: don't re-assume priv on ubuntu
 
