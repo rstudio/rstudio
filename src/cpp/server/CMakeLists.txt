@@ -84,15 +84,21 @@ foreach(SERVER_ADDIN_TEMPLATE_FILE ${SERVER_ADDIN_TEMPLATE_FILES})
                   COPYONLY)
 endforeach()
 
-# platform introspection
-set(PAM_RESTORE_PREV TRUE)
-if(${RSTUDIO_LSB_RELEASE} STREQUAL "ubuntu" OR
-   ${RSTUDIO_LSB_RELEASE} STREQUAL "debian")
-   set(PAM_RESTORE_PRIV FALSE)
+# set flag for platforms that are known to be able to call PAM routines
+# without requring restorePriv (to avoid geteuid != getuid)
+if(NOT ${RSTUDIO_LSB_RELEASE} STREQUAL "ubuntu" AND
+   NOT ${RSTUDIO_LSB_RELEASE} STREQUAL "debian")
+   set(PAM_REQUIRES_RESTORE_PRIV TRUE)
 endif()
+
+# look for setresuid
 check_function_exists(setresuid HAVE_SETRESUID)
+
+# configuration
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+
+# require openssl (for crypto)
 find_package(OpenSSL REQUIRED QUIET)
 
 # include directories and libraries
