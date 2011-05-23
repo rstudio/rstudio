@@ -344,12 +344,9 @@ public class Pruner {
     @Override
     public boolean visit(JClassType type, Context ctx) {
       assert (referencedTypes.contains(type));
-      boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
-
       for (int i = 0; i < type.getFields().size(); ++i) {
         JField field = type.getFields().get(i);
-        if (!referencedNonTypes.contains(field)
-            || pruneViaNoninstantiability(isInstantiated, field)) {
+        if (!referencedNonTypes.contains(field)) {
           type.removeField(i);
           madeChanges();
           --i;
@@ -358,8 +355,7 @@ public class Pruner {
 
       for (int i = 0; i < type.getMethods().size(); ++i) {
         JMethod method = type.getMethods().get(i);
-        if (!referencedNonTypes.contains(method)
-            || pruneViaNoninstantiability(isInstantiated, method)) {
+        if (!referencedNonTypes.contains(method)) {
           // Never prune clinit directly out of the class.
           if (i > 0) {
             type.removeMethod(i);
@@ -423,15 +419,14 @@ public class Pruner {
          * We cannot prune parameters from staticImpls that still have a live
          * instance method, because doing so would screw up any subsequent
          * devirtualizations. If the instance method has been pruned, then it's
-         * okay. Also, it's okay on the final pass since no more
-         * devirtualizations will occur.
+         * okay. Also, it's okay on the final pass (saveCodeTypes == false)
+         * since no more devirtualizations will occur.
          * 
          * TODO: prune params; MakeCallsStatic smarter to account for it.
          */
         JMethod staticImplFor = program.staticImplFor(x);
         // Unless the instance method has already been pruned, of course.
-        if (saveCodeGenTypes && staticImplFor != null
-            && staticImplFor.getEnclosingType().getMethods().contains(staticImplFor)) {
+        if (saveCodeGenTypes && staticImplFor != null && referencedNonTypes.contains(staticImplFor)) {
           // instance method is still live
           return true;
         }
@@ -484,10 +479,6 @@ public class Pruner {
         }
       }
       return false;
-    }
-
-    private boolean pruneViaNoninstantiability(boolean isInstantiated, CanBeStatic it) {
-      return (!isInstantiated && !it.isStatic());
     }
   }
 
@@ -576,7 +567,11 @@ public class Pruner {
         new JMethodCall(x.getSourceInfo(), instance, program.getNullMethod(),
             primitiveTypeOrNullType(program, x.getType()));
     // Retain the original arguments, they will be evaluated for side effects.
-    newCall.addArgs(args);
+    for (JExpression arg : args) {
+      if (arg.hasSideEffects()) {
+        newCall.addArg(arg);
+      }
+    }
     return newCall;
   }
 
@@ -591,6 +586,7 @@ public class Pruner {
   }
 
   private final JProgram program;
+
   private final boolean saveCodeGenTypes;
 
   private Pruner(JProgram program, boolean saveCodeGenTypes) {
@@ -601,38 +597,35 @@ public class Pruner {
   private OptimizerStats execImpl() {
     OptimizerStats stats = new OptimizerStats(NAME);
 
-    // TODO(zundel): see if this loop can be removed and all work done in one
-    // pass of the optimizer to improve performance.
-    while (true) {
-      ControlFlowAnalyzer livenessAnalyzer = new ControlFlowAnalyzer(program);
-      if (saveCodeGenTypes) {
-        /*
-         * SPECIAL: Some classes contain methods used by code generation later.
-         * Unless those transforms have already been performed, we must rescue
-         * all contained methods for later user.
-         */
-        traverseFromCodeGenTypes(livenessAnalyzer);
-      }
-      for (JMethod method : program.getAllEntryMethods()) {
-        livenessAnalyzer.traverseFrom(method);
-      }
-      livenessAnalyzer.traverseFromLeftoversFragmentHasLoaded();
-
-      program.typeOracle.setInstantiatedTypes(livenessAnalyzer.getInstantiatedTypes());
-
-      PruneVisitor pruner =
-          new PruneVisitor(livenessAnalyzer.getReferencedTypes(), livenessAnalyzer
-              .getLiveFieldsAndMethods());
-      pruner.accept(program);
-      stats.recordModified(pruner.getNumMods());
-      if (!pruner.didChange()) {
-        break;
-      }
-      CleanupRefsVisitor cleaner =
-          new CleanupRefsVisitor(livenessAnalyzer.getLiveFieldsAndMethods(), pruner
-              .getMethodToOriginalParamsMap());
-      cleaner.accept(program.getDeclaredTypes());
+    ControlFlowAnalyzer livenessAnalyzer = new ControlFlowAnalyzer(program);
+    livenessAnalyzer.setForPruning();
+    if (saveCodeGenTypes) {
+      /*
+       * SPECIAL: Some classes contain methods used by code generation later.
+       * Unless those transforms have already been performed, we must rescue all
+       * contained methods for later user.
+       */
+      traverseFromCodeGenTypes(livenessAnalyzer);
     }
+    for (JMethod method : program.getAllEntryMethods()) {
+      livenessAnalyzer.traverseFrom(method);
+    }
+    livenessAnalyzer.traverseFromLeftoversFragmentHasLoaded();
+
+    program.typeOracle.setInstantiatedTypes(livenessAnalyzer.getInstantiatedTypes());
+
+    PruneVisitor pruner =
+        new PruneVisitor(livenessAnalyzer.getReferencedTypes(), livenessAnalyzer
+            .getLiveFieldsAndMethods());
+    pruner.accept(program);
+    stats.recordModified(pruner.getNumMods());
+    if (!pruner.didChange()) {
+      return stats;
+    }
+    CleanupRefsVisitor cleaner =
+        new CleanupRefsVisitor(livenessAnalyzer.getLiveFieldsAndMethods(), pruner
+            .getMethodToOriginalParamsMap());
+    cleaner.accept(program.getDeclaredTypes());
     return stats;
   }
 

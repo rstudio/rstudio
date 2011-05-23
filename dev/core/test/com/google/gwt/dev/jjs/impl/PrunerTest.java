@@ -139,10 +139,15 @@ public class PrunerTest extends OptimizerTestBase {
         "}", 
         result.findClass("EntryPoint$UsedInterface").toSource());
   }
-  
+
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
     program.addEntryMethod(findMainMethod(program));
-    return Pruner.exec(program, true).didChange();
+    boolean didChange = false;
+    // TODO(jbrosenberg): remove loop when Pruner/CFA interaction is perfect.
+    while (Pruner.exec(program, true).didChange()) {
+      didChange = true;
+    }
+    return didChange;
   }
 }

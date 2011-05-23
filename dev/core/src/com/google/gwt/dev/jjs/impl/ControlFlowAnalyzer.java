@@ -55,6 +55,7 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.dev.util.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -81,8 +82,8 @@ public class ControlFlowAnalyzer {
 
   /**
    * Marks as "referenced" any types, methods, and fields that are reachable.
-   * Also marks as "instantiable" any the classes and interfaces that can
-   * possibly be instantiated.
+   * Also marks as "instantiable" any classes and interfaces that can possibly
+   * be instantiated.
    * 
    * TODO(later): make RescueVisitor use less stack?
    */
@@ -229,8 +230,7 @@ public class ControlFlowAnalyzer {
         rescue(intfType, false, isInstantiated);
       }
 
-      rescueMethodsIfInstantiable(type);
-
+      rescueMembersIfInstantiable(type);
       return false;
     }
 
@@ -271,14 +271,23 @@ public class ControlFlowAnalyzer {
     public boolean visit(JFieldRef ref, Context ctx) {
       JField target = ref.getField();
 
-      // JLS 12.4.1: references to static, non-final, or
-      // non-compile-time-constant fields rescue the enclosing class.
-      // JDT already folds in compile-time constants as literals, so we must
-      // rescue the enclosing types for any static fields that make it here.
+      /*
+       * JLS 12.4.1: references to static, non-final, or
+       * non-compile-time-constant fields rescue the enclosing class. JDT
+       * already folds in compile-time constants as literals, so we must rescue
+       * the enclosing types for any static fields that make it here.
+       */
       if (target.isStatic()) {
         rescue(target.getEnclosingType(), true, false);
       }
-      rescue(target);
+      if (target.isStatic() || instantiatedTypes.contains(target.getEnclosingType())) {
+        rescue(target);
+      } else {
+        // It's a field whose class is not instantiable
+        if (!liveFieldsAndMethods.contains(target)) {
+          membersToRescueIfTypeIsInstantiated.add(target);
+        }
+      }
       return true;
     }
 
@@ -306,7 +315,7 @@ public class ControlFlowAnalyzer {
         accept(it);
       }
 
-      rescueMethodsIfInstantiable(type);
+      rescueMembersIfInstantiable(type);
       return false;
     }
 
@@ -363,11 +372,21 @@ public class ControlFlowAnalyzer {
       } else {
         // It's a virtual method whose class is not instantiable
         if (!liveFieldsAndMethods.contains(method)) {
-          methodsLiveExceptForInstantiability.add(method);
+          membersToRescueIfTypeIsInstantiated.add(method);
         }
       }
 
-      return true;
+      if (argsToRescueIfParameterRead == null || method.canBePolymorphic()
+          || call instanceof JsniMethodRef) {
+        return true;
+      }
+
+      if (program.staticImplFor(method) != null) {
+        // CleanUpRefsVisitor does not prune these params, must rescue.
+        return true;
+      }
+
+      return rescueArgumentsIfParametersCanBeRead(call, method);
     }
 
     @Override
@@ -524,7 +543,7 @@ public class ControlFlowAnalyzer {
       if (method != null) {
         if (!liveFieldsAndMethods.contains(method)) {
           liveFieldsAndMethods.add(method);
-          methodsLiveExceptForInstantiability.remove(method);
+          membersToRescueIfTypeIsInstantiated.remove(method);
           if (dependencyRecorder != null) {
             curMethodStack.add(method);
             dependencyRecorder.methodIsLiveBecause(method, curMethodStack);
@@ -589,6 +608,7 @@ public class ControlFlowAnalyzer {
     private void rescue(JVariable var) {
       if (var != null) {
         if (liveFieldsAndMethods.add(var)) {
+          membersToRescueIfTypeIsInstantiated.remove(var);
           if (isStaticFieldInitializedToLiteral(var)) {
             /*
              * Rescue literal initializers when the field is rescued, not when
@@ -619,6 +639,13 @@ public class ControlFlowAnalyzer {
             accept(field.getInitializer());
             referencedTypes.add(field.getEnclosingType());
             liveFieldsAndMethods.add(field.getEnclosingType().getMethods().get(0));
+          } else if (argsToRescueIfParameterRead != null && var instanceof JParameter) {
+            List<JExpression> list = argsToRescueIfParameterRead.remove(var);
+            if (list != null) {
+              for (JExpression arg : list) {
+                this.accept(arg);
+              }
+            }
           }
         }
       }
@@ -626,6 +653,43 @@ public class ControlFlowAnalyzer {
 
     private void rescueAndInstantiate(JClassType type) {
       rescue(type, true, true);
+    }
+
+    /**
+     * The code is very tightly tied to the behavior of
+     * Pruner.CleanupRefsVisitor. CleanUpRefsVisitor will prune unread
+     * parameters, and also prune any matching arguments that don't have side
+     * effects. We want to make control flow congruent to pruning, to avoid the
+     * need to iterate over Pruner until reaching a stable point, so we avoid
+     * actually rescuing such arguments until/unless the parameter is read.
+     */
+    private boolean rescueArgumentsIfParametersCanBeRead(JMethodCall call, JMethod method) {
+      if (call.getInstance() != null) {
+        // Explicitly visit instance since we're returning false below.
+        this.accept(call.getInstance());
+      }
+      List<JExpression> args = call.getArgs();
+      List<JParameter> params = method.getParams();
+      int i = 0;
+      for (int c = params.size(); i < c; ++i) {
+        JExpression arg = args.get(i);
+        JParameter param = params.get(i);
+        if (arg.hasSideEffects() || liveFieldsAndMethods.contains(param)) {
+          this.accept(arg);
+          continue;
+        }
+        List<JExpression> list = argsToRescueIfParameterRead.get(param);
+        if (list == null) {
+          argsToRescueIfParameterRead.put(param, Lists.create(arg));
+        } else {
+          argsToRescueIfParameterRead.put(param, Lists.add(list, arg));
+        }
+      }
+      // Visit any "extra" arguments that exceed the param list.
+      for (int c = args.size(); i < c; ++i) {
+        this.accept(args.get(i));
+      }
+      return false;
     }
 
     /**
@@ -672,12 +736,20 @@ public class ControlFlowAnalyzer {
      * If the type is instantiable, rescue any of its virtual methods that a
      * previously seen method call could call.
      */
-    private void rescueMethodsIfInstantiable(JDeclaredType type) {
+    private void rescueMembersIfInstantiable(JDeclaredType type) {
       if (instantiatedTypes.contains(type)) {
         for (JMethod method : type.getMethods()) {
           if (!method.isStatic()) {
-            if (methodsLiveExceptForInstantiability.contains(method)) {
+            if (membersToRescueIfTypeIsInstantiated.contains(method)) {
               rescue(method);
+              continue;
+            }
+          }
+        }
+        for (JField field : type.getFields()) {
+          if (!field.isStatic()) {
+            if (membersToRescueIfTypeIsInstantiated.contains(field)) {
+              rescue(field);
               continue;
             }
           }
@@ -703,13 +775,21 @@ public class ControlFlowAnalyzer {
               rescue(overrider);
             } else {
               // The enclosing class is not yet alive, put override in limbo.
-              methodsLiveExceptForInstantiability.add(overrider);
+              membersToRescueIfTypeIsInstantiated.add(overrider);
             }
           }
         }
       }
     }
   }
+
+  /**
+   * These are arguments that have not yet been rescued on account of the
+   * associated parameter not having been read yet. If the parameter becomes
+   * read, we will need to rescue the associated arguments. See comments in
+   * {@link #rescueArgumentsIfParametersCanBeRead}.
+   */
+  private Map<JParameter, List<JExpression>> argsToRescueIfParameterRead;
 
   private final JDeclaredType baseArrayType;
   private DependencyRecorder dependencyRecorder;
@@ -720,12 +800,12 @@ public class ControlFlowAnalyzer {
   private Set<String> liveStrings = new HashSet<String>();
 
   /**
-   * Schrodinger's methods... aka "limbo". :) These are instance methods that
-   * seem to be reachable, only their enclosing type is uninstantiable. We place
-   * these methods into purgatory until/unless the enclosing type is found to be
-   * instantiable.
+   * Schrodinger's members... aka "limbo". :) These are instance methods and
+   * fields that seem to be reachable, only their enclosing type is
+   * uninstantiable. We place these methods into purgatory until/unless the
+   * enclosing type is found to be instantiable.
    */
-  private Set<JMethod> methodsLiveExceptForInstantiability = new HashSet<JMethod>();
+  private Set<JNode> membersToRescueIfTypeIsInstantiated = new HashSet<JNode>();
 
   /**
    * A precomputed map of all instance methods onto a set of methods that
@@ -748,8 +828,12 @@ public class ControlFlowAnalyzer {
     referencedTypes = new HashSet<JReferenceType>(cfa.referencedTypes);
     stringValueOfChar = cfa.stringValueOfChar;
     liveStrings = new HashSet<String>(cfa.liveStrings);
-    methodsLiveExceptForInstantiability =
-        new HashSet<JMethod>(cfa.methodsLiveExceptForInstantiability);
+    membersToRescueIfTypeIsInstantiated =
+        new HashSet<JNode>(cfa.membersToRescueIfTypeIsInstantiated);
+    if (cfa.argsToRescueIfParameterRead != null) {
+      argsToRescueIfParameterRead =
+          new HashMap<JParameter, List<JExpression>>(cfa.argsToRescueIfParameterRead);
+    }
     methodsThatOverrideMe = cfa.methodsThatOverrideMe;
   }
 
@@ -801,6 +885,11 @@ public class ControlFlowAnalyzer {
       throw new IllegalArgumentException("Attempting to set multiple dependency recorders");
     }
     this.dependencyRecorder = dr;
+  }
+
+  public void setForPruning() {
+    assert argsToRescueIfParameterRead == null;
+    argsToRescueIfParameterRead = new HashMap<JParameter, List<JExpression>>();
   }
 
   /**
