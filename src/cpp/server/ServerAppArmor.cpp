@@ -74,9 +74,24 @@ Error enforceRestricted()
 
    // change to restricted
    if (pChangeHat("restricted", 0) == -1)
-      return systemError(errno, ERROR_LOCATION);
-
-   return Success();
+   {
+      // if this is operation not permitted then simply log a warning
+      // (this occurs when the app armor profile is disabled)
+      if (errno == EPERM)
+      {
+         LOG_WARNING_MESSAGE("Unable to change rserver into app armor "
+                             "restricted hat (profile may be disabled)");
+         return Success();
+      }
+      else
+      {
+         return systemError(errno, ERROR_LOCATION);
+      }
+   }
+   else
+   {
+      return Success();
+   }
 }
 
 #endif

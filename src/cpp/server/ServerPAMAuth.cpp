@@ -50,8 +50,6 @@ namespace {
 
 // TODO: more restrictive startup profile
 
-// TODO: make sure aa_change_hat doesn't fail for disabled app armor profile
-
 // TODO: make sure it works on redhat
 
 
