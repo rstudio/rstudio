@@ -42,8 +42,6 @@ namespace pam_auth {
 
 namespace {
 
-// TODO: don't re-assume priv on ubuntu and debian
-
 // TODO: confirm that debian doesn't require re-assuming priv
 
 // TODO: verify that we never leak a file descriptor
@@ -114,8 +112,7 @@ bool pamLogin(const std::string& username, const std::string& password)
    // child
    else if (pid == 0)
    {
-
- #ifdef PAM_REQUIRES_RESTORE_PRIV
+ #ifdef HAVE_PAM_REQUIRES_RESTORE_PRIV
       // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
       // running with geteuid != getuid (as is the case when we temporarily
       // drop privileges). So restore privilliges in the child

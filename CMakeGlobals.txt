@@ -108,6 +108,7 @@ if (UNIX AND NOT APPLE)
       execute_process(COMMAND /usr/bin/lsb_release "--id" "--short"
                       OUTPUT_VARIABLE RSTUDIO_LSB_RELEASE)
       if (RSTUDIO_LSB_RELEASE)
+         string(STRIP ${RSTUDIO_LSB_RELEASE} RSTUDIO_LSB_RELEASE)
          string(TOLOWER  ${RSTUDIO_LSB_RELEASE} RSTUDIO_LSB_RELEASE)
          set(RSTUDIO_LSB_RELEASE ${RSTUDIO_LSB_RELEASE} CACHE STRING "LSB release")
          message(STATUS "LSB release: ${RSTUDIO_LSB_RELEASE}")
