@@ -154,6 +154,9 @@ void setSaveAction(int saveAction);
 void markImageClean();
 bool imageIsDirty();
 
+// check whether there is a browser context active
+bool browserContextActive();
+
 // quit
 void quit(bool saveWorkspace);
 
