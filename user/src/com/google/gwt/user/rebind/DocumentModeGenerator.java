@@ -21,22 +21,22 @@ import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
-import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.user.client.DocumentModeAsserter;
+import com.google.gwt.user.client.DocumentModeAsserter.Severity;
 
 import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.List;
 
 /**
- * Generator for {@link com.google.gwt.user.client.UserAgentAsserter}.
+ * Generator for {@link com.google.gwt.user.client.DocumentModeAsserter}.
  */
-public class UserAgentGenerator extends Generator {
-  static final String PROPERTY_USER_AGENT = "user.agent";
-
-  static final String PROPERTY_USER_AGENT_RUNTIME_WARNING = "user.agent.runtimeWarning";
+public class DocumentModeGenerator extends Generator {
 
   @Override
   public String generate(TreeLogger logger, GeneratorContext context, String typeName)
@@ -61,60 +61,66 @@ public class UserAgentGenerator extends Generator {
 
     PropertyOracle propertyOracle = context.getPropertyOracle();
 
-    boolean userAgentRuntimeWarning = true;
+    String severityText;
     try {
-      ConfigurationProperty property = propertyOracle.getConfigurationProperty(PROPERTY_USER_AGENT_RUNTIME_WARNING);
-      userAgentRuntimeWarning = Boolean.valueOf(property.getValues().get(0));
+      ConfigurationProperty property = propertyOracle.getConfigurationProperty(DocumentModeAsserter.PROPERTY_DOCUMENT_COMPATMODE_SEVERITY);
+      severityText = property.getValues().get(0);
     } catch (BadPropertyValueException e) {
-      logger.log(TreeLogger.WARN, "Unable to find value for '"
-          + PROPERTY_USER_AGENT_RUNTIME_WARNING + "'", e);
+      logger.log(TreeLogger.ERROR, "Unable to find value for '"
+          + DocumentModeAsserter.PROPERTY_DOCUMENT_COMPATMODE_SEVERITY + "'", e);
+      throw new UnableToCompleteException();
     }
-
-    String userAgentValue;
-    SelectionProperty selectionProperty;
+    Severity severity;
     try {
-      selectionProperty = propertyOracle.getSelectionProperty(logger, PROPERTY_USER_AGENT);
-      userAgentValue = selectionProperty.getCurrentValue();
-    } catch (BadPropertyValueException e) {
-      logger.log(TreeLogger.ERROR, "Unable to find value for '" + PROPERTY_USER_AGENT + "'", e);
+      severity = Severity.valueOf(severityText);
+    } catch (IllegalArgumentException e) {
+      logger.log(TreeLogger.ERROR, "Value '" + severityText + "' for '"
+          + DocumentModeAsserter.PROPERTY_DOCUMENT_COMPATMODE_SEVERITY + "' is not one of: "
+          + Arrays.toString(Severity.values()), e);
       throw new UnableToCompleteException();
     }
 
-    String userAgentValueInitialCap = userAgentValue.substring(0, 1).toUpperCase()
-        + userAgentValue.substring(1);
-    className = className + "Impl" + userAgentValueInitialCap;
+    List<String> documentModes;
+    try {
+      ConfigurationProperty property = propertyOracle.getConfigurationProperty(DocumentModeAsserter.PROPERTY_DOCUMENT_COMPATMODE);
+      documentModes = property.getValues();
+    } catch (BadPropertyValueException e) {
+      logger.log(TreeLogger.ERROR, "Unable to find value for '"
+          + DocumentModeAsserter.PROPERTY_DOCUMENT_COMPATMODE + "'", e);
+      throw new UnableToCompleteException();
+    }
 
     ClassSourceFileComposerFactory composerFactory = new ClassSourceFileComposerFactory(
         packageName, className);
     composerFactory.addImplementedInterface(userType.getQualifiedSourceName());
+    composerFactory.addImport(DocumentModeAsserter.Severity.class.getCanonicalName());
 
     PrintWriter pw = context.tryCreate(logger, packageName, className);
     if (pw != null) {
       SourceWriter sw = composerFactory.createSourceWriter(context, pw);
 
       sw.println();
-      sw.println("public boolean getUserAgentRuntimeWarning() {");
+
+      sw.println("public String[] getAllowedDocumentModes() {");
       sw.indent();
-      sw.println("return " + userAgentRuntimeWarning + ";");
+      sw.println("return new String[] {");
+      sw.indent();
+      for (String mode : documentModes) {
+        sw.println("\"" + mode + "\", ");
+      }
+      sw.outdent();
+      sw.println("};");
+      sw.outdent();
+      sw.println("}");
+      
+      sw.println();
+
+      sw.println("public Severity getDocumentModeSeverity() {");
+      sw.indent();
+      sw.println("return Severity." + severity.toString() + ";");
       sw.outdent();
       sw.println("}");
       sw.println();
-
-      sw.println();
-      sw.println("public native String getRuntimeValue() /*-{");
-      sw.indent();
-      UserAgentPropertyGenerator.writeUserAgentPropertyJavaScript(sw,
-          selectionProperty.getPossibleValues());
-      sw.outdent();
-      sw.println("}-*/;");
-      sw.println();
-
-      sw.println();
-      sw.println("public String getCompileTimeValue() {");
-      sw.indent();
-      sw.println("return \"" + userAgentValue.trim() + "\";");
-      sw.outdent();
-      sw.println("}");
 
       sw.commit(logger);
     }

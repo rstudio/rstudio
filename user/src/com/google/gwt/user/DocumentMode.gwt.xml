@@ -1,0 +1,53 @@
+<!--                                                                        -->
+<!-- Copyright 2011 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+
+<!-- Defines the user.agent property and its provider function.             -->
+<!--                                                                        -->
+<!-- This module is typically inherited via com.google.gwt.user.User        -->
+<!--                                                                        -->
+<module>
+
+  <!--
+    Enumerate one or more valid browser rendering modes, to be compared with
+    the runtime value of $doc.compatMode
+     - Specify 'CSS1Compat' for Standards Mode
+     - Specify 'BackCompat' for Quirks Mode
+     
+     See http://en.wikipedia.org/wiki/Quirks_mode
+  -->
+  <define-configuration-property name="document.compatMode"
+    is-multi-valued="true" />
+  <!-- GWT only supports Standards Mode; Quirks Mode is deprecated -->
+  <set-configuration-property name="document.compatMode" value="CSS1Compat"/>
+  
+  <!--
+    Determine the severity of the runtime $doc.compatMode check:
+     - Specify 'ERROR' to receive an error message at runtime
+     - Specify 'WARN' to receive a warning in Development Mode
+     - Specify 'IGNORE' for no runtime check
+  -->
+  <define-configuration-property name="document.compatMode.severity"
+    is-multi-valued="false" />
+  <!-- The default value will be changed to 'ERROR' in a future release -->
+  <set-configuration-property name="document.compatMode.severity"
+    value="WARN" />
+
+  <!-- Asserts a valid browser rendering mode at runtime -->
+  <entry-point class="com.google.gwt.user.client.DocumentModeAsserter" />
+
+  <generate-with class="com.google.gwt.user.rebind.DocumentModeGenerator">
+    <when-type-assignable class="com.google.gwt.user.client.DocumentModeAsserter.DocumentModeProperty" />
+  </generate-with>
+
+</module>
