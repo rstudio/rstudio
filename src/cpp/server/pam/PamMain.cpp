@@ -14,14 +14,17 @@
 #include <security/pam_appl.h>
 
 #include <iostream>
+#include <stdio.h>
 
 #include <boost/utility.hpp>
 #include <boost/regex.hpp>
+#include <boost/format.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
+#include <core/system/PosixUser.hpp>
 
 // NOTE: Mac OS X supports PAM but ships with it in a locked-down config
 // which will cause all passwords to be rejected. To make it work run:
@@ -203,6 +206,24 @@ private:
     int status_;
 };
 
+int inappropriateUsage(const ErrorLocation& location)
+{
+   // log warning
+   boost::format fmt("Inappropriate use of pam helper binary (user=%1%)");
+   std::string msg = boost::str(
+               fmt % core::system::user::currentUserIdentity().userId);
+   core::log::logWarningMessage(msg, location);
+
+   // additional notification to the user
+   std::cerr << "\nThis binary is not designed for running this way\n"
+                "-- the system administrator has been informed\n\n";
+
+   // cause further annoyance
+   ::sleep(10);
+
+   return EXIT_FAILURE;
+}
+
 } // anonymous namespace
 
 
@@ -213,14 +234,35 @@ int main(int argc, char * const argv[])
       // initialize log
       initializeSystemLog("rserver-pam", core::system::kLogLevelWarning);
 
+      // ensure that we aren't being called inappropriately
+      if (::isatty(STDIN_FILENO))
+         return inappropriateUsage(ERROR_LOCATION);
+      else if (::isatty(STDOUT_FILENO))
+         return inappropriateUsage(ERROR_LOCATION);
+      else if (argc != 2)
+         return inappropriateUsage(ERROR_LOCATION);
+
       // read username from command line
-      if (argc < 2)
-         return EXIT_FAILURE;
       std::string username(argv[1]);
 
-      // read password from stdin
+      // read password (up to 200 chars in length)
       std::string password;
-      std::getline(std::cin, password);
+      const int MAXPASS = 200;
+      int ch = 0;
+      int count = 0;
+      while((ch = ::fgetc(stdin)) != EOF)
+      {
+         if (++count <= MAXPASS)
+         {
+            password.push_back(static_cast<char>(ch));
+         }
+         else
+         {
+            LOG_WARNING_MESSAGE("Password exceeded maximum length for "
+                                "user " + username);
+            return EXIT_FAILURE;
+         }
+      }
 
       // verify password
       if (PAMAuth(false).login(username, password) == PAM_SUCCESS)

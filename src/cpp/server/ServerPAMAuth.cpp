@@ -45,9 +45,6 @@ namespace {
 
 // TODO: verify that we never leak a file descriptor
 
-// TODO: make sure inputs into pam helper are bounded
-// TODO: block tty case in pam helper
-
 // TODO: more restrictive startup profile
 
 // TODO: make sure it works on redhat
