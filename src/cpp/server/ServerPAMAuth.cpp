@@ -42,11 +42,8 @@ namespace pam_auth {
 
 namespace {
 
-// TODO: confirm that debian doesn't require re-assuming priv
 
 // TODO: verify that we never leak a file descriptor
-
-// TODO: comments on intentionally failing forward in child
 
 // TODO: make sure inputs into pam helper are bounded
 // TODO: block tty case in pam helper
@@ -112,6 +109,13 @@ bool pamLogin(const std::string& username, const std::string& password)
    // child
    else if (pid == 0)
    {
+      // NOTE: within the child we want to make sure in all cases that
+      // we call ::execv to execute the pam helper. as a result if any
+      // errors occur while we are setting up for the ::execv we log
+      // and continue rather than calling ::exit (we do this to avoid
+      // strange error conditions related to global c++ objects being
+      // torn down in a non-standard sequence).
+
  #ifdef HAVE_PAM_REQUIRES_RESTORE_PRIV
       // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
       // running with geteuid != getuid (as is the case when we temporarily
@@ -120,7 +124,10 @@ bool pamLogin(const std::string& username, const std::string& password)
       {
          Error error = util::system::restorePriv();
          if (error)
+         {
             LOG_ERROR(error);
+            // intentionally fail forward (see note above)
+         }
       }
 #endif
 
@@ -131,7 +138,10 @@ bool pamLogin(const std::string& username, const std::string& password)
       // clear the child signal mask
       Error error = core::system::clearSignalMask();
       if (error)
+      {
          LOG_ERROR(error);
+         // intentionally fail forward (see note above)
+      }
 
       // wire standard streams
       posixcall(boost::bind(::dup2, fdInput[READ], STDIN_FILENO),
@@ -142,7 +152,10 @@ bool pamLogin(const std::string& username, const std::string& password)
       // close all open file descriptors other than std streams
       error = core::system::closeNonStdFileDescriptors();
       if (error)
+      {
          LOG_ERROR(error);
+         // intentionally fail forward (see note above)
+      }
 
       // build username args (on heap so they stay around after exec)
       // and execute pam helper
