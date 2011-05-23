@@ -42,18 +42,28 @@ namespace pam_auth {
 
 namespace {
 
-// TODO: verify that we never leak a file descriptor
+// TODO: don't re-assume priv on ubuntu and debian
 
 // TODO: confirm that debian doesn't require re-assuming priv
+
+// TODO: verify that we never leak a file descriptor
 
 // TODO: comments on intentionally failing forward in child
 
 // TODO: make sure inputs into pam helper are bounded
 // TODO: block tty case in pam helper
 
-// TODO: make sure it works on redhat
+// TODO: more restrictive startup profile
 
 // TODO: then can change hat permanently
+
+// TODO: why isn't user.log getting hit?
+//    - AppArmor issue?
+//    - Ubuntu 11.04 issue?
+
+// TODO: make sure it works on redhat
+
+
 
 
 // Handles error logging and EINTR retrying. Only for use with
