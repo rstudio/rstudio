@@ -81,7 +81,8 @@ void GwtCallback::browseUrl(QString url)
       localUrl.setEncodedPath(url.toAscii());
 
       // show it in a browser or a secondary window as appropriate
-      if (url.startsWith(QString::fromAscii("custom/")))
+      if (url.startsWith(QString::fromAscii("custom/")) ||
+          url.startsWith(QString::fromAscii("help/")))
       {
          QDesktopServices::openUrl(localUrl);
       }
