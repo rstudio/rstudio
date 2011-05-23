@@ -29,22 +29,7 @@ namespace app_armor {
   
 #ifdef __APPLE__
 
-bool isAvailable()
-{
-   return false;
-}
-
-bool isEnforcingRestricted()
-{
-   return false;
-}
-
 Error enforceRestricted()
-{
-   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
-}
-
-core::Error dropRestricted()
 {
    return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 }
@@ -61,37 +46,10 @@ void addLastDLErrorMessage(Error* pError)
       pError->addProperty("dlerror", std::string(msg));
 }
 
-// aa_change_hat
-typedef int (*PtrAAChangeHat)(const char*, unsigned long);
-PtrAAChangeHat s_pChangeHat = NULL;
-
-// magic token used to get out of restriected mode
-unsigned long s_magicToken = 0L;
-
 } // anonymous namespace
-
-bool isAvailable()
-{
-   return FilePath("/etc/apparmor.d/rstudio-server").exists();
-}
-
-bool isEnforcingRestricted()
-{
-   return s_magicToken != 0;
-}
 
 Error enforceRestricted()
 {
-   // verify we aren't already enforcing restricted
-   if (isEnforcingRestricted())
-   {
-      return systemError(boost::system::errc::permission_denied,
-                         ERROR_LOCATION);
-   }
-
-   // create magic token
-   unsigned int magicToken = core::random::uniformRandomInteger<unsigned long>();
-
    // dynamically load libapparmor
    void* pLibAA = ::dlopen("libapparmor.so.1", RTLD_NOW);
    if (pLibAA == NULL)
@@ -103,8 +61,10 @@ Error enforceRestricted()
    }
 
    // lookup the change hat function
-   s_pChangeHat = (PtrAAChangeHat)::dlsym(pLibAA, "aa_change_hat");
-   if (s_pChangeHat == NULL)
+   typedef int (*PtrAAChangeHat)(const char*, unsigned long);
+   PtrAAChangeHat pChangeHat = (PtrAAChangeHat)::dlsym(pLibAA,
+                                                       "aa_change_hat");
+   if (pChangeHat == NULL)
    {
       Error error = systemError(boost::system::errc::not_supported,
                                 ERROR_LOCATION);
@@ -113,31 +73,11 @@ Error enforceRestricted()
    }
 
    // change to restricted
-   if (s_pChangeHat("restricted", magicToken) == -1)
+   if (pChangeHat("restricted", 0) == -1)
       return systemError(errno, ERROR_LOCATION);
 
-   s_magicToken = magicToken;
    return Success();
 }
-
-core::Error dropRestricted()
-{
-   // verify we are currently enforcing restricted
-   if (!isEnforcingRestricted())
-   {
-      return systemError(boost::system::errc::permission_denied,
-                         ERROR_LOCATION);
-   }
-
-   // drop restricted. note we leave the magic token alone so
-   // that if a caller subsequently attempts to call enforceRestricted it
-   // will fail
-   if (s_pChangeHat(NULL, s_magicToken) == -1)
-      return systemError(errno, ERROR_LOCATION);
-   else
-      return Success();
-}
-
 
 #endif
 

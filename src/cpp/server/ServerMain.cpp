@@ -294,8 +294,8 @@ int main(int argc, char * const argv[])
          }
       }
 
-      // enable apparmor profile
-      if (options.serverEnableAppArmor() && app_armor::isAvailable())
+      // enforce restricted mode if we are running under app armor
+      if (options.serverAppArmorEnabled())
       {
          error = app_armor::enforceRestricted();
          if (error)

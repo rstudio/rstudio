@@ -50,14 +50,9 @@ namespace {
 
 // TODO: more restrictive startup profile
 
-// TODO: then can change hat permanently
-
-// TODO: why isn't user.log getting hit?
-//    - AppArmor issue?
-//    - Ubuntu 11.04 issue?
+// TODO: make sure aa_change_hat doesn't fail for disabled app armor profile
 
 // TODO: make sure it works on redhat
-
 
 
 

@@ -20,22 +20,10 @@ namespace core {
    class Error;
 }
 
-// NOTE: like the setuid related functions (e.g. temporarilyDropPriv)
-// the App Armor API is global to the process and therefore not thread
-// safe. Typically the enforceRestricted call will be made once during
-// startup and then the dropRestricted call will be made after a fork
-// into a child process (simillar to the restorePriv call)
-
 namespace server {
 namespace app_armor {
    
-bool isAvailable();
-
-bool isEnforcingRestricted();
-
 core::Error enforceRestricted();
-
-core::Error dropRestricted();
 
 } // namespace app_armor
 } // namespace server

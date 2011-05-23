@@ -76,11 +76,10 @@ ProgramStatus Options::read(int argc, char * const argv[])
       ("server-daemonize",
          value<bool>(&serverDaemonize_)->default_value(1),
          "run program as daemon")
-      ("server-enable-app-armor",
-         value<bool>(&serverEnableAppArmor_)->default_value(1),
-         "enable app armor profile");
+      ("server-app-armor-enabled",
+         value<bool>(&serverAppArmorEnabled_)->default_value(1),
+         "is app armor enabled for this session");
 
-   
    // www - web server options
    options_description www("www") ;
    www.add_options()
@@ -177,6 +176,14 @@ ProgramStatus Options::read(int argc, char * const argv[])
             return ProgramStatus::exitFailure();
          }
       }
+   }
+
+   // if app armor is enabled do a further check to see whether
+   // the profile exists. if it doesn't then disable it
+   if (serverAppArmorEnabled_)
+   {
+      if (!FilePath("/etc/apparmor.d/rstudio-server").exists())
+         serverAppArmorEnabled_ = false;
    }
 
    // convert relative paths by completing from the system installation
