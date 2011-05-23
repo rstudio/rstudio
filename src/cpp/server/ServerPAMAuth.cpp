@@ -42,8 +42,6 @@ namespace pam_auth {
 
 namespace {
 
-// TODO: more restrictive startup profile
-
 // Handles error logging and EINTR retrying. Only for use with
 // functions that return -1 on error and set errno.
 int posixcall(boost::function<ssize_t()> func, const ErrorLocation& location)
