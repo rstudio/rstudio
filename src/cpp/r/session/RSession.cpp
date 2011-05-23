@@ -1260,6 +1260,12 @@ bool imageIsDirty()
 {
    return R_DirtyImage != 0;
 }
+
+bool browserContextActive()
+{
+   const int CTXT_BROWSER = 16; // from Defn.h
+   return Rf_countContexts(CTXT_BROWSER, 1) > 0;
+}
    
 void quit(bool saveWorkspace)
 {   
