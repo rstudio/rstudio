@@ -42,14 +42,7 @@ namespace pam_auth {
 
 namespace {
 
-
-// TODO: verify that we never leak a file descriptor
-
 // TODO: more restrictive startup profile
-
-// TODO: make sure it works on redhat
-
-
 
 // Handles error logging and EINTR retrying. Only for use with
 // functions that return -1 on error and set errno.
