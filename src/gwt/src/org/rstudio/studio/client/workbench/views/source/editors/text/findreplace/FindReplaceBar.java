@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.workbench.views.history.view.Shelf;
