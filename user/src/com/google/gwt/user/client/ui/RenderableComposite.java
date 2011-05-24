@@ -27,7 +27,7 @@ import com.google.gwt.user.client.Event;
 /**
  * EXPERIMENTAL and subject to change. Do not use this in production code.
  * <p>
- * A version of {@link Composite} that supports wrapping {@link Attachable}
+ * A version of {@link Composite} that supports wrapping {@link Renderable}
  * widgets. This functionality will eventually be merged into {@link Composite}
  * itself, but is still under active development.
  * The only reason why this isn't a subclass of {@link Composite} is to avoid
@@ -35,7 +35,7 @@ import com.google.gwt.user.client.Event;
  *
  * TODO(rdcastro): Rename this RenderableComposite.
  */
-public abstract class AttachableComposite extends Widget implements IsRenderable {
+public abstract class RenderableComposite extends Widget implements IsRenderable {
 
   interface HTMLTemplates extends SafeHtmlTemplates {
     @Template("<span id=\"{0}\"></span>")
