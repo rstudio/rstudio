@@ -933,7 +933,7 @@ public class ApiCompatibilityChecker extends ToolBase {
     }
     // gwt-user.jar
     Set<String> gwtIncludedPaths =
-        new HashSet<String>(Arrays.asList(new String[] {"com/google/gwt"}));
+        new HashSet<String>(Arrays.asList(new String[] {"com/google/gwt", "com/google/web"}));
     Set<String> gwtExcludedPaths =
         new HashSet<String>(
             Arrays

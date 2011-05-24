@@ -29,7 +29,7 @@ do
   then 
     MODIFIED_FILE=gwt-dev-modified.jar
   fi 
-  jar -cf ../${MODIFIED_FILE} `find com/google/gwt -name *.java`
+  jar -cf ../${MODIFIED_FILE} `find com/google/gwt -name *.java` `find com/google/web -name *.java`
   cd ..
   rm -rf ${TEMP_DIR} 
 done
