@@ -161,7 +161,6 @@ public class HelpPane extends WorkbenchPane
       } ;
    }-*/;
    
-   @SuppressWarnings("unused")
    private void helpNavigated(Document doc)
    {
       NodeList<Element> elements = doc.getElementsByTagName("a") ;
@@ -201,7 +200,6 @@ public class HelpPane extends WorkbenchPane
       this.fireEvent(new HelpNavigateEvent(doc.getURL(), effectiveTitle)) ;
    }
 
-   @SuppressWarnings("unused")
    private void unload()
    {
       title_.setText("") ;

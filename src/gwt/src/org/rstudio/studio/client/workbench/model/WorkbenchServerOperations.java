@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-import org.rstudio.studio.client.common.cran.model.CRANMirror;
 import org.rstudio.studio.client.common.cran.model.CRANServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;

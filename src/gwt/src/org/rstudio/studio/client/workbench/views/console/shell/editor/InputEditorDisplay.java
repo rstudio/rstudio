@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.views.console.shell.editor;
 
 import com.google.gwt.event.dom.client.HasAllFocusHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.Rectangle;
 
 public interface InputEditorDisplay extends HasAllFocusHandlers,

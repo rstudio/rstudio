@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 

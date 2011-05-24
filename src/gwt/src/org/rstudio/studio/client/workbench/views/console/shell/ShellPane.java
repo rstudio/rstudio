@@ -496,7 +496,6 @@ public class ShellPane extends Composite implements Shell.Display,
    public String processCommandEntry()
    {
       // parse out the command text
-      @SuppressWarnings("unused")
       String promptText = prompt_.getElement().getInnerText();
       String commandText = input_.getCode();
       input_.setInputText("");
