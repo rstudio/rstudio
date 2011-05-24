@@ -178,7 +178,7 @@ public class SimpleEventBus extends EventBus {
       firingDepth++;
 
       if (source != null) {
-        event.setSource(source);
+        setSourceOfEvent(event, source);
       }
 
       List<H> handlers = getDispatchList(event.getAssociatedType(), source);
@@ -190,7 +190,7 @@ public class SimpleEventBus extends EventBus {
         H handler = isReverseOrder ? it.previous() : it.next();
 
         try {
-          event.dispatch(handler);
+          dispatchEvent(event, handler);
         } catch (Throwable e) {
           if (causes == null) {
             causes = new HashSet<Throwable>();

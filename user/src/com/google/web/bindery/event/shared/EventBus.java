@@ -31,6 +31,26 @@ import com.google.web.bindery.event.shared.Event.Type;
 public abstract class EventBus {
 
   /**
+   * Invokes {@code event.dispatch} with {@code handler}.
+   * <p>
+   * Protected to allow EventBus implementations in different packages to
+   * dispatch events even though the {@code event.dispatch} method is protected.
+   */
+  protected static <H> void dispatchEvent(Event<H> event, H handler) {
+    event.dispatch(handler);
+  }
+
+  /**
+   * Sets {@code source} as the source of {@code event}.
+   * <p>
+   * Protected to allow EventBus implementations in different packages to set an
+   * event source even though the {@code event.setSource} method is protected.
+   */
+  protected static void setSourceOfEvent(Event<?> event, Object source) {
+    event.setSource(source);
+  }
+
+  /**
    * Adds an unfiltered handler to receive events of this type from all sources.
    * <p>
    * It is rare to call this method directly. More typically an {@link Event}
@@ -70,7 +90,7 @@ public abstract class EventBus {
    * from executing.
    * 
    * @throws UmbrellaException wrapping exceptions thrown by handlers
-   *
+   * 
    * @param event the event to fire
    */
   public abstract void fireEvent(Event<?> event);
