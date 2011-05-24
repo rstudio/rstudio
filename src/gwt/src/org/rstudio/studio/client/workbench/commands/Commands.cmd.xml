@@ -149,7 +149,12 @@ well as menu structures (for main menu and popup menus).
       <menu label="_Tools">
          <cmd refid="interruptR"/>
          <separator/>
-         <cmd refid="setWorkingDir"/>
+         <menu label="Set Working Directory">
+            <cmd refid="setWorkingDirToActiveDoc"/>
+            <cmd refid="setWorkingDirToFilesPane"/>
+            <separator/>
+            <cmd refid="setWorkingDir"/>
+         </menu>
          <separator/>
          <cmd refid="installPackage"/>
          <cmd refid="updatePackages"/>
@@ -249,10 +254,18 @@ well as menu structures (for main menu and popup menus).
                    or hidden. Defaults to true.
    -->
 
+   <cmd id="setWorkingDirToActiveDoc"
+        buttonLabel=""
+        menuLabel="To Source File Location"
+        desc="Change working directory to path of active document"/> 
+   <cmd id="setWorkingDirToFilesPane"
+        buttonLabel=""
+        menuLabel="To _Files Pane Location"
+        desc="Change working directory to location of Files pane"/>
    <cmd id="setWorkingDir"
         buttonLabel=""
-        menuLabel="Change Working _Dir..."
-        desc="Change the current working directory"/>
+        menuLabel="_Choose Directory..."
+        desc="Select and change to a new working directory"/>
 
    <cmd id="newSourceDoc"
         buttonLabel=""

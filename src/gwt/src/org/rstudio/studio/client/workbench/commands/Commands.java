@@ -43,6 +43,7 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand findReplace();
    public abstract AppCommand extractFunction();
    public abstract AppCommand commentUncomment();
+   public abstract AppCommand setWorkingDirToActiveDoc();
 
    // Console
    public abstract AppCommand consoleClear();
@@ -63,6 +64,7 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand quickOpen();
    public abstract AppCommand activateFiles();
    public abstract AppCommand syncWorkingDir();
+   public abstract AppCommand setWorkingDirToFilesPane();
    public abstract AppCommand showFolder();
 
    // View

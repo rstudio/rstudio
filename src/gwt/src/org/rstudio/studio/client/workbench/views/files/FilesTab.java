@@ -34,6 +34,8 @@ public class FilesTab extends DelayLoadWorkbenchTab<Files>
    {
       @Handler
       public abstract void onUploadFile();
+      @Handler
+      public abstract void onSetWorkingDirToFilesPane();
    }
 
    @Inject

@@ -192,7 +192,7 @@ public class Workbench implements BusyHandler,
    public void onSetWorkingDir()
    {
       fileDialogs_.chooseFolder(
-            "Change Working Directory",
+            "Choose Working Directory",
             fsContext_,
             workbenchContext_.getCurrentWorkingDir(),
             new ProgressOperationWithInput<FileSystemItem>()
@@ -204,7 +204,7 @@ public class Workbench implements BusyHandler,
                      return;
 
                   // set console
-                  consoleDispatcher_.executeSetWd(input); 
+                  consoleDispatcher_.executeSetWd(input, true); 
                   
                   // set files pane
                   eventBus_.fireEvent(new DirectoryNavigateEvent(input));

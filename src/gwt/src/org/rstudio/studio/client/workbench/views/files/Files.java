@@ -522,7 +522,12 @@ public class Files
    @Handler
    void onSyncWorkingDir()
    {
-      consoleDispatcher_.executeSetWd(currentPath_);
+      consoleDispatcher_.executeSetWd(currentPath_, true);
+   }
+   
+   void onSetWorkingDirToFilesPane()
+   {
+      onSyncWorkingDir();
    }
 
    @Handler

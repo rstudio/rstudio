@@ -6,6 +6,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
@@ -18,23 +19,28 @@ public class ConsoleDispatcher
 {
    @Inject
    public ConsoleDispatcher(EventBus eventBus,
+                            Commands commands,
                             FileDialogs fileDialogs,
                             WorkbenchContext workbenchContext,
                             RemoteFileSystemContext fsContext)
    {
       eventBus_ = eventBus;
+      commands_ = commands;
       fileDialogs_ = fileDialogs;
       workbenchContext_ = workbenchContext;
       fsContext_ = fsContext;
    }
 
-   public void executeSetWd(FileSystemItem dir)
+   public void executeSetWd(FileSystemItem dir, boolean activateConsole)
    {
       String escaped = dir.getPath().replaceAll("\\\\", "\\\\\\\\");
       if (escaped.equals("~"))
          escaped = "~/";
       eventBus_.fireEvent(
             new SendToConsoleEvent("setwd(\"" + escaped + "\")", true));
+      
+      if (activateConsole)
+         commands_.activateConsole().execute();
    }
    
    public void executeCommand(String command, FileSystemItem targetFile)
@@ -108,6 +114,7 @@ public class ConsoleDispatcher
    
    
    private final EventBus eventBus_;
+   private final Commands commands_;
    private final FileDialogs fileDialogs_;
    private final WorkbenchContext workbenchContext_;
    private final RemoteFileSystemContext fsContext_;

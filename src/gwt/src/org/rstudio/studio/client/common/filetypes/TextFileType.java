@@ -106,6 +106,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.publishPDF());
       }
       results.add(commands.findReplace());
+      results.add(commands.setWorkingDirToActiveDoc());
       return results;
    }
 

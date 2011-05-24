@@ -158,6 +158,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.extractFunction());
       dynamicCommands_.add(commands.commentUncomment());
       dynamicCommands_.add(commands.jumpToFunction());
+      dynamicCommands_.add(commands.setWorkingDirToActiveDoc());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -452,7 +453,7 @@ public class Source implements InsertSourceHandler,
                }
             });
    }
-
+   
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
       openFile(event.getFile(), event.getFileType());
@@ -766,6 +767,7 @@ public class Source implements InsertSourceHandler,
       commands_.lastTab().setEnabled(hasDocs);
       commands_.switchToTab().setEnabled(hasDocs);
       commands_.activateSource().setEnabled(hasDocs);
+      commands_.setWorkingDirToActiveDoc().setEnabled(hasDocs);
 
       HashSet<AppCommand> newCommands =
             activeEditor_ != null ? activeEditor_.getSupportedCommands()
@@ -792,6 +794,7 @@ public class Source implements InsertSourceHandler,
       // Save/Save As should always stay visible
       commands_.saveSourceDoc().setVisible(true);
       commands_.saveSourceDocAs().setVisible(true);
+      commands_.setWorkingDirToActiveDoc().setVisible(true);
 
       activeCommands_ = newCommands;
 

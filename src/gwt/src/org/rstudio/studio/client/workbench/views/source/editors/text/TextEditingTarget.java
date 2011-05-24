@@ -48,12 +48,12 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.FilenameTransform;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -227,6 +227,7 @@ public class TextEditingTarget implements EditingTarget
                             GlobalDisplay globalDisplay,
                             FileDialogs fileDialogs,
                             FileTypeRegistry fileTypeRegistry,
+                            ConsoleDispatcher consoleDispatcher,
                             Provider<PublishPdf> pPublishPdf,
                             Session session,
                             FontSizeManager fontSizeManager,
@@ -240,6 +241,7 @@ public class TextEditingTarget implements EditingTarget
       globalDisplay_ = globalDisplay;
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
+      consoleDispatcher_ = consoleDispatcher;
       session_ = session;
       fontSizeManager_ = fontSizeManager;
       pPublishPdf_ = pPublishPdf;
@@ -1233,6 +1235,29 @@ public class TextEditingTarget implements EditingTarget
    {
       statusBar_.getFunction().click();
    }
+   
+   @Handler
+   public void onSetWorkingDirToActiveDoc()
+   {
+      // get path
+      String activeDocPath = docUpdateSentinel_.getPath();
+      if (activeDocPath != null)
+      {       
+         FileSystemItem wdPath = 
+            FileSystemItem.createFile(activeDocPath).getParentPath();
+         consoleDispatcher_.executeSetWd(wdPath, true);
+      }
+      else
+      {
+         globalDisplay_.showMessage(
+               MessageDialog.WARNING,
+               "Source File Not Saved",   
+               "The currently active source file is not saved so doesn't " +
+               "have a directory to change into.");
+         return;
+      }
+   }
+
 
    private static String stangle(String sweaveStr)
    {
@@ -1533,6 +1558,7 @@ public class TextEditingTarget implements EditingTarget
    private final GlobalDisplay globalDisplay_;
    private final FileDialogs fileDialogs_;
    private final FileTypeRegistry fileTypeRegistry_;
+   private final ConsoleDispatcher consoleDispatcher_;
    private final Session session_;
    private final FontSizeManager fontSizeManager_;
    private DocUpdateSentinel docUpdateSentinel_;
