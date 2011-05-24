@@ -161,6 +161,7 @@ public class HelpPane extends WorkbenchPane
       } ;
    }-*/;
    
+   @SuppressWarnings("unused")
    private void helpNavigated(Document doc)
    {
       NodeList<Element> elements = doc.getElementsByTagName("a") ;
@@ -200,6 +201,7 @@ public class HelpPane extends WorkbenchPane
       this.fireEvent(new HelpNavigateEvent(doc.getURL(), effectiveTitle)) ;
    }
 
+   @SuppressWarnings("unused")
    private void unload()
    {
       title_.setText("") ;
@@ -292,6 +294,11 @@ public class HelpPane extends WorkbenchPane
                   event.stopPropagation();
                   findButton.click();
                   findTextBox.focus();
+               }
+               else if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
+               {
+                  findTextBox.setValue("");
+                  findButton.setVisible(false);
                }
                else
                {
