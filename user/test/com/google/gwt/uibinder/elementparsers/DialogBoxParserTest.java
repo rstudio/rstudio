@@ -77,8 +77,7 @@ public class DialogBoxParserTest extends TestCase {
     b.append("</g:DialogBox> ");
 
     String[] expected = {
-        "fieldName.setHTML(\"@mockToken-" + ElementParserTester.FIELD_NAME
-            + "-Hello, I <b>caption</b>you.\");",
+        "fieldName.setHTML(\"@mockToken-Hello, I <b>caption</b>you.\");",
         "fieldName.setWidget(<g:Label>);",};
 
     FieldWriter w = tester.parse(b.toString());
@@ -343,8 +342,7 @@ public class DialogBoxParserTest extends TestCase {
     b.append("</ui:UiBinder>");
 
     String[] expected = {
-        "fieldName.setHTML(\"@mockToken-" + ElementParserTester.FIELD_NAME
-            + "-Hello, I <b>caption</b>you.\");",
+        "fieldName.setHTML(\"@mockToken-Hello, I <b>caption</b>you.\");",
         "fieldName.setWidget(<g:Label>);",};
 
     parser.parse(tester.getElem(b.toString(), "my:MyDialogBox"), "fieldName",

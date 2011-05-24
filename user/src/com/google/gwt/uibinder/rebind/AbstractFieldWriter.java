@@ -60,7 +60,6 @@ abstract class AbstractFieldWriter implements FieldWriter {
   private int buildPrecedence;
   private final MortalLogger logger;
   private final FieldWriterType fieldType;
-  private String html;
 
   public AbstractFieldWriter(String name, FieldWriterType fieldType, MortalLogger logger) {
     if (name == null) {
@@ -96,9 +95,6 @@ abstract class AbstractFieldWriter implements FieldWriter {
   public FieldWriterType getFieldType() {
     return fieldType;
   }
-  public String getHtml() {
-    return html + ".asString()";
-  }  
 
   public String getInitializer() {
     return initializer;
@@ -119,10 +115,6 @@ abstract class AbstractFieldWriter implements FieldWriter {
     return getReturnType(getAssignableType(), pathList, logger);
   }
 
-  public String getSafeHtml() {
-    return html;
-  }
-  
   public void needs(FieldWriter f) {
     needs.add(f);
   }
@@ -130,10 +122,6 @@ abstract class AbstractFieldWriter implements FieldWriter {
   @Override
   public void setBuildPrecedence(int precedence) {
     this.buildPrecedence = precedence;
-  }
-
-  public void setHtml(String html) {
-    this.html = html;
   }
 
   public void setInitializer(String initializer) {

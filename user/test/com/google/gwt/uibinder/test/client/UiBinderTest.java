@@ -18,15 +18,12 @@ package com.google.gwt.uibinder.test.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.LabelElement;
-import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.CssResource.NotStrict;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.test.client.EnumeratedLabel.Suffix;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.AbsolutePanel;
@@ -53,7 +50,6 @@ public class UiBinderTest extends GWTTestCase {
   private WidgetBasedUi widgetUi;
   private DomBasedUi domUi;
   private com.google.gwt.user.client.ui.DockPanel root;
-  private SafeHtmlRendererUi safeHtmlUi;
 
   @Override
   public String getModuleName() {
@@ -67,28 +63,6 @@ public class UiBinderTest extends GWTTestCase {
     widgetUi = app.getWidgetUi();
     domUi = app.getDomUi();
     root = widgetUi.root;
-    safeHtmlUi = app.getSafeHtmlUi();
-  }
-
-  public void testSafeHtmlRendererText() {
-    SafeHtml render = safeHtmlUi.render();
-
-    LabelElement renderedHtml = domUi.root.getOwnerDocument().createLabelElement();
-    renderedHtml.setInnerHTML(render.asString());
-
-    Node innerDiv = renderedHtml.getFirstChild();
-
-    // Was the first span rendered as a "HTML-safe" text string?
-    Node spanWithConstantTextNode = innerDiv.getChild(0);
-    assertEquals("span", spanWithConstantTextNode.getNodeName().toLowerCase());
-    assertEquals(Node.TEXT_NODE, spanWithConstantTextNode.getFirstChild().getNodeType());
-    assertEquals("<b>Here's the text!</b>",
-        spanWithConstantTextNode.getFirstChild().getNodeValue());
-
-    Node firstRawTextNode = innerDiv.getChild(1);
-    assertEquals(Node.TEXT_NODE, firstRawTextNode.getNodeType());
-    assertEquals(" Hello, ",
-        firstRawTextNode.getNodeValue());
   }
 
   public void testTableWithColumns() {

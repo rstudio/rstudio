@@ -132,16 +132,12 @@ public class GridParserTest extends TestCase {
 
     String[] expected = {"fieldName.resize(2, 2);",
         "fieldName.getRowFormatter().setStyleName(0, \"rowHeaderStyle\");",
-        "fieldName.setHTML(0, 0, \"@mockToken-" + ElementParserTester.FIELD_NAME
-            + "-foo\");",
+        "fieldName.setHTML(0, 0, \"@mockToken-foo\");",
         "fieldName.getCellFormatter().setStyleName(0, 0, \"headerStyle\");",
-        "fieldName.setHTML(0, 1, \"@mockToken-" + ElementParserTester.FIELD_NAME
-            + "-bar\");",
+        "fieldName.setHTML(0, 1, \"@mockToken-bar\");",
         "fieldName.getCellFormatter().setStyleName(0, 1, \"headerStyle\");",
-        "fieldName.setHTML(1, 0, \"@mockToken-" + ElementParserTester.FIELD_NAME
-            + "-foo\");",
-        "fieldName.setHTML(1, 1, \"@mockToken-" + ElementParserTester.FIELD_NAME
-            + "-bar\");"};
+        "fieldName.setHTML(1, 0, \"@mockToken-foo\");",
+        "fieldName.setHTML(1, 1, \"@mockToken-bar\");"};
 
     FieldWriter w = tester.parse(b.toString());
 
@@ -176,10 +172,8 @@ public class GridParserTest extends TestCase {
 
     String[] expected = {
         "fieldName.resize(2, 2);",
-        "fieldName.setHTML(0, 0, \"@mockToken-" + ElementParserTester.FIELD_NAME
-            + "-<div>foo HTML element</div>\");",
-        "fieldName.setHTML(0, 1, \"@mockToken-" + ElementParserTester.FIELD_NAME
-            + "-<div>bar HTML element</div>\");",
+        "fieldName.setHTML(0, 0, \"@mockToken-<div>foo HTML element</div>\");",
+        "fieldName.setHTML(0, 1, \"@mockToken-<div>bar HTML element</div>\");",
         "fieldName.setWidget(1, 0, <g:Label>);",
         "fieldName.setWidget(1, 1, <g:Label>);"};
 
@@ -215,8 +209,7 @@ public class GridParserTest extends TestCase {
 
     String[] expected = {
         "fieldName.resize(2, 2);",
-        "fieldName.setHTML(0, 0, \"@mockToken-" + ElementParserTester.FIELD_NAME
-            + "-<div>foo HTML element</div>\");",
+        "fieldName.setHTML(0, 0, \"@mockToken-<div>foo HTML element</div>\");",
         "fieldName.setWidget(1, 0, <g:Label>);",
         "fieldName.setWidget(1, 1, <g:Label>);"};
 

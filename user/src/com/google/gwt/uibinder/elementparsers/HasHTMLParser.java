@@ -35,8 +35,7 @@ public class HasHTMLParser implements ElementParser {
     writer.endAttachedSection();
     // TODO(jgw): throw an error if there's a conflicting 'html' attribute.
     if (html.trim().length() > 0) {
-      writer.genPropertySet(fieldName, "HTML", writer.declareTemplateCall(html,
-          fieldName));
+      writer.genPropertySet(fieldName, "HTML", writer.declareTemplateCall(html));
     }
   }
 }

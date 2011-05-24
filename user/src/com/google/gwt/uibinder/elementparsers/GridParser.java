@@ -128,7 +128,7 @@ public class GridParser implements ElementParser {
             writer.addStatement("%s.setHTML(%s, %s, %s);", fieldName,
                 Integer.toString(matrix.indexOf(row)),
                 Integer.toString(row.getColumns().indexOf(column)),
-                writer.declareTemplateCall(column.getContent(), fieldName));
+                writer.declareTemplateCall(column.getContent()));
           }
           if (column.getTagName().equals(CUSTOMCELL_TAG)) {
             writer.addStatement("%s.setWidget(%s, %s, %s);", fieldName,

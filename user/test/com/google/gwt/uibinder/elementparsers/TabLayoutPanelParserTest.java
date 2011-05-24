@@ -168,8 +168,7 @@ public class TabLayoutPanelParserTest extends TestCase {
     b.append("</g:TabLayoutPanel>");
 
     String[] expected = {
-        "fieldName.add(<g:Label id='able'>, \"@mockToken-" + ElementParserTester.FIELD_NAME
-            + "-Re<b>mark</b>able\", true);",
+        "fieldName.add(<g:Label id='able'>, \"@mockToken-Re<b>mark</b>able\", true);",
         "fieldName.add(<g:Label id='baker'>, " + "<g:Label id='custom'>);",};
 
     FieldWriter w = tester.parse(b.toString());

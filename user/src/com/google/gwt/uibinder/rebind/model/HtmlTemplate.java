@@ -77,7 +77,7 @@ public class HtmlTemplate {
    */
   public String writeTemplateCall() {
     return "template." + methodName + "(" + getSafeHtmlArgs() 
-      + ")";
+      + ").asString()";
   }
 
   /**

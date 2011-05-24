@@ -39,8 +39,4 @@ public class Constants {
   }
 
   public static String CONST_FOO = "Foo";
-
-  public String getText() {
-    return "<b>Here's the text!</b>";
-  }
 }
