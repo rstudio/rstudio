@@ -99,13 +99,6 @@ public class MethodCallTightener {
     return stats;
   }
 
-  /**
-   * Tighten method calls that occur within <code>node</code> and its children.
-   */
-  public static void exec(JProgram program, JNode node) {
-    new MethodCallTightener(program).execImpl(node);
-  }
-
   private final JProgram program;
 
   private MethodCallTightener(JProgram program) {

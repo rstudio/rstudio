@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.util.tools.Utility;
@@ -112,8 +113,12 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
 
     try {
       printPre();
-      for (JMethod method : jprogram.getAllEntryMethods()) {
+      for (JMethod method : jprogram.getEntryMethods()) {
         dependencyAnalyzer.traverseFrom(method);
+        maybeFlushOutput();
+      }
+      for (JRunAsync runAsync : jprogram.getRunAsyncs()) {
+        dependencyAnalyzer.traverseFromRunAsync(runAsync);
         maybeFlushOutput();
       }
       printPost();
