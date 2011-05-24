@@ -202,7 +202,7 @@ public class Compiler {
 
       File persistentUnitCacheDir = null;
       if (options.getWarDir() != null && !options.getWarDir().getName().endsWith(".jar")) {
-        persistentUnitCacheDir = new File(options.getWarDir(), "WEB-INF");
+        persistentUnitCacheDir = new File(options.getWarDir(), "../");
       }
       CompilationStateBuilder.init(logger, persistentUnitCacheDir);
 
