@@ -34,10 +34,10 @@ public class AttachableHTMLPanelParser implements ElementParser {
     assert writer.useLazyWidgetBuilders();
 
     /*
-     * Gathers up elements that indicate nested Attachable objects.
+     * Gathers up elements that indicate nested IsRenderable objects.
      */
-    AttachableInterpreter attachableInterpreter = null;
-    attachableInterpreter = new AttachableInterpreter(
+    IsRenderableInterpreter isRenderableInterpreter = null;
+    isRenderableInterpreter = new IsRenderableInterpreter(
         fieldName, writer);
 
     /*
@@ -58,7 +58,7 @@ public class AttachableHTMLPanelParser implements ElementParser {
 
     final InterpreterPipe interpreters;
     interpreters = InterpreterPipe.newPipe(
-        attachableInterpreter, widgetInterpreter, htmlInterpreter);
+        isRenderableInterpreter, widgetInterpreter, htmlInterpreter);
     String html = elem.consumeInnerHtml(interpreters);
 
     writer.endAttachedSection();

@@ -22,18 +22,17 @@ import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
 /**
- * Used by {@link AttachableHTMLPanelParser} to interpret Attachable elements.
- * Declares the appropriate Attachable, and returns the correct HTML
- * to be inlined in the AttachableHTMLPanel. If the Attachable happens to be a
- * Widget, also adds that widget to the AttachableHTMLPanel.
+ * Used by {@link AttachableHTMLPanelParser} to interpret renderable elements.
+ * Declares the appropriate {@link IsRenderable}, and returns the correct HTML
+ * to be inlined in the AttachableHTMLPanel.
  */
-class AttachableInterpreter implements XMLElement.Interpreter<String> {
+class IsRenderableInterpreter implements XMLElement.Interpreter<String> {
 
   private final String fieldName;
 
   private final UiBinderWriter uiWriter;
 
-  public AttachableInterpreter(String fieldName, UiBinderWriter writer) {
+  public IsRenderableInterpreter(String fieldName, UiBinderWriter writer) {
     this.fieldName = fieldName;
     this.uiWriter = writer;
     assert writer.useLazyWidgetBuilders();
@@ -41,7 +40,7 @@ class AttachableInterpreter implements XMLElement.Interpreter<String> {
 
   public String interpretElement(XMLElement elem)
       throws UnableToCompleteException {
-    if (!uiWriter.isAttachableElement(elem)) {
+    if (!uiWriter.isRenderableElement(elem)) {
       return null;
     }
 

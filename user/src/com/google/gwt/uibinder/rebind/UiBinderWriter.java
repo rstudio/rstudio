@@ -40,7 +40,7 @@ import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
-import com.google.gwt.user.client.ui.Attachable;
+import com.google.gwt.user.client.ui.IsRenderable;
 import com.google.gwt.user.client.ui.IsWidget;
 
 import org.w3c.dom.Document;
@@ -199,7 +199,7 @@ public class UiBinderWriter implements Statements {
 
   private final JClassType uiRootType;
 
-  private final JClassType attachableClassType;
+  private final JClassType isRenderableClassType;
 
   private final JClassType lazyDomElementClass;
 
@@ -283,7 +283,7 @@ public class UiBinderWriter implements Statements {
     uiRootType = typeArgs[0];
     uiOwnerType = typeArgs[1];
 
-    attachableClassType = oracle.findType(Attachable.class.getCanonicalName());
+    isRenderableClassType = oracle.findType(IsRenderable.class.getCanonicalName());
     lazyDomElementClass = oracle.findType(LazyDomElement.class.getCanonicalName());
 
     ownerClass = new OwnerClass(uiOwnerType, logger, uiBinderCtx);
@@ -691,9 +691,9 @@ public class UiBinderWriter implements Statements {
     return gwtPrefix + ":field";
   }
 
-  public boolean isAttachableElement(XMLElement elem)
+  public boolean isRenderableElement(XMLElement elem)
       throws UnableToCompleteException {
-    return findFieldType(elem).isAssignableTo(attachableClassType);
+    return findFieldType(elem).isAssignableTo(isRenderableClassType);
   }
 
   public boolean isBinderElement(XMLElement elem) {

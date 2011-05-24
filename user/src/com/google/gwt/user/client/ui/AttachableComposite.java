@@ -32,8 +32,10 @@ import com.google.gwt.user.client.Event;
  * itself, but is still under active development.
  * The only reason why this isn't a subclass of {@link Composite} is to avoid
  * messing up it's API, since {@link Composite} is very often subclassed.
+ *
+ * TODO(rdcastro): Rename this RenderableComposite.
  */
-public abstract class AttachableComposite extends Widget implements Attachable {
+public abstract class AttachableComposite extends Widget implements IsRenderable {
 
   interface HTMLTemplates extends SafeHtmlTemplates {
     @Template("<span id=\"{0}\"></span>")
@@ -44,7 +46,7 @@ public abstract class AttachableComposite extends Widget implements Attachable {
 
   private Widget widget;
 
-  private Attachable attachable;
+  private IsRenderable attachable;
 
   private Element elementToWrap;
 
@@ -156,10 +158,10 @@ public abstract class AttachableComposite extends Widget implements Attachable {
     // Logical attach.
     this.widget = widget;
 
-    if (widget instanceof Attachable) {
-      // In case the Widget being wrapped is an Attachable, we delay finishing
+    if (widget instanceof IsRenderable) {
+      // In case the Widget being wrapped is an IsRenderable, we delay finishing
       // the initialization until the performDetachedInitialization() is called.
-      this.attachable = (Attachable) widget;
+      this.attachable = (IsRenderable) widget;
       return;
     }
 

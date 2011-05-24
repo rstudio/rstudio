@@ -26,7 +26,7 @@ import com.google.gwt.text.shared.SafeHtmlRenderer;
  * API is likely to change. Very likely. In fact, it will definitely change.
  * You've been warned.
  */
-public interface Attachable extends SafeHtmlRenderer<String> {
+public interface IsRenderable extends SafeHtmlRenderer<String> {
 
   /**
    * Replace the previous contents of the receiver with the given element,

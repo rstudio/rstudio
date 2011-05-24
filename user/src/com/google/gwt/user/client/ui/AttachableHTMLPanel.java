@@ -31,8 +31,10 @@ import com.google.gwt.user.client.Command;
  * should be merged into {@link HTMLPanel}.
  * The only reason this class doesn't extend {@link HTMLPanel} is because it
  * doesn't provide any way to build the panel lazily (which is needed here).
+ *
+ * TODO(rdcastro): Rename this RenderablePanel.
  */
-public class AttachableHTMLPanel extends ComplexPanel implements Attachable {
+public class AttachableHTMLPanel extends ComplexPanel implements IsRenderable {
 
   private static Element hiddenDiv;
 
@@ -160,7 +162,7 @@ public class AttachableHTMLPanel extends ComplexPanel implements Attachable {
    * No-op if called with an Attachable that isn't also IsWidget,
    * but safe to call with such as a convenience.
    */
-  public void logicalAdd(Attachable attachable) {
+  public void logicalAdd(IsRenderable attachable) {
     if (!(attachable instanceof IsWidget)) {
       // Nothing to do if not a Widget.
       return;
