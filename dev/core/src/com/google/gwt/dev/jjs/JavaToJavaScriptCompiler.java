@@ -80,6 +80,7 @@ import com.google.gwt.dev.jjs.impl.EnumOrdinalizer;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
+import com.google.gwt.dev.jjs.impl.FragmentLoaderCreator;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.HandleCrossFragmentReferences;
@@ -515,6 +516,7 @@ public class JavaToJavaScriptCompiler {
     Collections.addAll(allRootTypes, additionalRootTypes);
     allRootTypes.addAll(JProgram.CODEGEN_TYPES_SET);
     allRootTypes.addAll(JProgram.INDEX_TYPES_SET);
+    allRootTypes.add(FragmentLoaderCreator.ASYNC_FRAGMENT_LOADER);
     /*
      * Add all SingleJsoImpl types that we know about. It's likely that the
      * concrete types are never explicitly referenced.
@@ -1293,7 +1295,12 @@ public class JavaToJavaScriptCompiler {
 
     ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(program);
     cfa.setDependencyRecorder(deps);
-    cfa.traverseEntryMethods();
+    for (List<JMethod> entryList : program.entryMethods) {
+      for (JMethod entry : entryList) {
+        cfa.traverseFrom(entry);
+      }
+    }
+
     deps.endDependencyGraph();
     deps.close();
   }

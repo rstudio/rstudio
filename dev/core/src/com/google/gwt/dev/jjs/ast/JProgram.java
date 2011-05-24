@@ -25,7 +25,9 @@ import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JsCastMap;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
+import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs.RunAsyncReplacement;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.collect.Maps;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -196,7 +198,7 @@ public class JProgram extends JNode {
   }
 
   public static String getJsniSig(JMethod method, boolean addReturnType) {
-    StringBuilder sb = new StringBuilder();
+    StringBuffer sb = new StringBuffer();
     sb.append(method.getName());
     sb.append("(");
     for (int i = 0; i < method.getOriginalParamTypes().size(); ++i) {
@@ -301,6 +303,14 @@ public class JProgram extends JNode {
 
   public final List<JClassType> codeGenTypes = new ArrayList<JClassType>();
 
+  /**
+   * There is a list containing the main entry methods as well as the entry
+   * methods for each split point. The main entry methods are at entry 0 of this
+   * list. Split points are numbered sequentially from 1, and the entry methods
+   * for split point <em>i</em> are at entry <em>i</em> of this list.
+   */
+  public final List<List<JMethod>> entryMethods = new ArrayList<List<JMethod>>();
+
   public final JTypeOracle typeOracle = new JTypeOracle(this);
 
   /**
@@ -317,8 +327,6 @@ public class JProgram extends JNode {
    */
   private final CorrelationFactory correlator;
 
-  private final List<JMethod> entryMethods = new ArrayList<JMethod>();
-
   private final Map<String, JField> indexedFields = new HashMap<String, JField>();
 
   private final Map<String, JMethod> indexedMethods = new HashMap<String, JMethod>();
@@ -332,7 +340,7 @@ public class JProgram extends JNode {
   /**
    * Filled in by ReplaceRunAsync, once the numbers are known.
    */
-  private List<JRunAsync> runAsyncs = Lists.create();
+  private Map<Integer, RunAsyncReplacement> runAsyncReplacements = Maps.create();
 
   private List<Integer> splitPointInitialSequence = Lists.create();
 
@@ -377,8 +385,18 @@ public class JProgram extends JNode {
   }
 
   public void addEntryMethod(JMethod entryPoint) {
-    assert !entryMethods.contains(entryPoint);
-    entryMethods.add(entryPoint);
+    addEntryMethod(entryPoint, 0);
+  }
+
+  public void addEntryMethod(JMethod entryPoint, int fragmentNumber) {
+    assert entryPoint.isStatic();
+    while (fragmentNumber >= entryMethods.size()) {
+      entryMethods.add(new ArrayList<JMethod>());
+    }
+    List<JMethod> methods = entryMethods.get(fragmentNumber);
+    if (!methods.contains(entryPoint)) {
+      methods.add(entryPoint);
+    }
   }
 
   public JClassType createClass(SourceInfo info, String name, boolean isAbstract, boolean isFinal) {
@@ -716,6 +734,14 @@ public class JProgram extends JNode {
     return result;
   }
 
+  public List<JMethod> getAllEntryMethods() {
+    List<JMethod> allEntryMethods = new ArrayList<JMethod>();
+    for (List<JMethod> entries : entryMethods) {
+      allEntryMethods.addAll(entries);
+    }
+    return allEntryMethods;
+  }
+
   public JsCastMap getCastMap(JReferenceType referenceType) {
     // ensure jsonCastableTypeMaps has been initialized
     // it might not have been if the CastNormalizer has not been run
@@ -733,13 +759,12 @@ public class JProgram extends JNode {
     return allTypes;
   }
 
-  public List<JMethod> getEntryMethods() {
-    return entryMethods;
+  public int getEntryCount(int fragment) {
+    return entryMethods.get(fragment).size();
   }
 
   public int getFragmentCount() {
-    // Initial fragment is the +1.
-    return runAsyncs.size() + 1;
+    return entryMethods.size();
   }
 
   public JDeclaredType getFromTypeMap(String qualifiedBinaryOrSourceName) {
@@ -839,8 +864,8 @@ public class JProgram extends JNode {
     return integer.intValue();
   }
 
-  public List<JRunAsync> getRunAsyncs() {
-    return runAsyncs;
+  public Map<Integer, RunAsyncReplacement> getRunAsyncReplacements() {
+    return runAsyncReplacements;
   }
 
   public List<Integer> getSplitPointInitialSequence() {
@@ -1012,8 +1037,9 @@ public class JProgram extends JNode {
     this.typesByQueryId = typesByQueryId;
   }
 
-  public void setRunAsyncs(List<JRunAsync> runAsyncs) {
-    this.runAsyncs = Lists.normalizeUnmodifiable(runAsyncs);
+  public void setRunAsyncReplacements(Map<Integer, RunAsyncReplacement> map) {
+    assert runAsyncReplacements.isEmpty();
+    runAsyncReplacements = map;
   }
 
   public void setSplitPointInitialSequence(List<Integer> list) {

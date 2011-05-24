@@ -57,7 +57,7 @@ public class RunAsyncCode implements PrefetchableResource {
    * Ask whether this code has already been loaded.
    */
   public boolean isLoaded() {
-    if (!GWT.isScript()) {
+    if (GWT.isScript()) {
       return true;
     }
     return AsyncFragmentLoader.BROWSER_LOADER.isAlreadyLoaded(splitPoint);

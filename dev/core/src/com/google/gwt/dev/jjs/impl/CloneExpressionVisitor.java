@@ -44,7 +44,6 @@ import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
-import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
@@ -221,16 +220,6 @@ public class CloneExpressionVisitor extends JVisitor {
     JMethodCall newMethodCall = new JMethodCall(x, cloneExpression(x.getInstance()));
     newMethodCall.addArgs(cloneExpressions(x.getArgs()));
     expression = newMethodCall;
-    return false;
-  }
-
-  @Override
-  public boolean visit(JRunAsync x, Context ctx) {
-    // Only the runAsync call itself needs cloning, the onSuccess can be shared.
-    JExpression runAsyncCall = cloneExpression(x.getRunAsyncCall());
-    expression =
-        new JRunAsync(x.getSourceInfo(), x.getSplitPoint(), x.getName(), runAsyncCall, x
-            .getOnSuccessCall());
     return false;
   }
 

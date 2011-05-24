@@ -150,11 +150,11 @@ import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
-import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -585,14 +585,14 @@ public class GenerateJavaScriptAST {
 
     /**
      * The JavaScript functions corresponding to the entry methods of the
-     * program ({@link JProgram#getEntryMethods()}).
+     * program ({@link JProgram#getAllEntryMethods()}).
      */
     private JsFunction[] entryFunctions;
 
     /**
      * A reverse index for the entry methods of the program (
-     * {@link JProgram#getEntryMethods()}). Each entry method is mapped to its
-     * integer index.
+     * {@link JProgram#getAllEntryMethods()}). Each entry method is mapped to
+     * its integer index.
      */
     private Map<JMethod, Integer> entryMethodToIndex;
 
@@ -1214,7 +1214,7 @@ public class GenerateJavaScriptAST {
       List<JsStatement> globalStmts = jsProgram.getGlobalBlock().getStatements();
 
       // Generate entry methods
-      generateGwtOnLoad(Lists.create(entryFunctions), globalStmts);
+      generateGwtOnLoad(Arrays.asList(entryFunctions).subList(0, x.getEntryCount(0)), globalStmts);
 
       // Add a few things onto the beginning.
 
@@ -1238,13 +1238,28 @@ public class GenerateJavaScriptAST {
         }
       }
 
-      if (program.getRunAsyncs().size() > 0) {
-        // Prevent onLoad from being pruned.
-        JMethod onLoadMethod = program.getIndexedMethod("AsyncFragmentLoader.onLoad");
-        JsName name = names.get(onLoadMethod);
-        assert name != null;
-        JsFunction func = (JsFunction) name.getStaticRef();
-        func.setArtificiallyRescued(true);
+      /*
+       * Add calls to all non-initial entry points. That way, if the code
+       * splitter does not run, the resulting code will still function.
+       * Likewise, add a call to
+       * AsyncFragmentLoader.leftoversFragmentHasLoaded().
+       */
+      List<JsFunction> nonInitialEntries =
+          Arrays.asList(entryFunctions).subList(x.getEntryCount(0), entryFunctions.length);
+      if (!nonInitialEntries.isEmpty()) {
+        JMethod loadedMethod =
+            program.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded");
+        JsName loadedMethodName = names.get(loadedMethod);
+        JsInvocation call = new JsInvocation(jsProgram.getSourceInfo());
+        call.setQualifier(loadedMethodName.makeRef(jsProgram.getSourceInfo().makeChild()));
+        globalStmts.add(call.makeStmt());
+      }
+      for (JsFunction func : nonInitialEntries) {
+        if (func != null) {
+          JsInvocation call = new JsInvocation(jsProgram.getSourceInfo());
+          call.setQualifier(func.getName().makeRef(jsProgram.getSourceInfo().makeChild()));
+          globalStmts.add(call.makeStmt());
+        }
       }
     }
 
@@ -1407,7 +1422,7 @@ public class GenerateJavaScriptAST {
        * Arrange for entryFunctions to be filled in as functions are visited.
        * See their Javadoc comments for more details.
        */
-      List<JMethod> entryMethods = x.getEntryMethods();
+      List<JMethod> entryMethods = x.getAllEntryMethods();
       entryFunctions = new JsFunction[entryMethods.size()];
       entryMethodToIndex = new IdentityHashMap<JMethod, Integer>();
       for (int i = 0; i < entryMethods.size(); i++) {
@@ -1688,7 +1703,6 @@ public class GenerateJavaScriptAST {
       JsName gwtOnLoadName = topScope.declareName("gwtOnLoad");
       gwtOnLoadName.setObfuscatable(false);
       JsFunction gwtOnLoad = new JsFunction(sourceInfo, topScope, gwtOnLoadName, true);
-      gwtOnLoad.setArtificiallyRescued(true);
       globalStmts.add(gwtOnLoad.makeStmt());
       JsBlock body = new JsBlock(sourceInfo);
       gwtOnLoad.setBody(body);
@@ -2036,7 +2050,7 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JProgram x, Context ctx) {
       // Entry methods can be called externally, so they must run clinit.
-      crossClassTargets.addAll(x.getEntryMethods());
+      crossClassTargets.addAll(x.getAllEntryMethods());
     }
 
     @Override
@@ -2077,7 +2091,9 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JProgram x, Context ctx) {
-      Collections.sort(x.getEntryMethods(), hasNameSort);
+      for (List<JMethod> methods : x.entryMethods) {
+        Collections.sort(methods, hasNameSort);
+      }
       Collections.sort(x.getDeclaredTypes(), hasNameSort);
     }
   }

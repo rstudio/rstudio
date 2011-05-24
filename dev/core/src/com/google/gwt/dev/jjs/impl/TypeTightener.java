@@ -674,7 +674,11 @@ public class TypeTightener {
 
       if (refType instanceof JArrayType) {
         JArrayType arrayType = (JArrayType) refType;
-        refType = nullifyArrayType(arrayType);
+        JArrayType newArrayType = nullifyArrayType(arrayType);
+        if (arrayType != newArrayType) {
+          x.setType(newArrayType);
+          madeChanges();
+        }
       }
 
       // tighten based on leaf types
@@ -735,7 +739,7 @@ public class TypeTightener {
         }
       }
 
-      if (x.getType() != resultType) {
+      if (refType != resultType) {
         x.setType(resultType);
         madeChanges();
       }
