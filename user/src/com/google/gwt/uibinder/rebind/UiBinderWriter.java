@@ -696,11 +696,6 @@ public class UiBinderWriter implements Statements {
     return uri != null && UiBinderGenerator.BINDER_URI.equals(uri);
   }
 
-  public boolean isRenderableElement(XMLElement elem)
-      throws UnableToCompleteException {
-    return findFieldType(elem).isAssignableTo(isRenderableClassType);
-  }
-
   public boolean isElementAssignableTo(XMLElement elem, Class<?> possibleSuperclass)
       throws UnableToCompleteException {
     JClassType classType = oracle.findType(possibleSuperclass.getCanonicalName());
@@ -756,6 +751,11 @@ public class UiBinderWriter implements Statements {
     }
 
     return lazyDomElementClass.isAssignableFrom(ownerField.getType().getRawType());
+  }
+
+  public boolean isRenderableElement(XMLElement elem)
+      throws UnableToCompleteException {
+    return findFieldType(elem).isAssignableTo(isRenderableClassType);
   }
 
   public boolean isWidgetElement(XMLElement elem) throws UnableToCompleteException {
