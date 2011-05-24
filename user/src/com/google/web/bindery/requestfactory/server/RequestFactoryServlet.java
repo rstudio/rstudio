@@ -23,6 +23,7 @@ import java.io.PrintWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -43,6 +44,7 @@ public class RequestFactoryServlet extends HttpServlet {
    * These ThreadLocals are used to allow service objects to obtain access to
    * the HTTP transaction.
    */
+  private static final ThreadLocal<ServletContext> perThreadContext = new ThreadLocal<ServletContext>();
   private static final ThreadLocal<HttpServletRequest> perThreadRequest = new ThreadLocal<HttpServletRequest>();
   private static final ThreadLocal<HttpServletResponse> perThreadResponse = new ThreadLocal<HttpServletResponse>();
 
@@ -62,6 +64,15 @@ public class RequestFactoryServlet extends HttpServlet {
    */
   public static HttpServletResponse getThreadLocalResponse() {
     return perThreadResponse.get();
+  }
+
+  /**
+   * Returns the thread-local {@link ServletContext}
+   * 
+   * @return the {@link ServletContext} associated with this servlet
+   */
+  public static ServletContext getThreadLocalServletContext() {
+    return perThreadContext.get();
   }
 
   private final SimpleRequestProcessor processor;
@@ -102,6 +113,7 @@ public class RequestFactoryServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException, ServletException {
 
+    perThreadContext.set(getServletContext());
     perThreadRequest.set(request);
     perThreadResponse.set(response);
 
@@ -130,6 +142,7 @@ public class RequestFactoryServlet extends HttpServlet {
         log.log(Level.SEVERE, "Unexpected error", e);
       }
     } finally {
+      perThreadContext.set(null);
       perThreadRequest.set(null);
       perThreadResponse.set(null);
     }
