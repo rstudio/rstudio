@@ -691,14 +691,14 @@ public class UiBinderWriter implements Statements {
     return gwtPrefix + ":field";
   }
 
-  public boolean isRenderableElement(XMLElement elem)
-      throws UnableToCompleteException {
-    return findFieldType(elem).isAssignableTo(isRenderableClassType);
-  }
-
   public boolean isBinderElement(XMLElement elem) {
     String uri = elem.getNamespaceUri();
     return uri != null && UiBinderGenerator.BINDER_URI.equals(uri);
+  }
+
+  public boolean isRenderableElement(XMLElement elem)
+      throws UnableToCompleteException {
+    return findFieldType(elem).isAssignableTo(isRenderableClassType);
   }
 
   public boolean isElementAssignableTo(XMLElement elem, Class<?> possibleSuperclass)
