@@ -81,6 +81,8 @@ public class TextEditingTargetWidget
 
       toolbar.addRightWidget(commands_.executeCode().createToolbarButton());
       toolbar.addRightWidget(commands_.executeAllCode().createToolbarButton());
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(commands_.sourceActiveDocument().createToolbarButton());
 
       return toolbar;
    }

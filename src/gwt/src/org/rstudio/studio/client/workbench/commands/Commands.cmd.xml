@@ -358,8 +358,9 @@ well as menu structures (for main menu and popup menus).
         menuLabel="E_xtract Function"
         desc="Turn the current selection into a function"/>
    <cmd id="sourceActiveDocument"
+        buttonLabel="Source"
         menuLabel="_Source Active Document"
-        desc="Sources the contents of the active document"/>
+        desc="Source the contents of the active document"/>
    <cmd id="commentUncomment"
         menuLabel="C_omment/Uncomment Lines"
         desc="Comment or uncomment the current line/selection"/>
