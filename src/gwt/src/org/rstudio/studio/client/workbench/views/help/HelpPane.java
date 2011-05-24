@@ -20,6 +20,9 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -27,12 +30,18 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.FindTextBox;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SecondaryToolbar;
+import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -231,6 +240,7 @@ public class HelpPane extends WorkbenchPane
       toolbar.addLeftWidget(title_) ;
       final Image image = new Image(ThemeResources.INSTANCE.mediumDropDownArrow());
       image.getElement().getStyle().setMarginLeft(2, Unit.PX);
+      image.getElement().getStyle().setMarginRight(8, Unit.PX);
       image.getElement().getStyle().setMarginBottom(2, Unit.PX);
       toolbar.addLeftWidget(image);
 
@@ -245,6 +255,61 @@ public class HelpPane extends WorkbenchPane
       };
       title_.addClickHandler(clickHandler);
       image.addClickHandler(clickHandler);
+      
+      if (BrowseCap.INSTANCE.hasWindowFind())
+      {
+         final FindTextBox findTextBox = new FindTextBox("Find in Topic");
+         findTextBox.setOverrideWidth(90);
+         toolbar.addLeftWidget(findTextBox);
+         final SmallButton findButton = new SmallButton("Find");
+         findButton.setVisible(false);
+         findButton.addClickHandler(new ClickHandler() {
+   
+            @Override
+            public void onClick(ClickEvent event)
+            {
+               // prevent two enter keys in rapid succession from 
+               // maximizing or minimizing the help tab
+               event.stopPropagation();
+               event.preventDefault();
+               
+               // do the find
+               findInTopic(findTextBox.getValue().trim(), findTextBox);
+            }
+            
+         });
+         toolbar.addLeftWidget(findButton);      
+         
+         
+         findTextBox.addKeyDownHandler(new KeyDownHandler() {
+            @Override
+            public void onKeyDown(KeyDownEvent event)
+            {
+               // enter key triggers a find
+               if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+               {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  findButton.click();
+                  findTextBox.focus();
+               }
+               else
+               {
+                  // other keys trigger visibility chagne of find button
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+                     @Override
+                     public void execute()
+                     {
+                        findButton.setVisible(
+                                   findTextBox.getValue().trim().length() > 0);
+                        
+                     }    
+                  });
+               }       
+            }
+            
+         });
+      }
 
       return toolbar ;
    }
@@ -341,6 +406,22 @@ public class HelpPane extends WorkbenchPane
    private IFrameElementEx getIFrameEx()
    {
       return frame_.getElement().cast();
+   }
+   
+   private void findInTopic(String term, CanFocus findInputSource)
+   {
+      // get content window
+      WindowEx contentWindow = getContentWindow();
+      if (contentWindow == null)
+         return;
+          
+      if (!contentWindow.find(term, false, false, true, false))
+      {
+         globalDisplay_.showMessage(MessageDialog.INFO,
+               "Find in Topic", 
+               "No occurences found",
+               findInputSource);
+      }     
    }
 
    private final VirtualHistory navStack_ = new VirtualHistory() ;

@@ -20,4 +20,10 @@ public class BrowseCapIE8 extends BrowseCap
    {
       return true;
    }
+   
+   @Override
+   public boolean hasWindowFind()
+   {
+      return false;
+   }
 }

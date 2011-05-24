@@ -27,7 +27,8 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
-public class FindTextBox extends Composite implements HasValue<String>
+public class FindTextBox extends Composite implements HasValue<String>,
+                                                      CanFocus
 {
    interface MyUiBinder extends UiBinder<Widget, FindTextBox>
    {}

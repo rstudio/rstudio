@@ -61,6 +61,38 @@ public abstract class MessageDisplay
             .addButton("OK", dismissed)
             .showModal();
    }
+   
+   public void showMessage(int type,
+                           String caption,
+                           String message,
+                           final Focusable focusAfter)
+   {
+      createDialog(type, caption, message)
+      .addButton("OK", new Operation() {
+
+         public void execute()
+         {
+            FocusHelper.setFocusDeferred(focusAfter);
+         }
+      })
+      .showModal();
+   }
+
+   public void showMessage(int type,
+                           String caption,
+                           String message,
+                           final CanFocus focusAfter)
+   {
+      createDialog(type, caption, message)
+      .addButton("OK", new Operation() {
+
+         public void execute()
+         {
+            FocusHelper.setFocusDeferred(focusAfter);
+         }
+      })
+      .showModal();
+   }
 
    public void showYesNoMessage(int type,
                                 String caption,
@@ -158,31 +190,15 @@ public abstract class MessageDisplay
 
    public void showErrorMessage(String caption,
                                 String message,
-                                final Focusable focusAfter)
+                                Focusable focusAfter)
    {
-      createDialog(MSG_ERROR, caption, message)
-            .addButton("OK", new Operation() {
-
-               public void execute()
-               {
-                  FocusHelper.setFocusDeferred(focusAfter);
-               }
-            })
-            .showModal();
+      showMessage(MSG_ERROR, caption, message, focusAfter);
    }
 
    public void showErrorMessage(String caption,
                                 String message,
-                                final CanFocus focusAfter)
+                                CanFocus focusAfter)
    {
-      createDialog(MSG_ERROR, caption, message)
-            .addButton("OK", new Operation() {
-
-               public void execute()
-               {
-                  FocusHelper.setFocusDeferred(focusAfter);
-               }
-            })
-            .showModal();
+      showMessage(MSG_ERROR, caption, message, focusAfter);
    }
 }

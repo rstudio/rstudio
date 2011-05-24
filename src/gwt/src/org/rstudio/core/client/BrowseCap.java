@@ -41,6 +41,11 @@ public class BrowseCap
    {
       return false;
    }
+   
+   public boolean hasWindowFind()
+   {
+      return true;
+   }
 
    public static boolean hasMetaKey()
    {

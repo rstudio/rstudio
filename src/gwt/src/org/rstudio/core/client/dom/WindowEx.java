@@ -52,6 +52,14 @@ public class WindowEx extends JavaScriptObject
       this.history.forward() ;
    }-*/;
    
+   public final native boolean find(String term, 
+                                    boolean matchCase,
+                                    boolean searchUpward,
+                                    boolean wrapAround,
+                                    boolean wholeWord) /*-{
+      return this.find(term, matchCase, searchUpward, wrapAround, wholeWord);
+   }-*/;
+   
    public final native String getLocationHref() /*-{
       return this.location.href ;
    }-*/;
@@ -100,8 +108,6 @@ public class WindowEx extends JavaScriptObject
       return this.document;
    }-*/;
 
-
-   
    public static HandlerRegistration addFocusHandler(FocusHandler handler)
    {
       return handlers_.addHandler(FocusEvent.getType(), handler);
