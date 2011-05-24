@@ -74,9 +74,13 @@ public class HtmlInterpreter implements XMLElement.Interpreter<String> {
     this.pipe = new InterpreterPipe<String>();
 
     pipe.add(new FieldInterpreter(writer, ancestorExpression));
+    /* UiTextInterpreter and UiSafeHtmlInterpreter must be invoked before
+     * ComputedAttributeInterpreter to function properly
+     */
+    pipe.add(new UiTextInterpreter(writer));
+    pipe.add(new UiSafeHtmlInterpreter(writer));
     pipe.add(new ComputedAttributeInterpreter(writer));
     pipe.add(new AttributeMessageInterpreter(writer));
-    pipe.add(new UiTextInterpreter(writer.getLogger()));
     pipe.add(messageInterpreter);
   }
 

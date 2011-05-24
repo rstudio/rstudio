@@ -114,7 +114,7 @@ class ElementParserTester {
         templatePath, baseType.getPackage().getName(), implName);
 
     writer = new MockUiBinderWriter(baseType, implName, templatePath, types,
-        logger, fieldManager, messages);
+        logger, fieldManager, messages, BINDER_URI);
     fieldManager.registerField(types.findType(parsedTypeName), FIELD_NAME);
     parsedType = types.findType(parsedTypeName);
   }
@@ -133,11 +133,7 @@ class ElementParserTester {
   public FieldWriter parse(String xml) throws UnableToCompleteException,
       SAXParseException {
 
-    StringBuffer b = new StringBuffer();
-    b.append("<ui:UiBinder xmlns:ui='" + BINDER_URI + "'");
-    b.append("    xmlns:g='urn:import:com.google.gwt.user.client.ui'>");
-    b.append(xml);
-    b.append("</ui:UiBinder>");
+    StringBuffer b = wrapXML(xml);
 
     // CHECKSTYLE_OFF
     String tag = "g:" + parsedType.getName();
@@ -150,5 +146,14 @@ class ElementParserTester {
     Set<Resource> rtn = UiJavaResources.getUiResources();
     rtn.add(BINDER_OWNER_JAVA);
     return rtn;
+  }
+  
+  public StringBuffer wrapXML(String xml) {
+    StringBuffer b = new StringBuffer();
+    b.append("<ui:UiBinder xmlns:ui='" + BINDER_URI + "'");
+    b.append("    xmlns:g='urn:import:com.google.gwt.user.client.ui'>");
+    b.append(xml);
+    b.append("</ui:UiBinder>");
+    return b;
   }
 }

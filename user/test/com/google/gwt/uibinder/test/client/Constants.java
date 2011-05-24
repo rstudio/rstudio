@@ -15,6 +15,9 @@
  */
 package com.google.gwt.uibinder.test.client;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+
 /**
  * Used to test static imports in UiBinder templates.
  */
@@ -39,4 +42,16 @@ public class Constants {
   }
 
   public static String CONST_FOO = "Foo";
+
+  public SafeHtml getSafeHtml() {
+    return SafeHtmlUtils.fromSafeConstant("<b>This text should be bold!</b>");
+  }
+  
+  public String getText() {
+    return "<b>This text won't be bold!</b>";
+  }
+
+  public String getRendererText() {
+    return "<b>Here's the text!</b>";
+  }
 }

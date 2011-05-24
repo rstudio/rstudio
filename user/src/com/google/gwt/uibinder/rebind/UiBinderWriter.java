@@ -241,11 +241,14 @@ public class UiBinderWriter implements Statements {
 
   private final UiBinderContext uiBinderCtx;
 
+  private final String binderUri;
+
   public UiBinderWriter(JClassType baseClass, String implClassName,
       String templatePath, TypeOracle oracle, MortalLogger logger,
       FieldManager fieldManager, MessagesWriter messagesWriter,
       DesignTimeUtils designTime, UiBinderContext uiBinderCtx,
-      boolean useSafeHtmlTemplates, boolean useLazyWidgetBuilders)
+      boolean useSafeHtmlTemplates, boolean useLazyWidgetBuilders, 
+      String binderUri)
       throws UnableToCompleteException {
     this.baseClass = baseClass;
     this.implClassName = implClassName;
@@ -258,6 +261,7 @@ public class UiBinderWriter implements Statements {
     this.uiBinderCtx = uiBinderCtx;
     this.useSafeHtmlTemplates = useSafeHtmlTemplates;
     this.useLazyWidgetBuilders = useLazyWidgetBuilders;
+    this.binderUri = binderUri;
 
     // Check for possible misuse 'GWT.create(UiBinder.class)'
     JClassType uibinderItself = oracle.findType(UiBinder.class.getCanonicalName());
@@ -693,7 +697,7 @@ public class UiBinderWriter implements Statements {
 
   public boolean isBinderElement(XMLElement elem) {
     String uri = elem.getNamespaceUri();
-    return uri != null && UiBinderGenerator.BINDER_URI.equals(uri);
+    return uri != null && binderUri.equals(uri);
   }
 
   public boolean isElementAssignableTo(XMLElement elem, Class<?> possibleSuperclass)
@@ -942,7 +946,7 @@ public class UiBinderWriter implements Statements {
     }
 
     Element documentElement = doc.getDocumentElement();
-    gwtPrefix = documentElement.lookupPrefix(UiBinderGenerator.BINDER_URI);
+    gwtPrefix = documentElement.lookupPrefix(binderUri);
 
     XMLElement elem = new XMLElementProviderImpl(attributeParsers,
         bundleParsers, oracle, logger, designTime).get(documentElement);
@@ -1169,7 +1173,7 @@ public class UiBinderWriter implements Statements {
     // Allow GWT.create() to init the field, the default behavior
 
     String rootField = new UiBinderParser(this, messages, fieldManager, oracle,
-        bundleClass).parse(elem);
+        bundleClass, binderUri).parse(elem);
 
     fieldManager.validate();
 

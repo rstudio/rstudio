@@ -17,35 +17,62 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.UiBinderWriter;
+import com.google.gwt.uibinder.rebind.XMLAttribute;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
 /**
  * Interprets generic message tags like:
- * <b>&lt;ui:text from="{myMsg.message}" /&gt;</b>. It's called in both hasText
- * and hasHTML context.
+ * <b>&lt;ui:text from="{myMsg.message}" /&gt;</b>. It's called in both text
+ * and HTML contexts.
  */
 public class UiTextInterpreter implements XMLElement.Interpreter<String> {
-
-  private static final String BINDER_URI = "urn:ui:com.google.gwt.uibinder";
-  private static final String LOCAL_NAME = "text";
-
+  /**
+   * Used in {@link #interpretElement} to invoke the {@link ComputedAttributeInterpreter}.
+   */
+  protected class Delegate implements ComputedAttributeInterpreter.Delegate {
+    public String getAttributeToken(XMLAttribute attribute)
+      throws UnableToCompleteException {
+        return writer.tokenForStringExpression(attribute.consumeStringValue());
+    }
+  }
+  
+  protected final UiBinderWriter writer;
+  protected final ComputedAttributeInterpreter computedAttributeInterpreter;
   private final MortalLogger logger;
 
-  public UiTextInterpreter(MortalLogger logger) {
-    this.logger = logger;
+  public UiTextInterpreter(UiBinderWriter writer) {
+    this.writer = writer;
+    this.logger = writer.getLogger();
+    this.computedAttributeInterpreter = createComputedAttributeInterpreter();
   }
-
+  
   public String interpretElement(XMLElement elem)
       throws UnableToCompleteException {
    // Must be in the format: <ui:string from="{myMsg.message}" />
-   if (BINDER_URI.equals(elem.getNamespaceUri())
-        && LOCAL_NAME.equals(elem.getLocalName())) {
-      String fieldRef = elem.consumeStringAttribute("from");
-      if (fieldRef == null) {
-        logger.die(elem, "Attribute 'from' not found.");
-      }
-      return "\" + " + fieldRef + " + \"";
-    }
-    return null;
+   if (writer.isBinderElement(elem) && getLocalName().equals(elem.getLocalName())) {
+     if (!elem.hasAttribute("from")) {
+       logger.die(elem, "Attribute 'from' not found.");
+     }
+     if (!elem.getAttribute("from").hasComputedValue()) {
+       logger.die(elem, "Attribute 'from' does not have a computed value");
+     }
+     // Make sure all computed attributes are interpreted first
+     computedAttributeInterpreter.interpretElement(elem);
+     
+     String fieldRef = elem.consumeStringAttribute("from");
+     // Make sure that "from" was the only attribute
+     elem.assertNoAttributes();
+     return "\" + " + fieldRef + " + \"";
+   }
+   return null;
+  }
+  
+  protected ComputedAttributeInterpreter createComputedAttributeInterpreter() {
+    return new ComputedAttributeInterpreter(writer);
+  }
+  
+  protected String getLocalName() {
+    return "text";
   }
 }

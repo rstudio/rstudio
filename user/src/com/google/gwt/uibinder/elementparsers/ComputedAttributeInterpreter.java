@@ -32,9 +32,28 @@ import java.util.Map;
  */
 class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
 
+  interface Delegate {
+    String getAttributeToken(XMLAttribute attribute)
+      throws UnableToCompleteException;
+  }
+  
+  class DefaultDelegate implements Delegate {
+    public String getAttributeToken(XMLAttribute attribute)
+    throws UnableToCompleteException {
+      return writer.tokenForStringExpression(attribute.consumeStringValue());
+    }
+  }
+
   private final UiBinderWriter writer;
+  private final Delegate delegate;
 
   public ComputedAttributeInterpreter(UiBinderWriter writer) {
+    this.writer = writer;
+    this.delegate = new DefaultDelegate();
+  }
+
+  public ComputedAttributeInterpreter(UiBinderWriter writer, Delegate delegate) {
+    this.delegate = delegate;
     this.writer = writer;
   }
 
@@ -58,7 +77,7 @@ class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
       }
 
       if (att.hasComputedValue()) {
-        String attToken = writer.tokenForStringExpression(att.consumeStringValue());
+        String attToken = delegate.getAttributeToken(att);
         attNameToToken.put(att.getName(), attToken);
       } else {
         /*

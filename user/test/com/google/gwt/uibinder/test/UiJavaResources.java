@@ -294,6 +294,17 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource HTML_PANEL = new MockJavaResource(
+  "com.google.gwt.user.client.ui.HTMLPanel") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class HTMLPanel extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource IMAGE = new MockJavaResource(
       "com.google.gwt.user.client.ui.Image") {
     @Override
@@ -466,6 +477,17 @@ public class UiJavaResources {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.text.shared;\n");
       code.append("public class Renderer<T> {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource SAFEHTML = new MockJavaResource(
+  "com.google.gwt.safehtml.shared.SafeHtml") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.safehtml.shared;\n");
+      code.append("public interface SafeHtml {\n");
       code.append("}\n");
       return code;
     }
@@ -685,6 +707,7 @@ public class UiJavaResources {
     rtn.add(HAS_CLICK_HANDLERS);
     rtn.add(HAS_HORIZONTAL_ALIGNMENT);
     rtn.add(HAS_VERTICAL_ALIGNMENT);
+    rtn.add(HTML_PANEL);
     rtn.add(LABEL);
     rtn.add(LAYOUT_PANEL);
     rtn.add(LIST_BOX);
@@ -696,6 +719,7 @@ public class UiJavaResources {
     rtn.add(NUMBER_LABEL);
     rtn.add(NUMBER_FORMAT);
     rtn.add(RENDERER);
+    rtn.add(SAFEHTML);
     rtn.add(SPLIT_LAYOUT_PANEL);
     rtn.add(STACK_LAYOUT_PANEL);
     rtn.add(STACK_PANEL);

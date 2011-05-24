@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.attributeparsers.AttributeParser;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
 
@@ -145,7 +146,8 @@ public class XMLElement {
   private JType doubleType;
   private JType intType;
   private JType stringType;
-
+  private JType safeHtmlType;
+  
   {
     // from com/google/gxp/compiler/schema/html.xml
     NO_END_TAG.add("area");
@@ -647,7 +649,20 @@ public class XMLElement {
     }
     return value;
   }
-
+  
+  /**
+  * Convenience method for parsing the named attribute as a 
+  * {@link com.google.gwt.safehtml.shared.SafeHtml SafeHtml} value or reference.
+  *
+  * @return an expression that will evaluate to a
+  * {@link com.google.gwt.safehtml.shared.SafeHtml SafeHtml} value in 
+  * the generated code, or null if there is no such attribute
+  * @throws UnableToCompleteException on unparseable value
+  */
+  public String consumeSafeHtmlAttribute(String name)
+      throws UnableToCompleteException {
+    return consumeAttribute(name, getSafeHtmlType());
+  }
   /**
    * Consumes a single child element, ignoring any text nodes and throwing an
    * exception if no child is found, or more than one child element is found.
@@ -933,6 +948,13 @@ public class XMLElement {
     return rtn;
   }
 
+  private JType getSafeHtmlType() {
+    if (safeHtmlType == null) {
+      safeHtmlType = oracle.findType(SafeHtml.class.getName());
+    }
+    return safeHtmlType;
+  }
+  
   private JType getStringType() {
     if (stringType == null) {
       stringType = oracle.findType(String.class.getCanonicalName());

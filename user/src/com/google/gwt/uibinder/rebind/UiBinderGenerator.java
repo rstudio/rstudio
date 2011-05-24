@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class UiBinderGenerator extends Generator {
 
-  static final String BINDER_URI = "urn:ui:com.google.gwt.uibinder";
+  private static final String BINDER_URI = "urn:ui:com.google.gwt.uibinder";
 
   private static final String TEMPLATE_SUFFIX = ".ui.xml";
 
@@ -166,7 +166,7 @@ public class UiBinderGenerator extends Generator {
 
     UiBinderWriter uiBinderWriter = new UiBinderWriter(interfaceType, implName,
         templatePath, oracle, logger, fieldManager, messages, designTime, uiBinderCtx,
-        useSafeHtmlTemplates(logger, propertyOracle), useLazyWidgetBuilders);
+        useSafeHtmlTemplates(logger, propertyOracle), useLazyWidgetBuilders, BINDER_URI);
 
     Document doc = getW3cDoc(logger, designTime, resourceOracle, templatePath);
     designTime.rememberPathForElements(doc);

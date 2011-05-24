@@ -37,6 +37,10 @@ public class XMLAttribute {
     return xmlElem.consumeRawAttribute(w3cAttr.getName());
   }
   
+  public String consumeSafeHtmlValue() throws UnableToCompleteException {
+    return xmlElem.consumeSafeHtmlAttribute(w3cAttr.getName());
+  }
+  
   public String consumeStringValue() throws UnableToCompleteException {
     return xmlElem.consumeStringAttribute(w3cAttr.getName());
   }

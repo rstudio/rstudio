@@ -198,6 +198,9 @@ public class WidgetBasedUi extends Composite {
   Renderer doubleRenderer = DoubleRenderer.instance();
   @UiField ValueLabel<Double> myValueLabel;
   @UiField ImageElement myImage;
+  @UiField HTML htmlWithComputedSafeHtml;
+  @UiField HTML htmlWithComputedText;
+  @UiField Label labelWithComputedText;
 
   public WidgetBasedUi() {
     external.style().ensureInjected();

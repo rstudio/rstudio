@@ -103,10 +103,11 @@ public class UiBinderParser {
   private final JClassType imageResourceType;
 
   private final JClassType dataResourceType;
+  private final String binderUri;
 
   public UiBinderParser(UiBinderWriter writer, MessagesWriter messagesWriter,
       FieldManager fieldManager, TypeOracle oracle,
-      ImplicitClientBundle bundleClass) {
+      ImplicitClientBundle bundleClass, String binderUri) {
     this.writer = writer;
     this.oracle = oracle;
     this.messagesWriter = messagesWriter;
@@ -115,6 +116,7 @@ public class UiBinderParser {
     this.cssResourceType = oracle.findType(CssResource.class.getCanonicalName());
     this.imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
     this.dataResourceType = oracle.findType(DataResource.class.getCanonicalName());
+    this.binderUri = binderUri;
   }
 
   /**
@@ -126,7 +128,7 @@ public class UiBinderParser {
       writer.die(elem, "Bad prefix on <%s:%s>? The root element must be in "
           + "xml namespace \"%s\" (usually with prefix \"ui:\"), "
           + "but this has prefix \"%s\"", elem.getPrefix(),
-          elem.getLocalName(), UiBinderGenerator.BINDER_URI, elem.getPrefix());
+          elem.getLocalName(), binderUri, elem.getPrefix());
     }
 
     if (!TAG.equals(elem.getLocalName())) {

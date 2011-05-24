@@ -46,7 +46,7 @@ public class TextInterpreter implements XMLElement.Interpreter<String> {
       return writer.tokenForStringExpression(messageInvocation);
     }
 
-    return new UiTextInterpreter(writer.getLogger()).interpretElement(elem);
+    return new UiTextInterpreter(writer).interpretElement(elem);
   }
 
   private String consumeAsTextMessage(XMLElement elem, MessagesWriter messages)
