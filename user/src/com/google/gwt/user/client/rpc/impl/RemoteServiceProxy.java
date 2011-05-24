@@ -372,7 +372,8 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
       return rb.send();
     } catch (RequestException ex) {
       InvocationException iex = new InvocationException(
-          "Unable to initiate the asynchronous service invocation -- check the network connection",
+          "Unable to initiate the asynchronous service invocation (" +
+          methodName + ") -- check the network connection",
           ex);
       callback.onFailure(iex);
     } finally {

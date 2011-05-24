@@ -83,7 +83,7 @@ public class RpcCallbackAdapter<T> implements RequestCallback {
         caught = new StatusCodeException(statusCode, encodedResponse);
       } else if (encodedResponse == null) {
         // This can happen if the XHR is interrupted by the server dying
-        caught = new InvocationException("No response payload");
+        caught = new InvocationException("No response payload from " + methodName);
       } else {
         result = (T) streamFactory.createStreamReader(encodedResponse).readObject();
       }

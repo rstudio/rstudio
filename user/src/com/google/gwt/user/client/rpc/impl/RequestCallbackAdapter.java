@@ -209,13 +209,13 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
         caught = new StatusCodeException(statusCode, encodedResponse);
       } else if (encodedResponse == null) {
         // This can happen if the XHR is interrupted by the server dying
-        caught = new InvocationException("No response payload");
+        caught = new InvocationException("No response payload from " + methodName);
       } else if (RemoteServiceProxy.isReturnValue(encodedResponse)) {
         result = (T) responseReader.read(streamFactory.createStreamReader(encodedResponse));
       } else if (RemoteServiceProxy.isThrownException(encodedResponse)) {
         caught = (Throwable) streamFactory.createStreamReader(encodedResponse).readObject();
       } else {
-        caught = new InvocationException(encodedResponse);
+        caught = new InvocationException(encodedResponse + " from " + methodName);
       }
     } catch (com.google.gwt.user.client.rpc.SerializationException e) {
       caught = new IncompatibleRemoteServiceException(
