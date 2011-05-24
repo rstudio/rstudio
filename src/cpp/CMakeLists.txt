@@ -50,7 +50,7 @@ if(UNIX)
 
    # gcc hardending options (see: http://wiki.debian.org/Hardening)
    if(NOT APPLE)
-      add_definitions(-Wformat -Wformat-security -Werror=format-security)
+      add_definitions(-Wformat -Wformat-security)
       add_definitions(-D_FORTIFY_SOURCE=2)
       add_definitions(-fstack-protector --param ssp-buffer-size=4)
       add_definitions(-pie -fPIE)
