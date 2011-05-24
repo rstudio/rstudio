@@ -24,9 +24,9 @@ import com.google.gwt.uibinder.rebind.messages.MessageWriter;
 import com.google.gwt.uibinder.rebind.messages.PlaceholderInterpreter;
 
 /**
- * Parses {@link com.google.gwt.user.client.ui.AttachableHTMLPanel} widgets.
+ * Parses {@link com.google.gwt.user.client.ui.RenderablePanel} widgets.
  */
-public class AttachableHTMLPanelParser implements ElementParser {
+public class RenderablePanelParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       final UiBinderWriter writer) throws UnableToCompleteException {
@@ -64,17 +64,17 @@ public class AttachableHTMLPanelParser implements ElementParser {
     writer.endAttachedSection();
 
     /*
-     * AttachableHTMLPanel has no no-arg ctor, so we have to generate our own, using the
+     * RenderablePanel has no no-arg ctor, so we have to generate our own, using the
      * element's innerHTML and perhaps its tag attribute. Do this in a way that
      * will not break subclasses if they happen to have the same constructor
      * signature (by passing in type).
      */
     String customTag = elem.consumeStringAttribute("tag", null);
 
-    // TODO(rdcastro): Add support for custom tags in AttachableHTMLPanel.
+    // TODO(rdcastro): Add support for custom tags in RenderablePanel.
     if (customTag != null) {
       writer.getLogger().die(
-          "AttachableHTMLPanel does not support custom root elements yet.");
+          "RenderablePanel does not support custom root elements yet.");
     }
 
     writer.setFieldInitializerAsConstructor(fieldName, type, writer.declareTemplateCall(html));

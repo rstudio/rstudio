@@ -22,9 +22,9 @@ import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
 /**
- * Used by {@link AttachableHTMLPanelParser} to interpret renderable elements.
+ * Used by {@link RenderablePanelParser} to interpret renderable elements.
  * Declares the appropriate {@link IsRenderable}, and returns the correct HTML
- * to be inlined in the AttachableHTMLPanel.
+ * to be inlined in the {@link RenderablePanel}.
  */
 class IsRenderableInterpreter implements XMLElement.Interpreter<String> {
 

@@ -1187,7 +1187,7 @@ public class UiBinderWriter implements Statements {
         FieldWriter cssField = fieldManager.require(fieldName);
         cssField.addStatement("%s.ensureInjected();", fieldName);
       }
-      writeBinderForAttachableStrategy(niceWriter, rootField);
+      writeBinderForRenderableStrategy(niceWriter, rootField);
     } else {
       writeBinder(niceWriter, rootField);
     }
@@ -1253,7 +1253,7 @@ public class UiBinderWriter implements Statements {
     addWidgetParser("NumberLabel");
     if (useLazyWidgetBuilders) {
       addWidgetParser("LazyPanel");
-      addWidgetParser("AttachableHTMLPanel");
+      addWidgetParser("RenderablePanel");
     }
   }
 
@@ -1319,10 +1319,10 @@ public class UiBinderWriter implements Statements {
   }
 
   /**
-   * Writes a different optimized UiBinder's source for the attachable
+   * Writes a different optimized UiBinder's source for the renderable
    * strategy.
    */
-  private void writeBinderForAttachableStrategy(
+  private void writeBinderForRenderableStrategy(
       IndentedWriter w, String rootField) throws UnableToCompleteException {
     writePackage(w);
 

@@ -26,15 +26,13 @@ import com.google.gwt.user.client.Command;
 /**
  * EXPERIMENTAL and subject to change. Do not use this in production code.
  * <p>
- * An {@link Attachable} version of {@link HTMLPanel}. This class is a stepping
- * in our transition to the Attachable strategy. Eventually this functionality
+ * An {@link IsRenderable} version of {@link HTMLPanel}. This class is a stepping
+ * in our transition to the Renderable strategy. Eventually this functionality
  * should be merged into {@link HTMLPanel}.
  * The only reason this class doesn't extend {@link HTMLPanel} is because it
  * doesn't provide any way to build the panel lazily (which is needed here).
- *
- * TODO(rdcastro): Rename this RenderablePanel.
  */
-public class AttachableHTMLPanel extends ComplexPanel implements IsRenderable {
+public class RenderablePanel extends ComplexPanel implements IsRenderable {
 
   private static Element hiddenDiv;
 
@@ -76,7 +74,7 @@ public class AttachableHTMLPanel extends ComplexPanel implements IsRenderable {
    *
    * @param html the panel's HTML
    */
-  public AttachableHTMLPanel(String html) {
+  public RenderablePanel(String html) {
     this(new SafeHtmlBuilder().appendHtmlConstant(html).toSafeHtml());
   }
 
@@ -87,7 +85,7 @@ public class AttachableHTMLPanel extends ComplexPanel implements IsRenderable {
    *
    * @param safeHtml the html to set.
    */
-  public AttachableHTMLPanel(SafeHtml safeHtml) {
+  public RenderablePanel(SafeHtml safeHtml) {
     this.html = safeHtml;
   }
 
@@ -159,15 +157,15 @@ public class AttachableHTMLPanel extends ComplexPanel implements IsRenderable {
    * Adopts the given, but doesn't change anything about its DOM element.
    * Should only be used for widgets with elements that are children of this
    * panel's element.
-   * No-op if called with an Attachable that isn't also IsWidget,
+   * No-op if called with an {@link IsRenderable} that isn't also IsWidget,
    * but safe to call with such as a convenience.
    */
-  public void logicalAdd(IsRenderable attachable) {
-    if (!(attachable instanceof IsWidget)) {
+  public void logicalAdd(IsRenderable renderable) {
+    if (!(renderable instanceof IsWidget)) {
       // Nothing to do if not a Widget.
       return;
     }
-    Widget widget = ((IsWidget) attachable).asWidget();
+    Widget widget = ((IsWidget) renderable).asWidget();
     getChildren().add(widget);
     adopt(widget);
   }

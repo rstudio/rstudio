@@ -23,7 +23,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
-import com.google.gwt.user.client.ui.AttachableHTMLPanel;
+import com.google.gwt.user.client.ui.RenderablePanel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -190,11 +190,11 @@ abstract class AbstractFieldWriter implements FieldWriter {
       boolean useLazyWidgetBuilders)
       throws UnableToCompleteException {
 
-    JClassType attachableHTMLPanelType = typeOracle.findType(
-        AttachableHTMLPanel.class.getName());
+    JClassType renderablePanelType = typeOracle.findType(
+        RenderablePanel.class.getName());
     boolean outputAttachDetachCallbacks = useLazyWidgetBuilders
         && getAssignableType() != null
-        && getAssignableType().isAssignableTo(attachableHTMLPanelType);
+        && getAssignableType().isAssignableTo(renderablePanelType);
 
     // Check initializer.
     if (initializer == null) {
@@ -250,7 +250,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
       w.newline();
       w.write("// Attach section.");
       if (outputAttachDetachCallbacks) {
-        // TODO(rdcastro): This is too coupled with AttachableHTMLPanel.
+        // TODO(rdcastro): This is too coupled with RenderablePanel.
         // Make this nicer.
         w.write("%s.wrapInitializationCallback = ", getName());
         w.indent();

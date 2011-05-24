@@ -32,8 +32,6 @@ import com.google.gwt.user.client.Event;
  * itself, but is still under active development.
  * The only reason why this isn't a subclass of {@link Composite} is to avoid
  * messing up it's API, since {@link Composite} is very often subclassed.
- *
- * TODO(rdcastro): Rename this RenderableComposite.
  */
 public abstract class RenderableComposite extends Widget implements IsRenderable {
 
@@ -46,7 +44,7 @@ public abstract class RenderableComposite extends Widget implements IsRenderable
 
   private Widget widget;
 
-  private IsRenderable attachable;
+  private IsRenderable renderable;
 
   private Element elementToWrap;
 
@@ -81,9 +79,9 @@ public abstract class RenderableComposite extends Widget implements IsRenderable
 
   @Override
   public void performDetachedInitialization() {
-    if (attachable != null) {
+    if (renderable != null) {
       assert (initFinished == false);
-      attachable.performDetachedInitialization();
+      renderable.performDetachedInitialization();
       initWidgetInternal();
     } else {
       elementToWrap.getParentNode().replaceChild(widget.getElement(), elementToWrap);
@@ -92,8 +90,8 @@ public abstract class RenderableComposite extends Widget implements IsRenderable
 
   @Override
   public SafeHtml render(String id) {
-    if (attachable != null) {
-      return attachable.render(id);
+    if (renderable != null) {
+      return renderable.render(id);
     } else {
       SafeHtmlBuilder builder = new SafeHtmlBuilder();
       render(id, builder);
@@ -103,8 +101,8 @@ public abstract class RenderableComposite extends Widget implements IsRenderable
 
   @Override
   public void render(String id, SafeHtmlBuilder builder) {
-    if (attachable != null) {
-      attachable.render(id, builder);
+    if (renderable != null) {
+      renderable.render(id, builder);
     } else {
       builder.append(TEMPLATE.renderWithId(id));
     }
@@ -120,9 +118,9 @@ public abstract class RenderableComposite extends Widget implements IsRenderable
 
   @Override
   public void wrapElement(Element element) {
-    if (attachable != null) {
+    if (renderable != null) {
       assert (initFinished == false);
-      attachable.wrapElement(element);
+      renderable.wrapElement(element);
     } else {
       this.elementToWrap = element;
     }
@@ -161,7 +159,7 @@ public abstract class RenderableComposite extends Widget implements IsRenderable
     if (widget instanceof IsRenderable) {
       // In case the Widget being wrapped is an IsRenderable, we delay finishing
       // the initialization until the performDetachedInitialization() is called.
-      this.attachable = (IsRenderable) widget;
+      this.renderable = (IsRenderable) widget;
       return;
     }
 
