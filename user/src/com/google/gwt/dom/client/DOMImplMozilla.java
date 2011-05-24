@@ -51,6 +51,16 @@ class DOMImplMozilla extends DOMImplStandard {
   }
 
   /**
+   * Return true if using Gecko 1.9.2 (Firefox 3.6) or earlier.
+   * 
+   * @return true if using Gecko 1.9.2 (Firefox 3.6) or earlier
+   */
+  private static boolean isGecko192OrBefore() {
+    int geckoVersion = getGeckoVersion();
+    return (geckoVersion != -1) && (geckoVersion <= 1009002);
+  }
+
+  /**
    * Return true if using Gecko 2.0.0 (Firefox 4.0) or earlier.
    * 
    * @return true if using Gecko 2.0.0 (Firefox 4.0) or earlier

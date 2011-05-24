@@ -48,6 +48,14 @@
     </any>
   </replace-with>
 
+  <!-- Mozilla-specific CellTable implementation. -->
+  <replace-with class="com.google.gwt.user.cellview.client.CellTable.ImplMozilla">
+    <when-type-is class="com.google.gwt.user.cellview.client.CellTable.Impl"/>
+    <any>
+      <when-property-is name="user.agent" value="gecko1_8"/>
+    </any>
+  </replace-with>
+
   <!-- IE-specific CellTable implementation. -->
   <replace-with class="com.google.gwt.user.cellview.client.CellTable.ImplTrident">
     <when-type-is class="com.google.gwt.user.cellview.client.CellTable.Impl"/>

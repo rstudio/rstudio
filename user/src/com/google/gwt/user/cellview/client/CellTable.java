@@ -116,6 +116,7 @@ public class CellTable<T> extends AbstractHasData<T> {
     /**
      * The styles used in this widget.
      */
+    @Override
     @Source(BasicStyle.DEFAULT_CSS)
     BasicStyle cellTableStyle();
   }
@@ -411,6 +412,27 @@ public class CellTable<T> extends AbstractHasData<T> {
     }
 
     /**
+     * Detach a table section element from its parent.
+     * 
+     * @param section the element to detach
+     */
+    protected void detachSectionElement(TableSectionElement section) {
+      section.removeFromParent();
+    }
+
+    /**
+     * Reattach a table section element from its parent.
+     * 
+     * @param parent the parent element
+     * @param section the element to reattach
+     * @param nextSection the next section
+     */
+    protected void reattachSectionElement(Element parent, TableSectionElement section,
+        Element nextSection) {
+      parent.insertBefore(section, nextSection);
+    }
+
+    /**
      * Render a table section in the table.
      * 
      * @param table the {@link CellTable}
@@ -425,14 +447,59 @@ public class CellTable<T> extends AbstractHasData<T> {
         DOM.setEventListener(table.getElement(), table);
       }
 
+      // Remove the section from the tbody.
+      Element parent = section.getParentElement();
+      Element nextSection = section.getNextSiblingElement();
+      detachSectionElement(section);
+
       // Render the html.
       section.setInnerHTML(html.asString());
+
+      /*
+       * Reattach the section. If next section is null, the section will be
+       * appended instead.
+       */
+      reattachSectionElement(parent, section, nextSection);
 
       // Detach the event listener.
       if (!table.isAttached()) {
         DOM.setEventListener(table.getElement(), null);
       }
     }
+  }
+
+  /**
+   * Implementation of {@link CellTable} used by Firefox.
+   */
+  @SuppressWarnings("unused")
+  private static class ImplMozilla extends Impl {
+    /**
+     * Firefox 3.6 and earlier convert td elements to divs if the tbody is
+     * removed from the table element.
+     */
+    @Override
+    protected void detachSectionElement(TableSectionElement section) {
+      if (isGecko192OrBefore()) {
+        return;
+      }
+      super.detachSectionElement(section);
+    }
+
+    @Override
+    protected void reattachSectionElement(Element parent, TableSectionElement section,
+        Element nextSection) {
+      if (isGecko192OrBefore()) {
+        return;
+      }
+      super.reattachSectionElement(parent, section, nextSection);
+    }
+
+    /**
+     * Return true if using Gecko 1.9.2 (Firefox 3.6) or earlier.
+     */
+    private native boolean isGecko192OrBefore() /*-{
+      return @com.google.gwt.dom.client.DOMImplMozilla::isGecko192OrBefore()();
+    }-*/;
   }
 
   /**
@@ -644,6 +711,7 @@ public class CellTable<T> extends AbstractHasData<T> {
 
     // Create the ColumnSortList and delegate.
     sortList = new ColumnSortList(new ColumnSortList.Delegate() {
+      @Override
       public void onModification() {
         if (!updatingSortList) {
           createHeaders(false);
@@ -1601,6 +1669,7 @@ public class CellTable<T> extends AbstractHasData<T> {
       TableCellElement td = tr.getCells().getItem(keyboardSelectedColumn);
       final com.google.gwt.user.client.Element cellParent = getCellParent(td).cast();
       CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
+        @Override
         public void execute() {
           cellParent.focus();
         }
@@ -1871,6 +1940,7 @@ public class CellTable<T> extends AbstractHasData<T> {
       cellIsEditing = cell.isEditing(context, parentElem, cellValue);
       if (cellWasEditing && !cellIsEditing) {
         CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
+          @Override
           public void execute() {
             setFocus(true);
           }
