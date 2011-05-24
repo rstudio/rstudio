@@ -73,7 +73,7 @@ public final class Math {
   }-*/;
 
   public static native double atan2(double y, double x) /*-{
-    return Math.atan2(y,x);
+    return Math.atan2(y, x);
   }-*/;
 
   public static double cbrt(double x) {

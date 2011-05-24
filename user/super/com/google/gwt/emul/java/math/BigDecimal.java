@@ -400,15 +400,15 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
   }
 
   private static native double parseUnscaled(String str) /*-{
-      var unscaledRegex = @java.math.BigDecimal::unscaledRegex;
-      if (!unscaledRegex) {
-        unscaledRegex = @java.math.BigDecimal::unscaledRegex = /^[+-]?\d*$/i;
-      }
-      if (unscaledRegex.test(str)) {
-        return parseInt(str, 10);
-      } else {
-        return Number.NaN;
-      }
+    var unscaledRegex = @java.math.BigDecimal::unscaledRegex;
+    if (!unscaledRegex) {
+      unscaledRegex = @java.math.BigDecimal::unscaledRegex = /^[+-]?\d*$/i;
+    }
+    if (unscaledRegex.test(str)) {
+      return parseInt(str, 10);
+    } else {
+      return Number.NaN;
+    }
   }-*/;
 
   /**

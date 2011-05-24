@@ -1221,7 +1221,7 @@ public class Arrays {
   // see above
   private static native JavaScriptObject getNativeComparator(Object array,
       Comparator<?> comp) /*-{
-    function compare(a,b) {
+    function compare(a, b) {
       var elementCompare = comp.@java.util.Comparator::compare(Ljava/lang/Object;Ljava/lang/Object;)(array[a], array[b]);
       var indexCompare = a - b;
       // If elements compare equal, use the index comparison.
@@ -1366,7 +1366,9 @@ public class Arrays {
    * Sort an entire array of number primitives.
    */
   private static native void nativeNumberSort(Object array) /*-{
-    array.sort(function(a,b) { return a - b; });
+    array.sort(function(a, b) {
+      return a - b;
+    });
   }-*/;
 
   /**
@@ -1375,7 +1377,9 @@ public class Arrays {
   private static native void nativeNumberSort(Object array, int fromIndex,
       int toIndex) /*-{
     var temp = array.slice(fromIndex, toIndex);
-    temp.sort(function(a,b) { return a - b; });
+    temp.sort(function(a, b) {
+      return a - b;
+    });
     var n = toIndex - fromIndex;
     // Do the equivalent of array.splice(fromIndex, n, temp) except
     // flattening the temp slice.
@@ -1412,14 +1416,14 @@ public class Arrays {
     var n = toIndex - fromIndex;
     var indexArray = new Array(n);
     var arrayIdx = fromIndex;
-    for (var i = 0; i < n; ++i) {
+    for ( var i = 0; i < n; ++i) {
       indexArray[i] = arrayIdx++;
     }
     indexArray.sort(comp);
     if (comp.swap) { // only reorder elements if we made a swap
       var temp = array.slice(fromIndex, toIndex);
       arrayIdx = fromIndex;
-      for (var i = 0; i < n; ++i) {
+      for ( var i = 0; i < n; ++i) {
         array[arrayIdx++] = temp[indexArray[i] - fromIndex];
       }
     }

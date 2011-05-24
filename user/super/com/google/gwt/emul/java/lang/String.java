@@ -627,7 +627,7 @@ public final class String implements Comparable<String>, CharSequence,
     _String(sb);
   }
 
-  public native char charAt(int index) /*-{ 
+  public native char charAt(int index) /*-{
     return this.charCodeAt(index);
   }-*/;
 
@@ -668,8 +668,7 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   public native boolean endsWith(String suffix) /*-{
-    return (this.lastIndexOf(suffix) != -1)
-       && (this.lastIndexOf(suffix) == (this.length - suffix.length));
+    return (this.lastIndexOf(suffix) != -1) && (this.lastIndexOf(suffix) == (this.length - suffix.length));
   }-*/;
 
   @Override
@@ -791,7 +790,9 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   public native String replace(char from, char to) /*-{
-    // We previously used \\uXXXX, but Safari 2 doesn't match them properly in RegExp
+
+    // We previously used \\uXXXX, but Safari 2 doesn't match them properly 
+// in RegExp
     // See http://bugs.webkit.org/show_bug.cgi?id=8043
     //     http://bugs.webkit.org/show_bug.cgi?id=6257
     //     http://bugs.webkit.org/show_bug.cgi?id=7253
@@ -884,19 +885,18 @@ public final class String implements Comparable<String>, CharSequence,
       // None of the information in the match returned are useful as we have no 
       // subgroup handling
       var matchObj = compiled.exec(trail);
-      if (matchObj == null || trail == "" || 
-        (count == (maxMatch - 1) && maxMatch > 0)) {
+      if (matchObj == null || trail == "" || (count == (maxMatch - 1) && maxMatch > 0)) {
         out[count] = trail;
         break;
       } else {
-        out[count] = trail.substring(0,matchObj.index);
+        out[count] = trail.substring(0, matchObj.index);
         trail = trail.substring(matchObj.index + matchObj[0].length, trail.length);
         // Force the compiled pattern to reset internal state
         compiled.lastIndex = 0;
         // Only one zero length match per character to ensure termination
-        if (lastTrail == trail) {  
-          out[count] = trail.substring(0,1);
-          trail = trail.substring(1);          
+        if (lastTrail == trail) {
+          out[count] = trail.substring(0, 1);
+          trail = trail.substring(1);
         }
         lastTrail = trail;
         count++;
@@ -915,8 +915,8 @@ public final class String implements Comparable<String>, CharSequence,
       }
     }
     var jr = @java.lang.String::__createArray(I)(out.length);
-    for(var i = 0; i < out.length; ++i) {
-      jr[i] = out[i]; 
+    for ( var i = 0; i < out.length; ++i) {
+      jr[i] = out[i];
     }
     return jr;
   }-*/;
@@ -966,7 +966,7 @@ public final class String implements Comparable<String>, CharSequence,
   }-*/;
 
   public native String trim() /*-{
-    if (this.length == 0 || (this[0] > '\u0020' && this[this.length-1] > '\u0020')) {
+    if (this.length == 0 || (this[0] > '\u0020' && this[this.length - 1] > '\u0020')) {
       return this;
     }
     var r1 = this.replace(/^(\s*)/, '');

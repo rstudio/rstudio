@@ -47,7 +47,7 @@ public final class Array {
     private static native void initExpandos(Array protoType,
         Object expandoNames, Object expandoValues) /*-{
       var i = 0, value;
-      for (var name in protoType) {
+      for ( var name in protoType) {
         // Only copy non-null values over; this generally means only functions
         // will get copied over, and not fields, which is good because we will
         // setup the fields manually and it's best if length doesn't get blown
@@ -66,7 +66,7 @@ public final class Array {
 
     private static native void wrapArray(Array array, Object expandoNames,
         Object expandoValues) /*-{
-      for (var i = 0, c = expandoNames.length; i < c; ++i) {
+      for ( var i = 0, c = expandoNames.length; i < c; ++i) {
         array[expandoNames[i]] = expandoValues[i];
       }
     }-*/;
@@ -228,14 +228,14 @@ public final class Array {
     var array = new Array(length);
     if (seedType == 3) {
       // Fill array with the type used by LongLib
-      for (var i = 0; i < length; ++i) {
+      for ( var i = 0; i < length; ++i) {
         var value = new Object();
         value.l = value.m = value.h = 0;
         array[i] = value;
       }
     } else if (seedType > 0) {
       var value = [null, 0, false][seedType];
-      for (var i = 0; i < length; ++i) {
+      for ( var i = 0; i < length; ++i) {
         array[i] = value;
       }
     }

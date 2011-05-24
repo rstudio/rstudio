@@ -274,12 +274,12 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
 
   private native void addAllHashEntries(Collection<?> dest) /*-{
     var hashCodeMap = this.@java.util.AbstractHashMap::hashCodeMap;
-    for (var hashCode in hashCodeMap) {
+    for ( var hashCode in hashCodeMap) {
       // sanity check that it's really an integer
       var hashCodeInt = parseInt(hashCode, 10);
       if (hashCode == hashCodeInt) {
         var array = hashCodeMap[hashCodeInt];
-        for (var i = 0, c = array.length; i < c; ++i) {
+        for ( var i = 0, c = array.length; i < c; ++i) {
           dest.@java.util.Collection::add(Ljava/lang/Object;)(array[i]);
         }
       }
@@ -311,12 +311,12 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    */
   private native boolean containsHashValue(Object value) /*-{
     var hashCodeMap = this.@java.util.AbstractHashMap::hashCodeMap;
-    for (var hashCode in hashCodeMap) {
+    for ( var hashCode in hashCodeMap) {
       // sanity check that it's really one of ours
       var hashCodeInt = parseInt(hashCode, 10);
       if (hashCode == hashCodeInt) {
         var array = hashCodeMap[hashCodeInt];
-        for (var i = 0, c = array.length; i < c; ++i) {
+        for ( var i = 0, c = array.length; i < c; ++i) {
           var entry = array[i];
           var entryValue = entry.@java.util.Map$Entry::getValue()();
           if (this.@java.util.AbstractHashMap::equalsBridge(Ljava/lang/Object;Ljava/lang/Object;)(value, entryValue)) {
@@ -334,7 +334,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    */
   private native boolean containsStringValue(Object value) /*-{
     var stringMap = this.@java.util.AbstractHashMap::stringMap;
-    for (var key in stringMap) {
+    for ( var key in stringMap) {
       // only keys that start with a colon ':' count
       if (key.charCodeAt(0) == 58) {
         var entryValue = stringMap[key];
@@ -365,7 +365,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   private native V getHashValue(Object key, int hashCode) /*-{
     var array = this.@java.util.AbstractHashMap::hashCodeMap[hashCode];
     if (array) {
-      for (var i = 0, c = array.length; i < c; ++i) {
+      for ( var i = 0, c = array.length; i < c; ++i) {
         var entry = array[i];
         var entryKey = entry.@java.util.Map$Entry::getKey()();
         if (this.@java.util.AbstractHashMap::equalsBridge(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
@@ -392,7 +392,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   private native boolean hasHashValue(Object key, int hashCode) /*-{
     var array = this.@java.util.AbstractHashMap::hashCodeMap[hashCode];
     if (array) {
-      for (var i = 0, c = array.length; i < c; ++i) {
+      for ( var i = 0, c = array.length; i < c; ++i) {
         var entry = array[i];
         var entryKey = entry.@java.util.Map$Entry::getKey()();
         if (this.@java.util.AbstractHashMap::equalsBridge(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
@@ -418,7 +418,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   private native V putHashValue(K key, V value, int hashCode) /*-{
     var array = this.@java.util.AbstractHashMap::hashCodeMap[hashCode];
     if (array) {
-      for (var i = 0, c = array.length; i < c; ++i) {
+      for ( var i = 0, c = array.length; i < c; ++i) {
         var entry = array[i];
         var entryKey = entry.@java.util.Map$Entry::getKey()();
         if (this.@java.util.AbstractHashMap::equalsBridge(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
@@ -473,7 +473,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   private native V removeHashValue(Object key, int hashCode) /*-{
     var array = this.@java.util.AbstractHashMap::hashCodeMap[hashCode];
     if (array) {
-      for (var i = 0, c = array.length; i < c; ++i) {
+      for ( var i = 0, c = array.length; i < c; ++i) {
         var entry = array[i];
         var entryKey = entry.@java.util.Map$Entry::getKey()();
         if (this.@java.util.AbstractHashMap::equalsBridge(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
