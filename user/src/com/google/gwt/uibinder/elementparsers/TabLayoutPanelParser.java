@@ -79,7 +79,7 @@ public class TabLayoutPanelParser implements ElementParser {
             writer, fieldName);
         String html = children.header.consumeInnerHtml(htmlInt);
         writer.addStatement("%s.add(%s, %s, true);", fieldName,
-            childFieldName, writer.declareTemplateCall(html));
+            childFieldName, writer.declareTemplateCall(html, fieldName));
       } else if (children.customHeader != null) {
         XMLElement headerElement = children.customHeader.consumeSingleChildElement();
 

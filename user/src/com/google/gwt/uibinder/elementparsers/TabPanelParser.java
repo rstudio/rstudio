@@ -70,7 +70,7 @@ public class TabPanelParser implements ElementParser {
       }
       if (tabHTML != null) {
         writer.addStatement("%1$s.add(%2$s, %3$s, true);", fieldName,
-            childFieldName, writer.declareTemplateCall(tabHTML));
+            childFieldName, writer.declareTemplateCall(tabHTML, fieldName));
       } else if (tabCaption != null) {
         writer.addStatement("%1$s.add(%2$s, %3$s);", fieldName, childFieldName,
             tabCaption);

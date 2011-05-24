@@ -41,11 +41,15 @@ public class UiBinderTestApp implements EntryPoint {
     instance.domUi = new DomBasedUi("Mr. User Man");
     Document.get().getBody().appendChild(instance.domUi.root);
 
+    instance.safeHtmlUi = new SafeHtmlRendererUi();
+
     instance.widgetUi = new WidgetBasedUi();
     RootPanel.get().add(instance.widgetUi);
   }
 
   private DomBasedUi domUi;
+
+  private SafeHtmlRendererUi safeHtmlUi;
 
   private WidgetBasedUi widgetUi;
 
@@ -54,6 +58,10 @@ public class UiBinderTestApp implements EntryPoint {
 
   public DomBasedUi getDomUi() {
     return domUi;
+  }
+
+  public SafeHtmlRendererUi getSafeHtmlUi() {
+    return safeHtmlUi;
   }
 
   public WidgetBasedUi getWidgetUi() {

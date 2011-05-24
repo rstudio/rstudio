@@ -77,7 +77,7 @@ public class AttachableHTMLPanelParser implements ElementParser {
           "AttachableHTMLPanel does not support custom root elements yet.");
     }
 
-    writer.setFieldInitializerAsConstructor(fieldName, type, writer.declareTemplateCall(html));
+    writer.setFieldInitializerAsConstructor(fieldName, type, writer.declareTemplateCall(html, fieldName));
   }
 
   /**

@@ -45,11 +45,12 @@ class MockUiBinderWriter extends UiBinderWriter {
   }
 
   /**
-   * Mocked out version of the template declaration. Returns the template
-   * prefixed with "@mockToken-"
+   * Mocked out version of the template declaration. Returns the fieldName and
+   * template separated with a dash, all prefixed with "@mockToken-"
    */
-  public String declareTemplateCall(String html) {
-    return "\"@mockToken-" + html + "\"";
+  @Override
+  public String declareTemplateCall(String html, String fieldName) {
+    return "\"@mockToken-" + fieldName + "-" + html + "\"";
   }
 
   @Override
