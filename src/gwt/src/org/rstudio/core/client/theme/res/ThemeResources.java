@@ -156,6 +156,8 @@ public interface ThemeResources extends ClientBundle
    ImageResource mediumDropDownArrow();
    ImageResource chevron();
 
+   ImageResource help();
+   
    ImageResource warning();
 
    ImageResource codeTransform();

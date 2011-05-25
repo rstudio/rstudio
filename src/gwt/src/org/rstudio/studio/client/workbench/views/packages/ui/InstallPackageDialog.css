@@ -13,6 +13,16 @@
    height: 50px;	
 }
 
+.configureRepositoriesImage {
+   margin-right: 4px;
+   margin-bottom: -4px;	
+}
+
+.configureRepositoriesLink {
+   font-size: 0.8em;
+   margin-top: 2px;
+}
+
 .packagesLabel {
    margin-bottom: 3px;	
 }
@@ -20,7 +30,7 @@
 .packageFileTextBox {
 	margin-top: 0px;
 	margin-right: 5px;
-	width: 285px;
+	width: 290px;
 }
 
 .packageFileBrowseButton {
