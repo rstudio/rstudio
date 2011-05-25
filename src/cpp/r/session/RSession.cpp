@@ -54,6 +54,8 @@
 #include <R_ext/RStartup.h>
 extern "C" SA_TYPE SaveAction;
 
+#define CTXT_BROWSER 16 // from Defn.h
+
 // get rid of windows TRUE and FALSE definitions
 #undef TRUE
 #undef FALSE
@@ -986,7 +988,6 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
 // function after it does it's work)
 #ifdef _WIN32
 extern "C" Rboolean R_Interactive;/* TRUE during interactive use*/
-#define CTXT_BROWSER 16 // from Defn.h
 #define _(String) String
 SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -1263,7 +1264,6 @@ bool imageIsDirty()
 
 bool browserContextActive()
 {
-   const int CTXT_BROWSER = 16; // from Defn.h
    return Rf_countContexts(CTXT_BROWSER, 1) > 0;
 }
    
