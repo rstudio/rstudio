@@ -22,15 +22,24 @@ public class PackageInstallOptions extends JavaScriptObject
    }
    
    public static final native PackageInstallOptions create(
+                                          boolean installFromRepository,
                                           String libraryPath, 
                                           boolean installDependencies) /*-{
       var options = new Object();
+      options.installFromRepository = installFromRepository;
       options.libraryPath = libraryPath ;
       options.installDependencies = installDependencies ;
       return options ;
    }-*/;
 
 
+   public final native boolean getInstallFromRepository() /*-{
+      if (typeof this.installFromRepository  != 'undefined')
+         return this.installFromRepository;
+      else
+         return true;
+   }-*/;
+   
    public final native String getLibraryPath() /*-{
       return this.libraryPath;
    }-*/;
@@ -46,7 +55,8 @@ public class PackageInstallOptions extends JavaScriptObject
       if (a === null)
          return true;
       return a.libraryPath === b.libraryPath &&
-             a.installDependencies === b.installDependencies;     
+             a.installDependencies === b.installDependencies &&
+             a.installFromRepository === b.installFromRepository;     
    }-*/;
 
    

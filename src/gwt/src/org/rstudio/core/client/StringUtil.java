@@ -19,6 +19,9 @@ import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Date;
 
+import org.rstudio.core.client.dom.DomMetrics;
+import org.rstudio.core.client.files.FileSystemItem;
+
 public class StringUtil
 {
    public static String formatDate(Date date)
@@ -205,6 +208,27 @@ public class StringUtil
          if (!isNullOrEmpty(s))
             return s;
       return null;
+   }
+   
+   public static String shortPathName(FileSystemItem item,
+                                      String styleName,
+                                      int maxWidth)
+   {
+      // measure HTML and truncate if necessary
+      String path = item.getPath();
+      Size textSize = DomMetrics.measureHTML(path, styleName);
+      if (textSize.width >= maxWidth)
+      {
+         // shortened directory nam
+         if (item.getParentPath() != null &&
+               item.getParentPath().getParentPath() != null)
+         {
+            path = ".../" + 
+            item.getParentPath().getName() + "/" +
+            item.getName(); 
+         }
+      }
+      return path;
    }
 
    private static final long[] SIZES = {

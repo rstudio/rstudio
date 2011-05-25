@@ -4,6 +4,29 @@
    width: 360px;
 }
 
+.packageSourceListBox {
+	width: 100%;
+}
+
+.packageSourcePanel {
+   width: 99%;
+   height: 50px;	
+}
+
+.packagesLabel {
+   margin-bottom: 3px;	
+}
+
+.packageFileTextBox {
+	margin-top: 0px;
+	margin-right: 5px;
+	width: 285px;
+}
+
+.packageFileBrowseButton {
+	
+}
+	
 .extraBottomPad {
    margin-bottom: 15px;	
 }

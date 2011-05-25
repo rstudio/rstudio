@@ -24,6 +24,14 @@ public class PackageInstallContext extends JavaScriptObject
    public final native boolean isCRANMirrorConfigured() /*-{
       return this.cranMirrorConfigured[0];
    }-*/;
+   
+   public final native JsArrayString selectedRepositoryNames() /*-{
+      return this.selectedRepositoryNames;
+   }-*/;
+   
+   public final native String packageArchiveExtension() /*-{
+      return this.packageArchiveExtension[0];
+   }-*/;
 
    public final native String getDefaultLibraryPath() /*-{
       return this.defaultLibraryPath[0];

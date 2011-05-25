@@ -14,18 +14,39 @@ package org.rstudio.studio.client.workbench.views.packages.model;
 
 import java.util.List;
 
+import org.rstudio.core.client.files.FileSystemItem;
+
 public class PackageInstallRequest 
 {
    public PackageInstallRequest(List<String> packages,
                                 PackageInstallOptions options)
    {
-      packages_ = packages;
-      options_ = options;
+      this(packages, null, options);
+   }
+   
+   public PackageInstallRequest(FileSystemItem localPackage,
+                                 PackageInstallOptions options)
+   {
+      this(null, localPackage, options);
    }
   
+   private PackageInstallRequest(List<String> packages,
+                                 FileSystemItem localPackage,
+                                 PackageInstallOptions options)
+   {
+      packages_ = packages;
+      localPackage_ = localPackage;
+      options_ = options;
+   }
+   
    public List<String> getPackages()
    {
       return packages_;
+   }
+   
+   public FileSystemItem getLocalPackage()
+   {
+      return localPackage_;
    }
    
    public PackageInstallOptions getOptions()
@@ -35,6 +56,7 @@ public class PackageInstallRequest
    
    
    private final List<String> packages_;
+   private final FileSystemItem localPackage_;
    private final PackageInstallOptions options_;
 
    

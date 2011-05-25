@@ -2,8 +2,7 @@ package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
 import java.util.HashMap;
 
-import org.rstudio.core.client.Size;
-import org.rstudio.core.client.dom.DomMetrics;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -58,21 +57,7 @@ public abstract class ExportPlot
    public static String shortDirectoryName(FileSystemItem directory,
                                            int maxWidth)
    {
-      // measure HTML and truncate if necessary
-      String path = directory.getPath();
-      Size textSize = DomMetrics.measureHTML(path, "gwt-Label");
-      if (textSize.width >= maxWidth)
-      {
-         // shortened directory nam
-         if (directory.getParentPath() != null &&
-             directory.getParentPath().getParentPath() != null)
-         {
-            path = ".../" + 
-                   directory.getParentPath().getName() + "/" +
-                   directory.getName(); 
-         }
-      }
-      return path;
+      return StringUtil.shortPathName(directory, "gwt-Label", maxWidth);
    }
    
    public static FileSystemItem composeTargetPath(String ext,

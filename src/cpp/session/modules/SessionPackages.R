@@ -162,6 +162,17 @@
    repos = getOption("repos")
    cranMirrorConfigured <- !is.null(repos) && repos != "@CRAN@"
    
+   # selected repository names
+   selectedRepositoryNames <- names(repos)
+
+   # package archive extension
+   if (identical(.Platform$OS.type, "windows"))
+      packageArchiveExtension <- ".zip"
+   else if (identical(substr(.Platform$pkgType, 1L, 10L), "mac.binary"))
+      packageArchiveExtension <- ".tgz"
+   else
+      packageArchiveExtension <- ".tar.gz"
+
    # default library path
    defaultLibraryPath = .libPaths()[1L]
    
@@ -176,6 +187,8 @@
 
    # return context
    list(cranMirrorConfigured = cranMirrorConfigured,
+        selectedRepositoryNames = selectedRepositoryNames,
+        packageArchiveExtension = packageArchiveExtension,
         defaultLibraryPath = defaultLibraryPath,
         defaultLibraryWriteable = defaultLibraryWriteable,
         writeableLibraryPaths = writeableLibraryPaths,

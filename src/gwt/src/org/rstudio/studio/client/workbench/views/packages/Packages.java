@@ -18,6 +18,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -223,6 +224,7 @@ public class Packages
       if (installOptions_.getLibraryPath().length() == 0)
       {
          installOptions_ = PackageInstallOptions.create(
+                                 installOptions_.getInstallFromRepository(),
                                  installContext.getDefaultLibraryPath(), 
                                  installOptions_.getInstallDependencies());
       }
@@ -242,28 +244,46 @@ public class Packages
                   request.getOptions().getLibraryPath().equals(
                                        installContext.getDefaultLibraryPath());
 
-               List<String> packages = request.getPackages();
                StringBuilder command = new StringBuilder();
                command.append("install.packages(");
-               if (packages.size() > 1)
-                  command.append("c(");
-               for (int i=0; i<packages.size(); i++)
-               {
-                  if (i > 0)
-                     command.append(", ");
-                  command.append("\""); 
-                  command.append(packages.get(i));
-                  command.append("\"");
-               }
-               if (packages.size() > 1)
-                  command.append(")");
                
-               if (!usingDefaultLibrary)
+               List<String> packages = request.getPackages();
+               if (packages != null)
                {
-                  command.append(", lib=\"");
-                  command.append(request.getOptions().getLibraryPath());
-                  command.append("\"");
+                  if (packages.size() > 1)
+                     command.append("c(");
+                  for (int i=0; i<packages.size(); i++)
+                  {
+                     if (i > 0)
+                        command.append(", ");
+                     command.append("\""); 
+                     command.append(packages.get(i));
+                     command.append("\"");
+                  }
+                  if (packages.size() > 1)
+                     command.append(")");
+                  
+                  if (!usingDefaultLibrary)
+                  {
+                     command.append(", lib=\"");
+                     command.append(request.getOptions().getLibraryPath());
+                     command.append("\"");
+                  }
                }
+               // must be a local package
+               else
+               {
+                  // get path
+                  FileSystemItem localPackage = request.getLocalPackage();
+                  
+                  // convert to string 
+                  String path = localPackage.getPath();
+                  
+                  // append command
+                  command.append("\"" + path + "\", repos = NULL");
+               }
+               
+               // dependencies
                if (!request.getOptions().getInstallDependencies())
                   command.append(", dependencies = FALSE");
 
@@ -635,5 +655,5 @@ public class Packages
    private final GlobalDisplay globalDisplay_ ;
    private final DefaultCRANMirror defaultCRANMirror_;
    private PackageInstallOptions installOptions_ = 
-                                    PackageInstallOptions.create("", true);
+                                  PackageInstallOptions.create(true, "", true);
 }
