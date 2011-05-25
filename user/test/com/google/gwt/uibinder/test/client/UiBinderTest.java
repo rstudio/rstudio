@@ -631,8 +631,8 @@ public class UiBinderTest extends GWTTestCase {
   public void testUiTextWithSafeHtml() {
     assertEquals(widgetUi.htmlWithComputedSafeHtml.getHTML().toLowerCase(),
         "<b>this text should be bold!</b>");
-    assertEquals(widgetUi.htmlWithComputedText.getHTML().toLowerCase(),
-        "&lt;b&gt;this text won't be bold!&lt;/b&gt;");
+    assertEquals(widgetUi.htmlWithComputedText.getHTML().toLowerCase()
+        .replaceAll(">", "&gt;"), "&lt;b&gt;this text won't be bold!&lt;/b&gt;");
     assertEquals(widgetUi.labelWithComputedText.getText().toLowerCase(),
         "<b>this text won't be bold!</b>");
   }
