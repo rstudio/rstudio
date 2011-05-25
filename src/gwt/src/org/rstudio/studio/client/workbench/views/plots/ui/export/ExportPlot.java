@@ -14,7 +14,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOption
 
 import com.google.gwt.user.client.ui.TextBox;
 
-public abstract class ExportPlot
+public class ExportPlot
 {
    public void savePlotAsImage(GlobalDisplay globalDisplay,
                                PlotsServerOperations server,
@@ -47,10 +47,12 @@ public abstract class ExportPlot
    }
    
    
-   public abstract void copyPlotToClipboard(
+   public void copyPlotToClipboard(
                            PlotsServerOperations server,
                            ExportPlotOptions options,
-                           OperationWithInput<ExportPlotOptions> onClose);
+                           OperationWithInput<ExportPlotOptions> onClose)
+   {  
+   }
    
    
    // utility for calculating display of directory
