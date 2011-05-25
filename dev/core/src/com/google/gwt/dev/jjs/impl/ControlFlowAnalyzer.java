@@ -107,6 +107,10 @@ public class ControlFlowAnalyzer {
           rescue(program.getTypeArray(superClass, dims), true, isInstantiated);
           didSuperType = true;
         }
+      } else if (leafType instanceof JInterfaceType) {
+        // Intf[] -> Object[]
+        rescue(program.getTypeArray(program.getTypeJavaLangObject(), dims), true, isInstantiated);
+        didSuperType = true;
       }
       if (!didSuperType) {
         if (dims > 1) {
@@ -297,7 +301,7 @@ public class ControlFlowAnalyzer {
       boolean isInstantiated = instantiatedTypes.contains(type);
       assert (isReferenced || isInstantiated);
 
-      // Rescue my clinit (it won't ever be explicitly referenced
+      // Rescue my clinit (it won't ever be explicitly referenced)
       if (type.hasClinit()) {
         rescue(type.getMethods().get(0));
       }
@@ -308,11 +312,6 @@ public class ControlFlowAnalyzer {
         for (JInterfaceType intfType : type.getImplements()) {
           rescue(intfType, false, true);
         }
-      }
-
-      // visit any field initializers
-      for (JField it : type.getFields()) {
-        accept(it);
       }
 
       rescueMembersIfInstantiable(type);
