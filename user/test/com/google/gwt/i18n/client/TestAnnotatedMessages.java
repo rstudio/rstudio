@@ -266,6 +266,18 @@ public interface TestAnnotatedMessages extends Messages {
   @AlternateMessage({"one", "A {0}"})
   String twoParamPlural(String name, @PluralCount int count);
 
+  @DefaultMessage("#: {0,number}")
+  @AlternateMessage({"false", "Message Count: {0,number}"})
+  SafeHtml selectBoolean(int count, @Select boolean shortMsg);
+
+  @DefaultMessage("Updated order {0}")
+  @AlternateMessage({"0", "Created new order"})
+  String selectInt(@Select int orderId);
+
+  @DefaultMessage("Updated order {0}")
+  @AlternateMessage({"0", "Created new order"})
+  SafeHtml selectLong(@Select long orderId);
+
   @DefaultMessage("{0} widgets")
   @AlternateMessage({"=0", "No widgets",
       "=1", "A widget",

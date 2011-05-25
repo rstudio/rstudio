@@ -35,6 +35,16 @@ public class I18N_en_US_Test extends GWTTestCase {
     return "com.google.gwt.i18n.I18NTest_en";
   }
 
+  public void testSelect() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    assertEquals("#: 14", m.selectBoolean(14, true).asString());
+    assertEquals("Message Count: 14", m.selectBoolean(14, false).asString());
+    assertEquals("Created new order", m.selectInt(0));
+    assertEquals("Updated order 42", m.selectInt(42));
+    assertEquals("Created new order", m.selectLong(0).asString());
+    assertEquals("Updated order 42", m.selectLong(42).asString());
+  }
+
   /**
    * Verifies correct output for multiple, nested selectors, using an enum
    * for gender selection (and SafeHtml output).

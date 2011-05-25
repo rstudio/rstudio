@@ -201,7 +201,9 @@ class MessagesMethodCreator extends AbstractMethodCreator {
   private static class GenericSelector extends AlternateFormSelector {
 
     private final JEnumType enumType;
+    private final boolean isBoolean;
     private final boolean isString;
+    private final boolean needsIf;
     private boolean startedIfChain;
 
     /**
@@ -217,13 +219,17 @@ class MessagesMethodCreator extends AbstractMethodCreator {
       JPrimitiveType primType = argType.isPrimitive();
       JClassType classType = argType.isClass();
       JEnumType tempEnumType = null;
+      boolean tempIsBoolean = false;
       boolean tempIsString = false;
+      boolean tempNeedsIf = false;
       if (primType != null) {
         if (primType == JPrimitiveType.DOUBLE
             || primType == JPrimitiveType.FLOAT) {
           throw error(logger, m.getName() + ": @Select arguments may only be"
               + " integral primitives, boolean, enums, or String");
         }
+        tempIsBoolean = (primType == JPrimitiveType.BOOLEAN);
+        tempNeedsIf = tempIsBoolean || (primType == JPrimitiveType.LONG);
       } else if (classType != null) {
         tempEnumType = classType.isEnum();
         tempIsString = "java.lang.String".equals(classType.getQualifiedSourceName());
@@ -235,8 +241,11 @@ class MessagesMethodCreator extends AbstractMethodCreator {
         throw error(logger, m.getName() + ": @Select arguments may only be"
             + " integral primitives, boolean, enums, or String");
       }
+      tempNeedsIf |= tempIsString;
       enumType = tempEnumType;
+      isBoolean = tempIsBoolean;
       isString = tempIsString;
+      needsIf = tempNeedsIf;
     }
 
     @Override
@@ -271,7 +280,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     @Override
     public void generateSelectMatchStart(SourceWriter out, TreeLogger logger,
         String value) throws UnableToCompleteException {
-      if (isString) {
+      if (needsIf) {
         if (startedIfChain) {
           out.print("} else ");
         } else {
@@ -280,9 +289,22 @@ class MessagesMethodCreator extends AbstractMethodCreator {
         if (AlternateMessageSelector.OTHER_FORM_NAME.equals(value)) {
           out.println("{  // other");
         } else {
-          value = value.replace("\"", "\\\"");
-          out.println("if (\"" + value + "\".equals(arg" + argNumber
-              + ")) {");
+          if (isString) {
+            value = value.replace("\"", "\\\"");
+            out.println("if (\"" + value + "\".equals(arg" + argNumber + ")) {");
+          } else if (isBoolean) {
+            boolean isTrue = Boolean.parseBoolean(value);
+            out.println("if (" + (isTrue ? "" : "!") + "arg" + argNumber + ") {");
+          } else {
+            long longVal;
+            try {
+              longVal = Long.parseLong(value);
+            } catch (NumberFormatException e) {
+              throw error(logger, "'" + value + "' is not a valid long value",
+                  e);
+            }
+            out.println("if (" + longVal + " == arg" + argNumber + ") {");
+          }
         }
       } else {
         if (AlternateMessageSelector.OTHER_FORM_NAME.equals(value)) {
@@ -299,14 +321,14 @@ class MessagesMethodCreator extends AbstractMethodCreator {
           }
           out.println("case " + enumConstant.getOrdinal() + ":  // " + value);
         } else {
-          long longVal;
+          int intVal;
           try {
-            longVal = Long.parseLong(value);
+            intVal = Integer.parseInt(value);
           } catch (NumberFormatException e) {
-            throw error(logger, "'" + value + "' is not a valid numeric value",
+            throw error(logger, "'" + value + "' is not a valid integral value",
                 e);
           }
-          out.println("case " + longVal + ":");
+          out.println("case " + intVal + ":");
         }
       }
       out.indent();
@@ -315,7 +337,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     @Override
     public void generateSelectStart(SourceWriter out, boolean exactMatches) {
       // ignore exactMatches, so "=VALUE" is the same as "VALUE"
-      if (isString) {
+      if (needsIf) {
         startedIfChain = false;
         return;
       }
@@ -1165,7 +1187,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
           null);
     }
     Collection<String> resourceForms = resourceEntry.getForms();
-    if (seenPluralCount) {
+    if (seenPluralCount || seenSelect) {
       paramsAccessor.enablePluralOffsets();
       writer.println(m.getReturnType().getParameterizedQualifiedSourceName()
           + " returnVal = null;");

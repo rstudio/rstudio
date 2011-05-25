@@ -408,8 +408,8 @@ public interface Messages extends LocalizableResource {
    * 
    * This annotation is applied to a single parameter of a Messages subinterface
    * and indicates that parameter is to be used to choose the proper form of the
-   * message. The parameter chosen must be of type Enum, String, or a primitive
-   * numeric type.  This is frequently used to get proper gender for
+   * message. The parameter chosen must be of type Enum, String, boolean, or a
+   * primitive integral type.  This is frequently used to get proper gender for
    * translations to languages where surrounding words depend on the gender of
    * a person or noun.  This also marks the parameter as {@link Optional}.
    * 
