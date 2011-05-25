@@ -41,6 +41,7 @@ public class JsReportGenerationVisitor extends
     this.out = out;
   }
 
+  @Override
   public Map<Range, SourceInfo> getSourceInfoMap() {
     return Collections.unmodifiableMap(sourceInfoMap);
   }

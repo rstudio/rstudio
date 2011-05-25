@@ -17,8 +17,11 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.impl.StandardStatementRanges;
+import com.google.gwt.core.ext.soyc.Range;
+import com.google.gwt.dev.jjs.SourceInfo;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * Base class for transforming program text.
@@ -26,17 +29,23 @@ import java.util.ArrayList;
 public abstract class JsAbstractTextTransformer {
 
   protected String js;
+  
+  protected StatementRanges originalStatementRanges;
 
   protected StatementRanges statementRanges;
+  
+  protected Map<Range, SourceInfo> sourceInfoMap;
 
   public JsAbstractTextTransformer(JsAbstractTextTransformer xformer) {
-    this.js = xformer.getJs();
-    this.statementRanges = xformer.getStatementRanges();
+    this(xformer.getJs(), xformer.getStatementRanges(), xformer.getSourceInfoMap());
   }
 
-  public JsAbstractTextTransformer(String js, StatementRanges statementRanges) {
+  public JsAbstractTextTransformer(String js, StatementRanges statementRanges, 
+      Map<Range, SourceInfo> sourceInfoMap) {
     this.js = js;
     this.statementRanges = statementRanges;
+    this.originalStatementRanges = statementRanges;
+    this.sourceInfoMap = sourceInfoMap;
   }
 
   public abstract void exec();
@@ -44,23 +53,26 @@ public abstract class JsAbstractTextTransformer {
   public String getJs() {
     return js;
   }
+  
+  public Map<Range, SourceInfo> getSourceInfoMap() {
+    return sourceInfoMap;
+  }
 
   public StatementRanges getStatementRanges() {
     return statementRanges;
   }
 
-  protected void addStatement(String code, StringBuilder newJs, ArrayList<Integer> starts,
-      ArrayList<Integer> ends) {
-    beginStatement(newJs, starts);
+  protected void addStatement(int index, String code, StringBuilder newJs,
+      ArrayList<Integer> starts, ArrayList<Integer> ends) {
+    beginStatement(index, newJs, starts);
     newJs.append(code);
-    endStatement(newJs, ends);
+    endStatement(index, newJs, ends);
   }
 
-  protected void beginStatement(StringBuilder newJs, ArrayList<Integer> starts) {
+  protected void beginStatement(int index, StringBuilder newJs, ArrayList<Integer> starts) {
     starts.add(newJs.length());
   }
 
-  // FIXME document parameters
   /**
    * Called if any operations need to be performed before all statements have
    * been processed.
@@ -73,16 +85,10 @@ public abstract class JsAbstractTextTransformer {
       ArrayList<Integer> ends) {
   }
 
-  // FIXME document
-  /**
-   * @param newJs
-   * @param ends
-   */
-  protected void endStatement(StringBuilder newJs, ArrayList<Integer> ends) {
+  protected void endStatement(int index, StringBuilder newJs, ArrayList<Integer> ends) {
     ends.add(newJs.length());
   }
 
-  // FIXME document parameters
   /**
    * Called if any operations need to be performed after all statements have
    * been processed.
@@ -110,18 +116,26 @@ public abstract class JsAbstractTextTransformer {
     ArrayList<Integer> ends = new ArrayList<Integer>();
 
     beginStatements(newJs, starts, ends);
-    for (int stmtIndice : stmtIndices) {
-      String code = getJsForRange(stmtIndice);
-      addStatement(code, newJs, starts, ends);
+    for (int stmtIndex : stmtIndices) {
+      String code = getJsForRange(stmtIndex);
+      addStatement(stmtIndex, code, newJs, starts, ends);
     }
     endStatements(newJs, starts, ends);
 
     assert starts.size() == ends.size() : "Size mismatch between start and"
         + " end statement ranges.";
-    assert starts.get(0) == 0 && ends.get(ends.size() - 1) == newJs.length() : "statement ranges don't cover entire JS output string.";
+    assert starts.get(0) == 0 && ends.get(ends.size() - 1) == newJs.length() : 
+        "statement ranges don't cover entire JS output string.";
 
-    StandardStatementRanges newRanges = new StandardStatementRanges(starts, ends);
     js = newJs.toString();
-    statementRanges = newRanges;
+    statementRanges = new StandardStatementRanges(starts, ends);
+    updateSourceInfoMap();
   }
+  
+  /**
+   * Update the expression ranges in the SourceInfo map after the 
+   * transformer has manipulated the statements.
+   */
+  protected abstract void updateSourceInfoMap();
+  
 }

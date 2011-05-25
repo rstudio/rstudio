@@ -86,6 +86,7 @@ import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.HandleCrossFragmentReferences;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
+import com.google.gwt.dev.jjs.impl.JsAbstractTextTransformer;
 import com.google.gwt.dev.jjs.impl.JsFunctionClusterer;
 import com.google.gwt.dev.jjs.impl.JsIEBlockTextTransformer;
 import com.google.gwt.dev.jjs.impl.JsoDevirtualizer;
@@ -1034,41 +1035,53 @@ public class JavaToJavaScriptCompiler {
     for (int i = 0; i < js.length; i++) {
       DefaultTextOutput out = new DefaultTextOutput(options.getOutput().shouldMinimize());
       JsSourceGenerationVisitorWithSizeBreakdown v;
+      
       if (sourceInfoMaps != null) {
         v = new JsReportGenerationVisitor(out, jjsMap);
       } else {
         v = new JsSourceGenerationVisitorWithSizeBreakdown(out, jjsMap);
       }
       v.accept(jsProgram.getFragmentBlock(i));
-
+      
+      StatementRanges statementRanges = v.getStatementRanges();
+      String code = out.toString();
+      Map<Range, SourceInfo> infoMap = (sourceInfoMaps != null) ? v.getSourceInfoMap() : null;
+      
+      JsAbstractTextTransformer transformer = 
+          new JsAbstractTextTransformer(code, statementRanges, infoMap) {
+        @Override public void exec() { }
+        @Override protected void updateSourceInfoMap() { }
+      };
+      
       /**
        * Reorder function decls to improve compression ratios. Also restructures
        * the top level blocks into sub-blocks if they exceed 32767 statements.
        */
       Event functionClusterEvent = SpeedTracerLogger.start(CompilerEventType.FUNCTION_CLUSTER);
-      JsFunctionClusterer clusterer =
-          new JsFunctionClusterer(out.toString(), v.getStatementRanges());
       // only cluster for obfuscated mode
       if (options.isAggressivelyOptimize() && options.getOutput() == JsOutputOption.OBFUSCATED) {
-        clusterer.exec();
+        transformer = new JsFunctionClusterer(transformer);
+        transformer.exec();
       }
       functionClusterEvent.end();
+      
       // rewrite top-level blocks to limit the number of statements
-      JsIEBlockTextTransformer ieXformer = new JsIEBlockTextTransformer(clusterer);
       if (splitBlocks) {
-        ieXformer.exec();
+        transformer = new JsIEBlockTextTransformer(transformer);
+        transformer.exec();
       }
-      js[i] = ieXformer.getJs();
+      
+      js[i] = transformer.getJs();
+      ranges[i] = transformer.getStatementRanges();
       if (sizeBreakdowns != null) {
         sizeBreakdowns[i] = v.getSizeBreakdown();
       }
       if (sourceInfoMaps != null) {
-        sourceInfoMaps.add(((JsReportGenerationVisitor) v).getSourceInfoMap());
+        sourceInfoMaps.add(transformer.getSourceInfoMap());
       }
-      ranges[i] = ieXformer.getStatementRanges();
     }
   }
-
+  
   /**
    * This method can be used to fetch the list of referenced classs.
    * 

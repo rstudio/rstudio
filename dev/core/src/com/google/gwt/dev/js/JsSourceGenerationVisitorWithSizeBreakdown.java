@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.core.ext.soyc.Range;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.impl.FragmentExtractor;
@@ -54,6 +56,11 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
 
   public SizeBreakdown getSizeBreakdown() {
     return new SizeBreakdown(out.getPosition(), sizeMap);
+  }
+
+  public Map<Range, SourceInfo> getSourceInfoMap() {
+    // override if your child class creates sourceinfo
+    return null;
   }
 
   @Override
