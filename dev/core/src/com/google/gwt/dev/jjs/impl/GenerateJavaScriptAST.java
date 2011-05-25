@@ -127,6 +127,7 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsNormalScope;
+import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
@@ -1117,6 +1118,31 @@ public class GenerateJavaScriptAST {
       JsInvocation jsInvocation = new JsInvocation(x.getSourceInfo());
 
       popList(jsInvocation.getArguments(), x.getArgs().size()); // args
+
+      if (JProgram.isClinit(method)) {
+        /*
+         * It is possible for clinits to be referenced here that have actually
+         * been retargeted (see {@link
+         * JTypeOracle.recomputeAfterOptimizations}). Most of the time, these
+         * will get cleaned up by other optimization passes prior to this point,
+         * but it's not guaranteed. In this case we need to replace the method
+         * call with the replaced clinit, unless the replacement is null, in
+         * which case we generate a JsNullLiteral as a place-holder expression.
+         */
+        JDeclaredType type = method.getEnclosingType();
+        JDeclaredType clinitTarget = type.getClinitTarget();
+        if (clinitTarget == null) {
+          if (x.getInstance() != null) {
+            pop(); // instance
+          }
+          // generate a null expression, which will get optimized out
+          push(JsNullLiteral.INSTANCE);
+          return;
+        } else if (type != clinitTarget) {
+          // replace the method with its retargeted clinit
+          method = clinitTarget.getMethods().get(0);
+        }
+      }
 
       JsNameRef qualifier;
       JsExpression unnecessaryQualifier = null;
