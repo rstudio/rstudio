@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -260,6 +261,23 @@ public class MakeTopLevelHtmlForPerm {
             + globalInformation.getSplitPointToLocation().get(sp) + "',");
       }
       outFile.println("  ];");
+      
+      // object/dictionary containing method sizes
+      outFile.println("  var methodSizes = {");
+      for (SizeBreakdown breakdown : globalInformation.allSizeBreakdowns()) {
+        for (Entry<String, Integer> methodEntry : breakdown.methodToSize.entrySet()) {
+          String methodSignature = methodEntry.getKey();
+          String method = methodSignature.substring(0, methodSignature.indexOf("("));
+          outFile.println("    \"" + method + "\" : " + methodEntry.getValue() + ",");
+        }
+      }
+      outFile.println("};");
+      
+      // dropdown button image srcs
+      outFile.println("  var images = {");
+      outFile.println("    \"closed\" : \"images/play-g16.png\",");
+      outFile.println("    \"open\" : \"images/play-g16-down.png\",");
+      outFile.println("  };");
 
       // TODO(zundel): Most of this below is just inserting a fixed string into the code. It would
       // be easier to read and maintain if we could store the fixed part in a flat file. Use some
@@ -270,26 +288,67 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("  function a(packageRef, classRef) {");
       outFile.println("    var className = internedStrings[packageRef] + \".\" + "
           + "internedStrings[classRef];");
-      outFile.println("    document.write(\"<a name='\" + className + \"'>\");");
-      outFile.println("    document.write(\"<h3 class='soyc-class-header'>Class: \" + className + "
-          + "\"</a></h3>\");");
+      outFile.println("    document.write(\"<div class='main'>\");");
+      outFile.println("    document.write(\"<table class='soyc-table'>\");");
+      outFile.println("    document.write(\"<thead>\");");
+      outFile.println("    document.write(\"<th><a class='soyc-class-name' "
+          + "name='\" + className + \"'>"
+          + "Class: \" + className + \"</a></th>\");");
+      outFile.println("    document.write(\"<th class='soyc-numerical-col-header'>Size "
+          + "<span class='soyc-th-units'>(bytes)</span></th>\");");
+      outFile.println("    document.write(\"</thead>\");");
       outFile.println("  }");
-
+      
+      outFile.println("  function swapShowHide(elementName) {");
+      outFile.println("    hp = document.getElementById(elementName);");
+      outFile.println("    arrow = document.getElementById(\"dropdown-\" + elementName);");
+      outFile.println("    if (hp.style.display !== \"none\" && hp.style.display "
+          + "!== \"inline\") {");
+      outFile.println("      hp.style.display = \"inline\";");
+      outFile.println("      arrow.src = images[\"open\"];");
+      outFile.println("    } else if (hp.style.display === \"none\") {");
+      outFile.println("      hp.style.display = \"inline\";");
+      outFile.println("      arrow.src = images[\"open\"];");
+      outFile.println("    } else {");
+      outFile.println("      hp.style.display = \"none\";");
+      outFile.println("      arrow.src = images[\"closed\"];");
+      outFile.println("    }");
+      outFile.println("  }");
+      
       // function to print a single dependency in the methodDependencies report
       // see printDependency()
       outFile.println("  function b(c, deps) {");
-      outFile.println("    document.write(\"<div class='main'>"
-          + "<a class='toggle soyc-call-stack-link' onclick='toggle.call(this)'>\");");
-      outFile.println("    document.write(\"<span class='calledBy'> Call stack: </span>\");");
-      outFile.println("    document.write(internedStrings[c[0]] + \".\" + internedStrings[c[1]] + "
-          + "\"::\" + internedStrings[c[2]] + \"</a>\");");
-      outFile.println("    document.write(\"<ul class='soyc-call-stack-list'>\");");
+      outFile.println("    var methodName = internedStrings[c[0]] + \".\" + internedStrings[c[1]] "
+          + "+ \"::\" + internedStrings[c[2]];");
+      outFile.println("    var methodSize = methodSizes[methodName];");
+      outFile.println("    if (methodSize === undefined) methodSize = \"--\";");
+      outFile.println("    var callstackId = \"callstack-\" + methodName;");
+      outFile.println("    document.write(\"<tr>\");");
+      outFile.println("    document.write(\"<td>\");");
+      outFile.println("    document.write(\"<img onclick='swapShowHide(\\\"\" + "
+          + "callstackId + \"\\\")'"
+          + "id='dropdown-\" + callstackId + \"' "
+          + "class='dropdown-img' "
+          + "src=\" + images[\"closed\"] + \">\");");
+      outFile.println("    document.write(\"<a class='toggle soyc-call-stack-link' "
+          + "onclick='swapShowHide(\\\"\" + callstackId + \"\\\")'>\" + methodName + \"</a>\");");
+      outFile.println("    document.write(\"<ul id='\" + callstackId + \"' "
+          + "class='soyc-call-stack-list'>\");");
       outFile.println("    for (var i = 0; i < deps.length ; i++) {");
       outFile.println("      var s = deps[i];");
       outFile.println("      document.write(\"<li>\" + internedStrings[s[0]] + \".\" + "
           + "internedStrings[s[1]] + \"::\" + internedStrings[s[2]] + \"</li>\");");
       outFile.println("    }");
-      outFile.println("    document.write(\"</ul></div>\");");
+      outFile.println("    document.write(\"</ul>\");");
+      outFile.println("    document.write(\"</td>\");");
+      outFile.println("    document.write(\"<td class='soyc-numerical-col'>\" + "
+          + "methodSize + \"</td>\");");
+      outFile.println("    document.write(\"</tr>\");");
+      outFile.println("  }");
+      
+      // follows all method dependency stacks
+      outFile.println("  function j() {");
+      outFile.println("    document.write(\"</div></table>\");");
       outFile.println("  }");
 
       // leftovers status line
@@ -722,7 +781,8 @@ public class MakeTopLevelHtmlForPerm {
           outFile.println("<td class=\"soyc-numerical-col\">");
           outFile.println(bytesFormatter.format(size));
           outFile.println("</td>");
-          outFile.println("<td class=\"soyc-percent-col\">" + percentFormatter.format(perc) + "</td>");
+          outFile.println("<td class=\"soyc-percent-col\">" + 
+              percentFormatter.format(perc) + "</td>");
           outFile.println("</tr>");
         }
       }
@@ -1072,7 +1132,8 @@ public class MakeTopLevelHtmlForPerm {
             outFile.println("<td class=\"soyc-numerical-col\">");
             outFile.println(bytesFormatter.format(size));
             outFile.println("</td>");
-            outFile.println("<td class=\"soyc-percent-col\">" + percentFormatter.format(perc) + "</td>");
+            outFile.println("<td class=\"soyc-percent-col\">" + 
+                percentFormatter.format(perc) + "</td>");
             outFile.println("</tr>");
           }
         }
@@ -1243,7 +1304,8 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("<td class=\"soyc-numerical-col\">");
         outFile.println(bytesFormatter.format(size));
         outFile.println("</td>");
-        outFile.println("<td class=\"soyc-percent-col\">" + percentFormatter.format(perc) + "</td>");
+        outFile.println("<td class=\"soyc-percent-col\">" + 
+            percentFormatter.format(perc) + "</td>");
         outFile.println("</tr>");
       }
     }
@@ -1445,7 +1507,8 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("<td class=\"soyc-numerical-col\">");
         outFile.println(bytesFormatter.format(size));
         outFile.println("</td>");
-        outFile.println("<td class=\"soyc-percent-col\">" + percentFormatter.format(perc) + "</td>");
+        outFile.println("<td class=\"soyc-percent-col\">" + 
+            percentFormatter.format(perc) + "</td>");
         outFile.println("</tr>");
       }
     }
@@ -1674,6 +1737,9 @@ public class MakeTopLevelHtmlForPerm {
       String depMethod = dependencies.get(method);
       if (curClassName.compareTo(className) != 0) {
         curClassName = className;
+        if (method != classesInPackage.get(0)) {
+          outFile.print("j();"); // close the previous table if not the first
+        }
         interner.printDependencyClassHeader(outFile, className);
       }
       interner.printDependency(outFile, dependencies, method, depMethod);
@@ -1761,7 +1827,8 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("<td class=\"soyc-numerical-col\">");
         outFile.println(bytesFormatter.format(size));
         outFile.println("</td>");
-        outFile.println("<td class=\"soyc-percent-col\">" + percentFormatter.format(perc) + "</td>");
+        outFile.println("<td class=\"soyc-percent-col\">" + 
+            percentFormatter.format(perc) + "</td>");
         outFile.println("</tr>");
       }
     }

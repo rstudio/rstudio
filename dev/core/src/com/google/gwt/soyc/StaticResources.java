@@ -35,7 +35,7 @@ public class StaticResources {
    */
   private static String[] resourceNames = new String[] {
       "goog.css", "inlay.css", "soyc.css", "images/g_gwt.png",
-      "images/up_arrow.png"};
+      "images/up_arrow.png", "images/play-g16.png", "images/play-g16-down.png"};
 
   public static void emit(OutputDirectory outDir) throws IOException {
     String prefix = StaticResources.class.getPackage().getName().replace('.',

@@ -122,11 +122,31 @@
 }
 .soyc-call-stack-list {
   list-style: none;
+  display: none;
 }
 .soyc-call-stack-list li {
   background: transparent url('images/up_arrow.png') no-repeat center left;
   padding-left: 1.4em;
   padding-top: .4em;
+}
+.dropdown-img {
+  width: 16px;
+  height: 16px;
+}
+.soyc-class-name {
+  color:black;
+}
+a.soyc-class-name:link {
+  color: black;
+}
+a.soyc-class-name:visited {
+  color: black;
+}
+a.soyc-class-name:hover {
+  color: black;
+}
+a.soyc-class-name:active {
+  color: black;
 }
 
 /* Breakdown page rules */
@@ -194,6 +214,7 @@
 }
 .soyc-numerical-col {
   text-align: right;
+  vertical-align: top;
   font-family: monospace;
   width: 10em;
 }

@@ -24,6 +24,7 @@ import java.util.TreeMap;
  */
 public class SizeBreakdown {
   public Map<String, Integer> classToSize = new HashMap<String, Integer>();
+  public Map<String, Integer> methodToSize = new HashMap<String, Integer>();
 
   public HashMap<String, CodeCollection> nameToCodeColl = new HashMap<String, CodeCollection>();
 
