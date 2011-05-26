@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -33,6 +33,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.TextInputCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.Constants;
@@ -48,8 +49,8 @@ import com.google.gwt.sample.showcase.client.content.cell.ContactDatabase.Catego
 import com.google.gwt.sample.showcase.client.content.cell.ContactDatabase.ContactInfo;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -93,7 +94,7 @@ public class CwCellSampler extends ContentWidget {
 
   /**
    * Get a cell value from a record.
-   *
+   * 
    * @param <C> the cell type
    */
   @ShowcaseSource
@@ -104,7 +105,7 @@ public class CwCellSampler extends ContentWidget {
   /**
    * A pending change to a {@link ContactInfo}. Changes aren't committed
    * immediately to illustrate that cells can remember their pending changes.
-   *
+   * 
    * @param <T> the data type being changed
    */
   @ShowcaseSource
@@ -126,7 +127,7 @@ public class CwCellSampler extends ContentWidget {
 
     /**
      * Update the appropriate field in the {@link ContactInfo}.
-     *
+     * 
      * @param contact the contact to update
      * @param value the new value
      */
@@ -202,7 +203,7 @@ public class CwCellSampler extends ContentWidget {
    */
   @ShowcaseData
   @UiField(provided = true)
-  CellTable<ContactInfo> cellTable;
+  DataGrid<ContactInfo> contactList;
 
   /**
    * The commit button.
@@ -232,12 +233,22 @@ public class CwCellSampler extends ContentWidget {
 
   /**
    * Constructor.
-   *
+   * 
    * @param constants the constants
    */
   public CwCellSampler(CwConstants constants) {
     super(constants.cwCellSamplerName(), constants.cwCellSamplerDescription(), false,
         "ContactDatabase.java", "CwCellSampler.ui.xml");
+  }
+
+  @Override
+  public boolean hasMargins() {
+    return false;
+  }
+
+  @Override
+  public boolean hasScrollableContent() {
+    return false;
   }
 
   /**
@@ -250,18 +261,21 @@ public class CwCellSampler extends ContentWidget {
 
     // Create the table.
     editableCells = new ArrayList<AbstractEditableCell<?, ?>>();
-    cellTable = new CellTable<ContactInfo>(6, ContactInfo.KEY_PROVIDER);
-    ContactDatabase.get().addDataDisplay(cellTable);
+    contactList = new DataGrid<ContactInfo>(25, ContactInfo.KEY_PROVIDER);
+    contactList.setMinimumTableWidth(140, Unit.EM);
+    ContactDatabase.get().addDataDisplay(contactList);
 
     // CheckboxCell.
     final Category[] categories = ContactDatabase.get().queryCategories();
     addColumn(new CheckboxCell(), "Checkbox", new GetValue<Boolean>() {
+      @Override
       public Boolean getValue(ContactInfo contact) {
         // Checkbox indicates that the contact is a relative.
         // Index 0 = Family.
         return contact.getCategory() == categories[0];
       }
     }, new FieldUpdater<ContactInfo, Boolean>() {
+      @Override
       public void update(int index, ContactInfo object, Boolean value) {
         if (value) {
           // If a relative, use the Family Category.
@@ -275,39 +289,50 @@ public class CwCellSampler extends ContentWidget {
 
     // TextCell.
     addColumn(new TextCell(), "Text", new GetValue<String>() {
+      @Override
       public String getValue(ContactInfo contact) {
         return contact.getFullName();
       }
     }, null);
 
     // EditTextCell.
-    addColumn(new EditTextCell(), "EditText", new GetValue<String>() {
-      public String getValue(ContactInfo contact) {
-        return contact.getFirstName();
-      }
-    }, new FieldUpdater<ContactInfo, String>() {
-      public void update(int index, ContactInfo object, String value) {
-        pendingChanges.add(new FirstNameChange(object, value));
-      }
-    });
+    Column<ContactInfo, String> editTextColumn =
+        addColumn(new EditTextCell(), "EditText", new GetValue<String>() {
+          @Override
+          public String getValue(ContactInfo contact) {
+            return contact.getFirstName();
+          }
+        }, new FieldUpdater<ContactInfo, String>() {
+          @Override
+          public void update(int index, ContactInfo object, String value) {
+            pendingChanges.add(new FirstNameChange(object, value));
+          }
+        });
+    contactList.setColumnWidth(editTextColumn, 16.0, Unit.EM);
 
     // TextInputCell.
-    addColumn(new TextInputCell(), "TextInput", new GetValue<String>() {
-      public String getValue(ContactInfo contact) {
-        return contact.getLastName();
-      }
-    }, new FieldUpdater<ContactInfo, String>() {
-      public void update(int index, ContactInfo object, String value) {
-        pendingChanges.add(new LastNameChange(object, value));
-      }
-    });
+    Column<ContactInfo, String> textInputColumn =
+        addColumn(new TextInputCell(), "TextInput", new GetValue<String>() {
+          @Override
+          public String getValue(ContactInfo contact) {
+            return contact.getLastName();
+          }
+        }, new FieldUpdater<ContactInfo, String>() {
+          @Override
+          public void update(int index, ContactInfo object, String value) {
+            pendingChanges.add(new LastNameChange(object, value));
+          }
+        });
+    contactList.setColumnWidth(textInputColumn, 16.0, Unit.EM);
 
     // ClickableTextCell.
     addColumn(new ClickableTextCell(), "ClickableText", new GetValue<String>() {
+      @Override
       public String getValue(ContactInfo contact) {
         return "Click " + contact.getFirstName();
       }
     }, new FieldUpdater<ContactInfo, String>() {
+      @Override
       public void update(int index, ContactInfo object, String value) {
         Window.alert("You clicked " + object.getFullName());
       }
@@ -315,10 +340,12 @@ public class CwCellSampler extends ContentWidget {
 
     // ActionCell.
     addColumn(new ActionCell<ContactInfo>("Click Me", new ActionCell.Delegate<ContactInfo>() {
+      @Override
       public void execute(ContactInfo contact) {
         Window.alert("You clicked " + contact.getFullName());
       }
     }), "Action", new GetValue<ContactInfo>() {
+      @Override
       public ContactInfo getValue(ContactInfo contact) {
         return contact;
       }
@@ -326,10 +353,12 @@ public class CwCellSampler extends ContentWidget {
 
     // ButtonCell.
     addColumn(new ButtonCell(), "Button", new GetValue<String>() {
+      @Override
       public String getValue(ContactInfo contact) {
         return "Click " + contact.getFirstName();
       }
     }, new FieldUpdater<ContactInfo, String>() {
+      @Override
       public void update(int index, ContactInfo object, String value) {
         Window.alert("You clicked " + object.getFullName());
       }
@@ -338,6 +367,7 @@ public class CwCellSampler extends ContentWidget {
     // DateCell.
     DateTimeFormat dateFormat = DateTimeFormat.getFormat(PredefinedFormat.DATE_MEDIUM);
     addColumn(new DateCell(dateFormat), "Date", new GetValue<Date>() {
+      @Override
       public Date getValue(ContactInfo contact) {
         return contact.getBirthday();
       }
@@ -345,10 +375,12 @@ public class CwCellSampler extends ContentWidget {
 
     // DatePickerCell.
     addColumn(new DatePickerCell(dateFormat), "DatePicker", new GetValue<Date>() {
+      @Override
       public Date getValue(ContactInfo contact) {
         return contact.getBirthday();
       }
     }, new FieldUpdater<ContactInfo, Date>() {
+      @Override
       public void update(int index, ContactInfo object, Date value) {
         pendingChanges.add(new BirthdayChange(object, value));
       }
@@ -357,6 +389,7 @@ public class CwCellSampler extends ContentWidget {
     // NumberCell.
     Column<ContactInfo, Number> numberColumn =
         addColumn(new NumberCell(), "Number", new GetValue<Number>() {
+          @Override
           public Number getValue(ContactInfo contact) {
             return contact.getAge();
           }
@@ -366,6 +399,7 @@ public class CwCellSampler extends ContentWidget {
     // IconCellDecorator.
     addColumn(new IconCellDecorator<String>(images.contactsGroup(), new TextCell()), "Icon",
         new GetValue<String>() {
+          @Override
           public String getValue(ContactInfo contact) {
             return contact.getCategory().getDisplayName();
           }
@@ -373,6 +407,7 @@ public class CwCellSampler extends ContentWidget {
 
     // ImageCell.
     addColumn(new ImageCell(), "Image", new GetValue<String>() {
+      @Override
       public String getValue(ContactInfo contact) {
         return "contact.jpg";
       }
@@ -384,10 +419,12 @@ public class CwCellSampler extends ContentWidget {
       options.add(category.getDisplayName());
     }
     addColumn(new SelectionCell(options), "Selection", new GetValue<String>() {
+      @Override
       public String getValue(ContactInfo contact) {
         return contact.getCategory().getDisplayName();
       }
     }, new FieldUpdater<ContactInfo, String>() {
+      @Override
       public void update(int index, ContactInfo object, String value) {
         for (Category category : categories) {
           if (category.getDisplayName().equals(value)) {
@@ -404,11 +441,13 @@ public class CwCellSampler extends ContentWidget {
 
     // Add handlers to redraw or refresh the table.
     redrawButton.addClickHandler(new ClickHandler() {
+      @Override
       public void onClick(ClickEvent event) {
-        cellTable.redraw();
+        contactList.redraw();
       }
     });
     commitButton.addClickHandler(new ClickHandler() {
+      @Override
       public void onClick(ClickEvent event) {
         // Commit the changes.
         for (PendingChange<?> pendingChange : pendingChanges) {
@@ -428,10 +467,12 @@ public class CwCellSampler extends ContentWidget {
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
     GWT.runAsync(CwCellSampler.class, new RunAsyncCallback() {
 
+      @Override
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
       }
 
+      @Override
       public void onSuccess() {
         callback.onSuccess(onInitialize());
       }
@@ -440,7 +481,7 @@ public class CwCellSampler extends ContentWidget {
 
   /**
    * Add a column with a header.
-   *
+   * 
    * @param <C> the cell type
    * @param cell the cell used to render the column
    * @param headerText the header string
@@ -459,7 +500,7 @@ public class CwCellSampler extends ContentWidget {
     if (cell instanceof AbstractEditableCell<?, ?>) {
       editableCells.add((AbstractEditableCell<?, ?>) cell);
     }
-    cellTable.addColumn(column, headerText);
+    contactList.addColumn(column, headerText);
     return column;
   }
 }

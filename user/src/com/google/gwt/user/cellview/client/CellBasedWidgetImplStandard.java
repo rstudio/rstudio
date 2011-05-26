@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -39,14 +39,13 @@ class CellBasedWidgetImplStandard extends CellBasedWidgetImpl {
   /**
    * Dispatch an event through the normal GWT mechanism.
    */
-  private static native void dispatchEvent(
-      Event evt, Element elem, EventListener listener) /*-{
+  private static native void dispatchEvent(Event evt, Element elem, EventListener listener) /*-{
     @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, elem, listener);
   }-*/;
 
   /**
    * Handle an event from a cell. Used by {@link #initEventSystem()}.
-   *
+   * 
    * @param event the event to handle.
    */
   private static void handleNonBubblingEvent(Event event) {
@@ -57,17 +56,33 @@ class CellBasedWidgetImplStandard extends CellBasedWidgetImpl {
     }
     com.google.gwt.user.client.Element target = eventTarget.cast();
 
-    // Get the event listener.
+    // Get the event listener, which is the first widget that handles the
+    // specified event type.
+    String typeName = event.getType();
     EventListener listener = DOM.getEventListener(target);
     while (target != null && listener == null) {
       target = target.getParentElement().cast();
-      listener = (target == null) ? null : DOM.getEventListener(target);
+      if (target != null && isNonBubblingEventHandled(target, typeName)) {
+        // The target handles the event, so this must be the event listener.
+        listener = DOM.getEventListener(target);
+      }
     }
 
     // Fire the event.
     if (listener != null) {
       dispatchEvent(event, target, listener);
     }
+  }
+
+  /**
+   * Check if the specified element handles the a non-bubbling event.
+   * 
+   * @param elem the element to check
+   * @param typeName the non-bubbling event
+   * @return true if the event is handled, false if not
+   */
+  private static boolean isNonBubblingEventHandled(Element elem, String typeName) {
+    return "true".equals(elem.getAttribute("__gwtCellBasedWidgetImplDispatching" + typeName));
   }
 
   /**
@@ -94,9 +109,8 @@ class CellBasedWidgetImplStandard extends CellBasedWidgetImpl {
 
       // Sink the non-bubbling event.
       Element elem = widget.getElement();
-      String attr = "__gwtCellBasedWidgetImplDispatching" + typeName;
-      if (!"true".equals(elem.getAttribute(attr))) {
-        elem.setAttribute(attr, "true");
+      if (!isNonBubblingEventHandled(elem, typeName)) {
+        elem.setAttribute("__gwtCellBasedWidgetImplDispatching" + typeName, "true");
         sinkEventImpl(elem, typeName);
       }
       return -1;
@@ -116,7 +130,7 @@ class CellBasedWidgetImplStandard extends CellBasedWidgetImpl {
 
   /**
    * Sink an event on the element.
-   *
+   * 
    * @param elem the element to sink the event on
    * @param typeName the name of the event to sink
    */

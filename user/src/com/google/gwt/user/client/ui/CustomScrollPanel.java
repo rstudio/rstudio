@@ -206,6 +206,7 @@ public class CustomScrollPanel extends ScrollPanel {
      */
     ResizeLayoutPanel.Impl.Delegate containerResizeDelegate =
         new ResizeLayoutPanel.Impl.Delegate() {
+          @Override
           public void onResize() {
             maybeUpdateScrollbars();
           }
@@ -357,6 +358,7 @@ public class CustomScrollPanel extends ScrollPanel {
     // Initialize the new scrollbar.
     if (scrollbar != null) {
       hScrollbarHandler = scrollbar.addScrollHandler(new ScrollHandler() {
+        @Override
         public void onScroll(ScrollEvent event) {
           double curTime = Duration.currentTimeMillis();
           if (curTime > ignoreScrollbarsUntil) {
@@ -389,6 +391,7 @@ public class CustomScrollPanel extends ScrollPanel {
     // Initialize the new scrollbar.
     if (scrollbar != null) {
       vScrollbarHandler = scrollbar.addScrollHandler(new ScrollHandler() {
+        @Override
         public void onScroll(ScrollEvent event) {
           double curTime = Duration.currentTimeMillis();
           if (curTime > ignoreScrollbarsUntil) {
@@ -440,6 +443,7 @@ public class CustomScrollPanel extends ScrollPanel {
     layout.onAttach();
     hideNativeScrollbars();
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         maybeUpdateScrollbars();
       }
@@ -580,6 +584,19 @@ public class CustomScrollPanel extends ScrollPanel {
         && (alwaysShowScrollbars || getElement().getClientHeight() < contentHeight)) {
       // Vertical scrollbar is defined and required.
       realScrollbarWidth = vScrollbarWidth;
+    }
+
+    /*
+     * Add some padding to the so bottom we can scroll to the bottom without the
+     * content being hidden beneath the horizontal scrollbar.
+     */
+    if (w != null) {
+      if (realScrollbarHeight > 0) {
+        w.getElement().getStyle().setMarginBottom(realScrollbarHeight, Unit.PX);
+        contentHeight += realScrollbarHeight;
+      } else {
+        w.getElement().getStyle().clearMarginBottom();
+      }
     }
 
     // Adjust the scrollbar layers to display the visible scrollbars.

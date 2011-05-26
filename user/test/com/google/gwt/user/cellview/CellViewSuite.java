@@ -27,6 +27,7 @@ import com.google.gwt.user.cellview.client.ColumnSortEventTest;
 import com.google.gwt.user.cellview.client.ColumnSortInfoTest;
 import com.google.gwt.user.cellview.client.ColumnSortListTest;
 import com.google.gwt.user.cellview.client.ColumnTest;
+import com.google.gwt.user.cellview.client.DataGridTest;
 import com.google.gwt.user.cellview.client.HasDataPresenterTest;
 import com.google.gwt.user.cellview.client.PageSizePagerTest;
 import com.google.gwt.user.cellview.client.SimplePagerTest;
@@ -51,6 +52,7 @@ public class CellViewSuite {
     suite.addTestSuite(ColumnSortInfoTest.class);
     suite.addTestSuite(ColumnSortListTest.class);
     suite.addTestSuite(ColumnTest.class);
+    suite.addTestSuite(DataGridTest.class);
     suite.addTestSuite(HasDataPresenterTest.class);
     suite.addTestSuite(PageSizePagerTest.class);
     suite.addTestSuite(SimplePagerTest.class);

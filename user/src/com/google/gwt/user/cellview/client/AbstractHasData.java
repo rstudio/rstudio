@@ -32,6 +32,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
@@ -54,7 +55,7 @@ import java.util.Set;
  *
  * @param <T> the data type of each row
  */
-public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
+public abstract class AbstractHasData<T> extends Composite implements HasData<T>,
     HasKeyProvider<T>, Focusable, HasKeyboardPagingPolicy {
 
   /**
@@ -237,7 +238,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
     }
     return tmpElem;
   }
-
+  
   /**
    * A boolean indicating that the widget has focus.
    */
@@ -262,9 +263,25 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
    * @param pageSize the page size
    * @param keyProvider the key provider, or null
    */
-  public AbstractHasData(Element elem, final int pageSize,
+  public AbstractHasData(final Element elem, final int pageSize,
       final ProvidesKey<T> keyProvider) {
-    setElement(elem);
+    this(new Widget() {
+      {
+        setElement(elem);
+      }
+    }, pageSize, keyProvider);
+  }
+
+  /**
+   * Constructs an {@link AbstractHasData} with the given page size.
+   * 
+   * @param widget the parent {@link Widget}
+   * @param pageSize the page size
+   * @param keyProvider the key provider, or null
+   */
+  public AbstractHasData(Widget widget, final int pageSize,
+      final ProvidesKey<T> keyProvider) {
+    initWidget(widget);
     this.presenter = new HasDataPresenter<T>(this, new View<T>(this), pageSize,
         keyProvider);
 

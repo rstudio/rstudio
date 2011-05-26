@@ -83,7 +83,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
     // Temporary listen for events from the cell. The event listener will be
     // removed in onBrowserEvent().
     DOM.setEventListener(target, widget);
-    DOM.sinkEvents(target, eventBits);
+    DOM.sinkEvents(target, eventBits | DOM.getEventsSunk(target));
 
     // Dispatch the event to the cell.
     if (event != null) {

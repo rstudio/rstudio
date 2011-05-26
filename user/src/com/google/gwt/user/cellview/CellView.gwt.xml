@@ -49,16 +49,16 @@
   </replace-with>
 
   <!-- Mozilla-specific CellTable implementation. -->
-  <replace-with class="com.google.gwt.user.cellview.client.CellTable.ImplMozilla">
-    <when-type-is class="com.google.gwt.user.cellview.client.CellTable.Impl"/>
+  <replace-with class="com.google.gwt.user.cellview.client.AbstractCellTable.ImplMozilla">
+    <when-type-is class="com.google.gwt.user.cellview.client.AbstractCellTable.Impl"/>
     <any>
       <when-property-is name="user.agent" value="gecko1_8"/>
     </any>
   </replace-with>
 
   <!-- IE-specific CellTable implementation. -->
-  <replace-with class="com.google.gwt.user.cellview.client.CellTable.ImplTrident">
-    <when-type-is class="com.google.gwt.user.cellview.client.CellTable.Impl"/>
+  <replace-with class="com.google.gwt.user.cellview.client.AbstractCellTable.ImplTrident">
+    <when-type-is class="com.google.gwt.user.cellview.client.AbstractCellTable.Impl"/>
     <any>
       <when-property-is name="user.agent" value="ie6"/>
       <when-property-is name="user.agent" value="ie8"/>

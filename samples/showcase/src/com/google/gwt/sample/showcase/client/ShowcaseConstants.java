@@ -22,6 +22,7 @@ import com.google.gwt.sample.showcase.client.content.cell.CwCellSampler;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellTable;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellTree;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellValidation;
+import com.google.gwt.sample.showcase.client.content.cell.CwDataGrid;
 import com.google.gwt.sample.showcase.client.content.i18n.CwBidiFormatting;
 import com.google.gwt.sample.showcase.client.content.i18n.CwBidiInput;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsExample;
@@ -66,27 +67,22 @@ import com.google.gwt.sample.showcase.client.content.widgets.CwRadioButton;
 /**
  * Constants used throughout the showcase.
  */
-public interface ShowcaseConstants extends MenuConstants,
-    CwCheckBox.CwConstants, CwRadioButton.CwConstants,
-    CwBasicButton.CwConstants, CwCustomButton.CwConstants,
-    CwListBox.CwConstants, CwSuggestBox.CwConstants, CwTree.CwConstants,
-    CwMenuBar.CwConstants, CwFlowPanel.CwConstants,
-    CwDisclosurePanel.CwConstants, CwTabLayoutPanel.CwConstants,
-    CwDockPanel.CwConstants, CwHorizontalPanel.CwConstants,
-    CwVerticalPanel.CwConstants, CwBasicPopup.CwConstants,
-    CwDialogBox.CwConstants, CwGrid.CwConstants, CwFlexTable.CwConstants,
+public interface ShowcaseConstants extends MenuConstants, CwCheckBox.CwConstants,
+    CwRadioButton.CwConstants, CwBasicButton.CwConstants, CwCustomButton.CwConstants,
+    CwListBox.CwConstants, CwSuggestBox.CwConstants, CwTree.CwConstants, CwMenuBar.CwConstants,
+    CwFlowPanel.CwConstants, CwDisclosurePanel.CwConstants, CwTabLayoutPanel.CwConstants,
+    CwDockPanel.CwConstants, CwHorizontalPanel.CwConstants, CwVerticalPanel.CwConstants,
+    CwBasicPopup.CwConstants, CwDialogBox.CwConstants, CwGrid.CwConstants, CwFlexTable.CwConstants,
     CwBasicText.CwConstants, CwRichText.CwConstants, CwFileUpload.CwConstants,
     CwAbsolutePanel.CwConstants, CwHyperlink.CwConstants, CwFrame.CwConstants,
-    CwStackPanel.CwConstants, CwCookies.CwConstants,
-    CwNumberFormat.CwConstants, CwBidiInput.CwConstants,
-    CwBidiFormatting.CwConstants, CwDateTimeFormat.CwConstants,
+    CwStackPanel.CwConstants, CwCookies.CwConstants, CwNumberFormat.CwConstants,
+    CwBidiInput.CwConstants, CwBidiFormatting.CwConstants, CwDateTimeFormat.CwConstants,
     CwMessagesExample.CwConstants, CwConstantsExample.CwConstants,
     CwConstantsWithLookupExample.CwConstants, CwDictionaryExample.CwConstants,
-    CwDecoratorPanel.CwConstants, CwAnimation.CwConstants,
-    CwDatePicker.CwConstants, CwPluralFormsExample.CwConstants,
-    CwCellList.CwConstants, CwCellTable.CwConstants, CwCellTree.CwConstants,
-    CwCellBrowser.CwConstants, CwCellValidation.CwConstants,
-    CwCellSampler.CwConstants, CwSplitLayoutPanel.CwConstants,
+    CwDecoratorPanel.CwConstants, CwAnimation.CwConstants, CwDatePicker.CwConstants,
+    CwPluralFormsExample.CwConstants, CwCellList.CwConstants, CwCellTable.CwConstants,
+    CwDataGrid.CwConstants, CwCellTree.CwConstants, CwCellBrowser.CwConstants,
+    CwCellValidation.CwConstants, CwCellSampler.CwConstants, CwSplitLayoutPanel.CwConstants,
     CwStackLayoutPanel.CwConstants {
 
   /**

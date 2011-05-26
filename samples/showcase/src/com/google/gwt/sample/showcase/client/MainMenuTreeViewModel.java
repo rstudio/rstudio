@@ -25,6 +25,7 @@ import com.google.gwt.sample.showcase.client.content.cell.CwCellSampler;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellTable;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellTree;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellValidation;
+import com.google.gwt.sample.showcase.client.content.cell.CwDataGrid;
 import com.google.gwt.sample.showcase.client.content.i18n.CwBidiFormatting;
 import com.google.gwt.sample.showcase.client.content.i18n.CwBidiInput;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsExample;
@@ -368,6 +369,8 @@ public class MainMenuTreeViewModel implements TreeViewModel {
           RunAsyncCode.runAsyncCode(CwCellList.class));
       category.addExample(new CwCellTable(constants),
           RunAsyncCode.runAsyncCode(CwCellTable.class));
+      category.addExample(new CwDataGrid(constants),
+          RunAsyncCode.runAsyncCode(CwDataGrid.class));
       category.addExample(new CwCellTree(constants),
           RunAsyncCode.runAsyncCode(CwCellTree.class));
       category.addExample(new CwCellBrowser(constants),
