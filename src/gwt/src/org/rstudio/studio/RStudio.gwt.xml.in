@@ -118,5 +118,5 @@
    <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true"/>
    <set-configuration-property name="compiler.emulatedStack.recordFileNames" value="true"/>
    <!--<set-configuration-property name="CssResource.style" value="pretty" />-->
-
+   <set-configuration-property name="UiBinder.useSafeHtmlTemplates" value="true" />
 </module>
