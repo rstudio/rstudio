@@ -27,7 +27,6 @@ import com.google.gwt.core.ext.linker.impl.JarEntryEmittedArtifact;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationResult;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
-import com.google.gwt.dev.Precompile.PrecompileOptions;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
@@ -128,37 +127,45 @@ public class Link {
       setOutDir(other.getOutDir());
     }
 
+    @Override
     public File getDeployDir() {
       return (deployDir == null) ? new File(warDir, "WEB-INF/deploy")
           : deployDir;
     }
 
+    @Override
     public File getExtraDir() {
       return extraDir;
     }
 
+    @Override
     @Deprecated
     public File getOutDir() {
       return outDir;
     }
 
+    @Override
     public File getWarDir() {
       return warDir;
     }
 
+    @Override
     public void setDeployDir(File dir) {
       deployDir = dir;
     }
 
+    @Override
     public void setExtraDir(File extraDir) {
       this.extraDir = extraDir;
     }
 
+    @Override
     @Deprecated
     public void setOutDir(File outDir) {
       this.outDir = outDir;
     }
 
+    @Override
     public void setWarDir(File warDir) {
       this.warDir = warDir;
     }
@@ -213,7 +220,7 @@ public class Link {
   public static void linkOnePermutationToJar(TreeLogger logger,
       ModuleDef module, ArtifactSet generatedArtifacts,
       PermutationResult permResult, File jarFile,
-      PrecompileOptions precompileOptions) throws UnableToCompleteException {
+      PrecompileTaskOptions precompileOptions) throws UnableToCompleteException {
     try {
       if (jarFile.exists()) {
         boolean success = jarFile.delete();
@@ -287,6 +294,7 @@ public class Link {
 
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
+        @Override
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           return new Link(options).run(logger);
         }
@@ -609,7 +617,7 @@ public class Link {
       File compilerWorkDir = options.getCompilerWorkDir(moduleName);
 
       // Look for the compilerOptions file output from running AnalyzeModule
-      PrecompileOptions precompileOptions = AnalyzeModule.readAnalyzeModuleOptionsFile(
+      PrecompileTaskOptions precompileOptions = AnalyzeModule.readAnalyzeModuleOptionsFile(
           logger, compilerWorkDir);
 
       PrecompilationResult precompileResults = null;
@@ -623,8 +631,8 @@ public class Link {
         if (precompileResults == null) {
           return false;
         }
-        if (precompileResults instanceof PrecompileOptions) {
-          precompileOptions = (PrecompileOptions) precompileResults;
+        if (precompileResults instanceof PrecompileTaskOptions) {
+          precompileOptions = (PrecompileTaskOptions) precompileResults;
         }
       }
 

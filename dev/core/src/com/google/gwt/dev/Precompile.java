@@ -32,45 +32,18 @@ import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.AbstractCompiler;
 import com.google.gwt.dev.jjs.JJSOptions;
-import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.JavaScriptCompiler;
-import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.CollapsedPropertyKey;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dev.util.arg.ArgHandlerCompileReport;
-import com.google.gwt.dev.util.arg.ArgHandlerCompilerMetrics;
-import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
-import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
-import com.google.gwt.dev.util.arg.ArgHandlerDisableClassMetadata;
-import com.google.gwt.dev.util.arg.ArgHandlerDisableGeneratingOnShards;
-import com.google.gwt.dev.util.arg.ArgHandlerDisableRunAsync;
-import com.google.gwt.dev.util.arg.ArgHandlerDisableUpdateCheck;
-import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
-import com.google.gwt.dev.util.arg.ArgHandlerDumpSignatures;
-import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
-import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
-import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
-import com.google.gwt.dev.util.arg.ArgHandlerOptimize;
-import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
-import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
-import com.google.gwt.dev.util.arg.ArgHandlerSoycDetailed;
-import com.google.gwt.dev.util.arg.ArgHandlerStrict;
-import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
-import com.google.gwt.dev.util.arg.OptionDisableUpdateCheck;
-import com.google.gwt.dev.util.arg.OptionEnableGeneratingOnShards;
-import com.google.gwt.dev.util.arg.OptionGenDir;
-import com.google.gwt.dev.util.arg.OptionMaxPermsPerPrecompile;
-import com.google.gwt.dev.util.arg.OptionValidateOnly;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
-import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
@@ -89,242 +62,6 @@ import java.util.concurrent.FutureTask;
  * to compile, and a ready-to-compile AST.
  */
 public class Precompile {
-
-  /**
-   * The set of options for the precompiler.
-   */
-  public interface PrecompileOptions extends JJSOptions, CompileTaskOptions, OptionGenDir,
-      OptionValidateOnly, OptionDisableUpdateCheck, OptionEnableGeneratingOnShards,
-      OptionMaxPermsPerPrecompile, PrecompilationResult {
-  }
-
-  static class ArgProcessor extends CompileArgProcessor {
-    public ArgProcessor(PrecompileOptions options) {
-      super(options);
-      registerHandler(new ArgHandlerGenDir(options));
-      registerHandler(new ArgHandlerScriptStyle(options));
-      registerHandler(new ArgHandlerEnableAssertions(options));
-      registerHandler(new ArgHandlerDisableGeneratingOnShards(options));
-      registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
-      registerHandler(new ArgHandlerDisableClassMetadata(options));
-      registerHandler(new ArgHandlerDisableCastChecking(options));
-      registerHandler(new ArgHandlerValidateOnlyFlag(options));
-      registerHandler(new ArgHandlerDisableRunAsync(options));
-      registerHandler(new ArgHandlerDraftCompile(options));
-      registerHandler(new ArgHandlerDisableUpdateCheck(options));
-      registerHandler(new ArgHandlerDumpSignatures());
-      registerHandler(new ArgHandlerMaxPermsPerPrecompile(options));
-      registerHandler(new ArgHandlerOptimize(options));
-      registerHandler(new ArgHandlerCompileReport(options));
-      registerHandler(new ArgHandlerSoyc(options));
-      registerHandler(new ArgHandlerSoycDetailed(options));
-      registerHandler(new ArgHandlerStrict(options));
-      registerHandler(new ArgHandlerCompilerMetrics(options));
-    }
-
-    @Override
-    protected String getName() {
-      return Precompile.class.getName();
-    }
-  }
-
-  static class PrecompileOptionsImpl extends CompileTaskOptionsImpl implements PrecompileOptions {
-    private boolean disableUpdateCheck;
-    private boolean enableGeneratingOnShards = true;
-    private File genDir;
-    private final JJSOptionsImpl jjsOptions = new JJSOptionsImpl();
-    private int maxPermsPerPrecompile;
-    private boolean validateOnly;
-
-    public PrecompileOptionsImpl() {
-    }
-
-    public PrecompileOptionsImpl(PrecompileOptions other) {
-      copyFrom(other);
-    }
-
-    public void copyFrom(PrecompileOptions other) {
-      super.copyFrom(other);
-
-      jjsOptions.copyFrom(other);
-
-      setDisableUpdateCheck(other.isUpdateCheckDisabled());
-      setGenDir(other.getGenDir());
-      setMaxPermsPerPrecompile(other.getMaxPermsPerPrecompile());
-      setValidateOnly(other.isValidateOnly());
-      setEnabledGeneratingOnShards(other.isEnabledGeneratingOnShards());
-    }
-
-    public File getGenDir() {
-      return genDir;
-    }
-
-    public int getMaxPermsPerPrecompile() {
-      return maxPermsPerPrecompile;
-    }
-
-    public int getOptimizationLevel() {
-      return jjsOptions.getOptimizationLevel();
-    }
-
-    public JsOutputOption getOutput() {
-      return jjsOptions.getOutput();
-    }
-
-    public boolean isAggressivelyOptimize() {
-      return jjsOptions.isAggressivelyOptimize();
-    }
-
-    public boolean isCastCheckingDisabled() {
-      return jjsOptions.isCastCheckingDisabled();
-    }
-
-    public boolean isClassMetadataDisabled() {
-      return jjsOptions.isClassMetadataDisabled();
-    }
-
-    public boolean isCompilerMetricsEnabled() {
-      return jjsOptions.isCompilerMetricsEnabled();
-    }
-
-    public boolean isDraftCompile() {
-      return jjsOptions.isDraftCompile();
-    }
-
-    public boolean isEnableAssertions() {
-      return jjsOptions.isEnableAssertions();
-    }
-
-    public boolean isEnabledGeneratingOnShards() {
-      return enableGeneratingOnShards;
-    }
-
-    public boolean isGeneratorResultCachingEnabled() {
-      return jjsOptions.isGeneratorResultCachingEnabled();
-    }
-
-    public boolean isOptimizePrecompile() {
-      return jjsOptions.isOptimizePrecompile();
-    }
-
-    public boolean isRunAsyncEnabled() {
-      return jjsOptions.isRunAsyncEnabled();
-    }
-
-    public boolean isSoycEnabled() {
-      return jjsOptions.isSoycEnabled();
-    }
-
-    public boolean isSoycExtra() {
-      return jjsOptions.isSoycExtra();
-    }
-
-    public boolean isStrict() {
-      return jjsOptions.isStrict();
-    }
-
-    public boolean isUpdateCheckDisabled() {
-      return disableUpdateCheck;
-    }
-
-    public boolean isValidateOnly() {
-      return validateOnly;
-    }
-
-    public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
-      jjsOptions.setAggressivelyOptimize(aggressivelyOptimize);
-    }
-
-    public void setCastCheckingDisabled(boolean disabled) {
-      jjsOptions.setCastCheckingDisabled(disabled);
-    }
-
-    public void setClassMetadataDisabled(boolean disabled) {
-      jjsOptions.setClassMetadataDisabled(disabled);
-    }
-
-    public void setCompilerMetricsEnabled(boolean enabled) {
-      jjsOptions.setCompilerMetricsEnabled(enabled);
-    }
-
-    public void setDisableUpdateCheck(boolean disabled) {
-      disableUpdateCheck = disabled;
-    }
-
-    public void setEnableAssertions(boolean enableAssertions) {
-      jjsOptions.setEnableAssertions(enableAssertions);
-    }
-
-    public void setEnabledGeneratingOnShards(boolean enabled) {
-      enableGeneratingOnShards = enabled;
-    }
-
-    public void setGenDir(File genDir) {
-      this.genDir = genDir;
-    }
-
-    public void setGeneratorResultCachingEnabled(boolean enabled) {
-      jjsOptions.setGeneratorResultCachingEnabled(enabled);
-    }
-
-    public void setMaxPermsPerPrecompile(int maxPermsPerPrecompile) {
-      this.maxPermsPerPrecompile = maxPermsPerPrecompile;
-    }
-
-    public void setOptimizationLevel(int level) {
-      jjsOptions.setOptimizationLevel(level);
-    }
-
-    public void setOptimizePrecompile(boolean optimize) {
-      jjsOptions.setOptimizePrecompile(optimize);
-    }
-
-    public void setOutput(JsOutputOption output) {
-      jjsOptions.setOutput(output);
-    }
-
-    public void setRunAsyncEnabled(boolean enabled) {
-      jjsOptions.setRunAsyncEnabled(enabled);
-    }
-
-    public void setSoycEnabled(boolean enabled) {
-      jjsOptions.setSoycEnabled(enabled);
-    }
-
-    public void setSoycExtra(boolean soycExtra) {
-      jjsOptions.setSoycExtra(soycExtra);
-    }
-
-    public void setStrict(boolean strict) {
-      jjsOptions.setStrict(strict);
-    }
-
-    public void setValidateOnly(boolean validateOnly) {
-      this.validateOnly = validateOnly;
-    }
-  }
-
-  /**
-   * Creates a Graphics2D context in a thread in order to go ahead and get first
-   * time initialization out of the way. Delays ranging from 200ms to 6s have
-   * been observed when initializing the library.
-   */
-  private static class GraphicsInitThread extends Thread {
-    public GraphicsInitThread() {
-      // We don't care if the program finishes before the initialization ends.
-      setDaemon(true);
-    }
-
-    @Override
-    public void run() {
-      SpeedTracerLogger.Event createGraphicsEvent =
-          SpeedTracerLogger.start(CompilerEventType.GRAPHICS_INIT, "java.awt.headless", System
-              .getProperty("java.awt.headless"));
-      GraphicsEnvironment.getLocalGraphicsEnvironment();
-      createGraphicsEvent.end();
-    }
-  };
-
   /**
    * The file name for the max number of permutations output as plain text.
    */
@@ -360,10 +97,11 @@ public class Precompile {
      * shutdown AWT related threads, since the contract for their termination is
      * still implementation-dependent.
      */
-    final PrecompileOptions options = new PrecompileOptionsImpl();
+    final PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
     boolean success = false;
-    if (new ArgProcessor(options).processArgs(args)) {
+    if (new PrecompileTaskArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
+        @Override
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           FutureTask<UpdateResult> updater = null;
           if (!options.isUpdateCheckDisabled()) {
@@ -649,10 +387,10 @@ public class Precompile {
     }
   }
 
-  private final PrecompileOptionsImpl options;
+  private final PrecompileTaskOptionsImpl options;
 
-  public Precompile(PrecompileOptions options) {
-    this.options = new PrecompileOptionsImpl(options);
+  public Precompile(PrecompileTaskOptions options) {
+    this.options = new PrecompileTaskOptionsImpl(options);
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {

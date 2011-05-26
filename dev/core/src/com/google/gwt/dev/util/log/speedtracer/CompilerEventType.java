@@ -69,7 +69,8 @@ public enum CompilerEventType implements EventType {
   CREATE_UNIFIED_AST("CreateUnifiedAST", "BlueViolet"), //
   CHECK_FOR_ERRORS("CheckForErrors", "DimGrey"), //
   GRAPHICS_INIT("Graphics2D.createGraphics()", "Blue"), //
-  ANALYZE_MODULE("AnalyzeModule", "LightBlue"); //
+  ANALYZE_MODULE("AnalyzeModule", "LightBlue"), //
+  COMPILE_MODULE("CompileModule", "LightBlue"); //
 
   final String cssColor;
   final String name;

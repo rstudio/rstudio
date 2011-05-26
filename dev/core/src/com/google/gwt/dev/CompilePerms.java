@@ -18,7 +18,6 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
-import com.google.gwt.dev.Precompile.PrecompileOptions;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.PropertyPermutations;
@@ -47,7 +46,7 @@ public class CompilePerms {
   /**
    * Options for CompilePerms.
    */
-  public interface CompilePermsOptions extends Precompile.PrecompileOptions,
+  public interface CompilePermsOptions extends PrecompileTaskOptions,
       OptionLocalWorkers, OptionPerms {
   }
 
@@ -128,7 +127,7 @@ public class CompilePerms {
     }
   }
 
-  static class ArgProcessor extends Precompile.ArgProcessor {
+  static class ArgProcessor extends PrecompileTaskArgProcessor {
     public ArgProcessor(CompilePermsOptions options) {
       super(options);
       registerHandler(new ArgHandlerPerms(options));
@@ -144,7 +143,7 @@ public class CompilePerms {
   /**
    * Concrete class to implement compiler perm options.
    */
-  static class CompilePermsOptionsImpl extends Precompile.PrecompileOptionsImpl implements
+  static class CompilePermsOptionsImpl extends PrecompileTaskOptionsImpl implements
       CompilePermsOptions {
 
     private int localWorkers;
@@ -163,18 +162,22 @@ public class CompilePerms {
       setLocalWorkers(other.getLocalWorkers());
     }
 
+    @Override
     public int getLocalWorkers() {
       return localWorkers;
     }
 
+    @Override
     public int[] getPermsToCompile() {
       return (permsToCompile == null) ? null : permsToCompile.clone();
     }
 
+    @Override
     public void setLocalWorkers(int localWorkers) {
       this.localWorkers = localWorkers;
     }
 
+    @Override
     public void setPermsToCompile(int[] permsToCompile) {
       this.permsToCompile = (permsToCompile == null) ? null
           : permsToCompile.clone();
@@ -217,6 +220,7 @@ public class CompilePerms {
     final CompilePermsOptions options = new CompilePermsOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
+        @Override
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           return new CompilePerms(options).run(logger);
         }
@@ -307,8 +311,8 @@ public class CompilePerms {
       PrecompilationResult precompileResults = readPrecompilationFile(logger, 
           precompilationFile);
 
-      if (precompileResults instanceof PrecompileOptions) {
-        PrecompileOptions precompilationOptions = (PrecompileOptions) precompileResults;
+      if (precompileResults instanceof PrecompileTaskOptions) {
+        PrecompileTaskOptions precompilationOptions = (PrecompileTaskOptions) precompileResults;
         if (!precompileAndCompile(logger, moduleName, compilerWorkDir,
             precompilationOptions)) {
           return false;
@@ -333,7 +337,7 @@ public class CompilePerms {
    * Run both a precompile and a compile with the given precompilation options.
    */
   private boolean precompileAndCompile(TreeLogger logger, String moduleName,
-      File compilerWorkDir, PrecompileOptions precompilationOptions)
+      File compilerWorkDir, PrecompileTaskOptions precompilationOptions)
       throws UnableToCompleteException {
     precompilationOptions.setOptimizePrecompile(false);
     precompilationOptions.setGenDir(null);

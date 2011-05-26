@@ -16,12 +16,11 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.dev.Link.LinkOptions;
-import com.google.gwt.dev.Precompile.PrecompileOptions;
 import com.google.gwt.dev.util.arg.OptionLocalWorkers;
 
 /**
  * The complete set of options for the GWT compiler.
  */
-public interface CompilerOptions extends PrecompileOptions, LinkOptions,
+public interface CompilerOptions extends PrecompileTaskOptions, LinkOptions,
     OptionLocalWorkers {
 }

@@ -18,8 +18,6 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
-import com.google.gwt.dev.Precompile.PrecompileOptions;
-import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.PropertyPermutations;
@@ -34,7 +32,7 @@ import java.io.IOException;
 
 /**
  * Performs the first phase of compilation, generating the set of permutations
- * to compile, and a ready-to-compile AST.
+ * to compile and writing it out to a file.
  */
 public class AnalyzeModule {
 
@@ -43,7 +41,7 @@ public class AnalyzeModule {
    * module analysis.
    */
   @SuppressWarnings("serial")
-  static class AnalyzeModuleOptionsImpl extends PrecompileOptionsImpl implements
+  static class AnalyzeModuleOptionsImpl extends PrecompileTaskOptionsImpl implements
       AnalyzeModuleOptions {
 
     public AnalyzeModuleOptionsImpl() {
@@ -58,7 +56,7 @@ public class AnalyzeModule {
     }
   }
 
-  static class ArgProcessor extends Precompile.ArgProcessor {
+  static class ArgProcessor extends PrecompileTaskArgProcessor {
     public ArgProcessor(AnalyzeModuleOptions options) {
       super(options);
     }
@@ -69,7 +67,7 @@ public class AnalyzeModule {
     }
   }
 
-  private interface AnalyzeModuleOptions extends Precompile.PrecompileOptions {
+  private interface AnalyzeModuleOptions extends PrecompileTaskOptions {
     // This interface is here to support future options.
   }
 
@@ -97,6 +95,7 @@ public class AnalyzeModule {
     final AnalyzeModuleOptions options = new AnalyzeModuleOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
+        @Override
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           return new AnalyzeModule(options).run(logger);
         }
@@ -112,13 +111,13 @@ public class AnalyzeModule {
    * Silently returns <code>null</code> if the file is not found or another problem is
    * encountered reading the file.
    */
-  public static PrecompileOptions readAnalyzeModuleOptionsFile(
+  public static PrecompileTaskOptions readAnalyzeModuleOptionsFile(
       TreeLogger logger, File compilerWorkDir) {
     File optionsFile = new File(compilerWorkDir, AnalyzeModule.OPTIONS_FILENAME);
-    PrecompileOptions precompilationOptions = null;
+    PrecompileTaskOptions precompilationOptions = null;
     try {
       precompilationOptions = Util.readFileAsObject(optionsFile,
-          PrecompileOptions.class);
+          PrecompileTaskOptions.class);
     } catch (IOException e) {
       if (logger.isLoggable(TreeLogger.DEBUG)) {
         logger.log(TreeLogger.DEBUG, "Failed to read " + optionsFile

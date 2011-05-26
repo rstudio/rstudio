@@ -47,10 +47,10 @@ public class PrecompileOnePerm {
    * The set of options for the precompiler.
    */
   public interface PrecompileOnePermOptions extends
-      Precompile.PrecompileOptions, OptionPerm {
+      PrecompileTaskOptions, OptionPerm {
   }
 
-  static class ArgProcessor extends Precompile.ArgProcessor {
+  static class ArgProcessor extends PrecompileTaskArgProcessor {
     public ArgProcessor(PrecompileOnePermOptions options) {
       super(options);
       registerHandler(new ArgHandlerPerm(options));
@@ -64,7 +64,7 @@ public class PrecompileOnePerm {
 
   @SuppressWarnings("serial")
   static class PrecompileOnePermOptionsImpl extends
-      Precompile.PrecompileOptionsImpl implements PrecompileOnePermOptions {
+      PrecompileTaskOptionsImpl implements PrecompileOnePermOptions {
 
     int permToCompile = -1;
 
@@ -80,10 +80,12 @@ public class PrecompileOnePerm {
       setPermToCompile(other.getPermToCompile());
     }
 
+    @Override
     public int getPermToCompile() {
       return permToCompile;
     }
 
+    @Override
     public void setPermToCompile(int permToCompile) {
       this.permToCompile = permToCompile;
     }
@@ -111,6 +113,7 @@ public class PrecompileOnePerm {
     boolean success = false;
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
+        @Override
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           FutureTask<UpdateResult> updater = null;
           if (!options.isUpdateCheckDisabled()) {
@@ -199,7 +202,7 @@ public class PrecompileOnePerm {
       return false;
     }
 
-    Precompile.PrecompileOptions optionsFileData = AnalyzeModule.readAnalyzeModuleOptionsFile(
+    PrecompileTaskOptions optionsFileData = AnalyzeModule.readAnalyzeModuleOptionsFile(
         logger, compilerWorkDir);
     if (optionsFileData == null) {
       logger.log(TreeLogger.ERROR, "Couldn't find "

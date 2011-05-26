@@ -18,7 +18,6 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
-import com.google.gwt.dev.Precompile.PrecompileOptions;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.jjs.PermutationResult;
@@ -38,10 +37,10 @@ public class CompileOnePerm {
   /**
    * Options for CompilePerm.
    */
-  public interface CompileOnePermOptions extends Precompile.PrecompileOptions, OptionPerm {
+  public interface CompileOnePermOptions extends PrecompileTaskOptions, OptionPerm {
   }
 
-  static class ArgProcessor extends Precompile.ArgProcessor {
+  static class ArgProcessor extends PrecompileTaskArgProcessor {
     public ArgProcessor(CompileOnePermOptions options) {
       super(options);
       registerHandler(new ArgHandlerPerm(options));
@@ -56,7 +55,7 @@ public class CompileOnePerm {
   /**
    * Concrete class to implement compiler perm options.
    */
-  static class CompileOnePermOptionsImpl extends Precompile.PrecompileOptionsImpl
+  static class CompileOnePermOptionsImpl extends PrecompileTaskOptionsImpl
       implements CompileOnePermOptions {
 
     private int permToCompile = -1;
@@ -73,10 +72,12 @@ public class CompileOnePerm {
       setPermToCompile(other.getPermToCompile());
     }
 
+    @Override
     public int getPermToCompile() {
       return permToCompile;
     }
 
+    @Override
     public void setPermToCompile(int permToCompile) {
       this.permToCompile = permToCompile;
     }
@@ -93,6 +94,7 @@ public class CompileOnePerm {
     final CompileOnePermOptions options = new CompileOnePermOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
+        @Override
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           return new CompileOnePerm(options).run(logger);
         }
@@ -127,7 +129,7 @@ public class CompileOnePerm {
    * @return <code>true</code> if compilation succeeds
    */
   private static boolean compileSpecificPermutation(TreeLogger logger,
-      String moduleName, PrecompileOptions precompilationOptions, int permId,
+      String moduleName, PrecompileTaskOptions precompilationOptions, int permId,
       File compilerWorkDir) throws UnableToCompleteException {
 
     ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
@@ -176,7 +178,7 @@ public class CompileOnePerm {
 
     // Look for the sentinel file that indicates that this compilation already
     // has a precompilation result from a previous Precompile step.
-    PrecompileOptions precompilationOptions = AnalyzeModule.readAnalyzeModuleOptionsFile(
+    PrecompileTaskOptions precompilationOptions = AnalyzeModule.readAnalyzeModuleOptionsFile(
         logger, compilerWorkDir);
     if (precompilationOptions == null) {
       logger.log(TreeLogger.ERROR, "Could not read file "

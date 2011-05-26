@@ -20,7 +20,7 @@ import java.io.Serializable;
 /**
  * A result of running {@link Precompile}. It's either a {@link Precompilation}
  * or, if precompiles are going to happen on compile shards, an instance of
- * {@link com.google.gwt.dev.Precompile.PrecompileOptions}.
+ * {@link com.google.gwt.dev.PrecompileTaskOptions}.
  */
 public interface PrecompilationResult extends Serializable {
 }

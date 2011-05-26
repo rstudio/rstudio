@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
-import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.CompilationState;
@@ -462,7 +461,7 @@ public abstract class DevModeBase implements DoneCallback {
    * Concrete class to implement all hosted mode base options.
    */
   @SuppressWarnings("serial")
-  protected static class HostedModeBaseOptionsImpl extends PrecompileOptionsImpl implements
+  protected static class HostedModeBaseOptionsImpl extends PrecompileTaskOptionsImpl implements
       HostedModeBaseOptions {
 
     private String bindAddress;

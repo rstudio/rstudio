@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
-import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.jjs.JJSOptions;
@@ -50,7 +49,7 @@ import java.util.concurrent.FutureTask;
 @Deprecated
 public class GWTCompiler {
 
-  static final class ArgProcessor extends Precompile.ArgProcessor {
+  static final class ArgProcessor extends PrecompileTaskArgProcessor {
     public ArgProcessor(LegacyCompilerOptions options) {
       super(options);
 
@@ -71,7 +70,7 @@ public class GWTCompiler {
   /**
    * Simple implementation of {@link LegacyCompilerOptions}.
    */
-  public static class GWTCompilerOptionsImpl extends PrecompileOptionsImpl
+  public static class GWTCompilerOptionsImpl extends PrecompileTaskOptionsImpl
       implements LegacyCompilerOptions {
 
     private int localWorkers;
@@ -90,18 +89,22 @@ public class GWTCompiler {
       setOutDir(other.getOutDir());
     }
 
+    @Override
     public int getLocalWorkers() {
       return localWorkers;
     }
 
+    @Override
     public File getOutDir() {
       return outDir;
     }
 
+    @Override
     public void setLocalWorkers(int localWorkers) {
       this.localWorkers = localWorkers;
     }
 
+    @Override
     public void setOutDir(File outDir) {
       this.outDir = outDir;
     }
@@ -122,6 +125,7 @@ public class GWTCompiler {
     boolean success = false;
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
+        @Override
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           FutureTask<UpdateResult> updater = null;
           if (!options.isUpdateCheckDisabled()) {

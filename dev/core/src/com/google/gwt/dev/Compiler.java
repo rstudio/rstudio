@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.Link.LinkOptionsImpl;
-import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
@@ -51,7 +50,7 @@ import java.util.concurrent.FutureTask;
  */
 public class Compiler {
 
-  static class ArgProcessor extends Precompile.ArgProcessor {
+  static class ArgProcessor extends PrecompileTaskArgProcessor {
     public ArgProcessor(CompilerOptions options) {
       super(options);
 
@@ -71,7 +70,7 @@ public class Compiler {
     }
   }
 
-  static class CompilerOptionsImpl extends PrecompileOptionsImpl implements
+  static class CompilerOptionsImpl extends PrecompileTaskOptionsImpl implements
       CompilerOptions {
 
     private LinkOptionsImpl linkOptions = new LinkOptionsImpl();
@@ -90,44 +89,54 @@ public class Compiler {
       localWorkers = other.getLocalWorkers();
     }
 
+    @Override
     public File getDeployDir() {
       return linkOptions.getDeployDir();
     }
 
+    @Override
     public File getExtraDir() {
       return linkOptions.getExtraDir();
     }
 
+    @Override
     public int getLocalWorkers() {
       return localWorkers;
     }
 
+    @Override
     @Deprecated
     public File getOutDir() {
       return linkOptions.getOutDir();
     }
 
+    @Override
     public File getWarDir() {
       return linkOptions.getWarDir();
     }
 
+    @Override
     public void setDeployDir(File extraDir) {
       linkOptions.setDeployDir(extraDir);
     }
 
+    @Override
     public void setExtraDir(File extraDir) {
       linkOptions.setExtraDir(extraDir);
     }
 
+    @Override
     public void setLocalWorkers(int localWorkers) {
       this.localWorkers = localWorkers;
     }
 
+    @Override
     @Deprecated
     public void setOutDir(File outDir) {
       linkOptions.setOutDir(outDir);
     }
 
+    @Override
     public void setWarDir(File outDir) {
       linkOptions.setWarDir(outDir);
     }
@@ -151,6 +160,7 @@ public class Compiler {
     final CompilerOptions options = new CompilerOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
+        @Override
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           FutureTask<UpdateResult> updater = null;
           if (!options.isUpdateCheckDisabled()) {
