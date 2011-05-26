@@ -281,7 +281,7 @@ public class BuildTypeMap {
         method = (JMethod) typeMap.get(referenceMethod.binding);
       }
       assert !method.isNative() && !method.isAbstract();
-      return (JMethodBody) (method.getEnclosingType().isExternal() ? null : method.getBody());
+      return (JMethodBody) (method.isExternal() ? null : method.getBody());
     }
 
     private SourceInfo makeSourceInfo(AbstractMethodDeclaration methodDecl, HasSourceInfo enclosing) {

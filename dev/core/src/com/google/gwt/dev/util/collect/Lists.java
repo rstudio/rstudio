@@ -179,8 +179,10 @@ public class Lists {
 
   public static <T> List<T> create(Collection<T> collection) {
     switch (collection.size()) {
-      case 0 :
+      case 0:
         return create();
+      case 1:
+        return create(collection.iterator().next());
       default:
         return new ArrayList<T>(collection);
     }

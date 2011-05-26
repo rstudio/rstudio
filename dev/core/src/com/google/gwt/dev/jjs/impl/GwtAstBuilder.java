@@ -448,7 +448,7 @@ public class GwtAstBuilder {
           op = JBinaryOperator.SHRU;
           break;
         case OperatorIds.PLUS:
-          if (x.resolvedType instanceof ReferenceBinding) {
+          if (javaLangString == typeMap.get(x.resolvedType)) {
             op = JBinaryOperator.CONCAT;
           } else {
             op = JBinaryOperator.ADD;
@@ -578,7 +578,7 @@ public class GwtAstBuilder {
       JBinaryOperator op;
       switch (x.operator) {
         case OperatorIds.PLUS:
-          if (x.resolvedType instanceof ReferenceBinding) {
+          if (javaLangString == typeMap.get(x.resolvedType)) {
             op = JBinaryOperator.ASG_CONCAT;
           } else {
             op = JBinaryOperator.ASG_ADD;
@@ -1542,7 +1542,7 @@ public class GwtAstBuilder {
     public boolean visit(ConstructorDeclaration x, ClassScope scope) {
       try {
         JConstructor method = (JConstructor) typeMap.get(x.binding);
-        assert !method.getEnclosingType().isExternal();
+        assert !method.isExternal();
         JMethodBody body = new JMethodBody(method.getSourceInfo());
         method.setBody(body);
         pushMethodInfo(new MethodInfo(method, body, x.scope));
@@ -1606,7 +1606,7 @@ public class GwtAstBuilder {
     @Override
     public boolean visit(FieldDeclaration x, MethodScope scope) {
       try {
-        assert !typeMap.get(x.binding).getEnclosingType().isExternal();
+        assert !typeMap.get(x.binding).isExternal();
         pushInitializerMethodInfo(x, scope);
         return true;
       } catch (Throwable e) {
@@ -1663,7 +1663,7 @@ public class GwtAstBuilder {
     public boolean visit(MethodDeclaration x, ClassScope scope) {
       try {
         JMethod method = typeMap.get(x.binding);
-        assert !method.getEnclosingType().isExternal();
+        assert !method.isExternal();
         JMethodBody body = null;
         if (!method.isNative()) {
           body = new JMethodBody(method.getSourceInfo());
@@ -3170,7 +3170,7 @@ public class GwtAstBuilder {
   private JMethod createSynthicMethodFromBinding(SourceInfo info, MethodBinding binding,
       String[] paramNames) {
     JMethod method = typeMap.createMethod(info, binding, paramNames);
-    assert !method.getEnclosingType().isExternal();
+    assert !method.isExternal();
     method.setBody(new JMethodBody(info));
     typeMap.setMethod(binding, method);
     return method;

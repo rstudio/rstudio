@@ -30,6 +30,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
+import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.util.StringInterner;
 
@@ -58,7 +59,7 @@ public class ReferenceMapper {
   private final Map<String, JMethod> methods = new HashMap<String, JMethod>();
   private final Map<String, JField> sourceFields = new HashMap<String, JField>();
   private final Map<String, JMethod> sourceMethods = new HashMap<String, JMethod>();
-  private final Map<String, JDeclaredType> sourceTypes = new HashMap<String, JDeclaredType>();
+  private final Map<String, JReferenceType> sourceTypes = new HashMap<String, JReferenceType>();
   private final StringInterner stringInterner = StringInterner.get();
   private final Map<String, JType> types = new HashMap<String, JType>();
 
@@ -79,13 +80,13 @@ public class ReferenceMapper {
     String key = signature(binding);
     JField sourceField = sourceFields.get(key);
     if (sourceField != null) {
-      assert !sourceField.getEnclosingType().isExternal();
+      assert !sourceField.isExternal();
       return sourceField;
     }
     JField field = fields.get(key);
     if (field == null) {
       field = createField(binding);
-      assert field.getEnclosingType().isExternal();
+      assert field.isExternal();
       fields.put(key, field);
     }
     return field;
@@ -96,7 +97,7 @@ public class ReferenceMapper {
     String key = signature(binding);
     JMethod sourceMethod = sourceMethods.get(key);
     if (sourceMethod != null) {
-      assert !sourceMethod.getEnclosingType().isExternal();
+      assert !sourceMethod.isExternal();
       return sourceMethod;
     }
     JMethod method = methods.get(key);
@@ -106,7 +107,7 @@ public class ReferenceMapper {
       } else {
         method = createMethod(SourceOrigin.UNKNOWN, binding, null);
       }
-      assert method.getEnclosingType().isExternal();
+      assert method.isExternal();
       methods.put(key, method);
     }
     return method;
@@ -115,47 +116,54 @@ public class ReferenceMapper {
   public JType get(TypeBinding binding) {
     binding = binding.erasure();
     String key = signature(binding);
-    JDeclaredType sourceType = sourceTypes.get(key);
+    JReferenceType sourceType = sourceTypes.get(key);
     if (sourceType != null) {
       assert !sourceType.isExternal();
       return sourceType;
     }
+
     JType type = types.get(key);
-    if (type == null) {
-      assert !(binding instanceof BaseTypeBinding);
-      if (binding instanceof ArrayBinding) {
-        ArrayBinding arrayBinding = (ArrayBinding) binding;
-        type = new JArrayType(get(arrayBinding.elementsType()));
+    if (type != null) {
+      assert type instanceof JPrimitiveType || type == JNullType.INSTANCE || type.isExternal();
+      return type;
+    }
+    assert !(binding instanceof BaseTypeBinding);
+
+    if (binding instanceof ArrayBinding) {
+      ArrayBinding arrayBinding = (ArrayBinding) binding;
+      JArrayType arrayType = new JArrayType(get(arrayBinding.elementsType()));
+      if (arrayType.isExternal()) {
+        types.put(key, arrayType);
       } else {
-        ReferenceBinding refBinding = (ReferenceBinding) binding;
-        type = createType(refBinding);
-        if (type instanceof JClassType) {
-          ReferenceBinding superclass = refBinding.superclass();
-          if (superclass != null) {
-            ((JClassType) type).setSuperClass((JClassType) get(superclass));
-          }
-        }
-        if (type instanceof JDeclaredType) {
-          ReferenceBinding[] superInterfaces = refBinding.superInterfaces();
-          JDeclaredType declType = (JDeclaredType) type;
-          if (superInterfaces != null) {
-            for (ReferenceBinding intf : superInterfaces) {
-              declType.addImplements((JInterfaceType) get(intf));
-            }
-          }
-          declType.setExternal(true);
-          // Emulate clinit method for super clinit calls.
-          JMethod clinit =
-              new JMethod(SourceOrigin.UNKNOWN, "$clinit", declType, JPrimitiveType.VOID, false,
-                  true, true, true);
-          clinit.freezeParamTypes();
-          clinit.setSynthetic();
-          declType.addMethod(clinit);
+        sourceTypes.put(key, arrayType);
+      }
+      return arrayType;
+    } else {
+      ReferenceBinding refBinding = (ReferenceBinding) binding;
+      JDeclaredType declType = createType(refBinding);
+      if (declType instanceof JClassType) {
+        ReferenceBinding superclass = refBinding.superclass();
+        if (superclass != null) {
+          ((JClassType) declType).setSuperClass((JClassType) get(superclass));
         }
       }
-      types.put(key, type);
+      ReferenceBinding[] superInterfaces = refBinding.superInterfaces();
+      if (superInterfaces != null) {
+        for (ReferenceBinding intf : superInterfaces) {
+          declType.addImplements((JInterfaceType) get(intf));
+        }
+      }
+      // Emulate clinit method for super clinit calls.
+      JMethod clinit =
+          new JMethod(SourceOrigin.UNKNOWN, "$clinit", declType, JPrimitiveType.VOID, false, true,
+              true, true);
+      clinit.freezeParamTypes();
+      clinit.setSynthetic();
+      declType.addMethod(clinit);
+      declType.setExternal(true);
+      types.put(key, declType);
+      return declType;
     }
-    return type;
   }
 
   public void setField(FieldBinding binding, JField field) {

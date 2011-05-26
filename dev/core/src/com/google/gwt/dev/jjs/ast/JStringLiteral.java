@@ -29,6 +29,7 @@ public class JStringLiteral extends JValueLiteral {
     super(sourceInfo);
     this.value = value;
     this.stringType = stringType;
+    assert stringType.getName().equals("java.lang.String");
   }
 
   @Override

@@ -33,14 +33,20 @@ public class JInterfaceType extends JDeclaredType {
     }
 
     private Object readResolve() {
-      JInterfaceType result = new JInterfaceType(SourceOrigin.UNKNOWN, name);
-      result.setExternal(true);
-      return result;
+      return new JInterfaceType(name);
     }
   }
 
   public JInterfaceType(SourceInfo info, String name) {
     super(info, name);
+  }
+
+  /**
+   * Construct a bare-bones deserialized external interface.
+   */
+  private JInterfaceType(String name) {
+    super(SourceOrigin.UNKNOWN, name);
+    setExternal(true);
   }
 
   @Override

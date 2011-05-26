@@ -123,6 +123,10 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     return isCompileTimeConstant;
   }
 
+  public boolean isExternal() {
+    return getEnclosingType() != null && getEnclosingType().isExternal();
+  }
+
   public boolean isStatic() {
     return isStatic;
   }
@@ -162,7 +166,7 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
   }
 
   protected Object writeReplace() {
-    if (enclosingType != null && enclosingType.isExternal()) {
+    if (isExternal()) {
       return new ExternalSerializedForm(this);
     } else if (this == NULL_FIELD) {
       return ExternalSerializedNullField.INSTANCE;

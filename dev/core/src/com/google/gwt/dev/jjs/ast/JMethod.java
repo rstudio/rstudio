@@ -47,11 +47,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     }
 
     private Object readResolve() {
-      String name = signature.substring(0, signature.indexOf('('));
-      JMethod result =
-          new JMethod(SourceOrigin.UNKNOWN, name, enclosingType, null, false, false, false, false);
-      result.signature = signature;
-      return result;
+      return new JMethod(signature, enclosingType);
     }
   }
 
@@ -125,6 +121,19 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   }
 
   /**
+   * Construct a bare-bones deserialized external method.
+   */
+  private JMethod(String signature, JDeclaredType enclosingType) {
+    super(SourceOrigin.UNKNOWN);
+    this.name = signature.substring(0, signature.indexOf('('));
+    this.enclosingType = enclosingType;
+    this.signature = signature;
+    this.isAbstract = false;
+    this.isStatic = false;
+    this.isPrivate = false;
+  }
+
+  /**
    * Add a method that this method overrides.
    */
   public void addOverride(JMethod toAdd) {
@@ -173,7 +182,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   }
 
   public JAbstractMethodBody getBody() {
-    assert !enclosingType.isExternal() : "External types do not have method bodies.";
+    assert !isExternal() : "External types do not have method bodies.";
     return body;
   }
 
@@ -232,6 +241,10 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
 
   public boolean isAbstract() {
     return isAbstract;
+  }
+
+  public boolean isExternal() {
+    return getEnclosingType() != null && getEnclosingType().isExternal();
   }
 
   public boolean isFinal() {
@@ -366,7 +379,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   }
 
   protected Object writeReplace() {
-    if (enclosingType != null && enclosingType.isExternal()) {
+    if (isExternal()) {
       return new ExternalSerializedForm(this);
     } else if (this == NULL_METHOD) {
       return ExternalSerializedNullMethod.INSTANCE;

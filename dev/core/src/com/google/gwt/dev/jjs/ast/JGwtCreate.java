@@ -38,7 +38,7 @@ public class JGwtCreate extends JExpression {
     JConstructor noArgCtor = null;
     for (JMethod ctor : classType.getMethods()) {
       if (ctor instanceof JConstructor) {
-        if (ctor.getParams().size() == 0) {
+        if (ctor.getOriginalParamTypes().size() == 0) {
           noArgCtor = (JConstructor) ctor;
           break;
         }

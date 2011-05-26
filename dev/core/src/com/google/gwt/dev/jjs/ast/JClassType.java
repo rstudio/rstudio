@@ -33,9 +33,7 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
     }
 
     private Object readResolve() {
-      JClassType result = new JClassType(SourceOrigin.UNKNOWN, name, false, false);
-      result.setExternal(true);
-      return result;
+      return new JClassType(name);
     }
   }
 
@@ -47,6 +45,15 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
     super(info, name);
     this.isAbstract = isAbstract;
     this.isFinal = isFinal;
+  }
+
+  /**
+   * Construct a bare-bones deserialized external class.
+   */
+  private JClassType(String name) {
+    super(SourceOrigin.UNKNOWN, name);
+    isAbstract = false;
+    setExternal(true);
   }
 
   @Override

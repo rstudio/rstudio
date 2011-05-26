@@ -110,6 +110,7 @@ public class ImplementClassLiteralsAsFields {
     this.typeClassLiteralHolder = program.getTypeClassLiteralHolder();
     this.classLiteralHolderClinitBody =
         (JMethodBody) typeClassLiteralHolder.getMethods().get(0).getBody();
+    assert program.getDeclaredTypes().contains(typeClassLiteralHolder);
   }
 
   /**
@@ -217,17 +218,19 @@ public class ImplementClassLiteralsAsFields {
         JMethod valuesMethod = null;
         JMethod valueOfMethod = null;
         for (JMethod methodIt : enumType.getMethods()) {
-          if ("values".equals(methodIt.getName())) {
-            if (methodIt.getParams().size() != 0) {
-              continue;
+          if (methodIt.isStatic()) {
+            if ("values".equals(methodIt.getName())) {
+              if (methodIt.getOriginalParamTypes().size() != 0) {
+                continue;
+              }
+              valuesMethod = methodIt;
+            } else if ("valueOf".equals(methodIt.getName())) {
+              if (methodIt.getOriginalParamTypes().size() != 1
+                  || methodIt.getOriginalParamTypes().get(0) != program.getTypeJavaLangString()) {
+                continue;
+              }
+              valueOfMethod = methodIt;
             }
-            valuesMethod = methodIt;
-          } else if ("valueOf".equals(methodIt.getName())) {
-            if (methodIt.getParams().size() != 1
-                || methodIt.getParams().get(0).getType() != program.getTypeJavaLangString()) {
-              continue;
-            }
-            valueOfMethod = methodIt;
           }
         }
         if (valuesMethod == null) {

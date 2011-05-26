@@ -128,7 +128,7 @@ public class JConstructor extends JMethod {
 
   @Override
   protected Object writeReplace() {
-    if (getEnclosingType() != null && getEnclosingType().isExternal()) {
+    if (isExternal()) {
       return new ExternalSerializedForm(this);
     } else {
       return this;
