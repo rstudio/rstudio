@@ -17,7 +17,7 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.CompileModule;
+import com.google.gwt.dev.GwtAstBuilderUtil;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.CompilationState;
@@ -52,7 +52,7 @@ public class GwtAstBuilderTest extends TestCase {
   private static synchronized CompilationState getCompilationState()
       throws UnableToCompleteException {
     if (compilationState == null) {
-      compilationState = CompileModule.buildGwtAst(getLogger(), getTestModule());
+      compilationState = GwtAstBuilderUtil.buildGwtAst(getLogger(), getTestModule());
     }
     return compilationState;
   }
@@ -84,7 +84,7 @@ public class GwtAstBuilderTest extends TestCase {
     CompilationState compilationState = getCompilationState();
     assertFalse(compilationState.hasErrors());
     JProgram jprogram =
-        CompileModule.buildGenerateJavaAst(getLogger(), getTestModule(), compilationState);
+        GwtAstBuilderUtil.buildGenerateJavaAst(getLogger(), getTestModule(), compilationState);
 
     Map<String, JDeclaredType> compStateTypes = new HashMap<String, JDeclaredType>();
     for (CompilationUnit unit : compilationState.getCompilationUnits()) {

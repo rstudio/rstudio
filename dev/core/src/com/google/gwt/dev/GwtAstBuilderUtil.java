@@ -18,9 +18,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
-import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.ModuleDef;
-import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
@@ -32,7 +30,6 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
 import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.BuildTypeMap;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
@@ -40,74 +37,20 @@ import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.jjs.impl.TypeLinker;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.util.Memory;
-import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
-import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
-import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
-import com.google.gwt.dev.util.arg.OptionOutDir;
-import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Compiles a GWT module.
+ * Used by GwtAstBuilderTest.
+ * 
+ * TODO(zundel): remove after GwtAstBuilderTest is obsolete.
  */
-public class CompileModule {
-
-  static class ArgProcessor extends ArgProcessorBase {
-    public ArgProcessor(CompileModuleOptions options) {
-      registerHandler(new ArgHandlerLogLevel(options));
-      registerHandler(new ArgHandlerOutDir(options) {
-        @Override
-        public String[] getDefaultArgs() {
-          return new String[]{getTag(), "bin"};
-        }
-      });
-      registerHandler(new ArgHandlerModuleName(options));
-    }
-
-    @Override
-    protected String getName() {
-      return CompileModule.class.getName();
-    }
-  }
-
-  interface CompileModuleOptions extends CompileTaskOptions, OptionOutDir {
-  }
-
-  static class CompileModuleOptionsImpl extends CompileTaskOptionsImpl implements
-      CompileModuleOptions {
-
-    private File outDir;
-
-    public CompileModuleOptionsImpl() {
-    }
-
-    public CompileModuleOptionsImpl(CompileModuleOptions other) {
-      copyFrom(other);
-    }
-
-    public void copyFrom(CompileModuleOptions other) {
-      super.copyFrom(other);
-      setOutDir(other.getOutDir());
-    }
-
-    public File getOutDir() {
-      return outDir;
-    }
-
-    public void setOutDir(File outDir) {
-      this.outDir = outDir;
-    }
-  }
+public class GwtAstBuilderUtil {
 
   public static JProgram buildGenerateJavaAst(final TreeLogger logger, ModuleDef module,
       final CompilationState compilationState) throws UnableToCompleteException {
@@ -176,37 +119,6 @@ public class CompileModule {
     }
   }
 
-  public static void main(String[] args) {
-    Memory.initialize();
-    if (System.getProperty("gwt.jjs.dumpAst") != null) {
-      System.out.println("Will dump AST to: " + System.getProperty("gwt.jjs.dumpAst"));
-    }
-
-    SpeedTracerLogger.init();
-
-    /*
-     * NOTE: main always exits with a call to System.exit to terminate any
-     * non-daemon threads that were started in Generators. Typically, this is to
-     * shutdown AWT related threads, since the contract for their termination is
-     * still implementation-dependent.
-     */
-    final CompileModuleOptions options = new CompileModuleOptionsImpl();
-    if (new ArgProcessor(options).processArgs(args)) {
-      CompileTask task = new CompileTask() {
-        public boolean run(TreeLogger logger) throws UnableToCompleteException {
-          // TODO: updates?
-          return new CompileModule(options).run(logger);
-        }
-      };
-      if (CompileTaskRunner.runWithAppropriateLogger(options, task)) {
-        // Exit w/ success code.
-        System.exit(0);
-      }
-    }
-    // Exit w/ non-success code.
-    System.exit(1);
-  }
-
   static UnableToCompleteException logAndTranslateException(TreeLogger logger, Throwable e) {
     if (e instanceof UnableToCompleteException) {
       // just rethrow
@@ -257,64 +169,6 @@ public class CompileModule {
         logger.log(TreeLogger.ERROR, "Aborting on '" + String.valueOf(cud.getFileName()) + "'");
         throw new UnableToCompleteException();
       }
-    }
-  }
-
-  private final CompileModuleOptionsImpl options;
-
-  public CompileModule(CompileModuleOptions options) {
-    this.options = new CompileModuleOptionsImpl(options);
-  }
-
-  public boolean run(final TreeLogger logger) {
-    try {
-      ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, options.getModuleNames().get(0));
-      final CompilationState compilationState = buildGwtAst(logger, module);
-
-      boolean loggable = logger.isLoggable(TreeLogger.INFO);
-      long start = loggable ? System.currentTimeMillis() : 0L;
-      Map<String, JDeclaredType> compStateTypes = new HashMap<String, JDeclaredType>();
-      for (CompilationUnit unit : compilationState.getCompilationUnits()) {
-        for (JDeclaredType type : unit.getTypes()) {
-          compStateTypes.put(type.getName(), type);
-        }
-      }
-      if (loggable) {
-        logger.log(TreeLogger.INFO, (System.currentTimeMillis() - start) + " time to get all types");
-      }
-
-      start = loggable ? System.currentTimeMillis() : 0L;
-      JProgram jprogram = buildGenerateJavaAst(logger, module, compilationState);
-      if (loggable) {
-        logger.log(TreeLogger.INFO, (System.currentTimeMillis() - start) + " time to build old AST");
-      }
-
-      for (JDeclaredType genJavaAstType : jprogram.getDeclaredTypes()) {
-        String typeName = genJavaAstType.getName();
-        if ("com.google.gwt.core.client.JavaScriptObject".equals(typeName)) {
-          // Known mismatch; genJavaAst version implements all JSO interfaces.
-          continue;
-        }
-        JDeclaredType compStateType = compStateTypes.get(typeName);
-        if (compStateType == null) {
-          System.out.println("No matching prebuilt type for '" + typeName + "'");
-        } else {
-          String oldSource = genJavaAstType.toSource();
-          String newSource = compStateType.toSource();
-          if (!oldSource.equals(newSource)) {
-            System.out.println("Mismatched output for '" + typeName + "'");
-            System.out.println("GenerateJavaAST:");
-            System.out.println(oldSource);
-            System.out.println("GwtAstBuilder:");
-            System.out.println(newSource);
-          }
-        }
-      }
-
-      return !compilationState.hasErrors();
-    } catch (Throwable e) {
-      logAndTranslateException(logger, e);
-      return false;
     }
   }
 }
