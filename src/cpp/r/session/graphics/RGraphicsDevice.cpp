@@ -505,6 +505,24 @@ SEXP rs_activateGD()
       LOG_ERROR(error);
    return R_NilValue;
 }
+
+
+CCODE s_originalDevSetFunction;
+SEXP devSetHook(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+   r::function_hook::checkArity(op, args, call);
+
+   // dev.set(which = 1) is a special syntax for creating a new graphics device,
+   // so check for which = 1 and throw an error if this would result in the
+   // creation of a 2nd RStudio graphics device
+   int devNum = r::sexp::asInteger(CAR(args));
+   if (devNum == 1 && s_pGEDevDesc != NULL)
+      Rf_error("Only one RStudio graphics device is permitted");
+
+   // call original
+   return s_originalDevSetFunction(call, op, args, rho);
+}
+
    
 CCODE s_originalInteractiveFunction;   
 SEXP interactiveHook(SEXP call, SEXP op, SEXP args, SEXP rho) 
@@ -648,6 +666,14 @@ Error initialize(
       activateGDMethodDef.fun = (DL_FUNC) rs_activateGD ;
       activateGDMethodDef.numArgs = 0;
       r::routines::addCallMethod(activateGDMethodDef);
+
+
+      // register dev.set hook to handle special dev.set(which = 1) case
+      error = function_hook::registerReplaceHook("dev.set",
+                                                 devSetHook,
+                                                 &s_originalDevSetFunction);
+      if (error)
+         return error;
 
       // register interactive() hook to work around dev.interactive device
       // bootstrapping bug

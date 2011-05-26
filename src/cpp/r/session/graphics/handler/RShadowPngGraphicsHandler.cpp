@@ -451,7 +451,7 @@ void onBeforeExecute(DeviceContext* pDC)
    // then switch to the rstudio device. note this can occur if the
    // user creates another device such as windows() or postscript() and
    // then does a dev.off
-   pGEDevDesc pCurrentDevice = GEcurrentDevice();
+   pGEDevDesc pCurrentDevice = NoDevices() ? NULL : GEcurrentDevice();
    ShadowDeviceData* pShadowDevData = (ShadowDeviceData*)pDC->pDeviceSpecific;
    if (pCurrentDevice != NULL && pShadowDevData != NULL)
    {
