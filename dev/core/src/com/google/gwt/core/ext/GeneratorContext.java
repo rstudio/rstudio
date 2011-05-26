@@ -48,8 +48,7 @@ public interface GeneratorContext {
    *          or a branch thereof
    * @param artifact the Artifact to provide to the Linker chain.
    */
-  void commitArtifact(TreeLogger logger, Artifact<?> artifact)
-      throws UnableToCompleteException;
+  void commitArtifact(TreeLogger logger, Artifact<?> artifact) throws UnableToCompleteException;
 
   /**
    * Commits resource generation begun with
@@ -74,10 +73,10 @@ public interface GeneratorContext {
    * Returns a resource oracle containing all resources that are mapped into the
    * module's source (or super-source) paths. Conceptually, this resource oracle
    * exposes resources which are "siblings" to GWT-compatible Java classes. For
-   * example, if the module includes <code>com.google.gwt.core.client</code>
-   * as a source package, then a resource at
-   * <code>com/google/gwt/core/client/Foo.properties</code> would be exposed
-   * by this resource oracle.
+   * example, if the module includes <code>com.google.gwt.core.client</code> as
+   * a source package, then a resource at
+   * <code>com/google/gwt/core/client/Foo.properties</code> would be exposed by
+   * this resource oracle.
    */
   ResourceOracle getResourcesOracle();
 
@@ -91,11 +90,11 @@ public interface GeneratorContext {
   TypeOracle getTypeOracle();
 
   /**
-   * Attempts to get a <code>PrintWriter</code> so that the caller can
-   * generate the source code for the named type. If the named types already
-   * exists, <code>null</code> is returned to indicate that no work needs to
-   * be done. The file is not committed until
-   * {@link #commit(TreeLogger, PrintWriter)} is called.
+   * Attempts to get a <code>PrintWriter</code> so that the caller can generate
+   * the source code for the named type. If the named types already exists,
+   * <code>null</code> is returned to indicate that no work needs to be done.
+   * The file is not committed until {@link #commit(TreeLogger, PrintWriter)} is
+   * called.
    * 
    * @param logger a logger; normally the logger passed into
    *          {@link Generator#generate(TreeLogger, GeneratorContext, String)}
@@ -120,8 +119,8 @@ public interface GeneratorContext {
    *          the name can include subdirectories separated by forward slashes
    *          ('/')
    * @return an <code>OutputStream</code> into which file contents can be
-   *         written, or <code>null</code> if a resource by that name is
-   *         already pending or already exists
+   *         written, or <code>null</code> if a resource by that name is already
+   *         pending or already exists
    * @throws UnableToCompleteException if the resource could not be initialized
    *           for some reason, such as if the specified partial path is invalid
    */

@@ -248,27 +248,21 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     eventsByGeneratorType.put(
         "com.google.gwt.resources.rebind.context.InlineClientBundleGenerator",
         CompilerEventType.GENERATOR_CLIENT_BUNDLE);
-    eventsByGeneratorType.put(
-        "com.google.gwt.i18n.rebind.LocalizableGenerator",
+    eventsByGeneratorType.put("com.google.gwt.i18n.rebind.LocalizableGenerator",
         CompilerEventType.GENERATOR_I18N);
     eventsByGeneratorType.put("com.google.gwt.i18n.rebind.LocaleInfoGenerator",
         CompilerEventType.GENERATOR_I18N);
-    eventsByGeneratorType.put(
-        "com.google.gwt.i18n.rebind.CurrencyListGenerator",
+    eventsByGeneratorType.put("com.google.gwt.i18n.rebind.CurrencyListGenerator",
         CompilerEventType.GENERATOR_I18N);
-    eventsByGeneratorType.put(
-        "com.google.gwt.i18n.rebind.CustomDateTimeFormatGenerator",
+    eventsByGeneratorType.put("com.google.gwt.i18n.rebind.CustomDateTimeFormatGenerator",
         CompilerEventType.GENERATOR_I18N);
-    eventsByGeneratorType.put(
-        "com.google.gwt.user.rebind.rpc.ServiceInterfaceProxyGenerator",
+    eventsByGeneratorType.put("com.google.gwt.user.rebind.rpc.ServiceInterfaceProxyGenerator",
         CompilerEventType.GENERATOR_RPC);
     eventsByGeneratorType.put("com.google.gwt.rpc.rebind.RpcServiceGenerator",
         CompilerEventType.GENERATOR_RPC); // deRPC
-    eventsByGeneratorType.put(
-        "com.google.gwt.uibinder.rebind.UiBinderGenerator",
+    eventsByGeneratorType.put("com.google.gwt.uibinder.rebind.UiBinderGenerator",
         CompilerEventType.GENERATOR_UIBINDER);
-    eventsByGeneratorType.put(
-        "com.google.gwt.inject.rebind.GinjectorGenerator",
+    eventsByGeneratorType.put("com.google.gwt.inject.rebind.GinjectorGenerator",
         CompilerEventType.GENERATOR_GIN);
   }
 
@@ -312,9 +306,8 @@ public class StandardGeneratorContext implements GeneratorContextExt {
    * Normally, the compiler host would be aware of the same types that are
    * available in the supplied type oracle although it isn't strictly required.
    */
-  public StandardGeneratorContext(CompilationState compilationState,
-      ModuleDef module, File genDir, ArtifactSet allGeneratedArtifacts,
-      boolean isProdMode) {
+  public StandardGeneratorContext(CompilationState compilationState, ModuleDef module, File genDir,
+      ArtifactSet allGeneratedArtifacts, boolean isProdMode) {
     this.compilationState = compilationState;
     this.module = module;
     this.genDir = genDir;
@@ -347,8 +340,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
    * for a given type will not be overwritten.
    */
   public void addGeneratedUnitsFromCache() {
-    if (cachedRebindResult != null
-        && cachedRebindResult.getGeneratedUnits() != null) {
+    if (cachedRebindResult != null && cachedRebindResult.getGeneratedUnits() != null) {
       addGeneratedUnits(cachedRebindResult.getGeneratedUnits());
     }
   }
@@ -386,8 +378,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
       uncommittedGeneratedCupsByPrintWriter.remove(pw);
       committedGeneratedCups.put(gcup.getTypeName(), gcup);
     } else {
-      logger.log(TreeLogger.WARN,
-          "Generator attempted to commit an unknown PrintWriter", null);
+      logger.log(TreeLogger.WARN, "Generator attempted to commit an unknown PrintWriter", null);
     }
   }
 
@@ -428,15 +419,13 @@ public class StandardGeneratorContext implements GeneratorContextExt {
       }
     }
     if (pendingResource == null) {
-      logger.log(TreeLogger.WARN,
-          "Generator attempted to commit an unknown OutputStream", null);
+      logger.log(TreeLogger.WARN, "Generator attempted to commit an unknown OutputStream", null);
       throw new UnableToCompleteException();
     }
 
     // Add the GeneratedResource to the ArtifactSet
     GeneratedResource toReturn =
-        new StandardGeneratedResource(currentGenerator, partialPath,
-            pendingResource.takeBytes());
+        new StandardGeneratedResource(currentGenerator, partialPath, pendingResource.takeBytes());
     commitArtifact(logger, toReturn);
     pendingResources.remove(pendingResource.getPartialPath());
     return toReturn;
@@ -462,8 +451,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
 
         TreeLogger subBranch = null;
         if (branch.isLoggable(TreeLogger.DEBUG)) {
-          subBranch =
-              branch.branch(TreeLogger.DEBUG, "Generated source files...", null);
+          subBranch = branch.branch(TreeLogger.DEBUG, "Generated source files...", null);
         }
 
         for (GeneratedUnit gcup : committedGeneratedCups.values()) {
@@ -473,8 +461,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
           }
         }
 
-        compilationState.addGeneratedCompilationUnits(logger,
-            committedGeneratedCups.values());
+        compilationState.addGeneratedCompilationUnits(logger, committedGeneratedCups.values());
       }
       return newlyGeneratedArtifacts;
     } finally {
@@ -524,6 +511,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   public CompilationState getCompilationState() {
     return compilationState;
   }
+
   /**
    * Gets all committed Java units.
    */
@@ -610,12 +598,10 @@ public class StandardGeneratorContext implements GeneratorContextExt {
    * This method is maintained for backwards compatibility.
    * {@link #runGeneratorIncrementally} should be used instead.
    */
-  public String runGenerator(TreeLogger logger,
-      Class<? extends Generator> generatorClass, String typeName)
-      throws UnableToCompleteException {
+  public String runGenerator(TreeLogger logger, Class<? extends Generator> generatorClass,
+      String typeName) throws UnableToCompleteException {
 
-    RebindResult result =
-        runGeneratorIncrementally(logger, generatorClass, typeName);
+    RebindResult result = runGeneratorIncrementally(logger, generatorClass, typeName);
 
     return result.getReturnedTypeName();
   }
@@ -639,8 +625,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
    * @throws UnableToCompleteException
    */
   public RebindResult runGeneratorIncrementally(TreeLogger logger,
-      Class<? extends Generator> generatorClass, String typeName)
-      throws UnableToCompleteException {
+      Class<? extends Generator> generatorClass, String typeName) throws UnableToCompleteException {
     String msg = "Invoking generator " + generatorClass.getName();
     logger = logger.branch(TreeLogger.DEBUG, msg, null);
 
@@ -650,9 +635,8 @@ public class StandardGeneratorContext implements GeneratorContextExt {
         generator = generatorClass.newInstance();
         generators.put(generatorClass, generator);
       } catch (Throwable e) {
-        logger.log(TreeLogger.ERROR,
-            "Unexpected error trying to instantiate Generator '"
-                + generatorClass.getName() + "'", e);
+        logger.log(TreeLogger.ERROR, "Unexpected error trying to instantiate Generator '"
+            + generatorClass.getName() + "'", e);
         throw new UnableToCompleteException();
       }
     }
@@ -670,8 +654,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     }
 
     Event generatorEvent =
-        SpeedTracerLogger.start(type, "class", generatorClassName, "type",
-            typeName);
+        SpeedTracerLogger.start(type, "class", generatorClassName, "type", typeName);
 
     try {
       GeneratorExt generatorExt;
@@ -732,8 +715,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     this.propOracle = propOracle;
   }
 
-  public final PrintWriter tryCreate(TreeLogger logger, String packageName,
-      String simpleTypeName) {
+  public final PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleTypeName) {
     String typeName;
     if (packageName.length() == 0) {
       typeName = simpleTypeName;
@@ -741,8 +723,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
       typeName = packageName + '.' + simpleTypeName;
     }
     // Is type already known to the host?
-    JClassType existingType =
-        getTypeOracle().findType(packageName, simpleTypeName);
+    JClassType existingType = getTypeOracle().findType(packageName, simpleTypeName);
     if (existingType != null) {
       if (logger.isLoggable(TreeLogger.DEBUG)) {
         logger.log(TreeLogger.DEBUG, "Type '" + typeName
@@ -792,29 +773,28 @@ public class StandardGeneratorContext implements GeneratorContextExt {
       throws UnableToCompleteException {
 
     logger =
-        logger.branch(TreeLogger.DEBUG, "Preparing pending output resource '"
-            + partialPath + "'", null);
+        logger.branch(TreeLogger.DEBUG, "Preparing pending output resource '" + partialPath + "'",
+            null);
 
     // Disallow null or empty names.
     if (partialPath == null || partialPath.trim().equals("")) {
-      logger.log(TreeLogger.ERROR,
-          "The resource name must be a non-empty string", null);
+      logger.log(TreeLogger.ERROR, "The resource name must be a non-empty string", null);
       throw new UnableToCompleteException();
     }
 
     // Disallow absolute paths.
     if (new File(partialPath).isAbsolute()) {
-      logger.log(
-          TreeLogger.ERROR,
-          "Resource paths are intended to be relative to the compiled output directory and cannot be absolute",
-          null);
+      logger
+          .log(
+              TreeLogger.ERROR,
+              "Resource paths are intended to be relative to the compiled output directory and cannot be absolute",
+              null);
       throw new UnableToCompleteException();
     }
 
     // Disallow backslashes (to promote consistency in calling code).
     if (partialPath.indexOf('\\') >= 0) {
-      logger.log(
-          TreeLogger.ERROR,
+      logger.log(TreeLogger.ERROR,
           "Resource paths must contain forward slashes (not backslashes) to denote subdirectories",
           null);
       throw new UnableToCompleteException();
@@ -828,8 +808,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     }
 
     // See if the file is already committed.
-    SortedSet<GeneratedResource> resources =
-        allGeneratedArtifacts.find(GeneratedResource.class);
+    SortedSet<GeneratedResource> resources = allGeneratedArtifacts.find(GeneratedResource.class);
     for (GeneratedResource resource : resources) {
       if (partialPath.equals(resource.getPartialPath())) {
         return null;
@@ -839,8 +818,8 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     // See if the file is pending.
     if (pendingResources.containsKey(partialPath)) {
       // It is already pending.
-      logger.log(TreeLogger.WARN, "The file '" + partialPath
-          + "' is already a pending resource", null);
+      logger.log(TreeLogger.WARN, "The file '" + partialPath + "' is already a pending resource",
+          null);
       return null;
     }
     PendingResource pendingResource = new PendingResource(partialPath);
@@ -856,10 +835,11 @@ public class StandardGeneratorContext implements GeneratorContextExt {
 
     // Warn the user about uncommitted resources.
     logger =
-        logger.branch(
-            TreeLogger.WARN,
-            "The following resources will not be created because they were never committed (did you forget to call commit()?)",
-            null);
+        logger
+            .branch(
+                TreeLogger.WARN,
+                "The following resources will not be created because they were never committed (did you forget to call commit()?)",
+                null);
 
     for (Entry<String, PendingResource> entry : pendingResources.entrySet()) {
       logger.log(TreeLogger.WARN, entry.getKey());

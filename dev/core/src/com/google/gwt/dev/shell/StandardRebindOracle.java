@@ -54,8 +54,8 @@ public class StandardRebindOracle implements RebindOracle {
 
     private final List<String> usedTypeNames = new ArrayList<String>();
 
-    public String rebind(TreeLogger logger, String typeName,
-        ArtifactAcceptor artifactAcceptor) throws UnableToCompleteException {
+    public String rebind(TreeLogger logger, String typeName, ArtifactAcceptor artifactAcceptor)
+        throws UnableToCompleteException {
       Event rebindEvent = SpeedTracerLogger.start(DevModeEventType.REBIND, "Type Name", typeName);
       try {
         genCtx.setPropertyOracle(propOracle);
@@ -64,19 +64,19 @@ public class StandardRebindOracle implements RebindOracle {
         if (rule == null) {
           return typeName;
         }
-        
+
         CachedRebindResult cachedResult = rebindCacheGet(rule, typeName);
         if (cachedResult != null) {
           genCtx.setCachedGeneratorResult(cachedResult);
         }
-        
+
         // realize the rule (call a generator, or do type replacement, etc.)
         RebindResult result = rule.realize(logger, genCtx, typeName);
-        
+
         // handle rebind result caching (if enabled)
-        String resultTypeName = processCacheableResult(logger, rule, typeName, 
-            cachedResult, result);
-        
+        String resultTypeName =
+            processCacheableResult(logger, rule, typeName, cachedResult, result);
+
         /*
          * Finalize new artifacts from the generator context
          */
@@ -95,8 +95,7 @@ public class StandardRebindOracle implements RebindOracle {
       }
     }
 
-    private Rule getRebindRule(TreeLogger logger, String typeName)
-        throws UnableToCompleteException {
+    private Rule getRebindRule(TreeLogger logger, String typeName) throws UnableToCompleteException {
       if (usedTypeNames.contains(typeName)) {
         // Found a cycle.
         //
@@ -112,8 +111,7 @@ public class StandardRebindOracle implements RebindOracle {
       // Make the rebind decision.
       //
       if (rules.isEmpty()) {
-        logger.log(TreeLogger.DEBUG,
-            "No rules are defined, so no substitution can occur", null);
+        logger.log(TreeLogger.DEBUG, "No rules are defined, so no substitution can occur", null);
         return null;
       }
 
@@ -124,8 +122,7 @@ public class StandardRebindOracle implements RebindOracle {
 
         // Branch the logger.
         //
-        TreeLogger branch = Messages.TRACE_CHECKING_RULE.branch(logger, rule,
-            null);
+        TreeLogger branch = Messages.TRACE_CHECKING_RULE.branch(logger, rule, null);
 
         if (rule.isApplicable(branch, genCtx, typeName)) {
           // See if this rule has already been used. This is needed to prevent
@@ -134,7 +131,7 @@ public class StandardRebindOracle implements RebindOracle {
           if (!usedRules.contains(rule)) {
             usedRules.add(rule);
             Messages.TRACE_RULE_MATCHED.log(logger, null);
-            
+
             return rule;
           } else {
             // We are skipping this rule because it has already been used
@@ -164,19 +161,21 @@ public class StandardRebindOracle implements RebindOracle {
       assert minCostRuleSoFar != null;
       if (minCostRuleSoFar.getFallbackEvaluationCost() < Integer.MAX_VALUE) {
         if (logger.isLoggable(TreeLogger.INFO)) {
-          logger.log(TreeLogger.INFO, "Could not find an exact match rule. Using 'closest' rule " +
-              minCostRuleSoFar + " based on fall back values. You may need to implement a specific " +
-          "binding in case the fall back behavior does not replace the missing binding");
+          logger.log(TreeLogger.INFO, "Could not find an exact match rule. Using 'closest' rule "
+              + minCostRuleSoFar
+              + " based on fall back values. You may need to implement a specific "
+              + "binding in case the fall back behavior does not replace the missing binding");
         }
         if (!usedRules.contains(minCostRuleSoFar)) {
           usedRules.add(minCostRuleSoFar);
           if (logger.isLoggable(TreeLogger.DEBUG)) {
-            logger.log(TreeLogger.DEBUG, "No exact match was found, using closest match rule " + minCostRuleSoFar);
+            logger.log(TreeLogger.DEBUG, "No exact match was found, using closest match rule "
+                + minCostRuleSoFar);
           }
           return minCostRuleSoFar;
         }
       }
-      
+
       // No matching rule for this type.
       return null;
     }
@@ -185,21 +184,21 @@ public class StandardRebindOracle implements RebindOracle {
      * Decide how to handle integrating a previously cached result, and whether
      * to cache the new result for the future.
      */
-    private String processCacheableResult(TreeLogger logger, Rule rule, 
-        String typeName, CachedRebindResult cachedResult, RebindResult newResult) {
-      
+    private String processCacheableResult(TreeLogger logger, Rule rule, String typeName,
+        CachedRebindResult cachedResult, RebindResult newResult) {
+
       String resultTypeName = newResult.getReturnedTypeName();
-      
+
       if (!genCtx.isGeneratorResultCachingEnabled()) {
         return resultTypeName;
       }
 
       RebindStatus status = newResult.getResultStatus();
       switch (status) {
-        
+
         case USE_EXISTING:
           // in this case, no newly generated or cached types are needed
-          break; 
+          break;
 
         case USE_ALL_NEW_WITH_NO_CACHING:
           /*
@@ -211,9 +210,9 @@ public class StandardRebindOracle implements RebindOracle {
 
         case USE_ALL_NEW:
           // use all new results, add a new cache entry
-          cachedResult = new CachedRebindResult(newResult.getReturnedTypeName(),
-              genCtx.getArtifacts(), genCtx.getGeneratedUnitMap(), 
-              System.currentTimeMillis(), newResult.getClientDataMap());
+          cachedResult =
+              new CachedRebindResult(newResult.getReturnedTypeName(), genCtx.getArtifacts(), genCtx
+                  .getGeneratedUnitMap(), System.currentTimeMillis(), newResult.getClientDataMap());
           rebindCachePut(rule, typeName, cachedResult);
           break;
 
@@ -230,19 +229,19 @@ public class StandardRebindOracle implements RebindOracle {
 
         case USE_PARTIAL_CACHED:
           /*
-           * Add cached generated units marked for reuse to the context.  
-           * TODO(jbrosenberg): add support for reusing artifacts as well
-           * as GeneratedUnits.
+           * Add cached generated units marked for reuse to the context.
+           * TODO(jbrosenberg): add support for reusing artifacts as well as
+           * GeneratedUnits.
            */
           genCtx.addGeneratedUnitsMarkedForReuseFromCache();
 
           /*
-           * Create a new cache entry using the composite set of new and 
-           * reused cached results currently in genCtx.
+           * Create a new cache entry using the composite set of new and reused
+           * cached results currently in genCtx.
            */
-          cachedResult = new CachedRebindResult(newResult.getReturnedTypeName(),
-              genCtx.getArtifacts(), genCtx.getGeneratedUnitMap(), 
-              System.currentTimeMillis(), newResult.getClientDataMap());
+          cachedResult =
+              new CachedRebindResult(newResult.getReturnedTypeName(), genCtx.getArtifacts(), genCtx
+                  .getGeneratedUnitMap(), System.currentTimeMillis(), newResult.getClientDataMap());
           rebindCachePut(rule, typeName, cachedResult);
           break;
       }
@@ -275,13 +274,12 @@ public class StandardRebindOracle implements RebindOracle {
     typeNameBindingMap.remove(sourceTypeName);
   }
 
-  public String rebind(TreeLogger logger, String typeName)
-      throws UnableToCompleteException {
+  public String rebind(TreeLogger logger, String typeName) throws UnableToCompleteException {
     return rebind(logger, typeName, null);
   }
 
-  public String rebind(TreeLogger logger, String typeName,
-      ArtifactAcceptor artifactAcceptor) throws UnableToCompleteException {
+  public String rebind(TreeLogger logger, String typeName, ArtifactAcceptor artifactAcceptor)
+      throws UnableToCompleteException {
 
     String resultTypeName = typeNameBindingMap.get(typeName);
     if (resultTypeName == null) {

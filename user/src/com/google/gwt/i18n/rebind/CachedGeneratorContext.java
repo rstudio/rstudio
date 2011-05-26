@@ -79,8 +79,7 @@ class CachedGeneratorContext implements GeneratorContext {
     return context;
   }
 
-  public PrintWriter tryCreate(TreeLogger logger, String packageName,
-      String simpleName) {
+  public PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleName) {
     String typeName = packageName + '.' + simpleName;
     if (generatedTypes.contains(typeName)) {
       return null;

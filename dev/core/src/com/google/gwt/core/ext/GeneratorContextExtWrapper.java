@@ -27,25 +27,25 @@ import java.io.PrintWriter;
 
 /**
  * EXPERIMENTAL and subject to change. Do not use this in production code.
- * <p> 
- * A wrapper to access a base {@link GeneratorContext} instance as a 
- * {@link GeneratorContextExt} instance.  Methods from the 
- * {@link GeneratorContext} interface are passed through to the baseContext, 
- * while methods from the {@link GeneratorContextExt} interface are given 
+ * <p>
+ * A wrapper to access a base {@link GeneratorContext} instance as a
+ * {@link GeneratorContextExt} instance. Methods from the
+ * {@link GeneratorContext} interface are passed through to the baseContext,
+ * while methods from the {@link GeneratorContextExt} interface are given
  * default stub implementations.
  */
 public class GeneratorContextExtWrapper implements GeneratorContextExt {
- 
+
   /**
-   * Get a new instance wrapped from a base {@link GeneratorContext} 
+   * Get a new instance wrapped from a base {@link GeneratorContext}
    * implementation.
    */
   public static GeneratorContextExt newInstance(GeneratorContext baseContext) {
     return new GeneratorContextExtWrapper(baseContext);
-  } 
-  
+  }
+
   private final GeneratorContext baseContext;
-  
+
   private GeneratorContextExtWrapper(GeneratorContext baseContext) {
     this.baseContext = baseContext;
   }
@@ -97,8 +97,7 @@ public class GeneratorContextExtWrapper implements GeneratorContextExt {
     return false;
   }
 
-  public PrintWriter tryCreate(
-      TreeLogger logger, String packageName, String simpleName) {
+  public PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleName) {
     return baseContext.tryCreate(logger, packageName, simpleName);
   }
 
