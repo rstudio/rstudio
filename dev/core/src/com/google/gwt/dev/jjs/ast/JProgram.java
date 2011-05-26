@@ -71,7 +71,7 @@ public class JProgram extends JNode {
       "java.lang.CharSequence", "java.lang.Cloneable", "java.lang.Comparable", "java.lang.Enum",
       "java.lang.Iterable", "java.util.Iterator", "java.lang.AssertionError", "java.lang.Boolean",
       "java.lang.Byte", "java.lang.Character", "java.lang.Short", "java.lang.Integer",
-      "java.lang.Float", "java.lang.Double", "java.lang.Throwable",
+      "java.lang.Long", "java.lang.Float", "java.lang.Double", "java.lang.Throwable",
       "com.google.gwt.core.client.GWT", "com.google.gwt.core.client.JavaScriptObject",
       "com.google.gwt.lang.ClassLiteralHolder", "com.google.gwt.core.client.RunAsyncCallback",
       "com.google.gwt.core.client.impl.AsyncFragmentLoader",

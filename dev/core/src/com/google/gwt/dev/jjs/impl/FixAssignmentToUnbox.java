@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -116,9 +117,8 @@ public class FixAssignmentToUnbox extends JModVisitor {
       // Assignment-to-unbox, e.g.
       // unbox(x) = foo -> x = box(foo)
       JClassType boxedType = (JClassType) boxed.getType();
-
       ctx.replaceMe(new JBinaryOperation(x.getSourceInfo(), boxedType, JBinaryOperator.ASG, boxed,
-          autoboxUtils.box(x.getRhs(), boxedType)));
+          autoboxUtils.box(x.getRhs(), (JPrimitiveType) lhs.getType())));
       return;
     }
 

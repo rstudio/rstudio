@@ -24,7 +24,7 @@ public class JavaResourceBase {
       "java.lang.annotation.Annotation") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang.annotation;\n");
       code.append("public interface Annotation {\n");
       code.append("}\n");
@@ -34,7 +34,7 @@ public class JavaResourceBase {
   public static final MockJavaResource BAR = new MockJavaResource("test.Bar") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package test;\n");
       code.append("public class Bar extends Foo {\n");
       code.append("  public String value() { return \"Bar\"; }\n");
@@ -45,18 +45,23 @@ public class JavaResourceBase {
   public static final MockJavaResource BOOLEAN = new MockJavaResource("java.lang.Boolean") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Boolean {\n");
+      code.append("  private boolean value;\n");
+      code.append("  public Boolean(boolean value) {\n");
+      code.append("    this.value = value;\n");
+      code.append("  }\n");
+      code.append("  public static Boolean valueOf(boolean b) { return new Boolean(b); }\n");
+      code.append("  public boolean booleanValue() { return value; }\n");
       code.append("}\n");
       return code;
     }
   };
-  public static final MockJavaResource BYTE = new MockJavaResource(
-      "java.lang.Byte") {
+  public static final MockJavaResource BYTE = new MockJavaResource("java.lang.Byte") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Byte extends Number {\n");
       code.append("  private byte value;\n");
@@ -69,11 +74,10 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockJavaResource CHARACTER = new MockJavaResource(
-      "java.lang.Character") {
+  public static final MockJavaResource CHARACTER = new MockJavaResource("java.lang.Character") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Character {\n");
       code.append("  private char value;\n");
@@ -86,11 +90,10 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockJavaResource CLASS = new MockJavaResource(
-      "java.lang.Class") {
+  public static final MockJavaResource CLASS = new MockJavaResource("java.lang.Class") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Class<T> {\n");
       code.append("  public String getName() { return null; }\n");
@@ -103,7 +106,7 @@ public class JavaResourceBase {
       "java.lang.ClassNotFoundException") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class ClassNotFoundException extends Exception {\n");
       code.append("  public ClassNotFoundException() {}\n");
@@ -115,22 +118,20 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockJavaResource COLLECTION = new MockJavaResource(
-      "java.util.Collection") {
+  public static final MockJavaResource COLLECTION = new MockJavaResource("java.util.Collection") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.util;\n");
       code.append("public interface Collection<E> {\n");
       code.append("}\n");
       return code;
     }
   };
-  public static final MockJavaResource DOUBLE = new MockJavaResource(
-      "java.lang.Double") {
+  public static final MockJavaResource DOUBLE = new MockJavaResource("java.lang.Double") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Double extends Number {\n");
       code.append("  private double value;\n");
@@ -144,11 +145,10 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockJavaResource ENUM = new MockJavaResource(
-      "java.lang.Enum") {
+  public static final MockJavaResource ENUM = new MockJavaResource("java.lang.Enum") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("import java.io.Serializable;\n");
       code.append("public abstract class Enum<E extends Enum<E>> implements Serializable {\n");
@@ -159,33 +159,30 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockJavaResource ERROR = new MockJavaResource(
-      "java.lang.Error") {
+  public static final MockJavaResource ERROR = new MockJavaResource("java.lang.Error") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Error extends Throwable {\n");
       code.append("}\n");
       return code;
     }
   };
-  public static final MockJavaResource EXCEPTION = new MockJavaResource(
-      "java.lang.Exception") {
+  public static final MockJavaResource EXCEPTION = new MockJavaResource("java.lang.Exception") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Exception extends Throwable {\n");
       code.append("}\n");
       return code;
     }
   };
-  public static final MockJavaResource FLOAT = new MockJavaResource(
-      "java.lang.Float") {
+  public static final MockJavaResource FLOAT = new MockJavaResource("java.lang.Float") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Float extends Number {\n");
       code.append("  private float value;\n");
@@ -201,7 +198,7 @@ public class JavaResourceBase {
   public static final MockJavaResource FOO = new MockJavaResource("test.Foo") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package test;\n");
       code.append("public class Foo {\n");
       code.append("  public String value() { return \"Foo\"; }\n");
@@ -209,11 +206,10 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockJavaResource INTEGER = new MockJavaResource(
-      "java.lang.Integer") {
+  public static final MockJavaResource INTEGER = new MockJavaResource("java.lang.Integer") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Integer extends Number {\n");
       code.append("  private int value;\n");
@@ -230,7 +226,7 @@ public class JavaResourceBase {
       "com.google.gwt.user.client.rpc.IsSerializable") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package com.google.gwt.user.client.rpc;\n");
       code.append("public interface IsSerializable {\n");
       code.append("}\n");
@@ -241,7 +237,7 @@ public class JavaResourceBase {
       "com.google.gwt.core.client.JavaScriptObject") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package com.google.gwt.core.client;\n");
       code.append("public class JavaScriptObject {\n");
       code.append("  public static native JavaScriptObject createObject() /*-{ return {}; }-*/;\n");
@@ -251,28 +247,26 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockJavaResource LONG = new MockJavaResource(
-      "java.lang.Long") {
+  public static final MockJavaResource LONG = new MockJavaResource("java.lang.Long") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Long extends Number {\n");
       code.append("  private long value;\n");
       code.append("  public Long(long value) {\n");
       code.append("    this.value = value;\n");
       code.append("  }\n");
-      code.append("  public static Long valueOf(int i) { return new Long(i); }\n");
+      code.append("  public static Long valueOf(long l) { return new Long(l); }\n");
       code.append("  public long longValue() { return value; }\n");
       code.append("}\n");
       return code;
     }
   };
-  public static final MockJavaResource MAP = new MockJavaResource(
-      "java.util.Map") {
+  public static final MockJavaResource MAP = new MockJavaResource("java.util.Map") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.util;\n");
       code.append("public interface Map<K,V> { }\n");
       return code;
@@ -282,7 +276,7 @@ public class JavaResourceBase {
       "java.lang.NoClassDefFoundError") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class NoClassDefFoundError extends Error {\n");
       code.append("  public NoClassDefFoundError() {}\n");
@@ -291,11 +285,10 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockJavaResource NUMBER = new MockJavaResource(
-      "java.lang.Number") {
+  public static final MockJavaResource NUMBER = new MockJavaResource("java.lang.Number") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Number implements java.io.Serializable {\n");
       code.append("}\n");
@@ -303,13 +296,14 @@ public class JavaResourceBase {
     }
   };
 
-  public static final MockJavaResource OBJECT = new MockJavaResource(
-      "java.lang.Object") {
+  public static final MockJavaResource OBJECT = new MockJavaResource("java.lang.Object") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Object {\n");
+      code.append("  public boolean equals(Object that){return this == that;}");
+      code.append("  public int hashCode() { return 0; }\n");
       code.append("  public String toString() { return \"Object\"; }\n");
       code.append("  public Object clone() { return this; } ");
       code.append("  public Class<?> getClass() { return Object.class; } ");
@@ -317,21 +311,19 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockJavaResource SERIALIZABLE = new MockJavaResource(
-      "java.io.Serializable") {
+  public static final MockJavaResource SERIALIZABLE = new MockJavaResource("java.io.Serializable") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.io;\n");
       code.append("public interface Serializable { }\n");
       return code;
     }
   };
-  public static final MockJavaResource SHORT = new MockJavaResource(
-      "java.lang.Short") {
+  public static final MockJavaResource SHORT = new MockJavaResource("java.lang.Short") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Short extends Number {\n");
       code.append("  private short value;\n");
@@ -344,26 +336,28 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockJavaResource STRING = new MockJavaResource(
-      "java.lang.String") {
+  public static final MockJavaResource STRING = new MockJavaResource("java.lang.String") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("import java.io.Serializable;\n");
       code.append("public final class String implements Serializable {\n");
-      /*
-       * TODO(scottb) Can't add String constructors because they are "magic" in
-       * GWT. (They're re-vectored to static calls). Maybe we should generalize
-       * the compiler magic to work via annotations, and annotate only the real
-       * GWT string.
-       */
-      // code.append("  public String(String s) {}\n");
+      code.append("  public String() { }\n");
+      code.append("  public String(char c) { }\n");
+      code.append("  public String(String s) { }\n");
+      code.append("  public static String _String() { return \"\"; }\n");
+      code.append("  public static String _String(char c) { return \"\" + c; }\n");
+      code.append("  public static String _String(String s) { return s; }\n");
       code.append("  private static final long serialVersionUID = 0L;\n");
       code.append("  public char charAt(int index) { return 'a'; }\n");
       code.append("  public boolean equals(Object obj) { return false; }\n");
       code.append("  public boolean equalsIgnoreCase(String str) { return false; }\n");
       code.append("  public int length() { return 0; }\n");
+      code.append("  public static String valueOf(int i) { return \"\" + i; }\n");
+      code.append("  public static String valueOf(char c) { return \"\" + c; }\n");
+      code.append("  public static String valueOf(long l) { return \"\" + l; }\n");
+      code.append("  public int hashCode() { return 0; }\n");
       code.append("  public String replace(char c1, char c2) { return null; }\n");
       code.append("  public boolean startsWith(String str) { return false; }\n");
       code.append("  public String toLowerCase() { return null; }\n");
@@ -376,7 +370,7 @@ public class JavaResourceBase {
       "java.lang.StringBuilder") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public final class StringBuilder {\n");
       code.append("}\n");
@@ -387,7 +381,7 @@ public class JavaResourceBase {
       "java.lang.SuppressWarnings") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public @interface SuppressWarnings {\n");
       code.append("  String[] value();\n");
@@ -395,11 +389,10 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockJavaResource THROWABLE = new MockJavaResource(
-      "java.lang.Throwable") {
+  public static final MockJavaResource THROWABLE = new MockJavaResource("java.lang.Throwable") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Throwable {\n");
       code.append("  public String getMessage() { return \"\"; }\n");
@@ -411,10 +404,9 @@ public class JavaResourceBase {
 
   public static MockJavaResource[] getStandardResources() {
     return new MockJavaResource[]{
-        ANNOTATION, BYTE, BOOLEAN, CHARACTER, CLASS, CLASS_NOT_FOUND_EXCEPTION,
-        COLLECTION, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT, INTEGER,
-        IS_SERIALIZABLE, JAVASCRIPTOBJECT, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR,
-        NUMBER, OBJECT, SERIALIZABLE, SHORT, STRING, STRING_BUILDER,
+        ANNOTATION, BYTE, BOOLEAN, CHARACTER, CLASS, CLASS_NOT_FOUND_EXCEPTION, COLLECTION, DOUBLE,
+        ENUM, EXCEPTION, ERROR, FLOAT, INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LONG, MAP,
+        NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT, SERIALIZABLE, SHORT, STRING, STRING_BUILDER,
         SUPPRESS_WARNINGS, THROWABLE};
   }
 }

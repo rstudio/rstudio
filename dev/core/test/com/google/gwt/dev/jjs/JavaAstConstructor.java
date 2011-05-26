@@ -54,9 +54,14 @@ public class JavaAstConstructor {
   public static final MockJavaResource ARRAY = new MockJavaResource("com.google.gwt.lang.Array") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package com.google.gwt.lang;\n");
+      code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
       code.append("public final class Array {\n");
+      code.append("  static void setCheck(Array array, int index, Object value) { }\n");
+      code.append("  static void initDim(Class arrayClass, JavaScriptObject castableTypeMap, int queryId, int length, int seedType) { }\n");
+      code.append("  static void initDims(Class arrayClasses[], JavaScriptObject[] castableTypeMapExprs, int[] queryIdExprs, int[] dimExprs, int count, int seedType) { }\n");
+      code.append("  static void initValues(Class arrayClass, JavaScriptObject castableTypeMap, int queryId, Array array) { }\n");
       code.append("  public int length = 0;\n");
       code.append("  protected Class<?> arrayClass = null;\n");
       code.append("}\n");
@@ -66,7 +71,7 @@ public class JavaAstConstructor {
   public static final MockJavaResource CAST = new MockJavaResource("com.google.gwt.lang.Cast") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package com.google.gwt.lang;\n");
       code.append("public final class Cast {\n");
       code.append("  public static Object dynamicCast(Object src, int dstId) { return src;}\n");
@@ -82,7 +87,7 @@ public class JavaAstConstructor {
   public static final MockJavaResource CLASS = new MockJavaResource("java.lang.Class") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
       code.append("public final class Class<T> {\n");
@@ -102,7 +107,7 @@ public class JavaAstConstructor {
       "com.google.gwt.lang.ClassLiteralHolder") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package com.google.gwt.lang;\n");
       code.append("final class ClassLiteralHolder {\n");
       code.append("}\n");
@@ -112,7 +117,7 @@ public class JavaAstConstructor {
   public static final MockJavaResource ENUM = new MockJavaResource("java.lang.Enum") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("import java.io.Serializable;\n");
       code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
@@ -135,12 +140,13 @@ public class JavaAstConstructor {
       new MockJavaResource("com.google.gwt.core.client.GWT") {
         @Override
         public CharSequence getContent() {
-          StringBuffer code = new StringBuffer();
+          StringBuilder code = new StringBuilder();
           code.append("package com.google.gwt.core.client;\n");
           code.append("public final class GWT {\n");
-          code.append("  public boolean isClient() { return true; };\n");
-          code.append("  public boolean isProdMode() { return true; };\n");
-          code.append("  public boolean isScript() { return true; };\n");
+          code.append("  public static <T> T create(Class<?> classLiteral) { return null; }");
+          code.append("  public static boolean isClient() { return true; };\n");
+          code.append("  public static boolean isProdMode() { return true; };\n");
+          code.append("  public static boolean isScript() { return true; };\n");
           code.append("  public static void runAsync(RunAsyncCallback callback) { }\n");
           code.append("  public static void runAsync(Class<?> name, RunAsyncCallback callback) { }\n");
           code.append("}\n");
@@ -151,7 +157,7 @@ public class JavaAstConstructor {
       "com.google.gwt.core.client.RunAsyncCallback") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package com.google.gwt.core.client;\n");
       code.append("public interface RunAsyncCallback { }\n");
       return code;
@@ -160,10 +166,11 @@ public class JavaAstConstructor {
   public static final MockJavaResource STATS = new MockJavaResource("com.google.gwt.lang.Stats") {
     @Override
     public CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
+      StringBuilder code = new StringBuilder();
       code.append("package com.google.gwt.lang;\n");
       code.append("public class Stats {\n");
-      code.append("  public boolean isStatsAvailable() { return false; };\n");
+      code.append("  static boolean isStatsAvailable() { return false; };\n");
+      code.append("  static boolean onModuleStart(String mainClassName) { return false; }\n");
       code.append("}\n");
       return code;
     }
@@ -255,7 +262,8 @@ public class JavaAstConstructor {
     // Replace the basic Class and Enum with a compiler-specific one.
     result.remove(JavaResourceBase.CLASS);
     result.remove(JavaResourceBase.ENUM);
-    Collections.addAll(result, ARRAY, CAST, CLASS, CLASSLITERALHOLDER, ENUM, GWT, RUNASYNCCALLBACK);
+    Collections.addAll(result, ARRAY, CAST, CLASS, CLASSLITERALHOLDER, ENUM, GWT, RUNASYNCCALLBACK,
+        STATS);
     return result.toArray(new MockJavaResource[result.size()]);
   }
 }
