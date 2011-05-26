@@ -25,6 +25,12 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
 
   protected final String name;
 
+  /**
+   * Base type for AST type definitions.
+   * 
+   * @param info tracks the source file origin of this type through compilation.
+   * @param name binary name of the type.
+   */
   public JType(SourceInfo info, String name) {
     super(info);
     this.name = StringInterner.get().intern(name);
@@ -38,10 +44,25 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
 
   public abstract String getJsniSignatureName();
 
+  /**
+   * Binary name of the type.
+   * 
+   * For example "com.example.Foo$Bar"
+   */
+  @Override
   public String getName() {
     return name;
   }
 
+  /**
+   * True if this class is provided externally to the program by the program's
+   * host execution environment. For example, while compiling for the JVM, JRE
+   * types are external types. External types definitions are provided by class
+   * files which are considered opaque by the GWT compiler.
+   *
+   * TODO(scottb): The meaning of this method changes after refactoring to stitch 
+   * from partial ASTs.
+   */
   public boolean isExternal() {
     return false;
   }
