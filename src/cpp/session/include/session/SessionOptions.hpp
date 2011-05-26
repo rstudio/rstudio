@@ -146,6 +146,16 @@ public:
       return rShellEscape_;
    }
 
+   std::string rHomeDirOverride()
+   {
+      return std::string(rHomeDirOverride_.c_str());
+   }
+
+   std::string rDocDirOverride()
+   {
+      return std::string(rDocDirOverride_.c_str());
+   }
+
    bool autoReloadSource() const { return autoReloadSource_; }
 
    // limits
@@ -246,6 +256,8 @@ private:
    int rCompatibleGraphicsEngineVersion_;
    std::string rHelpCssFilePath_;
    bool rShellEscape_;
+   std::string rHomeDirOverride_;
+   std::string rDocDirOverride_;
    
    // limits
    int limitFileUploadSizeMb_;

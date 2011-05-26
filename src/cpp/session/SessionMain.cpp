@@ -1867,6 +1867,12 @@ int main (int argc, char * const argv[])
             ensureRLibsUser(options.userHomePath(), options.rLibsUser());
       }
 
+      // install home and doc dir overrides if requested (for debugger mode)
+      if (!options.rHomeDirOverride().empty())
+         core::system::setenv("R_HOME", options.rHomeDirOverride());
+      if (!options.rDocDirOverride().empty())
+         core::system::setenv("R_DOC_DIR", options.rDocDirOverride());
+
       // r options
       r::session::ROptions rOptions ;
       rOptions.userHomePath = options.userHomePath();

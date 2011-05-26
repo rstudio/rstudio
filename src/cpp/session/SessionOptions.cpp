@@ -144,7 +144,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "Custom R.css file")
       ("r-shell-escape",
          value<bool>(&rShellEscape_)->default_value(false),
-         "Support shell escape");
+         "Support shell escape")
+      ("r-home-dir-override",
+         value<std::string>(&rHomeDirOverride_)->default_value(""),
+         "Override for R_HOME (used for debug configurations)")
+      ("r-doc-dir-override",
+         value<std::string>(&rDocDirOverride_)->default_value(""),
+         "Override for R_DOC_DIR (used for debug configurations)");
 
    // limits options
    options_description limits("limits");
