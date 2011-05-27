@@ -82,4 +82,8 @@ public class EditSession extends JavaScriptObject
    public native final int getScreenLength() /*-{
       return this.getScreenLength();
    }-*/;
+
+   public native final UndoManager getUndoManager() /*-{
+      return this.getUndoManager();
+   }-*/;
 }

@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -56,6 +57,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 
 public class AceEditor implements DocDisplay, InputEditorDisplay
 {
@@ -614,6 +617,24 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public HandlerRegistration addCapturingKeyUpHandler(KeyUpHandler handler)
    {
       return widget_.addCapturingKeyUpHandler(handler);
+   }
+
+   public HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler)
+   {
+      return widget_.addUndoRedoHandler(handler);
+   }
+
+   public JavaScriptObject getCleanStateToken()
+   {
+      return getSession().getUndoManager().peek();
+   }
+
+   public boolean checkCleanStateToken(JavaScriptObject token)
+   {
+      JavaScriptObject other = getSession().getUndoManager().peek();
+      if (token == null ^ other == null)
+         return false;
+      return token == null || other.equals(token);
    }
 
    public void fireEvent(GwtEvent<?> event)

@@ -1,5 +1,5 @@
 /*
- * SavePlotAsImageFormat.java
+ * UndoManager.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,21 +10,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.plots.model;
+package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class SavePlotAsImageFormat extends JavaScriptObject
-{  
-   protected SavePlotAsImageFormat()
-   {
-   }
-   
-   public final native String getName() /*-{
-      return this.name;
-   }-*/;
-   
-   public final native String getExtension() /*-{
-      return this.extension;
+public class UndoManager extends JavaScriptObject
+{
+   protected UndoManager()
+   {}
+
+   public native final JavaScriptObject peek() /*-{
+      return this.peek();
    }-*/;
 }

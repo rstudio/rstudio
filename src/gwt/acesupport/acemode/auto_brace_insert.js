@@ -17,46 +17,8 @@
  */
 define("mode/auto_brace_insert", function(require, exports, module)
 {
-   var Editor = require("ace/editor").Editor;
-   var EditSession = require("ace/edit_session").EditSession;
    var Range = require("ace/range").Range;
-   var oop = require("pilot/oop");
    var TextMode = require("ace/mode/text").Mode;
-
-   // Monkeypatch EditSession.insert and Editor.removeLeft to allow R mode to
-   // do automatic brace insertion
-
-   if (!EditSession.prototype.insertWrapped) {
-      EditSession.prototype.insertWrapped = true;
-
-      (function() {
-         var __insert = this.insert;
-         this.insert = function(position, text) {
-            if (this.getMode().wrapInsert) {
-               return this.getMode().wrapInsert(this, __insert, position, text);
-            }
-            else {
-               return __insert.call(this, position, text);
-            }
-         };
-      }).call(EditSession.prototype);
-   }
-
-   if (!Editor.prototype.removeLeftWrapped) {
-      Editor.prototype.removeLeftWrapped = true;
-
-      (function() {
-         var __removeLeft = this.removeLeft;
-         this.removeLeft = function() {
-            if (this.session.getMode().wrapRemoveLeft) {
-               return this.session.getMode().wrapRemoveLeft(this, __removeLeft);
-            }
-            else {
-               return __removeLeft.call(this);
-            }
-         };
-      }).call(Editor.prototype);
-   }
 
    (function()
    {

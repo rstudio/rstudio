@@ -1,5 +1,5 @@
 /*
- * ModalDialogProgressIndicator.java
+ * ReadOnlyValue.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,9 +10,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client.widget;
+package org.rstudio.studio.client.common;
 
-public interface ModalDialogProgressIndicator extends ProgressIndicator
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+
+public interface ReadOnlyValue<T> extends HasValueChangeHandlers<T>
 {
-   void clearProgress();
+   T getValue();
 }
