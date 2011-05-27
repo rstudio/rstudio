@@ -17,6 +17,7 @@ package com.google.web.bindery.requestfactory.vm;
 
 import com.google.web.bindery.requestfactory.server.BoxesAndPrimitivesJreTest;
 import com.google.web.bindery.requestfactory.server.ComplexKeysJreTest;
+import com.google.web.bindery.requestfactory.server.FanoutReceiverJreTest;
 import com.google.web.bindery.requestfactory.server.FindServiceJreTest;
 import com.google.web.bindery.requestfactory.server.LocatorJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryExceptionPropagationJreTest;
@@ -32,18 +33,15 @@ import junit.framework.TestSuite;
 
 /**
  * Suite of RequestFactory tests that require the JRE (without GWT).
- * <p>
- * Note: these tests require gwt-user src on the classpath. To run in
- * Eclipse, use Google Plugin for Eclipse to run as a GWT JUnit test
- * or edit the Eclipse launch config and add the src folder to the classpath
- * (click Classpath tab, User entries, Advanced..., Add folders)
+ * 
+ * @see com.google.web.bindery.requestfactory.gwt.RequestFactoryGwtJreSuite
  */
 public class RequestFactoryJreSuite {
   public static Test suite() {
-    TestSuite suite = new TestSuite(
-        "requestfactory package tests that require the JRE");
+    TestSuite suite = new TestSuite("requestfactory package tests that require the JRE");
     suite.addTestSuite(BoxesAndPrimitivesJreTest.class);
     suite.addTestSuite(ComplexKeysJreTest.class);
+    suite.addTestSuite(FanoutReceiverJreTest.class);
     suite.addTestSuite(FindServiceJreTest.class);
     suite.addTestSuite(LocatorJreTest.class);
     suite.addTestSuite(RequestFactoryExceptionPropagationJreTest.class);

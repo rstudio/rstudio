@@ -16,16 +16,6 @@
 package com.google.web.bindery.requestfactory.gwt;
 
 import com.google.web.bindery.requestfactory.gwt.rebind.model.RequestFactoryModelTest;
-import com.google.web.bindery.requestfactory.server.BoxesAndPrimitivesJreTest;
-import com.google.web.bindery.requestfactory.server.ComplexKeysJreTest;
-import com.google.web.bindery.requestfactory.server.FindServiceJreTest;
-import com.google.web.bindery.requestfactory.server.LocatorJreTest;
-import com.google.web.bindery.requestfactory.server.RequestFactoryExceptionPropagationJreTest;
-import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidatorTest;
-import com.google.web.bindery.requestfactory.server.RequestFactoryJreTest;
-import com.google.web.bindery.requestfactory.server.RequestFactoryUnicodeEscapingJreTest;
-import com.google.web.bindery.requestfactory.server.ServiceInheritanceJreTest;
-import com.google.web.bindery.requestfactory.shared.impl.SimpleEntityProxyIdTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -41,18 +31,8 @@ import junit.framework.TestSuite;
 public class RequestFactoryGwtJreSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite(
-        "requestfactory package tests that require the JRE");
-    suite.addTestSuite(BoxesAndPrimitivesJreTest.class);
-    suite.addTestSuite(ComplexKeysJreTest.class);
-    suite.addTestSuite(FindServiceJreTest.class);
-    suite.addTestSuite(LocatorJreTest.class);
-    suite.addTestSuite(RequestFactoryExceptionPropagationJreTest.class);
-    suite.addTestSuite(RequestFactoryInterfaceValidatorTest.class);
-    suite.addTestSuite(RequestFactoryJreTest.class);
+        "requestfactory package tests that require the JRE and gwt-user");
     suite.addTestSuite(RequestFactoryModelTest.class);
-    suite.addTestSuite(RequestFactoryUnicodeEscapingJreTest.class);
-    suite.addTestSuite(ServiceInheritanceJreTest.class);
-    suite.addTestSuite(SimpleEntityProxyIdTest.class);
 
     return suite;
   }

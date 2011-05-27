@@ -33,6 +33,7 @@ import com.google.web.bindery.event.shared.UmbrellaException;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
+import com.google.web.bindery.requestfactory.shared.FanoutReceiver;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestTransport.TransportReceiver;
@@ -97,6 +98,12 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   protected static class State {
     public final AbstractRequestContext canonical;
     public final DialectImpl dialect;
+    public FanoutReceiver<Void> fanout;
+    /**
+     * When {@code true} the {@link AbstractRequestContext#fire()} method will
+     * be a no-op.
+     */
+    public boolean fireDisabled;
     public final List<AbstractRequest<?>> invocations = new ArrayList<AbstractRequest<?>>();
 
     public boolean locked;
@@ -618,6 +625,10 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     return state.requestFactory.isValueType(clazz);
   };
 
+  public void setFireDisabled(boolean disabled) {
+    state.fireDisabled = disabled;
+  }
+
   /**
    * Called by generated subclasses to enqueue a method invocation.
    */
@@ -1005,7 +1016,24 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     return clone;
   }
 
-  private void doFire(final Receiver<Void> receiver) {
+  private void doFire(Receiver<Void> receiver) {
+    final Receiver<Void> finalReceiver;
+    if (state.fireDisabled) {
+      if (receiver != null) {
+        if (state.fanout == null) {
+          state.fanout = new FanoutReceiver<Void>();
+        }
+        state.fanout.add(receiver);
+      }
+      return;
+    } else if (state.fanout != null) {
+      if (receiver != null) {
+        state.fanout.add(receiver);
+      }
+      finalReceiver = state.fanout;
+    } else {
+      finalReceiver = receiver;
+    }
     checkLocked();
     state.locked = true;
 
@@ -1014,11 +1042,11 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     String payload = state.dialect.makePayload();
     state.requestFactory.getRequestTransport().send(payload, new TransportReceiver() {
       public void onTransportFailure(ServerFailure failure) {
-        fail(receiver, failure);
+        fail(finalReceiver, failure);
       }
 
       public void onTransportSuccess(String payload) {
-        state.dialect.processPayload(receiver, payload);
+        state.dialect.processPayload(finalReceiver, payload);
       }
     });
   }

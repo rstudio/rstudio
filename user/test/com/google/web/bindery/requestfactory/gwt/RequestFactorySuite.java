@@ -16,6 +16,7 @@
 package com.google.web.bindery.requestfactory.gwt;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.web.bindery.requestfactory.gwt.client.RequestBatcherTest;
 import com.google.web.bindery.requestfactory.gwt.client.FindServiceTest;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryExceptionHandlerTest;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryExceptionPropagationTest;
@@ -25,6 +26,7 @@ import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryUnicodeEsc
 import com.google.web.bindery.requestfactory.gwt.client.ui.EditorTest;
 import com.google.web.bindery.requestfactory.shared.BoxesAndPrimitivesTest;
 import com.google.web.bindery.requestfactory.shared.ComplexKeysTest;
+import com.google.web.bindery.requestfactory.shared.FanoutReceiverTest;
 import com.google.web.bindery.requestfactory.shared.LocatorTest;
 import com.google.web.bindery.requestfactory.shared.ServiceInheritanceTest;
 
@@ -37,9 +39,11 @@ public class RequestFactorySuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite(
         "Test suite for requestfactory gwt code.");
+    suite.addTestSuite(RequestBatcherTest.class);
     suite.addTestSuite(BoxesAndPrimitivesTest.class);
     suite.addTestSuite(ComplexKeysTest.class);
     suite.addTestSuite(EditorTest.class);
+    suite.addTestSuite(FanoutReceiverTest.class);
     suite.addTestSuite(FindServiceTest.class);
     suite.addTestSuite(LocatorTest.class);
     suite.addTestSuite(RequestFactoryTest.class);
