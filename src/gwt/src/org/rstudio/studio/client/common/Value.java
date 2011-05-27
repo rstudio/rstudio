@@ -19,7 +19,7 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HasValue;
 
-public class Value<T> implements HasValue<T>
+public class Value<T> implements HasValue<T>, ReadOnlyValue<T>
 {
    public Value(T initialValue)
    {

@@ -20,6 +20,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.widget.Widgetable;
+import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -50,7 +51,7 @@ public interface EditingTarget extends Widgetable,
    boolean onBeforeDismiss();
    void onDismiss();
 
-   HasValue<Boolean> dirtyState();
+   ReadOnlyValue<Boolean> dirtyState();
 
    void initialize(SourceDocument document,
                    FileSystemContext fileContext,

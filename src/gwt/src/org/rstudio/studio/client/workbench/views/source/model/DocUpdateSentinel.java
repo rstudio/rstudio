@@ -18,7 +18,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
-import com.google.gwt.user.client.ui.HasValue;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -50,7 +49,7 @@ public class DocUpdateSentinel
       {
          sourceDoc_ = response;
          docDisplay_.setCode(sourceDoc_.getContents(), true);
-         dirtyState_.setValue(false, true);
+         dirtyState_.markClean();
 
          if (progress_ != null)
             progress_.onCompleted();
@@ -70,7 +69,7 @@ public class DocUpdateSentinel
                             DocDisplay docDisplay,
                             SourceDocument sourceDoc,
                             ProgressIndicator progress,
-                            HasValue<Boolean> dirtyState,
+                            DirtyState dirtyState,
                             EventBus events)
    {
       server_ = server;
@@ -485,7 +484,7 @@ public class DocUpdateSentinel
    private final DocDisplay docDisplay_;
    private SourceDocument sourceDoc_;
    private final ProgressIndicator progress_;
-   private final HasValue<Boolean> dirtyState_;
+   private final DirtyState dirtyState_;
    private final TimeBufferedCommand bufferedCommand_;
    private final HandlerRegistration closeHandlerReg_;
    private HandlerRegistration lastChanceSaveHandlerReg_;

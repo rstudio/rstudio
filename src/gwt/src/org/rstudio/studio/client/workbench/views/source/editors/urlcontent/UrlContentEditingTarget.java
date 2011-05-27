@@ -29,6 +29,7 @@ import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.widget.Widgetable;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
@@ -157,7 +158,7 @@ public class UrlContentEditingTarget implements EditingTarget
       return getContentItem().getContentUrl();
    }
 
-   public HasValue<Boolean> dirtyState()
+   public ReadOnlyValue<Boolean> dirtyState()
    {
       return dirtyState_;
    }
@@ -219,7 +220,7 @@ public class UrlContentEditingTarget implements EditingTarget
    }
 
    protected SourceDocument doc_;
-   private HasValue<Boolean> dirtyState_ = new Value<Boolean>(false);
+   private Value<Boolean> dirtyState_ = new Value<Boolean>(false);
 
    protected final SourceServerOperations server_;
    protected final Commands commands_;

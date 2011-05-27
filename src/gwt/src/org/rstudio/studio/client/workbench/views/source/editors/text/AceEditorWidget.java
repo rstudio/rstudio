@@ -33,10 +33,7 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
@@ -77,6 +74,26 @@ public class AceEditorWidget extends Composite
             AceEditorWidget.this.fireEvent(new CursorChangedEvent(arg));
          }
       });
+      AceEditorNative.addEventListener(
+                  editor_,
+                  "undo",
+                  new Command()
+                  {
+                     public void execute()
+                     {
+                        fireEvent(new UndoRedoEvent(false));
+                     }
+                  });
+      AceEditorNative.addEventListener(
+                  editor_,
+                  "redo",
+                  new Command()
+                  {
+                     public void execute()
+                     {
+                        fireEvent(new UndoRedoEvent(true));
+                     }
+                  });
    }
 
    public HandlerRegistration addCursorChangedHandler(
@@ -196,6 +213,11 @@ public class AceEditorWidget extends Composite
       element.addEventListener(event, listener, true);
 
    }-*/;
+
+   public HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler)
+   {
+      return addHandler(handler, UndoRedoEvent.TYPE);
+   }
 
    public void forceResize()
    {

@@ -12,10 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.*;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
@@ -53,11 +50,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.ConsoleDispatcher;
-import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -79,10 +72,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
-import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
-import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
-import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -156,6 +146,10 @@ public class TextEditingTarget implements EditingTarget
 
       FunctionStart getCurrentFunction();
       JsArray<FunctionStart> getFunctionTree();
+
+      HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler);
+      JavaScriptObject getCleanStateToken();
+      boolean checkCleanStateToken(JavaScriptObject token);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -186,7 +180,7 @@ public class TextEditingTarget implements EditingTarget
             name_.setValue(file_.getName(), true);
             // Make sure tooltip gets updated, even if name hasn't changed
             name_.fireChangeEvent();
-            dirtyState_.setValue(false, true);
+            dirtyState_.markClean();
          }
 
          if (newFileType_ != null)
@@ -247,6 +241,7 @@ public class TextEditingTarget implements EditingTarget
       pPublishPdf_ = pPublishPdf;
 
       docDisplay_ = docDisplay;
+      dirtyState_ = new DirtyState(docDisplay_, false);
       prefs_ = prefs;
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
       {
@@ -385,12 +380,15 @@ public class TextEditingTarget implements EditingTarget
          }
       });
 
-      dirtyState_.setValue(document.isDirty(), false);
+      if (document.isDirty())
+         dirtyState_.markDirty(false);
+      else
+         dirtyState_.markClean();
       docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
          public void onValueChange(ValueChangeEvent<Void> event)
          {
-            dirtyState_.setValue(true, true);
+            dirtyState_.markDirty(true);
          }
       });
 
@@ -970,7 +968,7 @@ public class TextEditingTarget implements EditingTarget
          releaseOnDismiss_.remove(0).removeHandler();
    }
 
-   public HasValue<Boolean> dirtyState()
+   public ReadOnlyValue<Boolean> dirtyState()
    {
       return dirtyState_;
    }
@@ -1490,7 +1488,8 @@ public class TextEditingTarget implements EditingTarget
                               {
                                  externalEditCheckInterval_.reset();
                                  ignoreDeletes_ = true;
-                                 dirtyState_.setValue(true, true);
+                                 // Make sure it stays dirty
+                                 dirtyState_.markDirty(false);
                               }
                            },
                            false);
@@ -1528,9 +1527,8 @@ public class TextEditingTarget implements EditingTarget
                                  {
                                     externalEditCheckInterval_.reset();
                                     docUpdateSentinel_.ignoreExternalEdit();
-                                    // Should already be dirty, but whatever,
-                                    // we'll just make extra sure.
-                                    dirtyState_.setValue(true, true);
+                                    // Make sure it stays dirty
+                                    dirtyState_.markDirty(false);
                                  }
                               },
                               true);
@@ -1569,7 +1567,8 @@ public class TextEditingTarget implements EditingTarget
    private HandlerRegistration publishPdfReg_;
    private ArrayList<HandlerRegistration> releaseOnDismiss_ =
          new ArrayList<HandlerRegistration>();
-   private final Value<Boolean> dirtyState_ = new Value<Boolean>(false);
+   private final DirtyState dirtyState_;
+   private JavaScriptObject cleanStateToken_ = null;
    private HandlerManager handlers_ = new HandlerManager(this);
    private FileSystemContext fileContext_;
    private final Provider<PublishPdf> pPublishPdf_;
