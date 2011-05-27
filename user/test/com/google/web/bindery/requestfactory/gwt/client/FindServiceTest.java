@@ -26,8 +26,13 @@ import com.google.web.bindery.requestfactory.shared.SimpleFooProxy;
 import com.google.web.bindery.requestfactory.shared.SimpleFooRequest;
 import com.google.web.bindery.requestfactory.shared.SimpleRequestFactory;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
- * Tests for {@link com.google.web.bindery.requestfactory.shared.RequestFactory}.
+ * Tests for {@link com.google.web.bindery.requestfactory.shared.RequestFactory}
+ * .
  */
 public class FindServiceTest extends RequestFactoryTestBase {
   /*
@@ -41,59 +46,98 @@ public class FindServiceTest extends RequestFactoryTestBase {
     return "com.google.web.bindery.requestfactory.gwt.RequestFactorySuite";
   }
 
+  /**
+   * Tests {@code RequestContext.find()}, which uses the same plumbing as
+   * {@code RequestFactory.find()}, but can be chained.
+   */
+  public void testChainedFind() {
+    delayTestFinish(TEST_DELAY);
+    List<String> ids = Arrays.asList("1L", "999L");
+    final List<SimpleBarProxy> proxies = new ArrayList<SimpleBarProxy>();
+    SimpleBarRequest ctx = req.simpleBarRequest();
+    for (String id : ids) {
+      ctx.findSimpleBarById(id).to(new Receiver<SimpleBarProxy>() {
+        @Override
+        public void onSuccess(SimpleBarProxy response) {
+          proxies.add(response);
+        }
+      });
+    }
+    ctx.fire(new Receiver<Void>() {
+      @Override
+      public void onSuccess(Void response) {
+        final List<SimpleBarProxy> reloaded = new ArrayList<SimpleBarProxy>();
+        SimpleBarRequest ctx = req.simpleBarRequest();
+        for (SimpleBarProxy proxy : proxies) {
+          ctx.find(proxy.stableId()).to(new Receiver<SimpleBarProxy>() {
+            @Override
+            public void onSuccess(SimpleBarProxy response) {
+              reloaded.add(response);
+            }
+          });
+        }
+        ctx.fire(new Receiver<Void>() {
+          @Override
+          public void onSuccess(Void response) {
+            assertEquals(proxies, reloaded);
+            finishTest();
+          }
+        });
+      }
+    });
+  }
+
   public void testFetchDeletedEntity() {
     delayTestFinish(TEST_DELAY);
     SimpleBarRequest context = req.simpleBarRequest();
     SimpleBarProxy willDelete = context.create(SimpleBarProxy.class);
-    context.persistAndReturnSelf().using(willDelete).fire(
-        new Receiver<SimpleBarProxy>() {
+    context.persistAndReturnSelf().using(willDelete).fire(new Receiver<SimpleBarProxy>() {
+      @Override
+      public void onSuccess(SimpleBarProxy response) {
+        final EntityProxyId<SimpleBarProxy> id = response.stableId();
+
+        // Make the entity behave as though it's been deleted
+        SimpleBarRequest context = req.simpleBarRequest();
+        Request<Void> persist = context.persist().using(response);
+        context.edit(response).setFindFails(true);
+        persist.fire(new Receiver<Void>() {
+
           @Override
-          public void onSuccess(SimpleBarProxy response) {
-            final EntityProxyId<SimpleBarProxy> id = response.stableId();
-
-            // Make the entity behave as though it's been deleted
-            SimpleBarRequest context = req.simpleBarRequest();
-            Request<Void> persist = context.persist().using(response);
-            context.edit(response).setFindFails(true);
-            persist.fire(new Receiver<Void>() {
-
+          public void onSuccess(Void response) {
+            // Now try fetching the deleted instance
+            req.find(id).fire(new Receiver<SimpleBarProxy>() {
               @Override
-              public void onSuccess(Void response) {
-                // Now try fetching the deleted instance
-                req.find(id).fire(new Receiver<SimpleBarProxy>() {
-                  @Override
-                  public void onSuccess(SimpleBarProxy response) {
-                    assertNull(response);
-                    finishTestAndReset();
-                  }
-                });
-              }
-            });
-          }
-        });
-  }
-
-  public void testFetchEntityWithLongId() {
-    final boolean relationsAbsent = false;
-    delayTestFinish(TEST_DELAY);
-    req.simpleFooRequest().findSimpleFooById(999L).fire(
-        new Receiver<SimpleFooProxy>() {
-          @Override
-          public void onSuccess(SimpleFooProxy response) {
-            checkReturnedProxy(response, relationsAbsent);
-
-            final EntityProxyId<SimpleFooProxy> stableId = response.stableId();
-            req.find(stableId).fire(new Receiver<SimpleFooProxy>() {
-
-              @Override
-              public void onSuccess(SimpleFooProxy returnedProxy) {
-                assertEquals(stableId, returnedProxy.stableId());
-                checkReturnedProxy(returnedProxy, relationsAbsent);
+              public void onSuccess(SimpleBarProxy response) {
+                assertNull(response);
                 finishTestAndReset();
               }
             });
           }
         });
+      }
+    });
+  }
+
+  public void testFetchEntityWithLongId() {
+    final boolean relationsAbsent = false;
+    delayTestFinish(TEST_DELAY);
+    req.simpleFooRequest().findSimpleFooById(999L).fire(new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onSuccess(SimpleFooProxy response) {
+        checkReturnedProxy(response, relationsAbsent);
+
+        final EntityProxyId<SimpleFooProxy> stableId = response.stableId();
+        req.find(stableId).fire(new Receiver<SimpleFooProxy>() {
+
+          @Override
+          public void onSuccess(SimpleFooProxy returnedProxy) {
+            assertEquals(stableId, returnedProxy.stableId());
+            checkReturnedProxy(returnedProxy, relationsAbsent);
+            finishTestAndReset();
+          }
+        });
+      }
+    });
   }
 
   public void testFetchEntityWithRelation() {
@@ -106,68 +150,65 @@ public class FindServiceTest extends RequestFactoryTestBase {
             checkReturnedProxy(response, relationsPresent);
 
             final EntityProxyId<SimpleFooProxy> stableId = response.stableId();
-            req.find(stableId).with("barField").fire(
-                new Receiver<SimpleFooProxy>() {
+            req.find(stableId).with("barField").fire(new Receiver<SimpleFooProxy>() {
 
-                  @Override
-                  public void onSuccess(SimpleFooProxy returnedProxy) {
-                    assertEquals(stableId, returnedProxy.stableId());
-                    checkReturnedProxy(returnedProxy, relationsPresent);
-                    finishTestAndReset();
-                  }
-                });
+              @Override
+              public void onSuccess(SimpleFooProxy returnedProxy) {
+                assertEquals(stableId, returnedProxy.stableId());
+                checkReturnedProxy(returnedProxy, relationsPresent);
+                finishTestAndReset();
+              }
+            });
           }
         });
   }
 
   public void testFetchEntityWithStringId() {
     delayTestFinish(TEST_DELAY);
-    req.simpleBarRequest().findSimpleBarById("999L").fire(
-        new Receiver<SimpleBarProxy>() {
-          @Override
-          public void onSuccess(SimpleBarProxy response) {
-            final EntityProxyId<SimpleBarProxy> stableId = response.stableId();
-            req.find(stableId).fire(new Receiver<SimpleBarProxy>() {
+    req.simpleBarRequest().findSimpleBarById("999L").fire(new Receiver<SimpleBarProxy>() {
+      @Override
+      public void onSuccess(SimpleBarProxy response) {
+        final EntityProxyId<SimpleBarProxy> stableId = response.stableId();
+        req.find(stableId).fire(new Receiver<SimpleBarProxy>() {
 
-              @Override
-              public void onSuccess(SimpleBarProxy returnedProxy) {
-                assertEquals(stableId, returnedProxy.stableId());
-                finishTestAndReset();
-              }
-            });
+          @Override
+          public void onSuccess(SimpleBarProxy returnedProxy) {
+            assertEquals(stableId, returnedProxy.stableId());
+            finishTestAndReset();
           }
         });
+      }
+    });
   }
 
   public void testFetchsAfterCreateDontUpdate() {
     final int[] count = {0};
-    final HandlerRegistration registration = EntityProxyChange.registerForProxyType(
-        req.getEventBus(), SimpleFooProxy.class,
-        new EntityProxyChange.Handler<SimpleFooProxy>() {
-          public void onProxyChange(EntityProxyChange<SimpleFooProxy> event) {
-            count[0]++;
-          }
-        });
+    final HandlerRegistration registration =
+        EntityProxyChange.registerForProxyType(req.getEventBus(), SimpleFooProxy.class,
+            new EntityProxyChange.Handler<SimpleFooProxy>() {
+              public void onProxyChange(EntityProxyChange<SimpleFooProxy> event) {
+                count[0]++;
+              }
+            });
     delayTestFinish(TEST_DELAY);
     SimpleFooRequest context = req.simpleFooRequest();
     SimpleFooProxy proxy = context.create(SimpleFooProxy.class);
-    context.persistAndReturnSelf().using(proxy).fire(
-        new Receiver<SimpleFooProxy>() {
+    context.persistAndReturnSelf().using(proxy).fire(new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onSuccess(SimpleFooProxy response) {
+        // Persist and Update events
+        assertEquals(2, count[0]);
+        req.find(response.stableId()).fire(new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
-            // Persist and Update events
+            // No new events
             assertEquals(2, count[0]);
-            req.find(response.stableId()).fire(new Receiver<SimpleFooProxy>() {
-              @Override
-              public void onSuccess(SimpleFooProxy response) {
-                // No new events
-                assertEquals(2, count[0]);
-                registration.removeHandler();
-                finishTestAndReset();
-              }
-            });
+            registration.removeHandler();
+            finishTestAndReset();
           }
         });
+      }
+    });
   }
 
   /**
@@ -181,8 +222,8 @@ public class FindServiceTest extends RequestFactoryTestBase {
     // Here's the factory from the "previous invocation" of the client
     {
       SimpleRequestFactory oldFactory = createFactory();
-      EntityProxyId<SimpleBarProxy> id = oldFactory.simpleBarRequest().create(
-          SimpleBarProxy.class).stableId();
+      EntityProxyId<SimpleBarProxy> id =
+          oldFactory.simpleBarRequest().create(SimpleBarProxy.class).stableId();
       historyToken = oldFactory.getHistoryToken(id);
     }
 
@@ -201,41 +242,39 @@ public class FindServiceTest extends RequestFactoryTestBase {
    */
   public void testMultipleFetchesDontUpdate() {
     final int[] count = {0};
-    final HandlerRegistration registration = EntityProxyChange.registerForProxyType(
-        req.getEventBus(), SimpleFooProxy.class,
-        new EntityProxyChange.Handler<SimpleFooProxy>() {
-          public void onProxyChange(EntityProxyChange<SimpleFooProxy> event) {
-            count[0]++;
-          }
-        });
-    delayTestFinish(TEST_DELAY);
-    req.simpleFooRequest().findSimpleFooById(999L).fire(
-        new Receiver<SimpleFooProxy>() {
-          @Override
-          public void onSuccess(SimpleFooProxy response) {
-            assertEquals(1, count[0]);
-
-            final EntityProxyId<SimpleFooProxy> stableId = response.stableId();
-            req.find(stableId).fire(new Receiver<SimpleFooProxy>() {
-
-              @Override
-              public void onSuccess(SimpleFooProxy returnedProxy) {
-                assertEquals(1, count[0]);
-                registration.removeHandler();
-                finishTestAndReset();
+    final HandlerRegistration registration =
+        EntityProxyChange.registerForProxyType(req.getEventBus(), SimpleFooProxy.class,
+            new EntityProxyChange.Handler<SimpleFooProxy>() {
+              public void onProxyChange(EntityProxyChange<SimpleFooProxy> event) {
+                count[0]++;
               }
             });
+    delayTestFinish(TEST_DELAY);
+    req.simpleFooRequest().findSimpleFooById(999L).fire(new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onSuccess(SimpleFooProxy response) {
+        assertEquals(1, count[0]);
+
+        final EntityProxyId<SimpleFooProxy> stableId = response.stableId();
+        req.find(stableId).fire(new Receiver<SimpleFooProxy>() {
+
+          @Override
+          public void onSuccess(SimpleFooProxy returnedProxy) {
+            assertEquals(1, count[0]);
+            registration.removeHandler();
+            finishTestAndReset();
           }
         });
+      }
+    });
   }
 
-  private void checkReturnedProxy(SimpleFooProxy response,
-      boolean checkForRelations) {
+  private void checkReturnedProxy(SimpleFooProxy response, boolean checkForRelations) {
     assertEquals(42, (int) response.getIntId());
     assertEquals("GWT", response.getUserName());
     assertEquals(8L, (long) response.getLongField());
-    assertEquals(com.google.web.bindery.requestfactory.shared.SimpleEnum.FOO,
-        response.getEnumField());
+    assertEquals(com.google.web.bindery.requestfactory.shared.SimpleEnum.FOO, response
+        .getEnumField());
     if (checkForRelations) {
       assertNotNull(response.getBarField());
     } else {

@@ -33,8 +33,10 @@ import com.google.web.bindery.event.shared.UmbrellaException;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
+import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.FanoutReceiver;
 import com.google.web.bindery.requestfactory.shared.Receiver;
+import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestTransport.TransportReceiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
@@ -517,6 +519,23 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     bean = cloneBeanAndCollections(bean);
     bean.setTag(Constants.PARENT_OBJECT, parent);
     return bean.as();
+  }
+
+  @Override
+  public <P extends EntityProxy> Request<P> find(final EntityProxyId<P> proxyId) {
+    return new AbstractRequest<P>(this) {
+      {
+        requestContext.addInvocation(this);
+      }
+
+      @Override
+      protected RequestData makeRequestData() {
+        // This method is normally generated, hence the ugly constructor
+        return new RequestData(
+            "com.google.web.bindery.requestfactory.shared.impl.FindRequest::find",
+            new Object[] {proxyId}, propertyRefs, proxyId.getProxyClass(), null);
+      }
+    };
   }
 
   /**

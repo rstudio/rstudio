@@ -49,10 +49,14 @@ public interface RequestFactory {
   String JSON_CONTENT_TYPE_UTF8 = "application/json; charset=utf-8";
 
   /**
-   * Return a request to find a fresh instance of the referenced proxy.
+   * Return a request to find a fresh instance of the referenced proxy. If it is
+   * necessary to load several proxy instances, use
+   * {@link RequestContext#find(EntityProxyId)}, which supports chained
+   * requests.
    * 
    * @param proxyId an {@link EntityProxyId} instance of type P
    * @return a {@link Request} object
+   * @see RequestContext#find(EntityProxyId)
    */
   <P extends EntityProxy> Request<P> find(EntityProxyId<P> proxyId);
 

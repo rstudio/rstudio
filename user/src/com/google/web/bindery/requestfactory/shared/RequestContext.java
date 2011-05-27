@@ -16,7 +16,11 @@
 package com.google.web.bindery.requestfactory.shared;
 
 /**
- * The base interface for RequestFactory service endpoints.
+ * The base interface for RequestFactory service endpoints. Implementations of
+ * this interface are provided by the RequestFactory plumbing and this interface
+ * may be extended in the future.
+ * 
+ * @see com.google.web.bindery.requestfactory.shared.testing.FakeRequestContext
  */
 public interface RequestContext {
   /**
@@ -58,6 +62,14 @@ public interface RequestContext {
    * @return an {@link EntityProxy} or {@link ValueProxy} instance of type T
    */
   <T extends BaseProxy> T edit(T object);
+
+  /**
+   * Return a request to find a fresh instance of the referenced proxy.
+   * 
+   * @param proxyId an {@link EntityProxyId} instance of type P
+   * @return a {@link Request} object
+   */
+  <P extends EntityProxy> Request<P> find(EntityProxyId<P> proxyId);
 
   /**
    * Send the accumulated changes and method invocations associated with the

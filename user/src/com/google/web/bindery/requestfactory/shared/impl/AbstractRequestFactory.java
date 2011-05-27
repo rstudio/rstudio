@@ -32,15 +32,13 @@ import java.util.Map.Entry;
 /**
  * Base type for generated RF interfaces.
  */
-public abstract class AbstractRequestFactory extends IdFactory implements
-    RequestFactory {
+public abstract class AbstractRequestFactory extends IdFactory implements RequestFactory {
   private static final int MAX_VERSION_ENTRIES = 10000;
 
   private EventBus eventBus;
 
   @SuppressWarnings("serial")
-  private final Map<String, String> version = new LinkedHashMap<String, String>(
-      16, 0.75f, true) {
+  private final Map<String, String> version = new LinkedHashMap<String, String>(16, 0.75f, true) {
     @Override
     protected boolean removeEldestEntry(Entry<String, String> eldest) {
       return size() > MAX_VERSION_ENTRIES;
@@ -48,30 +46,20 @@ public abstract class AbstractRequestFactory extends IdFactory implements
   };
   private RequestTransport transport;
 
-  public <P extends EntityProxy> Request<P> find(final EntityProxyId<P> proxyId) {
+  public <P extends EntityProxy> Request<P> find(EntityProxyId<P> proxyId) {
     if (((SimpleEntityProxyId<P>) proxyId).isEphemeral()) {
       throw new IllegalArgumentException("Cannot fetch unpersisted entity");
     }
 
-    AbstractRequestContext context = new AbstractRequestContext(
-        AbstractRequestFactory.this, AbstractRequestContext.Dialect.STANDARD) {
-      @Override
-      protected AutoBeanFactory getAutoBeanFactory() {
-        return AbstractRequestFactory.this.getAutoBeanFactory();
-      }
-    };
-    return new AbstractRequest<P>(context) {
-      {
-        requestContext.addInvocation(this);
-      }
-
-      @Override
-      protected RequestData makeRequestData() {
-        return new RequestData(
-            "com.google.web.bindery.requestfactory.shared.impl.FindRequest::find",
-            new Object[] {proxyId}, propertyRefs, proxyId.getProxyClass(), null);
-      }
-    };
+    AbstractRequestContext context =
+        new AbstractRequestContext(AbstractRequestFactory.this,
+            AbstractRequestContext.Dialect.STANDARD) {
+          @Override
+          protected AutoBeanFactory getAutoBeanFactory() {
+            return AbstractRequestFactory.this.getAutoBeanFactory();
+          }
+        };
+    return context.find(proxyId);
   }
 
   public EventBus getEventBus() {
@@ -131,15 +119,13 @@ public abstract class AbstractRequestFactory extends IdFactory implements
    * Used by {@link AbstractRequestContext} to quiesce update events for objects
    * that haven't truly changed.
    */
-  protected boolean hasVersionChanged(SimpleProxyId<?> id,
-      String observedVersion) {
+  protected boolean hasVersionChanged(SimpleProxyId<?> id, String observedVersion) {
     assert id != null : "id";
     assert observedVersion != null : "observedVersion";
     String key = getHistoryToken(id);
     String existingVersion = version.get(key);
     // Return true if we haven't seen this before or the versions differ
-    boolean toReturn = existingVersion == null
-        || !existingVersion.equals(observedVersion);
+    boolean toReturn = existingVersion == null || !existingVersion.equals(observedVersion);
     if (toReturn) {
       version.put(key, observedVersion);
     }
