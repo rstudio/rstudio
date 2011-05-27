@@ -22,6 +22,7 @@ public class RPrefs extends JavaScriptObject
       var prefs = new Object();
       this.general_prefs = new Object();
       this.history_prefs = new Object();
+      this.packages_prefs = new Object();
       return prefs;
    }-*/;
    
@@ -39,5 +40,13 @@ public class RPrefs extends JavaScriptObject
    
    public native final void setHistoryPrefs(HistoryPrefs historyPrefs) /*-{
       this.history_prefs = historyPrefs;
+   }-*/;
+   
+   public native final PackagesPrefs getPackagesPrefs() /*-{
+      return this.packages_prefs;
+   }-*/;
+
+   public native final void setPackagesPrefs(PackagesPrefs packagesPrefs) /*-{
+      this.packages_prefs = packagesPrefs;
    }-*/;
 }

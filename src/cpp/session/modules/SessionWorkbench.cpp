@@ -113,10 +113,11 @@ void setCRANReposOption(const std::string& url)
 Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 {
    // read params
-   json::Object uiPrefs, generalPrefs, historyPrefs;
+   json::Object uiPrefs, generalPrefs, historyPrefs, packagesPrefs;
    Error error = json::readObjectParam(request.params, 0,
                                        "general_prefs", &generalPrefs,
-                                       "history_prefs", &historyPrefs);
+                                       "history_prefs", &historyPrefs,
+                                       "packages_prefs", &packagesPrefs);
    if (error)
       return error;
    error = json::readParam(request.params, 1, &uiPrefs);
@@ -128,26 +129,18 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    int saveAction;
    bool loadRData;
    std::string initialWorkingDir;
-   json::Object cranMirrorJson;
    error = json::readObject(generalPrefs,
                             "save_action", &saveAction,
                             "load_rdata", &loadRData,
-                            "initial_working_dir", &initialWorkingDir,
-                            "cran_mirror", &cranMirrorJson);
+                            "initial_working_dir", &initialWorkingDir);
    if (error)
       return error;
-   CRANMirror cranMirror = toCRANMirror(cranMirrorJson);
+
    userSettings().beginUpdate();
    userSettings().setSaveAction(saveAction);
    userSettings().setLoadRData(loadRData);
    userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
-   userSettings().setCRANMirror(cranMirror);
    userSettings().endUpdate();
-
-   // NOTE: must be outside of userSettings update block because it has its
-   // own block and nested blocks are not supported
-   setCRANReposOption(cranMirror.url);
-
 
    // read and set history prefs
    bool alwaysSave, useGlobal, removeDuplicates;
@@ -162,6 +155,20 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setUseGlobalHistory(useGlobal);
    userSettings().setRemoveHistoryDuplicates(removeDuplicates);
    userSettings().endUpdate();
+
+   // read and set packages prefs
+   json::Object cranMirrorJson;
+   error = json::readObject(packagesPrefs,
+                            "cran_mirror", &cranMirrorJson);
+   if (error)
+       return error;
+   CRANMirror cranMirror = toCRANMirror(cranMirrorJson);
+   userSettings().setCRANMirror(cranMirror);
+
+   // NOTE: must be outside of userSettings update block because it has its
+   // own block and nested blocks are not supported
+   setCRANReposOption(cranMirror.url);
+
 
    // set ui prefs
    userSettings().setUiPrefs(uiPrefs);
@@ -203,7 +210,6 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    generalPrefs["load_rdata"] = userSettings().loadRData();
    generalPrefs["initial_working_dir"] = module_context::createAliasedPath(
          userSettings().initialWorkingDirectory());
-   generalPrefs["cran_mirror"] = toCRANMirrorJson(userSettings().cranMirror());
 
    // get history prefs
    json::Object historyPrefs;
@@ -211,10 +217,15 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    historyPrefs["use_global"] = userSettings().useGlobalHistory();
    historyPrefs["remove_duplicates"] = userSettings().removeHistoryDuplicates();
 
+   // get packages prefs
+   json::Object packagesPrefs;
+   packagesPrefs["cran_mirror"] = toCRANMirrorJson(userSettings().cranMirror());
+
    // initialize and set result object
    json::Object result;
    result["general_prefs"] = generalPrefs;
    result["history_prefs"] = historyPrefs;
+   result["packages_prefs"] = packagesPrefs;
 
    pResponse->setResult(result);
 
