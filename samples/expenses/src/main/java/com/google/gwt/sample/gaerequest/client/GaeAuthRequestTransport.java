@@ -20,7 +20,6 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 import com.google.web.bindery.requestfactory.gwt.client.DefaultRequestTransport;
-import com.google.web.bindery.requestfactory.shared.RequestTransport.TransportReceiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 
 /**

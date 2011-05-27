@@ -90,6 +90,7 @@ public class SlidingPanel extends ResizeComposite implements HasWidgets,
    * Set the widget to show, adding it to the end of our sliding set if we
    * haven't seen it before. Nulls are ignored.
    */
+  @SuppressWarnings("deprecation")
   // Conflict btw deprecated Composite#setWidget and HasOneWidget#setWidget
   @Override
   public void setWidget(Widget widget) {

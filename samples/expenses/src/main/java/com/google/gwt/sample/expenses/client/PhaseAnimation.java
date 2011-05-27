@@ -59,12 +59,12 @@ public abstract class PhaseAnimation<T> extends Animation {
 
     @Override
     protected T getDisplayedItem(int index) {
-      return cellList.getDisplayedItem(index);
+      return cellList.getVisibleItem(index);
     }
 
     @Override
     protected List<T> getDisplayedItems() {
-      return cellList.getDisplayedItems();
+      return cellList.getVisibleItems();
     }
 
     @Override
@@ -97,12 +97,12 @@ public abstract class PhaseAnimation<T> extends Animation {
 
     @Override
     protected T getDisplayedItem(int index) {
-      return cellTable.getDisplayedItem(index);
+      return cellTable.getVisibleItem(index);
     }
 
     @Override
     protected List<T> getDisplayedItems() {
-      return cellTable.getDisplayedItems();
+      return cellTable.getVisibleItems();
     }
 
     @Override

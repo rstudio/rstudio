@@ -415,12 +415,10 @@ public class TouchHandler implements EventListener {
       scrollOffTimer.schedule(100);
     }
 
-    boolean firstDrag = false;
     if (!dragging) {
       if (totalMoveY > MIN_TRACKING_FOR_DRAG
           || totalMoveX > MIN_TRACKING_FOR_DRAG) {
         dragging = true;
-        firstDrag = true;
         dragDelegate.onDragStart(e);
       }
     }

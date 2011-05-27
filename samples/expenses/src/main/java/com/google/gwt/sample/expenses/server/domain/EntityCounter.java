@@ -47,7 +47,7 @@ public class EntityCounter {
 
   private static final Long ZERO = Long.valueOf(0L);
 
-  private static final boolean DENSE_IDS = false;
+//  private static final boolean DENSE_IDS = false;
 
   public static final EntityManager entityManager() {
     return EMF.get().createEntityManager();
@@ -167,10 +167,10 @@ public class EntityCounter {
             + mmin + " and id < " + mmax;
         Number count = (Number) em.createQuery(query).getSingleResult();
         long value = count.longValue();
-        if (value == 0 && DENSE_IDS) {
-          log.info("Got 0 results between " + mmin + " and " + mmax);
-          break;
-        }
+//        if (value == 0 && DENSE_IDS) {
+//          log.info("Got 0 results between " + mmin + " and " + mmax);
+//          break;
+//        }
 
         mmin = mmax;
         min = Long.valueOf(mmin);
