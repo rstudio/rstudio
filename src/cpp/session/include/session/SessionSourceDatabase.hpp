@@ -57,6 +57,8 @@ public:
    core::Error setPathAndContents(const std::string& path,
                                   bool allowSubstChars = true);
 
+   core::Error updateDirty();
+
    // set dirty
    void setDirty(bool dirty)
    {

@@ -188,13 +188,13 @@ void SourceDocument::setContents(const std::string& contents)
    hash_ = hash::crc32Hash(contents_);
 }
 
-// set contents from file
-Error SourceDocument::setPathAndContents(const std::string& path,
-                                         bool allowSubstChars)
-{
-   // resolve aliased path
-   FilePath docPath = module_context::resolveAliasedPath(path);
+namespace {
 
+Error readAndDecode(const FilePath& docPath,
+                    const std::string& encoding,
+                    bool allowSubstChars,
+                    std::string* pContents)
+{
    // read contents
    std::string encodedContents;
    Error error = readStringFromFile(docPath, &encodedContents,
@@ -203,17 +203,31 @@ Error SourceDocument::setPathAndContents(const std::string& path,
    if (error)
       return error ;
 
-   std::string contents;
-   error = r::util::iconvstr(encodedContents, encoding(), "UTF-8",
-                             allowSubstChars, &contents);
+   error = r::util::iconvstr(encodedContents, encoding, "UTF-8",
+                             allowSubstChars, pContents);
    if (error)
       return error;
 
-   stripBOM(&contents);
+   stripBOM(pContents);
    // Detect invalid UTF-8 sequences and recover
-   error = string_utils::utf8Clean(contents.begin(),
-                                   contents.end(),
+   error = string_utils::utf8Clean(pContents->begin(),
+                                   pContents->end(),
                                    '?');
+   return error ;
+}
+
+} // anonymous namespace
+
+// set contents from file
+Error SourceDocument::setPathAndContents(const std::string& path,
+                                         bool allowSubstChars)
+{
+   // resolve aliased path
+   FilePath docPath = module_context::resolveAliasedPath(path);
+
+   std::string contents;
+   Error error = readAndDecode(docPath, encoding(), allowSubstChars,
+                               &contents);
    if (error)
       return error ;
 
@@ -225,6 +239,35 @@ Error SourceDocument::setPathAndContents(const std::string& path,
    return Success();
 }
 
+Error SourceDocument::updateDirty()
+{
+   if (path().empty())
+   {
+      dirty_ = !contents_.empty();
+   }
+   else
+   {
+      FilePath docPath = module_context::resolveAliasedPath(path());
+      if (!docPath.exists())
+      {
+         dirty_ = true;
+      }
+      else if (docPath.size() > (1024*1024))
+      {
+         // Don't update anything if the file is really huge
+      }
+      else
+      {
+         std::string contents;
+         Error error = readAndDecode(docPath, encoding(), true, &contents);
+         if (error)
+            return error;
+
+         dirty_ = contents_.length() != contents.length() || hash_ != hash::crc32Hash(contents);
+      }
+   }
+   return Success();
+}
 
 void SourceDocument::editProperties(json::Object& properties)
 {
@@ -461,6 +504,21 @@ Error getSourceDocumentsJson(core::json::Array* pJsonDocs)
    pJsonDocs->clear();
    BOOST_FOREACH( SourceDocument& doc, docs )
    {
+      // Force dirty state to be checked.
+      // Client and server dirty state can get out of sync because
+      // undo/redo on the client side can make dirty documents
+      // become clean again. I tried pushing the client dirty state
+      // back to the server but couldn't convince myself that I
+      // got all the edge cases. This approach is simpler--just
+      // compare the contents in the doc database to the contents
+      // on disk, and only do it when listing documents. However
+      // it does mean that reloading the client may cause a dirty
+      // document to become clean (if the contents are identical
+      // to what's on disk).
+      error = doc.updateDirty();
+      if (error)
+         LOG_ERROR(error);
+
       json::Object jsonDoc ;
       doc.writeToJson(&jsonDoc);
       pJsonDocs->push_back(jsonDoc);
