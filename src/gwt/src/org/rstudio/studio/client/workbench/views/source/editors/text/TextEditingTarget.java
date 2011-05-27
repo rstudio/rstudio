@@ -1447,7 +1447,7 @@ public class TextEditingTarget implements EditingTarget
 
    public void checkForExternalEdit()
    {
-      if (externalEditCheckInterval_.hasElapsed())
+      if (!externalEditCheckInterval_.hasElapsed())
          return;
       externalEditCheckInterval_.reset();
 

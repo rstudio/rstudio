@@ -28,8 +28,8 @@ public class IntervalTracker
 
    public boolean hasElapsed()
    {
-      return lastTime_ != null
-             && System.currentTimeMillis() - lastTime_ < threshold_;
+      return lastTime_ == null
+             || System.currentTimeMillis() - lastTime_ >= threshold_;
    }
 
    private Long lastTime_;
