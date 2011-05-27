@@ -34,7 +34,6 @@ import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
-import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
@@ -191,6 +190,8 @@ public class FragmentExtractor {
     return map.vtableInitToMethod(stat);
   }
 
+  private Set<JsName> entryMethodNames;
+
   private final JProgram jprogram;
 
   private final JsProgram jsprogram;
@@ -207,18 +208,38 @@ public class FragmentExtractor {
     this.jprogram = jprogram;
     this.jsprogram = jsprogram;
     this.map = map;
+
+    buildEntryMethodSet();
   }
 
   /**
-   * Create a call to {@link AsyncFragmentLoader#onLoad}.
+   * Add direct calls to the entry methods of the specified entry number.
    */
-  public List<JsStatement> createOnLoadedCall(int splitPoint) {
-    JMethod loadMethod = jprogram.getIndexedMethod("AsyncFragmentLoader.onLoad");
-    JsName loadMethodName = map.nameForMethod(loadMethod);
+  public List<JsStatement> createCallsToEntryMethods(int splitPoint) {
+    List<JsStatement> callStats = new ArrayList<JsStatement>(jprogram.entryMethods.size());
+    for (JMethod entryMethod : jprogram.entryMethods.get(splitPoint)) {
+      JsName name = map.nameForMethod(entryMethod);
+      assert name != null;
+      SourceInfo sourceInfo = jsprogram.getSourceInfo();
+      JsInvocation call = new JsInvocation(sourceInfo);
+      call.setQualifier(wrapWithEntry(name.makeRef(sourceInfo)));
+      callStats.add(call.makeStmt());
+    }
+    return callStats;
+  }
+
+  /**
+   * Create a call to
+   * {@link com.google.gwt.core.client.impl.AsyncFragmentLoader#leftoversFragmentHasLoaded()}
+   * .
+   */
+  public List<JsStatement> createCallToLeftoversFragmentHasLoaded() {
+    JMethod loadedMethod =
+        jprogram.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded");
+    JsName loadedMethodName = map.nameForMethod(loadedMethod);
     SourceInfo sourceInfo = jsprogram.getSourceInfo();
     JsInvocation call = new JsInvocation(sourceInfo);
-    call.setQualifier(wrapWithEntry(loadMethodName.makeRef(sourceInfo)));
-    call.getArguments().add(new JsNumberLiteral(sourceInfo, splitPoint));
+    call.setQualifier(wrapWithEntry(loadedMethodName.makeRef(sourceInfo)));
     List<JsStatement> newStats = Collections.<JsStatement> singletonList(call.makeStmt());
     return newStats;
   }
@@ -239,41 +260,45 @@ public class FragmentExtractor {
      */
     JClassType currentVtableType = null;
 
-    // Since we haven't run yet.
-    assert jsprogram.getFragmentCount() == 1;
-    List<JsStatement> stats = jsprogram.getGlobalBlock().getStatements();
-    for (JsStatement stat : stats) {
-      boolean keepIt;
-      JClassType vtableTypeAssigned = vtableTypeAssigned(stat);
-      if (vtableTypeAssigned != null && livenessPredicate.isLive(vtableTypeAssigned)) {
-        JsExprStmt result =
-            extractPrototypeSetup(livenessPredicate, alreadyLoadedPredicate, stat,
-                vtableTypeAssigned);
-        if (result != null) {
-          stat = result;
-          keepIt = true;
+    for (int frag = 0; frag < jsprogram.getFragmentCount(); frag++) {
+      List<JsStatement> stats = jsprogram.getFragmentBlock(frag).getStatements();
+      for (JsStatement stat : stats) {
+        if (isEntryCall(stat)) {
+          continue;
+        }
+
+        boolean keepIt;
+        JClassType vtableTypeAssigned = vtableTypeAssigned(stat);
+        if (vtableTypeAssigned != null && livenessPredicate.isLive(vtableTypeAssigned)) {
+          JsExprStmt result =
+              extractPrototypeSetup(livenessPredicate, alreadyLoadedPredicate, stat,
+                  vtableTypeAssigned);
+          if (result != null) {
+            stat = result;
+            keepIt = true;
+          } else {
+            keepIt = false;
+          }
+        } else if (containsRemovableVars(stat)) {
+          stat = removeSomeVars((JsVars) stat, livenessPredicate, alreadyLoadedPredicate);
+          keepIt = !(stat instanceof JsEmpty);
         } else {
-          keepIt = false;
+          keepIt = isLive(stat, livenessPredicate) && !isLive(stat, alreadyLoadedPredicate);
         }
-      } else if (containsRemovableVars(stat)) {
-        stat = removeSomeVars((JsVars) stat, livenessPredicate, alreadyLoadedPredicate);
-        keepIt = !(stat instanceof JsEmpty);
-      } else {
-        keepIt = isLive(stat, livenessPredicate) && !isLive(stat, alreadyLoadedPredicate);
-      }
 
-      statementLogger.logStatement(stat, keepIt);
+        statementLogger.logStatement(stat, keepIt);
 
-      if (keepIt) {
-        if (vtableTypeAssigned != null) {
-          currentVtableType = vtableTypeAssigned;
+        if (keepIt) {
+          if (vtableTypeAssigned != null) {
+            currentVtableType = vtableTypeAssigned;
+          }
+          JClassType vtableType = vtableTypeNeeded(stat);
+          if (vtableType != null && vtableType != currentVtableType) {
+            extractedStats.add(vtableStatFor(vtableType));
+            currentVtableType = vtableType;
+          }
+          extractedStats.add(stat);
         }
-        JClassType vtableType = vtableTypeNeeded(stat);
-        if (vtableType != null && vtableType != currentVtableType) {
-          extractedStats.add(vtableStatFor(vtableType));
-          currentVtableType = vtableType;
-        }
-        extractedStats.add(stat);
       }
     }
 
@@ -300,6 +325,23 @@ public class FragmentExtractor {
 
   public void setStatementLogger(StatementLogger logger) {
     statementLogger = logger;
+  }
+
+  private void buildEntryMethodSet() {
+    entryMethodNames = new HashSet<JsName>();
+    for (JMethod entryMethod : jprogram.getAllEntryMethods()) {
+      JsName name = map.nameForMethod(entryMethod);
+      assert name != null;
+      entryMethodNames.add(name);
+    }
+
+    JMethod leftoverFragmentLoaded =
+        jprogram.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded");
+    if (leftoverFragmentLoaded != null) {
+      JsName name = map.nameForMethod(leftoverFragmentLoaded);
+      assert name != null;
+      entryMethodNames.add(name);
+    }
   }
 
   /**
@@ -372,6 +414,27 @@ public class FragmentExtractor {
     c.accept(((JsExprStmt) stat).getExpression());
     JsExprStmt result = anyLiveCode[0] ? c.getExpression().makeStmt() : null;
     return result;
+  }
+
+  /**
+   * Check whether the statement invokes an entry method. Detect JavaScript code
+   * of the form foo() where foo is a the JavaScript function corresponding to
+   * an entry method.
+   */
+  private boolean isEntryCall(JsStatement stat) {
+    if (stat instanceof JsExprStmt) {
+      JsExpression expr = ((JsExprStmt) stat).getExpression();
+      if (expr instanceof JsInvocation) {
+        JsInvocation inv = (JsInvocation) expr;
+        if (inv.getArguments().isEmpty() && (inv.getQualifier() instanceof JsNameRef)) {
+          JsNameRef calleeRef = (JsNameRef) inv.getQualifier();
+          if (calleeRef.getQualifier() == null) {
+            return entryMethodNames.contains(calleeRef.getName());
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private boolean isLive(JsStatement stat, LivenessPredicate livenessPredicate) {

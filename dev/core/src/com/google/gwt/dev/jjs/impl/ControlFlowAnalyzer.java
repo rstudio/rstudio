@@ -42,7 +42,6 @@ import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
@@ -90,7 +89,6 @@ public class ControlFlowAnalyzer {
    */
   private class RescueVisitor extends JVisitor {
     private final ArrayList<JMethod> curMethodStack = new ArrayList<JMethod>();
-    private JMethod currentMethod;
 
     @Override
     public boolean visit(JArrayType type, Context ctx) {
@@ -367,21 +365,6 @@ public class ControlFlowAnalyzer {
     @Override
     public boolean visit(JMethodCall call, Context ctx) {
       JMethod method = call.getTarget();
-      if (method == runAsyncOnsuccess) {
-        if (currentMethod != null
-            && currentMethod.getEnclosingType() == program.getIndexedType("AsyncFragmentLoader")) {
-          /*
-           * Magic magic magic: don't allow code flow from the
-           * AsyncFragmentLoader implementation back into the
-           * callback.onSuccess(). If we did, the rescue path would look like
-           * JRunAsync -> AsyncFragmentLoader.runAsync() ->
-           * callback.onSuccess(). This would completely defeat code splitting
-           * as all the code on the other side of the barrier would become
-           * reachable.
-           */
-          return true;
-        }
-      }
       if (method.isStatic() || program.isJavaScriptObject(method.getEnclosingType())
           || instantiatedTypes.contains(method.getEnclosingType())) {
         rescue(method);
@@ -564,10 +547,7 @@ public class ControlFlowAnalyzer {
             curMethodStack.add(method);
             dependencyRecorder.methodIsLiveBecause(method, curMethodStack);
           }
-          JMethod lastMethod = currentMethod;
-          currentMethod = method;
           accept(method);
-          currentMethod = lastMethod;
           if (dependencyRecorder != null) {
             curMethodStack.remove(curMethodStack.size() - 1);
           }
@@ -810,9 +790,9 @@ public class ControlFlowAnalyzer {
    */
   private Map<JParameter, List<JExpression>> argsToRescueIfParameterRead;
 
-  private final JMethod asyncFragmentOnLoad;
   private final JDeclaredType baseArrayType;
   private DependencyRecorder dependencyRecorder;
+
   private Set<JField> fieldsWritten = new HashSet<JField>();
   private Set<JReferenceType> instantiatedTypes = new HashSet<JReferenceType>();
   private Set<JNode> liveFieldsAndMethods = new HashSet<JNode>();
@@ -833,15 +813,13 @@ public class ControlFlowAnalyzer {
   private Map<JMethod, List<JMethod>> methodsThatOverrideMe;
 
   private final JProgram program;
+
   private Set<JReferenceType> referencedTypes = new HashSet<JReferenceType>();
   private final RescueVisitor rescuer = new RescueVisitor();
-  private final JMethod runAsyncOnsuccess;
   private JMethod stringValueOfChar = null;
 
   public ControlFlowAnalyzer(ControlFlowAnalyzer cfa) {
     program = cfa.program;
-    asyncFragmentOnLoad = cfa.asyncFragmentOnLoad;
-    runAsyncOnsuccess = cfa.runAsyncOnsuccess;
     baseArrayType = cfa.baseArrayType;
     fieldsWritten = new HashSet<JField>(cfa.fieldsWritten);
     instantiatedTypes = new HashSet<JReferenceType>(cfa.instantiatedTypes);
@@ -860,8 +838,6 @@ public class ControlFlowAnalyzer {
 
   public ControlFlowAnalyzer(JProgram program) {
     this.program = program;
-    asyncFragmentOnLoad = program.getIndexedMethod("AsyncFragmentLoader.onLoad");
-    runAsyncOnsuccess = program.getIndexedMethod("RunAsyncCallback.onSuccess");
     baseArrayType = program.getIndexedType("Array");
     buildMethodsOverriding();
   }
@@ -916,26 +892,10 @@ public class ControlFlowAnalyzer {
   }
 
   /**
-   * Traverse the program entry points, but don't traverse any runAsync
-   * fragments.
+   * Traverse all code executed by <code>expr</code>.
    */
-  public void traverseEntryMethods() {
-    for (JMethod method : program.getEntryMethods()) {
-      traverseFrom(method);
-    }
-    if (program.getRunAsyncs().size() > 0) {
-      /*
-       * Explicitly rescue AsyncFragmentLoader.onLoad(). It is never explicitly
-       * called anyway, until late code gen. Also, we want it in the initial
-       * fragment so all other fragments can share the code.
-       */
-      traverseFrom(asyncFragmentOnLoad);
-      /*
-       * Keep callback.onSuccess() from being pruned since we explicitly avoid
-       * visiting it.
-       */
-      liveFieldsAndMethods.add(runAsyncOnsuccess);
-    }
+  public void traverseFrom(JExpression expr) {
+    rescuer.accept(expr);
   }
 
   /**
@@ -953,24 +913,15 @@ public class ControlFlowAnalyzer {
     rescuer.rescue(type, true, true);
   }
 
+  public void traverseFromLeftoversFragmentHasLoaded() {
+    if (program.entryMethods.size() > 1) {
+      traverseFrom(program
+          .getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded"));
+    }
+  }
+
   public void traverseFromReferenceTo(JDeclaredType type) {
     rescuer.rescue(type, true, false);
-  }
-
-  /**
-   * Traverse the fragment for a specific runAsync.
-   */
-  public void traverseFromRunAsync(JRunAsync runAsync) {
-    rescuer.accept(runAsync.getOnSuccessCall());
-  }
-
-  /**
-   * Traverse the fragments for all runAsyncs.
-   */
-  public void traverseFromRunAsyncs() {
-    for (JRunAsync runAsync : program.getRunAsyncs()) {
-      traverseFromRunAsync(runAsync);
-    }
   }
 
   private void buildMethodsOverriding() {

@@ -25,17 +25,42 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitor;
-import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Removes JsFunctions that are never referenced in the program.
  */
 public class JsUnusedFunctionRemover {
+  /**
+   * Finds all functions in the program.
+   */
+  private class JsFunctionVisitor extends JsVisitor {
+
+    @Override
+    public void endVisit(JsFunction x, JsContext ctx) {
+      // Anonymous function, ignore it
+      if (x.getName() != null && !x.isArtificiallyRescued()) {
+        toRemove.put(x.getName(), x);
+      }
+    }
+  }
+
+  /**
+   * Finds all function references in the program.
+   */
+  private class JsNameRefVisitor extends JsVisitor {
+
+    @Override
+    public void endVisit(JsNameRef x, JsContext ctx) {
+      toRemove.remove(x.getName());
+    }
+  }
+
   private class RemovalVisitor extends JsModVisitor {
 
     @Override
@@ -47,29 +72,22 @@ public class JsUnusedFunctionRemover {
       JsFunction f = (JsFunction) x.getExpression();
       JsName name = f.getName();
 
-      // Anonymous function, ignore it
-      if (name == null || seen.contains(name) || f.isArtificiallyRescued()) {
-        return;
+      if (toRemove.containsKey(name)) {
+        // Removing a static initializer indicates a problem in
+        // JsInliner.
+        if (name.getIdent().equals("$clinit")) {
+          throw new InternalCompilerException("Tried to remove clinit "
+              + name.getStaticRef().toSource());
+        }
+
+        if (!name.isObfuscatable()) {
+          // This is intended to be used externally (e.g. gwtOnLoad)
+          return;
+        }
+
+        // Remove the statement
+        ctx.removeMe();
       }
-
-      // Removing a static initializer indicates a problem in JsInliner.
-      if (f.getExecuteOnce()) {
-        throw new InternalCompilerException("Tried to remove clinit "
-            + name.getStaticRef().toSource());
-      }
-      // Remove the statement
-      ctx.removeMe();
-    }
-  }
-
-  /**
-   * Finds all function references in the program.
-   */
-  private class RescueVisitor extends JsVisitor {
-
-    @Override
-    public void endVisit(JsNameRef x, JsContext ctx) {
-      seen.add(x.getName());
     }
   }
 
@@ -84,7 +102,7 @@ public class JsUnusedFunctionRemover {
   }
 
   private final JsProgram program;
-  private final Set<JsName> seen = new IdentityHashSet<JsName>();
+  private final Map<JsName, JsFunction> toRemove = new HashMap<JsName, JsFunction>();
 
   public JsUnusedFunctionRemover(JsProgram program) {
     this.program = program;
@@ -93,8 +111,11 @@ public class JsUnusedFunctionRemover {
   public OptimizerStats execImpl() {
     OptimizerStats stats = new OptimizerStats(NAME);
 
-    // Rescue all referenced functions.
-    new RescueVisitor().accept(program);
+    // Find all functions
+    (new JsFunctionVisitor()).accept(program);
+
+    // Remove the functions that are referenced from the hit list
+    (new JsNameRefVisitor()).accept(program);
 
     // Remove the unused functions from the JsProgram
     RemovalVisitor removalVisitor = new RemovalVisitor();

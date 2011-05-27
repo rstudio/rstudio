@@ -58,7 +58,7 @@ public class XhrLoadingStrategy implements LoadingStrategy {
    * 
    * It is important that these methods be simple enough to be inlined away.
    */
-  static class DelegatingXMLHttpRequest implements MockableXMLHttpRequest {
+  class DelegatingXMLHttpRequest implements MockableXMLHttpRequest {
     private final XMLHttpRequest delegate;
 
     public DelegatingXMLHttpRequest(XMLHttpRequest xmlHttpRequest) {
@@ -123,7 +123,7 @@ public class XhrLoadingStrategy implements LoadingStrategy {
    * which is which in the onLoadError handling, we need to keep track of this
    * data for each outstanding request, which we index by xhr object.
    */
-  protected static class RequestData {
+  protected class RequestData {
     String url;
     int retryCount;
     LoadTerminatedHandler errorHandler = null;
