@@ -11,8 +11,8 @@
     <roo.version>1.1.0.RELEASE</roo.version>
     <spring.version>3.0.3.RELEASE</spring.version>
     <slf4j.version>1.6.1</slf4j.version>
-    <gae.version>1.5.0</gae.version>
-    <gae-test.version>1.5.0</gae-test.version>
+    <gae.version>1.5.0.1</gae.version>
+    <gae-test.version>1.5.0.1</gae-test.version>
     <gae.home>${user.home}/.m2/repository/com/google/appengine/appengine-java-sdk/${gae.version}/appengine-java-sdk-${gae.version}</gae.home>
     <datanucleus.version>1.1.5</datanucleus.version>
   </properties>
