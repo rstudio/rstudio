@@ -1452,6 +1452,11 @@ public class TextEditingTarget implements EditingTarget
       externalEditCheckInterval_.reset();
 
       externalEditCheckInvalidation_.invalidate();
+
+      // If the doc has never been saved, don't even bother checking
+      if (getPath() == null)
+         return;
+
       final Token token = externalEditCheckInvalidation_.getInvalidationToken();
 
       server_.checkForExternalEdit(
