@@ -37,6 +37,12 @@ struct CRANMirror
    std::string country;
 };
 
+struct BioconductorMirror
+{
+   std::string name;
+   std::string url;
+};
+
 class UserSettings : boost::noncopyable
 {
 private:
@@ -73,9 +79,6 @@ public:
    core::FilePath initialWorkingDirectory() const;
    void setInitialWorkingDirectory(const core::FilePath& filePath);
 
-   CRANMirror cranMirror() const;
-   void setCRANMirror(const CRANMirror& cranMirror);
-
    bool alwaysSaveHistory() const;
    void setAlwaysSaveHistory(bool alwaysSave);
 
@@ -84,6 +87,12 @@ public:
 
    bool removeHistoryDuplicates() const;
    void setRemoveHistoryDuplicates(bool removeDuplicates);
+
+   CRANMirror cranMirror() const;
+   void setCRANMirror(const CRANMirror& cranMirror);
+
+   BioconductorMirror bioconductorMirror() const;
+   void setBioconductorMirror(const BioconductorMirror& bioconductorMirror);
 
 private:
    core::FilePath getWorkingDirectoryValue(const std::string& key) const;

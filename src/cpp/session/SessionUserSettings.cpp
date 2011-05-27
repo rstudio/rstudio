@@ -21,6 +21,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 
+#include <r/RExec.hpp>
+#include <r/ROptions.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RConsoleHistory.hpp>
 
@@ -41,10 +43,35 @@ const char * const kCRANMirrorName = "cranMirrorName";
 const char * const kCRANMirrorHost = "cranMirrorHost";
 const char * const kCRANMirrorUrl = "cranMirrorUrl";
 const char * const kCRANMirrorCountry = "cranMirrorCountry";
+const char * const kBioconductorMirrorName = "bioconductorMirrorName";
+const char * const kBioconductorMirrorUrl = "bioconductorMirrorUrl";
 const char * const kAlwaysSaveHistory = "alwaysSaveHistory";
 const char * const kUseGlobalHistory = "useGlobalHistory";
 const char * const kRemoveHistoryDuplicates = "removeHistoryDuplicates";
+
+void setCRANReposOption(const std::string& url)
+{
+   if (!url.empty())
+   {
+      Error error = r::exec::RFunction(".rs.setCRANRepos", url).call();
+      if (error)
+         LOG_ERROR(error);
+   }
 }
+
+void setBioconductorReposOption(const std::string& mirror)
+{
+   if (!mirror.empty())
+   {
+      Error error = r::options::setOption("BioC_mirror", mirror);
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+
+
+} // anonymous namespace
    
 UserSettings& userSettings()
 {
@@ -143,7 +170,37 @@ void UserSettings::setCRANMirror(const CRANMirror& mirror)
    settings_.set(kCRANMirrorHost, mirror.host);
    settings_.set(kCRANMirrorUrl, mirror.url);
    settings_.set(kCRANMirrorCountry, mirror.country);
+
+   setCRANReposOption(mirror.url);
 }
+
+BioconductorMirror UserSettings::bioconductorMirror() const
+{
+   BioconductorMirror mirror ;
+
+   mirror.name = settings_.get(kBioconductorMirrorName);
+   if (!mirror.name.empty())
+   {
+      mirror.url = settings_.get(kBioconductorMirrorUrl);
+   }
+   else
+   {
+      mirror.name = "Seattle (USA)";
+      mirror.url = "http://www.bioconductor.org";
+   }
+
+   return mirror;
+}
+
+void UserSettings::setBioconductorMirror(
+                        const BioconductorMirror& bioconductorMirror)
+{
+   settings_.set(kBioconductorMirrorName, bioconductorMirror.name);
+   settings_.set(kBioconductorMirrorUrl, bioconductorMirror.url);
+
+   setBioconductorReposOption(bioconductorMirror.url);
+}
+
 
 bool UserSettings::alwaysSaveHistory() const
 {

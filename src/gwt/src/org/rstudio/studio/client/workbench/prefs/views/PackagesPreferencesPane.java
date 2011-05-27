@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.cran.DefaultCRANMirror;
 import org.rstudio.studio.client.common.cran.model.CRANMirror;
+import org.rstudio.studio.client.workbench.prefs.model.BioconductorMirror;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
@@ -69,6 +70,8 @@ public class PackagesPreferencesPane extends PreferencesPane
          cranMirror_ = prefs.getCRANMirror();
          cranMirrorTextBox_.setText(cranMirror_.getDisplay());
       }
+      
+      bioconductorMirror_ = prefs.getBioconductorMirror();
    }
 
    @Override
@@ -95,7 +98,9 @@ public class PackagesPreferencesPane extends PreferencesPane
       super.onApply(rPrefs);
      
       // set packages prefs
-      PackagesPrefs packagesPrefs = PackagesPrefs.create(cranMirror_);
+      PackagesPrefs packagesPrefs = PackagesPrefs.create(
+                                             cranMirror_,
+                                             bioconductorMirror_);
                                       
       rPrefs.setPackagesPrefs(packagesPrefs);
    }
@@ -103,5 +108,6 @@ public class PackagesPreferencesPane extends PreferencesPane
    private final PreferencesDialogResources res_;
    
    private CRANMirror cranMirror_ = CRANMirror.empty();
+   private BioconductorMirror bioconductorMirror_ = null;
    private TextBoxWithButton cranMirrorTextBox_;
 }

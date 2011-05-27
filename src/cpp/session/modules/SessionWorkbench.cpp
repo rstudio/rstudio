@@ -100,14 +100,13 @@ CRANMirror toCRANMirror(const json::Object& cranMirrorJson)
    return cranMirror;
 }
 
-void setCRANReposOption(const std::string& url)
+BioconductorMirror toBioconductorMirror(const json::Object& mirrorJson)
 {
-   if (!url.empty())
-   {
-      Error error = r::exec::RFunction(".rs.setCRANRepos", url).call();
-      if (error)
-         LOG_ERROR(error);
-   }
+   BioconductorMirror mirror;
+   json::readObject(mirrorJson,
+                    "name", &mirror.name,
+                    "url", &mirror.url);
+   return mirror;
 }
 
 Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
@@ -157,18 +156,17 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().endUpdate();
 
    // read and set packages prefs
-   json::Object cranMirrorJson;
+   json::Object cranMirrorJson, bioconductorMirrorJson;
    error = json::readObject(packagesPrefs,
-                            "cran_mirror", &cranMirrorJson);
+                            "cran_mirror", &cranMirrorJson,
+                            "bioconductor_mirror", &bioconductorMirrorJson);
    if (error)
        return error;
-   CRANMirror cranMirror = toCRANMirror(cranMirrorJson);
-   userSettings().setCRANMirror(cranMirror);
-
-   // NOTE: must be outside of userSettings update block because it has its
-   // own block and nested blocks are not supported
-   setCRANReposOption(cranMirror.url);
-
+   userSettings().beginUpdate();
+   userSettings().setCRANMirror(toCRANMirror(cranMirrorJson));
+   userSettings().setBioconductorMirror(toBioconductorMirror(
+                                                bioconductorMirrorJson));
+   userSettings().endUpdate();
 
    // set ui prefs
    userSettings().setUiPrefs(uiPrefs);
@@ -201,6 +199,16 @@ json::Object toCRANMirrorJson(const CRANMirror& cranMirror)
    return cranMirrorJson;
 }
 
+json::Object toBioconductorMirrorJson(
+                           const BioconductorMirror& bioconductorMirror)
+{
+   json::Object bioconductorMirrorJson;
+   bioconductorMirrorJson["name"] = bioconductorMirror.name;
+   bioconductorMirrorJson["url"] = bioconductorMirror.url;
+   return bioconductorMirrorJson;
+}
+
+
 Error getRPrefs(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
@@ -219,7 +227,10 @@ Error getRPrefs(const json::JsonRpcRequest& request,
 
    // get packages prefs
    json::Object packagesPrefs;
-   packagesPrefs["cran_mirror"] = toCRANMirrorJson(userSettings().cranMirror());
+   packagesPrefs["cran_mirror"] = toCRANMirrorJson(
+                                      userSettings().cranMirror());
+   packagesPrefs["bioconductor_mirror"] = toBioconductorMirrorJson(
+                                      userSettings().bioconductorMirror());
 
    // initialize and set result object
    json::Object result;
@@ -244,8 +255,6 @@ Error setCRANMirror(const json::JsonRpcRequest& request,
    userSettings().beginUpdate();
    userSettings().setCRANMirror(cranMirror);
    userSettings().endUpdate();
-
-   setCRANReposOption(cranMirror.url);
 
    return Success();
 }
