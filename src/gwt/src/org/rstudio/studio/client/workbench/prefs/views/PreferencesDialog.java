@@ -45,6 +45,7 @@ public class PreferencesDialog extends ModalDialogBase
                             PreferencesDialogResources res,
                             final SectionChooser sectionChooser,
                             Provider<GeneralPreferencesPane> pR,
+                            PackagesPreferencesPane packages,
                             EditingPreferencesPane source,
                             AppearancePreferencesPane appearance,
                             PaneLayoutPreferencesPane paneLayout)
@@ -89,7 +90,8 @@ public class PreferencesDialog extends ModalDialogBase
       panes_ = new PreferencesPane[] {pR.get(), 
                                      source, 
                                      appearance, 
-                                     paneLayout};
+                                     paneLayout,
+                                     packages};
 
       for (final PreferencesPane pane : panes_)
       {

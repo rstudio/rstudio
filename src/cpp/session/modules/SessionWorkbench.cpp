@@ -100,23 +100,23 @@ CRANMirror toCRANMirror(const json::Object& cranMirrorJson)
    return cranMirror;
 }
 
-void setCRANReposOption(const std::string& url)
+BioconductorMirror toBioconductorMirror(const json::Object& mirrorJson)
 {
-   if (!url.empty())
-   {
-      Error error = r::exec::RFunction(".rs.setCRANRepos", url).call();
-      if (error)
-         LOG_ERROR(error);
-   }
+   BioconductorMirror mirror;
+   json::readObject(mirrorJson,
+                    "name", &mirror.name,
+                    "url", &mirror.url);
+   return mirror;
 }
 
 Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 {
    // read params
-   json::Object uiPrefs, generalPrefs, historyPrefs;
+   json::Object uiPrefs, generalPrefs, historyPrefs, packagesPrefs;
    Error error = json::readObjectParam(request.params, 0,
                                        "general_prefs", &generalPrefs,
-                                       "history_prefs", &historyPrefs);
+                                       "history_prefs", &historyPrefs,
+                                       "packages_prefs", &packagesPrefs);
    if (error)
       return error;
    error = json::readParam(request.params, 1, &uiPrefs);
@@ -128,26 +128,18 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    int saveAction;
    bool loadRData;
    std::string initialWorkingDir;
-   json::Object cranMirrorJson;
    error = json::readObject(generalPrefs,
                             "save_action", &saveAction,
                             "load_rdata", &loadRData,
-                            "initial_working_dir", &initialWorkingDir,
-                            "cran_mirror", &cranMirrorJson);
+                            "initial_working_dir", &initialWorkingDir);
    if (error)
       return error;
-   CRANMirror cranMirror = toCRANMirror(cranMirrorJson);
+
    userSettings().beginUpdate();
    userSettings().setSaveAction(saveAction);
    userSettings().setLoadRData(loadRData);
    userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
-   userSettings().setCRANMirror(cranMirror);
    userSettings().endUpdate();
-
-   // NOTE: must be outside of userSettings update block because it has its
-   // own block and nested blocks are not supported
-   setCRANReposOption(cranMirror.url);
-
 
    // read and set history prefs
    bool alwaysSave, useGlobal, removeDuplicates;
@@ -161,6 +153,19 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setAlwaysSaveHistory(alwaysSave);
    userSettings().setUseGlobalHistory(useGlobal);
    userSettings().setRemoveHistoryDuplicates(removeDuplicates);
+   userSettings().endUpdate();
+
+   // read and set packages prefs
+   json::Object cranMirrorJson, bioconductorMirrorJson;
+   error = json::readObject(packagesPrefs,
+                            "cran_mirror", &cranMirrorJson,
+                            "bioconductor_mirror", &bioconductorMirrorJson);
+   if (error)
+       return error;
+   userSettings().beginUpdate();
+   userSettings().setCRANMirror(toCRANMirror(cranMirrorJson));
+   userSettings().setBioconductorMirror(toBioconductorMirror(
+                                                bioconductorMirrorJson));
    userSettings().endUpdate();
 
    // set ui prefs
@@ -194,6 +199,16 @@ json::Object toCRANMirrorJson(const CRANMirror& cranMirror)
    return cranMirrorJson;
 }
 
+json::Object toBioconductorMirrorJson(
+                           const BioconductorMirror& bioconductorMirror)
+{
+   json::Object bioconductorMirrorJson;
+   bioconductorMirrorJson["name"] = bioconductorMirror.name;
+   bioconductorMirrorJson["url"] = bioconductorMirror.url;
+   return bioconductorMirrorJson;
+}
+
+
 Error getRPrefs(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
@@ -203,7 +218,6 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    generalPrefs["load_rdata"] = userSettings().loadRData();
    generalPrefs["initial_working_dir"] = module_context::createAliasedPath(
          userSettings().initialWorkingDirectory());
-   generalPrefs["cran_mirror"] = toCRANMirrorJson(userSettings().cranMirror());
 
    // get history prefs
    json::Object historyPrefs;
@@ -211,10 +225,18 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    historyPrefs["use_global"] = userSettings().useGlobalHistory();
    historyPrefs["remove_duplicates"] = userSettings().removeHistoryDuplicates();
 
+   // get packages prefs
+   json::Object packagesPrefs;
+   packagesPrefs["cran_mirror"] = toCRANMirrorJson(
+                                      userSettings().cranMirror());
+   packagesPrefs["bioconductor_mirror"] = toBioconductorMirrorJson(
+                                      userSettings().bioconductorMirror());
+
    // initialize and set result object
    json::Object result;
    result["general_prefs"] = generalPrefs;
    result["history_prefs"] = historyPrefs;
+   result["packages_prefs"] = packagesPrefs;
 
    pResponse->setResult(result);
 
@@ -233,8 +255,6 @@ Error setCRANMirror(const json::JsonRpcRequest& request,
    userSettings().beginUpdate();
    userSettings().setCRANMirror(cranMirror);
    userSettings().endUpdate();
-
-   setCRANReposOption(cranMirror.url);
 
    return Success();
 }

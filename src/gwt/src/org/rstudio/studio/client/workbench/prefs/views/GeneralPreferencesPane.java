@@ -21,18 +21,15 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.common.cran.DefaultCRANMirror;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.common.cran.model.CRANMirror;
 
 /**
  * TODO: Apply new settings
@@ -43,8 +40,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    @Inject
    public GeneralPreferencesPane(PreferencesDialogResources res,
                                  RemoteFileSystemContext fsContext,
-                                 FileDialogs fileDialogs,
-                                 final DefaultCRANMirror defaultCRANMirror)
+                                 FileDialogs fileDialogs)
    {
       res_ = res;
       fsContext_ = fsContext;
@@ -129,35 +125,12 @@ public class GeneralPreferencesPane extends PreferencesPane
       removeHistoryDuplicates_.addStyleName(res.styles().extraSpaced());
       add(removeHistoryDuplicates_);
 
-      cranMirrorTextBox_ = new TextBoxWithButton(
-            "Default CRAN mirror:",
-            "Change...",
-            new ClickHandler()
-            {
-               public void onClick(ClickEvent event)
-               {
-                  defaultCRANMirror.choose(new OperationWithInput<CRANMirror>(){
-                     @Override
-                     public void execute(CRANMirror cranMirror)
-                     {
-                        cranMirror_ = cranMirror;
-                        cranMirrorTextBox_.setText(cranMirror_.getDisplay());
-                     }     
-                  });
-                 
-               }
-            });
-      cranMirrorTextBox_.setWidth("90%");
-      cranMirrorTextBox_.setText("");
-      cranMirrorTextBox_.addStyleName(res.styles().cranMirrorTextBox());
-      cranMirrorTextBox_.addStyleName(res.styles().extraSpaced());
-      add(cranMirrorTextBox_);
+    
       
      
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);
-      cranMirrorTextBox_.setEnabled(false);
       alwaysSaveHistory_.setEnabled(false);
       useGlobalHistory_.setEnabled(false);
       removeHistoryDuplicates_.setEnabled(false);
@@ -172,7 +145,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       saveWorkspace_.setEnabled(true);
       loadRData_.setEnabled(true);
       dirChooser_.setEnabled(true);
-      cranMirrorTextBox_.setEnabled(true);
       
       int saveWorkspaceIndex;
       switch (generalPrefs.getSaveAction())
@@ -192,13 +164,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       loadRData_.setValue(generalPrefs.getLoadRData());
       dirChooser_.setText(generalPrefs.getInitialWorkingDirectory());
-      
-      if (!generalPrefs.getCRANMirror().isEmpty())
-      {
-         cranMirror_ = generalPrefs.getCRANMirror();
-         cranMirrorTextBox_.setText(cranMirror_.getDisplay());
-      }
-      
+        
       // history prefs
       HistoryPrefs historyPrefs = rPrefs.getHistoryPrefs();
       
@@ -243,8 +209,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          // set general prefs
          GeneralPrefs generalPrefs = GeneralPrefs.create(saveAction, 
                                                          loadRData_.getValue(),
-                                                         dirChooser_.getText(),
-                                                         cranMirror_);
+                                                         dirChooser_.getText());
          rPrefs.setGeneralPrefs(generalPrefs);
          
          // set history prefs
@@ -267,8 +232,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final FileDialogs fileDialogs_;
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
-   private CRANMirror cranMirror_ = CRANMirror.empty();
-   private TextBoxWithButton cranMirrorTextBox_;
    private TextBoxWithButton dirChooser_;
    private CheckBox loadRData_;
    private final CheckBox alwaysSaveHistory_;
