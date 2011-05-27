@@ -16,6 +16,7 @@
 package com.google.gwt.sample.expenses.server.domain;
 
 import com.google.appengine.api.datastore.Cursor;
+import com.google.gwt.sample.expenses.server.DataGenerationServiceImpl;
 
 import org.datanucleus.store.appengine.query.JPACursorHelper;
 
@@ -69,9 +70,20 @@ public class Report {
       Query query = queryReportsBySearch(em, employeeId, department, startsWith,
           null, true);
       if (query == null) {
+        /*
+         * Demo hack around app engine's 1000 record cap: a request for "all"
+         * records comes in as startsWith=="", which returns null. Report how
+         * many we prepopulated the thing with. A real app would have to
+         * maintain its own count in the datastore and return that.
+         */
         return REPORT_COUNT;
       }
       long count = ((Number) query.getSingleResult()).longValue();
+      // Demo hack: if there are no records, make some up.
+      if (count == 0) {
+        new DataGenerationServiceImpl().generate(200);
+        count = ((Number) query.getSingleResult()).longValue();
+      }
       return count;
     } finally {
       em.close();

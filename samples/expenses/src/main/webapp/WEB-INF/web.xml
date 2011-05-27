@@ -27,7 +27,7 @@
 
   <servlet>
     <servlet-name>requestFactoryServlet</servlet-name>
-    <Servlet-class>com.google.web.bindery.requestfactory.server.RequestFactoryServlet</servlet-class>
+    <servlet-class>com.google.web.bindery.requestfactory.server.RequestFactoryServlet</servlet-class>
   </servlet>
 
   <servlet-mapping>

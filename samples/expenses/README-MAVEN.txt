@@ -1,8 +1,10 @@
 -- Option A: Import your project into Eclipse (recommended) --
 
-If you use Eclipse, you can simply import the generated project into
-Eclipse. We've tested against Eclipse 3.5. Later versions will likely
-also work, earlier versions may not.
+If you use Eclipse for Jave EE, you can simply import the generated
+project into Eclipse. We've tested against Eclipse 3.5. Later versions
+will likely also work, earlier versions may not. (Please note that
+this demo requires WTP, which is pre-installed with the Jave EE
+versions of Eclipse.)
 
 Eclipse users will need to install the following plugin components:
 - Google Plugin for Eclipse (instructions at http://code.google.com/eclipse/)
@@ -40,6 +42,19 @@ To launch your web app in GWT development mode
   that Eclipse defaults to.
 
   You can now use the built-in debugger to debug your web app in development mode.
+
+GWT developers (those who build GWT from source) may add their
+gwt-user project to top of this project's class path in order to use
+the built-from-source version of GWT instead of the version specified
+in the POM.
+
+  Select the project in the Project explorer and select File > Properties
+
+  Select Java Build Path and click the Projects tab
+
+  Click Add..., select gwt-user, and click OK
+
+  Click Order and Export and move gwt-user above Maven Dependencies
 
 -- Option B: Build from the command line with Maven --
 
