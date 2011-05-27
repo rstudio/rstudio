@@ -50,101 +50,25 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
         return code;
       }
     });
+
     addSnippetImport("test.SplitPoint3");
-
-    expectError("Line 15: Multiple runAsync calls are named test.SplitPoint1");
-    expectError("One call is in test.SplitPoint1.doStuff (/mock/test/SplitPoint1.java:4)");
-    expectError("One call is in test.SplitPoint3.doStuff (/mock/test/SplitPoint3.java:4)");
-
+    expectError("Line 8: Multiple runAsync calls are named test.SplitPoint1");
+    expectError("One call is at '/mock/test/SplitPoint1.java:5'");
+    expectError("One call is at '/mock/test/SplitPoint3.java:5'");
     testSnippet("RunAsyncCode.runAsyncCode(SplitPoint1.class);");
   }
 
   public void testNonClassLiteral() {
-    expectError("Line 14: Only a class literal may be passed to runAsyncCode");
+    expectError("Line 7: Only a class literal may be passed to runAsyncCode");
     testSnippet("RunAsyncCode.runAsyncCode(new SplitPoint1().getClass());");
   }
 
   public void testNonExistentSplitPoint() {
-    expectError("Line 14: No runAsync call is named java.lang.String");
+    expectError("Line 7: No runAsync call is named java.lang.String");
     testSnippet("RunAsyncCode.runAsyncCode(String.class);");
   }
 
-  private void addAsyncLoader(final int sp) {
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.asyncloaders.AsyncLoader"
-        + sp) {
-      @Override
-      public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
-        code.append("package com.google.gwt.lang.asyncloaders;\n");
-        code.append("import com.google.gwt.core.client.RunAsyncCallback;");
-        code.append("public class AsyncLoader" + sp + " {\n");
-        code.append("  public static void onLoad() { }\n");
-        code.append("  public static void runAsync(RunAsyncCallback cb) { }\n");
-        code.append("  public static void runCallbacks() { }\n");
-        code.append("}\n");
-        return code;
-      }
-    });
-
-    addSnippetImport("com.google.gwt.lang.asyncloaders.AsyncLoader" + sp);
-
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.asyncloaders.AsyncLoader"
-        + sp + FragmentLoaderCreator.CALLBACK_LIST_SUFFIX) {
-      @Override
-      public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
-        code.append("package com.google.gwt.lang.asyncloaders;\n");
-        code.append("import com.google.gwt.core.client.RunAsyncCallback;");
-        code.append("public class AsyncLoader" + sp + FragmentLoaderCreator.CALLBACK_LIST_SUFFIX
-            + "{\n");
-        code.append("  RunAsyncCallback callback;\n");
-        code.append("}\n");
-        return code;
-      }
-    });
-
-    addSnippetImport("com.google.gwt.lang.asyncloaders.AsyncLoader" + sp
-        + FragmentLoaderCreator.CALLBACK_LIST_SUFFIX);
-  }
-
   private void addCommonTestCode() {
-    addAsyncLoader(1);
-    addAsyncLoader(2);
-    addAsyncLoader(3);
-
-    sourceOracle.addOrReplace(new MockJavaResource(
-        "com.google.gwt.core.client.impl.AsyncFragmentLoader") {
-      @Override
-      public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
-        code.append("package com.google.gwt.core.client.impl;\n");
-        code.append("public class AsyncFragmentLoader {\n");
-        code.append("  private static AsyncFragmentLoader BROWSER_LOADER =\n");
-        code.append("    makeBrowserLoader(1, new int[] {});\n");
-        code.append("  private static AsyncFragmentLoader makeBrowserLoader(\n");
-        code.append("    int numSp, int[] initial) {\n");
-        code.append("    return null;\n");
-        code.append("  }\n");
-        code.append("}\n");
-        return code;
-      }
-    });
-    addSnippetImport("com.google.gwt.core.client.impl.AsyncFragmentLoader");
-
-    sourceOracle.addOrReplace(new MockJavaResource(
-        "com.google.gwt.core.client.prefetch.RunAsyncCode") {
-      @Override
-      public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
-        code.append("package com.google.gwt.core.client.prefetch;\n");
-        code.append("public class RunAsyncCode {\n");
-        code.append("  public static RunAsyncCode runAsyncCode(Class<?> splitPoint) {\n");
-        code.append("    return null;\n");
-        code.append("  }");
-        code.append("}");
-        return code;
-      }
-    });
     addSnippetImport("com.google.gwt.core.client.prefetch.RunAsyncCode");
 
     sourceOracle.addOrReplace(new MockJavaResource("test.SplitPoint1") {
@@ -187,7 +111,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
   private void initializeTestLoggerBuilder() {
     testLoggerBuilder = new UnitTestTreeLogger.Builder();
     testLoggerBuilder.setLowestLogLevel(TreeLogger.ERROR);
-    expectError("Error in '/mock/test/EntryPoint.java'");
+    expectError("Errors in '/mock/test/EntryPoint.java'");
   }
 
   private void testSnippet(String codeSnippet) {

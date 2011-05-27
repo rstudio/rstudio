@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
-import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -58,6 +57,10 @@ public class MethodCallTightener {
       }
 
       JMethod method = x.getTarget();
+      if (method == runAsyncOnsuccess) {
+        // Do not defeat code splitting.
+        return;
+      }
       if (instanceType == method.getEnclosingType()) {
         // Cannot tighten.
         return;
@@ -99,27 +102,17 @@ public class MethodCallTightener {
     return stats;
   }
 
-  /**
-   * Tighten method calls that occur within <code>node</code> and its children.
-   */
-  public static void exec(JProgram program, JNode node) {
-    new MethodCallTightener(program).execImpl(node);
-  }
-
   private final JProgram program;
+  private final JMethod runAsyncOnsuccess;
 
   private MethodCallTightener(JProgram program) {
     this.program = program;
+    runAsyncOnsuccess = program.getIndexedMethod("RunAsyncCallback.onSuccess");
   }
 
   private OptimizerStats execImpl() {
     MethodCallTighteningVisitor tightener = new MethodCallTighteningVisitor();
     tightener.accept(program);
     return new OptimizerStats(NAME).recordModified(tightener.getNumMods());
-  }
-
-  private void execImpl(JNode node) {
-    MethodCallTighteningVisitor tightener = new MethodCallTighteningVisitor();
-    tightener.accept(node);
   }
 }
