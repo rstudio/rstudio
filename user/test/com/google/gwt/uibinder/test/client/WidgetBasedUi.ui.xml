@@ -54,7 +54,7 @@
   xmlns:legacyValuesForBeans='urn:with:com.google.gwt.uibinder.test.client.WidgetBasedUi.FakeBundle2'
   xmlns:legacyValuesForHtml='urn:with:com.google.gwt.uibinder.test.client.WidgetBasedUi.FakeBundle3'
 
-  ui:baseInterface="com.google.gwt.uibinder.test.client.MyMessages"
+  ui:baseMessagesInterface="com.google.gwt.uibinder.test.client.MyMessages"
   ui:defaultLocale="en_US"
   ui:generateKeys="com.google.gwt.i18n.rebind.keygen.MD5KeyGenerator"
   ui:generateFormat="com.google.gwt.i18n.rebind.format.PropertiesFormat"

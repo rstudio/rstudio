@@ -141,10 +141,27 @@ public class MessagesWriter {
   /**
    * Consume an m:blah attribute on a non-message element, e.g.
    * {@code <span m:ph="fnord"/>}
+   * 
+   * @param attName name of the attribute (to be prefixed with "msgprefix:")
+   * @param elem element to search
+   * @return attribute value, or an empty string if not found
    */
   public String consumeMessageAttribute(String attName, XMLElement elem) {
+    return consumeMessageAttribute(attName, elem, "");
+  }
+
+  /**
+   * Consume an m:blah attribute on a non-message element, e.g.
+   * {@code <span m:ph="fnord"/>}
+   * 
+   * @param attName name of the attribute (to be prefixed with "msgprefix:")
+   * @param elem element to search
+   * @param defaultValue default value to return if the attribute is not present
+   * @return attribute value, or {@code defaultValue} if not found
+   */
+  public String consumeMessageAttribute(String attName, XMLElement elem, String defaultValue) {
     String fullAttName = getMessagesPrefix() + ":" + attName;
-    return elem.consumeRawAttribute(fullAttName, "");
+    return elem.consumeRawAttribute(fullAttName, defaultValue);
   }
 
   /**
@@ -166,7 +183,14 @@ public class MessagesWriter {
     String prefix = elem.lookupPrefix(getMessagesUri());
     if (prefix != null) {
       messagesPrefix = prefix;
-      String baseInterfaceAttr = elem.consumeRawAttribute(getMessagesPrefix() + ":baseInterface");
+      String baseInterfaceAttr = consumeMessageAttribute("baseMessagesInterface", elem, null);
+      if (baseInterfaceAttr == null) {
+        // TODO(jat): temporary compatibility, remove next week 
+        baseInterfaceAttr = consumeMessageAttribute("baseInterface", elem, null);
+        if (baseInterfaceAttr != null) {
+          logger.warn(elem, "baseInterface is deprecated, use baseMessagesInterface instead");
+        }
+      }
       if (baseInterfaceAttr != null) {
         JClassType baseInterfaceType = oracle.findType(baseInterfaceAttr);
         if (baseInterfaceType == null) {
@@ -364,7 +388,7 @@ public class MessagesWriter {
 
   private String[] getMessageAttributeStringArray(String attName,
       XMLElement elem) {
-    String value = consumeMessageAttribute(attName, elem);
+    String value = consumeMessageAttribute(attName, elem, null);
     if (value == null) {
       return EMPTY_ARRAY;
     }
