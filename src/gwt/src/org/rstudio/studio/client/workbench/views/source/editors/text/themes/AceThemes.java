@@ -57,17 +57,11 @@ public class AceThemes
 //      addTheme("Pastel on Dark", res.pastel_on_dark());
 //      addTheme("Vibrant Ink", res.vibrant_ink());
 
-      eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
+      prefs.get().theme().bind(new CommandWithArg<String>()
       {
-         public void onSessionInit(SessionInitEvent e)
+         public void execute(String theme)
          {
-            prefs.get().theme().bind(new CommandWithArg<String>()
-            {
-               public void execute(String theme)
-               {
-                  applyTheme(theme);
-               }
-            });
+            applyTheme(theme);
          }
       });
    }

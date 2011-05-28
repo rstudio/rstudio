@@ -98,7 +98,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(DefaultCRANMirror.class).in(Singleton.class);
       bind(ConsoleDispatcher.class).in(Singleton.class);
       bind(ChooseFile.class).asEagerSingleton();
-      bind(AceThemes.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;

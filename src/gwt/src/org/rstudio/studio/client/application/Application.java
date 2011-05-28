@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 @Singleton
 public class Application implements ApplicationEventHandlers,
@@ -72,7 +73,8 @@ public class Application implements ApplicationEventHandlers,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
                       Provider<ClientStateUpdater> clientStateUpdater,
-                      Provider<ApplicationClientInit> pClientInit)
+                      Provider<ApplicationClientInit> pClientInit,
+                      Provider<AceThemes> pAceThemes)
    {
       // save references
       view_ = view ;
@@ -86,6 +88,7 @@ public class Application implements ApplicationEventHandlers,
       workbench_ = workbench;
       eventBusProvider_ = eventBusProvider;
       pClientInit_ = pClientInit;
+      pAceThemes_ = pAceThemes;
 
       // bind to commands
       binder.bind(commands_, this);
@@ -553,6 +556,8 @@ public class Application implements ApplicationEventHandlers,
    
    private void initializeWorkbench()
    {
+      pAceThemes_.get();
+
       // subscribe to ClientDisconnected event (wait to do this until here
       // because there were spurious ClientDisconnected events occuring
       // after a session interrupt sequence. we couldn't figure out why,
@@ -601,6 +606,7 @@ public class Application implements ApplicationEventHandlers,
    private final Provider<Workbench> workbench_;
    private final Provider<EventBus> eventBusProvider_;
    private final Provider<ApplicationClientInit> pClientInit_;
+   private final Provider<AceThemes> pAceThemes_;
 
    private ClientStateUpdater clientStateUpdaterInstance_;
    
