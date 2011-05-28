@@ -8,14 +8,14 @@ cd ace
 git checkout master
 
 # Point this to the upstream commit that we've tested
-git reset --hard b17382fd171523fb0026
+git reset --hard 832707a82b3743243dfe
 
 git submodule update --init --recursive
 
 # Merge all the bugfix branches
 git merge \
     origin/bugfix-webkit-paste2 \
-    origin/bugfix-updatefontsize \
+    origin/bugfix-updatefontsize2 \
     origin/bugfix-ctrl-backspace \
     origin/bugfix-active-line-back \
     origin/bugfix-eclipse-print-margin \
