@@ -1,5 +1,5 @@
 /*
- * HistoryPreferencesPane.java
+ * PackagesPreferencesPane.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,6 +10,8 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+/*
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -133,3 +135,4 @@ public class PackagesPreferencesPane extends PreferencesPane
    private TextBoxWithButton cranMirrorTextBox_;
    private TextBoxWithButton bioconductorMirrorTextBox_;
 }
+*/

@@ -21,14 +21,18 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
+import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
 /**
@@ -40,7 +44,8 @@ public class GeneralPreferencesPane extends PreferencesPane
    @Inject
    public GeneralPreferencesPane(PreferencesDialogResources res,
                                  RemoteFileSystemContext fsContext,
-                                 FileDialogs fileDialogs)
+                                 FileDialogs fileDialogs,
+                                 final DefaultCRANMirror defaultCRANMirror)
    {
       res_ = res;
       fsContext_ = fsContext;
@@ -125,7 +130,27 @@ public class GeneralPreferencesPane extends PreferencesPane
       removeHistoryDuplicates_.addStyleName(res.styles().extraSpaced());
       add(removeHistoryDuplicates_);
 
-    
+      cranMirrorTextBox_ = new TextBoxWithButton(
+            "CRAN mirror:",
+            "Change...",
+            new ClickHandler()
+            {
+               public void onClick(ClickEvent event)
+               {
+                  defaultCRANMirror.choose(new OperationWithInput<CRANMirror>(){
+                     @Override
+                     public void execute(CRANMirror cranMirror)
+                     {
+                        cranMirror_ = cranMirror;
+                        cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+                     }     
+                  });
+                 
+               }
+            });
+      cranMirrorTextBox_.setWidth("90%");
+      cranMirrorTextBox_.setText("");
+      add(cranMirrorTextBox_);
       
      
       saveWorkspace_.setEnabled(false);
@@ -134,6 +159,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       alwaysSaveHistory_.setEnabled(false);
       useGlobalHistory_.setEnabled(false);
       removeHistoryDuplicates_.setEnabled(false);
+      cranMirrorTextBox_.setEnabled(false);
    }
    
    @Override
@@ -175,6 +201,15 @@ public class GeneralPreferencesPane extends PreferencesPane
       alwaysSaveHistory_.setValue(historyPrefs.getAlwaysSave());
       useGlobalHistory_.setValue(historyPrefs.getUseGlobal());
       removeHistoryDuplicates_.setValue(historyPrefs.getRemoveDuplicates());
+      
+      // packages prefs
+      PackagesPrefs packagesPrefs = rPrefs.getPackagesPrefs();
+      cranMirrorTextBox_.setEnabled(true);
+      if (!packagesPrefs.getCRANMirror().isEmpty())
+      {
+         cranMirror_ = packagesPrefs.getCRANMirror();
+         cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+      }     
    }
    
 
@@ -218,6 +253,10 @@ public class GeneralPreferencesPane extends PreferencesPane
                                           useGlobalHistory_.getValue(),
                                           removeHistoryDuplicates_.getValue());
          rPrefs.setHistoryPrefs(historyPrefs);
+         
+         // set packages prefs
+         PackagesPrefs packagesPrefs = PackagesPrefs.create(cranMirror_, null);
+         rPrefs.setPackagesPrefs(packagesPrefs);
       }
    }
 
@@ -237,4 +276,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final CheckBox alwaysSaveHistory_;
    private final CheckBox useGlobalHistory_;
    private final CheckBox removeHistoryDuplicates_;
+   private CRANMirror cranMirror_ = CRANMirror.empty();
+   private TextBoxWithButton cranMirrorTextBox_;
 }

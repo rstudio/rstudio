@@ -156,16 +156,25 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().endUpdate();
 
    // read and set packages prefs
-   json::Object cranMirrorJson, bioconductorMirrorJson;
+   json::Object cranMirrorJson;
    error = json::readObject(packagesPrefs,
-                            "cran_mirror", &cranMirrorJson,
+                            "cran_mirror", &cranMirrorJson);
+   /* see note on bioconductor below
                             "bioconductor_mirror", &bioconductorMirrorJson);
+   */
    if (error)
        return error;
    userSettings().beginUpdate();
    userSettings().setCRANMirror(toCRANMirror(cranMirrorJson));
+
+   // NOTE: currently there is no UI for bioconductor mirror so we
+   // don't want to set it (would have side effect of overwriting
+   // user-specified BioC_Mirror option)
+   /*
    userSettings().setBioconductorMirror(toBioconductorMirror(
                                                 bioconductorMirrorJson));
+   */
+
    userSettings().endUpdate();
 
    // set ui prefs
