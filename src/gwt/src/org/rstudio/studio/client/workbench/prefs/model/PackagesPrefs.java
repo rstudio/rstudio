@@ -12,7 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
-import org.rstudio.studio.client.common.cran.model.CRANMirror;
+import org.rstudio.studio.client.common.mirrors.model.BioconductorMirror;
+import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 
 import com.google.gwt.core.client.JavaScriptObject;
 

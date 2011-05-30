@@ -32,7 +32,7 @@ import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.HttpLogEntry;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.Completions;
-import org.rstudio.studio.client.common.cran.model.CRANMirror;
+import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;

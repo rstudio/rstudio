@@ -38,7 +38,7 @@ import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPa
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
-import org.rstudio.studio.client.common.cran.ChooseCRANMirrorDialog;
+import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
@@ -147,7 +147,7 @@ public class RStudio implements EntryPoint
       PreferencesDialog.ensureStylesInjected();
       LinkColumn.ensureStylesInjected();
       CheckForUpdatesDialog.ensureStylesInjected();
-      ChooseCRANMirrorDialog.ensureStylesInjected();
+      ChooseMirrorDialog.ensureStylesInjected();
       ResizeGripper.ensureStylesInjected();
 
       StyleInjector.inject(

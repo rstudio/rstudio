@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.cran;
+package org.rstudio.studio.client.common.mirrors;
 
 import java.util.ArrayList;
 
@@ -21,11 +21,11 @@ import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.cran.model.CRANMirror;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -34,20 +34,28 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
+public class ChooseMirrorDialog<T extends JavaScriptObject> extends ModalDialog<T>
 {
-   public ChooseCRANMirrorDialog(GlobalDisplay globalDisplay,
-                                 ServerDataSource<JsArray<CRANMirror>> mirrorDS,
-                                 OperationWithInput<CRANMirror> inputOperation)
+   public interface Source<T extends JavaScriptObject> 
+                    extends ServerDataSource<JsArray<T>>
    {
-      super("Choose CRAN Mirror", inputOperation);
+      String getType();
+      String getLabel(T mirror);
+      String getURL(T mirror);
+   }
+   
+   public ChooseMirrorDialog(GlobalDisplay globalDisplay,
+                             Source<T> mirrorSource,
+                             OperationWithInput<T> inputOperation)
+   {
+      super("Choose " + mirrorSource.getType() + " Mirror", inputOperation);
       globalDisplay_ = globalDisplay;
-      mirrorDS_ = mirrorDS;
+      mirrorSource_ = mirrorSource;
       enableOkButton(false);
    }
 
    @Override
-   protected CRANMirror collectInput()
+   protected T collectInput()
    {
       if (listBox_ != null && listBox_.getSelectedIndex() >= 0)
       {
@@ -60,7 +68,7 @@ public class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
    }
 
    @Override
-   protected boolean validate(CRANMirror input)
+   protected boolean validate(T input)
    {
       if (input == null)
       {
@@ -86,13 +94,13 @@ public class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
       panel.showProgress(200);
       
       // query data source for packages
-      mirrorDS_.requestData(new SimpleRequestCallback<JsArray<CRANMirror>>() {
+      mirrorSource_.requestData(new SimpleRequestCallback<JsArray<T>>() {
 
          @Override 
-         public void onResponseReceived(JsArray<CRANMirror> mirrors)
+         public void onResponseReceived(JsArray<T> mirrors)
          {   
             // keep internal list of mirrors 
-            mirrors_ = new ArrayList<CRANMirror>(mirrors.length());
+            mirrors_ = new ArrayList<T>(mirrors.length());
             
             // create list box and select default item
             listBox_ = new ListBox(false);
@@ -102,10 +110,10 @@ public class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
             {
                for(int i=0; i<mirrors.length(); i++)
                {
-                  CRANMirror mirror = mirrors.get(i);
+                  T mirror = mirrors.get(i);
                   mirrors_.add(mirror);
-                  String item = mirror.getName() + " - " + mirror.getHost();
-                  String value = mirror.getURL();
+                  String item = mirrorSource_.getLabel(mirror);
+                  String value = mirrorSource_.getURL(mirror);
                   listBox_.addItem(item, value);
                }
             }
@@ -150,7 +158,7 @@ public class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
   
    static interface Resources extends ClientBundle
    {
-      @Source("ChooseCRANMirrorDialog.css")
+      @Source("ChooseMirrorDialog.css")
       Styles styles();
    }
    
@@ -161,8 +169,8 @@ public class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
    }
    
    private final GlobalDisplay globalDisplay_ ;
-   private final ServerDataSource<JsArray<CRANMirror>> mirrorDS_;
-   private ArrayList<CRANMirror> mirrors_ = null;
+   private final Source<T> mirrorSource_;
+   private ArrayList<T> mirrors_ = null;
    private ListBox listBox_ = null;
 
 }

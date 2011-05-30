@@ -18,9 +18,9 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.common.cran.DefaultCRANMirror;
-import org.rstudio.studio.client.common.cran.model.CRANMirror;
-import org.rstudio.studio.client.workbench.prefs.model.BioconductorMirror;
+import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
+import org.rstudio.studio.client.common.mirrors.model.BioconductorMirror;
+import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
@@ -33,7 +33,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       res_ = res;
 
       cranMirrorTextBox_ = new TextBoxWithButton(
-            "Default CRAN mirror:",
+            "CRAN mirror:",
             "Change...",
             new ClickHandler()
             {
@@ -52,10 +52,25 @@ public class PackagesPreferencesPane extends PreferencesPane
             });
       cranMirrorTextBox_.setWidth("90%");
       cranMirrorTextBox_.setText("");
-      cranMirrorTextBox_.addStyleName(res.styles().cranMirrorTextBox());
-      cranMirrorTextBox_.addStyleName(res.styles().extraSpaced());
       add(cranMirrorTextBox_);
       cranMirrorTextBox_.setEnabled(false);
+      
+      
+      bioconductorMirrorTextBox_ = new TextBoxWithButton(
+            "Bioconductor mirror:",
+            "Change...",
+            new ClickHandler() {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  // TODO Auto-generated method stub
+                  
+               }
+            });
+      bioconductorMirrorTextBox_.setWidth("90%");
+      bioconductorMirrorTextBox_.setText("");
+      add(bioconductorMirrorTextBox_);
+      bioconductorMirrorTextBox_.setEnabled(false);
    }
 
    @Override
@@ -71,7 +86,13 @@ public class PackagesPreferencesPane extends PreferencesPane
          cranMirrorTextBox_.setText(cranMirror_.getDisplay());
       }
       
+      
+      bioconductorMirrorTextBox_.setEnabled(true);
+      
       bioconductorMirror_ = prefs.getBioconductorMirror();
+      
+      
+      
    }
 
    @Override
@@ -110,4 +131,5 @@ public class PackagesPreferencesPane extends PreferencesPane
    private CRANMirror cranMirror_ = CRANMirror.empty();
    private BioconductorMirror bioconductorMirror_ = null;
    private TextBoxWithButton cranMirrorTextBox_;
+   private TextBoxWithButton bioconductorMirrorTextBox_;
 }

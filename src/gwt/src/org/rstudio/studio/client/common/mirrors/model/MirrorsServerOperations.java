@@ -10,14 +10,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.cran.model;
+package org.rstudio.studio.client.common.mirrors.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JsArray;
 
-public interface CRANServerOperations
+public interface MirrorsServerOperations
 {
    void setCRANMirror(CRANMirror mirror,
                       ServerRequestCallback<Void> requestCallback);

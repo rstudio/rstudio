@@ -10,14 +10,13 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.cran;
+package org.rstudio.studio.client.common.mirrors;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.cran.model.CRANMirror;
-import org.rstudio.studio.client.common.cran.model.CRANServerOperations;
-import org.rstudio.studio.client.server.ServerDataSource;
+import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
@@ -30,7 +29,7 @@ import com.google.inject.Singleton;
 public class DefaultCRANMirror 
 {
    @Inject
-   public DefaultCRANMirror(CRANServerOperations server,
+   public DefaultCRANMirror(MirrorsServerOperations server,
                             GlobalDisplay globalDisplay)
    {
       server_ = server;
@@ -39,15 +38,15 @@ public class DefaultCRANMirror
    
    public void choose(OperationWithInput<CRANMirror> onChosen)
    {
-      new ChooseCRANMirrorDialog(globalDisplay_, 
-                                 mirrorDS_, 
-                                 onChosen).showModal();
+      new ChooseMirrorDialog<CRANMirror>(globalDisplay_, 
+                                         mirrorDS_, 
+                                         onChosen).showModal();
    }
    
    public void configure(final Command onConfigured)
    {
       // show dialog
-      new ChooseCRANMirrorDialog(
+      new ChooseMirrorDialog<CRANMirror>(
          globalDisplay_,  
          mirrorDS_,
          new OperationWithInput<CRANMirror>() {
@@ -68,13 +67,31 @@ public class DefaultCRANMirror
            }).showModal();
    }
    
-   private final CRANServerOperations server_;
+   private final MirrorsServerOperations server_;
    
    private final GlobalDisplay globalDisplay_;
    
-   private final ServerDataSource<JsArray<CRANMirror>> mirrorDS_ = 
-      new ServerDataSource<JsArray<CRANMirror>>()
-      {
+   private final ChooseMirrorDialog.Source<CRANMirror> mirrorDS_ = 
+      new ChooseMirrorDialog.Source<CRANMirror>() {
+         
+         @Override
+         public String getType()
+         {
+            return "CRAN";
+         }
+
+         @Override
+         public String getLabel(CRANMirror mirror)
+         {
+            return mirror.getName() + " - " + mirror.getHost();
+         }
+
+         @Override
+         public String getURL(CRANMirror mirror)
+         {
+            return mirror.getURL();
+         }
+
          @Override
          public void requestData(
                ServerRequestCallback<JsArray<CRANMirror>> requestCallback)

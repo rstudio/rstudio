@@ -25,8 +25,8 @@ import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.DefaultGlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
-import org.rstudio.studio.client.common.cran.DefaultCRANMirror;
-import org.rstudio.studio.client.common.cran.model.CRANServerOperations;
+import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
+import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
@@ -149,7 +149,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(PackagesServerOperations.class).to(RemoteServer.class) ;
       bind(HelpServerOperations.class).to(RemoteServer.class) ;
       bind(EditServerOperations.class).to(RemoteServer.class) ;
-      bind(CRANServerOperations.class).to(RemoteServer.class);
+      bind(MirrorsServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 
