@@ -20,8 +20,6 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import java.util.ArrayList;
