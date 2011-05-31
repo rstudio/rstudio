@@ -16,7 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.text.shared.SafeHtmlRenderer;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 /**
  * An interface for UI elements that can be built by first generating a piece
@@ -26,7 +27,25 @@ import com.google.gwt.text.shared.SafeHtmlRenderer;
  * API is likely to change. Very likely. In fact, it will definitely change.
  * You've been warned.
  */
-public interface IsRenderable extends SafeHtmlRenderer<String> {
+public interface IsRenderable {
+
+  /**
+   * Perform any initialization needed when the widget is not attached to
+   * the document. Assumed to be called after {@link #wrapElement}.
+   */
+  void performDetachedInitialization();
+
+  /**
+   * @see #render(String, SafeHtmlBuilder)
+   * TODO(rdcastro): Remove this once UiBinder doesn't rely on it anymore.
+   */
+  SafeHtml render(String id);
+
+  /**
+   * Tells this object to render itself as HTML and append it to the given builder.
+   * The root element of the HTML must be identifies by the given id.
+   */
+  void render(String id, SafeHtmlBuilder builder);
 
   /**
    * Replace the previous contents of the receiver with the given element,
@@ -34,10 +53,4 @@ public interface IsRenderable extends SafeHtmlRenderer<String> {
    * Assumes the element is attached to the document.
    */
   void wrapElement(Element element);
-
-  /**
-   * Perform any initialization needed when the widget is not attached to
-   * the document. Assumed to be called after {@link #wrapElement}.
-   */
-  void performDetachedInitialization();
 }
