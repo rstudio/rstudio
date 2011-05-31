@@ -29,6 +29,38 @@ namespace r_util {
 
 namespace {
 
+FilePath scanForRScript(const std::vector<std::string>& rScriptPaths,
+                        std::string* pErrMsg)
+{
+   // iterate over paths
+   for (std::vector<std::string>::const_iterator it = rScriptPaths.begin();
+        it != rScriptPaths.end();
+        ++it)
+   {
+      FilePath rScriptPath(*it);
+      if (rScriptPath.exists())
+      {
+         // verify that the alias points to a real version of R
+         Error error = core::system::realPath(*it, &rScriptPath);
+         if (!error)
+         {
+            return rScriptPath;
+         }
+         else
+         {
+            error.addProperty("script-path", *it);
+            LOG_ERROR(error);
+            continue;
+         }
+      }
+   }
+
+   // didn't find it
+   *pErrMsg = "Unable to locate R binary by scanning standard locations";
+   LOG_ERROR_MESSAGE(*pErrMsg);
+   return FilePath();
+}
+
 // MacOS X Specific
 #ifdef __APPLE__
 
@@ -40,6 +72,58 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
                               const std::string& rHome)
 {
    return std::string();
+}
+
+FilePath systemDefaultRScript(std::string* pErrMsg)
+{
+   // define potential paths (use same order as in conventional osx PATH)
+   std::vector<std::string> rScriptPaths;
+   rScriptPaths.push_back("/opt/local/bin/R");
+   rScriptPaths.push_back("/usr/bin/R");
+   rScriptPaths.push_back("/usr/local/bin/R");
+   return scanForRScript(rScriptPaths, pErrMsg);
+}
+
+bool getRHomeAndLibPath(const FilePath& rScriptPath,
+                        const config_utils::Variables& scriptVars,
+                        std::string* pRHome,
+                        std::string* pRLibPath,
+                        std::string* pErrMsg)
+{
+   config_utils::Variables::const_iterator it = scriptVars.find("R_HOME_DIR");
+   if (it != scriptVars.end())
+   {
+      // get R home
+      *pRHome = it->second;
+
+      // get R lib path (probe subdiretories if necessary)
+      FilePath libPath = FilePath(*pRHome).complete("lib");
+
+      // check for dylib in lib and lib/x86_64
+      if (libPath.complete(kLibRFileName).exists())
+      {
+         *pRLibPath = libPath.absolutePath();
+         return true;
+      }
+      else if (libPath.complete("x86_64/" kLibRFileName).exists())
+      {
+         *pRLibPath = libPath.complete("x86_64").absolutePath();
+         return true;
+      }
+      else
+      {
+         *pErrMsg = "Unable to find " kLibRFileName " in expected locations"
+                    "within R Home directory " + *pRHome;
+         LOG_ERROR_MESSAGE(*pErrMsg);
+         return false;
+      }
+   }
+   else
+   {
+      *pErrMsg = "Unable to find R_HOME_DIR in " + rScriptPath.absolutePath();
+      LOG_ERROR_MESSAGE(*pErrMsg);
+      return false;
+   }
 }
 
 // Linux specific
@@ -70,7 +154,68 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
    return libraryPaths;
 }
 
+FilePath systemDefaultRScript(std::string* pErrMsg)
+{
+   // ask system which R to use
+   std::string whichOutput;
+   Error error = core::system::captureCommand("which R", &whichOutput);
+   if (error)
+   {
+      *pErrMsg = "Error calling which R: " + error.summary();
+      LOG_ERROR_MESSAGE(*pErrMsg);
+      return FilePath();
+   }
+   boost::algorithm::trim(whichOutput);
+
+   // if we got no output then log and return false
+   if (whichOutput.empty())
+   {
+      *pErrMsg = "Unable to find an installation of R on the system "
+                 "(which R didn't return valid output)";
+      LOG_ERROR_MESSAGE(*pErrMsg);
+      return FilePath();
+   }
+   else
+   {
+      return FilePath(whichOutput);
+   }
+}
+
+bool getRHomeAndLibPath(const FilePath& rScriptPath,
+                        const config_utils::Variables& scriptVars,
+                        std::string* pRHome,
+                        std::string* pRLibPath,
+                        std::string* pErrMsg)
+{
+   // eliminate a potentially conflicting R_HOME before calling R RHOME"
+   // (the normal semantics of invoking the R script are that it overwrites
+   // R_HOME and prints a warning -- this warning is co-mingled with the
+   // output of "R RHOME" and messes up our parsing)
+   core::system::setenv("R_HOME", "");
+
+   // run R script to detect R home
+   std::string rHomeOutput;
+   std::string command = rScriptPath.absolutePath() + " RHOME";
+   Error error = core::system::captureCommand(command, &rHomeOutput);
+   if (error)
+   {
+      *pErrMsg = "Error running R (" + rScriptPath.absolutePath() + "): " +
+                 error.summary();
+      LOG_ERROR_MESSAGE(*pErrMsg);
+      return false;
+   }
+   else
+   {
+      boost::algorithm::trim(rHomeOutput);
+      *pRHome = rHomeOutput;
+      *pRLibPath = FilePath(*pRHome).complete("lib").absolutePath();
+      return true;
+   }
+}
+
+
 #endif
+
 
 
 bool validateRScriptPath(const std::string& rScriptPath,
@@ -81,7 +226,6 @@ bool validateRScriptPath(const std::string& rScriptPath,
    Error error = core::system::realPath(rScriptPath, &rBinaryPath);
    if (error)
    {
-      LOG_ERROR(error);
       *pErrMsg = "Unable to determine real path of R script " +
                  rScriptPath + " (" + error.summary() + ")";
       LOG_ERROR_MESSAGE(*pErrMsg);
@@ -110,35 +254,6 @@ bool validateRScriptPath(const std::string& rScriptPath,
    else
    {
       return true;
-   }
-}
-
-bool validateSystemDefaultRScript(std::string* pErrMsg)
-{
-   // ask system which R to use
-   std::string whichOutput;
-   Error error = core::system::captureCommand("which R", &whichOutput);
-   if (error)
-   {
-      LOG_ERROR(error);
-      *pErrMsg = "Error calling which R to determine system default "
-                 "R binary " + error.summary();
-      LOG_ERROR_MESSAGE(*pErrMsg);
-      return false;
-   }
-   boost::algorithm::trim(whichOutput);
-
-   // if we got no output then log and return false
-   if (whichOutput.empty())
-   {
-      *pErrMsg = "Unable to find an installation of R on the system "
-                 "(which R didn't return valid output)";
-      LOG_ERROR_MESSAGE(*pErrMsg);
-      return false;
-   }
-   else
-   {
-      return validateRScriptPath(whichOutput, pErrMsg);
    }
 }
 
@@ -213,12 +328,68 @@ bool validateREnvironment(const EnvironmentVars& vars,
    return true;
 }
 
+// resolve an R path which has been parsed from the R bash script. If
+// R is running out of the source directory (and was thus never installed)
+// then the values for R_DOC_DIR, etc. will contain unexpanded references
+// to the R_HOME_DIR, so we expand these if they are present.
+std::string resolveRPath(const FilePath& rHomePath, const std::string& path)
+{
+   std::string resolvedPath = path;
+   boost::algorithm::replace_all(resolvedPath,
+                                 "${R_HOME_DIR}",
+                                 rHomePath.absolutePath());
+   return resolvedPath;
+}
 
-bool detectRLocations(const std::string& rScriptPath,
-                      FilePath* pHomePath,
-                      FilePath* pLibPath,
-                      config_utils::Variables* pScriptVars,
-                      std::string* pErrMsg)
+bool detectRLocationsUsingScript(const FilePath& rScriptPath,
+                                 FilePath* pHomePath,
+                                 FilePath* pLibPath,
+                                 config_utils::Variables* pScriptVars,
+                                 std::string* pErrMsg)
+{
+   // scan R script for other locations and append them to our vars
+   Error error = config_utils::extractVariables(rScriptPath, pScriptVars);
+   if (error)
+   {
+      *pErrMsg = "Error reading R script (" + rScriptPath.absolutePath() +
+                 "), " + error.summary();
+      LOG_ERROR_MESSAGE(*pErrMsg);
+      return false;
+   }
+
+   // get r home path
+   std::string rHome, rLib;
+   if (!getRHomeAndLibPath(rScriptPath, *pScriptVars, &rHome, &rLib, pErrMsg))
+      return false;
+
+   // validate: error if we got no output
+   if (rHome.empty())
+   {
+      *pErrMsg = "Unable to determine R home directory";
+      LOG_ERROR_MESSAGE(*pErrMsg);
+      return false;
+   }
+
+   // validate: error if `R RHOME` yields file that doesn't exist
+   *pHomePath = FilePath(rHome);
+   if (!pHomePath->exists())
+   {
+      *pErrMsg = "R home path (" + rHome + ") not found";
+      LOG_ERROR_MESSAGE(*pErrMsg);
+      return false;
+   }
+
+   // get lib path
+   *pLibPath = FilePath(rLib);
+
+   return true;
+}
+
+bool detectRLocationsUsingR(const std::string& rScriptPath,
+                            FilePath* pHomePath,
+                            FilePath* pLibPath,
+                            config_utils::Variables* pScriptVars,
+                            std::string* pErrMsg)
 {
    // eliminate a potentially conflicting R_HOME before calling R
    // (the normal semantics of invoking the R script are that it overwrites
@@ -352,32 +523,55 @@ bool detectREnvironment(const FilePath& whichRScript,
    // otherwise use the system default (after validating it as well)
    else
    {
-      if (!validateSystemDefaultRScript(pErrMsg))
+      // get system default
+      FilePath sysRScript = systemDefaultRScript(pErrMsg);
+      if (sysRScript.empty())
+         return false;
+
+      if (!validateRScriptPath(sysRScript.absolutePath(), pErrMsg))
          return false;
 
       // set it
-      rScriptPath = "R";
+      rScriptPath = sysRScript.absolutePath();
    }
 
    // detect R locations
    FilePath rHomePath, rLibPath;
    config_utils::Variables scriptVars;
-   if (!detectRLocations(rScriptPath,
-                         &rHomePath,
-                         &rLibPath,
-                         &scriptVars,
-                         pErrMsg))
+#ifdef __APPLE__
+   if (!detectRLocationsUsingScript(FilePath(rScriptPath),
+                                    &rHomePath,
+                                    &rLibPath,
+                                    &scriptVars,
+                                    pErrMsg))
    {
       return false;
    }
+#else
+   if (!detectRLocationsUsingR(rScriptPath,
+                               &rHomePath,
+                               &rLibPath,
+                               &scriptVars,
+                               pErrMsg))
+   {
+      return false;
+   }
+#endif
+
 
    // set R home path
    pVars->push_back(std::make_pair("R_HOME", rHomePath.absolutePath()));
 
    // set other environment values
-   pVars->push_back(std::make_pair("R_SHARE_DIR", scriptVars["R_SHARE_DIR"]));
-   pVars->push_back(std::make_pair("R_INCLUDE_DIR", scriptVars["R_INCLUDE_DIR"]));
-   pVars->push_back(std::make_pair("R_DOC_DIR", scriptVars["R_DOC_DIR"]));
+   pVars->push_back(std::make_pair("R_SHARE_DIR",
+                                   resolveRPath(rHomePath,
+                                                scriptVars["R_SHARE_DIR"])));
+   pVars->push_back(std::make_pair("R_INCLUDE_DIR",
+                                   resolveRPath(rHomePath,
+                                                scriptVars["R_INCLUDE_DIR"])));
+   pVars->push_back(std::make_pair("R_DOC_DIR",
+                                   resolveRPath(rHomePath,
+                                                scriptVars["R_DOC_DIR"])));
 
    // determine library path (existing + r lib dir + r extra lib dirs)
    std::string libraryPath = core::system::getenv(kLibraryPathEnvVariable);
