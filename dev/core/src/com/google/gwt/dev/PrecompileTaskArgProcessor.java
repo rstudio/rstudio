@@ -23,6 +23,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableClassMetadata;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableGeneratingOnShards;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableRunAsync;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableSoycHtml;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerDumpSignatures;
@@ -58,6 +59,7 @@ class PrecompileTaskArgProcessor extends CompileArgProcessor {
     registerHandler(new ArgHandlerSoycDetailed(options));
     registerHandler(new ArgHandlerStrict(options));
     registerHandler(new ArgHandlerCompilerMetrics(options));
+    registerHandler(new ArgHandlerDisableSoycHtml(options));
   }
 
   @Override

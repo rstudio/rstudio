@@ -451,7 +451,8 @@ public class JavaToJavaScriptCompiler {
       }
       toReturn.addArtifacts(makeSoycArtifacts(logger, permutationId, jprogram, js, sizeBreakdowns,
           sourceInfoMaps, dependencies, jjsmap, obfuscateMap, unifiedAst.getModuleMetrics(),
-          unifiedAst.getPrecompilationMetrics(), compilationMetrics));
+          unifiedAst.getPrecompilationMetrics(), compilationMetrics, 
+          options.isSoycHtmlDisabled()));
 
       logTrackingStats(logger);
       if (logger.isLoggable(TreeLogger.TRACE)) {
@@ -1163,7 +1164,8 @@ public class JavaToJavaScriptCompiler {
       JavaToJavaScriptMap jjsmap, Map<JsName, String> obfuscateMap,
       ModuleMetricsArtifact moduleMetricsArtifact,
       PrecompilationMetricsArtifact precompilationMetricsArtifact,
-      CompilationMetricsArtifact compilationMetrics) throws IOException, UnableToCompleteException {
+      CompilationMetricsArtifact compilationMetrics, boolean htmlReportsDisabled) 
+      throws IOException, UnableToCompleteException {
     Memory.maybeDumpMemory("makeSoycArtifactsStart");
     List<SyntheticArtifact> soycArtifacts = new ArrayList<SyntheticArtifact>();
 
@@ -1213,7 +1215,7 @@ public class JavaToJavaScriptCompiler {
       soycArtifact.setVisibility(Visibility.Private);
     }
 
-    if (sizeBreakdowns != null) {
+    if (!htmlReportsDisabled && sizeBreakdowns != null) {
       Event generateCompileReport =
           SpeedTracerLogger.start(CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase",
               "generateCompileReport");
@@ -1245,7 +1247,7 @@ public class JavaToJavaScriptCompiler {
       soycArtifacts.addAll(outDir.getArtifacts());
       generateCompileReport.end();
     }
-
+    
     soycEvent.end();
 
     return soycArtifacts;

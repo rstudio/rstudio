@@ -36,6 +36,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean runAsyncEnabled = true;
   private boolean soycEnabled = false;
   private boolean soycExtra = false;
+  private boolean soycHtmlDisabled = false;
   private boolean strict = false;
 
   public JJSOptionsImpl() {
@@ -57,6 +58,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setRunAsyncEnabled(other.isRunAsyncEnabled());
     setSoycEnabled(other.isSoycEnabled());
     setSoycExtra(other.isSoycExtra());
+    setSoycHtmlDisabled(other.isSoycHtmlDisabled());
     setStrict(other.isStrict());
   }
 
@@ -111,6 +113,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   public boolean isSoycExtra() {
     return soycExtra;
   }
+  
+  public boolean isSoycHtmlDisabled() {
+    return soycHtmlDisabled;
+  }
 
   public boolean isStrict() {
     return strict;
@@ -162,6 +168,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void setSoycExtra(boolean enabled) {
     soycExtra = enabled;
+  }
+  
+  public void setSoycHtmlDisabled(boolean disabled) {
+    soycHtmlDisabled = disabled;
   }
 
   public void setStrict(boolean strict) {

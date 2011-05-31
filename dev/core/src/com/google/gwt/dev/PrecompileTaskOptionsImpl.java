@@ -128,6 +128,11 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   }
 
   @Override
+  public boolean isSoycHtmlDisabled() {
+    return jjsOptions.isSoycHtmlDisabled();
+  }
+
+  @Override
   public boolean isStrict() {
     return jjsOptions.isStrict();
   }
@@ -220,6 +225,11 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   @Override
   public void setSoycExtra(boolean soycExtra) {
     jjsOptions.setSoycExtra(soycExtra);
+  }
+
+  @Override
+  public void setSoycHtmlDisabled(boolean disabled) {
+    jjsOptions.setSoycHtmlDisabled(disabled);
   }
 
   @Override
