@@ -17,6 +17,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -171,7 +172,10 @@ public class Packages
                                  @Override
                                  protected void onSuccess()
                                  {
-                                    continueInstallPackage(installContext);
+                                    // call this function back recursively
+                                    // so we can retrieve the updated 
+                                    // PackageInstallContext from the server
+                                    onInstallPackage();
                                  }
                               });  
                      }
@@ -221,7 +225,7 @@ public class Packages
    {
       // if install options have not yet initialized the default library
       // path then set it now from the context
-      if (installOptions_.getLibraryPath().length() == 0)
+      if (StringUtil.isNullOrEmpty(installOptions_.getLibraryPath()))
       {
          installOptions_ = PackageInstallOptions.create(
                                  installOptions_.getInstallFromRepository(),
