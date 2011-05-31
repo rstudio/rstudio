@@ -57,7 +57,7 @@ public class MakeTopLevelHtmlForPerm {
     public String dependencyLinkForClass(String className) {
       String packageName = globalInformation.getClassToPackage().get(className);
       assert packageName != null;
-      return dependenciesFileName("initial", packageName) + "#" + className;
+      return dependenciesFileName("initial") + "#" + className;
     }
   }
 
@@ -355,17 +355,13 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("  function c(packageRef,classRef,packageHashRef) {");
       outFile.println("    var packageName = internedStrings[packageRef];");
       outFile.println("    var className = packageName + \".\" + internedStrings[classRef];");
-      outFile.println("    var d1 = 'methodDependencies-total-' + internedStrings[packageHashRef] "
-          + "+ '-" + getPermutationId() + ".html';");
+      outFile.println("    var d1 = 'methodDependencies-total-" + getPermutationId() + ".html';");
       outFile.println("    document.write(\"<ul class='soyc-excl'>\");");
       outFile.println("    document.write(\"<li><a href='\" + d1 + \"#\" + className + \"'>"
           + "See why it's live</a></li>\");");
       outFile.println("    for (var sp = 1; sp <= "
           + globalInformation.getNumSplitPoints() + "; sp++) {");
-      outFile.println("      var d2 = 'methodDependencies-sp' + sp + '-' + "
-          + "internedStrings[packageHashRef] + '-" + getPermutationId()
-          + ".html';");
-
+      outFile.println("      var d2 = 'methodDependencies-sp' + sp + '-" + getPermutationId() + ".html';");
       outFile.println("      document.write(\"<li><a href='\" + d2 + \"#\" + className +\"'>"
           + " See why it's not exclusive to s.p. #\" + sp + \" (\" + spl[sp - 1] + \")"
           + "</a></li>\");");
@@ -1340,10 +1336,8 @@ public class MakeTopLevelHtmlForPerm {
   /**
    * Returns a file name for the dependencies list.
    */
-  private String dependenciesFileName(String depGraphName, String packageName) {
-    return "methodDependencies-" + depGraphName + "-"
-        + hashedFilenameFragment(packageName) + "-" + getPermutationId()
-        + ".html";
+  private String dependenciesFileName(String depGraphName) {
+    return "methodDependencies-" + depGraphName + "-" + getPermutationId() + ".html";
   }
 
   private String[] getGeneratedTypes(ModuleMetricsArtifact moduleMetrics,
@@ -1676,28 +1670,12 @@ public class MakeTopLevelHtmlForPerm {
     interner.printInternedDataAsJs(outFile);
     outFile.close();
 
-    // Separate out the packages to write them into different HTML files.
-    String packageName = "";
     List<String> classesInPackage = new ArrayList<String>();
     for (String method : dependencies.keySet()) {
-      // this key set is already in alphabetical order
-      // get the package of this method, i.e., everything up to .[A-Z]
-      packageName = method.replaceAll("\\.\\p{Upper}.*", "");
-
-      if (curPackageName.compareTo("") == 0) {
-        curPackageName = packageName;
-      } else if (curPackageName.compareTo(packageName) != 0) {
-        makeDependenciesInternedHtml(depGraphName, curPackageName,
-            classesInPackage, dependencies, interner, jsFileName);
-        classesInPackage = new ArrayList<String>();
-        curPackageName = packageName;
-      }
       classesInPackage.add(method);
     }
-    if (classesInPackage.size() > 0) {
-      makeDependenciesInternedHtml(depGraphName, curPackageName,
-          classesInPackage, dependencies, interner, jsFileName);
-    }
+    makeDependenciesInternedHtml(depGraphName, 
+        classesInPackage, dependencies, interner, jsFileName);
   }
 
   /**
@@ -1708,28 +1686,27 @@ public class MakeTopLevelHtmlForPerm {
    * @throws IOException
    */
   private void makeDependenciesInternedHtml(String depGraphName,
-      String packageName, List<String> classesInPackage,
+      List<String> classesInSplitPoint,
       Map<String, String> dependencies, HtmlInterner interner, String jsFileName)
       throws IOException {
     String depGraphDescription = inferDepGraphDescription(depGraphName);
     PrintWriter outFile = null;
     String curClassName = "";
 
-    String outFileName = dependenciesFileName(depGraphName, packageName);
+    String outFileName = dependenciesFileName(depGraphName);
     outFile = new PrintWriter(getOutFile(outFileName));
-    String packageDescription = packageName.length() == 0
-        ? "the default package" : packageName;
+    
     addStandardHtmlProlog(outFile, "Method Dependencies for "
         + depGraphDescription,
-        "Method Dependencies for " + depGraphDescription, "Showing Package: "
-            + packageDescription);
+        "Method Dependencies for " + depGraphDescription, null);
 
     outFile.print("<script src=\"" + jsFileName
         + "\" language=\"javascript\" ></script>");
 
     // Write out the HTML
     outFile.print("<script>");
-    for (String method : classesInPackage) {
+    boolean first = true;
+    for (String method : classesInSplitPoint) {
       // this key set is already in alphabetical order
       // get the package of this method, i.e., everything up to .[A-Z]
 
@@ -1737,7 +1714,7 @@ public class MakeTopLevelHtmlForPerm {
       String depMethod = dependencies.get(method);
       if (curClassName.compareTo(className) != 0) {
         curClassName = className;
-        if (method != classesInPackage.get(0)) {
+        if (method != classesInSplitPoint.get(0)) {
           outFile.print("j();"); // close the previous table if not the first
         }
         interner.printDependencyClassHeader(outFile, className);
