@@ -54,6 +54,7 @@ public class MakeTopLevelHtmlForPerm {
    * dependencies for the initial download.
    */
   public class DependencyLinkerForInitialCode implements DependencyLinker {
+    @Override
     public String dependencyLinkForClass(String className) {
       String packageName = globalInformation.getClassToPackage().get(className);
       assert packageName != null;
@@ -66,6 +67,7 @@ public class MakeTopLevelHtmlForPerm {
    * status pages.
    */
   public class DependencyLinkerForLeftoversFragment implements DependencyLinker {
+    @Override
     public String dependencyLinkForClass(String className) {
       return leftoversStatusFileName() + "#"
           + hashedFilenameFragment(className);
@@ -78,6 +80,7 @@ public class MakeTopLevelHtmlForPerm {
    *
    */
   public class DependencyLinkerForTotalBreakdown implements DependencyLinker {
+    @Override
     public String dependencyLinkForClass(String className) {
       return splitStatusFileName() + "#" + hashedFilenameFragment(className);
     }
@@ -87,6 +90,7 @@ public class MakeTopLevelHtmlForPerm {
    * A dependency linker that never links to anything.
    */
   public static class NullDependencyLinker implements DependencyLinker {
+    @Override
     public String dependencyLinkForClass(String className) {
       return null;
     }
@@ -139,9 +143,9 @@ public class MakeTopLevelHtmlForPerm {
 
     /**
      * Stores a string for later interning. Keeps track of the number of times a
-     * particular string is interned which will be used by {@link freeze()} to
+     * particular string is interned which will be used by {@link #freeze()} to
      * place the most frequently used strings at the beginning of the
-     * dictionary. After a call to {@link freeze()}, it is no longer valid to
+     * dictionary. After a call to {@link #freeze()}, it is no longer valid to
      * call this method.
      *
      * @param key string to be added to the intern dictionary.
@@ -1705,7 +1709,6 @@ public class MakeTopLevelHtmlForPerm {
 
     // Write out the HTML
     outFile.print("<script>");
-    boolean first = true;
     for (String method : classesInSplitPoint) {
       // this key set is already in alphabetical order
       // get the package of this method, i.e., everything up to .[A-Z]
