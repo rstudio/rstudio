@@ -71,16 +71,22 @@ ifeq ($(ARCH),x86)
 MARCH=i386
 endif
 
+ifeq ($(DEBUG),TRUE)
+DEBUGCFLAGS= -g
+else
+DEBUGCFLAGS= -DGWT_DEBUGDISABLE
+endif
+
 # Set OS as well as CFLAGS, CXX, and other common make variables
 ifeq ($(shell uname),Linux)
 OS=linux
-BASECFLAGS= -g -O2 -fPIC $(INC) -rdynamic
-ARCHCFLAGS=-m$(FLAG32BIT)
-ALLARCHCFLAGS=
+BASECFLAGS= $(DEBUGCFLAGS) -O2 -fPIC $(INC) -rdynamic
+ARCHCFLAGS= -m$(FLAG32BIT)
+ALLARCHCFLAGS= -m$(FLAG32BIT)
 endif
 ifeq ($(shell uname),Darwin)
 OS=mac
-BASECFLAGS= -g -O2 -fPIC $(INC) -D__mac -mmacosx-version-min=10.5
+BASECFLAGS= $(DEBUGCFLAGS) -O2 -fPIC $(INC) -D__mac -mmacosx-version-min=10.5
 ARCHCFLAGS=-arch $(MARCH)
 ALLARCHCFLAGS=-arch i386 -arch ppc -arch x86_64
 AR=libtool
@@ -88,11 +94,14 @@ ARFLAGS=-static -o
 endif
 ifeq ($(shell uname),SunOS)
 OS=sun
+ifeq ($(DEBUG),TRUE)
+DEBUGCFLAGS= -g0
+endif
 #CFLAGS=-fast -g0 -Kpic $(INC) -Bdynamic -noex
 # SunC appears to miscompile Socket::writeByte by not incrementing the
 # buffer pointer, so no optimization for now
 #CFLAGS=-g -Kpic $(INC) -Bdynamic -noex
-BASECFLAGS= -g0 -Kpic -noex -xO1 -xlibmil -xlibmopt -features=tmplife -xbuiltin=%all -mt $(INC)
+BASECFLAGS= $(DEBUGCFLAGS) -Kpic -noex -xO1 -xlibmil -xlibmopt -features=tmplife -xbuiltin=%all -mt $(INC)
 ARCHCFLAGS=
 ALLARCHCFLAGS=
 CXX= CC

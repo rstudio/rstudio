@@ -34,7 +34,9 @@ public:
    * @param pattern pattern to match
    * @param exclude true if matches should be excluded instead of included
    */
-  static void addRule(const std::string& pattern, bool exclude = false);
+  static void addRule(const std::string& webHost,
+      const std::string& codeServer,
+      bool exclude = false);
 
   /**
    * Clear all rules.
@@ -48,6 +50,14 @@ public:
    *     appear to be valid
    */
   static std::string getHostFromUrl(const std::string& url);
+
+  /**
+   * Get the code server  value from the URL, not including the port
+   *
+   * @return the first found server in the URL, or the unmodified URL if it
+   *     does not appear to be valid
+   */
+  static std::string getCodeServerFromUrl(const std::string& url);
 
   /**
    * Clear any existing rules and reinitialize from the supplied access list.
@@ -68,12 +78,14 @@ public:
    * denies the request.  A host name of localhost or 127.0.0.1 is always
    * allowed.
    *
-   * @param url url of page initiating connection
+   * @param hostname host name of webserver or codeserver
    * @param allowed pointer to return value indiciating that this URL should
    *     be allowed to initiate GWT development mode connections
    * @return true if url matched a rule
    */
-  static bool matchesRule(const std::string& url, bool* allowed);
+  static bool matchesRule(const std::string& webHost, 
+      const std::string& codeServer,
+      bool* allowed);
 
 private:
   AllowedConnections() {
@@ -82,18 +94,29 @@ private:
   /**
    * Internal class used for representing a rule.
    */
-  class Rule : std::pair<std::string, bool> {
+  class Rule {
   public:
-    Rule(const std::string& pattern, bool exclude)
-        : std::pair<std::string, bool>(pattern, exclude) {}
+    Rule(const std::string& webHost,
+        const std::string& codeServer,
+        bool exclude)
+        : webhost(webHost), codesvr(codeServer), excluded(exclude) {}
 
-    const std::string& getPattern() const {
-      return first;
+    const std::string& getWebHost() const {
+      return webhost;
+    }
+
+    const std::string& getCodeServer() const {
+      return codesvr;
     }
 
     bool isExcluded() const {
-      return second;
+      return excluded;
     }
+
+  private:
+    std::string webhost;
+    std::string codesvr;
+    bool        excluded;
   };
 
   static std::vector<Rule> rules;

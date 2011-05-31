@@ -22,3 +22,7 @@ BROWSER values supported:
 
 You may need to try both ff3 and ff3+, as different platforms chose different
 library layouts.
+
+Targets of interest:
+  make linuxplatforms
+  make macplatforms

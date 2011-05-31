@@ -17,7 +17,7 @@
 	<ui:with field='res'
 		type='com.google.gwt.devmodeoptions.client.DevModeOptionsResources' />
 	<g:HTMLPanel styleName="{res.css.mainPanel}">
-		<g:VerticalPanel>
+		<div>
 			<g:HorizontalPanel>
 				<g:Image resource='{res.gwt64}' styleName="{res.css.logo}" />
 				<g:HTML>
@@ -30,23 +30,30 @@
 				host/port at the request of a web page. To minimize security risks,
 				by default it will only connect to the local machine. To allow
 				cross-machine debugging, you can add exceptions here -- include the
-				exact host name of the web servers you will use for debugging, but
-				do not include any you do not trust.</g:Label>
+				exact host name of the web and code servers you will use for debugging, 
+				but do not include any you do not trust.</g:Label>
 
 			<g:Label ui:field="errorMessage" styleName="{res.css.errorMessage}"/>
-			<g:HorizontalPanel>
-				<g:TextBox ui:field="hostname" styleName="{res.css.textBox}" />
-				<g:Button styleName="{res.css.important}" ui:field="addBtn">Add</g:Button>
-				<g:VerticalPanel>
-					<g:RadioButton name="include" ui:field="includeYes"
-						checked="true">Include</g:RadioButton>
-					<g:RadioButton name="include" ui:field="includeNo">Exclude</g:RadioButton>
-				</g:VerticalPanel>
-			</g:HorizontalPanel>
+			<div>
+				<div style="float:left">
+					<g:TextBox ui:field="hostname" styleName="{res.css.textBox}" />
+					<g:TextBox ui:field="codeserver" styleName="{res.css.textBox}" />
+					<g:Button styleName="{res.css.important}" ui:field="addBtn">Add</g:Button>
+				</div>
+				<div style="float:left">
+					<div>
+						<g:RadioButton name="include" ui:field="includeYes"
+							checked="true">Include</g:RadioButton>
+					</div>
+					<div>
+						<g:RadioButton name="include" ui:field="includeNo">Exclude</g:RadioButton>
+					</div>
+				</div>
+			</div>
 
 			<g:FlexTable ui:field="savedHosts" styleName="{res.css.savedHosts}">
 			</g:FlexTable>
-		</g:VerticalPanel>
+		</div>
 	</g:HTMLPanel>
 
 </ui:UiBinder> 

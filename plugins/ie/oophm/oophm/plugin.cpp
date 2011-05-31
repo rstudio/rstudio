@@ -51,12 +51,13 @@ STDMETHODIMP Cplugin::connect(BSTR burl, BSTR bsessionKey, BSTR bhostedServer,
   Debug::log(Debug::Debugging) << "OOPHM connect(url=" << url << ")" << Debug::flush;
   Preferences::loadAccessList();
   bool allowed = false;
-  if (!AllowedConnections::matchesRule(url, &allowed)) {
+  std::string webHost = AllowedConnections::getHostFromUrl(url);
+  std::string codeSvr = AllowedConnections::getCodeServerFromUrl(url);
+  if (!AllowedConnections::matchesRule(webHost, codeSvr, &allowed)) {
     bool remember;
     allowed = AllowDialog::askUserToAllow(&remember);
     if (remember) {
-      std::string host = AllowedConnections::getHostFromUrl(url);
-      Preferences::addNewRule(host, !allowed);
+      Preferences::addNewRule(webHost + "/" + codeSvr, !allowed);
     }
   }
   if (!allowed) {

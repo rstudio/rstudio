@@ -307,7 +307,13 @@ void ScriptableInstance::loadHostEntries(const NPVariant* args, unsigned argCoun
       }
       bool include = includeVariant.getAsBoolean();
       Debug::log(Debug::Info) << "Adding " << urlString << "(" << (include ? "include" : "exclude") << ")\n";
-      AllowedConnections::addRule(urlString, !include);
+
+      int slash = urlString.find( '/' );
+      if( slash == std::string::npos ) {
+        AllowedConnections::addRule(urlString, "localhost", !include);
+      } else {
+        AllowedConnections::addRule(urlString.substr( 0, slash), urlString.substr(slash+1), !include);
+      }
     }
   } else {
     Debug::log(Debug::Error) << "ScriptableInstance::loadHostEntries called from outside the background page: " <<
@@ -323,9 +329,13 @@ void ScriptableInstance::getHostPermission(const NPVariant* args, unsigned argCo
   const NPString url = args[0].value.stringValue;
   const string urlStr = convertToString(url);
   bool allowed = false;
-  bool matches = AllowedConnections::matchesRule(urlStr, &allowed);
-  string retStr;
 
+  Debug::log(Debug::Info) << "getHostPermission() url " << urlStr << Debug::flush;
+  bool matches = AllowedConnections::matchesRule(
+      AllowedConnections::getHostFromUrl(urlStr),
+      AllowedConnections::getCodeServerFromUrl(urlStr),
+      &allowed);
+  string retStr;
   if (!matches) {
     retStr = UNKNOWN_STR;
   } else if (allowed) {
@@ -371,7 +381,10 @@ void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVar
       << ")" << Debug::flush;
 
   bool allowed = false;
-  AllowedConnections::matchesRule(urlStr, &allowed);
+  AllowedConnections::matchesRule(
+      AllowedConnections::getHostFromUrl(urlStr),
+      AllowedConnections::getCodeServerFromUrl(appUrlStr),
+      &allowed);
   if (!allowed) {
     BOOLEAN_TO_NPVARIANT(false, *result);
     result->type = NPVariantType_Bool;

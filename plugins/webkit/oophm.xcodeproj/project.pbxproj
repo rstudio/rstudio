@@ -86,7 +86,7 @@
 
 /* Begin PBXFileReference section */
 		089C1672FE841209C02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
-		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		089C167FFE841241C02AAC07 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		32DBCF630370AF2F00C91783 /* oophm_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = oophm_Prefix.pch; sourceTree = "<group>"; };
@@ -441,7 +441,11 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB913E08733D840010E9CD /* Build configuration list for PBXProject "oophm" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				en,
+			);
 			mainGroup = 089C166AFE841209C02AAC07 /* oophm */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -592,6 +596,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Library/Bundles";
 				PRODUCT_NAME = "${PluginShortName}";
+				SDKROOT = macosx10.6;
 				WRAPPER_EXTENSION = webplugin;
 				ZERO_LINK = YES;
 			};
@@ -611,6 +616,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Library/Bundles";
 				PRODUCT_NAME = "${PluginShortName}";
+				SDKROOT = macosx10.6;
 				STRIP_INSTALLED_PRODUCT = YES;
 				STRIP_STYLE = "non-global";
 				WRAPPER_EXTENSION = webplugin;
@@ -661,6 +667,7 @@
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				PRODUCT_NAME = "${PluginShortName}.symlinks";
+				SDKROOT = macosx10.6;
 			};
 			name = Debug;
 		};
@@ -671,6 +678,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				PRODUCT_NAME = "${PluginShortName}.symlinks";
+				SDKROOT = macosx10.6;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -695,6 +703,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Browser;
+				SDKROOT = macosx10.6;
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
 			};
@@ -723,6 +732,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Browser;
+				SDKROOT = macosx10.6;
 				STRIP_INSTALLED_PRODUCT = YES;
 				STRIP_STYLE = "non-global";
 				VALID_ARCHS = "ppc64 ppc7400 ppc970 i386 x86_64 ppc";

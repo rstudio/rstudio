@@ -22,13 +22,37 @@ function getHostFromUrl(url) {
   }
   idx = hostname.indexOf('/');
   if (idx >= 0) {
-    hostname = hostname.split('/')[0];
+    hostname = hostname.substring(0,idx);
+  }
+  idx = hostname.indexOf('@');
+  if( idx >= 0)
+  {
+    hostname = hostname.substring(idx+1);
   }
   idx = hostname.indexOf(':');
   if (idx >= 0) {
-    hostname = hostname.split(':')[0];
+    hostname = hostname.substring(0,idx);
   }
   return hostname;
+}
+
+function getCodeServerFromUrl(url) {
+  var idx = url.indexOf('?');
+  if (idx < 0) {
+    return '';
+  }
+  url = url.substring(idx+1);
+  idx = url.indexOf('gwt.codesvr=');
+  if( idx < 0 ) {
+    return '';
+  }
+  url = url.substring(idx+12);
+  var colon = url.indexOf(':');
+  var amp   = url.indexOf('&');
+  if( amp < 0 || colon < amp ) {
+    amp = colon;
+  }
+  return amp < 0 ? url : url.substring(0,amp);
 }
 
 function devModeTabListener(tabId, changeInfo, tab) {
@@ -36,9 +60,10 @@ function devModeTabListener(tabId, changeInfo, tab) {
   if (search.indexOf('gwt.codesvr=') >= 0 || search.indexOf('gwt.hosted=') >= 0) {
     var permission = plugin.getHostPermission(tab.url);
     var host = getHostFromUrl(tab.url);
+    var code = getCodeServerFromUrl(tab.url);
     var popup = 'page_action.html';
     var icon = null;
-    console.log("got permission " + permission + " for host " + host);
+    console.log("got permission " + permission + " for host " + host + '/ code ' + code);
 
     if (permission == 'include') {
       icon = enabledIcon;
@@ -47,7 +72,7 @@ function devModeTabListener(tabId, changeInfo, tab) {
     } else if (permission == 'unknown') {
       icon = disabledIcon;
     }
-    popup += "?permission=" + permission + "&host=" + host;
+    popup += "?permission=" + permission + "&host=" + host + "&codeserver=" + code;
     chrome.pageAction.setIcon({'tabId' : tabId, 'path' : icon});
     chrome.pageAction.setPopup({'tabId' : tabId, 'popup' : popup});
     chrome.pageAction.show(tabId);

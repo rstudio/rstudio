@@ -134,6 +134,7 @@ bool PluginCrashHandler::hasCrashed() {
     for (int i = 0; i < n; ++i) {
       NSString* entry = [allowedHosts objectAtIndex:i];
       std::string hostName = [entry UTF8String];
+      std::string codeServer = "localhost";
       int len = hostName.length();
       bool exclude = false;
       if (len > 0) {
@@ -141,14 +142,23 @@ bool PluginCrashHandler::hasCrashed() {
           exclude = true;
           hostName = hostName.substr(1);
         }
-        AllowedConnections::addRule(hostName, exclude);
+        int slash = hostName.find("/");
+        if( slash > 0 && slash != std::string::npos ) {
+            codeServer = hostName.substr(slash+1);
+            hostName = hostName.substr(0,slash);
+        }
+        AllowedConnections::addRule(hostName, codeServer, exclude);
       }
     }
   }
 
   const std::string urlStr = [url UTF8String];
   bool allowed = false;
-  if (AllowedConnections::matchesRule(urlStr, &allowed)) {
+
+  if (AllowedConnections::matchesRule(AllowedConnections::getHostFromUrl(urlStr), 
+                                      AllowedConnections::getCodeServerFromUrl(urlStr),
+                                      &allowed) )
+  {
     if (allowed) {
       return [self doConnectWithUrl:url withSessionKey:sessionKey withHost:host
           withModule:moduleName withHostedHtmlVersion:hostedHtmlVersion];
@@ -217,7 +227,7 @@ bool PluginCrashHandler::hasCrashed() {
   // Use a simple crash page built into the bundle
   NSBundle* oophmBundle = [NSBundle bundleForClass:[self class]];
   NSString* path = [oophmBundle pathForResource:@"crash" ofType:@"html"];
-  NSMutableString* crashPage = [NSMutableString stringWithContentsOfFile:path];
+  NSMutableString* crashPage = [NSMutableString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil];
   [crashPage replacePattern:@"__MESSAGE__" withStringLiteral:message];
   
   long major, minor, bugFix;
@@ -287,6 +297,8 @@ bool PluginCrashHandler::hasCrashed() {
   NSDictionary* pluginDict = [shared persistentDomainForName:bundleIdentifier];
   NSArray* allowedHosts = [pluginDict objectForKey:@"allowedHosts"];
   
+  //TODO(codefu): don't add duplicates
+
   NSMutableArray* mutableHosts = [NSMutableArray arrayWithArray:allowedHosts];
   NSMutableDictionary* mutableDict = [NSMutableDictionary dictionaryWithDictionary:pluginDict];
   [mutableHosts addObject:host];
@@ -311,16 +323,24 @@ bool PluginCrashHandler::hasCrashed() {
   [contextArray release];
   
   if (returnCode == NSAlertDefaultReturn) {
+    //TODO(codefu): save the host/codesvr as excluded ("!host")
+    //              should this require a check to verify that one is
+    //              not already whitelisted?
+    // currently: ignore exclude, re-show the modal popup on webpage reload
     return;
   } else if (returnCode == NSAlertAlternateReturn ||
       [alert respondsToSelector:@selector(suppressionButton)] &&
       [[alert suppressionButton] state] == NSOnState) {
     // TODO(jat): simplify, handle errors
     // Get the host part of the URL and store that
-    NSString* server = [[[[[[url componentsSeparatedByString:@"://"]
-        objectAtIndex:1] componentsSeparatedByString:@"/"] objectAtIndex:0]
-        componentsSeparatedByString:@":"] objectAtIndex:0];
-    [self addAllowedHost:server];
+    NSString* host = [NSString stringWithFormat: @"%@/%@",
+                      [[[[[[url componentsSeparatedByString:@"://"]
+                           objectAtIndex:1] componentsSeparatedByString:@"/"] objectAtIndex:0]
+                           componentsSeparatedByString:@":"] objectAtIndex:0],
+                      [[[[[[url componentsSeparatedByString:@"gwt.codesvr="]
+                           objectAtIndex:1] componentsSeparatedByString:@"&"] objectAtIndex:0]
+                        componentsSeparatedByString:@":"] objectAtIndex:0]];
+    [self addAllowedHost:host];
   }
 
   [self doConnectWithUrl:url withSessionKey:sessionKey withHost:host

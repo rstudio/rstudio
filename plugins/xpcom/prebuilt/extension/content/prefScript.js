@@ -8,8 +8,17 @@ addEntry: function() {
     alert("No host name provided");
     return;
   }
-  if (hostname.indexOf(",") >=0 || hostname.indexOf("!") >= 0) {
-    alert("Host name must not contain ',' or '!'");
+  if (hostname.indexOf(",") >=0 || hostname.indexOf("!") >= 0 || hostname.indexOf("/") >= 0) {
+    alert("Host name must not contain ',', '!', or '/'");
+    return;
+  }
+  var codeserver = document.getElementById("codeserver").value;
+  if (!codeserver || codeserver.length == 0) {
+    alert("No code server provided");
+    return;
+  }
+  if (codeserver.indexOf(",") >=0 || codeserver.indexOf("!") >= 0 || codeserver.indexOf("/") >= 0) {
+    alert("Code server must not contain ',', '!', or '/'");
     return;
   }
   var exclude = document.getElementById("exclude");
@@ -21,8 +30,8 @@ addEntry: function() {
   } else {
     incText = "Include";
   }
-  var listboxEntry = this.makeLBE(incText, hostname);
-  var prefsEntry = prefix + hostname;
+  var listboxEntry = this.makeLBE(incText, hostname, codeserver);
+  var prefsEntry = prefix + hostname + '/' + codeserver;
   var listbox = document.getElementById("accessListListbox");
   listbox.appendChild(listboxEntry);
   prefs.push(prefsEntry.toString());
@@ -52,14 +61,21 @@ onload: function() {
     if (pref.length > 0 && pref.charAt(0) == "!") {
       hostname = hostname.substr(1);
       incexc = "Exclude";
+    }  
+    var codeserver = "localhost";
+    var slash = hostname.indexOf("/");
+    if( slash >= 0 )
+    {
+      codeserver = hostname.substr(slash+1);
+      hostname   = hostname.substr(0,slash);
     }
-    var listboxEntry = this.makeLBE(incexc, hostname);
+    var listboxEntry = this.makeLBE(incexc, hostname, codeserver);
     listbox.appendChild(listboxEntry);
   }
 },
 
 // Internal - create a entry for the list box
-makeLBE: function(inc, hostname) {
+makeLBE: function(inc, hostname, codeserver) {
   var listboxEntry = document.createElement("listitem");
   var lbeInc = document.createElement("listcell");
   lbeInc.setAttribute("label", inc);
@@ -67,6 +83,9 @@ makeLBE: function(inc, hostname) {
   var lbeHost = document.createElement("listcell");
   lbeHost.setAttribute("label", hostname);
   listboxEntry.appendChild(lbeHost);
+  var lbeCode = document.createElement("listcell");
+  lbeCode.setAttribute("label", codeserver);
+  listboxEntry.appendChild(lbeCode);
   return listboxEntry;
 },
 

@@ -232,7 +232,7 @@ bool ExternalWrapper::askUserToAllow(const std::string& url) {
     return false;
   }
   NS_ConvertASCIItoUTF16 title("Allow GWT Developer Plugin Connection");
-  NS_ConvertASCIItoUTF16 text("This web server is requesting a GWT "
+  NS_ConvertASCIItoUTF16 text("The web and code server combination is unrecognized and requesting a GWT "
       "developer plugin connection -- do you want to allow it?");
   NS_ConvertASCIItoUTF16 checkMsg("Remember this decision for this server "
       "(change in GWT Developer Plugin preferences)");
@@ -243,7 +243,9 @@ bool ExternalWrapper::askUserToAllow(const std::string& url) {
     return false;
   }
   if (remember) {
-    preferences->addNewRule(AllowedConnections::getHostFromUrl(url), !include);
+    std::string host = AllowedConnections::getHostFromUrl(url);
+    std::string server = AllowedConnections::getCodeServerFromUrl(url);
+    preferences->addNewRule(host + "/" + server, !include);
   }
   return include;
 }
@@ -268,7 +270,9 @@ NS_IMETHODIMP ExternalWrapper::Connect(const nsACString& suppliedUrl,
   std::string urlStr(urlAutoStr.get());
 
   bool allowed = false;
-  if (!AllowedConnections::matchesRule(urlStr, &allowed)) {
+  std::string webHost = AllowedConnections::getHostFromUrl(urlStr);
+  std::string codeServer = AllowedConnections::getCodeServerFromUrl(urlStr);
+  if (!AllowedConnections::matchesRule( webHost, codeServer, &allowed)) {
     // If we didn't match an existing rule, prompt the user
     allowed = askUserToAllow(urlStr);
   }

@@ -1,0 +1,484 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Header Files\common">
+      <UniqueIdentifier>{a7c29063-75f8-42b1-965f-a05c1216d850}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gecko">
+      <UniqueIdentifier>{5a35bded-1db6-48ba-ae1a-efd9f28c578f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx</Extensions>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files\common">
+      <UniqueIdentifier>{155aa627-d60d-49af-9953-f150d540f110}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\ExternalWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FFSessionHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\prebuilt\ff40\include\IOOPHM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\JavaObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\JSRunner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mozincludes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Preferences.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RootedObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SessionData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\XpcomDebug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\AllowedConnections.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\BrowserChannel.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\ByteOrder.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\CheckVersionsMessage.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\ChooseTransportMessage.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\Debug.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\DebugLevel.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\FatalErrorMessage.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\FreeValueMessage.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\HashMap.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\HostChannel.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\InvokeMessage.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\InvokeSpecialMessage.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\LoadJsniMessage.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\LoadModuleMessage.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\Message.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\Platform.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\ProtocolVersionMessage.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\QuitMessage.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\ReturnMessage.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\scoped_ptr\scoped_ptr.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\ServerMethods.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\SessionHandler.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\Socket.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\SwitchTransportMessage.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\Value.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\WINNT_x86-msvc\include\js-config.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\js\jsapi.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\js\jsautocfg.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\js\jscompat.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\js\jsconfig.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\WINNT_x86-msvc\include\jscpucfg.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\jscpucfg.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\jsinttypes.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\js\jslong.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\jsosdep.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\js\jsotypes.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\js\jspubtd.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\js\jstypes.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\js\jsutil.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\WINNT_x86-msvc\include\mozilla-config.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpconnect\nsAXPCNativeCallContext.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsCOMPtr.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\nscore.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nscore.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsCycleCollector.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsDebug.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsError.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\widget\nsEvent.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsICategoryManager.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsIClassInfo.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsIClassInfoImpl.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsIComponentManager.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsID.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\nsIEnumerator.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\nsIException.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\nsIExceptionService.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsIFactory.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsIGenericFactory.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\necko\nsIHttpProtocolHandler.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\nsIInterfaceInfo.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\nsIInterfaceInfoManager.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpconnect\nsIJSContextStack.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsIMemory.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsIModule.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\caps\nsIPrincipal.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsIProgrammingLanguage.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\necko\nsIProtocolHandler.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\necko\nsIProxiedProtocolHandler.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpconnect\nsIScriptableInterfaces.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\dom\nsIScriptGlobalObject.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\dom\nsIScriptObjectPrincipal.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\caps\nsISecurityCheckedComponent.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\nsISerializable.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsIServiceManager.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsISimpleEnumerator.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\nsISimpleEnumerator.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsISupports.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\nsISupports.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\nsISupportsBase.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsISupportsBase.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsISupportsImpl.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsISupportsUtils.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\nsISupportsUtils.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsIURI.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\nsIVariant.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpconnect\nsIXPConnect.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsMemory.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\necko\nsNetCID.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\nsrootidl.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsrootidl.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsServiceManagerUtils.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsStringAPI.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsTraceRefcnt.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsXPCOM.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsXPCOMCID.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\nsXPCOMStrings.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\pratom.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\prcpucfg.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\prinrval.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\prlock.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\prlog.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\prlong.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\obsolete\protypes.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\prthread.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\prtime.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\prtypes.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpconnect\xpccomponents.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpconnect\xpcexception.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpconnect\xpcjsid.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\WINNT_x86-msvc\include\xpcom-config.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\xpt_arena.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\xpt_struct.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\xpcom\xptinfo.h">
+      <Filter>Header Files\gecko</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-2.0.0\include\js\jsproto.tbl">
+      <Filter>Header Files\gecko</Filter>
+    </None>
+    <None Include="..\xpGwtDevPlugin.def">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\xpGwtDevPlugin.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\ExternalWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FFSessionHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\JavaObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\JSRunner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ModuleOOPHM.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Preferences.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\XpcomDebug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\AllowedConnections.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\CheckVersionsMessage.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\ChooseTransportMessage.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\Debug.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\FatalErrorMessage.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\FreeValueMessage.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\HostChannel.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\InvokeMessage.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\InvokeSpecialMessage.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\LoadJsniMessage.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\LoadModuleMessage.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\ProtocolVersionMessage.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\ReturnMessage.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\ServerMethods.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\Socket.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\SwitchTransportMessage.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -132,13 +132,13 @@ void WebScriptSessionHandler::freeValue(HostChannel& channel, int idCount, const
   for (int i = 0; i < idCount; i++) {
     int objId = ids[i];
 
-    std::map<int, JSObjectRef>::iterator i = jsObjectsById.find(objId);
-    if (i == jsObjectsById.end()) {
+    std::map<int, JSObjectRef>::iterator x = jsObjectsById.find(objId);
+    if (x == jsObjectsById.end()) {
       Debug::log(Debug::Error) << "Unknown object id " << objId << Debug::flush;
       continue;
     }
 
-    JSObjectRef ref = i->second;
+    JSObjectRef ref = x->second;
     jsObjectsById.erase(objId);
     jsIdsByObject.erase(ref);
     JSValueUnprotect(contextRef, ref);
@@ -292,13 +292,15 @@ JSValueRef WebScriptSessionHandler::javaFunctionCallbackImpl (int dispatchId,
     }
 
     // Argument conversion is straightforward
-    Value args[argumentCount];
+    Value *args = new Value[argumentCount];
     for (int i = 0; i < argumentCount; i++) {
       makeValue(args[i], arguments[i]);
     }
-
-    if (!InvokeMessage::send(*channel, thisValue, dispatchId,
-                             argumentCount, args)) {
+      
+    bool status = InvokeMessage::send(*channel, thisValue, dispatchId,
+                                      argumentCount, args);
+    delete[] args;
+    if (!status) {
       initiateAutodestructSequence(__PRETTY_FUNCTION__, "Unable to send invocation message");
       *exception = makeException("Unable to send invocation message");
       return JSValueMakeUndefined(contextRef);
@@ -558,6 +560,7 @@ JSValueRef WebScriptSessionHandler::makeValueRef(const Value& v) {
     }
 
     case Value::JAVA_OBJECT:
+    {
       unsigned javaId = v.getJavaObjectId();
       JSObjectRef ref;
 
@@ -593,8 +596,10 @@ JSValueRef WebScriptSessionHandler::makeValueRef(const Value& v) {
 
 
       return ref;
+    }
 
-      case Value::JS_OBJECT:
+    case Value::JS_OBJECT:
+    {
       int jsId = v.getJsObjectId();
 
       i = jsObjectsById.find(jsId);
@@ -606,15 +611,18 @@ JSValueRef WebScriptSessionHandler::makeValueRef(const Value& v) {
       } else {
         return i->second;
       }
+    }
 
-      case Value::UNDEFINED:
+    case Value::UNDEFINED:
       return JSValueMakeUndefined(contextRef);
 
-      default:
+    default:
+    {
       char message[50];
       snprintf(message, sizeof(message), "Could not convert %s", v.toString().c_str());
       initiateAutodestructSequence(__PRETTY_FUNCTION__, message);
       return makeException(message);
+    }
   }
 }
 

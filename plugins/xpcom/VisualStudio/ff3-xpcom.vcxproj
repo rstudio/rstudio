@@ -1,0 +1,269 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6BF0C2CE-CB0C-421B-A67C-1E448371D24C}</ProjectGuid>
+    <RootNamespace>ff3-xpcom</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Debug3\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Debug3\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Release3\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Release3\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\common;..\prebuilt\ff3\include;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\WINNT_x86-msvc\include;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Debugging;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3;BROWSER=ff3;GECKO_VERSION=1900;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <ResourceOutputFileName>$(IntDir)$(TargetName).res</ResourceOutputFileName>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;xpcomglue_s.lib;xpcom.lib;nspr4.lib;js3250.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>LinkVerboseLib</ShowProgress>
+      <OutputFile>$(ProjectDir)\..\prebuilt\extension\lib\WINNT_x86-msvc\ff3\xpGwtDevPlugin.dll</OutputFile>
+      <AdditionalLibraryDirectories>..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\WINNT_x86-msvc\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ModuleDefinitionFile>$(ProjectDir)\..\xpGwtDevPlugin.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\common;..\prebuilt\ff3\include;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\WINNT_x86-msvc\include;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3;BROWSER=ff3;GECKO_VERSION=1900;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <ResourceOutputFileName>$(IntDir)$(TargetName).res</ResourceOutputFileName>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;xpcomglue_s.lib;xpcom.lib;nspr4.lib;js3250.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>LinkVerboseLib</ShowProgress>
+      <OutputFile>$(ProjectDir)\..\prebuilt\extension\lib\WINNT_x86-msvc\ff3\xpGwtDevPlugin.dll</OutputFile>
+      <AdditionalLibraryDirectories>..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\WINNT_x86-msvc\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ModuleDefinitionFile>$(ProjectDir)\..\xpGwtDevPlugin.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\ExternalWrapper.h" />
+    <ClInclude Include="..\FFSessionHandler.h" />
+    <ClInclude Include="..\prebuilt\ff3\include\IOOPHM.h" />
+    <ClInclude Include="..\JavaObject.h" />
+    <ClInclude Include="..\JSRunner.h" />
+    <ClInclude Include="..\ModuleOOPHM.h" />
+    <ClInclude Include="..\mozincludes.h" />
+    <ClInclude Include="..\Preferences.h" />
+    <ClInclude Include="..\RootedObject.h" />
+    <ClInclude Include="..\SessionData.h" />
+    <ClInclude Include="..\XpcomDebug.h" />
+    <ClInclude Include="..\..\common\AllowedConnections.h" />
+    <ClInclude Include="..\..\common\BrowserChannel.h" />
+    <ClInclude Include="..\..\common\ByteOrder.h" />
+    <ClInclude Include="..\..\common\CheckVersionsMessage.h" />
+    <ClInclude Include="..\..\common\ChooseTransportMessage.h" />
+    <ClInclude Include="..\..\common\Debug.h" />
+    <ClInclude Include="..\..\common\DebugLevel.h" />
+    <ClInclude Include="..\..\common\FatalErrorMessage.h" />
+    <ClInclude Include="..\..\common\FreeValueMessage.h" />
+    <ClInclude Include="..\..\common\HashMap.h" />
+    <ClInclude Include="..\..\common\HostChannel.h" />
+    <ClInclude Include="..\..\common\InvokeMessage.h" />
+    <ClInclude Include="..\..\common\InvokeSpecialMessage.h" />
+    <ClInclude Include="..\..\common\LoadJsniMessage.h" />
+    <ClInclude Include="..\..\common\LoadModuleMessage.h" />
+    <ClInclude Include="..\..\common\Message.h" />
+    <ClInclude Include="..\..\common\Platform.h" />
+    <ClInclude Include="..\..\common\ProtocolVersionMessage.h" />
+    <ClInclude Include="..\..\common\QuitMessage.h" />
+    <ClInclude Include="..\..\common\ReturnMessage.h" />
+    <ClInclude Include="..\..\common\scoped_ptr\scoped_ptr.h" />
+    <ClInclude Include="..\..\common\ServerMethods.h" />
+    <ClInclude Include="..\..\common\SessionHandler.h" />
+    <ClInclude Include="..\..\common\Socket.h" />
+    <ClInclude Include="..\..\common\SwitchTransportMessage.h" />
+    <ClInclude Include="..\..\common\Value.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsapi.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsautocfg.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jscompat.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsconfig.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jscpucfg.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jslong.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsosdep.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsotypes.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jspubtd.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jstypes.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsutil.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\WINNT_x86-msvc\include\mozilla-config.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsAXPCNativeCallContext.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsCOMPtr.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nscore.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsCycleCollector.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsDebug.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsError.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsEvent.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsICategoryManager.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIClassInfo.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIClassInfoImpl.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIComponentManager.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsID.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIEnumerator.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIException.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIExceptionService.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIFactory.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIGenericFactory.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIHttpProtocolHandler.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIInterfaceInfo.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIInterfaceInfoManager.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIJSContextStack.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIMemory.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIModule.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIPrincipal.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIProgrammingLanguage.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIProtocolHandler.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIProxiedProtocolHandler.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIScriptableInterfaces.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIScriptGlobalObject.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIScriptObjectPrincipal.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsISecurityCheckedComponent.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsISerializable.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIServiceManager.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsISimpleEnumerator.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsISupports.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsISupportsBase.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsISupportsImpl.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsISupportsUtils.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIURI.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIVariant.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIXPConnect.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsMemory.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsNetCID.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsrootidl.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsServiceManagerUtils.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsStringAPI.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsTraceRefcnt.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsXPCOM.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsXPCOMCID.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsXPCOMStrings.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\pratom.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\prcpucfg.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\prinrval.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\prlock.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\prlog.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\prlong.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\obsolete\protypes.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\prthread.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\prtime.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\prtypes.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpccomponents.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcexception.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcjsid.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\WINNT_x86-msvc\include\xpcom-config.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpt_arena.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpt_struct.h" />
+    <ClInclude Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xptinfo.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsproto.tbl" />
+    <None Include="..\xpGwtDevPlugin.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\xpGwtDevPlugin.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\ExternalWrapper.cpp" />
+    <ClCompile Include="..\FFSessionHandler.cpp" />
+    <ClCompile Include="..\JavaObject.cpp" />
+    <ClCompile Include="..\JSRunner.cpp" />
+    <ClCompile Include="..\ModuleOOPHM.cpp">
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessToFile>
+      <PreprocessSuppressLineNumbers Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessSuppressLineNumbers>
+    </ClCompile>
+    <ClCompile Include="..\Preferences.cpp" />
+    <ClCompile Include="..\XpcomDebug.cpp" />
+    <ClCompile Include="..\..\common\AllowedConnections.cpp" />
+    <ClCompile Include="..\..\common\CheckVersionsMessage.cpp" />
+    <ClCompile Include="..\..\common\ChooseTransportMessage.cpp" />
+    <ClCompile Include="..\..\common\Debug.cpp" />
+    <ClCompile Include="..\..\common\FatalErrorMessage.cpp" />
+    <ClCompile Include="..\..\common\FreeValueMessage.cpp" />
+    <ClCompile Include="..\..\common\HostChannel.cpp" />
+    <ClCompile Include="..\..\common\InvokeMessage.cpp" />
+    <ClCompile Include="..\..\common\InvokeSpecialMessage.cpp" />
+    <ClCompile Include="..\..\common\LoadJsniMessage.cpp" />
+    <ClCompile Include="..\..\common\LoadModuleMessage.cpp" />
+    <ClCompile Include="..\..\common\ProtocolVersionMessage.cpp" />
+    <ClCompile Include="..\..\common\ReturnMessage.cpp" />
+    <ClCompile Include="..\..\common\ServerMethods.cpp" />
+    <ClCompile Include="..\..\common\Socket.cpp" />
+    <ClCompile Include="..\..\common\SwitchTransportMessage.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

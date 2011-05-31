@@ -18,21 +18,22 @@
     function init() {
       var permission = getParam('permission');
       var host = getParam('host');
+      var code = getParam('codeserver');
       var message='';
 
       if (permission == 'include') {
-        message = 'The host at ' + host + ' is allowed to use the plugin';
+        message = 'The web and code server (' + host + '/' + code + ') is allowed to use the plugin';
       } else if (permission == 'exclude') {
-        message = 'The host at ' + host + ' has been been blacklisted.';
+        message = 'The web and code server (' + host + '/' + code + ') has been been blacklisted.';
       } else if (permission == 'unknown') {
-        message = 'The host at ' + host + ' is unknown to the plugin.';
+        message = 'The web and code server (' + host + '/' + code + ') is unknown to the plugin.';
       }
 
       document.getElementById('message').innerText = message;
     }
 
     function updateConfiguration() {
-      var url = 'DevModeOptions.html?host=' + getParam('host');
+      var url = 'DevModeOptions.html?host=' + getParam('host') + '&codeserver=' + getParam('codeserver');
       url = chrome.extension.getURL(url);
       chrome.tabs.create({'url' : url});
     }

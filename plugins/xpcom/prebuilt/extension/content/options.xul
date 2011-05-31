@@ -25,7 +25,7 @@
       arbitrary host/port at the request of a web page.  To minimize security
       risks, by default it will only connect to the local machine.  To allow
       cross-machine debugging, you can add exceptions here -- include the exact
-      host name of the web servers you will use for debugging, but do not
+      host name of the web and code server you will use for debugging, but do not
       include any you do not trust.
     </description>
   </groupbox>
@@ -34,6 +34,10 @@
     <hbox align="center" flex="1">
       <label control="hostname" value="Host name: "/>
       <textbox id="hostname" maxlength="40" flex="1"/>
+    </hbox>
+    <hbox align="center" flex="1">
+      <label control="codeserver" value="Code server: "/>
+      <textbox id="codeserver" maxlength="40" flex="1"/>
     </hbox>
     <radiogroup id="incexc">
       <radio id="include" label="Include" selected="true"/>
@@ -46,9 +50,11 @@
     <listhead>
       <listheader label="Inc/Exc"/>
       <listheader label="Host Name"/>
+      <listheader label="Code Server"/>
     </listhead>
     <listcols>
       <listcol/>
+      <listcol flex="1"/>
       <listcol flex="1"/>
     </listcols>
   </listbox>

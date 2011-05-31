@@ -56,6 +56,9 @@ public class DevModeOptions implements EntryPoint {
   @UiField
   TextBox hostname;
 
+  @UiField
+  TextBox codeserver;
+
   JsArray<HostEntry> hosts;
 
   @UiField
@@ -76,7 +79,9 @@ public class DevModeOptions implements EntryPoint {
 
     addBtn.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        addHost(HostEntry.create(hostname.getText(), includeYes.getValue()));
+        addHost(HostEntry.create(hostname.getText() + "/"
+            + getCodeServer(codeserver),
+            includeYes.getValue()));
       }
     });
 
@@ -86,25 +91,50 @@ public class DevModeOptions implements EntryPoint {
       hostname.setText(host);
     }
 
+    String code = Location.getParameter("codeserver");
+    if (code != null) {
+      codeserver.setText(code);
+    } else {
+      //default for users entering through options
+      codeserver.setText("localhost");
+    }
+
     hostname.addKeyPressHandler(new KeyPressHandler() {
       public void onKeyPress(KeyPressEvent event) {
         if (event.getCharCode() == KeyCodes.KEY_ENTER) {
-          addHost(HostEntry.create(hostname.getText(), includeYes.getValue()));
+        addHost(HostEntry.create(hostname.getText() + "/"
+            + getCodeServer(codeserver),
+            includeYes.getValue()));
         }
       }
     });
 
-    savedHosts.setText(0, 0, "Host");
-    savedHosts.setText(0, 1, "Include/Exclude");
-    savedHosts.setText(0, 2, "Remove");
+    codeserver.addKeyPressHandler(new KeyPressHandler() {
+      public void onKeyPress(KeyPressEvent event) {
+        if (event.getCharCode() == KeyCodes.KEY_ENTER) {
+        addHost(HostEntry.create(hostname.getText() + "/"
+            + getCodeServer(codeserver),
+            includeYes.getValue()));
+        }
+      }
+    });
+
+    savedHosts.setText(0, 0, "Web server");
+    savedHosts.setText(0, 1, "Code server");
+    savedHosts.setText(0, 2, "Include/Exclude");
+    savedHosts.setText(0, 3, "Remove");
     savedHosts.getCellFormatter().addStyleName(0, 0,
         bundle.css().savedHostsHeading());
     savedHosts.getCellFormatter().addStyleName(0, 0, bundle.css().textCol());
 
     savedHosts.getCellFormatter().addStyleName(0, 1,
         bundle.css().savedHostsHeading());
+    savedHosts.getCellFormatter().addStyleName(0, 1, bundle.css().textCol());
 
     savedHosts.getCellFormatter().addStyleName(0, 2,
+        bundle.css().savedHostsHeading());
+
+    savedHosts.getCellFormatter().addStyleName(0, 3,
         bundle.css().savedHostsHeading());
 
     for (int i = 0; i < hosts.length(); i++) {
@@ -135,6 +165,7 @@ public class DevModeOptions implements EntryPoint {
 
     displayHost(newHost);
 
+    codeserver.setText("");
     hostname.setText("");
     hostname.setFocus(true);
   }
@@ -146,8 +177,13 @@ public class DevModeOptions implements EntryPoint {
   private void displayHost(final HostEntry newHost) {
     int numRows = savedHosts.getRowCount();
     int col = 0;
+    
+    String[] names = newHost.getUrl().split("/");
+   
     savedHosts.insertRow(numRows);
-    savedHosts.setText(numRows, col++, newHost.getUrl());
+    savedHosts.setText(numRows, col++, names[0]);
+    savedHosts.setText(numRows, col++, names.length > 0 ? names[1] 
+        : "localhost");
     savedHosts.setText(numRows, col++, newHost.include() ? "Include"
         : "Exclude");
     if (newHost.include()) {
@@ -155,10 +191,14 @@ public class DevModeOptions implements EntryPoint {
           bundle.css().include());
       savedHosts.getCellFormatter().addStyleName(numRows, 1,
           bundle.css().include());
+      savedHosts.getCellFormatter().addStyleName(numRows, 2,
+          bundle.css().include());
     } else {
       savedHosts.getCellFormatter().addStyleName(numRows, 0,
           bundle.css().exclude());
       savedHosts.getCellFormatter().addStyleName(numRows, 1,
+          bundle.css().exclude());
+      savedHosts.getCellFormatter().addStyleName(numRows, 2,
           bundle.css().exclude());
     }
 
@@ -187,6 +227,10 @@ public class DevModeOptions implements EntryPoint {
 
     hosts = newHosts;
     HostEntryStorage.get().saveEntries(hosts);
+  }
+
+  private String getCodeServer(TextBox box) {
+    return (box.getText().length() > 0) ? box.getText() : "localhost";
   }
 
 }
