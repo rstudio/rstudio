@@ -89,6 +89,7 @@ public class FileTypeRegistry
       register("*.cpp", TEXT, icons.iconText());
       register("*.h", TEXT, icons.iconText());
       register("*.hpp", TEXT, icons.iconText());
+      register("*.Rout.save", TEXT, icons.iconText());
       register("*.rd", RD, icons.iconRd());
       register("*.rdata", RDATA, icons.iconRdata());
       register("*.rda", RDATA, icons.iconRdata());
