@@ -717,6 +717,11 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       widget_.autoHeight();
    }
 
+   public void forceCursorChange()
+   {
+      widget_.forceCursorChange();
+   }
+
    public void scrollToCursor(ScrollPanel scrollPanel, int padding)
    {
       DomUtils.ensureVisibleVert(

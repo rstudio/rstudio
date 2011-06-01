@@ -172,11 +172,10 @@ public class AceEditorNative extends JavaScriptObject {
          editor.getSession().getDocument().on("change", updateEditorHeight);
       }
       updateEditorHeight();
+   }-*/;
 
-      // Console scroll pos jumps on first typing without this, because the
-      // textarea is in the upper left corner of the screen and when focus
-      // moves to it scrolling ensues.
-      editor.onCursorChange();
+   public final native void onCursorChange() /*-{
+      this.onCursorChange();
    }-*/;
 
    public static native void setInsertMatching(boolean insertMatching) /*-{

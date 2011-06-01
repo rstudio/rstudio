@@ -229,6 +229,11 @@ public class AceEditorWidget extends Composite
       editor_.autoHeight();
    }
 
+   public void forceCursorChange()
+   {
+      editor_.onCursorChange();
+   }
+
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
    private boolean initToEmptyString_ = true;

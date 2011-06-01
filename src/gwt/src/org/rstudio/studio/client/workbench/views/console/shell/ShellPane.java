@@ -177,6 +177,10 @@ public class ShellPane extends Composite implements Shell.Display,
          public void execute()
          {
             input_.autoHeight();
+            // Console scroll pos jumps on first typing without this, because the
+            // textarea is in the upper left corner of the screen and when focus
+            // moves to it scrolling ensues.
+            input_.forceCursorChange();
             scrollPanel_.scrollToBottom();
          }
       });
