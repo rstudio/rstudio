@@ -35,7 +35,7 @@
   </target>
 
   <target name="mobilewebapp" description="Build mobile web app">
-    <gwt.ant dir="mobilewebapp" target="source+libs" />
+    <gwt.ant dir="mobilewebapp" target="source" />
   </target>
 
   <target name="showcase" description="Build showcase">
