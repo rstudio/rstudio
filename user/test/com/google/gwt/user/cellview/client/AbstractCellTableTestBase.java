@@ -21,6 +21,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -270,6 +271,28 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     } catch (IndexOutOfBoundsException e) {
       // Expected.
     }
+  }
+
+  public void testSetColumnWidth() {
+    AbstractCellTable<String> table = createAbstractHasData(new TextCell());
+    Column<String, ?> col0 = new MockColumn<String, String>();
+    Column<String, ?> col1 = new MockColumn<String, String>();
+    Column<String, ?> col2 = new MockColumn<String, String>();
+
+    // Set a column width.
+    table.setColumnWidth(col0, "100px");
+    table.setColumnWidth(col1, 200.0, Unit.EM);
+    assertEquals("100px", table.getColumnWidth(col0));
+
+    // Some browsers return 200.0, others 200.
+    assertTrue(table.getColumnWidth(col1).contains("200"));
+
+    // Check a column that has not been set.
+    assertNull(table.getColumnWidth(col2));
+
+    // Check a column that has been cleared.
+    table.clearColumnWidth(col0);
+    assertNull(table.getColumnWidth(col0));
   }
 
   public void testSetEmptyTableWidget() {

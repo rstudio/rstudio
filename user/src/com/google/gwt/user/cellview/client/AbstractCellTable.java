@@ -635,6 +635,20 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Flush all pending changes to the table and render immediately.
+   * 
+   * <p>
+   * Modifications to the table, such as adding columns or setting data, are not
+   * rendered immediately. Instead, changes are coalesced at the end of the
+   * current event loop to avoid rendering the table multiple times. Use this
+   * method to force the table to render all pending modifications immediately.
+   * </p>
+   */
+  public void flush() {
+    getPresenter().flush();
+  }
+
+  /**
    * Get the column at the specified index.
    * 
    * @param col the index of the column to retrieve
@@ -676,6 +690,17 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Get the width of a {@link Column}.
+   * 
+   * @param column the column
+   * @return the width of the column, or null if not set
+   * @see #setColumnWidth(Column, double, Unit)
+   */
+  public String getColumnWidth(Column<T, ?> column) {
+    return columnWidths.get(column);
+  }
+
+  /**
    * Get the widget displayed when the table has no rows.
    * 
    * @return the empty table widget
@@ -703,7 +728,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    *           current page
    */
   public TableRowElement getRowElement(int row) {
-    getPresenter().flush();
+    flush();
     checkRowBounds(row);
     NodeList<TableRowElement> rows = getTableBodyElement().getRows();
     return rows.getLength() > row ? rows.getItem(row) : null;
