@@ -96,4 +96,8 @@ public class Renderer extends JavaScriptObject
    public native final void scrollToX(int scrollLeft) /*-{
       this.scrollToX(scrollLeft);
    }-*/;
+
+   public native final void forceImmediateRender() /*-{
+      this.$renderChanges(this.CHANGE_FULL);
+   }-*/;
 }

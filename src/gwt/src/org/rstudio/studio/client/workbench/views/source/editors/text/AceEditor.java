@@ -730,6 +730,11 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
             padding);
    }
 
+   public void forceImmediateRender()
+   {
+      widget_.getEditor().getRenderer().forceImmediateRender();
+   }
+
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private CompletionManager completionManager_;

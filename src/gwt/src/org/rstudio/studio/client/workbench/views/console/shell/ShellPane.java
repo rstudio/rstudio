@@ -539,6 +539,9 @@ public class ShellPane extends Composite implements Shell.Display,
       String promptText = prompt_.getElement().getInnerText();
       String commandText = input_.getCode();
       input_.setInputText("");
+      // Force render to avoid subtle command movement in the console, caused
+      // by the prompt disappearing before the input line does
+      input_.forceImmediateRender();
       prompt_.setHTML("");
 
       SpanElement pendingPrompt = Document.get().createSpanElement();
