@@ -359,7 +359,7 @@ public class Workspace
                      indicator.onCompleted();
                      showImportFileDialog(
                            FileSystemItem.createFile(downloadInfo.getPath()),
-                           StringUtil.toRSymbolName(downloadInfo.getVarname()));
+                           downloadInfo.getVarname());
                   }
                   
                   @Override

@@ -82,7 +82,9 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
       if (varname != null)
          varname_.setText(varname);
       else
-         varname_.setText(dataFile.getStem().replace(" ", "."));
+         varname_.setText(dataFile.getStem()
+                                .replace(" ", ".")
+                                .replace("-", "."));
 
       separator_.addItem("Whitespace", "");
       separator_.addItem("Comma", ",");
