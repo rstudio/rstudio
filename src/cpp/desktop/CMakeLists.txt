@@ -297,7 +297,7 @@ if(RSTUDIO_BUNDLE_QT)
 endif(RSTUDIO_BUNDLE_QT)
 
 # install desktop integration files on linux
-if (UNIX AND NOT APPLE)
+if(RSTUDIO_INSTALL_FREEDESKTOP)
 
    # define freedesktop dirs
    set(RSTUDIO_FREEDESKTOP_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources/freedesktop)
