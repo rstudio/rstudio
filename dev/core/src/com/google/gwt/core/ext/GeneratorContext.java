@@ -29,6 +29,16 @@ import java.io.PrintWriter;
 public interface GeneratorContext {
 
   /**
+   * Checks whether a rebind rule is available for a given sourceTypeName, such
+   * as can appear in a replace-with or generate-with rule.
+   * 
+   * @param sourceTypeName the name of a type to check for rebind rule
+   *          availability.
+   * @return true if a rebind rule is available
+   */
+  boolean checkRebindRuleAvailable(String sourceTypeName);
+
+  /**
    * Commits source generation begun with
    * {@link #tryCreate(TreeLogger, String, String)}.
    */

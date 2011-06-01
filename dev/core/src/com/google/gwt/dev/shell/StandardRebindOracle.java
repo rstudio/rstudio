@@ -25,20 +25,16 @@ import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.javac.rebind.CachedRebindResult;
 import com.google.gwt.dev.javac.rebind.RebindCache;
 import com.google.gwt.dev.javac.rebind.RebindResult;
+import com.google.gwt.dev.javac.rebind.RebindRuleResolver;
 import com.google.gwt.dev.javac.rebind.RebindStatus;
 import com.google.gwt.dev.jdt.RebindOracle;
-import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Implements rebind logic in terms of a variety of other well-known oracles.
@@ -48,17 +44,25 @@ public class StandardRebindOracle implements RebindOracle {
   /**
    * Makes the actual deferred binding decision by examining rules.
    */
-  private final class Rebinder {
+  private final class Rebinder implements RebindRuleResolver {
 
-    private final Set<Rule> usedRules = new HashSet<Rule>();
-
-    private final List<String> usedTypeNames = new ArrayList<String>();
+    @Override
+    public boolean checkRebindRuleResolvable(String typeName) {
+      try {
+        if (getRebindRule(TreeLogger.NULL, typeName) != null) {
+          return true;
+        }
+      } catch (UnableToCompleteException utcEx) {
+      }
+      return false;
+    }
 
     public String rebind(TreeLogger logger, String typeName, ArtifactAcceptor artifactAcceptor)
         throws UnableToCompleteException {
       Event rebindEvent = SpeedTracerLogger.start(DevModeEventType.REBIND, "Type Name", typeName);
       try {
         genCtx.setPropertyOracle(propOracle);
+        genCtx.setRebindRuleResolver(this);
         Rule rule = getRebindRule(logger, typeName);
 
         if (rule == null) {
@@ -96,17 +100,6 @@ public class StandardRebindOracle implements RebindOracle {
     }
 
     private Rule getRebindRule(TreeLogger logger, String typeName) throws UnableToCompleteException {
-      if (usedTypeNames.contains(typeName)) {
-        // Found a cycle.
-        //
-        String[] cycle = Util.toArray(String.class, usedTypeNames);
-        Messages.UNABLE_TO_REBIND_DUE_TO_CYCLE_IN_RULES.log(logger, cycle, null);
-        throw new UnableToCompleteException();
-      }
-
-      // Remember that we've seen this one.
-      //
-      usedTypeNames.add(typeName);
 
       // Make the rebind decision.
       //
@@ -125,19 +118,8 @@ public class StandardRebindOracle implements RebindOracle {
         TreeLogger branch = Messages.TRACE_CHECKING_RULE.branch(logger, rule, null);
 
         if (rule.isApplicable(branch, genCtx, typeName)) {
-          // See if this rule has already been used. This is needed to prevent
-          // infinite loops with 'when-assignable' conditions.
-          //
-          if (!usedRules.contains(rule)) {
-            usedRules.add(rule);
-            Messages.TRACE_RULE_MATCHED.log(logger, null);
-
-            return rule;
-          } else {
-            // We are skipping this rule because it has already been used
-            // in a previous iteration.
-            //
-          }
+          Messages.TRACE_RULE_MATCHED.log(logger, null);
+          return rule;
         } else {
           Messages.TRACE_RULE_DID_NOT_MATCH.log(logger, null);
 
@@ -166,14 +148,11 @@ public class StandardRebindOracle implements RebindOracle {
               + " based on fall back values. You may need to implement a specific "
               + "binding in case the fall back behavior does not replace the missing binding");
         }
-        if (!usedRules.contains(minCostRuleSoFar)) {
-          usedRules.add(minCostRuleSoFar);
-          if (logger.isLoggable(TreeLogger.DEBUG)) {
-            logger.log(TreeLogger.DEBUG, "No exact match was found, using closest match rule "
-                + minCostRuleSoFar);
-          }
-          return minCostRuleSoFar;
+        if (logger.isLoggable(TreeLogger.DEBUG)) {
+          logger.log(TreeLogger.DEBUG, "No exact match was found, using closest match rule "
+              + minCostRuleSoFar);
         }
+        return minCostRuleSoFar;
       }
 
       // No matching rule for this type.

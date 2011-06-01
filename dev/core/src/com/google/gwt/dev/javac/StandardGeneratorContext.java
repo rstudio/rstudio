@@ -33,6 +33,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.javac.rebind.CachedRebindResult;
 import com.google.gwt.dev.javac.rebind.RebindResult;
+import com.google.gwt.dev.javac.rebind.RebindRuleResolver;
 import com.google.gwt.dev.javac.rebind.RebindStatus;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
@@ -291,6 +292,8 @@ public class StandardGeneratorContext implements GeneratorContextExt {
 
   private transient PropertyOracle propOracle;
 
+  private RebindRuleResolver rebindRuleResolver;
+
   private final Map<PrintWriter, Generated> uncommittedGeneratedCupsByPrintWriter =
       new IdentityHashMap<PrintWriter, Generated>();
 
@@ -357,6 +360,17 @@ public class StandardGeneratorContext implements GeneratorContextExt {
           addGeneratedUnit(gu);
         }
       }
+    }
+  }
+
+  /**
+   * Checks whether a rebind rule is available for a given sourceTypeName.
+   */
+  public boolean checkRebindRuleAvailable(String sourceTypeName) {
+    if (rebindRuleResolver != null) {
+      return rebindRuleResolver.checkRebindRuleResolvable(sourceTypeName);
+    } else {
+      return false;
     }
   }
 
@@ -713,6 +727,10 @@ public class StandardGeneratorContext implements GeneratorContextExt {
    */
   public void setPropertyOracle(PropertyOracle propOracle) {
     this.propOracle = propOracle;
+  }
+
+  public void setRebindRuleResolver(RebindRuleResolver resolver) {
+    this.rebindRuleResolver = resolver;
   }
 
   public final PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleTypeName) {

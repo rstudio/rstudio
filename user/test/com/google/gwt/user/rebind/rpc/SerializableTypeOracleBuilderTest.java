@@ -79,6 +79,10 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       this.typeOracle = typeOracle;
     }
 
+    public boolean checkRebindRuleAvailable(String sourceTypeName) {
+      return true;
+    }
+
     public void commit(TreeLogger logger, PrintWriter pw) {
     }
 

@@ -44,6 +44,10 @@ class CachedGeneratorContext implements GeneratorContext {
     this.context = context;
   }
 
+  public boolean checkRebindRuleAvailable(String sourceTypeName) {
+    return context.checkRebindRuleAvailable(sourceTypeName);
+  }
+
   public void commit(TreeLogger logger, PrintWriter pw) {
     context.commit(logger, pw);
   }

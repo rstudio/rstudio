@@ -50,6 +50,10 @@ public class GeneratorContextExtWrapper implements GeneratorContextExt {
     this.baseContext = baseContext;
   }
 
+  public boolean checkRebindRuleAvailable(String sourceTypeName) {
+    return baseContext.checkRebindRuleAvailable(sourceTypeName);
+  }
+
   public void commit(TreeLogger logger, PrintWriter pw) {
     baseContext.commit(logger, pw);
   }
