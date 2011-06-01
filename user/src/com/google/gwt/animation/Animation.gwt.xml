@@ -18,7 +18,25 @@
 <!--                                                                        -->
 <module>
   <inherits name="com.google.gwt.core.Core"/>
+  <inherits name="com.google.gwt.user.UserAgent"/>
   
   <!-- Include User module to inherit Timer -->
   <inherits name="com.google.gwt.user.User"/>
+
+  <!-- Fallback implementation, based on a timer -->
+  <replace-with class="com.google.gwt.animation.client.AnimationSchedulerImplTimer">
+    <when-type-is class="com.google.gwt.animation.client.AnimationScheduler"/>
+  </replace-with>
+
+  <!-- Implementation based on mozRequestAnimationFrame -->
+  <replace-with class="com.google.gwt.animation.client.AnimationSchedulerImplMozilla">
+    <when-type-is class="com.google.gwt.animation.client.AnimationScheduler"/>
+    <when-property-is name="user.agent" value="gecko1_8"/>
+  </replace-with>
+
+  <!-- Implementation based on webkitRequestAnimationFrame -->
+  <replace-with class="com.google.gwt.animation.client.AnimationSchedulerImplWebkit">
+    <when-type-is class="com.google.gwt.animation.client.AnimationScheduler"/>
+    <when-property-is name="user.agent" value="safari"/>
+  </replace-with>
 </module>

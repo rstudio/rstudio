@@ -25,8 +25,16 @@ import java.util.ArrayList;
  * java.util.Timer, but is simplified because of the single-threaded
  * environment.
  * 
+ * <p>
  * To schedule a timer, simply create a subclass of it (overriding {@link #run})
  * and call {@link #schedule} or {@link #scheduleRepeating}.
+ * </p>
+ * 
+ * <p>
+ * NOTE: If you are using a timer to schedule a UI animation, use
+ * {@link com.google.gwt.animation.client.AnimationScheduler} instead. The
+ * browser can optimize your animation for maximum performance.
+ * </p>
  * 
  * <p>
  * <h3>Example</h3>

@@ -22,6 +22,12 @@ import com.google.gwt.core.client.impl.SchedulerImpl;
  * thrown by the command objects executed by the scheduler will be passed to the
  * {@link GWT.UncaughtExceptionHandler} if one is installed.
  * 
+ * <p>
+ * NOTE: If you are using a timer to schedule a UI animation, use
+ * {@link com.google.gwt.animation.client.AnimationScheduler} instead. The
+ * browser can optimize your animation for maximum performance.
+ * </p>
+ * 
  * @see com.google.gwt.core.client.testing.StubScheduler
  */
 public abstract class Scheduler {

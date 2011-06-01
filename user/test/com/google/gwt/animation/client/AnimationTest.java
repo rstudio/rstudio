@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,28 +15,36 @@
  */
 package com.google.gwt.animation.client;
 
+import com.google.gwt.animation.client.AnimationScheduler.AnimationCallback;
+import com.google.gwt.animation.client.testing.StubAnimationScheduler;
 import com.google.gwt.core.client.Duration;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.Timer;
+
+import java.util.List;
 
 /**
  * Tests the {@link Animation} class.
+ * 
+ * <p>
+ * This class uses the {@link StubAnimationScheduler} to manually trigger
+ * callbacks.
+ * </p>
  */
 public class AnimationTest extends GWTTestCase {
-  /**
-   * Increase this multiplier to increase the duration of the tests, reducing
-   * the potential of an error caused by timing issues.
-   */
-  private static int DELAY_MULTIPLIER = 100;
 
   /**
    * A default implementation of {@link Animation} used for testing.
    */
-  private static class DefaultAnimation extends Animation {
+  private class DefaultAnimation extends Animation {
     protected boolean canceled = false;
     protected boolean completed = false;
-    protected boolean started = false;
     protected double curProgress = -1.0;
+    protected boolean started = false;
+    protected boolean updated = false;
+
+    public DefaultAnimation() {
+      super(scheduler);
+    }
 
     /**
      * Assert the value of canceled.
@@ -60,29 +68,25 @@ public class AnimationTest extends GWTTestCase {
     }
 
     /**
-     * Assert that the progress falls between min and max, inclusively.
-     */
-    public void assertProgressRange(double min, double max) {
-      assertTrue(curProgress >= min && curProgress <= max);
-    }
-
-    /**
      * Assert the value of started.
      */
     public void assertStarted(boolean expected) {
       assertEquals(expected, started);
     }
 
+    /**
+     * Assert the value of updated.
+     */
+    public void assertUpdated(boolean expected) {
+      assertEquals(expected, updated);
+    }
+
     public void reset() {
       canceled = false;
       completed = false;
+      updated = false;
       started = false;
       curProgress = -1.0;
-    }
-
-    @Override
-    protected void onUpdate(double progress) {
-      curProgress = progress;
     }
 
     @Override
@@ -102,18 +106,18 @@ public class AnimationTest extends GWTTestCase {
       super.onStart();
       started = true;
     }
+
+    @Override
+    protected void onUpdate(double progress) {
+      updated = true;
+      curProgress = progress;
+    }
   }
 
   /**
    * A custom {@link Animation} used for testing.
    */
-  private static class TestAnimation extends DefaultAnimation {
-    /*
-     * TODO: Consider timing issues for test system. Specifically, onUpdate is
-     * not guaranteed to be called in the Animation timer if we miss our
-     * deadline.
-     */
-
+  private class TestAnimation extends DefaultAnimation {
     @Override
     protected void onCancel() {
       canceled = true;
@@ -130,140 +134,208 @@ public class AnimationTest extends GWTTestCase {
     }
   }
 
+  /**
+   * The maximum delay before an animation will run. Animations may run slowly
+   * if the browser tab is not focused.
+   * 
+   * Increase this multiplier to increase the duration of the tests, reducing
+   * the potential of an error caused by timing issues.
+   */
+  private static int DELAY_MULTIPLIER = 3000;
+
+  private List<AnimationCallback> callbacks;
+  private double curTime;
+  private StubAnimationScheduler scheduler;
+
   @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
-  }
-
-  /**
-   * Test canceling an {@link Animation} before it starts.
-   */
-  public void testCancelBeforeStarted() {
-    final TestAnimation anim = new TestAnimation();
-    double curTime = Duration.currentTimeMillis();
-    delayTestFinish(20 * DELAY_MULTIPLIER);
-    anim.run(10 * DELAY_MULTIPLIER, curTime + 10 * DELAY_MULTIPLIER);
-
-    // Check progress
-    new Timer() {
-      @Override
-      public void run() {
-        anim.assertStarted(false);
-        anim.assertCompleted(false);
-        anim.assertProgress(-1.0);
-        anim.cancel();
-        anim.assertStarted(false);
-        anim.assertCancelled(true);
-        anim.assertCompleted(false);
-        anim.reset();
-      }
-    }.schedule(5 * DELAY_MULTIPLIER);
-
-    // Check progress
-    new Timer() {
-      @Override
-      public void run() {
-        anim.assertStarted(false);
-        anim.assertCompleted(false);
-        anim.assertProgress(-1.0);
-        finishTest();
-      }
-    }.schedule(15 * DELAY_MULTIPLIER);
+    return "com.google.gwt.animation.Animation";
   }
 
   /**
    * Test canceling an {@link Animation} after it completes.
    */
-  public void testCancelWhenComplete() {
+  public void testCancelAfterOnComplete() {
     final TestAnimation anim = new TestAnimation();
-    delayTestFinish(25 * DELAY_MULTIPLIER);
+    anim.run(DELAY_MULTIPLIER);
+    anim.assertStarted(true);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(false);
+    anim.reset();
+
+    // Complete the animation.
+    executeLastCallbackAt(curTime + DELAY_MULTIPLIER + 100);
+    anim.assertStarted(false);
+    anim.assertUpdated(false);
+    anim.assertCompleted(true);
+    anim.assertCancelled(false);
+    assertEquals(0, callbacks.size());
+    anim.reset();
+
+    // Cancel the animation.
+    anim.cancel(); // no-op.
+    anim.assertStarted(false);
+    anim.assertUpdated(false);
+    anim.assertProgress(-1);
+    anim.assertCancelled(false);
+  }
+
+  /**
+   * Test canceling an {@link Animation} before onStart is called.
+   */
+  public void testCancelBeforeOnStart() {
+    final TestAnimation anim = new TestAnimation();
+
+    // Run the animation in the future.
+    anim.run(DELAY_MULTIPLIER, curTime + 1000);
+    anim.assertStarted(false);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(false);
+    assertEquals(1, callbacks.size());
+    anim.reset();
+
+    // Cancel the animation before it starts.
+    anim.cancel();
+    anim.assertStarted(false);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(true);
+    assertEquals(0, callbacks.size());
+  }
+
+  /**
+   * Test canceling an {@link Animation} between updates.
+   */
+  public void testCancelBetweenUpdates() {
+    TestAnimation anim = new TestAnimation();
     anim.run(10 * DELAY_MULTIPLIER);
+    anim.assertStarted(true);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(false);
+    anim.reset();
 
-    // Check progress
-    new Timer() {
-      @Override
-      public void run() {
-        anim.assertStarted(true);
-        anim.assertCompleted(true);
-        anim.assertProgressRange(0.0, 1.0);
-        anim.cancel();
-        anim.assertCancelled(false);
-        anim.assertCompleted(true);
-        anim.reset();
-      }
-    }.schedule(15 * DELAY_MULTIPLIER);
+    // Update the animation.
+    executeLastCallbackAt(curTime + DELAY_MULTIPLIER);
+    anim.assertStarted(false);
+    anim.assertUpdated(true);
+    anim.assertCompleted(false);
+    anim.assertCancelled(false);
+    anim.reset();
 
-    // Check progress
-    new Timer() {
-      @Override
-      public void run() {
-        anim.assertStarted(false);
-        anim.assertCompleted(false);
-        anim.assertProgress(-1.0);
-        finishTest();
-      }
-    }.schedule(20 * DELAY_MULTIPLIER);
+    // Cancel the animation.
+    assertEquals(1, callbacks.size());
+    anim.cancel();
+    anim.assertStarted(false);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(true);
+    anim.assertProgress(-1.0);
+    assertEquals(0, callbacks.size());
   }
 
   /**
-   * Test canceling an {@link Animation} while it is running.
+   * Test canceling an {@link Animation} within onComplete.
    */
-  public void testCancelWhileRunning() {
-    final TestAnimation anim = new TestAnimation();
-    delayTestFinish(20 * DELAY_MULTIPLIER);
-    anim.run(50 * DELAY_MULTIPLIER);
-
-    // Check progress
-    new Timer() {
+  public void testCancelDuringOnComplete() {
+    final TestAnimation anim = new TestAnimation() {
       @Override
-      public void run() {
-        anim.assertStarted(true);
-        anim.assertCompleted(false);
-        anim.cancel();
-        anim.assertCancelled(true);
-        anim.assertCompleted(false);
-        anim.reset();
-      }
-    }.schedule(5 * DELAY_MULTIPLIER);
+      protected void onComplete() {
+        super.onComplete();
+        assertStarted(false);
+        assertUpdated(false);
+        assertCompleted(true);
+        assertCancelled(false);
+        reset();
 
-    // Check progress
-    new Timer() {
-      @Override
-      public void run() {
-        anim.assertStarted(false);
-        anim.assertCompleted(false);
-        anim.assertProgress(-1.0);
-        finishTest();
+        // Cancel the animation.
+        cancel(); // no-op.
       }
-    }.schedule(15 * DELAY_MULTIPLIER);
+    };
+
+    // Run the animation.
+    anim.run(DELAY_MULTIPLIER);
+    anim.assertStarted(true);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(false);
+    anim.reset();
+
+    // Force the animation to complete.
+    executeLastCallbackAt(curTime + DELAY_MULTIPLIER + 100);
+    anim.assertStarted(false);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(false);
+    assertEquals(0, callbacks.size());
   }
 
   /**
-   * Test that an animation runs synchronously if its duration is 0.
+   * Test canceling an {@link Animation} within onStart.
    */
-  public void testNoDelay() {
-    final TestAnimation animNow = new TestAnimation();
-    final TestAnimation animPast = new TestAnimation();
-    final TestAnimation animFuture = new TestAnimation();
+  public void testCancelDuringOnStart() {
+    final TestAnimation anim = new TestAnimation() {
+      @Override
+      protected void onStart() {
+        super.onStart();
+        assertStarted(true);
+        assertUpdated(false);
+        assertCompleted(false);
+        assertCancelled(false);
+        reset();
 
-    // Run animations
-    double curTime = Duration.currentTimeMillis();
-    animNow.run(0);
-    animPast.run(0, curTime - 15 * DELAY_MULTIPLIER);
-    animFuture.run(0, curTime + 15 * DELAY_MULTIPLIER);
+        // Cancel the animation.
+        cancel();
+      }
+    };
 
-    // Test synchronous start
-    animNow.assertStarted(true);
-    animNow.assertCompleted(true);
-    animNow.assertProgress(-1.0);
+    // Run the animation.
+    anim.run(DELAY_MULTIPLIER);
+    anim.assertStarted(false);
+    anim.assertUpdated(false);
+    anim.assertCancelled(true);
+    anim.assertCompleted(false);
+    assertEquals(0, callbacks.size());
+  }
 
-    animPast.assertStarted(true);
-    animPast.assertCompleted(true);
-    animPast.assertProgress(-1.0);
+  /**
+   * Test canceling an {@link Animation} during an update.
+   */
+  public void testCancelDuringOnUpdate() {
+    final TestAnimation anim = new TestAnimation() {
+      @Override
+      protected void onUpdate(double progress) {
+        super.onUpdate(progress);
+        assertStarted(false);
+        assertUpdated(true);
+        assertCompleted(false);
+        assertCancelled(false);
+        reset();
 
-    animFuture.assertStarted(false);
-    animFuture.assertCompleted(false);
-    animFuture.assertProgress(-1.0);
+        // Cancel the test while it is running.
+        cancel();
+      }
+    };
+
+    // Run the animation.
+    anim.run(10 * DELAY_MULTIPLIER);
+    anim.assertStarted(true);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(false);
+    anim.assertProgress(-1.0);
+    anim.reset();
+
+    // Force the update.
+    executeLastCallbackAt(curTime + DELAY_MULTIPLIER);
+    anim.assertStarted(false);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(true);
+    anim.assertProgress(-1.0);
+    assertEquals(0, callbacks.size());
   }
 
   /**
@@ -272,10 +344,10 @@ public class AnimationTest extends GWTTestCase {
   public void testDefaultAnimation() {
     // Verify initial state
     final DefaultAnimation anim = new DefaultAnimation();
-    anim.assertProgress(-1.0);
     anim.assertStarted(false);
-    anim.assertCompleted(false);
+    anim.assertUpdated(false);
     anim.assertCancelled(false);
+    anim.assertCompleted(false);
 
     // Starting an animation calls onUpdate(interpolate(0.0))
     anim.reset();
@@ -305,8 +377,7 @@ public class AnimationTest extends GWTTestCase {
     // Canceling an animation before it starts does not call onStart or
     // onComplete
     anim.reset();
-    anim.run(20 * DELAY_MULTIPLIER, Duration.currentTimeMillis() + 100
-        * DELAY_MULTIPLIER);
+    anim.run(10 * DELAY_MULTIPLIER, curTime + DELAY_MULTIPLIER);
     anim.cancel();
     anim.assertProgress(-1.0);
     anim.assertStarted(false);
@@ -315,123 +386,164 @@ public class AnimationTest extends GWTTestCase {
   }
 
   /**
-   * Test general functionality.
+   * Test that restarting an {@link Animation} within onComplete does not break.
+   * See issue 5639.
    */
-  public void testRun() {
-    final TestAnimation animNow = new TestAnimation();
-    final TestAnimation animPast = new TestAnimation();
-    final TestAnimation animFuture = new TestAnimation();
-
-    delayTestFinish(50 * DELAY_MULTIPLIER);
-    // Run animations
-    double curTime = Duration.currentTimeMillis();
-    animNow.run(30 * DELAY_MULTIPLIER);
-    animPast.run(30 * DELAY_MULTIPLIER, curTime - 10 * DELAY_MULTIPLIER);
-    animFuture.run(30 * DELAY_MULTIPLIER, curTime + 10 * DELAY_MULTIPLIER);
-
-    // Test synchronous start
-    animNow.assertStarted(true);
-    animNow.assertCompleted(false);
-    animNow.assertProgress(-1.0);
-
-    animPast.assertStarted(true);
-    animPast.assertCompleted(false);
-    animPast.assertProgress(-1.0);
-
-    animFuture.assertStarted(false);
-    animFuture.assertCompleted(false);
-    animFuture.assertProgress(-1.0);
-
-    // Check progress
-    new Timer() {
+  public void testRunDuringOnComplete() {
+    final TestAnimation anim = new TestAnimation() {
       @Override
-      public void run() {
-        animNow.assertStarted(true);
-        animNow.assertCompleted(false);
-        animNow.assertProgressRange(0.0, 1.0);
+      protected void onComplete() {
+        super.onComplete();
+        assertStarted(false);
+        assertUpdated(false);
+        assertCompleted(true);
+        assertCancelled(false);
+        reset();
 
-        animPast.assertStarted(true);
-        animPast.assertCompleted(false);
-        animPast.assertProgressRange(0.0, 1.0);
-
-        animFuture.assertStarted(false);
-        animFuture.assertCompleted(false);
-        animFuture.assertProgress(-1.0);
+        // Run the animation.
+        run(DELAY_MULTIPLIER);
       }
-    }.schedule(5 * DELAY_MULTIPLIER);
+    };
 
-    // Check progress
-    new Timer() {
-      @Override
-      public void run() {
-        animNow.assertStarted(true);
-        animNow.assertCompleted(false);
-        animNow.assertProgressRange(0.0, 1.0);
+    // Run the animation.
+    anim.run(DELAY_MULTIPLIER);
+    anim.assertStarted(true);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(false);
+    anim.reset();
 
-        animPast.assertStarted(true);
-        animPast.assertCompleted(false);
-        animPast.assertProgressRange(0.0, 1.0);
+    // Force the animation to complete.
+    executeLastCallbackAt(curTime + DELAY_MULTIPLIER + 100);
+    anim.assertStarted(true);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(false);
+    assertEquals(1, callbacks.size());
+  }
 
-        animFuture.assertStarted(true);
-        animFuture.assertCompleted(false);
-        animFuture.assertProgressRange(0.0, 1.0);
-      }
-    }.schedule(15 * DELAY_MULTIPLIER);
+  /**
+   * Test that an animation runs in the future.
+   */
+  public void testRunFuture() {
+    final TestAnimation anim = new TestAnimation();
+    anim.run(2 * DELAY_MULTIPLIER, curTime + 2 * DELAY_MULTIPLIER);
+    anim.assertStarted(false);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.reset();
 
-    // Check progress
-    new Timer() {
-      @Override
-      public void run() {
-        animNow.assertStarted(true);
-        animNow.assertCompleted(false);
-        animNow.assertProgressRange(0.0, 1.0);
+    // Update, but still before the start time.
+    executeLastCallbackAt(curTime + DELAY_MULTIPLIER);
+    anim.assertStarted(false);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.reset();
 
-        animPast.assertStarted(true);
-        animPast.assertCompleted(true);
-        animPast.assertProgressRange(0.0, 1.0);
+    // Start the animation.
+    executeLastCallbackAt(curTime + 2 * DELAY_MULTIPLIER);
+    anim.assertStarted(true);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.reset();
 
-        animFuture.assertStarted(true);
-        animFuture.assertCompleted(false);
-        animFuture.assertProgressRange(0.0, 1.0);
-      }
-    }.schedule(25 * DELAY_MULTIPLIER);
+    // Update the animation.
+    executeLastCallbackAt(curTime + 3 * DELAY_MULTIPLIER);
+    anim.assertStarted(false);
+    anim.assertUpdated(true);
+    anim.assertCompleted(false);
+    anim.reset();
 
-    // Check progress
-    new Timer() {
-      @Override
-      public void run() {
-        animNow.assertStarted(true);
-        animNow.assertCompleted(true);
-        animNow.assertProgressRange(0.0, 1.0);
+    // Complete the animation.
+    executeLastCallbackAt(curTime + 4 * DELAY_MULTIPLIER + 100);
+    anim.assertStarted(false);
+    anim.assertUpdated(false);
+    anim.assertCompleted(true);
+  }
 
-        animPast.assertStarted(true);
-        animPast.assertCompleted(true);
-        animPast.assertProgressRange(0.0, 1.0);
+  /**
+   * Test that an animation runs synchronously if its duration is 0.
+   */
+  public void testRunNow() {
+    final TestAnimation anim = new TestAnimation();
+    anim.run(2 * DELAY_MULTIPLIER);
+    anim.assertStarted(true);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.reset();
 
-        animFuture.assertStarted(true);
-        animFuture.assertCompleted(false);
-        animFuture.assertProgressRange(0.0, 1.0);
-      }
-    }.schedule(35 * DELAY_MULTIPLIER);
+    // Update the progress.
+    executeLastCallbackAt(curTime + DELAY_MULTIPLIER);
+    anim.assertStarted(false);
+    anim.assertUpdated(true);
+    anim.assertCompleted(false);
+    anim.reset();
 
-    // Check progress
-    new Timer() {
-      @Override
-      public void run() {
-        animNow.assertStarted(true);
-        animNow.assertCompleted(true);
-        animNow.assertProgressRange(0.0, 1.0);
+    // Complete the animation.
+    executeLastCallbackAt(curTime + 2 * DELAY_MULTIPLIER + 100);
+    anim.assertStarted(false);
+    anim.assertUpdated(false);
+    anim.assertCompleted(true);
+  }
 
-        animPast.assertStarted(true);
-        animPast.assertCompleted(true);
-        animPast.assertProgressRange(0.0, 1.0);
+  /**
+   * Test running an animation that started in the past.
+   */
+  public void testRunPast() {
+    final TestAnimation anim = new TestAnimation();
+    anim.run(3 * DELAY_MULTIPLIER, curTime - DELAY_MULTIPLIER);
+    anim.assertStarted(true);
+    anim.assertUpdated(false);
+    anim.assertCompleted(false);
+    anim.reset();
 
-        animFuture.assertStarted(true);
-        animFuture.assertCompleted(true);
-        animFuture.assertProgressRange(0.0, 1.0);
+    // Update the progress.
+    executeLastCallbackAt(curTime + DELAY_MULTIPLIER);
+    anim.assertStarted(false);
+    anim.assertUpdated(true);
+    anim.assertCompleted(false);
+    anim.reset();
 
-        finishTest();
-      }
-    }.schedule(45 * DELAY_MULTIPLIER);
+    // Complete the animation.
+    executeLastCallbackAt(curTime + 2 * DELAY_MULTIPLIER + 100);
+    anim.assertStarted(false);
+    anim.assertUpdated(false);
+    anim.assertCompleted(true);
+  }
+
+  /**
+   * Test running an animation that started and finished in the past.
+   */
+  public void testRunPaster() {
+    final TestAnimation anim = new TestAnimation();
+    anim.run(DELAY_MULTIPLIER, curTime - 2 * DELAY_MULTIPLIER);
+    anim.assertStarted(true);
+    anim.assertUpdated(false);
+    anim.assertCompleted(true);
+  }
+
+  @Override
+  protected void gwtSetUp() throws Exception {
+    scheduler = new StubAnimationScheduler();
+    callbacks = scheduler.getAnimationCallbacks();
+    curTime = Duration.currentTimeMillis();
+  }
+
+  @Override
+  protected void gwtTearDown() throws Exception {
+    scheduler = null;
+    callbacks = null;
+  }
+
+  /**
+   * Execute the last callback requested from the scheduler at the specified
+   * time.
+   * 
+   * @param timestamp the time to pass to the callback
+   */
+  private void executeLastCallbackAt(double timestamp) {
+    assertTrue(callbacks.size() > 0);
+    AnimationCallback callback = callbacks.remove(callbacks.size() - 1);
+    callback.execute(timestamp);
   }
 }
