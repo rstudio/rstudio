@@ -62,12 +62,10 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
       return 0;
     }
   }
-
   @ProxyFor(ClinitEntity.class)
   interface ClinitEntityProxy extends EntityProxy {
     Object OBJECT = new Object();
   }
-
   @Service(ClinitEntity.class)
   interface ClinitRequestContext extends RequestContext {
     Object OBJECT = new Object();
@@ -126,6 +124,30 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   @ProxyFor(Domain.class)
   interface DomainWithSqlDateProxy extends EntityProxy {
     java.sql.Date getSqlDate();
+  }
+
+  /**
+   * Tests that the validator reports non-static finder methods.
+   */
+  static class EntityWithInstanceFind {
+    public String getId() {
+      return null;
+    }
+
+    public int getVersion() {
+      return 0;
+    }
+
+    /**
+     * This method should be static.
+     */
+    EntityWithInstanceFind findEntityWithInstanceFind(String key) {
+      return null;
+    }
+  }
+
+  @ProxyFor(EntityWithInstanceFind.class)
+  interface EntityWithInstanceFindProxy extends EntityProxy {
   }
 
   class Foo {
@@ -249,6 +271,13 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   }
 
   @Service(Domain.class)
+  interface SkipValidationChecksReferredProxies extends ValueProxy {
+    @SkipInterfaceValidation
+    // still validates other proxies
+    DomainProxyMissingAnnotation getDomainProxyMissingAnnotation();
+  }
+
+  @Service(Domain.class)
   interface SkipValidationContext extends RequestContext {
     @SkipInterfaceValidation
     Request<Integer> doesNotExist(int a);
@@ -261,13 +290,6 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   interface SkipValidationProxy extends ValueProxy {
     @SkipInterfaceValidation
     boolean doesNotExist();
-  }
-
-  @Service(Domain.class)
-  interface SkipValidationChecksReferredProxies extends ValueProxy {
-    @SkipInterfaceValidation
-    // still validates other proxies
-    DomainProxyMissingAnnotation getDomainProxyMissingAnnotation();
   }
 
   @ProxyFor(Domain.class)
@@ -294,8 +316,7 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   static class Value {
   }
 
-  static class VisibleErrorContext extends
-      RequestFactoryInterfaceValidator.ErrorContext {
+  static class VisibleErrorContext extends RequestFactoryInterfaceValidator.ErrorContext {
     final List<String> logs;
 
     public VisibleErrorContext(Logger logger) {
@@ -365,6 +386,12 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     assertTrue(v.isPoisoned());
   }
 
+  public void testFindMustBeStatic() {
+    v.validateEntityProxy(EntityWithInstanceFindProxy.class.getName());
+    assertTrue(v.isPoisoned());
+    assertTrue(errors.logs.contains("The findEntityWithInstanceFind method must be static"));
+  }
+
   /**
    * Test the {@link FindRequest} context used to implement find().
    */
@@ -378,8 +405,7 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
    */
   public void testFollowingTypeParameters() {
     v.validateEntityProxy(HasList.class.getName());
-    assertNotNull(v.getEntityProxyTypeName(HasListDomain.class.getName(),
-        HasList.class.getName()));
+    assertNotNull(v.getEntityProxyTypeName(HasListDomain.class.getName(), HasList.class.getName()));
     assertNotNull(v.getEntityProxyTypeName(Domain.class.getName(),
         ReachableOnlyThroughParamaterList.class.getName()));
     assertNotNull(v.getEntityProxyTypeName(Domain.class.getName(),
@@ -487,7 +513,8 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     Logger logger = Logger.getLogger("");
     logger.setLevel(DUMP_PAYLOAD ? Level.ALL : Level.OFF);
     errors = new VisibleErrorContext(logger);
-    v = new RequestFactoryInterfaceValidator(errors, new ClassLoaderLoader(
-        Thread.currentThread().getContextClassLoader()));
+    v =
+        new RequestFactoryInterfaceValidator(errors, new ClassLoaderLoader(Thread.currentThread()
+            .getContextClassLoader()));
   }
 }

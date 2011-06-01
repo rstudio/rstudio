@@ -1077,6 +1077,9 @@ public class RequestFactoryInterfaceValidator {
             + " cannot be used as the argument to %s(%s)", print(keyType),
             findMethod.getName(), print(findMethod.getArgumentTypes()[0]));
       }
+      if (!findMethod.isDeclaredStatic()) {
+        logger.poison("The %s method must be static", findMethodName);
+      }
     } else {
       logger.poison("There is no %s method in type %s that returns %2$s",
           findMethodName, print(domainType));
