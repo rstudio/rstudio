@@ -81,6 +81,36 @@ public class ShellPane extends Composite implements Shell.Display,
             input_.scrollToCursor(scrollPanel_, 8);
          }
       });
+      input_.addCapturingKeyDownHandler(new KeyDownHandler()
+      {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            // If the user hits Page-Up from inside the console input, we need
+            // to simulate pageup because focus is not contained in the scroll
+            // panel (it's in the hidden textarea that Ace uses under the
+            // covers).
+
+            int keyCode = event.getNativeKeyCode();
+            switch (keyCode)
+            {
+               case KeyCodes.KEY_PAGEUP:
+                  event.stopPropagation();
+                  event.preventDefault();
+
+                  // Can't scroll any further up. Return before we change focus.
+                  if (scrollPanel_.getVerticalScrollPosition() == 0)
+                     return;
+
+                  scrollPanel_.focus();
+                  int newScrollTop = scrollPanel_.getVerticalScrollPosition() -
+                                     scrollPanel_.getOffsetHeight() + 40;
+                  scrollPanel_.setVerticalScrollPosition(Math.max(0, newScrollTop));
+                  break;
+            }
+         }
+      });
+
       uiPrefs.syntaxColorConsole().bind(new CommandWithArg<Boolean>()
       {
          public void execute(Boolean arg)
@@ -443,6 +473,7 @@ public class ShellPane extends Composite implements Shell.Display,
       private ClickableScrollPanel()
       {
          super();
+         getElement().setTabIndex(-1);
       }
 
       public HandlerRegistration addClickHandler(ClickHandler handler)
@@ -453,6 +484,11 @@ public class ShellPane extends Composite implements Shell.Display,
       public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
       {
          return addDomHandler(handler, KeyDownEvent.getType());
+      }
+
+      public void focus()
+      {
+         getElement().focus();
       }
    }
 
