@@ -45,6 +45,9 @@ in the POM.
   Select Java Build Path and click the Projects tab
 
   Click Add..., select gwt-user, and click OK
+  
+GWT developers can also use tools/scripts/maven_script.sh to push their
+own GWT jars into their local maven repo.
 
 -- Option B: Build from the command line with Maven --
 

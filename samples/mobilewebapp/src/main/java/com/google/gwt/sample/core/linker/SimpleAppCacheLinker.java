@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.linker;
+package com.google.gwt.sample.core.linker;
 
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
@@ -30,7 +30,10 @@ import java.util.Arrays;
 import java.util.Date;
 
 /**
- * AppCacheLinker - linker for public path resources in the Application Cache.
+ * Linker for public path resources in the Application Cache.
+ * <p>
+ * <strong>Warning</strong>This linker sends all permutations to clients, 
+ * making it inappropriate for most production use.</strong>
  * <p>
  * To use:
  * <ol>

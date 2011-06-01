@@ -8,7 +8,9 @@
   <inherits name='com.google.gwt.editor.Editor'/>
   <inherits name='com.google.gwt.sample.mobilewebapp.FormFactor'/>
   <inherits name='com.google.web.bindery.requestfactory.RequestFactory'/>
+  
   <inherits name='com.google.gwt.sample.gaerequest.GaeRequest'/>
+  <inherits name='com.google.gwt.sample.core.Core'/>
 
   <!-- Specify the app entry point class.                         -->
   <entry-point class='com.google.gwt.sample.mobilewebapp.client.MobileWebApp'/>
