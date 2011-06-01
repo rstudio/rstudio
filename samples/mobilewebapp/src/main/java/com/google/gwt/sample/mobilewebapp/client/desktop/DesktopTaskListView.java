@@ -16,17 +16,13 @@
 package com.google.gwt.sample.mobilewebapp.client.desktop;
 
 import com.google.gwt.cell.client.DateCell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.TextColumn;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
@@ -37,25 +33,12 @@ import java.util.List;
 /**
  * View used to display the list of Tasks.
  */
-public class DesktopTaskListView extends Composite implements TaskListView {
-
-  /**
-   * The UiBinder interface.
-   */
-  interface DesktopTaskListViewUiBinder extends UiBinder<Widget, DesktopTaskListView> {
-  }
-
-  /**
-   * The UiBinder used to generate the view.
-   */
-  private static DesktopTaskListViewUiBinder uiBinder =
-      GWT.create(DesktopTaskListViewUiBinder.class);
+public class DesktopTaskListView extends ResizeComposite implements TaskListView {
 
   /**
    * Displays the list of tasks.
    */
-  @UiField(provided = true)
-  CellTable<TaskProxy> taskList;
+  DataGrid<TaskProxy> taskList;
 
   /**
    * The presenter for this view.
@@ -68,7 +51,7 @@ public class DesktopTaskListView extends Composite implements TaskListView {
   public DesktopTaskListView() {
 
     // Create the CellTable.
-    taskList = new CellTable<TaskProxy>();
+    taskList = new DataGrid<TaskProxy>();
     taskList.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
     taskList.setWidth("100%");
 
@@ -105,6 +88,7 @@ public class DesktopTaskListView extends Composite implements TaskListView {
     final NoSelectionModel<TaskProxy> selectionModel = new NoSelectionModel<TaskProxy>();
     taskList.setSelectionModel(selectionModel);
     selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
+      @Override
       public void onSelectionChange(SelectionChangeEvent event) {
         // Edit the task.
         if (presenter != null) {
@@ -114,13 +98,15 @@ public class DesktopTaskListView extends Composite implements TaskListView {
     });
 
     // Initialize the widget.
-    initWidget(uiBinder.createAndBindUi(this));
+    initWidget(taskList);
   }
 
+  @Override
   public void clearList() {
     taskList.setVisibleRangeAndClearData(taskList.getVisibleRange(), true);
   }
 
+  @Override
   public void setPresenter(Presenter presenter) {
     this.presenter = presenter;
   }
@@ -129,6 +115,7 @@ public class DesktopTaskListView extends Composite implements TaskListView {
     taskList.setSelectionModel(selectionModel);
   }
 
+  @Override
   public void setTasks(List<TaskProxy> tasks) {
     taskList.setRowData(tasks);
   }

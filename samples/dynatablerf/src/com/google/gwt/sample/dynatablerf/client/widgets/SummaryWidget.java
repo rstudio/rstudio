@@ -35,8 +35,8 @@ import com.google.gwt.sample.dynatablerf.shared.TimeSlotProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.client.ui.Composite;
@@ -66,9 +66,10 @@ public class SummaryWidget extends Composite {
   interface Style extends CssResource {
   }
 
-  interface TableResources extends CellTable.Resources {
-    @Source(value = {CellTable.Style.DEFAULT_CSS, "CellTablePatch.css"})
-    CellTable.Style cellTableStyle();
+  interface TableResources extends DataGrid.Resources {
+    @Override
+    @Source(value = {DataGrid.Style.DEFAULT_CSS, "DataGridPatch.css"})
+    DataGrid.Style dataGridStyle();
   }
 
   private class DescriptionColumn extends Column<PersonProxy, String> {
@@ -111,7 +112,7 @@ public class SummaryWidget extends Composite {
   SimplePager pager = new SimplePager();
 
   @UiField(provided = true)
-  CellTable<PersonProxy> table;
+  DataGrid<PersonProxy> table;
 
   private final EventBus eventBus;
   private List<Boolean> filter = new ArrayList<Boolean>(ALL_DAYS);
@@ -127,11 +128,9 @@ public class SummaryWidget extends Composite {
     this.requestFactory = requestFactory;
     this.numRows = numRows;
 
-    table = new CellTable<PersonProxy>(numRows,
+    table = new DataGrid<PersonProxy>(numRows,
         GWT.<TableResources> create(TableResources.class));
     initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
-    dock.getWidgetContainerElement(table).getStyle().setProperty("overflowY",
-        "visible");
 
     Column<PersonProxy, String> nameColumn = new NameColumn();
     table.addColumn(nameColumn, "Name");
@@ -146,17 +145,20 @@ public class SummaryWidget extends Composite {
 
     EntityProxyChange.registerForProxyType(eventBus, PersonProxy.class,
         new EntityProxyChange.Handler<PersonProxy>() {
+          @Override
           public void onProxyChange(EntityProxyChange<PersonProxy> event) {
             SummaryWidget.this.onPersonChanged(event);
           }
         });
 
     FilterChangeEvent.register(eventBus, new FilterChangeEvent.Handler() {
+      @Override
       public void onFilterChanged(FilterChangeEvent e) {
         filter.set(e.getDay(), e.isSelected());
         if (!pending) {
           pending = true;
           Scheduler.get().scheduleFinally(new ScheduledCommand() {
+            @Override
             public void execute() {
               pending = false;
               fetch(0);
@@ -167,6 +169,7 @@ public class SummaryWidget extends Composite {
     });
 
     selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
+      @Override
       public void onSelectionChange(SelectionChangeEvent event) {
         SummaryWidget.this.refreshSelection();
       }
@@ -255,7 +258,7 @@ public class SummaryWidget extends Composite {
   }
 
   private int offsetOf(EntityProxyId<PersonProxy> personId) {
-    List<PersonProxy> displayedItems = table.getDisplayedItems();
+    List<PersonProxy> displayedItems = table.getVisibleItems();
     for (int offset = 0, j = displayedItems.size(); offset < j; offset++) {
       if (personId.equals(displayedItems.get(offset).stableId())) {
         return offset;

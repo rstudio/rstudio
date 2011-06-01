@@ -9,7 +9,7 @@
   </ui:style>
 
   <g:ScrollPanel>
-    <c:CellTable
+    <c:DataGrid
       ui:field="taskList" />
   </g:ScrollPanel>
 

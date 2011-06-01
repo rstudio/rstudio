@@ -30,7 +30,7 @@
       </g:DockLayoutPanel>
     </g:north>
     <g:center>
-      <cv:CellTable ui:field="table" stylePrimaryName="{style.table}" />
+      <cv:DataGrid ui:field="table" stylePrimaryName="{style.table}" />
     </g:center>
   </g:DockLayoutPanel>
 </ui:UiBinder>

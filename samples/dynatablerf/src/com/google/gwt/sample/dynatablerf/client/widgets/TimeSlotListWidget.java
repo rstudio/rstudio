@@ -20,7 +20,6 @@ import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.EditorDelegate;
 import com.google.gwt.editor.client.ValueAwareEditor;
-import com.google.gwt.sample.dynatablerf.client.widgets.SummaryWidget.TableResources;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.ScheduleRequest;
 import com.google.gwt.sample.dynatablerf.shared.TimeSlotProxy;
@@ -43,6 +42,12 @@ import java.util.List;
  * Edits a list of time slots.
  */
 public class TimeSlotListWidget extends Composite implements ValueAwareEditor<List<TimeSlotProxy>> {
+
+  interface TableResources extends CellTable.Resources {
+    @Override
+    @Source(value = {CellTable.Style.DEFAULT_CSS, "CellTablePatch.css"})
+    CellTable.Style cellTableStyle();
+  }
 
   interface TimeSlotListWidgetUiBinder extends UiBinder<Widget, TimeSlotListWidget> {
   }
@@ -202,6 +207,7 @@ public class TimeSlotListWidget extends Composite implements ValueAwareEditor<Li
           columnDay = day;
         }
         
+        @Override
         public void update(int index, ScheduleRow row, String value) {
           if (acceptClicks) {
             row.toggleInUse(columnDay);
@@ -219,6 +225,7 @@ public class TimeSlotListWidget extends Composite implements ValueAwareEditor<Li
     initWidget(uiBinder.createAndBindUi(this));
   }
   
+  @Override
   public void flush() {
     HashMap<TimeSlotProxy, TimeSlotKey> index = new HashMap<TimeSlotProxy, TimeSlotKey>();
     
@@ -238,12 +245,15 @@ public class TimeSlotListWidget extends Composite implements ValueAwareEditor<Li
     }    
   }
 
+  @Override
   public void onPropertyChange(String... paths) {
   }
 
+  @Override
   public void setDelegate(EditorDelegate<List<TimeSlotProxy>> delegate) {
   }
 
+  @Override
   public void setValue(List<TimeSlotProxy> value) {
     backing = value;
     currentSchedule = new HashSet<TimeSlotKey>();
