@@ -16,6 +16,14 @@ body, td {
    font-size: 10pt;
 }
 
+::selection {
+   background: rgb(181, 213, 255);
+}
+
+::-moz-selection{
+   background: rgb(181, 213, 255);
+}
+
 a:visited {
    color: rgb(50%, 0%, 50%);
 }
