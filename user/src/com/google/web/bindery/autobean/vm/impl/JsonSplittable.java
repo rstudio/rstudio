@@ -15,6 +15,7 @@
  */
 package com.google.web.bindery.autobean.vm.impl;
 
+import com.google.gwt.core.client.impl.WeakMapping;
 import com.google.web.bindery.autobean.shared.Splittable;
 import com.google.web.bindery.autobean.shared.impl.HasSplittable;
 import com.google.web.bindery.autobean.shared.impl.StringQuoter;
@@ -23,27 +24,17 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * Uses the org.json packages to slice and dice request payloads.
  */
 public class JsonSplittable implements Splittable, HasSplittable {
-
-  /**
-   * Ensures that the same JsonSplittable will be returned for a given backing
-   * JSONObject.
-   */
-  private static final Map<Object, Reference<JsonSplittable>> canonical =
-      new WeakHashMap<Object, Reference<JsonSplittable>>();
 
   public static JsonSplittable create() {
     return new JsonSplittable(new JSONObject());
@@ -306,13 +297,19 @@ public class JsonSplittable implements Splittable, HasSplittable {
     if (JSONObject.NULL.equals(object)) {
       return null;
     }
-    Reference<JsonSplittable> ref = canonical.get(object);
-    JsonSplittable seen = ref == null ? null : ref.get();
+    /*
+     * Maintain a 1:1 mapping between object instances and JsonSplittables.
+     * Doing this with a WeakHashMap doesn't work on Android, since its org.json
+     * arrays appear to have value-based equality.
+     */
+    JsonSplittable seen = (JsonSplittable) WeakMapping.get(object, JsonSplittable.class.getName());
     if (seen == null) {
       if (object instanceof JSONObject) {
         seen = new JsonSplittable((JSONObject) object);
+        WeakMapping.set(object, JsonSplittable.class.getName(), seen);
       } else if (object instanceof JSONArray) {
         seen = new JsonSplittable((JSONArray) object);
+        WeakMapping.set(object, JsonSplittable.class.getName(), seen);
       } else if (object instanceof String) {
         seen = new JsonSplittable(object.toString());
       } else if (object instanceof Number) {
@@ -322,7 +319,6 @@ public class JsonSplittable implements Splittable, HasSplittable {
       } else {
         throw new RuntimeException("Unhandled type " + object.getClass());
       }
-      canonical.put(object, new WeakReference<JsonSplittable>(seen));
     }
     return seen;
   }
