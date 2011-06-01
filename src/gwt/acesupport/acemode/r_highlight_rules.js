@@ -27,7 +27,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
    {
 
       var keywords = lang.arrayToMap(
-            ("function|while|repeat|for|if|in|else|next|break|return")
+            ("function|while|repeat|for|if|in|else|next|break|return|try|tryCatch|with|within")
                   .split("|")
             );
 
