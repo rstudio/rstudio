@@ -80,4 +80,20 @@ public class Renderer extends JavaScriptObject
    public native final Element getCursorElement() /*-{
       return this.$cursorLayer.cursor;
    }-*/;
+
+   public native final int getScrollTop() /*-{
+      return this.getScrollTop() || 0;
+   }-*/;
+
+   public native final int getScrollLeft() /*-{
+      return this.getScrollLeft() || 0;
+   }-*/;
+
+   public native final void scrollToY(int scrollTop) /*-{
+      this.scrollToY(scrollTop);
+   }-*/;
+
+   public native final void scrollToX(int scrollLeft) /*-{
+      this.scrollToX(scrollLeft);
+   }-*/;
 }

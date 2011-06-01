@@ -16,6 +16,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
@@ -173,11 +174,41 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    public void setCode(String code, boolean preserveCursorPosition)
    {
-      widget_.setCode(code);
-      if (!preserveCursorPosition)
-         widget_.getEditor().getSession().getSelection().moveCursorTo(0,
-                                                                      0,
-                                                                      false);
+      final AceEditorNative ed = widget_.getEditor();
+
+      if (preserveCursorPosition)
+      {
+         final Position cursorPos;
+         final int scrollTop, scrollLeft;
+
+         cursorPos = ed.getSession().getSelection().getCursor();
+         scrollTop = ed.getRenderer().getScrollTop();
+         scrollLeft = ed.getRenderer().getScrollLeft();
+
+         // Setting the value directly on the document prevents undo/redo
+         // stack from being blown away
+         widget_.getEditor().getSession().getDocument().setValue(code);
+
+         ed.getSession().getSelection().moveCursorTo(cursorPos.getRow(),
+                                                     cursorPos.getColumn(),
+                                                     false);
+         ed.getRenderer().scrollToY(scrollTop);
+         ed.getRenderer().scrollToX(scrollLeft);
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               ed.getRenderer().scrollToY(scrollTop);
+               ed.getRenderer().scrollToX(scrollLeft);
+            }
+         });
+      }
+      else
+      {
+         ed.getSession().setValue(code);
+         ed.getSession().getSelection().moveCursorTo(0, 0, false);
+      }
    }
 
    public void insertCode(String code, boolean blockMode)

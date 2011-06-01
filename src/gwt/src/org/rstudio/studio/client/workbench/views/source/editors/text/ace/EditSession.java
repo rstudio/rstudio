@@ -86,4 +86,8 @@ public class EditSession extends JavaScriptObject
    public native final UndoManager getUndoManager() /*-{
       return this.getUndoManager();
    }-*/;
+
+  public native final Document getDocument() /*-{
+     return this.getDocument();
+  }-*/;
 }
