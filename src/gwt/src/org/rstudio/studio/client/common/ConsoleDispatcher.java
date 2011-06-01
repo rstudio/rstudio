@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.common;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.FilenameTransform;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -20,6 +21,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.inject.Inject;
@@ -34,12 +36,14 @@ public class ConsoleDispatcher
                             Commands commands,
                             FileDialogs fileDialogs,
                             WorkbenchContext workbenchContext,
+                            Session session,
                             RemoteFileSystemContext fsContext)
    {
       eventBus_ = eventBus;
       commands_ = commands;
       fileDialogs_ = fileDialogs;
       workbenchContext_ = workbenchContext;
+      session_ = session;
       fsContext_ = fsContext;
    }
 
@@ -124,10 +128,43 @@ public class ConsoleDispatcher
       
    }
    
+ 
+   public void executeSourceCommand(String path, 
+                                    String encoding, 
+                                    boolean contentKnownToBeAscii)
+   {
+      String systemEncoding = session_.getSessionInfo().getSystemEncoding();
+      boolean isSystemEncoding =
+            normalizeEncoding(encoding).equals(normalizeEncoding(systemEncoding));
+
+      String escapedPath = "'" +
+                           path.replace("\\", "\\\\").replace("'", "\\'") +
+                           "'";
+
+      String code = null;
+      
+      if (contentKnownToBeAscii || isSystemEncoding)
+         code = "source(" + escapedPath + ")";
+      else
+      {
+         code = "source.with.encoding(" + escapedPath + ", encoding='" +
+                   (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
+                   "')";
+      }
+      
+      eventBus_.fireEvent(new SendToConsoleEvent(code, true));
+   }
+   
+   private String normalizeEncoding(String str)
+   {
+      return StringUtil.notNull(str).replaceAll("[- ]", "").toLowerCase();
+   }
+   
    
    private final EventBus eventBus_;
    private final Commands commands_;
    private final FileDialogs fileDialogs_;
    private final WorkbenchContext workbenchContext_;
+   private final Session session_;
    private final RemoteFileSystemContext fsContext_;
 }
