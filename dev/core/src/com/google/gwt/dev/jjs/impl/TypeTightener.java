@@ -557,8 +557,11 @@ public class TypeTightener {
         x = newCall;
       }
 
-      if (x.canBePolymorphic()) {
-        // See if we can remove virtualization from this call.
+      /*
+       * Mark a call as non-polymorphic if the targeted method is the only
+       * possible dispatch, given the qualifying instance type.
+       */
+      if (x.canBePolymorphic() && !target.isAbstract()) {
         JExpression instance = x.getInstance();
         assert (instance != null);
         JReferenceType instanceType = (JReferenceType) instance.getType();
@@ -572,6 +575,7 @@ public class TypeTightener {
               return;
             }
           }
+          // The instance type is incompatible with all overrides.
         }
         x.setCannotBePolymorphic();
         madeChanges();
