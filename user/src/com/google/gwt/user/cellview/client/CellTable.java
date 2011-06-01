@@ -37,9 +37,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ProvidesKey;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -485,7 +483,6 @@ public class CellTable<T> extends AbstractCellTable<T> {
   }
 
   final TableColElement colgroup;
-  private final List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
   private final SimplePanel emptyTableWidgetContainer = new SimplePanel();
   private final SimplePanel loadingIndicatorContainer = new SimplePanel();
 
@@ -805,7 +802,7 @@ public class CellTable<T> extends AbstractCellTable<T> {
     }
 
     // Adjust the colspan of the messages panel container.
-    tbodyLoadingCell.setColSpan(Math.max(1, columns.size()));
+    tbodyLoadingCell.setColSpan(Math.max(1, getColumnCount()));
 
     // Show the correct container.
     showOrHide(getChildContainer(), message == null);
