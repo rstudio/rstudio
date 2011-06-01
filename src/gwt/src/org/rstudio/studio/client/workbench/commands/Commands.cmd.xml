@@ -78,6 +78,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="executeAllCode"/>
          <separator/>
          <cmd refid="sourceActiveDocument"/>
+         <cmd refid="sourceFile"/>
          <separator/>
          <cmd refid="extractFunction"/>
          <cmd refid="commentUncomment"/>
@@ -203,6 +204,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="compilePDF" value="Cmd+Shift+P"/>
       <shortcut refid="executeCode" value="Cmd+Enter"/>
       <shortcut refid="executeAllCode" value="Cmd+Shift+Enter"/>
+      <shortcut refid="sourceFile" value="Cmd+Shift+O"/>
       <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S"/>
       <shortcut refid="extractFunction" value="Cmd+Shift+F"/>
       <shortcut refid="commentUncomment" value="Cmd+/"/>
@@ -221,7 +223,6 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="nextTab" value="Ctrl+Alt+Right"/>
       <shortcut refid="firstTab" value="Ctrl+Alt+Shift+Left"/>
       <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
-      <shortcut refid="quickOpen" value="Cmd+Alt+O"/>
       <shortcut refid="previousPlot" value="Cmd+PageUp" />
       <shortcut refid="nextPlot" value="Cmd+PageDown" />
       <shortcut refid="removePlot" value="Cmd+Shift+R" />
@@ -357,6 +358,10 @@ well as menu structures (for main menu and popup menus).
    <cmd id="extractFunction"
         menuLabel="E_xtract Function"
         desc="Turn the current selection into a function"/>
+   <cmd id="sourceFile"
+        buttonLabel=""
+        menuLabel="Source Fi_le..."
+        desc="Source the contents of an R file"/>
    <cmd id="sourceActiveDocument"
         buttonLabel="Source"
         menuLabel="_Source Active Document"
@@ -408,8 +413,6 @@ well as menu structures (for main menu and popup menus).
    <cmd id="refreshFiles"
         menuLabel="Refresh"
         desc="Refresh file listing"/>
-   <cmd id="quickOpen"
-        label="Quick Open"/>
    <cmd id="syncWorkingDir"
         label="Set As Working Directory"/>
    <cmd id="showFolder"

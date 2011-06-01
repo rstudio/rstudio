@@ -48,9 +48,9 @@ public class Workbench implements BusyHandler,
    public Workbench(WorkbenchMainView view, 
                     WorkbenchContext workbenchContext,
                     GlobalDisplay globalDisplay,
+                    Commands commands,
                     EventBus eventBus,
                     Server server,
-                    Commands commands,
                     RemoteFileSystemContext fsContext,
                     FileDialogs fileDialogs,
                     ConsoleDispatcher consoleDispatcher)
@@ -58,6 +58,7 @@ public class Workbench implements BusyHandler,
       view_ = view;
       workbenchContext_ = workbenchContext;
       globalDisplay_ = globalDisplay;
+      commands_ = commands;
       eventBus_ = eventBus;
       server_ = server;
       fsContext_ = fsContext;
@@ -214,10 +215,36 @@ public class Workbench implements BusyHandler,
             });
    }
    
+   @Handler
+   public void onSourceFile()
+   {
+      fileDialogs_.openFile(
+            "Source File",
+            fsContext_,
+            workbenchContext_.getCurrentWorkingDir(),
+            new ProgressOperationWithInput<FileSystemItem>()
+            {
+               public void execute(FileSystemItem input, ProgressIndicator indicator)
+               {
+                  if (input == null)
+                     return;
+                  
+                  indicator.onCompleted();
+                  
+                  consoleDispatcher_.executeSourceCommand(input.getPath(), 
+                                                          "UTF-8", 
+                                                          false);
+                    
+                  commands_.activateConsole().execute();
+               }
+            });
+   }
+   
    private final Server server_;
    private final EventBus eventBus_;
    private final WorkbenchMainView view_;
    private final GlobalDisplay globalDisplay_;
+   private final Commands commands_;
    private final RemoteFileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
    private final WorkbenchContext workbenchContext_;

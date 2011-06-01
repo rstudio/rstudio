@@ -33,6 +33,7 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand closeSourceDoc();
    public abstract AppCommand closeAllSourceDocs();
    public abstract AppCommand executeAllCode();
+   public abstract AppCommand sourceFile();
    public abstract AppCommand sourceActiveDocument();
    public abstract AppCommand executeCode();
    public abstract AppCommand compilePDF();
@@ -61,7 +62,6 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand renameFile();
    public abstract AppCommand deleteFiles();
    public abstract AppCommand refreshFiles();
-   public abstract AppCommand quickOpen();
    public abstract AppCommand activateFiles();
    public abstract AppCommand syncWorkingDir();
    public abstract AppCommand setWorkingDirToFilesPane();

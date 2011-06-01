@@ -1299,49 +1299,28 @@ public class TextEditingTarget implements EditingTarget
             @Override
             public void onResponseReceived(Void response)
             {
-               events_.fireEvent(new SendToConsoleEvent(
-                     createSourceCommand("~/.active-rstudio-document", "UTF-8"),
-                     true));
+               consoleDispatcher_.executeSourceCommand(
+                                              "~/.active-rstudio-document", 
+                                              "UTF-8",
+                                              activeCodeIsAscii());
             }
          });
       }
    }
+  
 
-   private String normalizeEncoding(String str)
+   private boolean activeCodeIsAscii()
    {
-      return StringUtil.notNull(str).replaceAll("[- ]", "").toLowerCase();
-   }
-
-   private String createSourceCommand(String path, String encoding)
-   {
-      boolean isAscii = true;
       String code = docDisplay_.getCode();
-      for (int i = 0; i < code.length(); i++)
+      for (int i=0; i< code.length(); i++)
       {
          if (code.charAt(i) > 127)
-         {
-            isAscii = false;
-            break;
-         }
+            return false;
       }
-
-      String systemEncoding = session_.getSessionInfo().getSystemEncoding();
-      boolean isSystemEncoding =
-            normalizeEncoding(encoding).equals(normalizeEncoding(systemEncoding));
-
-      String escapedPath = "'" +
-                           path.replace("\\", "\\\\").replace("'", "\\'") +
-                           "'";
-
-      if (isAscii || isSystemEncoding)
-         return "source(" + escapedPath + ")";
-      else
-      {
-         return "source.with.encoding(" + escapedPath + ", encoding='" +
-                (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
-                "')";
-      }
+      
+      return true;
    }
+   
 
    @Handler
    void onPublishPDF()
@@ -1436,10 +1415,10 @@ public class TextEditingTarget implements EditingTarget
          {
             if (fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave())
             {
-               String path = docUpdateSentinel_.getPath();
-               String code = createSourceCommand(
-                     path, docUpdateSentinel_.getEncoding());
-               events_.fireEvent(new SendToConsoleEvent(code, true));
+               consoleDispatcher_.executeSourceCommand(
+                                             docUpdateSentinel_.getPath(), 
+                                             docUpdateSentinel_.getEncoding(), 
+                                             activeCodeIsAscii());
             }
          }
       };
@@ -1573,7 +1552,6 @@ public class TextEditingTarget implements EditingTarget
    private ArrayList<HandlerRegistration> releaseOnDismiss_ =
          new ArrayList<HandlerRegistration>();
    private final DirtyState dirtyState_;
-   private JavaScriptObject cleanStateToken_ = null;
    private HandlerManager handlers_ = new HandlerManager(this);
    private FileSystemContext fileContext_;
    private final Provider<PublishPdf> pPublishPdf_;
