@@ -35,14 +35,39 @@ SourceManager& sourceManager()
    return instance ;
 }
    
-Error SourceManager::source(const FilePath& filePath)
+Error SourceManager::sourceTools(const core::FilePath& filePath)
 {
-   return source(filePath, false);
+   Error error = sourceLocal(filePath);
+   if (error)
+      return error;
+
+   toolsFilePaths_.push_back(filePath);
+
+   return Success();
 }
-   
+
+
 Error SourceManager::sourceLocal(const FilePath& filePath)
 {
    return source(filePath, true);
+}
+
+void SourceManager::ensureToolsLoaded()
+{
+   // check whether tools:rstudio is still in the search patch
+   bool toolsRStudioLoaded = true;
+   Error error = r::exec::evaluateString("\"tools:rstudio\" %in% search()",
+                                         &toolsRStudioLoaded);
+   if (error)
+      LOG_ERROR(error);
+
+   // if not then source all of the tools files back in
+   if (!toolsRStudioLoaded)
+   {
+      std::for_each(toolsFilePaths_.begin(),
+                    toolsFilePaths_.end(),
+                    boost::bind(&SourceManager::reSourceTools, this, _1));
+   }
 }
    
 void SourceManager::reloadIfNecessary()
@@ -56,7 +81,14 @@ void SourceManager::reloadIfNecessary()
                                 _1));
    }
 }
-    
+
+
+void SourceManager::reSourceTools(const core::FilePath& filePath)
+{
+   Error error = source(filePath, true);
+   if (error)
+      LOG_ERROR(error);
+}
    
 Error SourceManager::source(const FilePath& filePath, bool local)
 {

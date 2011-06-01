@@ -17,13 +17,15 @@
 #include <time.h>
 
 #include <string>
+#include <vector>
 
 #include <boost/utility.hpp>
 #include <boost/unordered_map.hpp>
 
+#include <core/FilePath.hpp>
+
 namespace core {
    class Error ;
-   class FilePath;
 }
 
 namespace r {
@@ -44,7 +46,9 @@ public:
    bool autoReload() const { return autoReload_; }
    void setAutoReload(bool autoReload) { autoReload_ = autoReload; }
    
-   core::Error source(const core::FilePath& filePath);
+   core::Error sourceTools(const core::FilePath& filePath);
+   void ensureToolsLoaded();
+
    core::Error sourceLocal(const core::FilePath& filePath);
    
    void reloadIfNecessary();
@@ -66,12 +70,14 @@ private:
    
    // helper functions
    core::Error source(const core::FilePath& filePath, bool local);
+   void reSourceTools(const core::FilePath& filePath);
    void recordSourcedFile(const core::FilePath& filePath, bool local);
    void reloadSourceIfNecessary(const SourcedFileMap::value_type& value);
    
    // members
    bool autoReload_ ;
    SourcedFileMap sourcedFiles_ ;
+   std::vector<core::FilePath> toolsFilePaths_;
 };
    
 } // namespace r

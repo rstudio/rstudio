@@ -276,7 +276,7 @@ Error initialize()
 
    // source the ModuleTools.R file
    FilePath modulesPath = session::options().modulesRSourcePath();
-   return r::sourceManager().sourceLocal(modulesPath.complete("ModuleTools.R"));
+   return r::sourceManager().sourceTools(modulesPath.complete("ModuleTools.R"));
 }
 
 namespace {
@@ -427,7 +427,7 @@ Error sourceModuleRFile(const std::string& rSourceFile)
 {
    FilePath modulesPath = session::options().modulesRSourcePath();
    FilePath srcPath = modulesPath.complete(rSourceFile);
-   return r::sourceManager().sourceLocal(srcPath);
+   return r::sourceManager().sourceTools(srcPath);
 }
       
 void enqueClientEvent(const ClientEvent& event)

@@ -284,7 +284,7 @@ Error initialize()
 
    // install R tools
    FilePath toolsFilePath = s_options.rSourcePath.complete("Tools.R");
-   Error error = r::sourceManager().sourceLocal(toolsFilePath);
+   Error error = r::sourceManager().sourceTools(toolsFilePath);
    if (error)
       return error ;
 
@@ -481,7 +481,10 @@ int RReadConsole (const char *prompt,
          // ensure only one initialization 
          s_initialized = true;
       }
-         
+
+      // ensure rstudio tools are loaded before prompting
+      r::sourceManager().ensureToolsLoaded();
+
       // get the next input
       bool addToHistory = (hist == 1);
       RConsoleInput consoleInput;
