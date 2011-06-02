@@ -440,11 +440,10 @@ Error list(std::vector<SourceDocument>* pDocs)
          // get the source doc
          SourceDocument doc ;
          Error error = source_database::get(filePath.filename(), &doc);
-         if (error)
-            return error ;
-
-         // add it to the list
-         pDocs->push_back(doc);
+         if (!error)
+            pDocs->push_back(doc);
+         else
+            LOG_ERROR(error);
       }
    }
    
