@@ -3,7 +3,7 @@
    <assemblyIdentity version="1.0.0.0"
       name="rstudio"
       type="win32"/>
-   <description>rdesktop</description>
+   <description>rstudio</description>
    <!-- Identify the application security requirements. -->
    <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
       <security>
