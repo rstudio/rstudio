@@ -11,27 +11,18 @@
 #
 #
 
-# set save defaults for high-performance
-options(save.defaults=list(ascii=FALSE, compress=FALSE))
-options(save.image.defaults=list(ascii=FALSE, safe=TRUE, compress=FALSE))
+# set save defaults for high-performance (only if the administrator
+# or user hasn't set them explicitly already)
+
+if (is.null(getOption("save.defaults")))
+   options(save.defaults=list(ascii=FALSE, compress=FALSE))
+
+if (is.null(getOption("save.image.defaults")))
+   options(save.image.defaults=list(ascii=FALSE, safe=TRUE, compress=FALSE))
 
 # no support for email
 options(mailer = "none")
 
 # use internal unzip
 options(unzip = "internal")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
