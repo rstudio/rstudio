@@ -20,7 +20,7 @@ function comparePoints(pos1, pos2)
    return pos1.column - pos2.column;
 }
 
-var Anchor = require("ace/anchor").Anchor;
+var ScopeManager = require("mode/r_scope_tree").ScopeManager;
 
 var RCodeModel = function(doc, tokenizer, statePattern) {
    this.$doc = doc;
@@ -28,6 +28,7 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
    this.$tokens = new Array(doc.getLength());
    this.$endStates = new Array(doc.getLength());
    this.$statePattern = statePattern;
+   this.$scopes = new ScopeManager();
 
    var that = this;
    this.$doc.on('change', function(evt) {
@@ -81,18 +82,21 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
          return true;
       };
 
-      this.seekToNearestToken = function(position)
+      this.seekToNearestToken = function(position, maxRow)
       {
+         if (position.row > maxRow)
+            return false;
          this.$row = position.row;
          var rowTokens = that.$tokens[this.$row] || [];
          for (this.$offset = 0; this.$offset < rowTokens.length; this.$offset++)
          {
             var token = rowTokens[this.$offset];
-            if (token.column + token.value.length >= position.column)
+            if (token.column >= position.column)
             {
-               break;
+               return true;
             }
          }
+         return this.moveToNextToken(maxRow);
       };
 
       this.findToken = function(predicate, maxRow)
@@ -145,155 +149,6 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       };
 
    }).call(this.$TokenCursor.prototype);
-
-   this.$ScopeTree = function(label, start)
-   {
-      this.label = label;
-      this.start = start;
-      this.end = null;
-      this.$children = [];
-   };
-
-   (function() {
-      this.getLabel = function()
-      {
-         return this.label;
-      };
-
-      this.getStart = function()
-      {
-         return this.start;
-      };
-
-      this.setEnd = function(pos)
-      {
-         this.end = pos;
-      };
-
-      this.getEnd = function()
-      {
-         return this.end;
-      };
-
-      this.exportFunctions = function(list)
-      {
-         if (this.label)
-         {
-            var here = {
-               label: this.label,
-               start: this.start,
-               children: []
-            };
-            list.push(here);
-            list = here.children;
-         }
-
-         for (var i = 0; i < this.$children.length; i++)
-            this.$children[i].exportFunctions(list);
-      };
-
-      this.comparePosition = function(pos)
-      {
-         if (comparePoints(pos, this.start) < 0)
-            return -1;
-         if (this.end != null && comparePoints(pos, this.end) >= 0)
-            return 1;
-         return 0;
-      };
-
-      this.addChild = function(label, start)
-      {
-         var child = new that.$ScopeTree(label, start);
-         var index = this.$binarySearch(start);
-         if (index >= 0)
-         {
-            return this.$children[index].addChild(label, start);
-         }
-         else
-         {
-            index = -(index+1);
-            this.$children.splice(index, 0, child);
-            return child;
-         }
-      };
-
-      this.findFunction = function(pos)
-      {
-         var index = this.$binarySearch(pos);
-         if (index >= 0)
-         {
-            var child = this.$children[index].findFunction(pos);
-            if (child)
-               return child;
-            if (this.label)
-               return this;
-            return null;
-         }
-         else
-         {
-            return this.label ? this : null;
-         }
-      };
-
-      // Invalidates everything after pos, and possibly some stuff before.
-      // Returns the position from which parsing should resume.
-      this.invalidateFrom = function(pos)
-      {
-         var index = this.$binarySearch(pos);
-         var resumePos;
-         if (index >= 0)
-         {
-            resumePos = this.$children[index].getStart();
-         }
-         else
-         {
-            index = -(index+1);
-            resumePos = pos;
-         }
-
-         if (index < this.$children.length)
-         {
-            this.$children.splice(index, this.$children.length - index);
-         }
-
-         this.end = null;
-
-         return resumePos;
-      };
-
-      this.pushOpenScopes = function(stack)
-      {
-         if (this.end === null)
-         {
-            stack.push(this);
-            if (this.$children.length > 0)
-               this.$children[this.$children.length - 1].pushOpenScopes(stack);
-         }
-      };
-
-      // start is inclusive, end is exclusive
-      // Positive result is match, negative result is -([closest index] + 1)
-      this.$binarySearch = function(pos, start /*optional*/, end /*optional*/)
-      {
-         if (typeof(start) === 'undefined')
-            start = 0;
-         if (typeof(end) === 'undefined')
-            end = this.$children.length;
-
-         // No elements left to test
-         if (start === end)
-            return -(start + 1);
-
-         var mid = Math.floor((start + end)/2);
-         var comp = this.$children[mid].comparePosition(pos);
-         if (comp === 0)
-            return mid;
-         else if (comp < 0)
-            return this.$binarySearch(pos, start, mid);
-         else // comp > 0
-            return this.$binarySearch(pos, mid + 1, end);
-      };
-   }).call(this.$ScopeTree.prototype);
 
 };
 
@@ -369,14 +224,6 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       return true;
    }
 
-   this.$invalidateScopeTreeFrom = function(position)
-   {
-      if (this.$scopeTree && comparePoints(this.$scopeTreeParsePos, position) > 0)
-      {
-         this.$scopeTreeParsePos = this.$scopeTree.invalidateFrom(position);
-      }
-   };
-
    this.$buildScopeTreeUpToRow = function(maxrow)
    {
       // It's possible that determining the scope at 'position' may require
@@ -387,64 +234,54 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
       this.$tokenizeUpToRow(maxRow);
 
-      // If this is the first time we're parsing, initialize the scope tree
-      if (!this.$scopeTree)
-      {
-         this.$scopeTreeParsePos = {row: 0, column: 0};
-         this.$scopeTree = new this.$ScopeTree("(Top Level)", this.$scopeTreeParsePos);
-      }
-
-      var nodes = [];
-      this.$scopeTree.pushOpenScopes(nodes);
+      //console.log("Seeking to " + this.$scopes.parsePos.row + "x"+ this.$scopes.parsePos.column);
       var tokenCursor = new this.$TokenCursor();
-      tokenCursor.seekToNearestToken(this.$scopeTreeParsePos);
+      if (!tokenCursor.seekToNearestToken(this.$scopes.parsePos, maxRow))
+         return;
 
-      while (tokenCursor.moveToNextToken(maxRow))
+      do
       {
-         this.$scopeTreeParsePos = tokenCursor.currentPosition();
-         this.$scopeTreeParsePos.column += tokenCursor.currentValue().length;
+         this.$scopes.parsePos = tokenCursor.currentPosition();
+         this.$scopes.parsePos.column += tokenCursor.currentValue().length;
+
+         //console.log("                                 Token: " + tokenCursor.currentValue() + " [" + tokenCursor.currentPosition().row + "x" + tokenCursor.currentPosition().column + "]");
 
          if (tokenCursor.currentValue() === "{")
          {
             var localCursor = tokenCursor.cloneCursor();
-            var label, startPos;
+            var startPos;
             if (findAssocFuncToken(localCursor))
             {
-               label = localCursor.currentValue();
                startPos = localCursor.currentPosition();
                if (localCursor.isFirstSignificantTokenOnLine())
                   startPos.column = 0;
+               this.$scopes.onFunctionScopeStart(localCursor.currentValue(),
+                                                 startPos,
+                                                 tokenCursor.currentPosition());
             }
             else
             {
-               label = null;
                startPos = tokenCursor.currentPosition();
                if (tokenCursor.isFirstSignificantTokenOnLine())
                   startPos.column = 0;
+               this.$scopes.onScopeStart(startPos);
             }
-
-            var child = nodes[nodes.length - 1].addChild(label, startPos);
-            nodes.push(child);
          }
          else if (tokenCursor.currentValue() === "}")
          {
-            if (nodes.length > 1)
+            var pos = tokenCursor.currentPosition();
+            if (tokenCursor.isLastSignificantTokenOnLine())
             {
-               var node = nodes.pop();
-               var pos = tokenCursor.currentPosition();
-               if (tokenCursor.isLastSignificantTokenOnLine())
-               {
-                  pos.row++;
-                  pos.column = 0;
-               }
-               else
-               {
-                  pos.column++;
-               }
-               node.setEnd(pos);
+               pos.row++;
+               pos.column = 0;
             }
+            else
+            {
+               pos.column++;
+            }
+            this.$scopes.onScopeEnd(pos);
          }
-      }
+      } while (tokenCursor.moveToNextToken(maxRow));
    };
 
    this.getCurrentFunction = function(position)
@@ -452,14 +289,13 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       if (!position)
          return "";
       this.$buildScopeTreeUpToRow(position.row);
-      return this.$scopeTree.findFunction(position);
+      return this.$scopes.findFunction(position);
    };
 
    this.getFunctionTree = function()
    {
       this.$buildScopeTreeUpToRow(this.$doc.getLength() - 1);
-      var list = [];
-      this.$scopeTree.exportFunctions(list);
+      var list = this.$scopes.getFunctionList();
       return list[0].children;
    };
 
@@ -694,7 +530,7 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
          this.$invalidateRow(delta.range.start.row);
       }
 
-      this.$invalidateScopeTreeFrom(delta.range.start);
+      this.$scopes.invalidateFrom(delta.range.start);
    };
    
    this.$invalidateRow = function(row)

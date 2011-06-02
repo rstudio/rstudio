@@ -6,6 +6,7 @@
   <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
   <style type="text/css">
   pre {
@@ -19,7 +20,11 @@
 
 <h2>Interactive Tester</h2>
 <input id="funcName" type="text" readonly="true" style="width: 598px; border: 1px solid #999; margin-bottom: 12px"/><button onclick="updateLabel();">Update</button>
-<div id="editor" style="width: 600px; height: 300px; border: 1px solid #999"></div>
+<div id="editor" style="width: 600px; height: 300px; border: 1px solid #999">foo {
+a <- function(b=function() { }) {
+
+}
+}</div>
 
 
 <script type="text/javascript">
