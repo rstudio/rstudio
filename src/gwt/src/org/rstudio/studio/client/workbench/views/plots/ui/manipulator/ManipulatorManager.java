@@ -134,16 +134,24 @@ public class ManipulatorManager
          // state of the manipulator existing below the workbench
          if (plotsSurface_.getOffsetHeight() == 0)
             return;
-
+    
          manipulatorPopup_.recordPreviouslyFocusedElement();
          
          manipulatorPopup_.setPopupPositionAndShow(new PositionCallback(){
             @Override
             public void setPosition(int offsetWidth, int offsetHeight)
             {
+               // position the manipulator to the right if necessary
+               int xPos = plotsSurface_.getAbsoluteLeft() - offsetWidth + 20;
+               if (xPos < 0)
+               {
+                  xPos = plotsSurface_.getAbsoluteLeft() +  
+                         plotsSurface_.getOffsetWidth() - 20;
+               }
+               
                manipulatorPopup_.setPopupPosition(
-                     plotsSurface_.getAbsoluteLeft() - offsetWidth + 20,
-                     plotsSurface_.getAbsoluteTop() - 6);
+                                          xPos,
+                                          plotsSurface_.getAbsoluteTop() - 6);
                
                manipulatorPopup_.focusFirstControl();
             }
