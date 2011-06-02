@@ -133,6 +133,32 @@ include_directories(
 # link directories
 link_directories(${R_GRAPHICS_HANDLER_SYSTEM_LIBRARY_DIRS})
 
+if(WIN32)
+   # configure rsession.rc
+   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsession.rc.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/rsession.rc)
+
+
+   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest
+                   ${CMAKE_CURRENT_BINARY_DIR}/rsession.exe.manifest COPYONLY)
+
+   set(LINK_FLAGS -Wl,-subsystem,windows -lversion)
+
+   add_custom_command(
+      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
+      COMMAND windres.exe
+         -I "."
+         -i "rsession.rc"
+         -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"
+         -Ocoff
+      DEPENDS
+         "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
+         "${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest")
+   set(SESSION_SOURCE_FILES
+      ${SESSION_SOURCE_FILES}
+      "${CMAKE_CURRENT_BINARY_DIR}/res.o")
+endif()
+
 # define executable
 add_executable(rsession ${SESSION_SOURCE_FILES} ${SESSION_HEADER_FILES})
 
@@ -142,6 +168,7 @@ target_link_libraries(rsession
    rstudio-r
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
+   ${LINK_FLAGS}
 )
 
 # configure and install r-ldpaths script
