@@ -28,6 +28,10 @@ Error captureStandardStreams(
          const boost::function<void(const std::string&)>& stdoutHandler,
          const boost::function<void(const std::string&)>& stderrHandler);
 
+#ifndef _WIN32
+void stopOutputCapture();
+#endif
+
 } // namespace system
 } // namespace core
 

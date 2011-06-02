@@ -63,7 +63,8 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand deleteFiles();
    public abstract AppCommand refreshFiles();
    public abstract AppCommand activateFiles();
-   public abstract AppCommand syncWorkingDir();
+   public abstract AppCommand goToWorkingDir();
+   public abstract AppCommand setAsWorkingDir();
    public abstract AppCommand setWorkingDirToFilesPane();
    public abstract AppCommand showFolder();
 

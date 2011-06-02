@@ -597,8 +597,48 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
    }
 }
 
-void handlePendingConnections()
+bool s_wasForked = false;
+
+// fork handlers (only applicatable to Unix platforms)
+#ifndef _WIN32
+void atForkChild()
 {
+   s_wasForked = true;
+}
+
+void setupForkHandlers()
+{
+   int rc = ::pthread_atfork(NULL, NULL, atForkChild);
+   if (rc != 0)
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+}
+#else
+void setupForkHandlers()
+{
+
+}
+#endif
+
+
+void polledEventHandler()
+{
+   // if R is getting called after a fork this is likely multicore or
+   // some other parallel computing package that uses fork. in this
+   // case be defensive by shutting down as many things as we can
+   // which might cause mischief in the child process
+   if (s_wasForked)
+   {
+      // no more polled events
+      r::session::event_loop::disablePolledEventHandler();
+
+      // allow modules a chance for shutdown (e.g. directory changed listener,
+      // output capture, etc)
+      module_context::events().onForked();
+
+      // done
+      return;
+   }
+
    // check for a pending connections only while R is processing
    // (otherwise we'll handle them directly in waitForMethod)
    if (s_rProcessingInput)
@@ -820,7 +860,7 @@ void waitForMethod(const std::string& method,
          // handleConnection which wouldn't know what to do with them
          if (!r::session::event_loop::polledEventHandlerInitialized())
             r::session::event_loop::initializePolledEventHandler(
-                                          handlePendingConnections);
+                                                     polledEventHandler);
       }
    }
 }
@@ -989,7 +1029,6 @@ Error runPreflightScript()
    // always return success
    return Success();
 }
-
       
 Error rInit(const r::session::RInitInfo& rInitInfo) 
 {
@@ -1091,6 +1130,9 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
    session::persistentState().setAbend(true);
    
+   // setup fork handlers
+   setupForkHandlers();
+
    // success!
    return Success();
 }
@@ -1114,6 +1156,13 @@ bool rConsoleRead(const std::string& prompt,
                   bool addToHistory,
                   r::session::RConsoleInput* pConsoleInput)
 {
+   // this is an invalid state in a forked (multicore) process
+   if (s_wasForked)
+   {
+      LOG_WARNING_MESSAGE("rConsoleRead called in forked processs");
+      return false;
+   }
+
    // r is not processing input
    s_rProcessingInput = false;
 
@@ -1406,6 +1455,9 @@ void rQuit()
 // override suicide on windows)
 void rSuicide(const std::string& message)
 {
+   if (s_wasForked)
+      return;
+
    // log the error
    LOG_ERROR_MESSAGE("R SUICIDE: " + message);
    
@@ -1418,6 +1470,10 @@ void rCleanup(bool terminatedNormally)
 {
    try
    {
+      // bail completely if we were forked
+      if (s_wasForked)
+         return;
+
       // note that we didn't abend
       if (terminatedNormally)
          session::persistentState().setAbend(false);
@@ -1648,7 +1704,7 @@ namespace {
 bool continueChildProcess()
 {
    // pump events so we can actually receive an interrupt
-   handlePendingConnections();
+   polledEventHandler();
 
    // check for interrupts pending. note that we need to do this
    // before we call event_loop::processEvents because code within
@@ -1755,6 +1811,7 @@ bool ensureUtf8Charset()
    return false;
 #endif
 }
+
 
 } // anonymous namespace
 

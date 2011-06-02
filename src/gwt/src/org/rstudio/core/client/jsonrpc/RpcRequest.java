@@ -141,8 +141,7 @@ public class RpcRequest
                   // override error message for status code 0
                   if (status == 0)
                   {
-                     message = "Unable to reach RStudio server " +
-                                "(Internet connection may be offline)";
+                     message = "Unable to establish connection with R session"; 
                   }
                   
                  

@@ -35,15 +35,26 @@ namespace console {
 
 namespace {   
 
+void onForked()
+{
+#ifndef _WIN32
+   core::system::stopOutputCapture();
+#endif
+
+}
+
+
 bool suppressOutput(const std::string& output)
 {
    // tokens to suppress
    const char * const kGlibWarningToken = "GLib-WARNING **: getpwuid_r()";
    const char * const kAutoreleaseNoPool = "NSAutoreleaseNoPool";
+   const char * const kSelectInterrupted = "select: Interrupted system call";
 
    // check tokens
    if (boost::algorithm::contains(output, kGlibWarningToken) ||
-       boost::algorithm::contains(output, kAutoreleaseNoPool))
+       boost::algorithm::contains(output, kAutoreleaseNoPool) ||
+       boost::algorithm::contains(output, kSelectInterrupted))
    {
       return true;
    }
@@ -136,6 +147,7 @@ Error initialize()
    using namespace module_context;
    events().onClientInit.connect(bind(onClientInit));
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
+   events().onForked.connect(bind(onForked));
 
    // more initialization 
    using boost::bind;

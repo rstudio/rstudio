@@ -372,6 +372,7 @@ void runEmbeddedR(const core::FilePath& rHome,
    ::GA_initapp(0, 0);
    ::readconsolecfg();
 
+
    // run main loop
    ::setup_Rmainloop();
    ::run_Rmainloop();
@@ -399,7 +400,13 @@ Error completeEmbeddedRInitialization()
       (bind(registerReplaceHook, "savehistory", saveHistoryHook,(CCODE*)NULL))
       (bind(registerReplaceHook, "addhistory", addHistoryHook,(CCODE*)NULL))
       (bind(registerReplaceHook, "file.show", fileShowHook, (CCODE*)NULL))
-      (bind(registerReplaceHook, "edit", editHook, (CCODE*)NULL));
+      (bind(registerReplaceHook, "edit", editHook, (CCODE*)NULL))
+      (bind(registerUnsupported, "winMenuAdd", "utils"))
+      (bind(registerUnsupported, "winMenuAddItem", "utils"))
+      (bind(registerUnsupported, "winMenuDel", "utils"))
+      (bind(registerUnsupported, "winMenuDelItem", "utils"))
+      (bind(registerUnsupported, "winMenuNames", "utils"))
+      (bind(registerUnsupported, "winMenuItems", "utils"));
    return block.execute();
 }
 
@@ -409,6 +416,12 @@ void initializePolledEventHandler(void (*newPolledEventHandler)(void))
 {
    s_polledEventHandler = newPolledEventHandler;
 }
+
+void disablePolledEventHandler()
+{
+   s_polledEventHandler = NULL;
+}
+
 
 bool polledEventHandlerInitialized()
 {

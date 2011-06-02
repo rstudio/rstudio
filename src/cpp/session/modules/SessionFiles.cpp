@@ -178,6 +178,11 @@ void onShutdown(bool terminatedNormally)
       LOG_ERROR(error);
 }
 
+void onForked()
+{
+   s_directoryMonitor.stop();
+}
+
 // extract a set of FilePath object from a list of home path relative strings
 Error extractFilePaths(const json::Array& files, 
                        std::vector<FilePath>* pFilePaths)
@@ -892,6 +897,7 @@ Error initialize()
    events().onClientInit.connect(bind(onClientInit));
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
    events().onShutdown.connect(bind(onShutdown, _1));
+   events().onForked.connect(bind(onForked));
 
    // register path info function
    R_CallMethodDef pathInfoMethodDef ;

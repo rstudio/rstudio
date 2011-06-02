@@ -150,6 +150,7 @@ struct Events : boost::noncopyable
    boost::signal<void (ChangeSource)>  onDetectChanges;
    boost::signal<void(bool)>           onShutdown;
    boost::signal<void ()>              onSysSleep;
+   boost::signal<void ()>              onForked;
 };
 
 Events& events();

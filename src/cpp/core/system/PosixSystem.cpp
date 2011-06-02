@@ -466,10 +466,22 @@ Error closeFileDescriptorsFrom(int fdStart)
 
 } // anonymous namespace
 
+Error closeAllFileDescriptors()
+{
+   return closeFileDescriptorsFrom(0);
+}
 
 Error closeNonStdFileDescriptors()
 {
    return closeFileDescriptorsFrom(STDERR_FILENO+1);
+}
+
+void attachStdFileDescriptorsToDevNull()
+{
+   int fd0, fd1, fd2;
+   fd0 = ::open("/dev/null", O_RDWR);
+   fd1 = ::dup(fd0);
+   fd2 = ::dup(fd0);
 }
 
 

@@ -299,6 +299,7 @@ struct MimeType
    const char* contentType;
 } ;
 
+// NOTE: should be synced with mime type database in FileSystemItem.java
 MimeType s_mimeTypes[] =
 {
    // most common web types
@@ -320,7 +321,11 @@ MimeType s_mimeTypes[] =
    { "csv",   "text/csv" },
    { "ico",   "image/x-icon" },
    { "zip",   "application/zip" },
-    
+   { "bz",    "application/x-bzip" },
+   { "bz2",   "application/x-bzip2" },
+   { "gz",    "application/x-gzip" },
+   { "tar",   "application/x-tar" },
+
    // yet more types...
    
    { "shtml", "text/html" },
@@ -334,6 +339,7 @@ MimeType s_mimeTypes[] =
    { "bmp",   "image/bmp"  },
    { "ps",    "application/postscript" },
    { "eps",   "application/postscript" },
+   { "dvi"    "application/x-dvi" },
       
    { "atom",  "application/atom+xml" },
    { "rss",   "application/rss+xml" },
@@ -359,6 +365,7 @@ MimeType s_mimeTypes[] =
    { "deb",   "application/octet-stream" },
    { "xpi",   "application/x-xpinstall" },
    
+   { "mp2",   "audio/mpeg" },
    { "mp3",   "audio/mpeg" },
    
    { "mpg",   "video/mpeg" },

@@ -50,21 +50,6 @@
                                                                 lib,
                                                                 ...) 
    {
-      # the following pacakges are known to not work in RStudio (and beyond
-      # that are likely to be dangerous to load in RStudio, thus their
-      # inclusion on this list rather than allowing the package install,
-      # test, or load to fail in the normal manner)
-      unsupported <- c("multicore")
-
-      # check unsupported list
-      unsupportedPkgs <- pkgs[pkgs %in% unsupported]
-      if (length(unsupportedPkgs) > 0)
-      {
-         stop(paste("The following packages are unsupported in RStudio:",
-                    paste(unsupportedPkgs, collapse=", ")))
-      }
-
-
       # do housekeeping after we execute the original
       on.exit({
          .rs.updatePackageEvents()
