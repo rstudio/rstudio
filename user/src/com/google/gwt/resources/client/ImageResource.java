@@ -56,6 +56,14 @@ public interface ImageResource extends ResourcePrototype {
     int height() default -1;
 
     /**
+     * Set to {@code true} to require the ImageResource to be downloaded as a
+     * separate resource at runtime. Specifically, this will disable the use of
+     * {@code data:} URLs or other bundling optimizations for the image. This
+     * can be used for infrequently-displayed images.
+     */
+    boolean preventInlining() default false;
+
+    /**
      * This option affects the image bundling optimization to allow the image to
      * be used with the {@link CssResource} {@code @sprite} rule where
      * repetition of the image is desired.

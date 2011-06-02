@@ -31,7 +31,17 @@ import com.google.gwt.user.client.ui.RootPanel;
  * Tests ImageResource generation.
  */
 public class ImageResourceTest extends GWTTestCase {
-  static interface Resources extends ClientBundle {
+  interface ExternalResources extends ClientBundle {
+    @ImageOptions(preventInlining = true)
+    @Source("16x16.png")
+    ImageResource i16x16();
+
+    @ImageOptions(preventInlining = true)
+    @Source("32x32.png")
+    ImageResource i32x32();    
+  }
+
+  interface Resources extends ClientBundle {
     @Source("animated.gif")
     ImageResource animated();
 
@@ -165,5 +175,23 @@ public class ImageResourceTest extends GWTTestCase {
     assertEquals(32, r.scaledDown().getHeight());
     assertEquals(128, r.scaledUp().getWidth());
     assertEquals(128, r.scaledUp().getHeight());
+  }
+
+  public void testPreventInlining() {
+    ExternalResources r = GWT.create(ExternalResources.class);
+    ImageResource a = r.i16x16();
+    ImageResource b = r.i32x32();
+
+    // Should never be a data URL
+    assertFalse(a.getURL().startsWith("data:"));
+    assertFalse(b.getURL().startsWith("data:"));
+    // Should be fetched from different URLs
+    assertFalse(a.getURL().equals(b.getURL()));
+
+    // No image packing
+    assertEquals(0, a.getTop());
+    assertEquals(0, a.getLeft());
+    assertEquals(0, b.getTop());
+    assertEquals(0, b.getLeft());
   }
 }

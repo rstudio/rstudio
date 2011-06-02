@@ -191,9 +191,11 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
    * bytes should be associated with.
    */
   static class BundleKey extends StringKey {
-    private static String key(ResourceContext context,
-        ImageResourceDeclaration image) {
-      if (image.getRepeatStyle() == RepeatStyle.Both) {
+    private static String key(ImageResourceDeclaration image, boolean isExternal) {
+      if (isExternal) {
+        return "External: " + image.get();
+      }
+      if (image.isPreventInlining() || image.getRepeatStyle() == RepeatStyle.Both) {
         return "Unbundled: " + image.get();
       }
       return "Arranged: " + image.getRepeatStyle().toString();
@@ -201,13 +203,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
 
     private final RepeatStyle repeatStyle;
 
-    public BundleKey(ImageResourceDeclaration image) {
-      super("External: " + image.get());
-      this.repeatStyle = image.getRepeatStyle();
-    }
-
-    public BundleKey(ResourceContext context, ImageResourceDeclaration image) {
-      super(key(context, image));
+    public BundleKey(ImageResourceDeclaration image, boolean isExternal) {
+      super(key(image, isExternal));
       this.repeatStyle = image.getRepeatStyle();
     }
 
@@ -314,7 +311,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
           String.class.getCanonicalName());
 
       String contentsExpression = context.deploy(
-          localized.getUrl(), null, false);
+          localized.getUrl(), null, image.isPreventInlining());
       normalContentsFieldName = fields.define(stringType, "externalImage",
           contentsExpression, true, true);
 
@@ -326,7 +323,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
 
         byte[] rtlData = ImageBundleBuilder.toPng(logger, rect);
         String rtlContentsUrlExpression = context.deploy(image.getName()
-            + "_rtl.png", "image/png", rtlData, false);
+            + "_rtl.png", "image/png", rtlData, image.isPreventInlining());
         rtlContentsFieldName = fields.define(stringType, "externalImage_rtl",
             rtlContentsUrlExpression, true, true);
       }
@@ -383,6 +380,10 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
 
     public boolean isFlipRtl() {
       return options == null ? false : options.flipRtl();
+    }
+    
+    public boolean isPreventInlining() {
+      return options == null ? false : options.preventInlining();
     }
   }
 
@@ -474,7 +475,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
     sw.println('"' + name + "\",");
 
     ImageResourceDeclaration image = new ImageResourceDeclaration(method);
-    DisplayedImage bundle = getImage(context, image);
+    DisplayedImage bundle = getImage(image);
     ImageRect rect = bundle.getImageRect(image);
     assert rect != null : "No ImageRect ever computed for " + name;
 
@@ -542,10 +543,13 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
     LocalizedImage localizedImage;
     ImageRect rect;
     try {
-      BundledImage bundledImage = (BundledImage) getImage(context, image);
+      BundledImage bundledImage = (BundledImage) getImage(image);
       localizedImage = bundledImage.addImage(logger, context, image);
       rect = bundledImage.getImageRect(image);
       displayed = bundledImage;
+      if (image.isPreventInlining()) {
+        cannotBundle = true;
+      }
     } catch (CannotBundleImageException e) {
       cannotBundle = true;
       localizedImage = e.getLocalizedImage();
@@ -587,7 +591,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
       }
       ExternalImage externalImage = new ExternalImage(image, localizedImage,
           rect);
-      shared.externalImages.put(new BundleKey(image), externalImage);
+      shared.externalImages.put(new BundleKey(image, true), externalImage);
       displayed = externalImage;
     }
 
@@ -620,14 +624,13 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
     return sb.toString();
   }
 
-  private DisplayedImage getImage(ResourceContext context,
-      ImageResourceDeclaration image) {
-    DisplayedImage toReturn = shared.externalImages.get(new BundleKey(image));
+  private DisplayedImage getImage(ImageResourceDeclaration image) {
+    DisplayedImage toReturn = shared.externalImages.get(new BundleKey(image, true));
     if (toReturn != null) {
       return toReturn;
     }
 
-    BundleKey key = new BundleKey(context, image);
+    BundleKey key = new BundleKey(image, false);
     toReturn = shared.bundledImages.get(key);
     if (toReturn == null) {
       BundledImage bundled = new BundledImage();
