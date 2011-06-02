@@ -130,6 +130,11 @@ public class UrlContentEditingTarget implements EditingTarget
       commandReg_ = null;
    }
 
+   @Override
+   public void onInitiallyLoaded()
+   {
+   }
+
    public boolean onBeforeDismiss()
    {
       return true;

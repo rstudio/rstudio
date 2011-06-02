@@ -740,6 +740,12 @@ public class TextEditingTarget implements EditingTarget
       commandHandlerReg_ = null;
    }
 
+   @Override
+   public void onInitiallyLoaded()
+   {
+      checkForExternalEdit();
+   }
+
    public boolean onBeforeDismiss()
    {
       promptForSave(new Command() {
@@ -1300,9 +1306,9 @@ public class TextEditingTarget implements EditingTarget
             public void onResponseReceived(Void response)
             {
                consoleDispatcher_.executeSourceCommand(
-                                              "~/.active-rstudio-document", 
-                                              "UTF-8",
-                                              activeCodeIsAscii());
+                     "~/.active-rstudio-document",
+                     "UTF-8",
+                     activeCodeIsAscii());
             }
          });
       }
@@ -1375,13 +1381,14 @@ public class TextEditingTarget implements EditingTarget
    
    void handlePdfCommand(final String function)
    {
-      saveThenExecute(null, new Command() {
+      saveThenExecute(null, new Command()
+      {
          public void execute()
          {
             String path = docUpdateSentinel_.getPath();
             if (path != null)
                sendPdfFunctionToConsole(function, path);
-         }  
+         }
       });
    }
    

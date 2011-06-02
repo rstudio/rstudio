@@ -221,6 +221,11 @@ public class Source implements InsertSourceHandler,
                return;
             if (value >= 0 && view_.getTabCount() > value)
                view_.selectTab(value);
+
+            if (view_.getTabCount() > 0 && view_.getActiveTabIndex() >= 0)
+            {
+               editors_.get(view_.getActiveTabIndex()).onInitiallyLoaded();
+            }
          }
 
          @Override

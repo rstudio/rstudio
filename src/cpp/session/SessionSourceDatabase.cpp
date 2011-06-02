@@ -245,25 +245,30 @@ Error SourceDocument::updateDirty()
    {
       dirty_ = !contents_.empty();
    }
-   else
+   else if (dirty_)
    {
+      // This doesn't actually guarantee that dirty state is correct. All
+      // it does, at the most, is take a dirty document and mark it clean
+      // if the contents are the same as on disk. This is important because
+      // the client now has logic to detect when undo/redo causes a document
+      // to be reverted to its previous state (i.e. a dirty document can
+      // become clean through undo/redo), but that state doesn't get sent
+      // back to the server.
+
+      // We don't make a clean document dirty here, even if the contents
+      // on disk are different, because we will do that on the client side
+      // and the UI logic is a little complicated.
+
       FilePath docPath = module_context::resolveAliasedPath(path());
-      if (!docPath.exists())
-      {
-         dirty_ = true;
-      }
-      else if (docPath.size() > (1024*1024))
-      {
-         // Don't update anything if the file is really huge
-      }
-      else
+      if (docPath.exists() && docPath.size() <= (1024*1024))
       {
          std::string contents;
          Error error = readAndDecode(docPath, encoding(), true, &contents);
          if (error)
             return error;
 
-         dirty_ = contents_.length() != contents.length() || hash_ != hash::crc32Hash(contents);
+         if (contents_.length() == contents.length() && hash_ == hash::crc32Hash(contents))
+            dirty_ = false;
       }
    }
    return Success();

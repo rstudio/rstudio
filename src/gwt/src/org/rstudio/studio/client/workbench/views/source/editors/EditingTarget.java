@@ -45,6 +45,9 @@ public interface EditingTarget extends Widgetable,
    void focus();
    void onActivate();
    void onDeactivate();
+
+   void onInitiallyLoaded();
+
    /**
     * @return True if dismissal is allowed, false to cancel.
     */
