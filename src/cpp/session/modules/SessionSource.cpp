@@ -275,8 +275,6 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
 {
    using namespace core::string_utils;
 
-   pResponse->setSuppressDetectChanges(true);
-
    // unique id and jsonPath (can be null for auto-save)
    std::string id;
    json::Value jsonPath, jsonType, jsonEncoding;
@@ -304,6 +302,12 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    if (error)
       return error ;
    
+   // if this has no path then it is an autosave, in this case
+   // suppress change detection
+   bool hasPath = json::isType<std::string>(jsonPath);
+   if (!hasPath)
+       pResponse->setSuppressDetectChanges(true);
+
    // get the doc
    SourceDocument doc;
    error = source_database::get(id, &doc);
