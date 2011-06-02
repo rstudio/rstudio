@@ -417,6 +417,12 @@ void initializePolledEventHandler(void (*newPolledEventHandler)(void))
    s_polledEventHandler = newPolledEventHandler;
 }
 
+void disablePolledEventHandler()
+{
+   s_polledEventHandler = NULL;
+}
+
+
 bool polledEventHandlerInitialized()
 {
    return s_polledEventHandler != NULL;

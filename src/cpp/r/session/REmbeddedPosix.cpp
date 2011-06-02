@@ -163,7 +163,8 @@ void (*s_oldPolledEventHandler)(void) = NULL;
 // function we register with R to implement polled event handler
 void polledEventHandler()
 {
-   s_polledEventHandler();
+   if (s_polledEventHandler != NULL)
+      s_polledEventHandler();
 
    if (s_oldPolledEventHandler != NULL)
       s_oldPolledEventHandler();
@@ -316,6 +317,11 @@ void initializePolledEventHandler(void (*newPolledEventHandler)(void))
    // set R_wait_usec
    if (R_wait_usec > 10000 || R_wait_usec == 0)
       R_wait_usec = 10000;
+}
+
+void disablePolledEventHandler()
+{
+   s_polledEventHandler = NULL;
 }
 
 bool polledEventHandlerInitialized()

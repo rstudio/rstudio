@@ -91,14 +91,6 @@ void closeStdFileDescriptors()
    ::close(STDERR_FILENO);
 }
 
-void attachStdFileDescriptorsToDevNull()
-{
-   int fd0, fd1, fd2;
-   fd0 = ::open("/dev/null", O_RDWR);
-   fd1 = ::dup(fd0);
-   fd2 = ::dup(fd0);
-}
-
 const int kNotFoundError = EACCES;
 
 } // anonymouys namespace
@@ -122,7 +114,7 @@ Error daemonize()
       return error;
 
    // attach file descriptors 0, 1, and 2 to /dev/null
-   attachStdFileDescriptorsToDevNull();
+   core::system::attachStdFileDescriptorsToDevNull();
 
    // note: ignoring of terminal signals are handled by an optional
    // separate call (ignoreTerminalSignals)
@@ -370,7 +362,7 @@ Error launchChildProcess(std::string path,
 
          case StdStreamDevNull:
             closeStdFileDescriptors();
-            attachStdFileDescriptorsToDevNull();
+            core::system::attachStdFileDescriptorsToDevNull();
             break;
 
          case StdStreamInherit:
