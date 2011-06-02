@@ -78,7 +78,14 @@ public class ShellPane extends Composite implements Shell.Display,
       {
          public void onCursorChanged(CursorChangedEvent event)
          {
-            input_.scrollToCursor(scrollPanel_, 8);
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  input_.scrollToCursor(scrollPanel_, 8, 60);
+               }
+            });
          }
       });
       input_.addCapturingKeyDownHandler(new KeyDownHandler()

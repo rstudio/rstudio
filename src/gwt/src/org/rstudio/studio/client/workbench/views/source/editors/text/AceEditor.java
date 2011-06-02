@@ -722,12 +722,19 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       widget_.forceCursorChange();
    }
 
-   public void scrollToCursor(ScrollPanel scrollPanel, int padding)
+   public void scrollToCursor(ScrollPanel scrollPanel,
+                              int paddingVert,
+                              int paddingHoriz)
    {
       DomUtils.ensureVisibleVert(
             scrollPanel.getElement(),
             widget_.getEditor().getRenderer().getCursorElement(),
-            padding);
+            paddingVert);
+      DomUtils.ensureVisibleHoriz(
+            scrollPanel.getElement(),
+            widget_.getEditor().getRenderer().getCursorElement(),
+            paddingHoriz, paddingHoriz,
+            false);
    }
 
    public void forceImmediateRender()
