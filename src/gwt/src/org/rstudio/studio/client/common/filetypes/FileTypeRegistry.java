@@ -165,6 +165,14 @@ public class FileTypeRegistry
          result = fileTypesByFileExtension_.get(extension);
          if (result != null)
             return result;
+         
+         // last ditch -- see if this either a known text file type
+         // or NOT a known binary type. the result of this is that
+         // unknown files types are treated as text and opened in 
+         // the editor
+         String mimeType = file.mimeType();
+         if (mimeType.startsWith("text/"))
+            return TEXT;
       }
       
       if (canUseDefault)

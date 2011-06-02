@@ -19,6 +19,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 
 import java.util.Date;
+import java.util.HashMap;
 
 // NOTE: this class is represented as a native JavaScriptObject for
 // straightforward RPC handling
@@ -201,6 +202,29 @@ public class FileSystemItem extends JavaScriptObject
       }
    }
    
+   public final String mimeType()
+   {
+      return mimeType("text/plain");
+   }
+   
+   public final String mimeType(String defaultType)
+   {
+      String ext = getExtension().toLowerCase();
+      if (ext.length() > 0)
+      {
+         String mimeExt = ext.substring(1).toLowerCase();
+         String mimeType = MIME_TYPES.get(mimeExt);
+         if (mimeType != null)
+            return mimeType;
+         else
+            return defaultType;
+      }
+      else
+      {
+         return defaultType;
+      }    
+   }
+   
    public final boolean equalTo(FileSystemItem other)
    {
       if (other==null)
@@ -248,6 +272,81 @@ public class FileSystemItem extends JavaScriptObject
    private final native double getLastModifiedNative() /*-{
       return this.lastModified;
    }-*/;
+   
+   // NOTE: should be synced with mime type database in FilePath.cpp
+   private final static HashMap<String,String> MIME_TYPES = 
+                                             new HashMap<String,String>();
+   static 
+   {
+      MIME_TYPES.put( "htm",   "text/html" );
+      MIME_TYPES.put( "html",  "text/html" );
+      MIME_TYPES.put( "css",   "text/css" );
+      MIME_TYPES.put( "gif",   "image/gif" );
+      MIME_TYPES.put( "jpg",   "image/jpeg" );
+      MIME_TYPES.put( "jpeg",  "image/jpeg" );
+      MIME_TYPES.put( "jpe",   "image/jpeg" );
+      MIME_TYPES.put( "png",   "image/png" );
+      MIME_TYPES.put( "js",    "application/x-javascript" );
+      MIME_TYPES.put( "pdf",   "application/pdf" );
+      MIME_TYPES.put( "svg",   "image/svg+xml" );
+      MIME_TYPES.put( "swf",   "application/x-shockwave-flash" );
+      
+      // other types we are likely to serve
+      MIME_TYPES.put( "xml",   "text/xml" );
+      MIME_TYPES.put( "csv",   "text/csv" );
+      MIME_TYPES.put( "ico",   "image/x-icon" );
+      MIME_TYPES.put( "zip",   "application/zip" );
+      MIME_TYPES.put( "bz",    "application/x-bzip");
+      MIME_TYPES.put( "bz2",   "application/x-bzip2");
+      MIME_TYPES.put( "gz",    "application/x-gzip");
+      MIME_TYPES.put( "tar",   "application/x-tar");
+       
+      // yet more types...
+      
+      MIME_TYPES.put( "shtml", "text/html" );
+      MIME_TYPES.put( "tsv",   "text/tab-separated-values" );
+      MIME_TYPES.put( "tab",   "text/tab-separated-values" );
+      MIME_TYPES.put( "txt",   "text/plain" );
+      MIME_TYPES.put( "mml",   "text/mathml" );
+     
+      MIME_TYPES.put( "tif",   "image/tiff" );
+      MIME_TYPES.put( "tiff",  "image/tiff" );
+      MIME_TYPES.put( "bmp",   "image/bmp"  );
+      MIME_TYPES.put( "ps",    "application/postscript" );
+      MIME_TYPES.put( "eps",   "application/postscript" );
+      MIME_TYPES.put( "dvi",   "application/x-dvi" );
+         
+      MIME_TYPES.put( "atom",  "application/atom+xml" );
+      MIME_TYPES.put( "rss",   "application/rss+xml" );
+      
+      MIME_TYPES.put( "doc",   "application/msword" );
+      MIME_TYPES.put( "docx",  "application/vnd.openxmlformats-officedocument.wordprocessingml.document" );
+      MIME_TYPES.put( "odt",   "application/vnd.oasis.opendocument.text" );
+      MIME_TYPES.put( "rtf",   "application/rtf" );
+      MIME_TYPES.put( "xls",   "application/vnd.ms-excel" );
+      MIME_TYPES.put( "xlsx",  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" );
+      MIME_TYPES.put( "ods",   "application/x-vnd.oasis.opendocument.spreadsheet" );
+      MIME_TYPES.put( "ppt",   "application/vnd.ms-powerpoint" );
+      MIME_TYPES.put( "pps",   "application/vnd.ms-powerpoint" );
+      MIME_TYPES.put( "pptx",  "application/vnd.openxmlformats-officedocument.presentationml.presentation" );
+    
+      MIME_TYPES.put( "sit",   "application/x-stuffit" );
+      MIME_TYPES.put( "sxw",   "application/vnd.sun.xml.writer" );
+      
+      MIME_TYPES.put( "iso",   "application/octet-stream" );
+      MIME_TYPES.put( "dmg",   "application/octet-stream" );
+      MIME_TYPES.put( "exe",   "application/octet-stream" );
+      MIME_TYPES.put( "dll",   "application/octet-stream" );
+      MIME_TYPES.put( "deb",   "application/octet-stream" );
+      MIME_TYPES.put( "xpi",   "application/x-xpinstall" );
+      
+      MIME_TYPES.put( "mp2",   "audio/mpeg" );
+      MIME_TYPES.put( "mp3",   "audio/mpeg" );
+      
+      MIME_TYPES.put( "mpg",   "video/mpeg" );
+      MIME_TYPES.put( "mpeg",  "video/mpeg" );
+      MIME_TYPES.put( "flv",   "video/x-flv" );
+   }
 
    private static final Pattern EXT_PATTERN = Pattern.create("\\.[^.]+$");
    private static final FileIconResources RES = FileIconResources.INSTANCE;
