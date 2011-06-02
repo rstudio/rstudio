@@ -11,6 +11,7 @@ gwt clients.
   </source>
   <source path="engine">
     <include name="ConstraintViolationImpl*.java"/>
+    <include name="ValidationSupport.java"/>
     <include name="NodeImpl.java"/>
     <include name="PathImpl*.java"/>
   </source>
