@@ -25,22 +25,21 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * Server side object that handles log messages sent by
- * {@link com.google.web.bindery.requestfactory.gwt.client.RequestFactoryLogHandler}.
+ * {@link com.google.web.bindery.requestfactory.gwt.client.RequestFactoryLogHandler}
+ * .
  */
 public class Logging {
 
-  private static StackTraceDeobfuscator deobfuscator = new StackTraceDeobfuscator(
-      "");
+  private static StackTraceDeobfuscator deobfuscator = new StackTraceDeobfuscator("");
 
   /**
    * Logs a message.
    * 
    * @param logRecordJson a json serialized LogRecord, as provided by
-   * {@link com.google.gwt.logging.client.JsonLogRecordClientUtil#logRecordAsJsonObject(LogRecord)}
+   *          {@link com.google.gwt.logging.client.JsonLogRecordClientUtil#logRecordAsJsonObject(LogRecord)}
    * @throws RemoteLoggingException if logging fails
    */
-  public static void logMessage(String logRecordJson)
-      throws RemoteLoggingException {
+  public static void logMessage(String logRecordJson) throws RemoteLoggingException {
     /*
      * if the header does not exist, we pass null, which is handled gracefully
      * by the deobfuscation code.
@@ -51,8 +50,7 @@ public class Logging {
       // can be null during tests
       strongName = threadLocalRequest.getHeader(RpcRequestBuilder.STRONG_NAME_HEADER);
     }
-    RemoteLoggingServiceUtil.logOnServer(logRecordJson, strongName,
-        deobfuscator, null);
+    RemoteLoggingServiceUtil.logOnServer(logRecordJson, strongName, deobfuscator, null);
   }
 
   /**

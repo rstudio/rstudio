@@ -94,7 +94,9 @@ class RequestState implements EntityCodex.EntitySource {
     if (ValueCodex.canDecode(domainValue.getClass())) {
       flatValue = ValueCodex.encode(domainValue);
     } else {
-      flatValue = new SimpleRequestProcessor(service).createOobMessage(Collections.singletonList(domainValue));
+      flatValue =
+          new SimpleRequestProcessor(service).createOobMessage(Collections
+              .singletonList(domainValue));
     }
     return flatValue;
   }
@@ -102,8 +104,8 @@ class RequestState implements EntityCodex.EntitySource {
   /**
    * Get or create a BaseProxy AutoBean for the given id.
    */
-  public <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(
-      SimpleProxyId<Q> id, Object domainObject) {
+  public <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(SimpleProxyId<Q> id,
+      Object domainObject) {
     @SuppressWarnings("unchecked")
     AutoBean<Q> toReturn = (AutoBean<Q>) beans.get(id);
     if (toReturn == null) {
@@ -115,33 +117,30 @@ class RequestState implements EntityCodex.EntitySource {
   /**
    * EntityCodex support.
    */
-  public <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(
-      Splittable serializedProxyId) {
-    IdMessage idMessage = AutoBeanCodex.decode(MessageFactoryHolder.FACTORY,
-        IdMessage.class, serializedProxyId).as();
+  public <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(Splittable serializedProxyId) {
+    IdMessage idMessage =
+        AutoBeanCodex.decode(MessageFactoryHolder.FACTORY, IdMessage.class, serializedProxyId).as();
     @SuppressWarnings("unchecked")
-    AutoBean<Q> toReturn = (AutoBean<Q>) getBeansForPayload(
-        Collections.singletonList(idMessage)).get(0);
+    AutoBean<Q> toReturn =
+        (AutoBean<Q>) getBeansForPayload(Collections.singletonList(idMessage)).get(0);
     return toReturn;
   }
 
   /**
    * Get or create BaseProxy AutoBeans for a list of id-bearing messages.
    */
-  public List<AutoBean<? extends BaseProxy>> getBeansForPayload(
-      List<? extends IdMessage> idMessages) {
-    List<SimpleProxyId<?>> ids = new ArrayList<SimpleProxyId<?>>(
-        idMessages.size());
+  public List<AutoBean<? extends BaseProxy>> getBeansForPayload(List<? extends IdMessage> idMessages) {
+    List<SimpleProxyId<?>> ids = new ArrayList<SimpleProxyId<?>>(idMessages.size());
     for (IdMessage idMessage : idMessages) {
       SimpleProxyId<?> id;
       if (Strength.SYNTHETIC.equals(idMessage.getStrength())) {
         Class<? extends BaseProxy> clazz = service.resolveClass(idMessage.getTypeToken());
         id = idFactory.allocateSyntheticId(clazz, idMessage.getSyntheticId());
       } else {
-        String decodedId = idMessage.getServerId() == null ? null
-            : SimpleRequestProcessor.fromBase64(idMessage.getServerId());
-        id = idFactory.getId(idMessage.getTypeToken(), decodedId,
-            idMessage.getClientId());
+        String decodedId =
+            idMessage.getServerId() == null ? null : SimpleRequestProcessor.fromBase64(idMessage
+                .getServerId());
+        id = idFactory.getId(idMessage.getTypeToken(), decodedId, idMessage.getClientId());
       }
       ids.add(id);
     }
@@ -208,10 +207,9 @@ class RequestState implements EntityCodex.EntitySource {
   /**
    * Creates an AutoBean for the given id, tracking a domain object.
    */
-  private <Q extends BaseProxy> AutoBean<Q> createProxyBean(
-      SimpleProxyId<Q> id, Object domainObject) {
-    AutoBean<Q> toReturn = AutoBeanFactorySource.createBean(id.getProxyClass(),
-        SimpleRequestProcessor.CONFIGURATION);
+  private <Q extends BaseProxy> AutoBean<Q> createProxyBean(SimpleProxyId<Q> id, Object domainObject) {
+    AutoBean<Q> toReturn =
+        AutoBeanFactorySource.createBean(id.getProxyClass(), SimpleRequestProcessor.CONFIGURATION);
     toReturn.setTag(Constants.STABLE_ID, id);
     toReturn.setTag(Constants.DOMAIN_OBJECT, domainObject);
     beans.put(id, toReturn);
@@ -222,8 +220,7 @@ class RequestState implements EntityCodex.EntitySource {
    * Returns the AutoBeans corresponding to the given ids, or creates them if
    * they do not yet exist.
    */
-  private List<AutoBean<? extends BaseProxy>> getBeansForIds(
-      List<SimpleProxyId<?>> ids) {
+  private List<AutoBean<? extends BaseProxy>> getBeansForIds(List<SimpleProxyId<?>> ids) {
     List<Class<?>> domainClasses = new ArrayList<Class<?>>(ids.size());
     List<Object> domainIds = new ArrayList<Object>(ids.size());
     List<SimpleProxyId<?>> idsToLoad = new ArrayList<SimpleProxyId<?>>();
@@ -254,8 +251,7 @@ class RequestState implements EntityCodex.EntitySource {
         if (ValueCodex.canDecode(param)) {
           domainParam = ValueCodex.decode(param, split);
         } else {
-          domainParam = new SimpleRequestProcessor(service).decodeOobMessage(
-              param, split).get(0);
+          domainParam = new SimpleRequestProcessor(service).decodeOobMessage(param, split).get(0);
         }
 
         // Enqueue
@@ -267,8 +263,7 @@ class RequestState implements EntityCodex.EntitySource {
 
     // Actually load the data
     if (!domainClasses.isEmpty()) {
-      assert domainClasses.size() == domainIds.size()
-          && domainClasses.size() == idsToLoad.size();
+      assert domainClasses.size() == domainIds.size() && domainClasses.size() == idsToLoad.size();
       List<Object> loaded = service.loadDomainObjects(domainClasses, domainIds);
       if (idsToLoad.size() != loaded.size()) {
         throw new UnexpectedException("Expected " + idsToLoad.size()
@@ -285,8 +280,8 @@ class RequestState implements EntityCodex.EntitySource {
     }
 
     // Construct the return value
-    List<AutoBean<? extends BaseProxy>> toReturn = new ArrayList<AutoBean<? extends BaseProxy>>(
-        ids.size());
+    List<AutoBean<? extends BaseProxy>> toReturn =
+        new ArrayList<AutoBean<? extends BaseProxy>>(ids.size());
     for (SimpleProxyId<?> id : ids) {
       toReturn.add(beans.get(id));
     }

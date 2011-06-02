@@ -49,8 +49,7 @@ public class ServerFailure {
    * @param exceptionType a String containing the exception type
    * @param stackTraceString a String containing the stack trace
    */
-  public ServerFailure(String message, String exceptionType,
-      String stackTraceString, boolean fatal) {
+  public ServerFailure(String message, String exceptionType, String stackTraceString, boolean fatal) {
     this.message = message;
     this.exceptionType = exceptionType;
     this.stackTraceString = stackTraceString;

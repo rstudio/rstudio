@@ -15,10 +15,11 @@
  */
 
 /**
- * Shared classes used on both the client and the server side for transmitting data between the
- * server and the client in JSON format.
- *
+ * Shared classes used on both the client and the server side for transmitting
+ * data between the server and the client in JSON format.
+ * 
  * @since GWT 2.1
  */
 @com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.web.bindery.requestfactory.shared;
+

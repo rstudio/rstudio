@@ -38,15 +38,19 @@ public class RequestFactoryServlet extends HttpServlet {
   private static final boolean DUMP_PAYLOAD = Boolean.getBoolean("gwt.rpc.dumpPayload");
   private static final String JSON_CHARSET = "UTF-8";
   private static final String JSON_CONTENT_TYPE = "application/json";
-  private static final Logger log = Logger.getLogger(RequestFactoryServlet.class.getCanonicalName());
+  private static final Logger log = Logger
+      .getLogger(RequestFactoryServlet.class.getCanonicalName());
 
   /**
    * These ThreadLocals are used to allow service objects to obtain access to
    * the HTTP transaction.
    */
-  private static final ThreadLocal<ServletContext> perThreadContext = new ThreadLocal<ServletContext>();
-  private static final ThreadLocal<HttpServletRequest> perThreadRequest = new ThreadLocal<HttpServletRequest>();
-  private static final ThreadLocal<HttpServletResponse> perThreadResponse = new ThreadLocal<HttpServletResponse>();
+  private static final ThreadLocal<ServletContext> perThreadContext =
+      new ThreadLocal<ServletContext>();
+  private static final ThreadLocal<HttpServletRequest> perThreadRequest =
+      new ThreadLocal<HttpServletRequest>();
+  private static final ThreadLocal<HttpServletResponse> perThreadResponse =
+      new ThreadLocal<HttpServletResponse>();
 
   /**
    * Returns the thread-local {@link HttpServletRequest}.
@@ -96,8 +100,7 @@ public class RequestFactoryServlet extends HttpServlet {
    */
   public RequestFactoryServlet(ExceptionHandler exceptionHandler,
       ServiceLayerDecorator... serviceDecorators) {
-    processor = new SimpleRequestProcessor(
-        ServiceLayer.create(serviceDecorators));
+    processor = new SimpleRequestProcessor(ServiceLayer.create(serviceDecorators));
     processor.setExceptionHandler(exceptionHandler);
   }
 
@@ -120,8 +123,8 @@ public class RequestFactoryServlet extends HttpServlet {
     // No new code should be placed outside of this try block.
     try {
       ensureConfig();
-      String jsonRequestString = RPCServletUtils.readContent(request,
-          JSON_CONTENT_TYPE, JSON_CHARSET);
+      String jsonRequestString =
+          RPCServletUtils.readContent(request, JSON_CONTENT_TYPE, JSON_CHARSET);
       if (DUMP_PAYLOAD) {
         System.out.println(">>> " + jsonRequestString);
       }
@@ -149,8 +152,7 @@ public class RequestFactoryServlet extends HttpServlet {
   }
 
   private void ensureConfig() {
-    String symbolMapsDirectory = getServletConfig().getInitParameter(
-        "symbolMapsDirectory");
+    String symbolMapsDirectory = getServletConfig().getInitParameter("symbolMapsDirectory");
     if (symbolMapsDirectory != null) {
       Logging.setSymbolMapsDirectory(symbolMapsDirectory);
     }

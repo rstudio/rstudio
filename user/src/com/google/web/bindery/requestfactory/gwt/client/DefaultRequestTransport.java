@@ -76,8 +76,7 @@ public class DefaultRequestTransport implements RequestTransport {
       wireLogger.finest("Sending fire request");
       builder.send();
     } catch (RequestException e) {
-      wireLogger.log(Level.SEVERE, SERVER_ERROR + " (" + e.getMessage() + ")",
-          e);
+      wireLogger.log(Level.SEVERE, SERVER_ERROR + " (" + e.getMessage() + ")", e);
     }
   }
 
@@ -117,11 +116,12 @@ public class DefaultRequestTransport implements RequestTransport {
    * {@link com.google.web.bindery.requestfactory.shared.RequestTransport.TransportReceiver
    * TransportReceiver} interface.
    * 
-   * @param receiver a {@link com.google.web.bindery.requestfactory.shared.RequestTransport.TransportReceiver TransportReceiver}
+   * @param receiver a
+   *          {@link com.google.web.bindery.requestfactory.shared.RequestTransport.TransportReceiver
+   *          TransportReceiver}
    * @return a {@link RequestCallback} instance
    */
-  protected RequestCallback createRequestCallback(
-      final TransportReceiver receiver) {
+  protected RequestCallback createRequestCallback(final TransportReceiver receiver) {
     return new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {
@@ -135,8 +135,7 @@ public class DefaultRequestTransport implements RequestTransport {
           String text = response.getText();
           receiver.onTransportSuccess(text);
         } else {
-          String message = SERVER_ERROR + " " + response.getStatusCode() + " "
-              + response.getText();
+          String message = SERVER_ERROR + " " + response.getStatusCode() + " " + response.getText();
           wireLogger.severe(message);
           receiver.onTransportFailure(new ServerFailure(message));
         }

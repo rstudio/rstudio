@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,47 +24,45 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
  * detected. Provides a {@link WriteOperation} value describing the change, and
  * the {@link EntityProxyId} of the entity in question.
  * <p>
- * EntityProxyChange events are posted with the relevant EntityProxy
- * Class as their source, allowing handlers to register for changes only
- * of the type they care about via
- * {@link #registerForProxyType(EventBus, Class, Handler)}.
+ * EntityProxyChange events are posted with the relevant EntityProxy Class as
+ * their source, allowing handlers to register for changes only of the type they
+ * care about via {@link #registerForProxyType(EventBus, Class, Handler)}.
  * 
  * @param <P> the type of the proxy
  * 
  * @see RequestFactory#initialize(EventBus)
  * @see RequestFactory#find(EntityProxyId)
  */
-public class EntityProxyChange<P extends EntityProxy> extends
-    Event<EntityProxyChange.Handler<P>> {
+public class EntityProxyChange<P extends EntityProxy> extends Event<EntityProxyChange.Handler<P>> {
 
   /**
    * Implemented by methods that handle EntityProxyChange events.
-   *
+   * 
    * @param <P> the proxy type
    */
   public interface Handler<P extends EntityProxy> {
     /**
      * Called when an {@link EntityProxyChange} event is fired.
-     *
+     * 
      * @param event an {@link EntityProxyChange} instance
      */
     void onProxyChange(EntityProxyChange<P> event);
   }
 
-  private static final Type<EntityProxyChange.Handler<?>> TYPE = new Type<EntityProxyChange.Handler<?>>();
+  private static final Type<EntityProxyChange.Handler<?>> TYPE =
+      new Type<EntityProxyChange.Handler<?>>();
 
   /**
    * Register a handler for a EntityProxyChange events for a particular proxy
    * class.
-   *
+   * 
    * @param eventBus the {@link EventBus}
    * @param proxyType a Class instance of type P
    * @param handler an {@link EntityProxyChange.Handler} instance of type P
    * @return an {@link EntityProxy} instance
    */
-  public static <P extends EntityProxy> HandlerRegistration registerForProxyType(
-      EventBus eventBus, Class<P> proxyType,
-      EntityProxyChange.Handler<P> handler) {
+  public static <P extends EntityProxy> HandlerRegistration registerForProxyType(EventBus eventBus,
+      Class<P> proxyType, EntityProxyChange.Handler<P> handler) {
     return eventBus.addHandlerToSource(TYPE, proxyType, handler);
   }
 
@@ -74,7 +72,7 @@ public class EntityProxyChange<P extends EntityProxy> extends
 
   /**
    * Constructs an EntityProxyChange object.
-   *
+   * 
    * @param proxy an {@link EntityProxy} instance of type P
    * @param writeOperation a {@link WriteOperation} instance
    */
@@ -85,7 +83,7 @@ public class EntityProxyChange<P extends EntityProxy> extends
 
   /**
    * Returns the type associated with this instance.
-   *
+   * 
    * @return an instance of {@link Event.Type Type} of type Handler&lt;P&gt
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -102,7 +100,7 @@ public class EntityProxyChange<P extends EntityProxy> extends
   /**
    * Returns an unpopulated copy of the changed proxy &mdash; all properties are
    * undefined except its id.
-   *
+   * 
    * @return an instance of {@link EntityProxyId}&lt;P&gt;
    */
   @SuppressWarnings("unchecked")
@@ -112,7 +110,7 @@ public class EntityProxyChange<P extends EntityProxy> extends
 
   /**
    * Returns the {@link WriteOperation} associated with this instance.
-   *
+   * 
    * @return a {@link WriteOperation} instance
    */
   public WriteOperation getWriteOperation() {

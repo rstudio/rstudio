@@ -43,16 +43,13 @@ import java.lang.reflect.Proxy;
  * A JRE-compatible implementation of RequestFactory.
  */
 class InProcessRequestFactory extends AbstractRequestFactory {
-  @Category(value = {
-      EntityProxyCategory.class, ValueProxyCategory.class,
-      BaseProxyCategory.class})
+  @Category(value = {EntityProxyCategory.class, ValueProxyCategory.class, BaseProxyCategory.class})
   @NoWrap(EntityProxyId.class)
   interface Factory extends AutoBeanFactory {
   }
 
   class RequestFactoryHandler implements InvocationHandler {
-    public Object invoke(Object proxy, Method method, Object[] args)
-        throws Throwable {
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       if (Object.class.equals(method.getDeclaringClass())
           || RequestFactory.class.equals(method.getDeclaringClass())) {
         try {
@@ -62,22 +59,21 @@ class InProcessRequestFactory extends AbstractRequestFactory {
         }
       }
 
-      Class<? extends RequestContext> context = method.getReturnType().asSubclass(
-          RequestContext.class);
-      Dialect dialect = method.getReturnType().isAnnotationPresent(
-          JsonRpcService.class) ? Dialect.JSON_RPC : Dialect.STANDARD;
-      RequestContextHandler handler = new InProcessRequestContext(
-          InProcessRequestFactory.this, dialect).new RequestContextHandler();
-      return context.cast(Proxy.newProxyInstance(
-          Thread.currentThread().getContextClassLoader(),
+      Class<? extends RequestContext> context =
+          method.getReturnType().asSubclass(RequestContext.class);
+      Dialect dialect =
+          method.getReturnType().isAnnotationPresent(JsonRpcService.class) ? Dialect.JSON_RPC
+              : Dialect.STANDARD;
+      RequestContextHandler handler =
+          new InProcessRequestContext(InProcessRequestFactory.this, dialect).new RequestContextHandler();
+      return context.cast(Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
           new Class<?>[] {context}, handler));
     }
   }
 
   @Override
   public void initialize(EventBus eventBus) {
-    throw new UnsupportedOperationException(
-        "An explicit RequestTransport must be provided");
+    throw new UnsupportedOperationException("An explicit RequestTransport must be provided");
   }
 
   @Override
@@ -99,9 +95,9 @@ class InProcessRequestFactory extends AbstractRequestFactory {
   @SuppressWarnings("unchecked")
   protected <P extends BaseProxy> Class<P> getTypeFromToken(String typeToken) {
     try {
-      Class<? extends BaseProxy> found = Class.forName(typeToken, false,
-          Thread.currentThread().getContextClassLoader()).asSubclass(
-          BaseProxy.class);
+      Class<? extends BaseProxy> found =
+          Class.forName(typeToken, false, Thread.currentThread().getContextClassLoader())
+              .asSubclass(BaseProxy.class);
       return (Class<P>) found;
     } catch (ClassNotFoundException e) {
       return null;

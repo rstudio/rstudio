@@ -23,14 +23,13 @@ import com.google.gwt.text.shared.AbstractRenderer;
  * 
  * @param <R> the type to render
  */
-public abstract class ProxyRenderer<R> extends
-    AbstractRenderer<R> {
+public abstract class ProxyRenderer<R> extends AbstractRenderer<R> {
 
   private final String[] paths;
 
   /**
    * Constructs a {@link ProxyRenderer} with a given set of paths.
-   *
+   * 
    * @param paths an Array of Strings
    */
   public ProxyRenderer(String[] paths) {
@@ -39,7 +38,7 @@ public abstract class ProxyRenderer<R> extends
 
   /**
    * The properties required by this renderer.
-   *
+   * 
    * @return an Array of String paths
    */
   public String[] getPaths() {

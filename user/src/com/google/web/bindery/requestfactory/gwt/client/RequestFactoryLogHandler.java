@@ -36,7 +36,7 @@ public class RequestFactoryLogHandler extends RemoteLogHandlerBase {
   public static interface LoggingRequestProvider {
     /**
      * Returns the logging request.
-     *
+     * 
      * @return a {@link LoggingRequest} instance
      */
     LoggingRequest getLoggingRequest();
@@ -45,20 +45,20 @@ public class RequestFactoryLogHandler extends RemoteLogHandlerBase {
   private LoggingRequestProvider requestProvider;
 
   /**
-   * Since records from this handler go accross the wire, it should only be
-   * used for important messages, and it's Level will often be higher than the
-   * Level being used app-wide. This handler also takes string which it will
-   * use to exclude the messages from some loggers. This usually includes the
-   * name of the logger(s) which will be used to log acknowledgements of
-   * activity going accross the wire. If we did not exclude these loggers, an
-   * infinite loop would occur.
-   *
+   * Since records from this handler go accross the wire, it should only be used
+   * for important messages, and it's Level will often be higher than the Level
+   * being used app-wide. This handler also takes string which it will use to
+   * exclude the messages from some loggers. This usually includes the name of
+   * the logger(s) which will be used to log acknowledgements of activity going
+   * accross the wire. If we did not exclude these loggers, an infinite loop
+   * would occur.
+   * 
    * @param requestProvider a {@link LoggingRequestProvider} instance
    * @param level a logging {@link Level}
    * @param ignoredLoggerNames a List of Strings
    */
-  public RequestFactoryLogHandler(LoggingRequestProvider requestProvider,
-      Level level, List<String> ignoredLoggerNames) {
+  public RequestFactoryLogHandler(LoggingRequestProvider requestProvider, Level level,
+      List<String> ignoredLoggerNames) {
     super(ignoredLoggerNames);
     this.requestProvider = requestProvider;
     setLevel(level);
@@ -70,12 +70,11 @@ public class RequestFactoryLogHandler extends RemoteLogHandlerBase {
       return;
     }
     String json = JsonLogRecordClientUtil.logRecordAsJson(record);
-    requestProvider.getLoggingRequest().logMessage(json).fire(
-        new Receiver<Void>() {
-          @Override
-          public void onSuccess(Void response) {
-            // Do nothing
-          }
-        });
+    requestProvider.getLoggingRequest().logMessage(json).fire(new Receiver<Void>() {
+      @Override
+      public void onSuccess(Void response) {
+        // Do nothing
+      }
+    });
   }
 }

@@ -30,14 +30,14 @@ public interface Request<T> {
 
   /**
    * Convenience method equivalent to calling <code>to(...).fire()</code>.
-   *
+   * 
    * @param receiver a {@link Receiver} instance
    */
   void fire(Receiver<? super T> receiver);
 
   /**
    * Specify the object that will receive the result of the method invocation.
-   *
+   * 
    * @param receiver a {@link Receiver} instance
    * @return a {@link RequestContext} instance
    */
@@ -45,7 +45,7 @@ public interface Request<T> {
 
   /**
    * Request additional reference properties to fetch with the return value.
-   *
+   * 
    * @param propertyRefs a list of reference property names as Strings
    * @return a {@link Request} instance of type T
    */

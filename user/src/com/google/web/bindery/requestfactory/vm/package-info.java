@@ -15,9 +15,11 @@
  */
 
 /**
- * Classes to use RequestFactory in a non-GWT (e.g., Android or desktop) JRE environment. 
- *
+ * Classes to use RequestFactory in a non-GWT (e.g., Android or desktop) JRE
+ * environment.
+ * 
  * @since GWT 2.3
  */
 @com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.web.bindery.requestfactory.vm;
+

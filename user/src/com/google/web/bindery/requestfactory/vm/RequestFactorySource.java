@@ -41,9 +41,8 @@ public class RequestFactorySource {
    */
   public static <T extends RequestFactory> T create(Class<T> requestFactory) {
     RequestFactoryHandler handler = new InProcessRequestFactory().new RequestFactoryHandler();
-    return requestFactory.cast(Proxy.newProxyInstance(
-        Thread.currentThread().getContextClassLoader(),
-        new Class<?>[] {requestFactory}, handler));
+    return requestFactory.cast(Proxy.newProxyInstance(Thread.currentThread()
+        .getContextClassLoader(), new Class<?>[] {requestFactory}, handler));
   }
 
   private RequestFactorySource() {

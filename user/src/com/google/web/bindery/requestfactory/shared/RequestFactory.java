@@ -130,7 +130,8 @@ public interface RequestFactory {
 
   /**
    * Start this request factory with a
-   * {@link com.google.web.bindery.requestfactory.gwt.client.DefaultRequestTransport}.
+   * {@link com.google.web.bindery.requestfactory.gwt.client.DefaultRequestTransport}
+   * .
    * 
    * @param eventBus an {@link EventBus}
    */

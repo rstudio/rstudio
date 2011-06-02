@@ -20,7 +20,7 @@ package com.google.web.bindery.requestfactory.shared;
  * A {@link Locator} for use with value types (as opposed to entities), which
  * are not persisted. Abstract methods from the {@link Locator} class that are
  * not relevant for value types are implemented to return {@code null}.
- *
+ * 
  * @param <T> the type of domain object the Locator will operate on
  */
 public abstract class ValueLocator<T> extends Locator<T, Void> {

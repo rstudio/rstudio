@@ -70,8 +70,7 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
    * Linear search, but we want to handle getFoo, isFoo, and hasFoo. The result
    * of this method will be cached by the ServiceLayerCache.
    */
-  private static Method getBeanMethod(BeanMethod methodType,
-      Class<?> domainType, String property) {
+  private static Method getBeanMethod(BeanMethod methodType, Class<?> domainType, String property) {
     for (Method m : domainType.getMethods()) {
       if (methodType.matches(m) && property.equals(methodType.inferName(m))) {
         m.setAccessible(true);
@@ -102,9 +101,8 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
     } catch (IllegalArgumentException e) {
       ex = e;
     }
-    return this.<T> die(ex,
-        "Could not create a new instance of domain type %s",
-        clazz.getCanonicalName());
+    return this.<T> die(ex, "Could not create a new instance of domain type %s", clazz
+        .getCanonicalName());
   }
 
   @Override
@@ -127,8 +125,8 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
     try {
       Method getter = getTop().getGetter(domainObject.getClass(), property);
       if (getter == null) {
-        die(null, "Could not determine getter for property %s on type %s",
-            property, domainObject.getClass().getCanonicalName());
+        die(null, "Could not determine getter for property %s on type %s", property, domainObject
+            .getClass().getCanonicalName());
       }
       Object value = getter.invoke(domainObject);
       return value;
@@ -143,17 +141,17 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
   public Type getRequestReturnType(Method contextMethod) {
     Class<?> returnClass = contextMethod.getReturnType();
     if (InstanceRequest.class.isAssignableFrom(returnClass)) {
-      Type[] params = TypeUtils.getParameterization(InstanceRequest.class,
-          contextMethod.getGenericReturnType());
+      Type[] params =
+          TypeUtils
+              .getParameterization(InstanceRequest.class, contextMethod.getGenericReturnType());
       assert params.length == 2;
       return params[1];
     } else if (Request.class.isAssignableFrom(returnClass)) {
-      Type param = TypeUtils.getSingleParameterization(Request.class,
-          contextMethod.getGenericReturnType());
+      Type param =
+          TypeUtils.getSingleParameterization(Request.class, contextMethod.getGenericReturnType());
       return param;
     } else {
-      return die(null, "Unknown RequestContext return type %s",
-          returnClass.getCanonicalName());
+      return die(null, "Unknown RequestContext return type %s", returnClass.getCanonicalName());
     }
   }
 
@@ -211,12 +209,10 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
   }
 
   @Override
-  public List<Object> loadDomainObjects(List<Class<?>> classes,
-      List<Object> domainIds) {
+  public List<Object> loadDomainObjects(List<Class<?>> classes, List<Object> domainIds) {
     if (classes.size() != domainIds.size()) {
-      die(null,
-          "Size mismatch in paramaters. classes.size() = %d domainIds.size=%d",
-          classes.size(), domainIds.size());
+      die(null, "Size mismatch in paramaters. classes.size() = %d domainIds.size=%d", classes
+          .size(), domainIds.size());
     }
     List<Object> toReturn = new ArrayList<Object>(classes.size());
     Iterator<Class<?>> classIt = classes.iterator();
@@ -228,13 +224,12 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
   }
 
   @Override
-  public void setProperty(Object domainObject, String property,
-      Class<?> expectedType, Object value) {
+  public void setProperty(Object domainObject, String property, Class<?> expectedType, Object value) {
     try {
       Method setter = getTop().getSetter(domainObject.getClass(), property);
       if (setter == null) {
-        die(null, "Could not locate setter for property %s in type %s",
-            property, domainObject.getClass().getCanonicalName());
+        die(null, "Could not locate setter for property %s in type %s", property, domainObject
+            .getClass().getCanonicalName());
       }
       setter.invoke(domainObject, value);
       return;
@@ -255,8 +250,7 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
 
   private Method getFind(Class<?> clazz) {
     if (clazz == null) {
-      return die(null, "Could not find static method with a single"
-          + " parameter of a key type");
+      return die(null, "Could not find static method with a single" + " parameter of a key type");
     }
     String searchFor = "find" + clazz.getSimpleName();
     for (Method method : clazz.getMethods()) {
@@ -286,7 +280,7 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
       return true;
     }
 
-    return BaseProxy.class.isAssignableFrom(getTop().resolveClientType(
-        domainClass, BaseProxy.class, true));
+    return BaseProxy.class.isAssignableFrom(getTop().resolveClientType(domainClass,
+        BaseProxy.class, true));
   }
 }

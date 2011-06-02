@@ -20,8 +20,7 @@ import com.google.web.bindery.requestfactory.shared.EntityProxy;
 
 /**
  * An {@link EntityProxy}-aware key provider, handy for use with
- * {@link com.google.gwt.view.client.SelectionModel} and various
- * cell widgets.
+ * {@link com.google.gwt.view.client.SelectionModel} and various cell widgets.
  * 
  * @see com.google.gwt.user.cellview.client.CellBrowser
  * @see com.google.gwt.user.cellview.client.CellList
@@ -29,11 +28,10 @@ import com.google.web.bindery.requestfactory.shared.EntityProxy;
  * 
  * @param <P> the proxy type
  */
-public class EntityProxyKeyProvider<P extends EntityProxy> implements
-    ProvidesKey<P> {
+public class EntityProxyKeyProvider<P extends EntityProxy> implements ProvidesKey<P> {
   /**
    * Returns the key Object for the given item.
-   *
+   * 
    * @param item an item of type P
    */
   public Object getKey(P item) {

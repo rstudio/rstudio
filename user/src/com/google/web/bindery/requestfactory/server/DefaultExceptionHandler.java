@@ -23,7 +23,7 @@ import com.google.web.bindery.requestfactory.shared.ServerFailure;
  */
 public class DefaultExceptionHandler implements ExceptionHandler {
   public ServerFailure createServerFailure(Throwable throwable) {
-    return new ServerFailure("Server Error: "
-        + (throwable == null ? null : throwable.getMessage()), null, null, true);
+    return new ServerFailure(
+        "Server Error: " + (throwable == null ? null : throwable.getMessage()), null, null, true);
   }
 }

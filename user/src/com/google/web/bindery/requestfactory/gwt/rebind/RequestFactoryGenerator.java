@@ -67,16 +67,15 @@ import java.util.Set;
 
 /**
  * Generates implementations of
- * {@link com.google.web.bindery.requestfactory.shared.RequestFactory RequestFactory}
- * and its nested interfaces.
+ * {@link com.google.web.bindery.requestfactory.shared.RequestFactory
+ * RequestFactory} and its nested interfaces.
  */
 public class RequestFactoryGenerator extends Generator {
 
   /**
    * Visits all types reachable from a RequestContext.
    */
-  private static class AllReachableTypesVisitor extends
-      RequestMethodTypesVisitor {
+  private static class AllReachableTypesVisitor extends RequestMethodTypesVisitor {
     private final RequestFactoryModel model;
 
     public AllReachableTypesVisitor(RequestFactoryModel model) {
@@ -144,8 +143,8 @@ public class RequestFactoryGenerator extends Generator {
   private RequestFactoryModel model;
 
   @Override
-  public String generate(TreeLogger logger, GeneratorContext context,
-      String typeName) throws UnableToCompleteException {
+  public String generate(TreeLogger logger, GeneratorContext context, String typeName)
+      throws UnableToCompleteException {
     this.context = context;
     this.logger = logger;
 
@@ -165,8 +164,8 @@ public class RequestFactoryGenerator extends Generator {
 
     model = new RequestFactoryModel(logger, toGenerate);
 
-    ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
-        packageName, simpleSourceName);
+    ClassSourceFileComposerFactory factory =
+        new ClassSourceFileComposerFactory(packageName, simpleSourceName);
     factory.setSuperclass(AbstractClientRequestFactory.class.getCanonicalName());
     factory.addImplementedInterface(typeName);
     SourceWriter sw = factory.createSourceWriter(context, pw);
@@ -240,8 +239,8 @@ public class RequestFactoryGenerator extends Generator {
     return models;
   }
 
-  private void writeAutoBeanFactory(SourceWriter sw,
-      Collection<EntityProxyModel> models, Collection<JEnumType> extraEnums) {
+  private void writeAutoBeanFactory(SourceWriter sw, Collection<EntityProxyModel> models,
+      Collection<JEnumType> extraEnums) {
     if (!extraEnums.isEmpty()) {
       StringBuilder extraClasses = new StringBuilder();
       for (JEnumType enumType : extraEnums) {
@@ -253,22 +252,18 @@ public class RequestFactoryGenerator extends Generator {
       sw.println("@%s({%s})", ExtraEnums.class.getCanonicalName(), extraClasses);
     }
     // Map in static implementations of EntityProxy methods
-    sw.println("@%s({%s.class, %s.class, %s.class})",
-        Category.class.getCanonicalName(),
-        EntityProxyCategory.class.getCanonicalName(),
-        ValueProxyCategory.class.getCanonicalName(),
+    sw.println("@%s({%s.class, %s.class, %s.class})", Category.class.getCanonicalName(),
+        EntityProxyCategory.class.getCanonicalName(), ValueProxyCategory.class.getCanonicalName(),
         BaseProxyCategory.class.getCanonicalName());
     // Don't wrap our id type, because it makes code grungy
-    sw.println("@%s(%s.class)", NoWrap.class.getCanonicalName(),
-        EntityProxyId.class.getCanonicalName());
-    sw.println("interface Factory extends %s {",
-        AutoBeanFactory.class.getCanonicalName());
+    sw.println("@%s(%s.class)", NoWrap.class.getCanonicalName(), EntityProxyId.class
+        .getCanonicalName());
+    sw.println("interface Factory extends %s {", AutoBeanFactory.class.getCanonicalName());
     sw.indent();
 
     for (EntityProxyModel proxy : models) {
       // AutoBean<FooProxy> com_google_FooProxy();
-      sw.println("%s<%s> %s();", AutoBean.class.getCanonicalName(),
-          proxy.getQualifiedSourceName(),
+      sw.println("%s<%s> %s();", AutoBean.class.getCanonicalName(), proxy.getQualifiedSourceName(),
           proxy.getQualifiedSourceName().replace('.', '_'));
     }
     sw.outdent();
@@ -281,8 +276,7 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("@Override public Factory getAutoBeanFactory() {");
     sw.indent();
     sw.println("if (FACTORY == null) {");
-    sw.indentln("FACTORY = %s.create(Factory.class);",
-        GWT.class.getCanonicalName());
+    sw.indentln("FACTORY = %s.create(Factory.class);", GWT.class.getCanonicalName());
     sw.println("}");
     sw.println("return FACTORY;");
     sw.outdent();
@@ -291,25 +285,23 @@ public class RequestFactoryGenerator extends Generator {
 
   private void writeContextImplementations() {
     for (ContextMethod method : model.getMethods()) {
-      PrintWriter pw = context.tryCreate(logger, method.getPackageName(),
-          method.getSimpleSourceName());
+      PrintWriter pw =
+          context.tryCreate(logger, method.getPackageName(), method.getSimpleSourceName());
       if (pw == null) {
         // Already generated
         continue;
       }
 
-      ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
-          method.getPackageName(), method.getSimpleSourceName());
+      ClassSourceFileComposerFactory factory =
+          new ClassSourceFileComposerFactory(method.getPackageName(), method.getSimpleSourceName());
       factory.setSuperclass(AbstractRequestContext.class.getCanonicalName());
       factory.addImplementedInterface(method.getImplementedInterfaceQualifiedSourceName());
       SourceWriter sw = factory.createSourceWriter(context, pw);
 
       // Constructor that accepts the parent RequestFactory
-      sw.println(
-          "public %s(%s requestFactory) {super(requestFactory, %s.%s);}",
-          method.getSimpleSourceName(),
-          AbstractRequestFactory.class.getCanonicalName(),
-          Dialect.class.getCanonicalName(), method.getDialect().name());
+      sw.println("public %s(%s requestFactory) {super(requestFactory, %s.%s);}", method
+          .getSimpleSourceName(), AbstractRequestFactory.class.getCanonicalName(), Dialect.class
+          .getCanonicalName(), method.getDialect().name());
 
       Set<EntityProxyModel> models = findReferencedEntities(method);
       Set<JEnumType> extraEnumTypes = findExtraEnums(method);
@@ -332,8 +324,7 @@ public class RequestFactoryGenerator extends Generator {
           parameterArray.append(",null");
         }
         for (JTypeParameter param : jmethod.getTypeParameters()) {
-          typeParameterDeclaration.append(",").append(
-              param.getQualifiedSourceName());
+          typeParameterDeclaration.append(",").append(param.getQualifiedSourceName());
         }
         for (JParameter param : jmethod.getParameters()) {
           parameterArray.append(",").append(param.getName());
@@ -352,38 +343,35 @@ public class RequestFactoryGenerator extends Generator {
         }
 
         // public Request<Foo> doFoo(final Foo foo) {
-        sw.println("public %s %s %s(%s) {", typeParameterDeclaration,
-            jmethod.getReturnType().getParameterizedQualifiedSourceName(),
-            jmethod.getName(), parameterDeclaration);
+        sw.println("public %s %s %s(%s) {", typeParameterDeclaration, jmethod.getReturnType()
+            .getParameterizedQualifiedSourceName(), jmethod.getName(), parameterDeclaration);
         sw.indent();
         // The implements clause covers InstanceRequest
         // class X extends AbstractRequest<Return> implements Request<Return> {
-        sw.println("class X extends %s<%s> implements %s {",
-            AbstractRequest.class.getCanonicalName(),
-            request.getDataType().getParameterizedQualifiedSourceName(),
+        sw.println("class X extends %s<%s> implements %s {", AbstractRequest.class
+            .getCanonicalName(), request.getDataType().getParameterizedQualifiedSourceName(),
             jmethod.getReturnType().getParameterizedQualifiedSourceName());
         sw.indent();
 
         // public X() { super(FooRequestContext.this); }
-        sw.println("public X() { super(%s.this);}",
-            method.getSimpleSourceName());
+        sw.println("public X() { super(%s.this);}", method.getSimpleSourceName());
 
         // This could also be gotten rid of by having only Request /
         // InstanceRequest
         sw.println("@Override public X with(String... paths) {super.with(paths); return this;}");
 
         // makeRequestData()
-        sw.println("@Override protected %s makeRequestData() {",
-            RequestData.class.getCanonicalName());
+        sw.println("@Override protected %s makeRequestData() {", RequestData.class
+            .getCanonicalName());
         // return new RequestData("Foo::bar", {parameters}, propertyRefs,
         // List.class, FooProxy.class);
-        String elementType = request.isCollectionType()
-            ? request.getCollectionElementType().getQualifiedSourceName()
+        String elementType =
+            request.isCollectionType() ? request.getCollectionElementType()
+                .getQualifiedSourceName()
                 + ".class" : "null";
-        String returnTypeBaseQualifiedName = ModelUtils.ensureBaseType(
-            request.getDataType()).getQualifiedSourceName();
-        sw.indentln(
-            "return new %s(\"%s\", new Object[] {%s}, propertyRefs, %s.class, %s);",
+        String returnTypeBaseQualifiedName =
+            ModelUtils.ensureBaseType(request.getDataType()).getQualifiedSourceName();
+        sw.indentln("return new %s(\"%s\", new Object[] {%s}, propertyRefs, %s.class, %s);",
             RequestData.class.getCanonicalName(), operation, parameterArray,
             returnTypeBaseQualifiedName, elementType);
         sw.println("}");
@@ -395,15 +383,13 @@ public class RequestFactoryGenerator extends Generator {
         if (method.getDialect().equals(Dialect.JSON_RPC)) {
           for (JMethod setter : request.getExtraSetters()) {
             PropertyName propertyNameAnnotation = setter.getAnnotation(PropertyName.class);
-            String propertyName = propertyNameAnnotation == null
-                ? JBeanMethod.SET.inferName(setter)
-                : propertyNameAnnotation.value();
-            String maybeReturn = JBeanMethod.SET_BUILDER.matches(setter)
-                ? "return this;" : "";
-            sw.println(
-                "%s { getRequestData().setNamedParameter(\"%s\", %s); %s}",
-                setter.getReadableDeclaration(false, false, false, false, true),
-                propertyName, setter.getParameters()[0].getName(), maybeReturn);
+            String propertyName =
+                propertyNameAnnotation == null ? JBeanMethod.SET.inferName(setter)
+                    : propertyNameAnnotation.value();
+            String maybeReturn = JBeanMethod.SET_BUILDER.matches(setter) ? "return this;" : "";
+            sw.println("%s { getRequestData().setNamedParameter(\"%s\", %s); %s}", setter
+                .getReadableDeclaration(false, false, false, false, true), propertyName, setter
+                .getParameters()[0].getName(), maybeReturn);
           }
         }
 
@@ -415,23 +401,21 @@ public class RequestFactoryGenerator extends Generator {
         sw.println("X x = new X();");
 
         if (request.getApiVersion() != null) {
-          sw.println("x.getRequestData().setApiVersion(\"%s\");",
-              Generator.escape(request.getApiVersion()));
+          sw.println("x.getRequestData().setApiVersion(\"%s\");", Generator.escape(request
+              .getApiVersion()));
         }
 
         // JSON-RPC payloads send their parameters in a by-name fashion
         if (method.getDialect().equals(Dialect.JSON_RPC)) {
           for (JParameter param : jmethod.getParameters()) {
             PropertyName annotation = param.getAnnotation(PropertyName.class);
-            String propertyName = annotation == null ? param.getName()
-                : annotation.value();
+            String propertyName = annotation == null ? param.getName() : annotation.value();
             boolean isContent = param.isAnnotationPresent(JsonRpcContent.class);
             if (isContent) {
-              sw.println("x.getRequestData().setRequestContent(%s);",
-                  param.getName());
+              sw.println("x.getRequestData().setRequestContent(%s);", param.getName());
             } else {
-              sw.println("x.getRequestData().setNamedParameter(\"%s\", %s);",
-                  propertyName, param.getName());
+              sw.println("x.getRequestData().setNamedParameter(\"%s\", %s);", propertyName, param
+                  .getName());
             }
           }
         }
@@ -452,8 +436,7 @@ public class RequestFactoryGenerator extends Generator {
   private void writeContextMethods(SourceWriter sw) {
     for (ContextMethod method : model.getMethods()) {
       // public FooService foo() {
-      sw.println("public %s %s() {", method.getQualifiedSourceName(),
-          method.getMethodName());
+      sw.println("public %s %s() {", method.getQualifiedSourceName(), method.getMethodName());
       // return new FooServiceImpl(this);
       sw.indentln("return new %s(this);", method.getQualifiedSourceName());
       sw.println("}");
@@ -465,25 +448,22 @@ public class RequestFactoryGenerator extends Generator {
         + " = new %1$s<String, Class<?>>();", HashMap.class.getCanonicalName());
     sw.println("private static final %1$s<Class<?>, String> typesToTokens"
         + " = new %1$s<Class<?>, String>();", HashMap.class.getCanonicalName());
-    sw.println(
-        "private static final %1$s<Class<?>> entityProxyTypes = new %1$s<Class<?>>();",
+    sw.println("private static final %1$s<Class<?>> entityProxyTypes = new %1$s<Class<?>>();",
         HashSet.class.getCanonicalName());
-    sw.println(
-        "private static final %1$s<Class<?>> valueProxyTypes = new %1$s<Class<?>>();",
+    sw.println("private static final %1$s<Class<?>> valueProxyTypes = new %1$s<Class<?>>();",
         HashSet.class.getCanonicalName());
     sw.println("static {");
     sw.indent();
     for (EntityProxyModel type : model.getAllProxyModels()) {
       // tokensToTypes.put("Foo", Foo.class);
-      sw.println("tokensToTypes.put(\"%s\", %s.class);",
-          type.getQualifiedBinaryName(), type.getQualifiedSourceName());
+      sw.println("tokensToTypes.put(\"%s\", %s.class);", type.getQualifiedBinaryName(), type
+          .getQualifiedSourceName());
       // typesToTokens.put(Foo.class, Foo);
-      sw.println("typesToTokens.put(%s.class, \"%s\");",
-          type.getQualifiedSourceName(), type.getQualifiedBinaryName());
+      sw.println("typesToTokens.put(%s.class, \"%s\");", type.getQualifiedSourceName(), type
+          .getQualifiedBinaryName());
       // fooProxyTypes.add(MyFooProxy.class);
-      sw.println("%s.add(%s.class);", type.getType().equals(Type.ENTITY)
-          ? "entityProxyTypes" : "valueProxyTypes",
-          type.getQualifiedSourceName());
+      sw.println("%s.add(%s.class);", type.getType().equals(Type.ENTITY) ? "entityProxyTypes"
+          : "valueProxyTypes", type.getQualifiedSourceName());
     }
     sw.outdent();
     sw.println("}");

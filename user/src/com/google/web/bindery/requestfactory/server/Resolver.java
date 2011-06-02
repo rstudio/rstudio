@@ -65,8 +65,7 @@ class Resolver {
         return false;
       }
       CollectionType other = (CollectionType) o;
-      return rawType.equals(other.rawType)
-          && elementType.equals(other.elementType);
+      return rawType.equals(other.rawType) && elementType.equals(other.elementType);
     }
 
     public Type[] getActualTypeArguments() {
@@ -100,8 +99,7 @@ class Resolver {
     public ResolutionKey(Object domainObject, Type requestedType) {
       this.domainObject = domainObject;
       this.requestedType = requestedType;
-      this.hashCode = System.identityHashCode(domainObject) * 13
-          + requestedType.hashCode() * 7;
+      this.hashCode = System.identityHashCode(domainObject) * 13 + requestedType.hashCode() * 7;
     }
 
     @Override
@@ -191,10 +189,8 @@ class Resolver {
    *          resolution will suffice.
    * @param propertyRefs the property references requested by the client
    */
-  public Object resolveClientValue(Object domainValue, Type assignableTo,
-      Set<String> propertyRefs) {
-    return resolveClientValue(domainValue, assignableTo,
-        getPropertyRefs(propertyRefs), "");
+  public Object resolveClientValue(Object domainValue, Type assignableTo, Set<String> propertyRefs) {
+    return resolveClientValue(domainValue, assignableTo, getPropertyRefs(propertyRefs), "");
   }
 
   /**
@@ -205,8 +201,7 @@ class Resolver {
    *          ReportableException containing a {@link DeadEntityException} if an
    *          EntityProxy cannot be resolved
    */
-  public Object resolveDomainValue(Object maybeEntityProxy,
-      boolean detectDeadEntities) {
+  public Object resolveDomainValue(Object maybeEntityProxy, boolean detectDeadEntities) {
     if (maybeEntityProxy instanceof BaseProxy) {
       AutoBean<BaseProxy> bean = AutoBeanUtils.getAutoBean((BaseProxy) maybeEntityProxy);
       Object domain = bean.getTag(Constants.DOMAIN_OBJECT);
@@ -256,9 +251,8 @@ class Resolver {
    * Converts a domain entity into an EntityProxy that will be sent to the
    * client.
    */
-  private <T extends BaseProxy> T resolveClientProxy(final Object domainEntity,
-      Class<T> proxyType, final Set<String> propertyRefs, ResolutionKey key,
-      final String prefix) {
+  private <T extends BaseProxy> T resolveClientProxy(final Object domainEntity, Class<T> proxyType,
+      final Set<String> propertyRefs, ResolutionKey key, final String prefix) {
     if (domainEntity == null) {
       return null;
     }
@@ -291,8 +285,7 @@ class Resolver {
            * will behave as though it were an object newly-created by the
            * client.
            */
-          id = state.getIdFactory().allocateSyntheticId(proxyType,
-              ++syntheticId);
+          id = state.getIdFactory().allocateSyntheticId(proxyType, ++syntheticId);
         } else {
           Splittable flatValue = state.flatten(domainId);
           id = state.getIdFactory().getId(proxyType, flatValue.getPayload(), 0);
@@ -316,28 +309,28 @@ class Resolver {
     bean.setTag(Constants.IN_RESPONSE, true);
     if (domainVersion != null) {
       Splittable flatVersion = state.flatten(domainVersion);
-      bean.setTag(Constants.VERSION_PROPERTY_B64,
-          SimpleRequestProcessor.toBase64(flatVersion.getPayload()));
+      bean.setTag(Constants.VERSION_PROPERTY_B64, SimpleRequestProcessor.toBase64(flatVersion
+          .getPayload()));
     }
 
     bean.accept(new AutoBeanVisitor() {
 
       @Override
-      public boolean visitReferenceProperty(String propertyName,
-          AutoBean<?> value, PropertyContext ctx) {
+      public boolean visitReferenceProperty(String propertyName, AutoBean<?> value,
+          PropertyContext ctx) {
         // Does the user care about the property?
-        String newPrefix = (prefix.length() > 0 ? (prefix + ".") : "")
-            + propertyName;
+        String newPrefix = (prefix.length() > 0 ? (prefix + ".") : "") + propertyName;
 
         /*
          * Send the property if the enclosing type is a ValueProxy, if the owner
          * requested the property, or if the property is a list of values.
          */
-        Class<?> elementType = ctx instanceof CollectionPropertyContext
-            ? ((CollectionPropertyContext) ctx).getElementType() : null;
-        boolean shouldSend = isOwnerValueProxy
-            || matchesPropertyRef(propertyRefs, newPrefix)
-            || elementType != null && ValueCodex.canDecode(elementType);
+        Class<?> elementType =
+            ctx instanceof CollectionPropertyContext ? ((CollectionPropertyContext) ctx)
+                .getElementType() : null;
+        boolean shouldSend =
+            isOwnerValueProxy || matchesPropertyRef(propertyRefs, newPrefix) || elementType != null
+                && ValueCodex.canDecode(elementType);
 
         if (!shouldSend) {
           return false;
@@ -356,16 +349,14 @@ class Resolver {
         } else {
           type = new CollectionType(ctx.getType(), elementType);
         }
-        Object clientValue = resolveClientValue(domainValue, type,
-            propertyRefs, newPrefix);
+        Object clientValue = resolveClientValue(domainValue, type, propertyRefs, newPrefix);
 
         ctx.set(clientValue);
         return false;
       }
 
       @Override
-      public boolean visitValueProperty(String propertyName, Object value,
-          PropertyContext ctx) {
+      public boolean visitValueProperty(String propertyName, Object value, PropertyContext ctx) {
         // Limit unrequested value properties?
         value = service.getProperty(domainEntity, propertyName);
         ctx.set(value);
@@ -379,8 +370,8 @@ class Resolver {
   /**
    * Recursive-descent implementation.
    */
-  private Object resolveClientValue(Object domainValue, Type returnType,
-      Set<String> propertyRefs, String prefix) {
+  private Object resolveClientValue(Object domainValue, Type returnType, Set<String> propertyRefs,
+      String prefix) {
     if (domainValue == null) {
       return null;
     }
@@ -398,8 +389,7 @@ class Resolver {
       return assignableTo.cast(previous);
     }
 
-    Class<?> returnClass = service.resolveClientType(domainValue.getClass(),
-        assignableTo, true);
+    Class<?> returnClass = service.resolveClientType(domainValue.getClass(), assignableTo, true);
 
     if (anyType) {
       assignableTo = returnClass;
@@ -415,8 +405,7 @@ class Resolver {
     boolean isId = EntityProxyId.class.isAssignableFrom(returnClass);
     if (isProxy || isId) {
       Class<? extends BaseProxy> proxyClass = assignableTo.asSubclass(BaseProxy.class);
-      BaseProxy entity = resolveClientProxy(domainValue, proxyClass,
-          propertyRefs, key, prefix);
+      BaseProxy entity = resolveClientProxy(domainValue, proxyClass, propertyRefs, key, prefix);
       if (isId) {
         return assignableTo.cast(((EntityProxy) entity).stableId());
       }
@@ -431,20 +420,17 @@ class Resolver {
       } else if (Set.class.isAssignableFrom(returnClass)) {
         accumulator = new HashSet<Object>();
       } else {
-        throw new ReportableException("Unsupported collection type"
-            + returnClass.getName());
+        throw new ReportableException("Unsupported collection type" + returnClass.getName());
       }
       resolved.put(key, accumulator);
 
-      Type elementType = TypeUtils.getSingleParameterization(Collection.class,
-          returnType);
+      Type elementType = TypeUtils.getSingleParameterization(Collection.class, returnType);
       for (Object o : (Collection<?>) domainValue) {
         accumulator.add(resolveClientValue(o, elementType, propertyRefs, prefix));
       }
       return assignableTo.cast(accumulator);
     }
 
-    throw new ReportableException("Unsupported domain type "
-        + returnClass.getCanonicalName());
+    throw new ReportableException("Unsupported domain type " + returnClass.getCanonicalName());
   }
 }

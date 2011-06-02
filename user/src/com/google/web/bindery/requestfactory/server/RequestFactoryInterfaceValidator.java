@@ -152,8 +152,7 @@ public class RequestFactoryInterfaceValidator {
 
     public void poison(String msg, Object... args) {
       poison();
-      logger.logp(Level.SEVERE, currentType(), currentMethod(),
-          String.format(msg, args));
+      logger.logp(Level.SEVERE, currentType(), currentMethod(), String.format(msg, args));
       validator.poisoned = true;
     }
 
@@ -176,8 +175,7 @@ public class RequestFactoryInterfaceValidator {
     }
 
     public void spam(String msg, Object... args) {
-      logger.logp(Level.FINEST, currentType(), currentMethod(),
-          String.format(msg, args));
+      logger.logp(Level.FINEST, currentType(), currentMethod(), String.format(msg, args));
     }
 
     protected ErrorContext fork() {
@@ -254,8 +252,8 @@ public class RequestFactoryInterfaceValidator {
     }
 
     @Override
-    public void visit(int version, int access, String name, String signature,
-        String superName, String[] interfaces) {
+    public void visit(int version, int access, String name, String signature, String superName,
+        String[] interfaces) {
       if ((access & Opcodes.ACC_INTERFACE) == 0) {
         logger.poison("Type must be an interface");
       }
@@ -354,8 +352,7 @@ public class RequestFactoryInterfaceValidator {
         for (Class<?> clazz : found) {
           sb.append(" @").append(clazz.getSimpleName());
         }
-        logger.poison("Redundant domain mapping annotations present:%s",
-            sb.toString());
+        logger.poison("Redundant domain mapping annotations present:%s", sb.toString());
       }
     }
   }
@@ -379,14 +376,14 @@ public class RequestFactoryInterfaceValidator {
       Map<RFMethod, RFMethod> toReturn = new HashMap<RFMethod, RFMethod>();
       // Return most-derived methods
       for (RFMethod method : methods) {
-        RFMethod key = new RFMethod(method.getName(), Type.getMethodDescriptor(
-            Type.VOID_TYPE, method.getArgumentTypes()));
+        RFMethod key =
+            new RFMethod(method.getName(), Type.getMethodDescriptor(Type.VOID_TYPE, method
+                .getArgumentTypes()));
 
         RFMethod compareTo = toReturn.get(key);
         if (compareTo == null) {
           toReturn.put(key, method);
-        } else if (isAssignable(logger, compareTo.getReturnType(),
-            method.getReturnType())) {
+        } else if (isAssignable(logger, compareTo.getReturnType(), method.getReturnType())) {
           toReturn.put(key, method);
         }
       }
@@ -395,8 +392,8 @@ public class RequestFactoryInterfaceValidator {
     }
 
     @Override
-    public void visit(int version, int access, String name, String signature,
-        String superName, String[] interfaces) {
+    public void visit(int version, int access, String name, String signature, String superName,
+        String[] interfaces) {
       if (!seen.add(name)) {
         return;
       }
@@ -411,8 +408,8 @@ public class RequestFactoryInterfaceValidator {
     }
 
     @Override
-    public MethodVisitor visitMethod(int access, String name, String desc,
-        String signature, String[] exceptions) {
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature,
+        String[] exceptions) {
       // Ignore initializers
       if ("<clinit>".equals(name) || "<init>".equals(name)) {
         return null;
@@ -483,14 +480,13 @@ public class RequestFactoryInterfaceValidator {
     }
 
     public List<Type> exec(Type type) {
-      RequestFactoryInterfaceValidator.this.visit(logger,
-          type.getInternalName(), this);
+      RequestFactoryInterfaceValidator.this.visit(logger, type.getInternalName(), this);
       return supers;
     }
 
     @Override
-    public void visit(int version, int access, String name, String signature,
-        String superName, String[] interfaces) {
+    public void visit(int version, int access, String name, String signature, String superName,
+        String[] interfaces) {
       if (!seen.add(name)) {
         return;
       }
@@ -576,18 +572,17 @@ public class RequestFactoryInterfaceValidator {
           + " com.example.MyRequestFactory");
       System.exit(1);
     }
-    RequestFactoryInterfaceValidator validator = new RequestFactoryInterfaceValidator(
-        Logger.getLogger(RequestFactoryInterfaceValidator.class.getName()),
-        new ClassLoaderLoader(Thread.currentThread().getContextClassLoader()));
+    RequestFactoryInterfaceValidator validator =
+        new RequestFactoryInterfaceValidator(Logger
+            .getLogger(RequestFactoryInterfaceValidator.class.getName()), new ClassLoaderLoader(
+            Thread.currentThread().getContextClassLoader()));
     validator.validateRequestFactory(args[0]);
     System.exit(validator.isPoisoned() ? 1 : 0);
   }
 
-  static String messageCouldNotFindMethod(Type domainType,
-      List<? extends Method> methods) {
+  static String messageCouldNotFindMethod(Type domainType, List<? extends Method> methods) {
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format(
-        "Could not find matching method in %s.\nPossible matches:\n",
+    sb.append(String.format("Could not find matching method in %s.\nPossible matches:\n",
         print(domainType)));
     for (Method domainMethod : methods) {
       sb.append("  ").append(print(domainMethod)).append("\n");
@@ -597,8 +592,7 @@ public class RequestFactoryInterfaceValidator {
 
   private static String print(Method method) {
     StringBuilder sb = new StringBuilder();
-    sb.append(print(method.getReturnType())).append(" ").append(
-        method.getName()).append("(");
+    sb.append(print(method.getReturnType())).append(" ").append(method.getName()).append("(");
     for (Type t : method.getArgumentTypes()) {
       sb.append(print(t)).append(" ");
     }
@@ -776,8 +770,8 @@ public class RequestFactoryInterfaceValidator {
     } else if (isAssignable(parentLogger, valueProxyIntf, proxyType)) {
       validateValueProxy(binaryName);
     } else {
-      parentLogger.poison("%s is neither an %s nor a %s", print(proxyType),
-          print(entityProxyIntf), print(valueProxyIntf));
+      parentLogger.poison("%s is neither an %s nor a %s", print(proxyType), print(entityProxyIntf),
+          print(valueProxyIntf));
     }
   }
 
@@ -815,30 +809,28 @@ public class RequestFactoryInterfaceValidator {
 
     // Quick sanity check for calling code
     if (!isAssignable(logger, requestContextIntf, requestContextType)) {
-      logger.poison("%s is not a %s", print(requestContextType),
-          RequestContext.class.getSimpleName());
+      logger.poison("%s is not a %s", print(requestContextType), RequestContext.class
+          .getSimpleName());
       return;
     }
 
     Type domainServiceType = getDomainType(logger, requestContextType);
     if (domainServiceType == errorType) {
-      logger.poison(
-          "The type %s must be annotated with a @%s or @%s annotation",
-          BinaryName.toSourceName(binaryName), Service.class.getSimpleName(),
-          ServiceName.class.getSimpleName());
+      logger.poison("The type %s must be annotated with a @%s or @%s annotation", BinaryName
+          .toSourceName(binaryName), Service.class.getSimpleName(), ServiceName.class
+          .getSimpleName());
       return;
     }
 
     for (RFMethod method : getMethodsInHierarchy(logger, requestContextType)) {
       // Ignore methods in RequestContext itself
-      if (findCompatibleMethod(logger, requestContextIntf, method, false, true,
-          true) != null) {
+      if (findCompatibleMethod(logger, requestContextIntf, method, false, true, true) != null) {
         continue;
       }
 
       // Check the client method against the domain
-      checkClientMethodInDomain(logger, method, domainServiceType,
-          !clientToLocatorMap.containsKey(requestContextType));
+      checkClientMethodInDomain(logger, method, domainServiceType, !clientToLocatorMap
+          .containsKey(requestContextType));
       maybeCheckReferredProxies(logger, method);
     }
 
@@ -872,16 +864,14 @@ public class RequestFactoryInterfaceValidator {
     ErrorContext logger = parentLogger.setType(requestFactoryType);
 
     // Quick sanity check for calling code
-    if (!isAssignable(logger, Type.getType(RequestFactory.class),
-        requestFactoryType)) {
-      logger.poison("%s is not a %s", print(requestFactoryType),
-          RequestFactory.class.getSimpleName());
+    if (!isAssignable(logger, Type.getType(RequestFactory.class), requestFactoryType)) {
+      logger.poison("%s is not a %s", print(requestFactoryType), RequestFactory.class
+          .getSimpleName());
       return;
     }
 
     // Validate each RequestContext method in the RF
-    for (Method contextMethod : getMethodsInHierarchy(logger,
-        requestFactoryType)) {
+    for (Method contextMethod : getMethodsInHierarchy(logger, requestFactoryType)) {
       Type returnType = contextMethod.getReturnType();
       if (isAssignable(logger, requestContextIntf, returnType)) {
         validateRequestContext(returnType.getClassName());
@@ -924,8 +914,7 @@ public class RequestFactoryInterfaceValidator {
    * {@code domainTypeBinaryName} and assignable to {@code clientTypeBinaryName}
    * , the first matching type will be returned.
    */
-  String getEntityProxyTypeName(String domainTypeBinaryName,
-      String clientTypeBinaryName) {
+  String getEntityProxyTypeName(String domainTypeBinaryName, String clientTypeBinaryName) {
     Type key = Type.getObjectType(BinaryName.toInternalName(domainTypeBinaryName));
     List<Type> found = domainToClientType.get(key);
 
@@ -974,8 +963,7 @@ public class RequestFactoryInterfaceValidator {
    * Record the mapping of a domain type to a client type. Proxy types will be
    * added to {@link #domainToClientType}.
    */
-  private void addToDomainMap(ErrorContext logger, Type domainType,
-      Type clientType) {
+  private void addToDomainMap(ErrorContext logger, Type domainType, Type clientType) {
     clientToDomainType.put(clientType, domainType);
 
     if (isAssignable(logger, baseProxyIntf, clientType)) {
@@ -1000,24 +988,23 @@ public class RequestFactoryInterfaceValidator {
     // Create a "translated" method declaration to search for
     // Request<BlahProxy> foo(int a, BarProxy bar) -> Blah foo(int a, Bar bar);
     Type returnType = getReturnType(logger, method);
-    Method searchFor = createDomainMethod(logger, new Method(method.getName(),
-        returnType, method.getArgumentTypes()));
+    Method searchFor =
+        createDomainMethod(logger, new Method(method.getName(), returnType, method
+            .getArgumentTypes()));
 
-    RFMethod found = findCompatibleServiceMethod(logger, domainServiceType,
-        searchFor, !method.isValidationSkipped());
+    RFMethod found =
+        findCompatibleServiceMethod(logger, domainServiceType, searchFor, !method
+            .isValidationSkipped());
 
     if (found != null) {
-      boolean isInstance = isAssignable(logger, instanceRequestIntf,
-          method.getReturnType());
+      boolean isInstance = isAssignable(logger, instanceRequestIntf, method.getReturnType());
       if (isInstance && found.isDeclaredStatic()) {
         logger.poison("The method %s is declared to return %s, but the"
-            + " service method is static", method.getName(),
-            InstanceRequest.class.getCanonicalName());
-      } else if (requireStaticMethodsForRequestType && !isInstance
-          && !found.isDeclaredStatic()) {
+            + " service method is static", method.getName(), InstanceRequest.class
+            .getCanonicalName());
+      } else if (requireStaticMethodsForRequestType && !isInstance && !found.isDeclaredStatic()) {
         logger.poison("The method %s is declared to return %s, but the"
-            + " service method is not static", method.getName(),
-            Request.class.getCanonicalName());
+            + " service method is not static", method.getName(), Request.class.getCanonicalName());
       }
     }
   }
@@ -1031,8 +1018,7 @@ public class RequestFactoryInterfaceValidator {
       return;
     }
     logger = logger.setType(domainType);
-    String findMethodName = "find"
-        + BinaryName.getShortClassName(domainType.getClassName());
+    String findMethodName = "find" + BinaryName.getShortClassName(domainType.getClassName());
     Type keyType = null;
     RFMethod findMethod = null;
 
@@ -1040,21 +1026,18 @@ public class RequestFactoryInterfaceValidator {
     boolean foundId = false;
     boolean foundVersion = false;
     for (RFMethod method : getMethodsInHierarchy(logger, domainType)) {
-      if ("getId".equals(method.getName())
-          && method.getArgumentTypes().length == 0) {
+      if ("getId".equals(method.getName()) && method.getArgumentTypes().length == 0) {
         foundId = true;
         keyType = method.getReturnType();
         if (!isResolvedKeyType(logger, keyType)) {
           unresolvedKeyTypes.put(domainType, keyType);
         }
-      } else if ("getVersion".equals(method.getName())
-          && method.getArgumentTypes().length == 0) {
+      } else if ("getVersion".equals(method.getName()) && method.getArgumentTypes().length == 0) {
         foundVersion = true;
         if (!isResolvedKeyType(logger, method.getReturnType())) {
           unresolvedKeyTypes.put(domainType, method.getReturnType());
         }
-      } else if (findMethodName.equals(method.getName())
-          && method.getArgumentTypes().length == 1) {
+      } else if (findMethodName.equals(method.getName()) && method.getArgumentTypes().length == 1) {
         foundFind = true;
         findMethod = method;
       }
@@ -1066,23 +1049,21 @@ public class RequestFactoryInterfaceValidator {
       logger.poison("There is no getId() method in type %s", print(domainType));
     }
     if (!foundVersion) {
-      logger.poison("There is no getVersion() method in type %s",
-          print(domainType));
+      logger.poison("There is no getVersion() method in type %s", print(domainType));
     }
 
     if (foundFind) {
-      if (keyType != null
-          && !isAssignable(logger, findMethod.getArgumentTypes()[0], keyType)) {
+      if (keyType != null && !isAssignable(logger, findMethod.getArgumentTypes()[0], keyType)) {
         logger.poison("The key type returned by %s getId()"
-            + " cannot be used as the argument to %s(%s)", print(keyType),
-            findMethod.getName(), print(findMethod.getArgumentTypes()[0]));
+            + " cannot be used as the argument to %s(%s)", print(keyType), findMethod.getName(),
+            print(findMethod.getArgumentTypes()[0]));
       }
       if (!findMethod.isDeclaredStatic()) {
         logger.poison("The %s method must be static", findMethodName);
       }
     } else {
-      logger.poison("There is no %s method in type %s that returns %2$s",
-          findMethodName, print(domainType));
+      logger.poison("There is no %s method in type %s that returns %2$s", findMethodName,
+          print(domainType));
     }
   }
 
@@ -1090,13 +1071,12 @@ public class RequestFactoryInterfaceValidator {
    * Ensure that the given property method on an EntityProxy exists on the
    * domain object.
    */
-  private void checkPropertyMethod(ErrorContext logger,
-      RFMethod clientPropertyMethod, Type domainType) {
+  private void checkPropertyMethod(ErrorContext logger, RFMethod clientPropertyMethod,
+      Type domainType) {
     logger = logger.setMethod(clientPropertyMethod);
 
-    findCompatiblePropertyMethod(logger, domainType,
-        createDomainMethod(logger, clientPropertyMethod),
-        !clientPropertyMethod.isValidationSkipped());
+    findCompatiblePropertyMethod(logger, domainType, createDomainMethod(logger,
+        clientPropertyMethod), !clientPropertyMethod.isValidationSkipped());
   }
 
   private void checkUnresolvedKeyTypes(ErrorContext logger) {
@@ -1108,9 +1088,8 @@ public class RequestFactoryInterfaceValidator {
     for (Map.Entry<Type, Type> type : unresolvedKeyTypes.entrySet()) {
       logger.setType(type.getKey()).poison(
           "The domain type %s uses  a non-simple key type (%s)"
-              + " in its getId() or getVersion() method that"
-              + " does not have a proxy mapping.", print(type.getKey()),
-          print(type.getValue()));
+              + " in its getId() or getVersion() method that" + " does not have a proxy mapping.",
+          print(type.getKey()), print(type.getValue()));
     }
   }
 
@@ -1138,8 +1117,7 @@ public class RequestFactoryInterfaceValidator {
 
     // Allow the poisoned flag to be reset without losing data
     if (badTypes.contains(binaryName)) {
-      parentLogger.poison("Type type %s was previously marked as bad",
-          binaryName);
+      parentLogger.poison("Type type %s was previously marked as bad", binaryName);
       return true;
     }
 
@@ -1154,9 +1132,8 @@ public class RequestFactoryInterfaceValidator {
    * Finds a compatible method declaration in <code>domainType</code>'s
    * hierarchy that is assignment-compatible with the given Method.
    */
-  private RFMethod findCompatibleMethod(final ErrorContext logger,
-      Type domainType, Method searchFor, boolean mustFind,
-      boolean allowOverloads, boolean boxReturnTypes) {
+  private RFMethod findCompatibleMethod(final ErrorContext logger, Type domainType,
+      Method searchFor, boolean mustFind, boolean allowOverloads, boolean boxReturnTypes) {
     String methodName = searchFor.getName();
     Type[] clientArgs = searchFor.getArgumentTypes();
     Type clientReturnType = searchFor.getReturnType();
@@ -1178,15 +1155,14 @@ public class RequestFactoryInterfaceValidator {
     List<RFMethod> methods = domainLookup.get(methodName);
     if (methods == null) {
       if (mustFind) {
-        logger.poison("Could not find any methods named %s in %s", methodName,
-            print(domainType));
+        logger.poison("Could not find any methods named %s in %s", methodName, print(domainType));
       }
       return null;
     }
     if (methods.size() > 1 && !allowOverloads) {
       StringBuilder sb = new StringBuilder();
-      sb.append(String.format("Method overloads found in type %s named %s:\n",
-          print(domainType), methodName));
+      sb.append(String.format("Method overloads found in type %s named %s:\n", print(domainType),
+          methodName));
       for (RFMethod method : methods) {
         sb.append("  ").append(print(method)).append("\n");
       }
@@ -1214,8 +1190,7 @@ public class RequestFactoryInterfaceValidator {
       if (isAssignable(logger, domainArgs, clientArgs)
           && isAssignable(logger, clientReturnType, domainReturnType)) {
 
-        logger.spam("Mapped client method " + print(searchFor) + " to "
-            + print(domainMethod));
+        logger.spam("Mapped client method " + print(searchFor) + " to " + print(domainMethod));
         return domainMethod;
       }
     }
@@ -1229,20 +1204,18 @@ public class RequestFactoryInterfaceValidator {
    * Finds a compatible method declaration in <code>domainType</code>'s
    * hierarchy that is assignment-compatible with the given Method.
    */
-  private RFMethod findCompatiblePropertyMethod(final ErrorContext logger,
-      Type domainType, Method searchFor, boolean mustFind) {
-    return findCompatibleMethod(logger, domainType, searchFor, mustFind, false,
-        false);
+  private RFMethod findCompatiblePropertyMethod(final ErrorContext logger, Type domainType,
+      Method searchFor, boolean mustFind) {
+    return findCompatibleMethod(logger, domainType, searchFor, mustFind, false, false);
   }
 
   /**
    * Finds a compatible method declaration in <code>domainType</code>'s
    * hierarchy that is assignment-compatible with the given Method.
    */
-  private RFMethod findCompatibleServiceMethod(final ErrorContext logger,
-      Type domainType, Method searchFor, boolean mustFind) {
-    return findCompatibleMethod(logger, domainType, searchFor, mustFind, false,
-        true);
+  private RFMethod findCompatibleServiceMethod(final ErrorContext logger, Type domainType,
+      Method searchFor, boolean mustFind) {
+    return findCompatibleMethod(logger, domainType, searchFor, mustFind, false, true);
   }
 
   /**
@@ -1270,8 +1243,7 @@ public class RequestFactoryInterfaceValidator {
       case Type.VOID:
         return Type.getType(Void.class);
     }
-    throw new RuntimeException(primitive.getDescriptor()
-        + " is not a primitive type");
+    throw new RuntimeException(primitive.getDescriptor() + " is not a primitive type");
   }
 
   /**
@@ -1288,17 +1260,15 @@ public class RequestFactoryInterfaceValidator {
     }
     if (isValueType(logger, clientType) || isCollectionType(logger, clientType)) {
       domainType = clientType;
-    } else if (entityProxyIntf.equals(clientType)
-        || valueProxyIntf.equals(clientType)) {
+    } else if (entityProxyIntf.equals(clientType) || valueProxyIntf.equals(clientType)) {
       domainType = objectType;
     } else {
       logger = logger.setType(clientType);
       DomainMapper pv = new DomainMapper(logger);
       visit(logger, clientType.getInternalName(), pv);
       if (pv.getDomainInternalName() == null) {
-        logger.poison("%s has no mapping to a domain type (e.g. @%s or @%s)",
-            print(clientType), ProxyFor.class.getSimpleName(),
-            Service.class.getSimpleName());
+        logger.poison("%s has no mapping to a domain type (e.g. @%s or @%s)", print(clientType),
+            ProxyFor.class.getSimpleName(), Service.class.getSimpleName());
         domainType = errorType;
       } else {
         domainType = Type.getObjectType(pv.getDomainInternalName());
@@ -1316,8 +1286,7 @@ public class RequestFactoryInterfaceValidator {
   /**
    * Collect all of the methods defined within a type hierarchy.
    */
-  private Set<RFMethod> getMethodsInHierarchy(ErrorContext logger,
-      Type domainType) {
+  private Set<RFMethod> getMethodsInHierarchy(ErrorContext logger, Type domainType) {
     Set<RFMethod> toReturn = methodsInHierarchy.get(domainType);
     if (toReturn == null) {
       logger = logger.setType(domainType);
@@ -1392,8 +1361,7 @@ public class RequestFactoryInterfaceValidator {
     return toReturn;
   }
 
-  private boolean isAssignable(ErrorContext logger, Type possibleSupertype,
-      Type possibleSubtype) {
+  private boolean isAssignable(ErrorContext logger, Type possibleSupertype, Type possibleSubtype) {
     // Fast-path for same type
     if (possibleSupertype.equals(possibleSubtype)) {
       return true;
@@ -1418,8 +1386,7 @@ public class RequestFactoryInterfaceValidator {
     return true;
   }
 
-  private boolean isCollectionType(
-      @SuppressWarnings("unused") ErrorContext logger, Type type) {
+  private boolean isCollectionType(@SuppressWarnings("unused") ErrorContext logger, Type type) {
     // keeping the logger arg just for internal consistency for our small minds
     return "java/util/List".equals(type.getInternalName())
         || "java/util/Set".equals(type.getInternalName());
@@ -1500,8 +1467,7 @@ public class RequestFactoryInterfaceValidator {
     }
   }
 
-  private void validateProxy(String binaryName, Type expectedType,
-      boolean requireId) {
+  private void validateProxy(String binaryName, Type expectedType, boolean requireId) {
     if (fastFail(binaryName)) {
       return;
     }
@@ -1511,18 +1477,16 @@ public class RequestFactoryInterfaceValidator {
 
     // Quick sanity check for calling code
     if (!isAssignable(logger, expectedType, proxyType)) {
-      parentLogger.poison("%s is not a %s", print(proxyType),
-          print(expectedType));
+      parentLogger.poison("%s is not a %s", print(proxyType), print(expectedType));
       return;
     }
 
     // Find the domain type
     Type domainType = getDomainType(logger, proxyType);
     if (domainType == errorType) {
-      logger.poison(
-          "The type %s must be annotated with a @%s or @%s annotation",
-          BinaryName.toSourceName(binaryName), ProxyFor.class.getSimpleName(),
-          ProxyForName.class.getSimpleName());
+      logger.poison("The type %s must be annotated with a @%s or @%s annotation", BinaryName
+          .toSourceName(binaryName), ProxyFor.class.getSimpleName(), ProxyForName.class
+          .getSimpleName());
       return;
     }
 
@@ -1535,8 +1499,7 @@ public class RequestFactoryInterfaceValidator {
     }
 
     // Collect all methods in the client proxy type
-    Set<RFMethod> clientPropertyMethods = getMethodsInHierarchy(logger,
-        proxyType);
+    Set<RFMethod> clientPropertyMethods = getMethodsInHierarchy(logger, proxyType);
 
     // Find the equivalent domain getter/setter method
     for (RFMethod clientPropertyMethod : clientPropertyMethods) {
@@ -1556,8 +1519,7 @@ public class RequestFactoryInterfaceValidator {
    * 
    * @return <code>true</code> if the visitor was successfully visited
    */
-  private boolean visit(ErrorContext logger, String internalName,
-      ClassVisitor visitor) {
+  private boolean visit(ErrorContext logger, String internalName, ClassVisitor visitor) {
     assert Name.isInternalName(internalName) : "internalName";
     logger.spam("Visiting " + internalName);
     InputStream inputStream = null;

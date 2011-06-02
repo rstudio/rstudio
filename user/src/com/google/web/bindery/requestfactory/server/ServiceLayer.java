@@ -61,8 +61,8 @@ public abstract class ServiceLayer {
   public static ServiceLayer create(ServiceLayerDecorator... decorators) {
     List<ServiceLayerDecorator> list = new ArrayList<ServiceLayerDecorator>();
     // Always hit the cache first
-    ServiceLayerDecorator cache = ENABLE_CACHE ? new ServiceLayerCache()
-        : new ServiceLayerDecorator();
+    ServiceLayerDecorator cache =
+        ENABLE_CACHE ? new ServiceLayerCache() : new ServiceLayerDecorator();
     list.add(cache);
     // The the user-provided decorators
     if (decorators != null) {
@@ -125,8 +125,7 @@ public abstract class ServiceLayer {
    * @param domainMethod the method that the service object must implement
    * @return an instance of the requested service object
    */
-  public abstract Object createServiceInstance(Method contextMethod,
-      Method domainMethod);
+  public abstract Object createServiceInstance(Method contextMethod, Method domainMethod);
 
   /**
    * Create an instance of the requested {@link ServiceLocator} type.
@@ -135,8 +134,7 @@ public abstract class ServiceLayer {
    * @param clazz the requested ServiceLocator type
    * @return an instance of the requested ServiceLocator type
    */
-  public abstract <T extends ServiceLocator> T createServiceLocator(
-      Class<T> clazz);
+  public abstract <T extends ServiceLocator> T createServiceLocator(Class<T> clazz);
 
   /**
    * Returns the ClassLoader that should be used when attempting to access
@@ -264,8 +262,7 @@ public abstract class ServiceLayer {
    * @return the requested objects, elements of which may be {@code null} if the
    *         requested objects were irretrievable
    */
-  public abstract List<Object> loadDomainObjects(List<Class<?>> classes,
-      List<Object> domainIds);
+  public abstract List<Object> loadDomainObjects(List<Class<?>> classes, List<Object> domainIds);
 
   /**
    * Determines if the invocation of a domain method requires a
@@ -276,8 +273,7 @@ public abstract class ServiceLayer {
    * @param domainMethod a domain method
    * @return {@code true} if a ServiceLocator is required
    */
-  public abstract boolean requiresServiceLocator(Method contextMethod,
-      Method domainMethod);
+  public abstract boolean requiresServiceLocator(Method contextMethod, Method domainMethod);
 
   /**
    * Given a type token previously returned from
@@ -301,8 +297,8 @@ public abstract class ServiceLayer {
    * @return a class that represents {@code domainClass} on the client which is
    *         assignable to {@code clientType}
    */
-  public abstract <T> Class<? extends T> resolveClientType(
-      Class<?> domainClass, Class<T> clientType, boolean required);
+  public abstract <T> Class<? extends T> resolveClientType(Class<?> domainClass,
+      Class<T> clientType, boolean required);
 
   /**
    * Determine the domain (server-side) type that the given client type is
@@ -331,8 +327,7 @@ public abstract class ServiceLayer {
    * @return the type of Locator to use, or {@code null} if the type conforms to
    *         the RequestFactory entity protocol
    */
-  public abstract Class<? extends Locator<?, ?>> resolveLocator(
-      Class<?> domainType);
+  public abstract Class<? extends Locator<?, ?>> resolveLocator(Class<?> domainType);
 
   /**
    * Find a RequestContext method declaration by name.
@@ -344,8 +339,7 @@ public abstract class ServiceLayer {
    * @return the method declaration, or {@code null} if the method does not
    *         exist
    */
-  public abstract Method resolveRequestContextMethod(
-      String requestContextClass, String methodName);
+  public abstract Method resolveRequestContextMethod(String requestContextClass, String methodName);
 
   /**
    * Given a {@link RequestContext} method, find the service class referenced in
@@ -354,8 +348,7 @@ public abstract class ServiceLayer {
    * @param requestContextClass a RequestContext interface
    * @return the type of service to use
    */
-  public abstract Class<?> resolveServiceClass(
-      Class<? extends RequestContext> requestContextClass);
+  public abstract Class<?> resolveServiceClass(Class<? extends RequestContext> requestContextClass);
 
   /**
    * Given a RequestContext method declaration, resolve the
@@ -368,8 +361,8 @@ public abstract class ServiceLayer {
    * @param domainMethod the domain method that will be invoked
    * @return the type of ServiceLocator to use
    */
-  public abstract Class<? extends ServiceLocator> resolveServiceLocator(
-      Method contextMethod, Method domainMethod);
+  public abstract Class<? extends ServiceLocator> resolveServiceLocator(Method contextMethod,
+      Method domainMethod);
 
   /**
    * Return a string used to represent the given type in the wire protocol.
@@ -387,8 +380,8 @@ public abstract class ServiceLayer {
    * @param expectedType the type of the property
    * @param value the new value
    */
-  public abstract void setProperty(Object domainObject, String property,
-      Class<?> expectedType, Object value);
+  public abstract void setProperty(Object domainObject, String property, Class<?> expectedType,
+      Object value);
 
   /**
    * Invoke a JSR 303 validator on the given domain object. If no validator is

@@ -16,8 +16,9 @@
 
 /**
  * A package for managing client-server requests.
- *
+ * 
  * @since GWT 2.1
  */
 @com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.web.bindery.requestfactory.gwt.client;
+

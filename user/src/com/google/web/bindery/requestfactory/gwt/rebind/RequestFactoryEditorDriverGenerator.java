@@ -29,16 +29,14 @@ import com.google.web.bindery.requestfactory.shared.BaseProxy;
 /**
  * Generates implementations of RFEDs.
  */
-public class RequestFactoryEditorDriverGenerator extends
-    AbstractEditorDriverGenerator {
+public class RequestFactoryEditorDriverGenerator extends AbstractEditorDriverGenerator {
 
   private JClassType baseProxyType;
 
   @Override
-  public String generate(TreeLogger logger, GeneratorContext context,
-      String typeName) throws UnableToCompleteException {
-    baseProxyType = context.getTypeOracle().findType(
-        BaseProxy.class.getCanonicalName());
+  public String generate(TreeLogger logger, GeneratorContext context, String typeName)
+      throws UnableToCompleteException {
+    baseProxyType = context.getTypeOracle().findType(BaseProxy.class.getCanonicalName());
     return super.generate(logger, context, typeName);
   }
 
@@ -58,12 +56,10 @@ public class RequestFactoryEditorDriverGenerator extends
   }
 
   @Override
-  protected String mutableObjectExpression(EditorData data,
-      String sourceObjectExpression) {
+  protected String mutableObjectExpression(EditorData data, String sourceObjectExpression) {
     if (baseProxyType.isAssignableFrom(data.getPropertyOwnerType())) {
-      return String.format("((%s) request.edit((%s)))",
-          data.getPropertyOwnerType().getQualifiedSourceName(),
-          sourceObjectExpression);
+      return String.format("((%s) request.edit((%s)))", data.getPropertyOwnerType()
+          .getQualifiedSourceName(), sourceObjectExpression);
     } else {
       return sourceObjectExpression;
     }

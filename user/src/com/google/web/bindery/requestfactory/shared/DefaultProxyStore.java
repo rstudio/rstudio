@@ -57,13 +57,13 @@ public class DefaultProxyStore implements ProxyStore {
    * @throws IllegalArgumentException if the payload cannot be parsed
    */
   public DefaultProxyStore(String payload) throws IllegalArgumentException {
-    messageBean = AutoBeanCodex.decode(MessageFactoryHolder.FACTORY,
-        OperationMessage.class, payload);
+    messageBean =
+        AutoBeanCodex.decode(MessageFactoryHolder.FACTORY, OperationMessage.class, payload);
 
     OperationMessage message = messageBean.as();
     if (!EXPECTED_VERSION.equals(message.getVersion())) {
-      throw new IllegalArgumentException(
-          "Unexpected version string in payload " + message.getVersion());
+      throw new IllegalArgumentException("Unexpected version string in payload "
+          + message.getVersion());
     }
     map = message.getPropertyMap();
   }

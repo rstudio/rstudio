@@ -618,7 +618,7 @@ public class RequestFactoryJarExtractor {
    * Maximum number of threads to use to run the Extractor.
    */
   private static final int MAX_THREADS = 4;
-  
+
   static {
     List<Class<?>> sharedClasses = Arrays.<Class<?>> asList(SHARED_CLASSES);
 
@@ -764,7 +764,7 @@ public class RequestFactoryJarExtractor {
       } catch (InterruptedException retry) {
       } catch (ExecutionException e) {
         e.getCause().printStackTrace();
-        executionFailed  = true;
+        executionFailed = true;
       }
     }
     emitter.close();
