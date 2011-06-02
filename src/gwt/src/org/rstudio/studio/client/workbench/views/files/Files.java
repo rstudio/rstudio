@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserHandle
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientInitState;
@@ -122,13 +123,15 @@ public class Files
                 Provider<FilesCopy> pFilesCopy,
                 Provider<FilesUpload> pFilesUpload,
                 FileTypeRegistry fileTypeRegistry,
-                ConsoleDispatcher consoleDispatcher)
+                ConsoleDispatcher consoleDispatcher,
+                WorkbenchContext workbenchContext)
    {
       super(view);
       view_ = view ;
       view_.setObserver(new DisplayObserver());
       fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
+      workbenchContext_ = workbenchContext;
       
       eventBus_ = eventBus;
       server_ = server;
@@ -520,15 +523,22 @@ public class Files
    }
 
    @Handler
-   void onSyncWorkingDir()
+   void onGoToWorkingDir()
+   {
+      navigateToDirectory(workbenchContext_.getCurrentWorkingDir());
+   }
+   
+   @Handler
+   void onSetAsWorkingDir()
    {
       consoleDispatcher_.executeSetWd(currentPath_, true);
    }
    
    void onSetWorkingDirToFilesPane()
    {
-      onSyncWorkingDir();
+      onSetAsWorkingDir();
    }
+   
 
    @Handler
    void onShowFolder()
@@ -581,6 +591,7 @@ public class Files
    private final Display view_ ;
    private final FileTypeRegistry fileTypeRegistry_;
    private final ConsoleDispatcher consoleDispatcher_;
+   private final WorkbenchContext workbenchContext_;
    private final FilesServerOperations server_;
    private final EventBus eventBus_;
    private final GlobalDisplay globalDisplay_ ;
