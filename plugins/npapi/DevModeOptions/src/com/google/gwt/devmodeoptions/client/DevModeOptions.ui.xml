@@ -34,22 +34,38 @@
 				but do not include any you do not trust.</g:Label>
 
 			<g:Label ui:field="errorMessage" styleName="{res.css.errorMessage}"/>
-			<div>
-				<div style="float:left">
+
+			<g:Grid>
+				<g:row>
+					<g:customCell>
+						<g:Label styleName="{res.css.important}">Web server</g:Label>
+					</g:customCell>
+					<g:customCell>
+						<g:Label styleName="{res.css.important}">Code server</g:Label>
+					</g:customCell>
+				</g:row>
+				<g:row>
+					<g:customCell>
 					<g:TextBox ui:field="hostname" styleName="{res.css.textBox}" />
+					</g:customCell>
+
+					<g:customCell>
 					<g:TextBox ui:field="codeserver" styleName="{res.css.textBox}" />
+					</g:customCell>
+
+					<g:customCell>
 					<g:Button styleName="{res.css.important}" ui:field="addBtn">Add</g:Button>
-				</div>
-				<div style="float:left">
-					<div>
-						<g:RadioButton name="include" ui:field="includeYes"
-							checked="true">Include</g:RadioButton>
-					</div>
-					<div>
-						<g:RadioButton name="include" ui:field="includeNo">Exclude</g:RadioButton>
-					</div>
-				</div>
-			</div>
+					</g:customCell>
+
+					<g:customCell>
+					<g:RadioButton name="include" ui:field="includeYes"
+						checked="true">Include</g:RadioButton>
+					</g:customCell>
+					<g:customCell>
+					<g:RadioButton name="include" ui:field="includeNo">Exclude</g:RadioButton>
+					</g:customCell>
+				</g:row>
+			</g:Grid>
 
 			<g:FlexTable ui:field="savedHosts" styleName="{res.css.savedHosts}">
 			</g:FlexTable>

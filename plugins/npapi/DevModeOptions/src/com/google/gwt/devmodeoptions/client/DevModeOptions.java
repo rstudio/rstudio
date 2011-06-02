@@ -182,7 +182,7 @@ public class DevModeOptions implements EntryPoint {
    
     savedHosts.insertRow(numRows);
     savedHosts.setText(numRows, col++, names[0]);
-    savedHosts.setText(numRows, col++, names.length > 0 ? names[1] 
+    savedHosts.setText(numRows, col++, names.length > 1 ? names[1] 
         : "localhost");
     savedHosts.setText(numRows, col++, newHost.include() ? "Include"
         : "Exclude");
