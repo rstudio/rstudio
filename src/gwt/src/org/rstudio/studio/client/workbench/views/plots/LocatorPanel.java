@@ -98,6 +98,7 @@ public class LocatorPanel extends LayoutPanel
             if (event.getTypeInt() == Event.ONKEYDOWN
                 && event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
             {
+               event.cancel();
                SelectionEvent.fire(LocatorPanel.this, null);
             }
          }
