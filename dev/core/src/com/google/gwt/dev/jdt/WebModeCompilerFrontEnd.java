@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.ArtificialRescueChecker;
 import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor.MessageSendSite;
-import com.google.gwt.dev.jjs.impl.FragmentLoaderCreator;
 import com.google.gwt.dev.jjs.impl.TypeLinker;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -57,19 +56,14 @@ public class WebModeCompilerFrontEnd extends BasicWebModeCompiler {
     return results;
   }
 
-  private final FragmentLoaderCreator fragmentLoaderCreator;
   private final RebindPermutationOracle rebindPermOracle;
 
   /**
-   * Construct a WebModeCompilerFrontEnd. The reason a
-   * {@link FragmentLoaderCreator} needs to be passed in is that it uses
-   * generator infrastructure, and therefore needs access to more parts of the
-   * compiler than WebModeCompilerFrontEnd currently has.
+   * Construct a WebModeCompilerFrontEnd.
    */
   private WebModeCompilerFrontEnd(RebindPermutationOracle rebindPermOracle, TypeLinker linker) {
     super(rebindPermOracle.getCompilationState(), linker);
     this.rebindPermOracle = rebindPermOracle;
-    this.fragmentLoaderCreator = new FragmentLoaderCreator(rebindPermOracle.getGeneratorContext());
   }
 
   @Override
@@ -107,26 +101,6 @@ public class WebModeCompilerFrontEnd extends BasicWebModeCompiler {
         FindDeferredBindingSitesVisitor.reportRebindProblem(site, "Failed to resolve '" + reqType
             + "' via deferred binding");
         rebindAnswers.put(reqType, new String[0]);
-      }
-    }
-
-    /*
-     * Create a a fragment loader for each GWT.runAsync call. They must be
-     * created now, rather than in ReplaceRunAsyncs, because all generated
-     * classes need to be created before GenerateJavaAST. Note that the loaders
-     * created are not yet associated with the specific sites. The present task
-     * is only to make sure that enough loaders exist. The real association
-     * between loaders and runAsync sites will be made in ReplaceRunAsyncs.
-     */
-    for (MessageSendSite site : v.getRunAsyncSites()) {
-      String resultType;
-      try {
-        resultType = fragmentLoaderCreator.create(logger);
-        dependentTypeNames.add(resultType);
-        doFinish = true;
-      } catch (UnableToCompleteException e) {
-        FindDeferredBindingSitesVisitor.reportRebindProblem(site,
-            "Failed to create a runAsync fragment loader");
       }
     }
 

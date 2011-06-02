@@ -24,17 +24,18 @@ import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
+import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,77 +51,40 @@ import java.util.Map;
  * by an equivalent call using an integer rather than a class literal.
  */
 public class ReplaceRunAsyncs {
-  /**
-   * Information about the replacement of one runAsync call by a call to a
-   * generated code-loading method.
-   */
-  public static class RunAsyncReplacement implements Serializable {
-    private final JMethod enclosingMethod;
-    private final JMethod loadMethod;
-    private final String name;
-    private final int number;
-
-    RunAsyncReplacement(int number, JMethod enclosingMethod, JMethod loadMethod, String name) {
-      this.number = number;
-      this.enclosingMethod = enclosingMethod;
-      this.loadMethod = loadMethod;
-      this.name = name;
-    }
-
-    /**
-     * Can be null if the enclosing method cannot be designated with a JSNI
-     * reference.
-     */
-    public JMethod getEnclosingMethod() {
-      return enclosingMethod;
-    }
-
-    /**
-     * The load method to request loading the code for this method.
-     */
-    public JMethod getLoadMethod() {
-      return loadMethod;
-    }
-
-    /**
-     * Return the name of this runAsync, which is specified by a class literal
-     * in the two-argument version of runAsync(). Returns <code>null</code> if
-     * there is no name for the call.
-     */
-    public String getName() {
-      return name;
-    }
-
-    /**
-     * The index of this runAsync, numbered from 1 to n.
-     */
-    public int getNumber() {
-      return number;
-    }
-
-    @Override
-    public String toString() {
-      return "#" + number + ": " + enclosingMethod.toString();
-    }
-  }
-
   private class AsyncCreateVisitor extends JModVisitor {
     private JMethod currentMethod;
-    private int entryCount = 1;
+    private final JMethod runAsyncOnsuccess = program
+        .getIndexedMethod("RunAsyncCallback.onSuccess");
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
+      if (method == runAsyncOnsuccess
+          && (currentMethod != null && currentMethod.getEnclosingType() == program
+              .getIndexedType("AsyncFragmentLoader"))) {
+        /*
+         * Magic magic magic: don't optimize calls from AsyncFragmentLoader
+         * to runAsyncCallBack.onSuccess(). This can defeat code splitting!
+         */
+        x.setVolatile();
+        return;
+      }
       if (isRunAsyncMethod(method)) {
         JExpression asyncCallback;
         String name;
         switch (x.getArgs().size()) {
           case 1:
-            name = null;
+            name = getImplicitName(currentMethod);
             asyncCallback = x.getArgs().get(0);
             break;
           case 2:
-            name = nameFromClassLiteral((JClassLiteral) x.getArgs().get(0));
+            JExpression arg0 = x.getArgs().get(0);
+            if (!(arg0 instanceof JClassLiteral)) {
+              error(arg0.getSourceInfo(),
+                  "Only class literals may be used to name a call to GWT.runAsync()");
+              return;
+            }
+            name = nameFromClassLiteral((JClassLiteral) arg0);
             asyncCallback = x.getArgs().get(1);
             break;
           default:
@@ -128,21 +92,30 @@ public class ReplaceRunAsyncs {
                 "runAsync call found with neither 1 nor 2 arguments: " + x);
         }
 
-        int entryNumber = entryCount++;
-        JClassType loader = getFragmentLoader(entryNumber);
-        JMethod loadMethod = getRunAsyncMethod(loader);
-        assert loadMethod != null;
-        runAsyncReplacements.put(entryNumber, new RunAsyncReplacement(entryNumber, currentMethod,
-            loadMethod, name));
+        int splitPoint = runAsyncs.size() + 1;
+        SourceInfo info = x.getSourceInfo();
 
-        JMethodCall methodCall = new JMethodCall(x.getSourceInfo(), null, loadMethod);
-        methodCall.addArg(asyncCallback);
+        JMethod runAsyncMethod = program.getIndexedMethod("AsyncFragmentLoader.runAsync");
+        assert runAsyncMethod != null;
+        JMethodCall runAsyncCall = new JMethodCall(info, null, runAsyncMethod);
+        runAsyncCall.addArg(JIntLiteral.get(splitPoint));
+        runAsyncCall.addArg(asyncCallback);
 
-        tightenCallbackType(entryNumber, asyncCallback.getType());
+        JReferenceType callbackType = (JReferenceType) asyncCallback.getType();
+        callbackType = callbackType.getUnderlyingType();
+        JMethod callbackMethod;
+        if (callbackType instanceof JClassType) {
+          callbackMethod =
+              program.typeOracle.getPolyMethod((JClassType) callbackType, "onSuccess()V");
+        } else {
+          callbackMethod = program.getIndexedMethod("RunAsyncCallback.onSuccess");
+        }
+        assert callbackMethod != null;
+        JMethodCall onSuccessCall = new JMethodCall(info, asyncCallback, callbackMethod);
 
-        program.addEntryMethod(getOnLoadMethod(loader), entryNumber);
-
-        ctx.replaceMe(methodCall);
+        JRunAsync runAsyncNode = new JRunAsync(info, splitPoint, name, runAsyncCall, onSuccessCall);
+        runAsyncs.add(runAsyncNode);
+        ctx.replaceMe(runAsyncNode);
       }
     }
 
@@ -159,62 +132,20 @@ public class ReplaceRunAsyncs {
       return method.getEnclosingType() == program.getIndexedType("GWT")
           && method.getName().equals("runAsync");
     }
-
-    /**
-     * Tighten some types and method calls immediately, in case the optimizer is
-     * not run. Without a little bit of tightening, code splitting will be
-     * completely ineffective.
-     * 
-     * Note that {@link FragmentLoaderCreator} can't simply generate the tighter
-     * types to begin with, because when it runs, it doesn't know which runAsync
-     * call it is generating a loader for.
-     * 
-     * This method can be deleted if {@link FragmentLoaderCreator} is
-     * eliminated.
-     */
-    private void tightenCallbackType(int entryNumber, JType callbackType) {
-      JClassType loaderClass = getFragmentLoader(entryNumber);
-
-      /*
-       * Before: class AsyncLoader3 { static void runAsync(RunAsyncCallback cb)
-       * { ... } }
-       * 
-       * After: class AsyncLoader3 { static void runAsync(RunAsyncCallback$3 cb)
-       * { ... } }
-       */
-      JMethod loadMethod = getRunAsyncMethod(loaderClass);
-      loadMethod.getParams().get(0).setType(callbackType);
-
-      /*
-       * Before: class AsyncLoader3__Callback { RunAsyncCallback callback; }
-       * 
-       * After: class AsyncLoader3__Callback { RunAsyncCallback$3 callback; }
-       */
-      JClassType callbackListType = getFragmentLoaderCallbackList(entryNumber);
-      JField callbackField = getField(callbackListType, "callback");
-
-      /*
-       * The method AsyncLoaderNNN.runCallbacks has a lot of calls to onSuccess
-       * methods where the target is onSuccess in the RunAsyncCallback
-       * interface. Use MethodCallTightener to tighten those calls down to
-       * target the onSuccess method of a specific callback class.
-       */
-      callbackField.setType(callbackType);
-      JMethod runCallbacksMethod = getMethod(loaderClass, FragmentLoaderCreator.RUN_CALLBACKS);
-      MethodCallTightener.exec(program, runCallbacksMethod);
-    }
   }
   private class ReplaceRunAsyncResources extends JModVisitor {
-    private final Map<String, List<RunAsyncReplacement>> replacementsByName;
+    private final Map<String, List<JRunAsync>> replacementsByName;
+    private final JMethod runAsyncCode;
 
     public ReplaceRunAsyncResources() {
-      replacementsByName = new HashMap<String, List<RunAsyncReplacement>>();
-      for (RunAsyncReplacement replacement : runAsyncReplacements.values()) {
+      replacementsByName = new HashMap<String, List<JRunAsync>>();
+      runAsyncCode = program.getIndexedMethod("RunAsyncCode.runAsyncCode");
+      for (JRunAsync replacement : runAsyncs) {
         String name = replacement.getName();
         if (name != null) {
-          List<RunAsyncReplacement> list = replacementsByName.get(name);
+          List<JRunAsync> list = replacementsByName.get(name);
           if (list == null) {
-            list = new ArrayList<RunAsyncReplacement>();
+            list = new ArrayList<JRunAsync>();
             replacementsByName.put(name, list);
           }
           list.add(replacement);
@@ -224,7 +155,7 @@ public class ReplaceRunAsyncs {
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      if (x.getTarget() == program.getIndexedMethod("RunAsyncCode.runAsyncCode")) {
+      if (x.getTarget() == runAsyncCode) {
         JExpression arg0 = x.getArgs().get(0);
         if (!(arg0 instanceof JClassLiteral)) {
           error(arg0.getSourceInfo(), "Only a class literal may be passed to runAsyncCode");
@@ -232,41 +163,27 @@ public class ReplaceRunAsyncs {
         }
         JClassLiteral lit = (JClassLiteral) arg0;
         String name = nameFromClassLiteral(lit);
-        List<RunAsyncReplacement> matches = replacementsByName.get(name);
+        List<JRunAsync> matches = replacementsByName.get(name);
+        SourceInfo info = x.getSourceInfo();
         if (matches == null || matches.size() == 0) {
-          error(x.getSourceInfo(), "No runAsync call is named " + name);
+          error(info, "No runAsync call is named " + name);
           return;
         }
         if (matches.size() > 1) {
-          TreeLogger branch = error(x.getSourceInfo(), "Multiple runAsync calls are named " + name);
-          for (RunAsyncReplacement match : matches) {
-            branch.log(TreeLogger.ERROR, "One call is in "
-                + methodDescription(match.getEnclosingMethod()));
+          TreeLogger branch = error(info, "Multiple runAsync calls are named " + name);
+          for (JRunAsync match : matches) {
+            branch.log(TreeLogger.ERROR, "One call is at '" + match.getSourceInfo().getFileName()
+                + ':' + match.getSourceInfo().getStartLine() + "'");
           }
           return;
         }
-        Integer splitPoint = matches.get(0).getNumber();
-
+        int splitPoint = matches.get(0).getSplitPoint();
         JMethodCall newCall =
-            new JMethodCall(x.getSourceInfo(), null, program
+            new JMethodCall(info, null, program
                 .getIndexedMethod("RunAsyncCode.forSplitPointNumber"));
         newCall.addArg(program.getLiteralInt(splitPoint));
         ctx.replaceMe(newCall);
       }
-    }
-
-    private String methodDescription(JMethod method) {
-      StringBuilder desc = new StringBuilder();
-      desc.append(method.getEnclosingType().getName());
-      desc.append(".");
-      desc.append(method.getName());
-      desc.append(" (");
-      desc.append(method.getSourceInfo().getFileName());
-      desc.append(':');
-      desc.append(method.getSourceInfo().getStartLine());
-      desc.append(")");
-
-      return desc.toString();
     }
   }
 
@@ -290,33 +207,15 @@ public class ReplaceRunAsyncs {
     return initializerCall;
   }
 
-  private static JMethod getMethod(JClassType type, String name) {
-    for (JMethod method : type.getMethods()) {
-      if (method.getName().equals(name)) {
-        return method;
-      }
-    }
-    throw new InternalCompilerException("Method not found: " + type.getName() + "." + name);
-  }
-
-  private static JMethod getOnLoadMethod(JClassType loaderType) {
-    assert loaderType != null;
-    assert loaderType.getMethods() != null;
-    JMethod method = getMethod(loaderType, "onLoad");
-    assert method.isStatic();
-    assert method.getParams().size() == 0;
-    return method;
-  }
-
-  private static JMethod getRunAsyncMethod(JClassType loaderType) {
-    assert loaderType != null;
-    assert loaderType.getMethods() != null;
-    JMethod method = getMethod(loaderType, "runAsync");
-    assert (method.isStatic());
-    assert (method.getParams().size() == 1);
-    assert (method.getParams().get(0).getType().getName()
-        .equals(FragmentLoaderCreator.RUN_ASYNC_CALLBACK));
-    return method;
+  static String getImplicitName(JMethod method) {
+    String name;
+    StringBuilder sb = new StringBuilder();
+    sb.append('@');
+    sb.append(method.getEnclosingType().getName());
+    sb.append("::");
+    sb.append(JProgram.getJsniSig(method, false));
+    name = sb.toString();
+    return name;
   }
 
   /**
@@ -330,8 +229,7 @@ public class ReplaceRunAsyncs {
   private final TreeLogger logger;
   private final JProgram program;
 
-  private final Map<Integer, RunAsyncReplacement> runAsyncReplacements =
-      new HashMap<Integer, RunAsyncReplacement>();
+  private final List<JRunAsync> runAsyncs = new ArrayList<JRunAsync>();
 
   private ReplaceRunAsyncs(TreeLogger logger, JProgram program) {
     this.logger = logger;
@@ -341,7 +239,7 @@ public class ReplaceRunAsyncs {
   private TreeLogger error(SourceInfo info, String message) {
     errorsFound = true;
     TreeLogger fileLogger =
-        logger.branch(TreeLogger.ERROR, "Error in '" + info.getFileName() + "'");
+        logger.branch(TreeLogger.ERROR, "Errors in '" + info.getFileName() + "'");
     String linePrefix = "";
     if (info.getStartLine() > 0) {
       linePrefix = "Line " + info.getStartLine() + ": ";
@@ -353,41 +251,12 @@ public class ReplaceRunAsyncs {
   private void execImpl() throws UnableToCompleteException {
     AsyncCreateVisitor visitor = new AsyncCreateVisitor();
     visitor.accept(program);
-    setNumEntriesInAsyncFragmentLoader(visitor.entryCount);
-    program.setRunAsyncReplacements(runAsyncReplacements);
+    setNumEntriesInAsyncFragmentLoader(runAsyncs.size() + 1);
+    program.setRunAsyncs(runAsyncs);
     new ReplaceRunAsyncResources().accept(program);
     if (errorsFound) {
       throw new UnableToCompleteException();
     }
-  }
-
-  private JField getField(JClassType type, String name) {
-    for (JField field : type.getFields()) {
-      if (field.getName().equals(name)) {
-        return field;
-      }
-    }
-    throw new InternalCompilerException("Field not found: " + type.getName() + "." + name);
-  }
-
-  private JClassType getFragmentLoader(int fragmentNumber) {
-    String fragmentLoaderClassName =
-        FragmentLoaderCreator.ASYNC_LOADER_PACKAGE + "."
-            + FragmentLoaderCreator.ASYNC_LOADER_CLASS_PREFIX + fragmentNumber;
-    JType result = program.getFromTypeMap(fragmentLoaderClassName);
-    assert (result != null);
-    assert (result instanceof JClassType);
-    return (JClassType) result;
-  }
-
-  private JClassType getFragmentLoaderCallbackList(int fragmentNumber) {
-    String className =
-        FragmentLoaderCreator.ASYNC_LOADER_PACKAGE + "."
-            + FragmentLoaderCreator.ASYNC_LOADER_CLASS_PREFIX + fragmentNumber
-            + FragmentLoaderCreator.CALLBACK_LIST_SUFFIX;
-    JType result = program.getFromTypeMap(className);
-    assert (result != null);
-    return (JClassType) result;
   }
 
   private void setNumEntriesInAsyncFragmentLoader(int entryCount) {

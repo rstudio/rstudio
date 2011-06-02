@@ -116,11 +116,10 @@ public class RunAsyncTest extends GWTTestCase {
     // save the original handler
     final UncaughtExceptionHandler originalHandler = GWT.getUncaughtExceptionHandler();
 
-    // set a handler that catches toThrow and nothing else
-    GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
+    // set a handler that looks for toThrow
+    GWT.UncaughtExceptionHandler myHandler = new GWT.UncaughtExceptionHandler() {
       public void onUncaughtException(Throwable e) {
         GWT.setUncaughtExceptionHandler(originalHandler);
-
         if (e == toThrow) {
           // expected
           finishTest();
@@ -129,17 +128,22 @@ public class RunAsyncTest extends GWTTestCase {
           throw new RuntimeException(e);
         }
       }
-    });
-
+    };
+    GWT.setUncaughtExceptionHandler(myHandler);
     delayTestFinish(RUNASYNC_TIMEOUT);
 
-    GWT.runAsync(new RunAsyncCallback() {
-      public void onFailure(Throwable caught) {
-      }
+    try {
+      GWT.runAsync(new RunAsyncCallback() {
+        public void onFailure(Throwable caught) {
+        }
 
-      public void onSuccess() {
-        throw toThrow;
-      }
-    });
+        public void onSuccess() {
+          throw toThrow;
+        }
+      });
+    } catch (Throwable e) {
+      // runAsync can either throw immediately, or throw uncaught.
+      myHandler.onUncaughtException(e);
+    }
   }
 }

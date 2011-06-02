@@ -547,6 +547,9 @@ public class TypeTightener {
      */
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
+      if (x.isVolatile()) {
+        return;
+      }
       JMethod target = x.getTarget();
       JMethod concreteMethod = getSingleConcreteMethod(target);
       if (concreteMethod != null) {
@@ -678,11 +681,7 @@ public class TypeTightener {
 
       if (refType instanceof JArrayType) {
         JArrayType arrayType = (JArrayType) refType;
-        JArrayType newArrayType = nullifyArrayType(arrayType);
-        if (arrayType != newArrayType) {
-          x.setType(newArrayType);
-          madeChanges();
-        }
+        refType = nullifyArrayType(arrayType);
       }
 
       // tighten based on leaf types
@@ -743,7 +742,7 @@ public class TypeTightener {
         }
       }
 
-      if (refType != resultType) {
+      if (x.getType() != resultType) {
         x.setType(resultType);
         madeChanges();
       }
@@ -808,7 +807,6 @@ public class TypeTightener {
   private final JProgram program;
   private final Map<JMethod, Set<JExpression>> returns =
       new IdentityHashMap<JMethod, Set<JExpression>>();
-
   private final JNullType typeNull;
 
   private TypeTightener(JProgram program) {

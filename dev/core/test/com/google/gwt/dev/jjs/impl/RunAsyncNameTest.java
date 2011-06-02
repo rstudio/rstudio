@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
+import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
 /**
@@ -61,14 +62,14 @@ public class RunAsyncNameTest extends JJSTestBase {
       builder.expectError("Errors in '/mock/test/EntryPoint.java'", null);
       builder.expectError(
           "Line 5: Only class literals may be used to name a call to GWT.runAsync()", null);
-      builder.expectError("Cannot proceed due to previous errors", null);
       logger = builder.createLogger();
       this.logger = logger;
     }
 
     addSnippetImport("com.google.gwt.core.client.GWT");
     try {
-      compileSnippet("void", "GWT.runAsync((new Object()).getClass(), null);");
+      JProgram program = compileSnippet("void", "GWT.runAsync((new Object()).getClass(), null);");
+      ReplaceRunAsyncs.exec(logger, program);
       fail("Expected compilation to fail");
     } catch (UnableToCompleteException e) {
       // expected

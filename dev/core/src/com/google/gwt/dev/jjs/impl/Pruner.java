@@ -466,7 +466,7 @@ public class Pruner {
 
     @Override
     public boolean visit(JProgram program, Context ctx) {
-      for (JMethod method : program.getAllEntryMethods()) {
+      for (JMethod method : program.getEntryMethods()) {
         accept(method);
       }
       for (Iterator<JDeclaredType> it = program.getDeclaredTypes().iterator(); it.hasNext();) {
@@ -607,10 +607,7 @@ public class Pruner {
        */
       traverseFromCodeGenTypes(livenessAnalyzer);
     }
-    for (JMethod method : program.getAllEntryMethods()) {
-      livenessAnalyzer.traverseFrom(method);
-    }
-    livenessAnalyzer.traverseFromLeftoversFragmentHasLoaded();
+    livenessAnalyzer.traverseEverything();
 
     program.typeOracle.setInstantiatedTypes(livenessAnalyzer.getInstantiatedTypes());
 

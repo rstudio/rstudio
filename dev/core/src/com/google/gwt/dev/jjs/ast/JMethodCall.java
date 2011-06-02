@@ -25,13 +25,47 @@ import java.util.List;
  * Java method call expression.
  */
 public class JMethodCall extends JExpression {
+  /**
+   * Interesting facts about a method call's polymorphism.
+   */
+  private static enum Polymorphism {
+    /**
+     * Optimizers have determined that call target is not overridden.
+     */
+    CANNOT_BE_POLYMORPHIC,
+    /**
+     * Normal polymorphic dispatch.
+     */
+    NORMAL,
+    /**
+     * An instance call that <i>must</i> be dispatch statically, e.g.
+     * super.method() invocations, and super() and this() constructor calls.
+     */
+    STATIC_DISPATCH_ONLY,
+    /**
+     * So-named because it's like a 'volatile' field, simply means "do not
+     * attempt to optimize this call".
+     */
+    VOLATILE;
+
+    public boolean canBePolymorphic() {
+      return (this != CANNOT_BE_POLYMORPHIC) && (this != STATIC_DISPATCH_ONLY);
+    }
+
+    public boolean isStaticDispatchOnly() {
+      return this == STATIC_DISPATCH_ONLY;
+    }
+
+    public boolean isVolatile() {
+      return this == VOLATILE;
+    }
+  }
 
   private List<JExpression> args = Collections.emptyList();
-  private boolean cannotBePolymorphic = false;
   private JExpression instance;
   private final JMethod method;
   private final JType overrideReturnType;
-  private boolean staticDispatchOnly = false;
+  private Polymorphism polymorphism = Polymorphism.NORMAL;
 
   /**
    * Initialize a new method call equivalent to another one. A new instance must
@@ -41,10 +75,9 @@ public class JMethodCall extends JExpression {
   public JMethodCall(JMethodCall other, JExpression instance) {
     super(other.getSourceInfo());
     this.instance = instance;
-    this.cannotBePolymorphic = other.cannotBePolymorphic;
     this.method = other.method;
     this.overrideReturnType = other.overrideReturnType;
-    this.staticDispatchOnly = other.staticDispatchOnly;
+    this.polymorphism = other.polymorphism;
   }
 
   public JMethodCall(SourceInfo info, JExpression instance, JMethod method) {
@@ -105,9 +138,12 @@ public class JMethodCall extends JExpression {
     args = Lists.addAll(args, toAdd);
   }
 
+  /**
+   * Returns <code>true</code> if the call can dispatch to more than possible
+   * target method.
+   */
   public boolean canBePolymorphic() {
-    return !cannotBePolymorphic && !staticDispatchOnly && !method.isFinal()
-        && method.canBePolymorphic();
+    return polymorphism.canBePolymorphic() && !method.isFinal() && method.canBePolymorphic();
   }
 
   /**
@@ -139,8 +175,19 @@ public class JMethodCall extends JExpression {
     return true;
   }
 
+  /**
+   * Returns <code>true</code> for calls that <i>must</i> be called statically,
+   * e.g. super.method() invocations, and super() and this() constructor calls.
+   */
   public boolean isStaticDispatchOnly() {
-    return staticDispatchOnly;
+    return polymorphism.isStaticDispatchOnly();
+  }
+
+  /**
+   * Returns <code>true</code> for calls that should not be optimized.
+   */
+  public boolean isVolatile() {
+    return polymorphism.isVolatile();
   }
 
   /**
@@ -157,12 +204,28 @@ public class JMethodCall extends JExpression {
     args = Lists.set(args, index, arg);
   }
 
+  /**
+   * See {@link #canBePolymorphic()}.
+   */
   public void setCannotBePolymorphic() {
-    this.cannotBePolymorphic = true;
+    assert polymorphism == Polymorphism.NORMAL;
+    polymorphism = Polymorphism.CANNOT_BE_POLYMORPHIC;
   }
 
+  /**
+   * See {@link #isStaticDispatchOnly()}.
+   */
   public void setStaticDispatchOnly() {
-    this.staticDispatchOnly = true;
+    assert polymorphism == Polymorphism.NORMAL;
+    polymorphism = Polymorphism.STATIC_DISPATCH_ONLY;
+  }
+
+  /**
+   * See {@link #isVolatile()}.
+   */
+  public void setVolatile() {
+    assert polymorphism == Polymorphism.NORMAL;
+    polymorphism = Polymorphism.VOLATILE;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

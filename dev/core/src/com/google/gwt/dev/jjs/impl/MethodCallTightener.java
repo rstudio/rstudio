@@ -21,9 +21,9 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
-import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -46,7 +46,7 @@ public class MethodCallTightener {
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       // The method call is already known statically
-      if (!x.canBePolymorphic()) {
+      if (x.isVolatile() || !x.canBePolymorphic()) {
         return;
       }
 
@@ -88,6 +88,12 @@ public class MethodCallTightener {
     public void endVisit(JNewInstance x, Context ctx) {
       // Do not tighten new operations.
     }
+
+    @Override
+    public boolean visit(JRunAsync x, Context ctx) {
+      x.traverseOnSuccess(this);
+      return super.visit(x, ctx);
+    }
   }
 
   public static final String NAME = MethodCallTightener.class.getSimpleName();
@@ -97,13 +103,6 @@ public class MethodCallTightener {
     OptimizerStats stats = new MethodCallTightener(program).execImpl();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
-  }
-
-  /**
-   * Tighten method calls that occur within <code>node</code> and its children.
-   */
-  public static void exec(JProgram program, JNode node) {
-    new MethodCallTightener(program).execImpl(node);
   }
 
   private final JProgram program;
@@ -116,10 +115,5 @@ public class MethodCallTightener {
     MethodCallTighteningVisitor tightener = new MethodCallTighteningVisitor();
     tightener.accept(program);
     return new OptimizerStats(NAME).recordModified(tightener.getNumMods());
-  }
-
-  private void execImpl(JNode node) {
-    MethodCallTighteningVisitor tightener = new MethodCallTighteningVisitor();
-    tightener.accept(node);
   }
 }

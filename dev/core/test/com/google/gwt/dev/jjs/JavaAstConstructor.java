@@ -51,6 +51,26 @@ import java.util.TreeSet;
  */
 public class JavaAstConstructor {
 
+  public static final MockJavaResource ASYNCFRAGMENTLOADER = new MockJavaResource(
+      "com.google.gwt.core.client.impl.AsyncFragmentLoader") {
+    @Override
+    public CharSequence getContent() {
+      StringBuilder code = new StringBuilder();
+      code.append("package com.google.gwt.core.client.impl;\n");
+      code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
+      code.append("public class AsyncFragmentLoader {\n");
+      code.append("  public static void onLoad(int fragment) { }\n");
+      code.append("  public static void runAsync(int fragment, RunAsyncCallback callback) { }\n");
+      code.append("  public static AsyncFragmentLoader BROWSER_LOADER =\n");
+      code.append("    makeBrowserLoader(1, new int[] {});\n");
+      code.append("  private static AsyncFragmentLoader makeBrowserLoader(\n");
+      code.append("    int numSp, int[] initial) {\n");
+      code.append("    return null;\n");
+      code.append("  }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource ARRAY = new MockJavaResource("com.google.gwt.lang.Array") {
     @Override
     public CharSequence getContent() {
@@ -159,7 +179,23 @@ public class JavaAstConstructor {
     public CharSequence getContent() {
       StringBuilder code = new StringBuilder();
       code.append("package com.google.gwt.core.client;\n");
-      code.append("public interface RunAsyncCallback { }\n");
+      code.append("public interface RunAsyncCallback {\n");
+      code.append("  void onSuccess();\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource RUNASYNCCODE = new MockJavaResource(
+      "com.google.gwt.core.client.prefetch.RunAsyncCode") {
+    @Override
+    public CharSequence getContent() {
+      StringBuilder code = new StringBuilder();
+      code.append("package com.google.gwt.core.client.prefetch;\n");
+      code.append("public class RunAsyncCode {\n");
+      code.append("  public static RunAsyncCode runAsyncCode(Class<?> splitPoint) {\n");
+      code.append("    return null;\n");
+      code.append("  }");
+      code.append("}");
       return code;
     }
   };
@@ -262,8 +298,8 @@ public class JavaAstConstructor {
     // Replace the basic Class and Enum with a compiler-specific one.
     result.remove(JavaResourceBase.CLASS);
     result.remove(JavaResourceBase.ENUM);
-    Collections.addAll(result, ARRAY, CAST, CLASS, CLASSLITERALHOLDER, ENUM, GWT, RUNASYNCCALLBACK,
-        STATS);
+    Collections.addAll(result, ASYNCFRAGMENTLOADER, ARRAY, CAST, CLASS, CLASSLITERALHOLDER, ENUM,
+        GWT, RUNASYNCCALLBACK, RUNASYNCCODE);
     return result.toArray(new MockJavaResource[result.size()]);
   }
 }
