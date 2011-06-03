@@ -107,6 +107,7 @@ input[type=text] {
 }
 .gwt-DialogBox input[type=text] {
    border: 1px solid #999;
+   height: 17px;
 }
 
 iframe {
