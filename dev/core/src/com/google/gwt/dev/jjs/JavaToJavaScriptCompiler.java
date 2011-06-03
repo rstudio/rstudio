@@ -450,8 +450,7 @@ public class JavaToJavaScriptCompiler {
       }
       toReturn.addArtifacts(makeSoycArtifacts(logger, permutationId, jprogram, js, sizeBreakdowns,
           sourceInfoMaps, dependencies, jjsmap, obfuscateMap, unifiedAst.getModuleMetrics(),
-          unifiedAst.getPrecompilationMetrics(), compilationMetrics, 
-          options.isSoycHtmlDisabled()));
+          unifiedAst.getPrecompilationMetrics(), compilationMetrics, options.isSoycHtmlDisabled()));
 
       logTrackingStats(logger);
       if (logger.isLoggable(TreeLogger.TRACE)) {
@@ -1034,24 +1033,29 @@ public class JavaToJavaScriptCompiler {
     for (int i = 0; i < js.length; i++) {
       DefaultTextOutput out = new DefaultTextOutput(options.getOutput().shouldMinimize());
       JsSourceGenerationVisitorWithSizeBreakdown v;
-      
+
       if (sourceInfoMaps != null) {
         v = new JsReportGenerationVisitor(out, jjsMap);
       } else {
         v = new JsSourceGenerationVisitorWithSizeBreakdown(out, jjsMap);
       }
       v.accept(jsProgram.getFragmentBlock(i));
-      
+
       StatementRanges statementRanges = v.getStatementRanges();
       String code = out.toString();
       Map<Range, SourceInfo> infoMap = (sourceInfoMaps != null) ? v.getSourceInfoMap() : null;
-      
-      JsAbstractTextTransformer transformer = 
+
+      JsAbstractTextTransformer transformer =
           new JsAbstractTextTransformer(code, statementRanges, infoMap) {
-        @Override public void exec() { }
-        @Override protected void updateSourceInfoMap() { }
-      };
-      
+            @Override
+            public void exec() {
+            }
+
+            @Override
+            protected void updateSourceInfoMap() {
+            }
+          };
+
       /**
        * Reorder function decls to improve compression ratios. Also restructures
        * the top level blocks into sub-blocks if they exceed 32767 statements.
@@ -1063,13 +1067,13 @@ public class JavaToJavaScriptCompiler {
         transformer.exec();
       }
       functionClusterEvent.end();
-      
+
       // rewrite top-level blocks to limit the number of statements
       if (splitBlocks) {
         transformer = new JsIEBlockTextTransformer(transformer);
         transformer.exec();
       }
-      
+
       js[i] = transformer.getJs();
       ranges[i] = transformer.getStatementRanges();
       if (sizeBreakdowns != null) {
@@ -1080,7 +1084,7 @@ public class JavaToJavaScriptCompiler {
       }
     }
   }
-  
+
   /**
    * This method can be used to fetch the list of referenced classs.
    * 
@@ -1162,7 +1166,7 @@ public class JavaToJavaScriptCompiler {
       JavaToJavaScriptMap jjsmap, Map<JsName, String> obfuscateMap,
       ModuleMetricsArtifact moduleMetricsArtifact,
       PrecompilationMetricsArtifact precompilationMetricsArtifact,
-      CompilationMetricsArtifact compilationMetrics, boolean htmlReportsDisabled) 
+      CompilationMetricsArtifact compilationMetrics, boolean htmlReportsDisabled)
       throws IOException, UnableToCompleteException {
     Memory.maybeDumpMemory("makeSoycArtifactsStart");
     List<SyntheticArtifact> soycArtifacts = new ArrayList<SyntheticArtifact>();
@@ -1245,7 +1249,7 @@ public class JavaToJavaScriptCompiler {
       soycArtifacts.addAll(outDir.getArtifacts());
       generateCompileReport.end();
     }
-    
+
     soycEvent.end();
 
     return soycArtifacts;
