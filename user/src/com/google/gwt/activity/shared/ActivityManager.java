@@ -181,7 +181,25 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
     }
   }
 
-  public Throwable tryStart() {
+  private Activity getNextActivity(PlaceChangeEvent event) {
+    if (display == null) {
+      /*
+       * Display may have been nulled during PlaceChangeEvent dispatch. Don't
+       * bother the mapper, just return a null to ensure we shut down the
+       * current activity
+       */
+      return null;
+    }
+    return mapper.getActivity(event.getNewPlace());
+  }
+
+  private void showWidget(IsWidget view) {
+    if (display != null) {
+      display.setWidget(view);
+    }
+  }
+
+  private Throwable tryStart() {
     Throwable caughtOnStart = null;
     try {
       /* Wrap the actual display with a per-call instance
@@ -196,7 +214,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
     return caughtOnStart;
   }
 
-  public Throwable tryStopOrCancel(boolean stop) {
+  private Throwable tryStopOrCancel(boolean stop) {
     Throwable caughtOnStop = null;
     try {
       if (stop) {
@@ -214,24 +232,6 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
       stopperedEventBus.removeHandlers();
     }
     return caughtOnStop;
-  }
-
-  private Activity getNextActivity(PlaceChangeEvent event) {
-    if (display == null) {
-      /*
-       * Display may have been nulled during PlaceChangeEvent dispatch. Don't
-       * bother the mapper, just return a null to ensure we shut down the
-       * current activity
-       */
-      return null;
-    }
-    return mapper.getActivity(event.getNewPlace());
-  }
-
-  private void showWidget(IsWidget view) {
-    if (display != null) {
-      display.setWidget(view);
-    }
   }
 
   private void updateHandlers(boolean activate) {
