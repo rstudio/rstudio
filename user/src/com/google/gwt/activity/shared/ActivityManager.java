@@ -95,13 +95,12 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
    * be minimized by decent caching. Perenially slow activities might mitigate
    * this by providing a widget immediately, with some kind of "loading"
    * treatment.
-   * 
-   * @see com.google.gwt.place.shared.PlaceChangeEvent.Handler#onPlaceChange(PlaceChangeEvent)
    */
   public void onPlaceChange(PlaceChangeEvent event) {
     Activity nextActivity = getNextActivity(event);
 
     Throwable caughtOnStop = null;
+    Throwable caughtOnCancel = null;
     Throwable caughtOnStart = null;
 
     if (nextActivity == null) {
@@ -115,7 +114,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
     if (startingNext) {
       // The place changed again before the new current activity showed its
       // widget
-      currentActivity.onCancel();
+      caughtOnCancel = tryStopOrCancel(false);
       currentActivity = NULL_ACTIVITY;
       startingNext = false;
     } else if (!currentActivity.equals(NULL_ACTIVITY)) {
@@ -126,45 +125,25 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
        * them accidentally firing as a side effect of its tear down
        */
       stopperedEventBus.removeHandlers();
-
-      try {
-        currentActivity.onStop();
-      } catch (Throwable t) {
-        caughtOnStop = t;
-      } finally {
-        /*
-         * And kill them off again in case it was naughty and added new ones
-         * during onstop
-         */
-        stopperedEventBus.removeHandlers();
-      }
+      caughtOnStop = tryStopOrCancel(true);
     }
 
     currentActivity = nextActivity;
 
     if (currentActivity.equals(NULL_ACTIVITY)) {
       showWidget(null);
-      return;
+    } else {
+      startingNext = true;
+      caughtOnStart = tryStart();
     }
-
-    startingNext = true;
-
-    /*
-     * Now start the thing. Wrap the actual display with a per-call instance
-     * that protects the display from canceled or stopped activities, and which
-     * maintains our startingNext state.
-     */
-    try {
-      currentActivity.start(new ProtectedDisplay(currentActivity),
-          stopperedEventBus);
-    } catch (Throwable t) {
-      caughtOnStart = t;
-    }
-
-    if (caughtOnStart != null || caughtOnStop != null) {
+    
+    if (caughtOnStart != null || caughtOnCancel != null || caughtOnStop != null) {
       Set<Throwable> causes = new LinkedHashSet<Throwable>();
       if (caughtOnStop != null) {
         causes.add(caughtOnStop);
+      }
+      if (caughtOnCancel != null) {
+        causes.add(caughtOnCancel);
       }
       if (caughtOnStart != null) {
         causes.add(caughtOnStart);
@@ -180,9 +159,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
    * @see com.google.gwt.place.shared.PlaceChangeRequestEvent.Handler#onPlaceChangeRequest(PlaceChangeRequestEvent)
    */
   public void onPlaceChangeRequest(PlaceChangeRequestEvent event) {
-    if (!currentActivity.equals(NULL_ACTIVITY)) {
-      event.setWarning(currentActivity.mayStop());
-    }
+    event.setWarning(currentActivity.mayStop());
   }
 
   /**
@@ -202,6 +179,41 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
     if (wasActive != willBeActive) {
       updateHandlers(willBeActive);
     }
+  }
+
+  public Throwable tryStart() {
+    Throwable caughtOnStart = null;
+    try {
+      /* Wrap the actual display with a per-call instance
+       * that protects the display from canceled or stopped activities, and which
+       * maintains our startingNext state.
+       */
+      currentActivity.start(new ProtectedDisplay(currentActivity),
+          stopperedEventBus);
+    } catch (Throwable t) {
+      caughtOnStart = t;
+    }
+    return caughtOnStart;
+  }
+
+  public Throwable tryStopOrCancel(boolean stop) {
+    Throwable caughtOnStop = null;
+    try {
+      if (stop) {
+        currentActivity.onStop();
+      } else {
+        currentActivity.onCancel();
+      }
+    } catch (Throwable t) {
+      caughtOnStop = t;
+    } finally {
+      /*
+       * Kill off the handlers again in case it was naughty and added new ones
+       * during onstop or oncancel
+       */
+      stopperedEventBus.removeHandlers();
+    }
+    return caughtOnStop;
   }
 
   private Activity getNextActivity(PlaceChangeEvent event) {

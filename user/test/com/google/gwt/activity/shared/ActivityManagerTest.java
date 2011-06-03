@@ -305,18 +305,18 @@ public class ActivityManagerTest extends TestCase {
     assertEquals(0, eventBus.getCount(PlaceChangeRequestEvent.TYPE));
   }
 
-  public void testExceptionsOnStopAndStart() {
-    activity1 = new SyncActivity(null) {
+  public void testExceptionsOnStartAndCancel() {
+    activity1 = new AsyncActivity(null) {
       @Override
       public void start(AcceptsOneWidget panel, EventBus eventBus) {
         super.start(panel, eventBus);
         bus.addHandler(Event.TYPE, new Handler());
       }
       @Override
-      public void onStop() {
-        super.onStop();
+      public void onCancel() {
+        super.onCancel();
         bus.addHandler(Event.TYPE, new Handler());
-        throw new UnsupportedOperationException("Auto-generated method stub");
+        throw new UnsupportedOperationException("Exception on cancel");
       }
     };
 
@@ -324,7 +324,7 @@ public class ActivityManagerTest extends TestCase {
       @Override
       public void start(AcceptsOneWidget panel, EventBus eventBus) {
         super.start(panel, eventBus);
-        throw new UnsupportedOperationException("Auto-generated method stub");
+        throw new UnsupportedOperationException("Exception on start");
       }
     };
 
@@ -340,9 +340,56 @@ public class ActivityManagerTest extends TestCase {
 
       fail("Expected exception");
     } catch (UmbrellaException e) {
-      // HandlerManager throws this one
+      // EventBus throws this one
       assertEquals(1, e.getCauses().size());
+      // And this is the one thrown by ActivityManager
+      UmbrellaException nested = (UmbrellaException) e.getCause();
+      assertEquals(2, nested.getCauses().size());
+    }
 
+    assertTrue(activity1.canceled);
+    assertNotNull(activity2.display);
+    assertEquals(0, eventBus.getCount(Event.TYPE));
+  }
+  
+  public void testExceptionsOnStopAndStart() {
+    activity1 = new SyncActivity(null) {
+      @Override
+      public void start(AcceptsOneWidget panel, EventBus eventBus) {
+        super.start(panel, eventBus);
+        bus.addHandler(Event.TYPE, new Handler());
+      }
+      @Override
+      public void onStop() {
+        super.onStop();
+        bus.addHandler(Event.TYPE, new Handler());
+        throw new UnsupportedOperationException("Exception on stop");
+      }
+    };
+
+    activity2 = new SyncActivity(null) {
+      @Override
+      public void start(AcceptsOneWidget panel, EventBus eventBus) {
+        super.start(panel, eventBus);
+        throw new UnsupportedOperationException("Exception on start");
+      }
+    };
+
+    manager.setDisplay(realDisplay);
+
+    try {
+      PlaceChangeEvent event = new PlaceChangeEvent(place1);
+      eventBus.fireEvent(event);
+      assertEquals(1, eventBus.getCount(Event.TYPE));
+
+      event = new PlaceChangeEvent(place2);
+      eventBus.fireEvent(event);
+
+      fail("Expected exception");
+    } catch (UmbrellaException e) {
+      // EventBus throws this one
+      assertEquals(1, e.getCauses().size());
+      // And this is the one thrown by ActivityManager
       UmbrellaException nested = (UmbrellaException) e.getCause();
       assertEquals(2, nested.getCauses().size());
     }
