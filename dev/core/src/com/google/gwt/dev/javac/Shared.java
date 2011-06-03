@@ -33,8 +33,6 @@ import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A grab bag of utility functions useful for dealing with java files.
@@ -163,49 +161,5 @@ public class Shared {
     assert (path.endsWith(".java"));
     path = path.substring(0, path.lastIndexOf('.'));
     return path.replace('/', '.');
-  }
-
-  static String[] modifierBitsToNames(int bits) {
-    List<String> strings = new ArrayList<String>();
-
-    // The order is based on the order in which we want them to appear.
-    //
-    if (0 != (bits & MOD_PUBLIC)) {
-      strings.add("public");
-    }
-
-    if (0 != (bits & MOD_PRIVATE)) {
-      strings.add("private");
-    }
-
-    if (0 != (bits & MOD_PROTECTED)) {
-      strings.add("protected");
-    }
-
-    if (0 != (bits & MOD_STATIC)) {
-      strings.add("static");
-    }
-
-    if (0 != (bits & MOD_ABSTRACT)) {
-      strings.add("abstract");
-    }
-
-    if (0 != (bits & MOD_FINAL)) {
-      strings.add("final");
-    }
-
-    if (0 != (bits & MOD_NATIVE)) {
-      strings.add("native");
-    }
-
-    if (0 != (bits & MOD_TRANSIENT)) {
-      strings.add("transient");
-    }
-
-    if (0 != (bits & MOD_VOLATILE)) {
-      strings.add("volatile");
-    }
-
-    return strings.toArray(NO_STRINGS);
   }
 }

@@ -129,7 +129,7 @@ public class JMethod extends JAbstractMethod implements
   }
 
   String getReadableDeclaration(int modifierBits) {
-    String[] names = TypeOracle.modifierBitsToNames(modifierBits);
+    String[] names = TypeOracle.modifierBitsToNamesForMethod(modifierBits);
     StringBuilder sb = new StringBuilder();
     for (String name : names) {
       sb.append(name);

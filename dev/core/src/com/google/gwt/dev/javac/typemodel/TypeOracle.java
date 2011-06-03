@@ -204,7 +204,48 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     });
   }
 
-  static String[] modifierBitsToNames(int bits) {
+  static String[] modifierBitsToNamesForField(int bits) {
+    List<String> strings = modifierBitsToNamesForMethodsAndFields(bits);
+
+    if (0 != (bits & MOD_VOLATILE)) {
+      strings.add("volatile");
+    }
+    
+    if (0 != (bits & MOD_TRANSIENT)) {
+      strings.add("transient");
+    }
+   
+    return strings.toArray(NO_STRINGS);
+  }
+  
+  static String[] modifierBitsToNamesForMethod(int bits) {
+    List<String> strings = modifierBitsToNamesForMethodsAndFields(bits);
+    
+    if (0 != (bits & MOD_ABSTRACT)) {
+      strings.add("abstract");
+    }
+    
+    if (0 != (bits & MOD_NATIVE)) {
+      strings.add("native");
+    } 
+    
+    return strings.toArray(NO_STRINGS);
+  }
+
+  private static JClassType[] cast(com.google.gwt.core.ext.typeinfo.JClassType[] extTypeArgs) {
+    JClassType[] result = new JClassType[extTypeArgs.length];
+    System.arraycopy(extTypeArgs, 0, result, 0, extTypeArgs.length);
+    return result;
+  }
+  
+  /**
+   * Converts modifier bits, which are common to fields and methods, to
+   * readable names.
+   * 
+   * @see TypeOracle#modifierBitsToNamesForField(int) modifierBitsToNamesForField
+   * @see TypeOracle#modifierBitsToNamesForMethod(int) modifierBitsToNamesForMethod
+   */
+  private static List<String> modifierBitsToNamesForMethodsAndFields(int bits) {
     List<String> strings = new ArrayList<String>();
 
     // The order is based on the order in which we want them to appear.
@@ -225,33 +266,11 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
       strings.add("static");
     }
 
-    if (0 != (bits & MOD_ABSTRACT)) {
-      strings.add("abstract");
-    }
-
     if (0 != (bits & MOD_FINAL)) {
       strings.add("final");
     }
 
-    if (0 != (bits & MOD_NATIVE)) {
-      strings.add("native");
-    }
-
-    if (0 != (bits & MOD_TRANSIENT)) {
-      strings.add("transient");
-    }
-
-    if (0 != (bits & MOD_VOLATILE)) {
-      strings.add("volatile");
-    }
-
-    return strings.toArray(NO_STRINGS);
-  }
-
-  private static JClassType[] cast(com.google.gwt.core.ext.typeinfo.JClassType[] extTypeArgs) {
-    JClassType[] result = new JClassType[extTypeArgs.length];
-    System.arraycopy(extTypeArgs, 0, result, 0, extTypeArgs.length);
-    return result;
+    return strings;
   }
 
   /**

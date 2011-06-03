@@ -62,7 +62,7 @@ public class JConstructor extends JAbstractMethod implements
 
   @Override
   public String getReadableDeclaration() {
-    String[] names = TypeOracle.modifierBitsToNames(getModifierBits());
+    String[] names = TypeOracle.modifierBitsToNamesForMethod(getModifierBits());
     StringBuilder sb = new StringBuilder();
     for (String name : names) {
       sb.append(name);

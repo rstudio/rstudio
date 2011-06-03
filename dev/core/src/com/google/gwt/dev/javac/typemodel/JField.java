@@ -135,7 +135,7 @@ public class JField implements com.google.gwt.core.ext.typeinfo.JField {
 
   @Override
   public String toString() {
-    String[] names = TypeOracle.modifierBitsToNames(modifierBits);
+    String[] names = TypeOracle.modifierBitsToNamesForField(modifierBits);
     StringBuffer sb = new StringBuffer();
     for (int i = 0; i < names.length; i++) {
       if (i > 0) {
