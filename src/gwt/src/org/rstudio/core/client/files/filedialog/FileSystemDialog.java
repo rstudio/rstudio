@@ -174,7 +174,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
-      breadcrumb_ = new PathBreadcrumbWidget(context_, false);
+      breadcrumb_ = new PathBreadcrumbWidget(context_);
       breadcrumb_.addSelectionCommitHandler(this);
 
       directory_ = new DirectoryContentsWidget(context_);

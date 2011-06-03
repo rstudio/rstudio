@@ -25,9 +25,11 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 
 public class PathBreadcrumbWidget
@@ -35,11 +37,10 @@ public class PathBreadcrumbWidget
    implements HasSelectionCommitHandlers<FileSystemItem>,
               RequiresResize
 {
-   public PathBreadcrumbWidget(FileSystemContext context, 
-                               boolean includeBrowseButton)
+   public PathBreadcrumbWidget(FileSystemContext context)
    {
       context_ = context;
-
+  
       pathPanel_ = new HorizontalPanel();
       pathPanel_.setStylePrimaryName(RES.styles().path());
 
@@ -90,20 +91,17 @@ public class PathBreadcrumbWidget
 
       DockLayoutPanel frame = new DockLayoutPanel(Unit.PX);
 
-      if (includeBrowseButton)
+      Image browse = new Image(RES.browse());
+      browse.setStyleName(STYLES.browse());
+      frame.addEast(browse, RES.browse().getWidth());
+      browse.addClickHandler(new ClickHandler()
       {
-         Image browse = new Image(RES.browse());
-         browse.setStyleName(STYLES.browse());
-         frame.addEast(browse, RES.browse().getWidth());
-         browse.addClickHandler(new ClickHandler()
+         public void onClick(ClickEvent event)
          {
-            public void onClick(ClickEvent event)
-            {
-               browse();
-            }
-         });
-      }
-
+            browse();
+         }
+      });
+      
       frame.add(outer_);
       frame.setStyleName(STYLES.breadcrumbFrame());
       initWidget(frame);
@@ -170,23 +168,46 @@ public class PathBreadcrumbWidget
 
    private void browse()
    {
-      FileSystemContext tempContext =
-            RStudioGinjector.INSTANCE.getRemoteFileSystemContext();
-      RStudioGinjector.INSTANCE.getFileDialogs().chooseFolder(
-            "Go To Folder",
-            tempContext,
-            null,
-            new ProgressOperationWithInput<FileSystemItem>()
-            {
-               public void execute(FileSystemItem input,
-                                   ProgressIndicator indicator)
+      if (Desktop.isDesktop())
+      {
+         FileSystemContext tempContext =
+               RStudioGinjector.INSTANCE.getRemoteFileSystemContext();
+         RStudioGinjector.INSTANCE.getFileDialogs().chooseFolder(
+               "Go To Folder",
+               tempContext,
+               null,
+               new ProgressOperationWithInput<FileSystemItem>()
                {
-                  if (input == null)
-                     return;
-                  context_.cd(input.getPath());
-                  indicator.onCompleted();
-               }
-            });
+                  public void execute(FileSystemItem input,
+                                      ProgressIndicator indicator)
+                  {
+                     if (input == null)
+                        return;
+                     context_.cd(input.getPath());
+                     indicator.onCompleted();
+                  }
+               });
+      }
+      else
+      {
+         context_.messageDisplay().promptForText(
+               "Go To Folder", 
+               "Path to folder (use ~ for home directory):",
+               "", 
+               new OperationWithInput<String>() {
+
+                  @Override
+                  public void execute(String input)
+                  {
+                     if (input == null)
+                        return;
+                     
+                     context_.cd(input);
+                  }
+                  
+               });
+      }
+      
    }
 
    public HandlerRegistration addSelectionCommitHandler(

@@ -27,7 +27,6 @@ import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.views.files.Files;
 
 public class FilePathToolbar extends Composite
@@ -106,8 +105,7 @@ public class FilePathToolbar extends Composite
             assert false : "Not implemented";
          }
       });
-      pathBreadcrumbWidget_ = new PathBreadcrumbWidget(fileSystemContext_,
-                                                       Desktop.isDesktop());
+      pathBreadcrumbWidget_ = new PathBreadcrumbWidget(fileSystemContext_);
       pathBreadcrumbWidget_.addStyleDependentName("filepane");
       pathBreadcrumbWidget_.addSelectionCommitHandler(
             new SelectionCommitHandler<FileSystemItem>()
