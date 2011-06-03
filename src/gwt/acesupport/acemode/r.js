@@ -80,7 +80,7 @@ define("mode/r", function(require, exports, module)
 
             if (!openBracePos || openBracePos.row == row) return 0;
 
-            var indent = this.$getIndent(doc.getLine(openBracePos.row));
+            var indent = this.$rCodeModel.getIndentForOpenBrace(openBracePos);
             doc.replace(new Range(row, 0, row, column-1), indent);
          }
 

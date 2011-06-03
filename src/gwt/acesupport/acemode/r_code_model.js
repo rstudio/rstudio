@@ -99,6 +99,34 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
          return this.moveToNextToken(maxRow);
       };
 
+      this.moveBackwardOverMatchingParens = function()
+      {
+         if (!this.moveToPreviousToken())
+            return false;
+         if (this.currentValue() !== ")")
+            return false;
+
+         var success = false;
+         var parenCount = 0;
+         while (this.moveToPreviousToken())
+         {
+            if (this.currentValue() === "(")
+            {
+               if (parenCount == 0)
+               {
+                  success = true;
+                  break;
+               }
+               parenCount--;
+            }
+            else if (this.currentValue() === ")")
+            {
+               parenCount++;
+            }
+         }
+         return success;
+      };
+
       this.findToken = function(predicate, maxRow)
       {
          do
@@ -182,32 +210,8 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
    {
       if (tokenCursor.currentValue() !== "{")
          return false;
-      if (!tokenCursor.moveToPreviousToken())
+      if (!tokenCursor.moveBackwardOverMatchingParens())
          return false;
-      if (tokenCursor.currentValue() !== ")")
-         return false;
-
-      var success = false;
-      var parenCount = 0;
-      while (tokenCursor.moveToPreviousToken())
-      {
-         if (tokenCursor.currentValue() === "(")
-         {
-            if (parenCount == 0)
-            {
-               success = true;
-               break;
-            }
-            parenCount--;
-         }
-         else if (tokenCursor.currentValue() === ")")
-         {
-            parenCount++;
-         }
-      }
-      if (!success)
-         return false;
-
       if (!tokenCursor.moveToPreviousToken())
          return false;
       if (!pFunction(tokenCursor.currentToken()))
@@ -299,6 +303,22 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       return list[0].children;
    };
 
+   this.getIndentForOpenBrace = function(pos)
+   {
+      if (this.$tokenizeUpToRow(pos.row))
+      {
+         var tokenCursor = new this.$TokenCursor();
+         if (tokenCursor.seekToNearestToken(pos, pos.row)
+                   && tokenCursor.currentValue() == "{"
+               && tokenCursor.moveBackwardOverMatchingParens())
+         {
+            return this.$getIndent(this.$getLine(tokenCursor.currentPosition().row));
+         }
+      }
+
+      return this.$getIndent(this.$getLine(pos.row));
+   };
+
    this.getNextLineIndent = function(lastRow, line, endState, tab, tabSize)
    {
       // This lineOverrides nonsense is necessary because the line has not 
@@ -386,8 +406,7 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
 
             if (!nextTokenPos)
             {
-               // return line that contains the brace, plus 1 indent level
-               return this.$getIndent(this.$getLine(openBracePos.row)) + tab;
+               return this.getIndentForOpenBrace(openBracePos) + tab;
             }
             else
             {
