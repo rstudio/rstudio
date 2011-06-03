@@ -86,6 +86,7 @@
 #include "modules/SessionData.hpp"
 #include "modules/SessionHelp.hpp"
 #include "modules/SessionPlots.hpp"
+#include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
 #include "modules/SessionSource.hpp"
 #include "modules/SessionTeX.hpp"
@@ -1077,6 +1078,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (source_database::initialize)
    
       // modules with c++ implementations
+      (modules::path::initialize)
       (modules::content_urls::initialize)
       (modules::limits::initialize)
       (modules::agreement::initialize)

@@ -44,6 +44,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionHistory.cpp
    modules/SessionLimits.cpp
    modules/SessionPackages.cpp
+   modules/SessionPath.cpp
    modules/SessionPlots.cpp
    modules/SessionSource.cpp
    modules/SessionTeX.cpp
