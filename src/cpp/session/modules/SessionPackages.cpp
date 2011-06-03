@@ -51,11 +51,15 @@ Error availablePackagesBegin(const core::json::JsonRpcRequest& request,
 class AvailablePackagesCache
 {
 public:
+   AvailablePackagesCache()
+      : pMutex_(new boost::mutex())
+   {
+   }
 
    void insert(const std::string& contribUrl,
                const std::vector<std::string>& availablePackages)
    {
-      LOCK_MUTEX(mutex_)
+      LOCK_MUTEX(*pMutex_)
       {
          cache_[contribUrl] = availablePackages;
       }
@@ -66,7 +70,7 @@ public:
    bool lookup(const std::string& contribUrl,
                std::vector<std::string>* pAvailablePackages)
    {
-      LOCK_MUTEX(mutex_)
+      LOCK_MUTEX(*pMutex_)
       {
          std::map<std::string, std::vector<std::string> >::const_iterator it =
                                                          cache_.find(contribUrl);
@@ -87,7 +91,9 @@ public:
    }
 
 private:
-   boost::mutex mutex_;
+   // make mutex heap based to avoid boost mutex assertions when
+   // it is destructucted in a multicore forked child
+   boost::mutex* pMutex_;
    std::map<std::string, std::vector<std::string> > cache_;
 };
 

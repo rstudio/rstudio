@@ -35,20 +35,6 @@ namespace console {
 
 namespace {   
 
-void onForked()
-{  
-#ifndef _WIN32
-   // stop listening for output
-   core::system::stopOutputCapture();
-
-   // shut down standard streams
-   core::system::closeStdFileDescriptors();
-   core::system::attachStdFileDescriptorsToDevNull();
-   std::ios::sync_with_stdio();
-#endif
-}
-
-
 bool suppressOutput(const std::string& output)
 {
    // tokens to suppress
@@ -152,7 +138,6 @@ Error initialize()
    using namespace module_context;
    events().onClientInit.connect(bind(onClientInit));
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
-   events().onForked.connect(bind(onForked));
 
    // more initialization 
    using boost::bind;

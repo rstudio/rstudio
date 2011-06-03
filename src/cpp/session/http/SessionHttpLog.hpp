@@ -74,7 +74,9 @@ private:
       boost::posix_time::ptime timestamp;
    };
 
-   boost::mutex mutex_;
+   // make mutex heap based so we don't get destructor assertions
+   // when it is closed within a forked child (from multicore)
+   boost::mutex* pMutex_;
    boost::circular_buffer<Entry> logEntries_;
 };
 

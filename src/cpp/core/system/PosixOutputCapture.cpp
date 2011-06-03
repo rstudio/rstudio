@@ -52,8 +52,6 @@ void readFromPipe(
    }
 }
 
-boost::thread s_streamCaptureThread;
-
 void standardStreamCaptureThread(
        int stdoutFd,
        const boost::function<void(const std::string&)>& stdoutHandler,
@@ -76,10 +74,6 @@ void standardStreamCaptureThread(
          int result = ::select(highFd+1, &fds, NULL, NULL, NULL);
          if (result != -1)
          {
-            // exit the thread if requested
-            if (boost::this_thread::interruption_requested())
-               break;
-
             if (FD_ISSET(stdoutFd, &fds))
                readFromPipe(stdoutFd, stdoutHandler);
 
@@ -170,8 +164,6 @@ Error captureStandardStreams(
                                      stderrReadPipe,
                                      stderrHandler));
 
-      s_streamCaptureThread = t.move();
-
       return Success();
    }
    catch(const boost::thread_resource_error& e)
@@ -179,13 +171,6 @@ Error captureStandardStreams(
       return Error(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
    }
 }
-
-
-void stopOutputCapture()
-{
-   s_streamCaptureThread.interrupt();
-}
-
 
 } // namespace system
 } // namespace core

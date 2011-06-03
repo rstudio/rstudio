@@ -606,9 +606,15 @@ void atForkChild()
    s_wasForked = true;
 }
 
+void atForkParent()
+{
+   module_context::events().onForkedParent();
+}
+
+
 void setupForkHandlers()
 {
-   int rc = ::pthread_atfork(NULL, NULL, atForkChild);
+   int rc = ::pthread_atfork(NULL, atForkParent, atForkChild);
    if (rc != 0)
       LOG_ERROR(systemError(errno, ERROR_LOCATION));
 }
@@ -633,7 +639,7 @@ void polledEventHandler()
 
       // allow modules a chance for shutdown (e.g. directory changed listener,
       // output capture, etc)
-      module_context::events().onForked();
+      module_context::events().onForkedChild();
 
       // done
       return;
@@ -770,13 +776,22 @@ void processDesktopGuiEvents()
 }
 
 
-// wait for the specified method (will either return the method or 
+// wait for the specified method. will either:
+//   - return true and the method request in pRequest
+//   - return false indicating failure (e.g. called after fork in child)
+//   - suspend or quit the process
 // exit the process as a result of suspend or quit)
-void waitForMethod(const std::string& method, 
+bool waitForMethod(const std::string& method,
                    const boost::function<void()>& initFunction,
                    const boost::function<bool()>& allowSuspend,
                    core::json::JsonRpcRequest* pRequest)
 {
+   if (s_wasForked)
+   {
+      LOG_ERROR_MESSAGE("Waiting for method " + method + " after fork");
+      return false;
+   }
+
    // determine mode
    bool desktopMode = session::options().programMode() ==
                                              kSessionProgramModeDesktop;
@@ -863,20 +878,24 @@ void waitForMethod(const std::string& method,
                                                      polledEventHandler);
       }
    }
+
+   // satisfied the request
+   return true;
 }
 
 
 // wait for the specified method (will either return the method or 
 // exit the process as a result of suspend or quit)
-void waitForMethod(const std::string& method, 
+bool waitForMethod(const std::string& method,
                    const ClientEvent& initEvent,
                    const boost::function<bool()>& allowSuspend,
                    core::json::JsonRpcRequest* pRequest)
 {
-   waitForMethod(method,
-                 boost::bind(module_context::enqueClientEvent, initEvent),
-                 allowSuspend,
-                 pRequest);
+   return waitForMethod(method,
+                        boost::bind(module_context::enqueClientEvent,
+                                    initEvent),
+                        allowSuspend,
+                        pRequest);
 }
 
 void addToConsoleInputBuffer(const r::session::RConsoleInput& consoleInput)
@@ -1182,10 +1201,15 @@ bool rConsoleRead(const std::string& prompt,
 
       // wait for console_input
       json::JsonRpcRequest request ;
-      waitForMethod(kConsoleInput,
-                    boost::bind(consolePrompt, prompt, addToHistory),
-                    boost::bind(r::session::isSuspendable, prompt),
-                    &request);
+      bool succeeded = waitForMethod(
+                        kConsoleInput,
+                        boost::bind(consolePrompt, prompt, addToHistory),
+                        boost::bind(r::session::isSuspendable, prompt),
+                        &request);
+
+      // exit process if we failed
+      if (!succeeded)
+         return false;
 
       // extract console input. if there is an error during extraction we log it
       // but still return and empty string and true (returning false will cause R
@@ -1235,7 +1259,13 @@ int rEditFile(const std::string& file)
 
    // wait for edit_completed 
    json::JsonRpcRequest request ;
-   waitForMethod(kEditCompleted, editEvent, disallowSuspend, &request);
+   bool succeeded = waitForMethod(kEditCompleted,
+                                  editEvent,
+                                  disallowSuspend,
+                                  &request);
+
+   if (!succeeded)
+      return false;
    
    // user cancelled edit
    if (request.params[0].is_null())
@@ -1278,11 +1308,14 @@ FilePath rChooseFile(bool newFile)
    
    // wait for choose_file_completed 
    json::JsonRpcRequest request ;
-   waitForMethod(kChooseFileCompleted, 
-                 chooseFileEvent, 
-                 disallowSuspend, 
-                 &request);
+   bool succeeded = waitForMethod(kChooseFileCompleted,
+                                 chooseFileEvent,
+                                 disallowSuspend,
+                                 &request);
    
+   if (!succeeded)
+      return FilePath();
+
    // extract the file name
    std::string fileName;
    if (!request.params[0].is_null())
@@ -1338,7 +1371,13 @@ bool rLocator(double* x, double* y)
    
    // wait for locator_completed 
    json::JsonRpcRequest request ;
-   waitForMethod(kLocatorCompleted, locatorEvent, disallowSuspend, &request);
+   bool succeeded = waitForMethod(kLocatorCompleted,
+                                  locatorEvent,
+                                  disallowSuspend,
+                                  &request);
+
+   if (!succeeded)
+      return false;
    
    // see if we got a point
    if ((request.params.size() > 0) && !request.params[0].is_null())

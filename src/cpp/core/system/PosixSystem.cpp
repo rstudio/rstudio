@@ -492,6 +492,12 @@ void attachStdFileDescriptorsToDevNull()
    fd2 = ::dup(fd0);
 }
 
+void setStandardStreamsToDevNull()
+{
+   core::system::closeStdFileDescriptors();
+   core::system::attachStdFileDescriptorsToDevNull();
+   std::ios::sync_with_stdio();
+}
 
 Error executeInterruptableChildProcess(
            std::string path,

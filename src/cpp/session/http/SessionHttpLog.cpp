@@ -38,13 +38,14 @@ HttpLog& httpLog()
 }
 
 HttpLog::HttpLog()
+   : pMutex_(new boost::mutex())
 {
    logEntries_.set_capacity(500);
 }
 
 void HttpLog::addEntry(const EntryType& type, const std::string& requestId)
 {
-   LOCK_MUTEX(mutex_)
+   LOCK_MUTEX(*pMutex_)
    {
       logEntries_.push_back(Entry(type, requestId));
    }
@@ -53,7 +54,7 @@ void HttpLog::addEntry(const EntryType& type, const std::string& requestId)
 
 void HttpLog::asJson(core::json::Array* pEntryArray)
 {
-   LOCK_MUTEX(mutex_)
+   LOCK_MUTEX(*pMutex_)
    {
       BOOST_FOREACH(const Entry& entry, logEntries_)
       {

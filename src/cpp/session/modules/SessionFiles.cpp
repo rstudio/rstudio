@@ -178,9 +178,26 @@ void onShutdown(bool terminatedNormally)
       LOG_ERROR(error);
 }
 
-void onForked()
+void onForkedChild()
 {
-   s_directoryMonitor.stop();
+   Error error = s_directoryMonitor.stop();
+   if (error)
+      LOG_ERROR(error);
+}
+
+void onForkedParent()
+{
+   // restart directory monitor (child process inheritence of directory
+   // monitor handles interferes with our directory monitor)
+   std::string monitoredPath = s_directoryMonitor.path();
+   if (!monitoredPath.empty())
+   {
+      Error error = s_directoryMonitor.stop();
+      if (error)
+         LOG_ERROR(error);
+
+      startMonitoring(monitoredPath);
+   }
 }
 
 // extract a set of FilePath object from a list of home path relative strings
@@ -897,7 +914,8 @@ Error initialize()
    events().onClientInit.connect(bind(onClientInit));
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
    events().onShutdown.connect(bind(onShutdown, _1));
-   events().onForked.connect(bind(onForked));
+   events().onForkedChild.connect(bind(onForkedChild));
+   events().onForkedParent.connect(bind(onForkedParent));
 
    // register path info function
    R_CallMethodDef pathInfoMethodDef ;

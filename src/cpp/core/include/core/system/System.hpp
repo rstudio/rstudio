@@ -44,6 +44,7 @@ Error closeAllFileDescriptors();
 Error closeNonStdFileDescriptors();
 void closeStdFileDescriptors();
 void attachStdFileDescriptorsToDevNull();
+void setStandardStreamsToDevNull();
 Error realPath(const std::string& path, FilePath* pRealPath);
 void addToSystemPath(const FilePath& path, bool prepend = false);
 #endif
