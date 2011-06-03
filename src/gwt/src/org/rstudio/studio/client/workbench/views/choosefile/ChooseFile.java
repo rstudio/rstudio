@@ -19,6 +19,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileHandler;
@@ -30,10 +31,12 @@ public class ChooseFile implements ChooseFileHandler
    public ChooseFile(EventBus events,
                      ChooseFileServerOperations server,
                      RemoteFileSystemContext fsContext,
+                     WorkbenchContext workbenchContext,
                      FileDialogs fileDialogs)
    {
       server_ = server;
       fsContext_ = fsContext;
+      workbenchContext_ = workbenchContext;
       fileDialogs_ = fileDialogs;
 
       events.addHandler(ChooseFileEvent.TYPE, this);
@@ -45,7 +48,7 @@ public class ChooseFile implements ChooseFileHandler
       fileDialogs_.openFile(
             "Choose File",
             fsContext_,
-            null,
+            workbenchContext_.getCurrentWorkingDir(),
             new ProgressOperationWithInput<FileSystemItem>()
             {
                public void execute(FileSystemItem input,
@@ -74,5 +77,6 @@ public class ChooseFile implements ChooseFileHandler
    
    private final ChooseFileServerOperations server_;
    private final RemoteFileSystemContext fsContext_;
+   private final WorkbenchContext workbenchContext_;
    private final FileDialogs fileDialogs_;
 }
