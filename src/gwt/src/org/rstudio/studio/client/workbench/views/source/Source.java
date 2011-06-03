@@ -53,8 +53,6 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
-import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
@@ -81,8 +79,7 @@ public class Source implements InsertSourceHandler,
                              FileEditHandler,
                              ShowContentHandler,
                              ShowDataHandler,
-                             BeforeShowHandler,
-                             WorkingDirChangedHandler
+                             BeforeShowHandler
 {
    public interface Display extends Widgetable,
                                     HasTabClosingHandlers,
@@ -139,6 +136,7 @@ public class Source implements InsertSourceHandler,
       fileDialogs_ = fileDialogs;
       fileContext_ = fileContext;
       events_ = events;
+      workbenchContext_ = workbenchContext;
       mruList_ = mruList;
       uiPrefs_ = uiPrefs;
 
@@ -169,9 +167,6 @@ public class Source implements InsertSourceHandler,
          command.setVisible(false);
          command.setEnabled(false);
       }
-      
-      defaultOpenDirectory_ = workbenchContext.getCurrentWorkingDir();
-      events.addHandler(WorkingDirChangedEvent.TYPE, this);
       
       events.addHandler(ShowContentEvent.TYPE, this);
       events.addHandler(ShowDataEvent.TYPE, this);
@@ -440,12 +435,7 @@ public class Source implements InsertSourceHandler,
 
    }
 
-   
-   @Override
-   public void onWorkingDirChanged(WorkingDirChangedEvent event)
-   {
-      defaultOpenDirectory_ = FileSystemItem.createDir(event.getPath());
-   }
+  
    
    @Handler
    public void onOpenSourceDoc()
@@ -453,7 +443,7 @@ public class Source implements InsertSourceHandler,
       fileDialogs_.openFile(
             "Open File",
             fileContext_,
-            defaultOpenDirectory_,
+            workbenchContext_.getDefaultFileDialogDir(),
             new ProgressOperationWithInput<FileSystemItem>()
             {
                public void execute(final FileSystemItem input,
@@ -462,7 +452,8 @@ public class Source implements InsertSourceHandler,
                   if (input == null)
                      return;
                   
-                  defaultOpenDirectory_ = input.getParentPath();
+                  workbenchContext_.setDefaultFileDialogDir(
+                                                   input.getParentPath());
 
                   indicator.onCompleted();
                   Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -855,6 +846,7 @@ public class Source implements InsertSourceHandler,
    private final EditingTargetSource editingTargetSource_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final GlobalDisplay globalDisplay_;
+   private final WorkbenchContext workbenchContext_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileContext_;
    private final EventBus events_;
@@ -869,6 +861,4 @@ public class Source implements InsertSourceHandler,
 
    // If positive, a new tab is about to be created
    private int newTabPending_;
-   
-   private FileSystemItem defaultOpenDirectory_ = null;
 }

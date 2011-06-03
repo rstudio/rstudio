@@ -33,12 +33,14 @@ public class WorkbenchContext
       
       // track current working dir
       currentWorkingDir_ = FileSystemItem.home();
+      defaultFileDialogDir_ = FileSystemItem.home();
       eventBus.addHandler(WorkingDirChangedEvent.TYPE, 
                           new WorkingDirChangedHandler() {
          @Override
          public void onWorkingDirChanged(WorkingDirChangedEvent event)
          {
             currentWorkingDir_ = FileSystemItem.createDir(event.getPath());
+            defaultFileDialogDir_ = FileSystemItem.createDir(event.getPath());;
          }      
       }); 
    }
@@ -47,6 +49,16 @@ public class WorkbenchContext
    public FileSystemItem getCurrentWorkingDir()
    {
       return currentWorkingDir_;
+   }
+   
+   public FileSystemItem getDefaultFileDialogDir()
+   {
+      return defaultFileDialogDir_;
+   }
+   
+   public void setDefaultFileDialogDir(FileSystemItem dir)
+   {
+      defaultFileDialogDir_ = dir;
    }
    
    // mirrors behavior of rEnvironmentDir in SessionMain.cpp
@@ -71,5 +83,6 @@ public class WorkbenchContext
    
    
    FileSystemItem currentWorkingDir_ = FileSystemItem.home();
+   FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
    Session session_;
 }

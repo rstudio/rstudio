@@ -57,6 +57,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -222,6 +223,7 @@ public class TextEditingTarget implements EditingTarget
                             FileDialogs fileDialogs,
                             FileTypeRegistry fileTypeRegistry,
                             ConsoleDispatcher consoleDispatcher,
+                            WorkbenchContext workbenchContext,
                             Provider<PublishPdf> pPublishPdf,
                             Session session,
                             FontSizeManager fontSizeManager,
@@ -236,6 +238,7 @@ public class TextEditingTarget implements EditingTarget
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
+      workbenchContext_ = workbenchContext;
       session_ = session;
       fontSizeManager_ = fontSizeManager;
       pPublishPdf_ = pPublishPdf;
@@ -910,7 +913,7 @@ public class TextEditingTarget implements EditingTarget
    {
       FileSystemItem fsi = suggestedPath != null
                            ? FileSystemItem.createFile(suggestedPath)
-                           : null;
+                           : workbenchContext_.getDefaultFileDialogDir();
       fileDialogs_.saveFile(
             "Save File",
             fileContext_,
@@ -935,6 +938,9 @@ public class TextEditingTarget implements EditingTarget
                   if (input == null)
                      return;
 
+                  workbenchContext_.setDefaultFileDialogDir(
+                                                     input.getParentPath());
+                  
                   try
                   {
                      FileSystemItem saveItem = input;
@@ -1548,6 +1554,7 @@ public class TextEditingTarget implements EditingTarget
    private final FileDialogs fileDialogs_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final ConsoleDispatcher consoleDispatcher_;
+   private final WorkbenchContext workbenchContext_;
    private final Session session_;
    private final FontSizeManager fontSizeManager_;
    private DocUpdateSentinel docUpdateSentinel_;
