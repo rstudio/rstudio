@@ -148,25 +148,22 @@ FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      if (e.code() == boost::system::errc::no_such_file_or_directory)
-      {
-         // revert to the specified path if it exists, otherwise
-         // take the user home path from the system
-         FilePath safePath = revertToPath;
-         if (!safePath.exists())
-            safePath = core::system::userHomePath();
-
-         Error error = safePath.makeCurrentPath();
-         if (error)
-            LOG_ERROR(error);
-
-         return safePath;
-      }
-      else
-      {
-         throw;
-      }
+      if (e.code() != boost::system::errc::no_such_file_or_directory)
+         LOG_ERROR(Error(e.code(), ERROR_LOCATION));
    }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   // revert to the specified path if it exists, otherwise
+   // take the user home path from the system
+   FilePath safePath = revertToPath;
+   if (!safePath.exists())
+      safePath = core::system::userHomePath();
+
+   Error error = safePath.makeCurrentPath();
+   if (error)
+      LOG_ERROR(error);
+
+   return safePath;
 }
    
 Error FilePath::makeCurrent(const std::string& path)
