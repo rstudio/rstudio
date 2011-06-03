@@ -92,9 +92,6 @@ public abstract class DOMImpl {
     case "gesturestart": return 0x1000000;
     case "gesturechange": return 0x2000000;
     case "gestureend": return 0x4000000;
-    case "ended": return 0x8000000;
-    case "progress": return 0x10000000;
-    case "canplaythrough": return 0x20000000;
     default: return -1;
     }
   }-*/; 

@@ -399,50 +399,6 @@ public class Event extends NativeEvent {
   public static final int GESTUREEVENTS = ONGESTURESTART | ONGESTURECHANGE | ONGESTUREEND;
 
   /**
-   * Fired when media is fully buffered and can be played through to the end.
-   * 
-   * <p>
-   * <span style="color:red">Experimental API: This API is still under development
-   * and is subject to change.
-   * </span>
-   * </p>
-   */
-  public static final int ONCANPLAYTHROUGH = 0x20000000;
-
-  /**
-   * Fired when media stops playing.
-   * 
-   * <p>
-   * <span style="color:red">Experimental API: This API is still under development
-   * and is subject to change.
-   * </span>
-   * </p>
-   */
-  public static final int ONENDED = 0x8000000;
-
-  /**
-   * Fired when progress is made downloading media.
-   * 
-   * <p>
-   * <span style="color:red">Experimental API: This API is still under development
-   * and is subject to change.
-   * </span>
-   * </p>
-   */
-  public static final int ONPROGRESS = 0x10000000;
-
-  /**
-   * A bit-mask covering all media events.
-   * 
-   * <p>
-   * <span style="color:red">Experimental API: This API is still under development
-   * and is subject to change.
-   * </span>
-   * </p>
-   */
-  public static final int MEDIAEVENTS = ONCANPLAYTHROUGH | ONENDED | ONPROGRESS;
-
-  /**
    * Value returned by accessors when the actual integer value is undefined. In
    * Development Mode, most accessors assert that the requested attribute is
    * reliable across all supported browsers.

@@ -220,20 +220,39 @@ abstract class DOMImplStandard extends DOMImpl {
   }-*/;
 
   protected native void sinkBitlessEventImpl(Element elem, String eventTypeName) /*-{
-    if (eventTypeName == "drag")
-      elem.ondrag      = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
-    else if (eventTypeName == "dragend")
-      elem.ondragend   = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
-    else if (eventTypeName == "dragenter")
-      elem.ondragenter = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchDragEvent;
-    else if (eventTypeName == "dragleave")
-      elem.ondragleave = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
-    else if (eventTypeName == "dragover")
-      elem.ondragover  = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchDragEvent;
-    else if (eventTypeName == "dragstart")
-      elem.ondragstart = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
-    else if (eventTypeName == "drop")
-      elem.ondrop      = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+    switch(eventTypeName) {
+      case "drag":
+        elem.ondrag           = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+        break;
+      case "dragend":
+        elem.ondragend        = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+        break;
+      case "dragenter":
+        elem.ondragenter      = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchDragEvent;
+        break;
+      case "dragleave":
+        elem.ondragleave      = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+        break;
+      case "dragover":
+        elem.ondragover       = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchDragEvent;
+        break;
+      case "dragstart":
+        elem.ondragstart      = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+        break;
+      case "drop":
+        elem.ondrop           = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+        break;
+      case "canplaythrough":
+      case "ended":
+      case "progress":
+        // First call removeEventListener, so as not to add the same event listener more than once
+        elem.removeEventListener(eventTypeName, @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent, false); 
+        elem.addEventListener(eventTypeName, @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent, false); 
+        break;
+      default:
+        // catch missing cases
+        throw "Trying to sink unknown event type " + eventTypeName;
+    }
   }-*/;
 
   protected native void sinkEventsImpl(Element elem, int bits) /*-{
@@ -295,17 +314,6 @@ abstract class DOMImplStandard extends DOMImpl {
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x4000000) elem.ongestureend    = (bits & 0x4000000) ? 
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
-
-    if (bits & 0x8000000) {
-      elem.addEventListener('ended', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent, false);
-    } else {
-      elem.removeEventListener('ended', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent, false);
-    }
-    if (bits & 0x10000000) {
-      elem.addEventListener('progress', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent, false);
-    } else {
-      elem.removeEventListener('progress', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent, false);
-    }
   }-*/;
 
   private native void releaseCaptureImpl(Element elem) /*-{

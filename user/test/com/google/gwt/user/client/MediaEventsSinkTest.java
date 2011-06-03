@@ -34,33 +34,92 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class MediaEventsSinkTest extends GWTTestCase {
 
+  private static class CanPlayThroughHandlerImpl extends HandlerImpl implements
+      CanPlayThroughHandler {
+    @Override
+    public void onCanPlayThrough(CanPlayThroughEvent event) {
+      eventFired();
+    }
+  }
+
+  private static class EndedHandlerImpl extends HandlerImpl implements EndedHandler {
+    @Override
+    public void onEnded(EndedEvent event) {
+      eventFired();
+    }
+  }
+
+  private static class HandlerImpl {
+    private boolean fired = false;
+
+    public void eventFired() {
+      fired = true;
+    }
+
+    boolean hasEventFired() {
+      return fired;
+    }
+  }
+
+  private static class ProgressHandlerImpl extends HandlerImpl implements ProgressHandler {
+    @Override
+    public void onProgress(ProgressEvent event) {
+      eventFired();
+    }
+  }
+
+  /**
+   * Interface to create a widget.
+   * 
+   * @param <W> the widget type
+   */
+  private interface WidgetCreator<W extends Widget & HasAllMediaHandlers> {
+    /**
+     * Create a widget to test.
+     * 
+     * @return the new widget
+     */
+    W createWidget();
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
 
-  public void testAudioMediaEventsSinkByAddingHandler() {
+  public void testAudioEventSink() {
+    // skip tests on browsers that do not support audio
     if (!Audio.isSupported()) {
       return;
     }
-    verifyProgressEventSinkOnAddHandler(Audio.createIfSupported());
-    verifyEndedEventSinkOnAddHandler(Audio.createIfSupported());
-    verifyCanPlayThroughEventSinkOnAddHandler(Audio.createIfSupported());
+
+    verifyMediaEventSink(new WidgetCreator<Audio>() {
+      @Override
+      public Audio createWidget() {
+        return Audio.createIfSupported();
+      }
+    });
   }
 
-  public void testVideoMediaEventsSinkByAddingHandler() {
-    if (!Audio.isSupported()) {
+  public void testEventBitsUnmapped() throws Exception {
+    ProgressEvent.getType();
+    assertEquals(-1, Event.getTypeInt("progress"));
+    assertEquals(-1, Event.getTypeInt("ended"));
+    assertEquals(-1, Event.getTypeInt("canplaythrough"));
+  }
+
+  public void testVideoEventSink() {
+    // skip tests on browsers that do not support video
+    if (!Video.isSupported()) {
       return;
     }
-    verifyProgressEventSinkOnAddHandler(Video.createIfSupported());
-    verifyEndedEventSinkOnAddHandler(Video.createIfSupported());
-    verifyCanPlayThroughEventSinkOnAddHandler(Video.createIfSupported());
-  }
 
-  public void testMediaEventBitFieldsNotTriviallyZero() {
-    assertNotSame(0, Event.ONCANPLAYTHROUGH);
-    assertNotSame(0, Event.ONPROGRESS);
-    assertNotSame(0, Event.ONENDED);
+    verifyMediaEventSink(new WidgetCreator<Video>() {
+      @Override
+      public Video createWidget() {
+        return Video.createIfSupported();
+      }
+    });
   }
 
   @Override
@@ -70,91 +129,41 @@ public class MediaEventsSinkTest extends GWTTestCase {
     super.gwtTearDown();
   }
 
-  private <W extends Widget & HasAllMediaHandlers> void assertNotSunkAfterAttach(
-      W w, String eventName, boolean isSunk) {
-    assertFalse("Event should not be sunk on " + w.getClass().getName()
-        + " until a " + eventName + " handler has been added", isSunk);
-  }
+  private <W extends Widget & HasAllMediaHandlers> void verifyCanPlayThroughEventSink(W w) {
+    CanPlayThroughHandlerImpl handler = new CanPlayThroughHandlerImpl();
+    w.addCanPlayThroughHandler(handler);
 
-  private <W extends Widget & HasAllMediaHandlers> void assertSunkAfterAddHandler(
-      W w, String eventName, boolean isSunk) {
-    assertTrue("Event should have been sunk on " + w.getClass().getName()
-        + " once the widget has been attached and a " + eventName
-        + " handler has been added", isSunk);
-  }
-
-  private boolean isCanPlayThroughEventSunk(Element e) {
-    return (DOM.getEventsSunk(e) & Event.ONCANPLAYTHROUGH) != 0;
-  }
-
-  private boolean isEndedEventSunk(Element e) {
-    return (DOM.getEventsSunk(e) & Event.ONENDED) != 0;
-  }
-
-  private boolean isProgressEventSunk(Element e) {
-    return (DOM.getEventsSunk(e) & Event.ONPROGRESS) != 0;
-  }
-
-  private <W extends Widget & HasAllMediaHandlers> void verifyCanPlayThroughEventSinkOnAddHandler(
-      W w) {
-    verifyCanPlayThroughEventSinkOnAddHandler(w, w.getElement());
-  }
-
-  private <W extends Widget & HasAllMediaHandlers> void verifyCanPlayThroughEventSinkOnAddHandler(
-      W w, Element e) {
-    RootPanel.get().add(w);
-
-    assertNotSunkAfterAttach(w, CanPlayThroughEvent.getType().getName(),
-        isCanPlayThroughEventSunk(e));
-
-    w.addCanPlayThroughHandler(new CanPlayThroughHandler() {
-      public void onCanPlayThrough(CanPlayThroughEvent event) {
-      }
+    assertFalse(handler.hasEventFired());
+    w.fireEvent(new CanPlayThroughEvent() {
     });
-
-    assertSunkAfterAddHandler(w, CanPlayThroughEvent.getType().getName(),
-        isCanPlayThroughEventSunk(e));
+    assertTrue(handler.hasEventFired());
   }
 
-  private <W extends Widget & HasAllMediaHandlers> void verifyEndedEventSinkOnAddHandler(
-      W w) {
-    verifyEndedEventSinkOnAddHandler(w, w.getElement());
-  }
+  private <W extends Widget & HasAllMediaHandlers> void verifyEndedEventSink(W w) {
+    EndedHandlerImpl handler = new EndedHandlerImpl();
+    w.addEndedHandler(handler);
 
-  private <W extends Widget & HasAllMediaHandlers> void verifyEndedEventSinkOnAddHandler(
-      W w, Element e) {
-    RootPanel.get().add(w);
-
-    assertNotSunkAfterAttach(w, EndedEvent.getType().getName(),
-        isEndedEventSunk(e));
-
-    w.addEndedHandler(new EndedHandler() {
-      public void onEnded(EndedEvent event) {
-      }
+    assertFalse(handler.hasEventFired());
+    w.fireEvent(new EndedEvent() {
     });
-
-    assertSunkAfterAddHandler(w, EndedEvent.getType().getName(),
-        isEndedEventSunk(e));
+    assertTrue(handler.hasEventFired());
   }
 
-  private <W extends Widget & HasAllMediaHandlers> void verifyProgressEventSinkOnAddHandler(
-      W w) {
-    verifyProgressEventSinkOnAddHandler(w, w.getElement());
+  private void verifyMediaEventSink(WidgetCreator<?>... creators) {
+    for (WidgetCreator<?> creator : creators) {
+      verifyProgressEventSink(creator.createWidget());
+      verifyCanPlayThroughEventSink(creator.createWidget());
+      verifyEndedEventSink(creator.createWidget());
+    }
   }
 
-  private <W extends Widget & HasAllMediaHandlers> void verifyProgressEventSinkOnAddHandler(
-      W w, Element e) {
-    RootPanel.get().add(w);
+  private <W extends Widget & HasAllMediaHandlers> void verifyProgressEventSink(W w) {
+    ProgressHandlerImpl handler = new ProgressHandlerImpl();
+    w.addProgressHandler(handler);
 
-    assertNotSunkAfterAttach(w, ProgressEvent.getType().getName(),
-        isProgressEventSunk(e));
-
-    w.addProgressHandler(new ProgressHandler() {
-      public void onProgress(ProgressEvent event) {
-      }
+    assertFalse(handler.hasEventFired());
+    w.fireEvent(new ProgressEvent() {
     });
-
-    assertSunkAfterAddHandler(w, ProgressEvent.getType().getName(),
-        isProgressEventSunk(e));
+    assertTrue(handler.hasEventFired());
   }
 }

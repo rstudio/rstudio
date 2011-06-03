@@ -49,17 +49,20 @@ public abstract class MediaBase extends FocusWidget
     setElement(element);
   }
 
+  @Override
   public HandlerRegistration addCanPlayThroughHandler(
       CanPlayThroughHandler handler) {
-    return addDomHandler(handler, CanPlayThroughEvent.getType());
+    return addBitlessDomHandler(handler, CanPlayThroughEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addEndedHandler(EndedHandler handler) {
-    return addDomHandler(handler, EndedEvent.getType());
+    return addBitlessDomHandler(handler, EndedEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addProgressHandler(ProgressHandler handler) {
-    return addDomHandler(handler, ProgressEvent.getType());
+    return addBitlessDomHandler(handler, ProgressEvent.getType());
   }
 
   /**
