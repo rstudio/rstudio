@@ -7225,6 +7225,8 @@ var KeyBinding = function(editor) {
     };
 
     this.onTextInput = function(text) {
+        if (window.desktop)
+            text = window.desktop.filterText(text);
         this.$callKeyboardHandler({}, 0, text, 0);
     }
 

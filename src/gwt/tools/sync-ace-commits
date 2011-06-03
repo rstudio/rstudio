@@ -22,6 +22,7 @@ git merge \
     origin/patch-advanced-indent2 \
     origin/patch-invisible-colors \
     origin/patch-build-matchingbraceoutdent \
+    origin/patch-normalizeinput \
 
 
 make clean

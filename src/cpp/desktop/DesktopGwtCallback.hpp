@@ -83,6 +83,7 @@ public slots:
    void checkForUpdates();
    void showAboutDialog();
    bool suppressSyntaxHighlighting();
+   QString filterText(QString text);
 
 private:
    void doAction(QKeySequence::StandardKey key);
