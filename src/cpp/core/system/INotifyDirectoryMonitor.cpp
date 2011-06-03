@@ -177,12 +177,7 @@ Error DirectoryMonitor::checkForEvents(std::vector<FileChangeEvent>* pEvents)
             eventType = FileChangeEvent::FileAdded;
          else if (pEvent->mask & IN_MOVED_FROM)
             eventType = FileChangeEvent::FileRemoved;
-         else
-         {
-            LOG_WARNING_MESSAGE("Unexpected event type from inotify: " +
-                                boost::lexical_cast<std::string>(pEvent->mask));
-         }
-         
+
          // return event if we got a valid event type and the event applies to a 
          // child of the monitored directory (len == 0 occurs for root element)
          if ((eventType != FileChangeEvent::None) && (pEvent->len > 0))
@@ -235,14 +230,9 @@ Error DirectoryMonitor::stop()
       if (res < 0)
       {
          // invalid argument is expected if the directory is gone
-         if ((errno == EINVAL) && !pImpl_->directory.exists())
-         {
-            // don't set the error
-         }
-         else
-         {
+         // or the directory file descriptor is no longer valid
+         if (errno != EINVAL)
             removeWatchError = systemError(errno, ERROR_LOCATION);
-         }
       }
       
       // reset watch descriptor
