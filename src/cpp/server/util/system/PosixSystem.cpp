@@ -83,14 +83,6 @@ Error closeNonStdFileDescriptors()
    return closeFileDescriptorsFrom(STDERR_FILENO+1);
 }
 
-
-void closeStdFileDescriptors()
-{
-   ::close(STDIN_FILENO);
-   ::close(STDOUT_FILENO);
-   ::close(STDERR_FILENO);
-}
-
 const int kNotFoundError = EACCES;
 
 } // anonymouys namespace
@@ -357,11 +349,11 @@ Error launchChildProcess(std::string path,
       switch(config.stdStreamBehavior)
       {
          case StdStreamClose:
-            closeStdFileDescriptors();
+            core::system::closeStdFileDescriptors();
             break;
 
          case StdStreamDevNull:
-            closeStdFileDescriptors();
+            core::system::closeStdFileDescriptors();
             core::system::attachStdFileDescriptorsToDevNull();
             break;
 

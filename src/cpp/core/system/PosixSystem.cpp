@@ -476,6 +476,14 @@ Error closeNonStdFileDescriptors()
    return closeFileDescriptorsFrom(STDERR_FILENO+1);
 }
 
+void closeStdFileDescriptors()
+{
+   ::close(STDIN_FILENO);
+   ::close(STDOUT_FILENO);
+   ::close(STDERR_FILENO);
+}
+
+
 void attachStdFileDescriptorsToDevNull()
 {
    int fd0, fd1, fd2;

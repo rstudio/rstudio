@@ -36,11 +36,16 @@ namespace console {
 namespace {   
 
 void onForked()
-{
+{  
 #ifndef _WIN32
+   // stop listening for output
    core::system::stopOutputCapture();
-#endif
 
+   // shut down standard streams
+   core::system::closeStdFileDescriptors();
+   core::system::attachStdFileDescriptorsToDevNull();
+   std::ios::sync_with_stdio();
+#endif
 }
 
 
