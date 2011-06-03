@@ -34,7 +34,7 @@ public class JClassLiteral extends JLiteral {
 
   private JField field;
 
-  private final JType refType;
+  private JType refType;
 
   public JClassLiteral(SourceInfo sourceInfo, JType type) {
     super(addCorrelation(sourceInfo));
@@ -54,6 +54,14 @@ public class JClassLiteral extends JLiteral {
 
   public JType getType() {
     return field.getType();
+  }
+
+  /**
+   * Resolve an external reference during AST stitching.
+   */
+  public void resolve(JType newType) {
+    assert newType.replaces(refType);
+    refType = newType;
   }
 
   /**

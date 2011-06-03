@@ -22,7 +22,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JCastOperation extends JExpression {
 
-  private final JType castType;
+  private JType castType;
   private JExpression expr;
 
   public JCastOperation(SourceInfo info, JType castType, JExpression expr) {
@@ -50,6 +50,14 @@ public class JCastOperation extends JExpression {
     // TODO: revisit this when we support the concept of whether something
     // can/must complete normally!
     return true;
+  }
+
+  /**
+   * Resolve an external reference during AST stitching.
+   */
+  public void resolve(JType newType) {
+    assert newType.replaces(castType);
+    castType = newType;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

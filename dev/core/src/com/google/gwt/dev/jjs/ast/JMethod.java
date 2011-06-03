@@ -69,6 +69,18 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     NULL_METHOD.freezeParamTypes();
   }
 
+  static boolean replaces(List<? extends JMethod> newMethods, List<? extends JMethod> oldMethods) {
+    if (newMethods.size() != oldMethods.size()) {
+      return false;
+    }
+    for (int i = 0, c = newMethods.size(); i < c; ++i) {
+      if (!newMethods.get(i).replaces(oldMethods.get(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private static void trace(String title, String code) {
     System.out.println("---------------------------");
     System.out.println(title + ":");
@@ -83,12 +95,13 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
    */
   private transient JAbstractMethodBody body = null;
   private final JDeclaredType enclosingType;
-  private final boolean isAbstract;
+  private boolean isAbstract;
   private boolean isFinal;
   private final boolean isPrivate;
   private final boolean isStatic;
   private boolean isSynthetic = false;
   private final String name;
+
   private List<JType> originalParamTypes;
   private JType originalReturnType;
 
@@ -102,7 +115,9 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   private List<JParameter> params = Collections.emptyList();
   private JType returnType;
   private List<JClassType> thrownExceptions = Collections.emptyList();
+
   private boolean trace = false;
+
   private boolean traceFirst = true;
 
   /**
@@ -290,6 +305,27 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     params = Lists.remove(params, index);
   }
 
+  /**
+   * Resolve an external references during AST stitching.
+   */
+  public void resolve(JType originalReturnType, List<JType> originalParamTypes, JType returnType,
+      List<JClassType> thrownExceptions) {
+    if (getClass().desiredAssertionStatus()) {
+      assert originalReturnType.replaces(this.originalReturnType);
+      assert JType.replaces(originalParamTypes, this.originalParamTypes);
+      assert returnType.replaces(this.returnType);
+      assert JType.replaces(thrownExceptions, this.thrownExceptions);
+    }
+    this.originalReturnType = originalReturnType;
+    this.originalParamTypes = Lists.normalize(originalParamTypes);
+    this.returnType = returnType;
+    this.thrownExceptions = Lists.normalize(thrownExceptions);
+  }
+
+  public void setAbstract(boolean isAbstract) {
+    this.isAbstract = isAbstract;
+  }
+
   public void setBody(JAbstractMethodBody body) {
     this.body = body;
     if (body != null) {
@@ -395,6 +431,14 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
    */
   void readBody(ObjectInputStream stream) throws IOException, ClassNotFoundException {
     body = (JAbstractMethodBody) stream.readObject();
+  }
+
+  boolean replaces(JMethod originalMethod) {
+    if (this == originalMethod) {
+      return true;
+    }
+    return originalMethod.isExternal() && originalMethod.getSignature().equals(this.getSignature())
+        && this.getEnclosingType().replaces(originalMethod.getEnclosingType());
   }
 
   /**

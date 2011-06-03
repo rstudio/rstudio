@@ -97,6 +97,14 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
     return expr.hasSideEffects();
   }
 
+  /**
+   * Resolve an external reference during AST stitching.
+   */
+  public void resolve(JField newField) {
+    assert newField.replaces(getField());
+    target = newField;
+  }
+
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       if (instance != null) {
@@ -105,5 +113,4 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
     }
     visitor.endVisit(this, ctx);
   }
-
 }

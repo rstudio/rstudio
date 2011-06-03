@@ -31,7 +31,7 @@ public class JsonArray extends JExpression {
 
   private final List<JExpression> exprs = new ArrayList<JExpression>();
 
-  private final JClassType jsoType;
+  private JClassType jsoType;
 
   public JsonArray(SourceInfo sourceInfo, JClassType jsoType) {
     super(sourceInfo);
@@ -54,6 +54,14 @@ public class JsonArray extends JExpression {
       }
     }
     return false;
+  }
+
+  /**
+   * Resolve an external references during AST stitching.
+   */
+  public void resolve(JClassType jsoType) {
+    assert jsoType.replaces(this.jsoType);
+    this.jsoType = jsoType;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

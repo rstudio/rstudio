@@ -70,11 +70,13 @@ public class JProgram extends JNode {
       "java.lang.Iterable", "java.util.Iterator", "java.lang.AssertionError", "java.lang.Boolean",
       "java.lang.Byte", "java.lang.Character", "java.lang.Short", "java.lang.Integer",
       "java.lang.Long", "java.lang.Float", "java.lang.Double", "java.lang.Throwable",
-      "com.google.gwt.core.client.GWT", "com.google.gwt.core.client.JavaScriptObject",
+      "com.google.gwt.core.client.GWT", JProgram.JAVASCRIPTOBJECT,
       "com.google.gwt.lang.ClassLiteralHolder", "com.google.gwt.core.client.RunAsyncCallback",
       "com.google.gwt.core.client.impl.AsyncFragmentLoader",
       "com.google.gwt.core.client.impl.Impl", "com.google.gwt.lang.EntryMethodHolder",
       "com.google.gwt.core.client.prefetch.RunAsyncCode"));
+
+  public static final String JAVASCRIPTOBJECT = "com.google.gwt.core.client.JavaScriptObject";
 
   static final Map<String, Set<String>> traceMethods = new HashMap<String, Set<String>>();
 
@@ -381,32 +383,47 @@ public class JProgram extends JNode {
     entryMethods.add(entryPoint);
   }
 
-  public JClassType createClass(SourceInfo info, String name, boolean isAbstract, boolean isFinal) {
-    JClassType x = new JClassType(info, name, isAbstract, isFinal);
-
-    allTypes.add(x);
-    putIntoTypeMap(name, x);
+  public void addType(JDeclaredType type) {
+    allTypes.add(type);
+    String name = type.getName();
+    putIntoTypeMap(name, type);
 
     if (CODEGEN_TYPES_SET.contains(name)) {
-      codeGenTypes.add(x);
+      codeGenTypes.add((JClassType) type);
     }
     if (INDEX_TYPES_SET.contains(name)) {
-      indexedTypes.put(x.getShortName(), x);
+      indexedTypes.put(type.getShortName(), type);
+      for (JMethod method : type.getMethods()) {
+        if (!method.isPrivate()) {
+          indexedMethods.put(type.getShortName() + '.' + method.getName(), method);
+        }
+      }
+      for (JField field : type.getFields()) {
+        indexedFields.put(type.getShortName() + '.' + field.getName(), field);
+      }
       if (name.equals("java.lang.Object")) {
-        typeJavaLangObject = x;
+        typeJavaLangObject = (JClassType) type;
       } else if (name.equals("java.lang.String")) {
-        typeString = x;
+        typeString = (JClassType) type;
       } else if (name.equals("java.lang.Enum")) {
-        typeJavaLangEnum = x;
+        typeJavaLangEnum = (JClassType) type;
       } else if (name.equals("java.lang.Class")) {
-        typeClass = x;
-      } else if (name.equals("com.google.gwt.core.client.JavaScriptObject")) {
-        typeSpecialJavaScriptObject = x;
+        typeClass = (JClassType) type;
+      } else if (name.equals(JAVASCRIPTOBJECT)) {
+        typeSpecialJavaScriptObject = (JClassType) type;
       } else if (name.equals("com.google.gwt.lang.ClassLiteralHolder")) {
-        typeSpecialClassLiteralHolder = x;
+        typeSpecialClassLiteralHolder = (JClassType) type;
+      } else if (name.equals("java.lang.Cloneable")) {
+        typeJavaLangCloneable = (JInterfaceType) type;
+      } else if (name.equals("java.io.Serializable")) {
+        typeJavaIoSerializable = (JInterfaceType) type;
       }
     }
+  }
 
+  public JClassType createClass(SourceInfo info, String name, boolean isAbstract, boolean isFinal) {
+    JClassType x = new JClassType(info, name, isAbstract, isFinal);
+    addType(x);
     return x;
   }
 
@@ -460,19 +477,7 @@ public class JProgram extends JNode {
 
   public JInterfaceType createInterface(SourceInfo info, String name) {
     JInterfaceType x = new JInterfaceType(info, name);
-
-    allTypes.add(x);
-    putIntoTypeMap(name, x);
-
-    if (INDEX_TYPES_SET.contains(name)) {
-      indexedTypes.put(x.getShortName(), x);
-      if (name.equals("java.lang.Cloneable")) {
-        typeJavaLangCloneable = x;
-      } else if (name.equals("java.io.Serializable")) {
-        typeJavaIoSerializable = x;
-      }
-    }
-
+    addType(x);
     return x;
   }
 

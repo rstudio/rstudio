@@ -95,12 +95,12 @@ public class GwtAstBuilderTest extends TestCase {
 
     for (JDeclaredType genJavaAstType : jprogram.getDeclaredTypes()) {
       String typeName = genJavaAstType.getName();
-      if ("com.google.gwt.core.client.JavaScriptObject".equals(typeName)) {
-        // Known mismatch; genJavaAst version implements all JSO interfaces.
+      if ("com.google.gwt.core.client.GWT".equals(typeName)) {
+        // Known mismatch; UnifyAst fills in the magic methods.
         continue;
       }
-      if (typeName.startsWith("com.google.gwt.lang.asyncloaders")) {
-        // GwtAstBuilder doesn't build these; added later.
+      if ("com.google.gwt.core.client.JavaScriptObject".equals(typeName)) {
+        // Known mismatch; genJavaAst version implements all JSO interfaces.
         continue;
       }
       if ("com.google.gwt.dev.jjs.test.B$1".equals(typeName)) {

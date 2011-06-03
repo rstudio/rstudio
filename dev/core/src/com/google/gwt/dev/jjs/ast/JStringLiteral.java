@@ -22,7 +22,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JStringLiteral extends JValueLiteral {
 
-  private final JClassType stringType;
+  private JClassType stringType;
   private final String value;
 
   public JStringLiteral(SourceInfo sourceInfo, String value, JClassType stringType) {
@@ -48,6 +48,14 @@ public class JStringLiteral extends JValueLiteral {
   @Override
   public Object getValueObj() {
     return value;
+  }
+
+  /**
+   * Resolve an external references during AST stitching.
+   */
+  public void resolve(JClassType stringType) {
+    assert stringType.replaces(this.stringType);
+    this.stringType = stringType;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

@@ -22,6 +22,7 @@ import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -53,6 +54,7 @@ import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.HashSet;
+import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -484,13 +486,12 @@ public class CodeSplitter {
   }
 
   /**
-   * Installs the initial load sequence into the
-   * AsyncFragmentLoader.BROWSER_LOADER. The initializer looks like this:
+   * Installs the initial load sequence into AsyncFragmentLoader.BROWSER_LOADER.
+   * The initializer looks like this:
    * 
    * <pre>
-       public static AsyncFragmentLoader BROWSER_LOADER = new AsyncFragmentLoader(1,
-         new int[] {}, new StandardLoadingStrategy(), new StandardLogger());
-     </pre>
+   * AsyncFragmentLoader BROWSER_LOADER = makeBrowserLoader(1, new int[]{});
+   * </pre>
    * 
    * The second argument (<code>new int[]</code>) gets replaced by an array
    * corresponding to <code>initialLoadSequence</code>.
@@ -498,14 +499,19 @@ public class CodeSplitter {
   private static void installInitialLoadSequenceField(JProgram program,
       LinkedHashSet<Integer> initialLoadSequence) {
     // Arg 1 is initialized in the source as "new int[]{}".
-    JMethodCall constructorCall = ReplaceRunAsyncs.getBrowserLoaderConstructor(program);
-    JNewArray newArray = (JNewArray) constructorCall.getArgs().get(1);
-    assert newArray.getArrayType().getElementType() == JPrimitiveType.INT;
-    assert newArray.initializers.size() == 0;
-
+    JMethodCall call = ReplaceRunAsyncs.getBrowserLoaderConstructor(program);
+    JExpression arg1 = call.getArgs().get(1);
+    assert arg1 instanceof JNewArray;
+    JArrayType arrayType = program.getTypeArray(JPrimitiveType.INT);
+    assert ((JNewArray) arg1).getArrayType() == arrayType;
+    List<JExpression> initializers = new ArrayList<JExpression>(initialLoadSequence.size());
     for (int sp : initialLoadSequence) {
-      newArray.initializers.add(JIntLiteral.get(sp));
+      initializers.add(JIntLiteral.get(sp));
     }
+    JNewArray newArray =
+        JNewArray.createInitializers(arg1.getSourceInfo(), arrayType, Lists
+            .normalizeUnmodifiable(initializers));
+    call.setArg(1, newArray);
   }
 
   private static <T> T last(T[] array) {

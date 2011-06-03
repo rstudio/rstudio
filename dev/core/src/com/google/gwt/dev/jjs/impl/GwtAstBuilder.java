@@ -1515,7 +1515,7 @@ public class GwtAstBuilder {
       if (type == null) {
         return false;
       }
-      if ("com.google.gwt.core.client.JavaScriptObject".equals(type.getName())) {
+      if (JProgram.JAVASCRIPTOBJECT.equals(type.getName())) {
         return true;
       }
       return isJavaScriptObject(type.getSuperClass());
@@ -1762,11 +1762,6 @@ public class GwtAstBuilder {
         implementGetClass(type);
       }
 
-      // Reimplement GWT.isClient(), GWT.isProdMode(), GWT.isScript().
-      if ("com.google.gwt.core.client.GWT".equals(type.getName())) {
-        implementGwtMethods(type);
-      }
-
       if (type instanceof JEnumType) {
         processEnumType((JEnumType) type);
       }
@@ -1789,8 +1784,6 @@ public class GwtAstBuilder {
           }
         }
       }
-
-      // TODO: uprefs???
 
       curClass = classStack.pop();
     }
@@ -2154,6 +2147,9 @@ public class GwtAstBuilder {
       return new JStringLiteral(info, intern(string), javaLangString);
     }
 
+    /**
+     * TODO(scottb): move to UnifyAst and only for non-abstract classes.
+     */
     private void implementGetClass(JDeclaredType type) {
       JMethod method = type.getMethods().get(2);
       assert ("getClass".equals(method.getName()));
@@ -2170,21 +2166,6 @@ public class GwtAstBuilder {
         implementMethod(method, new JFieldRef(info, makeThisRef(info), arrayClassField, type));
       } else {
         implementMethod(method, new JClassLiteral(info, type));
-      }
-    }
-
-    private void implementGwtMethods(JDeclaredType type) {
-      for (JMethod method : type.getMethods()) {
-        if (method.getOriginalParamTypes().size() != 0) {
-          continue;
-        }
-        if ("isClient".equals(method.getName())) {
-          implementMethod(method, JBooleanLiteral.TRUE);
-        } else if ("isProdMode".equals(method.getName())) {
-          implementMethod(method, JBooleanLiteral.TRUE);
-        } else if ("isScript".equals(method.getName())) {
-          implementMethod(method, JBooleanLiteral.TRUE);
-        }
       }
     }
 
@@ -2777,7 +2758,7 @@ public class GwtAstBuilder {
     }
   }
 
-  public static boolean ENABLED = false;
+  public static boolean ENABLED = System.getProperties().containsKey("x.gwt.astBuilder");
 
   private static final char[] _STRING = "_String".toCharArray();
   private static final String ARRAY_LENGTH_FIELD = "length";

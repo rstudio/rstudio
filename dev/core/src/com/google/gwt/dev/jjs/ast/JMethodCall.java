@@ -63,7 +63,7 @@ public class JMethodCall extends JExpression {
 
   private List<JExpression> args = Collections.emptyList();
   private JExpression instance;
-  private final JMethod method;
+  private JMethod method;
   private final JType overrideReturnType;
   private Polymorphism polymorphism = Polymorphism.NORMAL;
 
@@ -198,6 +198,14 @@ public class JMethodCall extends JExpression {
   }
 
   /**
+   * Resolve an external reference during AST stitching.
+   */
+  public void resolve(JMethod newMethod) {
+    assert newMethod.replaces(method);
+    method = newMethod;
+  }
+
+  /**
    * Sets the argument at the specified index.
    */
   public void setArg(int index, JExpression arg) {
@@ -241,5 +249,4 @@ public class JMethodCall extends JExpression {
     }
     args = visitor.acceptImmutable(args);
   }
-
 }

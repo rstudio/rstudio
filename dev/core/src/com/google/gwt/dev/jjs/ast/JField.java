@@ -175,4 +175,11 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     }
   }
 
+  boolean replaces(JField originalField) {
+    if (this == originalField) {
+      return true;
+    }
+    return originalField.isExternal() && originalField.getSignature().equals(this.getSignature())
+        && this.getEnclosingType().replaces(originalField.getEnclosingType());
+  }
 }

@@ -71,4 +71,10 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
   public JReferenceType getUnderlyingType() {
     return this;
   }
+
+  @Override
+  public boolean replaces(JType originalType) {
+    return super.replaces(originalType)
+        && canBeNull() == ((JReferenceType) originalType).canBeNull();
+  }
 }

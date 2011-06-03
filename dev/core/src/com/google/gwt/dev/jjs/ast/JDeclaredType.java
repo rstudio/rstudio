@@ -240,6 +240,16 @@ public abstract class JDeclaredType extends JReferenceType {
   }
 
   /**
+   * Resolves external references during AST stitching.
+   */
+  public void resolve(List<JInterfaceType> resolvedInterfaces, List<JNode> resolvedRescues) {
+    assert JType.replaces(resolvedInterfaces, superInterfaces);
+    superInterfaces = Lists.normalize(resolvedInterfaces);
+    assert JNameOf.replacesNamedElements(resolvedRescues, artificialRescues);
+    artificialRescues = Lists.normalize(resolvedRescues);
+  }
+
+  /**
    * Sets the type which encloses this types.
    * 
    * @param enclosingType May be {@code null}.

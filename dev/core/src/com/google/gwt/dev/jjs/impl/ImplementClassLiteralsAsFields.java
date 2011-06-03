@@ -219,16 +219,9 @@ public class ImplementClassLiteralsAsFields {
         JMethod valueOfMethod = null;
         for (JMethod methodIt : enumType.getMethods()) {
           if (methodIt.isStatic()) {
-            if ("values".equals(methodIt.getName())) {
-              if (methodIt.getOriginalParamTypes().size() != 0) {
-                continue;
-              }
+            if (methodIt.getSignature().startsWith("values()")) {
               valuesMethod = methodIt;
-            } else if ("valueOf".equals(methodIt.getName())) {
-              if (methodIt.getOriginalParamTypes().size() != 1
-                  || methodIt.getOriginalParamTypes().get(0) != program.getTypeJavaLangString()) {
-                continue;
-              }
+            } else if (methodIt.getSignature().startsWith("valueOf(Ljava/lang/String;)")) {
               valueOfMethod = methodIt;
             }
           }

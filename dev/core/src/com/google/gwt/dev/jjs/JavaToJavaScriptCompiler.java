@@ -82,6 +82,7 @@ import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
+import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.jjs.impl.HandleCrossFragmentReferences;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
@@ -106,6 +107,7 @@ import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
 import com.google.gwt.dev.jjs.impl.TypeLinker;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
+import com.google.gwt.dev.jjs.impl.UnifyAst;
 import com.google.gwt.dev.jjs.impl.gflow.DataflowOptimizer;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
@@ -528,60 +530,89 @@ public class JavaToJavaScriptCompiler {
 
     Memory.maybeDumpMemory("CompStateBuilt");
 
-    // Compile the source and get the compiler so we can get the parse tree
-    CompilationUnitDeclaration[] goldenCuds =
-        WebModeCompilerFrontEnd.getCompilationUnitDeclarations(logger, allRootTypes
-            .toArray(new String[allRootTypes.size()]), rpo, TypeLinker.NULL_TYPE_LINKER).compiledUnits;
-
-    List<String> finalTypeOracleTypes = Lists.create();
-    if (precompilationMetrics != null) {
-      for (com.google.gwt.core.ext.typeinfo.JClassType type : typeOracle.getTypes()) {
-        finalTypeOracleTypes =
-            Lists.add(finalTypeOracleTypes, type.getPackage().getName() + "." + type.getName());
-      }
-      precompilationMetrics.setFinalTypeOracleTypes(finalTypeOracleTypes);
-    }
-
-    // Free up memory.
-    rpo.clear();
-    Memory.maybeDumpMemory("GoldenCudsBuilt");
-
-    // Check for compilation problems. We don't log here because any problems
-    // found here will have already been logged by AbstractCompiler.
-    checkForErrors(logger, goldenCuds, false);
-
     CorrelationFactory correlator =
         options.isSoycExtra() ? RealCorrelationFactory.INSTANCE : DummyCorrelationFactory.INSTANCE;
     JProgram jprogram = new JProgram(correlator);
     JsProgram jsProgram = new JsProgram(correlator);
 
     try {
-      /*
-       * (1) Build a flattened map of TypeDeclarations => JType. The resulting
-       * map contains entries for all reference types. BuildTypeMap also parses
-       * all JSNI.
-       */
-      TypeMap typeMap = new TypeMap(jprogram);
-      TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap, goldenCuds, jsProgram);
+      if (GwtAstBuilder.ENABLED) {
+        UnifyAst unifyAst = new UnifyAst(jprogram, jsProgram, options, rpo);
+        unifyAst.addRootTypes(allRootTypes);
+        // TODO: errors.
+        // TODO: move this into UnifyAst.
+        findEntryPoints(logger, rpo, declEntryPts, jprogram);
+        unifyAst.exec(logger);
+        // TODO: errors.
 
-      // BuildTypeMap can uncover syntactic JSNI errors; report & abort
-      checkForErrors(logger, goldenCuds, true);
+        List<String> finalTypeOracleTypes = Lists.create();
+        if (precompilationMetrics != null) {
+          for (com.google.gwt.core.ext.typeinfo.JClassType type : typeOracle.getTypes()) {
+            finalTypeOracleTypes =
+                Lists.add(finalTypeOracleTypes, type.getPackage().getName() + "." + type.getName());
+          }
+          precompilationMetrics.setFinalTypeOracleTypes(finalTypeOracleTypes);
+        }
 
-      // Compute all super type/sub type info
-      jprogram.typeOracle.computeBeforeAST();
+        // Free up memory.
+        rpo.clear();
 
-      // (2) Create our own Java AST from the JDT AST.
-      GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, options);
+        // Compute all super type/sub type info
+        jprogram.typeOracle.computeBeforeAST();
+      } else {
 
-      // GenerateJavaAST can uncover semantic JSNI errors; report & abort
-      checkForErrors(logger, goldenCuds, true);
+        // Compile the source and get the compiler so we can get the parse tree
+        CompilationUnitDeclaration[] goldenCuds =
+            WebModeCompilerFrontEnd.getCompilationUnitDeclarations(logger, allRootTypes
+                .toArray(new String[allRootTypes.size()]), rpo, TypeLinker.NULL_TYPE_LINKER).compiledUnits;
 
-      Memory.maybeDumpMemory("AstBuilt");
+        List<String> finalTypeOracleTypes = Lists.create();
+        if (precompilationMetrics != null) {
+          for (com.google.gwt.core.ext.typeinfo.JClassType type : typeOracle.getTypes()) {
+            finalTypeOracleTypes =
+                Lists.add(finalTypeOracleTypes, type.getPackage().getName() + "." + type.getName());
+          }
+          precompilationMetrics.setFinalTypeOracleTypes(finalTypeOracleTypes);
+        }
 
-      // Allow GC
-      goldenCuds = null;
-      typeMap = null;
-      allTypeDeclarations = null;
+        // Free up memory.
+        rpo.clear();
+        Memory.maybeDumpMemory("GoldenCudsBuilt");
+
+        /*
+         * Check for compilation problems. We don't log here because any
+         * problems found here will have already been logged by
+         * AbstractCompiler.
+         */
+        checkForErrors(logger, goldenCuds, false);
+
+        /*
+         * (1) Build a flattened map of TypeDeclarations => JType. The resulting
+         * map contains entries for all reference types. BuildTypeMap also
+         * parses all JSNI.
+         */
+        TypeMap typeMap = new TypeMap(jprogram);
+        TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap, goldenCuds, jsProgram);
+
+        // BuildTypeMap can uncover syntactic JSNI errors; report & abort
+        checkForErrors(logger, goldenCuds, true);
+
+        // Compute all super type/sub type info
+        jprogram.typeOracle.computeBeforeAST();
+
+        // (2) Create our own Java AST from the JDT AST.
+        GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, options);
+
+        // GenerateJavaAST can uncover semantic JSNI errors; report & abort
+        checkForErrors(logger, goldenCuds, true);
+
+        Memory.maybeDumpMemory("AstBuilt");
+
+        // Allow GC
+        goldenCuds = null;
+        typeMap = null;
+        allTypeDeclarations = null;
+      }
 
       Memory.maybeDumpMemory("AstOnly");
       AstDumper.maybeDumpAST(jprogram);
@@ -611,8 +642,10 @@ public class JavaToJavaScriptCompiler {
         AssertionRemover.exec(jprogram);
       }
 
-      // Replace GWT.create calls with JGwtCreate nodes.
-      ReplaceRebinds.exec(logger, jprogram, rpo);
+      if (!GwtAstBuilder.ENABLED) {
+        // Replace GWT.create calls with JGwtCreate nodes.
+        ReplaceRebinds.exec(logger, jprogram, rpo);
+      }
 
       // Fix up GWT.runAsync()
       if (module != null && options.isRunAsyncEnabled()) {
@@ -620,8 +653,10 @@ public class JavaToJavaScriptCompiler {
         CodeSplitter.pickInitialLoadSequence(logger, jprogram, module.getProperties());
       }
 
-      // Resolve entry points, rebinding non-static entry points.
-      findEntryPoints(logger, rpo, declEntryPts, jprogram);
+      if (!GwtAstBuilder.ENABLED) {
+        // Resolve entry points, rebinding non-static entry points.
+        findEntryPoints(logger, rpo, declEntryPts, jprogram);
+      }
 
       ImplementClassLiteralsAsFields.exec(jprogram);
 

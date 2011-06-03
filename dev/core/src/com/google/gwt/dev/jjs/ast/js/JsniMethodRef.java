@@ -21,7 +21,7 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
-import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 
 /**
@@ -30,7 +30,7 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 public class JsniMethodRef extends JMethodCall {
 
   private final String ident;
-  private final JClassType jsoType;
+  private JClassType jsoType;
 
   public JsniMethodRef(SourceInfo info, String ident, JMethod method, JClassType jsoType) {
     // Just use a null literal as the qualifier on a non-static method
@@ -45,13 +45,23 @@ public class JsniMethodRef extends JMethodCall {
   }
 
   @Override
-  public JType getType() {
+  public JClassType getType() {
     return jsoType;
   }
 
   @Override
   public boolean hasSideEffects() {
     return false;
+  }
+
+  /**
+   * Resolve an external references during AST stitching.
+   */
+  public void resolve(JMethod newMethod, JClassType jsoType) {
+    super.resolve(newMethod);
+    assert !jsoType.isExternal();
+    assert jsoType.getName().equals(JProgram.JAVASCRIPTOBJECT);
+    this.jsoType = jsoType;
   }
 
   @Override

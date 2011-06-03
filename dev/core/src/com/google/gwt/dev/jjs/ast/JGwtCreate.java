@@ -51,20 +51,20 @@ public class JGwtCreate extends JExpression {
     return new JNewInstance(info, noArgCtor, enclosingType);
   }
 
+  /**
+   * Rebinds are always on a source type name.
+   */
+  public static String nameOf(JType type) {
+    // TODO: replace with BinaryName.toSourceName(type.getName())?
+    return type.getName().replace('$', '.');
+  }
+
   static List<String> nameOf(Collection<? extends JType> types) {
     List<String> result = Lists.create();
     for (JType type : types) {
       result = Lists.add(result, nameOf(type));
     }
     return Lists.normalizeUnmodifiable(result);
-  }
-
-  /**
-   * Rebinds are always on a source type name.
-   */
-  static String nameOf(JType type) {
-    // TODO: replace with BinaryName.toSourceName(type.getName())?
-    return type.getName().replace('$', '.');
   }
 
   private static ArrayList<JExpression> createInstantiationExpressions(SourceInfo info,

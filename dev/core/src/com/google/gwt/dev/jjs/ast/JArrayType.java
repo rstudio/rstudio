@@ -85,6 +85,12 @@ public class JArrayType extends JReferenceType {
     return elementType.isFinal();
   }
 
+  @Override
+  public boolean replaces(JType originalType) {
+    return (originalType instanceof JArrayType)
+        && elementType.replaces(((JArrayType) originalType).getElementType());
+  }
+
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

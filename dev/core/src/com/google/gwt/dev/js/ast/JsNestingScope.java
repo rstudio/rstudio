@@ -30,7 +30,7 @@ public abstract class JsNestingScope extends JsScope {
    */
   private transient List<JsScope> children = Lists.create();
 
-  private final JsScope parent;
+  private JsScope parent;
 
   /**
    * Create a scope with parent.
@@ -57,6 +57,12 @@ public abstract class JsNestingScope extends JsScope {
   @Override
   public final JsScope getParent() {
     return parent;
+  }
+
+  public void nestInto(JsScope newParent) {
+    assert getParent() == JsRootScope.INSTANCE;
+    parent = newParent;
+    parent.addChild(this);
   }
 
   @Override

@@ -23,7 +23,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 public class JInstanceOf extends JExpression {
 
   private JExpression expr;
-  private final JReferenceType testType;
+  private JReferenceType testType;
 
   public JInstanceOf(SourceInfo info, JReferenceType testType, JExpression expression) {
     super(info);
@@ -46,6 +46,14 @@ public class JInstanceOf extends JExpression {
   @Override
   public boolean hasSideEffects() {
     return false;
+  }
+
+  /**
+   * Resolve an external reference during AST stitching.
+   */
+  public void resolve(JReferenceType newType) {
+    assert newType.replaces(testType);
+    testType = newType;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

@@ -20,7 +20,6 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JNode;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 
 import java.util.ArrayList;
@@ -55,14 +54,14 @@ public class JsonObject extends JExpression {
   }
 
   public final List<JsonPropInit> propInits = new ArrayList<JsonPropInit>();
-  private final JClassType jsoType;
+  private JClassType jsoType;
 
   public JsonObject(SourceInfo sourceInfo, JClassType jsoType) {
     super(sourceInfo);
     this.jsoType = jsoType;
   }
 
-  public JType getType() {
+  public JClassType getType() {
     return jsoType;
   }
 
@@ -74,6 +73,14 @@ public class JsonObject extends JExpression {
       }
     }
     return false;
+  }
+
+  /**
+   * Resolve an external references during AST stitching.
+   */
+  public void resolve(JClassType jsoType) {
+    assert jsoType.replaces(this.jsoType);
+    this.jsoType = jsoType;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

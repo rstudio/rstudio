@@ -87,10 +87,6 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
 
   /**
    * Sets this type's super class.
-   * 
-   * TODO: to replace this setter with a final field, we'd have to refactor
-   * {@link com.google.gwt.dev.jjs.impl.BuildTypeMap} to use the builder pattern
-   * and resolve super types first.
    */
   public final void setSuperClass(JClassType superClass) {
     this.superClass = superClass;

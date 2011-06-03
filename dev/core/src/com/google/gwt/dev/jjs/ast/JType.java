@@ -18,10 +18,24 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.util.StringInterner;
 
+import java.util.List;
+
 /**
  * Base class for any types entity.
  */
 public abstract class JType extends JNode implements HasName, CanBeFinal {
+
+  static boolean replaces(List<? extends JType> newTypes, List<? extends JType> oldTypes) {
+    if (newTypes.size() != oldTypes.size()) {
+      return false;
+    }
+    for (int i = 0, c = newTypes.size(); i < c; ++i) {
+      if (!newTypes.get(i).replaces(oldTypes.get(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   protected final String name;
 
@@ -59,12 +73,21 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
    * host execution environment. For example, while compiling for the JVM, JRE
    * types are external types. External types definitions are provided by class
    * files which are considered opaque by the GWT compiler.
-   *
-   * TODO(scottb): The meaning of this method changes after refactoring to stitch 
-   * from partial ASTs.
+   * 
+   * TODO(scottb): Means something totally different after AST stiching is done.
    */
   public boolean isExternal() {
     return false;
+  }
+
+  /**
+   * Checks type replacement from an external type to a resolved canonical type.
+   */
+  boolean replaces(JType originalType) {
+    if (this == originalType) {
+      return true;
+    }
+    return originalType.isExternal() && originalType.getName().equals(this.getName());
   }
 
 }
