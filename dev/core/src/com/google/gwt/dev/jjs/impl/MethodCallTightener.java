@@ -35,6 +35,17 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
  * 
  * This is possible because the qualifier might have been tightened by
  * {@link com.google.gwt.dev.jjs.impl.TypeTightener}.
+ * 
+ * For example, given the code:
+ * 
+ * <pre>
+ *   List foo = new ArrayList<String>(); 
+ *   foo.add("bar");
+ * </pre>
+ * 
+ * The type of foo is tightened by TypeTightener from type List to be of type
+ * ArrayList. This means that MethodCallTightener can analyze the polymorphic
+ * call List.add() on foo and tighten it to the more specific ArrayList.add().
  */
 public class MethodCallTightener {
   /**

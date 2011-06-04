@@ -71,6 +71,31 @@ import java.util.Set;
  * types can be inferred for locals, fields, parameters, and method return
  * types. We also optimize dynamic casts and instanceof operations.
  * 
+ * Examples:
+ * 
+ * This declaration of variable foo:
+ * 
+ * <pre>
+ * final List foo = new ArrayList();
+ * </pre>
+ * 
+ * can be tightened from List to ArrayList because no type other than ArrayList
+ * can ever be assigned to foo.
+ * 
+ * The return value of the method bar:
+ * 
+ * <pre>
+ * Collection bar() { 
+ *   return new LinkedHashSet; 
+ * }
+ * </pre>
+ * 
+ * can be tightened from Collection to LinkedHashSet since it
+ * will never return any other type.
+ * 
+ * By working in conjunction with {@link MethodCallTightener}, Type tightening
+ * can eliminate generating run-time dispatch code for polymorphic methods.
+ * 
  * Type flow occurs automatically in most JExpressions. But locals, fields,
  * parameters, and method return types serve as "way points" where type
  * information is fixed based on the declared type. Type tightening can be done
