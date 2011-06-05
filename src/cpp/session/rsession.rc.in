@@ -10,7 +10,7 @@ BEGIN
         BLOCK "040904E4"
         BEGIN
             VALUE "CompanyName",      "RStudio, Inc.\0"
-            VALUE "FileDescription",  "rsession\0"
+            VALUE "FileDescription",  "RStudio R Session\0"
             VALUE "FileVersion",      "${CPACK_PACKAGE_VERSION_MAJOR},${CPACK_PACKAGE_VERSION_MINOR},${CPACK_PACKAGE_VERSION_PATCH},0\0"
             VALUE "InternalName",     "rsession\0"
             VALUE "LegalCopyright",   "Copyright (C) 2009-11 by RStudio, Inc.\0"
