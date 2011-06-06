@@ -104,9 +104,11 @@ public class SafeUriHostedModeUtils {
   }
 
   private static boolean isValidUri(String uri) {
-    if (!uri.matches(HREF_UCSCHAR)) {
-      return false;
-    }
+    // TODO(xtof): The regex appears to cause stack overflows in some cases.
+    // Investigate and re-enable.
+    // if (!uri.matches(HREF_UCSCHAR)) {
+    //   return false;
+    // }
     /*
      * pre-process to turn href-ucschars into ucschars, and encode to URI.
      *
