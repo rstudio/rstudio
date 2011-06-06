@@ -296,6 +296,13 @@ if(RSTUDIO_BUNDLE_QT)
    endif()
 endif(RSTUDIO_BUNDLE_QT)
 
+# add rstudio icon to root (so people installing from source or tar.gz can find it
+if (UNIX AND NOT APPLE)
+   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/freedesktop/icons/48x48/rstudio.png
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
+endif()
+
+
 # install desktop integration files on linux
 if(RSTUDIO_INSTALL_FREEDESKTOP)
 

@@ -2,6 +2,29 @@
 
 set -e
 
+# make standard package
 ./make-package Desktop $1 $2
+
+# make tar.gz
+
+# switch to build dir and determine name of package root
+CURRENT_DIR=`pwd`
+PACKAGE_DIR=$CURRENT_DIR/build-Desktop-$1/_CPack_Packages/Linux/$1
+cd $PACKAGE_DIR
+PACKAGE_ROOT=`ls -d */`
+PACKAGE_ROOT=${PACKAGE_ROOT%/}
+
+# tarball name
+PACKAGE_TAR=$PACKAGE_DIR/$PACKAGE_ROOT.tar.gz
+
+# switch to rstudio dir and create tarball
+cd ${PACKAGE_ROOT}/usr/lib
+tar -c -z -f $PACKAGE_TAR rstudio
+
+# back to current dir
+cd $CURRENT_DIR
+
+
+
 
 
