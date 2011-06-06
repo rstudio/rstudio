@@ -21,6 +21,7 @@ import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.OptionElement;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.user.client.impl.DOMImpl;
+import com.google.gwt.user.client.ui.PotentialElement;
 
 /**
  * This class provides a set of static methods that allow you to manipulate the
@@ -52,12 +53,18 @@ public class DOM {
 
   /**
    * Appends one element to another's list of children.
-   * 
+   * If the child element is a {@link PotentialElement}, it is first resolved
+   * {@see PotentialElement#resolve(Element)}.
+   *
    * @param parent the parent element
    * @param child its new child
    */
   public static void appendChild(Element parent, Element child) {
-    parent.appendChild(child);
+    assert !PotentialElement.isPotential(parent) : "Cannot append to a PotentialElement";
+
+    // If child isn't a PotentialElement, resolve() returns
+    // the Element itself.
+    parent.appendChild(PotentialElement.resolve(child));
   }
 
   /**

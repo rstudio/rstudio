@@ -63,7 +63,6 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
   public Command detachedInitializationCallback = null;
 
   protected SafeHtml html = null;
-  private String styleName = null;
 
   /**
    * Creates an HTML panel with the specified HTML contents inside a DIV
@@ -87,6 +86,7 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
    */
   public RenderablePanel(SafeHtml safeHtml) {
     this.html = safeHtml;
+    setElement(PotentialElement.build(this));
   }
 
   /**
@@ -137,22 +137,6 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
     this.addAndReplaceElement(widget.asWidget(), toReplace);
   }
 
-  @Override
-  public com.google.gwt.user.client.Element getElement() {
-    if (!isFullyInitialized()) {
-      // In case we haven't finished initialization yet, finish it now.
-      buildAndInitDivContainer();
-      html = null;
-
-      // We might have to add a style that has been previously set.
-      if (styleName != null) {
-        super.setStyleName(styleName);
-        styleName = null;
-      }
-    }
-    return super.getElement();
-  }
-
   /**
    * Adopts the given, but doesn't change anything about its DOM element.
    * Should only be used for widgets with elements that are children of this
@@ -187,6 +171,7 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
 
   @Override
   public void render(String id, SafeHtmlBuilder builder) {
+    String styleName = getStyleName();
     if (styleName != null) {
       builder.append(TEMPLATE.renderWithIdAndClass(id, styleName, getInnerHtml()));
       styleName = null;
@@ -196,14 +181,10 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
   }
 
   @Override
-  public void setStyleName(String styleName) {
-    if (!isFullyInitialized()) {
-      // If we haven't built the actual HTML element yet, we save the style
-      // to apply later on.
-      this.styleName = styleName;
-    } else {
-      super.setStyleName(styleName);
-    }
+  public Element resolvePotentialElement() {
+    buildAndInitDivContainer();
+    html = null;
+    return getElement();
   }
 
   @Override
@@ -215,9 +196,8 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
        * build the whole tree at once.
        */
       throw new IllegalStateException(
-          "wrapElement() cannot be called twice, or after a call to getElement()"
-          + "has forced the widget to render itself (e.g. after adding it to a"
-          + "panel)");
+          "wrapElement() cannot be called twice, or after forcing the widget to"
+          + " render itself (e.g. after adding it to a panel)");
     }
 
     setElement(element);
@@ -252,6 +232,14 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
     // Build the div that'll container the panel's HTML.
     Element element = Document.get().createDivElement();
     element.setInnerHTML(getInnerHtml().asString());
+
+    // TODO(rdcastro): Implement something like
+    // element.mergeFrom(getElement());
+    String styleName = getStyleName();
+    if (styleName != null) {
+      element.setClassName(styleName);
+    }
+
     setElement(element);
 
     // If there's any wrap callback to call, we have to attach the div before

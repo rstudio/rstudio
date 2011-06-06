@@ -842,6 +842,34 @@ public abstract class UIObject {
   }
 
   /**
+   * EXPERIMENTAL and subject to change. Do not use this in production code.
+   * <p>
+   * To be overridden by {@link IsRenderable} subclasses that initialize
+   * themselves by by calling
+   * <code>setElement(PotentialElement.build(this))</code>.
+   * <p>
+   * The receiver must:
+   * <ul>
+   * <li> create a real {@link Element} to replace its {@link PotentialElement}
+   * <li> call {@link #setElement()} with the new Element
+   * <li> and return the new Element
+   * </ul>
+   * <p>
+   * This method is called when the receiver's element is about to be
+   * added to a parent node, as a side effect of {@link DOM#appendChild}.
+   * <p>
+   * Note that this method is normally called only on the top element
+   * of an IsRenderable tree. Children instead will receive {@link
+   * IsRenderable#render} and {@link IsRenderable#wrap}.
+   *
+   * @see PotentialElement
+   * @see IsRenderable
+   */
+  protected Element resolvePotentialElement() {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
    * Sets this object's browser element. UIObject subclasses must call this
    * method before attempting to call any other methods, and it may only be
    * called once.
@@ -863,7 +891,7 @@ public abstract class UIObject {
    * @param elem the object's element
    */
   protected void setElement(com.google.gwt.user.client.Element elem) {
-    assert (element == null) : SETELEMENT_TWICE_ERROR;
+    assert (element == null || PotentialElement.isPotential(element)) : SETELEMENT_TWICE_ERROR;
     this.element = elem;
   }
 
