@@ -34,6 +34,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Widgetable;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -167,6 +168,13 @@ public class Source implements InsertSourceHandler,
          command.setVisible(false);
          command.setEnabled(false);
       }
+      
+      // allow Ctrl+W to propagate to the browser if close doc is disabled
+      if (!Desktop.isDesktop())
+      {
+         AppCommand closeSourceDoc = commands_.closeSourceDoc();
+         closeSourceDoc.setPreventShortcutWhenDisabled(false);
+      }   
       
       events.addHandler(ShowContentEvent.TYPE, this);
       events.addHandler(ShowDataEvent.TYPE, this);

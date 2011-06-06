@@ -178,25 +178,28 @@ void onShutdown(bool terminatedNormally)
       LOG_ERROR(error);
 }
 
-void onForkedChild()
-{
-   Error error = s_directoryMonitor.stop();
-   if (error)
-      LOG_ERROR(error);
-}
+// record previously monitored path for restoration after forking
+std::string s_preForkMonitoredPath;
 
-void onForkedParent()
+// stop file monitoring so the child doesn't inherit file monitoring
+// descriptors and other objects
+void onPrepareFork()
 {
-   // restart directory monitor (child process inheritence of directory
-   // monitor handles interferes with our directory monitor)
-   std::string monitoredPath = s_directoryMonitor.path();
-   if (!monitoredPath.empty())
+   s_preForkMonitoredPath = s_directoryMonitor.path();
+   if (!s_preForkMonitoredPath.empty())
    {
       Error error = s_directoryMonitor.stop();
       if (error)
          LOG_ERROR(error);
+   }
+}
 
-      startMonitoring(monitoredPath);
+void onParentAfterFork()
+{
+   if (!s_preForkMonitoredPath.empty())
+   {
+      startMonitoring(s_preForkMonitoredPath);
+      s_preForkMonitoredPath.clear();
    }
 }
 
@@ -914,8 +917,8 @@ Error initialize()
    events().onClientInit.connect(bind(onClientInit));
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
    events().onShutdown.connect(bind(onShutdown, _1));
-   events().onForkedChild.connect(bind(onForkedChild));
-   events().onForkedParent.connect(bind(onForkedParent));
+   events().onPrepareFork.connect(bind(onPrepareFork));
+   events().onParentAfterFork.connect(bind(onParentAfterFork));
 
    // register path info function
    R_CallMethodDef pathInfoMethodDef ;

@@ -204,7 +204,7 @@ void UserSettings::setBioconductorMirror(
 
 bool UserSettings::alwaysSaveHistory() const
 {
-   return settings_.getBool(kAlwaysSaveHistory, false);
+   return settings_.getBool(kAlwaysSaveHistory, true);
 }
 
 void UserSettings::setAlwaysSaveHistory(bool alwaysSave)
@@ -214,7 +214,7 @@ void UserSettings::setAlwaysSaveHistory(bool alwaysSave)
 
 bool UserSettings::useGlobalHistory() const
 {
-   return settings_.getBool(kUseGlobalHistory, false);
+   return settings_.getBool(kUseGlobalHistory, true);
 }
 
 void UserSettings::setUseGlobalHistory(bool useGlobal)
