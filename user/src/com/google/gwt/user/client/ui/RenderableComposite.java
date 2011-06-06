@@ -213,7 +213,7 @@ public abstract class RenderableComposite extends Widget implements IsRenderable
   private void initWidgetInternal() {
     // Use the contained widget's element as the composite's element,
     // effectively merging them within the DOM.
-    setElement(widget.getElement());
+    setElement(PotentialElement.resolve(widget.getElement()));
 
     // Adopt.
     widget.setParent(this);
