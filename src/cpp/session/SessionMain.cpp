@@ -598,24 +598,30 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
    }
 }
 
+// fork state
 bool s_wasForked = false;
 
 // fork handlers (only applicatable to Unix platforms)
 #ifndef _WIN32
+
+void prepareFork()
+{
+   module_context::events().onPrepareFork();
+}
+
+void atForkParent()
+{
+   module_context::events().onParentAfterFork();
+}
+
 void atForkChild()
 {
    s_wasForked = true;
 }
 
-void atForkParent()
-{
-   module_context::events().onForkedParent();
-}
-
-
 void setupForkHandlers()
 {
-   int rc = ::pthread_atfork(NULL, atForkParent, atForkChild);
+   int rc = ::pthread_atfork(prepareFork, atForkParent, atForkChild);
    if (rc != 0)
       LOG_ERROR(systemError(errno, ERROR_LOCATION));
 }
@@ -638,9 +644,8 @@ void polledEventHandler()
       // no more polled events
       r::session::event_loop::disablePolledEventHandler();
 
-      // allow modules a chance for shutdown (e.g. directory changed listener,
-      // output capture, etc)
-      module_context::events().onForkedChild();
+      // notify listeners that we were multicore forked
+      module_context::events().onChildAfterMulticoreFork();
 
       // done
       return;
