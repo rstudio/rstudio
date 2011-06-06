@@ -21,7 +21,7 @@ IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" call make-install-win64.bat "%PACKAGE_D
 REM create packages
 cd build
 cpack -G NSIS
-REM cpack -G ZIP
+cpack -G ZIP
 cd ..
 
 
