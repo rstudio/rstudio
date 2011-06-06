@@ -1001,6 +1001,26 @@ public class UiBinderWriter implements Statements {
   }
 
   /**
+   * Evaluate whether all @UiField attributes are also defined in the
+   * template. Dies if not.
+   */
+  private void evaluateUiFields() throws UnableToCompleteException {
+    if (designTime.isDesignTime()) {
+      return;
+    }
+    for (OwnerField ownerField : getOwnerClass().getUiFields()) {
+      String fieldName = ownerField.getName();
+      FieldWriter fieldWriter = fieldManager.lookup(fieldName);
+
+      if (fieldWriter == null) {
+        die("Template %s has no %s attribute for %s.%s#%s", templatePath,
+            getUiFieldAttributeName(), uiOwnerType.getPackage().getName(),
+            uiOwnerType.getName(), fieldName);
+      }
+    }
+  }
+
+  /**
    * Given a DOM tag name, return the corresponding JSO subclass.
    */
   private JClassType findDomElementTypeForTag(String tag) {
@@ -1373,6 +1393,8 @@ public class UiBinderWriter implements Statements {
     fieldManager.initializeWidgetsInnerClass(w, getOwnerClass());
     w.outdent();
     w.write("}");
+
+    evaluateUiFields();
 
     fieldManager.writeFieldDefinitions(
         w, getOracle(), getOwnerClass(), getDesignTime());
