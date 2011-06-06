@@ -15,7 +15,13 @@ PACKAGE_ROOT=`ls -d */`
 PACKAGE_ROOT=${PACKAGE_ROOT%/}
 
 # tarball name
-PACKAGE_TAR=$PACKAGE_DIR/$PACKAGE_ROOT.tar.gz
+if [ "$1" == "DEB" ]
+then
+  PLATFORM=debian
+else
+  PLATFORM=redhat
+fi
+PACKAGE_TAR=$PACKAGE_DIR/$PACKAGE_ROOT-$PLATFORM.tar.gz
 
 # switch to rstudio dir and create tarball
 cd ${PACKAGE_ROOT}/usr/lib
