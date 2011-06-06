@@ -90,4 +90,8 @@ public class EditSession extends JavaScriptObject
   public native final Document getDocument() /*-{
      return this.getDocument();
   }-*/;
+
+  public native final void setNewLineMode(String type) /*-{
+     this.setNewLineMode(type);
+  }-*/;
 }

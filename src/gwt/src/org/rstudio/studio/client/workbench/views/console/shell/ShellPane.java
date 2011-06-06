@@ -33,12 +33,14 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.NewLineMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
@@ -68,6 +70,8 @@ public class ShellPane extends Composite implements Shell.Display,
       input_.setShowLineNumbers(false);
       input_.setShowPrintMargin(false);
       input_.setFileType(FileTypeRegistry.R, true);
+      if (!Desktop.isDesktop())
+         input_.setNewLineMode(NewLineMode.Unix);
       input_.setUseWrapMode(true);
       input_.setPadding(0);
       input_.autoHeight();

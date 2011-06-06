@@ -62,6 +62,25 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Undo
 
 public class AceEditor implements DocDisplay, InputEditorDisplay
 {
+   public enum NewLineMode
+   {
+      Windows("windows"),
+      Unix("unix"),
+      Auto("auto");
+
+      NewLineMode(String type)
+      {
+         this.type = type;
+      }
+
+      public String getType()
+      {
+         return type;
+      }
+
+      private String type;
+   }
+
    private class Filter implements InitCompletionFilter
    {
       public boolean shouldComplete(NativeEvent event)
@@ -740,6 +759,11 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public void forceImmediateRender()
    {
       widget_.getEditor().getRenderer().forceImmediateRender();
+   }
+
+   public void setNewLineMode(NewLineMode mode)
+   {
+      getSession().setNewLineMode(mode.getType());
    }
 
    private final HandlerManager handlers_ = new HandlerManager(this);
