@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.FormElement;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
@@ -59,13 +60,11 @@ import com.google.gwt.user.client.ui.impl.FormPanelImplHost;
  * </p>
  */
 @SuppressWarnings("deprecation")
-public class FormPanel extends SimplePanel implements FiresFormEvents,
-    FormPanelImplHost {
+public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanelImplHost {
   /**
    * Fired when a form has been submitted successfully.
    */
-  public static class SubmitCompleteEvent extends
-      GwtEvent<SubmitCompleteHandler> {
+  public static class SubmitCompleteEvent extends GwtEvent<SubmitCompleteHandler> {
     /**
      * The event type.
      */
@@ -196,7 +195,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    */
   public interface SubmitHandler extends EventHandler {
     /**
-     *Fired when the form is submitted.
+     * Fired when the form is submitted.
      *
      * <p>
      * The FormPanel must <em>not</em> be detached (i.e. removed from its parent
@@ -418,8 +417,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * @param handler the handler
    * @return the handler registration used to remove the handler
    */
-  public HandlerRegistration addSubmitCompleteHandler(
-      SubmitCompleteHandler handler) {
+  public HandlerRegistration addSubmitCompleteHandler(SubmitCompleteHandler handler) {
     return addHandler(handler, SubmitCompleteEvent.getType());
   }
 
@@ -511,6 +509,16 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    */
   public void setAction(String url) {
     getFormElement().setAction(url);
+  }
+
+  /**
+   * Sets the 'action' associated with this form. This is the URL to which it
+   * will be submitted.
+   *
+   * @param url the form's action
+   */
+  public void setAction(SafeUri url) {
+    setAction(url.asString());
   }
 
   /**

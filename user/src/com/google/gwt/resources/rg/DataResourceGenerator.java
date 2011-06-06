@@ -18,13 +18,14 @@ package com.google.gwt.resources.rg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.resources.client.DataResource.MimeType;
-import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.DataResource.DoNotEmbed;
+import com.google.gwt.resources.client.DataResource.MimeType;
+import com.google.gwt.resources.client.impl.DataResourcePrototype;
 import com.google.gwt.resources.ext.AbstractResourceGenerator;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
@@ -33,56 +34,39 @@ import java.net.URL;
 /**
  * Provides implementations of DataResource.
  */
-public final class DataResourceGenerator extends AbstractResourceGenerator
-    implements SupportsGeneratorResultCaching {
+public final class DataResourceGenerator extends AbstractResourceGenerator implements
+    SupportsGeneratorResultCaching {
   @Override
-  public String createAssignment(TreeLogger logger, ResourceContext context,
-      JMethod method) throws UnableToCompleteException {
+  public String createAssignment(TreeLogger logger, ResourceContext context, JMethod method)
+      throws UnableToCompleteException {
 
-    URL[] resources = ResourceGeneratorUtil.findResources(logger, context,
-        method);
+    URL[] resources = ResourceGeneratorUtil.findResources(logger, context, method);
 
     if (resources.length != 1) {
-      logger.log(TreeLogger.ERROR, "Exactly one resource must be specified",
-          null);
+      logger.log(TreeLogger.ERROR, "Exactly one resource must be specified", null);
       throw new UnableToCompleteException();
     }
 
     // Determine if a MIME Type has been specified
     MimeType mimeTypeAnnotation = method.getAnnotation(MimeType.class);
-    String mimeType = mimeTypeAnnotation != null
-        ? mimeTypeAnnotation.value() : null;
+    String mimeType = mimeTypeAnnotation != null ? mimeTypeAnnotation.value() : null;
 
     // Determine if resource should not be embedded
     DoNotEmbed doNotEmbed = method.getAnnotation(DoNotEmbed.class);
     boolean forceExternal = (doNotEmbed != null);
 
     URL resource = resources[0];
-    String outputUrlExpression = context.deploy(
-        resource, mimeType, forceExternal);
+    String outputUrlExpression = context.deploy(resource, mimeType, forceExternal);
 
     SourceWriter sw = new StringSourceWriter();
-    // Write the expression to create the subtype.
-    sw.println("new " + DataResource.class.getName() + "() {");
-    sw.indent();
-
     // Convenience when examining the generated code.
     sw.println("// " + resource.toExternalForm());
-
-    sw.println("public String getUrl() {");
+    sw.println("new " + DataResourcePrototype.class.getName() + "(");
     sw.indent();
-    sw.println("return " + outputUrlExpression + ";");
+    sw.println('"' + method.getName() + "\",");
+    sw.println(UriUtils.class.getName() + ".fromTrustedString(" + outputUrlExpression + ")");
     sw.outdent();
-    sw.println("}");
-
-    sw.println("public String getName() {");
-    sw.indent();
-    sw.println("return \"" + method.getName() + "\";");
-    sw.outdent();
-    sw.println("}");
-
-    sw.outdent();
-    sw.println("}");
+    sw.print(")");
 
     return sw.toString();
   }

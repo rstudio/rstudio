@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.impl.ClippedImagePrototype;
 
 /**
@@ -70,8 +71,8 @@ public abstract class AbstractImagePrototype {
    *         ImageResource
    */
   public static AbstractImagePrototype create(ImageResource resource) {
-    return new ClippedImagePrototype(resource.getURL(), resource.getLeft(),
-        resource.getTop(), resource.getWidth(), resource.getHeight());
+    return new ClippedImagePrototype(resource.getSafeUri(), resource.getLeft(), resource.getTop(),
+        resource.getWidth(), resource.getHeight());
   }
 
   /**
@@ -123,8 +124,28 @@ public abstract class AbstractImagePrototype {
    * prototype. The HTML returned is not necessarily a simple
    * <code>&lt;img&gt;</code> element. It may be a more complex structure that
    * should be treated opaquely.
+   * <p>
+   * The default implementation calls {@link #getSafeHtml()}.
    * 
    * @return the HTML representation of this prototype
    */
-  public abstract String getHTML();
+  public String getHTML() {
+    return getSafeHtml().asString();
+  }
+
+  /**
+   * Gets an HTML fragment that displays the image represented by this
+   * prototype. The HTML returned is not necessarily a simple
+   * <code>&lt;img&gt;</code> element. It may be a more complex structure that
+   * should be treated opaquely.
+   * <p>
+   * The default implementation throws an {@link UnsupportedOperationException}.
+   * 
+   * @return the HTML representation of this prototype
+   */
+  public SafeHtml getSafeHtml() {
+    // Because this is a new method on an existing base class, we need to throw
+    // UnsupportedOperationException to avoid static errors.
+    throw new UnsupportedOperationException();
+  }
 }

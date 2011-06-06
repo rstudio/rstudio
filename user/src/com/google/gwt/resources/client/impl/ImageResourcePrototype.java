@@ -16,6 +16,7 @@
 package com.google.gwt.resources.client.impl;
 
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeUri;
 
 /**
  * This is part of an implementation of the ImageBundle optimization implemented
@@ -26,7 +27,7 @@ public class ImageResourcePrototype implements ImageResource {
   private final boolean animated;
   private final boolean lossy;
   private final String name;
-  private final String url;
+  private final SafeUri url;
   private final int left;
   private final int top;
   private final int width;
@@ -35,8 +36,8 @@ public class ImageResourcePrototype implements ImageResource {
   /**
    * Only called by generated code.
    */
-  public ImageResourcePrototype(String name, String url, int left, int top,
-      int width, int height, boolean animated, boolean lossy) {
+  public ImageResourcePrototype(String name, SafeUri url, int left, int top, int width, int height,
+      boolean animated, boolean lossy) {
     this.name = name;
     this.left = left;
     this.top = top;
@@ -65,18 +66,16 @@ public class ImageResourcePrototype implements ImageResource {
     return name;
   }
 
-  /**
-   * Exists for testing purposes, not part of the ImageResource interface.
-   */
+  public SafeUri getSafeUri() {
+    return url;
+  }
+
   public int getTop() {
     return top;
   }
 
-  /**
-   * Exists for testing purposes, not part of the ImageResource interface.
-   */
   public String getURL() {
-    return url;
+    return url.asString();
   }
 
   /**
@@ -90,6 +89,9 @@ public class ImageResourcePrototype implements ImageResource {
     return animated;
   }
 
+  /**
+   * Exists for testing purposes, not part of the ImageResource interface.
+   */
   public boolean isLossy() {
     return lossy;
   }

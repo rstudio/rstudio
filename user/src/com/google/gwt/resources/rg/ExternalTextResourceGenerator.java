@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -33,6 +33,7 @@ import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
@@ -50,7 +51,7 @@ public final class ExternalTextResourceGenerator extends
    * generator will use JSONP to fetch the files.
    */
   static final String USE_JSONP = "ExternalTextResource.useJsonp";
-  
+
   // This string must stay in sync with the values in JsonpRequest.java
   static final String JSONP_CALLBACK_PREFIX = "__gwt_jsonp__.P";
 
@@ -75,7 +76,8 @@ public final class ExternalTextResourceGenerator extends
     sw.indent();
     sw.println('"' + name + "\",");
     // These are field names
-    sw.println(externalTextUrlIdent + ", " + externalTextCacheIdent + ", ");
+    sw.println(UriUtils.class.getName() + ".fromTrustedString(" + externalTextUrlIdent + "),");
+    sw.println(externalTextCacheIdent + ", ");
     sw.println(offsets.get(method.getName()).toString());
     if (shouldUseJsonp(context, logger)) {
       sw.println(", \"" + getMd5HashOfData() + "\"");
@@ -178,7 +180,7 @@ public final class ExternalTextResourceGenerator extends
       ConfigurationProperty prop = context.getGeneratorContext()
         .getPropertyOracle().getConfigurationProperty(USE_JSONP);
       useJsonpProp = prop.getValues().get(0);
-      
+
       // add this configuration property to our requirements
       context.getRequirements().addConfigurationProperty(USE_JSONP);
     } catch (BadPropertyValueException e) {

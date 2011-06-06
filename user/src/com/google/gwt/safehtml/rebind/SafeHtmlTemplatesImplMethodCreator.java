@@ -31,6 +31,7 @@ import com.google.gwt.safehtml.rebind.ParsedHtmlTemplate.TemplateChunk;
 import com.google.gwt.safehtml.shared.OnlyToBeUsedInGeneratedCodeStringBlessedAsSafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
@@ -45,6 +46,16 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    * Fully-qualified class name of the {@link String} class.
    */
   private static final String JAVA_LANG_STRING_FQCN = String.class.getName();
+
+  /**
+   * Simple class name of the {@link SafeUri} interface.
+   */
+  private static final String SAFE_URI_CN = SafeUri.class.getSimpleName();
+
+  /**
+   * Fully-qualified class name of the {@link SafeUri} interface.
+   */
+  private static final String SAFE_URI_FQCN = SafeUri.class.getName();
 
   /**
    * Simple class name of the {@link SafeStyles} interface.
@@ -75,15 +86,14 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
   /**
    * Fully-qualified class name of the {@link SafeHtmlUtils} class.
    */
-  private static final String ESCAPE_UTILS_FQCN = SafeHtmlUtils.class.getName();
+  private static final String SAFE_HTML_UTILS_FQCN = SafeHtmlUtils.class.getName();
 
   /**
    * Fully-qualified class name of the {@link UriUtils} class.
    */
   private static final String URI_UTILS_FQCN = UriUtils.class.getName();
 
-  public SafeHtmlTemplatesImplMethodCreator(
-      AbstractGeneratorClassCreator classCreator) {
+  public SafeHtmlTemplatesImplMethodCreator(AbstractGeneratorClassCreator classCreator) {
     super(classCreator);
   }
 
@@ -91,9 +101,8 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    * {@inheritDoc}
    */
   @Override
-  public void createMethodFor(TreeLogger logger, JMethod targetMethod,
-      String key, ResourceList resourceList, GwtLocale locale)
-      throws UnableToCompleteException {
+  public void createMethodFor(TreeLogger logger, JMethod targetMethod, String key,
+      ResourceList resourceList, GwtLocale locale) throws UnableToCompleteException {
     if (!targetMethod.getReturnType().getQualifiedSourceName().equals(
         SafeHtmlTemplatesImplMethodCreator.SAFE_HTML_FQCN)) {
       throw error(logger, "All methods in interfaces extending "
@@ -102,8 +111,8 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
     }
     Template templateAnnotation = targetMethod.getAnnotation(Template.class);
     if (templateAnnotation == null) {
-      throw error(logger, "Required annotation @Template not present "
-          + "on interface method " + targetMethod.toString());
+      throw error(logger, "Required annotation @Template not present on interface method "
+          + targetMethod.toString());
     }
 
     String template = templateAnnotation.value();
@@ -122,11 +131,14 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    * <ul>
    *   <li>If the parameter is of type {@link SafeStyles}, it is converted to a
    *       string using {@link SafeStyles#asString()}.
-   *   <li>Otherwise, if the parameter is not of type {@link String}, it is first
-   *       converted to {@link String}.
-   *   <li>If the template parameter occurs at the start of a URI-valued attribute
-   *       within the template, it is sanitized to ensure that it is safe in this
-   *       context. This is done by passing the value through
+   *   <li>Otherwise, if the parameter is of type {@link SafeUri}, it is converted to a
+   *       string using {@link SafeUri#asString()}.
+   *   <li>Otherwise, if the parameter is not of type {@link String}, it is
+   *       first converted to {@link String}.
+   *   <li>If the template parameter occurs at the start, or as the entire value,
+   *       of a URI-valued attribute within the template, and the parameter isn't
+   *       of type {@link SafeUri}, it is sanitized to ensure that it is safe in
+   *       this context.  This is done by passing the value through
    *       {@link UriUtils#sanitizeUri(String)}.
    *   <li>The result is then HTML-escaped by passing it through
    *       {@link SafeHtmlUtils#htmlEscape(String)}.
@@ -145,9 +157,8 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    * @param parameterType the Java type of the corresponding template method's
    *        parameter
    */
-  private void emitAttributeContextParameterExpression(TreeLogger logger,
-      HtmlContext htmlContext, String formalParameterName,
-      JType parameterType) {
+  private void emitAttributeContextParameterExpression(TreeLogger logger, HtmlContext htmlContext,
+      String formalParameterName, JType parameterType) {
 
     /*
      * Build up the expression from the "inside out", i.e. start with the formal
@@ -156,24 +167,26 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
      */
     String expression = formalParameterName;
 
-    if (isSafeStyles(parameterType)) {
-      // SafeCss is safe in a CSS context, so we can use its string (but we still
-      // escape it).
+    if (isSafeUri(parameterType) || isSafeStyles(parameterType)) {
+      // SafeUri is safe in a URL context, and SafeStyles is safe in a CSS context,
+      // so we can use their string (but we still escape it).
       expression = expression + ".asString()";
-    } else if (!JAVA_LANG_STRING_FQCN.equals(parameterType.getQualifiedSourceName())) {
-      // The parameter's value must be explicitly converted to String unless it
-      // is already of that type.
-      expression = "String.valueOf(" + expression + ")";
-    }
+    } else {
+      if (!JAVA_LANG_STRING_FQCN.equals(parameterType.getQualifiedSourceName())) {
+        // The parameter's value must be explicitly converted to String unless it
+        // is already of that type.
+        expression = "String.valueOf(" + expression + ")";
+      }
 
-    if ((htmlContext.getType() == HtmlContext.Type.URL_ATTRIBUTE_START) ||
-        (htmlContext.getType() == HtmlContext.Type.URL_ATTRIBUTE_ENTIRE)) {
-      expression = URI_UTILS_FQCN + ".sanitizeUri(" + expression + ")";
+      if ((htmlContext.getType() == HtmlContext.Type.URL_ATTRIBUTE_START) ||
+          (htmlContext.getType() == HtmlContext.Type.URL_ATTRIBUTE_ENTIRE)) {
+        expression = URI_UTILS_FQCN + ".sanitizeUri(" + expression + ")";
+      }
     }
 
     // TODO(xtof): Handle EscapedString subtype of SafeHtml, once it's been
     //     introduced.
-    expression = ESCAPE_UTILS_FQCN + ".htmlEscape(" + expression + ")";
+    expression = SAFE_HTML_UTILS_FQCN + ".htmlEscape(" + expression + ")";
 
     print(expression);
   }
@@ -199,8 +212,8 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    * @throws UnableToCompleteException if an error occurred that prevented
    *         code generation for the template
    */
-  private void emitMethodBodyFromTemplate(TreeLogger logger, String template,
-      JParameter[] params) throws UnableToCompleteException {
+  private void emitMethodBodyFromTemplate(TreeLogger logger, String template, JParameter[] params)
+      throws UnableToCompleteException {
     println("StringBuilder sb = new java.lang.StringBuilder();");
 
     HtmlTemplateParser parser = new HtmlTemplateParser(logger);
@@ -214,17 +227,16 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
 
         int formalParameterIndex = parameterChunk.getParameterIndex();
         if (formalParameterIndex < 0 || formalParameterIndex >= params.length) {
-          throw error(logger, "Argument " + formalParameterIndex
-              + " beyond range of arguments: " + template);
+          throw error(logger, "Argument " + formalParameterIndex + " beyond range of arguments: "
+              + template);
         }
         String formalParameterName = "arg" + formalParameterIndex;
         JType paramType = params[formalParameterIndex].getType();
 
-        emitParameterExpression(logger, parameterChunk.getContext(),
-                                formalParameterName, paramType);
+        emitParameterExpression(
+            logger, parameterChunk.getContext(), formalParameterName, paramType);
       } else {
-        throw error(logger, "Unexpected chunk kind in parsed template "
-            + template);
+        throw error(logger, "Unexpected chunk kind in parsed template " + template);
       }
     }
     outdent();
@@ -282,6 +294,24 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
             + " used in a non-CSS attribute context. Did you mean to use " + JAVA_LANG_STRING_FQCN
             + " or " + SAFE_HTML_CN + " instead?");
       }
+    } else if (isSafeUri(parameterType) && HtmlContext.Type.URL_ATTRIBUTE_ENTIRE != contextType) {
+      // TODO(xtof): refactor HtmlContext with isStart/isEnd/isEntire accessors and simplified type.
+      if (HtmlContext.Type.URL_ATTRIBUTE_START == contextType) {
+        // SafeUri can only be used as the entire value of an URL attribute.
+        throw error(logger, SAFE_URI_CN + " cannot be used in a URL attribute if it isn't the "
+            + "entire attribute value.");
+      } else {
+        /*
+         * SafeUri outside a URL-attribute context (or in a URL-attribute, but
+         * not at start). SafeUri is only safe if it comprises the entire URL
+         * attribute's value. We could treat it as a normal parameter and escape
+         * the string value of the parameter, but it almost definitely isn't
+         * what the developer intended to do.
+         */
+        throw error(logger, SAFE_URI_CN + " can only be used as the entire value of a URL "
+            + "attribute. Did you mean to use " + JAVA_LANG_STRING_FQCN + " or " + SAFE_HTML_CN
+            + " instead?");
+      }
     }
 
     print("sb.append(");
@@ -289,10 +319,10 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
       case CSS:
         /*
          * TODO(jlabanca): Handle CSS in a text context.
-         * 
+         *
          * The stream parser does not parse CSS; we could however improve safety
          * via sub-formats that specify the in-css context.
-         * 
+         *
          * SafeStyles is safe in a CSS context when used inside of a CSS style
          * rule, but they are not always safe. We could implement SafeCssRules,
          * which would consist of SafeStyles inside of a CSS style rules found
@@ -315,20 +345,35 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
          * used SafeStyles in the current context.
          */
         if (!isSafeStyles(parameterType)) {
-          // Warn against using unsafe parameters in a CSS attribute context.  
+          // Warn against using unsafe parameters in a CSS attribute context.
           logger.log(TreeLogger.WARN,
               "Template with variable in CSS attribute context: The template code generator cannot"
                   + " guarantee HTML-safety of the template -- please inspect manually or use "
                   + SAFE_STYLES_CN + " to specify arguments in a CSS attribute context");
         }
-        emitAttributeContextParameterExpression(logger, htmlContext,
-            formalParameterName, parameterType);
+        emitAttributeContextParameterExpression(logger, htmlContext, formalParameterName,
+            parameterType);
         break;
       case URL_ATTRIBUTE_START:
       case URL_ATTRIBUTE_ENTIRE:
+        /*
+         * We already checked if the user tried to use SafeUri in an invalid
+         * (non-URL_ATTRIBUTE) context, but now we check if the user could have
+         * used SafeUri in the current context.
+         */
+        if (!isSafeUri(parameterType)) {
+          // Warn against using unsafe parameters in a URL attribute context.
+          logger.log(TreeLogger.WARN,
+              "Template with variable in URL attribute context: The template code generator cannot"
+                  + " guarantee HTML-safety of the template -- please inspect manually or use "
+                  + SAFE_URI_CN + " to specify arguments in a URL attribute context");
+        }
+        emitAttributeContextParameterExpression(logger, htmlContext, formalParameterName,
+            parameterType);
+        break;
       case ATTRIBUTE_VALUE:
-        emitAttributeContextParameterExpression(logger, htmlContext,
-            formalParameterName, parameterType);
+        emitAttributeContextParameterExpression(logger, htmlContext, formalParameterName,
+            parameterType);
         break;
 
       default:
@@ -360,8 +405,10 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    * <ul>
    *   <li>If the parameter is of a primitive (e.g., numeric, boolean) type, or
    *       of type {@link SafeHtml}, it is emitted as is, without escaping.
-   *   <li>Otherwise, an expression that passes the paramter's value through
-   *       {@link SafeHtmlUtils#htmlEscape(String)} is emitted.
+   *   <li>Otherwise, an expression that passes the parameter's value through
+   *       {@link SafeHtmlUtils#htmlEscape(String)} is emitted. If the value is
+   *       of type {@link SafeUri}, it is converted to string using
+   *       {@link SafeUri#asString()}.
    * </ul>
    *
    * @param formalParameterName the name of the template method's formal
@@ -369,13 +416,12 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    * @param parameterType the Java type of the corresponding template method's
    *        parameter
    */
-  private void emitTextContextParameterExpression(String formalParameterName,
-      JType parameterType) {
+  private void emitTextContextParameterExpression(String formalParameterName, JType parameterType) {
     boolean parameterIsPrimitiveType = (parameterType.isPrimitive() != null);
-    boolean parameterIsNotStringTyped = !(JAVA_LANG_STRING_FQCN.equals(
-        parameterType.getQualifiedSourceName()));
+    boolean parameterIsNotStringTyped =
+        !(JAVA_LANG_STRING_FQCN.equals(parameterType.getQualifiedSourceName()));
 
-    if (SAFE_HTML_FQCN.equals(parameterType.getQualifiedSourceName())) {
+    if (isSafeHtml(parameterType)) {
       // The parameter is of type SafeHtml and its wrapped string can
       // therefore be emitted safely without escaping.
       print(formalParameterName + ".asString()");
@@ -387,21 +433,17 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
       // The parameter is of some other type, and its value must be HTML
       // escaped. Furthermore, unless the parameter's type is {@link String},
       // it must be explicitly converted to {@link String}.
-      print(ESCAPE_UTILS_FQCN + ".htmlEscape(");
+      String expression = formalParameterName;
       if (parameterIsNotStringTyped) {
-        print("String.valueOf(");
+        expression = "String.valueOf(" + expression + ")";
       }
-      print(formalParameterName);
-      if (parameterIsNotStringTyped) {
-        print(")");
-      }
-      print(")");
+      print(SAFE_HTML_UTILS_FQCN + ".htmlEscape(" + expression + ")");
     }
   }
 
   /**
    * Check if the specified parameter type represents a {@link SafeHtml}.
-   * 
+   *
    * @param parameterType the Java parameter type
    * @return true if the type represents a {@link SafeHtml}
    */
@@ -411,11 +453,21 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
 
   /**
    * Check if the specified parameter type represents a {@link SafeStyles}.
-   * 
+   *
    * @param parameterType the Java parameter type
    * @return true if the type represents a {@link SafeStyles}
    */
   private boolean isSafeStyles(JType parameterType) {
     return parameterType.getQualifiedSourceName().equals(SAFE_STYLES_FQCN);
+  }
+
+  /**
+   * Check if the specified parameter type represents a {@link SafeUri}.
+   *
+   * @param parameterType the Java parameter type
+   * @return true if the type represents a {@link SafeUri}
+   */
+  private boolean isSafeUri(JType parameterType) {
+    return parameterType.getQualifiedSourceName().equals(SAFE_URI_FQCN);
   }
 }

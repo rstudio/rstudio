@@ -125,7 +125,7 @@ public class Spriter extends CssModVisitor {
     }
 
     String backgroundExpression = "\"url(\\\"\" + " + instance
-        + ".getURL() + \"\\\") -\" + " + instance + ".getLeft() + \"px -\" + "
+        + ".getSafeUri().asString() + \"\\\") -\" + " + instance + ".getLeft() + \"px -\" + "
         + instance + ".getTop() + \"px " + repeatText + "\"";
     properties.add(new CssProperty("background", new ExpressionValue(
         backgroundExpression), false));

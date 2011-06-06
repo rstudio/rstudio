@@ -26,6 +26,7 @@ import com.google.gwt.resources.client.ExternalTextResource;
 import com.google.gwt.resources.client.ResourceCallback;
 import com.google.gwt.resources.client.ResourceException;
 import com.google.gwt.resources.client.TextResource;
+import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
@@ -129,9 +130,9 @@ public class ExternalTextResourcePrototype implements ExternalTextResource {
   private final int index;
   private final String md5Hash;
   private final String name;
-  private final String url;
+  private final SafeUri url;
 
-  public ExternalTextResourcePrototype(String name, String url,
+  public ExternalTextResourcePrototype(String name, SafeUri url,
       TextResource[] cache, int index) {
     this.name = name;
     this.url = url;
@@ -140,7 +141,7 @@ public class ExternalTextResourcePrototype implements ExternalTextResource {
     this.md5Hash = null;
   }
 
-  public ExternalTextResourcePrototype(String name, String url,
+  public ExternalTextResourcePrototype(String name, SafeUri url,
       TextResource[] cache, int index, String md5Hash) {
     this.name = name;
     this.url = url;
@@ -169,14 +170,13 @@ public class ExternalTextResourcePrototype implements ExternalTextResource {
       // If we have an md5Hash, we should be using JSONP
       JsonpRequestBuilder rb = new JsonpRequestBuilder();
       rb.setPredeterminedId(md5Hash);
-      rb.requestObject(url, new ETRCallback(callback));
+      rb.requestObject(url.asString(), new ETRCallback(callback));
     } else {
-      RequestBuilder rb = new RequestBuilder(RequestBuilder.GET, url);
+      RequestBuilder rb = new RequestBuilder(RequestBuilder.GET, url.asString());
       try {
         rb.sendRequest("", new ETRCallback(callback));
       } catch (RequestException e) {
-        throw new ResourceException(this,
-            "Unable to initiate request for external resource", e);
+        throw new ResourceException(this, "Unable to initiate request for external resource", e);
       }
     }
   }

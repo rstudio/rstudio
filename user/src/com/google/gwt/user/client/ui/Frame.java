@@ -23,6 +23,7 @@ import com.google.gwt.event.dom.client.HasLoadHandlers;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeUri;
 
 /**
  * A widget that wraps an IFRAME element, which can contain an arbitrary web
@@ -123,6 +124,15 @@ public class Frame extends Widget implements HasLoadHandlers {
    */
   public void setUrl(String url) {
     getFrameElement().setSrc(url);
+  }
+
+  /**
+   * Sets the URL of the resource to be displayed within the frame.
+   * 
+   * @param url the frame's new URL
+   */
+  public void setUrl(SafeUri url) {
+    setUrl(url.asString());
   }
 
   private FrameElement getFrameElement() {

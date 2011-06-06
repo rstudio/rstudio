@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,12 +22,11 @@ import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ImageTest;
-import com.google.gwt.user.client.ui.LoadListener;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Tests for the ClippedImagePrototype implementation. Tests are done to ensure
@@ -38,28 +37,6 @@ import com.google.gwt.user.client.ui.Widget;
  * application of the prototype to the image.
  */
 public class ClippedImagePrototypeTest extends GWTTestCase {
-  @Deprecated
-  private static class TestLoadListener implements LoadListener {
-    private int onloadEventFireCount = 0;
-    private Image image;
-
-    public TestLoadListener(Image image) {
-      this.image = image;
-    }
-
-    public void onError(Widget sender) {
-      fail("The image " + image.getUrl() + " failed to load.");
-    }
-
-    public int getOnloadEventFireCount() {
-      return onloadEventFireCount;
-    }
-
-    public void onLoad(Widget sender) {
-      onloadEventFireCount++;
-    }
-  }
-  
   private static class TestLoadHandler implements LoadHandler {
     private int onloadEventFireCount = 0;
 
@@ -71,18 +48,18 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
       onloadEventFireCount++;
     }
   }
-  
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.UserTest";
   }
- 
+
   /**
    * Tests that a clipped image can be transformed to match a given prototype.
    * Also checks to make sure that a load event is fired on when
    * {@link com.google.gwt.user.client.ui.impl.ClippedImagePrototype#applyTo(com.google.gwt.user.client.ui.Image)}
    * is called.
-   * 
+   *
    * TODO(jlabanca): Enable this test when issue 863 is fixed
    */
   @DoNotRunWith({Platform.HtmlUnitBug})
@@ -102,7 +79,7 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
 
         if (image.getOriginLeft() == 12 && image.getOriginTop() == 13) {
           ClippedImagePrototype clippedImagePrototype = new ClippedImagePrototype(
-              "counting-forwards.png", 16, 16, 16, 16);
+              UriUtils.fromString("counting-forwards.png"), 16, 16, 16, 16);
 
           clippedImagePrototype.applyTo(image);
 
@@ -141,43 +118,43 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
    * <code>applyTo(Image)</code> is called.
    */
   /*
-   * This test has been commented out because of issue #863 
-   * 
-   * public void testApplyToUnclippedImage() { 
+   * This test has been commented out because of issue #863
+   *
+   * public void testApplyToUnclippedImage() {
    * final Image image = new Image("counting-backwards.png");
-   * 
+   *
    * assertEquals(0, image.getOriginLeft()); assertEquals(0,
    * image.getOriginTop()); assertEquals("unclipped",
    * ImageTest.getCurrentImageStateName(image));
-   * 
+   *
    * final ArrayList onloadEventFireCounter = new ArrayList();
-   * 
+   *
    * image.addLoadListener(new LoadListener() { public void onError(Widget
    * sender) { fail("The image " + ((Image) sender).getUrl() + " failed to
    * load."); }
-   * 
+   *
    * public void onLoad(Widget sender) { onloadEventFireCounter.add(new
    * Object());
-   * 
+   *
    * if (ImageTest.getCurrentImageStateName(image).equals("unclipped")) {
-   * 
+   *
    * assertEquals(32, image.getWidth()); assertEquals(32, image.getHeight());
-   * 
+   *
    * ClippedImagePrototype clippedImagePrototype = new
    * ClippedImagePrototype("counting-forwards.png", 16, 16, 16, 16);
-   * 
+   *
    * clippedImagePrototype.adjust(image);
-   * 
+   *
    * assertEquals(16, image.getOriginLeft()); assertEquals(16,
    * image.getOriginTop()); assertEquals(16, image.getWidth()); assertEquals(16,
    * image.getHeight()); assertEquals("counting-forwards.png", image.getUrl());
    * assertEquals("clipped", ImageTest.getCurrentImageStateName(image)); } } });
-   * 
+   *
    * RootPanel.get().add(image); delayTestFinish(2000);
-   * 
+   *
    * Timer t = new Timer() { public void run() { assertEquals(2,
    * onloadEventFireCounter.size()); finishTest(); } };
-   * 
+   *
    * t.schedule(1000); }
    */
 
@@ -187,7 +164,7 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
    */
   public void testGenerateNewImage() {
     ClippedImagePrototype clippedImagePrototype = new ClippedImagePrototype(
-        "counting-forwards.png", 16, 16, 16, 16);
+        UriUtils.fromString("counting-forwards.png"), 16, 16, 16, 16);
 
     Image image = clippedImagePrototype.createImage();
 

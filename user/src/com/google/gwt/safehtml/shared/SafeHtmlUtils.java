@@ -22,8 +22,7 @@ import com.google.gwt.regexp.shared.RegExp;
  */
 public final class SafeHtmlUtils {
 
-  private static final String HTML_ENTITY_REGEX =
-      "[a-z]+|#[0-9]+|#x[0-9a-fA-F]+";
+  private static final String HTML_ENTITY_REGEX = "[a-z]+|#[0-9]+|#x[0-9a-fA-F]+";
 
   /**
    * An empty String.
@@ -104,9 +103,8 @@ public final class SafeHtmlUtils {
   }
 
   /**
-   * HTML-escapes a character.  HTML meta characters
-   * will be escaped as follows:
-   *
+   * HTML-escapes a character. HTML meta characters will be escaped as follows:
+   * 
    * <pre>
    * &amp; - &amp;amp;
    * &lt; - &amp;lt;
@@ -167,7 +165,7 @@ public final class SafeHtmlUtils {
     if (s.indexOf("\"") != -1) {
       s = QUOT_RE.replace(s, "&quot;");
     }
-    if (s.indexOf("\'") != -1) {
+    if (s.indexOf("'") != -1) {
       s = SQUOT_RE.replace(s, "&#39;");
     }
     return s;
@@ -201,8 +199,7 @@ public final class SafeHtmlUtils {
       }
 
       int entityEnd = segment.indexOf(';');
-      if (entityEnd > 0
-          && segment.substring(0, entityEnd).matches(HTML_ENTITY_REGEX)) {
+      if (entityEnd > 0 && segment.substring(0, entityEnd).matches(HTML_ENTITY_REGEX)) {
         // Append the entity without escaping.
         escaped.append("&").append(segment.substring(0, entityEnd + 1));
 

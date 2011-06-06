@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,6 +17,9 @@ package com.google.gwt.user.client.ui.impl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Image;
 
@@ -31,7 +34,7 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
 
   private static String moduleBaseUrlProtocol =
       GWT.getHostPageBaseURL().startsWith("https") ?  "https://" : "http://";
-  
+
   private static native void injectGlobalHandler() /*-{
     $wnd.__gwt_transparentImgHandler = function (elem) {
       elem.onerror = null;
@@ -48,20 +51,19 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
   }
 
   @Override
-  public void adjust(Element clipper, String url, int left, int top, int width,
-      int height) {
+  public void adjust(Element clipper, SafeUri url, int left, int top, int width, int height) {
     if (!isIE6()) {
       super.adjust(clipper, url, left, top, width, height);
       return;
     }
-    
+
     clipper.getStyle().setPropertyPx("width", width);
     clipper.getStyle().setPropertyPx("height", height);
 
     // Update the nested image's url.
     Element img = clipper.getFirstChildElement();
     img.getStyle().setProperty("filter",
-        "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + url
+        "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + url.asString()
             + "',sizingMethod='crop')");
     img.getStyle().setPropertyPx("marginLeft", -left);
     img.getStyle().setPropertyPx("marginTop", -top);
@@ -75,12 +77,11 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
   }
 
   @Override
-  public Element createStructure(String url, int left, int top, int width,
-      int height) {
+  public Element createStructure(SafeUri url, int left, int top, int width, int height) {
     if (!isIE6()) {
       return super.createStructure(url, left, top, width, height);
     }
-    
+
     // We need to explicitly sink ONLOAD on the child image element, because it
     // can't be fired on the clipper.
     Element clipper = super.createStructure(url, left, top, width, height);
@@ -90,16 +91,24 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
   }
 
   @Override
-  public String getHTML(String url, int left, int top, int width, int height) {
+  public Element getImgElement(Image image) {
     if (!isIE6()) {
-      return super.getHTML(url, left, top, width, height);
+      return super.getImgElement(image);
     }
-    
+    return image.getElement().getFirstChildElement();
+  }
+
+  @Override
+  public SafeHtml getSafeHtml(SafeUri url, int left, int top, int width, int height) {
+    if (!isIE6()) {
+      return super.getSafeHtml(url, left, top, width, height);
+    }
+    // We cannot use a SafeHtmlTemplates because there are parameters in javascript context.
     String clipperStyle = "overflow: hidden; width: " + width + "px; height: "
         + height + "px; padding: 0px; zoom: 1";
 
     String imgStyle = "filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='"
-        + url
+        + url.asString()
         + "',sizingMethod='crop'); margin-left: "
         + -left
         + "px; margin-top: " + -top + "px; border: none";
@@ -121,14 +130,6 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
         + imgStyle + "\" width=" + (left + width) + " height=" + (top + height)
         + " border='0'></gwt:clipper>";
 
-    return clippedImgHtml;
-  }
-
-  @Override
-  public Element getImgElement(Image image) {
-    if (!isIE6()) {
-      return super.getImgElement(image);
-    }
-    return image.getElement().getFirstChildElement();
+    return SafeHtmlUtils.fromTrustedString(clippedImgHtml);
   }
 }

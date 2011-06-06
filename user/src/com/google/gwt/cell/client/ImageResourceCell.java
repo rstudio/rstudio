@@ -21,13 +21,6 @@ import com.google.gwt.user.client.ui.ImageResourceRenderer;
 
 /**
  * An {@link AbstractCell} used to render an {@link ImageResource}.
- *
- * <p>
- * This class assumes that the URL returned from ImageResource is safe from
- * script attacks. If you do not generate the ImageResource from a
- * {@link com.google.gwt.resources.client.ClientBundle ClientBundle}, you should
- * use {@link com.google.gwt.safehtml.shared.UriUtils UriUtils} to sanitize the
- * URL before returning it from {@link ImageResource#getURL()}.
  */
 public class ImageResourceCell extends AbstractCell<ImageResource> {
   private static ImageResourceRenderer renderer;

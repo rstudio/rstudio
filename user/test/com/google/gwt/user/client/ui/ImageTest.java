@@ -782,7 +782,7 @@ public class ImageTest extends GWTTestCase {
   }
 
   private void assertResourceWorked(Image image, ImageResource prettyPiccy) {
-    assertEquals(prettyPiccy.getURL(), image.getUrl());
+    assertEquals(prettyPiccy.getSafeUri().asString(), image.getUrl());
     assertEquals(prettyPiccy.getTop(), image.getOriginTop());
     assertEquals(prettyPiccy.getHeight(), image.getHeight());
     assertEquals(prettyPiccy.getLeft(), image.getOriginLeft());

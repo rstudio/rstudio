@@ -18,6 +18,7 @@ package com.google.gwt.resources.client;
 import com.google.gwt.resources.ext.DefaultExtensions;
 import com.google.gwt.resources.ext.ResourceGeneratorType;
 import com.google.gwt.resources.rg.ImageResourceGenerator;
+import com.google.gwt.safehtml.shared.SafeUri;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -119,13 +120,21 @@ public interface ImageResource extends ResourcePrototype {
   int getLeft();
 
   /**
+   * Returns the URL for the composite image that contains the ImageResource.
+   */
+  SafeUri getSafeUri();
+
+  /**
    * Returns the vertical position of the image within the composite image.
    */
   int getTop();
 
   /**
    * Returns the URL for the composite image that contains the ImageResource.
+   * 
+   * @deprecated Use {@link #getSafeUri()} instead.
    */
+  @Deprecated
   String getURL();
 
   /**

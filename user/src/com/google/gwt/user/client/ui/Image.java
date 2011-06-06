@@ -80,6 +80,8 @@ import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.ClippedImageImpl;
 
@@ -123,10 +125,9 @@ import java.util.HashMap;
  * </p>
  */
 @SuppressWarnings("deprecation")
-public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
-    HasErrorHandlers, SourcesClickEvents, HasClickHandlers,
-    HasDoubleClickHandlers, HasAllDragAndDropHandlers, HasAllGestureHandlers,
-    HasAllMouseHandlers, HasAllTouchHandlers, SourcesMouseEvents {
+public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers, HasErrorHandlers,
+    SourcesClickEvents, HasClickHandlers, HasDoubleClickHandlers, HasAllDragAndDropHandlers,
+    HasAllGestureHandlers, HasAllMouseHandlers, HasAllTouchHandlers, SourcesMouseEvents {
 
   /**
    * The attribute that is set when an image fires a native load or error event
@@ -145,11 +146,10 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     private int left = 0;
     private boolean pendingNativeLoadEvent = true;
     private int top = 0;
-    private String url = null;
+    private SafeUri url = null;
     private int width = 0;
 
-    ClippedState(Image image, String url, int left, int top, int width,
-        int height) {
+    ClippedState(Image image, SafeUri url, int left, int top, int width, int height) {
       this.left = left;
       this.top = top;
       this.width = width;
@@ -183,7 +183,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     }
 
     @Override
-    public String getUrl(Image image) {
+    public SafeUri getUrl(Image image) {
       return url;
     }
 
@@ -200,7 +200,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     }
 
     @Override
-    public void setUrl(Image image, String url) {
+    public void setUrl(Image image, SafeUri url) {
       image.changeState(new UnclippedState(image));
       // Need to make sure we change the state before an onload event can fire,
       // or handlers will be fired while we are in the old state.
@@ -208,7 +208,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     }
 
     @Override
-    public void setUrlAndVisibleRect(Image image, String url, int left, int top, int width,
+    public void setUrlAndVisibleRect(Image image, SafeUri url, int left, int top, int width,
         int height) {
       /*
        * In the event that the clipping rectangle has not changed, we want to
@@ -238,8 +238,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     }
 
     @Override
-    public void setVisibleRect(Image image, int left, int top, int width,
-        int height) {
+    public void setVisibleRect(Image image, int left, int top, int width, int height) {
       setUrlAndVisibleRect(image, url, left, top, width, height);
     }
 
@@ -269,7 +268,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
 
     public abstract int getOriginTop();
 
-    public abstract String getUrl(Image image);
+    public abstract SafeUri getUrl(Image image);
 
     public abstract int getWidth(Image image);
 
@@ -297,13 +296,12 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
       // Overridden by ClippedState.
     }
 
-    public abstract void setUrl(Image image, String url);
+    public abstract void setUrl(Image image, SafeUri url);
 
-    public abstract void setUrlAndVisibleRect(Image image, String url,
-        int left, int top, int width, int height);
-
-    public abstract void setVisibleRect(Image image, int left, int top,
+    public abstract void setUrlAndVisibleRect(Image image, SafeUri url, int left, int top,
         int width, int height);
+
+    public abstract void setVisibleRect(Image image, int left, int top, int width, int height);
 
     /**
      * We need to synthesize a load event in case the image loads synchronously,
@@ -360,9 +358,8 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     UnclippedState(Element element) {
       // This case is relatively unusual, in that we swapped a clipped image
       // out, so does not need to be efficient.
-      Event.sinkEvents(element, Event.ONCLICK | Event.ONDBLCLICK | Event.MOUSEEVENTS
-          | Event.ONLOAD | Event.ONERROR | Event.ONMOUSEWHEEL | Event.TOUCHEVENTS
-          | Event.GESTUREEVENTS);
+      Event.sinkEvents(element, Event.ONCLICK | Event.ONDBLCLICK | Event.MOUSEEVENTS | Event.ONLOAD
+          | Event.ONERROR | Event.ONMOUSEWHEEL | Event.TOUCHEVENTS | Event.GESTUREEVENTS);
     }
 
     UnclippedState(Image image) {
@@ -377,7 +374,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
           | Event.ONERROR | Event.ONMOUSEWHEEL | Event.TOUCHEVENTS | Event.GESTUREEVENTS);
     }
 
-    UnclippedState(Image image, String url) {
+    UnclippedState(Image image, SafeUri url) {
       this(image);
       setUrl(image, url);
     }
@@ -403,8 +400,8 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     }
 
     @Override
-    public String getUrl(Image image) {
-      return getImageElement(image).getSrc();
+    public SafeUri getUrl(Image image) {
+      return UriUtils.unsafeCastFromUntrustedString(getImageElement(image).getSrc());
     }
 
     @Override
@@ -413,22 +410,20 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     }
 
     @Override
-    public void setUrl(Image image, String url) {
+    public void setUrl(Image image, SafeUri url) {
       image.clearUnhandledEvent();
-      getImageElement(image).setSrc(url);
+      getImageElement(image).setSrc(url.asString());
     }
 
     @Override
-    public void setUrlAndVisibleRect(Image image, String url, int left,
-        int top, int width, int height) {
+    public void setUrlAndVisibleRect(Image image, SafeUri url, int left, int top, int width,
+        int height) {
       image.changeState(new ClippedState(image, url, left, top, width, height));
     }
 
     @Override
-    public void setVisibleRect(Image image, int left, int top, int width,
-        int height) {
-      image.changeState(new ClippedState(image, getUrl(image), left, top,
-          width, height));
+    public void setVisibleRect(Image image, int left, int top, int width, int height) {
+      image.changeState(new ClippedState(image, getUrl(image), left, top, width, height));
     }
 
     // This method is used only by unit tests.
@@ -454,6 +449,15 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     ImageElement img = Document.get().createImageElement();
     img.setSrc(url);
     prefetchImages.put(url, img);
+  }
+
+  /**
+   * Causes the browser to pre-fetch the image at a given URL.
+   * 
+   * @param url the URL of the image to be prefetched
+   */
+  public static void prefetch(SafeUri url) {
+    prefetch(url.asString());
   }
 
   /**
@@ -494,8 +498,8 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
    * @param resource the ImageResource to be displayed
    */
   public Image(ImageResource resource) {
-    this(resource.getURL(), resource.getLeft(), resource.getTop(),
-        resource.getWidth(), resource.getHeight());
+    this(resource.getURL(), resource.getLeft(), resource.getTop(), resource.getWidth(),
+        resource.getHeight());
   }
 
   /**
@@ -505,6 +509,16 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
    * @param url the URL of the image to be displayed
    */
   public Image(String url) {
+    this(UriUtils.unsafeCastFromUntrustedString(url));
+  }
+
+  /**
+   * Creates an image with a specified URL. The load event will be fired once
+   * the image at the given URL has been retrieved by the browser.
+   * 
+   * @param url the URL of the image to be displayed
+   */
+  public Image(SafeUri url) {
     changeState(new UnclippedState(this, url));
     setStyleName("gwt-Image");
   }
@@ -528,6 +542,28 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
    * @param height the height of the visibility rectangle
    */
   public Image(String url, int left, int top, int width, int height) {
+    this(UriUtils.unsafeCastFromUntrustedString(url), left, top, width, height);
+  }
+
+  /**
+   * Creates a clipped image with a specified URL and visibility rectangle. The
+   * visibility rectangle is declared relative to the the rectangle which
+   * encompasses the entire image, which has an upper-left vertex of (0,0). The
+   * load event will be fired immediately after the object has been constructed
+   * (i.e. potentially before the image has been loaded in the browser). Since
+   * the width and height are specified explicitly by the user, this behavior
+   * will not cause problems with retrieving the width and height of a clipped
+   * image in a load event handler.
+   * 
+   * @param url the URL of the image to be displayed
+   * @param left the horizontal co-ordinate of the upper-left vertex of the
+   *          visibility rectangle
+   * @param top the vertical co-ordinate of the upper-left vertex of the
+   *          visibility rectangle
+   * @param width the width of the visibility rectangle
+   * @param height the height of the visibility rectangle
+   */
+  public Image(SafeUri url, int left, int top, int width, int height) {
     changeState(new ClippedState(this, url, left, top, width, height));
     setStyleName("gwt-Image");
   }
@@ -729,7 +765,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
    * @return the image URL
    */
   public String getUrl() {
-    return state.getUrl(this);
+    return state.getUrl(this).asString();
   }
 
   /**
@@ -812,8 +848,20 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
    * @param resource the ImageResource to display
    */
   public void setResource(ImageResource resource) {
-    setUrlAndVisibleRect(resource.getURL(), resource.getLeft(),
-        resource.getTop(), resource.getWidth(), resource.getHeight());
+    setUrlAndVisibleRect(resource.getSafeUri(), resource.getLeft(), resource.getTop(),
+        resource.getWidth(), resource.getHeight());
+  }
+
+  /**
+   * Sets the URL of the image to be displayed. If the image is in the clipped
+   * state, a call to this method will cause a transition of the image to the
+   * unclipped state. Regardless of whether or not the image is in the clipped
+   * or unclipped state, a load event will be fired.
+   * 
+   * @param url the image URL
+   */
+  public void setUrl(SafeUri url) {
+    state.setUrl(this, url);
   }
 
   /**
@@ -825,7 +873,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
    * @param url the image URL
    */
   public void setUrl(String url) {
-    state.setUrl(this, url);
+    setUrl(UriUtils.unsafeCastFromUntrustedString(url));
   }
 
   /**
@@ -844,9 +892,28 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
    * @param width the width of the visibility rectangle
    * @param height the height of the visibility rectangle
    */
-  public void setUrlAndVisibleRect(String url, int left, int top, int width,
-      int height) {
+  public void setUrlAndVisibleRect(SafeUri url, int left, int top, int width, int height) {
     state.setUrlAndVisibleRect(this, url, left, top, width, height);
+  }
+
+  /**
+   * Sets the url and the visibility rectangle for the image at the same time. A
+   * single load event will be fired if either the incoming url or visiblity
+   * rectangle co-ordinates differ from the image's current url or current
+   * visibility rectangle co-ordinates. If the image is currently in the
+   * unclipped state, a call to this method will cause a transition to the
+   * clipped state.
+   * 
+   * @param url the image URL
+   * @param left the horizontal coordinate of the upper-left vertex of the
+   *          visibility rectangle
+   * @param top the vertical coordinate of the upper-left vertex of the
+   *          visibility rectangle
+   * @param width the width of the visibility rectangle
+   * @param height the height of the visibility rectangle
+   */
+  public void setUrlAndVisibleRect(String url, int left, int top, int width, int height) {
+    setUrlAndVisibleRect(UriUtils.unsafeCastFromUntrustedString(url), left, top, width, height);
   }
 
   /**

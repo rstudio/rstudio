@@ -35,6 +35,7 @@ import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
 import com.google.gwt.resources.rg.ImageBundleBuilder.Arranger;
 import com.google.gwt.resources.rg.ImageBundleBuilder.ImageRect;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
@@ -75,8 +76,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
         CannotBundleImageException {
 
       LocalizedImage localized = LocalizedImage.create(logger, context, image);
-      localizedByImageResource = Maps.put(localizedByImageResource, image,
-          localized);
+      localizedByImageResource = Maps.put(localizedByImageResource, image, localized);
       if (images.containsKey(localized)) {
         return localized;
       }
@@ -140,8 +140,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
             throw new UnableToCompleteException();
         }
         URL normalContents = renderToTempPngFile(logger, builder, arranger);
-        normalContentsUrlExpression = context.deploy(
-            normalContents, MIME_TYPE_IMAGE_PNG, false);
+        normalContentsUrlExpression = context.deploy(normalContents, MIME_TYPE_IMAGE_PNG, false);
 
         if (!rtlImages.isEmpty()) {
           for (LocalizedImage rtlImage : rtlImages) {
@@ -151,22 +150,20 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
             tx.setTransform(-1, 0, 0, 1, imageRect.getWidth(), 0);
             imageRect.setTransform(tx);
           }
-          URL rtlContents = renderToTempPngFile(logger, builder,
-              new ImageBundleBuilder.IdentityArranger());
+          URL rtlContents =
+              renderToTempPngFile(logger, builder, new ImageBundleBuilder.IdentityArranger());
           assert rtlContents != null;
-          rtlContentsUrlExpression = context.deploy(
-              rtlContents, MIME_TYPE_IMAGE_PNG, false);
+          rtlContentsUrlExpression = context.deploy(rtlContents, MIME_TYPE_IMAGE_PNG, false);
         }
 
         dirty = false;
         if (logger.isLoggable(TreeLogger.DEBUG)) {
-          logger.log(TreeLogger.DEBUG, "Composited " + builder.getImageCount()
-              + " images");
+          logger.log(TreeLogger.DEBUG, "Composited " + builder.getImageCount() + " images");
         }
       }
 
-      JClassType stringType = context.getGeneratorContext().getTypeOracle().findType(
-          String.class.getCanonicalName());
+      JClassType stringType =
+          context.getGeneratorContext().getTypeOracle().findType(String.class.getCanonicalName());
 
       // Create the field that holds the normal contents
       assert normalContentsUrlExpression != null;
@@ -222,8 +219,10 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
    * ClientBundle .
    */
   static class CachedState {
-    public final Map<BundleKey, BundledImage> bundledImages = new LinkedHashMap<BundleKey, BundledImage>();
-    public final Map<BundleKey, ExternalImage> externalImages = new LinkedHashMap<BundleKey, ExternalImage>();
+    public final Map<BundleKey, BundledImage> bundledImages =
+        new LinkedHashMap<BundleKey, BundledImage>();
+    public final Map<BundleKey, ExternalImage> externalImages =
+        new LinkedHashMap<BundleKey, ExternalImage>();
   }
 
   /**
@@ -233,8 +232,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
     private final ImageRect imageRect;
     private final LocalizedImage localized;
 
-    public CannotBundleImageException(LocalizedImage localized,
-        ImageRect imageRect) {
+    public CannotBundleImageException(LocalizedImage localized, ImageRect imageRect) {
       this.localized = localized;
       this.imageRect = imageRect;
     }
@@ -291,8 +289,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
     /**
      * Create an unbundled image.
      */
-    public ExternalImage(ImageResourceDeclaration image,
-        LocalizedImage localized, ImageRect rect) {
+    public ExternalImage(ImageResourceDeclaration image, LocalizedImage localized, ImageRect rect) {
       this.image = image;
       this.localized = localized;
       this.rect = rect;
@@ -307,8 +304,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
     public void render(TreeLogger logger, ResourceContext context,
         ClientBundleFields fields, RepeatStyle repeatStyle)
         throws UnableToCompleteException {
-      JClassType stringType = context.getGeneratorContext().getTypeOracle().findType(
-          String.class.getCanonicalName());
+      JClassType stringType =
+          context.getGeneratorContext().getTypeOracle().findType(String.class.getCanonicalName());
 
       String contentsExpression = context.deploy(
           localized.getUrl(), null, image.isPreventInlining());
@@ -343,8 +340,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
    */
   static class ImageResourceDeclaration extends StringKey {
     private static String key(JMethod method) {
-      return method.getEnclosingType().getQualifiedSourceName() + "."
-          + method.getName();
+      return method.getEnclosingType().getQualifiedSourceName() + "." + method.getName();
     }
 
     private final String name;
@@ -398,8 +394,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
         ResourceContext context, ImageResourceDeclaration image)
         throws UnableToCompleteException {
 
-      URL[] resources = ResourceGeneratorUtil.findResources(logger, context,
-          image.getMethod());
+      URL[] resources = ResourceGeneratorUtil.findResources(logger, context, image.getMethod());
 
       if (resources.length != 1) {
         logger.log(TreeLogger.ERROR, "Exactly one image may be specified", null);
@@ -447,8 +442,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
         return null;
       }
 
-      File file = File.createTempFile(
-          ImageResourceGenerator.class.getSimpleName(), ".png");
+      File file = File.createTempFile(ImageResourceGenerator.class.getSimpleName(), ".png");
       file.deleteOnExit();
       Util.writeBytesToFile(logger, file, imageBytes);
       return file.toURI().toURL();
@@ -465,8 +459,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
   private CachedState shared;
 
   @Override
-  public String createAssignment(TreeLogger logger, ResourceContext context,
-      JMethod method) throws UnableToCompleteException {
+  public String createAssignment(TreeLogger logger, ResourceContext context, JMethod method)
+      throws UnableToCompleteException {
     String name = method.getName();
 
     SourceWriter sw = new StringSourceWriter();
@@ -479,19 +473,19 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
     ImageRect rect = bundle.getImageRect(image);
     assert rect != null : "No ImageRect ever computed for " + name;
 
-    String[] urlExpressions = new String[] {
-        bundle.getNormalContentsFieldName(), bundle.getRtlContentsFieldName()};
+    String[] urlExpressions =
+        new String[] {bundle.getNormalContentsFieldName(), bundle.getRtlContentsFieldName()};
     assert urlExpressions[0] != null : "No primary URL expression for " + name;
 
     if (urlExpressions[1] == null) {
-      sw.println(urlExpressions[0] + ",");
+      sw.println(UriUtils.class.getName() + ".fromTrustedString(" + urlExpressions[0] + "),");
     } else {
-      sw.println("com.google.gwt.i18n.client.LocaleInfo.getCurrentLocale().isRTL() ?"
-          + urlExpressions[1] + " : " + urlExpressions[0] + ",");
+      sw.println(UriUtils.class.getName() + ".fromTrustedString("
+          + "com.google.gwt.i18n.client.LocaleInfo.getCurrentLocale().isRTL() ?"
+          + urlExpressions[1] + " : " + urlExpressions[0] + "),");
     }
-    sw.println(rect.getLeft() + ", " + rect.getTop() + ", " + rect.getWidth()
-        + ", " + rect.getHeight() + ", " + rect.isAnimated() + ", "
-        + rect.isLossy());
+    sw.println(rect.getLeft() + ", " + rect.getTop() + ", " + rect.getWidth() + ", "
+        + rect.getHeight() + ", " + rect.isAnimated() + ", " + rect.isLossy());
 
     sw.outdent();
     sw.print(")");
@@ -504,8 +498,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
    * create the bundled images.
    */
   @Override
-  public void createFields(TreeLogger logger, ResourceContext context,
-      ClientBundleFields fields) throws UnableToCompleteException {
+  public void createFields(TreeLogger logger, ResourceContext context, ClientBundleFields fields)
+      throws UnableToCompleteException {
     renderImageMap(logger, context, fields, shared.bundledImages);
     renderImageMap(logger, context, fields, shared.externalImages);
   }
@@ -579,18 +573,15 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
               logger.log(TreeLogger.SPAM, "Reencoded image and saved "
                   + (originalSize - newSize) + " bytes");
             }
-            localizedImage = new LocalizedImage(localizedImage,
-                reencodedContents);
+            localizedImage = new LocalizedImage(localizedImage, reencodedContents);
           }
         } catch (IOException e2) {
           // Non-fatal, but weird
           logger.log(TreeLogger.WARN,
-              "Unable to determine before/after size when re-encoding image "
-                  + "data", e2);
+              "Unable to determine before/after size when re-encoding image " + "data", e2);
         }
       }
-      ExternalImage externalImage = new ExternalImage(image, localizedImage,
-          rect);
+      ExternalImage externalImage = new ExternalImage(image, localizedImage, rect);
       shared.externalImages.put(new BundleKey(image, true), externalImage);
       displayed = externalImage;
     }
@@ -653,8 +644,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
         return null;
       }
 
-      File file = File.createTempFile(
-          ImageResourceGenerator.class.getSimpleName(), ".png");
+      File file = File.createTempFile(ImageResourceGenerator.class.getSimpleName(), ".png");
       file.deleteOnExit();
       Util.writeBytesToFile(logger, file, imageBytes);
       return file.toURI().toURL();

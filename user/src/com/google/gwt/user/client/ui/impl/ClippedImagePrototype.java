@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,6 +16,9 @@
 package com.google.gwt.user.client.ui.impl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Image;
 
@@ -31,16 +34,20 @@ public class ClippedImagePrototype extends AbstractImagePrototype {
   private int height = 0;
   private int left = 0;
   private int top = 0;
-  private String url = null;
+  private SafeUri url = null;
   private int width = 0;
 
-  public ClippedImagePrototype(String url, int left, int top, int width,
-      int height) {
+  public ClippedImagePrototype(SafeUri url, int left, int top, int width, int height) {
     this.url = url;
     this.left = left;
     this.top = top;
     this.width = width;
     this.height = height;
+  }
+
+  @Deprecated
+  public ClippedImagePrototype(String url, int left, int top, int width, int height) {
+    this(UriUtils.unsafeCastFromUntrustedString(url), left, top, width, height);
   }
 
   @Override
@@ -64,7 +71,7 @@ public class ClippedImagePrototype extends AbstractImagePrototype {
   }
 
   @Override
-  public String getHTML() {
-    return impl.getHTML(url, left, top, width, height);
+  public SafeHtml getSafeHtml() {
+    return impl.getSafeHtml(url, left, top, width, height);
   }
 }

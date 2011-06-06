@@ -116,7 +116,7 @@ public class ImageResourceTest extends GWTTestCase {
     assertEquals(0, a.getTop());
 
     // Make sure the animated image is encoded separately
-    assertFalse(a.getURL().equals(r.i16x16().getURL()));
+    assertFalse(a.getSafeUri().equals(r.i16x16().getSafeUri()));
   }
 
   public void testDedup() {
@@ -136,7 +136,7 @@ public class ImageResourceTest extends GWTTestCase {
 
     delayTestFinish(10000);
     // See if the size of the image strip is what we expect
-    Image i = new Image(a.getURL());
+    Image i = new Image(a.getSafeUri());
     i.addLoadHandler(new LoadHandler() {
       public void onLoad(LoadEvent event) {
         finishTest();
@@ -162,7 +162,7 @@ public class ImageResourceTest extends GWTTestCase {
 
     // Make sure that the large, lossy image isn't bundled with the rest
     assertTrue(((ImageResourcePrototype) lossy).isLossy());
-    assertTrue(!i64.getURL().equals(lossy.getURL()));
+    assertTrue(!i64.getSafeUri().equals(lossy.getSafeUri()));
 
     assertEquals(16, r.i16x16Vertical().getWidth());
     assertEquals(16, r.i16x16Vertical().getHeight());
@@ -193,5 +193,12 @@ public class ImageResourceTest extends GWTTestCase {
     assertEquals(0, a.getLeft());
     assertEquals(0, b.getTop());
     assertEquals(0, b.getLeft());
+  }
+  
+  @SuppressWarnings("deprecation")
+  public void testSafeUri() {
+    Resources r = GWT.create(Resources.class);
+
+    assertEquals(r.i64x64().getSafeUri().asString(), r.i64x64().getURL());
   }
 }
