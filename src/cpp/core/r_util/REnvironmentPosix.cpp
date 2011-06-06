@@ -157,28 +157,43 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
 FilePath systemDefaultRScript(std::string* pErrMsg)
 {
    // ask system which R to use
-   std::string whichOutput;
-   Error error = core::system::captureCommand("which R", &whichOutput);
-   if (error)
+   std::string whichR;
+   Error error = core::system::captureCommand("which R", &whichR);
+   boost::algorithm::trim(whichR);
+   if (error || whichR.empty())
    {
-      *pErrMsg = "Error calling which R: " + error.summary();
-      LOG_ERROR_MESSAGE(*pErrMsg);
-      return FilePath();
-   }
-   boost::algorithm::trim(whichOutput);
+      // log error or failure to return output
+      if (error)
+      {
+         *pErrMsg = "Error calling which R: " + error.summary();
+         LOG_ERROR_MESSAGE(*pErrMsg);
+      }
+      else
+      {
+         *pErrMsg = "Unable to find an installation of R on the system "
+                    "(which R didn't return valid output)";
+         LOG_ERROR_MESSAGE(*pErrMsg);
+      }
 
-   // if we got no output then log and return false
-   if (whichOutput.empty())
-   {
-      *pErrMsg = "Unable to find an installation of R on the system "
-                 "(which R didn't return valid output)";
-      LOG_ERROR_MESSAGE(*pErrMsg);
-      return FilePath();
+      // scan in standard locations as a fallback
+      std::string scanErrMsg;
+      std::vector<std::string> rScriptPaths;
+      rScriptPaths.push_back("/usr/local/bin/R");
+      rScriptPaths.push_back("/usr/bin/R");
+      FilePath scriptPath = scanForRScript(rScriptPaths, &scanErrMsg);
+      if (scriptPath.empty())
+      {
+        pErrMsg->append("; " + scanErrMsg);
+        return FilePath();
+      }
+
+      // set whichR
+      whichR = scriptPath.absolutePath();
    }
-   else
-   {
-      return FilePath(whichOutput);
-   }
+
+
+   // return path to R script
+   return FilePath(whichR);
 }
 
 bool getRHomeAndLibPath(const FilePath& rScriptPath,
@@ -554,7 +569,20 @@ bool detectREnvironment(const FilePath& whichRScript,
                                &scriptVars,
                                pErrMsg))
    {
-      return false;
+      // fallback to detecting using script
+      rHomePath = FilePath();
+      rLibPath = FilePath();
+      scriptVars.clear();
+      std::string scriptErrMsg;
+      if (!detectRLocationsUsingScript(FilePath(rScriptPath),
+                                       &rHomePath,
+                                       &rLibPath,
+                                       &scriptVars,
+                                       &scriptErrMsg))
+      {
+         pErrMsg->append("; " + scriptErrMsg);
+         return false;
+      }
    }
 #endif
 
