@@ -66,6 +66,11 @@ define("mode/r", function(require, exports, module)
          return /^\s*[\{\}]/.test(input);
       };
 
+      this.getIndentForOpenBrace = function(openBracePos)
+      {
+         return this.$rCodeModel.getIndentForOpenBrace(openBracePos);
+      };
+
       this.autoOutdent = function(state, doc, row) {
          if (row == 0)
             return 0;
