@@ -82,9 +82,16 @@ public class ShortcutManager implements NativePreviewHandler,
       AppCommand command = commands_.get(shortcut);
       if (command != null)
       {
+         boolean enabled = enabled_ && command.isEnabled();
+         
+         // some commands want their keyboard shortcut to pass through 
+         // to the browser when they are disabled (e.g. Cmd+W)
+         if (!enabled && !command.preventShortcutWhenDisabled())
+            return false;
+         
          e.preventDefault();
 
-         if (enabled_ && command.isEnabled())
+         if (enabled)
             command.execute();
       }
 

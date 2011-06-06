@@ -56,6 +56,19 @@ public class BrowseCap
    {
       return OPERATING_SYSTEM.equals("linux");
    }
+   
+   public static boolean isChrome()
+   {
+      return isUserAgent("chrome");
+   }
+   
+   private static native final boolean isUserAgent(String uaTest) /*-{
+      var ua = navigator.userAgent.toLowerCase();
+      if (ua.indexOf(uaTest) != -1)
+         return true;
+      else
+         return false;      
+   }-*/;
 
    private static native final String getOperatingSystem() /*-{
       var ua = navigator.userAgent.toLowerCase();

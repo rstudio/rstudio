@@ -125,6 +125,16 @@ public class AppCommand implements Command, ClickHandler
          handlers_.fireEvent(new VisibleChangedEvent(this));
       }
    }
+   
+   public boolean preventShortcutWhenDisabled()
+   {
+      return preventShortcutWhenDisabled_;
+   }
+   
+   public void setPreventShortcutWhenDisabled(boolean preventShortcut)
+   {
+      preventShortcutWhenDisabled_ = preventShortcut;
+   }
 
    /**
     * Hides the command and makes sure it never comes back.
@@ -294,6 +304,7 @@ public class AppCommand implements Command, ClickHandler
    private boolean enabled_ = true;
    private boolean visible_ = true;
    private boolean removed_ = false;
+   private boolean preventShortcutWhenDisabled_ = true;
    private final HandlerManager handlers_ = new HandlerManager(this);
 
    private String label_;

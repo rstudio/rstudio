@@ -80,6 +80,18 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       if (BrowseCap.INSTANCE.suppressBrowserForwardBack())
          suppressBrowserForwardBack();
 
+      // override Cmd+W keybaord shortcut for Chrome
+      if (BrowseCap.isChrome())
+      {
+         int modifiers = (BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
+                                                   KeyboardShortcut.CTRL) |
+                         KeyboardShortcut.SHIFT;
+             
+         AppCommand closeSourceDoc = commands.closeSourceDoc();
+         closeSourceDoc.setShortcut(new KeyboardShortcut(modifiers, 'L'));
+         ShortcutManager.INSTANCE.register(modifiers, 'L', closeSourceDoc);
+      }
+      
       // main menu
       advertiseEditingShortcuts(globalDisplay, commands);
       WebMenuCallback menuCallback = new WebMenuCallback();
