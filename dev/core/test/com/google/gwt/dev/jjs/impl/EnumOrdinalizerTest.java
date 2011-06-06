@@ -32,10 +32,6 @@ import com.google.gwt.dev.jjs.ast.JProgram;
  * makes sense to test the output in this way.  Thus, we provide confidence
  * that the AST is left in a coherent state, but it is not a complete test that
  * ordinalization has completed correctly in every respec.
- * 
- * TODO(jbrosenberg): Provide a test to assert that ordinalization has completed 
- * correctly, by inspecting the AST in detail, specifically for ordinal 
- * replacements, after the EnumOrdinalizer completes.
  */
 public class EnumOrdinalizerTest extends OptimizerTestBase {
   @Override
@@ -796,6 +792,68 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
                         "  return retString;",
                         "}");
     optimize("void", "String stringApple = getEnumString(Fruit.APPLE);");
+    
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
+    assertFalse(tracker.isOrdinalized("test.EntryPoint$Fruit"));
+  }
+  
+  public void testNotOrdinalizableImplicitUpcastMethodCallArgsNewArray() 
+      throws UnableToCompleteException  {
+    EnumOrdinalizer.resetTracker();
+    
+    setupFruitEnum();
+    addSnippetClassDecl("public static String getEnumString(Enum[] myEnumArray) {",
+                        "  String retString = \"\";",
+                        "  for (Enum myEnum : myEnumArray) {",
+                        "    retString += myEnum.name();",
+                        "  }",
+                        "  return retString;",
+                        "}");
+    optimize("void", "String stringFruits = getEnumString(new Enum[] {Fruit.APPLE, Fruit.ORANGE});");
+    
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
+    assertFalse(tracker.isOrdinalized("test.EntryPoint$Fruit"));
+  }
+
+  public void testNotOrdinalizableImplicitUpcastMethodCallVarArgs() 
+      throws UnableToCompleteException  {
+    EnumOrdinalizer.resetTracker();
+    
+    setupFruitEnum();
+    addSnippetClassDecl("public static String getEnumString(Enum...myEnumArray) {",
+                        "  String retString = \"\";",
+                        "  for (Enum myEnum : myEnumArray) {",
+                        "    retString += myEnum.name();",
+                        "  }",
+                        "  return retString;",
+                        "}");
+    optimize("void", "String stringFruits = getEnumString(Fruit.APPLE, Fruit.ORANGE);");
+    
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
+    assertFalse(tracker.isOrdinalized("test.EntryPoint$Fruit"));
+  }
+
+  public void testNotOrdinalizableImplicitUpcastNewArrayElements() 
+      throws UnableToCompleteException  {
+    EnumOrdinalizer.resetTracker();
+    
+    setupFruitEnum();
+    optimize("void", "Enum[] enums = new Enum[] {Fruit.APPLE, Fruit.ORANGE};");
+    
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
+    assertFalse(tracker.isOrdinalized("test.EntryPoint$Fruit"));
+  }
+  
+  public void testNotOrdinalizableImplicitUpcastNewArrayArrayElements() 
+      throws UnableToCompleteException  {
+    EnumOrdinalizer.resetTracker();
+    
+    setupFruitEnum();
+    optimize("void", "Enum[][] enums = new Enum[][] {{Fruit.APPLE, Fruit.ORANGE},{Fruit.ORANGE, Fruit.APPLE}};");
     
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));

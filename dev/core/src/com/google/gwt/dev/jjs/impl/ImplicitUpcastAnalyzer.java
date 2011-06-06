@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -142,6 +143,16 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
       // make sure the param wasn't pruned
       if (i < params.size()) {
         processIfTypesNotEqual(args.get(i).getType(), params.get(i).getType(), x.getSourceInfo());
+      }
+    }
+  }
+
+  @Override
+  public void endVisit(JNewArray x, Context ctx) {
+    JType elementType = x.getArrayType().getElementType();
+    if (x.initializers != null) {
+      for (JExpression init : x.initializers) {
+        processIfTypesNotEqual(init.getType(), elementType, x.getSourceInfo());
       }
     }
   }
