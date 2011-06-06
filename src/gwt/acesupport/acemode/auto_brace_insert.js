@@ -86,7 +86,11 @@ define("mode/auto_brace_insert", function(require, exports, module)
             var rangeEnd = this.$moveRight(session.doc, endPos);
             if (prevChar == "{" && "}" == session.doc.getTextRange(Range.fromPoints(endPos, rangeEnd)))
             {
-               var indent = this.$getIndent(session.doc.getLine(endPos.row - 1));
+               var indent;
+               if (this.getIndentForOpenBrace)
+                  indent = this.getIndentForOpenBrace(this.$moveLeft(session.doc, position));
+               else
+                  indent = this.$getIndent(session.doc.getLine(endPos.row - 1));
                session.doc.insert(endPos, "\n" + indent);
                session.selection.moveCursorTo(endPos.row, endPos.column, false);
             }
