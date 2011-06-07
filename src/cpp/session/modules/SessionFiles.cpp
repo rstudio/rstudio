@@ -13,6 +13,8 @@
 
 #include "SessionFiles.hpp"
 
+#include <csignal>
+
 #include <vector>
 #include <iostream>
 #include <fstream>
