@@ -22,13 +22,13 @@ import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JGenericType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
-import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.client.CompositeEditor;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.IsEditor;
 import com.google.gwt.editor.client.LeafValueEditor;
+import com.google.web.bindery.autobean.gwt.rebind.model.JBeanMethod;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -376,13 +376,6 @@ public class EditorModel {
     return toReturn.toArray(new EditorData[toReturn.size()]);
   }
 
-  private String camelCase(String prefix, String name) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(prefix).append(Character.toUpperCase(name.charAt(0))).append(
-        name, 1, name.length());
-    return sb.toString();
-  }
-
   private List<EditorData> createEditorData(EditorAccess access)
       throws UnableToCompleteException {
     TreeLogger subLogger = logger.branch(TreeLogger.DEBUG, "Examining "
@@ -471,64 +464,73 @@ public class EditorModel {
         continue;
       }
       boolean lastPart = i == j - 1;
-      String getterName = camelCase("get", parts[i]);
+      boolean foundGetterForPart = false;
 
-      for (JClassType search : lookingAt.getFlattenedSupertypeHierarchy()) {
-        // If looking at the last element of the path, also look for a setter
-        if (i == j - 1 && setterName == null) {
-          for (JMethod maybeSetter : search.getOverloads(camelCase("set",
-              parts[i]))) {
-            if (maybeSetter.getReturnType().equals(JPrimitiveType.VOID)
-                && maybeSetter.getParameters().length == 1) {
+      for (JMethod maybeSetter : lookingAt.getInheritableMethods()) {
+        JBeanMethod which = JBeanMethod.which(maybeSetter);
+        if (JBeanMethod.CALL.equals(which)) {
+          continue;
+        }
+        if (!which.inferName(maybeSetter).equals(parts[i])) {
+          continue;
+        }
+        switch (which) {
+          case GET: {
+            JType returnType = maybeSetter.getReturnType();
+            lookingAt = returnType.isClassOrInterface();
+            if (!lastPart && lookingAt == null) {
+              poison(foundPrimitiveMessage(returnType, interstitialGetters.toString(), path));
+              return;
+            }
+            interstitialGetters.append(".").append(maybeSetter.getName()).append("()");
+            interstitialGuard.append(" && %1$s").append(interstitialGetters).append(" != null");
+            builder.propertyOwnerType(maybeSetter.getEnclosingType());
+            foundGetterForPart = true;
+            if (!lastPart) {
+              continue part;
+            }
+            break;
+          }
+          case SET:
+          case SET_BUILDER: {
+            if (lastPart && setterName == null) {
+              /*
+               * If looking at the last element of the path, also look for a
+               * setter.
+               */
+
               JType setterParamType = maybeSetter.getParameters()[0].getType();
               // Handle the case of setFoo(int) vs. Editor<Integer>
               if (setterParamType.isPrimitive() != null) {
                 // Replace the int with Integer
-                setterParamType = oracle.findType(setterParamType.isPrimitive().getQualifiedBoxedSourceName());
+                setterParamType =
+                    oracle.findType(setterParamType.isPrimitive().getQualifiedBoxedSourceName());
               }
-              boolean matches = setterParamType.isClassOrInterface().isAssignableFrom(
-                  propertyType);
+              boolean matches = setterParamType.isClassOrInterface().isAssignableFrom(propertyType);
               if (matches) {
                 setterName = maybeSetter.getName();
-                break;
               }
             }
+            break;
           }
-        }
-
-        JMethod getter = search.findMethod(getterName, new JType[0]);
-        if (getter != null) {
-          JType returnType = getter.getReturnType();
-          lookingAt = returnType.isClassOrInterface();
-          if (!lastPart && lookingAt == null) {
-            poison(foundPrimitiveMessage(returnType,
-                interstitialGetters.toString(), path));
-            return;
-          }
-          interstitialGetters.append(".").append(getterName).append("()");
-          interstitialGuard.append(" && %1$s").append(interstitialGetters).append(
-              " != null");
-          builder.propertyOwnerType(search);
-          continue part;
         }
       }
-      poison(noGetterMessage(path, proxyType));
-      return;
+      if (!foundGetterForPart) {
+        poison(noGetterMessage(path, proxyType));
+        return;
+      }
     }
 
     int idx = interstitialGetters.lastIndexOf(".");
-    builder.beanOwnerExpression(idx <= 0 ? "" : interstitialGetters.substring(
-        0, idx));
+    builder.beanOwnerExpression(idx <= 0 ? "" : interstitialGetters.substring(0, idx));
     if (parts.length > 1) {
       // Strip after last && since null is a valid value
-      interstitialGuard.delete(interstitialGuard.lastIndexOf(" &&"),
-          interstitialGuard.length());
+      interstitialGuard.delete(interstitialGuard.lastIndexOf(" &&"), interstitialGuard.length());
       builder.beanOwnerGuard(interstitialGuard.substring(8));
     }
     if (interstitialGetters.length() > 0) {
       builder.getterExpression("."
-          + interstitialGetters.substring(idx + 1,
-              interstitialGetters.length() - 2) + "()");
+          + interstitialGetters.substring(idx + 1, interstitialGetters.length() - 2) + "()");
     } else {
       builder.getterExpression("");
     }

@@ -188,7 +188,7 @@ public class EditorModelTest extends TestCase {
         types.findType("t.CompositeEditorDriver"), rfedType);
 
     EditorData[] data = m.getEditorData();
-    assertEquals(7, data.length);
+    assertEquals(9, data.length);
 
     String[] paths = new String[data.length];
     String[] expressions = new String[data.length];
@@ -196,20 +196,22 @@ public class EditorModelTest extends TestCase {
       paths[i] = data[i].getPath();
       expressions[i] = data[i].getExpression();
     }
-    assertEquals(Arrays.asList("address", "address.city", "address.street",
-        "person", "person.lastModified", "person.name", "person.readonly"),
-        Arrays.asList(paths));
+    assertEquals(Arrays.asList("address", "address.city", "address.street", "person", "person.has",
+        "person.is", "person.lastModified", "person.name", "person.readonly"), Arrays.asList(paths));
     // address is a property, person is a method in CompositeEditor
-    assertEquals(Arrays.asList("address", "address.city", "address.street",
-        "person()", "person().lastModified", "person().name",
+    assertEquals(Arrays.asList("address", "address.city", "address.street", "person()",
+        "person().has", "person().is", "person().lastModified", "person().name",
         "person().readonly"), Arrays.asList(expressions));
     assertTrue(data[0].isDelegateRequired());
     assertFalse(data[0].isLeafValueEditor() || data[0].isValueAwareEditor());
     assertTrue(data[3].isDelegateRequired());
     assertFalse(data[3].isLeafValueEditor() || data[3].isValueAwareEditor());
-    checkPersonLastModified(data[4]);
-    checkPersonName(data[5]);
-    checkPersonReadonly(data[6]);
+    int fieldNum = 4;
+    checkPersonHasHas(data[fieldNum++]);
+    checkPersonIsIs(data[fieldNum++]);
+    checkPersonLastModified(data[fieldNum++]);
+    checkPersonName(data[fieldNum++]);
+    checkPersonReadonly(data[fieldNum++]);
   }
 
   public void testCyclicDriver() {
@@ -259,14 +261,19 @@ public class EditorModelTest extends TestCase {
     EditorModel m = new EditorModel(logger,
         types.findType("t.PersonEditorDriver"), rfedType);
     EditorData[] fields = m.getEditorData();
-    assertEquals(3, fields.length);
+    assertEquals(5, fields.length);
 
+    int fieldNum = 0;
+    // hasHas
+    checkPersonHasHas(fields[fieldNum++]);
+    // isIs
+    checkPersonIsIs(fields[fieldNum++]);
     // lastModified
-    checkPersonLastModified(fields[0]);
+    checkPersonLastModified(fields[fieldNum++]);
     // name
-    checkPersonName(fields[1]);
+    checkPersonName(fields[fieldNum++]);
     // readonly
-    checkPersonReadonly(fields[2]);
+    checkPersonReadonly(fields[fieldNum++]);
   }
 
   public void testFlatData() throws UnableToCompleteException {
@@ -282,10 +289,13 @@ public class EditorModelTest extends TestCase {
     assertEquals("person", composite[1].getPropertyName());
 
     EditorData[] person = m.getEditorData(types.findType("t.PersonEditor"));
-    assertEquals(3, person.length);
-    assertEquals("lastModified", person[0].getPropertyName());
-    assertEquals("name", person[1].getPropertyName());
-    assertEquals("readonly", person[2].getPropertyName());
+    assertEquals(5, person.length);
+    int fieldNum = 0;
+    assertEquals("has", person[fieldNum++].getPropertyName());
+    assertEquals("is", person[fieldNum++].getPropertyName());
+    assertEquals("lastModified", person[fieldNum++].getPropertyName());
+    assertEquals("name", person[fieldNum++].getPropertyName());
+    assertEquals("readonly", person[fieldNum++].getPropertyName());
 
     EditorData[] address = m.getEditorData(types.findType("t.AddressEditor"));
     assertEquals("city", address[0].getPropertyName());
@@ -465,7 +475,29 @@ public class EditorModelTest extends TestCase {
     EditorModel m = new EditorModel(logger,
         types.findType("t.PersonEditorWithAliasedSubEditorsDriver"), rfedType);
     EditorData[] fields = m.getEditorData();
-    assertEquals(8, fields.length);
+    assertEquals(12, fields.length);
+  }
+
+  private void checkPersonHasHas(EditorData editorField) {
+    assertNotNull(editorField);
+    assertEquals(types.findType(SimpleEditor.class.getName()),
+        editorField.getEditorType().isParameterized().getBaseType());
+    assertTrue(editorField.isLeafValueEditor());
+    assertFalse(editorField.isDelegateRequired());
+    assertFalse(editorField.isValueAwareEditor());
+    assertEquals(".hasHas()", editorField.getGetterExpression());
+    assertEquals("setHas", editorField.getSetterName());
+  }
+
+  private void checkPersonIsIs(EditorData editorField) {
+    assertNotNull(editorField);
+    assertEquals(types.findType(SimpleEditor.class.getName()),
+        editorField.getEditorType().isParameterized().getBaseType());
+    assertTrue(editorField.isLeafValueEditor());
+    assertFalse(editorField.isDelegateRequired());
+    assertFalse(editorField.isValueAwareEditor());
+    assertEquals(".isIs()", editorField.getGetterExpression());
+    assertEquals("setIs", editorField.getSetterName());
   }
 
   private void checkPersonLastModified(EditorData editorField) {
@@ -676,6 +708,10 @@ public class EditorModelTest extends TestCase {
         code.append("String getName();\n");
         code.append("long getLastModified();\n");
         code.append("String getReadonly();\n");
+        code.append("boolean hasHas();\n");
+        code.append("boolean isIs();\n");
+        code.append("void setHas(boolean has);\n");
+        code.append("void setIs(boolean is);\n");
         code.append("void setName(String name);\n");
         code.append("void setLastModified(long value);\n");
         code.append("}");
@@ -689,6 +725,8 @@ public class EditorModelTest extends TestCase {
         code.append("import " + Editor.class.getName() + ";\n");
         code.append("import " + SimpleEditor.class.getName() + ";\n");
         code.append("class PersonEditor implements Editor<PersonProxy> {\n");
+        code.append("SimpleEditor<Boolean> has;\n");
+        code.append("SimpleEditor<Boolean> is;\n");
         code.append("SimpleEditor<Long> lastModified;\n");
         code.append("public SimpleEditor<String> name;\n");
         code.append("SimpleEditor<String> readonly;\n");
