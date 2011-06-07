@@ -127,7 +127,7 @@ bool s_sessionInitialized = false;
 bool s_rSessionResumed = false;
 
 // manage global state indicating whether R is processing input
-bool s_rProcessingInput = false;
+volatile sig_atomic_t s_rProcessingInput = 0;
 
 // did we fail to coerce the charset to UTF-8
 bool s_printCharsetWarning = false;
@@ -150,6 +150,7 @@ bool disallowSuspend() { return false; }
 // request suspends (cooperative and forced) using interrupts
 volatile sig_atomic_t s_suspendRequested = 0;
 volatile sig_atomic_t s_forceSuspend = 0;
+volatile sig_atomic_t s_forceSuspendInterruptedR = 0;
    
 // cooperative suspend -- the http server is forced to timeout and a flag 
 // indicating that we should suspend at ourfirst valid opportunity is set
@@ -164,9 +165,13 @@ void handleUSR1(int unused)
 // and the 'force' flag is set
 void handleUSR2(int unused)
 {
-   // set the r interrupt flag in case we are in the middle of processing
+   // note whether R was interrupted
+   if (s_rProcessingInput)
+      s_forceSuspendInterruptedR = 1;
+
+   // set the r interrupt flag (always)
    r::exec::setInterruptsPending(true);
-   
+
    // note that a suspend is being forced. 
    s_forceSuspend = 1;
 }
@@ -732,14 +737,20 @@ void suspendIfRequested(const boost::function<bool()>& allowSuspend)
       // hammering away on the failure case)
       s_forceSuspend = false;
 
-      // notify user
-      r::session::reportAndLogWarning(
-        "Session forced to suspend due to system restart, maintenance, "
-        "or other issue. Your session data will be saved however running "
-        "computations may have been interrupted and transient state such as "
-        "open connections or graphics devices will not be preserved.");
+      // did this force suspend interrupt R?
+      if (s_forceSuspendInterruptedR)
+      {
+         // reset flag
+         s_forceSuspendInterruptedR = false;
 
-      // execute the forced suspend (doesb not return)
+         // notify user
+         r::session::reportAndLogWarning(
+            "Session forced to suspend due to system upgrade, restart, maintenance, "
+            "or other issue. Your session data was saved however running "
+            "computations may have been interrupted.");
+      }
+
+      // execute the forced suspend (does not return)
       suspendSession(true);
    }
 

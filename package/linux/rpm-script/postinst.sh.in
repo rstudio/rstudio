@@ -9,11 +9,11 @@ useradd -r rstudio-server
 # create softlink to admin script in /usr/sbin
 ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
 
-# write installed indicator then cooperatively suspend active sessions 
-# (so they have a chance to get the update)
+# write installed indicator then force suspend active sessions
+# (so that the new client is never paired against the old server)
 mkdir -p /etc/rstudio
 sh -c "echo `date +%s` > /etc/rstudio/installed"
-rstudio-server suspend-all
+rstudio-server force-suspend-all
 
 # add and register init.d script and (re) start the server
 cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/redhat/rstudio-server /etc/init.d/
