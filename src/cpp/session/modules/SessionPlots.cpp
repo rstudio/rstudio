@@ -424,29 +424,28 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
             "<title>Plot Zoom</title>"
             "<script type=\"text/javascript\">"
 
-               "window.timerPending = false;"
-
                "window.onresize = function() {"
 
-                  "if(window.timerPending) "
-                     "return;"
+                  "var plotEl = document.getElementById('plot');"
+                  "if (plotEl) {"
+                     "plotEl.style.width='100%';"
+                     "plotEl.style.height='100%';"
+                  "}"
 
-                  "window.timerPending = true;"
+                  "if(window.activeTimer)"
+                     "clearTimeout(window.activeTimer);"
 
-                  "setTimeout( function() { "
+                  "window.activeTimer = setTimeout( function() { "
 
                      "window.location.href = "
                         "\"plot_zoom?width=\" + document.body.clientWidth "
                               " + \"&height=\" + document.body.clientHeight; "
                    "}, 300);"
-
-                  "window.timerPending = false;"
-
                "}"
             "</script>"
          "</head>"
-         "<body style=\"margin: 0\">"
-            "<img src=\"plot_zoom_png?width=#width#&height=#height#\"/>"
+         "<body style=\"margin: 0; overflow: hidden\">"
+            "<img id=\"plot\" src=\"plot_zoom_png?width=#width#&height=#height#\"/>"
          "</body>"
       "</html>";
 
