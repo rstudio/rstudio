@@ -11,7 +11,7 @@ set -e
 CURRENT_DIR=`pwd`
 PACKAGE_DIR=$CURRENT_DIR/build-Desktop-$1/_CPack_Packages/Linux/$1
 cd $PACKAGE_DIR
-PACKAGE_ROOT=`ls -d */`
+PACKAGE_ROOT=`ls -d rstudio-*/`
 PACKAGE_ROOT=${PACKAGE_ROOT%/}
 
 # tarball name
@@ -19,7 +19,7 @@ if [ "$1" == "DEB" ]
 then
   PLATFORM=debian
 else
-  PLATFORM=redhat
+  PLATFORM=fedora
 fi
 PACKAGE_TAR=$PACKAGE_DIR/$PACKAGE_ROOT-$PLATFORM.tar.gz
 
