@@ -23,9 +23,13 @@ else
 fi
 PACKAGE_TAR=$PACKAGE_DIR/$PACKAGE_ROOT-$PLATFORM.tar.gz
 
-# switch to rstudio dir and create tarball
-cd ${PACKAGE_ROOT}/usr/lib
-tar -c -z -f $PACKAGE_TAR rstudio
+# copy rstudio dir to local (versioned) dir and make tarball
+VERSIONED_RSTUDIO=rstudio-${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}
+rm -rf ${VERSIONED_RSTUDIO}
+cp -R ${PACKAGE_ROOT}/usr/lib/rstudio ${VERSIONED_RSTUDIO}
+
+# create tarball
+tar -c -z -f $PACKAGE_TAR ${VERSIONED_RSTUDIO}
 
 # back to current dir
 cd $CURRENT_DIR
