@@ -36,15 +36,19 @@ To launch your web app in GWT development mode
   You can now use the built-in debugger to debug your web app in development mode.
 
 GWT developers (those who build GWT from source) may add their
-gwt-user project to this project's class path in order to use
-the built-from-source version of GWT instead of the version specified
-in the POM.
+gwt-user and gwt-dev projects to this project's class path in order to
+use the built-from-source version of GWT instead of the version
+specified in the POM.
 
   Select the project in the Project explorer and select File > Properties
 
   Select Java Build Path and click the Projects tab
 
-  Click Add..., select gwt-user, and click OK
+  Click Add..., select gwt-user and gwt-dev, and click OK
+
+  Still in the Java Build Path dialog, click the Order and Export tab
+
+  Move gwt-dev and gwt-user above Maven Dependencies
   
 GWT developers can also use tools/scripts/maven_script.sh to push their
 own GWT jars into their local maven repo.
