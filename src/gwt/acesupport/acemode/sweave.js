@@ -37,6 +37,17 @@ var Mode = function(suppressHighlighting, doc) {
 oop.inherits(Mode, TextMode);
 
 (function() {
+
+   // Remove
+   this.$complements = {
+      "(": ")",
+      "[": "]",
+      '"': '"',
+      "{": "}"
+   };
+   this.$reOpen = /^[(["{]$/;
+   this.$reClose = /^[)\]"}]$/;
+
    this.getNextLineIndent = function(state, line, tab, tabSize, row)
    {
       return this.$rCodeModel.getNextLineIndent(row, line, state, tab, tabSize);

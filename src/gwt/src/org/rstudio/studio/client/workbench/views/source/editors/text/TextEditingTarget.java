@@ -121,6 +121,8 @@ public class TextEditingTarget implements EditingTarget
       boolean moveSelectionToNextLine(boolean skipBlankLines);
       ChangeTracker getChangeTracker();
 
+      String getBeginningToCurrentLineCode();
+
       void fitSelectionToLines(boolean expand);
       int getSelectionOffset(boolean start);
 
@@ -1224,6 +1226,19 @@ public class TextEditingTarget implements EditingTarget
       code = code.replaceAll("^[ \t\n]*\n", "");
       code = code.replaceAll("\n[ \t\n]*$", "");
 
+      events_.fireEvent(new SendToConsoleEvent(code, true));
+   }
+
+   @Handler
+   void onExecuteToCurrentLine()
+   {
+      // Stops the console from thinking it has focus, and thus stealing it
+      Element activeEl = DomUtils.getActiveElement();
+      if (activeEl != null)
+         activeEl.blur();
+      docDisplay_.focus();
+
+      String code = docDisplay_.getBeginningToCurrentLineCode();
       events_.fireEvent(new SendToConsoleEvent(code, true));
    }
 

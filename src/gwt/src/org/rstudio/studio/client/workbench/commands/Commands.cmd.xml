@@ -76,6 +76,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="executeCode"/>
          <cmd refid="executeAllCode"/>
+         <cmd refid="executeToCurrentLine"/>
          <separator/>
          <cmd refid="sourceActiveDocument"/>
          <cmd refid="sourceFile"/>
@@ -204,6 +205,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="compilePDF" value="Cmd+Shift+P"/>
       <shortcut refid="executeCode" value="Cmd+Enter"/>
       <shortcut refid="executeAllCode" value="Cmd+Shift+Enter"/>
+      <shortcut refid="executeToCurrentLine" value="Cmd+Shift+B"/>
       <shortcut refid="sourceFile" value="Cmd+Shift+O"/>
       <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S"/>
       <shortcut refid="extractFunction" value="Cmd+Shift+F"/>
@@ -355,6 +357,9 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Run Line(s)"
         menuLabel="_Run Line(s)"
         desc="Run the current line or selection in the R console"/>
+   <cmd id="executeToCurrentLine"
+        menuLabel="Run From _Beginning To Line"
+        desc="Run the code from the beginning of the document up through the current line"/>
    <cmd id="extractFunction"
         menuLabel="E_xtract Function"
         desc="Turn the current selection into a function"/>

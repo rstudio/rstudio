@@ -34,4 +34,8 @@ public class Range extends JavaScriptObject
    public final native boolean isEmpty() /*-{
       return this.isEmpty();
    }-*/;
+
+   public final native Range extend(int row, int column) /*-{
+      return this.extend(row, column);
+   }-*/;
 }

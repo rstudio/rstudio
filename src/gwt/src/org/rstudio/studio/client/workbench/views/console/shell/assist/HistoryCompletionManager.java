@@ -149,10 +149,13 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
                      public void setPosition(int offsetWidth, int offsetHeight)
                      {
                         Rectangle bounds = input_.getBounds();
+
+                        int top = bounds.getTop() - offsetHeight;
+                        if (top < 20)
+                           top = bounds.getBottom();
+
                         popup_.selectLast();
-                        popup_.setPopupPosition(
-                              bounds.getLeft() - 6,
-                              bounds.getTop() - offsetHeight);
+                        popup_.setPopupPosition(bounds.getLeft() - 6, top);
                      }
                   });
 

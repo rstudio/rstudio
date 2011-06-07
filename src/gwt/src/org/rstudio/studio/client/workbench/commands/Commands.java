@@ -36,6 +36,7 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand sourceFile();
    public abstract AppCommand sourceActiveDocument();
    public abstract AppCommand executeCode();
+   public abstract AppCommand executeToCurrentLine();
    public abstract AppCommand compilePDF();
    public abstract AppCommand publishPDF();
    public abstract AppCommand activateSource();
