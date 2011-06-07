@@ -2030,7 +2030,7 @@ public class GenerateJavaAST {
       }
       JArrayType lastParamType = (JArrayType) typeMap.get(params[varArg]);
       JNewArray newArray =
-          JNewArray.createInitializers(SourceOrigin.UNKNOWN, lastParamType, initializers);
+          JNewArray.createInitializers(call.getSourceInfo(), lastParamType, initializers);
       call.addArg(newArray);
     }
 

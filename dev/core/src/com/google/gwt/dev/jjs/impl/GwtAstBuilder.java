@@ -347,8 +347,9 @@ public class GwtAstBuilder {
     @Override
     public void endVisit(AllocationExpression x, BlockScope scope) {
       try {
-        List<JExpression> arguments = popCallArgs(x.arguments, x.binding);
-        pushNewExpression(x, null, arguments, scope);
+        SourceInfo info = makeSourceInfo(x);
+        List<JExpression> arguments = popCallArgs(info, x.arguments, x.binding);
+        pushNewExpression(info, x, null, arguments, scope);
       } catch (Throwable e) {
         throw translateException(x, e);
       }
@@ -760,7 +761,7 @@ public class GwtAstBuilder {
         JConstructor ctor = (JConstructor) typeMap.get(x.binding);
         JExpression trueQualifier = makeThisRef(info);
         JMethodCall call = new JMethodCall(info, trueQualifier, ctor);
-        List<JExpression> callArgs = popCallArgs(x.arguments, x.binding);
+        List<JExpression> callArgs = popCallArgs(info, x.arguments, x.binding);
 
         if (curClass.classType.isEnumOrSubclass() != null) {
           // Enums: wire up synthetic name/ordinal params to the super method.
@@ -1114,7 +1115,7 @@ public class GwtAstBuilder {
         SourceInfo info = makeSourceInfo(x);
         JMethod method = typeMap.get(x.binding);
 
-        List<JExpression> arguments = popCallArgs(x.arguments, x.binding);
+        List<JExpression> arguments = popCallArgs(info, x.arguments, x.binding);
         JExpression receiver = pop(x.receiver);
         if (x.receiver instanceof ThisReference) {
           if (method.isStatic()) {
@@ -1231,8 +1232,9 @@ public class GwtAstBuilder {
     @Override
     public void endVisit(QualifiedAllocationExpression x, BlockScope scope) {
       try {
-        List<JExpression> arguments = popCallArgs(x.arguments, x.binding);
-        pushNewExpression(x, x.enclosingInstance(), arguments, scope);
+        SourceInfo info = makeSourceInfo(x);
+        List<JExpression> arguments = popCallArgs(info, x.arguments, x.binding);
+        pushNewExpression(info, x, x.enclosingInstance(), arguments, scope);
       } catch (Throwable e) {
         throw translateException(x, e);
       }
@@ -2274,7 +2276,8 @@ public class GwtAstBuilder {
       return nodeStack.remove(nodeStack.size() - 1);
     }
 
-    private List<JExpression> popCallArgs(Expression[] jdtArgs, MethodBinding binding) {
+    private List<JExpression> popCallArgs(SourceInfo info, Expression[] jdtArgs,
+        MethodBinding binding) {
       List<JExpression> args = pop(jdtArgs);
       if (!binding.isVarargs()) {
         return args;
@@ -2302,8 +2305,7 @@ public class GwtAstBuilder {
       ArrayList<JExpression> initializers = new ArrayList<JExpression>(tail);
       tail.clear();
       JArrayType lastParamType = (JArrayType) typeMap.get(params[varArg]);
-      JNewArray newArray =
-          JNewArray.createInitializers(SourceOrigin.UNKNOWN, lastParamType, initializers);
+      JNewArray newArray = JNewArray.createInitializers(info, lastParamType, initializers);
       args.add(newArray);
       return args;
     }
@@ -2447,7 +2449,7 @@ public class GwtAstBuilder {
       curMethod = newInfo;
     }
 
-    private void pushNewExpression(AllocationExpression x, Expression qualifier,
+    private void pushNewExpression(SourceInfo info, AllocationExpression x, Expression qualifier,
         List<JExpression> arguments, BlockScope scope) {
       TypeBinding typeBinding = x.resolvedType;
       if (typeBinding.constantPoolName() == null) {
@@ -2460,7 +2462,6 @@ public class GwtAstBuilder {
       }
       assert typeBinding.isClass() || typeBinding.isEnum();
 
-      SourceInfo info = makeSourceInfo(x);
       MethodBinding b = x.binding;
       assert b.isConstructor();
       JConstructor ctor = (JConstructor) typeMap.get(b);
