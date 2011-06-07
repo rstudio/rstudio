@@ -34,7 +34,7 @@ import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RequiresResizeComposite;
+import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -43,9 +43,9 @@ import com.google.gwt.user.client.ui.Widget;
  * 
  * TODO(rjrjr): this thing needs a presenter. Not an activity. A presenter.
  */
-public class MobileWebAppShellTablet extends RequiresResizeComposite<DockLayoutPanel> implements MobileWebAppShell {
+public class MobileWebAppShellTablet extends ResizeComposite implements MobileWebAppShell {
 
-  interface MobileWebAppShellTabletUiBinder extends UiBinder<DockLayoutPanel, MobileWebAppShellTablet> {
+  interface MobileWebAppShellTabletUiBinder extends UiBinder<Widget, MobileWebAppShellTablet> {
   }
 
   private static MobileWebAppShellTabletUiBinder uiBinder =

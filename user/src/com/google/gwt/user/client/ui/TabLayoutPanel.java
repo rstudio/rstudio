@@ -94,7 +94,7 @@ import java.util.Iterator;
  * &lt;/g:TabLayoutPanel>
  * </pre>
  */
-public class TabLayoutPanel extends RequiresResizeComposite<LayoutPanel> implements HasWidgets,
+public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     ProvidesResize, IndexedPanel.ForIsWidget, AnimatedLayout,
     HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
 

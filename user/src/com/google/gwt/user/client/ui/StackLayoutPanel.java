@@ -95,7 +95,7 @@ import java.util.NoSuchElementException;
  * &lt;/g:StackLayoutPanel>
  * </pre>
  */
-public class StackLayoutPanel extends RequiresResizeComposite<LayoutPanel> implements HasWidgets,
+public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
     ProvidesResize, IndexedPanel.ForIsWidget, AnimatedLayout,
     HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
 

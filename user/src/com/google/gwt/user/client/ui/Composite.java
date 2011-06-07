@@ -15,25 +15,115 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+
 /**
- * Simple extension of {@link AbstractComposite} that doesn't require type
- * parameters. This originally was the only implementation of Composite, before
- * {@link AbstractComposite} was introduced to allow strong typing and deferred
- * construction.
- *
+ * A type of widget that can wrap another widget, hiding the wrapped widget's
+ * methods. When added to a panel, a composite behaves exactly as if the widget
+ * it wraps had been added.
+ * 
+ * <p>
+ * The composite is useful for creating a single widget out of an aggregate of
+ * multiple other widgets contained in a single panel.
+ * </p>
+ * 
+ * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.CompositeExample}
  * </p>
  */
-public abstract class Composite extends AbstractComposite<Widget> {
-  
+public abstract class Composite extends Widget {
+
+  private Widget widget;
+
+  @Override
+  public boolean isAttached() {
+    if (widget != null) {
+      return widget.isAttached();
+    }
+    return false;
+  }
+
+  @Override
+  public void onBrowserEvent(Event event) {
+    // Fire any handler added to the composite itself.
+    super.onBrowserEvent(event);
+
+    // Delegate events to the widget.
+    widget.onBrowserEvent(event);
+  }
+
   /**
-   * Provided for compatibility with legacy unit tests that mocked
-   * this specific method.
+   * Provides subclasses access to the topmost widget that defines this
+   * composite.
+   * 
+   * @return the widget
    */
-  @Deprecated
-  protected void initWidget(Widget widget) { 
-    super.initWidget(widget);
+  protected Widget getWidget() {
+    return widget;
+  }
+
+  /**
+   * Sets the widget to be wrapped by the composite. The wrapped widget must be
+   * set before calling any {@link Widget} methods on this object, or adding it
+   * to a panel. This method may only be called once for a given composite.
+   * 
+   * @param widget the widget to be wrapped
+   */
+  protected void initWidget(Widget widget) {
+    // Validate. Make sure the widget is not being set twice.
+    if (this.widget != null) {
+      throw new IllegalStateException("Composite.initWidget() may only be "
+          + "called once.");
+    }
+
+    // Detach the new child.
+    widget.removeFromParent();
+
+    // Use the contained widget's element as the composite's element,
+    // effectively merging them within the DOM.
+    setElement(widget.getElement());
+
+    // Logical attach.
+    this.widget = widget;
+
+    // Adopt.
+    widget.setParent(this);
+  }
+
+  @Override
+  protected void onAttach() {
+    if (!isOrWasAttached()) {
+      widget.sinkEvents(eventsToSink);
+      eventsToSink = -1;
+    }
+
+    widget.onAttach();
+
+    // Clobber the widget's call to setEventListener(), causing all events to
+    // be routed to this composite, which will delegate back to the widget by
+    // default (note: it's not necessary to clear this in onDetach(), because
+    // the widget's onDetach will do so).
+    DOM.setEventListener(getElement(), this);
+
+    // Call onLoad() directly, because we're not calling super.onAttach().
+    onLoad();
+    AttachEvent.fire(this, true);
+  }
+
+  @Override
+  protected void onDetach() {
+    try {
+      onUnload();
+      AttachEvent.fire(this, false);
+    } finally {
+      // We don't want an exception in user code to keep us from calling the
+      // super implementation (or event listeners won't get cleaned up and
+      // the attached flag will be wrong).
+      widget.onDetach();
+    }
   }
 
   /**

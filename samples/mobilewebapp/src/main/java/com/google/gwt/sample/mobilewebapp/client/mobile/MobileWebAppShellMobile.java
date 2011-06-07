@@ -36,15 +36,15 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.RequiresResizeComposite;
+import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Mobile version of the UI shell.
  */
-public class MobileWebAppShellMobile extends RequiresResizeComposite<LayoutPanel> implements MobileWebAppShell {
+public class MobileWebAppShellMobile extends ResizeComposite implements MobileWebAppShell {
 
-  interface MobileWebAppShellMobileUiBinder extends UiBinder<LayoutPanel, MobileWebAppShellMobile> {
+  interface MobileWebAppShellMobileUiBinder extends UiBinder<Widget, MobileWebAppShellMobile> {
   }
 
   private static MobileWebAppShellMobileUiBinder uiBinder =
