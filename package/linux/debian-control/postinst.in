@@ -9,11 +9,11 @@ sudo useradd -r rstudio-server
 # create softlink to admin script in /usr/sbin
 sudo ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
 
-# write installed indicator then cooperatively suspend active sessions 
-# (so they have a chance to get the update)
+# write installed indicator then force suspend active sessions
+# (so that the new client is never paired against the old server)
 sudo mkdir -p /etc/rstudio
 sudo sh -c "echo `date +%s` > /etc/rstudio/installed"
-sudo rstudio-server suspend-all 
+sudo rstudio-server force-suspend-all
 
 # add apparmor profile
 if test -e /etc/apparmor.d/
