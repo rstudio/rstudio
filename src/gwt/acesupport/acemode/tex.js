@@ -34,9 +34,18 @@ var Mode = function(suppressHighlighting) {
 oop.inherits(Mode, TextMode);
 
 (function() {
-    this.getNextLineIndent = function(state, line, tab) {
-        return this.$getIndent(line);
-    };
+   this.$complements = {
+      "(": ")",
+      "[": "]",
+      '"': '"',
+      "{": "}"
+   };
+   this.$reOpen = /^[(["{]$/;
+   this.$reClose = /^[)\]"}]$/;
+
+   this.getNextLineIndent = function(state, line, tab) {
+      return this.$getIndent(line);
+   };
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
