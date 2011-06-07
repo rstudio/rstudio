@@ -33,6 +33,7 @@ public class TextFileType extends EditableFileType
                 boolean canSourceOnSave,
                 boolean canExecuteCode,
                 boolean canExecuteAllCode,
+                boolean canExecuteToCurrentLine,
                 boolean canCompilePDF)
    {
       super(id, label, defaultIcon);
@@ -42,6 +43,7 @@ public class TextFileType extends EditableFileType
       canSourceOnSave_ = canSourceOnSave;
       canExecuteCode_ = canExecuteCode;
       canExecuteAllCode_ = canExecuteAllCode;
+      canExecuteToCurrentLine_ = canExecuteToCurrentLine;
       canCompilePDF_ = canCompilePDF;
    }
 
@@ -76,6 +78,11 @@ public class TextFileType extends EditableFileType
       return canExecuteAllCode_;
    }
 
+   public boolean canExecuteToCurrentLine()
+   {
+      return canExecuteToCurrentLine_;
+   }
+
    public boolean canCompilePDF()
    {
       return canCompilePDF_;
@@ -100,6 +107,10 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeAllCode());
          results.add(commands.sourceActiveDocument());
       }
+      if (canExecuteToCurrentLine())
+      {
+         results.add(commands.executeToCurrentLine());
+      }
       if (canCompilePDF())
       {
          results.add(commands.compilePDF());
@@ -120,6 +131,7 @@ public class TextFileType extends EditableFileType
    private final boolean canSourceOnSave_;
    private final boolean canExecuteCode_;
    private final boolean canExecuteAllCode_;
+   private final boolean canExecuteToCurrentLine_;
    private final boolean canCompilePDF_;
    private final String defaultExtension_;
 }

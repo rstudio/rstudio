@@ -237,6 +237,21 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
             getSession().getSelection().getRange(), code);
    }
 
+   @Override
+   public String getBeginningToCurrentLineCode()
+   {
+      Range selRng = getSession().getSelection().getRange();
+
+      selRng.getStart().setRow(0);
+      selRng.getStart().setColumn(0);
+
+      int row = selRng.getEnd().getRow();
+      String line = getSession().getDocument().getLine(row);
+      selRng.getEnd().setColumn(line.length());
+
+      return getSession().getTextRange(selRng);
+   }
+
    public void focus()
    {
       widget_.getEditor().focus();

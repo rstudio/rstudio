@@ -41,4 +41,12 @@ public class Position extends JavaScriptObject
 
       return getColumn() - other.getColumn();
    }
+
+   public native final void setRow(int row) /*-{
+      this.row = row;
+   }-*/;
+
+   public native final void setColumn(int column) /*-{
+      this.column = column;
+   }-*/;
 }

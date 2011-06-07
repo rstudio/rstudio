@@ -30,6 +30,7 @@ public class RFileType extends TextFileType
              boolean canSourceOnSave,
              boolean canExecuteCode,
              boolean canExecuteAllCode,
+             boolean canExecuteToCurrentLine,
              boolean canCompilePDF)
    {
       super(id,
@@ -41,6 +42,7 @@ public class RFileType extends TextFileType
             canSourceOnSave,
             canExecuteCode,
             canExecuteAllCode,
+            canExecuteToCurrentLine,
             canCompilePDF);
    }
 
