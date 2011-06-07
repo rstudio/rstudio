@@ -46,6 +46,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
@@ -259,9 +260,10 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    class PrintIFrame extends DynamicIFrame
    {
-      public PrintIFrame(String code)
+      public PrintIFrame(String code, double fontSize)
       {
          code_ = code;
+         fontSize_ = fontSize;
 
          getElement().getStyle().setPosition(com.google.gwt.dom.client.Style.Position.ABSOLUTE);
          getElement().getStyle().setLeft(-5000, Unit.PX);
@@ -274,6 +276,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
          PreElement pre = doc.createPreElement();
          pre.setInnerText(code_);
          pre.getStyle().setProperty("whiteSpace", "pre-wrap");
+         pre.getStyle().setFontSize(fontSize_, Unit.PT);
          doc.getBody().appendChild(pre);
 
          getWindow().print();
@@ -297,11 +300,14 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       }
 
       private final String code_;
+      private final double fontSize_;
    }
 
    public void print()
    {
-      PrintIFrame printIFrame = new PrintIFrame(getCode());
+      PrintIFrame printIFrame = new PrintIFrame(
+            getCode(),
+            RStudioGinjector.INSTANCE.getUIPrefs().fontSize().getValue());
       RootPanel.get().add(printIFrame);
    }
 
