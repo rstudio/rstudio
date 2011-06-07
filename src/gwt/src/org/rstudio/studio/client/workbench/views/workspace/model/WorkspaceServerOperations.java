@@ -52,6 +52,7 @@ public interface WorkspaceServerOperations
          String dataFilePath,
          boolean heading,
          String separator,
+         String decimal,
          String quote,
          ServerRequestCallback<DataPreviewResult> requestCallback);
 }

@@ -302,11 +302,15 @@ public class Workspace
             new HashMap<String, ImportFileSettings>();
 
       commandDefaults_.put("read.table", new ImportFileSettings(
-            null, null, false, "", "\"'"));
+            null, null, false, "", ".", "\"'"));
       commandDefaults_.put("read.csv", new ImportFileSettings(
-            null, null, true, ",", "\""));
+            null, null, true, ",", ".", "\""));
       commandDefaults_.put("read.delim", new ImportFileSettings(
-            null, null, true, "\t", "\""));
+            null, null, true, "\t", ".", "\""));
+      commandDefaults_.put("read.csv2", new ImportFileSettings(
+            null, null, true, ";", ",", "\""));
+      commandDefaults_.put("read.delim2", new ImportFileSettings(
+            null, null, true, "\t", ",", "\""));
 
       String command = "read.table";
       ImportFileSettings settings = commandDefaults_.get("read.table");
@@ -330,6 +334,8 @@ public class Workspace
          code.append(", header=" + (input.isHeader() ? "T" : "F"));
       if (!input.getSep().equals(settings.getSep()))
          code.append(", sep=" + StringUtil.textToRLiteral(input.getSep()));
+      if (!input.getDec().equals(settings.getDec()))
+         code.append(", dec=" + StringUtil.textToRLiteral(input.getDec()));
       if (!input.getQuote().equals(settings.getQuote()))
          code.append(", quote=" + StringUtil.textToRLiteral(input.getQuote()));
       code.append(")");

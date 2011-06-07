@@ -360,6 +360,7 @@ public class RemoteServer implements Server
    public void getOutputPreview(String dataFilePath,
                                 boolean heading,
                                 String separator,
+                                String decimal,
                                 String quote,
                                 ServerRequestCallback<DataPreviewResult> requestCallback)
    {
@@ -367,7 +368,8 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(dataFilePath));
       params.set(1, JSONBoolean.getInstance(heading));
       params.set(2, new JSONString(separator));
-      params.set(3, new JSONString(quote));
+      params.set(3, new JSONString(decimal));
+      params.set(4, new JSONString(quote));
 
       sendRequest(RPC_SCOPE,
                   GET_OUTPUT_PREVIEW,

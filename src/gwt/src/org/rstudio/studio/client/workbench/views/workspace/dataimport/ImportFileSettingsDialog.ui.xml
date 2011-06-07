@@ -25,6 +25,10 @@
                   <td><g:ListBox ui:field="separator_" styleName="{res.styles.list}" /></td>
                </tr>
                <tr>
+                  <td>Decimal</td>
+                  <td><g:ListBox ui:field="decimal_" styleName="{res.styles.list}" /></td>
+               </tr>
+               <tr>
                   <td>Quote</td>
                   <td><g:ListBox ui:field="quote_" styleName="{res.styles.list}" /></td>
                </tr>

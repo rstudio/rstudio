@@ -91,6 +91,9 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
       separator_.addItem("Semicolon", ";");
       separator_.addItem("Tab", "\t");
 
+      decimal_.addItem("Period", ".");
+      decimal_.addItem("Comma", ",");
+
       quote_.addItem("Double quote (\")", "\"");
       quote_.addItem("Single quote (')", "'");
       quote_.addItem("None", "");
@@ -136,13 +139,18 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
          }
       };
       separator_.addChangeHandler(changeHandler);
+      decimal_.addChangeHandler(changeHandler);
       quote_.addChangeHandler(changeHandler);
    }
 
    private void updateOutput()
    {
-      if (separator_.getSelectedIndex() < 0 || quote_.getSelectedIndex() < 0)
+      if (separator_.getSelectedIndex() < 0
+          || quote_.getSelectedIndex() < 0
+          || decimal_.getSelectedIndex() < 0)
+      {
          return;
+      }
 
       updateRequest_.invalidate();
       final Token invalidationToken = updateRequest_.getInvalidationToken();
@@ -152,6 +160,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
             dataFile_.getPath(),
             headingYes_.getValue().booleanValue(),
             separator_.getValue(separator_.getSelectedIndex()),
+            decimal_.getValue(decimal_.getSelectedIndex()),
             quote_.getValue(quote_.getSelectedIndex()),
             new ServerRequestCallback<DataPreviewResult>()
             {
@@ -204,6 +213,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
                      headingNo_.setValue(true);
 
                   selectByValue(separator_, response.getSeparator());
+                  selectByValue(decimal_, response.getDecimal());
                   selectByValue(quote_, response.getQuote());
                }
 
@@ -290,6 +300,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
             varname_.getText().trim(),
             headingYes_.getValue(),
             separator_.getValue(separator_.getSelectedIndex()),
+            decimal_.getValue(decimal_.getSelectedIndex()),
             quote_.getValue(quote_.getSelectedIndex()));
    }
 
@@ -323,6 +334,8 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
 
    @UiField
    ListBox separator_;
+   @UiField
+   ListBox decimal_;
    @UiField
    ListBox quote_;
    @UiField

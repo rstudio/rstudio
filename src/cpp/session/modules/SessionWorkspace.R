@@ -130,9 +130,9 @@
    NULL
 })
 
-.rs.addFunction("parseDataFile", function(path, header, sep, quote, nrows) {
+.rs.addFunction("parseDataFile", function(path, header, sep, dec, quote, nrows) {
    data <- tryCatch(
-      read.table(path, header=header, sep=sep, quote=quote, nrows=nrows),
+      read.table(path, header=header, sep=sep, dec=dec, quote=quote, nrows=nrows),
       error=function(e) {
          data.frame(Error=e$message)
       })
@@ -182,29 +182,39 @@
    sep <- ''
    if (length(grep("\\t", firstline)) > 0)
       sep <- "\t"
-   else if (length(grep(",", firstline)) > 0)
-      sep <- ","
    else if (length(grep(";", firstline)) > 0)
       sep <- ";"
+   else if (length(grep(",", firstline)) > 0)
+      sep <- ","
+
+   dec <- '.'
+   if (length(grep(".", firstline)) < 0 && sep == ";")
+      dec <- ','
 
    header <- length(grep("[0-9]", firstline)) == 0
 
    quote <- "\""
 
-   output <- .rs.parseDataFile(path, header=header, sep=sep, quote=quote, nrows=nrows)
+   output <- .rs.parseDataFile(path,
+                               header=header,
+                               sep=sep,
+                               dec=dec,
+                               quote=quote,
+                               nrows=nrows)
 
    list(inputLines=paste(lines, collapse="\n"),
         output=output,
         outputNames=names(output),
         header=header,
         separator=sep,
+        decimal=dec,
         quote=quote)
 })
 
-.rs.addJsonRpcHandler("get_output_preview", function(path, header, sep, quote)
+.rs.addJsonRpcHandler("get_output_preview", function(path, header, sep, decimal, quote)
 {
    nrows <- 20
-   output <- .rs.parseDataFile(path, header=header, sep=sep, quote=quote, nrows=nrows)
+   output <- .rs.parseDataFile(path, header=header, sep=sep, dec=decimal, quote=quote, nrows=nrows)
 
    list(output=output,
         outputNames=names(output),

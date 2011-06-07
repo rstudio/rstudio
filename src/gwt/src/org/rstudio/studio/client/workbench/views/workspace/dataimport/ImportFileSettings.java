@@ -20,12 +20,14 @@ public class ImportFileSettings
                              String varname,
                              boolean header,
                              String sep,
+                             String decimal,
                              String quote)
    {
       file_ = file;
       varname_ = varname;
       header_ = header;
       sep_ = sep;
+      decimal_ = decimal;
       quote_ = quote;
    }
 
@@ -49,6 +51,11 @@ public class ImportFileSettings
       return sep_;
    }
 
+   public String getDec()
+   {
+      return decimal_;
+   }
+
    public String getQuote()
    {
       return quote_;
@@ -61,6 +68,8 @@ public class ImportFileSettings
          score++;
       if (getSep().equals(other.getSep()))
          score += 2;
+      if (getDec().equals(other.getDec()))
+         score += 2;
       if (getQuote().equals(other.getQuote()))
          score++;
       return score;
@@ -70,5 +79,6 @@ public class ImportFileSettings
    private final String varname_;
    private final boolean header_;
    private final String sep_;
+   private final String decimal_;
    private final String quote_;
 }

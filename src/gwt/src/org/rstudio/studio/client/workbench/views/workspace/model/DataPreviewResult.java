@@ -43,6 +43,10 @@ public class DataPreviewResult extends JavaScriptObject
       return this.separator[0];
    }-*/;
 
+   public final native String getDecimal() /*-{
+      return this.decimal[0];
+   }-*/;
+
    public final native String getQuote() /*-{
       return this.quote[0];
    }-*/;
