@@ -49,7 +49,7 @@ import com.google.gwt.user.client.ui.HasOneWidget;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.RequiresResizeComposite;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -63,7 +63,7 @@ import java.util.List;
 /**
  * Desktop version of the UI shell.
  */
-public class MobileWebAppShellDesktop extends ResizeComposite implements MobileWebAppShell {
+public class MobileWebAppShellDesktop extends RequiresResizeComposite<DockLayoutPanel> implements MobileWebAppShell {
 
   /**
    * CSS override used for the main menu.
@@ -71,7 +71,7 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
   interface MainMenuStyle extends CellList.Style {
   }
 
-  interface MobileWebAppShellDesktopUiBinder extends UiBinder<Widget, MobileWebAppShellDesktop> {
+  interface MobileWebAppShellDesktopUiBinder extends UiBinder<DockLayoutPanel, MobileWebAppShellDesktop> {
   }
 
   /**
@@ -147,7 +147,6 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
 
   /**
    * Construct a new {@link MobileWebAppShellDesktop}.
-   * @param clientFactory the {@link ClientFactory} of shared resources
    */
   public MobileWebAppShellDesktop(EventBus bus, final PlaceController placeController,
       TaskListView taskListView, TaskEditView taskEditView, TaskReadView taskReadView) {

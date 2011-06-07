@@ -22,7 +22,7 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.TextColumn;
-import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.RequiresResizeComposite;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * View used to display the list of Tasks.
  */
-public class DesktopTaskListView extends ResizeComposite implements TaskListView {
+public class DesktopTaskListView extends RequiresResizeComposite<DataGrid<?>> implements TaskListView {
 
   /**
    * Displays the list of tasks.

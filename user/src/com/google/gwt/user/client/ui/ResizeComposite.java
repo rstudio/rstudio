@@ -19,7 +19,9 @@ package com.google.gwt.user.client.ui;
  * A {@link Composite} implementation that implements {@link RequiresResize} and
  * automatically delegates that interface's methods to its wrapped widget, which
  * must itself implement {@link RequiresResize}.
+ * @deprecated Use {@link RequiresResizeComposite}
  */
+@Deprecated
 public abstract class ResizeComposite extends Composite implements
     RequiresResize {
 
