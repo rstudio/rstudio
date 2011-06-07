@@ -599,6 +599,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 }
 
 // fork state
+boost::thread::id s_mainThreadId;
 bool s_wasForked = false;
 
 // fork handlers (only applicatable to Unix platforms)
@@ -606,12 +607,29 @@ bool s_wasForked = false;
 
 void prepareFork()
 {
-   module_context::events().onPrepareFork();
+   // only detect forks from the main thread (since we are going to be
+   // calling into non-threadsafe code). this is ok because fork
+   // detection is meant to handle forks that don't exec (and thus
+   // continue running R code). only the main thread will ever do this
+   if (boost::this_thread::get_id() != s_mainThreadId)
+      return;
+
+   // if the main thread is being forked then it could be multicore
+   // (or another package which works in the same way). we don't want
+   // file monitoring objects inherited by the forked multicore child
+   // so we pause file monitoring in the parent first. we'll resume
+   // after the fork in the atForkParent call below.
+   session::modules::files::pauseDirectoryMonitor();
+
 }
 
 void atForkParent()
 {
-   module_context::events().onParentAfterFork();
+   if (boost::this_thread::get_id() != s_mainThreadId)
+      return;
+
+   // resume monitoring
+   session::modules::files::resumeDirectoryMonitor();
 }
 
 void atForkChild()
@@ -643,9 +661,6 @@ void polledEventHandler()
    {
       // no more polled events
       r::session::event_loop::disablePolledEventHandler();
-
-      // notify listeners that we were multicore forked
-      module_context::events().onChildAfterMulticoreFork();
 
       // done
       return;
@@ -1872,6 +1887,11 @@ int main (int argc, char * const argv[])
       initializeSystemLog("rsession-" + core::system::username(),
                           core::system::kLogLevelWarning);
 
+      // get main thread id (used to distinguish forks which occur
+      // from the main thread vs. child threads)
+      s_mainThreadId = boost::this_thread::get_id();
+
+      // determine character set
       s_printCharsetWarning = !ensureUtf8Charset();
 
       // read program options

@@ -59,7 +59,10 @@ namespace modules {
 namespace files {
 
 namespace {
-   
+
+// record previously monitored path for restoration after pause
+std::string s_pausedDirectoryMonitorPath;
+
 // constants for enquing file changed events
 const char * const kType = "type";
 const char * const kFile = "file";
@@ -180,30 +183,6 @@ void onShutdown(bool terminatedNormally)
       LOG_ERROR(error);
 }
 
-// record previously monitored path for restoration after forking
-std::string s_preForkMonitoredPath;
-
-// stop file monitoring so the child doesn't inherit file monitoring
-// descriptors and other objects
-void onPrepareFork()
-{
-   s_preForkMonitoredPath = s_directoryMonitor.path();
-   if (!s_preForkMonitoredPath.empty())
-   {
-      Error error = s_directoryMonitor.stop();
-      if (error)
-         LOG_ERROR(error);
-   }
-}
-
-void onParentAfterFork()
-{
-   if (!s_preForkMonitoredPath.empty())
-   {
-      startMonitoring(s_preForkMonitoredPath);
-      s_preForkMonitoredPath.clear();
-   }
-}
 
 // extract a set of FilePath object from a list of home path relative strings
 Error extractFilePaths(const json::Array& files, 
@@ -908,6 +887,26 @@ SEXP rs_pathInfo(SEXP pathSEXP)
 
 } // anonymous namespace
 
+void pauseDirectoryMonitor()
+{
+   s_pausedDirectoryMonitorPath = s_directoryMonitor.path();
+   if (!s_pausedDirectoryMonitorPath.empty())
+   {
+      Error error = s_directoryMonitor.stop();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+void resumeDirectoryMonitor()
+{
+   if (!s_pausedDirectoryMonitorPath.empty())
+   {
+      startMonitoring(s_pausedDirectoryMonitorPath);
+      s_pausedDirectoryMonitorPath.clear();
+   }
+}
+
 Error initialize()
 {
    // register suspend handler
@@ -919,8 +918,6 @@ Error initialize()
    events().onClientInit.connect(bind(onClientInit));
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
    events().onShutdown.connect(bind(onShutdown, _1));
-   events().onPrepareFork.connect(bind(onPrepareFork));
-   events().onParentAfterFork.connect(bind(onParentAfterFork));
 
    // register path info function
    R_CallMethodDef pathInfoMethodDef ;

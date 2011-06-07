@@ -21,6 +21,9 @@ namespace core {
 namespace session {
 namespace modules {      
 namespace files {
+
+void pauseDirectoryMonitor();
+void resumeDirectoryMonitor();
    
 core::Error initialize();
                        
