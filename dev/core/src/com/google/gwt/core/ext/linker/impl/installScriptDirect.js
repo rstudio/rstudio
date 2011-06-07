@@ -14,12 +14,6 @@ function installScript(filename) {
     script.src = code;
     sendStats('moduleStartup', 'moduleRequested');
     docbody.appendChild(script);
-
-    // Unless we're in pretty mode, remove the tags to shrink the DOM a little.
-    // It should have installed its code immediately after being added.
-    __START_OBFUSCATED_ONLY__
-    docbody.removeChild(script);
-    __END_OBFUSCATED_ONLY__
   }
 
   // Just pass along the filename so that a script tag can be installed in the
