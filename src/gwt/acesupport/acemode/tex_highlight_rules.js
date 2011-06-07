@@ -46,10 +46,16 @@ var TexHighlightRules = function() {
 	            regex : "`",
 	            next : "qstring"
 	        }, {
-	            token : "paren",
+               // Obviously these are neither keywords nor operators, but
+               // labelling them as such was the easiest way to get them
+               // to be colored distinctly from regular text
+               token : "paren.keyword.operator",
 	            regex : "[[({]"
 	        }, {
-	            token : "paren",
+               // Obviously these are neither keywords nor operators, but
+               // labelling them as such was the easiest way to get them
+               // to be colored distinctly from regular text
+               token : "paren.keyword.operator",
 	            regex : "[\\])}]"
 	        }, {
 	            token : "text",
@@ -71,10 +77,16 @@ var TexHighlightRules = function() {
 	            token : "keyword", // command
 	            regex : "\\\\(?:[a-zA-z0-9]+|[^a-zA-z0-9])"
 	        }, {
-	            token : "paren",
+               // Obviously these are neither keywords nor operators, but
+               // labelling them as such was the easiest way to get them
+               // to be colored distinctly from regular text
+               token : "paren.keyword.operator",
 	            regex : "[[({]"
 	        }, {
-	            token : "paren",
+               // Obviously these are neither keywords nor operators, but
+               // labelling them as such was the easiest way to get them
+               // to be colored distinctly from regular text
+               token : "paren.keyword.operator",
 	            regex : "[\\])}]"
 	        }, {
 	            token : "string",
@@ -99,10 +111,16 @@ var TexHighlightRules = function() {
 	            token : "keyword", // command
 	            regex : "\\\\(?:[a-zA-z0-9]+|[^a-zA-z0-9])"
 	        }, {
-	            token : "paren",
+               // Obviously these are neither keywords nor operators, but
+               // labelling them as such was the easiest way to get them
+               // to be colored distinctly from regular text
+               token : "paren.keyword.operator",
 	            regex : "[[({]"
 	        }, {
-	            token : "paren",
+               // Obviously these are neither keywords nor operators, but
+               // labelling them as such was the easiest way to get them
+               // to be colored distinctly from regular text
+               token : "paren.keyword.operator",
 	            regex : "[\\])}]"
 	        }, {
 	            token : "string",

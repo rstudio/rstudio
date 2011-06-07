@@ -38,7 +38,7 @@ public class FileTypeRegistry
                        true, true, true, false);
 
    public static final TextFileType RD =
-      new TextFileType("r_doc", "R Documentation", EditorLanguage.LANG_TEX, ".Rd",
+      new TextFileType("r_doc", "R Documentation", EditorLanguage.LANG_RDOC, ".Rd",
                        ICONS.iconRd(),
                        true,
                        false, false, false, false);

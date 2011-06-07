@@ -52,6 +52,8 @@
             <file name="tex.js"/>
             <file name="sweave_highlight_rules.js"/>
             <file name="sweave.js"/>
+            <file name="rdoc_highlight_rules.js"/>
+            <file name="rdoc.js"/>
          </sources>
          <sources dir="acesupport/acetheme">
             <file name="default.js"/>
