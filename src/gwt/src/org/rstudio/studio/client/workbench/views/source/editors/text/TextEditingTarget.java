@@ -70,6 +70,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.*;
@@ -108,7 +109,12 @@ public class TextEditingTarget implements EditingTarget
                                        HasFocusHandlers,
                                        HasKeyDownHandlers
    {
-
+      public interface AnchoredSelection
+      {
+         String getValue();
+         void apply();
+         void detach();
+      }
       void setFileType(TextFileType fileType);
       String getCode();
       void setCode(String code, boolean preserveCursorPosition);
@@ -121,7 +127,9 @@ public class TextEditingTarget implements EditingTarget
       boolean moveSelectionToNextLine(boolean skipBlankLines);
       ChangeTracker getChangeTracker();
 
-      String getBeginningToCurrentLineCode();
+      String getCode(Position start, Position end);
+      AnchoredSelection createAnchoredSelection(Position start,
+                                                Position end);
 
       void fitSelectionToLines(boolean expand);
       int getSelectionOffset(boolean start);
@@ -152,6 +160,10 @@ public class TextEditingTarget implements EditingTarget
       HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler);
       JavaScriptObject getCleanStateToken();
       boolean checkCleanStateToken(JavaScriptObject token);
+
+      Position getSelectionStart();
+      Position getSelectionEnd();
+      int getLength(int row);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -967,6 +979,12 @@ public class TextEditingTarget implements EditingTarget
 
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
+
+      if (lastExecutedCode_ != null)
+      {
+         lastExecutedCode_.detach();
+         lastExecutedCode_ = null;
+      }
    }
 
    public ReadOnlyValue<Boolean> dirtyState()
@@ -1191,11 +1209,17 @@ public class TextEditingTarget implements EditingTarget
       String code = docDisplay_.getSelectionValue();
       if (code == null || code.length() == 0)
       {
+         int row = docDisplay_.getSelectionStart().getRow();
+         setLastExecuted(Position.create(row, 0),
+                         Position.create(row, docDisplay_.getLength(row)));
+
          code = docDisplay_.getCurrentLine();
          docDisplay_.moveSelectionToNextLine(true);
       }
       else
       {
+         setLastExecuted(docDisplay_.getSelectionStart(),
+                         docDisplay_.getSelectionEnd());
          focusConsole = true;
       }
 
@@ -1205,6 +1229,16 @@ public class TextEditingTarget implements EditingTarget
          if (focusConsole)
             commands_.activateConsole().execute();
       }
+   }
+
+   private void setLastExecuted(Position start, Position end)
+   {
+      if (lastExecutedCode_ != null)
+      {
+         lastExecutedCode_.detach();
+         lastExecutedCode_ = null;
+      }
+      lastExecutedCode_ = docDisplay_.createAnchoredSelection(start, end);
    }
 
    @Handler
@@ -1238,7 +1272,17 @@ public class TextEditingTarget implements EditingTarget
          activeEl.blur();
       docDisplay_.focus();
 
-      String code = docDisplay_.getBeginningToCurrentLineCode();
+
+      int row = docDisplay_.getSelectionEnd().getRow();
+      int col = docDisplay_.getLength(row);
+
+      Position start = Position.create(0, 0);
+      Position end = Position.create(row, col);
+
+      String code = docDisplay_.getCode(start, end);
+
+      setLastExecuted(start, end);
+
       events_.fireEvent(new SendToConsoleEvent(code, true));
    }
 
@@ -1334,7 +1378,19 @@ public class TextEditingTarget implements EditingTarget
       
       return true;
    }
-   
+
+   @Handler
+   void onExecuteLastCode()
+   {
+      if (lastExecutedCode_ != null)
+      {
+         String code = lastExecutedCode_.getValue();
+         if (code != null && code.trim().length() > 0)
+         {
+            events_.fireEvent(new SendToConsoleEvent(code, true));
+         }
+      }
+   }
 
    @Handler
    void onPublishPDF()
@@ -1462,7 +1518,7 @@ public class TextEditingTarget implements EditingTarget
                {
                   if (token.isInvalid())
                      return;
-                  
+
                   if (response.isDeleted())
                   {
                      if (ignoreDeletes_)
@@ -1491,7 +1547,8 @@ public class TextEditingTarget implements EditingTarget
                                  dirtyState_.markDirty(false);
                               }
                            },
-                           false);
+                           false
+                     );
                   }
                   else if (response.isModified())
                   {
@@ -1530,7 +1587,8 @@ public class TextEditingTarget implements EditingTarget
                                     dirtyState_.markDirty(false);
                                  }
                               },
-                              true);
+                              true
+                        );
                      }
                   }
                }
@@ -1579,4 +1637,5 @@ public class TextEditingTarget implements EditingTarget
    // Prevents external edit checks from happening too soon after each other
    private final IntervalTracker externalEditCheckInterval_ =
          new IntervalTracker(1000, true);
+   private AnchoredSelection lastExecutedCode_;
 }

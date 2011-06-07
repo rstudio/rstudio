@@ -77,6 +77,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="executeCode"/>
          <cmd refid="executeAllCode"/>
          <cmd refid="executeToCurrentLine"/>
+         <cmd refid="executeLastCode"/>
          <separator/>
          <cmd refid="sourceActiveDocument"/>
          <cmd refid="sourceFile"/>
@@ -209,6 +210,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="sourceFile" value="Cmd+Shift+O"/>
       <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S"/>
       <shortcut refid="extractFunction" value="Cmd+Shift+F"/>
+      <shortcut refid="executeLastCode" value="Cmd+Alt+Enter"/>
       <shortcut refid="commentUncomment" value="Cmd+/"/>
       <shortcut refid="consoleClear" value="Ctrl+L"/>
       <shortcut refid="activateSource" value="Ctrl+1"/>
@@ -360,6 +362,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="executeToCurrentLine"
         menuLabel="Run From _Beginning To Line"
         desc="Run the code from the beginning of the document up through the current line"/>
+   <cmd id="executeLastCode"
+        menuLabel="Run _Previous"
+        desc="Re-run the selection that was most recently run"/>
    <cmd id="extractFunction"
         menuLabel="E_xtract Function"
         desc="Turn the current selection into a function"/>

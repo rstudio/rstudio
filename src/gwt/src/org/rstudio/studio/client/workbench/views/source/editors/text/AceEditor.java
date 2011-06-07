@@ -46,7 +46,6 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
@@ -105,6 +104,40 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
          String row = getSession().getLine(range.getStart().getRow());
          return row.substring(0, col).trim().length() != 0;
       }
+   }
+
+   private class AnchoredSelectionImpl implements AnchoredSelection
+   {
+      private AnchoredSelectionImpl(Anchor start, Anchor end)
+      {
+         start_ = start;
+         end_ = end;
+      }
+
+      public String getValue()
+      {
+         return getSession().getTextRange(getRange());
+      }
+
+      public void apply()
+      {
+         getSession().getSelection().setSelectionRange(
+               getRange());
+      }
+
+      private Range getRange()
+      {
+         return Range.fromPoints(start_.getPosition(), end_.getPosition());
+      }
+
+      public void detach()
+      {
+         start_.detach();
+         end_.detach();
+      }
+
+      private final Anchor start_;
+      private final Anchor end_;
    }
 
    public static void preload()
@@ -238,19 +271,9 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
             getSession().getSelection().getRange(), code);
    }
 
-   @Override
-   public String getBeginningToCurrentLineCode()
+   public String getCode(Position start, Position end)
    {
-      Range selRng = getSession().getSelection().getRange();
-
-      selRng.getStart().setRow(0);
-      selRng.getStart().setColumn(0);
-
-      int row = selRng.getEnd().getRow();
-      String line = getSession().getDocument().getLine(row);
-      selRng.getEnd().setColumn(line.length());
-
-      return getSession().getTextRange(selRng);
+      return getSession().getTextRange(Range.fromPoints(start, end));
    }
 
    public void focus()
@@ -341,6 +364,22 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    {
       return getSession().getTextRange(
             getSession().getSelection().getRange());
+   }
+
+   public Position getSelectionStart()
+   {
+      return getSession().getSelection().getRange().getStart();
+   }
+
+   public Position getSelectionEnd()
+   {
+      return getSession().getSelection().getRange().getEnd();
+   }
+
+   @Override
+   public int getLength(int row)
+   {
+      return getSession().getDocument().getLine(row).length();
    }
 
    public void setSelection(InputEditorSelection selection)
@@ -502,6 +541,18 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public ChangeTracker getChangeTracker()
    {
       return new EventBasedChangeTracker<Void>(this);
+   }
+
+   public AnchoredSelection createAnchoredSelection(Position startPos,
+                                                    Position endPos)
+   {
+      Anchor start = Anchor.createAnchor(getSession().getDocument(),
+                                         startPos.getRow(),
+                                         startPos.getColumn());
+      Anchor end = Anchor.createAnchor(getSession().getDocument(),
+                                       endPos.getRow(),
+                                       endPos.getColumn());
+      return new AnchoredSelectionImpl(start, end);
    }
 
    public void fitSelectionToLines(boolean expand)
