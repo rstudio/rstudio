@@ -319,9 +319,20 @@ void initializePolledEventHandler(void (*newPolledEventHandler)(void))
       R_wait_usec = 10000;
 }
 
-void disablePolledEventHandler()
+// NOTE: this call is used in child process after multicore forks
+// to make sure all subsequent R code is executed without any
+// event handlers (appropriate since the forked child is headless).
+// the prefix "permanently" is used because we explicitly don't
+// handle the abilty to restore event handling by calling
+// initializePolledEventHandler -- this is because we overwrite
+// s_oldPolledEventHandler with NULL, thus losing any reference
+// we have to a R_PolledEvents value that existed before our
+// initialization (it would be possible to implement a temporary
+// disable with a bit more complex control flow)
+void permanentlyDisablePolledEventHandler()
 {
    s_polledEventHandler = NULL;
+   s_oldPolledEventHandler = NULL;
 }
 
 bool polledEventHandlerInitialized()

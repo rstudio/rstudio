@@ -45,7 +45,7 @@ namespace event_loop {
 //
 void initializePolledEventHandler(void (*newPolledEventHandler)(void));
 
-void disablePolledEventHandler();
+void permanentlyDisablePolledEventHandler();
 
 // check whether the polled event handler has already been initialized
 bool polledEventHandlerInitialized();

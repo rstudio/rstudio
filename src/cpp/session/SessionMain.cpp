@@ -660,7 +660,7 @@ void polledEventHandler()
    if (s_wasForked)
    {
       // no more polled events
-      r::session::event_loop::disablePolledEventHandler();
+      r::session::event_loop::permanentlyDisablePolledEventHandler();
 
       // done
       return;
