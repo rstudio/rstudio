@@ -604,6 +604,11 @@ bool s_wasForked = false;
 // fork handlers (only applicatable to Unix platforms)
 #ifndef _WIN32
 
+void prepareFork()
+{
+   module_context::events().onPrepareFork();
+}
+
 void atForkParent()
 {
    module_context::events().onParentAfterFork();
@@ -616,7 +621,7 @@ void atForkChild()
 
 void setupForkHandlers()
 {
-   int rc = ::pthread_atfork(NULL, atForkParent, atForkChild);
+   int rc = ::pthread_atfork(prepareFork, atForkParent, atForkChild);
    if (rc != 0)
       LOG_ERROR(systemError(errno, ERROR_LOCATION));
 }
@@ -638,6 +643,9 @@ void polledEventHandler()
    {
       // no more polled events
       r::session::event_loop::disablePolledEventHandler();
+
+      // notify listeners that we were multicore forked
+      module_context::events().onChildAfterMulticoreFork();
 
       // done
       return;

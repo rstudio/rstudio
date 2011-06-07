@@ -161,33 +161,8 @@ void onClientInit()
    quotas::checkQuotaStatus();
 }
    
-// flag indicating we should restart file monitoring at the next opportunity
-// (so our descriptors don't overlap with those of the child)
-volatile sig_atomic_t s_restartFileMonitor = 0;
-
-void onParentAfterFork()
-{
-   s_restartFileMonitor = 1;
-}
-
 void onDetectChanges(module_context::ChangeSource source)
 {
-   // restart file monitor if requested
-   if (s_restartFileMonitor == 1)
-   {
-      std::string monitoredPath = s_directoryMonitor.path();
-      if (!monitoredPath.empty())
-      {
-         Error error = s_directoryMonitor.stop();
-         if (error)
-            LOG_ERROR(error);
-
-         startMonitoring(monitoredPath);
-
-         s_restartFileMonitor = 0;
-      }
-   }
-
    // poll for events
    std::vector<core::system::FileChangeEvent> events;
    Error error = s_directoryMonitor.checkForEvents(&events);
@@ -203,6 +178,31 @@ void onShutdown(bool terminatedNormally)
    Error error = s_directoryMonitor.stop();
    if (error)
       LOG_ERROR(error);
+}
+
+// record previously monitored path for restoration after forking
+std::string s_preForkMonitoredPath;
+
+// stop file monitoring so the child doesn't inherit file monitoring
+// descriptors and other objects
+void onPrepareFork()
+{
+   s_preForkMonitoredPath = s_directoryMonitor.path();
+   if (!s_preForkMonitoredPath.empty())
+   {
+      Error error = s_directoryMonitor.stop();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+void onParentAfterFork()
+{
+   if (!s_preForkMonitoredPath.empty())
+   {
+      startMonitoring(s_preForkMonitoredPath);
+      s_preForkMonitoredPath.clear();
+   }
 }
 
 // extract a set of FilePath object from a list of home path relative strings
@@ -919,6 +919,7 @@ Error initialize()
    events().onClientInit.connect(bind(onClientInit));
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
    events().onShutdown.connect(bind(onShutdown, _1));
+   events().onPrepareFork.connect(bind(onPrepareFork));
    events().onParentAfterFork.connect(bind(onParentAfterFork));
 
    // register path info function
