@@ -38,6 +38,8 @@
         <exclude name="com/google/gwt/junit/server/**" />
         <exclude name="com/google/gwt/benchmarks/*" />
       </fileset>
+
+      <!-- additional dependencies (used by scripts). -->
     </gwt.jar>
   </target>
 
