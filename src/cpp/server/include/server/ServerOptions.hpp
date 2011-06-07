@@ -41,6 +41,11 @@ public:
    virtual ~Options() {}
    core::ProgramStatus read(int argc, char * const argv[]);
    
+   bool verifyInstallation() const
+   {
+      return verifyInstallation_;
+   }
+
    std::string serverWorkingDir() const
    { 
       return std::string(serverWorkingDir_.c_str());
@@ -139,6 +144,7 @@ public:
    }
 
 private:
+   bool verifyInstallation_;
    std::string serverWorkingDir_;
    std::string serverUser_;
    bool serverDaemonize_;

@@ -1144,7 +1144,14 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    if (error)
       return error;
    
-   // register all of the json rpc methods implemented in R 
+   // if we are in verify installation mode then we should exit (successfully) now
+   if (session::options().verifyInstallation())
+   {
+      FilePath(kVerifyInstallationHomeDir).removeIfExists();
+      ::exit(EXIT_SUCCESS);
+   }
+
+   // register all of the json rpc methods implemented in R
    json::JsonRpcMethods rMethods ;
    error = r::json::getRpcMethods(&rMethods);
    if (error)
@@ -2041,7 +2048,7 @@ int main (int argc, char * const argv[])
       else
          rOptions.saveWorkspace = SA_SAVEASK;
       
-      // r callbacks 
+      // r callbacks
       r::session::RCallbacks rCallbacks;
       rCallbacks.init = rInit;
       rCallbacks.consoleRead = rConsoleRead;

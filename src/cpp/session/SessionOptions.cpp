@@ -71,6 +71,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       resourcePath = resourcePath.parent();
 #endif
 
+   // verify installation flag
+   options_description verify("verify");
+   verify.add_options()
+     (kVerifyInstallationSessionOption,
+     value<bool>(&verifyInstallation_)->default_value(false),
+     "verify the current installation");
+
    // program - name and execution
    options_description program("program");
    program.add_options()
@@ -187,6 +194,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    core::program_options::OptionsDescription optionsDesc("rsession",
                                                          configFile);
 
+   optionsDesc.commandLine.add(verify);
    optionsDesc.commandLine.add(program);
    optionsDesc.commandLine.add(agreement);
    optionsDesc.commandLine.add(docs);
@@ -224,8 +232,21 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    // compute program identity
    programIdentity_ = "rsession-" + userIdentity_;
 
+   // provide special home path in temp directory if we are verifying
+   if (verifyInstallation_)
+   {
+      Error error = FilePath(kVerifyInstallationHomeDir).ensureDirectory();
+      if (error)
+      {
+         LOG_ERROR(error);
+         return ProgramStatus::exitFailure();
+      }
+      core::system::setenv("R_USER", kVerifyInstallationHomeDir);
+   }
+
    // compute user home path
    FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
+
    userHomePath_ = userHomePath.absolutePath();
 
    // compute user scratch path

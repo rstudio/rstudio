@@ -98,6 +98,8 @@ struct ProcessConfig
    RLimitType userProcessesLimit;
 };
 
+core::Error waitForProcessExit(PidType processId);
+
 core::Error launchChildProcess(std::string path,
                                std::string runAsUser,
                                ProcessConfig config,

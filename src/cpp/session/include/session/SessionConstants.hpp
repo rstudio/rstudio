@@ -26,6 +26,9 @@
 #define kUserIdentitySessionOption        "user-identity"
 #define kUserIdentitySessionOptionShort   "u"
 
+#define kVerifyInstallationSessionOption  "verify-installation"
+#define kVerifyInstallationHomeDir        "/tmp/rstudio-verify-installation"
+
 #define kLocalUriLocationPrefix           "/rsession-local/"
 #define kPostbackUriScope                 "postback/"
 

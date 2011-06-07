@@ -53,7 +53,11 @@ public:
    core::ProgramStatus read(int argc, char * const argv[]);   
    virtual ~Options() {}
    
-   
+   bool verifyInstallation() const
+   {
+      return verifyInstallation_;
+   }
+
    std::string programIdentity() const 
    { 
       return std::string(programIdentity_.c_str()); 
@@ -63,6 +67,8 @@ public:
    { 
       return std::string(programMode_.c_str()); 
    }
+
+
    
    // agreement
    core::FilePath agreementFilePath() const
@@ -226,6 +232,9 @@ public:
    }
 
 private:
+   // verify
+   bool verifyInstallation_;
+
    // program
    std::string programIdentity_;
    std::string programMode_;

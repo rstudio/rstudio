@@ -128,10 +128,13 @@ Error resetConsoleActions(const json::JsonRpcRequest& request,
    
 Error initialize()
 {    
-   // capture standard streams
-   Error error = initializeOutputCapture();
-   if (error)
-      return error;
+   if (!session::options().verifyInstallation())
+   {
+      // capture standard streams
+      Error error = initializeOutputCapture();
+      if (error)
+         return error;
+   }
    
    // subscribe to events
    using boost::bind;

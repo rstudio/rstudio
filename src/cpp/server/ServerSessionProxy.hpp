@@ -26,6 +26,8 @@ namespace server {
 namespace session_proxy {
 
 core::Error initialize();
+
+core::Error runVerifyInstallationSession();
    
 void proxyContentRequest(
       const std::string& username,

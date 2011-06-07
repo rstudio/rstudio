@@ -312,17 +312,29 @@ int main(int argc, char * const argv[])
             return core::system::exitFailure(error, ERROR_LOCATION);
       }
 
-      // run http server
-      error = s_pHttpServer->run(options.wwwThreadPoolSize());
-      if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+      // run special verify installation mode if requested
+      if (options.verifyInstallation())
+      {
+         Error error = session_proxy::runVerifyInstallationSession();
+         if (error)
+            return core::system::exitFailure(error, ERROR_LOCATION);
 
-      // wait on termination of the server
-      // NOTE: current implementation does not ever terminate
-      s_pHttpServer->waitUntilStopped();
+         return EXIT_SUCCESS;
+      }
+      else
+      {
+         // run http server
+         error = s_pHttpServer->run(options.wwwThreadPoolSize());
+         if (error)
+            return core::system::exitFailure(error, ERROR_LOCATION);
 
-      // return success
-      return EXIT_SUCCESS;
+         // wait on termination of the server
+         // NOTE: current implementation does not ever terminate
+         s_pHttpServer->waitUntilStopped();
+
+         // return success
+         return EXIT_SUCCESS;
+      }
    }
    CATCH_UNEXPECTED_EXCEPTION
    

@@ -16,11 +16,14 @@
 
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <pwd.h>
 #include <grp.h>
 
 #include <vector>
+
+#include <boost/lexical_cast.hpp>
 
 #include <core/system/ProcessArgs.hpp>
 
@@ -272,6 +275,58 @@ void copyEnvironmentVar(const std::string& name,
       pVars->push_back(name + "=" + value);
 }
 
+}
+
+
+Error waitForProcessExit(PidType processId)
+{
+   while (true)
+   {
+      // call waitpid
+      int stat;
+      int result = ::waitpid (processId, &stat, 0);
+      if (result == processId)
+      {
+         // process "status changed" (i.e. exited, core dumped, terminated
+         // by a signal, or stopped). in all cases we stop waiting
+         return Success();
+      }
+      else if (result == 0)
+      {
+         // no status change, keep waiting...
+         continue;
+      }
+      else if (result < 0)
+      {
+         if (errno == EINTR)
+         {
+            // system call interrupted, keep waiting...
+            continue;
+         }
+         else if (errno == ECHILD)
+         {
+            // the child was already reaped (probably by a global handler)
+            return Success();
+         }
+         else
+         {
+            // some other unexpected error
+            return systemError(errno, ERROR_LOCATION);
+         }
+      }
+      else // a totally unexpected return from waitpid
+      {
+         Error error = systemError(
+                           boost::system::errc::state_not_recoverable,
+                           ERROR_LOCATION);
+         error.addProperty("result",
+                           boost::lexical_cast<std::string>(result));
+         return error;
+      }
+   }
+
+   // keep compiler happy (we can't reach this code)
+   return Success();
 }
 
 Error launchChildProcess(std::string path,

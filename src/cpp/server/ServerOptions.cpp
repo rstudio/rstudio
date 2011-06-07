@@ -60,10 +60,17 @@ ProgramStatus Options::read(int argc, char * const argv[])
       return ProgramStatus::exitFailure();
    }
 
+   // verify installation flag
+   options_description verify("verify");
+   verify.add_options()
+     ("verify-installation",
+     value<bool>(&verifyInstallation_)->default_value(false),
+     "verify the current installation");
+
    // special program offline option (based on file existence at 
    // startup for easy bash script enable/disable of offline state)
    serverOffline_ = FilePath("/etc/rstudio/offline").exists();
-   
+
    // program - name and execution
    options_description server("server");
    server.add_options()
@@ -142,7 +149,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
    std::string configFile = defaultConfigPath.exists() ?
                                  defaultConfigPath.absolutePath() : "";
    program_options::OptionsDescription optionsDesc("rserver", configFile);
-   optionsDesc.commandLine.add(server).add(www).add(rsession).add(auth);
+   optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(auth);
    optionsDesc.configFile.add(server).add(www).add(rsession).add(auth);
  
    // read options

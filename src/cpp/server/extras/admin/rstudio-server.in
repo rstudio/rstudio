@@ -14,6 +14,10 @@ testConfig() {
  `${CMAKE_INSTALL_PREFIX}/bin/rserver --test-config`
 }
 
+verifyInstallation() {
+ `${CMAKE_INSTALL_PREFIX}/bin/rserver --verify-installation=1 --server-daemonize=0`
+}
+
 
 case "$1" in
     start)
@@ -32,6 +36,12 @@ case "$1" in
 
     test-config)
         testConfig
+        ;;
+
+    verify-installation)
+        daemonCmd "stop" 2>/dev/null
+        verifyInstallation
+        daemonCmd "start"
         ;;
 
     suspend-session)
@@ -83,7 +93,7 @@ case "$1" in
         ;;
 
     *)
-        echo $"Usage: rstudio-server {start|stop|restart|suspend-session|suspend-all|force-suspend-session|force-suspend-all|offline|online|active-sessions|version}"
+        echo $"Usage: rstudio-server {start|stop|restart|test-config|verify-installation|suspend-session|suspend-all|force-suspend-session|force-suspend-all|offline|online|active-sessions|version}"
         exit 2
 esac
 

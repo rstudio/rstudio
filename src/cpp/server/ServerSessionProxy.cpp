@@ -45,6 +45,7 @@
 #include <session/SessionLocalStreams.hpp>
 
 #include <server/util/system/System.hpp>
+#include <server/util/system/User.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
 
@@ -59,7 +60,10 @@ namespace session_proxy {
    
 namespace {
 
-Error launchSession(const std::string& username, PidType* pPid)
+
+Error launchSession(const std::string& username,
+                    const core::system::Options& extraArgs,
+                    PidType* pPid)
 {
    // last ditch user validation -- an invalid user should very rarely
    // get to this point since we pre-emptively validate on client_init
@@ -92,6 +96,8 @@ Error launchSession(const std::string& username, PidType* pPid)
                            kRStudioLimitRpcClientUid,
                            boost::lexical_cast<std::string>(uid)));
 
+   // pass extra params
+   std::copy(extraArgs.begin(), extraArgs.end(), std::back_inserter(args));
 
    // append R environment variables
    core::system::Options rEnvVars = r_environment::variables();
@@ -115,6 +121,12 @@ Error launchSession(const std::string& username, PidType* pPid)
                                            config,
                                            pPid) ;
 }
+
+Error launchSession(const std::string& username, PidType* pPid)
+{
+   return launchSession(username, core::system::Options(), pPid);
+}
+
 
 class SessionLaunchManager
 {
@@ -376,6 +388,26 @@ bool validateUser(boost::shared_ptr<http::AsyncConnection> ptrConnection,
 Error initialize()
 { 
    return session::local_streams::createStreamsDir();
+}
+
+Error runVerifyInstallationSession()
+{
+   // get current user
+   server::util::system::user::User user;
+   Error error = currentUser(&user);
+   if (error)
+      return error;
+
+   // launch verify installation session
+   core::system::Options args;
+   args.push_back(core::system::Option("--" kVerifyInstallationSessionOption, "1"));
+   PidType sessionPid;
+   error = launchSession(user.username, args, &sessionPid);
+   if (error)
+      return error;
+
+   // wait for exit
+   return util::system::waitForProcessExit(sessionPid);
 }
 
 void proxyContentRequest(
