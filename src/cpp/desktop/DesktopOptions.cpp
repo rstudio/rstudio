@@ -56,7 +56,7 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
           .boundedTo(QApplication::desktop()->availableGeometry(win->pos()).size());
    win->resize(size);
 
-   if (settings_.value(QString::fromAscii("fullScreen"), false).toBool())
+   if (settings_.value(QString::fromAscii("maximized"), false).toBool())
       win->setWindowState(Qt::WindowMaximized);
 
    settings_.endGroup();
@@ -64,8 +64,8 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
 
 void Options::saveMainWindowBounds(QMainWindow* win)
 {
-   settings_.setValue(QString::fromAscii("mainwindow/fullScreen"), win->isFullScreen());
-   if (!win->isFullScreen())
+   settings_.setValue(QString::fromAscii("mainwindow/maximized"), win->isMaximized());
+   if (!win->isMaximized())
    {
      settings_.setValue(QString::fromAscii("mainwindow/size"), win->size());
      settings_.setValue(QString::fromAscii("mainwindow/pos"), win->pos());
