@@ -104,6 +104,7 @@ import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
+import com.google.gwt.dev.jjs.impl.SourceInfoCorrelator;
 import com.google.gwt.dev.jjs.impl.TypeLinker;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
@@ -557,6 +558,10 @@ public class JavaToJavaScriptCompiler {
         // Free up memory.
         rpo.clear();
 
+        if (options.isSoycEnabled()) {
+          SourceInfoCorrelator.exec(jprogram);
+        }
+
         // Compute all super type/sub type info
         jprogram.typeOracle.computeBeforeAST();
       } else {
@@ -978,7 +983,7 @@ public class JavaToJavaScriptCompiler {
     program.addEntryMethod(registerEntry);
 
     for (String mainClassName : mainClassNames) {
-      block.addStmt(makeStatsCalls(program, mainClassName));
+      block.addStmt(makeStatsCalls(info, program, mainClassName));
       JDeclaredType mainType = program.getFromTypeMap(mainClassName);
 
       if (mainType == null) {
@@ -1298,17 +1303,16 @@ public class JavaToJavaScriptCompiler {
    *   Stats.onModuleStart("mainClassName");
    * </pre>
    */
-  private static JStatement makeStatsCalls(JProgram program, String mainClassName) {
-    SourceInfo sourceInfo = program.createSourceInfoSynthetic(JavaToJavaScriptCompiler.class);
+  private static JStatement makeStatsCalls(SourceInfo info, JProgram program, String mainClassName) {
     JMethod isStatsAvailableMethod = program.getIndexedMethod("Stats.isStatsAvailable");
     JMethod onModuleStartMethod = program.getIndexedMethod("Stats.onModuleStart");
 
-    JMethodCall availableCall = new JMethodCall(sourceInfo, null, isStatsAvailableMethod);
-    JMethodCall onModuleStartCall = new JMethodCall(sourceInfo, null, onModuleStartMethod);
-    onModuleStartCall.addArg(program.getLiteralString(sourceInfo, mainClassName));
+    JMethodCall availableCall = new JMethodCall(info, null, isStatsAvailableMethod);
+    JMethodCall onModuleStartCall = new JMethodCall(info, null, onModuleStartMethod);
+    onModuleStartCall.addArg(program.getLiteralString(info, mainClassName));
 
     JBinaryOperation amp =
-        new JBinaryOperation(sourceInfo, program.getTypePrimitiveBoolean(), JBinaryOperator.AND,
+        new JBinaryOperation(info, program.getTypePrimitiveBoolean(), JBinaryOperator.AND,
             availableCall, onModuleStartCall);
 
     return amp.makeStatement();

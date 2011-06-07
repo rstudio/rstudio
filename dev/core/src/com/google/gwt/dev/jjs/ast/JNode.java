@@ -28,7 +28,7 @@ import java.io.Serializable;
  */
 public abstract class JNode implements JVisitable, HasSourceInfo, Serializable {
 
-  private final SourceInfo info;
+  private SourceInfo info;
 
   protected JNode(SourceInfo info) {
     assert info != null : "SourceInfo must be provided for JNodes";
@@ -37,6 +37,11 @@ public abstract class JNode implements JVisitable, HasSourceInfo, Serializable {
 
   public SourceInfo getSourceInfo() {
     return info;
+  }
+
+  public void setSourceInfo(SourceInfo info) {
+    assert this.info.getOrigin() == info.getOrigin();
+    this.info = info;
   }
 
   // Causes source generation to delegate to the one visitor

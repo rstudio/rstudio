@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.CanBeAbstract;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
@@ -282,8 +283,7 @@ public class TypeTightener {
       // Fake an assignment-to-self on all args to prevent tightening
       JMethod method = x.getTarget();
       for (JParameter param : method.getParams()) {
-        addAssignment(param, new JParameterRef(program
-            .createSourceInfoSynthetic(RecordVisitor.class), param));
+        addAssignment(param, new JParameterRef(SourceOrigin.UNKNOWN, param));
       }
     }
 

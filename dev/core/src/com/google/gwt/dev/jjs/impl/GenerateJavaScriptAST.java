@@ -268,10 +268,14 @@ public class GenerateJavaScriptAST {
       names.put(nullMethod, nullFunc.getName());
 
       /*
-       * Make sure we record all of the program's array types since
-       * JProgram.traverse() doesn't iterate over them.
+       * Create names for instantiable array types since JProgram.traverse()
+       * doesn't iterate over them.
        */
-      accept(program.getAllArrayTypes());
+      for (JArrayType arrayType : program.getAllArrayTypes()) {
+        if (typeOracle.isInstantiatedType(arrayType)) {
+          accept(arrayType);
+        }
+      }
 
       // Generate symbolic names for all query type ids.
       if (!output.shouldMinimize()) {

@@ -822,7 +822,7 @@ public class JProgram extends JNode {
   }
 
   public JStringLiteral getLiteralString(SourceInfo sourceInfo, String s) {
-    sourceInfo.addCorrelation(correlator.by(Literal.STRING));
+    sourceInfo.addCorrelation(sourceInfo.getCorrelator().by(Literal.STRING));
     return new JStringLiteral(sourceInfo, s, typeString);
   }
 

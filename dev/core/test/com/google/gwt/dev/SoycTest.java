@@ -35,20 +35,25 @@ public class SoycTest extends TestCase {
   private final CompilerOptionsImpl options = new CompilerOptionsImpl();
 
   public void testSoyc() throws UnableToCompleteException, IOException {
-    options.setSoycEnabled(true);
-    options.addModuleName("com.google.gwt.sample.hello.Hello");
-    options.setExtraDir(Utility.makeTemporaryDirectory(null, "helloextra"));
-    PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
-    logger.setMaxDetail(TreeLogger.ERROR);
-    new Compiler(options).run(logger);
-
-    // make sure the files have been produced
-    assertTrue(new File(options.getExtraDir() + "/hello/soycReport/compile-report/index.html").exists());
-    assertTrue(new File(options.getExtraDir() + "/hello/soycReport/compile-report/SoycDashboard-1-index.html").exists());
-    assertTrue(new File(options.getExtraDir() + "/hello/soycReport/compile-report/total-1-overallBreakdown.html").exists());
-    assertTrue(new File(options.getExtraDir() + "/hello/soycReport/compile-report/soyc.css").exists());
-
-    assertFalse(new File(options.getExtraDir() + "/hello/soycReport/compile-report/index2.html").exists());
-    Util.recursiveDelete(options.getExtraDir(), false);
+    File work = Utility.makeTemporaryDirectory(null, "hellowork");
+    try {
+      options.setSoycEnabled(true);
+      options.addModuleName("com.google.gwt.sample.hello.Hello");
+      options.setWarDir(new File(work, "war"));
+      options.setExtraDir(new File(work, "extra"));
+      PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
+      logger.setMaxDetail(TreeLogger.ERROR);
+      new Compiler(options).run(logger);
+  
+      // make sure the files have been produced
+      assertTrue(new File(options.getExtraDir() + "/hello/soycReport/compile-report/index.html").exists());
+      assertTrue(new File(options.getExtraDir() + "/hello/soycReport/compile-report/SoycDashboard-1-index.html").exists());
+      assertTrue(new File(options.getExtraDir() + "/hello/soycReport/compile-report/total-1-overallBreakdown.html").exists());
+      assertTrue(new File(options.getExtraDir() + "/hello/soycReport/compile-report/soyc.css").exists());
+  
+      assertFalse(new File(options.getExtraDir() + "/hello/soycReport/compile-report/index2.html").exists());
+    } finally {
+      Util.recursiveDelete(work, false);
+    }
   }
 }

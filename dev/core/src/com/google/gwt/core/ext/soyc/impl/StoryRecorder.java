@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.soyc.ClassMember;
 import com.google.gwt.core.ext.soyc.Member;
 import com.google.gwt.core.ext.soyc.Range;
-import com.google.gwt.core.ext.soyc.Story;
 import com.google.gwt.dev.jjs.Correlation;
 import com.google.gwt.dev.jjs.Correlation.Axis;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -32,7 +31,6 @@ import com.google.gwt.util.tools.Utility;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -99,7 +97,6 @@ public class StoryRecorder {
    */
   private transient Map<SourceInfo, StoryImpl> storyCache =
       new IdentityHashMap<SourceInfo, StoryImpl>();
-  private final Map<Story, Integer> storyIds = new HashMap<Story, Integer>();
 
   private StoryRecorder() {
   }
@@ -239,16 +236,8 @@ public class StoryRecorder {
   }
 
   private void emitStory(StoryImpl story, Range range) throws IOException {
-    int storyNum;
-    if (storyIds.containsKey(story)) {
-      storyNum = storyIds.get(story);
-    } else {
-      storyNum = storyIds.size();
-      storyIds.put(story, storyNum);
-    }
-
     builder.append("<story id=\"story");
-    builder.append(storyNum);
+    builder.append(story.getId());
     if (story.getLiteralTypeName() != null) {
       builder.append("\" literal=\"");
       builder.append(story.getLiteralTypeName());
@@ -271,7 +260,7 @@ public class StoryRecorder {
     builder.append("<js fragment=\"");
     builder.append(curHighestFragment);
     builder.append("\"/>\n<storyref idref=\"story");
-    builder.append(storyNum);
+    builder.append(story.getId());
 
     int start = range.getStart();
     int end = range.getEnd();

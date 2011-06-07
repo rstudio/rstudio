@@ -112,7 +112,7 @@ public class CastNormalizer {
         }
       }
 
-      for (JArrayType type : program.getAllArrayTypes()) {
+      for (JArrayType type : instantiatedArrayTypes) {
         computeSourceType(type);
       }
 

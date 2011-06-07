@@ -29,7 +29,7 @@ import java.io.Serializable;
 public abstract class JsNode implements JsVisitable, HasSourceInfo,
     Serializable {
 
-  private final SourceInfo sourceInfo;
+  private SourceInfo sourceInfo;
 
   protected JsNode(SourceInfo sourceInfo) {
     assert sourceInfo != null : "SourceInfo must be provided for JsNodes";
@@ -38,6 +38,11 @@ public abstract class JsNode implements JsVisitable, HasSourceInfo,
 
   public SourceInfo getSourceInfo() {
     return sourceInfo;
+  }
+
+  public void setSourceInfo(SourceInfo info) {
+    assert this.sourceInfo.getOrigin() == info.getOrigin();
+    this.sourceInfo = info;
   }
 
   /**

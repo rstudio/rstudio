@@ -2002,8 +2002,8 @@ public class GwtAstBuilder {
      * arguments, but with a different type signature.
      */
     private void createBridgeMethod(SyntheticMethodBinding jdtBridgeMethod) {
-      SourceInfo info = curClass.classType.getSourceInfo();
       JMethod implMethod = typeMap.get(jdtBridgeMethod.targetMethod);
+      SourceInfo info = implMethod.getSourceInfo();
       String[] paramNames = null;
       List<JParameter> implParams = implMethod.getParams();
       if (jdtBridgeMethod.parameters != null) {
@@ -2078,7 +2078,6 @@ public class GwtAstBuilder {
       JLocal newLocal =
           JProgram.createLocal(info, intern(x.name), localType, b.isFinal(), curMethod.body);
       curMethod.locals.put(b, newLocal);
-      curMethod.body.addLocal(newLocal);
       return newLocal;
     }
 
