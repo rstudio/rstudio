@@ -21,6 +21,7 @@
 #include <core/Log.hpp>
 
 #include <core/system/System.hpp>
+#include <core/StringUtils.hpp>
 
 #include <r/RExec.hpp>
 #include <r/session/RGraphics.hpp>
@@ -155,7 +156,7 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
    FilePath snapshotFile = snapshotFilePath(storageUuid);
    Error error = r::exec::RFunction(".rs.saveGraphicsSnapshot",
                                     snapshot,
-                                    snapshotFile.absolutePath()).call();
+                                    string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
    if (error)
       return error ;
 

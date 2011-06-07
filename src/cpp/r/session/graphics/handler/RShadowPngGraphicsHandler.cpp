@@ -18,6 +18,7 @@
 #include "RGraphicsHandler.hpp"
 
 #include <core/system/System.hpp>
+#include <core/StringUtils.hpp>
 
 #include <Rembedded.h>
 
@@ -99,7 +100,7 @@ pDevDesc shadowDevDesc(DeviceContext* pDC)
       // create PNG device (completely bail on error)
       boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, pointsize = 16)");
       std::string code = boost::str(fmt %
-                                    pDC->targetPath.absolutePath() %
+                                    string_utils::utf8ToSystem(pDC->targetPath.absolutePath()) %
                                     pDC->width %
                                     pDC->height);
       Error err = r::exec::executeString(code);
@@ -125,7 +126,7 @@ pDevDesc shadowDevDesc(pDevDesc dev)
 
 FilePath tempFile(const std::string& extension)
 {
-   FilePath tempFileDir(R_TempDir);
+   FilePath tempFileDir(string_utils::systemToUtf8(R_TempDir));
    FilePath tempFilePath = tempFileDir.complete(core::system::generateUuid(false) +
                                                 "." + extension);
    return tempFilePath;
