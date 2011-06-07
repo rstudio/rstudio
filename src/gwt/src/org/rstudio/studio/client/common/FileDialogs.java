@@ -14,7 +14,6 @@ package org.rstudio.studio.client.common;
 
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.files.FilenameTransform;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 
 public interface FileDialogs
@@ -27,7 +26,7 @@ public interface FileDialogs
    void saveFile(String caption,
                  FileSystemContext fsContext,
                  FileSystemItem initialFilePath,
-                 FilenameTransform filenameTransform,
+                 String defaultExtension,
                  ProgressOperationWithInput<FileSystemItem> operation);
 
    void chooseFolder(String caption,

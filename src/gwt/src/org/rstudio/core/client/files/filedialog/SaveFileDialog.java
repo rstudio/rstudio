@@ -13,9 +13,9 @@
 package org.rstudio.core.client.files.filedialog;
 
 import org.rstudio.core.client.MessageDisplay;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.files.FilenameTransform;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 
@@ -24,11 +24,11 @@ public class SaveFileDialog extends FileDialog
 
    public SaveFileDialog(String title,
                          FileSystemContext context,
-                         FilenameTransform transform,
+                         String defaultExtension,
                          ProgressOperationWithInput<FileSystemItem> operation)
    {
       super(title, null, "Save", true, true, context, operation);
-      transform_ = transform;
+      defaultExtension_ = defaultExtension;
    }
 
    @Override
@@ -53,11 +53,18 @@ public class SaveFileDialog extends FileDialog
    @Override
    protected String mungeFilename(String filename)
    {
-      if (transform_ == null)
+      if (StringUtil.isNullOrEmpty(defaultExtension_))
          return filename;
       else
-         return transform_.transform(filename);
+      {
+         // if there is no extension then we need to add one
+         String ext = FileSystemItem.getExtensionFromPath(filename);
+         if (ext.length() == 0)
+            return filename + defaultExtension_;
+         else
+            return filename;
+      }
    }
 
-   private final FilenameTransform transform_;
+   private final String defaultExtension_;
 }

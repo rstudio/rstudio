@@ -17,7 +17,6 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.files.FilenameTransform;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -51,7 +50,6 @@ public class DesktopFileDialogs implements FileDialogs
             final String caption,
             FileSystemContext fsContext,
             FileSystemItem initialFilePath,
-            final FilenameTransform transform,
             final ProgressOperationWithInput<FileSystemItem> operation)
       {
          final String dir = initialFilePath == null
@@ -67,9 +65,7 @@ public class DesktopFileDialogs implements FileDialogs
                FileSystemItem item =
                      StringUtil.isNullOrEmpty(file)
                      ? null
-                     : FileSystemItem.createFile(
-                           transform == null ? file
-                                             : transform.transform(file));
+                     : FileSystemItem.createFile(file);
 
                operation.execute(item, new NullProgress());
             }
@@ -94,13 +90,13 @@ public class DesktopFileDialogs implements FileDialogs
             }
             return fileName;
          }
-      }.execute(caption, fsContext, initialFilePath, null, operation);
+      }.execute(caption, fsContext, initialFilePath, operation);
    }
 
    public void saveFile(final String caption,
                         final FileSystemContext fsContext,
                         final FileSystemItem initialFilePath,
-                        FilenameTransform filenameTransform,
+                        final String defaultExtension,
                         final ProgressOperationWithInput<FileSystemItem> operation)
    {
       new FileDialogOperation()
@@ -108,7 +104,9 @@ public class DesktopFileDialogs implements FileDialogs
          @Override
          String operation(String caption, String dir)
          {
-            String fileName = Desktop.getFrame().getSaveFileName(caption, dir);
+            String fileName = Desktop.getFrame().getSaveFileName(
+                  caption, dir, defaultExtension);
+
             if (fileName != null)
             {
                updateWorkingDirectory(fileName, fsContext);
@@ -118,7 +116,6 @@ public class DesktopFileDialogs implements FileDialogs
       }.execute(caption,
                 fsContext,
                 initialFilePath,
-                filenameTransform,
                 operation);
    }
 
@@ -136,7 +133,7 @@ public class DesktopFileDialogs implements FileDialogs
                   caption,
                   initialDir != null ? initialDir.getPath() : null);
          }
-      }.execute(caption, fsContext, null, null, operation);
+      }.execute(caption, fsContext, null, operation);
    }
 
    private void updateWorkingDirectory(String fileName,

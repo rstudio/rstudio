@@ -133,12 +133,44 @@ QString GwtCallback::getOpenFileName(const QString& caption,
 }
 
 QString GwtCallback::getSaveFileName(const QString& caption,
-                                    const QString& dir)
+                                     const QString& dir,
+                                     const QString& defaultExtension)
 {
    QString resolvedDir = resolveAliasedPath(dir);
-   QString result = QFileDialog::getSaveFileName(pOwnerWindow_, caption, resolvedDir);
-   webView()->page()->mainFrame()->setFocus();
-   return createAliasedPath(result);
+
+   while (true)
+   {
+      QString result = QFileDialog::getSaveFileName(pOwnerWindow_, caption, resolvedDir);
+      webView()->page()->mainFrame()->setFocus();
+      if (result.isEmpty())
+         return result;
+
+      if (!defaultExtension.isEmpty())
+      {
+         FilePath fp(result.toUtf8().constData());
+         if (fp.extension().empty())
+         {
+            result += defaultExtension;
+            FilePath newExtPath(result.toUtf8().constData());
+            if (newExtPath.exists())
+            {
+               std::string message = "\"" + newExtPath.filename() + "\" already "
+                                     "exists. Do you want to overwrite it?";
+               if (QMessageBox::Cancel == QMessageBox::warning(pOwnerWindow_,
+                                        QString::fromUtf8("Save File"),
+                                        QString::fromUtf8(message.c_str()),
+                                        QMessageBox::Ok | QMessageBox::Cancel,
+                                        QMessageBox::Ok))
+               {
+                  resolvedDir = result;
+                  continue;
+               }
+            }
+         }
+      }
+
+      return createAliasedPath(result);
+   }
 }
 
 QString GwtCallback::getExistingDirectory(const QString& caption,

@@ -14,7 +14,6 @@ package org.rstudio.studio.client.common;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.files.FilenameTransform;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -74,24 +73,7 @@ public class ConsoleDispatcher
             caption,
             fsContext_,
             workbenchContext_.getCurrentWorkingDir(),
-            new FilenameTransform()
-            {
-               public String transform(String filename)
-               {
-                  if (defaultExtension != null)
-                  {
-                     // auto-append .RData if that isn't the extension
-                     String ext = FileSystemItem.getExtensionFromPath(filename);
-                     return ext.equalsIgnoreCase(defaultExtension)
-                              ? filename
-                              : filename + defaultExtension;
-                  }
-                  else
-                  {
-                     return filename;
-                  }
-               }
-            },
+            defaultExtension,
             new ProgressOperationWithInput<FileSystemItem>()
             {
                public void execute(

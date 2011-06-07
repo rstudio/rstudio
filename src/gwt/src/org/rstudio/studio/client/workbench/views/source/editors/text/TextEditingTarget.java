@@ -42,7 +42,6 @@ import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.files.FilenameTransform;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
@@ -918,32 +917,20 @@ public class TextEditingTarget implements EditingTarget
             "Save File",
             fileContext_,
             fsi,
-            new FilenameTransform()
-            {
-               public String transform(String filename)
-               {
-                  // if there is no extension then we need to add one
-                  String ext = FileSystemItem.getExtensionFromPath(filename);
-                  if (ext.length() == 0)
-                     return filename + fileType_.getDefaultExtension();
-                  else
-                     return filename;
-               }
-            },
+            fileType_.getDefaultExtension(),
             new ProgressOperationWithInput<FileSystemItem>()
             {
-               public void execute(final FileSystemItem input,
+               public void execute(final FileSystemItem saveItem,
                                    ProgressIndicator indicator)
                {
-                  if (input == null)
+                  if (saveItem == null)
                      return;
 
-                  workbenchContext_.setDefaultFileDialogDir(
-                                                     input.getParentPath());
-                  
                   try
                   {
-                     FileSystemItem saveItem = input;
+                     workbenchContext_.setDefaultFileDialogDir(
+                           saveItem.getParentPath());
+
                      TextFileType fileType =
                            fileTypeRegistry_.getTextTypeForFile(saveItem);
 
@@ -952,8 +939,8 @@ public class TextEditingTarget implements EditingTarget
                            fileType.getTypeId(),
                            encoding,
                            new SaveProgressIndicator(saveItem,
-                                                             fileType,
-                                                             executeOnSuccess));
+                                                     fileType,
+                                                     executeOnSuccess));
 
                      events_.fireEvent(
                            new SourceFileSavedEvent(saveItem.getPath()));

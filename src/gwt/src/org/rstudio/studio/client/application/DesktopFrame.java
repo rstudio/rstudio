@@ -24,7 +24,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
 {
    void browseUrl(String url);
    String getOpenFileName(String caption, String dir);
-   String getSaveFileName(String caption, String dir);
+   String getSaveFileName(String caption, String dir, String defaultExtension);
    String getExistingDirectory(String caption, String dir);
    void undo();
    void redo();

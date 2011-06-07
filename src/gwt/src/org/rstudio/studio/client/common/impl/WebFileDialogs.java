@@ -14,7 +14,6 @@ package org.rstudio.studio.client.common.impl;
 
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.files.FilenameTransform;
 import org.rstudio.core.client.files.filedialog.ChooseFolderDialog2;
 import org.rstudio.core.client.files.filedialog.FileDialog;
 import org.rstudio.core.client.files.filedialog.OpenFileDialog;
@@ -41,12 +40,12 @@ public class WebFileDialogs implements FileDialogs
    public void saveFile(String caption,
                         FileSystemContext fsContext,
                         FileSystemItem initialFilePath,
-                        FilenameTransform transform,
+                        String defaultExtension,
                         ProgressOperationWithInput<FileSystemItem> operation)
    {
       SaveFileDialog dialog = new SaveFileDialog(caption,
                                                  fsContext,
-                                                 transform,
+                                                 defaultExtension,
                                                  operation);
 
       dialog.setInvokeOperationEvenOnCancel(true);

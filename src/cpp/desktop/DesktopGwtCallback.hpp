@@ -43,7 +43,8 @@ public slots:
    QString getOpenFileName(const QString& caption,
                            const QString& dir);
    QString getSaveFileName(const QString& caption,
-                           const QString& dir);
+                           const QString& dir,
+                           const QString& defaultExtension);
    QString getExistingDirectory(const QString& caption,
                                 const QString& dir);
    void undo();
