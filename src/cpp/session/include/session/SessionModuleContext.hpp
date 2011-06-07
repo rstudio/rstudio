@@ -150,9 +150,7 @@ struct Events : boost::noncopyable
    boost::signal<void (ChangeSource)>  onDetectChanges;
    boost::signal<void(bool)>           onShutdown;
    boost::signal<void ()>              onSysSleep;
-   boost::signal<void ()>              onPrepareFork;
    boost::signal<void ()>              onParentAfterFork;
-   boost::signal<void ()>              onChildAfterMulticoreFork;
 };
 
 Events& events();
