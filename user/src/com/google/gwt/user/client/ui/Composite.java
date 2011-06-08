@@ -15,6 +15,11 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -23,20 +28,33 @@ import com.google.gwt.user.client.Event;
  * A type of widget that can wrap another widget, hiding the wrapped widget's
  * methods. When added to a panel, a composite behaves exactly as if the widget
  * it wraps had been added.
- * 
+ *
  * <p>
  * The composite is useful for creating a single widget out of an aggregate of
  * multiple other widgets contained in a single panel.
  * </p>
- * 
+ *
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.CompositeExample}
  * </p>
+ *
+ * TODO(rdcastro): Remove the final qualifier from IsRenderable overrides.
  */
-public abstract class Composite extends Widget {
+public abstract class Composite extends Widget implements IsRenderable {
+
+  interface HTMLTemplates extends SafeHtmlTemplates {
+    @Template("<span id=\"{0}\"></span>")
+     SafeHtml renderWithId(String id);
+  }
+  private static final HTMLTemplates TEMPLATE =
+      GWT.create(HTMLTemplates.class);
 
   private Widget widget;
+
+  private IsRenderable renderable;
+
+  private Element elementToWrap;
 
   @Override
   public boolean isAttached() {
@@ -53,6 +71,45 @@ public abstract class Composite extends Widget {
 
     // Delegate events to the widget.
     widget.onBrowserEvent(event);
+  }
+
+  @Override
+  public final void performDetachedInitialization() {
+    if (renderable != null) {
+      renderable.performDetachedInitialization();
+    } else {
+      elementToWrap.getParentNode().replaceChild(widget.getElement(), elementToWrap);
+    }
+  }
+
+  @Override
+  public final SafeHtml render(String id) {
+    if (renderable != null) {
+      return renderable.render(id);
+    } else {
+      SafeHtmlBuilder builder = new SafeHtmlBuilder();
+      render(id, builder);
+      return builder.toSafeHtml();
+    }
+  }
+
+  @Override
+  public final void render(String id, SafeHtmlBuilder builder) {
+    if (renderable != null) {
+      renderable.render(id, builder);
+    } else {
+      builder.append(TEMPLATE.renderWithId(id));
+    }
+  }
+
+  @Override
+  public final void wrapElement(Element element) {
+    if (renderable != null) {
+      renderable.wrapElement(element);
+      setElement(widget.getElement());
+    } else {
+      this.elementToWrap = element;
+    }
   }
 
   /**
@@ -79,12 +136,22 @@ public abstract class Composite extends Widget {
           + "called once.");
     }
 
+    if (widget instanceof IsRenderable) {
+      // In case the Widget being wrapped is an IsRenderable, we save that fact.
+      this.renderable = (IsRenderable) widget;
+    }
+
     // Detach the new child.
     widget.removeFromParent();
 
     // Use the contained widget's element as the composite's element,
     // effectively merging them within the DOM.
-    setElement(widget.getElement());
+    Element elem = widget.getElement();
+    setElement(elem);
+
+    if (PotentialElement.isPotential(elem)) {
+      PotentialElement.as(elem).setResolver(this);
+    }
 
     // Logical attach.
     this.widget = widget;
@@ -124,6 +191,12 @@ public abstract class Composite extends Widget {
       // the attached flag will be wrong).
       widget.onDetach();
     }
+  }
+
+  @Override
+  protected Element resolvePotentialElement() {
+    setElement(widget.resolvePotentialElement());
+    return getElement();
   }
 
   /**

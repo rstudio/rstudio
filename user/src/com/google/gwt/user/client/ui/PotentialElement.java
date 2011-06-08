@@ -37,6 +37,11 @@ import com.google.gwt.dom.client.Element;
  */
 public class PotentialElement extends Element {
 
+  public static PotentialElement as(Element e) {
+    assert isPotential(e);
+    return (PotentialElement) e;
+  }
+
   /**
    * Builds a new PotentialElement. This element keeps track of the
    * {@link UIObject} so that it can call
@@ -66,10 +71,7 @@ public class PotentialElement extends Element {
       },
       src: '',
       style: {},
-      __gwt_resolve: function() {
-        this.__gwt_resolve = @com.google.gwt.user.client.ui.PotentialElement::cannotResolveTwice();
-        return o.@com.google.gwt.user.client.ui.UIObject::resolvePotentialElement()();
-      },
+      __gwt_resolve: @com.google.gwt.user.client.ui.PotentialElement::buildResolveCallback(Lcom/google/gwt/user/client/ui/UIObject;)(o),
       title: ''
     });
   }-*/;
@@ -94,12 +96,23 @@ public class PotentialElement extends Element {
     return maybePotential.<PotentialElement>cast().resolve();
   }
 
+  private static native JavaScriptObject buildResolveCallback(UIObject resolver) /*-{
+    return function() {
+        this.__gwt_resolve = @com.google.gwt.user.client.ui.PotentialElement::cannotResolveTwice();
+        return resolver.@com.google.gwt.user.client.ui.UIObject::resolvePotentialElement()();
+      };
+  }-*/;
+
   private static final native void cannotResolveTwice() /*-{
     throw "A PotentialElement cannot be resolved twice.";
   }-*/;
 
   protected PotentialElement() {
   }
+
+  final native Element setResolver(UIObject resolver) /*-{
+    this.__gwt_resolve = @com.google.gwt.user.client.ui.PotentialElement::buildResolveCallback(Lcom/google/gwt/user/client/ui/UIObject;)(resolver);
+  }-*/;
 
   /**
    * Calls the <code>__gwt_resolve</code> method on the underlying
