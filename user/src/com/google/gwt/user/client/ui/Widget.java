@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,26 +29,25 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 
 /**
- * The base class for the majority of user-interface objects. Widget adds
- * support for receiving events from the browser and being added directly to
- * {@link com.google.gwt.user.client.ui.Panel panels}.
+ * The base class for the majority of user-interface objects. Widget adds support for receiving
+ * events from the browser and being added directly to {@link com.google.gwt.user.client.ui.Panel
+ * panels}.
  */
-public class Widget extends UIObject implements EventListener, HasAttachHandlers,
-    IsWidget {
+public class Widget extends UIObject implements EventListener, HasAttachHandlers, IsWidget {
 
   /**
-   * This convenience method makes a null-safe call to
-   * {@link IsWidget#asWidget()}.
-   *
+   * This convenience method makes a null-safe call to {@link IsWidget#asWidget()}.
+   * 
    * @return the widget aspect, or <code>null</code> if w is null
    */
   public static Widget asWidgetOrNull(IsWidget w) {
     return w == null ? null : w.asWidget();
   }
+
   /**
-   * A bit-map of the events that should be sunk when the widget is attached to
-   * the DOM. (We delay the sinking of events to improve startup performance.)
-   * When the widget is attached, this is set to -1
+   * A bit-map of the events that should be sunk when the widget is attached to the DOM. (We delay
+   * the sinking of events to improve startup performance.) When the widget is attached, this is set
+   * to -1
    * <p>
    * Package protected to allow Composite to see it.
    */
@@ -63,21 +62,19 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
   }
 
   /**
-   * For <a href=
-   * "http://code.google.com/p/google-web-toolkit/wiki/UnderstandingMemoryLeaks"
-   * >browsers which do not leak</a>, adds a native event handler to the widget.
-   * Note that, unlike the
-   * {@link #addDomHandler(EventHandler, com.google.gwt.event.dom.client.DomEvent.Type)}
-   * implementation, there is no need to attach the widget to the DOM in order
-   * to cause the event handlers to be attached.
-   *
+   * For <a href= "http://code.google.com/p/google-web-toolkit/wiki/UnderstandingMemoryLeaks"
+   * >browsers which do not leak</a>, adds a native event handler to the widget. Note that, unlike
+   * the {@link #addDomHandler(EventHandler, com.google.gwt.event.dom.client.DomEvent.Type)}
+   * implementation, there is no need to attach the widget to the DOM in order to cause the event
+   * handlers to be attached.
+   * 
    * @param <H> the type of handler to add
    * @param type the event key
    * @param handler the handler
    * @return {@link HandlerRegistration} used to remove the handler
    */
-  public final <H extends EventHandler> HandlerRegistration addBitlessDomHandler(
-      final H handler, DomEvent.Type<H> type) {
+  public final <H extends EventHandler> HandlerRegistration addBitlessDomHandler(final H handler,
+      DomEvent.Type<H> type) {
     assert handler != null : "handler must not be null";
     assert type != null : "type must not be null";
     sinkBitlessEvent(type.getName());
@@ -85,17 +82,16 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
   }
 
   /**
-   * Adds a native event handler to the widget and sinks the corresponding
-   * native event. If you do not want to sink the native event, use the generic
-   * addHandler method instead.
-   *
+   * Adds a native event handler to the widget and sinks the corresponding native event. If you do
+   * not want to sink the native event, use the generic addHandler method instead.
+   * 
    * @param <H> the type of handler to add
    * @param type the event key
    * @param handler the handler
    * @return {@link HandlerRegistration} used to remove the handler
    */
-  public final <H extends EventHandler> HandlerRegistration addDomHandler(
-      final H handler, DomEvent.Type<H> type) {
+  public final <H extends EventHandler> HandlerRegistration addDomHandler(final H handler,
+      DomEvent.Type<H> type) {
     assert handler != null : "handler must not be null";
     assert type != null : "type must not be null";
     int typeInt = Event.getTypeInt(type.getName());
@@ -109,14 +105,14 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
 
   /**
    * Adds this handler to the widget.
-   *
+   * 
    * @param <H> the type of handler to add
    * @param type the event type
    * @param handler the handler
    * @return {@link HandlerRegistration} used to remove the handler
    */
-  public final <H extends EventHandler> HandlerRegistration addHandler(
-      final H handler, GwtEvent.Type<H> type) {
+  public final <H extends EventHandler> HandlerRegistration addHandler(final H handler,
+      GwtEvent.Type<H> type) {
     return ensureHandlers().addHandler(type, handler);
   }
 
@@ -132,7 +128,7 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
 
   /**
    * Gets the panel-defined layout data associated with this widget.
-   *
+   * 
    * @return the widget's layout data
    * @see #setLayoutData
    */
@@ -142,7 +138,7 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
 
   /**
    * Gets this widget's parent panel.
-   *
+   * 
    * @return the widget's parent panel
    */
   public Widget getParent() {
@@ -150,10 +146,9 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
   }
 
   /**
-   * Determines whether this widget is currently attached to the browser's
-   * document (i.e., there is an unbroken chain of widgets between this widget
-   * and the underlying browser document).
-   *
+   * Determines whether this widget is currently attached to the browser's document (i.e., there is
+   * an unbroken chain of widgets between this widget and the underlying browser document).
+   * 
    * @return <code>true</code> if the widget is attached
    */
   public boolean isAttached() {
@@ -179,17 +174,16 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
 
   /**
    * Removes this widget from its parent widget, if one exists.
-   *
+   * 
    * <p>
-   * If it has no parent, this method does nothing. If it is a "root" widget
-   * (meaning it's been added to the detach list via
-   * {@link RootPanel#detachOnWindowClose(Widget)}), it will be removed from the
-   * detached immediately. This makes it possible for Composites and Panels to
-   * adopt root widgets.
+   * If it has no parent, this method does nothing. If it is a "root" widget (meaning it's been
+   * added to the detach list via {@link RootPanel#detachOnWindowClose(Widget)}), it will be removed
+   * from the detached immediately. This makes it possible for Composites and Panels to adopt root
+   * widgets.
    * </p>
-   *
-   * @throws IllegalStateException if this widget's parent does not support
-   *           removal (e.g. {@link Composite})
+   * 
+   * @throws IllegalStateException if this widget's parent does not support removal (e.g.
+   *           {@link Composite})
    */
   public void removeFromParent() {
     if (parent == null) {
@@ -201,17 +195,15 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
     } else if (parent instanceof HasWidgets) {
       ((HasWidgets) parent).remove(this);
     } else if (parent != null) {
-      throw new IllegalStateException(
-          "This widget's parent does not implement HasWidgets");
+      throw new IllegalStateException("This widget's parent does not implement HasWidgets");
     }
   }
 
   /**
-   * Sets the panel-defined layout data associated with this widget. Only the
-   * panel that currently contains a widget should ever set this value. It
-   * serves as a place to store layout bookkeeping data associated with a
-   * widget.
-   *
+   * Sets the panel-defined layout data associated with this widget. Only the panel that currently
+   * contains a widget should ever set this value. It serves as a place to store layout bookkeeping
+   * data associated with a widget.
+   * 
    * @param layoutData the widget's layout data
    */
   public void setLayoutData(Object layoutData) {
@@ -219,12 +211,11 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
   }
 
   /**
-   * Overridden to defer the call to super.sinkEvents until the first time this
-   * widget is attached to the dom, as a performance enhancement. Subclasses
-   * wishing to customize sinkEvents can preserve this deferred sink behavior by
-   * putting their implementation behind a check of
+   * Overridden to defer the call to super.sinkEvents until the first time this widget is attached
+   * to the dom, as a performance enhancement. Subclasses wishing to customize sinkEvents can
+   * preserve this deferred sink behavior by putting their implementation behind a check of
    * <code>isOrWasAttached()</code>:
-   *
+   * 
    * <pre>
    * {@literal @}Override
    * public void sinkEvents(int eventBitsToAdd) {
@@ -245,9 +236,9 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
   }
 
   /**
-   * Creates the {@link HandlerManager} used by this Widget. You can override
-   * this method to create a custom {@link HandlerManager}.
-   *
+   * Creates the {@link HandlerManager} used by this Widget. You can override this method to create
+   * a custom {@link HandlerManager}.
+   * 
    * @return the {@link HandlerManager} you want to use
    */
   protected HandlerManager createHandlerManager() {
@@ -255,9 +246,9 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
   }
 
   /**
-   * Fires an event on a child widget. Used to delegate the handling of an event
-   * from one widget to another.
-   *
+   * Fires an event on a child widget. Used to delegate the handling of an event from one widget to
+   * another.
+   * 
    * @param event the event
    * @param target fire the event on the given target
    */
@@ -266,22 +257,20 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
   }
 
   /**
-   * If a widget contains one or more child widgets that are not in the logical
-   * widget hierarchy (the child is physically connected only on the DOM level),
-   * it must override this method and call {@link #onAttach()} for each of its
-   * child widgets.
-   *
+   * If a widget contains one or more child widgets that are not in the logical widget hierarchy
+   * (the child is physically connected only on the DOM level), it must override this method and
+   * call {@link #onAttach()} for each of its child widgets.
+   * 
    * @see #onAttach()
    */
   protected void doAttachChildren() {
   }
 
   /**
-   * If a widget contains one or more child widgets that are not in the logical
-   * widget hierarchy (the child is physically connected only on the DOM level),
-   * it must override this method and call {@link #onDetach()} for each of its
-   * child widgets.
-   *
+   * If a widget contains one or more child widgets that are not in the logical widget hierarchy
+   * (the child is physically connected only on the DOM level), it must override this method and
+   * call {@link #onDetach()} for each of its child widgets.
+   * 
    * @see #onDetach()
    */
   protected void doDetachChildren() {
@@ -289,7 +278,7 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
 
   /**
    * Gets the number of handlers listening to the event type.
-   *
+   * 
    * @param type the event type
    * @return the number of registered handlers
    */
@@ -299,7 +288,7 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
 
   /**
    * Has this widget ever been attached?
-   *
+   * 
    * @return true if this widget ever been attached to the DOM, false otherwise
    */
   protected final boolean isOrWasAttached() {
@@ -308,21 +297,19 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
 
   /**
    * <p>
-   * This method is called when a widget is attached to the browser's document.
-   * To receive notification after a Widget has been added to the document,
-   * override the {@link #onLoad} method or use {@link #addAttachHandler}.
+   * This method is called when a widget is attached to the browser's document. To receive
+   * notification after a Widget has been added to the document, override the {@link #onLoad} method
+   * or use {@link #addAttachHandler}.
    * </p>
    * <p>
-   * It is strongly recommended that you override {@link #onLoad()} or
-   * {@link #doAttachChildren()} instead of this method to avoid inconsistencies
-   * between logical and physical attachment states.
+   * It is strongly recommended that you override {@link #onLoad()} or {@link #doAttachChildren()}
+   * instead of this method to avoid inconsistencies between logical and physical attachment states.
    * </p>
    * <p>
-   * Subclasses that override this method must call
-   * <code>super.onAttach()</code> to ensure that the Widget has been attached
-   * to its underlying Element.
+   * Subclasses that override this method must call <code>super.onAttach()</code> to ensure that the
+   * Widget has been attached to its underlying Element.
    * </p>
-   *
+   * 
    * @throws IllegalStateException if this widget is already attached
    * @see #onLoad()
    * @see #doAttachChildren()
@@ -353,23 +340,21 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
 
   /**
    * <p>
-   * This method is called when a widget is detached from the browser's
-   * document. To receive notification before a Widget is removed from the
-   * document, override the {@link #onUnload} method or use {@link #addAttachHandler}.
+   * This method is called when a widget is detached from the browser's document. To receive
+   * notification before a Widget is removed from the document, override the {@link #onUnload}
+   * method or use {@link #addAttachHandler}.
    * </p>
    * <p>
-   * It is strongly recommended that you override {@link #onUnload()} or
-   * {@link #doDetachChildren()} instead of this method to avoid inconsistencies
-   * between logical and physical attachment states.
+   * It is strongly recommended that you override {@link #onUnload()} or {@link #doDetachChildren()}
+   * instead of this method to avoid inconsistencies between logical and physical attachment states.
    * </p>
    * <p>
-   * Subclasses that override this method must call
-   * <code>super.onDetach()</code> to ensure that the Widget has been detached
-   * from the underlying Element. Failure to do so will result in application
-   * memory leaks due to circular references between DOM Elements and JavaScript
+   * Subclasses that override this method must call <code>super.onDetach()</code> to ensure that the
+   * Widget has been detached from the underlying Element. Failure to do so will result in
+   * application memory leaks due to circular references between DOM Elements and JavaScript
    * objects.
    * </p>
-   *
+   * 
    * @throws IllegalStateException if this widget is already detached
    * @see #onUnload()
    * @see #doDetachChildren()
@@ -398,27 +383,24 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
   }
 
   /**
-   * This method is called immediately after a widget becomes attached to the
-   * browser's document.
+   * This method is called immediately after a widget becomes attached to the browser's document.
    */
   protected void onLoad() {
   }
 
   /**
-   * This method is called immediately before a widget will be detached from the
-   * browser's document.
+   * This method is called immediately before a widget will be detached from the browser's document.
    */
   protected void onUnload() {
   }
 
   /**
    * Ensures the existence of the handler manager.
-   *
+   * 
    * @return the handler manager
    * */
   HandlerManager ensureHandlers() {
-    return handlerManager == null ? handlerManager = createHandlerManager()
-        : handlerManager;
+    return handlerManager == null ? handlerManager = createHandlerManager() : handlerManager;
   }
 
   HandlerManager getHandlerManager() {
@@ -445,12 +427,12 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
   }
 
   /**
-   * Sets this widget's parent. This method should only be called by
-   * {@link Panel} and {@link Composite}.
-   *
+   * Sets this widget's parent. This method should only be called by {@link Panel} and
+   * {@link Composite}.
+   * 
    * @param parent the widget's new parent
-   * @throws IllegalStateException if <code>parent</code> is non-null and the
-   *           widget already has a parent
+   * @throws IllegalStateException if <code>parent</code> is non-null and the widget already has a
+   *           parent
    */
   void setParent(Widget parent) {
     Widget oldParent = this.parent;
