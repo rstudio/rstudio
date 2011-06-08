@@ -51,7 +51,19 @@ void GwtCallback::browseUrl(QString url)
    if (qurl.scheme() == QString::fromAscii("file"))
    {
       QProcess open;
-      open.start(QString::fromAscii("open"), QStringList() << url);
+      QStringList args;
+      // force use of Preview for PDFs (Adobe Reader 10.01 crashes)
+      if (url.endsWith(QString::fromAscii(".pdf")))
+      {
+         args.append(QString::fromAscii("-a"));
+         args.append(QString::fromAscii("Preview"));
+         args.append(url);
+      }
+      else
+      {
+         args.append(url);
+      }
+      open.start(QString::fromAscii("open"), args);
       open.waitForFinished(5000);
       if (open.exitCode() != 0)
       {
