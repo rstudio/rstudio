@@ -86,6 +86,8 @@ public slots:
    bool suppressSyntaxHighlighting();
    QString filterText(QString text);
 
+   void cleanClipboard(bool stripHtml);
+
 private:
    void doAction(QKeySequence::StandardKey key);
    QWebView* webView();

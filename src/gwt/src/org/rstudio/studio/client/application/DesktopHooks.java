@@ -104,7 +104,17 @@ public class DesktopHooks
       });
       
       injector.injectObject(this);
+
+      addCopyHook();
    }
+
+   private native void addCopyHook() /*-{
+      $wnd.addEventListener("copy", function() {
+         setTimeout(function() {
+            $wnd.desktop.cleanClipboard(false);
+         }, 100)
+      }, true);
+   }-*/;
 
    void quitR(final boolean saveChanges)
    {
