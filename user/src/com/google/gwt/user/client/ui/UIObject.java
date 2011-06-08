@@ -123,7 +123,7 @@ import com.google.gwt.user.client.DOM;
  * 
  * Style names can be space or comma separated.
  */
-public abstract class UIObject {
+public abstract class UIObject implements HasVisibility {
 
   /**
    * Stores a regular expression object to extract float values from the
@@ -582,11 +582,7 @@ public abstract class UIObject {
     return DOM.getElementProperty(getElement(), "title");
   }
 
-  /**
-   * Determines whether or not this object is visible.
-   * 
-   * @return <code>true</code> if the object is visible
-   */
+  @Override
   public boolean isVisible() {
     return isVisible(getElement());
   }
@@ -729,12 +725,7 @@ public abstract class UIObject {
     }
   }
 
-  /**
-   * Sets whether this object is visible.
-   * 
-   * @param visible <code>true</code> to show the object, <code>false</code> to
-   *          hide it
-   */
+  @Override
   public void setVisible(boolean visible) {
     setVisible(getElement(), visible);
   }
