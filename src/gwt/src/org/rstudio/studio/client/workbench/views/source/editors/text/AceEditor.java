@@ -376,10 +376,14 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return getSession().getSelection().getRange().getEnd();
    }
 
-   @Override
    public int getLength(int row)
    {
       return getSession().getDocument().getLine(row).length();
+   }
+
+   public int getRowCount()
+   {
+      return getSession().getDocument().getLength();
    }
 
    public void setSelection(InputEditorSelection selection)
@@ -473,12 +477,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    public String getCurrentLine()
    {
-      int row = widget_.getEditor()
-            .getSession()
-            .getSelection()
-            .getRange()
-            .getStart()
-            .getRow();
+      int row = getSession().getSelection().getRange().getStart().getRow();
       return getSession().getLine(row);
    }
 

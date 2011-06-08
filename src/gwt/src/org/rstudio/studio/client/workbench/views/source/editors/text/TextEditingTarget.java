@@ -164,6 +164,7 @@ public class TextEditingTarget implements EditingTarget
       Position getSelectionStart();
       Position getSelectionEnd();
       int getLength(int row);
+      int getRowCount();
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -1082,10 +1083,6 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onExtractFunction()
    {
-      // Stops the console from thinking it has focus, and thus stealing it
-      Element activeEl = DomUtils.getActiveElement();
-      if (activeEl != null)
-         activeEl.blur();
       docDisplay_.focus();
 
       String initialSelection = docDisplay_.getSelectionValue();
@@ -1199,10 +1196,6 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onExecuteCode()
    {
-      // Stops the console from thinking it has focus, and thus stealing it
-      Element activeEl = DomUtils.getActiveElement();
-      if (activeEl != null)
-         activeEl.blur();
       docDisplay_.focus();
 
       String code = docDisplay_.getSelectionValue();
@@ -1221,10 +1214,7 @@ public class TextEditingTarget implements EditingTarget
                          docDisplay_.getSelectionEnd());
       }
 
-      if (code != null && code.trim().length() > 0)
-      {
-         events_.fireEvent(new SendToConsoleEvent(code, true));
-      }
+      events_.fireEvent(new SendToConsoleEvent(code, true));
    }
 
    private void setLastExecuted(Position start, Position end)
@@ -1240,10 +1230,6 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onExecuteAllCode()
    {
-      // Stops the console from thinking it has focus, and thus stealing it
-      Element activeEl = DomUtils.getActiveElement();
-      if (activeEl != null)
-         activeEl.blur();
       docDisplay_.focus();
 
       String code = docDisplay_.getCode();
@@ -1262,10 +1248,6 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onExecuteToCurrentLine()
    {
-      // Stops the console from thinking it has focus, and thus stealing it
-      Element activeEl = DomUtils.getActiveElement();
-      if (activeEl != null)
-         activeEl.blur();
       docDisplay_.focus();
 
 
@@ -1276,27 +1258,32 @@ public class TextEditingTarget implements EditingTarget
       Position end = Position.create(row, col);
 
       String code = docDisplay_.getCode(start, end);
-
       setLastExecuted(start, end);
-
       events_.fireEvent(new SendToConsoleEvent(code, true));
    }
    
    @Handler
    void onExecuteFromCurrentLine()
    {
-      globalDisplay_.showMessage(MessageDialog.INFO, 
-                                 "RStudio", 
-                                 "Not yet implemented");
+      docDisplay_.focus();
+
+      int startRow = docDisplay_.getSelectionStart().getRow();
+      int startColumn = 0;
+
+      int endRow = Math.max(0, docDisplay_.getRowCount() - 1);
+      int endColumn = docDisplay_.getLength(endRow);
+
+      Position start = Position.create(startRow, startColumn);
+      Position end = Position.create(endRow, endColumn);
+
+      String code = docDisplay_.getCode(start, end);
+      setLastExecuted(start, end);
+      events_.fireEvent(new SendToConsoleEvent(code, true));
    }
 
    @Handler
    void onExecuteCurrentFunction()
    {
-      // Stops the console from thinking it has focus, and thus stealing it
-      Element activeEl = DomUtils.getActiveElement();
-      if (activeEl != null)
-         activeEl.blur();
       docDisplay_.focus();
 
       // HACK: This is just to force the entire function tree to be built.
@@ -1375,10 +1362,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onSourceActiveDocument()
    {
-      // Stops the console from thinking it has focus, and thus stealing it
-      Element activeEl = DomUtils.getActiveElement();
-      if (activeEl != null)
-         activeEl.blur();
+      docDisplay_.focus();
 
       String code = docDisplay_.getCode();
       if (code != null && code.trim().length() > 0)
@@ -1414,6 +1398,8 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onExecuteLastCode()
    {
+      docDisplay_.focus();
+
       if (lastExecutedCode_ != null)
       {
          String code = lastExecutedCode_.getValue();

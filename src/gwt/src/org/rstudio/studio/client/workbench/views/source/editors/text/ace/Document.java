@@ -26,4 +26,8 @@ public class Document extends JavaScriptObject
    public native final String getLine(int row) /*-{
       return this.getLine(row);
    }-*/;
+
+   public native final int getLength() /*-{
+      return this.getLength();
+   }-*/;
 }
