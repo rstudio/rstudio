@@ -15,6 +15,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.findreplac
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.HasValue;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -46,7 +48,24 @@ public class FindReplace
       editor_ = editor;
       display_ = display;
       globalDisplay_ = globalDisplay;
-
+      
+      HasValue<Boolean> caseSensitive = display_.getCaseSensitive();
+      caseSensitive.setValue(defaultCaseSensitive_);
+      caseSensitive.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            defaultCaseSensitive_ = event.getValue();
+         }
+      });
+      HasValue<Boolean> regex = display_.getRegex();
+      regex.setValue(defaultRegex_);
+      regex.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            defaultRegex_ = event.getValue();
+         }
+      });
+      
       addClickHandler(display.getFindButton(), new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -192,4 +211,7 @@ public class FindReplace
    private final AceEditor editor_;
    private final Display display_;
    private final GlobalDisplay globalDisplay_;
+   
+   private static boolean defaultCaseSensitive_ = false;
+   private static boolean defaultRegex_ = false;
 }
