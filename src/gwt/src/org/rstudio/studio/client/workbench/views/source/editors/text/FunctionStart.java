@@ -25,8 +25,12 @@ public class FunctionStart extends JavaScriptObject
       return this.label;
    }-*/;
 
-   public native final Position getStart() /*-{
-      return this.start;
+   public native final Position getPreamble() /*-{
+      return this.preamble;
+   }-*/;
+
+   public native final Position getEnd() /*-{
+      return this.end;
    }-*/;
 
    public native final JsArray<FunctionStart> getChildren() /*-{

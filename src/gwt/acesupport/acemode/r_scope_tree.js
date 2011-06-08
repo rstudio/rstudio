@@ -236,7 +236,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
          {
             var here = {
                label: this.label,
-               start: this.preamble,
+               preamble: this.preamble,
                children: []
             };
             list.push(here);

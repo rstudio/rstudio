@@ -304,7 +304,7 @@ public class TextEditingTarget implements EditingTarget
       Position cursor = docDisplay_.getCursorPosition();
       JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
       FunctionStart jumpTo = findPreviousFunction(functions, cursor);
-      docDisplay_.setCursorPosition(jumpTo.getStart());
+      docDisplay_.setCursorPosition(jumpTo.getPreamble());
       docDisplay_.moveCursorNearTop();
    }
 
@@ -314,7 +314,7 @@ public class TextEditingTarget implements EditingTarget
       for (int i = 0; i < funcs.length(); i++)
       {
          FunctionStart child = funcs.get(i);
-         if (child.getStart().compareTo(pos) >= 0)
+         if (child.getPreamble().compareTo(pos) >= 0)
             break;
          result = child;
       }
@@ -335,7 +335,7 @@ public class TextEditingTarget implements EditingTarget
       Position cursor = docDisplay_.getCursorPosition();
       JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
       FunctionStart jumpTo = findNextFunction(functions, cursor);
-      docDisplay_.setCursorPosition(jumpTo.getStart());
+      docDisplay_.setCursorPosition(jumpTo.getPreamble());
       docDisplay_.moveCursorNearTop();
    }
 
@@ -344,7 +344,7 @@ public class TextEditingTarget implements EditingTarget
       for (int i = 0; i < funcs.length(); i++)
       {
          FunctionStart child = funcs.get(i);
-         if (child.getStart().compareTo(pos) <= 0)
+         if (child.getPreamble().compareTo(pos) <= 0)
          {
             FunctionStart descendant = findNextFunction(child.getChildren(), pos);
             if (descendant != null)
@@ -570,7 +570,7 @@ public class TextEditingTarget implements EditingTarget
                {
                   public void execute()
                   {
-                     docDisplay_.setCursorPosition(func.getStart());
+                     docDisplay_.setCursorPosition(func.getPreamble());
                      docDisplay_.moveCursorNearTop();
                      docDisplay_.focus();
                   }
@@ -579,8 +579,8 @@ public class TextEditingTarget implements EditingTarget
 
          if (defaultFunction != null && defaultMenuItem == null &&
              func.getLabel().equals(defaultFunction.getLabel()) &&
-             func.getStart().getRow() == defaultFunction.getStart().getRow() &&
-             func.getStart().getColumn() == defaultFunction.getStart().getColumn())
+             func.getPreamble().getRow() == defaultFunction.getPreamble().getRow() &&
+             func.getPreamble().getColumn() == defaultFunction.getPreamble().getColumn())
          {
             defaultMenuItem = menuItem;
          }
@@ -1284,6 +1284,34 @@ public class TextEditingTarget implements EditingTarget
       setLastExecuted(start, end);
 
       events_.fireEvent(new SendToConsoleEvent(code, true));
+   }
+
+   @Handler
+   void onExecuteCurrentFunction()
+   {
+      // Stops the console from thinking it has focus, and thus stealing it
+      Element activeEl = DomUtils.getActiveElement();
+      if (activeEl != null)
+         activeEl.blur();
+      docDisplay_.focus();
+
+      // HACK: This is just to force the entire function tree to be built.
+      // It's the easiest way to make sure getCurrentFunction() returns
+      // a FunctionStart with an end.
+      docDisplay_.getFunctionTree();
+      FunctionStart currentFunction = docDisplay_.getCurrentFunction();
+
+      // Check if we're at the top level (i.e. not in a function), or in
+      // an unclosed function
+      if (currentFunction == null || currentFunction.getEnd() == null)
+         return;
+
+      Position start = currentFunction.getPreamble();
+      Position end = currentFunction.getEnd();
+
+      String code = docDisplay_.getCode(start, end);
+      setLastExecuted(start, end);
+      events_.fireEvent(new SendToConsoleEvent(code.trim(), true));
    }
 
    @Handler

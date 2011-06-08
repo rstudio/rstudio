@@ -77,6 +77,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="executeCode"/>
          <cmd refid="executeAllCode"/>
          <cmd refid="executeToCurrentLine"/>
+         <cmd refid="executeCurrentFunction"/>
          <cmd refid="executeLastCode"/>
          <separator/>
          <cmd refid="sourceActiveDocument"/>
@@ -362,6 +363,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="executeToCurrentLine"
         menuLabel="Run From _Beginning To Line"
         desc="Run the code from the beginning of the document up through the current line"/>
+   <cmd id="executeCurrentFunction"
+        menuLabel="Ru_n Current Function Definition"
+        desc="Run the top-level function, if any, that contains the cursor"/>
    <cmd id="executeLastCode"
         menuLabel="Run _Previous"
         desc="Re-run the selection that was most recently run"/>
