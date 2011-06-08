@@ -172,7 +172,19 @@ public class ShellPane extends Composite implements Shell.Display,
       };
 
       initWidget(scrollPanel_) ;
+
+      addCopyHook(getElement());
    }
+
+   private native void addCopyHook(Element element) /*-{
+      if ($wnd.desktop) {
+         element.addEventListener("copy", function() {
+            setTimeout(function() {
+               $wnd.desktop.cleanClipboard(true);
+            }, 100)
+         }, true);
+      }
+   }-*/;
 
    private void scrollToBottomAsync()
    {

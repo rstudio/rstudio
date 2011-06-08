@@ -64,4 +64,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    String getRVersion();
    String chooseRVersion();
    boolean canChooseRVersion();
+
+   void cleanClipboard();
 }

@@ -15,7 +15,7 @@
 
 #include <algorithm>
 
-#if _WIN32
+#ifdef _WIN32
 #include <shlobj.h>
 #endif
 
@@ -36,6 +36,10 @@
 #include "DesktopRVersion.hpp"
 #include "DesktopMainWindow.hpp"
 #include "DesktopUtils.hpp"
+
+#ifdef __APPLE__
+#include <Carbon/Carbon.h>
+#endif
 
 using namespace core;
 
@@ -508,5 +512,137 @@ QString GwtCallback::filterText(QString text)
    // an NFD string on the clipboard.
    return text.normalized(QString::NormalizationForm_C);
 }
+
+#ifdef __APPLE__
+
+namespace {
+
+template <typename TValue>
+class CFReleaseHandle
+{
+public:
+   CFReleaseHandle(TValue value=NULL)
+   {
+      value_ = value;
+   }
+
+   ~CFReleaseHandle()
+   {
+      if (value_)
+         CFRelease(value_);
+   }
+
+   TValue& value()
+   {
+      return value_;
+   }
+
+   operator TValue () const
+   {
+      return value_;
+   }
+
+   TValue* operator& ()
+   {
+      return &value_;
+   }
+
+private:
+   TValue value_;
+};
+
+OSStatus addToPasteboard(PasteboardRef pasteboard,
+                         int slot,
+                         CFStringRef flavor,
+                         const QByteArray& data)
+{
+   CFReleaseHandle<CFDataRef> dataRef = CFDataCreate(
+         NULL,
+         reinterpret_cast<const UInt8*>(data.constData()),
+         data.length());
+
+   if (!dataRef)
+      return memFullErr;
+
+   return ::PasteboardPutItemFlavor(pasteboard, (PasteboardItemID)slot, flavor, dataRef, 0);
+}
+
+} // anonymous namespace
+
+void GwtCallback::cleanClipboard(bool stripHtml)
+{
+   CFReleaseHandle<PasteboardRef> clipboard;
+   if (::PasteboardCreate(kPasteboardClipboard, &clipboard))
+      return;
+
+   ::PasteboardSynchronize(clipboard);
+
+   ItemCount itemCount;
+   if (::PasteboardGetItemCount(clipboard, &itemCount) || itemCount < 1)
+      return;
+
+   PasteboardItemID itemId;
+   if (::PasteboardGetItemIdentifier(clipboard, 1, &itemId))
+      return;
+
+
+   /*
+   CFReleaseHandle<CFArrayRef> flavorTypes;
+   if (::PasteboardCopyItemFlavors(clipboard, itemId, &flavorTypes))
+      return;
+   for (int i = 0; i < CFArrayGetCount(flavorTypes); i++)
+   {
+      CFStringRef flavorType = (CFStringRef)CFArrayGetValueAtIndex(flavorTypes, i);
+      char buffer[1000];
+      if (!CFStringGetCString(flavorType, buffer, 1000, kCFStringEncodingMacRoman))
+         return;
+      qDebug() << buffer;
+   }
+   */
+
+   CFReleaseHandle<CFDataRef> data;
+   if (::PasteboardCopyItemFlavorData(clipboard,
+                                      itemId,
+                                      CFSTR("public.utf16-plain-text"),
+                                      &data))
+   {
+      return;
+   }
+
+   CFReleaseHandle<CFDataRef> htmlData;
+   OSStatus err;
+   if (!stripHtml && (err = ::PasteboardCopyItemFlavorData(clipboard, itemId, CFSTR("public.html"), &htmlData)))
+   {
+      if (err != badPasteboardFlavorErr)
+         return;
+   }
+
+   CFIndex len = ::CFDataGetLength(data);
+   QByteArray buffer;
+   buffer.resize(len);
+   ::CFDataGetBytes(data, CFRangeMake(0, len), reinterpret_cast<UInt8*>(buffer.data()));
+   QString str = QString::fromUtf16(reinterpret_cast<const ushort*>(buffer.constData()), buffer.length()/2);
+
+   if (::PasteboardClear(clipboard))
+      return;
+   if (addToPasteboard(clipboard, 1, CFSTR("public.utf8-plain-text"), str.toUtf8()))
+      return;
+
+   if (htmlData.value())
+   {
+      ::PasteboardPutItemFlavor(clipboard,
+                                (PasteboardItemID)1,
+                                CFSTR("public.html"),
+                                htmlData,
+                                0);
+   }
+}
+#else
+
+void GwtCallback::cleanClipboard(bool stripHtml)
+{
+}
+
+#endif
 
 } // namespace desktop
