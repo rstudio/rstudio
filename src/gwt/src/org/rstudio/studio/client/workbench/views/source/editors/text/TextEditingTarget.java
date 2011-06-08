@@ -1205,7 +1205,6 @@ public class TextEditingTarget implements EditingTarget
          activeEl.blur();
       docDisplay_.focus();
 
-      boolean focusConsole = false;
       String code = docDisplay_.getSelectionValue();
       if (code == null || code.length() == 0)
       {
@@ -1220,14 +1219,11 @@ public class TextEditingTarget implements EditingTarget
       {
          setLastExecuted(docDisplay_.getSelectionStart(),
                          docDisplay_.getSelectionEnd());
-         focusConsole = true;
       }
 
       if (code != null && code.trim().length() > 0)
       {
          events_.fireEvent(new SendToConsoleEvent(code, true));
-         if (focusConsole)
-            commands_.activateConsole().execute();
       }
    }
 
