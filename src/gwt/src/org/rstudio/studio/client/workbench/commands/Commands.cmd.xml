@@ -74,11 +74,15 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="findReplace"/>
          <separator/>
-         <cmd refid="executeCode"/>
-         <cmd refid="executeAllCode"/>
-         <cmd refid="executeToCurrentLine"/>
-         <cmd refid="executeCurrentFunction"/>
-         <cmd refid="executeLastCode"/>
+         <menu label="Run Code">
+	         <cmd refid="executeCode"/>
+	         <cmd refid="executeAllCode"/>
+	         <cmd refid="executeToCurrentLine"/>
+	         <cmd refid="executeFromCurrentLine"/>
+	         <cmd refid="executeCurrentFunction"/>
+	         <separator/>
+	         <cmd refid="executeLastCode"/>
+         </menu>
          <separator/>
          <cmd refid="sourceActiveDocument"/>
          <cmd refid="sourceFile"/>
@@ -207,10 +211,12 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="compilePDF" value="Cmd+Shift+P"/>
       <shortcut refid="executeCode" value="Cmd+Enter"/>
       <shortcut refid="executeAllCode" value="Cmd+Shift+Enter"/>
-      <shortcut refid="executeToCurrentLine" value="Cmd+Shift+B"/>
+      <shortcut refid="executeToCurrentLine" value="Cmd+Shift+T"/>
+      <shortcut refid="executeFromCurrentLine" value="Cmd+Shift+F"/>
+      <shortcut refid="executeCurrentFunction" value="Cmd+Shift+D"/>
       <shortcut refid="sourceFile" value="Cmd+Shift+O"/>
       <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S"/>
-      <shortcut refid="extractFunction" value="Cmd+Shift+F"/>
+      <shortcut refid="extractFunction" value="Cmd+Shift+U"/>
       <shortcut refid="executeLastCode" value="Cmd+Alt+Enter"/>
       <shortcut refid="commentUncomment" value="Cmd+/"/>
       <shortcut refid="consoleClear" value="Ctrl+L"/>
@@ -234,7 +240,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="showManipulator" value="Cmd+Shift+M"/>
       <shortcut refid="showRequestLog" value="Ctrl+`" />
       <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
-      <shortcut refid="setWorkingDir" value="Ctrl+Shift+D" />
+      <shortcut refid="setWorkingDir" value="Ctrl+Shift+K" />
    </shortcuts>
 
    <!--
@@ -353,22 +359,25 @@ well as menu structures (for main menu and popup menus).
    <cmd id="findReplace"
         menuLabel="_Find and Replace..."/>
    <cmd id="executeAllCode"
-        buttonLabel="Run All"
+        buttonLabel=""
         menuLabel="Run _All"
-        desc="Run the code in the current source tab"/>
+        desc="Run all of the code in the source file"/>
    <cmd id="executeCode"
         buttonLabel="Run Line(s)"
-        menuLabel="_Run Line(s)"
-        desc="Run the current line or selection in the R console"/>
+        menuLabel="Run _Line(s)"
+        desc="Run the current line or selection"/>
    <cmd id="executeToCurrentLine"
-        menuLabel="Run From _Beginning To Line"
-        desc="Run the code from the beginning of the document up through the current line"/>
+        menuLabel="Run _To Current Line"
+        desc="Run the code from the beginning of the source file up through the current line"/>
+    <cmd id="executeFromCurrentLine"
+        menuLabel="Run _From Current Line"
+        desc="Run the code from the current line through the end of the source file"/>
    <cmd id="executeCurrentFunction"
-        menuLabel="Ru_n Current Function Definition"
-        desc="Run the top-level function, if any, that contains the cursor"/>
+        menuLabel="Run Function _Definition"
+        desc="Run the top-level function definition, if any, that contains the cursor"/>
    <cmd id="executeLastCode"
         menuLabel="Run _Previous"
-        desc="Re-run the selection that was most recently run"/>
+        desc="Re-run the most recent run code command"/>
    <cmd id="extractFunction"
         menuLabel="E_xtract Function"
         desc="Turn the current selection into a function"/>

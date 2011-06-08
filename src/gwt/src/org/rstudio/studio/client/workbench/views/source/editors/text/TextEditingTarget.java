@@ -1285,6 +1285,14 @@ public class TextEditingTarget implements EditingTarget
 
       events_.fireEvent(new SendToConsoleEvent(code, true));
    }
+   
+   @Handler
+   void onExecuteFromCurrentLine()
+   {
+      globalDisplay_.showMessage(MessageDialog.INFO, 
+                                 "RStudio", 
+                                 "Not yet implemented");
+   }
 
    @Handler
    void onExecuteCurrentFunction()
