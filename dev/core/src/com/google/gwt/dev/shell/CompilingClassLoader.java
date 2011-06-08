@@ -1038,6 +1038,13 @@ public final class CompilingClassLoader extends ClassLoader implements
           new NullPointerException());
     }
 
+    if (className.equals("com.google.gwt.core.ext.debug.JsoEval")) {
+      // In addition to the system ClassLoader, we let JsoEval be available
+      // from this CompilingClassLoader in case that's where the debugger
+      // happens to look.
+      return ClassLoader.getSystemClassLoader().loadClass(className);
+    }
+    
     if (scriptOnlyClasses.contains(className)) {
       // Allow the child ClassLoader to handle this
       throw new ClassNotFoundException();
