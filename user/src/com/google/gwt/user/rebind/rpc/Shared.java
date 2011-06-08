@@ -37,7 +37,8 @@ class Shared {
    * Property used to control whether or not the RPC system will emit warnings
    * when a type has final fields.
    */
-  private static final String RPC_PROP_SUPPRESS_NON_STATIC_FINAL_FIELD_WARNINGS = "gwt.suppressNonStaticFinalFieldWarnings";
+  private static final String RPC_PROP_SUPPRESS_NON_STATIC_FINAL_FIELD_WARNINGS =
+      "gwt.suppressNonStaticFinalFieldWarnings";
 
   /**
    * Multi-valued configuration property used to list classes that are
@@ -55,12 +56,13 @@ class Shared {
   static String capitalize(String name) {
     return name.substring(0, 1).toUpperCase(Locale.US) + name.substring(1);
   }
-  
+
   /**
-   * Returns a Set of names of classes that may be enhanced with extra server-only fields.
+   * Returns a Set of names of classes that may be enhanced with extra
+   * server-only fields.
    * 
-   * @param propertyOracle The propertyOracle used to access the relevant configuration
-   * property.
+   * @param propertyOracle The propertyOracle used to access the relevant
+   *          configuration property.
    * @return a Set of Strings, or null.
    */
   static Set<String> getEnhancedTypes(PropertyOracle propertyOracle) {
@@ -153,16 +155,14 @@ class Shared {
    *         otherwise <code>false</code>.
    */
   static boolean typeNeedsCast(JType type) {
-    return type.isPrimitive() == null
-        && !type.getQualifiedSourceName().equals("java.lang.String")
+    return type.isPrimitive() == null && !type.getQualifiedSourceName().equals("java.lang.String")
         && !type.getQualifiedSourceName().equals("java.lang.Object");
   }
 
-  private static boolean getBooleanProperty(TreeLogger logger,
-      PropertyOracle propertyOracle, String propertyName, boolean defaultValue) {
+  private static boolean getBooleanProperty(TreeLogger logger, PropertyOracle propertyOracle,
+      String propertyName, boolean defaultValue) {
     try {
-      SelectionProperty prop
-         = propertyOracle.getSelectionProperty(logger, propertyName);
+      SelectionProperty prop = propertyOracle.getSelectionProperty(logger, propertyName);
       String propVal = prop.getCurrentValue();
       if (propVal != null && propVal.length() > 0) {
         return Boolean.valueOf(propVal);

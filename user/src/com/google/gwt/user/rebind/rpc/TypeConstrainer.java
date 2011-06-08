@@ -114,9 +114,9 @@ public class TypeConstrainer {
 
   /**
    * Return a subtype of <code>subType</code> that includes all values in both
-   * <code>subType</code> and <code>superType</code>. The returned type
-   * must have the same base type as <code>subType</code>. If there are
-   * definitely no such values, return <code>null</code>.
+   * <code>subType</code> and <code>superType</code>. The returned type must
+   * have the same base type as <code>subType</code>. If there are definitely no
+   * such values, return <code>null</code>.
    */
   public JClassType constrainTypeBy(JClassType subType, JClassType superType) {
     JParameterizedType superAsParameterized = superType.isParameterized();
@@ -130,11 +130,12 @@ public class TypeConstrainer {
     // Replace each wildcard in the subType with a fresh type variable.
     // These type variables will be the ones that are constrained.
     Map<JTypeParameter, JClassType> constraints = new HashMap<JTypeParameter, JClassType>();
-    JClassType subWithWildcardsReplaced = replaceWildcardsWithFreshTypeVariables(
-        subType, constraints);
+    JClassType subWithWildcardsReplaced =
+        replaceWildcardsWithFreshTypeVariables(subType, constraints);
 
     // Rewrite subType so that it has the same base type as superType.
-    JParameterizedType subAsParameterized = subWithWildcardsReplaced.asParameterizationOf(superAsParameterized.getBaseType());
+    JParameterizedType subAsParameterized =
+        subWithWildcardsReplaced.asParameterizationOf(superAsParameterized.getBaseType());
     if (subAsParameterized == null) {
       // The subtype's base does not inherit from the supertype's base,
       // so again no constraint will be possible.
@@ -153,11 +154,10 @@ public class TypeConstrainer {
 
   /**
    * Check whether two types can have any values in common. The
-   * <code>constraints</code> field holds known constraints for type
-   * parameters that appear in <code>type1</code>; this method may take
-   * advantage of those constraints in its decision, and it may tighten them so
-   * long as the tightening does not reject any values from the overlap of the
-   * two types.
+   * <code>constraints</code> field holds known constraints for type parameters
+   * that appear in <code>type1</code>; this method may take advantage of those
+   * constraints in its decision, and it may tighten them so long as the
+   * tightening does not reject any values from the overlap of the two types.
    * 
    * As an invariant, no key in <code>constraints</code> may occur inside any
    * value in <code>constraints</code>.
@@ -167,18 +167,15 @@ public class TypeConstrainer {
    * overlaps simplifies the algorithm but returns true more often than it has
    * to.
    */
-  boolean typesMatch(JClassType type1, JClassType type2,
-      Map<JTypeParameter, JClassType> constraints) {
+  boolean typesMatch(JClassType type1, JClassType type2, Map<JTypeParameter, JClassType> constraints) {
     JGenericType type1Generic = type1.isGenericType();
     if (type1Generic != null) {
-      return typesMatch(type1Generic.asParameterizedByWildcards(), type2,
-          constraints);
+      return typesMatch(type1Generic.asParameterizedByWildcards(), type2, constraints);
     }
 
     JGenericType type2Generic = type2.isGenericType();
     if (type2Generic != null) {
-      return typesMatch(type1, type2Generic.asParameterizedByWildcards(),
-          constraints);
+      return typesMatch(type1, type2Generic.asParameterizedByWildcards(), constraints);
     }
 
     JWildcardType type1Wild = type1.isWildcard();
@@ -193,23 +190,21 @@ public class TypeConstrainer {
 
     JRawType type1Raw = type1.isRawType();
     if (type1Raw != null) {
-      return typesMatch(type1Raw.asParameterizedByWildcards(), type2,
-          constraints);
+      return typesMatch(type1Raw.asParameterizedByWildcards(), type2, constraints);
     }
 
     JRawType type2Raw = type2.isRawType();
     if (type2Raw != null) {
-      return typesMatch(type1, type2Raw.asParameterizedByWildcards(),
-          constraints);
+      return typesMatch(type1, type2Raw.asParameterizedByWildcards(), constraints);
     }
 
     // The following assertions are known to be true, given the tests above.
-//    assert (type1Generic == null);
-//    assert (type2Generic == null);
-//    assert (type1Wild == null);
-//    assert (type2Wild == null);
-//    assert (type1Raw == null);
-//    assert (type2Raw == null);
+    // assert (type1Generic == null);
+    // assert (type2Generic == null);
+    // assert (type1Wild == null);
+    // assert (type2Wild == null);
+    // assert (type1Raw == null);
+    // assert (type2Raw == null);
 
     if (type1 == type2) {
       return true;
@@ -254,8 +249,7 @@ public class TypeConstrainer {
     JArrayType type1Array = type1.isArray();
     JArrayType type2Array = type2.isArray();
     if (type1Array != null && type2Array != null) {
-      if (typesMatch(type1Array.getComponentType(),
-          type2Array.getComponentType(), constraints)) {
+      if (typesMatch(type1Array.getComponentType(), type2Array.getComponentType(), constraints)) {
         return true;
       }
     }
@@ -266,8 +260,7 @@ public class TypeConstrainer {
       JParameterizedType type1Parameterized = type1.isParameterized();
       JParameterizedType type2Parameterized = type2.isParameterized();
 
-      if (baseType1 == baseType2 && type1Parameterized != null
-          && type2Parameterized != null) {
+      if (baseType1 == baseType2 && type1Parameterized != null && type2Parameterized != null) {
         // type1 and type2 are parameterized types with the same base type;
         // compare their arguments
         JClassType[] args1 = type1Parameterized.getTypeArgs();
@@ -298,8 +291,7 @@ public class TypeConstrainer {
    * The same as {@link #typesMatch(JClassType, JClassType, Map)}, but
    * additionally support primitive types as well as class types.
    */
-  boolean typesMatch(JType type1, JType type2,
-      Map<JTypeParameter, JClassType> constraints) {
+  boolean typesMatch(JType type1, JType type2, Map<JTypeParameter, JClassType> constraints) {
     if (type1 == type2) {
       // This covers the case where both are primitives
       return true;
@@ -307,8 +299,7 @@ public class TypeConstrainer {
 
     JClassType type1Class = type1.isClassOrInterface();
     JClassType type2Class = type2.isClassOrInterface();
-    if (type1Class != null && type2Class != null
-        && typesMatch(type1Class, type2Class, constraints)) {
+    if (type1Class != null && type2Class != null && typesMatch(type1Class, type2Class, constraints)) {
       return true;
     }
 
@@ -316,8 +307,8 @@ public class TypeConstrainer {
   }
 
   /**
-   * Replace all wildcards in <code>type</code> with a fresh type variable.
-   * For each type variable created, add an entry in <code>constraints</code>
+   * Replace all wildcards in <code>type</code> with a fresh type variable. For
+   * each type variable created, add an entry in <code>constraints</code>
    * mapping the type variable to its upper bound.
    */
   private JClassType replaceWildcardsWithFreshTypeVariables(JClassType type,
@@ -327,9 +318,12 @@ public class TypeConstrainer {
       @Override
       public void endVisit(JWildcardType wildcardType) {
         // TODO: fix this to not assume the typemodel types.
-        com.google.gwt.dev.javac.typemodel.JTypeParameter newParam = new com.google.gwt.dev.javac.typemodel.JTypeParameter(
-            "TP$" + freshTypeVariableCounter++, -1);
-        newParam.setBounds(new com.google.gwt.dev.javac.typemodel.JClassType[]{(com.google.gwt.dev.javac.typemodel.JClassType) typeOracle.getJavaLangObject()});
+        com.google.gwt.dev.javac.typemodel.JTypeParameter newParam =
+            new com.google.gwt.dev.javac.typemodel.JTypeParameter("TP$"
+                + freshTypeVariableCounter++, -1);
+        newParam
+            .setBounds(new com.google.gwt.dev.javac.typemodel.JClassType[] {(com.google.gwt.dev.javac.typemodel.JClassType) typeOracle
+                .getJavaLangObject()});
         constraints.put(newParam, wildcardType.getUpperBound());
         replacement = newParam;
       }
@@ -340,21 +334,20 @@ public class TypeConstrainer {
 
   /**
    * Substitute all occurrences in <code>type</code> of type parameters in
-   * <code>constraints</code> for a wildcard bounded by the parameter's entry
-   * in <code>constraints</code>. If the argument is <code>null</code>,
-   * return <code>null</code>.
+   * <code>constraints</code> for a wildcard bounded by the parameter's entry in
+   * <code>constraints</code>. If the argument is <code>null</code>, return
+   * <code>null</code>.
    */
-  private JClassType substitute(JClassType type,
-      final Map<JTypeParameter, JClassType> constraints) {
+  private JClassType substitute(JClassType type, final Map<JTypeParameter, JClassType> constraints) {
     JModTypeVisitor substituter = new JModTypeVisitor() {
       @Override
       public void endVisit(JTypeParameter param) {
         JClassType constr = constraints.get(param);
         if (constr != null) {
-          // further transform the substituted type recursively 
+          // further transform the substituted type recursively
           replacement = transform(constr);
         }
-      } 
+      }
     };
     return substituter.transform(type);
   }

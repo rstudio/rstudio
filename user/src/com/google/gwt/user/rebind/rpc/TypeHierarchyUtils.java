@@ -35,20 +35,18 @@ class TypeHierarchyUtils {
 
   /**
    * Returns <code>true</code> if the type directly implements the specified
-   * interface.  The test is done on erased types; any paramaterizations
-   * supplied in the arguments are ignored.
+   * interface. The test is done on erased types; any paramaterizations supplied
+   * in the arguments are ignored.
    * 
    * @param type type to check
    * @param intf interface to look for
    * @return <code>true</code> if the type directly implements the specified
    *         interface
    */
-  public static boolean directlyImplementsInterface(JClassType type,
-      JClassType intf) {
+  public static boolean directlyImplementsInterface(JClassType type, JClassType intf) {
     type = type.getErasedType();
     intf = intf.getErasedType();
-    return directlyImplementsInterfaceRecursive(new HashSet<JClassType>(),
-        type, intf);
+    return directlyImplementsInterfaceRecursive(new HashSet<JClassType>(), type, intf);
   }
 
   /**
@@ -59,8 +57,8 @@ class TypeHierarchyUtils {
    * @param leaves the set of serializable leaf types
    * @return all types on the path from the root type to the serializable leaves
    */
-  public static List<JClassType> getAllTypesBetweenRootTypeAndLeaves(
-      JClassType root, Collection<JClassType> leaves) {
+  public static List<JClassType> getAllTypesBetweenRootTypeAndLeaves(JClassType root,
+      Collection<JClassType> leaves) {
     Map<JClassType, List<JClassType>> adjList = getInvertedTypeHierarchy(root.getErasedType());
     Set<JClassType> types = new HashSet<JClassType>();
 
@@ -92,8 +90,8 @@ class TypeHierarchyUtils {
     return immediateSubtypes;
   }
 
-  private static void addEdge(Map<JClassType, List<JClassType>> adjList,
-      JClassType subclass, JClassType clazz) {
+  private static void addEdge(Map<JClassType, List<JClassType>> adjList, JClassType subclass,
+      JClassType clazz) {
     List<JClassType> edges = adjList.get(subclass);
     if (edges == null) {
       edges = new ArrayList<JClassType>();
@@ -120,8 +118,8 @@ class TypeHierarchyUtils {
     }
   }
 
-  private static boolean directlyImplementsInterfaceRecursive(
-      Set<JClassType> seen, JClassType clazz, JClassType intf) {
+  private static boolean directlyImplementsInterfaceRecursive(Set<JClassType> seen,
+      JClassType clazz, JClassType intf) {
     assert (clazz.getErasedType() == clazz);
     assert (intf.getErasedType() == intf);
 
@@ -149,8 +147,7 @@ class TypeHierarchyUtils {
    * Given a root type return an adjacency list that is the inverted type
    * hierarchy.
    */
-  private static Map<JClassType, List<JClassType>> getInvertedTypeHierarchy(
-      JClassType root) {
+  private static Map<JClassType, List<JClassType>> getInvertedTypeHierarchy(JClassType root) {
     Map<JClassType, List<JClassType>> adjList = new HashMap<JClassType, List<JClassType>>();
     Set<JClassType> seen = new HashSet<JClassType>();
     Stack<JClassType> queue = new Stack<JClassType>();

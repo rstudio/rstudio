@@ -34,16 +34,16 @@ class TypePaths {
    */
   interface TypePath {
     /**
-     * Get the previous element on this type path, or <code>null</code> if
-     * this is a one-element path.
+     * Get the previous element on this type path, or <code>null</code> if this
+     * is a one-element path.
      */
     TypePath getParent();
 
     String toString();
   }
 
-  static TypePaths.TypePath createArrayComponentPath(
-      final JArrayType arrayType, final TypePaths.TypePath parent) {
+  static TypePaths.TypePath createArrayComponentPath(final JArrayType arrayType,
+      final TypePaths.TypePath parent) {
     assert (arrayType != null);
 
     return new TypePaths.TypePath() {
@@ -53,16 +53,14 @@ class TypePaths {
 
       @Override
       public String toString() {
-        return "Type '"
-            + arrayType.getComponentType().getParameterizedQualifiedSourceName()
-            + "' is reachable from array type '"
-            + arrayType.getParameterizedQualifiedSourceName() + "'";
+        return "Type '" + arrayType.getComponentType().getParameterizedQualifiedSourceName()
+            + "' is reachable from array type '" + arrayType.getParameterizedQualifiedSourceName()
+            + "'";
       }
     };
   }
 
-  static TypePaths.TypePath createFieldPath(final TypePaths.TypePath parent,
-      final JField field) {
+  static TypePaths.TypePath createFieldPath(final TypePaths.TypePath parent, final JField field) {
     return new TypePaths.TypePath() {
       public TypePaths.TypePath getParent() {
         return parent;
@@ -72,9 +70,9 @@ class TypePaths {
       public String toString() {
         JType type = field.getType();
         JClassType enclosingType = field.getEnclosingType();
-        return "'" + type.getParameterizedQualifiedSourceName()
-            + "' is reachable from field '" + field.getName() + "' of type '"
-            + enclosingType.getParameterizedQualifiedSourceName() + "'";
+        return "'" + type.getParameterizedQualifiedSourceName() + "' is reachable from field '"
+            + field.getName() + "' of type '" + enclosingType.getParameterizedQualifiedSourceName()
+            + "'";
       }
     };
   }
@@ -89,14 +87,13 @@ class TypePaths {
 
       @Override
       public String toString() {
-        return "Started from '" + type.getParameterizedQualifiedSourceName()
-            + "'";
+        return "Started from '" + type.getParameterizedQualifiedSourceName() + "'";
       }
     };
   }
 
-  static TypePaths.TypePath createSubtypePath(final TypePaths.TypePath parent,
-      final JType type, final JClassType supertype) {
+  static TypePaths.TypePath createSubtypePath(final TypePaths.TypePath parent, final JType type,
+      final JClassType supertype) {
     assert (type != null);
     assert (supertype != null);
 
@@ -113,8 +110,7 @@ class TypePaths {
     };
   }
 
-  static TypePaths.TypePath createSupertypePath(
-      final TypePaths.TypePath parent, final JType type,
+  static TypePaths.TypePath createSupertypePath(final TypePaths.TypePath parent, final JType type,
       final JClassType subtype) {
     assert (type != null);
     assert (subtype != null);
@@ -132,9 +128,8 @@ class TypePaths {
     };
   }
 
-  static TypePaths.TypePath createTypeArgumentPath(
-      final TypePaths.TypePath parent, final JGenericType baseType,
-      final int typeArgIndex, final JClassType typeArg) {
+  static TypePaths.TypePath createTypeArgumentPath(final TypePaths.TypePath parent,
+      final JGenericType baseType, final int typeArgIndex, final JClassType typeArg) {
     assert (baseType != null);
     assert (typeArg != null);
 
@@ -146,15 +141,14 @@ class TypePaths {
       @Override
       public String toString() {
         return "'" + typeArg.getParameterizedQualifiedSourceName()
-            + "' is reachable from type argument " + typeArgIndex
-            + " of type '" + baseType.getParameterizedQualifiedSourceName()
-            + "'";
+            + "' is reachable from type argument " + typeArgIndex + " of type '"
+            + baseType.getParameterizedQualifiedSourceName() + "'";
       }
     };
   }
 
-  static TypePaths.TypePath createTypeParameterInRootPath(
-      final TypePaths.TypePath parent, final JTypeParameter typeParameter) {
+  static TypePaths.TypePath createTypeParameterInRootPath(final TypePaths.TypePath parent,
+      final JTypeParameter typeParameter) {
     assert (typeParameter != null);
 
     return new TypePaths.TypePath() {
@@ -166,13 +160,12 @@ class TypePaths {
       public String toString() {
         String parameterString = typeParameter.getName();
         if (typeParameter.getDeclaringClass() != null) {
-          parameterString += " of class "
-              + typeParameter.getDeclaringClass().getQualifiedSourceName();
+          parameterString +=
+              " of class " + typeParameter.getDeclaringClass().getQualifiedSourceName();
         }
-        return "'"
-            + typeParameter.getFirstBound().getParameterizedQualifiedSourceName()
-            + "' is reachable as an upper bound of type parameter "
-            + parameterString + ", which appears in a root type";
+        return "'" + typeParameter.getFirstBound().getParameterizedQualifiedSourceName()
+            + "' is reachable as an upper bound of type parameter " + parameterString
+            + ", which appears in a root type";
       }
     };
   }

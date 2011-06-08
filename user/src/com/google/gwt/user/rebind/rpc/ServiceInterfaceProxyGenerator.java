@@ -29,39 +29,39 @@ import com.google.gwt.dev.javac.rebind.RebindStatus;
  * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService} interface.
  */
 public class ServiceInterfaceProxyGenerator extends GeneratorExt {
- 
+
   @Override
   public RebindResult generateIncrementally(TreeLogger logger, GeneratorContextExt ctx,
       String requestedClass) throws UnableToCompleteException {
-    
+
     TypeOracle typeOracle = ctx.getTypeOracle();
     assert (typeOracle != null);
 
     JClassType remoteService = typeOracle.findType(requestedClass);
     if (remoteService == null) {
-      logger.log(TreeLogger.ERROR, "Unable to find metadata for type '"
-          + requestedClass + "'", null);
+      logger.log(TreeLogger.ERROR, "Unable to find metadata for type '" + requestedClass + "'",
+          null);
       throw new UnableToCompleteException();
     }
 
     if (remoteService.isInterface() == null) {
-      logger.log(TreeLogger.ERROR, remoteService.getQualifiedSourceName()
-          + " is not an interface", null);
+      logger.log(TreeLogger.ERROR, remoteService.getQualifiedSourceName() + " is not an interface",
+          null);
       throw new UnableToCompleteException();
     }
 
     ProxyCreator proxyCreator = createProxyCreator(remoteService);
 
-    TreeLogger proxyLogger = logger.branch(TreeLogger.DEBUG,
-        "Generating client proxy for remote service interface '"
+    TreeLogger proxyLogger =
+        logger.branch(TreeLogger.DEBUG, "Generating client proxy for remote service interface '"
             + remoteService.getQualifiedSourceName() + "'", null);
 
     String returnTypeName = proxyCreator.create(proxyLogger, ctx);
-    
+
     /*
      * Return with RebindStatus.USE_PARTIAL_CACHED, since we are implementing an
      * incremental scheme, which allows us to use a mixture of previously cached
-     * and newly generated compilation units and artifacts.  For example, the
+     * and newly generated compilation units and artifacts. For example, the
      * field serializers only need to be generated fresh if their source type
      * has changed (or if no previously cached version exists).
      */

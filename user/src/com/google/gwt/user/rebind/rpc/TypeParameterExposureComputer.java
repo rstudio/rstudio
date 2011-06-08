@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -53,11 +53,13 @@ class TypeParameterExposureComputer {
      * dimensionality should be added to the dimensionality that the key is
      * already exposed as.
      */
-    private final Map<TypeParameterFlowInfo, Integer> causesExposure = new LinkedHashMap<TypeParameterFlowInfo, Integer>();
+    private final Map<TypeParameterFlowInfo, Integer> causesExposure =
+        new LinkedHashMap<TypeParameterFlowInfo, Integer>();
 
     private int exposure = EXPOSURE_NONE;
 
-    private final Map<TypeParameterFlowInfo, Boolean> isTransitivelyAffectedByCache = new HashMap<TypeParameterFlowInfo, Boolean>();
+    private final Map<TypeParameterFlowInfo, Boolean> isTransitivelyAffectedByCache =
+        new HashMap<TypeParameterFlowInfo, Boolean>();
 
     /**
      * Type parameters that need to be notified when my exposure changes.
@@ -84,12 +86,12 @@ class TypeParameterExposureComputer {
       while (type != null) {
         // any problems should already have been captured by our caller, so we
         // make a throw-away ProblemReport here.
-        if (SerializableTypeOracleBuilder.shouldConsiderFieldsForSerialization(
-            type, typeFilter, new ProblemReport())) {
+        if (SerializableTypeOracleBuilder.shouldConsiderFieldsForSerialization(type, typeFilter,
+            new ProblemReport())) {
           JField[] fields = type.getFields();
           for (JField field : fields) {
-            if (!SerializableTypeOracleBuilder.shouldConsiderForSerialization(
-                TreeLogger.NULL, true, field)) {
+            if (!SerializableTypeOracleBuilder.shouldConsiderForSerialization(TreeLogger.NULL,
+                true, field)) {
               continue;
             }
 
@@ -172,8 +174,7 @@ class TypeParameterExposureComputer {
         int dimensionDelta = entry.getValue();
         if (info2.getExposure() >= 0) {
           if (!infiniteArrayExpansionPathBetween(info2)) {
-            didChange |= markExposedAsArray(dimensionDelta
-                + info2.getExposure());
+            didChange |= markExposedAsArray(dimensionDelta + info2.getExposure());
           }
         }
       }
@@ -253,8 +254,8 @@ class TypeParameterExposureComputer {
 
         // any problems should already have been captured by our caller, so we
         // make a throw-away ProblemReport here.
-        if (!SerializableTypeOracleBuilder.shouldConsiderFieldsForSerialization(
-            subtype, typeFilter, new ProblemReport())) {
+        if (!SerializableTypeOracleBuilder.shouldConsiderFieldsForSerialization(subtype,
+            typeFilter, new ProblemReport())) {
           continue;
         }
 
@@ -270,12 +271,12 @@ class TypeParameterExposureComputer {
 
       JClassType type = baseType;
       while (type != null) {
-        if (SerializableTypeOracleBuilder.shouldConsiderFieldsForSerialization(
-            type, typeFilter, new ProblemReport())) {
+        if (SerializableTypeOracleBuilder.shouldConsiderFieldsForSerialization(type, typeFilter,
+            new ProblemReport())) {
           JField[] fields = type.getFields();
           for (JField field : fields) {
-            if (!SerializableTypeOracleBuilder.shouldConsiderForSerialization(
-                TreeLogger.NULL, true, field)) {
+            if (!SerializableTypeOracleBuilder.shouldConsiderForSerialization(TreeLogger.NULL,
+                true, field)) {
               continue;
             }
 
@@ -290,8 +291,7 @@ class TypeParameterExposureComputer {
                 JGenericType genericFieldType = isParameterized.getBaseType();
                 recordCausesExposure(genericFieldType, i, 0);
                 JArrayType typeArgIsArray = typeArgs[i].isArray();
-                if (typeArgIsArray != null
-                    && typeArgIsArray.getLeafType() == getTypeParameter()) {
+                if (typeArgIsArray != null && typeArgIsArray.getLeafType() == getTypeParameter()) {
                   int dims = typeArgIsArray.getRank();
                   recordCausesExposure(genericFieldType, i, dims);
                 }
@@ -318,8 +318,7 @@ class TypeParameterExposureComputer {
      * returned flow info.
      */
     private TypeParameterFlowInfo getFlowInfo(JGenericType type, int index) {
-      TypeParameterFlowInfo flowInfo = TypeParameterExposureComputer.this.getFlowInfo(
-          type, index);
+      TypeParameterFlowInfo flowInfo = TypeParameterExposureComputer.this.getFlowInfo(type, index);
       flowInfo.addListener(this);
       return flowInfo;
     }
@@ -333,11 +332,9 @@ class TypeParameterExposureComputer {
       }
     }
 
-    private boolean referencesTypeParameter(JClassType classType,
-        JTypeParameter typeParameter) {
+    private boolean referencesTypeParameter(JClassType classType, JTypeParameter typeParameter) {
       Set<JTypeParameter> typeParameters = new LinkedHashSet<JTypeParameter>();
-      SerializableTypeOracleBuilder.recordTypeParametersIn(classType,
-          typeParameters);
+      SerializableTypeOracleBuilder.recordTypeParametersIn(classType, typeParameters);
       return typeParameters.contains(typeParameter);
     }
   }
@@ -360,7 +357,8 @@ class TypeParameterExposureComputer {
 
   private TypeFilter typeFilter;
 
-  private final Map<JTypeParameter, TypeParameterFlowInfo> typeParameterToFlowInfo = new IdentityHashMap<JTypeParameter, TypeParameterFlowInfo>();
+  private final Map<JTypeParameter, TypeParameterFlowInfo> typeParameterToFlowInfo =
+      new IdentityHashMap<JTypeParameter, TypeParameterFlowInfo>();
 
   private final Set<TypeParameterFlowInfo> worklist = new LinkedHashSet<TypeParameterFlowInfo>();
 
@@ -371,12 +369,11 @@ class TypeParameterExposureComputer {
   /**
    * Computes flow information for the specified type parameter. If it has
    * already been computed just return the value of the previous computation.
-   *
+   * 
    * @param type the generic type whose type parameter flow we are interested in
    * @param index the index of the type parameter whose flow we want to compute
    */
-  public TypeParameterFlowInfo computeTypeParameterExposure(JGenericType type,
-      int index) {
+  public TypeParameterFlowInfo computeTypeParameterExposure(JGenericType type, int index) {
     // check if it has already been computed
     JTypeParameter[] typeParameters = type.getTypeParameters();
     assert (index < typeParameters.length);

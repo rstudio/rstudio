@@ -38,19 +38,17 @@ import java.util.TreeMap;
  * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService} interface.
  */
 class RemoteServiceAsyncValidator {
-  static void logValidAsyncInterfaceDeclaration(TreeLogger logger,
-      JClassType remoteService) {
-    TreeLogger branch = logger.branch(TreeLogger.INFO,
-        "A valid definition for the asynchronous version of interface '"
-            + remoteService.getQualifiedSourceName() + "' would be:\n", null);
-    branch.log(TreeLogger.ERROR,
-        synthesizeAsynchronousInterfaceDefinition(remoteService), null);
+  static void logValidAsyncInterfaceDeclaration(TreeLogger logger, JClassType remoteService) {
+    TreeLogger branch =
+        logger.branch(TreeLogger.INFO,
+            "A valid definition for the asynchronous version of interface '"
+                + remoteService.getQualifiedSourceName() + "' would be:\n", null);
+    branch.log(TreeLogger.ERROR, synthesizeAsynchronousInterfaceDefinition(remoteService), null);
   }
 
   private static String computeAsyncMethodSignature(JMethod syncMethod,
       JClassType asyncCallbackClass) {
-    return computeInternalSignature(syncMethod) + "/"
-        + asyncCallbackClass.getQualifiedSourceName();
+    return computeInternalSignature(syncMethod) + "/" + asyncCallbackClass.getQualifiedSourceName();
   }
 
   private static String computeInternalSignature(JMethod method) {
@@ -70,8 +68,7 @@ class RemoteServiceAsyncValidator {
    * Builds a map of asynchronous method internal signatures to the
    * corresponding asynchronous {@link JMethod}.
    */
-  private static Map<String, JMethod> initializeAsyncMethodMap(
-      JMethod[] asyncMethods) {
+  private static Map<String, JMethod> initializeAsyncMethodMap(JMethod[] asyncMethods) {
     Map<String, JMethod> sigs = new TreeMap<String, JMethod>();
     for (JMethod asyncMethod : asyncMethods) {
       sigs.put(computeInternalSignature(asyncMethod), asyncMethod);
@@ -79,8 +76,7 @@ class RemoteServiceAsyncValidator {
     return sigs;
   }
 
-  private static String synthesizeAsynchronousInterfaceDefinition(
-      JClassType serviceIntf) {
+  private static String synthesizeAsynchronousInterfaceDefinition(JClassType serviceIntf) {
     StringBuffer sb = new StringBuffer();
     JPackage pkg = serviceIntf.getPackage();
     if (pkg != null) {
@@ -134,8 +130,8 @@ class RemoteServiceAsyncValidator {
     return sb.toString();
   }
 
-  private static void validationFailed(TreeLogger branch,
-      JClassType remoteService) throws UnableToCompleteException {
+  private static void validationFailed(TreeLogger branch, JClassType remoteService)
+      throws UnableToCompleteException {
     logValidAsyncInterfaceDeclaration(branch, remoteService);
     throw new UnableToCompleteException();
   }
@@ -178,17 +174,15 @@ class RemoteServiceAsyncValidator {
    * @return map of synchronous method to asynchronous method
    * 
    * @throws UnableToCompleteException if the asynchronous
-   *           {@link com.google.gwt.user.client.rpc.RemoteService RemoteService}
-   *           was not found, or if it does not have an asynchronous method
-   *           version of every synchronous one
+   *           {@link com.google.gwt.user.client.rpc.RemoteService
+   *           RemoteService} was not found, or if it does not have an
+   *           asynchronous method version of every synchronous one
    */
-  public Map<JMethod, JMethod> validate(TreeLogger logger,
-      JClassType remoteService, JClassType remoteServiceAsync)
-      throws UnableToCompleteException {
-    TreeLogger branch = logger.branch(TreeLogger.DEBUG,
-        "Checking the synchronous interface '"
-            + remoteService.getQualifiedSourceName()
-            + "' against its asynchronous version '"
+  public Map<JMethod, JMethod> validate(TreeLogger logger, JClassType remoteService,
+      JClassType remoteServiceAsync) throws UnableToCompleteException {
+    TreeLogger branch =
+        logger.branch(TreeLogger.DEBUG, "Checking the synchronous interface '"
+            + remoteService.getQualifiedSourceName() + "' against its asynchronous version '"
             + remoteServiceAsync.getQualifiedSourceName() + "'", null);
 
     // Sync and async versions must have the same number of methods
@@ -207,13 +201,11 @@ class RemoteServiceAsyncValidator {
     Map<String, JMethod> asyncMethodMap = initializeAsyncMethodMap(asyncMethods);
     Map<JMethod, JMethod> syncMethodToAsyncMethodMap = new HashMap<JMethod, JMethod>();
     for (JMethod syncMethod : syncMethods) {
-      String asyncSig = computeAsyncMethodSignature(syncMethod,
-          asyncCallbackClass);
+      String asyncSig = computeAsyncMethodSignature(syncMethod, asyncCallbackClass);
       JMethod asyncMethod = asyncMethodMap.get(asyncSig);
       if (asyncMethod == null) {
-        branch.branch(TreeLogger.ERROR,
-            "Missing asynchronous version of the synchronous method '"
-                + syncMethod.getReadableDeclaration() + "'", null);
+        branch.branch(TreeLogger.ERROR, "Missing asynchronous version of the synchronous method '"
+            + syncMethod.getReadableDeclaration() + "'", null);
         failed = true;
       } else {
         // TODO if async param is parameterized make sure that the sync return
@@ -221,12 +213,10 @@ class RemoteServiceAsyncValidator {
         JType returnType = asyncMethod.getReturnType();
         if (returnType != JPrimitiveType.VOID && returnType != requestType
             && returnType != requestBuilderType) {
-          branch.branch(TreeLogger.ERROR,
-              "The asynchronous version of the synchronous method '"
-                  + syncMethod.getReadableDeclaration()
-                  + "' must have a return type of 'void' or '"
-                  + Request.class.getCanonicalName() + "' or '"
-                  + RequestBuilder.class.getCanonicalName() + "'", null);
+          branch.branch(TreeLogger.ERROR, "The asynchronous version of the synchronous method '"
+              + syncMethod.getReadableDeclaration() + "' must have a return type of 'void' or '"
+              + Request.class.getCanonicalName() + "' or '"
+              + RequestBuilder.class.getCanonicalName() + "'", null);
           failed = true;
         } else {
           syncMethodToAsyncMethodMap.put(syncMethod, asyncMethod);

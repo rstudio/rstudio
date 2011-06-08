@@ -42,7 +42,7 @@ public interface SerializableTypeOracle {
   boolean isSerializable(JType type);
 
   /**
-   * Returns <code>true</code> if the type might be instantiated as part of 
+   * Returns <code>true</code> if the type might be instantiated as part of
    * deserialization or serialization.
    * 
    * @param type the type to test

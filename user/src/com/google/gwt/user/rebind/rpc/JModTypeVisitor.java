@@ -28,9 +28,9 @@ import com.google.gwt.core.ext.typeinfo.JWildcardType;
 /**
  * <p>
  * This visitor supports transforming interior parts of a type. Subclasses
- * should override the appropriate <code>endVisit</code> methods and, when
- * such a method wants to replace its argument, assign the replacement to the
- * field {@link #replacement}.
+ * should override the appropriate <code>endVisit</code> methods and, when such
+ * a method wants to replace its argument, assign the replacement to the field
+ * {@link #replacement}.
  * </p>
  * 
  * <p>
@@ -79,8 +79,8 @@ class JModTypeVisitor extends JTypeVisitor {
   }
 
   /**
-   * Do the same thing as {@link JTypeVisitor#acceptChildren(JType)}, but if
-   * any children types are replaced, reconstruct a version of <code>type</code>
+   * Do the same thing as {@link JTypeVisitor#acceptChildren(JType)}, but if any
+   * children types are replaced, reconstruct a version of <code>type</code>
    * that has those corresponding replacements made and assign the new type to
    * {@link #replacement}.
    */
@@ -104,8 +104,7 @@ class JModTypeVisitor extends JTypeVisitor {
       JGenericType newBaseType = transform(oldBaseType);
 
       JClassType oldEnclosingType = typeParameterized.getEnclosingType();
-      JClassType newEnclosingType = oldEnclosingType == null ? null
-          : transform(oldEnclosingType);
+      JClassType newEnclosingType = oldEnclosingType == null ? null : transform(oldEnclosingType);
 
       JClassType[] oldTypeArgs = typeParameterized.getTypeArgs();
       JClassType[] newTypeArgs = new JClassType[oldTypeArgs.length];
@@ -117,12 +116,12 @@ class JModTypeVisitor extends JTypeVisitor {
         }
       }
 
-      if (argsAllSame && oldBaseType == newBaseType
-          && oldEnclosingType == newEnclosingType) {
+      if (argsAllSame && oldBaseType == newBaseType && oldEnclosingType == newEnclosingType) {
         replacement = type;
       } else {
-        replacement = typeParameterized.getOracle().getParameterizedType(
-            newBaseType, newEnclosingType, newTypeArgs);
+        replacement =
+            typeParameterized.getOracle().getParameterizedType(newBaseType, newEnclosingType,
+                newTypeArgs);
       }
     }
 
@@ -146,8 +145,7 @@ class JModTypeVisitor extends JTypeVisitor {
       if (oldBound == newBound) {
         replacement = type;
       } else {
-        replacement = typeWild.getOracle().getWildcardType(
-            typeWild.getBoundType(), newBound);
+        replacement = typeWild.getOracle().getWildcardType(typeWild.getBoundType(), newBound);
       }
     }
   }

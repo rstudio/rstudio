@@ -44,8 +44,8 @@ class JTypeVisitor {
   }
 
   /**
-   * Call {@link #accept(JType)} on all children types of <code>type</code>.
-   * The children type of a type are its structural components. For example, an
+   * Call {@link #accept(JType)} on all children types of <code>type</code>. The
+   * children type of a type are its structural components. For example, an
    * array type has one child, which is the component type of the array.
    */
   protected void acceptChildren(JType type) {

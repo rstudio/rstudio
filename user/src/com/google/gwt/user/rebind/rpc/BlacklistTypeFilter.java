@@ -34,8 +34,7 @@ class BlacklistTypeFilter implements TypeFilter {
    * Configure {@link RegexFilter} for use for RPC blacklists.
    */
   private static class RpcBlacklist extends RegexFilter {
-    public RpcBlacklist(TreeLogger logger, List<String> regexes)
-        throws UnableToCompleteException {
+    public RpcBlacklist(TreeLogger logger, List<String> regexes) throws UnableToCompleteException {
       super(logger, regexes);
     }
 
@@ -59,13 +58,11 @@ class BlacklistTypeFilter implements TypeFilter {
     try {
       prop = propertyOracle.getConfigurationProperty(PROP_RPC_BLACKLIST);
     } catch (BadPropertyValueException e) {
-      logger.log(TreeLogger.ERROR, "Could not find property "
-          + PROP_RPC_BLACKLIST);
+      logger.log(TreeLogger.ERROR, "Could not find property " + PROP_RPC_BLACKLIST);
       throw new UnableToCompleteException();
     }
 
-    this.logger = logger.branch(TreeLogger.DEBUG,
-        "Analyzing RPC blacklist information");
+    this.logger = logger.branch(TreeLogger.DEBUG, "Analyzing RPC blacklist information");
     blacklist = new RpcBlacklist(logger, prop.getValues());
   }
 
