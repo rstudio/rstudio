@@ -76,12 +76,40 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
 
 FilePath systemDefaultRScript(std::string* pErrMsg)
 {
-   // define potential paths (use same order as in conventional osx PATH)
+   // define potential paths
    std::vector<std::string> rScriptPaths;
-   rScriptPaths.push_back("/opt/local/bin/R");
    rScriptPaths.push_back("/usr/bin/R");
    rScriptPaths.push_back("/usr/local/bin/R");
+   rScriptPaths.push_back("/Library/Frameworks/R.framework/Resources/bin/R");
+   rScriptPaths.push_back("/opt/local/bin/R");
    return scanForRScript(rScriptPaths, pErrMsg);
+}
+
+bool getLibPathFromRHome(const FilePath& rHomePath,
+                         std::string* pRLibPath,
+                         std::string* pErrMsg)
+{
+   // get R lib path (probe subdiretories if necessary)
+   FilePath libPath = rHomePath.complete("lib");
+
+   // check for dylib in lib and lib/x86_64
+   if (libPath.complete(kLibRFileName).exists())
+   {
+      *pRLibPath = libPath.absolutePath();
+      return true;
+   }
+   else if (libPath.complete("x86_64/" kLibRFileName).exists())
+   {
+      *pRLibPath = libPath.complete("x86_64").absolutePath();
+      return true;
+   }
+   else
+   {
+      *pErrMsg = "Unable to find " kLibRFileName " in expected locations"
+                 "within R Home directory " + rHomePath.absolutePath();
+      LOG_ERROR_MESSAGE(*pErrMsg);
+      return false;
+   }
 }
 
 bool getRHomeAndLibPath(const FilePath& rScriptPath,
@@ -96,27 +124,8 @@ bool getRHomeAndLibPath(const FilePath& rScriptPath,
       // get R home
       *pRHome = it->second;
 
-      // get R lib path (probe subdiretories if necessary)
-      FilePath libPath = FilePath(*pRHome).complete("lib");
-
-      // check for dylib in lib and lib/x86_64
-      if (libPath.complete(kLibRFileName).exists())
-      {
-         *pRLibPath = libPath.absolutePath();
-         return true;
-      }
-      else if (libPath.complete("x86_64/" kLibRFileName).exists())
-      {
-         *pRLibPath = libPath.complete("x86_64").absolutePath();
-         return true;
-      }
-      else
-      {
-         *pErrMsg = "Unable to find " kLibRFileName " in expected locations"
-                    "within R Home directory " + *pRHome;
-         LOG_ERROR_MESSAGE(*pErrMsg);
-         return false;
-      }
+      // get lib path
+      return getLibPathFromRHome(FilePath(*pRHome), pRLibPath, pErrMsg);
    }
    else
    {
@@ -124,6 +133,30 @@ bool getRHomeAndLibPath(const FilePath& rScriptPath,
       LOG_ERROR_MESSAGE(*pErrMsg);
       return false;
    }
+}
+
+bool detectRLocationsUsingFramework(FilePath* pHomePath,
+                                    FilePath* pLibPath,
+                                    config_utils::Variables* pScriptVars,
+                                    std::string* pErrMsg)
+{
+   // home path
+   *pHomePath = FilePath("/Library/Frameworks/R.framework/Resources");
+
+   // lib path
+   std::string rLibPath;
+   if (!getLibPathFromRHome(*pHomePath, &rLibPath, pErrMsg))
+      return false;
+   *pLibPath = FilePath(rLibPath);
+
+   // other paths
+   config_utils::Variables& scriptVars = *pScriptVars;
+   scriptVars["R_HOME"] = pHomePath->absolutePath();
+   scriptVars["R_SHARE_DIR"] = pHomePath->complete("share").absolutePath();
+   scriptVars["R_INCLUDE_DIR"] = pHomePath->complete("include").absolutePath();
+   scriptVars["R_DOC_DIR"] = pHomePath->complete("doc").absolutePath();
+
+   return true;
 }
 
 // Linux specific
@@ -560,7 +593,20 @@ bool detectREnvironment(const FilePath& whichRScript,
                                     &scriptVars,
                                     pErrMsg))
    {
-      return false;
+      // fallback to detecting using Framework directory
+      rHomePath = FilePath();
+      rLibPath = FilePath();
+      scriptVars.clear();
+      std::string scriptErrMsg;
+      rScriptPath = "/Library/Frameworks/R.framework/Resources/bin/R";
+      if (!detectRLocationsUsingFramework(&rHomePath,
+                                          &rLibPath,
+                                          &scriptVars,
+                                          &scriptErrMsg))
+      {
+         pErrMsg->append("; " + scriptErrMsg);
+         return false;
+      }
    }
 #else
    if (!detectRLocationsUsingR(rScriptPath,
