@@ -89,4 +89,12 @@ public class Pattern extends JavaScriptObject
 
       return result.toString();
    }
+
+   public static native String replace(String find,
+                                       String repl,
+                                       boolean caseSensitive) /*-{
+      return find.replace(
+            new RegExp(find, caseSensitive ? "g" : "ig"),
+            repl);
+   }-*/;
 }

@@ -18,12 +18,17 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.HasValue;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Search;
+
+// TODO: For regex mode, stop using Ace's search code and do our own, in order
+//    to avoid bugs with context directives (lookahead/lookbehind, ^, $)
 
 public class FindReplace
 {
@@ -155,22 +160,43 @@ public class FindReplace
       String searchString = display_.getFindValue().getValue();
       if (searchString.length() == 0)
          return;
-      boolean ignoreCase = !display_.getCaseSensitive().getValue();
-      String replacement = display_.getReplaceValue().getValue();
+
+      Pattern pattern = createPattern();
       String selected = editor_.getSelectionValue();
-      if (ignoreCase ? searchString.equalsIgnoreCase(selected)
-                     : searchString.equals(selected))
+      Match m = pattern.match(selected, 0);
+      if (m != null
+          && m.getIndex() == 0
+          && m.getValue().length() == selected.length())
       {
-         editor_.replaceSelection(replacement);
+         // For the regex mode, there are some broken edge cases here,
+         // i.e. lookahead/lookbehind and anchoring (^ and $)--basically
+         // anything where the context of the string matters. However,
+         // these edge cases don't matter too much here because they're
+         // also buggy in Ace's search facilities themselves.
+
+         String replacement = display_.getReplaceValue().getValue();
+         editor_.replaceSelection(display_.getRegex().getValue()
+                                  ? substitute(m, replacement, selected)
+                                  : replacement);
       }
 
       find(FindType.Forward);
    }
 
+   private Pattern createPattern()
+   {
+      boolean caseSensitive = display_.getCaseSensitive().getValue();
+      boolean regex = display_.getRegex().getValue();
+      String find = display_.getFindValue().getValue();
+
+      String flags = caseSensitive ? "g" : "ig";
+      String query = regex ? find : Pattern.escape(find);
+      return Pattern.create(query, flags);
+   }
+
    private void replaceAll()
    {
       String code = editor_.getCode();
-      boolean caseSensitive = display_.getCaseSensitive().getValue();
       boolean regex = display_.getRegex().getValue();
       String find = display_.getFindValue().getValue();
       String repl = display_.getReplaceValue().getValue();
@@ -178,8 +204,7 @@ public class FindReplace
       int occurrences = 0;
       if (find.length() > 0)
       {
-         String flags = caseSensitive ? "g" : "ig";
-         Pattern pattern = Pattern.create(Pattern.escape(find), flags);
+         Pattern pattern = createPattern();
          StringBuilder result = new StringBuilder();
 
          int pos = 0; // pointer into original string
@@ -194,7 +219,10 @@ public class FindReplace
             result.append(code, pos, index);
 
             // Add the replacement value
-            result.append(repl);
+            if (regex)
+               result.append(substitute(m, repl, code));
+            else
+               result.append(repl);
 
             // Point to the end of this match
             pos = index + m.getValue().length();
@@ -206,6 +234,43 @@ public class FindReplace
       globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
                                  "Find/Replace",
                                  occurrences + " occurrences replaced.");
+   }
+
+   private String substitute(final Match match, String replacement, final String data)
+   {
+      Pattern pattern = Pattern.create("\\$([1-9][0-9]?|.)");
+      return pattern.replaceAll(replacement, new ReplaceOperation()
+      {
+         public String replace(Match m)
+         {
+            char c = m.getValue().charAt(1);
+            switch (c)
+            {
+               case '&':
+                  return match.getValue();
+               //  We can't support these directives properly, especially in the
+               //  "replace one" scenario.
+               // case '`':
+               //    return data.substring(0, match.getIndex());
+               // case '\'':
+               //    return data.substring(match.getIndex() + match.getValue().length());
+               case '$':
+                  return "$";
+               case '1':
+               case '2':
+               case '3':
+               case '4':
+               case '5':
+               case '6':
+               case '7':
+               case '8':
+               case '9':
+                  int index = Integer.parseInt(m.getGroup(1));
+                  return StringUtil.notNull(match.getGroup(index));
+            }
+            return m.getValue();
+         }
+      });
    }
 
    private final AceEditor editor_;
