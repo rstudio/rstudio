@@ -28,18 +28,23 @@ public interface DashboardNotifier {
   // TODO(jhumphries) Add interface methods for collecting data from the
   // compiler
 
-  // Second: Dev-Mode related entry points
+  // Second: Devmode related entry points
 
   /**
-   * Records a top-level event to the dashboard.
+   * Notifies the dashboard of a top-level event.
    */
   void devModeEvent(DevModeSession session, String eventType, long startTimeNanos,
       long durationNanos);
 
   /**
-   * Records a new module/session.
+   * Notifies the dashboard of a new session starting.
    */
   void devModeSession(DevModeSession session);
+
+  /**
+   * Notifies the dashboard of a session ending.
+   */
+  void devModeSessionEnded(DevModeSession session);
 
   // Third: Test related entry points
 

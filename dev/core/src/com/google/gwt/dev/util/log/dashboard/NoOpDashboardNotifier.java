@@ -34,4 +34,9 @@ public class NoOpDashboardNotifier implements DashboardNotifier {
     // do nothing
   }
 
+  @Override
+  public void devModeSessionEnded(DevModeSession session) {
+    // do nothing
+  }
+
 }

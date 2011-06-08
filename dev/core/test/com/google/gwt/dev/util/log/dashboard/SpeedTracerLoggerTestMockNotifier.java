@@ -101,11 +101,17 @@ public class SpeedTracerLoggerTestMockNotifier implements DashboardNotifier {
   }
 
   @Override
+  public void devModeSessionEnded(DevModeSession session) {
+    // always raise exception here - this method shouldn't be invoked from
+    // SpeedTracerLogger
+    Assert.fail("SpeedTracerLogger should not be calling DashboardNotifier.devModeSessionEnded()");
+  }
+
+  @Override
   public void devModeSession(DevModeSession session) {
     // always raise exception here - this method shouldn't be invoked from
     // SpeedTracerLogger
-    Assert.assertTrue("SpeedTracerLogger should not be calling DashboardNotifier.devModeSession()",
-        false);
+    Assert.fail("SpeedTracerLogger should not be calling DashboardNotifier.devModeSession()");
   }
 
   public LinkedList<DevModeEvent> getEventSequence() {

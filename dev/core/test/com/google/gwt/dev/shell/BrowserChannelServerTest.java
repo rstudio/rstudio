@@ -27,6 +27,7 @@ import com.google.gwt.dev.shell.BrowserChannel.ReturnMessage;
 import com.google.gwt.dev.shell.BrowserChannel.UserAgentIconMessage;
 import com.google.gwt.dev.shell.BrowserChannel.Value;
 import com.google.gwt.dev.shell.BrowserChannelServer.SessionHandlerServer;
+import com.google.gwt.dev.util.log.dashboard.DashboardNotifier;
 
 import junit.framework.TestCase;
 
@@ -44,10 +45,14 @@ import java.util.concurrent.Semaphore;
 public class BrowserChannelServerTest extends TestCase {
 
   /**
-   * A BrowserChannelServer that can notify when the connection is closed.
+   * A BrowserChannelServer that can notify when the connection is closed. It
+   * also uses a custom {@code DashboardNotifier} in order to test notification
+   * calls.
    */
   private class TestBrowserChannelServer extends BrowserChannelServer {
 
+    TestDashboardNotifier notifier = new TestDashboardNotifier();
+    
     private final Semaphore finishNotify = new Semaphore(0);
 
     public TestBrowserChannelServer(TreeLogger logger,
@@ -57,10 +62,14 @@ public class BrowserChannelServerTest extends TestCase {
     }
 
     @Override
-    protected void processConnection() throws IOException,
-        BrowserChannelException {
-      super.processConnection();
+    public void run() {
+      super.run();
       finishNotify.release();
+    }
+    
+    @Override
+    DashboardNotifier getDashboardNotifier() {
+      return notifier;
     }
     
     public void waitForClose() throws InterruptedException {
@@ -180,6 +189,45 @@ public class BrowserChannelServerTest extends TestCase {
       loadedModule = null;
     }   
   }
+  
+  /**
+   * A dashboard notifier that enforces the correct method calls.
+   */
+  private static class TestDashboardNotifier implements DashboardNotifier {
+    DevModeSession currentSession;
+    boolean started;
+    boolean ended;
+
+    @Override
+    public void devModeEvent(DevModeSession session, String eventType, long startTimeNanos,
+        long durationNanos) {
+      fail("BrowserChannelServer should not be calling DashboardNotifier.devModeEvent()");
+    }
+
+    @Override
+    public void devModeSession(DevModeSession session) {
+      currentSession = session;
+      assertFalse("DashboardNotifier.devModeSession() called more than once", started);
+      started = true;
+    }
+
+    @Override
+    public void devModeSessionEnded(DevModeSession session) {
+      assertTrue("DashboardNotifier.devModeSessionEnded() without prior call to "
+          + "DashboardNotifier.devModeSession()", started);
+      assertFalse("DashboardNotifier.devModeSessionEnded() called more than once", ended);
+      assertEquals("Wrong session passed to DashboardNotifier.devModeSessionEnded()",
+          currentSession, session);
+      ended = true;
+    }
+    
+    public void verify(String moduleName, String userAgent) {
+      assertTrue(started);
+      assertTrue(ended);
+      assertEquals(moduleName, currentSession.getModuleName());
+      assertEquals(userAgent, currentSession.getUserAgent());
+    }
+  }
 
   private PipedStreamPair clientToServer = new PipedStreamPair();
   private PipedStreamPair serverToClient = new PipedStreamPair();
@@ -216,6 +264,7 @@ public class BrowserChannelServerTest extends TestCase {
     QuitMessage.send(client);
     server.waitForClose();
     assertNull(handler.getLoadedModule());
+    server.notifier.verify("testModule", "userAgent");
   }
 
   /**
@@ -258,6 +307,7 @@ public class BrowserChannelServerTest extends TestCase {
     QuitMessage.send(client);
     server.waitForClose();
     assertNull(handler.getLoadedModule());
+    server.notifier.verify("testModule", "userAgent");
   }
 
   /**
@@ -312,5 +362,6 @@ public class BrowserChannelServerTest extends TestCase {
     QuitMessage.send(client);
     server.waitForClose();
     assertNull(handler.getLoadedModule());
+    server.notifier.verify("testModule", "userAgent");
   }
 }

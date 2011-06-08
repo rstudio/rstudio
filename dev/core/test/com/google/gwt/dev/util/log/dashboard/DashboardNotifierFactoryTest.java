@@ -37,6 +37,11 @@ public class DashboardNotifierFactoryTest extends TestCase {
       public void devModeSession(DevModeSession session) {
         // no need to do anything
       }
+
+      @Override
+      public void devModeSessionEnded(DevModeSession session) {
+        // no need to do anything
+      }
     };
     // call method
     DashboardNotifierFactory.setNotifier(obj);

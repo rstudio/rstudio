@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.ExceptionOrReturnValue;
 import com.google.gwt.dev.shell.JsValue.DispatchObject;
+import com.google.gwt.dev.util.log.dashboard.DashboardNotifier;
 import com.google.gwt.dev.util.log.dashboard.DashboardNotifierFactory;
 
 import java.io.IOException;
@@ -150,7 +151,7 @@ public class BrowserChannelServer extends BrowserChannel
     this.ignoreRemoteDeath = ignoreRemoteDeath;
     init(initialLogger);
   }
-
+  
   /**
    * Indicate that Java no longer has references to the supplied JS objects.
    * 
@@ -380,6 +381,7 @@ public class BrowserChannelServer extends BrowserChannel
    * @throws IOException
    */
   public void shutdown() throws IOException {
+    getDashboardNotifier().devModeSessionEnded(devModeSession);
     QuitMessage.send(this);
   }
 
@@ -644,7 +646,16 @@ public class BrowserChannelServer extends BrowserChannel
         break;
     }
   }
-  
+
+  /**
+   * Returns the {@code DashboardNotifier} used to send notices to a dashboard
+   * service.
+   */
+  // @VisibleForTesting
+  DashboardNotifier getDashboardNotifier() {
+    return DashboardNotifierFactory.getNotifier();
+  }
+
   /**
    * Creates the {@code DevModeSession} that represents the current browser
    * connection, sets it as the "default" session for the current thread, and
@@ -653,7 +664,7 @@ public class BrowserChannelServer extends BrowserChannel
   private void createDevModeSession() {
     devModeSession = new DevModeSession(moduleName, userAgent);
     DevModeSession.setSessionForCurrentThread(devModeSession);
-    DashboardNotifierFactory.getNotifier().devModeSession(devModeSession);
+    getDashboardNotifier().devModeSession(devModeSession);
   }
 
   /**
