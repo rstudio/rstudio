@@ -152,6 +152,7 @@ public class FindReplace
    {
       String code = editor_.getCode();
       boolean caseSensitive = display_.getCaseSensitive().getValue();
+      boolean regex = display_.getRegex().getValue();
       String find = display_.getFindValue().getValue();
       String repl = display_.getReplaceValue().getValue();
 
