@@ -113,7 +113,9 @@ public final class SpeedTracerLogger {
 
     Event() {
       if (enabled) {
-        threadCpuTimeKeeper.resetTimeBase();
+        if (logThreadCpuTime) {
+          threadCpuTimeKeeper.resetTimeBase();
+        }
         recordStartTime();
         this.data = Lists.create();
         this.children = Lists.create();
@@ -702,10 +704,11 @@ public final class SpeedTracerLogger {
 
   private final ElapsedNormalizedTimeKeeper elapsedTimeKeeper = new ElapsedNormalizedTimeKeeper();
 
-  private final ProcessNormalizedTimeKeeper processCpuTimeKeeper =
-      new ProcessNormalizedTimeKeeper();
+  private final ProcessNormalizedTimeKeeper processCpuTimeKeeper = 
+              (logProcessCpuTime) ? new ProcessNormalizedTimeKeeper() : null;
 
-  private final ThreadNormalizedTimeKeeper threadCpuTimeKeeper = new ThreadNormalizedTimeKeeper();
+  private final ThreadNormalizedTimeKeeper threadCpuTimeKeeper = 
+              (logThreadCpuTime) ? new ThreadNormalizedTimeKeeper() : null;
 
   /**
    * Constructor intended for unit testing.
@@ -899,9 +902,11 @@ public final class SpeedTracerLogger {
     if (!threadPendingEvents.isEmpty()) {
       parent = threadPendingEvents.peek();
     } else {
-      // reset the thread CPU time base for top-level events (so events can be
-      // properly sequenced chronologically)
-      threadCpuTimeKeeper.resetTimeBase();
+      if (logThreadCpuTime) {
+        // reset the thread CPU time base for top-level events (so events can be
+        // properly sequenced chronologically)
+        threadCpuTimeKeeper.resetTimeBase();
+      }
     }
     
     Event newEvent = new Event(session, parent, type, data);
