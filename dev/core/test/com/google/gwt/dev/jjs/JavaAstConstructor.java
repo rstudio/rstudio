@@ -235,10 +235,8 @@ public class JavaAstConstructor {
     //
     JavaToJavaScriptCompiler.checkForErrors(logger, goldenCuds, false);
 
-    /*
-     * FindDeferredBindingSitesVisitor detects errors in usage of magic methods
-     * in the GWT class.
-     */
+    
+     // Find errors in usage of GWT.create() calls
     for (CompilationUnitDeclaration jdtCud : goldenCuds) {
       jdtCud.traverse(new FindDeferredBindingSitesVisitor(), jdtCud.scope);
     }

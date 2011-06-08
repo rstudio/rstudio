@@ -431,17 +431,20 @@ public class CastNormalizer {
       }
       SourceInfo info = x.getSourceInfo();
       if (toType instanceof JNullType) {
-        /*
-         * Magic: a null type cast means the user tried a cast that couldn't
-         * possibly work. Typically this means either the statically resolvable
-         * arg type is incompatible with the target type, or the target type was
-         * globally uninstantiable. We handle this cast by throwing a
-         * ClassCastException, unless the argument is null.
+        /**
+         * A null type cast is used as a placeholder value to indicate that the
+         * user tried a cast that couldn't possibly work. Typically this means
+         * either the statically resolvable arg type is incompatible with the
+         * target type, or the target type was globally uninstantiable.
+         * 
+         * See {@link com.google.gwt.dev.jjs.impl.TypeTightener.TightenTypesVisitor#endVisit(JCastOperation,
+         * Context)}
+         * 
+         * We handle this cast by throwing a ClassCastException, unless the
+         * argument is null.
          */
         JMethod method = program.getIndexedMethod("Cast.throwClassCastExceptionUnlessNull");
-        /*
-         * Override the type of the magic method with the null type.
-         */
+        // Note, we must update the method call to return the null type. 
         JMethodCall call = new JMethodCall(info, null, method, toType);
         call.addArg(expr);
         replaceExpr = call;
@@ -455,6 +458,7 @@ public class CastNormalizer {
           // just remove the cast
           replaceExpr = curExpr;
         } else {
+          // A cast is still needed.  Substitute the appropriate Cast implementation.
           JMethod method;
           boolean isJsoCast = program.typeOracle.isEffectivelyJavaScriptObject(refType);
           if (isJsoCast) {
@@ -631,5 +635,4 @@ public class CastNormalizer {
       replacer.accept(program);
     }
   }
-
 }

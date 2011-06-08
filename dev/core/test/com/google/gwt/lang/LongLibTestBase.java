@@ -21,8 +21,8 @@ import com.google.gwt.lang.LongLibBase.LongEmul;
 import junit.framework.TestCase;
 
 /**
- * Test the LongLib class. The magic expected values were computed by using a
- * Java println on normal Java longs.
+ * Test the LongLib class. The magic numbers being testing against were computed
+ * by using a Java println on normal Java longs.
  */
 public class LongLibTestBase extends TestCase {
     

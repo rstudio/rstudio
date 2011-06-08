@@ -242,8 +242,9 @@ public abstract class AbstractCompiler {
         TreeLogger branch =
             logger.branch(TreeLogger.SPAM, "Scanning for additional dependencies: " + loc, null);
 
-        // Examine the cud for magic types.
-        //
+        // Examine the cud for types outside of the flow of the original Java 
+        // source.
+        // 
         String[] typeNames = outer.doFindAdditionalTypesUsingJsni(branch, unit);
         addAdditionalTypes(branch, typeNames);
 
@@ -266,9 +267,9 @@ public abstract class AbstractCompiler {
       }
 
       /**
-       * Helper method for process() that receives the types found by magic.
-       * This causes the compiler to find the additional type, possibly winding
-       * its back to ask for the compilation unit from the source oracle.
+       * Helper method for process() that receives the types found outside the
+       * flow of the original Java source. This causes the compiler to find the
+       * additional type, possibly causing the type to be compiled from source.
        */
       private void addAdditionalTypes(TreeLogger logger, String[] typeNames) {
         for (String typeName : typeNames) {

@@ -147,7 +147,7 @@ public class DispatchClassInfo {
       addMember(members, field, field.getName());
     }
 
-    // Add a magic field to access class literals from JSNI
+    // Add a synthetic field to access class literals from JSNI
     addMember(members, new SyntheticClassMember(targetClass), "class");
   }
 

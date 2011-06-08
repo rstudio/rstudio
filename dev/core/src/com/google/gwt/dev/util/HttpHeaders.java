@@ -23,7 +23,7 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Groups predefined magic HTTP header strings.
+ * HTTP header strings defined by RFCs.
  */
 public final class HttpHeaders {
 

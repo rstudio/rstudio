@@ -149,7 +149,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
   }
   
   /**
-   * Test the fully magic script base with no meta properties.
+   * Test the script base with no meta properties.
    */
   public void testScriptBase() throws IOException {
     StringBuffer testCode = new StringBuffer();
@@ -269,6 +269,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
 
     final List<String> alerts = new ArrayList<String>();
     webClient.setAlertHandler(new AlertHandler() {
+      @Override
       public void handleAlert(Page page, String msg) {
         alerts.add(msg);
       }

@@ -43,7 +43,12 @@ public class Object {
   private transient JavaScriptObject castableTypeMap;
 
   /**
-   * magic magic magic.
+   * A special marker field used internally to the GWT compiler. For example, it
+   * is used for distinguishing whether an object is a Java object or a
+   * JavaScriptObject. It is also used to differentiate our own Java objects
+   * from foreign objects in a different module on the same page.
+   * 
+   * @see com.google.gwt.lang.Cast
    * 
    * @skip
    */
@@ -55,11 +60,11 @@ public class Object {
   }
 
   /*
-   * Magic; unlike the real JRE, we don't spec this method as final. The
-   * compiler will generate a polymorphic override on every other class which
-   * will return the correct class object.
+   * Note: Unlike the real JRE, we don't spec this method as final because the
+   * compiler generates a polymorphic override on every other class which will
+   * return the correct class object.
    * 
-   * TODO(scottb): declare this final, but have the compiler fix it up.
+   * TODO(scottb, compiler magician): declare this final, but have the compiler fix it up.
    */
   public Class<? extends Object> getClass() {
     return Object.class;
@@ -74,7 +79,7 @@ public class Object {
   }
 
   /**
-   * Never called; here for compatibility.
+   * Never called; here for JRE compatibility.
    * 
    * @skip
    */

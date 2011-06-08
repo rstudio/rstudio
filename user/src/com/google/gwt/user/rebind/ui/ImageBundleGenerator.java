@@ -363,7 +363,7 @@ public class ImageBundleGenerator extends Generator {
       JClassType userType = typeOracle.getType(typeName);
 
       // Get the type this generator is designed to support.
-      JClassType magicType = typeOracle.findType(IMAGEBUNDLE_QNAME);
+      JClassType markerType = typeOracle.findType(IMAGEBUNDLE_QNAME);
 
       // Ensure it's an interface.
       if (userType.isInterface() == null) {
@@ -373,9 +373,9 @@ public class ImageBundleGenerator extends Generator {
       }
 
       // Ensure proper derivation.
-      if (!userType.isAssignableTo(magicType)) {
+      if (!userType.isAssignableTo(markerType)) {
         logger.log(TreeLogger.ERROR, userType.getQualifiedSourceName()
-            + " must be assignable to " + magicType.getQualifiedSourceName(),
+            + " must be assignable to " + markerType.getQualifiedSourceName(),
             null);
         throw new UnableToCompleteException();
       }

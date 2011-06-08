@@ -312,7 +312,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
           numExpressions = concatOp(numExpressions, b);
 
         } else {
-          // This indicates that some magic node is slipping by our visitors
+          // This indicates that some unexpected node is slipping by our visitors
           loopLogger.log(TreeLogger.ERROR, "Unhandled substitution "
               + x.getClass());
           throw new UnableToCompleteException();

@@ -257,11 +257,12 @@ public class AsyncFragmentLoader {
   }
 
   /**
-   * The standard instance of AsyncFragmentLoader used in a web browser. If not
-   * in GWT (i.e our vanilla JUnit tests, or if referenced in a server context),
-   * this filed is {@code null}. In GWT, the parameters to this call are
-   * rewritten by {@link com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs}. So this
-   * must be a method call of exactly two arguments, or that magic fails.
+   * The standard instance of AsyncFragmentLoader used in a web browser.  Outside
+   * of GWT generated JavaScript (i.e our vanilla JUnit tests, or if referenced
+   * in a server context), this field is {@code null}. When compiled to
+   * JavaScript, the parameters to this call are rewritten by
+   * {@link com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs}. So this must be a
+   * method call of exactly two arguments to succeed when invoked in web mode.
    */
   public static AsyncFragmentLoader BROWSER_LOADER = makeBrowserLoader(1, new int[]{});
 

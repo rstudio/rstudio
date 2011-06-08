@@ -63,8 +63,9 @@ public class ReplaceRunAsyncs {
           && (currentMethod != null && currentMethod.getEnclosingType() == program
               .getIndexedType("AsyncFragmentLoader"))) {
         /*
-         * Magic magic magic: don't optimize calls from AsyncFragmentLoader
-         * to runAsyncCallBack.onSuccess(). This can defeat code splitting!
+         * Note: The volatile marker on the method flags it so that we don't
+         * optimize calls from AsyncFragmentLoader to implementations of
+         * RunAsyncCallback.onSuccess(). This can defeat code splitting.
          */
         x.setVolatile();
         return;

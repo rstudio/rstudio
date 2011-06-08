@@ -368,12 +368,15 @@ public class ControlFlowAnalyzer {
       JMethod method = call.getTarget();
       if (call.isVolatile() && method == runAsyncOnsuccess) {
         /*
-         * Magic magic magic: don't allow code flow from the AsyncFragmentLoader
-         * implementation back into the callback.onSuccess(). If we did, the
-         * rescue path would look like JRunAsync ->
-         * AsyncFragmentLoader.runAsync() -> callback.onSuccess(). This would
-         * completely defeat code splitting as all the code on the other side of
-         * the barrier would become reachable.
+         * Note: In order to preserve code splitting, don't allow code flow from the
+         * AsyncFragmentLoader implementation back into the
+         * callback.onSuccess(). If we did, the rescue path would look like
+         * JRunAsync -> AsyncFragmentLoader.runAsync() -> callback.onSuccess().
+         * This would completely defeat code splitting as all the code on the
+         * other side of the barrier would become reachable.
+         * 
+         * Code flow analysis is run separately on methods which implement
+         * RunAsyncCallback.onSuccess() as top-level entry points.
          */
         return true;
       }
@@ -517,7 +520,7 @@ public class ControlFlowAnalyzer {
 
     /**
      * Subclasses of JavaScriptObject are never instantiated directly. They are
-     * created "magically" when a JSNI method passes a reference to an existing
+     * implicitly created when a JSNI method passes a reference to an existing
      * JS object into Java code. If any point in the program can pass a value
      * from JS into Java which could potentially be cast to JavaScriptObject, we
      * must rescue JavaScriptObject.
@@ -643,8 +646,8 @@ public class ControlFlowAnalyzer {
              * literal initializers.
              * 
              * TODO: Model ClassLiteral access a different way to avoid special
-             * magic. See
-             * Pruner.transformToNullFieldRef()/transformToNullMethodCall().
+             * handling. See
+             *  Pruner.transformToNullFieldRef()/transformToNullMethodCall().
              */
             JField field = (JField) var;
             accept(field.getInitializer());
@@ -961,15 +964,6 @@ public class ControlFlowAnalyzer {
     runAsync.traverseOnSuccess(rescuer);
   }
 
-  /**
-   * Traverse the fragments for all runAsyncs.
-   */
-  public void traverseFromRunAsyncs() {
-    for (JRunAsync runAsync : program.getRunAsyncs()) {
-      traverseFromRunAsync(runAsync);
-    }
-  }
-
   private void buildMethodsOverriding() {
     methodsThatOverrideMe = new HashMap<JMethod, List<JMethod>>();
     for (JDeclaredType type : program.getDeclaredTypes()) {
@@ -983,6 +977,15 @@ public class ControlFlowAnalyzer {
           overs.add(method);
         }
       }
+    }
+  }
+
+  /**
+   * Traverse the fragments for all runAsyncs.
+   */
+  private void traverseFromRunAsyncs() {
+    for (JRunAsync runAsync : program.getRunAsyncs()) {
+      traverseFromRunAsync(runAsync);
     }
   }
 }

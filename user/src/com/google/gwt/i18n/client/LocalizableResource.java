@@ -86,8 +86,8 @@ public interface LocalizableResource extends Localizable {
   public @interface Generate {
 
     /**
-     * Constant "magic" default value used to detect that no value was supplied
-     * for the fileName parameter.
+     * Placeholder used to detect that no value was supplied for the fileName
+     * parameter.
      */
     String DEFAULT = "[default]";
     

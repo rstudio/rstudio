@@ -362,6 +362,16 @@ public class TypeTightener {
    */
   public class TightenTypesVisitor extends JModVisitor {
 
+    /**
+     * Tries to determine a specific concrete type for the cast, then either
+     * removes the cast, or tightens the cast to a narrower type.
+     * 
+     * If static analysis determines that a cast is not possible, swap in a cast
+     * to a null type. This will later be normalized into throwing an
+     * Exception.
+     * 
+     * @see CastNormalizer
+     */
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
       JType argType = x.getExpr().getType();
@@ -394,7 +404,7 @@ public class TypeTightener {
         // remove the cast operation
         ctx.replaceMe(x.getExpr());
       } else if (triviallyFalse && toType != program.getTypeNull()) {
-        // replace with a magic NULL cast, unless it's already a cast to NULL
+        // replace with a placeholder cast to NULL, unless it's already a cast to NULL
         JCastOperation newOp =
             new JCastOperation(x.getSourceInfo(), program.getTypeNull(), x.getExpr());
         ctx.replaceMe(newOp);
