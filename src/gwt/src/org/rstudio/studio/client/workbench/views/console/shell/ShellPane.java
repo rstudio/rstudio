@@ -178,11 +178,13 @@ public class ShellPane extends Composite implements Shell.Display,
 
    private native void addCopyHook(Element element) /*-{
       if ($wnd.desktop) {
-         element.addEventListener("copy", function() {
+         var clean = function() {
             setTimeout(function() {
                $wnd.desktop.cleanClipboard(true);
             }, 100)
-         }, true);
+         };
+         element.addEventListener("copy", clean, true);
+         element.addEventListener("cut", clean, true);
       }
    }-*/;
 

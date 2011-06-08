@@ -212,7 +212,7 @@ void WebView::openFile(QString fileName)
 {
    // force use of Preview for PDFs on the Mac (Adobe Reader 10.01 crashes)
 #ifdef Q_WS_MAC
-   if (fileName.endsWith(QString::fromAscii(".pdf")))
+   if (fileName.toLower().endsWith(QString::fromAscii(".pdf")))
    {
       QStringList args;
       args.append(QString::fromAscii("-a"));
