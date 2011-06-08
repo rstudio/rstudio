@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -66,6 +66,7 @@ public class CompilationStateBuilder {
 
     private final class UnitProcessorImpl implements UnitProcessor {
 
+      @Override
       public void process(CompilationUnitBuilder builder, CompilationUnitDeclaration cud,
           List<CompiledClass> compiledClasses) {
         Event event = SpeedTracerLogger.start(DevModeEventType.CSB_PROCESS);
@@ -80,6 +81,7 @@ public class CompilationStateBuilder {
           final Set<String> jsniDeps = new HashSet<String>();
           Map<String, Binding> jsniRefs = new HashMap<String, Binding>();
           JsniChecker.check(cud, jsoState, jsniMethods, jsniRefs, new JsniChecker.TypeResolver() {
+            @Override
             public ReferenceBinding resolveType(String typeName) {
               ReferenceBinding resolveType = compiler.resolveType(typeName);
               if (resolveType != null) {
@@ -147,8 +149,6 @@ public class CompilationStateBuilder {
 
     private final GwtAstBuilder astBuilder = new GwtAstBuilder();
 
-    private final boolean suppressErrors;
-
     private transient LinkedBlockingQueue<CompilationUnitBuilder> buildQueue;
 
     /**
@@ -161,6 +161,8 @@ public class CompilationStateBuilder {
      */
     private final JSORestrictionsChecker.CheckerState jsoState =
         new JSORestrictionsChecker.CheckerState();
+
+    private final boolean suppressErrors;
 
     public CompileMoreLater(AdditionalTypeProviderDelegate delegate, boolean suppressErrors) {
       compiler.setAdditionalTypeProviderDelegate(delegate);
@@ -323,13 +325,34 @@ public class CompilationStateBuilder {
       if (suppressErrors && errorCount > 0 && !logger.isLoggable(TreeLogger.TRACE)
           && logger.isLoggable(TreeLogger.INFO)) {
         logger.log(TreeLogger.INFO, "Ignored " + errorCount + " unit" + (errorCount > 1 ? "s" : "")
-            + " with compilation errors in first pass.  Specify -logLevel DEBUG to see all errors");
+            + " with compilation errors in first pass.\n"
+            + "Compile with -strict or with -logLevel set to TRACE or DEBUG to see all errors.");
       }
       return resultUnits;
     }
   }
 
   private static final CompilationStateBuilder instance = new CompilationStateBuilder();
+
+  /**
+   * Use previously compiled {@link CompilationUnit}s to pre-populate the unit
+   * cache.
+   */
+  public static void addArchive(CompilationUnitArchive module) {
+    UnitCache unitCache = instance.unitCache;
+    for (CompilationUnit unit : module.getUnits().values()) {
+      CompilationUnit cachedCompilationUnit = unitCache.find(unit.getResourcePath());
+      // A previously cached unit might be from the persistent cache or another
+      // archive
+      if (cachedCompilationUnit == null
+          || cachedCompilationUnit.getLastModified() < unit.getLastModified()) {
+        // TODO(zundel): mark these units as being a part of an archive.
+        // that way, the persistent unit cache won't need to bother to write
+        // them out.
+        unitCache.addArchivedUnit(unit);
+      }
+    }
+  }
 
   public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources) {
     return buildFrom(logger, resources, null, false);
@@ -355,7 +378,7 @@ public class CompilationStateBuilder {
   }
 
   /**
-   * Called to setup the directory where the persistent {@link ComplationUnit}
+   * Called to setup the directory where the persistent {@link CompilationUnit}
    * cache should be stored. Only the first call to init() will have an effect.
    */
   public static synchronized void init(TreeLogger logger, File cacheDirectory) {
@@ -371,7 +394,7 @@ public class CompilationStateBuilder {
   /**
    * Build a new compilation state from a source oracle. Allow the caller to
    * specify a compiler delegate that will handle undefined names.
-   *
+   * 
    * TODO: maybe use a finer brush than to synchronize the whole thing.
    */
   public synchronized CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources,
@@ -394,13 +417,13 @@ public class CompilationStateBuilder {
           new ResourceCompilationUnitBuilder(typeName, resource);
 
       CompilationUnit cachedUnit = unitCache.find(resource.getPathPrefix() + resource.getPath());
-      
+
       // Try to rescue cached units from previous sessions where a jar has been
       // recompiled.
       if (cachedUnit != null && cachedUnit.getLastModified() != resource.getLastModified()) {
         unitCache.remove(cachedUnit);
-        if (cachedUnit instanceof CachedCompilationUnit && 
-            cachedUnit.getContentId().equals(builder.getContentId())) {
+        if (cachedUnit instanceof CachedCompilationUnit
+            && cachedUnit.getContentId().equals(builder.getContentId())) {
           CachedCompilationUnit updatedUnit =
               new CachedCompilationUnit((CachedCompilationUnit) cachedUnit, resource
                   .getLastModified(), resource.getLocation());
@@ -434,7 +457,7 @@ public class CompilationStateBuilder {
 
   /**
    * Compile new generated units into an existing state.
-   *
+   * 
    * TODO: maybe use a finer brush than to synchronize the whole thing.
    */
   synchronized Collection<CompilationUnit> doBuildGeneratedTypes(TreeLogger logger,

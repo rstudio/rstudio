@@ -14,6 +14,8 @@
 
 <!-- Adds debug ID support for UIObjects.                                   -->
 <module>
+  <inherits name="com.google.gwt.core.Core" />
+  
   <!-- Enable or disable the UIObject.ensureDebugID method -->
   <define-property name="gwt.enableDebugId" values="true, false"/>
   

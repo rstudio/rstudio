@@ -219,6 +219,7 @@ class PersistentUnitCache extends MemoryUnitCache {
                 assert unitWriteQueue.size() == 0;
                 break;
               } else {
+                assert msg.unitCacheEntry.getOrigin() != UnitOrigin.ARCHIVE;
                 CompilationUnit unit = msg.unitCacheEntry.getUnit();
                 assert unit != null;
                 stream.writeObject(unit);
@@ -346,8 +347,9 @@ class PersistentUnitCache extends MemoryUnitCache {
   public void add(CompilationUnit newUnit) {
     unitCacheMapLoader.await();
     super.add(newUnit);
+    UnitCacheEntry entry = unitMap.get(newUnit.getResourcePath());
     addCount.getAndIncrement();
-    unitWriteQueue.add(new UnitWriteMessage(unitMap.get(newUnit.getResourcePath())));
+    unitWriteQueue.add(new UnitWriteMessage(entry));
   }
 
   /**

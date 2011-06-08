@@ -18,6 +18,10 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.util.Messages;
 import com.google.gwt.dev.util.Util;
 
@@ -29,6 +33,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -47,8 +52,61 @@ public class CompilationProblemReporter {
   }
 
   /**
-   * Provides a meaningful error message when a type is missing from the {@link
-   * import com.google.gwt.core.ext.typeinfo.TypeOracle} or
+   * Used as a convenience to catch all exceptions thrown by the compiler. For
+   * instances of {@link InternalCompilerException}, extra diagnostics are
+   * printed.
+   * 
+   * @param logger logger used to report errors to the console
+   * @param e the exception to analyze and log
+   * @return Always returns an instance of {@link UnableToCompleteException} so
+   *         that the calling method can declare a more narrow 'throws
+   *         UnableToCompleteException'
+   */
+  public static UnableToCompleteException logAndTranslateException(TreeLogger logger, Throwable e) {
+    if (e instanceof UnableToCompleteException) {
+      // just rethrow
+      return (UnableToCompleteException) e;
+    } else if (e instanceof InternalCompilerException) {
+      TreeLogger topBranch =
+          logger.branch(TreeLogger.ERROR, "An internal compiler exception occurred", e);
+      List<NodeInfo> nodeTrace = ((InternalCompilerException) e).getNodeTrace();
+      for (NodeInfo nodeInfo : nodeTrace) {
+        SourceInfo info = nodeInfo.getSourceInfo();
+        String msg;
+        if (info != null) {
+          String fileName = info.getFileName();
+          fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
+          fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
+          msg = "at " + fileName + "(" + info.getStartLine() + "): ";
+        } else {
+          msg = "<no source info>: ";
+        }
+
+        String description = nodeInfo.getDescription();
+        if (description != null) {
+          msg += description;
+        } else {
+          msg += "<no description available>";
+        }
+        TreeLogger nodeBranch = topBranch.branch(TreeLogger.ERROR, msg, null);
+        String className = nodeInfo.getClassName();
+        if (className != null) {
+          nodeBranch.log(TreeLogger.INFO, className, null);
+        }
+      }
+      return new UnableToCompleteException();
+    } else if (e instanceof VirtualMachineError) {
+      // Always rethrow VM errors (an attempt to wrap may fail).
+      throw (VirtualMachineError) e;
+    } else {
+      logger.log(TreeLogger.ERROR, "Unexpected internal compiler error", e);
+      return new UnableToCompleteException();
+    }
+  }
+
+  /**
+   * Provides a meaningful error message when a type is missing from the
+   * {@link com.google.gwt.core.ext.typeinfo.TypeOracle} or
    * {@link com.google.gwt.dev.shell.CompilingClassLoader}.
    * 
    * @param logger logger for logging errors to the console
@@ -85,6 +143,13 @@ public class CompilationProblemReporter {
     }
   }
 
+  /**
+   * Walk the compilation state and report errors if they exist.
+   * 
+   * @param logger logger for reporting errors to the console
+   * @param compilationState contains units that might contain errors
+   * @param suppressErrors See {@link #reportErrors(TreeLogger, CompilationUnit, boolean)}
+   */
   public static void reportAllErrors(TreeLogger logger, CompilationState compilationState,
       boolean suppressErrors) {
     for (CompilationUnit unit : compilationState.getCompilationUnits()) {
@@ -190,6 +255,7 @@ public class CompilationProblemReporter {
         CompilationProblemReporter.reportErrors(logger, unit.getProblems(), unit
             .getResourceLocation(), unit.isError(), new SourceFetcher() {
 
+          @Override
           public String getSource() {
             return unit.getSource();
           }

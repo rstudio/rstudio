@@ -15,6 +15,7 @@
 <!-- Internationalization support.                                          -->
 <!--                                                                        -->
 <module>
+  <inherits name="com.google.gwt.core.Core" />
   <inherits name="com.google.gwt.regexp.RegExp"/>
   <inherits name="com.google.gwt.safehtml.SafeHtml"/>
   <source path="" includes="client/,shared/" />

@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Used by {@link MemoryUnitTest} and {@link PersistentUnitTest}.
+ * Used by {@link MemoryUnitCacheTest} and {@link PersistentUnitCacheTest}.
  */
-class MockCompilationUnit extends CompilationUnit {
+public class MockCompilationUnit extends CompilationUnit {
   private static final AtomicInteger nextTimestamp = new AtomicInteger(1);
 
   private final ContentId contentId;

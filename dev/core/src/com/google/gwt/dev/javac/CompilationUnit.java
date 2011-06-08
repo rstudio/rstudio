@@ -175,9 +175,10 @@ public abstract class CompilationUnit implements Serializable {
 
   protected static final DiskCache diskCache = DiskCache.INSTANCE;
 
-  static final Comparator<CompilationUnit> COMPARATOR = new Comparator<CompilationUnit>() {
+  public static final Comparator<CompilationUnit> COMPARATOR = new Comparator<CompilationUnit>() {
+    @Override
     public int compare(CompilationUnit o1, CompilationUnit o2) {
-      return o1.getTypeName().compareTo(o2.getTypeName());
+      return o1.getResourcePath().compareTo(o2.getResourcePath());
     }
   };
 
@@ -210,8 +211,8 @@ public abstract class CompilationUnit implements Serializable {
   private transient Map<String, String> anonymousClassMap = null;
 
   /**
-   * Returns the unit as an instance of {@link CachedCompilationUnit}, making
-   * a copy if necessary.
+   * Returns the unit as an instance of {@link CachedCompilationUnit}, making a
+   * copy if necessary.
    */
   public abstract CachedCompilationUnit asCachedCompilationUnit();
 
@@ -293,7 +294,7 @@ public abstract class CompilationUnit implements Serializable {
    * for this unit originated. This should be unique for each unit compiled to
    * create a module.
    * 
-   * @see {@link com.google.gwt.dev.resource.Resource#getLocation()}
+   * @see com.google.gwt.dev.resource.Resource#getLocation()
    */
   public abstract String getResourceLocation();
 
@@ -301,8 +302,8 @@ public abstract class CompilationUnit implements Serializable {
    * Returns the full abstract path of the resource. If a resource has been
    * re-rooted, this path should include any path prefix that was stripped.
    * 
-   * @see {@link com.google.gwt.dev.resource.Resource#getPath()} and
-   *      {@link com.google.gwt.dev.resource.Resource#getPathPrefix()}
+   * @see com.google.gwt.dev.resource.Resource#getPath() 
+   * @see com.google.gwt.dev.resource.Resource#getPathPrefix()
    */
   public abstract String getResourcePath();
 

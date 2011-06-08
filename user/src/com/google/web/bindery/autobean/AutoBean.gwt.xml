@@ -13,7 +13,6 @@
 
 <!-- AutoBean framework -->
 <module>
-  <inherits name="com.google.gwt.core.Core" />
   <inherits name="com.google.gwt.user.User" />
   <source path="gwt/client" />
   <source path="shared" />

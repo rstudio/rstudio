@@ -15,9 +15,8 @@
 <!-- XML parsing support.                                                   -->
 <!--                                                                        -->
 <module>
-  <inherits name="com.google.gwt.core.Core"/>
-  <inherits name="com.google.gwt.user.UserAgent"/>
-
+  <inherits name="com.google.gwt.user.User"/>
+  
   <!-- Fall through to this rule for all other browsers -->
   <replace-with class="com.google.gwt.xml.client.impl.XMLParserImplStandard">
     <when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>

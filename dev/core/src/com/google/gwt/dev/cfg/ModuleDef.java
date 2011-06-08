@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,9 +21,9 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
-import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.resource.impl.DefaultFilters;
@@ -38,8 +38,11 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,19 +60,22 @@ import java.util.Set;
 public class ModuleDef {
 
   private static final ResourceFilter NON_JAVA_RESOURCES = new ResourceFilter() {
+    @Override
     public boolean allows(String path) {
       return !path.endsWith(".java") && !path.endsWith(".class");
     }
   };
 
-  private static final Comparator<Map.Entry<String, ?>> REV_NAME_CMP = new Comparator<Map.Entry<String, ?>>() {
-    public int compare(Map.Entry<String, ?> entry1, Map.Entry<String, ?> entry2) {
-      String key1 = entry1.getKey();
-      String key2 = entry2.getKey();
-      // intentionally reversed
-      return key2.compareTo(key1);
-    }
-  };
+  private static final Comparator<Map.Entry<String, ?>> REV_NAME_CMP =
+      new Comparator<Map.Entry<String, ?>>() {
+        @Override
+        public int compare(Map.Entry<String, ?> entry1, Map.Entry<String, ?> entry2) {
+          String key1 = entry1.getKey();
+          String key2 = entry2.getKey();
+          // intentionally reversed
+          return key2.compareTo(key1);
+        }
+      };
 
   public static boolean isValidModuleName(String moduleName) {
     String[] parts = moduleName.split("\\.");
@@ -86,6 +92,14 @@ public class ModuleDef {
 
   private String activePrimaryLinker;
 
+  /**
+   * A set of URLs for <module>.gwtar files found on the classpath that correspond
+   * to <module>.gwt.xml files loaded as a part of this module's nested load.
+   * 
+   * @see com.google.gwt.dev.CompileModule
+   */
+  private final List<URL> archiveURLs = new ArrayList<URL>();
+
   private boolean collapseAllProperties;
 
   private final DefaultFilters defaultFilters;
@@ -94,13 +108,26 @@ public class ModuleDef {
 
   private final Set<File> gwtXmlFiles = new HashSet<File>();
 
+  /**
+   * All resources found on the public path, specified by <public> directives in
+   * modules (or the implicit ./public directory). Marked 'lazy' because it does not
+   * start searching for resources until a query is made.
+   */
   private ResourceOracleImpl lazyPublicOracle;
 
+  /**
+   * A subset of lazySourceOracle, contains files other than .java and .class files.
+   */
   private ResourceOracleImpl lazyResourcesOracle;
 
+  /**
+   * Contains all files from the source path, specified by <source> and <super>
+   * directives in modules (or the implicit ./client directory).
+   */
   private ResourceOracleImpl lazySourceOracle;
 
-  private final Map<String, Class<? extends Linker>> linkerTypesByName = new LinkedHashMap<String, Class<? extends Linker>>();
+  private final Map<String, Class<? extends Linker>> linkerTypesByName =
+      new LinkedHashMap<String, Class<? extends Linker>>();
 
   private final long moduleDefCreationTime = System.currentTimeMillis();
 
@@ -156,48 +183,44 @@ public class ModuleDef {
     activeLinkers.add(name);
   }
 
-  public synchronized void addPublicPackage(String publicPackage,
-      String[] includeList, String[] excludeList, String[] skipList,
-      boolean defaultExcludes, boolean caseSensitive) {
+  public synchronized void addPublicPackage(String publicPackage, String[] includeList,
+      String[] excludeList, String[] skipList, boolean defaultExcludes, boolean caseSensitive) {
 
     if (lazyPublicOracle != null) {
       throw new IllegalStateException("Already normalized");
     }
-    publicPrefixSet.add(new PathPrefix(publicPackage,
-        defaultFilters.customResourceFilter(includeList, excludeList,
-            skipList, defaultExcludes, caseSensitive), true, excludeList));
+    publicPrefixSet.add(new PathPrefix(publicPackage, defaultFilters.customResourceFilter(
+        includeList, excludeList, skipList, defaultExcludes, caseSensitive), true, excludeList));
   }
 
-  public void addSourcePackage(String sourcePackage, String[] includeList,
-      String[] excludeList, String[] skipList, boolean defaultExcludes,
-      boolean caseSensitive) {
-    addSourcePackageImpl(sourcePackage, includeList, excludeList,
-        skipList, defaultExcludes, caseSensitive, false);
+  public void addSourcePackage(String sourcePackage, String[] includeList, String[] excludeList,
+      String[] skipList, boolean defaultExcludes, boolean caseSensitive) {
+    addSourcePackageImpl(sourcePackage, includeList, excludeList, skipList, defaultExcludes,
+        caseSensitive, false);
   }
 
   public void addSourcePackageImpl(String sourcePackage, String[] includeList,
-      String[] excludeList, String[] skipList, boolean defaultExcludes,
-      boolean caseSensitive, boolean isSuperSource) {
+      String[] excludeList, String[] skipList, boolean defaultExcludes, boolean caseSensitive,
+      boolean isSuperSource) {
     if (lazySourceOracle != null) {
       throw new IllegalStateException("Already normalized");
     }
-    PathPrefix pathPrefix = new PathPrefix(sourcePackage,
-        defaultFilters.customJavaFilter(includeList, excludeList, skipList,
-            defaultExcludes, caseSensitive), isSuperSource, excludeList);
+    PathPrefix pathPrefix =
+        new PathPrefix(sourcePackage, defaultFilters.customJavaFilter(includeList, excludeList,
+            skipList, defaultExcludes, caseSensitive), isSuperSource, excludeList);
     sourcePrefixSet.add(pathPrefix);
   }
 
-  public void addSuperSourcePackage(String superSourcePackage,
-      String[] includeList, String[] excludeList, String[] skipList,
-      boolean defaultExcludes, boolean caseSensitive) {
-    addSourcePackageImpl(superSourcePackage, includeList, excludeList,
-        skipList, defaultExcludes, caseSensitive, true);
+  public void addSuperSourcePackage(String superSourcePackage, String[] includeList,
+      String[] excludeList, String[] skipList, boolean defaultExcludes, boolean caseSensitive) {
+    addSourcePackageImpl(superSourcePackage, includeList, excludeList, skipList, defaultExcludes,
+        caseSensitive, true);
   }
 
   /**
    * Free up memory no longer needed in later compile stages. After calling this
-   * method, the ResourceOraclewill be empty and unusable. Calling
-   * {@link #refresh(TreeLogger)} will restore them.
+   * method, the ResourceOracle will be empty and unusable. Calling
+   * {@link #refresh()} will restore them.
    */
   public synchronized void clear() {
     if (lazySourceOracle != null) {
@@ -216,15 +239,14 @@ public class ModuleDef {
    * linker had been previously added to the set of active linkers, the old
    * active linker will be replaced with the new linker.
    */
-  public void defineLinker(TreeLogger logger, String name,
-      Class<? extends Linker> linker) throws UnableToCompleteException {
+  public void defineLinker(TreeLogger logger, String name, Class<? extends Linker> linker)
+      throws UnableToCompleteException {
     Class<? extends Linker> old = getLinker(name);
     if (old != null) {
       // Redefining an existing name
       if (activePrimaryLinker.equals(name)) {
         // Make sure the new one is also a primary linker
-        if (!linker.getAnnotation(LinkerOrder.class).value().equals(
-            Order.PRIMARY)) {
+        if (!linker.getAnnotation(LinkerOrder.class).value().equals(Order.PRIMARY)) {
           logger.log(TreeLogger.ERROR, "Redefining primary linker " + name
               + " with non-primary implementation " + linker.getName());
           throw new UnableToCompleteException();
@@ -232,8 +254,7 @@ public class ModuleDef {
 
       } else if (activeLinkers.contains(name)) {
         // Make sure it's a not a primary linker
-        if (linker.getAnnotation(LinkerOrder.class).value().equals(
-            Order.PRIMARY)) {
+        if (linker.getAnnotation(LinkerOrder.class).value().equals(Order.PRIMARY)) {
           logger.log(TreeLogger.ERROR, "Redefining non-primary linker " + name
               + " with primary implementation " + linker.getName());
           throw new UnableToCompleteException();
@@ -258,7 +279,7 @@ public class ModuleDef {
       /*
        * Ensure that URLs that match the servlet mapping, including those that
        * have additional path_info, get routed to the correct servlet.
-       *
+       * 
        * See "Inside Servlets", Second Edition, pg. 208
        */
       if (actual.equals(mapping) || actual.startsWith(mapping + "/")) {
@@ -271,7 +292,7 @@ public class ModuleDef {
   /**
    * Returns the Resource for a source file if it is found; <code>null</code>
    * otherwise.
-   *
+   * 
    * @param partialPath the partial path of the source file
    * @return the resource for the requested source file
    */
@@ -298,13 +319,22 @@ public class ModuleDef {
     return linkerTypesByName.get(activePrimaryLinker);
   }
 
+  /**
+   * Returns URLs to fetch archives of precompiled compilation units.
+   * 
+   * @see com.google.gwt.dev.CompileModule
+   */
+  public Collection<URL> getAllCompilationUnitArchiveURLs() {
+    return Collections.unmodifiableCollection(archiveURLs);
+  }
+
   public String[] getAllPublicFiles() {
     doRefresh();
     return lazyPublicOracle.getPathNames().toArray(Empty.STRINGS);
   }
 
   /**
-   * Strictly for statistics gathering.  There is no guarantee that the source
+   * Strictly for statistics gathering. There is no guarantee that the source
    * oracle has been initialized.
    */
   public String[] getAllSourceFiles() {
@@ -319,16 +349,17 @@ public class ModuleDef {
   public String getCanonicalName() {
     return name;
   }
-  
+
   public CompilationState getCompilationState(TreeLogger logger) throws UnableToCompleteException {
     return getCompilationState(logger, false);
   }
-  
+
   public synchronized CompilationState getCompilationState(TreeLogger logger, boolean suppressErrors)
       throws UnableToCompleteException {
     doRefresh();
     CompilationState compilationState =
-        CompilationStateBuilder.buildFrom(logger, lazySourceOracle.getResources(), null, suppressErrors);
+        CompilationStateBuilder.buildFrom(logger, lazySourceOracle.getResources(), null,
+            suppressErrors);
     checkForSeedTypes(logger, compilationState);
     return compilationState;
   }
@@ -367,8 +398,8 @@ public class ModuleDef {
       PathPrefixSet pathPrefixes = lazySourceOracle.getPathPrefixes();
       PathPrefixSet newPathPrefixes = new PathPrefixSet();
       for (PathPrefix pathPrefix : pathPrefixes.values()) {
-        newPathPrefixes.add(new PathPrefix(pathPrefix.getPrefix(),
-            NON_JAVA_RESOURCES, pathPrefix.shouldReroot()));
+        newPathPrefixes.add(new PathPrefix(pathPrefix.getPrefix(), NON_JAVA_RESOURCES, pathPrefix
+            .shouldReroot()));
       }
       lazyResourcesOracle.setPathPrefixes(newPathPrefixes);
       ResourceOracleImpl.refresh(TreeLogger.NULL, lazyResourcesOracle);
@@ -421,7 +452,7 @@ public class ModuleDef {
    * For convenience in hosted mode, servlets can be automatically loaded and
    * delegated to via {@link com.google.gwt.dev.shell.GWTShellServlet}. If a
    * servlet is already mapped to the specified path, it is replaced.
-   *
+   * 
    * @param path the url path at which the servlet resides
    * @param servletClassName the name of the servlet to publish
    */
@@ -448,11 +479,15 @@ public class ModuleDef {
     this.nameOverride = nameOverride;
   }
 
+  void addCompilationUnitArchiveURL(URL url) {
+    archiveURLs.add(url);
+  }
+
   /**
    * The final method to call when everything is setup. Before calling this
    * method, several of the getter methods may not be called. After calling this
    * method, the add methods may not be called.
-   *
+   * 
    * @param logger Logs the activity.
    */
   synchronized void normalize(TreeLogger logger) {
@@ -498,8 +533,8 @@ public class ModuleDef {
     moduleDefNormalize.end();
   }
 
-  private void checkForSeedTypes(TreeLogger logger,
-      CompilationState compilationState) throws UnableToCompleteException {
+  private void checkForSeedTypes(TreeLogger logger, CompilationState compilationState)
+      throws UnableToCompleteException {
     // Sanity check the seed types and don't even start it they're missing.
     boolean seedTypesMissing = false;
     TypeOracle typeOracle = compilationState.getTypeOracle();
@@ -508,8 +543,7 @@ public class ModuleDef {
           compilationState);
       seedTypesMissing = true;
     } else {
-      TreeLogger branch = logger.branch(TreeLogger.TRACE,
-          "Finding entry point classes", null);
+      TreeLogger branch = logger.branch(TreeLogger.TRACE, "Finding entry point classes", null);
       String[] typeNames = getEntryPointTypeNames();
       for (int i = 0; i < typeNames.length; i++) {
         String typeName = typeNames[i];
@@ -530,15 +564,15 @@ public class ModuleDef {
     if (!needsRefresh) {
       return;
     }
-    Event moduleDefEvent = SpeedTracerLogger.start(
-        CompilerEventType.MODULE_DEF, "phase", "refresh", "module", getName());
+    Event moduleDefEvent =
+        SpeedTracerLogger.start(CompilerEventType.MODULE_DEF, "phase", "refresh", "module",
+            getName());
     // Refresh resource oracles.
     if (lazyResourcesOracle == null) {
-      ResourceOracleImpl.refresh(TreeLogger.NULL, lazyPublicOracle,
-          lazySourceOracle);
+      ResourceOracleImpl.refresh(TreeLogger.NULL, lazyPublicOracle, lazySourceOracle);
     } else {
-      ResourceOracleImpl.refresh(TreeLogger.NULL, lazyPublicOracle,
-          lazySourceOracle, lazyResourcesOracle);
+      ResourceOracleImpl.refresh(TreeLogger.NULL, lazyPublicOracle, lazySourceOracle,
+          lazyResourcesOracle);
     }
     moduleDefEvent.end();
     needsRefresh = false;

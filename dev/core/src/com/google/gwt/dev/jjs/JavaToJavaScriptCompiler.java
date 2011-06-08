@@ -47,7 +47,6 @@ import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.jjs.CorrelationFactory.RealCorrelationFactory;
-import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
 import com.google.gwt.dev.jjs.UnifiedAst.AST;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -462,7 +461,7 @@ public class JavaToJavaScriptCompiler {
       }
       return toReturn;
     } catch (Throwable e) {
-      throw logAndTranslateException(logger, e);
+      throw CompilationProblemReporter.logAndTranslateException(logger, e);
     } finally {
       jjsCompilePermutationEvent.end();
     }
@@ -709,7 +708,7 @@ public class JavaToJavaScriptCompiler {
       createUnifiedAstEvent.end();
       return result;
     } catch (Throwable e) {
-      throw logAndTranslateException(logger, e);
+      throw CompilationProblemReporter.logAndTranslateException(logger, e);
     } finally {
     }
   }
@@ -1144,48 +1143,6 @@ public class JavaToJavaScriptCompiler {
     ClassNameVisitor v = new ClassNameVisitor();
     v.accept(jprogram);
     return v.classNames.toArray(new String[v.classNames.size()]);
-  }
-
-  private static UnableToCompleteException logAndTranslateException(TreeLogger logger, Throwable e) {
-    if (e instanceof UnableToCompleteException) {
-      // just rethrow
-      return (UnableToCompleteException) e;
-    } else if (e instanceof InternalCompilerException) {
-      TreeLogger topBranch =
-          logger.branch(TreeLogger.ERROR, "An internal compiler exception occurred", e);
-      List<NodeInfo> nodeTrace = ((InternalCompilerException) e).getNodeTrace();
-      for (NodeInfo nodeInfo : nodeTrace) {
-        SourceInfo info = nodeInfo.getSourceInfo();
-        String msg;
-        if (info != null) {
-          String fileName = info.getFileName();
-          fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
-          fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
-          msg = "at " + fileName + "(" + info.getStartLine() + "): ";
-        } else {
-          msg = "<no source info>: ";
-        }
-
-        String description = nodeInfo.getDescription();
-        if (description != null) {
-          msg += description;
-        } else {
-          msg += "<no description available>";
-        }
-        TreeLogger nodeBranch = topBranch.branch(TreeLogger.ERROR, msg, null);
-        String className = nodeInfo.getClassName();
-        if (className != null && logger.isLoggable(TreeLogger.INFO)) {
-          nodeBranch.log(TreeLogger.INFO, className, null);
-        }
-      }
-      return new UnableToCompleteException();
-    } else if (e instanceof VirtualMachineError) {
-      // Always rethrow VM errors (an attempt to wrap may fail).
-      throw (VirtualMachineError) e;
-    } else {
-      logger.log(TreeLogger.ERROR, "Unexpected internal compiler error", e);
-      return new UnableToCompleteException();
-    }
   }
 
   /*

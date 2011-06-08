@@ -64,6 +64,11 @@ public final class ModuleDefLoader {
    * Filename suffix used for GWT Module XML files.
    */
   public static final String GWT_MODULE_XML_SUFFIX = ".gwt.xml";
+  
+  /**
+   * Filename suffix used for Precompiled GWT Module files.
+   */
+  public static final String COMPILATION_UNIT_ARCHIVE_SUFFIX = ".gwtar";
 
   /**
    * Keep soft references to loaded modules so the VM can gc them when memory is
@@ -111,7 +116,7 @@ public final class ModuleDefLoader {
 
   /**
    * Loads a new module from the class path.  Equivalent to
-   * {@link #loadFromClassPath(logger, moduleName, false)}.
+   * {@link #loadFromClassPath(TreeLogger, String, boolean)}.
    *
    * @param logger logs the process
    * @param moduleName the module to load
@@ -187,6 +192,7 @@ public final class ModuleDefLoader {
   private ModuleDefLoader() {
     this.classLoader = Thread.currentThread().getContextClassLoader();
     this.strategy = new LoadStrategy() {
+      @Override
       public void load(TreeLogger logger, String moduleName, ModuleDef moduleDef)
           throws UnableToCompleteException {
         nestedLoad(logger, moduleName, moduleDef);
@@ -202,6 +208,7 @@ public final class ModuleDefLoader {
   private ModuleDefLoader(final String[] inherits) {
     this.classLoader = Thread.currentThread().getContextClassLoader();
     this.strategy = new LoadStrategy() {
+      @Override
       public void load(TreeLogger logger, String moduleName, ModuleDef moduleDef)
           throws UnableToCompleteException {
         for (String inherit : inherits) {
@@ -256,6 +263,11 @@ public final class ModuleDefLoader {
       } catch (URISyntaxException e) {
         logger.log(TreeLogger.ERROR, "Error parsing URI", e);
         throw new UnableToCompleteException();
+      }
+      String compilationUnitArchiveName = slashedModuleName + ModuleDefLoader.COMPILATION_UNIT_ARCHIVE_SUFFIX;
+      URL compiledModuleURL = classLoader.getResource(compilationUnitArchiveName);
+      if (compiledModuleURL != null) {
+        moduleDef.addCompilationUnitArchiveURL(compiledModuleURL);
       }
     }
     if (moduleURL == null) {

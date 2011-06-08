@@ -34,8 +34,8 @@ class MemoryUnitCache implements UnitCache {
    * Storage for a compilation unit in the map.
    */
   protected static class UnitCacheEntry {
-    private final CompilationUnit unit;
     private final UnitOrigin origin;
+    private final CompilationUnit unit;
 
     protected UnitCacheEntry(CompilationUnit unit, UnitOrigin source) {
       this.unit = unit;
@@ -44,11 +44,11 @@ class MemoryUnitCache implements UnitCache {
 
     public UnitOrigin getOrigin() {
       return origin;
-    };
+    }
 
     public CompilationUnit getUnit() {
       return unit;
-    };
+    }
   }
 
   /**
@@ -57,6 +57,11 @@ class MemoryUnitCache implements UnitCache {
    * 
    */
   protected static enum UnitOrigin {
+    /**
+     * Unit was loaded from an archive.
+     */
+    ARCHIVE,
+
     /**
      * Unit was loaded from persistent store.
      */
@@ -89,24 +94,29 @@ class MemoryUnitCache implements UnitCache {
   /**
    * Adds a new entry into the cache.
    */
+  @Override
   public void add(CompilationUnit newUnit) {
-    UnitCacheEntry newEntry = new UnitCacheEntry(newUnit, UnitOrigin.RUN_TIME);
-    String resourcePath = newUnit.getResourcePath();
-    UnitCacheEntry oldEntry = unitMap.get(resourcePath);
-    if (oldEntry != null) {
-      remove(oldEntry.getUnit());
-    }
-    unitMap.put(resourcePath, newEntry);
-    unitMapByContentId.put(newUnit.getContentId(), newEntry);
+    add(newUnit, UnitOrigin.RUN_TIME);
+  }
+
+  /**
+   * Adds a new entry into the cache, but marks it as already coming from a
+   * persistent archive. This means it doesn't need to be saved out to disk.
+   */
+  @Override
+  public void addArchivedUnit(CompilationUnit newUnit) {
+    add(newUnit, UnitOrigin.ARCHIVE);
   }
 
   /**
    * This method is a no-op for an in-memory cache.
    */
+  @Override
   public synchronized void cleanup(final TreeLogger logger) {
     // do nothing.
   }
 
+  @Override
   public CompilationUnit find(ContentId contentId) {
     UnitCacheEntry entry = unitMapByContentId.get(contentId);
     if (entry != null) {
@@ -115,6 +125,7 @@ class MemoryUnitCache implements UnitCache {
     return null;
   }
 
+  @Override
   public CompilationUnit find(String resourcePath) {
     UnitCacheEntry entry = unitMap.get(resourcePath);
     if (entry != null) {
@@ -123,8 +134,20 @@ class MemoryUnitCache implements UnitCache {
     return null;
   }
 
+  @Override
   public void remove(CompilationUnit unit) {
     unitMap.remove(unit.getResourcePath());
     unitMapByContentId.remove(unit.getContentId());
+  }
+
+  private void add(CompilationUnit newUnit, UnitOrigin origin) {
+    UnitCacheEntry newEntry = new UnitCacheEntry(newUnit, origin);
+    String resourcePath = newUnit.getResourcePath();
+    UnitCacheEntry oldEntry = unitMap.get(resourcePath);
+    if (oldEntry != null) {
+      remove(oldEntry.getUnit());
+    }
+    unitMap.put(resourcePath, newEntry);
+    unitMapByContentId.put(newUnit.getContentId(), newEntry);
   }
 }

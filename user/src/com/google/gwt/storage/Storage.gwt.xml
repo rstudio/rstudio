@@ -13,8 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <module>
-  <inherits name="com.google.gwt.core.Core" />
-  <inherits name="com.google.gwt.user.UserAgent" />
+  <inherits name="com.google.gwt.user.User" />
 
   <!-- Define the storage support property -->
   <define-property name="storageSupport" values="maybe,no" />

@@ -37,6 +37,7 @@
         <exclude name="com/google/gwt/junit/remote/**" />
         <exclude name="com/google/gwt/junit/server/**" />
         <exclude name="com/google/gwt/benchmarks/*" />
+        <exclude name="**/*.gwtar" />
       </fileset>
 
       <!-- additional dependencies (used by scripts). -->

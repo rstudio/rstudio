@@ -141,7 +141,65 @@
     </gwt.javac>
   </target>
 
-  <target name="build" depends="compile"
+  <!-- Precompile some GWT modules to speed up end-user builds   -->
+  <!-- TODO(zundel): Find a way to precompile  all modules       -->
+  <!--               without tedious manual specification        -->
+  <target name="precompile.modules" depends="compile">
+    <outofdate>
+      <sourcefiles>
+        <fileset dir="${gwt.root}/user/src" />
+        <fileset dir="${gwt.root}/user/super" />
+        <fileset dir="${gwt.root}/dev/core/src" />
+        <fileset dir="${gwt.root}/dev/core/super" />
+        <fileset file="${gwt.dev.jar}" />
+      </sourcefiles>
+      <targetfiles>
+        <!-- TODO(zundel): this is a mechanical transform        -->
+        <!-- from module name.  There must be a better way.      -->
+        <pathelement location="${project.build}/bin/com/google/gwt/core/Core.gwtar" />
+        <pathelement location="${project.build}/bin/com/google/gwt/json/JSON.gwtar" />
+        <pathelement location="${project.build}/bin/com/google/gwt/regexp/RegExp.gwtar" />
+        <pathelement location="${project.build}/bin/com/google/gwt/user/User.gwtar" />
+        <pathelement location="${project.build}/bin/com/google/gwt/xml/XML.gwtar" />
+        <pathelement location="${project.build}/bin/com/google/gwt/rpc/RPC.gwtar" />
+        <pathelement location="${project.build}/bin/com/google/gwt/debug/Debug.gwtar" />
+        <pathelement location="${project.build}/bin/com/google/gwt/place/Place.gwtar" />
+        <pathelement location="${project.build}/bin/com/google/gwt/activity/Activity.gwtar" />
+        <pathelement location="${project.build}/bin/com/google/web/bindery/event/Event.gwtar" />
+        <pathelement location="${project.build}/bin/com/google/web/bindery/autobean/AutoBean.gwtar" />
+        <pathelement location="${project.build}/bin/com/google/web/bindery/requestfactory/RequestFactory.gwtar" />
+        <pathelement location="${project.build}/bin/com/google/gwt/logging/Logging.gwtar" />
+      </targetfiles>
+      <sequential>
+        <compileModule>
+          <module>
+            <!-- Order is important!  Modules that inherit from  -->
+            <!-- others should come later in the list.           -->
+            <!-- All modules depend on Core                      -->
+            <arg value="com.google.gwt.core.Core" />
+            <arg value="com.google.gwt.json.JSON" />
+            <arg value="com.google.gwt.regexp.RegExp" />
+            <arg value="com.google.gwt.user.User" />
+    
+            <!-- Below are modules that depend on User           -->
+            <arg value="com.google.gwt.xml.XML" />
+            <arg value="com.google.gwt.rpc.RPC" />
+            <arg value="com.google.gwt.debug.Debug" />
+            <arg value="com.google.gwt.logging.Logging" />
+    
+            <arg value="com.google.gwt.place.Place" />
+            <arg value="com.google.gwt.activity.Activity" />
+    
+            <arg value="com.google.web.bindery.event.Event" />
+            <arg value="com.google.web.bindery.autobean.AutoBean" />
+            <arg value="com.google.web.bindery.requestfactory.RequestFactory" />
+          </module>
+        </compileModule>
+      </sequential>
+    </outofdate>
+  </target>
+
+  <target name="build" depends="precompile.modules"
       description="Build and package this project">
     <mkdir dir="${gwt.build.lib}" />
     <gwt.jar>
@@ -701,6 +759,31 @@
       <attribute name="outputproperty" default="jsr303.marked.@{annotation}" />
       <sequential>
    
+      </sequential>
+    </macrodef>
+
+    <macrodef name="compileModule">
+      <element name="module" />
+      <sequential>
+        <gwt.timer name="Pre-compile module">
+          <java classname="com.google.gwt.dev.CompileModule" fork="yes" failonerror="true">
+            <classpath>
+              <pathelement location="${gwt.root}/user/src" />
+              <pathelement location="${gwt.root}/user/super" />
+              <pathelement location="${gwt.root}/dev/core/src" />
+              <pathelement location="${gwt.root}/dev/core/super" />
+              <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
+              <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
+              <pathelement location="${gwt.root}/build/out/user/bin" />
+              <pathelement location="${gwt.dev.jar}" />
+            </classpath>
+            <jvmarg value="-Xmx512M" />
+            <module />
+            <arg value="-strict" />
+            <arg value="-out" />
+            <arg value="${project.build}/bin" />
+          </java>
+        </gwt.timer>
       </sequential>
     </macrodef>
 
