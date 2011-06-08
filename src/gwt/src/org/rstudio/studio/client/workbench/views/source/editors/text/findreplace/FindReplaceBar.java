@@ -18,6 +18,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
+
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -41,6 +42,8 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    interface Styles extends CssResource
    {
       String findReplaceBar();
+      String matchCaseCheckBox();
+      String regexCheckBox();
       String closeButton();
    }
 
@@ -54,9 +57,14 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       //shelf.addLeftWidget(btnFindPrev_ = new SmallButton("&lt;", true));
       shelf.addLeftWidget(btnFindNext_ = new SmallButton("Find", true));
       shelf.addLeftWidget(chkCaseSensitive_ = new CheckBox("Match case"));
+      shelf.addLeftWidget(chkRegEx_ = new CheckBox("Regex"));
       shelf.addLeftWidget(txtReplace_ = new FindTextBox("Replace"));
       shelf.addLeftWidget(btnReplace_ = new SmallButton("Replace"));
       shelf.addLeftWidget(btnReplaceAll_ = new SmallButton("All"));
+      
+      // pad after regex check box
+      chkCaseSensitive_.addStyleName(RES.styles().matchCaseCheckBox());
+      chkRegEx_.addStyleName(RES.styles().regexCheckBox());
       
       // remove SmallButton instances from tab order since (a) they aren't
       // capable of showing a focused state; and (b) enter is already a
@@ -133,6 +141,11 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    public HasValue<Boolean> getCaseSensitive()
    {
       return chkCaseSensitive_;
+   }
+
+   public HasValue<Boolean> getRegex()
+   {
+      return chkRegEx_;
    }
 
    public HasValue<Boolean> getFindBackwards()
@@ -226,6 +239,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    private SmallButton btnReplace_;
    private SmallButton btnReplaceAll_;
    private CheckBox chkCaseSensitive_;
+   private CheckBox chkRegEx_;
    private Button btnClose_;
    private static Resources RES = GWT.create(Resources.class);
 }

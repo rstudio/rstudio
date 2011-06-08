@@ -13,7 +13,14 @@
 .findReplaceBar .gwt-CheckBox {
    font-size: 9px;
    white-space: nowrap;
-   margin-right: 10px;
+}
+
+.matchCaseCheckBox {
+   margin-right: 2px;
+}
+
+.regexCheckBox {
+	margin-right: 10px;
 }
 
 .closeButton {

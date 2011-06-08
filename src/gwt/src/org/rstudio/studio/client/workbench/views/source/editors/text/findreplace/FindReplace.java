@@ -30,6 +30,7 @@ public class FindReplace
       HasValue<String> getFindValue();
       HasValue<String> getReplaceValue();
       HasValue<Boolean> getCaseSensitive();
+      HasValue<Boolean> getRegex();
       HasValue<Boolean> getFindBackwards();
       HasClickHandlers getFindButton();
       HasClickHandlers getFindNextButton();
@@ -104,6 +105,7 @@ public class FindReplace
          return false;
       
       boolean ignoreCase = !display_.getCaseSensitive().getValue();
+      boolean regex = display_.getRegex().getValue();
 
       Search search = Search.create(searchString,
                                     findType != FindType.Forward,
@@ -111,7 +113,7 @@ public class FindReplace
                                     !ignoreCase,
                                     false,
                                     false,
-                                    false);
+                                    regex);
 
       Range range = search.find(editor_.getSession());
 
