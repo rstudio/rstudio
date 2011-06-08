@@ -23,6 +23,7 @@ git merge \
     origin/patch-invisible-colors \
     origin/patch-build-matchingbraceoutdent \
     origin/patch-normalizeinput \
+    origin/bugfix/search-regexp \
 
 
 make clean

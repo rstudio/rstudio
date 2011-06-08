@@ -162,21 +162,16 @@ public class FindReplace
          return;
 
       Pattern pattern = createPattern();
-      String selected = editor_.getSelectionValue();
-      Match m = pattern.match(selected, 0);
+      String line = editor_.getCurrentLine();
+      Match m = pattern.match(line,
+                              editor_.getSelectionStart().getColumn());
       if (m != null
-          && m.getIndex() == 0
-          && m.getValue().length() == selected.length())
+          && m.getIndex() == editor_.getSelectionStart().getColumn()
+          && m.getValue().length() == editor_.getSelectionValue().length())
       {
-         // For the regex mode, there are some broken edge cases here,
-         // i.e. lookahead/lookbehind and anchoring (^ and $)--basically
-         // anything where the context of the string matters. However,
-         // these edge cases don't matter too much here because they're
-         // also buggy in Ace's search facilities themselves.
-
          String replacement = display_.getReplaceValue().getValue();
          editor_.replaceSelection(display_.getRegex().getValue()
-                                  ? substitute(m, replacement, selected)
+                                  ? substitute(m, replacement, line)
                                   : replacement);
       }
 
@@ -189,7 +184,7 @@ public class FindReplace
       boolean regex = display_.getRegex().getValue();
       String find = display_.getFindValue().getValue();
 
-      String flags = caseSensitive ? "g" : "ig";
+      String flags = caseSensitive ? "gm" : "igm";
       String query = regex ? find : Pattern.escape(find);
       return Pattern.create(query, flags);
    }
@@ -236,7 +231,9 @@ public class FindReplace
                                  occurrences + " occurrences replaced.");
    }
 
-   private String substitute(final Match match, String replacement, final String data)
+   private String substitute(final Match match,
+                             String replacement,
+                             final String data)
    {
       Pattern pattern = Pattern.create("\\$([1-9][0-9]?|.)");
       return pattern.replaceAll(replacement, new ReplaceOperation()
@@ -248,12 +245,20 @@ public class FindReplace
             {
                case '&':
                   return match.getValue();
-               //  We can't support these directives properly, especially in the
-               //  "replace one" scenario.
-               // case '`':
-               //    return data.substring(0, match.getIndex());
-               // case '\'':
-               //    return data.substring(match.getIndex() + match.getValue().length());
+               case '`':
+                  String prefix = data.substring(0, match.getIndex());
+                  int lastLF = prefix.lastIndexOf("\n");
+                  if (lastLF > 0)
+                     prefix = prefix.substring(lastLF + 1);
+                  return prefix;
+               case '\'':
+                  String suffix = data.substring(match.getIndex() + match.getValue().length());
+                  int firstBreak = suffix.indexOf("\r");
+                  if (firstBreak < 0)
+                     firstBreak = suffix.indexOf("\n");
+                  if (firstBreak >= 0)
+                     suffix = suffix.substring(0, firstBreak);
+                  return suffix;
                case '$':
                   return "$";
                case '1':

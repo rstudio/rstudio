@@ -12259,20 +12259,17 @@ Search.SELECTION = 2;
         return {
             forEach: function(callback) {
                 self.$forwardLineIterator(session).forEach(function(line, startIndex, row) {
-                    if (startIndex) {
-                        line = line.substring(startIndex);
-                    }
 
                     var matches = [];
-
-                    line.replace(re, function(str) {
-                        var offset = arguments[arguments.length-2];
-                        matches.push({
-                            str: str,
-                            offset: startIndex + offset
-                        });
-                        return str;
-                    });
+                    
+                    var result;
+                    re.lastIndex = startIndex;
+                    while (result = re.exec(line)) {
+                      matches.push({
+                        str: result[0],
+                        offset: result.index
+                      });
+                    }
 
                     for (var i=0; i<matches.length; i++) {
                         var match = matches[i];
@@ -12293,19 +12290,17 @@ Search.SELECTION = 2;
         return {
             forEach: function(callback) {
                 self.$backwardLineIterator(session).forEach(function(line, startIndex, row) {
-                    if (startIndex) {
-                        line = line.substring(startIndex);
-                    }
 
                     var matches = [];
-
-                    line.replace(re, function(str, offset) {
-                        matches.push({
-                            str: str,
-                            offset: startIndex + offset
-                        });
-                        return str;
-                    });
+                    
+                    var result;
+                    re.lastIndex = startIndex;
+                    while (result = re.exec(line)) {
+                      matches.push({
+                        str: result[0],
+                        offset: result.index
+                      });
+                    }
 
                     for (var i=matches.length-1; i>= 0; i--) {
                         var match = matches[i];
