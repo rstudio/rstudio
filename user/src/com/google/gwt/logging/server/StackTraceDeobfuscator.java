@@ -53,6 +53,10 @@ public class StackTraceDeobfuscator {
   private static Pattern JsniRefPattern =
     Pattern.compile("@?([^:]+)::([^(]+)(\\((.*)\\))?");
   
+  // The javadoc for StackTraceElement.getLineNumber() says it returns -1 when 
+  // the line number is unavailable
+  private static final int LINE_NUMBER_UNKNOWN = -1;
+  
   private File symbolMapsDirectory;
   
   private Map<String, SymbolMap> symbolMaps =
@@ -136,11 +140,12 @@ public class StackTraceDeobfuscator {
         
         int lineNumber = ste.getLineNumber();
         /*
-         * When lineNumber is zero, either because compiler.stackMode is not
-         * emulated or compiler.emulatedStack.recordLineNumbers is false, use
-         * the method declaration line number from the symbol map.
+         * When lineNumber is LINE_NUMBER_UNKNOWN, either because
+         * compiler.stackMode is not emulated or
+         * compiler.emulatedStack.recordLineNumbers is false, use the method
+         * declaration line number from the symbol map.
          */
-        if (lineNumber == 0) {
+        if (lineNumber == LINE_NUMBER_UNKNOWN) {
           lineNumber = Integer.parseInt(parts[4]);
         }
         
