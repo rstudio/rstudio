@@ -23,6 +23,7 @@
    <inherits name="com.google.gwt.core.Core"/>
    <inherits name="com.google.gwt.editor.Editor" />
    <inherits name="com.google.gwt.event.Event"/>
+   <inherits name="com.google.gwt.geolocation.Geolocation" />
    <inherits name="com.google.gwt.i18n.I18N"/>
    <inherits name="com.google.gwt.layout.Layout"/>
    <inherits name="com.google.gwt.media.Media"/>
