@@ -121,7 +121,8 @@ public class MessagesWriter {
         logger.die(child, "Missing name attribute");
       }
       if (!elem.hasAttribute(attributeName)) {
-        logger.die(child, "Enclosing element has no matching attribute");
+        logger.die(child, "The enclosing element needs to provide a "
+            + "default value for attribute \"%s\"", attributeName);
       }
       XMLAttribute attribute = elem.getAttribute(attributeName);
       if (attribute.hasComputedValue()) {
