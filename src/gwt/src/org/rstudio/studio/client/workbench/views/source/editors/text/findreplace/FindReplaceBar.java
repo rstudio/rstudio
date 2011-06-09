@@ -205,15 +205,15 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    public void onResize()
    {
       int width = getOffsetWidth();
-      setNarrowMode(width > 0 && width < 510);
+      setNarrowMode(width > 0 && width < 555);
    }
 
    private void setNarrowMode(boolean narrow)
    {
       if (narrow)
       {
-         txtFind_.setOverrideWidth(85);
-         txtReplace_.setOverrideWidth(85);
+         txtFind_.setOverrideWidth(100);
+         txtReplace_.setOverrideWidth(100);
       }
       else
       {
