@@ -296,10 +296,16 @@ if(RSTUDIO_BUNDLE_QT)
    endif()
 endif(RSTUDIO_BUNDLE_QT)
 
-# add rstudio icon to root (so people installing from source or tar.gz can find it
 if (UNIX AND NOT APPLE)
+   # add rstudio icon to root (so people installing from source or tar.gz can find it
    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/freedesktop/icons/48x48/rstudio.png
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
+
+   # install configured backtrace utility on linux
+   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rstudio-backtrace.sh.in
+                  ${CMAKE_CURRENT_BINARY_DIR}/rstudio-backtrace.sh)
+   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/rstudio-backtrace.sh
+                    DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 
 
