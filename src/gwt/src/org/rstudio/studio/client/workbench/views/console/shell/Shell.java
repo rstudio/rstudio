@@ -47,7 +47,6 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HistoryCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 
 import java.util.ArrayList;
@@ -439,18 +438,6 @@ public class Shell implements ConsoleInputHandler,
                   case 'L':
                      Shell.this.onConsoleClear() ;
                      event.preventDefault() ;
-                     break;
-                  case 'U':
-                     event.preventDefault() ;
-                     InputEditorUtil.yankBeforeCursor(input_, true);
-                     break;
-                  case 'K':
-                     event.preventDefault();
-                     InputEditorUtil.yankAfterCursor(input_, true);
-                     break;
-                  case 'Y':
-                     event.preventDefault();
-                     InputEditorUtil.pasteYanked(input_);
                      break;
                }
             }

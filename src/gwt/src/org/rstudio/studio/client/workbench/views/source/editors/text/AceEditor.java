@@ -35,6 +35,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -53,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.NullComple
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -175,6 +177,34 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
          public void onValueChange(ValueChangeEvent<Void> evt)
          {
             ValueChangeEvent.fire(AceEditor.this, null);
+         }
+      });
+
+      addCapturingKeyDownHandler(new KeyDownHandler()
+      {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+            if (mod == KeyboardShortcut.CTRL)
+            {
+               switch (event.getNativeKeyCode())
+               {
+                  case 'U':
+                     event.preventDefault() ;
+                     InputEditorUtil.yankBeforeCursor(AceEditor.this, true);
+                     break;
+                  case 'K':
+                     event.preventDefault();
+                     InputEditorUtil.yankAfterCursor(AceEditor.this, true);
+                     break;
+                  case 'Y':
+                     event.preventDefault();
+                     InputEditorUtil.pasteYanked(AceEditor.this);
+                     break;
+               }
+            }
+
          }
       });
    }
