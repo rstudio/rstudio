@@ -266,7 +266,7 @@ public class TextEditingTarget implements EditingTarget
          {
             NativeEvent ne = event.getNativeEvent();
             int mod = KeyboardShortcut.getModifierValue(ne);
-            if ((mod == KeyboardShortcut.META || mod == KeyboardShortcut.CTRL)
+            if ((mod == KeyboardShortcut.META || (mod == KeyboardShortcut.CTRL && !BrowseCap.hasMetaKey()))
                 && ne.getKeyCode() == 'F')
             {
                event.preventDefault();

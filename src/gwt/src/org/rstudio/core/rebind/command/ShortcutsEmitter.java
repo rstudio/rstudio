@@ -16,6 +16,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.user.rebind.SourceWriter;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -50,6 +51,7 @@ public class ShortcutsEmitter
             throw new UnableToCompleteException();
          }
 
+         String condition = childEl.getAttribute("if");
          String commandId = childEl.getAttribute("refid");
          String shortcutValue = childEl.getAttribute("value");
 
@@ -64,11 +66,12 @@ public class ShortcutsEmitter
             throw new UnableToCompleteException();
          }
 
-         printShortcut(writer, shortcutValue, commandId);
+         printShortcut(writer, condition, shortcutValue, commandId);
       }
    }
 
    private void printShortcut(SourceWriter writer,
+                              String condition,
                               String shortcutValue,
                               String commandId) throws UnableToCompleteException
    {
@@ -105,6 +108,12 @@ public class ShortcutsEmitter
          throw new UnableToCompleteException();
       }
 
+      if (!condition.isEmpty())
+      {
+         writer.println("if (" + condition + ") {");
+         writer.indent();
+      }
+
       if (cmd)
       {
          writer.println("ShortcutManager.INSTANCE.register(" +
@@ -122,6 +131,12 @@ public class ShortcutsEmitter
                         modifiers + ", " +
                         key + ", " +
                         commandId + "());");
+      }
+
+      if (!condition.isEmpty())
+      {
+         writer.outdent();
+         writer.println("}");
       }
    }
 

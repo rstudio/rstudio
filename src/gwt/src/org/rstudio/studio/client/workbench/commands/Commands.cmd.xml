@@ -230,12 +230,14 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="activateHelp" value="Ctrl+8"/>
       <shortcut refid="jumpToFunction" value="Ctrl+Alt+Up"/>
       <shortcut refid="switchToTab" value="Ctrl+Alt+Down"/>
-      <shortcut refid="previousTab" value="Ctrl+Alt+Left"/>
-      <shortcut refid="nextTab" value="Ctrl+Alt+Right"/>
+      <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
+      <shortcut refid="nextTab" value="Ctrl+Alt+Right" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
+      <shortcut refid="previousTab" value="Ctrl+PageUp" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
+      <shortcut refid="nextTab" value="Ctrl+PageDown" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
       <shortcut refid="firstTab" value="Ctrl+Alt+Shift+Left"/>
       <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
-      <shortcut refid="previousPlot" value="Cmd+PageUp" />
-      <shortcut refid="nextPlot" value="Cmd+PageDown" />
+      <shortcut refid="previousPlot" value="Cmd+Shift+PageUp" />
+      <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
       <shortcut refid="removePlot" value="Cmd+Shift+R" />
       <shortcut refid="showManipulator" value="Cmd+Shift+M"/>
       <shortcut refid="showRequestLog" value="Ctrl+`" />
