@@ -32,7 +32,10 @@ import org.rstudio.core.client.theme.MinimizedModuleTabLayoutPanel;
 import org.rstudio.core.client.theme.MinimizedWindowFrame;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.theme.WindowFrame;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
@@ -83,6 +86,7 @@ public class PaneManager
                       WorkbenchServerOperations server,
                       EventBus eventBus,
                       Session session,
+                      Commands commands,
                       UIPrefs uiPrefs,
                       @Named("Console") final Widget consolePane,
                       ConsoleInterruptButton consoleInterrupt,
@@ -96,6 +100,7 @@ public class PaneManager
    {
       eventBus_ = eventBus;
       session_ = session;
+      commands_ = commands;
       consolePane_ = (ConsolePane)consolePane;
       consoleInterrupt_ = consoleInterrupt;
       source_ = source;
@@ -271,6 +276,11 @@ public class PaneManager
       consoleWindowFrame_.setContextButton(consoleInterrupt_,
                                            consoleInterrupt_.getWidth(),
                                            consoleInterrupt_.getHeight());
+      ToolbarButton goToWorkingDirButton = 
+                           commands_.goToWorkingDir().createToolbarButton();
+      goToWorkingDirButton.addStyleName(
+            ThemeResources.INSTANCE.themeStyles().windowFrameToolbarButton());
+      consoleWindowFrame_.addLeftWidget(goToWorkingDirButton);
       return new LogicalWindow(consoleWindowFrame_,
                                new MinimizedWindowFrame("Console"));
    }
@@ -364,6 +374,7 @@ public class PaneManager
 
    private final EventBus eventBus_;
    private final Session session_;
+   private final Commands commands_;
    private final ConsolePane consolePane_;
    private final ConsoleInterruptButton consoleInterrupt_;
    private final SourceShim source_;

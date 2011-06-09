@@ -485,10 +485,13 @@ int RReadConsole (const char *prompt,
       // ensure rstudio tools are loaded before prompting
       r::sourceManager().ensureToolsLoaded();
 
+      std::string promptString(prompt);
+      promptString = util::rconsole2utf8(promptString);
+
       // get the next input
       bool addToHistory = (hist == 1);
       RConsoleInput consoleInput;
-      if ( s_callbacks.consoleRead(prompt, addToHistory, &consoleInput) )
+      if ( s_callbacks.consoleRead(promptString, addToHistory, &consoleInput) )
       {
          // add prompt to console actions (we do this after consoleRead
          // completes so that we don't send both a console prompt event

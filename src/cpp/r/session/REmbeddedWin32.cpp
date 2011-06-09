@@ -417,7 +417,7 @@ void initializePolledEventHandler(void (*newPolledEventHandler)(void))
    s_polledEventHandler = newPolledEventHandler;
 }
 
-void disablePolledEventHandler()
+void permanentlyDisablePolledEventHandler()
 {
    s_polledEventHandler = NULL;
 }

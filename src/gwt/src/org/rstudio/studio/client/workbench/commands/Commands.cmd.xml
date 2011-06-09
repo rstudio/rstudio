@@ -437,7 +437,9 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Refresh"
         desc="Refresh file listing"/>
    <cmd id="goToWorkingDir"
-        label="Go To Working Directory"/>
+        buttonLabel = ""
+        menuLabel="Go To Working Directory"
+        desc="Show the current working directory in the files pane"/>
    <cmd id="setAsWorkingDir"
         label="Set As Working Directory"/>
    <cmd id="showFolder"
