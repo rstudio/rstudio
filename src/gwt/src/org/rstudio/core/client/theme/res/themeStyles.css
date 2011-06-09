@@ -836,7 +836,7 @@ body.windows .searchBox {
 }
 
 .workspace tr.workspaceDataRow td {
-   line-height: 16px;   
+   line-height: 1.4;
 }
 
 @sprite .workspace tr.workspaceDataFrameRow td+td {

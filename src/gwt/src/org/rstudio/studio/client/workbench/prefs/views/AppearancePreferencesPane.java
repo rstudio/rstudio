@@ -35,7 +35,7 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       VerticalPanel leftPanel = new VerticalPanel();
 
-      String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18"};
+      String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
       String[] values = new String[labels.length];
       for (int i = 0; i < labels.length; i++)
          values[i] = Double.parseDouble(labels[i]) + "";
