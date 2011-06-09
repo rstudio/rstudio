@@ -72,6 +72,8 @@ public interface ThemeStyles extends CssResource
    String toolbarButtonLabel();
    String toolbarButtonLeftImage();
    String toolbarButtonRightImage();
+   
+   String windowFrameToolbarButton();
 
    String statusBarMenu();
 

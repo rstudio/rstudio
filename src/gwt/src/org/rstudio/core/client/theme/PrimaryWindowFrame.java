@@ -40,28 +40,24 @@ public class PrimaryWindowFrame extends WindowFrame
       }
    }
 
-   public PrimaryWindowFrame()
-   {
-   }
-
    public PrimaryWindowFrame(String title,
                              Widget mainWidget)
    {
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
 
-      ClickFlowPanel panel = new ClickFlowPanel();
-      panel.setStylePrimaryName(styles.primaryWindowFrameHeader());
+      panel_ = new ClickFlowPanel();
+      panel_.setStylePrimaryName(styles.primaryWindowFrameHeader());
 
       Label label = new Label(title);
       label.setStylePrimaryName(styles.title());
-      panel.addMouseDownHandler(new MouseDownHandler()
+      panel_.addMouseDownHandler(new MouseDownHandler()
       {
          public void onMouseDown(MouseDownEvent event)
          {
             event.preventDefault();
          }
       });
-      panel.addClickHandler(new ClickHandler()
+      panel_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
@@ -77,10 +73,10 @@ public class PrimaryWindowFrame extends WindowFrame
       subtitle_ = new Label();
       subtitle_.setStylePrimaryName(styles.subtitle());
 
-      panel.add(label);
-      panel.add(subtitle_);
+      panel_.add(label);
+      panel_.add(subtitle_);
 
-      setHeaderWidget(panel);
+      setHeaderWidget(panel_);
 
       setMainWidget(mainWidget);
    }
@@ -89,7 +85,13 @@ public class PrimaryWindowFrame extends WindowFrame
    {
       subtitle_.setText(subtitle);
    }
-
+   
+   public void addLeftWidget(Widget widget)
+   {
+      panel_.add(widget);
+   }
+   
    private final DoubleClickState doubleClickState_ = new DoubleClickState();
-   private Label subtitle_;
+   private final Label subtitle_;
+   private final ClickFlowPanel panel_;
 }

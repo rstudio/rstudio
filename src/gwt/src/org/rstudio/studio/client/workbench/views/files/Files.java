@@ -522,9 +522,9 @@ public class Files
                        true);
    }
 
-   @Handler
    void onGoToWorkingDir()
    {
+      view_.bringToFront();
       navigateToDirectory(workbenchContext_.getCurrentWorkingDir());
    }
    

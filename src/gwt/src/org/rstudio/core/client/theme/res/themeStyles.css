@@ -452,6 +452,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .primaryWindowFrameHeader {
    padding: 4px 0 0 12px;
    margin-right: 10px;
+   white-space: nowrap;
 }
 .title, .subtitle {
    display: inline;
@@ -703,6 +704,11 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    font-family: proportionalFont;
    font-size: 11px !important;
    white-space: nowrap;
+}
+
+.windowFrameToolbarButton {
+   margin-top: -3px;
+   margin-left: 5px;
 }
 
 .statusBarMenu {
