@@ -122,11 +122,21 @@
             && typeof(args[[1]]) != 'language')
    {
       lvalue <- as.character(args[[1]])
+
+      # Need to walk the right side of an assignment, before
+      # considering the lvalue (e.g.: x <- x + 1)
+      args <- args[-1]
+      if (length(args) > 0)
+      {
+         for (ee in args)
+            freeVars <- c(freeVars, codetools:::walkCode(ee, w))
+      }
+      args <- c()   # Clear out `args` so they aren't walked later
+   
       if (funcName == '<<-')
-	      assign(lvalue, T, envir=w$assignedGlobals)
+         assign(lvalue, T, envir=w$assignedGlobals)
       else
 	      assign(lvalue, T, envir=w$assigned)
-      args <- args[-1]
    }
    else if (funcName == '$')
    {
