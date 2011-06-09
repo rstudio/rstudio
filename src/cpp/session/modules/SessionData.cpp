@@ -227,6 +227,10 @@ SEXP dataViewerHook(SEXP call, SEXP op, SEXP args, SEXP rho)
                   html += "<td>&nbsp;</td>";
                }
             }
+            else
+            {
+               html += "<td>&nbsp;</td>";
+            }
          }
 
          html += "\n</tr>\n";
