@@ -1274,9 +1274,15 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
           tdClasses += lastColumnStyle;
         }
 
+        // Add class names specific to the cell.
+        Context context = new Context(i, curColumn, getValueKey(value));
+        String cellStyles = column.getCellStyleNames(context, value);
+        if (cellStyles != null) {
+          tdClasses += " " + cellStyles;
+        }
+
         SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
         if (value != null) {
-          Context context = new Context(i, curColumn, getValueKey(value));
           column.render(context, value, cellBuilder);
         }
 

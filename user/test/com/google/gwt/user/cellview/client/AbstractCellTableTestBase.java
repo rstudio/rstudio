@@ -18,6 +18,7 @@ package com.google.gwt.user.cellview.client;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.TableCellElement;
@@ -162,6 +163,43 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     cell.assertLastEditingIndex(5);
 
     RootPanel.get().remove(table);
+  }
+
+  public void testCellStyles() {
+    T table = createAbstractHasData();
+
+    // A column that return a static cell style.
+    TextColumn<String> col0 = new TextColumn<String>() {
+      @Override
+      public String getValue(String object) {
+        return object;
+      }
+    };
+    col0.setCellStyleNames("col0");
+    table.addColumn(col0);
+
+    // A column that returns dynamic cell styles.
+    TextColumn<String> col1 = new TextColumn<String>() {
+      @Override
+      public String getCellStyleNames(Context context, String object) {
+        return object.replace(" ", "_");
+      }
+
+      @Override
+      public String getValue(String object) {
+        return object;
+      }
+    };
+    table.addColumn(col1);
+
+    // Populate the table.
+    table.setRowData(createData(0, 10));
+    table.flush();
+
+    assertTrue(getBodyElement(table, 1, 0).getClassName().contains(" col0"));
+    assertFalse(getBodyElement(table, 1, 0).getClassName().contains(" test_1"));
+    assertFalse(getBodyElement(table, 1, 1).getClassName().contains(" col0"));
+    assertTrue(getBodyElement(table, 1, 1).getClassName().contains(" test_1"));
   }
 
   public void testGetColumnIndex() {

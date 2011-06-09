@@ -41,6 +41,8 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
    */
   private final Cell<C> cell;
 
+  private String cellStyleNames = null;
+
   /**
    * The {@link FieldUpdater} used for updating values in the column.
    */
@@ -64,8 +66,22 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
    * 
    * @return a Cell
    */
+  @Override
   public Cell<C> getCell() {
     return cell;
+  }
+
+  /**
+   * Get extra style names that should be applied to a cell in this column.
+   * 
+   * @param context the cell context
+   * @param object the base object to be updated, or null if the row is empty
+   * @return the extra styles of the given row in a space-separated list, or
+   *         {@code null} if there are no extra styles for the cells in this
+   *         column
+   */
+  public String getCellStyleNames(Context context, T object) {
+    return cellStyleNames;
   }
 
   /**
@@ -74,10 +90,12 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
    * @return an instance of FieldUpdater<T, C>
    * @see #setFieldUpdater(FieldUpdater)
    */
+  @Override
   public FieldUpdater<T, C> getFieldUpdater() {
     return fieldUpdater;
   }
 
+  @Override
   public HorizontalAlignmentConstant getHorizontalAlignment() {
     return hAlign;
   }
@@ -85,8 +103,10 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
   /**
    * Returns the column value from within the underlying data object.
    */
+  @Override
   public abstract C getValue(T object);
 
+  @Override
   public VerticalAlignmentConstant getVerticalAlignment() {
     return vAlign;
   }
@@ -108,15 +128,14 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
    * @param object the base object to be updated
    * @param event the native browser event
    */
-  public void onBrowserEvent(Context context, Element elem, final T object,
-      NativeEvent event) {
+  public void onBrowserEvent(Context context, Element elem, final T object, NativeEvent event) {
     final int index = context.getIndex();
-    ValueUpdater<C> valueUpdater = (fieldUpdater == null) ? null
-        : new ValueUpdater<C>() {
-          public void update(C value) {
-            fieldUpdater.update(index, object, value);
-          }
-        };
+    ValueUpdater<C> valueUpdater = (fieldUpdater == null) ? null : new ValueUpdater<C>() {
+      @Override
+      public void update(C value) {
+        fieldUpdater.update(index, object, value);
+      }
+    };
     cell.onBrowserEvent(context, elem, getValue(object), event, valueUpdater);
   }
 
@@ -129,6 +148,21 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
    */
   public void render(Context context, T object, SafeHtmlBuilder sb) {
     cell.render(context, getValue(object), sb);
+  }
+
+  /**
+   * Set extra style names that should be applied to every cell.
+   * 
+   * <p>
+   * If you want to apply style names based on the row or cell value, override
+   * {@link #getCellStyleNames(Context, Object)} directly.
+   * </p>
+   * 
+   * @param styleNames the extra style names to applyin a space-separated list,
+   *          or {@code null} if there are no extra styles for this cell
+   */
+  public void setCellStyleNames(String styleNames) {
+    this.cellStyleNames = styleNames;
   }
 
   /**
@@ -149,6 +183,7 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
    * rendered.
    * </p>
    */
+  @Override
   public void setHorizontalAlignment(HorizontalAlignmentConstant align) {
     this.hAlign = align;
   }
@@ -170,6 +205,7 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
    * The new vertical alignment will apply the next time the table is rendered.
    * </p>
    */
+  @Override
   public void setVerticalAlignment(VerticalAlignmentConstant align) {
     this.vAlign = align;
   }
