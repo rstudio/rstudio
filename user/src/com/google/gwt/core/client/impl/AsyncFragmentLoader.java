@@ -93,13 +93,14 @@ public class AsyncFragmentLoader {
    */
   public static class StandardLogger implements Logger {
     /**
-     * Always use this as {@link isStatsAvailable} &amp;&amp;
+     * Always use this as {@link #isStatsAvailable()} &amp;&amp;
      * {@link #stats(JavaScriptObject)}.
      */
     private static native boolean stats(JavaScriptObject data) /*-{
       return $stats(data);
     }-*/;
 
+    @Override
     public void logEventProgress(String eventGroup, String type, int fragment, int size) {
       @SuppressWarnings("unused")
       boolean toss =
@@ -211,6 +212,7 @@ public class AsyncFragmentLoader {
       this.fragment = myFragment;
     }
 
+    @Override
     public void loadTerminated(Throwable reason) {
       if (fragmentLoading != fragment) {
         // fragment already loaded successfully
@@ -600,6 +602,7 @@ public class AsyncFragmentLoader {
 
     if (!isLoading(fragment)) {
       inject(fragment, new AsyncFragmentLoader.LoadTerminatedHandler() {
+        @Override
         public void loadTerminated(Throwable reason) {
           Object[] callbacks = allCallbacks[fragment];
           if (callbacks != null) {
