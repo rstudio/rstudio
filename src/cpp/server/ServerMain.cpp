@@ -295,11 +295,14 @@ int main(int argc, char * const argv[])
       }
 
       // enforce restricted mode if we are running under app armor
+      // note that failure to do this (for whatever unanticipated reason)
+      // is not considered fatal however it is logged as an error
+      // so the sys-admin is informed
       if (options.serverAppArmorEnabled())
       {
          error = app_armor::enforceRestricted();
          if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+            LOG_ERROR(error);
       }
 
       // give up root privilige if requested
