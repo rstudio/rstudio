@@ -23,6 +23,7 @@ import java.util.List;
  * The message sent from the client to the server.
  */
 public interface RequestMessage extends VersionedMessage {
+  String FACTORY = "F";
   String INVOCATION = "I";
   String OPERATIONS = "O";
 
@@ -32,9 +33,15 @@ public interface RequestMessage extends VersionedMessage {
   @PropertyName(OPERATIONS)
   List<OperationMessage> getOperations();
 
+  @PropertyName(FACTORY)
+  String getRequestFactory();
+
   @PropertyName(INVOCATION)
   void setInvocations(List<InvocationMessage> value);
 
   @PropertyName(OPERATIONS)
   void setOperations(List<OperationMessage> value);
+
+  @PropertyName(FACTORY)
+  void setRequestFactory(String value);
 }

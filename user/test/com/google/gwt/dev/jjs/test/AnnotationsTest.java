@@ -43,9 +43,11 @@ public class AnnotationsTest extends GWTTestCase {
       FOO1, FOO2
     }
 
-    NestedEnum value() default NestedEnum.FOO1;
+    // http://bugs.sun.com/view_bug.do?bug_id=6512707
+    NestedEnum value() default com.google.gwt.dev.jjs.test.AnnotationsTest.IFoo.NestedEnum.FOO1;
 
-    Class<? extends NestedEnum> valueClass() default NestedEnum.class;
+    // http://bugs.sun.com/view_bug.do?bug_id=6512707
+    Class<? extends NestedEnum> valueClass() default com.google.gwt.dev.jjs.test.AnnotationsTest.IFoo.NestedEnum.class;
   }
 
   public String getModuleName() {

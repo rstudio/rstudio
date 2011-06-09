@@ -31,6 +31,7 @@ import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Util;
 import com.google.web.bindery.event.shared.SimpleEventBus;
+import com.google.web.bindery.requestfactory.apt.RfApt;
 import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.ClassLoaderLoader;
 import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.ErrorContext;
 import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.Loader;
@@ -62,12 +63,15 @@ import com.google.web.bindery.requestfactory.shared.ServiceName;
 import com.google.web.bindery.requestfactory.shared.ValueProxy;
 import com.google.web.bindery.requestfactory.shared.WriteOperation;
 import com.google.web.bindery.requestfactory.vm.RequestFactorySource;
+import com.google.web.bindery.requestfactory.vm.impl.TypeTokenResolver;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -89,6 +93,8 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
+
+import javax.annotation.processing.Processor;
 
 /**
  * Used to extract RequestFactory client jars from {@code gwt-user.jar}.
@@ -307,6 +313,24 @@ public class RequestFactoryJarExtractor {
         state.source = source;
       }
       super.visitSource(source, debug);
+    }
+  }
+
+  private class EmitOneResource implements Callable<Void> {
+    private final byte[] contents;
+    private final String path;
+
+    private EmitOneResource(String path, byte[] contents) {
+      this.path = path;
+      this.contents = contents;
+    }
+
+    @Override
+    public Void call() throws Exception {
+      if (mode.isEmitClasses()) {
+        emitter.emit(path, new ByteArrayInputStream(contents));
+      }
+      return null;
     }
   }
 
@@ -624,11 +648,13 @@ public class RequestFactoryJarExtractor {
 
     List<Class<?>> clientClasses = new ArrayList<Class<?>>();
     clientClasses.addAll(sharedClasses);
+    clientClasses.add(RfApt.class);
 
     List<Class<?>> serverClasses = new ArrayList<Class<?>>();
     serverClasses.addAll(Arrays.<Class<?>> asList(SERVER_CLASSES));
     serverClasses.addAll(sharedClasses);
 
+    SEEDS.put("apt", Collections.unmodifiableList(Arrays.<Class<?>> asList(RfApt.class)));
     SEEDS.put("client", Collections.unmodifiableList(clientClasses));
     SEEDS.put("server", Collections.unmodifiableList(serverClasses));
 
@@ -671,15 +697,37 @@ public class RequestFactoryJarExtractor {
       System.err.println("Unknown target: " + target);
       System.exit(1);
     }
+    Map<String, byte[]> resources = createResources(target, seeds);
     Mode mode = Mode.match(target);
     Logger errorContext = Logger.getLogger(RequestFactoryJarExtractor.class.getName());
     ClassLoaderLoader classLoader =
         new ClassLoaderLoader(Thread.currentThread().getContextClassLoader());
     JarEmitter jarEmitter = new JarEmitter(new File(args[1]));
     RequestFactoryJarExtractor extractor =
-        new RequestFactoryJarExtractor(errorContext, classLoader, jarEmitter, seeds, mode);
+        new RequestFactoryJarExtractor(errorContext, classLoader, jarEmitter, seeds, resources,
+            mode);
     extractor.run();
     System.exit(extractor.isExecutionFailed() ? 1 : 0);
+  }
+
+  private static Map<String, byte[]> createResources(String target, List<Class<?>> seeds)
+      throws UnsupportedEncodingException, IOException {
+    Map<String, byte[]> resources;
+    if (seeds.contains(RfApt.class)) {
+      // Add the annotation processor manifest
+      resources =
+          Collections.singletonMap("META-INF/services/" + Processor.class.getCanonicalName(),
+              RfApt.class.getCanonicalName().getBytes("UTF-8"));
+    } else if (("test" + CODE_AND_SOURCE).equals(target)) {
+      // Combine all type token maps to run tests
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      TypeTokenResolver resolver = TypeTokenResolver.loadFromClasspath();
+      resolver.store(out);
+      resources = Collections.singletonMap(TypeTokenResolver.TOKEN_MANIFEST, out.toByteArray());
+    } else {
+      resources = Collections.emptyMap();
+    }
+    return resources;
   }
 
   /**
@@ -731,16 +779,18 @@ public class RequestFactoryJarExtractor {
   private final ErrorContext logger;
   private final Loader loader;
   private final Mode mode;
+  private final Map<String, byte[]> resources;
   private final List<Class<?>> seeds;
   private final Map<Type, Type> seen = new ConcurrentHashMap<Type, Type>();
   private final Set<String> sources = new ConcurrentSkipListSet<String>();
   private final ExecutorService writerService;
 
   public RequestFactoryJarExtractor(Logger logger, Loader loader, Emitter emitter,
-      List<Class<?>> seeds, Mode mode) {
+      List<Class<?>> seeds, Map<String, byte[]> resources, Mode mode) {
     this.logger = new ErrorContext(logger);
     this.loader = loader;
     this.emitter = emitter;
+    this.resources = resources;
     this.seeds = seeds;
     this.mode = mode;
 
@@ -755,6 +805,9 @@ public class RequestFactoryJarExtractor {
   public void run() throws IOException {
     for (Class<?> seed : seeds) {
       processType("seeds", Type.getType(seed));
+    }
+    for (Map.Entry<String, byte[]> entry : resources.entrySet()) {
+      writerService.submit(new EmitOneResource(entry.getKey(), entry.getValue()));
     }
     // Wait for all tasks to be completed
     while (!inProcess.isEmpty()) {

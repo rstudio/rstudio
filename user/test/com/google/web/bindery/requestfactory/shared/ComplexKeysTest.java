@@ -23,7 +23,6 @@ import com.google.web.bindery.event.shared.SimpleEventBus;
  * Tests the use of non-trivial EntityProxy and ValueProxy key types.
  */
 public class ComplexKeysTest extends GWTTestCase {
-
   /**
    * The factory being tested.
    */

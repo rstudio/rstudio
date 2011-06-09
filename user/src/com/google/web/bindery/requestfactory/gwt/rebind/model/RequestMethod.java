@@ -17,7 +17,9 @@ package com.google.web.bindery.requestfactory.gwt.rebind.model;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.web.bindery.requestfactory.shared.JsonRpcWireName;
+import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,15 +70,22 @@ public class RequestMethod implements AcceptsModelVisitor {
       toReturn.dataType = dataType;
     }
 
-    public void setDeclarationMethod(JMethod declarationMethod) {
+    public void setDeclarationMethod(JClassType contextType, JMethod declarationMethod) {
       toReturn.declarationMethod = declarationMethod;
 
       JClassType returnClass = declarationMethod.getReturnType().isClassOrInterface();
       JsonRpcWireName annotation = returnClass == null ? null
           : returnClass.getAnnotation(JsonRpcWireName.class);
       if (annotation == null) {
-        toReturn.operation = declarationMethod.getEnclosingType().getQualifiedBinaryName()
-            + "::" + declarationMethod.getName();
+        StringBuilder sb = new StringBuilder("(");
+        for (JType type : declarationMethod.getParameterTypes()) {
+          sb.append(type.getJNISignature());
+        }
+        // Return type ignored
+        sb.append(")V");
+        toReturn.operation =
+            new OperationKey(contextType.getQualifiedBinaryName(), declarationMethod.getName(), sb
+                .toString()).get();
       } else {
         toReturn.operation = annotation.value();
         toReturn.apiVersion = annotation.version();

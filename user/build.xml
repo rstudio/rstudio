@@ -106,6 +106,8 @@
       	<!-- Hibernate is included until we can provide the super source as an third party jar" -->
       	<pathelement location="${gwt.tools.lib}/hibernate/validator/hibernate-validator-4.1.0.Final.jar" />
         <pathelement location="${gwt.tools.lib}/hibernate/validator/hibernate-validator-4.1.0.Final-sources.jar" />
+        <!-- Bootstrap support needed for obfuscated type tokens for JRE runtime -->
+        <pathelement location="${gwt.tools.lib}/requestfactory/requestfactory-apt.jar" />
         <pathelement location="${gwt.dev.jar}" />
       </classpath>
     </gwt.javac>
@@ -136,6 +138,8 @@
         <pathelement location="${javac.out}" />
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
+        <!-- Bootstrap support needed for obfuscated type tokens for JRE runtime -->
+        <pathelement location="${gwt.tools.lib}/requestfactory/requestfactory-apt.jar" />
         <path refid="test.extraclasspath" />
       </classpath>
     </gwt.javac>

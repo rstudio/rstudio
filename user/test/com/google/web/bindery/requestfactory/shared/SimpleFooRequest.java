@@ -26,7 +26,10 @@ import java.util.Set;
  */
 @Service(com.google.web.bindery.requestfactory.server.SimpleFoo.class)
 public interface SimpleFooRequest extends RequestContext {
-  Request<Integer> add(Integer a, int b);
+  Request<Double> add(double a, double b);
+
+  // Test overloaded method names
+  Request<Integer> add(int a, int b);
 
   Request<Long> countSimpleFoo();
 

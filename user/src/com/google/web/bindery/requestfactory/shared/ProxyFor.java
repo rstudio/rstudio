@@ -38,5 +38,6 @@ public @interface ProxyFor {
    * An optional {@link Locator} that provides instances of the domain objects.
    */
   @SuppressWarnings("rawtypes")
-  Class<? extends Locator> locator() default Locator.class;
+  // http://bugs.sun.com/view_bug.do?bug_id=6512707
+  Class<? extends Locator> locator() default com.google.web.bindery.requestfactory.shared.Locator.class;
 }

@@ -28,6 +28,7 @@ import com.google.web.bindery.requestfactory.shared.impl.AbstractRequest;
 import com.google.web.bindery.requestfactory.shared.impl.AbstractRequestContext;
 import com.google.web.bindery.requestfactory.shared.impl.AbstractRequestFactory;
 import com.google.web.bindery.requestfactory.shared.impl.RequestData;
+import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
@@ -94,9 +95,16 @@ class InProcessRequestContext extends AbstractRequestContext {
 
       final RequestData data;
       if (dialect.equals(Dialect.STANDARD)) {
-        String operation = method.getDeclaringClass().getName() + "::" + method.getName();
+        StringBuilder descriptor = new StringBuilder("(");
+        for (Class<?> param : method.getParameterTypes()) {
+          descriptor.append(com.google.gwt.dev.asm.Type.getDescriptor(param));
+        }
+        // Don't care about the return type
+        descriptor.append(")V");
+        OperationKey operation =
+            new OperationKey(context.getName(), method.getName(), descriptor.toString());
 
-        data = new RequestData(operation, actualArgs, returnType, elementType);
+        data = new RequestData(operation.get(), actualArgs, returnType, elementType);
       } else {
         // Calculate request metadata
         JsonRpcWireName wireInfo = method.getReturnType().getAnnotation(JsonRpcWireName.class);
@@ -172,10 +180,13 @@ class InProcessRequestContext extends AbstractRequestContext {
   }
 
   static final Object[] NO_ARGS = new Object[0];
+  private final Class<? extends RequestContext> context;
   private final Dialect dialect;
 
-  protected InProcessRequestContext(AbstractRequestFactory factory, Dialect dialect) {
+  protected InProcessRequestContext(AbstractRequestFactory factory, Dialect dialect,
+      Class<? extends RequestContext> context) {
     super(factory, dialect);
+    this.context = context;
     this.dialect = dialect;
   }
 

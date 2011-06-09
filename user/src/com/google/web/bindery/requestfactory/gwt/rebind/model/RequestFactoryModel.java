@@ -206,7 +206,7 @@ public class RequestFactoryModel implements AcceptsModelVisitor {
       }
 
       RequestMethod.Builder methodBuilder = new RequestMethod.Builder();
-      methodBuilder.setDeclarationMethod(method);
+      methodBuilder.setDeclarationMethod(contextType, method);
 
       if (!validateContextMethodAndSetDataType(methodBuilder, method,
           jsonRpcAnnotation != null)) {
@@ -272,7 +272,7 @@ public class RequestFactoryModel implements AcceptsModelVisitor {
           continue;
         }
         RequestMethod.Builder methodBuilder = new RequestMethod.Builder();
-        methodBuilder.setDeclarationMethod(method);
+        methodBuilder.setDeclarationMethod(entityProxyType, method);
 
         JType transportedType;
         String name = method.getName();

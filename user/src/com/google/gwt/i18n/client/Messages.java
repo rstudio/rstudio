@@ -360,7 +360,8 @@ public interface Messages extends LocalizableResource {
      * be replaced during code generation with the default implementation.
      * </p>
      */
-    Class<? extends PluralRule> value() default PluralRule.class;
+    // http://bugs.sun.com/view_bug.do?bug_id=6512707
+    Class<? extends PluralRule> value() default com.google.gwt.i18n.client.PluralRule.class;
   }
 
   /**

@@ -291,6 +291,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
       // Create the outer envelope message
       AutoBean<RequestMessage> bean = f.request();
       RequestMessage requestMessage = bean.as();
+      requestMessage.setRequestFactory(getRequestFactory().getFactoryTypeToken());
       if (!invocationMessages.isEmpty()) {
         requestMessage.setInvocations(invocationMessages);
       }
@@ -531,8 +532,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
       @Override
       protected RequestData makeRequestData() {
         // This method is normally generated, hence the ugly constructor
-        return new RequestData(
-            "com.google.web.bindery.requestfactory.shared.impl.FindRequest::find",
+        return new RequestData(Constants.FIND_METHOD_OPERATION,
             new Object[] {proxyId}, propertyRefs, proxyId.getProxyClass(), null);
       }
     };

@@ -15,16 +15,16 @@
  */
 package com.google.web.bindery.requestfactory.server;
 
+import com.google.gwt.dev.asm.Type;
 import com.google.web.bindery.autobean.vm.impl.TypeUtils;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
-import com.google.web.bindery.requestfactory.shared.EntityProxy;
-import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.ProxyFor;
 import com.google.web.bindery.requestfactory.shared.ProxyForName;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
+import com.google.web.bindery.requestfactory.shared.RequestFactory;
 import com.google.web.bindery.requestfactory.shared.Service;
 import com.google.web.bindery.requestfactory.shared.ServiceName;
-import com.google.web.bindery.requestfactory.shared.ValueProxy;
+import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -47,6 +47,7 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
       new RequestFactoryInterfaceValidator(log,
           new RequestFactoryInterfaceValidator.ClassLoaderLoader(ServiceLayer.class
               .getClassLoader()));
+  private static final Deobfuscator deobfuscator = validator.getDeobfuscator();
 
   @Override
   public ClassLoader getDomainClassLoader() {
@@ -55,19 +56,16 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
 
   @Override
   public Class<? extends BaseProxy> resolveClass(String typeToken) {
-    Class<?> found = forName(typeToken);
-    if (!EntityProxy.class.isAssignableFrom(found) && !ValueProxy.class.isAssignableFrom(found)) {
-      die(null, "The requested type %s is not assignable to %s or %s", typeToken, EntityProxy.class
-          .getCanonicalName(), ValueProxy.class.getCanonicalName());
-    }
+    String deobfuscated;
     synchronized (validator) {
-      validator.antidote();
-      validator.validateProxy(found.getName());
-      if (validator.isPoisoned()) {
-        die(null, "The type %s did not pass RequestFactory validation", found.getCanonicalName());
-      }
+      deobfuscated = deobfuscator.getTypeFromToken(typeToken);
     }
-    return found.asSubclass(BaseProxy.class);
+
+    if (deobfuscated == null) {
+      die(null, "No type for token %s", typeToken);
+    }
+
+    return forName(deobfuscated).asSubclass(BaseProxy.class);
   }
 
   @Override
@@ -116,60 +114,88 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
   }
 
   @Override
-  public Method resolveDomainMethod(Method requestContextMethod) {
-    Class<?> declaringClass = requestContextMethod.getDeclaringClass();
-    Class<?> searchIn =
-        getTop().resolveServiceClass(declaringClass.asSubclass(RequestContext.class));
-    Class<?>[] parameterTypes = requestContextMethod.getParameterTypes();
-    Class<?>[] domainArgs = new Class<?>[parameterTypes.length];
-    for (int i = 0, j = domainArgs.length; i < j; i++) {
-      if (BaseProxy.class.isAssignableFrom(parameterTypes[i])) {
-        domainArgs[i] = getTop().resolveDomainClass(parameterTypes[i].asSubclass(BaseProxy.class));
-      } else if (EntityProxyId.class.isAssignableFrom(parameterTypes[i])) {
-        domainArgs[i] =
-            TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(EntityProxyId.class,
-                requestContextMethod.getGenericParameterTypes()[i]));
-      } else {
-        domainArgs[i] = parameterTypes[i];
-      }
+  public Method resolveDomainMethod(String operation) {
+    /*
+     * The validator has already determined the mapping from the RequsetContext
+     * method to a domain method signature. We'll reuse this calculation instead
+     * of iterating over all methods.
+     */
+    String domainDescriptor;
+    synchronized (validator) {
+      domainDescriptor = deobfuscator.getDomainMethodDescriptor(operation);
     }
+
+    if (domainDescriptor == null) {
+      return die(null, "No domain method descriptor is mapped to operation %s", operation);
+    }
+
+    Class<?>[] domainArgs = getArgumentTypes(domainDescriptor);
+    Class<? extends RequestContext> requestContext = getTop().resolveRequestContext(operation);
+    Class<?> serviceImplementation = getTop().resolveServiceClass(requestContext);
+
+    // Request<FooProxy> someMethod(int a, double b, FooProxy c);
+    Method requestContextMethod = getTop().resolveRequestContextMethod(operation);
 
     Throwable ex;
     try {
-      return searchIn.getMethod(requestContextMethod.getName(), domainArgs);
+      return serviceImplementation.getMethod(requestContextMethod.getName(), domainArgs);
     } catch (SecurityException e) {
       ex = e;
     } catch (NoSuchMethodException e) {
-      return report("Could not locate domain method %s", requestContextMethod.getName());
+      ex = e;
     }
-    return die(ex, "Could not get domain method %s in type %s", requestContextMethod.getName(),
-        searchIn.getCanonicalName());
+
+    return die(ex,
+        "Could not find method in implementation %s matching descriptor %s for operation %s",
+        serviceImplementation.getCanonicalName(), domainDescriptor, operation);
   }
 
   @Override
-  public Method resolveRequestContextMethod(String requestContextClass, String methodName) {
+  public Class<? extends RequestContext> resolveRequestContext(String operation) {
+    String requestContextClass;
+    synchronized (validator) {
+      requestContextClass = deobfuscator.getRequestContext(operation);
+    }
+    if (requestContextClass == null) {
+      die(null, "No RequestContext for operation %s", operation);
+    }
+    return forName(requestContextClass).asSubclass(RequestContext.class);
+  }
+
+  @Override
+  public Method resolveRequestContextMethod(String operation) {
+    Class<?> searchIn = getTop().resolveRequestContext(operation);
+    String methodName;
+    String descriptor;
+    synchronized (validator) {
+      methodName = deobfuscator.getRequestContextMethodName(operation);
+      descriptor = deobfuscator.getRequestContextMethodDescriptor(operation);
+    }
+    Class<?>[] params = getArgumentTypes(descriptor);
+    try {
+      return searchIn.getMethod(methodName, params);
+    } catch (NoSuchMethodException ex) {
+      return report("Could not locate %s operation %s", RequestContext.class.getSimpleName(),
+          operation);
+    }
+  }
+
+  @Override
+  public Class<? extends RequestFactory> resolveRequestFactory(String binaryName) {
     synchronized (validator) {
       validator.antidote();
-      validator.validateRequestContext(requestContextClass);
+      validator.validateRequestFactory(binaryName);
       if (validator.isPoisoned()) {
-        die(null, "The RequestContext type %s did not pass validation", requestContextClass);
+        die(null, "The RequestFactory %s did not pass validation", binaryName);
       }
     }
-    Class<?> searchIn = forName(requestContextClass);
-    for (Method method : searchIn.getMethods()) {
-      if (method.getName().equals(methodName)) {
-        return method;
-      }
-    }
-    return report("Could not locate %s method %s::%s", RequestContext.class.getSimpleName(),
-        requestContextClass, methodName);
+    return forName(binaryName).asSubclass(RequestFactory.class);
   }
 
   @Override
   public Class<?> resolveServiceClass(Class<? extends RequestContext> requestContextClass) {
     Class<?> searchIn = null;
     Service s = requestContextClass.getAnnotation(Service.class);
-    // TODO Handle case when both annotations are present
     if (s != null) {
       searchIn = s.value();
     }
@@ -186,7 +212,7 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
 
   @Override
   public String resolveTypeToken(Class<? extends BaseProxy> clazz) {
-    return clazz.getName();
+    return OperationKey.hash(clazz.getName());
   }
 
   /**
@@ -198,6 +224,45 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
       return Class.forName(name, false, getTop().getDomainClassLoader());
     } catch (ClassNotFoundException e) {
       return die(e, "Could not locate class %s", name);
+    }
+  }
+
+  private Class<?>[] getArgumentTypes(String descriptor) {
+    Type[] types = Type.getArgumentTypes(descriptor);
+    Class<?>[] params = new Class<?>[types.length];
+    for (int i = 0, j = types.length; i < j; i++) {
+      params[i] = getClass(types[i]);
+    }
+    return params;
+  }
+
+  private Class<?> getClass(Type type) {
+    switch (type.getSort()) {
+      case Type.BOOLEAN:
+        return boolean.class;
+      case Type.BYTE:
+        return byte.class;
+      case Type.CHAR:
+        return char.class;
+      case Type.DOUBLE:
+        return double.class;
+      case Type.FLOAT:
+        return float.class;
+      case Type.INT:
+        return int.class;
+      case Type.LONG:
+        return long.class;
+      case Type.OBJECT:
+        return forName(type.getClassName());
+      case Type.SHORT:
+        return short.class;
+      case Type.VOID:
+        return void.class;
+      case Type.ARRAY:
+        return die(null, "Unsupported Type used in operation descriptor %s", type.getDescriptor());
+      default:
+        // Error in this switch statement
+        return die(null, "Unhandled Type: %s", type.getDescriptor());
     }
   }
 }

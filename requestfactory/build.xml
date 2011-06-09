@@ -5,6 +5,7 @@
 
   <!-- Remove all output files -->
   <target name="clean" description="Cleans this project's output files">
+    <delete file="${gwt.build.lib}/requestfactory-apt.jar" />
     <delete file="${gwt.build.lib}/requestfactory-client.jar" />
     <delete file="${gwt.build.lib}/requestfactory-client-src.jar" />
     <delete file="${gwt.build.lib}/requestfactory-client+src.jar" />
@@ -40,6 +41,9 @@
   </macrodef>
  
   <!-- Targets for individual jars -->
+  <target name="requestfactory-apt" description="Build RequestFactory apt jar">
+    <requestfactory-jar target="apt"/>
+  </target>
 
   <target name="requestfactory-client" description="Build RequestFactory client jar">
     <requestfactory-jar target="client"/>
@@ -71,7 +75,7 @@
   </target>
 
   <!-- Build all client jars -->
-  <target name="clientjars" depends="requestfactory-client,requestfactory-client-src,requestfactory-client+src" description="Build requestfactory client jars" />
+  <target name="clientjars" depends="requestfactory-apt,requestfactory-client,requestfactory-client-src,requestfactory-client+src" description="Build requestfactory client jars" />
 
   <!-- Build all server jars -->
   <target name="serverjars" depends="requestfactory-server,requestfactory-server-src,requestfactory-server+src" description="Build requestfactory server jars" />
@@ -96,7 +100,9 @@
         <fileset dir="${gwt.tools.lib}" includes="hibernate/validator/hibernate-validator-4.1.0.Final.jar" />
         <fileset dir="${gwt.tools.lib}" includes="javax/validation/validation-api-1.0.0.GA.jar" />
         <fileset dir="${gwt.tools.lib}" includes="javax/xml/bind/jaxb-api-2.1.jar" />
+        <fileset dir="${gwt.build.lib}" includes="requestfactory-apt.jar" />
         <fileset dir="${gwt.build.lib}" includes="requestfactory-test+src.jar" />
+
       </classpath>
     </java>
   </target>

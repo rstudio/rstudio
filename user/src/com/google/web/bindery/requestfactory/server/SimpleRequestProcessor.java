@@ -29,6 +29,7 @@ import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.InstanceRequest;
 import com.google.web.bindery.requestfactory.shared.Request;
+import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 import com.google.web.bindery.requestfactory.shared.WriteOperation;
 import com.google.web.bindery.requestfactory.shared.impl.BaseProxyCategory;
@@ -195,6 +196,10 @@ public class SimpleRequestProcessor {
    */
   void process(RequestMessage req, ResponseMessage resp) {
     final RequestState source = new RequestState(service);
+
+    // Make sure the RequestFactory is valid
+    service.resolveRequestFactory(req.getRequestFactory());
+
     // Apply operations
     processOperationMessages(source, req);
 
@@ -414,13 +419,13 @@ public class SimpleRequestProcessor {
     for (InvocationMessage invocation : invocations) {
       try {
         // Find the Method
-        String[] operation = invocation.getOperation().split("::");
-        Method contextMethod = service.resolveRequestContextMethod(operation[0], operation[1]);
+        String operation = invocation.getOperation();
+        Method contextMethod = service.resolveRequestContextMethod(operation);
         if (contextMethod == null) {
           throw new UnexpectedException("Cannot resolve operation " + invocation.getOperation(),
               null);
         }
-        Method domainMethod = service.resolveDomainMethod(contextMethod);
+        Method domainMethod = service.resolveDomainMethod(operation);
         if (domainMethod == null) {
           throw new UnexpectedException(
               "Cannot resolve domain method " + invocation.getOperation(), null);
@@ -430,7 +435,8 @@ public class SimpleRequestProcessor {
         List<Object> args = decodeInvocationArguments(state, invocation, contextMethod);
         // Possibly use a ServiceLocator
         if (service.requiresServiceLocator(contextMethod, domainMethod)) {
-          Object serviceInstance = service.createServiceInstance(contextMethod, domainMethod);
+          Class<? extends RequestContext> requestContext = service.resolveRequestContext(operation);
+          Object serviceInstance = service.createServiceInstance(requestContext);
           args.add(0, serviceInstance);
         }
         // Invoke it

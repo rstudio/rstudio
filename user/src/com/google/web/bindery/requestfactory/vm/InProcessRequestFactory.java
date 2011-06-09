@@ -16,8 +16,6 @@
 package com.google.web.bindery.requestfactory.vm;
 
 import com.google.web.bindery.autobean.shared.AutoBeanFactory;
-import com.google.web.bindery.autobean.shared.AutoBeanFactory.Category;
-import com.google.web.bindery.autobean.shared.AutoBeanFactory.NoWrap;
 import com.google.web.bindery.autobean.vm.AutoBeanFactorySource;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
@@ -33,7 +31,10 @@ import com.google.web.bindery.requestfactory.shared.impl.BaseProxyCategory;
 import com.google.web.bindery.requestfactory.shared.impl.EntityProxyCategory;
 import com.google.web.bindery.requestfactory.shared.impl.ValueProxyCategory;
 import com.google.web.bindery.requestfactory.vm.InProcessRequestContext.RequestContextHandler;
+import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
+import com.google.web.bindery.requestfactory.vm.impl.TypeTokenResolver;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -43,8 +44,9 @@ import java.lang.reflect.Proxy;
  * A JRE-compatible implementation of RequestFactory.
  */
 class InProcessRequestFactory extends AbstractRequestFactory {
-  @Category(value = {EntityProxyCategory.class, ValueProxyCategory.class, BaseProxyCategory.class})
-  @NoWrap(EntityProxyId.class)
+  @AutoBeanFactory.Category(value = {
+      EntityProxyCategory.class, ValueProxyCategory.class, BaseProxyCategory.class})
+  @AutoBeanFactory.NoWrap(EntityProxyId.class)
   interface Factory extends AutoBeanFactory {
   }
 
@@ -65,10 +67,27 @@ class InProcessRequestFactory extends AbstractRequestFactory {
           method.getReturnType().isAnnotationPresent(JsonRpcService.class) ? Dialect.JSON_RPC
               : Dialect.STANDARD;
       RequestContextHandler handler =
-          new InProcessRequestContext(InProcessRequestFactory.this, dialect).new RequestContextHandler();
+          new InProcessRequestContext(InProcessRequestFactory.this, dialect, context).new RequestContextHandler();
       return context.cast(Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
           new Class<?>[] {context}, handler));
     }
+  }
+
+  private final Class<? extends RequestFactory> requestFactoryInterface;
+  private final TypeTokenResolver deobfuscator;
+
+  public InProcessRequestFactory(Class<? extends RequestFactory> requestFactoryInterface) {
+    this.requestFactoryInterface = requestFactoryInterface;
+    try {
+      deobfuscator = TypeTokenResolver.loadFromClasspath();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public String getFactoryTypeToken() {
+    return requestFactoryInterface.getName();
   }
 
   @Override
@@ -94,9 +113,13 @@ class InProcessRequestFactory extends AbstractRequestFactory {
   @Override
   @SuppressWarnings("unchecked")
   protected <P extends BaseProxy> Class<P> getTypeFromToken(String typeToken) {
+    String deobfuscated = deobfuscator.getTypeFromToken(typeToken);
+    if (deobfuscated == null) {
+      throw new RuntimeException("Did not have deobfuscation data for " + typeToken);
+    }
     try {
       Class<? extends BaseProxy> found =
-          Class.forName(typeToken, false, Thread.currentThread().getContextClassLoader())
+          Class.forName(deobfuscated, false, Thread.currentThread().getContextClassLoader())
               .asSubclass(BaseProxy.class);
       return (Class<P>) found;
     } catch (ClassNotFoundException e) {
@@ -106,6 +129,6 @@ class InProcessRequestFactory extends AbstractRequestFactory {
 
   @Override
   protected String getTypeToken(Class<? extends BaseProxy> clazz) {
-    return isEntityType(clazz) || isValueType(clazz) ? clazz.getName() : null;
+    return isEntityType(clazz) || isValueType(clazz) ? OperationKey.hash(clazz.getName()) : null;
   }
 }

@@ -15,13 +15,6 @@
  */
 package com.google.web.bindery.requestfactory.gwt.rebind;
 
-import com.google.web.bindery.autobean.gwt.rebind.model.JBeanMethod;
-import com.google.web.bindery.autobean.shared.AutoBean;
-import com.google.web.bindery.autobean.shared.AutoBean.PropertyName;
-import com.google.web.bindery.autobean.shared.AutoBeanFactory;
-import com.google.web.bindery.autobean.shared.AutoBeanFactory.Category;
-import com.google.web.bindery.autobean.shared.AutoBeanFactory.NoWrap;
-import com.google.web.bindery.autobean.shared.impl.EnumMap.ExtraEnums;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
@@ -38,24 +31,32 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.rebind.model.ModelUtils;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
+import com.google.web.bindery.autobean.gwt.rebind.model.JBeanMethod;
+import com.google.web.bindery.autobean.shared.AutoBean;
+import com.google.web.bindery.autobean.shared.AutoBean.PropertyName;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory.Category;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory.NoWrap;
+import com.google.web.bindery.autobean.shared.impl.EnumMap.ExtraEnums;
 import com.google.web.bindery.requestfactory.gwt.client.impl.AbstractClientRequestFactory;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.AcceptsModelVisitor;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.ContextMethod;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.EntityProxyModel;
+import com.google.web.bindery.requestfactory.gwt.rebind.model.EntityProxyModel.Type;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.ModelVisitor;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.RequestFactoryModel;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.RequestMethod;
-import com.google.web.bindery.requestfactory.gwt.rebind.model.EntityProxyModel.Type;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.JsonRpcContent;
 import com.google.web.bindery.requestfactory.shared.impl.AbstractRequest;
 import com.google.web.bindery.requestfactory.shared.impl.AbstractRequestContext;
+import com.google.web.bindery.requestfactory.shared.impl.AbstractRequestContext.Dialect;
 import com.google.web.bindery.requestfactory.shared.impl.AbstractRequestFactory;
 import com.google.web.bindery.requestfactory.shared.impl.BaseProxyCategory;
 import com.google.web.bindery.requestfactory.shared.impl.EntityProxyCategory;
 import com.google.web.bindery.requestfactory.shared.impl.RequestData;
 import com.google.web.bindery.requestfactory.shared.impl.ValueProxyCategory;
-import com.google.web.bindery.requestfactory.shared.impl.AbstractRequestContext.Dialect;
+import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
 
 import java.io.PrintWriter;
 import java.util.Collection;
@@ -363,14 +364,14 @@ public class RequestFactoryGenerator extends Generator {
         // makeRequestData()
         sw.println("@Override protected %s makeRequestData() {", RequestData.class
             .getCanonicalName());
-        // return new RequestData("Foo::bar", {parameters}, propertyRefs,
-        // List.class, FooProxy.class);
         String elementType =
             request.isCollectionType() ? request.getCollectionElementType()
                 .getQualifiedSourceName()
                 + ".class" : "null";
         String returnTypeBaseQualifiedName =
             ModelUtils.ensureBaseType(request.getDataType()).getQualifiedSourceName();
+        // return new RequestData("ABC123", {parameters}, propertyRefs,
+        // List.class, FooProxy.class);
         sw.indentln("return new %s(\"%s\", new Object[] {%s}, propertyRefs, %s.class, %s);",
             RequestData.class.getCanonicalName(), operation, parameterArray,
             returnTypeBaseQualifiedName, elementType);
@@ -456,11 +457,11 @@ public class RequestFactoryGenerator extends Generator {
     sw.indent();
     for (EntityProxyModel type : model.getAllProxyModels()) {
       // tokensToTypes.put("Foo", Foo.class);
-      sw.println("tokensToTypes.put(\"%s\", %s.class);", type.getQualifiedBinaryName(), type
-          .getQualifiedSourceName());
+      sw.println("tokensToTypes.put(\"%s\", %s.class);", OperationKey.hash(type
+          .getQualifiedBinaryName()), type.getQualifiedSourceName());
       // typesToTokens.put(Foo.class, Foo);
-      sw.println("typesToTokens.put(%s.class, \"%s\");", type.getQualifiedSourceName(), type
-          .getQualifiedBinaryName());
+      sw.println("typesToTokens.put(%s.class, \"%s\");", type.getQualifiedSourceName(),
+          OperationKey.hash(type.getQualifiedBinaryName()));
       // fooProxyTypes.add(MyFooProxy.class);
       sw.println("%s.add(%s.class);", type.getType().equals(Type.ENTITY) ? "entityProxyTypes"
           : "valueProxyTypes", type.getQualifiedSourceName());
@@ -469,6 +470,9 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
 
     // Write instance methods
+    sw.println("@Override public String getFactoryTypeToken() {");
+    sw.indentln("return \"%s\";", model.getFactoryType().getQualifiedBinaryName());
+    sw.println("}");
     sw.println("@Override protected Class getTypeFromToken(String typeToken) {");
     sw.indentln("return tokensToTypes.get(typeToken);");
     sw.println("}");

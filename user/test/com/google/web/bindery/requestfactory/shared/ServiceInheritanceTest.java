@@ -20,8 +20,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
 /**
- * Tests the ability of instance services to inherit methods
- * from a base class.
+ * Tests the ability of instance services to inherit methods from a base class.
  */
 public class ServiceInheritanceTest extends GWTTestCase {
 
@@ -45,15 +44,22 @@ public class ServiceInheritanceTest extends GWTTestCase {
    */
   protected interface Factory extends RequestFactory {
     SumServiceBase baseContext();
+
     SumServiceSub subContext();
+  }
+
+  /**
+   * Demonstrate that mix-in interfaces work correctly.
+   */
+  interface HasAdd {
+    Request<Integer> add(int n);
   }
 
   /**
    * Specifies the base class implementation.
    */
   @Service(value = BaseImpl.class, locator = SumServiceLocator.class)
-  interface SumServiceBase extends RequestContext {
-    Request<Integer> add(int n);
+  interface SumServiceBase extends RequestContext, HasAdd {
     Request<Integer> subtract(int n);
   }
 
@@ -61,9 +67,7 @@ public class ServiceInheritanceTest extends GWTTestCase {
    * Specifies the subclass implementation.
    */
   @Service(value = SubclassImpl.class, locator = SumServiceLocator.class)
-  interface SumServiceSub extends RequestContext {
-    Request<Integer> add(int n);
-    Request<Integer> subtract(int n);
+  interface SumServiceSub extends SumServiceBase {
   }
 
   /**
@@ -79,15 +83,14 @@ public class ServiceInheritanceTest extends GWTTestCase {
     public Integer add(int n) {
       return initialValue + n;
     }
-    
+
     public Integer subtract(int n) {
       return initialValue - n;
     }
   }
 
   /**
-   * Subclass implementation of {@link SumServiceSub}
-   * inherits the add() method.
+   * Subclass implementation of {@link SumServiceSub} inherits the add() method.
    */
   static class SubclassImpl extends BaseImpl {
     public SubclassImpl() {
@@ -97,7 +100,7 @@ public class ServiceInheritanceTest extends GWTTestCase {
        */
       initialValue = 8;
     }
-    
+
     @Override
     public Integer subtract(int n) {
       return 0;

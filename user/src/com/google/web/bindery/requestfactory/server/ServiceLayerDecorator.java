@@ -18,6 +18,7 @@ package com.google.web.bindery.requestfactory.server;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.Locator;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
+import com.google.web.bindery.requestfactory.shared.RequestFactory;
 import com.google.web.bindery.requestfactory.shared.ServiceLocator;
 
 import java.lang.reflect.InvocationTargetException;
@@ -56,8 +57,8 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public Object createServiceInstance(Method contextMethod, Method domainMethod) {
-    return getNext().createServiceInstance(contextMethod, domainMethod);
+  public Object createServiceInstance(Class<? extends RequestContext> requestContext) {
+    return getNext().createServiceInstance(requestContext);
   }
 
   @Override
@@ -147,8 +148,8 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public Method resolveDomainMethod(Method requestContextMethod) {
-    return getNext().resolveDomainMethod(requestContextMethod);
+  public Method resolveDomainMethod(String operation) {
+    return getNext().resolveDomainMethod(operation);
   }
 
   @Override
@@ -157,8 +158,18 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public Method resolveRequestContextMethod(String requestContextClass, String methodName) {
-    return getNext().resolveRequestContextMethod(requestContextClass, methodName);
+  public Class<? extends RequestContext> resolveRequestContext(String operation) {
+    return getNext().resolveRequestContext(operation);
+  }
+
+  @Override
+  public Method resolveRequestContextMethod(String operation) {
+    return getNext().resolveRequestContextMethod(operation);
+  }
+
+  @Override
+  public Class<? extends RequestFactory> resolveRequestFactory(String binaryName) {
+    return getNext().resolveRequestFactory(binaryName);
   }
 
   @Override
@@ -167,9 +178,9 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public Class<? extends ServiceLocator> resolveServiceLocator(Method contextMethod,
-      Method domainMethod) {
-    return getNext().resolveServiceLocator(contextMethod, domainMethod);
+  public Class<? extends ServiceLocator> resolveServiceLocator(
+      Class<? extends RequestContext> requestContext) {
+    return getNext().resolveServiceLocator(requestContext);
   }
 
   @Override

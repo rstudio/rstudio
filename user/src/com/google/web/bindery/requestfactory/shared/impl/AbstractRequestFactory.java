@@ -66,6 +66,12 @@ public abstract class AbstractRequestFactory extends IdFactory implements Reques
     return eventBus;
   }
 
+  /**
+   * Returns a type token for the RequestFactory instance, which is used to seed
+   * operation and type token resolution on the server.
+   */
+  public abstract String getFactoryTypeToken();
+
   public String getHistoryToken(Class<? extends EntityProxy> clazz) {
     return getTypeToken(clazz);
   }

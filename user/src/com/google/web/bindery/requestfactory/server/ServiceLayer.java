@@ -18,6 +18,7 @@ package com.google.web.bindery.requestfactory.server;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.Locator;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
+import com.google.web.bindery.requestfactory.shared.RequestFactory;
 import com.google.web.bindery.requestfactory.shared.ServiceLocator;
 
 import java.lang.reflect.Method;
@@ -72,6 +73,8 @@ public abstract class ServiceLayer {
     list.add(new LocatorServiceLayer());
     // Interact with domain objects
     list.add(new ReflectiveServiceLayer());
+    // Add shortcut for find's operation
+    list.add(new FindServiceLayer());
     // Locate domain objects
     list.add(new ResolverServiceLayer());
 
@@ -121,11 +124,11 @@ public abstract class ServiceLayer {
    * Create an instance of a service object that can be used as the target for
    * the given method invocation.
    * 
-   * @param contextMethod a method defined in a RequestContext
-   * @param domainMethod the method that the service object must implement
+   * @param requestContext the RequestContext type for which a service object
+   *          must be instantiated.
    * @return an instance of the requested service object
    */
-  public abstract Object createServiceInstance(Method contextMethod, Method domainMethod);
+  public abstract Object createServiceInstance(Class<? extends RequestContext> requestContext);
 
   /**
    * Create an instance of the requested {@link ServiceLocator} type.
@@ -314,10 +317,13 @@ public abstract class ServiceLayer {
    * declaration. The {@code requestContextMethod} will have been previously
    * resolved by {@link #resolveRequestContextMethod(String, String)}.
    * 
-   * @param requestContextMethod a RequestContext method declaration.
+   * @param requestContext the RequestContext requested by the client
+   * @param requestContextMethod a RequestContext method declaration. Note that
+   *          this Method may be defined in a supertype of
+   *          {@code requestContext}
    * @return the domain service method that should be invoked
    */
-  public abstract Method resolveDomainMethod(Method requestContextMethod);
+  public abstract Method resolveDomainMethod(String operation);
 
   /**
    * Return the type of {@link Locator} that should be used to access the given
@@ -330,20 +336,38 @@ public abstract class ServiceLayer {
   public abstract Class<? extends Locator<?, ?>> resolveLocator(Class<?> domainType);
 
   /**
+   * Find a RequestContext that should be used to fulfill the requested
+   * operation.
+   * 
+   * @param operation the operation
+   * @return the RequestContext or {@code null} if no RequestContext exists that
+   *         can fulfill the operation
+   */
+  public abstract Class<? extends RequestContext> resolveRequestContext(String operation);
+
+  /**
    * Find a RequestContext method declaration by name.
    * 
-   * @param requestContextClass the fully-qualified binary name of the
-   *          RequestContext
-   * @param methodName the name of the service method declared within the
-   *          RequestContext
+   * @param operation the operation's name
    * @return the method declaration, or {@code null} if the method does not
    *         exist
    */
-  public abstract Method resolveRequestContextMethod(String requestContextClass, String methodName);
+  public abstract Method resolveRequestContextMethod(String operation);
+
+  /**
+   * Loads and validates a RequestFactory interface.
+   * 
+   * @param token the RequestFactory's type token (usually the type's binary
+   *          name)
+   * @return the RequestFactory type
+   */
+  public abstract Class<? extends RequestFactory> resolveRequestFactory(String token);
 
   /**
    * Given a {@link RequestContext} method, find the service class referenced in
-   * the {@link Service} or {@link ServiceName} annotation.
+   * the {@link com.google.web.bindery.requestfactory.shared.Service Service} or
+   * {@link com.google.web.bindery.requestfactory.shared.ServiceName
+   * ServiceName} annotation.
    * 
    * @param requestContextClass a RequestContext interface
    * @return the type of service to use
@@ -357,12 +381,12 @@ public abstract class ServiceLayer {
    * {@link #requiresServiceLocator(Method, Method)} returned {@code true} for
    * the associated domain method.
    * 
-   * @param contextMethod a RequestContext method declaration
-   * @param domainMethod the domain method that will be invoked
+   * @param requestContext the RequestContext for which a ServiceLocator must be
+   *          located
    * @return the type of ServiceLocator to use
    */
-  public abstract Class<? extends ServiceLocator> resolveServiceLocator(Method contextMethod,
-      Method domainMethod);
+  public abstract Class<? extends ServiceLocator> resolveServiceLocator(
+      Class<? extends RequestContext> requestContext);
 
   /**
    * Return a string used to represent the given type in the wire protocol.

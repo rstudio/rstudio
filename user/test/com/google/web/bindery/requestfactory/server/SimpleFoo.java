@@ -46,7 +46,11 @@ public class SimpleFoo {
 
   private static Long nextId = 1L;
 
-  public static Integer add(Integer a, int b) {
+  public static Double add(double a, double b) {
+    return a + b;
+  }
+
+  public static Integer add(int a, int b) {
     return a + b;
   }
 

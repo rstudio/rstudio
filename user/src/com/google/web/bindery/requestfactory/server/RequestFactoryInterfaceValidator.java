@@ -15,7 +15,6 @@
  */
 package com.google.web.bindery.requestfactory.server;
 
-import com.google.web.bindery.autobean.shared.ValueCodex;
 import com.google.gwt.dev.asm.AnnotationVisitor;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
@@ -29,6 +28,7 @@ import com.google.gwt.dev.asm.signature.SignatureVisitor;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Name.SourceOrBinaryName;
+import com.google.web.bindery.autobean.shared.ValueCodex;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.InstanceRequest;
@@ -41,6 +41,7 @@ import com.google.web.bindery.requestfactory.shared.Service;
 import com.google.web.bindery.requestfactory.shared.ServiceName;
 import com.google.web.bindery.requestfactory.shared.SkipInterfaceValidation;
 import com.google.web.bindery.requestfactory.shared.ValueProxy;
+import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -649,19 +650,30 @@ public class RequestFactoryInterfaceValidator {
    */
   private final Map<Type, Set<RFMethod>> methodsInHierarchy = new HashMap<Type, Set<RFMethod>>();
   /**
+   * Used to resolve obfuscated type tokens.
+   */
+  private final Map<String, Type> typeTokens = new HashMap<String, Type>();
+  /**
    * The type {@link Object}.
    */
   private final Type objectType = Type.getObjectType("java/lang/Object");
+  /**
+   * Maps obfuscated operation names to dispatch information.
+   */
+  private final Map<OperationKey, OperationData> operationData =
+      new HashMap<OperationKey, OperationData>();
   private final ErrorContext parentLogger;
   private boolean poisoned;
   /**
    * The type {@link Request}.
    */
   private final Type requestIntf = Type.getType(Request.class);
+
   /**
    * The type {@link RequestContext}.
    */
   private final Type requestContextIntf = Type.getType(RequestContext.class);
+
   /**
    * A map of a type to all types that it could be assigned to.
    */
@@ -714,6 +726,11 @@ public class RequestFactoryInterfaceValidator {
    */
   public void antidote() {
     poisoned = false;
+  }
+
+  public Deobfuscator getDeobfuscator() {
+    return new Deobfuscator.Builder().setOperationData(operationData).setTypeTokens(typeTokens)
+        .build();
   }
 
   /**
@@ -829,8 +846,17 @@ public class RequestFactoryInterfaceValidator {
       }
 
       // Check the client method against the domain
-      checkClientMethodInDomain(logger, method, domainServiceType, !clientToLocatorMap
-          .containsKey(requestContextType));
+      Method found =
+          checkClientMethodInDomain(logger, method, domainServiceType, !clientToLocatorMap
+              .containsKey(requestContextType));
+      if (found != null) {
+        OperationKey key = new OperationKey(binaryName, method.getName(), method.getDescriptor());
+        OperationData data =
+            new OperationData.Builder().setClientMethodDescriptor(method.getDescriptor())
+                .setDomainMethodDescriptor(found.getDescriptor()).setMethodName(method.getName())
+                .setRequestContext(requestContextType.getClassName()).build();
+        operationData.put(key, data);
+      }
       maybeCheckReferredProxies(logger, method);
     }
 
@@ -981,7 +1007,7 @@ public class RequestFactoryInterfaceValidator {
    * Check that a given method RequestContext method declaration can be mapped
    * to the server's domain type.
    */
-  private void checkClientMethodInDomain(ErrorContext logger, RFMethod method,
+  private RFMethod checkClientMethodInDomain(ErrorContext logger, RFMethod method,
       Type domainServiceType, boolean requireStaticMethodsForRequestType) {
     logger = logger.setMethod(method);
 
@@ -1007,6 +1033,7 @@ public class RequestFactoryInterfaceValidator {
             + " service method is not static", method.getName(), Request.class.getCanonicalName());
       }
     }
+    return found;
   }
 
   /**
@@ -1215,7 +1242,7 @@ public class RequestFactoryInterfaceValidator {
    */
   private RFMethod findCompatibleServiceMethod(final ErrorContext logger, Type domainType,
       Method searchFor, boolean mustFind) {
-    return findCompatibleMethod(logger, domainType, searchFor, mustFind, false, true);
+    return findCompatibleMethod(logger, domainType, searchFor, mustFind, true, true);
   }
 
   /**
@@ -1473,6 +1500,7 @@ public class RequestFactoryInterfaceValidator {
     }
 
     Type proxyType = Type.getObjectType(BinaryName.toInternalName(binaryName));
+    typeTokens.put(OperationKey.hash(binaryName), proxyType);
     ErrorContext logger = parentLogger.setType(proxyType);
 
     // Quick sanity check for calling code

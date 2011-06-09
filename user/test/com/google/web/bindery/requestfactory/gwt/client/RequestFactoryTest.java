@@ -1121,7 +1121,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
   public void testNullValueInIntegerListRequest() {
     delayTestFinish(DELAY_TEST_FINISH);
-    List<Integer> list = Arrays.asList(new Integer[] {1, 2, null});
+    List<Integer> list = Arrays.asList(new Integer[]{1, 2, null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInIntegerList(list);
     fooReq.fire(new Receiver<Void>() {
       @Override
@@ -1136,7 +1136,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
   public void testNullValueInStringListRequest() {
     delayTestFinish(DELAY_TEST_FINISH);
-    List<String> list = Arrays.asList(new String[] {"nonnull", "null", null});
+    List<String> list = Arrays.asList(new String[]{"nonnull", "null", null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInStringList(list);
     fooReq.fire(new Receiver<Void>() {
       @Override
@@ -2000,10 +2000,22 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
   public void testPrimitiveParameter() {
     delayTestFinish(DELAY_TEST_FINISH);
-    simpleFooRequest().add(3, 5).fire(new Receiver<Integer>() {
+    SimpleFooRequest ctx = simpleFooRequest();
+    ctx.add(3, 5).to(new Receiver<Integer>() {
       @Override
       public void onSuccess(Integer response) {
         assertTrue(8 == response);
+      }
+    });
+    ctx.add(4.0, 5.0).to(new Receiver<Double>() {
+      @Override
+      public void onSuccess(Double response) {
+        assertTrue(9.0 == response);
+      }
+    });
+    ctx.fire(new Receiver<Void>() {
+      @Override
+      public void onSuccess(Void response) {
         finishTestAndReset();
       }
     });
@@ -2639,7 +2651,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             assertEquals(value, v.getRootBean());
             assertEquals(value, v.getLeafBean());
             assertEquals("shouldBeNull", v.getPropertyPath().toString());
-            
+
             // Forward to onViolation()
             super.onConstraintViolation(errors);
           }

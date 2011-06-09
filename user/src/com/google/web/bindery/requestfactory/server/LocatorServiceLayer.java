@@ -49,14 +49,10 @@ final class LocatorServiceLayer extends ServiceLayerDecorator {
   }
 
   @Override
-  public Object createServiceInstance(Method contextMethod, Method domainMethod) {
-    Class<? extends ServiceLocator> locatorType =
-        getTop().resolveServiceLocator(contextMethod, domainMethod);
+  public Object createServiceInstance(Class<? extends RequestContext> requestContext) {
+    Class<? extends ServiceLocator> locatorType = getTop().resolveServiceLocator(requestContext);
     ServiceLocator locator = getTop().createServiceLocator(locatorType);
-    // Enclosing class may be a parent class, so invoke on service class
-    Class<?> declaringClass = contextMethod.getDeclaringClass();
-    Class<?> serviceClass =
-        getTop().resolveServiceClass(declaringClass.asSubclass(RequestContext.class));
+    Class<?> serviceClass = getTop().resolveServiceClass(requestContext);
     return locator.getInstance(serviceClass);
   }
 
@@ -139,14 +135,12 @@ final class LocatorServiceLayer extends ServiceLayerDecorator {
   }
 
   @Override
-  public Class<? extends ServiceLocator> resolveServiceLocator(Method contextMethod,
-      Method domainMethod) {
+  public Class<? extends ServiceLocator> resolveServiceLocator(
+      Class<? extends RequestContext> requestContext) {
     Class<? extends ServiceLocator> locatorType;
 
-    // Look at the RequestContext
-    Class<?> requestContextClass = contextMethod.getDeclaringClass();
-    Service l = requestContextClass.getAnnotation(Service.class);
-    ServiceName ln = requestContextClass.getAnnotation(ServiceName.class);
+    Service l = requestContext.getAnnotation(Service.class);
+    ServiceName ln = requestContext.getAnnotation(ServiceName.class);
     if (l != null && !ServiceLocator.class.equals(l.locator())) {
       locatorType = l.locator();
     } else if (ln != null && ln.locator().length() > 0) {

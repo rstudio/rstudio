@@ -20,6 +20,7 @@ package com.google.web.bindery.requestfactory.shared.impl;
  */
 public interface Constants {
   String DOMAIN_OBJECT = "domainObject";
+  String FIND_METHOD_OPERATION = "?";
   String IN_RESPONSE = "inResponse";
   String PARENT_OBJECT = "parentObject";
   String REQUEST_CONTEXT_STATE = "requestContext";

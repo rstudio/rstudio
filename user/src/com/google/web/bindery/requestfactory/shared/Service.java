@@ -40,5 +40,6 @@ public @interface Service {
    * objects used when invoking instance methods on the type returned by
    * {@link #value()}.
    */
-  Class<? extends ServiceLocator> locator() default ServiceLocator.class;
+  // http://bugs.sun.com/view_bug.do?bug_id=6512707
+  Class<? extends ServiceLocator> locator() default com.google.web.bindery.requestfactory.shared.ServiceLocator.class;
 }

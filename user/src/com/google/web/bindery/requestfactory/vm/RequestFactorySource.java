@@ -40,7 +40,8 @@ public class RequestFactorySource {
    * @see InProcessRequestTransport
    */
   public static <T extends RequestFactory> T create(Class<T> requestFactory) {
-    RequestFactoryHandler handler = new InProcessRequestFactory().new RequestFactoryHandler();
+    RequestFactoryHandler handler =
+        new InProcessRequestFactory(requestFactory).new RequestFactoryHandler();
     return requestFactory.cast(Proxy.newProxyInstance(Thread.currentThread()
         .getContextClassLoader(), new Class<?>[] {requestFactory}, handler));
   }

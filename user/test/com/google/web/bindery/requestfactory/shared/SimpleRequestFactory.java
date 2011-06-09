@@ -20,7 +20,6 @@ package com.google.web.bindery.requestfactory.shared;
  * UserInformation and Logging services.
  */
 public interface SimpleRequestFactory extends BasicRequestFactory {
-
   InstanceServiceRequest instanceServiceRequest();
 
   InstanceServiceRequestByName instanceServiceRequestByName();

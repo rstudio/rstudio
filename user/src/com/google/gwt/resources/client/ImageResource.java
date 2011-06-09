@@ -71,7 +71,8 @@ public interface ImageResource extends ResourcePrototype {
      * 
      * @see "CssResource documentation"
      */
-    RepeatStyle repeatStyle() default RepeatStyle.None;
+    // http://bugs.sun.com/view_bug.do?bug_id=6512707
+    RepeatStyle repeatStyle() default com.google.gwt.resources.client.ImageResource.RepeatStyle.None;
 
     /**
      * Set to a positive value to override the image's intrinsic width. The
