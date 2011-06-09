@@ -1,0 +1,44 @@
+#!/bin/sh
+# apparmor-profile-load
+#
+# Helper for loading an AppArmor profile in pre-start scripts.
+#
+# NOTE: This is a snapshot of the /lib/init/apparmor-profile-load script
+# which is included in Ubuntu 11.04. We did this so that we could take
+# advantage of this in 10.04 and 10.10. The issue it is designed to 
+# workaround is the fact that AppArmor doesn't use upstart and therefore
+# isn't available to rstudio-server after a restart. The bug is described
+# and discussed here: https://bugs.launchpad.net/ubuntu/+source/apparmor/+bug/577445
+#
+# If porting this script somehow doesn't work then the alternate (obstensibly
+# less robust) workaround would be to include this directly in our
+# rstudio-server.conf upstart script
+#
+# pre-start script
+#    if [ -d /sys/module/apparmor ] && [ -x /sbin/apparmor_parser ]; then
+#       /sbin/apparmor_parser -r -W /etc/apparmor.d/rstudio-server || true
+#    fi
+# end script
+#
+
+[ -z "$1" ]                  && exit 1 # require a profile name
+
+[ -d /rofs/etc/apparmor.d ]  && exit 0 # do not load if running liveCD
+
+profile=/etc/apparmor.d/"$1"
+[ -e "$profile" ]            || exit 0 # skip when missing profile
+
+module=/sys/module/apparmor
+[ -d $module ]               || exit 0 # do not load without AppArmor in kernel
+
+[ -x /sbin/apparmor_parser ] || exit 0 # do not load without parser
+
+aafs=/sys/kernel/security/apparmor
+[ -d $aafs ]                 || exit 0 # do not load if unmounted
+[ -w $aafs/.load ]           || exit 1 # fail if cannot load profiles
+
+params=$module/parameters
+[ -r $params/enabled ]       || exit 0 # do not load if missing
+read enabled < $params/enabled || exit 1 # if this fails, something went wrong
+[ "$enabled" = "Y" ]         || exit 0 # do not load if disabled
+

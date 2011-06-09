@@ -11,7 +11,14 @@ start on runlevel [2345]
 stop on runlevel [!2345]
 
 expect fork
+
 respawn
+
+pre-start script
+   # Make sure our AppArmor profile is loaded on boot
+   # (see: https://bugs.launchpad.net/ubuntu/+source/apparmor/+bug/577445)
+   ${CMAKE_INSTALL_PREFIX}/extras/apparmor/apparmor-profile-load rstudio-server
+end script
 
 # unlimited size for core dumps
 limit core unlimited unlimited

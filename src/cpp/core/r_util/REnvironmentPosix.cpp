@@ -615,7 +615,8 @@ bool detectREnvironment(const FilePath& whichRScript,
                                &scriptVars,
                                pErrMsg))
    {
-      // fallback to detecting using script
+      // fallback to detecting using script (sometimes we are unable to
+      // call R successfully immediately after a system reboot)
       rHomePath = FilePath();
       rLibPath = FilePath();
       scriptVars.clear();

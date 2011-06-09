@@ -181,6 +181,8 @@ if (UNIX AND NOT APPLE)
                   ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_APPARMOR_PROFILE})
    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_APPARMOR_PROFILE}
            DESTINATION ${RSERVER_APPARMOR_DIR})
+   install(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_APPARMOR_DIR}/apparmor-profile-load
+           DESTINATION ${RSERVER_APPARMOR_DIR})
 
    # install configured upstart profile
    set(RSERVER_UPSTART_DIR "extras/upstart")
