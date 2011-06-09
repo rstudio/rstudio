@@ -235,11 +235,17 @@ public abstract class JJSTestBase extends TestCase {
       }
     });
     addBuiltinClasses(sourceOracle);
-    CompilationState state = CompilationStateBuilder.buildFrom(logger,
-        sourceOracle.getResources(), getAdditionalTypeProviderDelegate());
-    JProgram program = JavaAstConstructor.construct(logger, state,
-        "test.EntryPoint", "com.google.gwt.lang.Exceptions");
-    return program;
+    boolean wasEnabled = GwtAstBuilder.ENABLED;
+    try {
+      GwtAstBuilder.ENABLED = true;
+      CompilationState state = CompilationStateBuilder.buildFrom(logger,
+          sourceOracle.getResources(), getAdditionalTypeProviderDelegate());
+      JProgram program = JavaAstConstructor.construct(logger, state,
+          "test.EntryPoint", "com.google.gwt.lang.Exceptions");
+      return program;
+    } finally {
+      GwtAstBuilder.ENABLED = wasEnabled;
+    }
   }
 
   protected void addBuiltinClasses(MockResourceOracle sourceOracle) {

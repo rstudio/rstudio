@@ -2902,6 +2902,13 @@ public class GwtAstBuilder {
     return result;
   }
 
+  SourceInfo makeSourceInfo(AbstractMethodDeclaration x) {
+    int startLine =
+        Util.getLineNumber(x.sourceStart, curCud.separatorPositions, 0,
+            curCud.separatorPositions.length - 1);
+    return SourceOrigin.create(x.sourceStart, x.bodyEnd, startLine, curCud.fileName);
+  }
+
   SourceInfo makeSourceInfo(ASTNode x) {
     int startLine =
         Util.getLineNumber(x.sourceStart, curCud.separatorPositions, 0,

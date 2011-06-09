@@ -20,31 +20,13 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
-import com.google.gwt.dev.jdt.AbstractCompiler.CompilationResults;
-import com.google.gwt.dev.jdt.BasicWebModeCompiler;
-import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor;
-import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
-import com.google.gwt.dev.jjs.impl.BuildTypeMap;
-import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
-import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
-import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
-import com.google.gwt.dev.jjs.impl.TypeLinker;
-import com.google.gwt.dev.jjs.impl.TypeMap;
-import com.google.gwt.dev.js.ast.JsProgram;
-
-import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * Constructs a Java AST for testing.
@@ -214,65 +196,9 @@ public class JavaAstConstructor {
 
   public static JProgram construct(TreeLogger logger, CompilationState state, String... entryPoints)
       throws UnableToCompleteException {
-    return construct(logger, state, TypeLinker.NULL_TYPE_LINKER, entryPoints);
-  }
-
-  public static JProgram construct(TreeLogger logger, CompilationState state, TypeLinker linker,
-      String... entryPoints) throws UnableToCompleteException {
-    Set<String> allRootTypes = new TreeSet<String>(Arrays.asList(entryPoints));
-    for (MockJavaResource resource : getCompilerTypes()) {
-      allRootTypes.add(resource.getTypeName());
-    }
-
-    CompilationResults units =
-        BasicWebModeCompiler.getCompilationUnitDeclarations(logger, state, linker, allRootTypes
-            .toArray(new String[allRootTypes.size()]));
-
-    CompilationUnitDeclaration[] goldenCuds = units.compiledUnits;
-
-    // Check for compilation problems. We don't log here because any problems
-    // found here will have already been logged by AbstractCompiler.
-    //
-    JavaToJavaScriptCompiler.checkForErrors(logger, goldenCuds, false);
-
-    
-     // Find errors in usage of GWT.create() calls
-    for (CompilationUnitDeclaration jdtCud : goldenCuds) {
-      jdtCud.traverse(new FindDeferredBindingSitesVisitor(), jdtCud.scope);
-    }
-
-    JavaToJavaScriptCompiler.checkForErrors(logger, goldenCuds, true);
-
-    CorrelationFactory correlator = DummyCorrelationFactory.INSTANCE;
-    JProgram jprogram = new JProgram(correlator);
-    JsProgram jsProgram = new JsProgram(correlator);
-
-    /*
-     * (1) Build a flattened map of TypeDeclarations => JType. The resulting map
-     * contains entries for all reference types. BuildTypeMap also parses all
-     * JSNI.
-     */
-    TypeMap typeMap = new TypeMap(jprogram);
-    TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap, units, jsProgram, linker);
-
-    // BuildTypeMap can uncover syntactic JSNI errors; report & abort
-    JavaToJavaScriptCompiler.checkForErrors(logger, goldenCuds, true);
-
-    // Compute all super type/sub type info
-    jprogram.typeOracle.computeBeforeAST();
-
-    // (2) Create our own Java AST from the JDT AST.
     JJSOptionsImpl options = new JJSOptionsImpl();
     options.setEnableAssertions(true);
-    GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, options);
-
-    // GenerateJavaAST can uncover semantic JSNI errors; report & abort
-    JavaToJavaScriptCompiler.checkForErrors(logger, goldenCuds, true);
-
-    // (3) Perform Java AST normalizations.
-    FixAssignmentToUnbox.exec(jprogram);
-    // Turn into assertion checking calls.
-    AssertionNormalizer.exec(jprogram);
+    JProgram jprogram = AstConstructor.construct(logger, state, options);
 
     // Add entry methods for entry points.
     for (String entryPoint : entryPoints) {
@@ -283,9 +209,6 @@ public class JavaAstConstructor {
         }
       }
     }
-
-    ImplementClassLiteralsAsFields.exec(jprogram);
-
     // Tree is now ready to optimize.
     return jprogram;
   }

@@ -37,6 +37,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,9 +173,14 @@ public class ReplaceRunAsyncs {
         }
         if (matches.size() > 1) {
           TreeLogger branch = error(info, "Multiple runAsync calls are named " + name);
+          List<String> errors = new ArrayList<String>();
           for (JRunAsync match : matches) {
-            branch.log(TreeLogger.ERROR, "One call is at '" + match.getSourceInfo().getFileName()
-                + ':' + match.getSourceInfo().getStartLine() + "'");
+            errors.add("One call is at '" + match.getSourceInfo().getFileName() + ':'
+                + match.getSourceInfo().getStartLine() + "'");
+          }
+          Collections.sort(errors);
+          for (String error : errors) {
+            branch.log(TreeLogger.ERROR, error);
           }
           return;
         }

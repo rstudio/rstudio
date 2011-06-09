@@ -71,6 +71,7 @@ import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.Name.BinaryName;
+import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Lists;
 
@@ -461,6 +462,7 @@ public class UnifyAst {
       CLASS_IS_CLASS_METADATA_ENABLED));
 
   private final Map<String, CompiledClass> classFileMap;
+  private boolean errorsFound = false;
   private final Map<String, JField> fieldMap = new HashMap<String, JField>();
 
   /**
@@ -521,7 +523,41 @@ public class UnifyAst {
     }
   }
 
-  public void exec(TreeLogger logger) {
+  /**
+   * Special AST construction, useful for tests. Everything is resolved,
+   * translated, and unified.
+   */
+  public void buildEverything(TreeLogger logger) throws UnableToCompleteException {
+    this.logger = logger;
+    for (String internalName : classFileMap.keySet()) {
+      String typeName = InternalName.toBinaryName(internalName);
+      searchForType(typeName);
+    }
+
+    for (JDeclaredType type : program.getDeclaredTypes()) {
+      instantiate(type);
+      for (JField field : type.getFields()) {
+        flowInto(field);
+      }
+      for (JMethod method : type.getMethods()) {
+        flowInto(method);
+      }
+    }
+
+    mainLoop();
+
+    computeOverrides();
+    if (errorsFound) {
+      throw new UnableToCompleteException();
+    }
+  }
+
+  /**
+   * For normal compilation, only translate and stitch types reachable from
+   * entry points. This reduces memory and improves compile speed. Any
+   * unreachable elements are pruned.
+   */
+  public void exec(TreeLogger logger) throws UnableToCompleteException {
     this.logger = logger;
 
     // Trace execution from entry points.
@@ -577,14 +613,7 @@ public class UnifyAst {
       }
     }
 
-    /*
-     * Main loop: run through the queue doing deferred resolution. We could have
-     * made this entirely recursive, but a work queues uses much less max stack.
-     */
-    UnifyVisitor visitor = new UnifyVisitor();
-    while (!todo.isEmpty()) {
-      visitor.accept(todo.poll());
-    }
+    mainLoop();
 
     // Post-stitching clean-ups.
 
@@ -614,21 +643,9 @@ public class UnifyAst {
       }
     }
 
-    // Compute overrides.
-    for (JDeclaredType type : program.getDeclaredTypes()) {
-      Map<String, Set<JMethod>> collected = new HashMap<String, Set<JMethod>>();
-      for (JMethod method : type.getMethods()) {
-        if (method.canBePolymorphic()) {
-          collected.put(method.getSignature(), new LinkedHashSet<JMethod>());
-        }
-      }
-      collectUpRefsInSupers(type, collected);
-      for (JMethod method : type.getMethods()) {
-        if (method.canBePolymorphic()) {
-          Set<JMethod> uprefs = collected.get(method.getSignature());
-          method.addOverrides(Lists.create(uprefs));
-        }
-      }
+    computeOverrides();
+    if (errorsFound) {
+      throw new UnableToCompleteException();
     }
   }
 
@@ -674,16 +691,48 @@ public class UnifyAst {
     }
   }
 
+  /**
+   * Compute all overrides.
+   */
+  private void computeOverrides() {
+    for (JDeclaredType type : program.getDeclaredTypes()) {
+      Map<String, Set<JMethod>> collected = new HashMap<String, Set<JMethod>>();
+      for (JMethod method : type.getMethods()) {
+        if (method.canBePolymorphic()) {
+          collected.put(method.getSignature(), new LinkedHashSet<JMethod>());
+        }
+      }
+      collectUpRefsInSupers(type, collected);
+      for (JMethod method : type.getMethods()) {
+        if (method.canBePolymorphic()) {
+          Set<JMethod> uprefs = collected.get(method.getSignature());
+          method.addOverrides(Lists.create(uprefs));
+        }
+      }
+    }
+  }
+
   private void error(JNode x, String errorMessage) {
-    // TODO: logging.
-    throw new InternalCompilerException(x, errorMessage, null);
+    errorsFound = true;
+    TreeLogger branch =
+        logger
+            .branch(TreeLogger.ERROR, "Errors in '" + x.getSourceInfo().getFileName() + "'", null);
+    // Append 'Line #: msg' to the error message.
+    StringBuffer msgBuf = new StringBuffer();
+    int line = x.getSourceInfo().getStartLine();
+    if (line > 0) {
+      msgBuf.append("Line ");
+      msgBuf.append(line);
+      msgBuf.append(": ");
+    }
+    msgBuf.append(errorMessage);
+    branch.log(TreeLogger.ERROR, msgBuf.toString());
   }
 
   private void flowInto(JField field) {
-    if (field == JField.NULL_FIELD) {
+    if (field == JField.NULL_FIELD || field.isExternal()) {
       return;
     }
-    assert !field.isExternal();
     if (!liveFieldsAndMethods.contains(field)) {
       liveFieldsAndMethods.add(field);
       field.setType(translate(field.getType()));
@@ -694,10 +743,9 @@ public class UnifyAst {
   }
 
   private void flowInto(JMethod method) {
-    if (method == JMethod.NULL_METHOD) {
+    if (method == JMethod.NULL_METHOD || method.isExternal()) {
       return;
     }
-    assert !method.isExternal();
     if (!liveFieldsAndMethods.contains(method)) {
       liveFieldsAndMethods.add(method);
       JType originalReturnType = translate(method.getOriginalReturnType());
@@ -783,6 +831,17 @@ public class UnifyAst {
       return false;
     }
     return type == program.getJavaScriptObject() || isJso(type.getSuperClass());
+  }
+
+  /**
+   * Main loop: run through the queue doing deferred resolution. We could have
+   * made this entirely recursive, but a work queue uses much less max stack.
+   */
+  private void mainLoop() {
+    UnifyVisitor visitor = new UnifyVisitor();
+    while (!todo.isEmpty()) {
+      visitor.accept(todo.poll());
+    }
   }
 
   private void mapApi(JDeclaredType type) {
@@ -888,47 +947,75 @@ public class UnifyAst {
   }
 
   private JDeclaredType translate(JDeclaredType type) {
-    if (type.isExternal()) {
-      String typeName = type.getName();
-      type = searchForType(typeName);
+    if (!type.isExternal()) {
+      return type;
     }
-    assert !type.isExternal();
+
+    String typeName = type.getName();
+    JDeclaredType newType = searchForType(typeName);
+    if (newType != null) {
+      assert !newType.isExternal();
+      return newType;
+    }
+    // Error condition, should be logged.
+    errorsFound = true;
     return type;
   }
 
   private JField translate(JField field) {
-    if (field.isExternal()) {
-      JDeclaredType enclosingType = field.getEnclosingType();
-      String sig = enclosingType.getName() + '.' + field.getSignature();
-      field = fieldMap.get(sig);
-      if (field == null) {
-        mapApi(translate(enclosingType));
-        // Now the field should be there.
-        field = fieldMap.get(sig);
-        if (field == null) {
-          // TODO: error logging
-          throw new NoSuchFieldError(sig);
-        }
-      }
+    if (!field.isExternal()) {
+      return field;
     }
+
+    JDeclaredType enclosingType = field.getEnclosingType();
+    String sig = enclosingType.getName() + '.' + field.getSignature();
+    JField newField = fieldMap.get(sig);
+    if (newField != null) {
+      return newField;
+    }
+
+    enclosingType = translate(enclosingType);
+    if (enclosingType.isExternal()) {
+      // Error condition, should be logged.
+      return field;
+    }
+    mapApi(enclosingType);
+
+    // Now the field should be there.
+    field = fieldMap.get(sig);
+    if (field == null) {
+      // TODO: error logging
+      throw new NoSuchFieldError(sig);
+    }
+
     assert !field.isExternal();
     return field;
   }
 
   private JMethod translate(JMethod method) {
-    if (method.isExternal()) {
-      JDeclaredType enclosingType = method.getEnclosingType();
-      String sig = enclosingType.getName() + '.' + method.getSignature();
-      method = methodMap.get(sig);
-      if (method == null) {
-        mapApi(translate(enclosingType));
-        // Now the method should be there.
-        method = methodMap.get(sig);
-        if (method == null) {
-          // TODO: error logging
-          throw new NoSuchMethodError(sig);
-        }
-      }
+    if (!method.isExternal()) {
+      return method;
+    }
+
+    JDeclaredType enclosingType = method.getEnclosingType();
+    String sig = enclosingType.getName() + '.' + method.getSignature();
+    JMethod newMethod = methodMap.get(sig);
+    if (newMethod != null) {
+      return newMethod;
+    }
+
+    enclosingType = translate(enclosingType);
+    if (enclosingType.isExternal()) {
+      // Error condition, should be logged.
+      return method;
+    }
+    mapApi(enclosingType);
+
+    // Now the method should be there.
+    method = methodMap.get(sig);
+    if (method == null) {
+      // TODO: error logging
+      throw new NoSuchMethodError(sig);
     }
     assert !method.isExternal();
     return method;
