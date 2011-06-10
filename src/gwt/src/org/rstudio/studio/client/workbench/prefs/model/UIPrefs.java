@@ -33,7 +33,7 @@ public class UIPrefs extends Prefs
 
    public PrefValue<Boolean> highlightSelectedWord()
    {
-      return bool("highlight_selected_word", false);
+      return bool("highlight_selected_word", true);
    }
 
    public PrefValue<Boolean> highlightSelectedLine()
