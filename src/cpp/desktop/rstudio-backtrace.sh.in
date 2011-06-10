@@ -49,7 +49,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rstudio
 RSTUDIO_BACKTRACE_GDB=/tmp/rstudio-backtrace.gdb 
 sudo rm -f $RSTUDIO_BACKTRACE_GDB
 cat <<'EOF' > $RSTUDIO_BACKTRACE_GDB 
-thread apply all bt
+thread apply all bt full
 quit
 EOF
 
