@@ -670,6 +670,11 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       widget_.getEditor().setHighlightActiveLine(on);
    }
 
+   public void setHighlightSelectedWord(boolean on)
+   {
+      widget_.getEditor().setHighlightSelectedWord(on);
+   }
+
    public void setShowLineNumbers(boolean on)
    {
       widget_.getEditor().getRenderer().setShowGutter(on);

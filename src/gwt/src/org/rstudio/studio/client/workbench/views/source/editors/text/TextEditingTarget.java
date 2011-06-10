@@ -142,6 +142,7 @@ public class TextEditingTarget implements EditingTarget
       void onVisibilityChanged(boolean visible);
 
       void setHighlightSelectedLine(boolean on);
+      void setHighlightSelectedWord(boolean on);
       void setShowLineNumbers(boolean on);
       void setUseSoftTabs(boolean on);
       void setUseWrapMode(boolean on);
@@ -637,6 +638,11 @@ public class TextEditingTarget implements EditingTarget
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
                   docDisplay_.setHighlightSelectedLine(arg);
+               }}));
+      releaseOnDismiss_.add(prefs_.highlightSelectedWord().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay_.setHighlightSelectedWord(arg);
                }}));
       releaseOnDismiss_.add(prefs_.showLineNumbers().bind(
             new CommandWithArg<Boolean>() {

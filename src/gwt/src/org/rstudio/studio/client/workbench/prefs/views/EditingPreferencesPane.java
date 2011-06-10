@@ -37,6 +37,7 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_ = prefs;
       res_ = res;
 
+      add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));
       add(checkboxPref("Highlight selected line", prefs.highlightSelectedLine()));
       add(checkboxPref("Show line numbers", prefs.showLineNumbers()));
       add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab())));
