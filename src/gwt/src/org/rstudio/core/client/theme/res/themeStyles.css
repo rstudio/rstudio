@@ -109,6 +109,10 @@ input[type=text] {
    border: 1px solid #999;
    height: 17px;
 }
+.gwt-DialogBox .search input[type=text] {
+   border: none;
+   height: 100%;
+}
 
 iframe {
    border: none;
