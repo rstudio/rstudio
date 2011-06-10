@@ -39,9 +39,51 @@
 <table class='shortcuts'>
   <tr><td colspan="3"><h3>Console</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
-    <td>Put the cursor in the Source document</td>
+    <td>Move cursor to Console</td>
     <td>Ctrl+2</td>
     <td>Ctrl+2</td>
+  </tr>
+  <tr>
+    <td>Clear console</td>
+    <td>Ctrl+L</td>
+    <td>Command+L</td>
+  </tr>
+  <tr>
+    <td>Move cursor to beginning of line</td>
+    <td>Home</td>
+    <td>Command+Left</td>
+  </tr>
+  <tr>
+    <td>Move cursor to end of line</td>
+    <td>End</td>
+    <td>Command+Right</td>
+  </tr>
+  <tr>
+    <td>Navigate command history</td>
+    <td>Up/Down</td>
+    <td>Up/Down</td>
+  </tr>
+  <tr>
+    <td>Popup command history</td>
+    <td>Ctrl+Up</td>
+    <td>Command+Up</td>
+  </tr>
+  <tr>
+    <td>Interrupt currently executing command</td>
+    <td>Esc</td>
+    <td>Esc</td>
+  </tr>
+  <tr>
+    <td>Change working directory</td>
+    <td>Ctrl+Shift+D</td>
+    <td>Ctrl+Shift+D</td>
+  </tr>
+  <tr><td><br/></td></tr>
+  <tr><td colspan="3"><h3>Source</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr>
+    <td>Move cursor to Source Editor</td>
+    <td>Ctrl+1</td>
+    <td>Ctrl+1</td>
   </tr>
   <tr>
     <td>New document (except on Chrome/Windows)</td>
@@ -59,9 +101,19 @@
     <td>Command+S</td>
   </tr>
   <tr>
-    <td>Close active document</td>
+    <td>Close active document (except on Chrome)</td>
+    <td>Ctrl+W</td>
+    <td>Command+W</td>
+  </tr>
+  <tr>
+    <td>Close active document (Chrome only)</td>
     <td>Ctrl+Shift+L</td>
     <td>Command+Shift+L</td>
+  </tr>
+  <tr>
+    <td>Compile PDF (TeX and Sweave)</td>
+    <td>Ctrl+Shift+I</td>
+    <td>Command+Shift+I</td>
   </tr>
   <tr>
     <td>Run current line/selection</td>
@@ -74,39 +126,89 @@
     <td>Command+Shift+Enter</td>
   </tr>
   <tr>
+    <td>Run from document beginning to current line</td>
+    <td>Ctrl+Shift+B</td>
+    <td>Command+Shift+B</td>
+  </tr>
+  <tr>
+    <td>Run from current line to document end</td>
+    <td>Ctrl+Shift+E</td>
+    <td>Command+Shift+E</td>
+  </tr>
+  <tr>
+    <td>Run the current function definition</td>
+    <td>Ctrl+Shift+F</td>
+    <td>Command+Shift+F</td>
+  </tr>
+  <tr>
+    <td>Re-run previous region</td>
+    <td>Ctrl+Shift+P</td>
+    <td>Command+Shift+P</td>
+  </tr>
+  <tr>
+    <td>Source a file</td>
+    <td>Ctrl+Shift+O</td>
+    <td>Command+Shift+O</td>
+  </tr>
+  <tr>
+    <td>Source the current document</td>
+    <td>Ctrl+Shift+S</td>
+    <td>Command+Shift+S</td>
+  </tr>
+  <tr>
+    <td>Jump to function (.R files only)</td>
+    <td>Ctrl+Alt+Up</td>
+    <td>Ctrl+Option+Up</td>
+  </tr>
+  <tr>
     <td>Switch to tab</td>
     <td>Ctrl+Alt+Down</td>
-    <td>Command+Option+Down</td>
+    <td>Ctrl+Option+Down</td>
   </tr>
   <tr>
     <td>Previous tab</td>
-    <td>Ctrl+Alt+Left</td>
-    <td>Command+Option+Left</td>
+    <td>Win: Ctrl+Alt+Left, Linux: Ctrl+PageUp</td>
+    <td>Ctrl+Option+Left</td>
   </tr>
   <tr>
     <td>Next tab</td>
-    <td>Ctrl+Alt+Right</td>
-    <td>Command+Option+Right</td>
+    <td>Win: Ctrl+Alt+Right, Linux: Ctrl+PageDown</td>
+    <td>Ctrl+Option+Right</td>
   </tr>
   <tr>
     <td>First tab</td>
     <td>Ctrl+Shift+Alt+Left</td>
-    <td>Command+Shift+Option+Left</td>
+    <td>Ctrl+Shift+Option+Left</td>
   </tr>
   <tr>
     <td>Last tab</td>
     <td>Ctrl+Shift+Alt+Right</td>
-    <td>Command+Shift+Option+Right</td>
+    <td>Ctrl+Shift+Option+Right</td>
   </tr>
   <tr>
     <td>Extract function from selection</td>
-    <td>Ctrl+Alt+F</td>
-    <td>Command+Option+F</td>
+    <td>Ctrl+Shift+U</td>
+    <td>Command+Shift+U</td>
   </tr>
   <tr>
     <td>Comment/uncomment current line/selection</td>
     <td>Ctrl+/</td>
     <td>Command+/</td>
+  </tr>
+  <tr>
+    <td>Transpose Letters</td>
+    <td></td>
+    <td>Ctrl+T</td>
+  </tr>
+  <tr>
+    <td>Move Lines Up/Down</td>
+    <td>Alt+Up/Down</td>
+    <td>Option+Up/Down</td>
+  </tr>
+  <tr>
+    <td>Copy Lines Up/Down</td>
+    <td>Ctrl+Alt+Up/Down</td>
+    <td>Command+Option+Up/Down</td>
   </tr>
   <tr><td><br/></td></tr>
   <tr><td colspan="3"><h3>Editing (Console and Source)</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
@@ -136,19 +238,104 @@
     <td>Command+V</td>
   </tr>
   <tr>
+    <td>Select All</td>
+    <td>Ctrl+A</td>
+    <td>Command+A</td>
+  </tr>
+  <tr>
+    <td>Jump to Word</td>
+    <td>Ctrl+Left/Right</td>
+    <td>Option+Left/Right</td>
+  </tr>
+  <tr>
+    <td>Jump to Start/End</td>
+    <td>Ctrl+Home/End or Ctrl+Up/Down</td>
+    <td>Command+Home/End or Command+Up/Down</td>
+  </tr>
+  <tr>
+    <td>Delete Line</td>
+    <td>Ctrl+D</td>
+    <td>Command+D</td>
+  </tr>
+  <tr>
+    <td>Select</td>
+    <td>Shift+[Arrow]</td>
+    <td>Shift+[Arrow]</td>
+  </tr>
+  <tr>
+    <td>Select Word</td>
+    <td>Ctrl+Shift+Left/Right</td>
+    <td>Option+Shift+Left/Right</td>
+  </tr>
+  <tr>
+    <td>Select to Line Start</td>
+    <td>Shift+Home</td>
+    <td>Command+Shift+Left or Shift+Home</td>
+  </tr>
+  <tr>
+    <td>Select to Line End</td>
+    <td>Shift+End</td>
+    <td>Command+Shift+Right or Shift+End</td>
+  </tr>
+  <tr>
+    <td>Select Page Up/Down</td>
+    <td>Shift+PageUp/PageDown</td>
+    <td>Shift+PageUp/Down</td>
+  </tr>
+  <tr>
+    <td>Select to Start/End</td>
+    <td>Ctrl+Shift+Home/End or Shift+Alt+Up/Down</td>
+    <td>Command+Shift+Up/Down</td>
+  </tr>
+  <tr>
+    <td>Delete Word Left</td>
+    <td>Ctrl+Backspace</td>
+    <td>Option+Backspace or Ctrl+Option+Backspace</td>
+  </tr>
+  <tr>
+    <td>Delete Word Right</td>
+    <td></td>
+    <td>Option+Delete</td>
+  </tr>
+  <tr>
+    <td>Delete to Line End</td>
+    <td></td>
+    <td>Ctrl+K</td>
+  </tr>
+  <tr>
+    <td>Delete to Line Start</td>
+    <td></td>
+    <td>Option+Backspace</td>
+  </tr>
+  <tr>
+    <td>Indent</td>
+    <td>Tab (at beginning of line)</td>
+    <td>Tab (at beginning of line)</td>
+  </tr>
+  <tr>
+    <td>Outdent</td>
+    <td>Shift+Tab</td>
+    <td>Shift+Tab</td>
+  </tr>
+  <tr>
     <td>Yank line up to cursor</td>
     <td>Ctrl+U</td>
-    <td>Command+U</td>
+    <td>Ctrl+U</td>
   </tr>
   <tr>
     <td>Yank line after cursor</td>
     <td>Ctrl+K</td>
-    <td>Command+K</td>
+    <td>Ctrl+K</td>
   </tr>
   <tr>
     <td>Insert currently yanked text</td>
     <td>Ctrl+Y</td>
-    <td>Command+Y</td>
+    <td>Ctrl+Y</td>
+  </tr>
+  <tr>
+    <td>Insert assignment operator</td>
+    <td>Alt+-</td>
+    <td>Option+-</td>
   </tr>
   <tr><td><br/></td></tr>
   <tr><td colspan="3"><h3>Completions (Console and Source)</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
@@ -180,12 +367,12 @@
   <tr><td><br/></td></tr>
   <tr><td colspan="3"><h3>Views</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
-    <td>Move cursor to source</td>
+    <td>Move cursor to Source Editor</td>
     <td>Ctrl+1</td>
     <td>Ctrl+1</td>
   </tr>
   <tr>
-    <td>Move cursor to console</td>
+    <td>Move cursor to Console</td>
     <td>Ctrl+2</td>
     <td>Ctrl+2</td>
   </tr>
@@ -228,13 +415,18 @@
   <tr><td colspan="3"><h3>Plots</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
     <td>Previous plot</td>
-    <td>Ctrl+PageUp</td>
-    <td>Command+PageUp</td>
+    <td>Ctrl+Shift+PageUp</td>
+    <td>Command+Shift+PageUp</td>
   </tr>
   <tr>
     <td>Next plot</td>
-    <td>Ctrl+PageDown</td>
-    <td>Command+PageDown</td>
+    <td>Ctrl+Shift+PageDown</td>
+    <td>Command+Shift+PageDown</td>
+  </tr>
+  <tr>
+    <td>Remove plot</td>
+    <td>Ctrl+Shift+R</td>
+    <td>Command+Shift+R</td>
   </tr>
   <tr><td><br/></td></tr>
 </table>
