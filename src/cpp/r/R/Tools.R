@@ -142,6 +142,8 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 {
    if(.Platform$OS.type == "windows")
       shell.exec(path)
+   else if (identical(substr(.Platform$pkgType, 1L, 10L), "mac.binary"))
+	  system(paste("open", "-a", "Preview", shQuote(path)), wait = FALSE)
    else
       system(paste(shQuote(getOption("pdfviewer")), shQuote(path)), wait = FALSE)
 })
