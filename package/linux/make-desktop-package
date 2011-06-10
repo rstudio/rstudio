@@ -6,10 +6,15 @@ set -e
 ./make-package Desktop $1 $2
 
 # make tar.gz
+BUILD_DIR=build-Desktop-$1
+if [ "${CMAKE_BUILD_TYPE}" == "Debug "]
+then
+	BUILD_DIR=$BUILD_DIR-Debug
+fi
 
 # switch to build dir and determine name of package root
 CURRENT_DIR=`pwd`
-PACKAGE_DIR=$CURRENT_DIR/build-Desktop-$1/_CPack_Packages/Linux/$1
+PACKAGE_DIR=$CURRENT_DIR/$BUILD_DIR/_CPack_Packages/Linux/$1
 cd $PACKAGE_DIR
 PACKAGE_ROOT=`ls -d rstudio-*/`
 PACKAGE_ROOT=${PACKAGE_ROOT%/}
