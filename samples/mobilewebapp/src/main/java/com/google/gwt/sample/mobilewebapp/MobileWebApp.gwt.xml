@@ -8,6 +8,12 @@
   <inherits name='com.google.gwt.editor.Editor'/>
   <inherits name='com.google.gwt.sample.mobilewebapp.FormFactor'/>
   <inherits name='com.google.web.bindery.requestfactory.RequestFactory'/>
+
+  <!-- Use GWT's java.util.logging emulation -->
+  <inherits name="com.google.gwt.logging.Logging"/>
+  <!-- Turn off the popup log handler, which is on by default to make sure 
+       people are very aware that they are including the logging code -->
+  <set-property name="gwt.logging.popupHandler" value="DISABLED" />
   
   <inherits name='com.google.gwt.sample.gaerequest.GaeRequest'/>
   <inherits name='com.google.gwt.sample.core.Core'/>
