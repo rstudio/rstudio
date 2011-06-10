@@ -32,6 +32,16 @@ RSTUDIO_BACKTRACE_OUT=$CURRENT_DIR/rstudio-backtrace.txt
 sudo rm -f $RSTUDIO_BACKTRACE_OUT
 touch $RSTUDIO_BACKTRACE_OUT
 
+# write RStudio and R version info
+echo "RStudio Version: ${CPACK_PACKAGE_VERSION}" >> $RSTUDIO_BACKTRACE_OUT
+echo "" >> $RSTUDIO_BACKTRACE_OUT
+R --vanilla --quiet -e "print(sessionInfo())" >> $RSTUDIO_BACKTRACE_OUT
+echo $RSTUDIO_WHICH_R >> $RSTUDIO_BACKTRACE_OUT
+which R  >> $RSTUDIO_BACKTRACE_OUT
+uname -a >> $RSTUDIO_BACKTRACE_OUT
+echo "" >> $RSTUDIO_BACKTRACE_OUT
+
+
 # run rstudio
 ${CMAKE_INSTALL_PREFIX}/bin/rstudio
 
