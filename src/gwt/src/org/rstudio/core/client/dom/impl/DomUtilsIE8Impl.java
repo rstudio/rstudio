@@ -95,6 +95,11 @@ public class DomUtilsIE8Impl implements DomUtilsImpl
       return orig;
    }-*/;
 
+   public native final String getSelectionText(Document document) /*-{
+      var rng = doc.selection.createRange();
+      return rng.text;
+   }-*/;
+
    public int[] getSelectionOffsets(Element container)
    {
       if (!isSelectionInElement(container))

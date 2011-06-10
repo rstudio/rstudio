@@ -46,3 +46,20 @@ utils:::rc.settings(files=T)
         packages=packages.sorted, 
         fguess=status$fguess)
 })
+
+.rs.addJsonRpcHandler("get_help_at_cursor", function(line, cursorPos)
+{
+   utils:::.assignLinebuffer(line)
+   utils:::.assignEnd(cursorPos)
+   token <- utils:::.guessTokenFromLine()
+
+   if (token == '')
+      return()
+
+   pieces <- strsplit(token, ':{2,3}')[[1]]
+
+   if (length(pieces) > 1)
+      print(help(pieces[2], package=pieces[1], help_type='html'))
+   else
+      print(help(pieces[1], help_type='html', try.all.packages=T))
+})

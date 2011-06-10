@@ -32,6 +32,8 @@ public interface DomUtilsImpl
 
    String replaceSelection(Document document, String text);
 
+   String getSelectionText(Document document);
+
    int[] getSelectionOffsets(Element container);
 
    void setSelectionOffsets(Element container, int start, int end);

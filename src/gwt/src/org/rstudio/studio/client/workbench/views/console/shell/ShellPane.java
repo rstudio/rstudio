@@ -29,6 +29,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.BottomScrollPanel;
@@ -38,6 +39,8 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.console.events.HelpAtCursorEvent;
+import org.rstudio.studio.client.workbench.views.console.events.HelpAtCursorHandler;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.NewLineMode;
@@ -478,6 +481,22 @@ public class ShellPane extends Composite implements Shell.Display,
                if (event.isControlKeyDown() || event.isMetaKeyDown())
                   return;
                break;
+            case 112: // F1
+               int modifiers = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+               if (modifiers == KeyboardShortcut.NONE)
+               {
+                  if (DomUtils.isSelectionInElement(scrollPanel_.getElement()))
+                  {
+                     String sel = DomUtils.getSelectionText(Document.get());
+                     if (!StringUtil.isNullOrEmpty(sel))
+                     {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        fireEvent(new HelpAtCursorEvent(sel));
+                        return;
+                     }
+                  }
+               }
          }
          input_.setFocus(true);
          delegateEvent(input_.toWidget(), event);
@@ -588,6 +607,12 @@ public class ShellPane extends Composite implements Shell.Display,
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
       return input_.addCapturingKeyDownHandler(handler) ;
+   }
+
+   @Override
+   public HandlerRegistration addHelpAtCursorHandler(HelpAtCursorHandler handler)
+   {
+      return addHandler(handler, HelpAtCursorEvent.TYPE);
    }
 
    public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)

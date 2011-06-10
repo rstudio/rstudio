@@ -27,6 +27,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -85,6 +86,7 @@ public class Shell implements ConsoleInputHandler,
       void setMaxOutputLines(int maxLines);
 
       HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler);
+      HandlerRegistration addHelpAtCursorHandler(HelpAtCursorHandler handler);
    }
 
    @Inject
@@ -116,6 +118,16 @@ public class Shell implements ConsoleInputHandler,
       // handled the event before we had a chance to prevent it
       view_.addCapturingKeyDownHandler(handler) ;
       view_.addKeyPressHandler(handler) ;
+      view_.addHelpAtCursorHandler(new HelpAtCursorHandler()
+      {
+         @Override
+         public void onHelpAtCursor(HelpAtCursorEvent event)
+         {
+            server_.getHelpAtCursor(event.getLine(),
+                                    event.getCursorPos(),
+                                    new SimpleRequestCallback<Void>("Help"));
+         }
+      });
       
       eventBus.addHandler(ConsoleInputEvent.TYPE, this); 
       eventBus.addHandler(ConsoleWriteOutputEvent.TYPE, this);

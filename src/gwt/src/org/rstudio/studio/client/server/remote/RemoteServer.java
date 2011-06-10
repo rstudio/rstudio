@@ -274,6 +274,18 @@ public class RemoteServer implements Server
                   params, 
                   requestCallback) ;
    }
+
+   public void getHelpAtCursor(String line, int cursorPos,
+                               ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(line));
+      params.set(1, new JSONNumber(cursorPos));
+      sendRequest(RPC_SCOPE,
+                  GET_HELP_AT_CURSOR,
+                  params,
+                  requestCallback) ;
+   }
    
    public void listObjects(
          ServerRequestCallback<RpcObjectList<WorkspaceObjectInfo>> requestCallback)
@@ -1451,7 +1463,8 @@ public class RemoteServer implements Server
    private static final String ABORT = "abort";
    private static final String HTTP_LOG = "http_log";
    private static final String GET_COMPLETIONS = "get_completions";
-   
+   private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";
+
    private static final String LIST_OBJECTS = "list_objects";
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String SET_OBJECT_VALUE = "set_object_value";

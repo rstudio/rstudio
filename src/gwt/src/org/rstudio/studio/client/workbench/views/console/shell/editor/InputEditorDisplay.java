@@ -24,6 +24,7 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
    boolean hasSelection() ;
    InputEditorSelection getSelection() ;
    void setSelection(InputEditorSelection selection) ;
+   String getSelectionValue();
    Rectangle getCursorBounds() ;
    Rectangle getBounds() ;
    void setFocus(boolean focused) ;

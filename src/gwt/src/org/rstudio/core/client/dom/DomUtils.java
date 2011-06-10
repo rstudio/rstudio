@@ -260,6 +260,11 @@ public class DomUtils
       return impl.replaceSelection(document, text);
    }
 
+   public static String getSelectionText(Document document)
+   {
+      return impl.getSelectionText(document);
+   }
+
    public static int[] getSelectionOffsets(Element container)
    {
       return impl.getSelectionOffsets(container);

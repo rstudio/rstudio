@@ -137,6 +137,15 @@ public class DomUtilsStandardImpl implements DomUtilsImpl
       return orig;
    }
 
+   public String getSelectionText(Document document)
+   {
+      Range range = getSelectionRange(NativeWindow.get(document), false);
+      if (range == null || range.isCollapsed())
+         return null;
+      else
+         return range.toStringJs();
+   }
+
    public int[] getSelectionOffsets(Element container)
    {
       Range rng = getSelectionRange(
