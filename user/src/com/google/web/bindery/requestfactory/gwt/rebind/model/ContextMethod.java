@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Represents a service endpoint.
  */
-public class ContextMethod implements AcceptsModelVisitor {
+public class ContextMethod implements AcceptsModelVisitor, HasExtraTypes {
 
   /**
    * Builds a {@link ContextMethod}.
@@ -42,23 +42,31 @@ public class ContextMethod implements AcceptsModelVisitor {
       }
     }
 
-    public void setDeclaredMethod(JMethod method) {
+    public Builder setDeclaredMethod(JMethod method) {
       toReturn.methodName = method.getName();
       JClassType returnClass = method.getReturnType().isClassOrInterface();
       toReturn.interfaceName = returnClass.getQualifiedSourceName();
       toReturn.packageName = returnClass.getPackage().getName();
-      toReturn.simpleSourceName = returnClass.getName().replace('.', '_')
-          + "Impl";
-      toReturn.dialect = returnClass.isAnnotationPresent(JsonRpcService.class)
-          ? Dialect.JSON_RPC : Dialect.STANDARD;
+      toReturn.simpleSourceName = returnClass.getName().replace('.', '_') + "Impl";
+      toReturn.dialect =
+          returnClass.isAnnotationPresent(JsonRpcService.class) ? Dialect.JSON_RPC
+              : Dialect.STANDARD;
+      return this;
     }
 
-    public void setRequestMethods(List<RequestMethod> requestMethods) {
+    public Builder setExtraTypes(List<EntityProxyModel> extraTypes) {
+      toReturn.extraTypes = extraTypes;
+      return this;
+    }
+
+    public Builder setRequestMethods(List<RequestMethod> requestMethods) {
       toReturn.requestMethods = requestMethods;
+      return this;
     }
   }
 
   private Dialect dialect;
+  private List<EntityProxyModel> extraTypes;
   private String interfaceName;
   private String methodName;
   private String packageName;
@@ -79,6 +87,10 @@ public class ContextMethod implements AcceptsModelVisitor {
 
   public Dialect getDialect() {
     return dialect;
+  }
+
+  public List<EntityProxyModel> getExtraTypes() {
+    return Collections.unmodifiableList(extraTypes);
   }
 
   /**

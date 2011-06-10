@@ -23,6 +23,7 @@ import com.google.web.bindery.requestfactory.server.LocatorJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryExceptionPropagationJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidatorTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryJreTest;
+import com.google.web.bindery.requestfactory.server.RequestFactoryPolymorphicJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryUnicodeEscapingJreTest;
 import com.google.web.bindery.requestfactory.server.ServiceInheritanceJreTest;
 import com.google.web.bindery.requestfactory.server.ServiceLocatorTest;
@@ -47,6 +48,7 @@ public class RequestFactoryJreSuite {
     suite.addTestSuite(RequestFactoryExceptionPropagationJreTest.class);
     suite.addTestSuite(RequestFactoryInterfaceValidatorTest.class);
     suite.addTestSuite(RequestFactoryJreTest.class);
+    suite.addTestSuite(RequestFactoryPolymorphicJreTest.class);
     suite.addTestSuite(RequestFactoryUnicodeEscapingJreTest.class);
     suite.addTestSuite(ServiceInheritanceJreTest.class);
     suite.addTestSuite(ServiceLocatorTest.class);

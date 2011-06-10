@@ -131,4 +131,8 @@ class InProcessRequestFactory extends AbstractRequestFactory {
   protected String getTypeToken(Class<? extends BaseProxy> clazz) {
     return isEntityType(clazz) || isValueType(clazz) ? OperationKey.hash(clazz.getName()) : null;
   }
+
+  TypeTokenResolver getTypeTokenResolver() {
+    return deobfuscator;
+  }
 }

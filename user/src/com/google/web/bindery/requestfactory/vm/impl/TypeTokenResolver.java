@@ -22,8 +22,10 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Resolves payload type tokens to binary class names.
@@ -46,6 +48,8 @@ public class TypeTokenResolver {
     public TypeTokenResolver build() {
       TypeTokenResolver toReturn = d;
       toReturn.typeTokens = Collections.unmodifiableMap(toReturn.typeTokens);
+      toReturn.referencedTypes =
+          Collections.unmodifiableSet(new HashSet<String>(toReturn.typeTokens.values()));
       d = null;
       return toReturn;
     }
@@ -86,12 +90,21 @@ public class TypeTokenResolver {
   }
 
   /**
+   * The values of {@link #typeTokens}.
+   */
+  private Set<String> referencedTypes;
+
+  /**
    * Map of obfuscated ids to binary class names.
    */
   private Map<String, String> typeTokens = new HashMap<String, String>();
 
   public String getTypeFromToken(String typeToken) {
     return typeTokens.get(typeToken);
+  }
+
+  public boolean isReferencedType(String binaryName) {
+    return referencedTypes.contains(binaryName);
   }
 
   /**

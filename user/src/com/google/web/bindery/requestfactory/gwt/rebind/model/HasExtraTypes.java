@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,12 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.web.bindery.requestfactory.shared;
+package com.google.web.bindery.requestfactory.gwt.rebind.model;
+
+import java.util.List;
 
 /**
- * An analog to EntityProxy for domain types that do not have an identity
- * concept.
+ * Capability interface for types that can be annotated with
+ * {@link com.google.web.bindery.requestfactory.shared.ExtraTypes}.
  */
-@ProxyFor(Object.class)
-public interface ValueProxy extends BaseProxy {
+public interface HasExtraTypes {
+  List<EntityProxyModel> getExtraTypes();
 }

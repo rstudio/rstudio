@@ -43,6 +43,7 @@ import com.google.web.bindery.requestfactory.gwt.rebind.model.AcceptsModelVisito
 import com.google.web.bindery.requestfactory.gwt.rebind.model.ContextMethod;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.EntityProxyModel;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.EntityProxyModel.Type;
+import com.google.web.bindery.requestfactory.gwt.rebind.model.HasExtraTypes;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.ModelVisitor;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.RequestFactoryModel;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.RequestMethod;
@@ -84,6 +85,24 @@ public class RequestFactoryGenerator extends Generator {
     }
 
     @Override
+    public boolean visit(ContextMethod x) {
+      visitExtraTypes(x);
+      return true;
+    }
+
+    @Override
+    public boolean visit(EntityProxyModel x) {
+      visitExtraTypes(x);
+      return true;
+    }
+
+    @Override
+    public boolean visit(RequestFactoryModel x) {
+      visitExtraTypes(x);
+      return true;
+    }
+
+    @Override
     void examineTypeOnce(JClassType type) {
       // Need this to handle List<Foo>, Map<Foo>
       JParameterizedType parameterized = type.isParameterized();
@@ -98,6 +117,14 @@ public class RequestFactoryGenerator extends Generator {
         return;
       }
       peer.accept(this);
+    }
+
+    void visitExtraTypes(HasExtraTypes x) {
+      if (x.getExtraTypes() != null) {
+        for (EntityProxyModel extra : x.getExtraTypes()) {
+          extra.accept(this);
+        }
+      }
     }
   }
 
@@ -235,6 +262,7 @@ public class RequestFactoryGenerator extends Generator {
       @Override
       public void endVisit(EntityProxyModel x) {
         models.add(x);
+        models.addAll(x.getSuperProxyTypes());
       }
     });
     return models;

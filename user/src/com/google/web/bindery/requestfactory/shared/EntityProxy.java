@@ -18,6 +18,7 @@ package com.google.web.bindery.requestfactory.shared;
 /**
  * A proxy for a server-side domain object.
  */
+@ProxyFor(Object.class)
 public interface EntityProxy extends BaseProxy {
   /**
    * Returns the {@link EntityProxyId} that identifies a particular instance of

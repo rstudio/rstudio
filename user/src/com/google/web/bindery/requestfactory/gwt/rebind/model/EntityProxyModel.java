@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Represents an EntityProxy subtype.
  */
-public class EntityProxyModel implements AcceptsModelVisitor {
+public class EntityProxyModel implements AcceptsModelVisitor, HasExtraTypes {
   /**
    * Builds {@link EntityProxyModel}.
    */
@@ -29,6 +29,9 @@ public class EntityProxyModel implements AcceptsModelVisitor {
     private EntityProxyModel toReturn = new EntityProxyModel();
 
     public EntityProxyModel build() {
+      if (toReturn.superProxyTypes == null) {
+        toReturn.superProxyTypes = Collections.emptyList();
+      }
       try {
         return toReturn;
       } finally {
@@ -44,21 +47,35 @@ public class EntityProxyModel implements AcceptsModelVisitor {
       return toReturn;
     }
 
-    public void setQualifiedBinaryName(String qualifiedBinaryName) {
-      toReturn.qualifiedBinaryName = qualifiedBinaryName;
+    public Builder setExtraTypes(List<EntityProxyModel> extraTypes) {
+      toReturn.extraTypes = extraTypes;
+      return this;
     }
 
-    public void setQualifiedSourceName(String name) {
+    public Builder setQualifiedBinaryName(String qualifiedBinaryName) {
+      toReturn.qualifiedBinaryName = qualifiedBinaryName;
+      return this;
+    }
+
+    public Builder setQualifiedSourceName(String name) {
       assert !name.contains(" ");
       toReturn.qualifiedSourceName = name;
+      return this;
     }
 
-    public void setRequestMethods(List<RequestMethod> requestMethods) {
+    public Builder setRequestMethods(List<RequestMethod> requestMethods) {
       toReturn.requestMethods = requestMethods;
+      return this;
     }
 
-    public void setType(Type type) {
+    public Builder setSuperProxyTypes(List<EntityProxyModel> superTypes) {
+      toReturn.superProxyTypes = superTypes;
+      return this;
+    }
+
+    public Builder setType(Type type) {
       toReturn.type = type;
+      return this;
     }
   }
 
@@ -70,9 +87,11 @@ public class EntityProxyModel implements AcceptsModelVisitor {
     ENTITY, VALUE
   }
 
+  private List<EntityProxyModel> extraTypes;
   private String qualifiedBinaryName;
   private String qualifiedSourceName;
   private List<RequestMethod> requestMethods;
+  private List<EntityProxyModel> superProxyTypes;
   private Type type;
 
   private EntityProxyModel() {
@@ -87,6 +106,10 @@ public class EntityProxyModel implements AcceptsModelVisitor {
     visitor.endVisit(this);
   }
 
+  public List<EntityProxyModel> getExtraTypes() {
+    return Collections.unmodifiableList(extraTypes);
+  }
+
   public String getQualifiedBinaryName() {
     return qualifiedBinaryName;
   }
@@ -97,6 +120,13 @@ public class EntityProxyModel implements AcceptsModelVisitor {
 
   public List<RequestMethod> getRequestMethods() {
     return Collections.unmodifiableList(requestMethods);
+  }
+
+  /**
+   * Returns the proxy types to which the EntityProxyModel is assignable.
+   */
+  public List<EntityProxyModel> getSuperProxyTypes() {
+    return superProxyTypes;
   }
 
   public Type getType() {

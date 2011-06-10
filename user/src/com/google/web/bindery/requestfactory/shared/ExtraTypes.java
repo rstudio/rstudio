@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,16 @@
  */
 package com.google.web.bindery.requestfactory.shared;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
 /**
- * An analog to EntityProxy for domain types that do not have an identity
- * concept.
+ * This annotation can be applied to {@link EntityProxy}, {@link ValueProxy},
+ * {@link RequestContext}, and {@link RequestFactory} type declarations to
+ * include additional polymorphic proxy types that are not explicitly
+ * referenced.
  */
-@ProxyFor(Object.class)
-public interface ValueProxy extends BaseProxy {
+@Target(ElementType.TYPE)
+public @interface ExtraTypes {
+  Class<? extends BaseProxy>[] value();
 }

@@ -97,25 +97,30 @@ class Deobfuscator {
    * Returns a method descriptor that should be invoked on the service object.
    */
   public String getDomainMethodDescriptor(String operation) {
-    return operationData.get(new OperationKey(operation)).getDomainMethodDescriptor();
+    OperationData data = operationData.get(new OperationKey(operation));
+    return data == null ? null : data.getDomainMethodDescriptor();
   }
 
   public String getRequestContext(String operation) {
-    return operationData.get(new OperationKey(operation)).getRequestContext();
+    OperationData data = operationData.get(new OperationKey(operation));
+    return data == null ? null : data.getRequestContext();
   }
 
   public String getRequestContextMethodDescriptor(String operation) {
-    return operationData.get(new OperationKey(operation)).getClientMethodDescriptor();
+    OperationData data = operationData.get(new OperationKey(operation));
+    return data == null ? null : data.getClientMethodDescriptor();
   }
 
   public String getRequestContextMethodName(String operation) {
-    return operationData.get(new OperationKey(operation)).getMethodName();
+    OperationData data = operationData.get(new OperationKey(operation));
+    return data == null ? null : data.getMethodName();
   }
 
   /**
    * Returns a type's binary name based on an obfuscated token.
    */
   public String getTypeFromToken(String token) {
-    return typeTokens.get(token).getClassName();
+    Type type = typeTokens.get(token);
+    return type == null ? null : type.getClassName();
   }
 }

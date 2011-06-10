@@ -16,8 +16,10 @@
 package com.google.web.bindery.requestfactory.shared;
 
 /**
- * Creates TestFooPolymorphicRequest.
+ * Creates TestFooPolymorphicRequest which verifies that the
+ * RequestFactoryGenerator can handle interface declarations that use generic
+ * type parameters.
  */
 public interface TestRequestFactory extends RequestFactory {
-  TestFooPolymorphicRequest testFooPolymorphicRequest();
+  TestFooPolymorphicRequest testGenericRequest();
 }

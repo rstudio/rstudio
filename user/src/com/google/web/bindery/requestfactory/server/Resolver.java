@@ -404,7 +404,7 @@ class Resolver {
     boolean isProxy = BaseProxy.class.isAssignableFrom(returnClass);
     boolean isId = EntityProxyId.class.isAssignableFrom(returnClass);
     if (isProxy || isId) {
-      Class<? extends BaseProxy> proxyClass = assignableTo.asSubclass(BaseProxy.class);
+      Class<? extends BaseProxy> proxyClass = returnClass.asSubclass(BaseProxy.class);
       BaseProxy entity = resolveClientProxy(domainValue, proxyClass, propertyRefs, key, prefix);
       if (isId) {
         return assignableTo.cast(((EntityProxy) entity).stableId());
