@@ -91,6 +91,11 @@ public interface RequestContext {
   void fire(Receiver<Void> receiver);
 
   /**
+   * Returns the {@link RequestFactory} that created the RequestContext.
+   */
+  RequestFactory getRequestFactory();
+
+  /**
    * Returns true if any changes have been made to proxies mutable under this
    * context. Note that vacuous changes &mdash; e.g. foo.setName(foo.getName()
    * &mdash; will not trip the changed flag. Similarly, "unmaking" a change will

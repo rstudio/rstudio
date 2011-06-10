@@ -27,6 +27,7 @@ public class ServerFailure {
   private final String stackTraceString;
   private final String exceptionType;
   private final boolean fatal;
+  private RequestContext requestContext;
 
   /**
    * Constructs a ServerFailure with null properties.
@@ -75,6 +76,13 @@ public class ServerFailure {
   }
 
   /**
+   * Returns the RequestContext that triggered the ServerFailure.
+   */
+  public RequestContext getRequestContext() {
+    return requestContext;
+  }
+
+  /**
    * Return the failure stack trace.
    * 
    * @return the stack trace as a String
@@ -91,5 +99,12 @@ public class ServerFailure {
    */
   public boolean isFatal() {
     return fatal;
+  }
+
+  /**
+   * Sets the RequestContext to return via {@link #getRequestContext()}.
+   */
+  public void setRequestContext(RequestContext requestContext) {
+    this.requestContext = requestContext;
   }
 }

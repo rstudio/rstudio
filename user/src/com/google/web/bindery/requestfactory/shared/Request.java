@@ -16,9 +16,14 @@
 package com.google.web.bindery.requestfactory.shared;
 
 /**
- * Implemented by the request objects created by this factory.
+ * A Request represents a single method invocation on the server. It
+ * encapsulates the arguments provided to the Request factory method declared in
+ * a RequestContext as well as a set of object paths to return from the server.
+ * The returned data is provided to an optional {@link Receiver} object,
+ * specified by the {@link #to(Receiver)} method.
  * 
  * @param <T> The return type of objects in the corresponding response.
+ * @see com.google.web.bindery.requestfactory.shared.testing.FakeRequest
  */
 public interface Request<T> {
 
@@ -34,6 +39,11 @@ public interface Request<T> {
    * @param receiver a {@link Receiver} instance
    */
   void fire(Receiver<? super T> receiver);
+
+  /**
+   * Returns the RequestContext associated with the Request.
+   */
+  RequestContext getRequestContext();
 
   /**
    * Specify the object that will receive the result of the method invocation.

@@ -21,6 +21,7 @@ import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
+import com.google.web.bindery.requestfactory.shared.RequestFactory;
 
 /**
  * A no-op implementation of RequestConext that can be used as a base type for
@@ -72,6 +73,14 @@ public class FakeRequestContext implements RequestContext {
    */
   @Override
   public void fire(Receiver<Void> receiver) {
+  }
+
+  /**
+   * Returns {@code null}.
+   */
+  @Override
+  public RequestFactory getRequestFactory() {
+    return null;
   }
 
   /**

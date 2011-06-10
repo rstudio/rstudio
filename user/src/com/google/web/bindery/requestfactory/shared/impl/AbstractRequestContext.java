@@ -661,6 +661,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    */
   protected void fail(Receiver<Void> receiver, ServerFailure failure) {
     reuse();
+    failure.setRequestContext(this);
     Set<Throwable> causes = null;
     for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(state.invocations)) {
       try {

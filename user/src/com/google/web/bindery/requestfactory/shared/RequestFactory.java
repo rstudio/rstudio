@@ -40,6 +40,7 @@ import com.google.web.bindery.event.shared.EventBus;
  * supertypes of value types is not supported (e.g. Object, Enum, Number).
  * </p>
  * 
+ * @see com.google.web.bindery.requestfactory.shared.testing.FakeRequestFactory
  * @see com.google.web.bindery.requestfactory.server.testing.InProcessRequestTransport
  */
 public interface RequestFactory {
@@ -116,6 +117,13 @@ public interface RequestFactory {
    * @return an {@link EntityProxyId}
    */
   <T extends EntityProxy> EntityProxyId<T> getProxyId(String historyToken);
+
+  /**
+   * Returns the RequestTransport set via {@link #initialize}.
+   * 
+   * @return the {@link RequestTransport} associated with this instance
+   */
+  RequestTransport getRequestTransport();
 
   /**
    * Returns a ProxySerializer that can encode and decode the various

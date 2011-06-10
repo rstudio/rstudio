@@ -20,6 +20,7 @@ package com.google.web.bindery.requestfactory.shared;
  * payload to the backend.
  * 
  * @see com.google.web.bindery.requestfactory.gwt.client.DefaultRequestTransport
+ * @see com.google.web.bindery.requestfactory.shared.testing.FakeRequestTransport
  */
 public interface RequestTransport {
   /**

@@ -36,8 +36,7 @@ import javax.validation.ConstraintViolation;
  * 
  * @param <T> return type
  */
-public abstract class AbstractRequest<T> implements Request<T>,
-    InstanceRequest<BaseProxy, T> {
+public abstract class AbstractRequest<T> implements Request<T>, InstanceRequest<BaseProxy, T> {
 
   /**
    * Used by generated subtypes.
@@ -65,6 +64,11 @@ public abstract class AbstractRequest<T> implements Request<T>,
    */
   public Set<String> getPropertyRefs() {
     return Collections.unmodifiableSet(propertyRefs);
+  }
+
+  @Override
+  public RequestContext getRequestContext() {
+    return requestContext;
   }
 
   public RequestData getRequestData() {
@@ -119,8 +123,9 @@ public abstract class AbstractRequest<T> implements Request<T>,
     // The user may not have called to()
     if (receiver != null) {
       @SuppressWarnings("unchecked")
-      T result = (T) EntityCodex.decode(requestContext,
-          requestData.getReturnType(), requestData.getElementType(), split);
+      T result =
+          (T) EntityCodex.decode(requestContext, requestData.getReturnType(), requestData
+              .getElementType(), split);
       receiver.onSuccess(result);
     }
   }

@@ -74,6 +74,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
     @Override
     public void onFailure(ServerFailure error) {
+      assertSame(persistRequest.getRequestContext(), error.getRequestContext());
       assertEquals(expectedException, error.getExceptionType());
       if (expectedException != null) {
         assertFalse(error.getStackTraceString().length() == 0);
