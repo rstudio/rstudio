@@ -17,6 +17,9 @@ package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.util.Arrays;
+import java.util.Iterator;
+
 /**
  * This test is intended to exercise as many code paths and node types as
  * possible in the Java to JavaScript compiler. This test is not at all intended
@@ -412,8 +415,65 @@ public class CoverageTest extends CoverageBase {
     }
 
     private void testForeachStatement() {
+      // Array of primitive.
       for (int q : ia) {
         i = q;
+      }
+      // Array of primitive with unboxing.
+      for (Integer q : ia) {
+        i = q;
+      }
+      // Array of object.
+      for (String str : sa) {
+        s = str;
+      }
+      // Iterable.
+      for (Object obj : Arrays.asList(new Object(), new Object())) {
+        o = obj;
+      }
+      // Iterable with unboxing.
+      for (int q : Arrays.asList(1, 2, 3)) {
+        i = q;
+      }
+      // Iterable with generic cast.
+      for (String str : Arrays.asList(sa)) {
+        s = str;
+      }
+      // Iterable with array element.
+      for (String[] stra : Arrays.asList(sa, sa, sa)) {
+        s = sa[0];
+      }
+      // Iterable Iterator subclass.
+      class SubIterator<T> implements Iterator<T> {
+        private final Iterator<T> it;
+
+        public SubIterator(Iterator<T> it) {
+          this.it = it;
+        }
+
+        @Override
+        public boolean hasNext() {
+          return it.hasNext();
+        }
+
+        @Override
+        public T next() {
+          return it.next();
+        }
+
+        @Override
+        public void remove() {
+          it.remove();
+        }
+      }
+      class SubIterableString implements Iterable<String> {
+        @Override
+        public SubIterator<String> iterator() {
+          return new SubIterator<String>(Arrays.asList(sa).iterator());
+        }
+      }
+      for (String str : new SubIterableString()) {
+        s = str;
       }
     }
 
@@ -750,6 +810,8 @@ public class CoverageTest extends CoverageBase {
   public static Object o;
 
   public static String s = "foo";
+
+  public static String[] sa = new String[]{"foo", "bar", "bar"};
 
   public static CoverageTest singleton;
 

@@ -199,6 +199,7 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.VariableBinding;
 import org.eclipse.jdt.internal.compiler.util.Util;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -979,16 +980,7 @@ public class GwtAstBuilder {
           // Perform any implicit reference type casts (due to generics).
           // Note this occurs before potential unboxing.
           if (elementVar.getType() != javaLangObject) {
-            /*
-             * Compute the collection element type by walking the iterator()
-             * method, which may be parameterized.
-             */
-            ReferenceBinding collectionType = (ReferenceBinding) x.collection.resolvedType;
-            MethodBinding iteratorMethod =
-                collectionType.getExactMethod(ITERATOR, NO_TYPES, cudScope);
-            ReferenceBinding iteratorType = (ReferenceBinding) iteratorMethod.returnType;
-            MethodBinding nextMethod = iteratorType.getMethods(NEXT)[0];
-            TypeBinding collectionElementType = nextMethod.returnType;
+            TypeBinding collectionElementType = (TypeBinding) collectionElementTypeField.get(x);
             JType toType = typeMap.get(collectionElementType);
             assert (toType instanceof JReferenceType);
             elementDecl.initializer = maybeCast(toType, elementDecl.initializer);
@@ -2762,6 +2754,12 @@ public class GwtAstBuilder {
 
   private static final char[] _STRING = "_String".toCharArray();
   private static final String ARRAY_LENGTH_FIELD = "length";
+
+  /**
+   * Reflective access to {@link ForeachStatement#collectionElementType}.
+   */
+  private static final Field collectionElementTypeField;
+
   private static final char[] CREATE_VALUE_OF_MAP = "createValueOfMap".toCharArray();
   private static final char[] HAS_NEXT = "hasNext".toCharArray();
   private static final char[] ITERATOR = "iterator".toCharArray();
@@ -2775,6 +2773,13 @@ public class GwtAstBuilder {
 
   static {
     InternalCompilerException.preload();
+    try {
+      collectionElementTypeField = ForeachStatement.class.getDeclaredField("collectionElementType");
+      collectionElementTypeField.setAccessible(true);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Unexpectedly unable to access ForeachStatement.collectionElementType via reflection", e);
+    }
   }
 
   static String dotify(char[][] name) {
