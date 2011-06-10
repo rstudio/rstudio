@@ -53,11 +53,14 @@ public class DOM {
 
   /**
    * Appends one element to another's list of children.
-   * If the child element is a {@link PotentialElement}, it is first resolved
-   * {@see PotentialElement#resolve(Element)}.
+   * <p>
+   * If the child element is a {@link com.google.gwt.user.client.ui.PotentialElement}, it is first
+   * resolved.
+   * </p>
    *
    * @param parent the parent element
    * @param child its new child
+   * @see com.google.gwt.user.client.ui.PotentialElement#resolve(Element)
    */
   public static void appendChild(Element parent, Element child) {
     assert !PotentialElement.isPotential(parent) : "Cannot append to a PotentialElement";
@@ -914,27 +917,45 @@ public class DOM {
   /**
    * Inserts an element as a child of the given parent element, before another
    * child of that parent.
+   * <p>
+   * If the child element is a {@link com.google.gwt.user.client.ui.PotentialElement}, it is first
+   * resolved.
+   * </p>
    * 
    * @param parent the parent element
    * @param child the child element to add to <code>parent</code>
    * @param before an existing child element of <code>parent</code> before which
    *          <code>child</code> will be inserted
+   * @see com.google.gwt.user.client.ui.PotentialElement#resolve(Element)
    */
   public static void insertBefore(Element parent, Element child, Element before) {
-    parent.insertBefore(child, before);
+    assert !PotentialElement.isPotential(parent) : "Cannot insert into a PotentialElement";
+
+    // If child isn't a PotentialElement, resolve() returns
+    // the Element itself.
+    parent.insertBefore(PotentialElement.resolve(child).<Element> cast(), before);
   }
 
   /**
    * Inserts an element as a child of the given parent element.
+   * <p>
+   * If the child element is a {@link com.google.gwt.user.client.ui.PotentialElement}, it is first
+   * resolved.
+   * </p>
    * 
    * @param parent the parent element
    * @param child the child element to add to <code>parent</code>
    * @param index the index before which the child will be inserted (any value
    *          greater than the number of existing children will cause the child
    *          to be appended)
+   * @see com.google.gwt.user.client.ui.PotentialElement#resolve(Element)
    */
   public static void insertChild(Element parent, Element child, int index) {
-    impl.insertChild(parent, child, index);
+    assert !PotentialElement.isPotential(parent) : "Cannot insert into a PotentialElement";
+
+    // If child isn't a PotentialElement, resolve() returns
+    // the Element itself.
+    impl.insertChild(parent, PotentialElement.resolve(child).<Element> cast(), index);
   }
 
   /**
@@ -951,6 +972,8 @@ public class DOM {
    */
   public static void insertListItem(Element selectElem, String item,
       String value, int index) {
+    assert !PotentialElement.isPotential(selectElem) : "Cannot insert into a PotentialElement";
+
     SelectElement select = selectElem.<SelectElement> cast();
     OptionElement option = Document.get().createOptionElement();
     option.setText(item);
