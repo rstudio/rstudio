@@ -365,7 +365,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Run _All"
         desc="Run all of the code in the source file"/>
    <cmd id="executeCode"
-        buttonLabel="Run Line(s)"
+        buttonLabel="Run"
         menuLabel="Run _Line(s)"
         desc="Run the current line or selection"/>
    <cmd id="executeToCurrentLine"
