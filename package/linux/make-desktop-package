@@ -7,9 +7,9 @@ set -e
 
 # make tar.gz
 BUILD_DIR=build-Desktop-$1
-if [ "${CMAKE_BUILD_TYPE}" == "Debug "]
+if ! test -z "$CMAKE_BUILD_TYPE"
 then
-	BUILD_DIR=$BUILD_DIR-Debug
+	BUILD_DIR=$BUILD_DIR-$CMAKE_BUILD_TYPE
 fi
 
 # switch to build dir and determine name of package root
