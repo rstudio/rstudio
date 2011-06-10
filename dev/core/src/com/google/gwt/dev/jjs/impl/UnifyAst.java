@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
@@ -70,6 +71,7 @@ import com.google.gwt.dev.js.ast.JsNestingScope;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.util.JsniRef;
+import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
@@ -189,7 +191,7 @@ public class UnifyAst {
 
     @Override
     public void endVisit(JExpression x, Context ctx) {
-      assert !x.getType().isExternal();
+      assert !x.getType().isExternal() || errorsFound;
     }
 
     @Override
@@ -226,7 +228,10 @@ public class UnifyAst {
     public void endVisit(JMethodCall x, Context ctx) {
       // Already resolved during visit().
       JMethod target = x.getTarget();
-      assert !target.isExternal();
+      if (target.isExternal()) {
+        assert errorsFound;
+        return;
+      }
       if (magicMethodCalls.contains(target)) {
         JExpression result = handleMagicMethodCall(x);
         if (result == null) {
@@ -399,7 +404,9 @@ public class UnifyAst {
 
       JsniRef ref = JsniRef.parse(stringValue);
       if (ref != null) {
-        searchForType(ref.className());
+        if (Name.isBinaryName(ref.className())) {
+          searchForType(ref.className());
+        }
         node = JsniRefLookup.findJsniRefTarget(ref, program, new JsniRefLookup.ErrorReporter() {
           public void reportError(String errMsg) {
             error(x, errMsg);
@@ -463,6 +470,7 @@ public class UnifyAst {
 
   private final Map<String, CompiledClass> classFileMap;
   private boolean errorsFound = false;
+  private final Set<CompilationUnit> failedUnits = new IdentityHashSet<CompilationUnit>();
   private final Map<String, JField> fieldMap = new HashMap<String, JField>();
 
   /**
@@ -518,7 +526,7 @@ public class UnifyAst {
         }
         assimilateUnit(cc.getUnit());
         type = program.getFromTypeMap(sourceTypeName);
-        assert type != null;
+        assert type != null || errorsFound;
       }
     }
   }
@@ -650,8 +658,16 @@ public class UnifyAst {
   }
 
   private void assimilateUnit(CompilationUnit unit) {
-    // TODO: error checking.
+    if (unit.isError()) {
+      if (failedUnits.add(unit)) {
+        CompilationProblemReporter.reportErrors(logger, unit, false);
+        errorsFound = true;
+      }
+      return;
+    }
+    // TODO(zundel): ask for a recompile if deserialization fails?
     List<JDeclaredType> types = unit.getTypes();
+    assert containsAllTypes(unit, types);
     for (JDeclaredType t : types) {
       program.addType(t);
     }
@@ -712,6 +728,19 @@ public class UnifyAst {
     }
   }
 
+  private boolean containsAllTypes(CompilationUnit unit, List<JDeclaredType> types) {
+    Set<String> binaryTypeNames = new HashSet<String>();
+    for (JDeclaredType type : types) {
+      binaryTypeNames.add(type.getName());
+    }
+    for (CompiledClass cc : unit.getCompiledClasses()) {
+      if (!binaryTypeNames.contains(InternalName.toBinaryName(cc.getInternalName()))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private void error(JNode x, String errorMessage) {
     errorsFound = true;
     TreeLogger branch =
@@ -730,7 +759,11 @@ public class UnifyAst {
   }
 
   private void flowInto(JField field) {
-    if (field == JField.NULL_FIELD || field.isExternal()) {
+    if (field.isExternal()) {
+      assert errorsFound;
+      return;
+    }
+    if (field == JField.NULL_FIELD) {
       return;
     }
     if (!liveFieldsAndMethods.contains(field)) {
@@ -743,7 +776,11 @@ public class UnifyAst {
   }
 
   private void flowInto(JMethod method) {
-    if (method == JMethod.NULL_METHOD || method.isExternal()) {
+    if (method.isExternal()) {
+      assert errorsFound;
+      return;
+    }
+    if (method == JMethod.NULL_METHOD) {
       return;
     }
     if (!liveFieldsAndMethods.contains(method)) {
@@ -794,7 +831,10 @@ public class UnifyAst {
   }
 
   private void instantiate(JDeclaredType type) {
-    assert !type.isExternal();
+    if (type.isExternal()) {
+      assert errorsFound;
+      return;
+    }
     if (!instantiatedTypes.contains(type)) {
       instantiatedTypes.add(type);
       if (type.getSuperClass() != null) {
@@ -909,13 +949,16 @@ public class UnifyAst {
       }
       assimilateUnit(cc.getUnit());
       type = program.getFromTypeMap(binaryTypeName);
+      assert type != null || errorsFound;
     }
     return type;
   }
 
   private void staticInitialize(JDeclaredType type) {
-    // Make sure the type is already resolved.
-    assert !type.isExternal();
+    if (type.isExternal()) {
+      assert errorsFound;
+      return;
+    }
     JMethod clinit = type.getMethods().get(0);
     if (!liveFieldsAndMethods.contains(clinit)) {
       flowInto(clinit);
@@ -953,13 +996,13 @@ public class UnifyAst {
 
     String typeName = type.getName();
     JDeclaredType newType = searchForType(typeName);
-    if (newType != null) {
-      assert !newType.isExternal();
-      return newType;
+    if (newType == null) {
+      assert errorsFound;
+      return type;
     }
-    // Error condition, should be logged.
-    errorsFound = true;
-    return type;
+
+    assert !newType.isExternal();
+    return newType;
   }
 
   private JField translate(JField field) {
@@ -976,7 +1019,7 @@ public class UnifyAst {
 
     enclosingType = translate(enclosingType);
     if (enclosingType.isExternal()) {
-      // Error condition, should be logged.
+      assert errorsFound;
       return field;
     }
     mapApi(enclosingType);
@@ -1006,7 +1049,7 @@ public class UnifyAst {
 
     enclosingType = translate(enclosingType);
     if (enclosingType.isExternal()) {
-      // Error condition, should be logged.
+      assert errorsFound;
       return method;
     }
     mapApi(enclosingType);

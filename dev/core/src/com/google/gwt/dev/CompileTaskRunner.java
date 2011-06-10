@@ -17,6 +17,7 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.shell.log.SwingLoggerPanel;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -88,7 +89,7 @@ public class CompileTaskRunner {
     } catch (UnableToCompleteException e) {
       // Assume logged.
     } catch (Throwable e) {
-      logger.log(TreeLogger.ERROR, "Unexpected", e);
+      CompilationProblemReporter.logAndTranslateException(logger, e);
     }
     return false;
   }

@@ -123,40 +123,6 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
          return code;
        }
      });
-    
-     // Create a source file containing a reference to an unknown class.
-     sourceOracle.addOrReplace(new MockJavaResource("test.C") {
-       @Override
-       public CharSequence getContent() {
-         StringBuffer code = new StringBuffer();
-         code.append("package test;\n");
-         code.append("import myPackage.UnknownClass;");
-         code.append("class C {\n");
-         code.append("  int func() {\n");
-         // Reference an unknown class.
-         code.append("    return myPackage.UnknownClass.getSmallNumber();\n");
-         code.append("  }\n");
-         code.append("}\n");
-         return code;
-       }
-     });
-     
-     // Create a final example with a reference to an unknown class and no
-     // import statement.
-     sourceOracle.addOrReplace(new MockJavaResource("test.D") {
-       @Override
-       public CharSequence getContent() {
-         StringBuffer code = new StringBuffer();
-         code.append("package test;\n");
-         code.append("class D {\n");
-         code.append("  int func() {\n");
-         // Reference an unknown class.
-         code.append("    return myPackage.UnknownClass.getSmallNumber();\n");
-         code.append("  }\n");
-         code.append("}\n");
-         return code;
-       }
-     });
   }
 
   public void testInsertedClass() throws UnableToCompleteException {
@@ -187,14 +153,46 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
   }
 
   public void testUnknownClass() {
+    // Create a source file containing a reference to an unknown class.
+    sourceOracle.addOrReplace(new MockJavaResource("test.C") {
+      @Override
+      public CharSequence getContent() {
+        StringBuffer code = new StringBuffer();
+        code.append("package test;\n");
+        code.append("import myPackage.UnknownClass;");
+        code.append("class C {\n");
+        code.append("  int func() {\n");
+        // Reference an unknown class.
+        code.append("    return myPackage.UnknownClass.getSmallNumber();\n");
+        code.append("  }\n");
+        code.append("}\n");
+        return code;
+      }
+    });
     try {
       compileSnippet("void", "new test.C();");
       fail("Shouldn't have compiled");
     } catch (UnableToCompleteException expected) {
     }
   }
- 
+
   public void testUnknownClassNoImport() {
+    // Create a source file with a reference to an unknown class and no
+    // import statement.
+    sourceOracle.addOrReplace(new MockJavaResource("test.D") {
+      @Override
+      public CharSequence getContent() {
+        StringBuffer code = new StringBuffer();
+        code.append("package test;\n");
+        code.append("class D {\n");
+        code.append("  int func() {\n");
+        // Reference an unknown class.
+        code.append("    return myPackage.UnknownClass.getSmallNumber();\n");
+        code.append("  }\n");
+        code.append("}\n");
+        return code;
+      }
+    });
     try {
       compileSnippet("void", "new test.D();");
       fail("Shouldn't have compiled");
