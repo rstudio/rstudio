@@ -179,17 +179,26 @@
    siglines <- grep("^[^#].*", lines, value=TRUE)
    firstline <- siglines[1]
 
+   dataline <- siglines[2]
+   if (is.na(dataline) || length(grep("[^\\s]+", dataline)) == 0)
+      dataline <- firstline
+
    sep <- ''
-   if (length(grep("\\t", firstline)) > 0)
+   if (length(grep("\\t", firstline)) > 0) {
       sep <- "\t"
-   else if (length(grep(";", firstline)) > 0)
+   } else if (length(grep(";", firstline)) > 0) {
       sep <- ";"
-   else if (length(grep(",", firstline)) > 0)
+   } else if (length(grep(",", firstline)) > 0) {
       sep <- ","
+   }
 
    dec <- '.'
-   if (length(grep(".", firstline)) < 0 && sep == ";")
+   if (length(grep("\\.", dataline)) == 0
+         && length(grep(",", dataline)) > 0
+         && sep != ",")
+   {
       dec <- ','
+   }
 
    header <- length(grep("[0-9]", firstline)) == 0
 
