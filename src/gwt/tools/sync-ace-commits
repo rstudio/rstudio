@@ -24,6 +24,7 @@ git merge \
     origin/patch-build-matchingbraceoutdent \
     origin/patch-normalizeinput \
     origin/bugfix/search-regexp \
+    origin/bugfix/selected-word-colors \
 
 
 make clean

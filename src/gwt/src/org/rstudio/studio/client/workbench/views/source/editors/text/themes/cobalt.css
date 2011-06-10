@@ -49,6 +49,10 @@
   background: rgba(179, 101, 57, 0.75);
 }
 
+.ace_marker-layer .ace_selected_word {
+  border: 1px solid rgba(179, 101, 57, 0.75);
+}
+
 .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }

@@ -49,6 +49,10 @@
   background: #073642;
 }
 
+.ace_marker-layer .ace_selected_word {
+  border: 1px solid #073642;
+}
+
 .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }

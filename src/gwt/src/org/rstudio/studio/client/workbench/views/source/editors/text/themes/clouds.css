@@ -49,6 +49,10 @@
   background: #BDD5FC;
 }
 
+.ace_marker-layer .ace_selected_word {
+  border: 1px solid #BDD5FC;
+}
+
 .ace_marker-layer .ace_step {
   background: rgb(198, 219, 174);
 }
@@ -145,6 +149,10 @@
 
 .ace_xml_pe {
   
+}
+
+.ace_collab.ace_user1 {
+     
 }
 .nocolor.ace_editor .ace_line span {color:#AF956F !important;}
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: #BFBFBF;}
