@@ -16,8 +16,16 @@ then
    exit 1
 fi
 
-BUILD_DIR=build-$1-$2
+# set build type( if necessary) and build dir
+if test -z "$CMAKE_BUILD_TYPE"
+then
+   CMAKE_BUILD_TYPE=Release
+   BUILD_DIR=build-$1-$2
+else
+   BUILD_DIR=build-$1-$2-$CMAKE_BUILD_TYPE
+fi
 
+# clean if requested
 if [ "$3" == "clean" ]
 then
    # remove existing build dir
@@ -28,6 +36,7 @@ then
    ant clean
    cd $PACKAGE_DIR
 fi
+
 
 if [ "$1" == "Desktop" ]
 then
@@ -41,7 +50,7 @@ cd $BUILD_DIR
 rm -f CMakeCache.txt
 rm -rf $BUILD_DIR/_CPack_Packages
 cmake -DRSTUDIO_TARGET=$1 \
-      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
       -DRSTUDIO_PACKAGE_BUILD=1 \
       -DCMAKE_INSTALL_PREFIX=/usr/lib/$INSTALL_DIR \
       ../../..
