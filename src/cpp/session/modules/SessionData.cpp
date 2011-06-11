@@ -217,7 +217,9 @@ SEXP dataViewerHook(SEXP call, SEXP op, SEXP args, SEXP rho)
             {
                SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
                SEXP stringSEXP = STRING_ELT(columnSEXP, row);
-               if (stringSEXP != NA_STRING && r::sexp::length(stringSEXP) > 0)
+               if (stringSEXP != NULL &&
+                   stringSEXP != NA_STRING &&
+                   r::sexp::length(stringSEXP) > 0)
                {
                   std::string text(Rf_translateChar(stringSEXP));
                   appendTD(&html, text);
