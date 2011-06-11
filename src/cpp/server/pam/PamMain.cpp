@@ -123,9 +123,16 @@ int conv(int num_msg,
                return PAM_CONV_ERR;
             break;
          }
+         case PAM_TEXT_INFO:
+         {
+            resp[i]->resp_retcode = 0;
+            char* respBuf = static_cast<char*>(pool.alloc(1));
+            respBuf[0] = '\0';
+            resp[i]->resp = respBuf;
+            break;
+         }
          case PAM_PROMPT_ECHO_ON:
          case PAM_ERROR_MSG:
-         case PAM_TEXT_INFO:
          default:
             return PAM_CONV_ERR;
          }
