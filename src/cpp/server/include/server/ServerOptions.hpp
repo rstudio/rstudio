@@ -102,6 +102,11 @@ public:
       return std::string(authPamHelperPath_.c_str());
    }
 
+   bool authPamRequiresPriv() const
+   {
+      return authPamRequiresPriv_;
+   }
+
    // rsession
    std::string rsessionWhichR() const
    {
@@ -157,6 +162,7 @@ private:
    bool authValidateUsers_;
    std::string authRequiredUserGroup_;
    std::string authPamHelperPath_;
+   bool authPamRequiresPriv_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;

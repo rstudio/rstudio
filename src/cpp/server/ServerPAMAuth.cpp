@@ -35,8 +35,6 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 
-#include "config.h"
-
 namespace server {
 namespace pam_auth {
 
@@ -96,21 +94,21 @@ bool pamLogin(const std::string& username, const std::string& password)
       // and continue rather than calling ::exit (we do this to avoid
       // strange error conditions related to global c++ objects being
       // torn down in a non-standard sequence).
-
- #ifdef HAVE_PAM_REQUIRES_RESTORE_PRIV
-      // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
-      // running with geteuid != getuid (as is the case when we temporarily
-      // drop privileges). So restore privilliges in the child
-      if (util::system::realUserIsRoot())
+      if (server::options().authPamRequiresPriv())
       {
-         Error error = util::system::restorePriv();
-         if (error)
+         // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
+         // running with geteuid != getuid (as is the case when we temporarily
+         // drop privileges). So restore privilliges in the child
+         if (util::system::realUserIsRoot())
          {
-            LOG_ERROR(error);
-            // intentionally fail forward (see note above)
+            Error error = util::system::restorePriv();
+            if (error)
+            {
+               LOG_ERROR(error);
+               // intentionally fail forward (see note above)
+            }
          }
       }
-#endif
 
       // close unused pipes
       posixcall(boost::bind(::close, fdInput[WRITE]), ERROR_LOCATION);
