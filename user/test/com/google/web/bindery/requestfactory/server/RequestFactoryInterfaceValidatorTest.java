@@ -44,7 +44,7 @@ import java.util.logging.Logger;
  */
 public class RequestFactoryInterfaceValidatorTest extends TestCase {
   static class ClinitEntity {
-    static ClinitEntity findClinitEntity(String key) {
+    static ClinitEntity findClinitEntity(@SuppressWarnings("unused") String key) {
       return null;
     }
 
@@ -80,11 +80,11 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   }
 
   static class Domain {
-    static int fooStatic(int a) {
+    static int fooStatic(@SuppressWarnings("unused") int a) {
       return 0;
     }
 
-    int foo(int a) {
+    int foo(@SuppressWarnings("unused") int a) {
       return 0;
     }
 
@@ -104,7 +104,7 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     void foo() {
     }
 
-    void foo(int a) {
+    void foo(@SuppressWarnings("unused") int a) {
     }
 
     String getId() {
@@ -141,7 +141,7 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     /**
      * This method should be static.
      */
-    EntityWithInstanceFind findEntityWithInstanceFind(String key) {
+    EntityWithInstanceFind findEntityWithInstanceFind(@SuppressWarnings("unused") String key) {
       return null;
     }
   }
@@ -173,7 +173,7 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
       return null;
     }
 
-    void setList(List<Domain> value) {
+    void setList(@SuppressWarnings("unused") List<Domain> value) {
     }
   }
 
@@ -405,10 +405,11 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
    */
   public void testFollowingTypeParameters() {
     v.validateEntityProxy(HasList.class.getName());
-    assertNotNull(v.getEntityProxyTypeName(HasListDomain.class.getName(), HasList.class.getName()));
-    assertNotNull(v.getEntityProxyTypeName(Domain.class.getName(),
+    Deobfuscator d = v.getDeobfuscator();
+    assertNotNull(d.getClientProxies(HasListDomain.class.getName()));
+    assertTrue(d.getClientProxies(Domain.class.getName()).contains(
         ReachableOnlyThroughParamaterList.class.getName()));
-    assertNotNull(v.getEntityProxyTypeName(Domain.class.getName(),
+    assertTrue(d.getClientProxies(Domain.class.getName()).contains(
         ReachableOnlyThroughReturnedList.class.getName()));
   }
 

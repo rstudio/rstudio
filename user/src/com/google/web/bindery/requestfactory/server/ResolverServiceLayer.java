@@ -36,18 +36,26 @@ import java.util.logging.Logger;
  */
 final class ResolverServiceLayer extends ServiceLayerDecorator {
 
+  private static Deobfuscator deobfuscator;
   private static final Logger log = Logger.getLogger(ServiceLayer.class.getName());
 
-  /**
-   * All instances of the service layer that are loaded by the same classloader
-   * can use a shared validator. The use of the validator should be
-   * synchronized, since it is stateful.
-   */
-  private static final RequestFactoryInterfaceValidator validator =
-      new RequestFactoryInterfaceValidator(log,
-          new RequestFactoryInterfaceValidator.ClassLoaderLoader(ServiceLayer.class
-              .getClassLoader()));
-  private static final Deobfuscator deobfuscator = validator.getDeobfuscator();
+  private static synchronized boolean updateDeobfuscator(ClassLoader classLoader, String binaryName) {
+    RequestFactoryInterfaceValidator validator =
+        new RequestFactoryInterfaceValidator(log,
+            new RequestFactoryInterfaceValidator.ClassLoaderLoader(classLoader));
+    validator.antidote();
+    validator.validateRequestFactory(binaryName);
+    if (validator.isPoisoned()) {
+      return false;
+    }
+    if (deobfuscator == null) {
+      deobfuscator = validator.getDeobfuscator();
+    } else {
+      deobfuscator =
+          new Deobfuscator.Builder().merge(deobfuscator).merge(validator.getDeobfuscator()).build();
+    }
+    return true;
+  }
 
   @Override
   public ClassLoader getDomainClassLoader() {
@@ -56,11 +64,7 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
 
   @Override
   public Class<? extends BaseProxy> resolveClass(String typeToken) {
-    String deobfuscated;
-    synchronized (validator) {
-      deobfuscated = deobfuscator.getTypeFromToken(typeToken);
-    }
-
+    String deobfuscated = deobfuscator.getTypeFromToken(typeToken);
     if (deobfuscated == null) {
       die(null, "No type for token %s", typeToken);
     }
@@ -71,13 +75,6 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
   @Override
   public <T> Class<? extends T> resolveClientType(Class<?> domainClass, Class<T> clientClass,
       boolean required) {
-    String name;
-    synchronized (validator) {
-      name = validator.getEntityProxyTypeName(domainClass.getName(), clientClass.getName());
-    }
-    if (name != null) {
-      return forName(name).asSubclass(clientClass);
-    }
     if (List.class.isAssignableFrom(domainClass)) {
       return List.class.asSubclass(clientClass);
     }
@@ -86,6 +83,19 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
     }
     if (TypeUtils.isValueType(domainClass)) {
       return domainClass.asSubclass(clientClass);
+    }
+    Class<?> toSearch = domainClass;
+    while (toSearch != null) {
+      List<String> clientTypes = deobfuscator.getClientProxies(toSearch.getName());
+      if (clientTypes != null) {
+        for (String clientType : clientTypes) {
+          Class<?> proxy = forName(clientType);
+          if (clientClass.isAssignableFrom(proxy)) {
+            return proxy.asSubclass(clientClass);
+          }
+        }
+      }
+      toSearch = toSearch.getSuperclass();
     }
     if (required) {
       die(null, "The domain type %s cannot be sent to the client", domainClass.getCanonicalName());
@@ -120,10 +130,7 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
      * method to a domain method signature. We'll reuse this calculation instead
      * of iterating over all methods.
      */
-    String domainDescriptor;
-    synchronized (validator) {
-      domainDescriptor = deobfuscator.getDomainMethodDescriptor(operation);
-    }
+    String domainDescriptor = deobfuscator.getDomainMethodDescriptor(operation);
 
     if (domainDescriptor == null) {
       return die(null, "No domain method descriptor is mapped to operation %s", operation);
@@ -152,10 +159,7 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
 
   @Override
   public Class<? extends RequestContext> resolveRequestContext(String operation) {
-    String requestContextClass;
-    synchronized (validator) {
-      requestContextClass = deobfuscator.getRequestContext(operation);
-    }
+    String requestContextClass = deobfuscator.getRequestContext(operation);
     if (requestContextClass == null) {
       die(null, "No RequestContext for operation %s", operation);
     }
@@ -165,12 +169,8 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
   @Override
   public Method resolveRequestContextMethod(String operation) {
     Class<?> searchIn = getTop().resolveRequestContext(operation);
-    String methodName;
-    String descriptor;
-    synchronized (validator) {
-      methodName = deobfuscator.getRequestContextMethodName(operation);
-      descriptor = deobfuscator.getRequestContextMethodDescriptor(operation);
-    }
+    String methodName = deobfuscator.getRequestContextMethodName(operation);
+    String descriptor = deobfuscator.getRequestContextMethodDescriptor(operation);
     Class<?>[] params = getArgumentTypes(descriptor);
     try {
       return searchIn.getMethod(methodName, params);
@@ -182,12 +182,8 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
 
   @Override
   public Class<? extends RequestFactory> resolveRequestFactory(String binaryName) {
-    synchronized (validator) {
-      validator.antidote();
-      validator.validateRequestFactory(binaryName);
-      if (validator.isPoisoned()) {
-        die(null, "The RequestFactory %s did not pass validation", binaryName);
-      }
+    if (!updateDeobfuscator(getTop().getDomainClassLoader(), binaryName)) {
+      die(null, "The RequestFactory %s did not pass validation", binaryName);
     }
     return forName(binaryName).asSubclass(RequestFactory.class);
   }

@@ -19,6 +19,7 @@ import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryPolymorphi
 import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.ClassLoaderLoader;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -27,7 +28,7 @@ import java.util.logging.Logger;
  * to type-hierarchy mapping.
  */
 public class RequestFactoryPolymorphicJreTest extends RequestFactoryPolymorphicTest {
-  RequestFactoryInterfaceValidator v;
+  private Deobfuscator deobfuscator;
 
   @Override
   public String getModuleName() {
@@ -44,16 +45,16 @@ public class RequestFactoryPolymorphicJreTest extends RequestFactoryPolymorphicT
   /**
    * Check related proxy types with unrelated domain types.
    * */
-  public void testUnrelatedDomainTypes() {
+  public void testUnrelatedDomainTypes() throws ClassNotFoundException {
     // Simple mappings
-    check(v, W.class, WProxy.class, WProxy.class);
-    check(v, W.class, WZProxy.class, WZProxy.class);
-    check(v, Z.class, ZProxy.class, ZProxy.class);
-    check(v, Z.class, ZWProxy.class, ZWProxy.class);
+    check(W.class, WProxy.class, WProxy.class);
+    check(W.class, WZProxy.class, WZProxy.class);
+    check(Z.class, ZProxy.class, ZProxy.class);
+    check(Z.class, ZWProxy.class, ZWProxy.class);
 
     // Look for derived proxy types that map to the domain type
-    check(v, Z.class, WProxy.class, ZWProxy.class);
-    check(v, W.class, ZProxy.class, WZProxy.class);
+    check(Z.class, WProxy.class, ZWProxy.class);
+    check(W.class, ZProxy.class, WZProxy.class);
 
     /*
      * This test is included to verify that the validator will fail gracefully
@@ -68,47 +69,47 @@ public class RequestFactoryPolymorphicJreTest extends RequestFactoryPolymorphicT
      * only ever crop up when the SkipInterfaceValidation annotation has been
      * used.
      */
-    check(v, Z.class, WZProxy.class, null);
-    check(v, W.class, ZWProxy.class, null);
+    check(Z.class, WZProxy.class, null);
+    check(W.class, ZWProxy.class, null);
   }
 
   /**
    * Tests that the RequestFactoryInterfaceValidator is producing the correct
    * mappings from domain types back to client types.
    */
-  public void testValidator() {
+  public void testValidator() throws ClassNotFoundException {
     /*
      * Check explicit mappings. Not all of the types are directly referenced in
      * the method declarations, so this also tests the ExtraTypes annotation.
      */
-    check(v, A.class, AProxy.class, AProxy.class);
-    check(v, B.class, B1Proxy.class, B1Proxy.class);
-    check(v, B.class, B2Proxy.class, B2Proxy.class);
-    check(v, C.class, C1Proxy.class, C1Proxy.class);
-    check(v, C.class, C2Proxy.class, C2Proxy.class);
+    check(A.class, AProxy.class, AProxy.class);
+    check(B.class, B1Proxy.class, B1Proxy.class);
+    check(B.class, B2Proxy.class, B2Proxy.class);
+    check(C.class, C1Proxy.class, C1Proxy.class);
+    check(C.class, C2Proxy.class, C2Proxy.class);
 
     // Check types without explicit mappings.
-    check(v, ASub.class, AProxy.class, AProxy.class);
-    check(v, BSub.class, B1Proxy.class, B1Proxy.class);
-    check(v, BSub.class, B2Proxy.class, B2Proxy.class);
-    check(v, CSub.class, C1Proxy.class, C1Proxy.class);
-    check(v, CSub.class, C2Proxy.class, C2Proxy.class);
+    check(ASub.class, AProxy.class, AProxy.class);
+    check(BSub.class, B1Proxy.class, B1Proxy.class);
+    check(BSub.class, B2Proxy.class, B2Proxy.class);
+    check(CSub.class, C1Proxy.class, C1Proxy.class);
+    check(CSub.class, C2Proxy.class, C2Proxy.class);
 
     // Check assignments with proxies extending proxies
-    check(v, C.class, B1Proxy.class, C1Proxy.class);
-    check(v, C.class, B2Proxy.class, C2Proxy.class);
+    check(C.class, B1Proxy.class, C1Proxy.class);
+    check(C.class, B2Proxy.class, C2Proxy.class);
 
     // Should prefer more-derived interfaces when possible
-    check(v, D.class, AProxy.class, MoreDerivedProxy.class);
-    check(v, D.class, D1Proxy.class, MoreDerivedProxy.class);
-    check(v, D.class, D2Proxy.class, MoreDerivedProxy.class);
-    check(v, D.class, D3Proxy.class, MoreDerivedProxy.class);
-    check(v, D.class, MoreDerivedProxy.class, MoreDerivedProxy.class);
-    check(v, DSub.class, AProxy.class, MoreDerivedProxy.class);
-    check(v, DSub.class, D1Proxy.class, MoreDerivedProxy.class);
-    check(v, DSub.class, D2Proxy.class, MoreDerivedProxy.class);
-    check(v, DSub.class, D3Proxy.class, MoreDerivedProxy.class);
-    check(v, DSub.class, MoreDerivedProxy.class, MoreDerivedProxy.class);
+    check(D.class, AProxy.class, MoreDerivedProxy.class);
+    check(D.class, D1Proxy.class, MoreDerivedProxy.class);
+    check(D.class, D2Proxy.class, MoreDerivedProxy.class);
+    check(D.class, D3Proxy.class, MoreDerivedProxy.class);
+    check(D.class, MoreDerivedProxy.class, MoreDerivedProxy.class);
+    check(DSub.class, AProxy.class, MoreDerivedProxy.class);
+    check(DSub.class, D1Proxy.class, MoreDerivedProxy.class);
+    check(DSub.class, D2Proxy.class, MoreDerivedProxy.class);
+    check(DSub.class, D3Proxy.class, MoreDerivedProxy.class);
+    check(DSub.class, MoreDerivedProxy.class, MoreDerivedProxy.class);
   }
 
   @Override
@@ -121,17 +122,31 @@ public class RequestFactoryPolymorphicJreTest extends RequestFactoryPolymorphicT
     super.gwtSetUp();
     Logger logger = Logger.getLogger(getClass().getName());
     ClassLoaderLoader loader = new ClassLoaderLoader(getClass().getClassLoader());
-    v = new RequestFactoryInterfaceValidator(logger, loader);
+    RequestFactoryInterfaceValidator v = new RequestFactoryInterfaceValidator(logger, loader);
     v.validateRequestFactory(Factory.class.getName());
+    deobfuscator = v.getDeobfuscator();
   }
 
-  private void check(RequestFactoryInterfaceValidator v, Class<?> domainType,
-      Class<? extends BaseProxy> declaredReturnType, Class<? extends BaseProxy> expectedClientType) {
-    String type = v.getEntityProxyTypeName(domainType.getName(), declaredReturnType.getName());
-    if (expectedClientType == null) {
-      assertNull(type, type);
-    } else {
-      assertEquals(expectedClientType.getName(), type);
+  private void check(Class<?> domainType, Class<? extends BaseProxy> declaredReturnType,
+      Class<? extends BaseProxy> expectedClientType) throws ClassNotFoundException {
+    while (domainType != null) {
+      List<String> types = deobfuscator.getClientProxies(domainType.getName());
+      if (types != null) {
+        for (String type : types) {
+          Class<?> clientType = Class.forName(type);
+          if (declaredReturnType.isAssignableFrom(clientType)) {
+            if (expectedClientType == null) {
+              fail("Should not have found any matches");
+            }
+            assertEquals(expectedClientType, clientType);
+            return;
+          }
+        }
+      }
+      domainType = domainType.getSuperclass();
+    }
+    if (expectedClientType != null) {
+      fail("Expecting to find " + expectedClientType.getCanonicalName());
     }
   }
 }

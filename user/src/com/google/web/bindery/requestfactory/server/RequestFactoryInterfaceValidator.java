@@ -789,8 +789,8 @@ public class RequestFactoryInterfaceValidator {
   }
 
   public Deobfuscator getDeobfuscator() {
-    return new Deobfuscator.Builder().setOperationData(operationData).setTypeTokens(typeTokens)
-        .build();
+    return new Deobfuscator.Builder().addClientToDomainMappings(domainToClientType)
+        .addOperationData(operationData).addTypeTokens(typeTokens).build();
   }
 
   /**
@@ -993,59 +993,6 @@ public class RequestFactoryInterfaceValidator {
    */
   public void validateValueProxy(String binaryName) {
     validateProxy(binaryName, valueProxyIntf, false);
-  }
-
-  /**
-   * Given the binary name of a domain type, return the BaseProxy type that is
-   * assignable to {@code clientType}. This method allows multiple proxy types
-   * to be assigned to a domain type for use in different contexts (e.g. API
-   * slices). If there are multiple client types mapped to
-   * {@code domainTypeBinaryName} and assignable to {@code clientTypeBinaryName}
-   * , the first matching type will be returned.
-   */
-  String getEntityProxyTypeName(String domainTypeBinaryName, String clientTypeBinaryName) {
-    Type key = Type.getObjectType(BinaryName.toInternalName(domainTypeBinaryName));
-    SortedSet<Type> found = domainToClientType.get(key);
-
-    /*
-     * If nothing was found look for proxyable supertypes the domain object can
-     * be upcast to.
-     */
-    if (found == null || found.isEmpty()) {
-      List<Type> types = getSupertypes(parentLogger, key);
-      for (Type type : types) {
-        if (objectType.equals(type)) {
-          break;
-        }
-
-        found = domainToClientType.get(type);
-        if (found != null && !found.isEmpty()) {
-          break;
-        }
-      }
-    }
-
-    if (found == null || found.isEmpty()) {
-      return null;
-    }
-
-    Type typeToReturn = null;
-
-    // Common case
-    if (found.size() == 1) {
-      typeToReturn = found.first();
-    } else {
-      // Search for the first assignable type
-      Type assignableTo = Type.getObjectType(BinaryName.toInternalName(clientTypeBinaryName));
-      for (Type t : found) {
-        if (isAssignable(parentLogger, assignableTo, t)) {
-          typeToReturn = t;
-          break;
-        }
-      }
-    }
-
-    return typeToReturn == null ? null : typeToReturn.getClassName();
   }
 
   /**

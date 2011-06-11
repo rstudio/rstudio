@@ -93,4 +93,12 @@ class OperationData {
   public String getRequestContext() {
     return requestContextBinaryName;
   }
+
+  /**
+   * For debugging use only.
+   */
+  @Override
+  public String toString() {
+    return getRequestContext() + "::" + getMethodName() + getDomainMethodDescriptor();
+  }
 }
