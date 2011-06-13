@@ -1366,8 +1366,8 @@ public class GwtAstBuilder {
         JBlock block = popBlock(info, x.statements);
         JExpression expression = pop(x.expression);
 
-        if (x.expression.resolvedType instanceof ReferenceBinding) {
-          // Must be an enum; synthesize a call to ordinal().
+        if (x.expression.resolvedType.isEnum()) {
+          // synthesize a call to ordinal().
           ReferenceBinding javaLangEnum = scope.getJavaLangEnum();
           MethodBinding ordinal = javaLangEnum.getMethods(ORDINAL)[0];
           expression = new JMethodCall(info, expression, typeMap.get(ordinal));
