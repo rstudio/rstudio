@@ -420,7 +420,7 @@ class PersistentUnitCache extends MemoryUnitCache {
       return;
     }
     if (logger.isLoggable(TreeLogger.INFO)) {
-      logger.log(TreeLogger.INFO, "Purging cache files from " + cacheDirectory);
+      logger.log(TreeLogger.TRACE, "Purging cache files from " + cacheDirectory);
     }
     for (File toDelete : filesToDelete) {
       if (!current.equals(toDelete)) {
