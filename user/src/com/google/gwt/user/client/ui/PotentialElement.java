@@ -43,12 +43,21 @@ public class PotentialElement extends Element {
   }
 
   /**
+   * Builds a new PotentialElement with the tag name set to "div".
+   *
+   * @see #build(UIObject,String)
+   */
+  public static PotentialElement build(UIObject o) {
+    return build(o, "div");
+  }
+
+  /**
    * Builds a new PotentialElement. This element keeps track of the
    * {@link UIObject} so that it can call
    * {@link UIObject#resolvePotentialElement} to get a real element when
    * that is needed.
    */
-  public static native PotentialElement build(UIObject o) /*-{
+  public static native PotentialElement build(UIObject o, String tagName) /*-{
     return @com.google.gwt.dom.client.Element::as(Lcom/google/gwt/core/client/JavaScriptObject;)({
       className: '',
       clientHeight: 0,
@@ -71,6 +80,7 @@ public class PotentialElement extends Element {
       },
       src: '',
       style: {},
+      tagName: tagName,
       __gwt_resolve: @com.google.gwt.user.client.ui.PotentialElement::buildResolveCallback(Lcom/google/gwt/user/client/ui/UIObject;)(o),
       title: ''
     });

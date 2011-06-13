@@ -36,6 +36,8 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
 
   private static Element hiddenDiv;
 
+  private static String TAG_NAME = "div";
+
   interface HTMLTemplates extends SafeHtmlTemplates {
     @Template("<div id=\"{0}\">{1}</div>")
     SafeHtml renderWithId(String id, SafeHtml innerHtml);
@@ -86,7 +88,7 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
    */
   public RenderablePanel(SafeHtml safeHtml) {
     this.html = safeHtml;
-    setElement(PotentialElement.build(this));
+    setElement(PotentialElement.build(this, TAG_NAME));
   }
 
   /**
