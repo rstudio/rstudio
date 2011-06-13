@@ -23,12 +23,29 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class GwtUriUtilsTest extends GWTTestCase {
 
-  private static final String JAVASCRIPT_URL = "javascript:alert('BOOM!');";
-  private static final String MAILTO_URL = "mailto:foo@example.com";
-  private static final String CONSTANT_URL =
-    "http://gwt.google.com/samples/Showcase/Showcase.html?locale=fr#!CwCheckBox";
-  private static final String EMPTY_GIF_DATA_URL =
-    "data:image/gif;base64,R0lGODlhAQABAPABAP///wAAACH5BAEKAAAALAAAAAABAAEAAAICRAEAOw==";
+  static final String INVALID_URL_UNPAIRED_SURROGATE = "a\uD800b";
+  static final String JAVASCRIPT_URL = "javascript:alert('BOOM!');";
+  static final String MAILTO_URL = "mailto:foo@example.com?subject=Hello%20world!";
+  static final String CONSTANT_URL =
+      "http://gwt.google.com/samples/Showcase/Showcase.html?locale=fr#!CwCheckBox";
+  static final String EMPTY_GIF_DATA_URL =
+      "data:image/gif;base64,R0lGODlhAQABAPABAP///wAAACH5BAEKAAAALAAAAAABAAEAAAICRAEAOw==";
+  static final String LONG_DATA_URL =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAMAAADzjKfhAAAAGXRFWHRTb2Z0d2FyZQ"
+          + "BBZG9iZSBJbWFnZVJlYWR5ccllPAAAAwBQTFRFZmZm////AgICAwMDBAQEBQUFBgYGBwcHCAgICQkJCgoKCwsL"
+          + "DAwMDQ0NDg4ODw8PEBAQEREREhISExMTFBQUFRUVFhYWFxcXGBgYGRkZGhoaGxsbHBwcHR0dHh4eHx8fICAgIS"
+          + "EhIiIiIyMjJCQkJSUlJiYmJycnKCgoKSkpKioqKysrLCwsLS0tLi4uLy8vMDAwMTExMjIyMzMzNDQ0NTU1NjY2"
+          + "Nzc3ODg4OTk5Ojo6Ozs7PDw8PT09Pj4+Pz8/QEBAQUFBQkJCQ0NDRERERUVFRkZGR0dHSEhISUlJSkpKS0tLTE"
+          + "xMTU1NTk5OT09PUFBQUVFRUlJSU1NTVFRUVVVVVlZWV1dXWFhYWVlZWlpaW1tbXFxcXV1dXl5eX19fYGBgYWFh"
+          + "YmJiY2NjZGRkZWVlZmZmZ2dnaGhoaWlpampqa2trbGxsbW1tbm5ub29vcHBwcXFxcnJyc3NzdHR0dXV1dnZ2d3"
+          + "d3eHh4eXl5enp6e3t7fHx8fX19fn5+f39/gICAgYGBgoKCg4ODhISEhYWFhoaGh4eHiIiIiYmJioqKi4uLjIyM"
+          + "jY2Njo6Oj4+PkJCQkZGRkpKSk5OTlJSUlZWVlpaWl5eXmJiYmZmZmpqam5ubnJycnZ2dnp6en5+foKCgoaGhoq"
+          + "Kio6OjpKSkpaWlpqamp6enqKioqampqqqqq6urrKysra2trq6ur6+vsLCwsbGxsrKys7OztLS0tbW1tra2t7e3"
+          + "uLi4ubm5urq6u7u7vLy8vb29vr6+v7+/wMDAwcHBwsLCw8PDxMTExcXFxsbGx8fHyMjIycnJysrKy8vLzMzMzc"
+          + "3Nzs7Oz8/P0NDQ0dHR0tLS09PT1NTU1dXV1tbW19fX2NjY2dnZ2tra29vb3Nzc3d3d3t7e39/f4ODg4eHh4uLi"
+          + "4+Pj5OTk5eXl5ubm5+fn6Ojo6enp6urq6+vr7Ozs7e3t7u7u7+/v8PDw8fHx8vLy8/Pz9PT09fX19vb29/f3+P"
+          + "j4+fn5+vr6+/v7/Pz8/f39/v7+////AADF2QAAAAJ0Uk5T/wDltzBKAAAAH0lEQVR42mJghAAGGJ0GAQyMYAok"
+          + "DqLA8mlI6gACDAC8pAaCn/ezogAAAABJRU5ErkJggg==";
 
   public void testEncode_noEscape() {
     StringBuilder sb = new StringBuilder(UriUtils.DONT_NEED_ENCODING);
@@ -80,6 +97,7 @@ public class GwtUriUtilsTest extends GWTTestCase {
     assertEquals(CONSTANT_URL, UriUtils.fromTrustedString(CONSTANT_URL).asString());
     assertEquals(MAILTO_URL, UriUtils.fromTrustedString(MAILTO_URL).asString());
     assertEquals(EMPTY_GIF_DATA_URL, UriUtils.fromTrustedString(EMPTY_GIF_DATA_URL).asString());
+    assertEquals(LONG_DATA_URL, UriUtils.fromTrustedString(LONG_DATA_URL).asString());
     assertEquals(JAVASCRIPT_URL, UriUtils.fromTrustedString(JAVASCRIPT_URL).asString());
     if (GWT.isClient()) {
       assertEquals(GWT.getModuleBaseURL(),
@@ -96,7 +114,7 @@ public class GwtUriUtilsTest extends GWTTestCase {
       return;
     }
     try {
-      SafeUri u = UriUtils.fromTrustedString("a\uD800b");
+      SafeUri u = UriUtils.fromTrustedString(INVALID_URL_UNPAIRED_SURROGATE);
       fail("Should have thrown IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       // expected
@@ -110,7 +128,8 @@ public class GwtUriUtilsTest extends GWTTestCase {
     assertEquals(EMPTY_GIF_DATA_URL, UriUtils.unsafeCastFromUntrustedString(EMPTY_GIF_DATA_URL)
         .asString());
     assertEquals(JAVASCRIPT_URL, UriUtils.unsafeCastFromUntrustedString(JAVASCRIPT_URL).asString());
-    assertEquals("a\uD800b", UriUtils.unsafeCastFromUntrustedString("a\uD800b").asString());
+    assertEquals(INVALID_URL_UNPAIRED_SURROGATE,
+        UriUtils.unsafeCastFromUntrustedString(INVALID_URL_UNPAIRED_SURROGATE).asString());
     if (GWT.isClient()) {
       assertEquals(GWT.getModuleBaseURL(), UriUtils.unsafeCastFromUntrustedString(
           GWT.getModuleBaseURL()).asString());

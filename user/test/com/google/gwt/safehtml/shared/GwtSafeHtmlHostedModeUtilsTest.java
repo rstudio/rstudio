@@ -30,8 +30,7 @@ public class GwtSafeHtmlHostedModeUtilsTest extends GWTTestCase {
 
   public void testMaybeCheckCompleteHtml() {
     if (GWT.isProdMode()) {
-      // SafeHtmlHostedModeUtils#isCompleteHtml always returns true in
-      // prod mode
+      // SafeHtmlHostedModeUtils#isCompleteHtml always returns true in prod mode
       SafeHtmlHostedModeUtils.maybeCheckCompleteHtml("<foo>blah");
       SafeHtmlHostedModeUtils.maybeCheckCompleteHtml("baz<em>foo</em> <x");
     } else {
@@ -48,27 +47,26 @@ public class GwtSafeHtmlHostedModeUtilsTest extends GWTTestCase {
       assertCheckCompleteHtmlFails("baz<em>foo</em> <x a=\"b\"");
       assertCheckCompleteHtmlFails("baz<em>foo</em> <x a=\"b\" ");
 
-      SafeHtmlHostedModeUtils.maybeCheckCompleteHtml(
-          "baz<em>foo</em> <x a=\"b\"> ");
-      SafeHtmlHostedModeUtils.maybeCheckCompleteHtml(
-          "baz<em>foo</em> <x a=\"b\">sadf");
-      SafeHtmlHostedModeUtils.maybeCheckCompleteHtml(
-          "baz<em>foo</em> <x a=\"b\">");
-      SafeHtmlHostedModeUtils.maybeCheckCompleteHtml(
-          "baz<em>foo</em> <x a=\"b\"/>");
-      SafeHtmlHostedModeUtils.maybeCheckCompleteHtml(
-          "baz<em>foo</em> <x a=\"b\"/>bbb");
+      SafeHtmlHostedModeUtils.maybeCheckCompleteHtml("baz<em>foo</em> <x a=\"b\"> ");
+      SafeHtmlHostedModeUtils.maybeCheckCompleteHtml("baz<em>foo</em> <x a=\"b\">sadf");
+      SafeHtmlHostedModeUtils.maybeCheckCompleteHtml("baz<em>foo</em> <x a=\"b\">");
+      SafeHtmlHostedModeUtils.maybeCheckCompleteHtml("baz<em>foo</em> <x a=\"b\"/>");
+      SafeHtmlHostedModeUtils.maybeCheckCompleteHtml("baz<em>foo</em> <x a=\"b\"/>bbb");
     }
   }
 
   private void assertCheckCompleteHtmlFails(String html) {
     try {
       SafeHtmlHostedModeUtils.maybeCheckCompleteHtml(html);
-      fail("maybeCheckCompleteHtml failed to throw exception for: " + html);
     } catch (IllegalArgumentException e) {
       // expected
+      return;
     } catch (AssertionError e) {
       // expected
+      return;
     }
+    // This must be outside the try/catch, as it throws an AssertionFailedError which, in some
+    // versions of JUnit, extends AssertionError
+    fail("maybeCheckCompleteHtml failed to throw exception for: " + html);
   }
 }

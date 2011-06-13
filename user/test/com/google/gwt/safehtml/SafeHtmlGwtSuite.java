@@ -21,6 +21,8 @@ import com.google.gwt.safehtml.shared.GwtSafeHtmlBuilderTest;
 import com.google.gwt.safehtml.shared.GwtSafeHtmlHostedModeUtilsTest;
 import com.google.gwt.safehtml.shared.GwtSafeHtmlStringTest;
 import com.google.gwt.safehtml.shared.GwtSafeHtmlUtilsTest;
+import com.google.gwt.safehtml.shared.GwtSafeUriHostedModeUtilsTest;
+import com.google.gwt.safehtml.shared.GwtUriUtilsTest;
 
 import junit.framework.Test;
 
@@ -37,6 +39,8 @@ public class SafeHtmlGwtSuite {
     suite.addTestSuite(GwtSafeHtmlBuilderTest.class);
     suite.addTestSuite(SafeHtmlTemplatesTest.class);
     suite.addTestSuite(GwtSafeHtmlHostedModeUtilsTest.class);
+    suite.addTestSuite(GwtUriUtilsTest.class);
+    suite.addTestSuite(GwtSafeUriHostedModeUtilsTest.class);
 
     return suite;
   }

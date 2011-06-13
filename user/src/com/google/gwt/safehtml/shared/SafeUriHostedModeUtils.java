@@ -22,38 +22,33 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 /**
- * SafeUri utilities whose implementation differs between Development and
- * Production Mode.
+ * SafeUri utilities whose implementation differs between Development and Production Mode.
  *
  * <p>
- * This class has a super-source peer that provides the Production Mode
- * implementation.
+ * This class has a super-source peer that provides the Production Mode implementation.
  *
  * <p>
- * Do not use this class - it is used for implementation only, and its methods
- * may change in the future.
+ * Do not use this class - it is used for implementation only, and its methods may change in the
+ * future.
  */
 public class SafeUriHostedModeUtils {
 
   /**
-   * All valid Web Addresses, i.e. the href-ucschar production from RFC 3987bis.
+   * All valid Web Addresses discrete characters, i.e. the reserved, iunreserved, href-ucschar, and
+   * href-pct-form productions from RFC 3986 and RFC 3987bis, with the exception of character
+   * ranges.
    *
    * @see <a href="http://tools.ietf.org/html/rfc3986#section-2">RFC 3986</a>
    * @see <a href="http://tools.ietf.org/html/draft-ietf-iri-3987bis-05#section-7.2">RFC 3987bis Web Addresses</a>
    */
-  static final String HREF_UCSCHAR = "("
-    + "["
-    + ":/?#\\[\\]@!$&'()*+,;=" // reserved
-    + "a-zA-Z0-9\\-._~" // iunreserved
-    + " <>\"{}|\\\\^`\u0000-\u001F\u001F-\uD7FF\uE000-\uFFFD" // href-ucschar
-    + "]"
-    + "|"
-    + "[\uD800-\uDBFF][\uDC00-\uDFFF]" // surrogate pairs
-    + ")*";
+  static final String HREF_DISCRETE_UCSCHAR = ":/?#[]@!$&'()*+,;=" // reserved
+      + "-._~" // iunreserved
+      + " <>\"{}|\\^`" // href-ucschar
+      + "%"; // href-pct-form
 
   /**
-   * Name of system property that if set, enables checks in server-side code
-   * (even if assertions are disabled).
+   * Name of system property that if set, enables checks in server-side code (even if assertions are
+   * disabled).
    */
   public static final String FORCE_CHECK_VALID_URI = "com.google.gwt.safehtml.ForceCheckValidUri";
 
@@ -61,6 +56,37 @@ public class SafeUriHostedModeUtils {
 
   static {
     setForceCheckValidUriFromProperty();
+  }
+
+  /**
+   * Tests whether all characters in the given URI are valid Web Addresses characters.
+   */
+  // @VisibleForTesting
+  public static boolean isValidUriCharset(String uri) {
+    int len = uri.length();
+    int i = 0;
+    while (i < len) {
+      int codePoint = uri.codePointAt(i);
+      i += Character.charCount(codePoint);
+      if (Character.isSupplementaryCodePoint(codePoint)) {
+        continue;
+      }
+      if (HREF_DISCRETE_UCSCHAR.indexOf(codePoint) >= 0) {
+        continue;
+      }
+      // iunreserved ranges
+      if (('a' <= codePoint && codePoint <= 'z') || ('A' <= codePoint && codePoint <= 'Z')
+          || ('0' <= codePoint && codePoint <= '9')) {
+        continue;
+      }
+      // href-ucschar ranges
+      if ((0 <= codePoint && codePoint <= 0x1F) || (0x7F <= codePoint && codePoint <= 0xD7FF)
+          || (0xE000 <= codePoint && codePoint <= 0xFFFD)) {
+        continue;
+      }
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -77,9 +103,8 @@ public class SafeUriHostedModeUtils {
   }
 
   /**
-   * Sets a global flag that controls whether or not
-   * {@link #maybeCheckValidUri(String)} should perform its check in a
-   * server-side environment.
+   * Sets a global flag that controls whether or not {@link #maybeCheckValidUri(String)} should
+   * perform its check in a server-side environment.
    *
    * @param check if true, perform server-side checks.
    */
@@ -88,9 +113,8 @@ public class SafeUriHostedModeUtils {
   }
 
   /**
-   * Sets a global flag that controls whether or not
-   * {@link #maybeCheckValidUri(String)} should perform its check in a
-   * server-side environment from the value of the {@value
+   * Sets a global flag that controls whether or not {@link #maybeCheckValidUri(String)} should
+   * perform its check in a server-side environment from the value of the {@value
    * FORCE_CHECK_VALID_URI} property.
    */
   // The following annotation causes javadoc to crash on Mac OS X 10.5.8,
@@ -104,17 +128,12 @@ public class SafeUriHostedModeUtils {
   }
 
   private static boolean isValidUri(String uri) {
-    // TODO(xtof): The regex appears to cause stack overflows in some cases.
-    // Investigate and re-enable.
-    // if (!uri.matches(HREF_UCSCHAR)) {
-    //   return false;
-    // }
-    /*
-     * pre-process to turn href-ucschars into ucschars, and encode to URI.
-     *
-     * This is done by encoding everything, and decoding back "%25" to "%".
-     */
-    uri = UriUtils.encode(uri).replace("%25", "%");
+    if (!isValidUriCharset(uri)) {
+      return false;
+    }
+
+    // pre-process to turn href-ucschars into ucschars, and encode to URI.
+    uri = UriUtils.encodeAllowEscapes(uri);
     try {
       new URI(uri);
       return true;
