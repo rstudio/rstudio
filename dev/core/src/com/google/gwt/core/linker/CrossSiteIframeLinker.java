@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -66,10 +66,18 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
       LinkerContext context, ArtifactSet artifacts, CompilationResult result)
       throws UnableToCompleteException {
 
+    if (shouldUseSelfForWindowAndDocument(context)) {
+      replaceAll(ss, "__WINDOW_DEF__", "self");
+      replaceAll(ss, "__DOCUMENT_DEF__", "self");
+    } else {
+      replaceAll(ss, "__WINDOW_DEF__", "window");
+      replaceAll(ss, "__DOCUMENT_DEF__", "document");
+    }
+
     // Must do installScript before installLocation and waitForBodyLoaded
     includeJs(ss, logger, getJsInstallScript(context), "__INSTALL_SCRIPT__");
     includeJs(ss, logger, getJsInstallLocation(context), "__INSTALL_LOCATION__");
-    
+
     // Must do waitForBodyLoaded before isBodyLoaded
     includeJs(ss, logger, getJsWaitForBodyLoaded(context), "__WAIT_FOR_BODY_LOADED__");
     includeJs(ss, logger, getJsIsBodyLoaded(context), "__IS_BODY_LOADED__");
@@ -132,10 +140,23 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
 
     if (context.isOutputCompact()) {
       replaceAll(ss, "__START_OBFUSCATED_ONLY__", "");
-      replaceAll(ss, "__END_OBFUSCATED_ONLY__", "");      
+      replaceAll(ss, "__END_OBFUSCATED_ONLY__", "");
     } else {
       replaceAll(ss, "__START_OBFUSCATED_ONLY__", "/*");
       replaceAll(ss, "__END_OBFUSCATED_ONLY__", "*/");
+    }
+
+    String jsModuleFunctionErrorCatch = getJsModuleFunctionErrorCatch(context);
+    if (jsModuleFunctionErrorCatch != null) {
+      replaceAll(ss, "__BEGIN_TRY_BLOCK__", "try {");
+      replaceAll(ss, "__END_TRY_BLOCK_AND_START_CATCH__", "} catch (moduleError) {");
+      includeJs(ss, logger, jsModuleFunctionErrorCatch, "__MODULE_FUNC_ERROR_CATCH__");
+      replaceAll(ss, "__END_CATCH_BLOCK__", "}");
+    } else {
+      replaceAll(ss, "__BEGIN_TRY_BLOCK__", "");
+      replaceAll(ss, "__END_TRY_BLOCK_AND_START_CATCH__", "");
+      replaceAll(ss, "__MODULE_FUNC_ERROR_CATCH__", "");
+      replaceAll(ss, "__END_CATCH_BLOCK__", "");
     }
 
     return ss.toString();
@@ -217,6 +238,18 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
    */
   protected String getJsLoadExternalStylesheets(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/loadExternalStylesheets.js";
+  }
+
+  /**
+   * Returns the name of the {@code JsModuleFunctionErrorCatch} script. By default returns null.
+   * This script executes if there's an error loading the module function or executing it.
+   * The error will be available under a local variable named "moduleError". If non-null, the
+   * module function and the call to the module function will be placed in a try/catch block.
+   *
+   * @param context a LinkerContext
+   */
+  protected String getJsModuleFunctionErrorCatch(LinkerContext context) {
+    return null;
   }
 
   /**
@@ -411,6 +444,14 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   }
 
   protected boolean shouldOutputPropertyMap(LinkerContext context) {
+    return false;
+  }
+
+  /**
+   * Returns whether to use "self" for $wnd and $doc references. Defaults to false.
+   * Useful for worker threads.
+   */
+  protected boolean shouldUseSelfForWindowAndDocument(LinkerContext context) {
     return false;
   }
 

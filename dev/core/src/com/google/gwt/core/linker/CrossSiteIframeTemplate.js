@@ -13,9 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+__BEGIN_TRY_BLOCK__
 function __MODULE_FUNC__() {
-  var $wnd = window;
-  var $doc = document;
+  var $wnd = __WINDOW_DEF__;
+  var $doc = __DOCUMENT_DEF__;
   sendStats('bootstrap', 'begin');
 
   /****************************************************************************
@@ -49,7 +50,7 @@ function __MODULE_FUNC__() {
    ***************************************************************************/
   // These are set by various parts of the bootstrapping code, but they always
   // need to exist, so give them all default values here.
-  
+
   // Exposed for the convenience of the devmode.js and md5.js files
   __MODULE_FUNC__.__sendStats = sendStats;
 
@@ -89,7 +90,7 @@ function __MODULE_FUNC__() {
   // Provides the computeUrlForResource() function
   __COMPUTE_URL_FOR_RESOURCE__
 
-  // Provides the getCompiledCodeFilename() function which sets the 
+  // Provides the getCompiledCodeFilename() function which sets the
   // __gwt_isKnownPropertyValue, MODULE_FUNC__.__computePropValue and
   // __MODULE_FUNC__.__softPermutationId variables if needed
   __PERMUTATIONS__
@@ -117,3 +118,7 @@ function __MODULE_FUNC__() {
 
 }
 __MODULE_FUNC__();
+
+__END_TRY_BLOCK_AND_START_CATCH__
+  __MODULE_FUNC_ERROR_CATCH__
+__END_CATCH_BLOCK__
