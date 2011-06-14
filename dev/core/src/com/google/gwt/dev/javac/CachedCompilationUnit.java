@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.util.DiskCacheToken;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
@@ -27,6 +28,7 @@ import java.util.List;
  */
 public class CachedCompilationUnit extends CompilationUnit {
   private final DiskCacheToken astToken;
+  private final long astVersion;
   private final Collection<CompiledClass> compiledClasses;
   private final ContentId contentId;
   private final Dependencies dependencies;
@@ -64,6 +66,7 @@ public class CachedCompilationUnit extends CompilationUnit {
     this.isSuperSource = unit.isSuperSource();
     this.problems = unit.problems;
     this.astToken = unit.astToken;
+    this.astVersion = unit.astVersion;
     this.sourceToken = unit.sourceToken;
 
     // Override these fields
@@ -106,6 +109,7 @@ public class CachedCompilationUnit extends CompilationUnit {
       }
     }
     this.astToken = new DiskCacheToken(astToken);
+    this.astVersion = GwtAstBuilder.getSerializationVersion();
     this.sourceToken = new DiskCacheToken(sourceToken);
   }
 
@@ -190,5 +194,9 @@ public class CachedCompilationUnit extends CompilationUnit {
   @Override
   CategorizedProblem[] getProblems() {
     return problems;
+  }
+
+  long getTypesSerializedVersion() {
+    return astVersion;
   }
 }

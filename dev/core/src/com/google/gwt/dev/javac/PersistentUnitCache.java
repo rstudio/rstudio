@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -489,9 +490,14 @@ class PersistentUnitCache extends MemoryUnitCache {
              */
             inputStream = new ObjectInputStream(bis);
             while (true) {
-              CompilationUnit unit = (CompilationUnit) inputStream.readObject();
+              CachedCompilationUnit unit = (CachedCompilationUnit) inputStream.readObject();
               if (unit == null) {
                 break;
+              }
+              if (GwtAstBuilder.ENABLED) {
+                if (unit.getTypesSerializedVersion() != GwtAstBuilder.getSerializationVersion()) {
+                  continue;
+                }
               }
               UnitCacheEntry entry = new UnitCacheEntry(unit, UnitOrigin.PERSISTENT);
               UnitCacheEntry oldEntry = unitMap.get(unit.getResourcePath());

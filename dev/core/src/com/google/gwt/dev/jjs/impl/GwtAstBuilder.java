@@ -2752,6 +2752,13 @@ public class GwtAstBuilder {
 
   public static boolean ENABLED = System.getProperties().containsKey("x.gwt.astBuilder");
 
+  /**
+   * Manually tracked version count.
+   * 
+   * TODO(zundel): something much more awesome?
+   */
+  private static final long AST_VERSION = 1;
+
   private static final char[] _STRING = "_String".toCharArray();
   private static final String ARRAY_LENGTH_FIELD = "length";
 
@@ -2780,6 +2787,16 @@ public class GwtAstBuilder {
       throw new RuntimeException(
           "Unexpectedly unable to access ForeachStatement.collectionElementType via reflection", e);
     }
+  }
+
+  /**
+   * Returns a serialization version number. Used to determine if the AST
+   * contained within cached compilation units is compatible with the current
+   * version of GWT.
+   */
+  public static long getSerializationVersion() {
+    // TODO(zundel): something much awesomer.
+    return ENABLED ? AST_VERSION : 0L;
   }
 
   static String dotify(char[][] name) {
