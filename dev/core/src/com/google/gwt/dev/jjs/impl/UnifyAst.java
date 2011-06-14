@@ -360,7 +360,7 @@ public class UnifyAst {
 
       ArrayList<JExpression> instantiationExpressions = new ArrayList<JExpression>(answers.size());
       for (String answer : answers) {
-        JDeclaredType answerType = searchForType(answer);
+        JDeclaredType answerType = searchForTypeBySource(answer);
         if (answerType == null) {
           error(x, "Rebind result '" + answer + "' could not be found");
           return null;
@@ -405,7 +405,7 @@ public class UnifyAst {
       JsniRef ref = JsniRef.parse(stringValue);
       if (ref != null) {
         if (Name.isBinaryName(ref.className())) {
-          searchForType(ref.className());
+          searchForTypeByBinary(ref.className());
         }
         node = JsniRefLookup.findJsniRefTarget(ref, program, new JsniRefLookup.ErrorReporter() {
           public void reportError(String errMsg) {
@@ -415,7 +415,7 @@ public class UnifyAst {
       } else {
         // See if it's just @foo.Bar, which would result in the class seed
         String typeName = stringValue.charAt(0) == '@' ? stringValue.substring(1) : stringValue;
-        node = searchForType(typeName);
+        node = searchForTypeByBinary(typeName);
       }
       if (node == null) {
         // Not found, must be null
@@ -469,6 +469,7 @@ public class UnifyAst {
       CLASS_IS_CLASS_METADATA_ENABLED));
 
   private final Map<String, CompiledClass> classFileMap;
+  private final Map<String, CompiledClass> classFileMapBySource;
   private boolean errorsFound = false;
   private final Set<CompilationUnit> failedUnits = new IdentityHashSet<CompilationUnit>();
   private final Map<String, JField> fieldMap = new HashMap<String, JField>();
@@ -511,23 +512,12 @@ public class UnifyAst {
     this.options = options;
     this.rpo = rpo;
     this.classFileMap = rpo.getCompilationState().getClassFileMap();
+    this.classFileMapBySource = rpo.getCompilationState().getClassFileMapBySource();
   }
 
   public void addRootTypes(Collection<String> sourceTypeNames) {
-    Map<String, CompiledClass> classFileMapBySource =
-        rpo.getCompilationState().getClassFileMapBySource();
     for (String sourceTypeName : sourceTypeNames) {
-      JDeclaredType type = program.getFromTypeMap(sourceTypeName);
-      if (type == null) {
-        CompiledClass cc = classFileMapBySource.get(sourceTypeName);
-        if (cc == null) {
-          // TODO: error
-          throw new NoClassDefFoundError(sourceTypeName);
-        }
-        assimilateUnit(cc.getUnit());
-        type = program.getFromTypeMap(sourceTypeName);
-        assert type != null || errorsFound;
-      }
+      searchForTypeBySource(sourceTypeName);
     }
   }
 
@@ -539,7 +529,7 @@ public class UnifyAst {
     this.logger = logger;
     for (String internalName : classFileMap.keySet()) {
       String typeName = InternalName.toBinaryName(internalName);
-      searchForType(typeName);
+      searchForTypeByBinary(typeName);
     }
 
     for (JDeclaredType type : program.getDeclaredTypes()) {
@@ -939,7 +929,7 @@ public class UnifyAst {
     type.resolve(resolvedInterfaces, resolvedRescues);
   }
 
-  private JDeclaredType searchForType(String binaryTypeName) {
+  private JDeclaredType searchForTypeByBinary(String binaryTypeName) {
     JDeclaredType type = program.getFromTypeMap(binaryTypeName);
     if (type == null) {
       CompiledClass cc = classFileMap.get(BinaryName.toInternalName(binaryTypeName));
@@ -949,6 +939,21 @@ public class UnifyAst {
       }
       assimilateUnit(cc.getUnit());
       type = program.getFromTypeMap(binaryTypeName);
+      assert type != null || errorsFound;
+    }
+    return type;
+  }
+
+  private JDeclaredType searchForTypeBySource(String sourceTypeName) {
+    JDeclaredType type = program.getFromTypeMap(sourceTypeName);
+    if (type == null) {
+      CompiledClass cc = classFileMapBySource.get(sourceTypeName);
+      if (cc == null) {
+        // TODO: error
+        throw new NoClassDefFoundError(sourceTypeName);
+      }
+      assimilateUnit(cc.getUnit());
+      type = program.getFromTypeMap(sourceTypeName);
       assert type != null || errorsFound;
     }
     return type;
@@ -995,7 +1000,7 @@ public class UnifyAst {
     }
 
     String typeName = type.getName();
-    JDeclaredType newType = searchForType(typeName);
+    JDeclaredType newType = searchForTypeByBinary(typeName);
     if (newType == null) {
       assert errorsFound;
       return type;
