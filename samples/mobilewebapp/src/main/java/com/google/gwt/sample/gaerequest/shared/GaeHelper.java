@@ -21,9 +21,8 @@ package com.google.gwt.sample.gaerequest.shared;
 public interface GaeHelper {
 
   /**
-   * The placeholder token added to the login URL. The client replaces the token
-   * with the current href, which only the client knows.
+   * The name of the HTTP header name used to specify the redirct url when login
+   * is required.
    */
-  /* Prefixed with http:// to ensure that GAE doesn't automatically prefix it. */
-  String REDIRECT_URL_TOKEN = "http%3A%2F%2FREDIRECTURL";
+  String REDIRECT_URL_HTTP_HEADER_NAME = "redirecturl";
 }

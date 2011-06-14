@@ -35,9 +35,11 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class GaeAuthFilter implements Filter {
 
+  @Override
   public void destroy() {
   }
 
+  @Override
   public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
       FilterChain filterChain) throws IOException, ServletException {
     UserService userService = UserServiceFactory.getUserService();
@@ -45,7 +47,12 @@ public class GaeAuthFilter implements Filter {
     HttpServletResponse response = (HttpServletResponse) servletResponse;
 
     if (!userService.isUserLoggedIn()) {
-      response.setHeader("login", userService.createLoginURL(GaeHelper.REDIRECT_URL_TOKEN));
+      String redirectUrl = request.getHeader(GaeHelper.REDIRECT_URL_HTTP_HEADER_NAME);
+      if (redirectUrl == null || redirectUrl.length() == 0) {
+        // Default to the root page if the redirecturl isn't specified in the request.
+        redirectUrl = "/";
+      }
+      response.setHeader("login", userService.createLoginURL(redirectUrl));
       response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
       return;
     }
@@ -53,6 +60,7 @@ public class GaeAuthFilter implements Filter {
     filterChain.doFilter(request, response);
   }
 
+  @Override
   public void init(FilterConfig config) {
   }
 }

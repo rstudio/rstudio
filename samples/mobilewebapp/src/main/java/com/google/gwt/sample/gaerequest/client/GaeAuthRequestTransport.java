@@ -17,10 +17,11 @@ package com.google.gwt.sample.gaerequest.client;
 
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.sample.gaerequest.shared.GaeHelper;
-import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.Location;
 import com.google.web.bindery.requestfactory.gwt.client.DefaultRequestTransport;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 
@@ -36,14 +37,29 @@ public class GaeAuthRequestTransport extends DefaultRequestTransport {
   }
 
   @Override
+  protected void configureRequestBuilder(RequestBuilder builder) {
+    super.configureRequestBuilder(builder);
+
+    /*
+     * Add the redirect URL in case the user is logged out.
+     * 
+     * /MobileWebApp.html?parem0=value0&param1=value1#hash
+     */
+    String redirectUrl = Location.getPath() + Location.getQueryString() + Location.getHash();
+    builder.setHeader(GaeHelper.REDIRECT_URL_HTTP_HEADER_NAME, redirectUrl);
+  }
+
+  @Override
   protected RequestCallback createRequestCallback(final TransportReceiver receiver) {
     final RequestCallback superCallback = super.createRequestCallback(receiver);
 
     return new RequestCallback() {
+      @Override
       public void onError(Request request, Throwable exception) {
         superCallback.onError(request, exception);
       }
 
+      @Override
       public void onResponseReceived(Request request, Response response) {
         /*
          * The GaeAuthFailure filter responds with Response.SC_UNAUTHORIZED and
@@ -51,15 +67,11 @@ public class GaeAuthRequestTransport extends DefaultRequestTransport {
          * receive that combo, post an event so that the app can handle things
          * as it sees fit.
          */
-
         if (Response.SC_UNAUTHORIZED == response.getStatusCode()) {
           String loginUrl = response.getHeader("login");
           if (loginUrl != null) {
-            // Replace the redirect url placeholder with the current url.
-            loginUrl = loginUrl.replace(GaeHelper.REDIRECT_URL_TOKEN, Window.Location.getHref());
-
             /*
-             * Hand the receiver a non-fatal callback, so that *
+             * Hand the receiver a non-fatal callback, so that
              * com.google.web.bindery.requestfactory.shared.Receiver will not
              * post a runtime exception.
              */
