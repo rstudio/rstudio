@@ -236,6 +236,7 @@ public class GwtAstBuilder {
      * Resolves local references to function parameters, and JSNI references.
      */
     private class JsniResolver extends JsModVisitor {
+      private final GenerateJavaScriptLiterals generator = new GenerateJavaScriptLiterals();
       private final JsniMethodBody nativeMethodBody;
 
       private JsniResolver(JsniMethodBody nativeMethodBody) {
@@ -260,8 +261,23 @@ public class GwtAstBuilder {
             JType type = typeMap.get((TypeBinding) binding);
             processClassLiteral(x, info, type, ctx);
           } else if (binding instanceof FieldBinding) {
-            JField field = typeMap.get((FieldBinding) binding);
-            processField(x, info, field, ctx);
+            FieldBinding fieldBinding = (FieldBinding) binding;
+            /*
+             * We must replace any compile-time constants with the constant
+             * value of the field.
+             */
+            if (isCompileTimeConstant(fieldBinding)) {
+              assert !ctx.isLvalue();
+              JExpression constant = getConstant(info, fieldBinding.constant());
+              generator.accept(constant);
+              JsExpression result = generator.pop();
+              assert (result != null);
+              ctx.replaceMe(result);
+            } else {
+              // Normal: create a jsniRef.
+              JField field = typeMap.get(fieldBinding);
+              processField(x, info, field, ctx);
+            }
           } else {
             JMethod method = typeMap.get((MethodBinding) binding);
             processMethod(x, info, method);
@@ -276,25 +292,6 @@ public class GwtAstBuilder {
       }
 
       private void processField(JsNameRef nameRef, SourceInfo info, JField field, JsContext ctx) {
-        /*
-         * We must replace any compile-time constants with the constant value of
-         * the field.
-         */
-        if (field.isCompileTimeConstant()) {
-          assert !ctx.isLvalue();
-          JLiteral initializer = field.getConstInitializer();
-          JType type = initializer.getType();
-          if (type instanceof JPrimitiveType || initializer instanceof JStringLiteral) {
-            GenerateJavaScriptLiterals generator = new GenerateJavaScriptLiterals();
-            generator.accept(initializer);
-            JsExpression result = generator.peek();
-            assert (result != null);
-            ctx.replaceMe(result);
-            return;
-          }
-        }
-
-        // Normal: create a jsniRef.
         JsniFieldRef fieldRef =
             new JsniFieldRef(info, nameRef.getIdent(), field, curClass.type, ctx.isLvalue());
         nativeMethodBody.addJsniRef(fieldRef);
@@ -2811,6 +2808,20 @@ public class GwtAstBuilder {
     return result.toString();
   }
 
+  static Disposition getFieldDisposition(FieldBinding binding) {
+    Disposition disposition;
+    if (isCompileTimeConstant(binding)) {
+      disposition = Disposition.COMPILE_TIME_CONSTANT;
+    } else if (binding.isFinal()) {
+      disposition = Disposition.FINAL;
+    } else if (binding.isVolatile()) {
+      disposition = Disposition.VOLATILE;
+    } else {
+      disposition = Disposition.NONE;
+    }
+    return disposition;
+  }
+
   static String intern(char[] cs) {
     return intern(String.valueOf(cs));
   }
@@ -2821,6 +2832,16 @@ public class GwtAstBuilder {
 
   static boolean isNested(ReferenceBinding binding) {
     return binding.isNestedType() && !binding.isStatic();
+  }
+
+  private static boolean isCompileTimeConstant(FieldBinding binding) {
+    assert !binding.isFinal() || !binding.isVolatile();
+    boolean isCompileTimeConstant =
+        binding.isStatic() && binding.isFinal() && (binding.constant() != Constant.NotAConstant);
+    if (isCompileTimeConstant) {
+      assert binding.type.isBaseType() || (binding.type.id == TypeIds.T_JavaLangString);
+    }
+    return isCompileTimeConstant;
   }
 
   /**
@@ -2971,26 +2992,9 @@ public class GwtAstBuilder {
           new JEnumField(info, intern(binding.name), binding.original().id,
               (JEnumType) enclosingType, (JClassType) type);
     } else {
-      boolean isCompileTimeConstant =
-          binding.isStatic() && (binding.isFinal())
-              && (binding.constant() != Constant.NotAConstant) && (binding.type.isBaseType());
-      assert (type instanceof JPrimitiveType || !isCompileTimeConstant);
-
-      assert (!binding.isFinal() || !binding.isVolatile());
-      Disposition disposition;
-      if (isCompileTimeConstant) {
-        disposition = Disposition.COMPILE_TIME_CONSTANT;
-      } else if (binding.isFinal()) {
-        disposition = Disposition.FINAL;
-      } else if (binding.isVolatile()) {
-        disposition = Disposition.VOLATILE;
-      } else {
-        disposition = Disposition.NONE;
-      }
-
       field =
           new JField(info, intern(binding.name), enclosingType, type, binding.isStatic(),
-              disposition);
+              getFieldDisposition(binding));
     }
     enclosingType.addField(field);
     typeMap.setField(binding, field);

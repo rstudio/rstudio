@@ -34,7 +34,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
-import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -63,7 +62,6 @@ import org.eclipse.jdt.internal.compiler.ast.LocalDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Statement;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
-import org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.eclipse.jdt.internal.compiler.lookup.ArrayBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
@@ -570,27 +568,9 @@ public class BuildTypeMap {
 
   private JField createField(SourceInfo info, FieldBinding binding, JDeclaredType enclosingType) {
     JType type = getType(binding.type);
-
-    boolean isCompileTimeConstant =
-        binding.isStatic() && (binding.isFinal()) && (binding.constant() != Constant.NotAConstant)
-            && (binding.type.isBaseType());
-    assert (type instanceof JPrimitiveType || !isCompileTimeConstant);
-
-    assert (!binding.isFinal() || !binding.isVolatile());
-    Disposition disposition;
-    if (isCompileTimeConstant) {
-      disposition = Disposition.COMPILE_TIME_CONSTANT;
-    } else if (binding.isFinal()) {
-      disposition = Disposition.FINAL;
-    } else if (binding.isVolatile()) {
-      disposition = Disposition.VOLATILE;
-    } else {
-      disposition = Disposition.NONE;
-    }
-
     JField field =
         program.createField(info, String.valueOf(binding.name), enclosingType, type, binding
-            .isStatic(), disposition);
+            .isStatic(), GwtAstBuilder.getFieldDisposition(binding));
     typeMap.put(binding, field);
     info.addCorrelation(info.getCorrelator().by(field));
     return field;

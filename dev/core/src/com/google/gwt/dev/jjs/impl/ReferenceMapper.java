@@ -24,7 +24,6 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JField;
-import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JNullType;
@@ -34,7 +33,6 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.util.StringInterner;
 
-import org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.eclipse.jdt.internal.compiler.lookup.ArrayBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
@@ -242,27 +240,9 @@ public class ReferenceMapper {
 
   private JField createField(FieldBinding binding) {
     JDeclaredType enclosingType = (JDeclaredType) get(binding.declaringClass);
-
-    boolean isCompileTimeConstant =
-        binding.isStatic() && (binding.isFinal()) && (binding.constant() != Constant.NotAConstant)
-            && (binding.type.isBaseType());
-    assert (get(binding.type) instanceof JPrimitiveType || !isCompileTimeConstant);
-
-    assert (!binding.isFinal() || !binding.isVolatile());
-    Disposition disposition;
-    if (isCompileTimeConstant) {
-      disposition = Disposition.COMPILE_TIME_CONSTANT;
-    } else if (binding.isFinal()) {
-      disposition = Disposition.FINAL;
-    } else if (binding.isVolatile()) {
-      disposition = Disposition.VOLATILE;
-    } else {
-      disposition = Disposition.NONE;
-    }
-
     JField field =
         new JField(SourceOrigin.UNKNOWN, intern(binding.name), enclosingType, get(binding.type),
-            binding.isStatic(), disposition);
+            binding.isStatic(), GwtAstBuilder.getFieldDisposition(binding));
     enclosingType.addField(field);
     return field;
   }
