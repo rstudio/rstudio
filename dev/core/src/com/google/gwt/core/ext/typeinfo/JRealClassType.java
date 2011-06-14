@@ -23,8 +23,7 @@ public interface JRealClassType extends JClassType {
   /**
    * EXPERIMENTAL and subject to change. Do not use this in production code.
    * 
-   * Generate a hash to be used as a signature for comparing versions of the 
-   * structure of a type.  
+   * Retrieve last modified time for this type.
    */
-  String getTypeStrongHash();
+  long getLastModifiedTime();
 }

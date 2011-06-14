@@ -15,7 +15,6 @@
  */
 package com.google.gwt.core.ext;
 
-import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.dev.javac.rebind.CachedRebindResult;
 
 /**
@@ -37,15 +36,6 @@ public interface GeneratorContextExt extends GeneratorContext {
    *         is no previous result, or if generator result caching is not enabled.
    */
   CachedRebindResult getCachedGeneratorResult();
-  
-  /**
-   * Get source last modified time.
-   * <p>
-   * TODO(jbrosenberg): Implement in terms of a getVersion method yet to be
-   * added to TypeOracle, instead of looking for age of a java source file.
-   * This will soon be removed.
-   */
-  long getSourceLastModifiedTime(JClassType sourceType);
   
   /**
    * Check whether generator result caching is currently enabled.

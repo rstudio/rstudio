@@ -122,9 +122,9 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
 
   private static final String FILE_PROTOCOL = "file";
   private static final String JAR_PROTOCOL = "jar";
-  private static final String CACHED_PROPERTY_INFORMATION = "cpi";
-  private static final String CACHED_RESOURCE_INFORMATION = "cri";
-  private static final String CACHED_TYPE_INFORMATION = "cti";
+  private static final String CACHED_PROPERTY_INFORMATION = "cached-property-info";
+  private static final String CACHED_RESOURCE_INFORMATION = "cached-resource-info";
+  private static final String CACHED_TYPE_INFORMATION = "cached-type-info";
   private static final String INSTANCE_NAME = "_instance0";
 
   /**
@@ -302,22 +302,18 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
       return resolvedResources;
     }
 
-    public Map<String, String> getTypeSignatures() {
+    public Map<String, Long> getTypeLastModifiedTimes() {
       if (!canBeCacheable) {
         return null;
       }
-      Map<String, String> typeSignatures = new HashMap<String, String>();
+      Map<String, Long> typeLastModifiedTimeMap = new HashMap<String, Long>();
       for (JClassType type : types) {
         String typeName = type.getQualifiedSourceName();
-        if (type instanceof JRealClassType) {
-          JRealClassType sourceRealType = (JRealClassType) type;
-          String typeSignature = sourceRealType.getTypeStrongHash();
-          typeSignatures.put(typeName, typeSignature);
-        } else {
-          typeSignatures.put(typeName, "");
-        }
+        assert type instanceof JRealClassType;
+        JRealClassType sourceRealType = (JRealClassType) type;
+        typeLastModifiedTimeMap.put(typeName, sourceRealType.getLastModifiedTime());
       }
-      return typeSignatures;
+      return typeLastModifiedTimeMap;
     }
 
     /*
@@ -337,9 +333,26 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
      * Do a series of checks to see if we can use a previously cached result,
      * and if so, we can skip further execution and return immediately.
      */
+    boolean useCache = false;
     if (checkPropertyCacheability(logger, generatorContext)
-        && checkSourceTypeCacheability(generatorContext)
+        && checkSourceTypeCacheability(logger, generatorContext)
         && checkDependentResourceCacheability(logger, generatorContext, null)) {
+      useCache = true;
+    }
+    
+    if (logger.isLoggable(TreeLogger.TRACE)) { 
+      if (generatorContext.isGeneratorResultCachingEnabled()) {
+        String msg;
+        if (useCache) {
+          msg = "Reusing cached client bundle for " + typeName;
+        } else {
+          msg = "Can't use cached client bundle for " + typeName;
+        }
+        logger.log(TreeLogger.TRACE, msg);
+      }
+    }
+      
+    if (useCache) {
       return new RebindResult(RebindStatus.USE_ALL_CACHED, typeName);
     }
       
@@ -470,8 +483,8 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
           requirements.getPermutationAxes(), 
           requirements.getConfigurationPropertyNames());
 
-      // remember the type signatures for required source types
-      Map<String, String> cti = requirements.getTypeSignatures();
+      // remember the last modified times for required source types
+      Map<String, Long> cti = requirements.getTypeLastModifiedTimes();
 
       // remember the required resources
       Map<String, URL> cri = requirements.getResolvedResources();
@@ -543,23 +556,26 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
   }
 
   /**
-   * Check that the map of cached type signatures matches those from the current
+   * Check that the cached last modified times match those from the current
    * typeOracle.
    */
-  private boolean checkCachedTypeSignatures(
-      GeneratorContextExt generatorContext, Map<String, String> typeSignatures) {
+  private boolean checkCachedTypeLastModifiedTimes(TreeLogger logger,
+      GeneratorContextExt generatorContext, Map<String, Long> typeLastModifiedTimes) {
     
     TypeOracle oracle = generatorContext.getTypeOracle();
     
-    for (String sourceTypeName : typeSignatures.keySet()) {
+    for (String sourceTypeName : typeLastModifiedTimes.keySet()) {
       JClassType sourceType = oracle.findType(sourceTypeName);
-      if (sourceType == null || !(sourceType instanceof JRealClassType)) {
+      if (sourceType == null) {
+        logger.log(TreeLogger.TRACE, 
+            "Found previously dependent type that's no longer present: " + sourceTypeName);
         return false;
       }
+      assert sourceType instanceof JRealClassType;
       JRealClassType sourceRealType = (JRealClassType) sourceType;
       
-      String signature = sourceRealType.getTypeStrongHash();
-      if (!signature.equals(typeSignatures.get(sourceTypeName))) {
+      if (sourceRealType.getLastModifiedTime() != typeLastModifiedTimes.get(sourceTypeName)) {
+        logger.log(TreeLogger.TRACE, "Found dependent type that has changed: " + sourceTypeName);
         return false;
       }
     }
@@ -597,10 +613,13 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
           resourceContext, resourceName);
       if (currentUrl == null || resolvedUrl == null
           || !resolvedUrl.toExternalForm().equals(currentUrl.toExternalForm())) {
+        logger.log(TreeLogger.TRACE,
+            "Found dependent resource that has moved or no longer exists: " + resourceName);
         return false;
       }
       
       if (!checkDependentResourceUpToDate(lastTimeGenerated, resolvedUrl)) {
+        logger.log(TreeLogger.TRACE, "Found dependent resource that has changed: " + resourceName);
         return false;
       }
     }
@@ -714,7 +733,7 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
   /*
    * Check source types for cacheability
    */
-  private boolean checkSourceTypeCacheability(GeneratorContextExt genContext) {
+  private boolean checkSourceTypeCacheability(TreeLogger logger, GeneratorContextExt genContext) {
 
     CachedRebindResult lastRebindResult = genContext.getCachedGeneratorResult();
 
@@ -729,11 +748,11 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
      * since the previous cached result was generated.
      */
     @SuppressWarnings("unchecked")
-    Map<String, String> cachedTypeSignatures = (Map<String, String>)
+    Map<String, Long> cachedTypeLastModifiedTimes = (Map<String, Long>)
       lastRebindResult.getClientData(CACHED_TYPE_INFORMATION);
 
-    return cachedTypeSignatures != null 
-      && checkCachedTypeSignatures(genContext, cachedTypeSignatures);
+    return cachedTypeLastModifiedTimes != null 
+      && checkCachedTypeLastModifiedTimes(logger, genContext, cachedTypeLastModifiedTimes);
   }
 
   /**

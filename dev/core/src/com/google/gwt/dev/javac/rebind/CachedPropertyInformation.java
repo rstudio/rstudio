@@ -85,10 +85,12 @@ public class CachedPropertyInformation implements Serializable {
           SelectionProperty currProp = 
             oracle.getSelectionProperty(logger, selProp.getName());
           if (!currProp.getCurrentValue().equals(selProp.getCurrentValue())) {
+            logger.log(TreeLogger.TRACE, "Found changed property: " + selProp.getName());
             return false;
           }
         }
       } catch (BadPropertyValueException e) {
+        logger.log(TreeLogger.TRACE, "Found problem checking property", e);
         return false;
       }
     }
@@ -99,10 +101,14 @@ public class CachedPropertyInformation implements Serializable {
           ConfigurationProperty currProp = 
             oracle.getConfigurationProperty(configProp.getName());
           if (!currProp.equals(configProp)) {
+            logger.log(TreeLogger.TRACE, 
+                "Found changed configuration property: " + configProp.getName());
             return false;
           }
         }
       } catch (BadPropertyValueException e) {
+        logger.log(TreeLogger.TRACE, 
+            "Found problem checking configuration property", e);
         return false;
       }
     }

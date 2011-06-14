@@ -27,7 +27,6 @@ import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.linker.impl.StandardGeneratedResource;
-import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.ModuleDef;
@@ -35,7 +34,6 @@ import com.google.gwt.dev.javac.rebind.CachedRebindResult;
 import com.google.gwt.dev.javac.rebind.RebindResult;
 import com.google.gwt.dev.javac.rebind.RebindRuleResolver;
 import com.google.gwt.dev.javac.rebind.RebindStatus;
-import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
@@ -539,39 +537,6 @@ public class StandardGeneratorContext implements GeneratorContextExt {
 
   public ResourceOracle getResourcesOracle() {
     return module.getResourcesOracle();
-  }
-
-  /**
-   * EXPERIMENTAL and subject to change. Do not use this in production code.
-   * 
-   * Temporary solution to get last modified time for a sourceType. Finds the
-   * the source file, if possible. Note, this won't work for sources contained
-   * in jar files, or for recently generated source files.
-   * 
-   * TODO(jbrosenberg): Replace this method by using a getVersion() method from
-   * TypeOracle (still under development).
-   */
-  public long getSourceLastModifiedTime(JClassType sourceType) {
-
-    while (sourceType instanceof JArrayType) {
-      sourceType = (JClassType) ((JArrayType) sourceType).getComponentType();
-    }
-
-    JClassType enclosingType;
-    while ((enclosingType = sourceType.getEnclosingType()) != null) {
-      sourceType = enclosingType;
-    }
-
-    String sourceName = sourceType.getQualifiedSourceName();
-    String sourcePath = sourceName.replace('.', '/') + ".java";
-
-    Resource sourceResource = module.findSourceFile(sourcePath);
-
-    if (sourceResource == null) {
-      return 0L;
-    }
-
-    return sourceResource.getLastModified();
   }
 
   public final TypeOracle getTypeOracle() {

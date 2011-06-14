@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.rebind.CachedClientDataMap;
 import com.google.gwt.dev.javac.rebind.RebindResult;
 import com.google.gwt.dev.javac.rebind.RebindStatus;
 
@@ -58,14 +59,21 @@ public class ServiceInterfaceProxyGenerator extends GeneratorExt {
 
     String returnTypeName = proxyCreator.create(proxyLogger, ctx);
 
-    /*
-     * Return with RebindStatus.USE_PARTIAL_CACHED, since we are implementing an
-     * incremental scheme, which allows us to use a mixture of previously cached
-     * and newly generated compilation units and artifacts. For example, the
-     * field serializers only need to be generated fresh if their source type
-     * has changed (or if no previously cached version exists).
-     */
-    return new RebindResult(RebindStatus.USE_PARTIAL_CACHED, returnTypeName);
+    if (ctx.isGeneratorResultCachingEnabled()) {
+      // Remember the type info that we care about for cacheability testing.
+      CachedClientDataMap clientData = new CachedClientDataMap();
+      proxyCreator.updateResultCacheData(clientData);
+
+      /*
+       * Return with RebindStatus.USE_PARTIAL_CACHED, since we are allowing
+       * generator result caching for field serializers, but other generated
+       * types cannot be cached effectively.
+       */
+      return new RebindResult(RebindStatus.USE_PARTIAL_CACHED, returnTypeName, clientData);
+    } else {
+      // If we can't be cacheable, don't return a cacheable result
+      return new RebindResult(RebindStatus.USE_ALL_NEW_WITH_NO_CACHING, returnTypeName);
+    }
   }
 
   protected ProxyCreator createProxyCreator(JClassType remoteService) {

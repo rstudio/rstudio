@@ -36,6 +36,7 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.generator.NameFactory;
+import com.google.gwt.dev.javac.rebind.CachedClientDataMap;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -204,6 +205,8 @@ public class ProxyCreator {
 
   private boolean elideTypeNames;
 
+  private Map<String, Long> cachedTypeLastModifiedTimes = null;
+
   /**
    * The possibly obfuscated type signatures used to represent a type.
    */
@@ -342,6 +345,12 @@ public class ProxyCreator {
     }
 
     return getProxyQualifiedName();
+  }
+
+  public void updateResultCacheData(CachedClientDataMap clientData) {
+    if (cachedTypeLastModifiedTimes != null) {
+      clientData.put(TypeSerializerCreator.CACHED_TYPE_INFO_KEY, cachedTypeLastModifiedTimes);
+    }
   }
 
   protected void addRoots(TreeLogger logger, TypeOracle typeOracle,
@@ -645,6 +654,8 @@ public class ProxyCreator {
 
     typeStrings = new HashMap<JType, String>(tsc.getTypeStrings());
     typeStrings.put(serviceIntf, TypeNameObfuscator.SERVICE_INTERFACE_ID);
+
+    cachedTypeLastModifiedTimes = tsc.getTypeLastModifiedTimeMap();
   }
 
   protected String getProxySimpleName() {

@@ -539,11 +539,11 @@ public class TypeOracleMediator extends TypeOracleBuilder {
       // Always add implicit modifiers on interfaces.
       resultType.addModifierBits(Shared.MOD_STATIC | Shared.MOD_ABSTRACT);
     }
-    
+
     /*
-     * Add a reference to the byteCode
+     * Add lastModified time from compilation unit
      */
-    resultType.addByteCode(typeData.byteCode);
+    resultType.addLastModifiedTime(typeData.lastModifiedTime);
 
     return resultType;
   }

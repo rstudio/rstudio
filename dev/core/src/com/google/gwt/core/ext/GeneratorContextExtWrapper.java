@@ -17,7 +17,6 @@ package com.google.gwt.core.ext;
 
 import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.GeneratedResource;
-import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.rebind.CachedRebindResult;
 import com.google.gwt.dev.resource.ResourceOracle;
@@ -78,10 +77,6 @@ public class GeneratorContextExtWrapper implements GeneratorContextExt {
 
   public ResourceOracle getResourcesOracle() {
     return baseContext.getResourcesOracle();
-  }
-
-  public long getSourceLastModifiedTime(JClassType sourceType) {
-    return 0L;
   }
 
   public TypeOracle getTypeOracle() {

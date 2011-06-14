@@ -107,10 +107,6 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       return null;
     }
 
-    public long getSourceLastModifiedTime(JClassType sourceType) {
-      return 0;
-    }
-
     public TypeOracle getTypeOracle() {
       return typeOracle;
     }
