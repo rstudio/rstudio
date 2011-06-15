@@ -15,14 +15,14 @@
  */
 package com.google.gwt.activity.shared;
 
-import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.ResettableEventBus;
 import com.google.gwt.event.shared.UmbrellaException;
 import com.google.gwt.place.shared.PlaceChangeEvent;
 import com.google.gwt.place.shared.PlaceChangeRequestEvent;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.google.gwt.user.client.ui.IsWidget;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -32,8 +32,7 @@ import java.util.Set;
  * {@link PlaceChangeEvent} events. Each activity can start itself
  * asynchronously, and provides a widget to be shown when it's ready to run.
  */
-public class ActivityManager implements PlaceChangeEvent.Handler,
-    PlaceChangeRequestEvent.Handler {
+public class ActivityManager implements PlaceChangeEvent.Handler, PlaceChangeRequestEvent.Handler {
 
   /**
    * Wraps our real display to prevent an Activity from taking it over if it is
@@ -55,13 +54,18 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
   }
 
   private static final Activity NULL_ACTIVITY = new AbstractActivity() {
-    public void start(AcceptsOneWidget panel, EventBus eventBus) {
+    public void start(AcceptsOneWidget panel, com.google.gwt.event.shared.EventBus eventBus) {
     }
   };
 
   private final ActivityMapper mapper;
 
   private final EventBus eventBus;
+
+  /*
+   * Note that we use the legacy class from com.google.gwt.event.shared, because
+   * we can't change the Activity interface.
+   */
   private final ResettableEventBus stopperedEventBus;
 
   private Activity currentActivity = NULL_ACTIVITY;
@@ -136,7 +140,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
       startingNext = true;
       caughtOnStart = tryStart();
     }
-    
+
     if (caughtOnStart != null || caughtOnCancel != null || caughtOnStop != null) {
       Set<Throwable> causes = new LinkedHashSet<Throwable>();
       if (caughtOnStop != null) {
@@ -202,12 +206,12 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
   private Throwable tryStart() {
     Throwable caughtOnStart = null;
     try {
-      /* Wrap the actual display with a per-call instance
-       * that protects the display from canceled or stopped activities, and which
-       * maintains our startingNext state.
+      /*
+       * Wrap the actual display with a per-call instance that protects the
+       * display from canceled or stopped activities, and which maintains our
+       * startingNext state.
        */
-      currentActivity.start(new ProtectedDisplay(currentActivity),
-          stopperedEventBus);
+      currentActivity.start(new ProtectedDisplay(currentActivity), stopperedEventBus);
     } catch (Throwable t) {
       caughtOnStart = t;
     }
@@ -236,10 +240,9 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
 
   private void updateHandlers(boolean activate) {
     if (activate) {
-      final HandlerRegistration placeReg = eventBus.addHandler(
-          PlaceChangeEvent.TYPE, this);
-      final HandlerRegistration placeRequestReg = eventBus.addHandler(
-          PlaceChangeRequestEvent.TYPE, this);
+      final HandlerRegistration placeReg = eventBus.addHandler(PlaceChangeEvent.TYPE, this);
+      final HandlerRegistration placeRequestReg =
+          eventBus.addHandler(PlaceChangeRequestEvent.TYPE, this);
 
       this.handlerRegistration = new HandlerRegistration() {
         public void removeHandler() {

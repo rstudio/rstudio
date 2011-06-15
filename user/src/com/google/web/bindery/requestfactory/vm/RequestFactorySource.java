@@ -31,7 +31,7 @@ public class RequestFactorySource {
    * initialized with an explicit
    * {@link com.google.web.bindery.requestfactory.shared.RequestTransport
    * RequestTransport} via the
-   * {@link RequestFactory#initialize(com.google.gwt.event.shared.EventBus, com.google.web.bindery.requestfactory.shared.RequestTransport)
+   * {@link RequestFactory#initialize(com.google.web.bindery.event.shared.EventBus, com.google.web.bindery.requestfactory.shared.RequestTransport)
    * initialize(EventBus, RequestTransport} method.
    * 
    * @param <T> the RequestFactory type

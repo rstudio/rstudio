@@ -25,10 +25,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
  */
 public class ResettableEventBus extends EventBus {
   private static class TestableResettableEventBus extends com.google.web.bindery.event.shared.ResettableEventBus {
-    /**
-     * @param wrappedBus
-     */
-    public TestableResettableEventBus(EventBus wrappedBus) {
+    private TestableResettableEventBus(com.google.web.bindery.event.shared.EventBus wrappedBus) {
       super(wrappedBus);
     }
 
@@ -40,7 +37,7 @@ public class ResettableEventBus extends EventBus {
 
   private final TestableResettableEventBus real;
 
-  public ResettableEventBus(EventBus wrappedBus) {
+  public ResettableEventBus(com.google.web.bindery.event.shared.EventBus wrappedBus) {
     real = new TestableResettableEventBus(wrappedBus);
   }
 

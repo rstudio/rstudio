@@ -18,9 +18,10 @@ package com.google.gwt.place.shared;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.LegacyHandlerWrapper;
 import com.google.gwt.user.client.History;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.logging.Logger;
 
@@ -35,7 +36,7 @@ public class PlaceHistoryHandler {
    * Default implementation of {@link Historian}, based on {@link History}.
    */
   public static class DefaultHistorian implements Historian {
-    public HandlerRegistration addValueChangeHandler(
+    public com.google.gwt.event.shared.HandlerRegistration addValueChangeHandler(
         ValueChangeHandler<String> valueChangeHandler) {
       return History.addValueChangeHandler(valueChangeHandler);
     }
@@ -62,7 +63,7 @@ public class PlaceHistoryHandler {
      * @param valueChangeHandler the handler
      * @return the registration used to remove this value change handler
      */
-    HandlerRegistration addValueChangeHandler(
+    com.google.gwt.event.shared.HandlerRegistration addValueChangeHandler(
         ValueChangeHandler<String> valueChangeHandler);
 
     /**
@@ -118,29 +119,41 @@ public class PlaceHistoryHandler {
   }
 
   /**
+   * Legacy method tied to the old location for {@link EventBus}.
+   * 
+   * @deprecated use {@link #register(PlaceController, EventBus, Place)}
+   */
+  @Deprecated
+  public com.google.gwt.event.shared.HandlerRegistration register(PlaceController placeController,
+      com.google.gwt.event.shared.EventBus eventBus, Place defaultPlace) {
+    return new LegacyHandlerWrapper(register(placeController, (EventBus) eventBus, defaultPlace));
+  }
+
+  /**
    * Initialize this place history handler.
    * 
    * @return a registration object to de-register the handler
    */
-  public HandlerRegistration register(PlaceController placeController,
-      EventBus eventBus, Place defaultPlace) {
+  public HandlerRegistration register(PlaceController placeController, EventBus eventBus,
+      Place defaultPlace) {
     this.placeController = placeController;
     this.defaultPlace = defaultPlace;
 
-    final HandlerRegistration placeReg = eventBus.addHandler(
-        PlaceChangeEvent.TYPE, new PlaceChangeEvent.Handler() {
+    final HandlerRegistration placeReg =
+        eventBus.addHandler(PlaceChangeEvent.TYPE, new PlaceChangeEvent.Handler() {
           public void onPlaceChange(PlaceChangeEvent event) {
             Place newPlace = event.getNewPlace();
             historian.newItem(tokenForPlace(newPlace), false);
           }
         });
 
-    final HandlerRegistration historyReg = historian.addValueChangeHandler(new ValueChangeHandler<String>() {
-      public void onValueChange(ValueChangeEvent<String> event) {
-        String token = event.getValue();
-        handleHistoryToken(token);
-      }
-    });
+    final HandlerRegistration historyReg =
+        historian.addValueChangeHandler(new ValueChangeHandler<String>() {
+          public void onValueChange(ValueChangeEvent<String> event) {
+            String token = event.getValue();
+            handleHistoryToken(token);
+          }
+        });
 
     return new HandlerRegistration() {
       public void removeHandler() {
