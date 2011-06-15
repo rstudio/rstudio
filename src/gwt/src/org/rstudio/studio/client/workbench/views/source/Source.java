@@ -30,6 +30,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -443,7 +444,18 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onCloseAllSourceDocs()
    {
-
+      globalDisplay_.showMessage(MessageDialog.INFO, 
+                                 "RStudio", 
+                                 "Not Yet Implemented");
+      
+      
+      /*
+      // determine if there are any dirty documents to prompt for
+      for (EditingTarget target : editors_)
+      {
+         Debug.log(target.getName().toString());
+      }
+      */
    }
 
   
@@ -785,6 +797,7 @@ public class Source implements InsertSourceHandler,
       boolean hasDocs = editors_.size() > 0;
 
       commands_.closeSourceDoc().setEnabled(hasDocs);
+      commands_.closeAllSourceDocs().setEnabled(hasDocs);
       commands_.nextTab().setEnabled(hasDocs);
       commands_.previousTab().setEnabled(hasDocs);
       commands_.firstTab().setEnabled(hasDocs);

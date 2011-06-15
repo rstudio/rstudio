@@ -57,7 +57,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="printSourceDoc"/>
          <separator/>
          <cmd refid="closeSourceDoc"/>
-         <!--<cmd refid="closeAllSourceDocs"/>-->
+         <cmd refid="closeAllSourceDocs"/>
          <separator/>
          <cmd refid="quitSession"/>
       </menu>
@@ -208,6 +208,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="openSourceDoc" value="Cmd+O"/>
       <shortcut refid="newSourceDoc" value="Cmd+Shift+N"/>
       <shortcut refid="closeSourceDoc" value="Cmd+W"/>
+      <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
       <shortcut refid="compilePDF" value="Cmd+Shift+I"/>
       <shortcut refid="executeCode" value="Cmd+Enter"/>
       <shortcut refid="executeAllCode" value="Cmd+Shift+Enter"/>
