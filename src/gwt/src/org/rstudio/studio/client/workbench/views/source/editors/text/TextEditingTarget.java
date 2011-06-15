@@ -796,13 +796,10 @@ public class TextEditingTarget implements EditingTarget
             }
             else
             {
-               saveThenExecute(null, new Command() {
-                  public void execute()
-                  {
-                     sourceOnSaveCommandIfApplicable().execute();
-                     onCompleted.execute();         
-                  } 
-               });
+               saveThenExecute(
+                     null, 
+                     CommandUtil.join(sourceOnSaveCommandIfApplicable(), 
+                                      onCompleted));
             }
          }
          else
