@@ -22,9 +22,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.*;
@@ -112,6 +110,11 @@ public class Source implements InsertSourceHandler,
                      String tooltip);
 
       HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler);
+   }
+
+   public interface CPSEditingTargetCommand
+   {
+      void execute(EditingTarget editingTarget, Command continuation);
    }
 
    @Inject
@@ -441,28 +444,27 @@ public class Source implements InsertSourceHandler,
       view_.closeTab(view_.getActiveTabIndex(), true);
    }
 
-  
-   private void saveSourceDocs(final int nextIndex)
+   /**
+    * Execute the given command for each editor, using continuation-passing
+    * style. When executed, the CPSEditingTargetCommand needs to execute its
+    * own Command parameter to continue the iteration.
+    * @param command The command to run on each EditingTarget
+    */
+   private void cpsExecuteForEachEditor(final CPSEditingTargetCommand command)
    {
-      if (nextIndex < editors_.size())
+      SerializedCommandQueue queue = new SerializedCommandQueue();
+
+      // Clone editors_, since the original may be mutated during iteration
+      for (final EditingTarget editor : new ArrayList<EditingTarget>(editors_))
       {
-         EditingTarget target = editors_.get(nextIndex);
-         if (target.dirtyState().getValue())
+         queue.addCommand(new SerializedCommand()
          {
-            // save (don't prompt unless untitled)
-            target.save(
-               false, 
-               new Command() {
-                  public void execute()
-                  {
-                     saveSourceDocs(nextIndex + 1);  
-                  }
-            });
-         }
-         else
-         {
-            saveSourceDocs(nextIndex + 1);
-         }
+            @Override
+            public void onExecute(Command continuation)
+            {
+               command.execute(editor, continuation);
+            }
+         });
       }
    }
    
@@ -470,45 +472,53 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onSaveAllSourceDocs()
    {
-      saveSourceDocs(0);
-   }
-   
-   
-   private Command closeNextSourceDoc_ = new Command() {
-      public void execute()
+      cpsExecuteForEachEditor(new CPSEditingTargetCommand()
       {
-         if (editors_.size() == 0)
-            return;
-          
-         EditingTarget nextDocTarget = editors_.get(0);
-         
-         if (nextDocTarget.dirtyState().getValue())
+         @Override
+         public void execute(EditingTarget target, Command continuation)
          {
-            // save (with prompt) then close
-            nextDocTarget.save(
-              true,
-              new Command() {
-                 public void execute()
-                 {
-                    view_.closeTab(0, false, closeNextSourceDoc_);
-                 } 
-              });
+            if (target.dirtyState().getValue())
+            {
+               // save (don't prompt unless untitled)
+               target.save(false, continuation);
+            }
+            else
+            {
+               continuation.execute();
+            }
          }
-         else
-         {
-            // close without saving or prompting
-            view_.closeTab(0, false, closeNextSourceDoc_);
-         }
-         
-      }  
-   };
-  
+      });
+   }
    
    @Handler
    public void onCloseAllSourceDocs()
    {
-      // save and close each source doc in turn
-      closeNextSourceDoc_.execute();
+      cpsExecuteForEachEditor(new CPSEditingTargetCommand()
+      {
+         @Override
+         public void execute(EditingTarget target, final Command continuation)
+         {
+            if (target.dirtyState().getValue())
+            {
+               // save (with prompt) then close
+               target.save(
+                     true,
+                     new Command()
+                     {
+                        public void execute()
+                        {
+                           view_.closeTab(0, false, continuation);
+                        }
+                     });
+            }
+            else
+            {
+               // close without saving or prompting
+               view_.closeTab(0, false, continuation);
+            }
+
+         }
+      });
    }
 
   
@@ -527,7 +537,7 @@ public class Source implements InsertSourceHandler,
                {
                   if (input == null)
                      return;
-                  
+
                   workbenchContext_.setDefaultFileDialogDir(
                                                    input.getParentPath());
 
@@ -836,7 +846,8 @@ public class Source implements InsertSourceHandler,
             {
                public void execute()
                {
-                  activeEditor_.focus();
+                  if (activeEditor_ != null)
+                     activeEditor_.focus();
                }
             });
          }
