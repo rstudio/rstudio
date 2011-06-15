@@ -169,7 +169,7 @@ public class UrlContentEditingTarget implements EditingTarget
       return dirtyState_;
    }
    
-   public void save(Command onCompleted)
+   public void save(boolean alwaysPrompt, Command onCompleted)
    {
       onCompleted.execute();
    }

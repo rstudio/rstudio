@@ -24,6 +24,7 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.events.*;
@@ -124,12 +125,17 @@ public class SourcePane extends Composite implements Display,
 
    public void closeTab(int index, boolean interactive)
    {
-      if (interactive)
-         tabPanel_.tryCloseTab(index);
-      else
-         tabPanel_.closeTab(index);
+      closeTab(index, interactive, null);
    }
 
+   public void closeTab(int index, boolean interactive, Command onClosed)
+   {
+      if (interactive)
+         tabPanel_.tryCloseTab(index, onClosed);
+      else
+         tabPanel_.closeTab(index, onClosed);
+   }
+   
    public void setDirty(Widget widget, boolean dirty)
    {
       Widget tab = tabPanel_.getTabWidget(widget);

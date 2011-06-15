@@ -782,21 +782,28 @@ public class TextEditingTarget implements EditingTarget
       return false;
    }
    
-   public void save(final Command onCompleted)
+   public void save(boolean alwaysPrompt, final Command onCompleted)
    {
       // if it has a path and is dirty then execute save directly
-      // with no prompt (add source on save if applicable)
+      // (prompt if requested and source on save if applicable)
       if (getPath() != null)
       {
          if (dirtyState_.getValue())
          {
-            saveThenExecute(null, new Command() {
-               public void execute()
-               {
-                  sourceOnSaveCommandIfApplicable().execute();
-                  onCompleted.execute();         
-               } 
-            });
+            if (alwaysPrompt)
+            {
+               promptForSave(onCompleted);
+            }
+            else
+            {
+               saveThenExecute(null, new Command() {
+                  public void execute()
+                  {
+                     sourceOnSaveCommandIfApplicable().execute();
+                     onCompleted.execute();         
+                  } 
+               });
+            }
          }
          else
          {

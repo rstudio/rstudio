@@ -18,6 +18,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
@@ -65,7 +66,7 @@ public class DocTabLayoutPanel
                int index = getWidgetIndex(child);
                if (index >= 0)
                {
-                  tryCloseTab(index);
+                  tryCloseTab(index, null);
                }
             }
          }));
@@ -76,20 +77,24 @@ public class DocTabLayoutPanel
       }
    }
 
-   public boolean tryCloseTab(int index)
+   public boolean tryCloseTab(int index, Command onClosed)
    {
       TabClosingEvent event = new TabClosingEvent(index);
       fireEvent(event);
       if (event.isCancelled())
          return false;
 
-      closeTab(index);
+      closeTab(index, onClosed);
       return true;
    }
 
-   public void closeTab(int index)
+   public void closeTab(int index, Command onClosed)
    {
-      remove(index);
+      if (remove(index))
+      {
+         if (onClosed != null)
+            onClosed.execute();
+      }
    }
 
    @Override
@@ -193,6 +198,7 @@ public class DocTabLayoutPanel
       ensureSelectedTabIsVisible(false);
    }
 
+  
    @Override
    public boolean remove(int index)
    {

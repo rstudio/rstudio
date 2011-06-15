@@ -30,7 +30,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -100,6 +99,7 @@ public class Source implements InsertSourceHandler,
       int getActiveTabIndex();
       void closeTab(Widget widget, boolean interactive);
       void closeTab(int index, boolean interactive);
+      void closeTab(int index, boolean interactive, Command onClosed);
       void setDirty(Widget widget, boolean dirty);
       void manageChevronVisibility();
       void showOverflowPopup();
@@ -449,12 +449,14 @@ public class Source implements InsertSourceHandler,
          EditingTarget target = editors_.get(nextIndex);
          if (target.dirtyState().getValue())
          {
-            target.save(new Command() {
-               public void execute()
-               {
-                  saveSourceDocs(nextIndex + 1);  
-               }
-               
+            // save (don't prompt unless untitled)
+            target.save(
+               false, 
+               new Command() {
+                  public void execute()
+                  {
+                     saveSourceDocs(nextIndex + 1);  
+                  }
             });
          }
          else
@@ -471,13 +473,42 @@ public class Source implements InsertSourceHandler,
       saveSourceDocs(0);
    }
    
+   
+   private Command closeNextSourceDoc_ = new Command() {
+      public void execute()
+      {
+         if (editors_.size() == 0)
+            return;
+          
+         EditingTarget nextDocTarget = editors_.get(0);
+         
+         if (nextDocTarget.dirtyState().getValue())
+         {
+            // save (with prompt) then close
+            nextDocTarget.save(
+              true,
+              new Command() {
+                 public void execute()
+                 {
+                    view_.closeTab(0, false, closeNextSourceDoc_);
+                 } 
+              });
+         }
+         else
+         {
+            // close without saving or prompting
+            view_.closeTab(0, false, closeNextSourceDoc_);
+         }
+         
+      }  
+   };
+  
+   
    @Handler
    public void onCloseAllSourceDocs()
    {
-      globalDisplay_.showMessage(MessageDialog.INFO, 
-                                 "RStudio", 
-                                 "Not Yet Implemented");
- 
+      // save and close each source doc in turn
+      closeNextSourceDoc_.execute();
    }
 
   
