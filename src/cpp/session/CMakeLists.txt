@@ -143,8 +143,6 @@ if(WIN32)
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest
                    ${CMAKE_CURRENT_BINARY_DIR}/rsession.exe.manifest COPYONLY)
 
-   set(LINK_FLAGS -Wl,-subsystem,windows -lversion)
-
    add_custom_command(
       OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
       COMMAND windres.exe
@@ -169,7 +167,6 @@ target_link_libraries(rsession
    rstudio-r
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
-   ${LINK_FLAGS}
 )
 
 # configure and install r-ldpaths script
