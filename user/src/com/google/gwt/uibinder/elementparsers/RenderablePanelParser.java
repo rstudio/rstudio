@@ -22,6 +22,7 @@ import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.messages.MessageWriter;
 import com.google.gwt.uibinder.rebind.messages.PlaceholderInterpreter;
+import com.google.gwt.uibinder.rebind.model.OwnerField;
 
 /**
  * Parses {@link com.google.gwt.user.client.ui.RenderablePanel} widgets.
@@ -32,6 +33,13 @@ public class RenderablePanelParser implements ElementParser {
       final UiBinderWriter writer) throws UnableToCompleteException {
 
     assert writer.useLazyWidgetBuilders();
+
+    // Make sure that, if there is a UiField for this panel, it isn't
+    // (provided = true), as that isn't supported.
+    OwnerField uiField = writer.getOwnerClass().getUiField(fieldName);
+    if (uiField != null && uiField.isProvided()) {
+      writer.die("UiField %s for RenderablePanel cannot be provided.", fieldName);
+    }
 
     /*
      * Gathers up elements that indicate nested IsRenderable objects.
