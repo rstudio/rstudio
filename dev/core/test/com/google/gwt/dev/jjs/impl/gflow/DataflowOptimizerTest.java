@@ -262,6 +262,36 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
        );
   }
 
+  public void testComplexCode4() throws Exception {
+    addSnippetClassDecl("static boolean confirm() { return true; }");
+
+    optimize("int",
+       "int n = 0;",
+       "for (; ; ) {",
+       "  if (confirm()) {",
+       "    break;",
+       "  } else {",
+       "    for (int i = 0; i < 2; i++) {",
+       "      n = i;",
+       "    }",
+       "  }",
+       "}",
+       "return n;"
+   ).into(
+       "int n = 0;",
+       "for (; ; ) {",
+       "  if (confirm()) {",
+       "    break;",
+       "  } else {",
+       "    for (int i = 0; i < 2; i++) {",
+       "      n = i;",
+       "    }",
+       "  }",
+       "}",
+      "return n;"
+      );
+  }
+
   public void testImplicitConversion() throws Exception {
     optimize("long", 
         "int bar = 0x12345678;",

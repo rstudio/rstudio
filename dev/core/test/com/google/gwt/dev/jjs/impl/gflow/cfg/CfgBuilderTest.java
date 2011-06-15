@@ -51,7 +51,7 @@ public class CfgBuilderTest extends JJSTestBase {
     addSnippetClassDecl("static class Foo { int i; int j; int k; }");
     addSnippetClassDecl("static Foo createFoo() {return null;}");
   }
-  
+
   public void testConstantAssignment() throws Exception {
     assertCfg("void", "i = 1;").is(
         "BLOCK -> [*]",
@@ -260,6 +260,52 @@ public class CfgBuilderTest extends JJSTestBase {
         "END");
   }
   
+  public void testDoStatementBreakNoLabel() throws Exception {
+    assertCfg("void", "do { if (b1) { break; } else { do { j = 2; } while (b2); } } while (i == 1);").is(
+        "BLOCK -> [*]",
+        "STMT -> [*]",
+        "1: BLOCK -> [*]",
+        "STMT -> [*]",
+        "READ(b1) -> [*]",
+        "COND (EntryPoint.b1) -> [THEN=*, ELSE=2]",
+        "BLOCK -> [*]",
+        "STMT -> [*]",
+        "GOTO -> [4]",
+        "2: BLOCK -> [*]",
+        "STMT -> [*]",
+        "3: BLOCK -> [*]",
+        "STMT -> [*]",
+        "WRITE(j, 2) -> [*]",
+        "READ(b2) -> [*]",
+        "COND (EntryPoint.b2) -> [THEN=3, ELSE=*]",
+        "READ(i) -> [*]",
+        "COND (EntryPoint.i == 1) -> [THEN=1, ELSE=*]",
+        "4: END");
+  }
+  
+  public void testDoStatementContinueNoLabel() throws Exception {
+    assertCfg("void", "do { if (b1) { continue; } else { do { j = 2; } while (b2); } } while (i == 1);").is(
+        "BLOCK -> [*]",
+        "STMT -> [*]",
+        "1: BLOCK -> [*]",
+        "STMT -> [*]",
+        "READ(b1) -> [*]",
+        "COND (EntryPoint.b1) -> [THEN=*, ELSE=2]",
+        "BLOCK -> [*]",
+        "STMT -> [*]",
+        "GOTO -> [1]",
+        "2: BLOCK -> [*]",
+        "STMT -> [*]",
+        "3: BLOCK -> [*]",
+        "STMT -> [*]",
+        "WRITE(j, 2) -> [*]",
+        "READ(b2) -> [*]",
+        "COND (EntryPoint.b2) -> [THEN=3, ELSE=*]",
+        "READ(i) -> [*]",
+        "COND (EntryPoint.i == 1) -> [THEN=1, ELSE=*]",
+        "END");
+  }
+
   public void testReturn1() throws Exception {
     assertCfg("void", "return;").is(
         "BLOCK -> [*]",
@@ -479,6 +525,29 @@ public class CfgBuilderTest extends JJSTestBase {
         "3: END");
   }
 
+  public void testWhileBreakNoLabel2() throws Exception {
+    assertCfg("void", "while (b1) { if (b2) { break; } else { while (i < 10) { i++; } } }").is(
+        "BLOCK -> [*]",
+        "STMT -> [*]",
+        "1: READ(b1) -> [*]",
+        "COND (EntryPoint.b1) -> [THEN=*, ELSE=4]",
+        "BLOCK -> [*]",
+        "STMT -> [*]",
+        "READ(b2) -> [*]",
+        "COND (EntryPoint.b2) -> [THEN=*, ELSE=2]",
+        "BLOCK -> [*]",
+        "STMT -> [*]",
+        "GOTO -> [4]",
+        "2: BLOCK -> [*]",
+        "STMT -> [*]",
+        "3: READ(i) -> [*]",
+        "COND (EntryPoint.i < 10) -> [THEN=*, ELSE=1]",
+        "BLOCK -> [*]",
+        "STMT -> [*]",
+        "READWRITE(i, null) -> [3]",
+        "4: END");
+  }
+
   public void testWhileBreakWithLabel1() throws Exception {
     assertCfg("void", 
         "nextLoop: while(b3)", 
@@ -550,6 +619,29 @@ public class CfgBuilderTest extends JJSTestBase {
             "3: END");
   }
   
+  public void testForBreakNoLabel() throws Exception {
+    assertCfg("void", 
+        "for(int i = 0; i < 10; i++) { if (b2) { break; } i++; }").is(
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "STMT -> [*]",
+            "WRITE(i, 0) -> [*]",
+            "1: READ(i) -> [*]",
+            "COND (i < 10) -> [THEN=*, ELSE=3]",
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "READ(b2) -> [*]",
+            "COND (EntryPoint.b2) -> [THEN=*, ELSE=2]",
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "GOTO -> [3]",
+            "2: STMT -> [*]",
+            "READWRITE(i, null) -> [*]",
+            "STMT -> [*]",
+            "READWRITE(i, null) -> [1]",
+            "3: END");
+  }
+  
   public void testForContinueNoLabel() throws Exception {
     assertCfg("void", 
         "for(int i = 0; i < 10; i++) { if (b2) { continue; } i++; }").is(
@@ -572,7 +664,71 @@ public class CfgBuilderTest extends JJSTestBase {
             "READWRITE(i, null) -> [1]",
             "4: END");
   }
-  
+
+  public void testForBreakNestedForWithLabel() throws Exception {
+    assertCfg("int",
+        "int j = 0; a: for(; ; ) { if (b2) { break a; } else { for (int i = 0; i < 1; i++) { j = i; } } } return j;").is(
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "WRITE(j, 0) -> [*]",
+            "STMT -> [*]",
+            "1: BLOCK -> [*]",
+            "STMT -> [*]",
+            "READ(b2) -> [*]",
+            "COND (EntryPoint.b2) -> [THEN=*, ELSE=2]",
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "GOTO -> [4]",
+            "2: BLOCK -> [*]",
+            "STMT -> [*]",
+            "STMT -> [*]",
+            "WRITE(i, 0) -> [*]",
+            "3: READ(i) -> [*]",
+            "COND (i < 1) -> [THEN=*, ELSE=1]",
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "READ(i) -> [*]",
+            "WRITE(j, i) -> [*]",
+            "STMT -> [*]",
+            "READWRITE(i, null) -> [3]",
+            "4: STMT -> [*]",
+            "READ(j) -> [*]",
+            "GOTO -> [*]",
+            "END");
+  }
+
+  public void testForBreakNestedForNoLabel() throws Exception {
+    assertCfg("int",
+        "int j = 0; for(; ; ) { if (b2) { break; } else { for (int i = 0; i < 1; i++) { j = i; } } } return j;").is(
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "WRITE(j, 0) -> [*]",
+            "STMT -> [*]",
+            "1: BLOCK -> [*]",
+            "STMT -> [*]",
+            "READ(b2) -> [*]",
+            "COND (EntryPoint.b2) -> [THEN=*, ELSE=2]",
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "GOTO -> [4]",
+            "2: BLOCK -> [*]",
+            "STMT -> [*]",
+            "STMT -> [*]",
+            "WRITE(i, 0) -> [*]",
+            "3: READ(i) -> [*]",
+            "COND (i < 1) -> [THEN=*, ELSE=1]",
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "READ(i) -> [*]",
+            "WRITE(j, i) -> [*]",
+            "STMT -> [*]",
+            "READWRITE(i, null) -> [3]",
+            "4: STMT -> [*]",
+            "READ(j) -> [*]",
+            "GOTO -> [*]",
+            "END");
+  }
+
   public void testCatchThrowException1() throws Exception {
     assertCfg("void", 
         "try {",
@@ -1484,7 +1640,7 @@ public class CfgBuilderTest extends JJSTestBase {
         "READWRITE(k, null) -> [*]",
         "8: END");
   }
-  
+
   private CfgBuilderResult assertCfg(String returnType, String ...codeSnippet)
       throws UnableToCompleteException {
     JProgram program = compileSnippet(returnType, 

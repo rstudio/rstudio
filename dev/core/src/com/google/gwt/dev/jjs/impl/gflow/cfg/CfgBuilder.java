@@ -452,6 +452,7 @@ public class CfgBuilder {
 
     @Override
     public boolean visit(JDoStatement x, Context ctx) {
+      List<Exit> unlabeledExits = removeUnlabeledExits();
       pushNode(new CfgStatementNode<JStatement>(parent, x));
       int pos = nodes.size();
 
@@ -473,6 +474,7 @@ public class CfgBuilder {
       addNormalExit(node, CfgConditionalNode.ELSE);
 
       popNode();
+      addExits(unlabeledExits);
       return false;
     }
 
@@ -486,6 +488,7 @@ public class CfgBuilder {
 
     @Override
     public boolean visit(JForStatement x, Context ctx) {
+      List<Exit> unlabeledExits = removeUnlabeledExits();
       pushNode(new CfgStatementNode<JStatement>(parent, x));
       accept(x.getInitializers());
 
@@ -519,6 +522,7 @@ public class CfgBuilder {
       }
 
       popNode();
+      addExits(unlabeledExits);
       return false;
     }
 
@@ -970,6 +974,7 @@ public class CfgBuilder {
 
     @Override
     public boolean visit(JWhileStatement x, Context ctx) {
+      List<Exit> unlabeledExits = removeUnlabeledExits();
       pushNode(new CfgStatementNode<JStatement>(parent, x));
       int pos = nodes.size();
       accept(x.getTestExpr());
@@ -992,6 +997,7 @@ public class CfgBuilder {
       addNormalExit(node, CfgConditionalNode.ELSE);
 
       popNode();
+      addExits(unlabeledExits);
       return false;
     }
 
@@ -1014,7 +1020,7 @@ public class CfgBuilder {
     }
 
     /**
-     * Transform all brake exits into normal exits, thus making sure that
+     * Transform all break exits into normal exits, thus making sure that
      * next node will get edges from them.
      */
     private void addBreakExits(String label) {
@@ -1162,6 +1168,21 @@ public class CfgBuilder {
       }
       addExits(labeledBreaks);
       return breakExits;
+    }
+
+    private List<Exit> removeUnlabeledExits() {
+      List<Exit> unlabeledExits = new ArrayList<Exit>();
+      Exit.Reason reasons[] = { Exit.Reason.BREAK, Exit.Reason.CONTINUE };
+      for (Exit.Reason reason : reasons) {
+        for (Iterator<Exit> i = currentExitsByReason.get(reason).iterator(); i.hasNext();) {
+          Exit exit = i.next();
+          if (exit.getLabel() == null) {
+            i.remove();
+            unlabeledExits.add(exit);
+          }
+        }
+      }
+      return unlabeledExits;
     }
   }
 
