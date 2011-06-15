@@ -17,6 +17,7 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -166,6 +167,11 @@ public class UrlContentEditingTarget implements EditingTarget
    public ReadOnlyValue<Boolean> dirtyState()
    {
       return dirtyState_;
+   }
+   
+   public void save(Command onCompleted)
+   {
+      onCompleted.execute();
    }
 
    public void initialize(SourceDocument document,

@@ -216,6 +216,10 @@ public class TextEditingTarget implements EditingTarget
 
       public void onError(String message)
       {
+         // in case the error occured saving a document that wasn't 
+         // in the foreground
+         view_.ensureVisible();
+         
          globalDisplay_.showErrorMessage(
                "Error Saving File",
                message);
@@ -777,6 +781,36 @@ public class TextEditingTarget implements EditingTarget
       });
       return false;
    }
+   
+   public void save(final Command onCompleted)
+   {
+      // if it has a path and is dirty then execute save directly
+      // with no prompt (add source on save if applicable)
+      if (getPath() != null)
+      {
+         if (dirtyState_.getValue())
+         {
+            saveThenExecute(null, new Command() {
+               public void execute()
+               {
+                  sourceOnSaveCommandIfApplicable().execute();
+                  onCompleted.execute();         
+               } 
+            });
+         }
+         else
+         {
+            onCompleted.execute(); 
+         }
+      }
+      
+      // otherwise this is an untitled document so go through the 
+      // standard prompting sequence
+      else
+      {
+         promptForSave(onCompleted);
+      }
+   }
 
    private void promptForSave(final Command command)
    {
@@ -784,9 +818,10 @@ public class TextEditingTarget implements EditingTarget
       {
          view_.ensureVisible();
          globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
-                         "Unsaved Changes",
-                         "This document has unsaved changes!\n\n" +
-                         "Do you want to save changes before continuing?",
+                         getName().getValue() + " - Unsaved Changes",
+                         "The document '" + getName().getValue() + 
+                         "' has unsaved changes.\n\n" +
+                         "Do you want to save these changes?",
                          true,
                          new Operation() {
                             public void execute() { saveThenExecute(null, command); }

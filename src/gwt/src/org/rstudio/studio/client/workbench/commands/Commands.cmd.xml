@@ -53,6 +53,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="saveSourceDoc"/>
          <cmd refid="saveSourceDocAs"/>
          <cmd refid="saveSourceDocWithEncoding"/>
+         <cmd refid="saveAllSourceDocs"/>
          <separator/>
          <cmd refid="printSourceDoc"/>
          <separator/>
@@ -302,6 +303,9 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Save _As..."
         buttonLabel="Save as"
         desc="Save current file to a specific path" />
+   <cmd id="saveAllSourceDocs"
+        label="Save All"
+        desc="Save all open documents"/>
    <cmd id="saveSourceDocWithEncoding"
         menuLabel="Save with Encoding..."
         desc="Save the current file with a different encoding"/>

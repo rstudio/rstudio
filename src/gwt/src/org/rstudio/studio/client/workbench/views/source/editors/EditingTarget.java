@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.source.editors;
 
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.inject.Provider;
 import org.rstudio.core.client.command.AppCommand;
@@ -55,6 +56,8 @@ public interface EditingTarget extends Widgetable,
    void onDismiss();
 
    ReadOnlyValue<Boolean> dirtyState();
+   
+   void save(Command onCompleted);
 
    void initialize(SourceDocument document,
                    FileSystemContext fileContext,

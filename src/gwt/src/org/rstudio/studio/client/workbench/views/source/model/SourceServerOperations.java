@@ -15,7 +15,6 @@ package org.rstudio.studio.client.workbench.views.source.model;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
@@ -160,5 +159,5 @@ public interface SourceServerOperations
    void detectFreeVars(String code,
                        ServerRequestCallback<JsArrayString> requestCallback);
 
-   void iconvlist(SimpleRequestCallback<IconvListResult> requestCallback);
+   void iconvlist(ServerRequestCallback<IconvListResult> requestCallback);
 }

@@ -30,7 +30,6 @@ import org.rstudio.core.client.jsonrpc.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.HttpLogEntry;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.server.Bool;
@@ -1008,7 +1007,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, DETECT_FREE_VARS, code, requestCallback);
    }
 
-   public void iconvlist(SimpleRequestCallback<IconvListResult> requestCallback)
+   public void iconvlist(ServerRequestCallback<IconvListResult> requestCallback)
    {
       sendRequest(RPC_SCOPE, ICONVLIST, requestCallback);      
    }

@@ -441,21 +441,43 @@ public class Source implements InsertSourceHandler,
       view_.closeTab(view_.getActiveTabIndex(), true);
    }
 
+  
+   private void saveSourceDocs(final int nextIndex)
+   {
+      if (nextIndex < editors_.size())
+      {
+         EditingTarget target = editors_.get(nextIndex);
+         if (target.dirtyState().getValue())
+         {
+            target.save(new Command() {
+               public void execute()
+               {
+                  saveSourceDocs(nextIndex + 1);  
+               }
+               
+            });
+         }
+         else
+         {
+            saveSourceDocs(nextIndex + 1);
+         }
+      }
+   }
+   
+   
+   @Handler
+   public void onSaveAllSourceDocs()
+   {
+      saveSourceDocs(0);
+   }
+   
    @Handler
    public void onCloseAllSourceDocs()
    {
       globalDisplay_.showMessage(MessageDialog.INFO, 
                                  "RStudio", 
                                  "Not Yet Implemented");
-      
-      
-      /*
-      // determine if there are any dirty documents to prompt for
-      for (EditingTarget target : editors_)
-      {
-         Debug.log(target.getName().toString());
-      }
-      */
+ 
    }
 
   
@@ -650,6 +672,7 @@ public class Source implements InsertSourceHandler,
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             view_.setDirty(widget, event.getValue());
+            manageSaveAllCommand();
          }
       });
 
@@ -827,16 +850,36 @@ public class Source implements InsertSourceHandler,
          command.setEnabled(false);
          command.setVisible(false);
       }
-
+      
+  
       // Save/Save As should always stay visible
       commands_.saveSourceDoc().setVisible(true);
       commands_.saveSourceDocAs().setVisible(true);
       commands_.setWorkingDirToActiveDoc().setVisible(true);
+      
+      // manage save all
+      manageSaveAllCommand();
 
       activeCommands_ = newCommands;
 
       assert verifyNoUnsupportedCommands(newCommands)
             : "Unsupported commands detected (please add to Source.dynamicCommands_)";
+   }
+   
+   private void manageSaveAllCommand()
+   {      
+      // if one document is dirty then we are enabled
+      for (EditingTarget target : editors_)
+      {
+         if (target.dirtyState().getValue())
+         {
+            commands_.saveAllSourceDocs().setEnabled(true);
+            return;
+         }
+      }
+      
+      // not one was dirty, disabled
+      commands_.saveAllSourceDocs().setEnabled(false);
    }
 
    private boolean verifyNoUnsupportedCommands(HashSet<AppCommand> commands)

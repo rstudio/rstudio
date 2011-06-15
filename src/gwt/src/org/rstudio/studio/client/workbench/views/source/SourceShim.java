@@ -51,6 +51,8 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onCloseSourceDoc();
       @Handler
+      public abstract void onSaveAllSourceDocs();
+      @Handler
       public abstract void onCloseAllSourceDocs();
       @Handler
       public abstract void onActivateSource();
