@@ -64,6 +64,7 @@ import com.google.web.bindery.requestfactory.shared.ValueProxy;
 import com.google.web.bindery.requestfactory.shared.WriteOperation;
 import com.google.web.bindery.requestfactory.vm.RequestFactorySource;
 import com.google.web.bindery.requestfactory.vm.impl.TypeTokenResolver;
+import com.google.web.bindery.requestfactory.vm.testing.UrlRequestTransport;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -649,6 +650,7 @@ public class RequestFactoryJarExtractor {
     List<Class<?>> clientClasses = new ArrayList<Class<?>>();
     clientClasses.addAll(sharedClasses);
     clientClasses.add(RfApt.class);
+    clientClasses.add(UrlRequestTransport.class);
 
     List<Class<?>> serverClasses = new ArrayList<Class<?>>();
     serverClasses.addAll(Arrays.<Class<?>> asList(SERVER_CLASSES));

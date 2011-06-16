@@ -27,20 +27,34 @@ import com.google.web.bindery.requestfactory.shared.SimpleRequestFactory;
 import com.google.web.bindery.requestfactory.vm.RequestFactorySource;
 import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
 import com.google.web.bindery.requestfactory.vm.impl.TypeTokenResolver;
+import com.google.web.bindery.requestfactory.vm.testing.UrlRequestTransport;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 /**
  * Runs the RequestFactory tests in-process.
  */
 public class RequestFactoryJreTest extends RequestFactoryTest {
+  private static final String TEST_SERVER_ADDRESS = System
+      .getProperty("RequestFactory.testUrl");
 
   public static <T extends RequestFactory> T createInProcess(Class<T> clazz) {
     EventBus eventBus = new SimpleEventBus();
     T req = RequestFactorySource.create(clazz);
-    ServiceLayer serviceLayer = ServiceLayer.create();
-    SimpleRequestProcessor processor = new SimpleRequestProcessor(serviceLayer);
-    req.initialize(eventBus, new InProcessRequestTransport(processor));
+    if (TEST_SERVER_ADDRESS != null) {
+      try {
+        UrlRequestTransport transport = new UrlRequestTransport(new URL(TEST_SERVER_ADDRESS));
+        req.initialize(eventBus, transport);
+      } catch (MalformedURLException e) {
+        throw new RuntimeException(e);
+      }
+    } else {
+      ServiceLayer serviceLayer = ServiceLayer.create();
+      SimpleRequestProcessor processor = new SimpleRequestProcessor(serviceLayer);
+      req.initialize(eventBus, new InProcessRequestTransport(processor));
+    }
     return req;
   }
 

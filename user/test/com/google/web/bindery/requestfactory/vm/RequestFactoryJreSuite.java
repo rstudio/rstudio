@@ -30,6 +30,7 @@ import com.google.web.bindery.requestfactory.server.ServiceLocatorTest;
 import com.google.web.bindery.requestfactory.shared.impl.SimpleEntityProxyIdTest;
 
 import junit.framework.Test;
+import junit.framework.TestResult;
 import junit.framework.TestSuite;
 
 /**
@@ -61,6 +62,37 @@ public class RequestFactoryJreSuite {
    * Used to test the JVM-only client package.
    */
   public static void main(String[] args) {
-    junit.textui.TestRunner.run(suite());
+    int count;
+    boolean keepRunning;
+    switch (args.length) {
+      case 0:
+        keepRunning = false;
+        count = 1;
+        break;
+      case 1:
+        keepRunning = false;
+        count = Integer.parseInt(args[0], 10);
+        break;
+      case 2:
+        if ("-k".equals(args[0])) {
+          keepRunning = true;
+          count = Integer.parseInt(args[1], 10);
+          break;
+        }
+        // Fall-through intentional
+      default:
+        System.err.println(RequestFactoryJreSuite.class.getName() + " [-k] <number of cycles>");
+        System.err.println(" -k: keep running");
+        System.err.println(" -1 cycles means run forever");
+        System.exit(-1);
+        return;
+    }
+    final Test suite = suite();
+    for (int i = 0; i < count || count == -1; i++) {
+      TestResult run = junit.textui.TestRunner.run(suite);
+      if (!keepRunning && (run.errorCount() + run.failureCount()) > 0) {
+        System.exit(-1);
+      }
+    }
   }
 }
