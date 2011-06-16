@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import java.util.ArrayList;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Cursor;
@@ -33,8 +35,10 @@ import org.rstudio.core.client.theme.DocTabLayoutPanel;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.BeforeShowCallback;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.workbench.views.source.Source.Display;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 
 public class SourcePane extends Composite implements Display,
                                                      HasEnsureVisibleHandlers,
@@ -232,6 +236,14 @@ public class SourcePane extends Composite implements Display,
    {
       setOverflowVisible(true);
       tabOverflowPopup_.showRelativeTo(chevron_);
+   }
+   
+   @Override
+   public void showUnsavedChangesDialog(
+         ArrayList<EditingTarget> dirtyTargets,
+         OperationWithInput<ArrayList<EditingTarget>> saveOperation)
+   {
+      new UnsavedChangesDialog(dirtyTargets, saveOperation).showModal();
    }
 
    private void setOverflowVisible(boolean visible)

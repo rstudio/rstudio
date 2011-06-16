@@ -29,6 +29,7 @@ import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Widgetable;
@@ -102,6 +103,10 @@ public class Source implements InsertSourceHandler,
       void setDirty(Widget widget, boolean dirty);
       void manageChevronVisibility();
       void showOverflowPopup();
+      
+      void showUnsavedChangesDialog(
+            ArrayList<EditingTarget> dirtyTargets,
+            OperationWithInput<ArrayList<EditingTarget>> saveOperation);
 
       void ensureVisible();
 
@@ -451,12 +456,14 @@ public class Source implements InsertSourceHandler,
     * own Command parameter to continue the iteration.
     * @param command The command to run on each EditingTarget
     */
-   private void cpsExecuteForEachEditor(final CPSEditingTargetCommand command)
+   private void cpsExecuteForEachEditor(ArrayList<EditingTarget> editors,
+                                        final CPSEditingTargetCommand command,
+                                        final Command completedCommand)
    {
       SerializedCommandQueue queue = new SerializedCommandQueue();
 
       // Clone editors_, since the original may be mutated during iteration
-      for (final EditingTarget editor : new ArrayList<EditingTarget>(editors_))
+      for (final EditingTarget editor : new ArrayList<EditingTarget>(editors))
       {
          queue.addCommand(new SerializedCommand()
          {
@@ -467,21 +474,38 @@ public class Source implements InsertSourceHandler,
             }
          });
       }
+      
+      if (completedCommand != null)
+      {
+         queue.addCommand(new SerializedCommand() {
+   
+            public void onExecute(Command continuation)
+            {
+               completedCommand.execute();
+               continuation.execute();
+            }  
+         });
+      }
+   }
+   
+   private void cpsExecuteForEachEditor(ArrayList<EditingTarget> editors,
+                                       final CPSEditingTargetCommand command)
+   {
+      cpsExecuteForEachEditor(editors, command, null);
    }
    
    
    @Handler
    public void onSaveAllSourceDocs()
    {
-      cpsExecuteForEachEditor(new CPSEditingTargetCommand()
+      cpsExecuteForEachEditor(editors_, new CPSEditingTargetCommand()
       {
          @Override
          public void execute(EditingTarget target, Command continuation)
          {
             if (target.dirtyState().getValue())
             {
-               // save (don't prompt unless untitled)
-               target.save(false, continuation);
+               target.save(continuation);
             }
             else
             {
@@ -494,34 +518,67 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onCloseAllSourceDocs()
    {
-      cpsExecuteForEachEditor(new CPSEditingTargetCommand()
+      // create a command used to close all tabs 
+      final Command closeAllTabsCommand = new Command()
       {
          @Override
-         public void execute(final EditingTarget target, final Command continuation)
-         {           
-            final Widget widget = target.toWidget();
+         public void execute()
+         {
+            cpsExecuteForEachEditor(editors_, new CPSEditingTargetCommand()
+            {
+               @Override
+               public void execute(EditingTarget target, Command continuation)
+               {
+                  view_.closeTab(target.toWidget(), false, continuation);
+               }
+            });
             
-            if (target.dirtyState().getValue())
+         }     
+      };
+      
+      // collect up a list of dirty documents
+      ArrayList<EditingTarget> dirtyTargets = new ArrayList<EditingTarget>();
+      for (EditingTarget target : editors_)
+         if (target.dirtyState().getValue())
+            dirtyTargets.add(target);
+      
+      // prompt the user if we have dirty targets
+      if (dirtyTargets.size() > 0)
+      {
+         view_.showUnsavedChangesDialog(
+            dirtyTargets, 
+            new OperationWithInput<ArrayList<EditingTarget>>() 
             {
-               // save (with prompt) then close
-               target.save(
-                     true,
-                     new Command()
+               @Override
+               public void execute(ArrayList<EditingTarget> saveTargets)
+               {
+                  cpsExecuteForEachEditor(
+                     
+                     // targets the user chose to save
+                     saveTargets, 
+                     
+                     // save each editor
+                     new CPSEditingTargetCommand()
                      {
-                        public void execute()
-                        {
-                           view_.closeTab(widget, false, continuation);
+                        @Override
+                        public void execute(EditingTarget saveTarget, 
+                                            Command continuation)
+                        {         
+                           saveTarget.save(continuation); 
                         }
-                     });
-            }
-            else
-            {
-               // close without saving or prompting
-               view_.closeTab(widget, false, continuation);
-            }
-
-         }
-      });
+                     },
+                     
+                     // close all at the end
+                     closeAllTabsCommand
+                  );          
+               }
+            }); 
+      }
+      // no dirty targets, just close everything
+      else
+      {
+         closeAllTabsCommand.execute();
+      }
    }
 
   

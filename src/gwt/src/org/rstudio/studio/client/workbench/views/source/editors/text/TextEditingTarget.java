@@ -782,38 +782,10 @@ public class TextEditingTarget implements EditingTarget
       return false;
    }
    
-   public void save(boolean alwaysPrompt, final Command onCompleted)
+   public void save(Command onCompleted)
    {
-      // if it has a path and is dirty then execute save directly
-      // (prompt if requested and source on save if applicable)
-      if (getPath() != null)
-      {
-         if (dirtyState_.getValue())
-         {
-            if (alwaysPrompt)
-            {
-               promptForSave(onCompleted);
-            }
-            else
-            {
-               saveThenExecute(
-                     null, 
-                     CommandUtil.join(sourceOnSaveCommandIfApplicable(), 
-                                      onCompleted));
-            }
-         }
-         else
-         {
-            onCompleted.execute(); 
-         }
-      }
-      
-      // otherwise this is an untitled document so go through the 
-      // standard prompting sequence
-      else
-      {
-         promptForSave(onCompleted);
-      }
+      saveThenExecute(null, CommandUtil.join(sourceOnSaveCommandIfApplicable(), 
+                                             onCompleted));
    }
 
    private void promptForSave(final Command command)
@@ -926,6 +898,8 @@ public class TextEditingTarget implements EditingTarget
    private void withChooseEncoding(final String defaultEncoding,
                                    final CommandWithArg<String> command)
    {
+      view_.ensureVisible();;
+      
       server_.iconvlist(new SimpleRequestCallback<IconvListResult>()
       {
          @Override
@@ -968,11 +942,13 @@ public class TextEditingTarget implements EditingTarget
                                         final String encoding,
                                         final Command executeOnSuccess)
    {
+      view_.ensureVisible();
+      
       FileSystemItem fsi = suggestedPath != null
                            ? FileSystemItem.createFile(suggestedPath)
                            : workbenchContext_.getDefaultFileDialogDir();
       fileDialogs_.saveFile(
-            "Save File",
+            "Save File - " + getName().getValue(),
             fileContext_,
             fsi,
             fileType_.getDefaultExtension(),

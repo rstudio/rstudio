@@ -1,0 +1,77 @@
+
+/* Based on:
+http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/google/gwt/user/cellview/client/CellTable.css
+*/
+
+
+@def selectionBorderWidth 2px;
+.cellTableWidget {
+  
+}
+
+.cellTableFirstColumn {
+}
+
+
+.cellTableLastColumn {
+   color: #606060;
+}
+
+.cellTableFooter {
+}
+
+.cellTableHeader {
+}
+
+.cellTableCell {
+  padding: 0px 1px;
+  overflow: hidden;
+}
+
+.cellTableCell input[type=checkbox] {
+   margin-top: 0;
+   margin-bottom: 0;
+}
+
+
+.cellTableFirstColumnFooter {
+  
+}
+
+.cellTableFirstColumnHeader {
+ 
+}
+
+.cellTableLastColumnFooter {
+  
+}
+
+.cellTableLastColumnHeader {
+}
+
+.cellTableSortableHeader {
+}
+
+.cellTableSortableHeader:hover {
+}
+
+.cellTableSortedHeaderAscending {
+
+}
+
+.cellTableSortedHeaderDescending {
+
+}
+
+.cellTableEvenRow, .cellTableOddRow, .cellTableHoveredRow, .cellTableSelectedRow, .cellTableKeyboardSelectedRow {
+  background: #ffffff;
+}
+
+.cellTableEvenRowCell, .cellTableOddRowCell, .cellTableHoveredRowCell, .cellTableSelectedRowCell, .cellTableKeyboardSelectedRowCell, .cellTableKeyboardSelectedCell   {
+  border: selectionBorderWidth solid #ffffff;
+}
+
+.cellTableLoading {
+  margin: 30px;
+}
+

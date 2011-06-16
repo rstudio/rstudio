@@ -57,7 +57,7 @@ public interface EditingTarget extends Widgetable,
 
    ReadOnlyValue<Boolean> dirtyState();
    
-   void save(boolean alwaysPrompt, Command onCompleted);
+   void save(Command onCompleted);
 
    void initialize(SourceDocument document,
                    FileSystemContext fileContext,

@@ -1,0 +1,13 @@
+
+
+.captionLabel {
+   margin-bottom: 4px;
+}
+
+.editingTargetScrollPanel {
+   width: 480px;
+   height: 320px;
+   border: 1px solid #BBB;  
+   background-color: white;
+}
+

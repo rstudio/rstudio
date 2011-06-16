@@ -210,6 +210,11 @@ public class StringUtil
       return null;
    }
    
+   public static String shortPathName(FileSystemItem item, int maxWidth)
+   {
+      return shortPathName(item, "gwt-Label", maxWidth);
+   }
+   
    public static String shortPathName(FileSystemItem item,
                                       String styleName,
                                       int maxWidth)
