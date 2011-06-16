@@ -96,6 +96,7 @@ public class Source implements InsertSourceHandler,
       int getTabCount();
       int getActiveTabIndex();
       void closeTab(Widget widget, boolean interactive);
+      void closeTab(Widget widget, boolean interactive, Command onClosed);
       void closeTab(int index, boolean interactive);
       void closeTab(int index, boolean interactive, Command onClosed);
       void setDirty(Widget widget, boolean dirty);
@@ -496,8 +497,10 @@ public class Source implements InsertSourceHandler,
       cpsExecuteForEachEditor(new CPSEditingTargetCommand()
       {
          @Override
-         public void execute(EditingTarget target, final Command continuation)
-         {
+         public void execute(final EditingTarget target, final Command continuation)
+         {           
+            final Widget widget = target.toWidget();
+            
             if (target.dirtyState().getValue())
             {
                // save (with prompt) then close
@@ -507,14 +510,14 @@ public class Source implements InsertSourceHandler,
                      {
                         public void execute()
                         {
-                           view_.closeTab(0, false, continuation);
+                           view_.closeTab(widget, false, continuation);
                         }
                      });
             }
             else
             {
                // close without saving or prompting
-               view_.closeTab(0, false, continuation);
+               view_.closeTab(widget, false, continuation);
             }
 
          }

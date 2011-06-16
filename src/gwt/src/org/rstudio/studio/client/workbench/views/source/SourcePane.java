@@ -120,9 +120,14 @@ public class SourcePane extends Composite implements Display,
 
    public void closeTab(Widget child, boolean interactive)
    {
-      closeTab(tabPanel_.getWidgetIndex(child), interactive);
+      closeTab(child, interactive, null);
    }
 
+   public void closeTab(Widget child, boolean interactive, Command onClosed)
+   {
+      closeTab(tabPanel_.getWidgetIndex(child), interactive, onClosed);
+   }
+   
    public void closeTab(int index, boolean interactive)
    {
       closeTab(index, interactive, null);
