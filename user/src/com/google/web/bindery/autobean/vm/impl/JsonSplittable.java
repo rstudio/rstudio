@@ -306,10 +306,10 @@ public class JsonSplittable implements Splittable, HasSplittable {
     if (seen == null) {
       if (object instanceof JSONObject) {
         seen = new JsonSplittable((JSONObject) object);
-        WeakMapping.set(object, JsonSplittable.class.getName(), seen);
+        WeakMapping.setWeak(object, JsonSplittable.class.getName(), seen);
       } else if (object instanceof JSONArray) {
         seen = new JsonSplittable((JSONArray) object);
-        WeakMapping.set(object, JsonSplittable.class.getName(), seen);
+        WeakMapping.setWeak(object, JsonSplittable.class.getName(), seen);
       } else if (object instanceof String) {
         seen = new JsonSplittable(object.toString());
       } else if (object instanceof Number) {

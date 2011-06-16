@@ -18,8 +18,10 @@ package com.google.gwt.core.client.impl;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A class associating a (String, Object) map with arbitrary source objects
@@ -88,12 +90,25 @@ public class WeakMapping {
     }
   }
 
+  private static class ManagedWeakReference<T> extends WeakReference<T> {
+    public ManagedWeakReference(T object) {
+      super(object);
+    }
+  }
+
+  /**
+   * Provides synchronization around {@link #queue} so at most one thread is
+   * cleaning at any given time.
+   */
+  private static final Lock cleanupLock = new ReentrantLock();
+
   /**
    * A Map from Objects to <String,Object> maps. Hashing is based on object
    * identity. Weak references are used to allow otherwise unreferenced Objects
    * to be garbage collected.
    */
-  private static Map<IdentityWeakReference, Map<String, Object>> map = new HashMap<IdentityWeakReference, Map<String, Object>>();
+  private static final ConcurrentHashMap<IdentityWeakReference, Map<String, Object>> map =
+      new ConcurrentHashMap<IdentityWeakReference, Map<String, Object>>();
 
   /**
    * A ReferenceQueue used to clean up the map as its keys are
@@ -109,15 +124,18 @@ public class WeakMapping {
    * @param key a String key.
    * @return an Object associated with that key on the given instance, or null.
    */
-  public static synchronized Object get(Object instance, String key) {
+  public static Object get(Object instance, String key) {
     cleanup();
-
     Object ref = new IdentityWeakReference(instance, queue);
     Map<String, Object> m = map.get(ref);
     if (m == null) {
       return null;
     }
-    return m.get(key);
+    Object toReturn = m.get(key);
+    if (toReturn instanceof ManagedWeakReference) {
+      toReturn = ((ManagedWeakReference<?>) toReturn).get();
+    }
+    return toReturn;
   }
 
   /**
@@ -128,16 +146,15 @@ public class WeakMapping {
    * <p>
    * Due to restrictions of the Production Mode implementation, the instance
    * argument must not be a String.
-   *
+   * 
    * @param instance the source Object, which must not be a String.
    * @param key a String key.
    * @param value the Object to associate with the key on the given source
    *          Object.
    * @throws IllegalArgumentException if instance is a String.
    */
-  public static synchronized void set(Object instance, String key, Object value) {
+  public static void set(Object instance, String key, Object value) {
     cleanup();
-
     if (instance instanceof String) {
       throw new IllegalArgumentException("Cannot use Strings with WeakMapping");
     }
@@ -145,10 +162,23 @@ public class WeakMapping {
     IdentityWeakReference ref = new IdentityWeakReference(instance, queue);
     Map<String, Object> m = map.get(ref);
     if (m == null) {
-      m = new HashMap<String, Object>();
-      map.put(ref, m);
+      m = new ConcurrentHashMap<String, Object>();
+      map.putIfAbsent(ref, m);
+      m = map.get(ref);
     }
-    m.put(key, value);
+    if (value == null) {
+      m.remove(key);
+    } else {
+      m.put(key, value);
+    }
+  }
+
+  /**
+   * Like {@link #set(Object, String, Object)}, but doesn't guarantee that
+   * {@code value} can be retrieved.
+   */
+  public static void setWeak(Object instance, String key, Object value) {
+    set(instance, key, new ManagedWeakReference<Object>(value));
   }
 
   /**
@@ -157,13 +187,16 @@ public class WeakMapping {
    * will be eligible for future garbage collection.
    */
   private static void cleanup() {
-    Reference<? extends Object> ref;
-    while ((ref = queue.poll()) != null) {
-      /**
-       * Note that we can still remove ref from the map even though its referent
-       * has been nulled out since we only need == equality to do so.
-       */
-      map.remove(ref);
+    if (cleanupLock.tryLock()) {
+      Reference<? extends Object> ref;
+      while ((ref = queue.poll()) != null) {
+        /**
+         * Note that we can still remove ref from the map even though its
+         * referent has been nulled out since we only need == equality to do so.
+         */
+        map.remove(ref);
+      }
+      cleanupLock.unlock();
     }
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.web.bindery.autobean.shared.impl;
 
+import com.google.gwt.core.client.impl.WeakMapping;
 import com.google.web.bindery.autobean.shared.AutoBean;
 import com.google.web.bindery.autobean.shared.AutoBeanFactory;
 import com.google.web.bindery.autobean.shared.AutoBeanUtils;
@@ -23,7 +24,6 @@ import com.google.web.bindery.autobean.shared.AutoBeanVisitor.Context;
 import com.google.web.bindery.autobean.shared.Splittable;
 import com.google.web.bindery.autobean.shared.impl.AutoBeanCodexImpl.Coder;
 import com.google.web.bindery.autobean.shared.impl.AutoBeanCodexImpl.EncodeState;
-import com.google.gwt.core.client.impl.WeakMapping;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -94,7 +94,7 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T>, HasSplittable 
     this.wrapped = wrapped;
 
     // Used by AutoBeanUtils
-    WeakMapping.set(wrapped, AutoBean.class.getName(), this);
+    WeakMapping.setWeak(wrapped, AutoBean.class.getName(), this);
   }
 
   public void accept(AutoBeanVisitor visitor) {

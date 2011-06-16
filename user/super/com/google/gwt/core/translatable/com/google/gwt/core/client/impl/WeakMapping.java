@@ -59,6 +59,10 @@ public class WeakMapping {
     setNative(instance, key, value);
   }
 
+  public static void setWeak(Object instance, String key, Object value) {
+    set(instance, key, value);
+  }
+
   private static native void setNative(Object instance, String key, Object value) /*-{
     if (!instance.@java.lang.Object::expando) {
       instance.@java.lang.Object::expando = {};

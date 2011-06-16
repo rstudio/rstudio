@@ -124,16 +124,23 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
    * ok if it's deallocated, since it has no interesting state.
    * 
    * <pre>
-   * 
-   * -----------------        --------------
-   * | ProxyAutoBean |        |    Shim    |
-   * |               | <------+-bean       |
-   * |          shim-+---X--->|____________|
-   * |_______________|              ^
-   *         ^                      |
-   *         |                      X
-   *         |______ WeakMapping ___|
+   * _________________            ______________
+   * | ProxyAutoBean |            |    Shim    |
+   * |               | <----------+-bean       |
+   * |          shim-+---X------> |            |
+   * |_______________|            |____________|
+   *         ^                           ^  ^
+   *         X                           X  |
+   *         |__value__WeakMapping__key__|  |
+   *                      ^                 |
+   *                      |                 |
+   *                   GC Roots -> Owner____|
    * </pre>
+   * <p>
+   * In the case of a wrapped object (for example, an ArrayList), the weak
+   * reference from WeakMapping to the ProxyAutoBean may cause the AutoBean to
+   * be prematurely collected if neither the bean nor the shim are referenced
+   * elsewhere. The alternative is a massive memory leak.
    */
   private WeakReference<T> shim;
 
@@ -332,7 +339,7 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
 
   private T createShim() {
     T toReturn = ProxyAutoBean.makeProxy(beanType, new ShimHandler<T>(this, getWrapped()));
-    WeakMapping.set(toReturn, AutoBean.class.getName(), this);
+    WeakMapping.setWeak(toReturn, AutoBean.class.getName(), this);
     return toReturn;
   }
 }
