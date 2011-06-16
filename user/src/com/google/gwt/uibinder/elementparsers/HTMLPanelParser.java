@@ -67,10 +67,11 @@ public class HTMLPanelParser implements ElementParser {
     String customTag = elem.consumeStringAttribute("tag", null);
 
     if (null == customTag) {
-      writer.setFieldInitializerAsConstructor(fieldName, type, writer.declareTemplateCall(html));
+      writer.setFieldInitializerAsConstructor(fieldName, type,
+          writer.declareTemplateCall(html, fieldName));
     } else {
       writer.setFieldInitializerAsConstructor(fieldName, type, customTag,
-          writer.declareTemplateCall(html));
+          writer.declareTemplateCall(html, fieldName));
     }
   }
 

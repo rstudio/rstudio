@@ -99,6 +99,11 @@ public interface FieldWriter {
   FieldWriterType getFieldType();
 
   /**
+   * Returns the string html representation of the field.
+   */
+  String getHtml();
+
+  /**
    * Returns the custom initializer for this field, or null if it is not set.
    */
   String getInitializer();
@@ -127,6 +132,11 @@ public interface FieldWriter {
   JType getReturnType(String[] path, MonitoredLogger logger);
 
   /**
+   * Returns the string SafeHtml representation of the field.
+   */
+  String getSafeHtml();
+
+  /**
    * Declares that the receiver depends upon the given field.
    */
   void needs(FieldWriter f);
@@ -138,6 +148,11 @@ public interface FieldWriter {
    * what you are doing.
    */
   void setBuildPrecedence(int precedence);
+
+  /**
+   * Sets the html representation of the field for applicable field types.
+   */
+  void setHtml(String html);
 
   /**
    * Used to provide an initializer string to use instead of a

@@ -85,7 +85,8 @@ public class RenderablePanelParser implements ElementParser {
           "RenderablePanel does not support custom root elements yet.");
     }
 
-    writer.setFieldInitializerAsConstructor(fieldName, type, writer.declareTemplateCall(html));
+    writer.setFieldInitializerAsConstructor(fieldName, type, writer.declareTemplateCall(html,
+        fieldName));
   }
 
   /**

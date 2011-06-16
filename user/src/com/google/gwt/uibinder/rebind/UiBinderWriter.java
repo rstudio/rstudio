@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dom.client.TagName;
 import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.text.shared.UiRenderer;
 import com.google.gwt.uibinder.attributeparsers.AttributeParser;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
 import com.google.gwt.uibinder.attributeparsers.BundleAttributeParser;
@@ -242,6 +243,7 @@ public class UiBinderWriter implements Statements {
   private final UiBinderContext uiBinderCtx;
 
   private final String binderUri;
+  private final boolean isRenderer;
 
   public UiBinderWriter(JClassType baseClass, String implClassName,
       String templatePath, TypeOracle oracle, MortalLogger logger,
@@ -279,13 +281,42 @@ public class UiBinderWriter implements Statements {
     JClassType uiBinderType = uiBinderTypes[0];
 
     JClassType[] typeArgs = uiBinderType.isParameterized().getTypeArgs();
-    if (typeArgs.length < 2) {
-      throw new RuntimeException(
-          "Root and owner type parameters are required for type %s"
-              + uiBinderType.getName());
+
+    String binderType = uiBinderType.getName();
+
+    JClassType uiRendererClass = getOracle().findType(UiRenderer.class.getName());
+    if (uiBinderType.isAssignableTo(uibinderItself)) {
+      if (typeArgs.length < 2) {
+        throw new RuntimeException(
+            "Root and owner type parameters are required for type %s"
+                + binderType);
+      }
+      uiRootType = typeArgs[0];
+      uiOwnerType = typeArgs[1];
+      isRenderer = false;
+    } else if (uiBinderType.isAssignableTo(uiRendererClass)) {
+      if (typeArgs.length < 1) {
+        throw new RuntimeException(
+            "Owner type parameter is required for type %s"
+                + binderType);
+      }
+      if (!useSafeHtmlTemplates) {
+        die("Configuration property UiBinder.useSafeHtmlTemplates\n"
+            + "  must be set to true to generate a UiRenderer");
+      }
+      if (!useLazyWidgetBuilders) {
+        die("Configuration property UiBinder.useLazyWidgetBuilders\n"
+            + "  must be set to true to generate a UiRenderer");
+      }
+
+      uiOwnerType = typeArgs[0];
+      uiRootType = null;
+      isRenderer = true;
+    } else {
+      die(baseClass.getName() + " must implement UiBinder or UiRenderer");
+      // This is unreachable in practice, but silences not initialized errors
+      throw new UnableToCompleteException();
     }
-    uiRootType = typeArgs[0];
-    uiOwnerType = typeArgs[1];
 
     isRenderableClassType = oracle.findType(IsRenderable.class.getCanonicalName());
     lazyDomElementClass = oracle.findType(LazyDomElement.class.getCanonicalName());
@@ -485,13 +516,14 @@ public class UiBinderWriter implements Statements {
    * @return The invocation of the SafeHtml template function with the arguments
    * filled in
    */
-  public String declareTemplateCall(String html)
+  public String declareTemplateCall(String html, String fieldName)
     throws IllegalArgumentException {
     if (!useSafeHtmlTemplates) {
       return '"' + html + '"';
     }
-
-    return htmlTemplates.addSafeHtmlTemplate(html, tokenator);
+    FieldWriter w = fieldManager.lookup(fieldName);
+    w.setHtml(htmlTemplates.addSafeHtmlTemplate(html, tokenator));
+    return w.getHtml();
   }
 
   /**
@@ -940,11 +972,6 @@ public class UiBinderWriter implements Statements {
    */
   void parseDocument(Document doc, PrintWriter printWriter)
       throws UnableToCompleteException {
-    JClassType uiBinderClass = getOracle().findType(UiBinder.class.getName());
-    if (!baseClass.isAssignableTo(uiBinderClass)) {
-      die(baseClass.getName() + " must implement UiBinder");
-    }
-
     Element documentElement = doc.getDocumentElement();
     gwtPrefix = documentElement.lookupPrefix(binderUri);
 
@@ -1201,7 +1228,9 @@ public class UiBinderWriter implements Statements {
     IndentedWriter niceWriter = new IndentedWriter(
         new PrintWriter(stringWriter));
 
-    if (useLazyWidgetBuilders) {
+    if (isRenderer) {
+      writeRenderer(niceWriter, rootField);
+    } else if (useLazyWidgetBuilders) {
       for (ImplicitCssResource css : bundleClass.getCssMethods()) {
         String fieldName = css.getName();
         FieldWriter cssField = fieldManager.require(fieldName);
@@ -1211,7 +1240,6 @@ public class UiBinderWriter implements Statements {
     } else {
       writeBinder(niceWriter, rootField);
     }
-
     ensureAttachmentCleanedUp();
     return stringWriter.toString();
   }
@@ -1408,10 +1436,16 @@ public class UiBinderWriter implements Statements {
   }
 
   private void writeClassOpen(IndentedWriter w) {
-    w.write("public class %s implements UiBinder<%s, %s>, %s {", implClassName,
-        uiRootType.getParameterizedQualifiedSourceName(),
-        uiOwnerType.getParameterizedQualifiedSourceName(),
-        baseClass.getParameterizedQualifiedSourceName());
+    if (!isRenderer) {
+      w.write("public class %s implements UiBinder<%s, %s>, %s {", implClassName,
+          uiRootType.getParameterizedQualifiedSourceName(),
+          uiOwnerType.getParameterizedQualifiedSourceName(),
+          baseClass.getParameterizedQualifiedSourceName());
+    } else {
+      w.write("public class %s extends AbstractSafeHtmlRenderer<%s> implements %s {", implClassName,
+          uiOwnerType.getParameterizedQualifiedSourceName(),
+          baseClass.getParameterizedQualifiedSourceName());
+    }
     w.indent();
   }
 
@@ -1455,7 +1489,6 @@ public class UiBinderWriter implements Statements {
       }
     }
 
-    // Write gwt field declarations.
     fieldManager.writeGwtFieldsDeclaration(niceWriter, uiOwnerType.getName());
   }
 
@@ -1473,11 +1506,18 @@ public class UiBinderWriter implements Statements {
       w.write("import com.google.gwt.safehtml.client.SafeHtmlTemplates;");
       w.write("import com.google.gwt.safehtml.shared.SafeHtml;");
       w.write("import com.google.gwt.safehtml.shared.SafeHtmlUtils;");
+      w.write("import com.google.gwt.safehtml.shared.SafeHtmlBuilder;");
+      w.write("import com.google.gwt.uibinder.client.UiBinderUtil;");
     }
-    w.write("import com.google.gwt.uibinder.client.UiBinder;");
-    w.write("import com.google.gwt.uibinder.client.UiBinderUtil;");
-    w.write("import %s.%s;", uiRootType.getPackage().getName(),
-        uiRootType.getName());
+
+    if (!isRenderer) {
+      w.write("import com.google.gwt.uibinder.client.UiBinder;");
+      w.write("import com.google.gwt.uibinder.client.UiBinderUtil;");
+      w.write("import %s.%s;", uiRootType.getPackage().getName(),
+          uiRootType.getName());
+    } else {
+      w.write("import com.google.gwt.text.shared.AbstractSafeHtmlRenderer;");
+    }
   }
 
   /**
@@ -1537,6 +1577,76 @@ public class UiBinderWriter implements Statements {
       w.write("package %1$s;", packageName);
       w.newline();
     }
+  }
+
+  /**
+   * Writes the SafeHtmlRenderer's source for the renderable
+   * strategy.
+   */
+  private void writeRenderer(
+      IndentedWriter w, String rootField) throws UnableToCompleteException {
+    writePackage(w);
+
+    writeImports(w);
+    w.newline();
+
+    writeClassOpen(w);
+    writeStatics(w);
+    w.newline();
+
+    // Create SafeHtml Template
+    writeSafeHtmlTemplates(w);
+
+    w.newline();
+
+    w.write("public SafeHtml render(final %s owner) {",
+        uiOwnerType.getParameterizedQualifiedSourceName());
+    w.indent();
+    w.newline();
+
+    w.write("return new Widgets(owner).getSafeHtml();");
+    w.outdent();
+
+    w.write("}");
+    w.newline();
+
+    // Writes the inner class Widgets.
+    w.newline();
+    w.write("/**");
+    w.write(" * Encapsulates the access to all inner widgets");
+    w.write(" */");
+    w.write("class Widgets {");
+    w.indent();
+
+    String ownerClassType = uiOwnerType.getParameterizedQualifiedSourceName();
+    w.write("private final %s owner;", ownerClassType);
+    w.newline();
+
+    w.write("public Widgets(final %s owner) {", ownerClassType);
+    w.indent();
+    w.write("this.owner = owner;");
+    fieldManager.initializeWidgetsInnerClass(w, getOwnerClass());
+    w.outdent();
+    w.write("}");
+    w.newline();
+
+    w.write("public SafeHtml getSafeHtml() {");
+    w.indent();
+    // TODO Find a better way to get the root field name
+    String safeHtml = fieldManager.lookup(rootField.substring(4, rootField.length() - 2)).getSafeHtml();
+    w.write("return %s;", safeHtml);
+    w.outdent();
+    w.write("}");
+
+    fieldManager.writeFieldDefinitions(
+        w, getOracle(), getOwnerClass(), getDesignTime());
+
+    w.outdent();
+    w.write("}");
+
+    // Close class
+    w.outdent();
+    w.write("}");
   }
 
   /**

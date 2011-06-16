@@ -1,0 +1,47 @@
+<!--                                                                        -->
+<!-- Copyright 2011 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:res='urn:with:com.google.gwt.uibinder.test.client.DomBasedUi.Resources'
+  >
+  <ui:with field="constants" type="com.google.gwt.uibinder.test.client.Constants"/>
+  <div ui:field='root' res:class="style.bodyColor style.bodyFont"
+      title="The title of this div is localizable">
+    <ui:attribute name='title'/>
+    <span><ui:text from="{constants.getText}" /></span>
+    Hello, <span ui:field="nameSpan" />.
+    <ui:msg>How goes it?</ui:msg>
+      <h2 res:class="style.bodyColor style.bodyFont">Placeholders in localizables</h2>
+      <p><ui:msg>When you mark up your text for translation, there will be bits
+      that you don't want the translators to mess with. You can protect
+      these with <span style="font-weight:bold"
+        ui:ph="boldSpan">placeholders</span><ui:ph name="tm"><sup ui:field="tmElement">TM</sup></ui:ph>.</ui:msg></p>
+  <table>
+    <col ui:field='narrowColumn' width='0%'></col>
+    <col width='100%'></col>
+    <tr ui:field='tr'>
+      <th ui:field='th1'>Tables with col elements</th>
+      <th ui:field='th2' align='left'>are</th>
+      <th ui:field='th3' align='left'>tricky</th>
+    </tr>
+  </table>
+  <table>
+    <tbody ui:field='tbody'>
+    <tr ui:field='tr2'>
+      <th ui:field='th4'>Tables with tbody elements too</th>
+    </tr>
+    </tbody>
+  </table>
+  </div>
+</ui:UiBinder>

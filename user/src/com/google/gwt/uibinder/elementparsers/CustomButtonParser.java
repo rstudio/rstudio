@@ -69,7 +69,8 @@ public class CustomButtonParser implements ElementParser {
         String innerHtml = child.consumeInnerHtml(interpreter);
         if (innerHtml.length() > 0) {
           writer.addStatement("%s.%s().setHTML(%s);", fieldName,
-              faceNameGetter(faceName), writer.declareTemplateCall(innerHtml));
+              faceNameGetter(faceName), writer.declareTemplateCall(innerHtml,
+                  fieldName));
         }
 
         if (child.hasAttribute("image")) {
