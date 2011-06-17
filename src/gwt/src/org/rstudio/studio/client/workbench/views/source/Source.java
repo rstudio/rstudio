@@ -542,8 +542,20 @@ public class Source implements InsertSourceHandler,
          if (target.dirtyState().getValue())
             dirtyTargets.add(target);
       
-      // prompt the user if we have dirty targets
-      if (dirtyTargets.size() > 0)
+      // close all straight away if nothing is dirty
+      if (dirtyTargets.size() ==  0)
+      {
+         closeAllTabsCommand.execute();
+      }
+      
+      // if there is just one thing dirty then go straight to the save dialog
+      else if (dirtyTargets.size() == 1)
+      {
+         dirtyTargets.get(0).saveWithPrompt(closeAllTabsCommand);
+      }
+      
+      // otherwise use the multi save changes dialog
+      else
       {
          view_.showUnsavedChangesDialog(
             dirtyTargets, 
@@ -573,11 +585,6 @@ public class Source implements InsertSourceHandler,
                   );          
                }
             }); 
-      }
-      // no dirty targets, just close everything
-      else
-      {
-         closeAllTabsCommand.execute();
       }
    }
 

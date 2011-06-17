@@ -173,6 +173,11 @@ public class UrlContentEditingTarget implements EditingTarget
    {
       onCompleted.execute();
    }
+   
+   public void saveWithPrompt(Command onCompleted)
+   {
+      onCompleted.execute();
+   }
 
    public void initialize(SourceDocument document,
                           FileSystemContext fileContext,

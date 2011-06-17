@@ -57,7 +57,15 @@ public interface EditingTarget extends Widgetable,
 
    ReadOnlyValue<Boolean> dirtyState();
    
+   /**
+    * Save the document, prompting only if the file is dirty and untitled
+    */
    void save(Command onCompleted);
+   
+   /**
+    * Save the document, always prompting if the file is dirty
+    */
+   void saveWithPrompt(Command onCompleted);
 
    void initialize(SourceDocument document,
                    FileSystemContext fileContext,

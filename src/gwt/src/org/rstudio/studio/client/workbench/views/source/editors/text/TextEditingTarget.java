@@ -773,12 +773,18 @@ public class TextEditingTarget implements EditingTarget
 
    public boolean onBeforeDismiss()
    {
-      promptForSave(new Command() {
+      Command closeCommand = new Command() {
          public void execute()
          {
             CloseEvent.fire(TextEditingTarget.this, null);
          }
-      });
+      };
+       
+      if (dirtyState_.getValue())
+         saveWithPrompt(closeCommand);
+      else
+         closeCommand.execute();
+
       return false;
    }
    
@@ -787,33 +793,27 @@ public class TextEditingTarget implements EditingTarget
       saveThenExecute(null, CommandUtil.join(sourceOnSaveCommandIfApplicable(), 
                                              onCompleted));
    }
-
-   private void promptForSave(final Command command)
+   
+   public void saveWithPrompt(final Command command)
    {
-      if (dirtyState_.getValue())
-      {
-         view_.ensureVisible();
-         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
-                         getName().getValue() + " - Unsaved Changes",
-                         "The document '" + getName().getValue() + 
-                         "' has unsaved changes.\n\n" +
-                         "Do you want to save these changes?",
-                         true,
-                         new Operation() {
-                            public void execute() { saveThenExecute(null, command); }
-                         },
-                         new Operation() {
-                            public void execute() { command.execute(); }
-                         },
-                         null,
-                         "Save",
-                         "Don't Save",
-                         true);
-      }
-      else
-      {
-         command.execute();
-      }
+      view_.ensureVisible();
+      
+      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
+                      getName().getValue() + " - Unsaved Changes",
+                      "The document '" + getName().getValue() + 
+                      "' has unsaved changes.\n\n" +
+                      "Do you want to save these changes?",
+                      true,
+                      new Operation() {
+                         public void execute() { saveThenExecute(null, command); }
+                      },
+                      new Operation() {
+                         public void execute() { command.execute(); }
+                      },
+                      null,
+                      "Save",
+                      "Don't Save",
+                      true);   
    }
 
    private void saveThenExecute(String encodingOverride, final Command command)
