@@ -14,8 +14,7 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -35,7 +34,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.IdentityColumn;
-import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -79,13 +77,12 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
       targetsCellTable_.setSelectionModel(
          selectionModel_, 
          DefaultSelectionEventManager.<EditingTarget> createCheckboxManager());
-      targetsCellTable_.setWidth("100%", false);
+      targetsCellTable_.setWidth("100%", true);
       
       // add columns
       addSelectionColumn();
       addIconColumn();
-      addNameColumn();
-      addPathColumn();
+      addNameAndPathColumn();
       
       // hook-up data provider 
       dataProvider_ = new ListDataProvider<EditingTarget>();
@@ -125,7 +122,7 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
          };
       checkColumn.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
       targetsCellTable_.addColumn(checkColumn); 
-      targetsCellTable_.setColumnWidth(checkColumn, 20, Unit.PX);
+      targetsCellTable_.setColumnWidth(checkColumn, 25, Unit.PX);
       
       return checkColumn;
    }
@@ -159,66 +156,36 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
          if (value != null) 
          {
            Styles styles = RESOURCES.styles();
-           StringBuilder div = new StringBuilder();
-           div.append("<div class=\"");
-           div.append(styles.targetName());
-           div.append("\">");
-           sb.appendHtmlConstant(div.toString());
-           sb.appendEscaped(value.getName().getValue());
-           sb.appendHtmlConstant("</div>");
+           
+           String path = value.getPath();
+           if (path != null)
+           {
+              SafeHtmlUtil.appendDiv(sb, 
+                                     styles.targetName(), 
+                                     value.getName().getValue());
+           
+              SafeHtmlUtil.appendDiv(sb, styles.targetPath(), path); 
+           }
+           else
+           {
+              SafeHtmlUtil.appendDiv(sb, 
+                                     styles.targetUntitled(), 
+                                     value.getName().getValue());
+           }
          }
          
       }
       
    }
    
-   private IdentityColumn<EditingTarget> addNameColumn()
+   private IdentityColumn<EditingTarget> addNameAndPathColumn()
    {
       IdentityColumn<EditingTarget> nameAndPathColumn = 
          new IdentityColumn<EditingTarget>(new NameAndPathCell());
       
       targetsCellTable_.addColumn(nameAndPathColumn);
-      targetsCellTable_.setColumnWidth(nameAndPathColumn, 120, Unit.PX);
-      
+      targetsCellTable_.setColumnWidth(nameAndPathColumn, 350, Unit.PX);
       return nameAndPathColumn;
-      
-      /*
-      TextColumn<EditingTarget> nameColumn = new TextColumn<EditingTarget>() {
-         public String getValue(EditingTarget object)
-         {
-            return object.getName().getValue();
-         } 
-      };  
-  
-      targetsCellTable_.addColumn(nameColumn);
-      targetsCellTable_.setColumnWidth(nameColumn, 120, Unit.PX);
-    
-      return nameColumn;
-      */
-   }
-
-   
-   private TextColumn<EditingTarget> addPathColumn()
-   {
-      TextColumn<EditingTarget> pathColumn = new TextColumn<EditingTarget>() {
-         public String getValue(EditingTarget object)
-         {
-            String path = object.getPath();
-            if (path != null)
-            {
-               return StringUtil.shortPathName(FileSystemItem.createFile(path),
-                                               300);
-            }
-            else
-            {
-               return "";
-            }
-         } 
-      };  
-      targetsCellTable_.addColumn(pathColumn);
-      targetsCellTable_.setColumnWidth(pathColumn, 300, Unit.PX);
-             
-      return pathColumn;
    }
    
    @Override
@@ -239,6 +206,7 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
       String captionLabel();
       String targetName();
       String targetPath();
+      String targetUntitled();
    }
 
    static interface Resources extends ClientBundle

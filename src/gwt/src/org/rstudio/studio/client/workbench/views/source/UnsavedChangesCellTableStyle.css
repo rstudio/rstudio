@@ -14,7 +14,6 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
 
 
 .cellTableLastColumn {
-   color: #606060;
 }
 
 .cellTableFooter {
@@ -24,12 +23,12 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
 }
 
 .cellTableCell {
-  padding: 0px 1px;
+  padding: 3px 1px;
   overflow: hidden;
 }
 
 .cellTableCell input[type=checkbox] {
-   margin-top: 0;
+   margin-top: 7px;
    margin-bottom: 0;
 }
 
@@ -63,12 +62,20 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
 
 }
 
-.cellTableEvenRow, .cellTableOddRow, .cellTableHoveredRow, .cellTableSelectedRow, .cellTableKeyboardSelectedRow {
+.cellTableEvenRow, .cellTableHoveredRow, .cellTableSelectedRow, .cellTableKeyboardSelectedRow {
   background: #ffffff;
 }
 
-.cellTableEvenRowCell, .cellTableOddRowCell, .cellTableHoveredRowCell, .cellTableSelectedRowCell, .cellTableKeyboardSelectedRowCell, .cellTableKeyboardSelectedCell   {
+.cellTableEvenRowCell, .cellTableHoveredRowCell, .cellTableSelectedRowCell, .cellTableKeyboardSelectedRowCell, .cellTableKeyboardSelectedCell   {
   border: selectionBorderWidth solid #ffffff;
+}
+
+.cellTableOddRow {
+  background-color: #eef4fb;
+}
+
+.cellTableOddRowCell {
+  border: selectionBorderWidth solid #eef4fb;;
 }
 
 .cellTableLoading {

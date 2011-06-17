@@ -9,12 +9,23 @@
 }
 
 .targetPath {
-	
+   color: #606060;
+   font-size: 0.9em;
+   word-wrap: break-word; 
 }
 
+.targetUntitled {
+  line-height: 2.2ex;
+  height: 4.4ex; /* 2.2ex for each visible line */
+  vertical-align: middle;
+  display: table-cell;
+  
+}
+
+
 .editingTargetScrollPanel {
-   width: 480px;
-   height: 320px;
+   width: 400px;
+   height: 280px;
    border: 1px solid #BBB;  
    background-color: white;
 }
