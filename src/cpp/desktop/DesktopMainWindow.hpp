@@ -31,6 +31,7 @@ public:
 
 public slots:
    void quit();
+   void closeWithSaveConfirmed();
    void loadUrl(const QUrl& url);
    void setMenuBar(QMenuBar *pMenuBar);
    void invokeCommand(QString commandId);
@@ -50,6 +51,7 @@ protected:
 
 private:
    bool quitConfirmed_;
+   bool saveConfirmed_;
    MenuCallback menuCallback_;
    GwtCallback gwtCallback_;
    UpdateChecker updateChecker_;

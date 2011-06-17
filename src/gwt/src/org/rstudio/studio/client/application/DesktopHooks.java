@@ -36,6 +36,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
+import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 /**
  * Any methods on this class are automatically made available to the
@@ -85,7 +86,8 @@ public class DesktopHooks
                        GlobalDisplay globalDisplay,
                        Server server,
                        FileTypeRegistry fileTypeRegistry,
-                       WorkbenchContext workbenchContext)
+                       WorkbenchContext workbenchContext,
+                       SourceShim sourceShim)
    {
       commands_ = commands;
       events_ = events;
@@ -93,6 +95,7 @@ public class DesktopHooks
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
       workbenchContext_ = workbenchContext;
+      sourceShim_ = sourceShim;
       
       events_.addHandler(SaveActionChangedEvent.TYPE, 
                          new SaveActionChangedHandler() 
@@ -117,6 +120,17 @@ public class DesktopHooks
       $wnd.addEventListener("copy", clean, true);
       $wnd.addEventListener("cut", clean, true);
    }-*/;
+
+
+   void saveChangesBeforeQuit()
+   {
+      sourceShim_.saveChangesBeforeQuit(new Command() {
+         public void execute()
+         {
+            Desktop.getFrame().closeWithSaveConfirmed();
+         }
+      });
+   }
 
    void quitR(final boolean saveChanges)
    {
@@ -224,6 +238,7 @@ public class DesktopHooks
    private final Server server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final WorkbenchContext workbenchContext_;
+   private final SourceShim sourceShim_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();
 }

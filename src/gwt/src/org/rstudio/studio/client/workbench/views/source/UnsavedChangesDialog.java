@@ -65,8 +65,8 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
          @Override
          public void onClick(ClickEvent event)
          {
-           saveOperation.execute(new ArrayList<EditingTarget>()); 
            closeDialog();
+           saveOperation.execute(new ArrayList<EditingTarget>());
          } 
       }));    
    }

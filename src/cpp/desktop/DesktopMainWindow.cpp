@@ -41,6 +41,7 @@ MainWindow::MainWindow(QUrl url) :
       updateChecker_(this)
 {
    quitConfirmed_ = false;
+   saveConfirmed_ = false;
    pToolbar_->setVisible(false);
 
    // Dummy menu bar to deal with the fact that
@@ -108,6 +109,12 @@ void MainWindow::quit()
    close();
 }
 
+void MainWindow::closeWithSaveConfirmed()
+{
+   saveConfirmed_ = true;
+   close();
+}
+
 void MainWindow::onJavaScriptWindowObjectCleared()
 {
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
@@ -156,6 +163,19 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
    }
    else
    {
+      // if save hasn't been confirmed yet then call into desktopHooks and bail
+      if (!saveConfirmed_)
+      {
+         pFrame->evaluateJavaScript(QString::fromAscii("!!window.desktopHooks.saveChangesBeforeQuit()"));
+         pEvent->ignore();
+         return;
+      }
+
+      // reset the saveConfirmed_ flag (if we exit this function without quitting
+      // R due to a cancel we want the user to get the chance to handle unsaved
+      // changes the next time they quit
+      saveConfirmed_ = false;
+
       // determine saveAction by calling hook
       QVariant saveAction = pFrame->evaluateJavaScript(
                                QString::fromAscii("window.desktopHooks.getSaveAction()"));

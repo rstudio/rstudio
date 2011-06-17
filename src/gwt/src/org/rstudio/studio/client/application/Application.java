@@ -230,7 +230,7 @@ public class Application implements ApplicationEventHandlers,
       {
          if (Desktop.isDesktop())
          {
-            Desktop.getFrame().close();
+            Desktop.getFrame().closeWithSaveConfirmed();
          }
          else
          {

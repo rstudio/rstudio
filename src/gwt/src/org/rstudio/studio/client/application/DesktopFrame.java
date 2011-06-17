@@ -35,6 +35,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void onWorkbenchInitialized(String scratchDir);
    void showFolder(String path);
    void close();
+   void closeWithSaveConfirmed();
    void openMinimalWindow(String name, String url, int width, int height);
    void copyImageToClipboard(int clientLeft,
                              int clientTop,
