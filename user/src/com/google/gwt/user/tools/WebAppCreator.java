@@ -458,13 +458,22 @@ public final class WebAppCreator {
     String gwtValidationPath = installPath + '/' + "validation-api-1.0.0.GA.jar";
     String gwtValidationSourcesPath = installPath + '/' + "validation-api-1.0.0.GA-sources.jar";
 
-    // Public builds generate a DTD reference.
-    String gwtModuleDtd = "";
+    // Generate a DTD reference.
+    String gwtModuleDtd = "\n<!-- Using DTD from SVN 'trunk'. You probably want to change this"
+        + " to a specific, release tagged, DTD -->"
+        + "\n<!DOCTYPE module PUBLIC \"-//Google Inc.//DTD Google Web Toolkit "
+        + About.getGwtVersionNum()
+        + "//EN\" \"http://google-web-toolkit.googlecode.com/svn/trunk/"
+        + "/distro-source/core/src/gwt-module.dtd\">";
     GwtVersion gwtVersion = About.getGwtVersionObject();
-    if (gwtVersion.isNoNagVersion()) {
-      gwtModuleDtd = "\n<!DOCTYPE module PUBLIC \"-//Google Inc.//DTD Google Web Toolkit "
-          + About.getGwtVersionNum()
-          + "//EN\" \"http://google-web-toolkit.googlecode.com/svn/tags/"
+    if (!gwtVersion.isNoNagVersion() && !gwtVersion.equals(new GwtVersion(null))) {
+      gwtModuleDtd = "\n<!--"
+          + "\n  When updating your version of GWT, you should also update this DTD reference,"
+          + "\n  so that your app can take advantage of the latest GWT module capabilities."
+          + "\n-->"
+          + "\n<!DOCTYPE module PUBLIC \"-//Google Inc.//DTD Google Web Toolkit "
+          + About.getGwtVersionNum() + "//EN\""
+          + "\n  \"http://google-web-toolkit.googlecode.com/svn/tags/"
           + About.getGwtVersionNum()
           + "/distro-source/core/src/gwt-module.dtd\">";
     }
