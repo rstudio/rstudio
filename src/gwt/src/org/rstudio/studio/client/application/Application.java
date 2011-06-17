@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 @Singleton
@@ -70,6 +71,7 @@ public class Application implements ApplicationEventHandlers,
                       Server server,
                       Session session,
                       WorkbenchContext workbenchContext,
+                      SourceShim sourceShim,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
                       Provider<ClientStateUpdater> clientStateUpdater,
@@ -82,6 +84,7 @@ public class Application implements ApplicationEventHandlers,
       events_ = events;
       session_ = session;
       workbenchContext_ = workbenchContext;
+      sourceShim_ = sourceShim;
       commands_ = commands;
       clientStateUpdater_ = clientStateUpdater;
       server_ = server;
@@ -220,55 +223,64 @@ public class Application implements ApplicationEventHandlers,
       $wnd.welfkjweg();
    }-*/;
   
-   @Handler
-   public void onQuitSession()
+   // implementatin of quit session
+   private Command doQuitSession_ = new Command()
    {
-      if (Desktop.isDesktop())
+      public void execute()
       {
-         Desktop.getFrame().close();
-      }
-      else
-      {
-         // quit session operation paramaterized by whether we save changes
-         class QuitOperation implements ProgressOperation
+         if (Desktop.isDesktop())
          {
-            QuitOperation(boolean saveChanges)
-            {
-               saveChanges_ = saveChanges;
-            }
-            public void execute(ProgressIndicator indicator)
-            {
-               indicator.onProgress("Quitting R Session...");
-               server_.quitSession(saveChanges_,
-                                   new VoidServerRequestCallback(indicator));
-            }
-            private final boolean saveChanges_ ;
-         }
-
-         if (saveAction_.getAction() == SaveAction.SAVEASK) 
-         {    
-            // confirm quit and do it
-            String prompt = "Save workspace image to " + 
-                            workbenchContext_.getREnvironmentPath() + "?";
-            globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-                                            "Quit R Session",
-                                            prompt,
-                                            true,
-                                            new QuitOperation(true),
-                                            new QuitOperation(false),
-                                            true);
+            Desktop.getFrame().close();
          }
          else
          {
-            // do the quit without prompting 
-            
-            ProgressIndicator indicator =
-               globalDisplay_.getProgressIndicator("Error Quitting R");
+            // quit session operation paramaterized by whether we save changes
+            class QuitOperation implements ProgressOperation
+            {
+               QuitOperation(boolean saveChanges)
+               {
+                  saveChanges_ = saveChanges;
+               }
+               public void execute(ProgressIndicator indicator)
+               {
+                  indicator.onProgress("Quitting R Session...");
+                  server_.quitSession(saveChanges_,
+                                      new VoidServerRequestCallback(indicator));
+               }
+               private final boolean saveChanges_ ;
+            }
 
-            boolean save = saveAction_.getAction() == SaveAction.SAVE;
-            new QuitOperation(save).execute(indicator);
-         }
-      }
+            if (saveAction_.getAction() == SaveAction.SAVEASK) 
+            {    
+               // confirm quit and do it
+               String prompt = "Save workspace image to " + 
+                               workbenchContext_.getREnvironmentPath() + "?";
+               globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+                                               "Quit R Session",
+                                               prompt,
+                                               true,
+                                               new QuitOperation(true),
+                                               new QuitOperation(false),
+                                               true);
+            }
+            else
+            {
+               // do the quit without prompting 
+               
+               ProgressIndicator indicator =
+                  globalDisplay_.getProgressIndicator("Error Quitting R");
+
+               boolean save = saveAction_.getAction() == SaveAction.SAVE;
+               new QuitOperation(save).execute(indicator);
+            }
+         } 
+      } 
+   };
+   
+   @Handler
+   public void onQuitSession()
+   {
+      sourceShim_.saveChangesBeforeQuit(doQuitSession_);
    }
 
    @Handler
@@ -600,6 +612,7 @@ public class Application implements ApplicationEventHandlers,
    private final EventBus events_;
    private final Session session_;
    private final WorkbenchContext workbenchContext_;
+   private final SourceShim sourceShim_;
    private final Commands commands_;
    private final Provider<ClientStateUpdater> clientStateUpdater_;
    private final Server server_;

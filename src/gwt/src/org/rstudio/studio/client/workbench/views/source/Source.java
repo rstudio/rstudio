@@ -104,8 +104,12 @@ public class Source implements InsertSourceHandler,
       void manageChevronVisibility();
       void showOverflowPopup();
       
+      public static int CLOSE_ALL_UNSAVED_CHANGES = 0;
+      public static int QUIT_UNSAVED_CHANGES = 1;
+      
       void showUnsavedChangesDialog(
             ArrayList<EditingTarget> dirtyTargets,
+            int mode,
             OperationWithInput<ArrayList<EditingTarget>> saveOperation);
 
       void ensureVisible();
@@ -515,50 +519,29 @@ public class Source implements InsertSourceHandler,
       });
    }
    
-   @Handler
-   public void onCloseAllSourceDocs()
+   
+   private void saveEditingTargetsWithPrompt(ArrayList<EditingTarget> targets,
+                                             int mode,
+                                             final Command onCompleted)
    {
-      // create a command used to close all tabs 
-      final Command closeAllTabsCommand = new Command()
+      // execute on completed right away if the list is empty
+      if (targets.size() ==  0)
       {
-         @Override
-         public void execute()
-         {
-            cpsExecuteForEachEditor(editors_, new CPSEditingTargetCommand()
-            {
-               @Override
-               public void execute(EditingTarget target, Command continuation)
-               {
-                  view_.closeTab(target.toWidget(), false, continuation);
-               }
-            });
-            
-         }     
-      };
-      
-      // collect up a list of dirty documents
-      ArrayList<EditingTarget> dirtyTargets = new ArrayList<EditingTarget>();
-      for (EditingTarget target : editors_)
-         if (target.dirtyState().getValue())
-            dirtyTargets.add(target);
-      
-      // close all straight away if nothing is dirty
-      if (dirtyTargets.size() ==  0)
-      {
-         closeAllTabsCommand.execute();
+         onCompleted.execute();
       }
       
       // if there is just one thing dirty then go straight to the save dialog
-      else if (dirtyTargets.size() == 1)
+      else if (targets.size() == 1)
       {
-         dirtyTargets.get(0).saveWithPrompt(closeAllTabsCommand);
+         targets.get(0).saveWithPrompt(onCompleted);
       }
       
       // otherwise use the multi save changes dialog
       else
       {
          view_.showUnsavedChangesDialog(
-            dirtyTargets, 
+            targets, 
+            mode,
             new OperationWithInput<ArrayList<EditingTarget>>() 
             {
                @Override
@@ -580,12 +563,63 @@ public class Source implements InsertSourceHandler,
                         }
                      },
                      
-                     // close all at the end
-                     closeAllTabsCommand
+                     // onCompleted at the end
+                     onCompleted
                   );          
                }
             }); 
       }
+   }
+          
+   
+   @Handler
+   public void onCloseAllSourceDocs()
+   { 
+      // collect up a list of dirty documents
+      ArrayList<EditingTarget> dirtyTargets = new ArrayList<EditingTarget>();
+      for (EditingTarget target : editors_)
+         if (target.dirtyState().getValue())
+            dirtyTargets.add(target);
+      
+      // create a command used to close all tabs 
+      final Command closeAllTabsCommand = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            cpsExecuteForEachEditor(editors_, new CPSEditingTargetCommand()
+            {
+               @Override
+               public void execute(EditingTarget target, Command continuation)
+               {
+                  view_.closeTab(target.toWidget(), false, continuation);
+               }
+            });
+            
+         }     
+      };
+      
+      // save targets
+      saveEditingTargetsWithPrompt(dirtyTargets, 
+                                   Display.CLOSE_ALL_UNSAVED_CHANGES,
+                                   closeAllTabsCommand);
+      
+   }
+   
+   public void saveChangesBeforeQuit(Command onCompleted)
+   {
+      // collect up a list of dirty documents with paths (we leave
+      // untitled documents alone at exit)
+      // collect up a list of dirty documents
+      ArrayList<EditingTarget> dirtyTargets = new ArrayList<EditingTarget>();
+      for (EditingTarget target : editors_)
+         if (target.dirtyState().getValue() && target.getPath() != null)
+            dirtyTargets.add(target);
+      
+      // save targets
+      saveEditingTargetsWithPrompt(dirtyTargets, 
+                                   Display.QUIT_UNSAVED_CHANGES,
+                                   onCompleted);
    }
 
   

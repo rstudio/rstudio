@@ -18,6 +18,8 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 import org.rstudio.core.client.AsyncShim;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -34,6 +36,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 
+@Singleton
 public class SourceShim extends Composite
    implements Widgetable, HasEnsureVisibleHandlers, BeforeShowCallback,
               ProvidesResize, RequiresResize, RequiresVisibilityChanged
@@ -92,6 +95,8 @@ public class SourceShim extends Composite
          parent_.panel_.add(child);
          parent_.panel_.setWidgetTopBottom(child, 0, Unit.PX, 0, Unit.PX);
          parent_.panel_.setWidgetLeftRight(child, 0, Unit.PX, 0, Unit.PX);
+
+         parent_.setSource(obj);
       }
 
       public void setParent(SourceShim parent)
@@ -124,6 +129,14 @@ public class SourceShim extends Composite
                                                new String[0]));
 
       events.addHandler(FileEditEvent.TYPE, asyncSource);
+   }
+
+   public void saveChangesBeforeQuit(Command onCompleted)
+   {
+      if (source_ != null)
+         source_.saveChangesBeforeQuit(onCompleted);
+      else
+         onCompleted.execute();
    }
 
    public Widget toWidget()
@@ -161,6 +174,12 @@ public class SourceShim extends Composite
             ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
    }
 
+   public void setSource(Source source)
+   {
+      source_ = source;
+   }
+
    private final LayoutPanel panel_;
    private AsyncSource asyncSource_;
+   private Source source_ = null;
 }
