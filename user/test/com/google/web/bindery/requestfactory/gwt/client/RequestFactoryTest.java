@@ -1122,7 +1122,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
   public void testNullValueInIntegerListRequest() {
     delayTestFinish(DELAY_TEST_FINISH);
-    List<Integer> list = Arrays.asList(new Integer[]{1, 2, null});
+    List<Integer> list = Arrays.asList(new Integer[] {1, 2, null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInIntegerList(list);
     fooReq.fire(new Receiver<Void>() {
       @Override
@@ -1137,7 +1137,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
   public void testNullValueInStringListRequest() {
     delayTestFinish(DELAY_TEST_FINISH);
-    List<String> list = Arrays.asList(new String[]{"nonnull", "null", null});
+    List<String> list = Arrays.asList(new String[] {"nonnull", "null", null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInStringList(list);
     fooReq.fire(new Receiver<Void>() {
       @Override
@@ -1145,6 +1145,14 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         finishTestAndReset();
       }
     });
+  }
+
+  /**
+   * Test that a proxy only referenced via a parameterization is available.
+   */
+  public void testOnlyUsedInList() {
+    OnlyUsedInListProxy proxy = simpleFooRequest().create(OnlyUsedInListProxy.class);
+    assertNotNull(proxy);
   }
 
   /**
@@ -1324,11 +1332,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       }
     });
   }
-
-  /*
-   * TODO: all these tests should check the final values. It will be easy when
-   * we have better persistence than the singleton pattern.
-   */
 
   /**
    * Ensure that a relationship can be set up between two newly-created objects.
@@ -1547,6 +1550,11 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  /*
+   * TODO: all these tests should check the final values. It will be easy when
+   * we have better persistence than the singleton pattern.
+   */
+
   public void testPersistSelfOneToManyExistingEntityExistingRelation() {
     delayTestFinish(DELAY_TEST_FINISH);
 
@@ -1601,11 +1609,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       }
     });
   }
-
-  /*
-   * TODO: all these tests should check the final values. It will be easy when
-   * we have better persistence than the singleton pattern.
-   */
 
   /*
    * TODO: all these tests should check the final values. It will be easy when
@@ -2050,6 +2053,48 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  public void testPropertyRefsOnRecursiveProxyStructures() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    simpleFooRequest().getFlattenedTripletReference().with("selfOneToManyField").fire(
+        new Receiver<List<SimpleFooProxy>>() {
+          @Override
+          public void onSuccess(List<SimpleFooProxy> response) {
+            for (int i = 0; i < response.size(); i++) {
+              SimpleFooProxy proxy = response.get(i);
+              checkSerialization(proxy); // do not reassign proxy as we
+                                         // assertSame() later
+              assertNotNull("Missing selfOneToManyField for item at index " + i, proxy
+                  .getSelfOneToManyField());
+              assertEquals(1, proxy.getSelfOneToManyField().size());
+              // last one references itself
+              SimpleFooProxy next = response.get(Math.min(i + 1, response.size() - 1));
+              assertSame("Item at index " + i
+                  + " does not link the following item in its selfOneToManyField", proxy
+                  .getSelfOneToManyField().get(0), next);
+            }
+            finishTestAndReset();
+          }
+        });
+  }
+
+  public void testPropertyRefsOnSameObjectReturnedTwice() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    SimpleFooRequest request = simpleFooRequest();
+    request.findSimpleFooById(1L);
+    request.findAll().with("barField").to(new Receiver<List<SimpleFooProxy>>() {
+      @Override
+      public void onSuccess(List<SimpleFooProxy> response) {
+        for (SimpleFooProxy proxy : response) {
+          proxy = checkSerialization(proxy);
+          assertNotNull("barField has not been retrieved on id=" + proxy.getId(), proxy
+              .getBarField());
+        }
+        finishTestAndReset();
+      }
+    });
+    request.fire();
+  }
+
   public void testProxyList() {
     delayTestFinish(DELAY_TEST_FINISH);
     final Request<SimpleFooProxy> fooReq =
@@ -2257,14 +2302,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         });
       }
     });
-  }
-
-  /**
-   * Test that a proxy only referenced via a parameterization is available.
-   */
-  public void testOnlyUsedInList() {
-    OnlyUsedInListProxy proxy = simpleFooRequest().create(OnlyUsedInListProxy.class);
-    assertNotNull(proxy);
   }
 
   /**

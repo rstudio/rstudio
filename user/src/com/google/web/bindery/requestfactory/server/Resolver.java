@@ -22,7 +22,6 @@ import com.google.web.bindery.autobean.shared.Splittable;
 import com.google.web.bindery.autobean.shared.ValueCodex;
 import com.google.web.bindery.autobean.vm.impl.TypeUtils;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
-import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.impl.Constants;
 import com.google.web.bindery.requestfactory.shared.impl.SimpleProxyId;
@@ -34,9 +33,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
@@ -87,6 +88,163 @@ class Resolver {
   }
 
   /**
+   * Copies values and references from a domain object to a client object. This
+   * type does not descend into referenced objects.
+   */
+  private class PropertyResolver extends AutoBeanVisitor {
+    private final Object domainEntity;
+    private final boolean isOwnerValueProxy;
+    private final boolean needsSimpleValues;
+    private final Set<String> propertyRefs;
+
+    private PropertyResolver(Resolution resolution) {
+      ResolutionKey key = resolution.getResolutionKey();
+      this.domainEntity = key.getDomainObject();
+      this.isOwnerValueProxy = state.isValueType(TypeUtils.ensureBaseType(key.requestedType));
+      this.needsSimpleValues = resolution.needsSimpleValues();
+      this.propertyRefs = resolution.takeWork();
+    }
+
+    @Override
+    public boolean visitReferenceProperty(String propertyName, AutoBean<?> value,
+        PropertyContext ctx) {
+      /*
+       * Send the property if the enclosing type is a ValueProxy, if the owner
+       * requested the property, or if the property is a list of values.
+       */
+      Class<?> elementType =
+          ctx instanceof CollectionPropertyContext ? ((CollectionPropertyContext) ctx)
+              .getElementType() : null;
+      boolean shouldSend =
+          isOwnerValueProxy || matchesPropertyRef(propertyRefs, propertyName)
+              || elementType != null && ValueCodex.canDecode(elementType);
+
+      if (!shouldSend) {
+        return false;
+      }
+
+      // Call the getter
+      Object domainValue = service.getProperty(domainEntity, propertyName);
+      if (domainValue == null) {
+        return false;
+      }
+
+      // Turn the domain object into something usable on the client side
+      Type type;
+      if (elementType == null) {
+        type = ctx.getType();
+      } else {
+        type = new CollectionType(ctx.getType(), elementType);
+      }
+      Resolution resolution = resolveClientValue(domainValue, type);
+      addPathsToResolution(resolution, propertyName, propertyRefs);
+      ctx.set(resolution.getClientObject());
+      return false;
+    }
+
+    @Override
+    public boolean visitValueProperty(String propertyName, Object value, PropertyContext ctx) {
+      /*
+       * Only call the getter for simple values once since they're not
+       * explicitly enumerated.
+       */
+      if (needsSimpleValues) {
+        // Limit unrequested value properties?
+        value = service.getProperty(domainEntity, propertyName);
+        ctx.set(value);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Tracks the state of resolving a single client object.
+   */
+  private static class Resolution {
+    /**
+     * There's no Collections shortcut for this.
+     */
+    private static final SortedSet<String> EMPTY = Collections
+        .unmodifiableSortedSet(new TreeSet<String>());
+
+    /**
+     * The client object.
+     */
+    private final Object clientObject;
+
+    /**
+     * A one-shot flag for {@link #hasWork()} to ensure that simple properties
+     * will be resolved, even when there's no requested property set.
+     */
+    private boolean needsSimpleValues;
+    private SortedSet<String> toResolve = EMPTY;
+    private final SortedSet<String> resolved = new TreeSet<String>();
+    private final ResolutionKey key;
+
+    public Resolution(Object simpleValue) {
+      assert !(simpleValue instanceof Resolution);
+      this.clientObject = simpleValue;
+      this.key = null;
+    }
+
+    public Resolution(ResolutionKey key, BaseProxy clientObject) {
+      this.clientObject = clientObject;
+      this.key = key;
+      needsSimpleValues = true;
+    }
+
+    /**
+     * Removes the prefix from each requested path and enqueues paths that have
+     * not been previously resolved for the next batch of work.
+     */
+    public void addPaths(String prefix, Collection<String> requestedPaths) {
+      // Identity comparison intentional
+      if (toResolve == EMPTY) {
+        toResolve = new TreeSet<String>();
+      }
+      prefix = prefix.isEmpty() ? prefix : (prefix + ".");
+      int prefixLength = prefix.length();
+      for (String path : requestedPaths) {
+        if (path.startsWith(prefix)) {
+          toResolve.add(path.substring(prefixLength));
+        }
+      }
+      toResolve.removeAll(resolved);
+      if (toResolve.isEmpty()) {
+        toResolve = EMPTY;
+      }
+    }
+
+    public Object getClientObject() {
+      return clientObject;
+    }
+
+    public ResolutionKey getResolutionKey() {
+      return key;
+    }
+
+    public boolean hasWork() {
+      return needsSimpleValues || !toResolve.isEmpty();
+    }
+
+    public boolean needsSimpleValues() {
+      return needsSimpleValues;
+    }
+
+    /**
+     * Returns client-object-relative reference paths that should be further
+     * resolved.
+     */
+    public SortedSet<String> takeWork() {
+      needsSimpleValues = false;
+      SortedSet<String> toReturn = toResolve;
+      resolved.addAll(toReturn);
+      toResolve = EMPTY;
+      return toReturn;
+    }
+  }
+
+  /**
    * Used to map the objects being resolved and its API slice to the client-side
    * value. This handles the case where a domain object is returned to the
    * client mapped to two proxies of differing types.
@@ -116,6 +274,10 @@ class Resolver {
         return false;
       }
       return true;
+    }
+
+    public Object getDomainObject() {
+      return domainObject;
     }
 
     @Override
@@ -163,12 +325,40 @@ class Resolver {
   }
 
   /**
+   * Expand the property references in an InvocationMessage into a
+   * fully-expanded list of properties. For example, <code>[foo.bar.baz]</code>
+   * will be converted into <code>[foo, foo.bar, foo.bar.baz]</code>.
+   */
+  private static Set<String> expandPropertyRefs(Set<String> refs) {
+    if (refs == null) {
+      return Collections.emptySet();
+    }
+
+    Set<String> toReturn = new TreeSet<String>();
+    for (String raw : refs) {
+      for (int idx = raw.length(); idx >= 0; idx = raw.lastIndexOf('.', idx - 1)) {
+        toReturn.add(raw.substring(0, idx));
+      }
+    }
+    return toReturn;
+  }
+
+  /**
+   * Maps proxy instances to the Resolution objects.
+   */
+  private Map<BaseProxy, Resolution> clientObjectsToResolutions =
+      new HashMap<BaseProxy, Resolution>();
+  /**
    * Maps domain values to client values. This map prevents cycles in the object
    * graph from causing infinite recursion.
    */
-  private final Map<ResolutionKey, Object> resolved = new HashMap<ResolutionKey, Object>();
+  private final Map<ResolutionKey, Resolution> resolved = new HashMap<ResolutionKey, Resolution>();
   private final ServiceLayer service;
   private final RequestState state;
+  /**
+   * Contains Resolutions with path references that have not yet been resolved.
+   */
+  private Set<Resolution> toProcess = new LinkedHashSet<Resolution>();
   private int syntheticId;
 
   /**
@@ -190,7 +380,23 @@ class Resolver {
    * @param propertyRefs the property references requested by the client
    */
   public Object resolveClientValue(Object domainValue, Type assignableTo, Set<String> propertyRefs) {
-    return resolveClientValue(domainValue, assignableTo, getPropertyRefs(propertyRefs), "");
+    Resolution toReturn = resolveClientValue(domainValue, assignableTo);
+    if (toReturn == null) {
+      return null;
+    }
+    addPathsToResolution(toReturn, "", expandPropertyRefs(propertyRefs));
+    while (!toProcess.isEmpty()) {
+      List<Resolution> working = new ArrayList<Resolution>(toProcess);
+      toProcess.clear();
+      for (Resolution resolution : working) {
+        if (resolution.hasWork()) {
+          AutoBean<BaseProxy> bean =
+              AutoBeanUtils.getAutoBean((BaseProxy) resolution.getClientObject());
+          bean.accept(new PropertyResolver(resolution));
+        }
+      }
+    }
+    return toReturn.getClientObject();
   }
 
   /**
@@ -229,30 +435,69 @@ class Resolver {
   }
 
   /**
-   * Expand the property references in an InvocationMessage into a
-   * fully-expanded list of properties. For example, <code>[foo.bar.baz]</code>
-   * will be converted into <code>[foo, foo.bar, foo.bar.baz]</code>.
+   * Calls {@link Resolution#addPaths(String, Collection)}, enqueuing
+   * {@code key} if {@link Resolution#hasWork()} returns {@code true}. This
+   * method will also expand paths on the members of Collections.
    */
-  private Set<String> getPropertyRefs(Set<String> refs) {
-    if (refs == null) {
-      return Collections.emptySet();
+  private void addPathsToResolution(Resolution resolution, String prefix, Set<String> propertyRefs) {
+    if (propertyRefs.isEmpty()) {
+      // No work to do
+      return;
     }
-
-    Set<String> toReturn = new TreeSet<String>();
-    for (String raw : refs) {
-      for (int idx = raw.length(); idx >= 0; idx = raw.lastIndexOf('.', idx - 1)) {
-        toReturn.add(raw.substring(0, idx));
+    if (resolution.getResolutionKey() != null) {
+      // Working on a proxied type
+      assert resolution.getClientObject() instanceof BaseProxy : "Expecting BaseProxy, found "
+          + resolution.getClientObject().getClass().getCanonicalName();
+      resolution.addPaths(prefix, propertyRefs);
+      if (resolution.hasWork()) {
+        toProcess.add(resolution);
       }
+      return;
     }
-    return toReturn;
+    if (resolution.getClientObject() instanceof Collection) {
+      // Pass the paths onto the Resolutions for the contained elements
+      Collection<?> collection = (Collection<?>) resolution.getClientObject();
+      for (Object obj : collection) {
+        Resolution subResolution = clientObjectsToResolutions.get(obj);
+        // subResolution will be null for List<Integer>, etc.
+        if (subResolution != null) {
+          addPathsToResolution(subResolution, prefix, propertyRefs);
+        }
+      }
+      return;
+    }
+    assert false : "Should not add paths to client type "
+        + resolution.getClientObject().getClass().getCanonicalName();
   }
 
   /**
-   * Converts a domain entity into an EntityProxy that will be sent to the
-   * client.
+   * Creates a resolution for a simple value.
    */
-  private <T extends BaseProxy> T resolveClientProxy(final Object domainEntity, Class<T> proxyType,
-      final Set<String> propertyRefs, ResolutionKey key, final String prefix) {
+  private Resolution makeResolution(Object domainValue) {
+    assert !state.isEntityType(domainValue.getClass())
+        && !state.isValueType(domainValue.getClass()) : "Not a simple value type";
+    return new Resolution(domainValue);
+  }
+
+  /**
+   * Create or reuse a Resolution for a proxy object.
+   */
+  private Resolution makeResolution(ResolutionKey key, BaseProxy clientObject) {
+    Resolution resolution = resolved.get(key);
+    if (resolution == null) {
+      resolution = new Resolution(key, clientObject);
+      clientObjectsToResolutions.put(clientObject, resolution);
+      toProcess.add(resolution);
+      resolved.put(key, resolution);
+    }
+    return resolution;
+  }
+
+  /**
+   * Creates a proxy instance held by a Resolution for a given domain type.
+   */
+  private <T extends BaseProxy> Resolution resolveClientProxy(Object domainEntity,
+      Class<T> proxyType, ResolutionKey key) {
     if (domainEntity == null) {
       return null;
     }
@@ -260,7 +505,6 @@ class Resolver {
     SimpleProxyId<? extends BaseProxy> id = state.getStableId(domainEntity);
 
     boolean isEntityProxy = state.isEntityType(proxyType);
-    final boolean isOwnerValueProxy = state.isValueType(proxyType);
     Object domainVersion;
 
     // Create the id or update an ephemeral id by calculating its address
@@ -305,7 +549,6 @@ class Resolver {
 
     @SuppressWarnings("unchecked")
     AutoBean<T> bean = (AutoBean<T>) state.getBeanForPayload(id, domainEntity);
-    resolved.put(key, bean.as());
     bean.setTag(Constants.IN_RESPONSE, true);
     if (domainVersion != null) {
       Splittable flatVersion = state.flatten(domainVersion);
@@ -313,80 +556,31 @@ class Resolver {
           .getPayload()));
     }
 
-    bean.accept(new AutoBeanVisitor() {
-
-      @Override
-      public boolean visitReferenceProperty(String propertyName, AutoBean<?> value,
-          PropertyContext ctx) {
-        // Does the user care about the property?
-        String newPrefix = (prefix.length() > 0 ? (prefix + ".") : "") + propertyName;
-
-        /*
-         * Send the property if the enclosing type is a ValueProxy, if the owner
-         * requested the property, or if the property is a list of values.
-         */
-        Class<?> elementType =
-            ctx instanceof CollectionPropertyContext ? ((CollectionPropertyContext) ctx)
-                .getElementType() : null;
-        boolean shouldSend =
-            isOwnerValueProxy || matchesPropertyRef(propertyRefs, newPrefix) || elementType != null
-                && ValueCodex.canDecode(elementType);
-
-        if (!shouldSend) {
-          return false;
-        }
-
-        // Call the getter
-        Object domainValue = service.getProperty(domainEntity, propertyName);
-        if (domainValue == null) {
-          return false;
-        }
-
-        // Turn the domain object into something usable on the client side
-        Type type;
-        if (elementType == null) {
-          type = ctx.getType();
-        } else {
-          type = new CollectionType(ctx.getType(), elementType);
-        }
-        Object clientValue = resolveClientValue(domainValue, type, propertyRefs, newPrefix);
-
-        ctx.set(clientValue);
-        return false;
-      }
-
-      @Override
-      public boolean visitValueProperty(String propertyName, Object value, PropertyContext ctx) {
-        // Limit unrequested value properties?
-        value = service.getProperty(domainEntity, propertyName);
-        ctx.set(value);
-        return false;
-      }
-    });
-
-    return bean.as();
+    T clientObject = bean.as();
+    return makeResolution(key, clientObject);
   }
 
   /**
-   * Recursive-descent implementation.
+   * Creates a Resolution object that holds a client value that represents the
+   * given domain value. The resolved client value will be assignable to
+   * {@code clientType}.
    */
-  private Object resolveClientValue(Object domainValue, Type returnType, Set<String> propertyRefs,
-      String prefix) {
+  private Resolution resolveClientValue(Object domainValue, Type clientType) {
     if (domainValue == null) {
       return null;
     }
 
-    boolean anyType = returnType == null;
+    boolean anyType = clientType == null;
     if (anyType) {
-      returnType = Object.class;
+      clientType = Object.class;
     }
 
-    Class<?> assignableTo = TypeUtils.ensureBaseType(returnType);
-    ResolutionKey key = new ResolutionKey(domainValue, returnType);
+    Class<?> assignableTo = TypeUtils.ensureBaseType(clientType);
+    ResolutionKey key = new ResolutionKey(domainValue, clientType);
 
-    Object previous = resolved.get(key);
-    if (previous != null && assignableTo.isInstance(previous)) {
-      return assignableTo.cast(previous);
+    Resolution previous = resolved.get(key);
+    if (previous != null && assignableTo.isInstance(previous.getClientObject())) {
+      return previous;
     }
 
     Class<?> returnClass = service.resolveClientType(domainValue.getClass(), assignableTo, true);
@@ -397,7 +591,7 @@ class Resolver {
 
     // Pass simple values through
     if (ValueCodex.canDecode(returnClass)) {
-      return assignableTo.cast(domainValue);
+      return makeResolution(domainValue);
     }
 
     // Convert entities to EntityProxies or EntityProxyIds
@@ -405,11 +599,7 @@ class Resolver {
     boolean isId = EntityProxyId.class.isAssignableFrom(returnClass);
     if (isProxy || isId) {
       Class<? extends BaseProxy> proxyClass = returnClass.asSubclass(BaseProxy.class);
-      BaseProxy entity = resolveClientProxy(domainValue, proxyClass, propertyRefs, key, prefix);
-      if (isId) {
-        return assignableTo.cast(((EntityProxy) entity).stableId());
-      }
-      return assignableTo.cast(entity);
+      return resolveClientProxy(domainValue, proxyClass, key);
     }
 
     // Convert collections
@@ -422,13 +612,12 @@ class Resolver {
       } else {
         throw new ReportableException("Unsupported collection type" + returnClass.getName());
       }
-      resolved.put(key, accumulator);
 
-      Type elementType = TypeUtils.getSingleParameterization(Collection.class, returnType);
+      Type elementType = TypeUtils.getSingleParameterization(Collection.class, clientType);
       for (Object o : (Collection<?>) domainValue) {
-        accumulator.add(resolveClientValue(o, elementType, propertyRefs, prefix));
+        accumulator.add(resolveClientValue(o, elementType).getClientObject());
       }
-      return assignableTo.cast(accumulator);
+      return makeResolution(accumulator);
     }
 
     throw new ReportableException("Unsupported domain type " + returnClass.getCanonicalName());

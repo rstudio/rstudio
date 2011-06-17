@@ -60,6 +60,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.validation.ConstraintViolation;
 
@@ -416,7 +418,12 @@ public class SimpleRequestProcessor {
       // No method invocations which can happen via RequestContext.fire()
       return;
     }
+    List<Method> contextMethods = new ArrayList<Method>(invocations.size());
+    List<Object> invocationResults = new ArrayList<Object>(invocations.size());
+    Map<Object, SortedSet<String>> allPropertyRefs = new HashMap<Object, SortedSet<String>>();
     for (InvocationMessage invocation : invocations) {
+      Object domainReturnValue;
+      boolean ok;
       try {
         // Find the Method
         String operation = invocation.getOperation();
@@ -425,6 +432,7 @@ public class SimpleRequestProcessor {
           throw new UnexpectedException("Cannot resolve operation " + invocation.getOperation(),
               null);
         }
+        contextMethods.add(contextMethod);
         Method domainMethod = service.resolveDomainMethod(operation);
         if (domainMethod == null) {
           throw new UnexpectedException(
@@ -440,20 +448,42 @@ public class SimpleRequestProcessor {
           args.add(0, serviceInstance);
         }
         // Invoke it
-        Object returnValue = service.invoke(domainMethod, args.toArray());
-
+        domainReturnValue = service.invoke(domainMethod, args.toArray());
+        if (invocation.getPropertyRefs() != null) {
+          SortedSet<String> paths = allPropertyRefs.get(domainReturnValue);
+          if (paths == null) {
+            paths = new TreeSet<String>();
+            allPropertyRefs.put(domainReturnValue, paths);
+          }
+          paths.addAll(invocation.getPropertyRefs());
+        }
+        ok = true;
+      } catch (ReportableException e) {
+        domainReturnValue = AutoBeanCodex.encode(createFailureMessage(e));
+        ok = false;
+      }
+      invocationResults.add(domainReturnValue);
+      success.add(ok);
+    }
+    Iterator<Method> contextMethodIt = contextMethods.iterator();
+    Iterator<Object> objects = invocationResults.iterator();
+    Iterator<Boolean> successes = success.iterator();
+    while (successes.hasNext()) {
+      assert contextMethodIt.hasNext();
+      assert objects.hasNext();
+      Method contextMethod = contextMethodIt.next();
+      Object returnValue = objects.next();
+      if (successes.next()) {
         // Convert domain object to client object
         Type requestReturnType = service.getRequestReturnType(contextMethod);
         returnValue =
             state.getResolver().resolveClientValue(returnValue, requestReturnType,
-                invocation.getPropertyRefs());
+                allPropertyRefs.get(returnValue));
 
         // Convert the client object to a string
         results.add(EntityCodex.encode(returnState, returnValue));
-        success.add(true);
-      } catch (ReportableException e) {
-        results.add(AutoBeanCodex.encode(createFailureMessage(e)));
-        success.add(false);
+      } else {
+        results.add((Splittable) returnValue);
       }
     }
   }

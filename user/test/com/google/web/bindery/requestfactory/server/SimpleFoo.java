@@ -104,13 +104,25 @@ public class SimpleFoo {
        * that doesn't allow any requests to be processed unless they're
        * associated with an existing session.
        */
-      Map<Long, SimpleFoo> value = (Map<Long, SimpleFoo>) req.getSession().getAttribute(
-          SimpleFoo.class.getCanonicalName());
+      Map<Long, SimpleFoo> value =
+          (Map<Long, SimpleFoo>) req.getSession().getAttribute(SimpleFoo.class.getCanonicalName());
       if (value == null) {
         value = resetImpl();
       }
       return value;
     }
+  }
+
+  public static List<SimpleFoo> getFlattenedTripletReference() {
+    SimpleFoo foo1 = new SimpleFoo();
+    SimpleFoo foo2 = new SimpleFoo();
+    SimpleFoo foo3 = new SimpleFoo();
+    foo1.setSelfOneToManyField(Arrays.asList(foo2));
+    foo2.setSelfOneToManyField(Arrays.asList(foo3));
+    foo1.persist();
+    foo2.persist();
+    foo3.persist();
+    return Arrays.asList(foo1, foo2, foo3);
   }
 
   public static List<Integer> getNumberList() {
@@ -179,8 +191,7 @@ public class SimpleFoo {
 
   public static void pleaseCrash(Integer crashIf42or43) throws Exception {
     if (crashIf42or43 == 42) {
-      throw new UnsupportedOperationException(
-          "THIS EXCEPTION IS EXPECTED BY A TEST");
+      throw new UnsupportedOperationException("THIS EXCEPTION IS EXPECTED BY A TEST");
     }
     if (crashIf42or43 == 43) {
       throw new Exception("THIS EXCEPTION IS EXPECTED BY A TEST");
@@ -247,8 +258,8 @@ public class SimpleFoo {
       long expectedTime = expectedDate.getTime();
       long actualTime = actual.next().getTime();
       if (expectedTime != actualTime) {
-        throw new IllegalArgumentException(expectedDate.getClass().getName()
-            + " " + expectedTime + " != " + actualTime);
+        throw new IllegalArgumentException(expectedDate.getClass().getName() + " " + expectedTime
+            + " != " + actualTime);
       }
     }
 
@@ -271,22 +282,22 @@ public class SimpleFoo {
 
   public static void receiveNullList(List<SimpleFoo> value) {
     if (value != null) {
-      throw new IllegalArgumentException(
-          "Expected value to be null. Actual value: \"" + value + "\"");
+      throw new IllegalArgumentException("Expected value to be null. Actual value: \"" + value
+          + "\"");
     }
   }
 
   public static void receiveNullSimpleFoo(SimpleFoo value) {
     if (value != null) {
-      throw new IllegalArgumentException(
-          "Expected value to be null. Actual value: \"" + value + "\"");
+      throw new IllegalArgumentException("Expected value to be null. Actual value: \"" + value
+          + "\"");
     }
   }
 
   public static void receiveNullString(String value) {
     if (value != null) {
-      throw new IllegalArgumentException(
-          "Expected value to be null. Actual value: \"" + value + "\"");
+      throw new IllegalArgumentException("Expected value to be null. Actual value: \"" + value
+          + "\"");
     }
   }
 
@@ -296,11 +307,10 @@ public class SimpleFoo {
     } else if (list.size() != 2) {
       throw new IllegalArgumentException("Expected list to contain two items.");
     } else if (list.get(0) == null) {
-      throw new IllegalArgumentException(
-          "Expected list.get(0) to return non null.");
+      throw new IllegalArgumentException("Expected list.get(0) to return non null.");
     } else if (list.get(1) != null) {
-      throw new IllegalArgumentException(
-          "Expected list.get(1) to return null. Actual: " + list.get(1));
+      throw new IllegalArgumentException("Expected list.get(1) to return null. Actual: "
+          + list.get(1));
     }
   }
 
@@ -308,15 +318,12 @@ public class SimpleFoo {
     if (list == null) {
       throw new IllegalArgumentException("Expected list to be non null.");
     } else if (list.size() != 3) {
-      throw new IllegalArgumentException(
-          "Expected list to contain three items.");
+      throw new IllegalArgumentException("Expected list to contain three items.");
     } else if (list.get(0) == null || list.get(1) == null) {
-      throw new IllegalArgumentException(
-          "Expected list.get(0)/get(1) to return non null.");
+      throw new IllegalArgumentException("Expected list.get(0)/get(1) to return non null.");
     } else if (list.get(2) != null) {
-      throw new IllegalArgumentException(
-          "Expected list.get(2) to return null. Actual: \"" + list.get(2)
-              + "\"");
+      throw new IllegalArgumentException("Expected list.get(2) to return null. Actual: \""
+          + list.get(2) + "\"");
     }
   }
 
@@ -324,15 +331,12 @@ public class SimpleFoo {
     if (list == null) {
       throw new IllegalArgumentException("Expected list to be non null.");
     } else if (list.size() != 3) {
-      throw new IllegalArgumentException(
-          "Expected list to contain three items.");
+      throw new IllegalArgumentException("Expected list to contain three items.");
     } else if (list.get(0) == null || list.get(1) == null) {
-      throw new IllegalArgumentException(
-          "Expected list.get(0)/get(1) to return non null.");
+      throw new IllegalArgumentException("Expected list.get(0)/get(1) to return non null.");
     } else if (list.get(2) != null) {
-      throw new IllegalArgumentException(
-          "Expected list.get(2) to return null. Actual: \"" + list.get(2)
-              + "\"");
+      throw new IllegalArgumentException("Expected list.get(2) to return null. Actual: \""
+          + list.get(2) + "\"");
     }
   }
 
@@ -357,8 +361,7 @@ public class SimpleFoo {
     if (req == null) {
       jreTestSingleton = instance;
     } else {
-      req.getSession().setAttribute(SimpleFoo.class.getCanonicalName(),
-          instance);
+      req.getSession().setAttribute(SimpleFoo.class.getCanonicalName(), instance);
     }
     return instance;
   }
@@ -666,8 +669,8 @@ public class SimpleFoo {
 
   public void receiveNull(String value) {
     if (value != null) {
-      throw new IllegalArgumentException(
-          "Expected value to be null. Actual value: \"" + value + "\"");
+      throw new IllegalArgumentException("Expected value to be null. Actual value: \"" + value
+          + "\"");
     }
   }
 
