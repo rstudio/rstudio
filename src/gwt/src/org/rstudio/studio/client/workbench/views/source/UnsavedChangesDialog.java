@@ -21,6 +21,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 
+import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.GWT;
@@ -30,8 +31,10 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.IdentityColumn;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Label;
@@ -145,8 +148,41 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
       return iconColumn;
    }
     
-   private TextColumn<EditingTarget> addNameColumn()
+   private class NameAndPathCell extends AbstractCell<EditingTarget>
    {
+
+      @Override
+      public void render(
+            com.google.gwt.cell.client.Cell.Context context,
+            EditingTarget value, SafeHtmlBuilder sb)
+      {
+         if (value != null) 
+         {
+           Styles styles = RESOURCES.styles();
+           StringBuilder div = new StringBuilder();
+           div.append("<div class=\"");
+           div.append(styles.targetName());
+           div.append("\">");
+           sb.appendHtmlConstant(div.toString());
+           sb.appendEscaped(value.getName().getValue());
+           sb.appendHtmlConstant("</div>");
+         }
+         
+      }
+      
+   }
+   
+   private IdentityColumn<EditingTarget> addNameColumn()
+   {
+      IdentityColumn<EditingTarget> nameAndPathColumn = 
+         new IdentityColumn<EditingTarget>(new NameAndPathCell());
+      
+      targetsCellTable_.addColumn(nameAndPathColumn);
+      targetsCellTable_.setColumnWidth(nameAndPathColumn, 120, Unit.PX);
+      
+      return nameAndPathColumn;
+      
+      /*
       TextColumn<EditingTarget> nameColumn = new TextColumn<EditingTarget>() {
          public String getValue(EditingTarget object)
          {
@@ -158,6 +194,7 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
       targetsCellTable_.setColumnWidth(nameColumn, 120, Unit.PX);
     
       return nameColumn;
+      */
    }
 
    
@@ -200,6 +237,8 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
    {
       String editingTargetScrollPanel();
       String captionLabel();
+      String targetName();
+      String targetPath();
    }
 
    static interface Resources extends ClientBundle
