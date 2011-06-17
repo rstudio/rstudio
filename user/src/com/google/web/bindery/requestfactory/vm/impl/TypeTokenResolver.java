@@ -26,6 +26,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Resolves payload type tokens to binary class names.
@@ -75,10 +77,26 @@ public class TypeTokenResolver {
    * TypeTokenResolver.
    */
   public static TypeTokenResolver loadFromClasspath() throws IOException {
-    Builder builder = new Builder();
+    Builder builder;
+    boolean mustLoad = true;
+    try {
+      // Look for a pre-cooked Builder type
+      Class<?> maybeBuilderImpl =
+          Class.forName(TypeTokenResolver.class.getName() + "BuilderImpl", false, Thread
+              .currentThread().getContextClassLoader());
+      builder = maybeBuilderImpl.asSubclass(Builder.class).newInstance();
+      mustLoad = false;
+    } catch (ClassNotFoundException ignored) {
+      // Try manifest-based approach
+      builder = new Builder();
+    } catch (InstantiationException e) {
+      throw new RuntimeException("Could not instantiate TypeTokenResolverImpl", e);
+    } catch (IllegalAccessException e) {
+      throw new RuntimeException("Could not instantiate TypeTokenResolverImpl", e);
+    }
     Enumeration<URL> locations =
         Thread.currentThread().getContextClassLoader().getResources(TOKEN_MANIFEST);
-    if (!locations.hasMoreElements()) {
+    if (mustLoad && !locations.hasMoreElements()) {
       throw new RuntimeException("No token manifest found.  Did the RequestFactory annotation"
           + " processor run? Check classpath for " + TOKEN_MANIFEST + " file and ensure that"
           + " your proxy types are compiled with the requestfactory-apt.jar on javac's classpath.");
@@ -98,6 +116,10 @@ public class TypeTokenResolver {
    * Map of obfuscated ids to binary class names.
    */
   private Map<String, String> typeTokens = new HashMap<String, String>();
+
+  public SortedMap<String, String> getAllTypeTokens() {
+    return new TreeMap<String, String>(typeTokens);
+  }
 
   public String getTypeFromToken(String typeToken) {
     return typeTokens.get(typeToken);
