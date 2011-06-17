@@ -148,6 +148,36 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
     model.setSelected("test", false); // Should not fire change event
   }
 
+  /**
+   * Tests that reselecting the same key from a different object does not fire
+   * a change event.
+   */
+  public void testNoDuplicateChangeEventWithKeyProvider() {
+    ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
+      public Object getKey(String item) {
+        return item.toUpperCase();
+      }
+    };
+    MultiSelectionModel<String> model = createSelectionModel(keyProvider);
+    SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
+      public void onSelectionChange(SelectionChangeEvent event) {
+        fail();
+      }
+    };
+
+    model.setSelected("test1", true);
+    assertTrue(model.isSelected("test1"));
+
+    model.addSelectionChangeHandler(handler);
+    // Selecting a different object with the same key should not be seen as a
+    // selection change
+    String replacement = "TEST1";
+    model.setSelected(replacement, true);
+    assertTrue(model.isSelected(replacement));
+    assertEquals(1, model.getSelectedSet().size());
+    assertSame(replacement, model.getSelectedSet().iterator().next());
+  }
+
   public void testSetSelected() {
     MultiSelectionModel<String> model = createSelectionModel(null);
     assertFalse(model.isSelected("test0"));

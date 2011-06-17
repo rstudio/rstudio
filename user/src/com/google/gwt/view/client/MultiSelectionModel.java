@@ -111,9 +111,10 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
       Object key = getKey(object);
       T oldValue = selectedSet.get(key);
       if (selected) {
-        if (oldValue == null || !oldValue.equals(object)) {
-          selectedSet.put(getKey(object), object);
-          changed = true;
+        selectedSet.put(key, object);
+        Object oldKey = getKey(oldValue);
+        if (!changed) {
+          changed = (oldKey == null) ? (key != null) : !oldKey.equals(key);
         }
       } else {
         if (oldValue != null) {
