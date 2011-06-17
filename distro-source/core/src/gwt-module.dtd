@@ -16,7 +16,7 @@
 <!-- The module root element -->
 <!ELEMENT module (inherits | source | public | super-source | entry-point | 
   stylesheet | script | servlet | replace-with | generate-with |
-  define-property | extend-property | set-property |
+  define-property | extend-property | set-property | set-property-fallback |
   clear-configuration-property | define-configuration-property |
   extend-configuration-property | set-configuration-property |
   property-provider | define-linker | add-linker)*>
@@ -104,6 +104,8 @@
 <!--                 ^^^ Commonly-used elements ^^^                -->
 <!--                VVV Deferred binding elements VVV              -->
 
+<!-- All possible predicates -->
+<!ENTITY % predicates "when-property-is | when-type-assignable | when-type-is | all | any | none">
 <!-- Define a property and allowable values (comma-separated identifiers) -->
 <!ELEMENT define-property EMPTY>
 <!ATTLIST define-property
@@ -117,8 +119,14 @@
 	is-multi-valued CDATA #REQUIRED
 >
 <!-- Set the value of a previously-defined property -->
-<!ELEMENT set-property EMPTY>
+<!ELEMENT set-property (%predicates;)*>
 <!ATTLIST set-property
+	name CDATA #REQUIRED
+	value CDATA #REQUIRED
+>
+<!-- Set the value of a previously-defined property -->
+<!ELEMENT set-property-fallback EMPTY>
+<!ATTLIST set-property-fallback
 	name CDATA #REQUIRED
 	value CDATA #REQUIRED
 >
@@ -133,6 +141,7 @@
 <!ATTLIST extend-property
 	name CDATA #REQUIRED
 	values CDATA #REQUIRED
+	fallback-value CDATA #IMPLIED
 >
 <!-- Collapse property values to produce soft permutations -->
 <!ELEMENT collapse-property EMPTY>
@@ -162,8 +171,6 @@
 	name CDATA #REQUIRED
 	generator CDATA #IMPLIED
 >
-<!-- All possible predicates -->
-<!ENTITY % predicates "when-property-is | when-type-assignable | when-type-is | all | any | none">
 <!-- Deferred binding assignment to substitute a named class -->
 <!ELEMENT replace-with (%predicates;)*>
 <!ATTLIST replace-with
