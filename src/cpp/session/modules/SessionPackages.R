@@ -158,8 +158,10 @@
    else
       packageArchiveExtension <- ".tar.gz"
 
-   # default library path
+   # default library path (normalize on unix)
    defaultLibraryPath = .libPaths()[1L]
+   if (!identical(.Platform$OS.type, "windows"))
+      defaultLibraryPath <- normalizePath(defaultLibraryPath)
    
    # is default library writeable (based on install.packages)
    defaultLibraryWriteable <- .rs.defaultLibPathIsWriteable()
