@@ -52,11 +52,7 @@ import com.google.gwt.resources.rg.BundleResourceGenerator;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.JarURLConnection;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -119,9 +115,6 @@ import java.util.Set;
  * another by simply emitting a call to <code>resource()</code>.
  */
 public abstract class AbstractClientBundleGenerator extends GeneratorExt {
-
-  private static final String FILE_PROTOCOL = "file";
-  private static final String JAR_PROTOCOL = "jar";
   private static final String CACHED_PROPERTY_INFORMATION = "cached-property-info";
   private static final String CACHED_RESOURCE_INFORMATION = "cached-resource-info";
   private static final String CACHED_TYPE_INFORMATION = "cached-type-info";
@@ -138,10 +131,12 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
     private final Map<String, String> fieldsToDeclarations = new LinkedHashMap<String, String>();
     private final Map<String, String> fieldsToInitializers = new HashMap<String, String>();
 
+    @Override
     public String define(JType type, String name) {
       return define(type, name, null, true, false);
     }
 
+    @Override
     public String define(JType type, String name, String initializer,
         boolean isStatic, boolean isFinal) {
 
@@ -231,6 +226,7 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
       }
     }
 
+    @Override
     public void addConfigurationProperty(String propertyName) 
         throws BadPropertyValueException {
       
@@ -242,6 +238,7 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
       configProps.add(propertyName);
     }
 
+    @Override
     public void addPermutationAxis(String propertyName)
         throws BadPropertyValueException {
 
@@ -266,6 +263,7 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
       }
     }
 
+    @Override
     public void addResolvedResource(String partialPath, URL resolvedResourceUrl) {
       if (!canBeCacheable) {
         return;
@@ -273,6 +271,7 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
       resolvedResources.put(partialPath, resolvedResourceUrl);
     }
 
+    @Override
     public void addTypeHierarchy(JClassType type) {
       if (!canBeCacheable) {
         return;
@@ -618,68 +617,14 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
         return false;
       }
       
-      if (!checkDependentResourceUpToDate(lastTimeGenerated, resolvedUrl)) {
+      // Check whether the resource referenced by the provided URL is up to date
+      long modifiedTime = Util.getResourceModifiedTime(resolvedUrl);
+      if (modifiedTime == 0L || modifiedTime > lastTimeGenerated) {
         logger.log(TreeLogger.TRACE, "Found dependent resource that has changed: " + resourceName);
         return false;
       }
     }
 
-    return true;
-  }
-
-  /**
-   * Checks whether a dependent resource referenced by the provided URL is
-   * up to date, based on the provided referenceTime.
-   */
-  private boolean checkDependentResourceUpToDate(long referenceTime, URL url) {
-    try {
-      if (url.getProtocol().equals(JAR_PROTOCOL)) {
-        /*
-         * If this resource is contained inside a jar file, such as can
-         * happen if it's bundled in a 3rd-party library, we use the jar 
-         * file itself to test whether it's up to date.  We don't want
-         * to call JarURLConnection.getLastModified(), as this is much
-         * slower than using the jar File resource directly.
-         */
-        JarURLConnection jarConn = (JarURLConnection) url.openConnection();
-        url = jarConn.getJarFileURL();
-      }
-
-      long lastModified;
-      if (url.getProtocol().equals(FILE_PROTOCOL)) {
-        /*
-         * Need to handle possibly wonky syntax in a file URL resource.
-         * Modeled after suggestion in this blog entry:
-         * http://weblogs.java.net/blog/2007/04/25/how-convert-javaneturl-javaiofile
-         */
-        File file;
-        try {
-          file = new File(url.toURI());
-        } catch (URISyntaxException uriEx) {
-          file = new File(url.getPath());
-        }
-        lastModified = file.lastModified();
-      } else {
-        /*
-         * Don't attempt to handle any other protocol
-         */
-        return false;
-      }
-      if (lastModified == 0L ||
-          lastModified > referenceTime) {
-        return false;
-      }
-    } catch (IOException ioEx) {
-      return false;
-    } catch (RuntimeException ruEx) {
-      /*
-       * Return false for any RuntimeException (e.g. a SecurityException), and 
-       * allow the cacheability check to fail, since we don't want to change the 
-       * behavior that would be encountered if no cache is available.  Force 
-       * resource generators to utilize their own exception handling.
-       */
-      return false;
-    }
     return true;
   }
 

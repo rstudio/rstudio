@@ -490,9 +490,7 @@ public class ModuleDefSchema extends Schema {
     @SuppressWarnings("unused") // called reflectively
     protected Schema __inherits_begin(String name)
         throws UnableToCompleteException {
-      TreeLogger branch = logger.branch(TreeLogger.TRACE,
-          "Loading inherited module '" + name + "'", null);
-      loader.nestedLoad(branch, name, moduleDef);
+      loader.nestedLoad(logger, name, moduleDef);
       return null;
     }
 

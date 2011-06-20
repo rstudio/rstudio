@@ -29,9 +29,7 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.PropertyPermutations;
 import com.google.gwt.dev.javac.CompilationState;
-import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.CompilationUnit;
-import com.google.gwt.dev.javac.CompilationUnitArchive;
 import com.google.gwt.dev.jjs.AbstractCompiler;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JavaScriptCompiler;
@@ -47,9 +45,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -244,9 +240,7 @@ public class Precompile {
     // doesn't block when the library is accessed for the first time.
     new GraphicsInitThread().start();
 
-    if (Boolean.valueOf(System.getProperty("gwt.usearchives"))) {
-      preloadArchives(logger, module);
-    }
+    ArchivePreloader.preloadArchives(logger, module);
 
     try {
       CompilationState compilationState =
@@ -339,36 +333,6 @@ public class Precompile {
       return null;
     } finally {
       precompileEvent.end();
-    }
-  }
-
-  /**
-   * Load any .gwtar files into the cache before building CompilationState.
-   */
-  static void preloadArchives(TreeLogger logger, ModuleDef module) {
-    SpeedTracerLogger.Event loadArchive = SpeedTracerLogger.start(CompilerEventType.LOAD_ARCHIVE);
-    try {
-      Collection<URL> archiveURLs = module.getAllCompilationUnitArchiveURLs();
-      if (logger.isLoggable(TreeLogger.TRACE) && archiveURLs != null) {
-        for (URL archiveURL : archiveURLs) {
-          logger.log(TreeLogger.TRACE, "Found archived module: " + archiveURL);
-        }
-      }
-
-      for (URL archiveURL : archiveURLs) {
-        try {
-          CompilationUnitArchive archive = CompilationUnitArchive.createFromURL(archiveURL);
-          // Pre-populate CompilationStateBuilder with .gwt files
-          CompilationStateBuilder.addArchive(archive);
-        } catch (IOException ex) {
-          logger.log(TreeLogger.WARN, "Unable to read: " + archiveURL + ". Skipping: " + ex);
-        } catch (ClassNotFoundException ex) {
-          logger.log(TreeLogger.WARN, "Incompatible archived module: " + archiveURL
-              + ". Skipping: " + ex);
-        }
-      }
-    } finally {
-      loadArchive.end();
     }
   }
 

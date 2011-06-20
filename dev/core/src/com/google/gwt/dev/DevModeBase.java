@@ -103,9 +103,7 @@ public abstract class DevModeBase implements DoneCallback {
         ModuleDef moduleDef = loadModule(logger, moduleName, true);
         assert (moduleDef != null);
 
-        if (Boolean.valueOf(System.getProperty("gwt.usearchives"))) {
-          Precompile.preloadArchives(logger, moduleDef);
-        }        
+        ArchivePreloader.preloadArchives(logger, moduleDef);
         
         CompilationState compilationState =
             moduleDef.getCompilationState(logger, !options.isStrict());

@@ -315,7 +315,7 @@ public class CompilationStateBuilder {
 
       // Sort, then report all errors (re-report for cached units).
       Collections.sort(resultUnits, CompilationUnit.COMPARATOR);
-      logger = logger.branch(TreeLogger.DEBUG, "Validating newly compiled units");
+      logger = logger.branch(TreeLogger.DEBUG, "Validating units:");
       int errorCount = 0;
       for (CompilationUnit unit : resultUnits) {
         if (CompilationProblemReporter.reportErrors(logger, unit, suppressErrors)) {
@@ -346,9 +346,6 @@ public class CompilationStateBuilder {
       // archive
       if (cachedCompilationUnit == null
           || cachedCompilationUnit.getLastModified() < unit.getLastModified()) {
-        // TODO(zundel): mark these units as being a part of an archive.
-        // that way, the persistent unit cache won't need to bother to write
-        // them out.
         unitCache.addArchivedUnit(unit);
       }
     }
@@ -440,7 +437,7 @@ public class CompilationStateBuilder {
       builders.add(builder);
     }
     if (logger.isLoggable(TreeLogger.TRACE)) {
-      logger.log(TreeLogger.TRACE, "Found " + cachedUnits.size() + " cached units.  Used "
+      logger.log(TreeLogger.TRACE, "Found " + cachedUnits.size() + " cached/archived units.  Used "
           + cachedUnits.size() + " / " + resources.size() + " units from cache.");
     }
 

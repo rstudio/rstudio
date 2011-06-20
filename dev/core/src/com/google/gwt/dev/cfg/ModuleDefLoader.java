@@ -211,10 +211,9 @@ public final class ModuleDefLoader {
       @Override
       public void load(TreeLogger logger, String moduleName, ModuleDef moduleDef)
           throws UnableToCompleteException {
+        logger.log(TreeLogger.TRACE, "Loading module '" + moduleName + "'");
         for (String inherit : inherits) {
-          TreeLogger branch = logger.branch(TreeLogger.TRACE,
-              "Loading inherited module '" + inherit + "'", null);
-          nestedLoad(branch, inherit, moduleDef);
+          nestedLoad(logger, inherit, moduleDef);
         }
       }
     };
@@ -223,23 +222,22 @@ public final class ModuleDefLoader {
   /**
    * Loads a new module into <code>moduleDef</code> as an included module.
    *
-   * @param logger Logs the process.
+   * @param parentLogger Logs the process.
    * @param moduleName The module to load.
    * @param moduleDef The module to add the new module to.
    * @throws UnableToCompleteException
    */
-  void nestedLoad(TreeLogger logger, String moduleName, ModuleDef moduleDef)
+  void nestedLoad(TreeLogger parentLogger, String moduleName, ModuleDef moduleDef)
       throws UnableToCompleteException {
 
     if (alreadyLoadedModules.contains(moduleName)) {
-      if (logger.isLoggable(TreeLogger.TRACE)) {
-        logger.log(TreeLogger.TRACE, "Module '" + moduleName
-            + "' has already been loaded and will be skipped", null);
-      }
+      // No need to parse module again.
       return;
-    } else {
-      alreadyLoadedModules.add(moduleName);
     }
+
+    TreeLogger logger = parentLogger.branch(TreeLogger.DEBUG, "Loading inherited module '" 
+        + moduleName + "'", null);
+    alreadyLoadedModules.add(moduleName);
 
     // Find the specified module using the classpath.
     //
@@ -249,8 +247,8 @@ public final class ModuleDefLoader {
 
     if (moduleURL != null) {
       String externalForm = moduleURL.toExternalForm();
-      if (logger.isLoggable(TreeLogger.TRACE)) {
-        logger.log(TreeLogger.TRACE, "Module location: " + externalForm, null);
+      if (logger.isLoggable(TreeLogger.DEBUG)) {
+        logger.log(TreeLogger.DEBUG, "Module location: " + externalForm, null);
       }
       try {
         if ((!(externalForm.startsWith("jar:file")))
@@ -271,10 +269,8 @@ public final class ModuleDefLoader {
       }
     }
     if (moduleURL == null) {
-      String msg = "Unable to find '"
-          + resName
-          + "' on your classpath; could be a typo, or maybe you forgot to include a classpath entry for source?";
-      logger.log(TreeLogger.ERROR, msg, null);
+      logger.log(TreeLogger.ERROR,"Unable to find '" + resName + "' on your classpath; "
+          + "could be a typo, or maybe you forgot to include a classpath entry for source?");
       throw new UnableToCompleteException();
     }
 

@@ -56,7 +56,9 @@ import java.io.Writer;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.JarURLConnection;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
@@ -83,6 +85,9 @@ public final class Util {
 
   public static final String[] EMPTY_ARRAY_STRING = new String[0];
 
+  private static final String FILE_PROTOCOL = "file";
+
+  private static final String JAR_PROTOCOL = "jar";
   /**
    * The size of a {@link #threadLocalBuf}, which should be large enough for
    * efficient data transfer but small enough to fit easily into the L2 cache of
@@ -432,6 +437,48 @@ public final class Util {
     String installPath = Utility.getInstallPath();
     File file = new File(installPath + '/' + relativePath);
     return readFileAsString(file);
+  }
+
+  /**
+   * Retrieves the last modified time of a provided URL.
+   *
+   * @return a positive value indicating milliseconds since the epoch (00:00:00
+   *         Jan 1, 1970), or 0L on failure, such as a SecurityException or
+   *         IOException.
+   */
+  public static long getResourceModifiedTime(URL url) {
+    long lastModified = 0L;
+    try {
+      if (url.getProtocol().equals(JAR_PROTOCOL)) {
+        /*
+         * If this resource is contained inside a jar file, such as can happen
+         * if it's bundled in a 3rd-party library, we use the jar file itself to
+         * test whether it's up to date. We don't want to call
+         * JarURLConnection.getLastModified(), as this is much slower than using
+         * the jar File resource directly.
+         */
+        JarURLConnection jarConn = (JarURLConnection) url.openConnection();
+        url = jarConn.getJarFileURL();
+      }
+      if (url.getProtocol().equals(FILE_PROTOCOL)) {
+        /*
+         * Need to handle possibly wonky syntax in a file URL resource. Modeled
+         * after suggestion in this blog entry:
+         * http://weblogs.java.net/blog/2007
+         * /04/25/how-convert-javaneturl-javaiofile
+         */
+        File file;
+        try {
+          file = new File(url.toURI());
+        } catch (URISyntaxException uriEx) {
+          file = new File(url.getPath());
+        }
+        lastModified = file.lastModified();
+      }
+    } catch (IOException ignored) {
+    } catch (RuntimeException ignored) {
+    }
+    return lastModified;
   }
 
   /**

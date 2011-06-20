@@ -186,6 +186,8 @@ public class CompileModule {
    */
   public boolean run(final TreeLogger logger) throws UnableToCompleteException {
 
+    Set<String> alreadyLoadedArchives = new HashSet<String>();
+
     // TODO(zundel): There is an optimal order to compile these modules in.
     // Modify ModuleDefLoader to be able to figure that out and sort them for
     // us.
@@ -211,10 +213,14 @@ public class CompileModule {
         }
 
         for (URL archiveURL : archiveURLs) {
+          String archiveURLstring = archiveURL.toString();
+          if (alreadyLoadedArchives.contains(archiveURLstring)) {
+            continue;
+          }
+          alreadyLoadedArchives.add(archiveURLstring);
           SpeedTracerLogger.Event loadArchive =
-              SpeedTracerLogger.start(CompilerEventType.LOAD_ARCHIVE, "dependentModule", archiveURL
-                  .toString());
-
+            SpeedTracerLogger.start(CompilerEventType.LOAD_ARCHIVE, "dependentModule", archiveURL
+                .toString());
           try {
             CompilationUnitArchive archive = CompilationUnitArchive.createFromURL(archiveURL);
             // Pre-populate CompilationStateBuilder with .gwtar files

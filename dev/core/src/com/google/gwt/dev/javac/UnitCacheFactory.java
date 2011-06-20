@@ -51,7 +51,8 @@ public class UnitCacheFactory {
         if (propertyCacheDir != null) {
           cacheDir = new File(propertyCacheDir);
         } else if (cacheDir == null) {
-          logger.log(TreeLogger.TRACE, "To enable persistent unit caching, specify the -Dgwt.persistentunitcachedir=<dir> system property.");
+          logger.log(TreeLogger.TRACE, "Persistent caching disabled - no directory specified.\n"
+              + "To enable persistent unit caching use -Dgwt.persistentunitcachedir=<dir>");
         }
         if (cacheDir != null) {
           try {
