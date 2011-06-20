@@ -178,42 +178,52 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       this.pageSize = pageSize;
     }
 
+    @Override
     public int getKeyboardSelectedRow() {
       return keyboardSelectedRow;
     }
 
+    @Override
     public T getKeyboardSelectedRowValue() {
       return keyboardSelectedRowValue;
     }
 
+    @Override
     public int getPageSize() {
       return pageSize;
     }
 
+    @Override
     public int getPageStart() {
       return pageStart;
     }
 
+    @Override
     public int getRowCount() {
       return rowCount;
     }
 
+    @Override
     public int getRowDataSize() {
       return rowData.size();
     }
 
+    @Override
     public T getRowDataValue(int index) {
       return rowData.get(index);
     }
 
+    @Override
     public List<T> getRowDataValues() {
       return Collections.unmodifiableList(rowData);
     }
 
+    @Override
     public T getSelectedValue() {
       return selectedValue;
     }
 
+    @Override
     public boolean isRowCountExact() {
       return rowCountIsExact;
     }
@@ -226,10 +236,12 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
      * method should only be called on the state after it has been resolved.
      * </p>
      */
+    @Override
     public boolean isRowSelected(int index) {
       return selectedRows.contains(index);
     }
 
+    @Override
     public boolean isViewTouched() {
       return viewTouched;
     }
@@ -372,8 +384,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
   /**
    * The number of rows to jump when PAGE_UP or PAGE_DOWN is pressed and the
-   * {@link KeyboardSelectionPolicy} is
-   * {@link KeyboardSelectionPolicy.INCREMENT_PAGE}.
+   * {@link HasKeyboardPagingPolicy.KeyboardPagingPolicy} is
+   * {@link HasKeyboardPagingPolicy.KeyboardPagingPolicy#INCREASE_RANGE}.
    */
   static final int PAGE_INCREMENT = 30;
 
@@ -459,6 +471,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     this.state = new DefaultState<T>(pageSize);
   }
 
+  @Override
   public HandlerRegistration addCellPreviewHandler(
       CellPreviewEvent.Handler<T> handler) {
     return view.addHandler(handler, CellPreviewEvent.getType());
@@ -469,11 +482,13 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     return view.addHandler(handler, LoadingStateChangeEvent.TYPE);
   }
 
+  @Override
   public HandlerRegistration addRangeChangeHandler(
       RangeChangeEvent.Handler handler) {
     return view.addHandler(handler, RangeChangeEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addRowCountChangeHandler(
       RowCountChangeEvent.Handler handler) {
     return view.addHandler(handler, RowCountChangeEvent.getType());
@@ -502,6 +517,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   /**
    * @throws UnsupportedOperationException
    */
+  @Override
   public void fireEvent(GwtEvent<?> event) {
     // HasData should fire their own events.
     throw new UnsupportedOperationException();
@@ -532,6 +548,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     return Math.min(getPageSize(), getRowCount() - getPageStart());
   }
 
+  @Override
   public KeyboardPagingPolicy getKeyboardPagingPolicy() {
     return keyboardPagingPolicy;
   }
@@ -568,10 +585,12 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
         : getCurrentState().getKeyboardSelectedRowValue();
   }
 
+  @Override
   public KeyboardSelectionPolicy getKeyboardSelectionPolicy() {
     return keyboardSelectionPolicy;
   }
 
+  @Override
   public ProvidesKey<T> getKeyProvider() {
     return keyProvider;
   }
@@ -581,22 +600,27 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    * 
    * @return the data size
    */
+  @Override
   public int getRowCount() {
     return getCurrentState().getRowCount();
   }
 
+  @Override
   public SelectionModel<? super T> getSelectionModel() {
     return selectionModel;
   }
 
+  @Override
   public T getVisibleItem(int indexOnPage) {
     return getCurrentState().getRowDataValue(indexOnPage);
   }
 
+  @Override
   public int getVisibleItemCount() {
     return getCurrentState().getRowDataSize();
   }
 
+  @Override
   public List<T> getVisibleItems() {
     return getCurrentState().getRowDataValues();
   }
@@ -604,6 +628,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   /**
    * Return the range of data being displayed.
    */
+  @Override
   public Range getVisibleRange() {
     return new Range(getPageStart(), getPageSize());
   }
@@ -626,7 +651,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   }
 
   /**
-   * Check if the next call to {@link #keyboardPrevious()} would succeed.
+   * Check if the next call to {@link #keyboardPrev()} would succeed.
    * 
    * @return true if there is a previous row accessible by the keyboard
    */
@@ -662,6 +687,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     return isRowCountExact() && getRowCount() == 0;
   }
 
+  @Override
   public boolean isRowCountExact() {
     return getCurrentState().isRowCountExact();
   }
@@ -736,6 +762,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     ensurePendingState().redrawRequired = true;
   }
 
+  @Override
   public void setKeyboardPagingPolicy(KeyboardPagingPolicy policy) {
     if (policy == null) {
       throw new NullPointerException("KeyboardPagingPolicy cannot be null");
@@ -839,6 +866,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     }
   }
 
+  @Override
   public void setKeyboardSelectionPolicy(KeyboardSelectionPolicy policy) {
     if (policy == null) {
       throw new NullPointerException("KeyboardSelectionPolicy cannot be null");
@@ -849,12 +877,14 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   /**
    * @throws UnsupportedOperationException
    */
+  @Override
   public final void setRowCount(int count) {
     // Views should defer to their own implementation of
     // setRowCount(int, boolean)) per HasRows spec.
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void setRowCount(int count, boolean isExact) {
     if (count == getRowCount() && isExact == isRowCountExact()) {
       return;
@@ -869,6 +899,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     RowCountChangeEvent.fire(display, count, isExact);
   }
 
+  @Override
   public void setRowData(int start, List<? extends T> values) {
     int valuesLength = values.size();
     int valuesEnd = start + valuesLength;
@@ -912,6 +943,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     }
   }
 
+  @Override
   public void setSelectionModel(final SelectionModel<? super T> selectionModel) {
     clearSelectionModel();
 
@@ -919,6 +951,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     this.selectionModel = selectionModel;
     if (selectionModel != null) {
       selectionHandler = selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
+        @Override
         public void onSelectionChange(SelectionChangeEvent event) {
           // Ensure that we resolve selection.
           ensurePendingState();
@@ -933,16 +966,19 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   /**
    * @throws UnsupportedOperationException
    */
+  @Override
   public final void setVisibleRange(int start, int length) {
     // Views should defer to their own implementation of setVisibleRange(Range)
     // per HasRows spec.
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void setVisibleRange(Range range) {
     setVisibleRange(range, false, false);
   }
 
+  @Override
   public void setVisibleRangeAndClearData(Range range,
       boolean forceRangeChangeEvent) {
     setVisibleRange(range, true, forceRangeChangeEvent);
@@ -1049,6 +1085,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
      * existing finally commands (such as SelectionModel commands).
      */
     pendingStateCommand = new ScheduledCommand() {
+      @Override
       public void execute() {
         // Verify that this command was the last one scheduled.
         if (pendingStateCommand == this) {
@@ -1418,6 +1455,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
               pending.keyboardStealFocus);
         }
       }
+    } catch (Error e) {
+      // Force the error into the dev mode console.
+      throw new RuntimeException(e);
     } finally {
       /*
        * We are done resolving state, so unlock the rendering loop. We unlock

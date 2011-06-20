@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.TreeViewModel;
 
 /**
@@ -24,6 +26,32 @@ public class CellTreeTest extends AbstractCellTreeTestBase {
 
   public CellTreeTest() {
     super(false);
+  }
+
+  public void testRefreshEmptyNode() {
+    // An empty data provider.
+    final ListDataProvider<String> provider = new ListDataProvider<String>();
+    TreeViewModel model = new TreeViewModel() {
+      @Override
+      public NodeInfo<?> getNodeInfo(Object value) {
+        TextCell cell = new TextCell();
+        return new DefaultNodeInfo<String>(provider, cell);
+      }
+
+      @Override
+      public boolean isLeaf(Object value) {
+        return false;
+      }
+    };
+
+    // Create the tree.
+    CellTree tree = createAbstractCellTree(model, null);
+    tree.rootNode.listView.presenter.flush();
+    
+    // Refresh the empty list.
+    provider.refresh();
+    provider.flush();
+    tree.rootNode.listView.presenter.flush();
   }
 
   /**
