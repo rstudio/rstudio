@@ -112,6 +112,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeToCurrentLine());
          results.add(commands.executeFromCurrentLine());
          results.add(commands.executeCurrentFunction());
+         results.add(commands.executeLastCode());
       }
       if (canCompilePDF())
       {
