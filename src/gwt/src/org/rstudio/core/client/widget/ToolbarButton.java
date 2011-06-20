@@ -77,13 +77,34 @@ public class ToolbarButton extends FocusWidget
    {
       this(null, image, clickHandler);
    }
+   
+   public ToolbarButton(ToolbarPopupMenu menu, String tooltipText)
+   {
+      this((String)null, 
+           ThemeResources.INSTANCE.menuDownArrow(), 
+           (ImageResource) null,
+           (ClickHandler) null);
+      
+      setTitle(tooltipText);
+      
+      addMenuHandlers(menu);
+      
+      addStyleName(styles_.toolbarButtonMenu());
+   }
     
    public ToolbarButton(String text, 
                         ImageResource leftImage,
-                        final ToolbarPopupMenu menu)
+                        ToolbarPopupMenu menu)
    {
       this(text, leftImage, ThemeResources.INSTANCE.menuDownArrow(), null);
 
+      addMenuHandlers(menu);
+      
+      addStyleName(styles_.toolbarButtonMenu());
+   }
+   
+   private void addMenuHandlers(final ToolbarPopupMenu menu)
+   {
       /*
        * We want clicks on this button to toggle the visibility of the menu,
        * as well as having the menu auto-hide itself as it normally does.
@@ -126,7 +147,6 @@ public class ToolbarButton extends FocusWidget
             });
          }
       });
-      addStyleName(styles_.toolbarButtonMenu());
    }
    
    private ToolbarButton(String text, 

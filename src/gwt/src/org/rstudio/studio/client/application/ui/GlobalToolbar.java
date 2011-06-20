@@ -3,7 +3,6 @@ package org.rstudio.studio.client.application.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -18,8 +17,8 @@ public class GlobalToolbar extends Toolbar
    public GlobalToolbar(Commands commands, FileTypeCommands fileTypeCommands)
    {
       super();
-      ThemeStyles styles = ThemeResources.INSTANCE.themeStyles(); 
-      addStyleName(styles.globalToolbar());
+      ThemeResources res = ThemeResources.INSTANCE;
+      addStyleName(res.themeStyles().globalToolbar());
       
       
       // add newSourceDoc command
@@ -38,12 +37,35 @@ public class GlobalToolbar extends Toolbar
                                                   icons.stock_new(),
                                                   newMenu);
       addLeftWidget(newButton);
+      addLeftSeparator();
       
-      addLeftSeparator();
+      // open button + mru
       addLeftWidget(commands.openSourceDoc().createToolbarButton());
+      
+      ToolbarPopupMenu mruMenu = new ToolbarPopupMenu();
+      mruMenu.addItem(commands.mru0().createMenuItem(false));
+      mruMenu.addItem(commands.mru1().createMenuItem(false));
+      mruMenu.addItem(commands.mru2().createMenuItem(false));
+      mruMenu.addItem(commands.mru3().createMenuItem(false));
+      mruMenu.addItem(commands.mru4().createMenuItem(false));
+      mruMenu.addItem(commands.mru5().createMenuItem(false));
+      mruMenu.addItem(commands.mru6().createMenuItem(false));
+      mruMenu.addItem(commands.mru7().createMenuItem(false));
+      mruMenu.addItem(commands.mru8().createMenuItem(false));
+      mruMenu.addItem(commands.mru9().createMenuItem(false));
+      mruMenu.addSeparator();
+      mruMenu.addItem(commands.clearRecentFiles().createMenuItem(false));
+      
+      ToolbarButton mruButton = new ToolbarButton(mruMenu,
+                                                  "Open recent files");
+      addLeftWidget(mruButton);
       addLeftSeparator();
+      
+      
       addLeftWidget(commands.saveSourceDoc().createToolbarButton());
+      addLeftWidget(commands.saveAllSourceDocs().createToolbarButton());
       addLeftSeparator();
+      
       addLeftWidget(commands.printSourceDoc().createToolbarButton());
    }
 
