@@ -260,20 +260,6 @@ FilePath getDefaultWorkingDirectory()
 }
 
 
-FilePath getInitialWorkingDirectory()
-{
-   // first see if there is an override from the environment
-   FilePath workingDirPath = session::options().initialWorkingDirOverride();
-   if (workingDirPath.exists() && workingDirPath.isDirectory())
-   {
-      return workingDirPath;
-   }
-   else
-   {
-      // if not then just return default working dir
-      return getDefaultWorkingDirectory();
-   }
-}
 
 void handleClientInit(const boost::function<void()>& initFunction,
                       boost::shared_ptr<HttpConnection> ptrConnection)
@@ -379,7 +365,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
 
    std::string initialWorkingDir = module_context::createAliasedPath(
-                                                   getInitialWorkingDirectory());
+                                module_context::initialWorkingDirectory());
    sessionInfo["initial_working_dir"] = initialWorkingDir;
 
    sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
@@ -1708,7 +1694,7 @@ FilePath rEnvironmentDir()
    }
    else
    {
-      return getInitialWorkingDirectory();
+      return module_context::initialWorkingDirectory();
    }
 }
 
@@ -1740,6 +1726,21 @@ FilePath getStartupEnvironmentFilePath()
 // provide definition methods for session::module_context
 namespace session { 
 namespace module_context {
+
+FilePath initialWorkingDirectory()
+{
+   // first see if there is an override from the environment
+   FilePath workingDirPath = session::options().initialWorkingDirOverride();
+   if (workingDirPath.exists() && workingDirPath.isDirectory())
+   {
+      return workingDirPath;
+   }
+   else
+   {
+      // if not then just return default working dir
+      return getDefaultWorkingDirectory();
+   }
+}
    
 Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler)
 {
@@ -1973,7 +1974,7 @@ int main (int argc, char * const argv[])
          return sessionExitFailure(error, ERROR_LOCATION) ;
 
       // set working directory
-      FilePath workingDir = getInitialWorkingDirectory();
+      FilePath workingDir = module_context::initialWorkingDirectory();
       error = workingDir.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);

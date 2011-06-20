@@ -47,6 +47,8 @@ core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 core::FilePath userScratchPath();
 bool isVisibleUserFile(const core::FilePath& filePath);
 
+core::FilePath initialWorkingDirectory();
+
 core::FilePath safeCurrentPath();
 
 core::json::Object createFileSystemItem(const core::FileInfo& fileInfo);
