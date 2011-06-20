@@ -27,6 +27,8 @@ git merge \
     origin/bugfix/selected-word-colors \
 
 
+git cherry-pick eb02e51
+
 make clean
 make
 cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
