@@ -166,9 +166,15 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       // if save hasn't been confirmed yet then call into desktopHooks and bail
       if (!saveConfirmed_)
       {
-         pFrame->evaluateJavaScript(QString::fromAscii("!!window.desktopHooks.saveChangesBeforeQuit()"));
-         pEvent->ignore();
-         return;
+         // if there are unsaved changes then resolve them before exiting
+         QVariant hasUnsaved = pFrame->evaluateJavaScript(
+               QString::fromAscii("window.desktopHooks.hasUnsavedChanged()"));
+         if (hasUnsaved.toBool())
+         {
+            pFrame->evaluateJavaScript(QString::fromAscii("!!window.desktopHooks.saveChangesBeforeQuit()"));
+            pEvent->ignore();
+            return;
+         }
       }
 
       // reset the saveConfirmed_ flag (if we exit this function without quitting

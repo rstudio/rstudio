@@ -122,6 +122,11 @@ public class DesktopHooks
    }-*/;
 
 
+   boolean hasUnsavedChanged()
+   {
+      return commands_.saveAllSourceDocs().isEnabled();
+   }
+   
    void saveChangesBeforeQuit()
    {
       sourceShim_.saveChangesBeforeQuit(new Command() {
