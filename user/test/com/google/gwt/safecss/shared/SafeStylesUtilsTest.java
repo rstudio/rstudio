@@ -16,9 +16,9 @@
 package com.google.gwt.safecss.shared;
 
 /**
- * Unit tests for {@link SafeStylesString}.
+ * Unit tests for {@link SafeStylesUtils}.
  */
-public class SafeStylesStringTest extends GwtSafeStylesStringTest {
+public class SafeStylesUtilsTest extends GwtSafeStylesUtilsTest {
 
   // This forces a GWTTestCase to run as a vanilla JUnit TestCase.
   @Override

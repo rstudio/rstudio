@@ -15,7 +15,6 @@
  */
 package com.google.gwt.safecss.shared;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -32,43 +31,22 @@ public class GwtSafeStylesStringTest extends GWTTestCase {
    * Test that {@link SafeStyles} throws an assertion error if the string
    * contains a bracket.
    */
-  public void testBrackets() {
-    if (GWT.isScript()) {
-      // Assertions are disabled in compiled scripts.
+  public void testCloseBracket() {
+    if (!GwtSafeStylesUtilsTest.isAssertionEnabled()) {
       return;
     }
 
+    String invalid = "contains:close>;";
+    boolean caught = false;
     try {
-      new SafeStylesString("name:value<;");
-      fail("Expected AssertionError");
+      new SafeStylesString(invalid);
     } catch (AssertionError e) {
       // Expected.
+      caught = true;
     }
-    try {
-      new SafeStylesString("name:value>;");
-      fail("Expected AssertionError");
-    } catch (AssertionError e) {
-      // Expected.
+    if (!caught) {
+      fail("Expected AssertionError for: " + invalid);
     }
-  }
-
-  /**
-   * Test that {@link SafeStyles} throws an assertion error if the string
-   * contains a double quote.
-   */
-  public void testQuotes() {
-    if (GWT.isScript()) {
-      // Assertions are disabled in compiled scripts.
-      return;
-    }
-
-    // Verify that a string containing single quotes does not cause an
-    // exception.
-    new SafeStylesString("name:'value';");
-
-    // Verify that a string containing double quotes does not cause an
-    // exception.
-    new SafeStylesString("name:\"value\";");
   }
 
   public void testEquals() {
@@ -93,8 +71,7 @@ public class GwtSafeStylesStringTest extends GWTTestCase {
    * missing a semi-colon.
    */
   public void testMissingSemiColon() {
-    if (GWT.isScript()) {
-      // Assertions are disabled in compiled scripts.
+    if (!GwtSafeStylesUtilsTest.isAssertionEnabled()) {
       return;
     }
 
@@ -102,20 +79,64 @@ public class GwtSafeStylesStringTest extends GWTTestCase {
     new SafeStylesString(""); // no error expected.
     new SafeStylesString(" "); // no error expected.
 
+    String invalid = "missing:semicolon";
+    boolean caught = false;
     try {
-      new SafeStylesString("string:same"); // missing a semi-colon.
-      fail("Expected AssertionError");
+      new SafeStylesString(invalid);
     } catch (AssertionError e) {
       // Expected.
+      caught = true;
+    }
+    if (!caught) {
+      fail("Expected AssertionError for: " + invalid);
     }
   }
 
   public void testNull() {
     try {
       new SafeStylesString(null);
-      fail("Expected IllegalArgumentException");
+      fail("Expected NullPointerException");
     } catch (NullPointerException e) {
       // Expected.
     }
+  }
+
+  /**
+   * Test that {@link SafeStyles} throws an assertion error if the string
+   * contains a bracket.
+   */
+  public void testOpenBracket() {
+    if (!GwtSafeStylesUtilsTest.isAssertionEnabled()) {
+      return;
+    }
+
+    String invalid = "contains:open<;";
+    boolean caught = false;
+    try {
+      new SafeStylesString(invalid);
+    } catch (AssertionError e) {
+      // Expected.
+      caught = true;
+    }
+    if (!caught) {
+      fail("Expected AssertionError for: " + invalid);
+    }
+  }
+
+  /**
+   * Test that {@link SafeStyles} allows quotes.
+   */
+  public void testQuotes() {
+    if (!GwtSafeStylesUtilsTest.isAssertionEnabled()) {
+      return;
+    }
+
+    // Verify that a string containing single quotes does not cause an
+    // exception.
+    new SafeStylesString("name:'value';");
+
+    // Verify that a string containing double quotes does not cause an
+    // exception.
+    new SafeStylesString("name:\"value\";");
   }
 }

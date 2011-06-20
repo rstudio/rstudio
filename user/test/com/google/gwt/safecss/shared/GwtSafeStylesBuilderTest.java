@@ -15,7 +15,6 @@
  */
 package com.google.gwt.safecss.shared;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -50,19 +49,22 @@ public class GwtSafeStylesBuilderTest extends GWTTestCase {
   }
 
   public void testAppendTrustedStringWithInvalidCss() {
-    if (GWT.isScript()) {
-      // Assertions are disabled in compiled scripts.
+    if (!GwtSafeStylesUtilsTest.isAssertionEnabled()) {
       return;
     }
 
     SafeStylesBuilder sb = new SafeStylesBuilder();
     sb.appendTrustedString(CSS0);
 
+    boolean caught = false;
     try {
       sb.appendTrustedString(INVALID_CSS);
-      fail("Expected AssertionError");
     } catch (AssertionError e) {
       // Expected.
+      caught = true;
+    }
+    if (!caught) {
+      fail("Expected AssertionError for invalid css: " + INVALID_CSS);
     }
   }
 

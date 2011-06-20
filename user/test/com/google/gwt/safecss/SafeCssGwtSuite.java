@@ -17,7 +17,9 @@ package com.google.gwt.safecss;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.safecss.shared.GwtSafeStylesBuilderTest;
+import com.google.gwt.safecss.shared.GwtSafeStylesHostedModeUtilsTest;
 import com.google.gwt.safecss.shared.GwtSafeStylesStringTest;
+import com.google.gwt.safecss.shared.GwtSafeStylesUtilsTest;
 
 import junit.framework.Test;
 
@@ -29,7 +31,9 @@ public class SafeCssGwtSuite {
     GWTTestSuite suite = new GWTTestSuite("Test suite for safe css  GWTTestCases");
 
     suite.addTestSuite(GwtSafeStylesBuilderTest.class);
+    suite.addTestSuite(GwtSafeStylesHostedModeUtilsTest.class);
     suite.addTestSuite(GwtSafeStylesStringTest.class);
+    suite.addTestSuite(GwtSafeStylesUtilsTest.class);
 
     return suite;
   }

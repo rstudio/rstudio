@@ -16,13 +16,21 @@
 package com.google.gwt.safecss.shared;
 
 /**
- * Unit tests for {@link SafeStylesString}.
+ * JUnit tests for {@link SafeStylesHostedModeUtils}.
  */
-public class SafeStylesStringTest extends GwtSafeStylesStringTest {
+public class SafeStylesHostedModeUtilsTest extends GwtSafeStylesHostedModeUtilsTest {
 
   // This forces a GWTTestCase to run as a vanilla JUnit TestCase.
   @Override
   public String getModuleName() {
     return null;
+  }
+
+  @Override
+  protected void gwtSetUp() throws Exception {
+    super.gwtSetUp();
+    // Since we can't assume assertions are enabled, force
+    // SafeStylesHostedModeUtils to perform its check when running in JRE.
+    SafeStylesHostedModeUtils.setForceCheckValidStyle(true);
   }
 }

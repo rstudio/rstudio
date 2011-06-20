@@ -32,7 +32,8 @@ import com.google.gwt.thirdparty.streamhtmlparser.ParseException;
 public class SafeHtmlHostedModeUtils {
 
   /**
-   * If true, perform checks in server-side code.
+   * Name of system property that if set, enables checks in server-side code
+   * (even if assertions are disabled).
    */
   public static final String FORCE_CHECK_COMPLETE_HTML =
       "com.google.gwt.safehtml.ForceCheckCompleteHtml";

@@ -17,5 +17,23 @@
 <!-- SafeCss - facilities for avoiding XSS attacks                         -->
 <!--                                                                       -->
 <module>
+  <inherits name="com.google.gwt.core.Core"/>
+  <inherits name="com.google.gwt.user.UserAgent"/>
+
+  <replace-with class="com.google.gwt.safecss.shared.SafeStylesUtils.ImplIE6To8">
+    <when-type-is class="com.google.gwt.safecss.shared.SafeStylesUtils.Impl" />
+    <any>
+      <when-property-is name="user.agent" value="ie6" />
+      <when-property-is name="user.agent" value="ie8" />
+    </any>
+  </replace-with>
+
+  <!-- Override IE9 fallback. -->
+  <replace-with class="com.google.gwt.safecss.shared.SafeStylesUtils.Impl">
+    <when-type-is class="com.google.gwt.safecss.shared.SafeStylesUtils.Impl" />
+    <when-property-is name="user.agent" value="ie9" />
+  </replace-with>
+
   <source path="shared"/>
+  <super-source path="super"/>
 </module>

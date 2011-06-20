@@ -18,7 +18,9 @@ package com.google.gwt.user.client.ui.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -46,7 +48,7 @@ public class ClippedImageImpl {
   private static Template template;
 
   public void adjust(Element img, SafeUri url, int left, int top, int width, int height) {
-    String style = "url(" + url.asString() + ") no-repeat " + (-left + "px ") + (-top + "px");
+    String style = "url(\"" + url.asString() + "\") no-repeat " + (-left + "px ") + (-top + "px");
     img.getStyle().setProperty("background", style);
     img.getStyle().setPropertyPx("width", width);
     img.getStyle().setPropertyPx("height", height);
@@ -63,12 +65,12 @@ public class ClippedImageImpl {
   }
 
   public SafeHtml getSafeHtml(SafeUri url, int left, int top, int width, int height) {
-    // TODO(t.broyer): use the context-specific SafeStyles API once it's been introduced.
-    String style = "width: " + width + "px; height: " + height + "px; background: url("
-        + url.asString() + ") " + "no-repeat " + (-left + "px ")
-        + (-top + "px;");
+    SafeStylesBuilder builder = new SafeStylesBuilder();
+    builder.width(width, Unit.PX).height(height, Unit.PX).trustedNameAndValue("background",
+        "url(" + url.asString() + ") " + "no-repeat " + (-left + "px ") + (-top + "px"));
 
-    return getTemplate().image(clearImage, SafeStylesUtils.fromTrustedString(style));
+    return getTemplate().image(clearImage,
+        SafeStylesUtils.fromTrustedString(builder.toSafeStyles().asString()));
   }
 
   private Template getTemplate() {
