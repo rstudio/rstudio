@@ -14,14 +14,10 @@ package org.rstudio.core.client.command;
 
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
-import com.google.gwt.user.client.ui.impl.ClippedImageImpl;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 
 import java.util.List;
 
@@ -66,8 +62,6 @@ public class AppMenuBar extends BaseMenuBar
             text = AppCommand.formatMenuLabel(null, text, null);
          else
             text = DomUtils.textToHtml(text);
-
-         text = replaceTokens(text);
       }
 
       return super.addItem(text,
@@ -107,37 +101,10 @@ public class AppMenuBar extends BaseMenuBar
       return super.getItems();
    }
 
-   /**
-    * This gives us an extension point for doing string replacement after
-    * HTML escaping occurs.
-    */
-   public static String replaceTokens(String s)
-   {
-      return s.replace("${dropdown}", DROP_DOWN_ARROW_HTML);
-   }
-
-
    public static HandlerRegistration addSubMenuVisibleChangedHandler(
          SubMenuVisibleChangedHandler handler)
    {
       return listeners_.addHandler(SubMenuVisibleChangedEvent.TYPE, handler);
-   }
-
-   private static final String DROP_DOWN_ARROW_HTML;
-   static
-   {
-      ImageResource arrow = ThemeResources.INSTANCE.mainMenuArrow();
-      DROP_DOWN_ARROW_HTML =
-            "<span class=\""
-            + ThemeStyles.INSTANCE.mainMenuArrow()
-            + "\">"
-            + new ClippedImageImpl().getHTML(
-                  arrow.getURL(),
-                  arrow.getLeft(),
-                  arrow.getTop(),
-                  arrow.getWidth(),
-                  arrow.getHeight())
-            + "</span>";
    }
 
    private static final HandlerManager listeners_ = new HandlerManager(null);

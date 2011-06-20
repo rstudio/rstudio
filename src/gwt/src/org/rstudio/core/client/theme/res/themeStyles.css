@@ -76,6 +76,10 @@
 
 @url TOOLBARBACKGROUND toolbarBackground;
 @url TOOLBARBACKGROUND2 toolbarBackground2;
+@url DESKTOPGLOBALTOOLBARBACKGROUND desktopGlobalToolbarBackground;
+@url WEBGLOBALTOOLBARLEFT webGlobalToolbarLeft;
+@url WEBGLOBALTOOLBARRIGHT webGlobalToolbarRight;
+@url WEBGLOBALTOOLBARTILE webGlobalToolbarTile;
 
 @url MULTIPODACTIVETABLEFT multiPodActiveTabLeft;
 @url MULTIPODACTIVETABRIGHT multiPodActiveTabRight;
@@ -305,13 +309,14 @@ pre {
 }
 
 .mainMenu {
+   margin-left: 18px;
    font-size: 11px;
    font-weight: bold;
    color: #494949;
 }
 
 .mainMenu .gwt-MenuItem {
-   padding: 5px 12px 5px 12px;
+   padding: 5px 9px 5px 9px;
    height: 15px;
    text-shadow: 0px 1px 0px #FFFFFF;
 }
@@ -322,10 +327,6 @@ pre {
    color: white !important;
    opacity: 1.0;
 }
-.mainMenuArrow {
-   position: relative;
-   top: -1px;
-}
 
 .gwt-MenuItem-selected, .subMenuIcon-selected, .gwt-SuggestBoxPopup .item-selected {
    background-color: #D6E9F8;
@@ -335,18 +336,7 @@ pre {
    color: white;
    height: 3px;
 }
-@sprite .mainMenu .gwt-MenuItemSeparator {
-   gwt-image: 'menuBevel';
-   border: none;
-   padding: 0;
-   width: 2px;
-   overflow: hidden;
-   display: block;
-}
-.mainMenu .gwt-MenuItemSeparator .menuSeparatorInner {
-   border: 0;
-   margin: 0;
-}
+
 
 .windowframe .maximize {
    background-image: MAXIMIZE;
@@ -709,6 +699,35 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    font-size: 11px !important;
    white-space: nowrap;
 }
+
+.globalToolbar {
+   height:27px;
+}
+
+.globalToolbar .toolbarButton {
+   margin-top: -1px;
+}
+
+.webGlobalToolbar {
+   margin-top: -3px;
+   background: none;
+}
+
+ @if user.agent gecko1_8 { .webGlobalToolbar {
+      margin-left: 53px;
+   }
+ }
+ @else { .webGlobalToolbar {
+      margin-left: 55px;
+   }
+ }
+
+
+
+.desktopGlobalToolbar {
+   background: DESKTOPGLOBALTOOLBARBACKGROUND bottom repeat-x;
+}
+
 
 .windowFrameToolbarButton {
    margin-top: -2px;

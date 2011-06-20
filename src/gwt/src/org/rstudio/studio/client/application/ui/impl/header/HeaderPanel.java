@@ -51,12 +51,16 @@ public class HeaderPanel extends Composite
 
    interface MyUiBinder extends UiBinder<Widget, HeaderPanel> {}
 
-   public HeaderPanel(Widget widget)
+   public HeaderPanel(Widget topLineWidget, Widget toolbarWidget)
    {
-      widget_ = widget;
+      topLineWidget_ = topLineWidget;
+      toolbarWidget_ = toolbarWidget;
       initWidget(((MyUiBinder)GWT.create(MyUiBinder.class)).createAndBindUi(this));
    }
 
    @UiField(provided = true)
-   final Widget widget_;
+   final Widget topLineWidget_;
+   
+   @UiField(provided = true)
+   final Widget toolbarWidget_;
 }

@@ -86,6 +86,14 @@ public interface ThemeResources extends ClientBundle
    DataResource toolbarBackground();
    @Source("toolbarBackground2.png")
    DataResource toolbarBackground2();
+   @Source("desktopGlobalToolbarBackground.png")
+   DataResource desktopGlobalToolbarBackground();
+   @Source("webGlobalToolbarLeft.png")
+   DataResource webGlobalToolbarLeft();
+   @Source("webGlobalToolbarRight.png")
+   DataResource webGlobalToolbarRight();
+   @Source("webGlobalToolbarTile.png")
+   DataResource webGlobalToolbarTile();
 
    @Source("multiPodActiveTabLeft.png")
    DataResource multiPodActiveTabLeft();
@@ -109,7 +117,6 @@ public interface ThemeResources extends ClientBundle
 
    ImageResource toolbarSeparator();
 
-   ImageResource mainMenuArrow();
    ImageResource menuDownArrow();
    ImageResource linkDownArrow();
 

@@ -36,6 +36,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
+import org.rstudio.studio.client.application.ui.GlobalToolbar;
 import org.rstudio.studio.client.application.ui.impl.header.HeaderPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
@@ -62,7 +63,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    {
       eventBus_ = eventBus;
       globalDisplay_ = globalDisplay;
-      preferredHeight_ = 40;
+      preferredHeight_ = 65;
 
       // Use the outer panel to just aggregate the menu bar/account area,
       // with the logo. The logo can't be inside the HorizontalPanel because
@@ -141,8 +142,13 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
             }
          }
       });
-
-      outerPanel.add(new HeaderPanel(headerBarPanel));
+      
+      // create toolbar
+      GlobalToolbar toolbar = new GlobalToolbar(commands);
+      toolbar.addStyleName(themeResources.themeStyles().webGlobalToolbar());
+   
+      // add widgets to header panel
+      outerPanel.add(new HeaderPanel(headerBarPanel, toolbar));
 
       // logo
       Image logo = new Image(ThemeResources.INSTANCE.rstudio());
@@ -268,8 +274,6 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       // add username 
       Label usernameLabel = new Label();
       usernameLabel.setText(sessionInfo.getUserIdentity());
-      usernameLabel.setStylePrimaryName(
-            ThemeResources.INSTANCE.themeStyles().applicationHeaderStrong());
       headerBarCommandsPanel_.add(usernameLabel);
       headerBarCommandsPanel_.add(createCommandSeparator());
       
@@ -315,7 +319,6 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    private Widget createCommandLink(String caption, ClickHandler clickHandler)
    {
       HyperlinkLabel link = new HyperlinkLabel(caption, clickHandler);
-      link.setAlwaysUnderline(true);
       return link;
    }
 
@@ -323,8 +326,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    {
       return this;
    }
-
-
+  
    private int preferredHeight_ ;
 
    private HorizontalPanel headerBarCommandsPanel_;

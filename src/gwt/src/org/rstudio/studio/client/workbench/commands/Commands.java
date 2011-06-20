@@ -57,8 +57,6 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand activateConsole();
 
    // Files
-   public abstract AppCommand newTextFile();
-   public abstract AppCommand newRSourceFile();
    public abstract AppCommand newFolder();
    public abstract AppCommand uploadFile();
    public abstract AppCommand copyFile();

@@ -67,14 +67,12 @@ public class TextEditingTargetWidget
    {
       Toolbar toolbar = new Toolbar();
 
-      toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       toolbar.addLeftWidget(sourceOnSave_);
 
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(createFindReplaceButton());
       toolbar.addLeftWidget(createCodeTransformMenuButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton());
       toolbar.addLeftWidget(commands_.compilePDF().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.publishPDF().createToolbarButton());

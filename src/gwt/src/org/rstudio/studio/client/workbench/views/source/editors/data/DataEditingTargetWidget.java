@@ -109,7 +109,6 @@ public class DataEditingTargetWidget extends Composite
 
       Toolbar toolbar = new Toolbar(
             new Widget[] {
-                  commands_.printSourceDoc().createToolbarButton(),
                   commands_.popoutDoc().createToolbarButton()
             },
             new Widget[] {

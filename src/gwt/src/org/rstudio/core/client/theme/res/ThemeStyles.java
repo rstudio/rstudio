@@ -57,6 +57,9 @@ public interface ThemeStyles extends CssResource
 
    String toolbar();
    String secondaryToolbar();
+   String globalToolbar();
+   String desktopGlobalToolbar();
+   String webGlobalToolbar();
    String toolbarButton();
    String noLabel();
    String toolbarButtonPushed();
@@ -88,7 +91,6 @@ public interface ThemeStyles extends CssResource
 
    String header();
    String mainMenu();
-   String mainMenuArrow();
 
    String miniToolbar();
 

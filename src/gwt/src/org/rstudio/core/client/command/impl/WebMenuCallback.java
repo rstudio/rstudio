@@ -30,9 +30,6 @@ public class WebMenuCallback implements MenuCallback
    {
       label = AppMenuItem.replaceMnemonics(label, "");
 
-      if (menuStack_.size() == 1)
-         label = label + " ${dropdown}";
-
       AppMenuBar newMenu = new AppMenuBar(true);
       head().addItem(label, newMenu);
       menuStack_.push(newMenu);

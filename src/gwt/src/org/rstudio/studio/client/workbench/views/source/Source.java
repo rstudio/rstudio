@@ -814,7 +814,7 @@ public class Source implements InsertSourceHandler,
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             view_.setDirty(widget, event.getValue());
-            manageSaveAllCommand();
+            manageCommands();
          }
       });
 
@@ -995,12 +995,16 @@ public class Source implements InsertSourceHandler,
       }
       
   
-      // Save/Save As should always stay visible
+      // commands which should always be visible even when disabled
       commands_.saveSourceDoc().setVisible(true);
       commands_.saveSourceDocAs().setVisible(true);
+      commands_.printSourceDoc().setVisible(true);
       commands_.setWorkingDirToActiveDoc().setVisible(true);
       
-      // manage save all
+      // manage save and save all
+      boolean saveEnabled = activeEditor_ != null &&
+                            activeEditor_.dirtyState().getValue() == true;
+      commands_.saveSourceDoc().setEnabled(saveEnabled);
       manageSaveAllCommand();
 
       activeCommands_ = newCommands;

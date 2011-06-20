@@ -8,7 +8,8 @@
          <tr>
             <td class="{res.styles.left}"></td>
             <td class="{res.styles.center}" valign="middle">
-               <g:Widget ui:field="widget_" />
+               <g:Widget ui:field="topLineWidget_" />
+               <g:Widget ui:field="toolbarWidget_" />
             </td>
             <td class="{res.styles.right}"></td>
          </tr>

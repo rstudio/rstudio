@@ -15,18 +15,20 @@ package org.rstudio.studio.client.application.ui.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopHooks;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
+import org.rstudio.studio.client.application.ui.GlobalToolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
@@ -95,7 +97,10 @@ public class DesktopApplicationHeader implements ApplicationHeader
             Desktop.getFrame().showFolder(event.getPath().getPath());
          }
       });
-
+      
+      toolbar_ = new GlobalToolbar(commands);
+      ThemeStyles styles = ThemeResources.INSTANCE.themeStyles(); 
+      toolbar_.addStyleName(styles.desktopGlobalToolbar());
    }
 
    @Handler
@@ -148,13 +153,14 @@ public class DesktopApplicationHeader implements ApplicationHeader
 
    public int getPreferredHeight()
    {
-      return 7;
+      return 32;
    }
 
    public Widget toWidget()
    {
-      return new HTML();
+      return toolbar_;
    }
 
    private Session session_;
+   private GlobalToolbar toolbar_;
 }
