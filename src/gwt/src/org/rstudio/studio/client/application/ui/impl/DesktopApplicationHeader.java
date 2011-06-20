@@ -29,6 +29,7 @@ import org.rstudio.studio.client.application.DesktopHooks;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
+import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
@@ -51,6 +52,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
 
    @Inject
    public void initialize(Commands commands,
+                          FileTypeCommands fileTypeCommands,
                           EventBus events,
                           final Session session,
                           Provider<DesktopHooks> pDesktopHooks)
@@ -98,7 +100,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          }
       });
       
-      toolbar_ = new GlobalToolbar(commands);
+      toolbar_ = new GlobalToolbar(commands, fileTypeCommands);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles(); 
       toolbar_.addStyleName(styles.desktopGlobalToolbar());
    }

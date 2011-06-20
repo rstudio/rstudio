@@ -40,6 +40,7 @@ import org.rstudio.studio.client.application.ui.GlobalToolbar;
 import org.rstudio.studio.client.application.ui.impl.header.HeaderPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
+import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
@@ -56,6 +57,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    @Inject
    public void initialize(
                   final Commands commands,
+                  FileTypeCommands fileTypeCommands,
                   EventBus eventBus,
                   GlobalDisplay globalDisplay,
                   ThemeResources themeResources,
@@ -144,7 +146,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       });
       
       // create toolbar
-      GlobalToolbar toolbar = new GlobalToolbar(commands);
+      GlobalToolbar toolbar = new GlobalToolbar(commands, fileTypeCommands);
       toolbar.addStyleName(themeResources.themeStyles().webGlobalToolbar());
    
       // add widgets to header panel
