@@ -30,10 +30,16 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 public interface IsRenderable {
 
   /**
-   * Perform any initialization needed when the widget is not attached to
-   * the document. Assumed to be called after {@link #wrapElement}.
+   * Replace the previous contents of the receiver with the given element,
+   * presumed to have been created via a previous call to {@link #render}.
    */
-  void performDetachedInitialization();
+  void claimElement(Element element);
+
+  /**
+   * Perform any initialization needed when the widget is not attached to
+   * the document. Assumed to be called after {@link #claimElement}.
+   */
+  void initializeClaimedElement();
 
   /**
    * @see #render(String, SafeHtmlBuilder)
@@ -46,11 +52,4 @@ public interface IsRenderable {
    * The root element of the HTML must be identifies by the given id.
    */
   void render(String id, SafeHtmlBuilder builder);
-
-  /**
-   * Replace the previous contents of the receiver with the given element,
-   * presumed to have been created via a previous call to {@link #render}.
-   * Assumes the element is attached to the document.
-   */
-  void wrapElement(Element element);
 }

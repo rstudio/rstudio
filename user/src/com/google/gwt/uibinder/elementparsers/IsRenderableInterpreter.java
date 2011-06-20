@@ -56,14 +56,14 @@ class IsRenderableInterpreter implements XMLElement.Interpreter<String> {
         "com.google.gwt.dom.client.Document.get().getElementById(%s).cast();",
         elementPointer, fieldManager.convertFieldToGetter(idHolder));
     fieldWriter.addAttachStatement(
-        "%s.wrapElement(%s);",
+        "%s.claimElement(%s);",
         fieldManager.convertFieldToGetter(childFieldWriter.getName()),
         elementPointer);
 
     // Some operations are more efficient when the Widget isn't attached to
     // the document. Perform them here.
     fieldWriter.addDetachStatement(
-        "%s.performDetachedInitialization();",
+        "%s.initializeClaimedElement();",
         fieldManager.convertFieldToGetter(childFieldWriter.getName()));
 
     fieldWriter.addDetachStatement(

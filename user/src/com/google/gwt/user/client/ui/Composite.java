@@ -57,6 +57,25 @@ public abstract class Composite extends Widget implements IsRenderable {
   private Element elementToWrap;
 
   @Override
+  public final void claimElement(Element element) {
+    if (renderable != null) {
+      renderable.claimElement(element);
+      setElement(widget.getElement());
+    } else {
+      this.elementToWrap = element;
+    }
+  }
+
+  @Override
+  public final void initializeClaimedElement() {
+    if (renderable != null) {
+      renderable.initializeClaimedElement();
+    } else {
+      elementToWrap.getParentNode().replaceChild(widget.getElement(), elementToWrap);
+    }
+  }
+
+  @Override
   public boolean isAttached() {
     if (widget != null) {
       return widget.isAttached();
@@ -71,15 +90,6 @@ public abstract class Composite extends Widget implements IsRenderable {
 
     // Delegate events to the widget.
     widget.onBrowserEvent(event);
-  }
-
-  @Override
-  public final void performDetachedInitialization() {
-    if (renderable != null) {
-      renderable.performDetachedInitialization();
-    } else {
-      elementToWrap.getParentNode().replaceChild(widget.getElement(), elementToWrap);
-    }
   }
 
   @Override
@@ -99,16 +109,6 @@ public abstract class Composite extends Widget implements IsRenderable {
       renderable.render(id, builder);
     } else {
       builder.append(TEMPLATE.renderWithId(id));
-    }
-  }
-
-  @Override
-  public final void wrapElement(Element element) {
-    if (renderable != null) {
-      renderable.wrapElement(element);
-      setElement(widget.getElement());
-    } else {
-      this.elementToWrap = element;
     }
   }
 

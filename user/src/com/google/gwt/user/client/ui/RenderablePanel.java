@@ -139,6 +139,35 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
     this.addAndReplaceElement(widget.asWidget(), toReplace);
   }
 
+  @Override
+  public void claimElement(Element element) {
+    if (isFullyInitialized()) {
+      /*
+       * If claimElement is being called after the widget is fully initialized,
+       * that's probably a programming error, as it's much more efficient to
+       * build the whole tree at once.
+       */
+      throw new IllegalStateException(
+          "claimElement() cannot be called twice, or after forcing the widget to"
+          + " render itself (e.g. after adding it to a panel)");
+    }
+
+    setElement(element);
+    html = null;
+    if (wrapInitializationCallback != null) {
+      wrapInitializationCallback.execute();
+      wrapInitializationCallback = null;
+    }
+  }
+
+  @Override
+  public void initializeClaimedElement() {
+    if (detachedInitializationCallback != null) {
+      detachedInitializationCallback.execute();
+      detachedInitializationCallback = null;
+    }
+  }
+
   /**
    * Adopts the given, but doesn't change anything about its DOM element.
    * Should only be used for widgets with elements that are children of this
@@ -154,14 +183,6 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
     Widget widget = ((IsWidget) renderable).asWidget();
     getChildren().add(widget);
     adopt(widget);
-  }
-
-  @Override
-  public void performDetachedInitialization() {
-    if (detachedInitializationCallback != null) {
-      detachedInitializationCallback.execute();
-      detachedInitializationCallback = null;
-    }
   }
 
   @Override
@@ -187,27 +208,6 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
     buildAndInitDivContainer();
     html = null;
     return getElement();
-  }
-
-  @Override
-  public void wrapElement(Element element) {
-    if (isFullyInitialized()) {
-      /*
-       * If wrapElement is being called after the widget is fully initialized,
-       * that's probably a programming error, as it's much more efficient to
-       * build the whole tree at once.
-       */
-      throw new IllegalStateException(
-          "wrapElement() cannot be called twice, or after forcing the widget to"
-          + " render itself (e.g. after adding it to a panel)");
-    }
-
-    setElement(element);
-    html = null;
-    if (wrapInitializationCallback != null) {
-      wrapInitializationCallback.execute();
-      wrapInitializationCallback = null;
-    }
   }
 
   /**
