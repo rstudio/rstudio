@@ -56,6 +56,11 @@ public class ConstantsTransformationFunction implements
       
       Preconditions.checkNotNull(condition, 
           "Null condition in %s: %s", node, node.getJNode());
+
+      if (condition.hasSideEffects()) {
+        return;
+      }
+
       JValueLiteral evaluatedCondition = 
         ExpressionEvaluator.evaluate(condition, assumption);
       

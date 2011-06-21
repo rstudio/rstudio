@@ -2,6 +2,8 @@ package com.google.gwt.dev.jjs.impl.gflow;
 
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
+import com.google.gwt.dev.jjs.impl.MethodInliner;
 import com.google.gwt.dev.jjs.impl.OptimizerTestBase;
 
 public class DataflowOptimizerTest extends OptimizerTestBase {
@@ -9,6 +11,10 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
   protected void setUp() throws Exception {
     super.setUp();
     
+    /*
+     * TODO: Each of these snippets shouldn't be setup for every test, and thus should be moved
+     * to the individual test cases they are needed for (or to shared methods if needed).
+     */
     addSnippetClassDecl("static void foo(int i) { }");
     addSnippetClassDecl("static boolean bar() { return true; }");
     addSnippetClassDecl("static void baz(boolean b) {  }");
@@ -29,6 +35,9 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
     addSnippetClassDecl("static class Foo { int i; int j; int k; }");
     addSnippetClassDecl("static Foo createFoo() {return null;}");
     addSnippetClassDecl("static Foo staticFooInstance;");
+    
+    runMethodInliner = false;
+    runDCE = false;
   }
 
   public void testLinearStatements1() throws Exception {
@@ -305,9 +314,60 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
             "  long lng8 = lng << 8;", 
             "  return lng8;");
   }
+   
+  /*
+   * This test is a regression for an issue where inlined multiexpressions were getting removed
+   * by the ConstantsTransformationFunction, based on the constant value of the multi-expression,
+   * despite there being side-effects of the multi-expression.  So, we want to test that inlining
+   * proceeds, but not further constant transformation.
+   * 
+   * TODO: This test may need to evolve over time, as the specifics of the optimizers change.  One
+   * obvious todo is to allow some form of constant transformation to occur with inlined 
+   * multi-expressions (see comment below).
+   */
+  public void testInlinedConstantExpressionWithSideEffects() throws Exception {
+    
+    runDCE = true;
+    runMethodInliner = true;
+    
+    addSnippetClassDecl("static void fail() {" +
+                        "  throw new RuntimeException();" +
+                        "}");
+    addSnippetClassDecl("static Integer x;");
+    addSnippetClassDecl("static boolean copy(Number n) {" +
+                        "  x = (Integer) n;" +
+                        "  return true;" +
+                        "}");
+    
+    optimize("int",
+              "Integer n = new Integer(1);",
+              "if (!copy(n)) {",
+              "  fail();",
+              "}",
+              "return x;")
+        // TODO: Allow the second line below to be transformed to just: "EntryPoint.x = n;"
+        .intoString("Integer n = new Integer(1);",
+                    "((EntryPoint.x = n, true)) || EntryPoint.fail();",
+                    "return EntryPoint.x.intValue();");
+    
+  }
+  
+  private boolean runDCE;
+  private boolean runMethodInliner;
 
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
-    return DataflowOptimizer.exec(program, method).didChange();
+    boolean didChange = false;
+
+    if (runDCE) {
+      didChange = DeadCodeElimination.exec(program).didChange() || didChange;
+    }
+
+    if (runMethodInliner) {
+      didChange = MethodInliner.exec(program).didChange() || didChange;
+    }
+
+    didChange = DataflowOptimizer.exec(program, method).didChange() || didChange;
+    return didChange;
   }
 }
