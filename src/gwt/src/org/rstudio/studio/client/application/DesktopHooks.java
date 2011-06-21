@@ -217,6 +217,10 @@ public class DesktopHooks
       // get the file system item
       FileSystemItem file = FileSystemItem.createFile(filePath);
       
+      // for now don't open projects
+      if (file.getExtension().equalsIgnoreCase(".rproject"))
+         return;
+      
       // don't open directories (these can sneak in if the user 
       // passes a directory on the command line)
       if (!file.isDirectory())

@@ -30,6 +30,24 @@
       <dict>
          <key>CFBundleTypeExtensions</key>
          <array>
+            <string>Rproject</string>
+            <string>RProject</string>
+            <string>rproject</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RProject.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Project File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+         <key>LSTypeIsPackage</key>
+         <false/>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
              <string>R</string>
              <string>r</string>
          </array>

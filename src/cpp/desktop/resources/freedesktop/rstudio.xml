@@ -30,6 +30,13 @@
     <glob pattern="*.rda"/>
   </mime-type>
 
+  <mime-type type="application/x-r-project">
+    <comment>R Project File</comment>
+    <glob pattern="*.Rproject"/>
+    <glob pattern="*.RProject"/>
+    <glob pattern="*.rproject"/>
+  </mime-type>
+
   <mime-type type="text/x-r-history">
     <sub-class-of type="text/plain"/>
     <comment>R History File</comment>

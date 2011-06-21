@@ -43,6 +43,7 @@ import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
@@ -70,6 +71,7 @@ public class Application implements ApplicationEventHandlers,
                       Commands commands,
                       Server server,
                       Session session,
+                      Projects projects,
                       WorkbenchContext workbenchContext,
                       SourceShim sourceShim,
                       Provider<Workbench> workbench,

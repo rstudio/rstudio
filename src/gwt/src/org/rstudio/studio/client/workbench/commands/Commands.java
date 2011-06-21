@@ -50,6 +50,10 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand extractFunction();
    public abstract AppCommand commentUncomment();
    public abstract AppCommand setWorkingDirToActiveDoc();
+   
+   // Projects
+   public abstract AppCommand newProject();
+   public abstract AppCommand openProject();
 
    // Console
    public abstract AppCommand consoleClear();

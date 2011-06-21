@@ -28,6 +28,7 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
+import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
@@ -91,6 +92,7 @@ public class RStudioGinModule extends AbstractGinModule
    {
       bind(EventBus.class).in(Singleton.class) ;
       bind(Session.class).in(Singleton.class) ;
+      bind(Projects.class).asEagerSingleton();
       bind(WorkbenchContext.class).asEagerSingleton();
       bind(ClientStateUpdater.class).asEagerSingleton();
       bind(Commands.class).in(Singleton.class);
