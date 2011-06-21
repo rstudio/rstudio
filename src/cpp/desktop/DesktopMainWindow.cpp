@@ -84,6 +84,11 @@ void MainWindow::onWorkbenchInitialized()
 {
    //QTimer::singleShot(300, this, SLOT(resetMargins()));
 
+   // reset state (in case this occurred in response to a manual reload
+   // or reload for a new project context)
+   quitConfirmed_ = false;
+   saveConfirmed_ = false;
+
 #ifdef Q_WS_MACX
    webView()->page()->mainFrame()->evaluateJavaScript(
          QString::fromAscii("document.body.className = document.body.className + ' avoid-move-cursor'"));
