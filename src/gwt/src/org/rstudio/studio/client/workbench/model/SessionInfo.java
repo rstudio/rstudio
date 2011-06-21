@@ -122,8 +122,8 @@ public class SessionInfo extends JavaScriptObject
       return this.system_encoding;
    }-*/;
 
-   public final native Boolean isVcsEnabled() /*-{
-      return this.vcs;
+   public final native boolean isVcsEnabled() /*-{
+      return !!this.vcs;
    }-*/;
 
    // TODO: The check for null was for migration in the presence of 

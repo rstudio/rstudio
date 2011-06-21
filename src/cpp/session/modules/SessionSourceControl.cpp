@@ -137,7 +137,7 @@ class SubversionVCSImpl : public GitVCSImpl
 
 VCS activeVCS()
 {
-   return VCSGit;
+   return VCSNone;
 }
 
 VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory)

@@ -22,6 +22,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.views.files.Files;
@@ -80,7 +81,8 @@ public class FilesList extends Composite
       addSelectionColumn();
       addIconColumn(fileTypeRegistry);
       nameColumn_ = addNameColumn();
-//      addVcsStatusColumn();
+      if (RStudioGinjector.INSTANCE.getSession().getSessionInfo().isVcsEnabled())
+         addVcsStatusColumn();
       sizeColumn_ = addSizeColumn();
       modifiedColumn_ = addModifiedColumn();
       
