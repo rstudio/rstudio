@@ -1116,6 +1116,10 @@ public class GwtAstBuilder {
                 scope.enclosingSourceType().enclosingTypeAt(
                     (x.bits & ASTNode.DepthMASK) >> ASTNode.DepthSHIFT);
             receiver = makeThisReference(info, targetType, true, scope);
+          } else if (x.receiver.sourceStart == 0) {
+            // Synthetic this ref with bad source info; fix the info.
+            JThisRef oldRef = (JThisRef) receiver;
+            receiver = new JThisRef(info, oldRef.getClassType());
           }
         }
 
@@ -1991,25 +1995,32 @@ public class GwtAstBuilder {
      * arguments, but with a different type signature.
      */
     private void createBridgeMethod(SyntheticMethodBinding jdtBridgeMethod) {
-      JMethod implMethod = typeMap.get(jdtBridgeMethod.targetMethod);
-      SourceInfo info = implMethod.getSourceInfo();
-      String[] paramNames = null;
-      List<JParameter> implParams = implMethod.getParams();
-      if (jdtBridgeMethod.parameters != null) {
-        int paramCount = implParams.size();
-        assert paramCount == jdtBridgeMethod.parameters.length;
-        paramNames = new String[paramCount];
-        for (int i = 0; i < paramCount; ++i) {
-          paramNames[i] = implParams.get(i).getName();
-        }
+      JMethod implmeth = typeMap.get(jdtBridgeMethod.targetMethod);
+      SourceInfo info = implmeth.getSourceInfo();
+      JMethod bridgeMethod =
+          new JMethod(info, implmeth.getName(), curClass.type, typeMap
+              .get(jdtBridgeMethod.returnType), false, false, implmeth.isFinal(), false);
+      typeMap.setMethod(jdtBridgeMethod, bridgeMethod);
+      bridgeMethod.setBody(new JMethodBody(info));
+      curClass.type.addMethod(bridgeMethod);
+      bridgeMethod.setSynthetic();
+      int paramIdx = 0;
+      List<JParameter> implParams = implmeth.getParams();
+      for (TypeBinding jdtParamType : jdtBridgeMethod.parameters) {
+        JParameter param = implParams.get(paramIdx++);
+        JType paramType = typeMap.get(jdtParamType.erasure());
+        JParameter newParam =
+            new JParameter(param.getSourceInfo(), param.getName(), paramType, true, false,
+                bridgeMethod);
+        bridgeMethod.addParam(newParam);
       }
-      JMethod bridgeMethod = createSynthicMethodFromBinding(info, jdtBridgeMethod, paramNames);
-      if (implMethod.isFinal()) {
-        bridgeMethod.setFinal();
+      for (ReferenceBinding exceptionReference : jdtBridgeMethod.thrownExceptions) {
+        bridgeMethod.addThrownException((JClassType) typeMap.get(exceptionReference.erasure()));
       }
+      bridgeMethod.freezeParamTypes();
 
       // create a call and pass all arguments through, casting if necessary
-      JMethodCall call = new JMethodCall(info, makeThisRef(info), implMethod);
+      JMethodCall call = new JMethodCall(info, makeThisRef(info), implmeth);
       for (int i = 0; i < bridgeMethod.getParams().size(); i++) {
         JParameter param = bridgeMethod.getParams().get(i);
         JParameterRef paramRef = new JParameterRef(info, param);
@@ -3032,13 +3043,13 @@ public class GwtAstBuilder {
               binding.getExactMethod(VALUE_OF, new TypeBinding[]{x.scope.getJavaLangString()},
                   curCud.scope);
           assert valueOfBinding != null;
-          createSynthicMethodFromBinding(info, valueOfBinding, new String[]{"name"});
+          createSyntheticMethodFromBinding(info, valueOfBinding, new String[]{"name"});
         }
         {
           assert type.getMethods().size() == 4;
           MethodBinding valuesBinding = binding.getExactMethod(VALUES, NO_TYPES, curCud.scope);
           assert valuesBinding != null;
-          createSynthicMethodFromBinding(info, valuesBinding, null);
+          createSyntheticMethodFromBinding(info, valuesBinding, null);
         }
       }
 
@@ -3181,7 +3192,7 @@ public class GwtAstBuilder {
     return method;
   }
 
-  private JMethod createSynthicMethodFromBinding(SourceInfo info, MethodBinding binding,
+  private JMethod createSyntheticMethodFromBinding(SourceInfo info, MethodBinding binding,
       String[] paramNames) {
     JMethod method = typeMap.createMethod(info, binding, paramNames);
     assert !method.isExternal();

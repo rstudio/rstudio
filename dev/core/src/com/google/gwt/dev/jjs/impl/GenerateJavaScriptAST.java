@@ -157,6 +157,7 @@ import com.google.gwt.dev.util.collect.Maps;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -2088,16 +2089,23 @@ public class GenerateJavaScriptAST {
 
     private final HasNameSort hasNameSort = new HasNameSort();
 
+    private final Comparator<JMethod> methodSort = new Comparator<JMethod>() {
+      @Override
+      public int compare(JMethod m1, JMethod m2) {
+        return m1.getSignature().compareTo(m2.getSignature());
+      }
+    };
+
     @Override
     public void endVisit(JClassType x, Context ctx) {
       x.sortFields(hasNameSort);
-      x.sortMethods(hasNameSort);
+      x.sortMethods(methodSort);
     }
 
     @Override
     public void endVisit(JInterfaceType x, Context ctx) {
       x.sortFields(hasNameSort);
-      x.sortMethods(hasNameSort);
+      x.sortMethods(methodSort);
     }
 
     @Override
@@ -2107,7 +2115,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JProgram x, Context ctx) {
-      Collections.sort(x.getEntryMethods(), hasNameSort);
+      Collections.sort(x.getEntryMethods(), methodSort);
       Collections.sort(x.getDeclaredTypes(), hasNameSort);
     }
   }
