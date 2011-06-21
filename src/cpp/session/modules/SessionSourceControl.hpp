@@ -55,7 +55,8 @@ struct FileWithStatus
 class StatusResult
 {
 public:
-   StatusResult(std::vector<FileWithStatus> files = std::vector<FileWithStatus>())
+   StatusResult(const std::vector<FileWithStatus>& files =
+                std::vector<FileWithStatus>())
    {
       files_ = files;
       for (std::vector<FileWithStatus>::iterator it = files_.begin();

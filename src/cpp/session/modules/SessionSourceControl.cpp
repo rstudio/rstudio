@@ -45,7 +45,7 @@ public:
    }
 };
 
-VCSImpl* vcsImpl_;
+boost::scoped_ptr<VCSImpl> s_pVcsImpl_;
 
 class GitVCSImpl : public VCSImpl
 {
@@ -58,8 +58,6 @@ public:
    core::Error status(const FilePath& dir, StatusResult* pStatusResult)
    {
       using namespace boost;
-
-      root_ = module_context::initialWorkingDirectory();
 
       std::vector<FileWithStatus> files;
 
@@ -154,12 +152,12 @@ VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory)
 
 core::Error status(const FilePath& dir, StatusResult* pStatusResult)
 {
-   return vcsImpl_->status(dir, pStatusResult);
+   return s_pVcsImpl_->status(dir, pStatusResult);
 }
 
 core::Error initialize()
 {
-   vcsImpl_ = new GitVCSImpl();
+   s_pVcsImpl_.reset(new GitVCSImpl());
    return Success();
 }
 
