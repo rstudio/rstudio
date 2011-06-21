@@ -31,6 +31,7 @@ class VCSImpl
 public:
    VCSImpl()
    {
+      root_ = module_context::initialWorkingDirectory();
    }
 
    virtual ~VCSImpl()
@@ -43,6 +44,37 @@ public:
       *pStatusResult = StatusResult();
       return Success();
    }
+
+   // TODO: Figure out why compile fails when args is const&
+   virtual core::Error runCommand(const std::string& command,
+                                  std::vector<std::string> args,
+                                  std::vector<std::string>* pOutputLines)
+   {
+      std::string cmd("cd ");
+      cmd.append(string_utils::bash_escape(root_));
+      cmd.append("; ");
+      cmd.append(command);
+      for (std::vector<std::string>::iterator it = args.begin();
+           it != args.end();
+           it++)
+      {
+         cmd.append(" ");
+         cmd.append(string_utils::bash_escape(*it));
+      }
+
+      std::string output;
+      Error error = core::system::captureCommand(cmd, &output);
+      if (error)
+         return error;
+
+      boost::algorithm::split(*pOutputLines, output,
+                              boost::algorithm::is_any_of("\r\n"));
+
+      return Success();
+   }
+
+protected:
+   FilePath root_;
 };
 
 boost::scoped_ptr<VCSImpl> s_pVcsImpl_;
@@ -52,7 +84,6 @@ class GitVCSImpl : public VCSImpl
 public:
    GitVCSImpl()
    {
-      root_ = module_context::initialWorkingDirectory();
    }
 
    core::Error status(const FilePath& dir, StatusResult* pStatusResult)
@@ -61,20 +92,16 @@ public:
 
       std::vector<FileWithStatus> files;
 
-      std::string cmd("cd ");
-      cmd.append(string_utils::bash_escape(root_));
-      cmd.append("; git status --porcelain -- ");
-      cmd.append(string_utils::bash_escape(dir));
-
-      std::string output;
-      Error error = core::system::captureCommand(cmd, &output);
-      if (error)
-         return error;
+      std::vector<std::string> args;
+      args.push_back("status");
+      args.push_back("--porcelain");
+      args.push_back("--");
+      args.push_back(string_utils::utf8ToSystem(dir.absolutePath()));
 
       std::vector<std::string> lines;
-
-      boost::algorithm::split(lines, output,
-                              boost::algorithm::is_any_of("\r\n"));
+      Error error = runCommand("git", args, &lines);
+      if (error)
+         return error;
 
       for (std::vector<std::string>::iterator it = lines.begin();
            it != lines.end();
@@ -123,13 +150,84 @@ public:
 
       return Success();
    }
-
-private:
-   FilePath root_;
 };
 
-class SubversionVCSImpl : public GitVCSImpl
+class SubversionVCSImpl : public VCSImpl
 {
+   core::Error status(const FilePath& dir, StatusResult* pStatusResult)
+   {
+      using namespace boost;
+
+      std::vector<FileWithStatus> files;
+
+      std::vector<std::string> args;
+      args.push_back("status");
+      args.push_back("--non-interactive");
+      args.push_back("--depth=immediates");
+      args.push_back("--");
+      args.push_back(string_utils::utf8ToSystem(dir.absolutePath()));
+
+      std::vector<std::string> lines;
+      Error error = runCommand("svn", args, &lines);
+      if (error)
+         return error;
+
+      for (std::vector<std::string>::iterator it = lines.begin();
+           it != lines.end();
+           it++)
+      {
+         std::string line = *it;
+         if (line.length() < 4)
+            continue;
+         FileWithStatus file;
+         switch (line[0])
+         {
+         case ' ':
+            file.status = VCSStatusUnmodified;
+            break;
+         case 'A':
+            file.status = VCSStatusAdded;
+            break;
+         case 'C':
+            file.status = VCSStatusUnmerged;
+            break;
+         case 'D':
+            file.status = VCSStatusDeleted;
+            break;
+         case 'I':
+            file.status = VCSStatusIgnored;
+            break;
+         case 'M':
+            file.status = VCSStatusModified;
+            break;
+         case 'R':
+            file.status = VCSStatusReplaced;
+            break;
+         case 'X':
+            file.status = VCSStatusExternal;
+            break;
+         case '?':
+            file.status = VCSStatusUntracked;
+            break;
+         case '!':
+            file.status = VCSStatusMissing;
+            break;
+         case '~':
+            file.status = VCSStatusObstructed;
+            break;
+         default:
+            LOG_WARNING_MESSAGE("Unparseable svn-status line: " + line);
+            continue;
+         }
+
+         file.path = FilePath(string_utils::systemToUtf8(line.substr(8)));
+         files.push_back(file);
+      }
+
+      *pStatusResult = StatusResult(files);
+
+      return Success();
+   }
 };
 
 } // anonymous namespace
@@ -157,7 +255,19 @@ core::Error status(const FilePath& dir, StatusResult* pStatusResult)
 
 core::Error initialize()
 {
-   s_pVcsImpl_.reset(new GitVCSImpl());
+   switch (activeVCS())
+   {
+   case VCSGit:
+      s_pVcsImpl_.reset(new GitVCSImpl());
+      break;
+   case VCSSubversion:
+      s_pVcsImpl_.reset(new SubversionVCSImpl());
+      break;
+   default:
+      s_pVcsImpl_.reset(new VCSImpl());
+      break;
+   }
+
    return Success();
 }
 

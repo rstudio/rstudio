@@ -34,6 +34,7 @@ enum VCS
    VCSSubversion
 };
 
+// Must stay in sync with VCSStatus enum in VCSStatus.java
 enum VCSStatus
 {
    VCSStatusUnmodified,
@@ -43,7 +44,13 @@ enum VCSStatus
    VCSStatusDeleted,
    VCSStatusRenamed,
    VCSStatusCopied,
-   VCSStatusUnmerged
+   VCSStatusUnmerged,
+   // SVN specific
+   VCSStatusIgnored,
+   VCSStatusReplaced,
+   VCSStatusExternal,
+   VCSStatusMissing,
+   VCSStatusObstructed
 };
 
 struct FileWithStatus

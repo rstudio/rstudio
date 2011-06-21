@@ -16,6 +16,7 @@ import com.google.gwt.resources.client.ImageResource;
 
 public enum VCSStatus
 {
+   // Must stay in sync with VCSStatus enum in SessionSourceControl.hpp
    Unmodified,
    Untracked,
    Modified,
@@ -23,7 +24,12 @@ public enum VCSStatus
    Deleted,
    Renamed,
    Copied,
-   Unmerged;
+   Unmerged,
+   Ignored,
+   Replaced,
+   External,
+   Missing,
+   Obstructed;
 
    private static VCSStatus[] all = values();
 
