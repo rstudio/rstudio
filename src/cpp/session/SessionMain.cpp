@@ -89,6 +89,7 @@
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
 #include "modules/SessionSource.hpp"
+#include "modules/SessionSourceControl.hpp"
 #include "modules/SessionTeX.hpp"
 #include "modules/SessionHistory.hpp"
 #include "modules/SessionLimits.hpp"
@@ -369,6 +370,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["initial_working_dir"] = initialWorkingDir;
 
    sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
+
+   sessionInfo["vcs"] = modules::source_control::activeVCS() != 0;
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
@@ -1109,6 +1112,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::plots::initialize)
       (modules::packages::initialize)
       (modules::source::initialize)
+      (modules::source_control::initialize)
       (modules::tex::initialize)
       (modules::history::initialize)
 

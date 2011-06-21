@@ -16,6 +16,7 @@
 
 #include <string>
 #include <core/Error.hpp>
+#include <core/FilePath.hpp>
 
 namespace core {
 namespace string_utils {
@@ -132,6 +133,9 @@ Error utf8Advance(InputIterator begin,
    *pResult = begin;
    return Success();
 }
+
+std::string bash_escape(const std::string& arg);
+std::string bash_escape(const FilePath& filePath);
 
 } // namespace string_utils
 } // namespace core 

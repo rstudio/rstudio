@@ -221,6 +221,18 @@ std::string jsLiteralUnescape(const std::string& str)
    return value.get_str();
 }
 
+std::string bash_escape(const std::string& arg)
+{
+   using namespace boost;
+   regex pattern("[\\\\$`!\\n\"]", regex_constants::normal);
+   return "\"" + regex_replace(arg, pattern, "\\$1") + "\"";
+}
+
+std::string bash_escape(const core::FilePath &path)
+{
+   return bash_escape(utf8ToSystem(path.absolutePath()));
+}
+
 } // namespace string_utils
 } // namespace core 
 

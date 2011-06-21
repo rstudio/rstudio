@@ -80,6 +80,7 @@ public class FilesList extends Composite
       addSelectionColumn();
       addIconColumn(fileTypeRegistry);
       nameColumn_ = addNameColumn();
+//      addVcsStatusColumn();
       sizeColumn_ = addSizeColumn();
       modifiedColumn_ = addModifiedColumn();
       
@@ -157,6 +158,33 @@ public class FilesList extends Composite
       return iconColumn;
    }
    
+   private Column<FileSystemItem, ImageResource> addVcsStatusColumn()
+   {
+      Column<FileSystemItem, ImageResource> iconColumn =
+         new Column<FileSystemItem, ImageResource>(new ImageResourceCell()) {
+
+            @Override
+            public ImageResource getValue(FileSystemItem object)
+            {
+               return object.getVCSStatusIcon();
+            }
+         };
+      iconColumn.setSortable(true);
+      filesCellTable_.addColumn(iconColumn,
+                                SafeHtmlUtils.fromSafeConstant("<br/>"));
+      filesCellTable_.setColumnWidth(iconColumn, 20, Unit.PX);
+
+      sortHandler_.setComparator(iconColumn, new FilesListComparator() {
+         @Override
+         public int doCompare(FileSystemItem a, FileSystemItem b)
+         {
+            return -(a.getVCSStatus().ordinal() - b.getVCSStatus().ordinal());
+         }
+      });
+
+      return iconColumn;
+   }
+
    private LinkColumn<FileSystemItem> addNameColumn()
    {
       LinkColumn<FileSystemItem> nameColumn = new LinkColumn<FileSystemItem>(

@@ -47,6 +47,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
    modules/SessionSource.cpp
+   modules/SessionSourceControl.cpp
    modules/SessionTeX.cpp
    modules/SessionWorkbench.cpp
    modules/SessionWorkspace.cpp

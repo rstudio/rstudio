@@ -50,6 +50,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include "SessionFilesQuotas.hpp"
+#include "SessionSourceControl.hpp"
 
 using namespace core ;
 
@@ -219,9 +220,14 @@ core::Error listFiles(const json::JsonRpcRequest& request,
    // retreive list of files
    FilePath targetPath = module_context::resolveAliasedPath(path) ;
    std::vector<FilePath> files ;
-   Error listingError = targetPath.children(&files) ;
-   if (listingError)
-      return listingError ;
+   error = targetPath.children(&files) ;
+   if (error)
+      return error ;
+
+   source_control::StatusResult vcsStatus;
+   error = source_control::status(targetPath, &vcsStatus);
+   if (error)
+      return error;
 
    // sort the files by name
    std::sort(files.begin(), files.end(), compareAbsolutePathNoCase);
@@ -234,7 +240,9 @@ core::Error listFiles(const json::JsonRpcRequest& request,
       // are not end-user visible
       if (filePath.exists() && isVisible(filePath))
       {
+         source_control::VCSStatus status = vcsStatus.getStatus(filePath);
          json::Object fileObject = module_context::createFileSystemItem(filePath);
+         fileObject["vcs_status"] = status;
          jsonFiles.push_back(fileObject) ;
       }
    }
