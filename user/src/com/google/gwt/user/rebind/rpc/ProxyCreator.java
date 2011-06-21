@@ -37,6 +37,10 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.dev.javac.rebind.CachedClientDataMap;
+import com.google.gwt.dev.javac.rebind.CachedPropertyInformation;
+import com.google.gwt.dev.javac.rebind.CachedRebindResult;
+import com.google.gwt.dev.javac.rebind.RebindResult;
+import com.google.gwt.dev.javac.rebind.RebindStatus;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -71,6 +75,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -83,15 +88,41 @@ import java.util.Set;
  */
 public class ProxyCreator {
   /**
+   * Some keys for storing cached information for use with generator result
+   * caching.
+   */
+  public static final String CACHED_PROPERTY_INFO_KEY = "cached-property-info";
+  public static final String CACHED_TYPE_INFO_KEY = "cached-type-info";
+
+  /**
    * The directory within which RPC manifests are placed for individual
    * permutations.
    */
   public static final String MANIFEST_ARTIFACT_DIR = "rpcPolicyManifest/manifests";
 
-  private static final Map<JPrimitiveType, ResponseReader> JPRIMITIVETYPE_TO_RESPONSEREADER =
-      new HashMap<JPrimitiveType, ResponseReader>();
+  /**
+   * Properties which need to be checked to determine cacheability.
+   */
+  private static final Collection<String> configPropsToCheck = Arrays.asList(
+      TypeSerializerCreator.GWT_ELIDE_TYPE_NAMES_FROM_RPC, Shared.RPC_ENHANCED_CLASSES);
+  private static final Collection<String> selectionPropsToCheck = Arrays
+      .asList(Shared.RPC_PROP_SUPPRESS_NON_STATIC_FINAL_FIELD_WARNINGS);
 
   private static final String PROXY_SUFFIX = "_Proxy";
+
+  private static final Map<JPrimitiveType, ResponseReader> JPRIMITIVETYPE_TO_RESPONSEREADER =
+      new HashMap<JPrimitiveType, ResponseReader>();
+  static {
+    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.BOOLEAN, ResponseReader.BOOLEAN);
+    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.BYTE, ResponseReader.BYTE);
+    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.CHAR, ResponseReader.CHAR);
+    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.DOUBLE, ResponseReader.DOUBLE);
+    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.FLOAT, ResponseReader.FLOAT);
+    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.INT, ResponseReader.INT);
+    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.LONG, ResponseReader.LONG);
+    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.SHORT, ResponseReader.SHORT);
+    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.VOID, ResponseReader.VOID);
+  }
 
   /**
    * Adds a root type for each type that appears in the RemoteService interface
@@ -196,7 +227,7 @@ public class ProxyCreator {
     for (JType[] a : types) {
       typesList.addAll(Arrays.asList(a));
     }
-    JType[] serializableTypes = typesList.toArray(new JType[0]);
+    JType[] serializableTypes = typesList.toArray(new JType[typesList.size()]);
     Arrays.sort(serializableTypes, SerializableTypeOracleBuilder.JTYPE_COMPARATOR);
     return serializableTypes;
   }
@@ -205,24 +236,13 @@ public class ProxyCreator {
 
   private boolean elideTypeNames;
 
-  private Map<String, Long> cachedTypeLastModifiedTimes = null;
-
   /**
    * The possibly obfuscated type signatures used to represent a type.
    */
   private Map<JType, String> typeStrings;
 
-  {
-    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.BOOLEAN, ResponseReader.BOOLEAN);
-    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.BYTE, ResponseReader.BYTE);
-    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.CHAR, ResponseReader.CHAR);
-    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.DOUBLE, ResponseReader.DOUBLE);
-    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.FLOAT, ResponseReader.FLOAT);
-    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.INT, ResponseReader.INT);
-    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.LONG, ResponseReader.LONG);
-    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.SHORT, ResponseReader.SHORT);
-    JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.VOID, ResponseReader.VOID);
-  }
+  private Set<JType> customSerializersUsed;
+  private Set<JType> typesNotUsingCustomSerializers;
 
   public ProxyCreator(JClassType serviceIntf) {
     assert (serviceIntf.isInterface() != null);
@@ -234,7 +254,7 @@ public class ProxyCreator {
    * 
    * @throws UnableToCompleteException
    */
-  public String create(TreeLogger logger, GeneratorContextExt context)
+  public RebindResult create(TreeLogger logger, GeneratorContextExt context)
       throws UnableToCompleteException {
     TypeOracle typeOracle = context.getTypeOracle();
 
@@ -247,9 +267,8 @@ public class ProxyCreator {
       throw new UnableToCompleteException();
     }
 
-    SourceWriter srcWriter = getSourceWriter(logger, context, serviceAsync);
-    if (srcWriter == null) {
-      return getProxyQualifiedName();
+    if (checkAlreadyGenerated(typeOracle, serviceIntf)) {
+      return new RebindResult(RebindStatus.USE_EXISTING, getProxyQualifiedName());
     }
 
     // Make sure that the async and synchronous versions of the RemoteService
@@ -265,15 +284,52 @@ public class ProxyCreator {
 
     // Determine the set of serializable types
     Event event = SpeedTracerLogger.start(CompilerEventType.GENERATOR_RPC_STOB);
+    SerializableTypeOracle typesSentFromBrowser;
+    SerializableTypeOracle typesSentToBrowser;
+    String rpcLog;
+    try {
+      SerializableTypeOracleBuilder typesSentFromBrowserBuilder =
+          new SerializableTypeOracleBuilder(logger, propertyOracle, context);
+      typesSentFromBrowserBuilder.setTypeFilter(blacklistTypeFilter);
+      SerializableTypeOracleBuilder typesSentToBrowserBuilder =
+          new SerializableTypeOracleBuilder(logger, propertyOracle, context);
+      typesSentToBrowserBuilder.setTypeFilter(blacklistTypeFilter);
 
-    SerializableTypeOracleBuilder typesSentFromBrowserBuilder =
-        new SerializableTypeOracleBuilder(logger, propertyOracle, context);
-    typesSentFromBrowserBuilder.setTypeFilter(blacklistTypeFilter);
-    SerializableTypeOracleBuilder typesSentToBrowserBuilder =
-        new SerializableTypeOracleBuilder(logger, propertyOracle, context);
-    typesSentToBrowserBuilder.setTypeFilter(blacklistTypeFilter);
+      addRoots(logger, typeOracle, typesSentFromBrowserBuilder, typesSentToBrowserBuilder);
 
-    addRoots(logger, typeOracle, typesSentFromBrowserBuilder, typesSentToBrowserBuilder);
+      // Decide what types to send in each direction.
+      // Log the decisions to a string that will be written later in this method
+      {
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter writer = new PrintWriter(stringWriter);
+
+        typesSentFromBrowserBuilder.setLogOutputWriter(writer);
+        typesSentToBrowserBuilder.setLogOutputWriter(writer);
+
+        writer.write("====================================\n");
+        writer.write("Types potentially sent from browser:\n");
+        writer.write("====================================\n\n");
+        writer.flush();
+        typesSentFromBrowser = typesSentFromBrowserBuilder.build(logger);
+
+        writer.write("===================================\n");
+        writer.write("Types potentially sent from server:\n");
+        writer.write("===================================\n\n");
+        writer.flush();
+        typesSentToBrowser = typesSentToBrowserBuilder.build(logger);
+
+        writer.close();
+        rpcLog = stringWriter.toString();
+      }
+    } finally {
+      event.end();
+    }
+
+    // Check generator result cacheability, to see if we can return now
+    if (checkGeneratorResultCacheability(logger, context, typesSentFromBrowser, typesSentToBrowser)) {
+      logger.log(TreeLogger.TRACE, "Reusing all cached artifacts for " + getProxyQualifiedName());
+      return new RebindResult(RebindStatus.USE_ALL_CACHED, getProxyQualifiedName());
+    }
 
     try {
       ConfigurationProperty prop =
@@ -287,34 +343,12 @@ public class ProxyCreator {
       throw new UnableToCompleteException();
     }
 
-    // Decide what types to send in each direction.
-    // Log the decisions to a string that will be written later in this method
-    SerializableTypeOracle typesSentFromBrowser;
-    SerializableTypeOracle typesSentToBrowser;
-    String rpcLog;
-    {
-      StringWriter stringWriter = new StringWriter();
-      PrintWriter writer = new PrintWriter(stringWriter);
-
-      typesSentFromBrowserBuilder.setLogOutputWriter(writer);
-      typesSentToBrowserBuilder.setLogOutputWriter(writer);
-
-      writer.write("====================================\n");
-      writer.write("Types potentially sent from browser:\n");
-      writer.write("====================================\n\n");
-      writer.flush();
-      typesSentFromBrowser = typesSentFromBrowserBuilder.build(logger);
-
-      writer.write("===================================\n");
-      writer.write("Types potentially sent from server:\n");
-      writer.write("===================================\n\n");
-      writer.flush();
-      typesSentToBrowser = typesSentToBrowserBuilder.build(logger);
-
-      writer.close();
-      rpcLog = stringWriter.toString();
+    SourceWriter srcWriter = getSourceWriter(logger, context, serviceAsync);
+    if (srcWriter == null) {
+      // don't expect this to occur, but could happen if an instance was
+      // recently generated but not yet committed
+      return new RebindResult(RebindStatus.USE_EXISTING, getProxyQualifiedName());
     }
-    event.end();
 
     generateTypeHandlers(logger, context, typesSentFromBrowser, typesSentToBrowser);
 
@@ -344,12 +378,26 @@ public class ProxyCreator {
           serializationPolicyStrongName, rpcLog));
     }
 
-    return getProxyQualifiedName();
-  }
+    if (context.isGeneratorResultCachingEnabled()) {
+      // Remember the type info that we care about for cacheability testing.
+      CachedClientDataMap clientData = new CachedClientDataMap();
+      CachedRpcTypeInformation cti =
+          new CachedRpcTypeInformation(typesSentFromBrowser, typesSentToBrowser,
+              customSerializersUsed, typesNotUsingCustomSerializers);
+      clientData.put(CACHED_TYPE_INFO_KEY, cti);
+      CachedPropertyInformation cpi =
+          new CachedPropertyInformation(logger, context.getPropertyOracle(), selectionPropsToCheck,
+              configPropsToCheck);
+      clientData.put(CACHED_PROPERTY_INFO_KEY, cpi);
 
-  public void updateResultCacheData(CachedClientDataMap clientData) {
-    if (cachedTypeLastModifiedTimes != null) {
-      clientData.put(TypeSerializerCreator.CACHED_TYPE_INFO_KEY, cachedTypeLastModifiedTimes);
+      /*
+       * Return with RebindStatus.USE_PARTIAL_CACHED, since we are allowing
+       * generator result caching for field serializers, but other generated
+       * types cannot be cached effectively.
+       */
+      return new RebindResult(RebindStatus.USE_PARTIAL_CACHED, getProxyQualifiedName(), clientData);
+    } else {
+      return new RebindResult(RebindStatus.USE_ALL_NEW_WITH_NO_CACHING, getProxyQualifiedName());
     }
   }
 
@@ -655,7 +703,8 @@ public class ProxyCreator {
     typeStrings = new HashMap<JType, String>(tsc.getTypeStrings());
     typeStrings.put(serviceIntf, TypeNameObfuscator.SERVICE_INTERFACE_ID);
 
-    cachedTypeLastModifiedTimes = tsc.getTypeLastModifiedTimeMap();
+    customSerializersUsed = tsc.getCustomSerializersUsed();
+    typesNotUsingCustomSerializers = tsc.getTypesNotUsingCustomSerializers();
   }
 
   protected String getProxySimpleName() {
@@ -775,6 +824,44 @@ public class ProxyCreator {
       logger.log(TreeLogger.ERROR, null, e);
       throw new UnableToCompleteException();
     }
+  }
+
+  private boolean checkAlreadyGenerated(TypeOracle typeOracle, JClassType serviceAsync) {
+    JPackage serviceIntfPkg = serviceAsync.getPackage();
+    String packageName = serviceIntfPkg == null ? "" : serviceIntfPkg.getName();
+    return typeOracle.findType(packageName, getProxySimpleName()) != null;
+  }
+
+  private boolean checkGeneratorResultCacheability(TreeLogger logger, GeneratorContextExt ctx,
+      SerializableTypeOracle typesSentFromBrowser, SerializableTypeOracle typesSentToBrowser) {
+
+    CachedRebindResult lastResult = ctx.getCachedGeneratorResult();
+    if (lastResult == null || !ctx.isGeneratorResultCachingEnabled()) {
+      return false;
+    }
+
+    CachedPropertyInformation cpi =
+        (CachedPropertyInformation) lastResult.getClientData(CACHED_PROPERTY_INFO_KEY);
+    if (cpi == null) {
+      return false;
+    }
+
+    CachedRpcTypeInformation cti =
+        (CachedRpcTypeInformation) lastResult.getClientData(CACHED_TYPE_INFO_KEY);
+    if (cti == null) {
+      return false;
+    }
+
+    if (!cti.checkTypeInformation(logger, ctx.getTypeOracle(), typesSentFromBrowser,
+        typesSentToBrowser)) {
+      return false;
+    }
+
+    if (!cpi.checkPropertiesWithPropertyOracle(logger, ctx.getPropertyOracle())) {
+      return false;
+    }
+
+    return true;
   }
 
   private void emitPolicyFileArtifact(TreeLogger logger, GeneratorContextExt context,

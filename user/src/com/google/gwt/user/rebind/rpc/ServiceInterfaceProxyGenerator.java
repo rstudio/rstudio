@@ -21,9 +21,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.javac.rebind.CachedClientDataMap;
 import com.google.gwt.dev.javac.rebind.RebindResult;
-import com.google.gwt.dev.javac.rebind.RebindStatus;
 
 /**
  * Generator for producing the asynchronous version of a
@@ -57,23 +55,7 @@ public class ServiceInterfaceProxyGenerator extends GeneratorExt {
         logger.branch(TreeLogger.DEBUG, "Generating client proxy for remote service interface '"
             + remoteService.getQualifiedSourceName() + "'", null);
 
-    String returnTypeName = proxyCreator.create(proxyLogger, ctx);
-
-    if (ctx.isGeneratorResultCachingEnabled()) {
-      // Remember the type info that we care about for cacheability testing.
-      CachedClientDataMap clientData = new CachedClientDataMap();
-      proxyCreator.updateResultCacheData(clientData);
-
-      /*
-       * Return with RebindStatus.USE_PARTIAL_CACHED, since we are allowing
-       * generator result caching for field serializers, but other generated
-       * types cannot be cached effectively.
-       */
-      return new RebindResult(RebindStatus.USE_PARTIAL_CACHED, returnTypeName, clientData);
-    } else {
-      // If we can't be cacheable, don't return a cacheable result
-      return new RebindResult(RebindStatus.USE_ALL_NEW_WITH_NO_CACHING, returnTypeName);
-    }
+    return proxyCreator.create(proxyLogger, ctx);
   }
 
   protected ProxyCreator createProxyCreator(JClassType remoteService) {

@@ -37,7 +37,7 @@ class Shared {
    * Property used to control whether or not the RPC system will emit warnings
    * when a type has final fields.
    */
-  private static final String RPC_PROP_SUPPRESS_NON_STATIC_FINAL_FIELD_WARNINGS =
+  public static final String RPC_PROP_SUPPRESS_NON_STATIC_FINAL_FIELD_WARNINGS =
       "gwt.suppressNonStaticFinalFieldWarnings";
 
   /**
@@ -45,7 +45,7 @@ class Shared {
    * (potentially) enhanced with server-only fields, to be handled specially by
    * RPC.
    */
-  private static final String RPC_ENHANCED_CLASSES = "rpc.enhancedClasses";
+  public static final String RPC_ENHANCED_CLASSES = "rpc.enhancedClasses";
 
   /**
    * Capitalizes a name.

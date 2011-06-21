@@ -24,13 +24,9 @@ import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.GeneratorContextExt;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
-import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
-import com.google.gwt.core.ext.typeinfo.JRawType;
-import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.rebind.CachedRebindResult;
@@ -61,12 +57,6 @@ import java.util.Set;
  * of types is obtained from the SerializableTypeOracle object.
  */
 public class TypeSerializerCreator {
-
-  /**
-   * A key for storing cached type information for use with generator result
-   * caching.
-   */
-  public static final String CACHED_TYPE_INFO_KEY = "cached-type-info";
 
   /**
    * Configuration property to use type indices instead of type signatures.
@@ -127,9 +117,11 @@ public class TypeSerializerCreator {
 
   private final String typeSerializerSimpleName;
 
-  private final Map<String, Long> typeLastModifiedTimeMap;
-
   private final Map<JType, String> typeStrings = new IdentityHashMap<JType, String>();
+
+  private final Set<JType> typesNotUsingCustomFieldSerializers;
+
+  private final Set<JType> customFieldSerializersUsed;
 
   public TypeSerializerCreator(TreeLogger logger, SerializableTypeOracle serializationOracle,
       SerializableTypeOracle deserializationOracle, GeneratorContextExt context,
@@ -169,14 +161,20 @@ public class TypeSerializerCreator {
     }
 
     if (context.isGeneratorResultCachingEnabled()) {
-      typeLastModifiedTimeMap = new HashMap<String, Long>();
+      typesNotUsingCustomFieldSerializers = new HashSet<JType>();
+      customFieldSerializersUsed = new HashSet<JType>();
     } else {
-      typeLastModifiedTimeMap = null;
+      typesNotUsingCustomFieldSerializers = null;
+      customFieldSerializersUsed = null;
     }
   }
 
-  public Map<String, Long> getTypeLastModifiedTimeMap() {
-    return typeLastModifiedTimeMap;
+  public Set<JType> getCustomSerializersUsed() {
+    return customFieldSerializersUsed;
+  }
+
+  public Set<JType> getTypesNotUsingCustomSerializers() {
+    return typesNotUsingCustomFieldSerializers;
   }
 
   public Map<JType, String> getTypeStrings() {
@@ -246,12 +244,21 @@ public class TypeSerializerCreator {
        */
       assert (type.isClass() != null || type.isArray() != null);
 
+      // get custom field serializer, if available
+      JClassType customFieldSerializer =
+          SerializableTypeOracleBuilder.findCustomFieldSerializer(typeOracle, type);
+
       if (ctx.isGeneratorResultCachingEnabled()) {
-        // get the last modified time for our type, and remember it
-        typeLastModifiedTimeMap.put(type.getQualifiedSourceName(), getLastModifiedTime(type));
+        // update cacheable info for next iteration
+        if (customFieldSerializer != null) {
+          customFieldSerializersUsed.add(customFieldSerializer);
+        } else {
+          typesNotUsingCustomFieldSerializers.add(type);
+        }
 
         // check the cache for a valid field serializer for the current type
-        if (findCacheableFieldSerializerAndMarkForReuseIfAvailable(logger, ctx, type)) {
+        if (findCacheableFieldSerializerAndMarkForReuseIfAvailable(logger, ctx, type,
+            customFieldSerializer)) {
           // we can skip re-generation of the field serializer for the current
           // type
           return;
@@ -259,8 +266,6 @@ public class TypeSerializerCreator {
       }
 
       // generate a new field serializer
-      JClassType customFieldSerializer =
-          SerializableTypeOracleBuilder.findCustomFieldSerializer(typeOracle, type);
       FieldSerializerCreator creator =
           new FieldSerializerCreator(context, serializationOracle, deserializationOracle,
               (JClassType) type, customFieldSerializer);
@@ -290,7 +295,7 @@ public class TypeSerializerCreator {
    * return false.
    */
   private boolean findCacheableFieldSerializerAndMarkForReuseIfAvailable(TreeLogger logger,
-      GeneratorContextExt ctx, JType type) {
+      GeneratorContextExt ctx, JType type, JType customFieldSerializer) {
 
     CachedRebindResult lastResult = ctx.getCachedGeneratorResult();
     if (lastResult == null || !ctx.isGeneratorResultCachingEnabled()) {
@@ -302,6 +307,12 @@ public class TypeSerializerCreator {
     if (type instanceof JClassType) {
       // check that it is available for reuse
       if (!lastResult.isTypeCached(fieldSerializerName)) {
+        if (logger.isLoggable(TreeLogger.TRACE)) {
+          if (ctx.getTypeOracle().findType(fieldSerializerName) == null) {
+            logger.log(TreeLogger.TRACE, "No cached field serializer available for "
+                + type.getQualifiedSourceName());
+          }
+        }
         return false;
       }
     } else {
@@ -309,14 +320,15 @@ public class TypeSerializerCreator {
     }
 
     @SuppressWarnings("unchecked")
-    Map<String, Long> cachedLastModifiedTimes =
-        (Map<String, Long>) lastResult.getClientData(CACHED_TYPE_INFO_KEY);
-    String sourceName = type.getQualifiedSourceName();
+    CachedRpcTypeInformation cachedTypeInfo =
+        (CachedRpcTypeInformation) lastResult.getClientData(ProxyCreator.CACHED_TYPE_INFO_KEY);
 
-    assert cachedLastModifiedTimes != null;
-    assert typeLastModifiedTimeMap.get(sourceName) != null;
+    assert cachedTypeInfo != null;
     boolean foundMatch = false;
-    if (typeLastModifiedTimeMap.get(sourceName).equals(cachedLastModifiedTimes.get(sourceName))) {
+    if (cachedTypeInfo.checkLastModifiedTime(type)
+        && ((customFieldSerializer != null && cachedTypeInfo
+            .checkLastModifiedTime(customFieldSerializer)) || (customFieldSerializer == null && cachedTypeInfo
+            .checkTypeNotUsingCustomSerializer(type)))) {
       // use cached version, if available
       foundMatch = ctx.reuseTypeFromCacheIfAvailable(fieldSerializerName);
     }
@@ -332,29 +344,6 @@ public class TypeSerializerCreator {
     }
 
     return foundMatch;
-  }
-
-  private long getLastModifiedTime(JType type) {
-    JType typeToCheck;
-    if (type instanceof JArrayType) {
-      typeToCheck = ((JArrayType) type).getLeafType();
-    } else if (type instanceof JRawType) {
-      typeToCheck = ((JRawType) type).getGenericType();
-    } else {
-      assert type instanceof JRealClassType;
-      typeToCheck = type;
-    }
-
-    long lastModifiedTime;
-    if (typeToCheck instanceof JRealClassType) {
-      lastModifiedTime = ((JRealClassType) typeToCheck).getLastModifiedTime();
-    } else {
-      // we have a type that is an array with a primitive leafType
-      assert typeToCheck instanceof JPrimitiveType;
-      lastModifiedTime = Long.MAX_VALUE;
-    }
-
-    return lastModifiedTime;
   }
 
   private String[] getPackageAndClassName(String fullClassName) {

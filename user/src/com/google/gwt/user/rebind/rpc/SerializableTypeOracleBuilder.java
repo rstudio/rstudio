@@ -404,7 +404,20 @@ public class SerializableTypeOracleBuilder {
       return null;
     }
 
-    String customFieldSerializerName = type.getQualifiedSourceName() + "_CustomFieldSerializer";
+    String customFieldSerializerName = getCustomFieldSerializerName(type.getQualifiedSourceName());
+    return findCustomFieldSerializer(typeOracle, customFieldSerializerName);
+  }
+
+  /**
+   * Finds the custom field serializer for a given qualified source name.
+   * 
+   * @param typeOracle
+   * @param customFieldSerializerName
+   * @return the custom field serializer for a type of <code>null</code> if
+   *         there is not one
+   */
+  public static JClassType findCustomFieldSerializer(TypeOracle typeOracle,
+      String customFieldSerializerName) {
     JClassType customSerializer = typeOracle.findType(customFieldSerializerName);
     if (customSerializer == null) {
       // If the type is in the java.lang or java.util packages then it will be
@@ -414,6 +427,16 @@ public class SerializableTypeOracleBuilder {
     }
 
     return customSerializer;
+  }
+
+  /**
+   * Returns the name for a custom field serializer, given a source name.
+   * 
+   * @param sourceName
+   * @return the custom field serializer type name for a given source name.
+   */
+  public static String getCustomFieldSerializerName(String sourceName) {
+    return sourceName + "_CustomFieldSerializer";
   }
 
   static JRealClassType getBaseType(JClassType type) {
