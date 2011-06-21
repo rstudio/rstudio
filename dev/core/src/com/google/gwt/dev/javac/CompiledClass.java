@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.javac.TypeOracleMediator.TypeData;
 import com.google.gwt.dev.util.DiskCache;
+import com.google.gwt.dev.util.DiskCacheToken;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.Name.InternalName;
 
@@ -24,9 +25,6 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 /**
@@ -48,7 +46,7 @@ public final class CompiledClass implements Serializable {
    * A token to retrieve this object's bytes from the disk cache. byte code is
    * placed in the cache when the object is deserialized.
    */
-  private transient long cacheToken;
+  private final DiskCacheToken classBytesToken;
   private transient NameEnvironmentAnswer nameEnvironmentAnswer;
 
   /**
@@ -67,7 +65,7 @@ public final class CompiledClass implements Serializable {
     this.enclosingClass = enclosingClass;
     this.internalName = StringInterner.get().intern(internalName);
     this.sourceName = StringInterner.get().intern(InternalName.toSourceName(internalName));
-    this.cacheToken = diskCache.writeByteArray(classBytes);
+    this.classBytesToken = new DiskCacheToken(diskCache.writeByteArray(classBytes));
     this.isLocal = isLocal;
   }
 
@@ -75,7 +73,7 @@ public final class CompiledClass implements Serializable {
    * Returns the bytes of the compiled class.
    */
   public byte[] getBytes() {
-    return diskCache.readByteArray(cacheToken);
+    return classBytesToken.readByteArray();
   }
 
   public CompiledClass getEnclosingClass() {
@@ -153,13 +151,4 @@ public final class CompiledClass implements Serializable {
     this.unit = unit;
   }
 
-  private void readObject(ObjectInputStream inputStream) throws ClassNotFoundException, IOException {
-    inputStream.defaultReadObject();
-    this.cacheToken = diskCache.transferFromStream(inputStream);
-  }
-
-  private void writeObject(ObjectOutputStream outputStream) throws IOException {
-    outputStream.defaultWriteObject();
-    diskCache.transferToStream(cacheToken, outputStream);
-  }
 }
