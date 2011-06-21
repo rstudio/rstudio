@@ -16,9 +16,9 @@
 
 package com.google.gwt.sample.gaerequest.client;
 
-import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Window.Location;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 /**
  * A minimal auth failure handler which takes the user a login page.

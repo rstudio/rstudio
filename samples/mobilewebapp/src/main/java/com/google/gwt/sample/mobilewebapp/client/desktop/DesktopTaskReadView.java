@@ -19,7 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.SimpleBeanEditorDriver;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
+import com.google.gwt.sample.mobilewebapp.presenter.task.TaskReadView;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -32,7 +32,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * View used to edit a task.
+ * View used to see the details of a task.
  */
 public class DesktopTaskReadView extends Composite implements TaskReadView {
 
@@ -42,8 +42,7 @@ public class DesktopTaskReadView extends Composite implements TaskReadView {
   interface DesktopTaskReadViewUiBinder extends UiBinder<Widget, DesktopTaskReadView> {
   }
 
-
-  interface Driver extends SimpleBeanEditorDriver<TaskProxy, DesktopTaskReadView> {
+  interface EditorDriver extends SimpleBeanEditorDriver<TaskProxy, DesktopTaskReadView> {
   }
 
   /**
@@ -68,9 +67,9 @@ public class DesktopTaskReadView extends Composite implements TaskReadView {
   @UiField
   Label notesEditor;
   @UiField
-  Button saveButton;
+  Button editButton;
 
-  private final Driver driver = GWT.create(Driver.class);
+  private final EditorDriver editorDriver = GWT.create(EditorDriver.class);
 
   /**
    * The {@link TaskReadView.Presenter} for this view.
@@ -82,10 +81,9 @@ public class DesktopTaskReadView extends Composite implements TaskReadView {
    */
   public DesktopTaskReadView() {
     initWidget(uiBinder.createAndBindUi(this));
-    driver.initialize(this);
-
+    editorDriver.initialize(this);
     // Create a new task or modify the current task when done is pressed.
-    saveButton.addClickHandler(new ClickHandler() {
+    editButton.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         if (presenter != null) {
           presenter.editTask();
@@ -95,7 +93,7 @@ public class DesktopTaskReadView extends Composite implements TaskReadView {
   }
 
   public SimpleBeanEditorDriver<TaskProxy, ?> getEditorDriver() {
-    return driver;
+    return editorDriver;
   }
 
   public void setPresenter(Presenter presenter) {

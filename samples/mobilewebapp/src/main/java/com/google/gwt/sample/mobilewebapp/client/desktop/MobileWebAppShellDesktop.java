@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.mobilewebapp.client.desktop;
 
-import com.google.gwt.canvas.dom.client.CssColor;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.VideoElement;
@@ -26,14 +25,12 @@ import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceChangeEvent;
 import com.google.gwt.place.shared.PlaceController;
 import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShell;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity.TaskListUpdateEvent;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
-import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
-import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
-import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
+import com.google.gwt.sample.mobilewebapp.presenter.task.TaskEditView;
+import com.google.gwt.sample.mobilewebapp.presenter.task.TaskPlace;
+import com.google.gwt.sample.mobilewebapp.presenter.task.TaskReadView;
+import com.google.gwt.sample.mobilewebapp.presenter.taskchart.TaskChartPresenter;
+import com.google.gwt.sample.mobilewebapp.presenter.tasklist.TaskListPlace;
+import com.google.gwt.sample.mobilewebapp.presenter.tasklist.TaskListView;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellList;
@@ -57,7 +54,6 @@ import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -131,11 +127,6 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
   private boolean firstContentWidget = true;
 
   /**
-   * A pie chart showing a snapshot of the tasks.
-   */
-  private PieChart pieChart;
-
-  /**
    * The {@link DialogBox} used to display the tutorial.
    */
   private PopupPanel tutoralPopup;
@@ -147,10 +138,10 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
 
   /**
    * Construct a new {@link MobileWebAppShellDesktop}.
-   * @param clientFactory the {@link ClientFactory} of shared resources
    */
-  public MobileWebAppShellDesktop(EventBus bus, final PlaceController placeController,
-      TaskListView taskListView, TaskEditView taskEditView, TaskReadView taskReadView) {
+  public MobileWebAppShellDesktop(EventBus bus, TaskChartPresenter pieChart,
+      final PlaceController placeController, TaskListView taskListView, TaskEditView taskEditView,
+      TaskReadView taskReadView) {
 
     // Initialize the main menu.
     Resources resources = GWT.create(Resources.class);
@@ -169,7 +160,7 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
         return p instanceof TaskListPlace;
       }
     });
-    menuItems.add(new MainMenuItem("Add Task", TaskEditPlace.getTaskCreatePlace()));
+    menuItems.add(new MainMenuItem("Add Task", TaskPlace.getTaskCreatePlace()));
     mainMenu.setRowData(menuItems);
 
     // Choose a place when a menu item is selected.
@@ -206,7 +197,6 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
     initWidget(uiBinder.createAndBindUi(this));
 
     // Initialize the pie chart.
-    pieChart = PieChart.createIfSupported();
     String chartUrlValue = Window.Location.getParameter(CHART_URL_ATTRIBUTE);
     if (chartUrlValue != null && chartUrlValue.startsWith("f")) {
       // Chart manually disabled.
@@ -217,35 +207,26 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
       pieChartContainer.setWidget(new Label("Try upgrading to a modern browser to enable charts."));
     } else {
       // Chart supported.
-      pieChart.setWidth("90%");
-      pieChart.setHeight("90%");
-      pieChart.getElement().getStyle().setMarginLeft(5.0, Unit.PCT);
-      pieChart.getElement().getStyle().setMarginTop(5.0, Unit.PCT);
+      Widget pieWidget = pieChart.asWidget();
+      pieWidget.setWidth("90%");
+      pieWidget.setHeight("90%");
+      pieWidget.getElement().getStyle().setMarginLeft(5.0, Unit.PCT);
+      pieWidget.getElement().getStyle().setMarginTop(5.0, Unit.PCT);
+      
       pieChartContainer.setWidget(pieChart);
     }
 
-    // Initialize the add button.
-    setAddButtonHandler(null);
-
     /*
      * Add all views to the DeckLayoutPanel so we can animate between them.
-     * Using a DeckLayoutPanel here works because we only have a few views, and we
-     * always know that the task views should animate in from the right side of
-     * the screen. A more complex app will require more complex logic to figure
-     * out which direction to animate.
+     * Using a DeckLayoutPanel here works because we only have a few views, and
+     * we always know that the task views should animate in from the right side
+     * of the screen. A more complex app will require more complex logic to
+     * figure out which direction to animate.
      */
     contentContainer.add(taskListView);
     contentContainer.add(taskReadView);
     contentContainer.add(taskEditView);
     contentContainer.setAnimationDuration(800);
-
-    // Listen for events from the task list activity.
-    bus.addHandler(TaskListUpdateEvent.getType(),
-        new TaskListActivity.TaskListUpdateHandler() {
-          public void onTaskListUpdated(TaskListUpdateEvent event) {
-            updatePieChart(event.getTasks());
-          }
-        });
 
     // Show a tutorial when the help link is clicked.
     helpLink.addClickHandler(new ClickHandler() {
@@ -255,13 +236,8 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
     });
   }
 
-  /**
-   * Set the handler to invoke when the add button is pressed. If no handler is
-   * specified, the button is hidden.
-   * 
-   * @param handler the handler to add to the button, or null to hide
-   */
-  public void setAddButtonHandler(ClickHandler handler) {
+  @Override
+  public void setAddButtonVisible(boolean isVisible) {
     // No-op: Adding a task is handled in the main menu.
   }
 
@@ -346,53 +322,5 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
     popup.setWidget(vPanel);
     tutoralPopup = popup;
     popup.center();
-  }
-
-  /**
-   * Update the pie chart with the list of tasks.
-   * 
-   * @param tasks the list of tasks
-   */
-  @SuppressWarnings("deprecation")
-  private void updatePieChart(List<TaskProxy> tasks) {
-    if (pieChart == null) {
-      return;
-    }
-
-    // Calculate the slices based on the due date.
-    double pastDue = 0;
-    double dueSoon = 0;
-    double onTime = 0;
-    double noDate = 0;
-    final Date now = new Date();
-    final Date tomorrow = new Date(now.getYear(), now.getMonth(), now.getDate() + 1, 23, 59, 59);
-    for (TaskProxy task : tasks) {
-      Date dueDate = task.getDueDate();
-      if (dueDate == null) {
-        noDate++;
-      } else if (dueDate.before(now)) {
-        pastDue++;
-      } else if (dueDate.before(tomorrow)) {
-        dueSoon++;
-      } else {
-        onTime++;
-      }
-    }
-
-    // Update the pie chart.
-    pieChart.clearSlices();
-    if (pastDue > 0) {
-      pieChart.addSlice(pastDue, CssColor.make(255, 100, 100));
-    }
-    if (dueSoon > 0) {
-      pieChart.addSlice(dueSoon, CssColor.make(255, 200, 100));
-    }
-    if (onTime > 0) {
-      pieChart.addSlice(onTime, CssColor.make(100, 255, 100));
-    }
-    if (noDate > 0) {
-      pieChart.addSlice(noDate, CssColor.make(200, 200, 200));
-    }
-    pieChart.redraw();
   }
 }

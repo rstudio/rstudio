@@ -13,22 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.mobilewebapp.client.activity;
+package com.google.gwt.sample.mobilewebapp.presenter.task;
 
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
+import com.google.gwt.sample.ui.client.PresentsWidgets;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
 
 /**
- * A view of {@link TaskEditActivity}.
+ * Implemented by widgets that edit tasks.
  */
-public interface TaskEditView extends IsWidget, Editor<TaskProxy> {
+public interface TaskEditView extends Editor<TaskProxy>, IsWidget {
 
   /**
    * The presenter for this view.
    */
-  public static interface Presenter {
+  public interface Presenter extends PresentsWidgets {
     /**
      * Delete the current task or cancel the creation of a task.
      */

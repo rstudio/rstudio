@@ -15,13 +15,15 @@
  */
 package com.google.gwt.sample.mobilewebapp.client;
 
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
+import com.google.gwt.activity.shared.ActivityMapper;
+import com.google.gwt.sample.mobilewebapp.client.activity.AppActivityMapperTablet;
 import com.google.gwt.sample.mobilewebapp.client.tablet.MobileWebAppShellTablet;
 import com.google.gwt.sample.mobilewebapp.client.tablet.TabletTaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.tablet.TabletTaskReadView;
-import com.google.gwt.sample.mobilewebapp.client.ui.OrientationHelper;
-import com.google.gwt.sample.mobilewebapp.client.ui.WindowBasedOrientationHelper;
+import com.google.gwt.sample.mobilewebapp.presenter.task.TaskEditView;
+import com.google.gwt.sample.mobilewebapp.presenter.task.TaskReadView;
+import com.google.gwt.sample.ui.client.OrientationHelper;
+import com.google.gwt.sample.ui.client.WindowBasedOrientationHelper;
 
 /**
  * Tablet version of {@link ClientFactory}.
@@ -30,8 +32,13 @@ public class ClientFactoryImplTablet extends ClientFactoryImplMobile {
   private final OrientationHelper orientationHelper = new WindowBasedOrientationHelper();
 
   @Override
+  protected ActivityMapper createActivityMapper() {
+    return new AppActivityMapperTablet(super.createActivityMapper(), orientationHelper);
+  }
+  
+  @Override
   protected MobileWebAppShell createShell() {
-    return new MobileWebAppShellTablet(getEventBus(), orientationHelper, getTaskListView());
+    return new MobileWebAppShellTablet(this, orientationHelper, getTaskListView());
   }
 
   @Override
@@ -42,19 +49,5 @@ public class ClientFactoryImplTablet extends ClientFactoryImplMobile {
   @Override
   protected TaskReadView createTaskReadView() {
     return new TabletTaskReadView();
-  }
-
-  @Override
-  protected Provider<Boolean> getIsTaskListIncludedProvider() {
-    /*
-     * TODO(rjrjr) This is awkward. Seems like we should be wrapping the tablet
-     * version of the ActivityMapper or something.
-     */
-    return new Provider<Boolean>() {
-      @Override
-      public Boolean get() {
-        return !orientationHelper.isPortrait();
-      }
-    };
   }
 }

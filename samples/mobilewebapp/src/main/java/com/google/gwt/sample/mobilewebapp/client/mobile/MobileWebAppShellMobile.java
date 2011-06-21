@@ -21,14 +21,13 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShell;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
-import com.google.gwt.sample.mobilewebapp.client.event.GoHomeEvent;
-import com.google.gwt.sample.mobilewebapp.client.ui.OrientationHelper;
+import com.google.gwt.sample.mobilewebapp.client.event.ActionEvent;
+import com.google.gwt.sample.mobilewebapp.client.event.ActionNames;
+import com.google.gwt.sample.mobilewebapp.presenter.task.TaskEditView;
+import com.google.gwt.sample.mobilewebapp.presenter.task.TaskReadView;
+import com.google.gwt.sample.mobilewebapp.presenter.tasklist.TaskListView;
+import com.google.gwt.sample.ui.client.OrientationHelper;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
@@ -38,6 +37,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.event.shared.EventBus;
 
 /**
  * Mobile version of the UI shell.
@@ -47,8 +47,8 @@ public class MobileWebAppShellMobile extends ResizeComposite implements MobileWe
   interface MobileWebAppShellMobileUiBinder extends UiBinder<Widget, MobileWebAppShellMobile> {
   }
 
-  private static MobileWebAppShellMobileUiBinder uiBinder =
-      GWT.create(MobileWebAppShellMobileUiBinder.class);
+  private static MobileWebAppShellMobileUiBinder uiBinder = GWT
+      .create(MobileWebAppShellMobileUiBinder.class);
 
   /**
    * The width of the menu bar in landscape mode in EX.
@@ -97,11 +97,6 @@ public class MobileWebAppShellMobile extends ResizeComposite implements MobileWe
   Element titleElem;
 
   /**
-   * A reference to the handler for the add button.
-   */
-  private HandlerRegistration addButtonHandler;
-
-  /**
    * A boolean indicating that we have not yet seen the first content widget.
    */
   private boolean firstContentWidget = true;
@@ -109,20 +104,27 @@ public class MobileWebAppShellMobile extends ResizeComposite implements MobileWe
   /**
    * Construct a new {@link MobileWebAppShellMobile}.
    */
-  public MobileWebAppShellMobile(OrientationHelper orientationHelper, TaskListView taskListView,
-      TaskEditView taskEditView, TaskReadView taskReadView, final EventBus eventBus) {
+  public MobileWebAppShellMobile(final EventBus eventBus, OrientationHelper orientationHelper,
+      TaskListView taskListView, TaskEditView taskEditView, TaskReadView taskReadView) {
 
     initWidget(uiBinder.createAndBindUi(this));
 
     // Initialize the add button.
-    setAddButtonHandler(null);
+    // Initialize the add button.
+    addButton.addClickHandler(new ClickHandler() {
+      @Override
+      public void onClick(ClickEvent event) {
+        ActionEvent.fire(eventBus, ActionNames.ADD_TASK);
+      }
+    });
+    setAddButtonVisible(false);
 
     /*
      * Add all views to the DeckLayoutPanel so we can animate between them.
-     * Using a DeckLayoutPanel here works because we only have a few views, and we
-     * always know that the task views should animate in from the right side of
-     * the screen. A more complex app will require more complex logic to figure
-     * out which direction to animate.
+     * Using a DeckLayoutPanel here works because we only have a few views, and
+     * we always know that the task views should animate in from the right side
+     * of the screen. A more complex app will require more complex logic to
+     * figure out which direction to animate.
      */
     contentContainer.add(taskListView);
     contentContainer.add(taskReadView);
@@ -142,35 +144,17 @@ public class MobileWebAppShellMobile extends ResizeComposite implements MobileWe
     });
 
     // Return to the task list when the title is clicked.
-    titleBar.addDomHandler(new ClickHandler() {      
+    titleBar.addDomHandler(new ClickHandler() {
       @Override
       public void onClick(ClickEvent event) {
-        eventBus.fireEvent(new GoHomeEvent());
+        ActionEvent.fire(eventBus, ActionNames.GO_HOME);
       }
     }, ClickEvent.getType());
   }
 
-  /**
-   * Set the handler to invoke when the add button is pressed. If no handler is
-   * specified, the button is hidden.
-   * 
-   * @param handler the handler to add to the button, or null to hide
-   */
-  public void setAddButtonHandler(ClickHandler handler) {
-    // Clear the old handler.
-    if (addButtonHandler != null) {
-      addButtonHandler.removeHandler();
-      addButtonHandler = null;
-    }
-
-    if (handler == null) {
-      // Hide the button.
-      addButton.setVisible(false);
-    } else {
-      // Show the button and add the handler.
-      addButton.setVisible(true);
-      addButtonHandler = addButton.addClickHandler(handler);
-    }
+  @Override
+  public void setAddButtonVisible(boolean visible) {
+    addButton.setVisible(visible);
   }
 
   /**
@@ -199,7 +183,8 @@ public class MobileWebAppShellMobile extends ResizeComposite implements MobileWe
     layoutPanel.setWidgetLeftRight(contentContainer, LANDSCAPE_MENU_WIDTH_EX, Unit.EX, 0, Unit.PX);
 
     layoutPanel.setWidgetTopHeight(addButtonContainer, 5, Unit.PX, 4, Unit.EX);
-    layoutPanel.setWidgetLeftWidth(addButtonContainer, 0, Unit.PX, LANDSCAPE_MENU_WIDTH_EX, Unit.EX);
+    layoutPanel
+        .setWidgetLeftWidth(addButtonContainer, 0, Unit.PX, LANDSCAPE_MENU_WIDTH_EX, Unit.EX);
 
     layoutPanel.setWidgetBottomHeight(backButtonContainer, 5, Unit.PX, 4, Unit.EX);
     layoutPanel.setWidgetLeftWidth(backButtonContainer, 0, Unit.PX, LANDSCAPE_MENU_WIDTH_EX,
@@ -215,7 +200,8 @@ public class MobileWebAppShellMobile extends ResizeComposite implements MobileWe
     layoutPanel.setWidgetTopBottom(contentContainer, PORTRAIT_MENU_HEIGHT_PT, Unit.PT, 0, Unit.PX);
     layoutPanel.setWidgetLeftRight(contentContainer, 0, Unit.EX, 0, Unit.PX);
 
-    layoutPanel.setWidgetTopHeight(addButtonContainer, 0, Unit.PX, PORTRAIT_MENU_HEIGHT_PT, Unit.PT);
+    layoutPanel
+        .setWidgetTopHeight(addButtonContainer, 0, Unit.PX, PORTRAIT_MENU_HEIGHT_PT, Unit.PT);
     layoutPanel.setWidgetRightWidth(addButtonContainer, 8, Unit.PX, 3, Unit.EX);
 
     layoutPanel.setWidgetTopHeight(backButtonContainer, 0, Unit.PX, PORTRAIT_MENU_HEIGHT_PT,

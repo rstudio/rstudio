@@ -19,9 +19,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.ui.DateButton;
 import com.google.gwt.sample.mobilewebapp.client.ui.EditorDecorator;
+import com.google.gwt.sample.mobilewebapp.presenter.task.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -35,7 +35,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
 
 /**
- * View used to edit a task.
+ * Tablet version of the {@link TaskEditView}.
  */
 public class TabletTaskEditView extends Composite implements TaskEditView {
 

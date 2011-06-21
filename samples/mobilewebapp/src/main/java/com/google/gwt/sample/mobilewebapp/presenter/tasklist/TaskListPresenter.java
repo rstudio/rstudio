@@ -1,33 +1,27 @@
 /*
  * Copyright 2011 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.mobilewebapp.client.activity;
+package com.google.gwt.sample.mobilewebapp.presenter.tasklist;
 
-import com.google.gwt.activity.shared.AbstractActivity;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
-import com.google.gwt.sample.mobilewebapp.client.event.AddTaskEvent;
 import com.google.gwt.sample.mobilewebapp.client.event.ShowTaskEvent;
-import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
+import com.google.gwt.sample.mobilewebapp.client.event.TaskListUpdateEvent;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.AcceptsOneWidget;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 
@@ -37,75 +31,12 @@ import java.util.List;
 /**
  * Activity that presents a list of tasks.
  */
-public class TaskListActivity extends AbstractActivity implements TaskListView.Presenter {
-
-  /**
-   * Event fired when the task list is updated.
-   */
-  public static class TaskListUpdateEvent extends GwtEvent<TaskListActivity.TaskListUpdateHandler> {
-
-    /**
-     * Handler type.
-     */
-    private static Type<TaskListUpdateHandler> TYPE;
-
-    /**
-     * Gets the type associated with this event.
-     * 
-     * @return returns the handler type
-     */
-    public static Type<TaskListUpdateHandler> getType() {
-      if (TYPE == null) {
-        TYPE = new Type<TaskListUpdateHandler>();
-      }
-      return TYPE;
-    }
-
-    private final List<TaskProxy> tasks;
-
-    public TaskListUpdateEvent(List<TaskProxy> tasks) {
-      this.tasks = tasks;
-    }
-
-    @Override
-    public Type<TaskListUpdateHandler> getAssociatedType() {
-      return TYPE;
-    }
-
-    public List<TaskProxy> getTasks() {
-      return tasks;
-    }
-
-    @Override
-    protected void dispatch(TaskListUpdateHandler handler) {
-      handler.onTaskListUpdated(this);
-    }
-  }
-
-  /**
-   * Handler for {@link TaskListUpdateEvent}.
-   */
-  public static interface TaskListUpdateHandler extends EventHandler {
-
-    /**
-     * Called when the task list is updated.
-     */
-    void onTaskListUpdated(TaskListUpdateEvent event);
-  }
+public class TaskListPresenter implements TaskListView.Presenter {
 
   /**
    * The delay in milliseconds between calls to refresh the task list.
    */
   private static final int REFRESH_DELAY = 5000;
-
-  /**
-   * The handler that handlers add button clicks.
-   */
-  private final ClickHandler addButtonHandler = new ClickHandler() {
-    public void onClick(ClickEvent event) {
-      clientFactory.getEventBus().fireEvent(new AddTaskEvent());
-    }
-  };
 
   /**
    * A boolean indicating that we should clear the task list when started.
@@ -114,65 +45,54 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
 
   private final ClientFactory clientFactory;
 
-  /**
-   * A boolean indicating whether or not this activity is still active. The user
-   * might move to another activity while this one is loading, in which case we
-   * do not want to do any more work.
-   */
-  private boolean isDead = false;
-
+  private EventBus eventBus;
+  
   /**
    * The refresh timer used to periodically refresh the task list.
    */
   private Timer refreshTimer;
 
-  public TaskListActivity(ClientFactory clientFactory, boolean clearTaskList) {
+  public TaskListPresenter(ClientFactory clientFactory, boolean clearTaskList) {
     this.clientFactory = clientFactory;
     this.clearTaskList = clearTaskList;
+    clientFactory.getTaskListView().setPresenter(this);
   }
 
   /**
-   * Construct a new {@link TaskListActivity}.
+   * Construct a new {@link TaskListPresenter}.
    * 
    * @param clientFactory the {@link ClientFactory} of shared resources
    * @param place configuration for this activity
    */
-  public TaskListActivity(ClientFactory clientFactory, TaskListPlace place) {
+  public TaskListPresenter(ClientFactory clientFactory, TaskListPlace place) {
     this(clientFactory, place.isTaskListStale());
   }
 
-  public ClickHandler getAddButtonHandler() {
-    return addButtonHandler;
+  @Override
+  public Widget asWidget() {
+    return getView().asWidget();
   }
 
   @Override
-  public void onCancel() {
-    killActivity();
-  }
-
-  @Override
-  public void onStop() {
-    killActivity();
+  public String mayStop() {
+    return null; // always happy to stop
   }
 
   public void selectTask(TaskProxy selected) {
     // Go into edit mode when a task is selected.
-    clientFactory.getEventBus().fireEvent(new ShowTaskEvent(selected));
+    eventBus.fireEvent(new ShowTaskEvent(selected));
   }
 
-  public void start(AcceptsOneWidget container, EventBus eventBus) {
+  @Override
+  public void start(EventBus eventBus) {
+    this.eventBus = eventBus;
     // Add a handler to the 'add' button in the shell.
-    clientFactory.getShell().setAddButtonHandler(addButtonHandler);
-
-    // Set the presenter on the view.
-    final TaskListView view = clientFactory.getTaskListView();
-    view.setPresenter(this);
+    clientFactory.getShell().setAddButtonVisible(true);
 
     // Clear the task list and display it.
     if (clearTaskList) {
-      view.clearList();
+      getView().clearList();
     }
-    container.setWidget(view);
 
     // Create a timer to periodically refresh the task list.
     refreshTimer = new Timer() {
@@ -190,17 +110,18 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
     refreshTaskList();
   }
 
-  /**
-   * Kill this activity.
-   */
-  private void killActivity() {
-    // Ignore all incoming responses to the requests from this activity.
-    isDead = true;
+  @Override
+  public void stop() {
+    eventBus = null;
 
     // Kill the refresh timer.
     if (refreshTimer != null) {
       refreshTimer.cancel();
     }
+  }
+
+  private TaskListView getView() {
+    return clientFactory.getTaskListView();
   }
 
   /**
@@ -217,7 +138,7 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
           @Override
           public void onSuccess(List<TaskProxy> response) {
             // Early exit if this activity has already been canceled.
-            if (isDead) {
+            if (eventBus == null) {
               return;
             }
 
@@ -240,7 +161,7 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
    * Set the list of tasks.
    */
   private void setTasks(List<TaskProxy> tasks) {
-    clientFactory.getTaskListView().setTasks(tasks);
-    clientFactory.getEventBus().fireEventFromSource(new TaskListUpdateEvent(tasks), this);
+    getView().setTasks(tasks);
+    eventBus.fireEventFromSource(new TaskListUpdateEvent(tasks), this);
   }
 }

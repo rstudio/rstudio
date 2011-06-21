@@ -30,7 +30,7 @@ import java.util.Date;
 /**
  * A {@link com.google.gwt.cell.client.Cell} used to render a {@link TaskProxy}.
  */
-public class TaskProxyCell extends AbstractCell<TaskProxy> {
+class TaskProxyCell extends AbstractCell<TaskProxy> {
 
   /**
    * The template used by this cell.

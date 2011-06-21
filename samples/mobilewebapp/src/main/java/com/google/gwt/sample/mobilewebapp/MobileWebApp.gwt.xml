@@ -17,6 +17,9 @@
   
   <inherits name='com.google.gwt.sample.gaerequest.GaeRequest'/>
   <inherits name='com.google.gwt.sample.core.Core'/>
+  <inherits name='com.google.gwt.sample.ui.UI'/>
+
+  <inherits name="com.google.gwt.logging.Logging"/>
 
   <!-- Specify the app entry point class.                         -->
   <entry-point class='com.google.gwt.sample.mobilewebapp.client.MobileWebApp'/>
@@ -43,5 +46,6 @@
 
   <!-- Specify the paths for translatable code                    -->
   <source path='client'/>
+  <source path='presenter'/>
   <source path='shared'/>
 </module>

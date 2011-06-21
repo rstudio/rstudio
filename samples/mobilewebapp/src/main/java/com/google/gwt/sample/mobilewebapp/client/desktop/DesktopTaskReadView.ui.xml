@@ -127,7 +127,7 @@
               colspan='2'
               align='center'>
               <g:Button
-                ui:field="saveButton"
+                ui:field="editButton"
                 addStyleNames="{style.button} {style.saveButton}">Edit</g:Button>
             </td>
           </tr>

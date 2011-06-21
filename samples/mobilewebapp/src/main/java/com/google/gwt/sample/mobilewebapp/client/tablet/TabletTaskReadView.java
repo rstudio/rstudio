@@ -19,8 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.SimpleBeanEditorDriver;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
+import com.google.gwt.sample.mobilewebapp.presenter.task.TaskReadView;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -31,7 +30,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * View used to edit a task.
+ * Tablet version of the {@link TaskReadView}.
  */
 public class TabletTaskReadView extends Composite implements TaskReadView {
 
@@ -68,7 +67,8 @@ public class TabletTaskReadView extends Composite implements TaskReadView {
   private final Driver driver = GWT.create(Driver.class);
 
   /**
-   * The {@link TaskEditView.Presenter} for this view.
+   * The {@link com.google.gwt.sample.mobilewebapp.presenter.task.TaskEditView.Presenter
+   * TaskEditView.Presenter} for this view.
    */
   private Presenter presenter;
 

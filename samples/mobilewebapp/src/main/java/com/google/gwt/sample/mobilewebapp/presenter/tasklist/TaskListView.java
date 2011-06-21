@@ -13,37 +13,46 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.mobilewebapp.client.activity;
+package com.google.gwt.sample.mobilewebapp.presenter.tasklist;
 
-import com.google.gwt.editor.client.Editor;
-import com.google.gwt.editor.client.SimpleBeanEditorDriver;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
+import com.google.gwt.sample.ui.client.PresentsWidgets;
 import com.google.gwt.user.client.ui.IsWidget;
 
+import java.util.List;
+
 /**
- * A readonly view of a task.
+ * Implemented by views that display a list of tasks.
  */
-public interface TaskReadView extends IsWidget, Editor<TaskProxy> {
+public interface TaskListView extends IsWidget {
 
   /**
    * The presenter for this view.
    */
-  public static interface Presenter {
+  public interface Presenter extends PresentsWidgets {
     /**
-     * Switch to an edit view of this task.
+     * Select a task.
+     * 
+     * @param selected the select task
      */
-    void editTask();
+    void selectTask(TaskProxy selected);
   }
 
   /**
-   * Get the driver used to edit tasks in the view.
+   * Clear the list of tasks.
    */
-  SimpleBeanEditorDriver<TaskProxy, ?> getEditorDriver();
+  void clearList();
 
   /**
-   * Set the {@link Presenter} for this view.
-   * 
-   * @param presenter the presenter
+   * Sets the new presenter, and calls {@link Presenter#stop()} on the previous
+   * one.
    */
   void setPresenter(Presenter presenter);
+
+  /**
+   * Set the list of tasks to display.
+   * 
+   * @param tasks the list of tasks
+   */
+  void setTasks(List<TaskProxy> tasks);
 }

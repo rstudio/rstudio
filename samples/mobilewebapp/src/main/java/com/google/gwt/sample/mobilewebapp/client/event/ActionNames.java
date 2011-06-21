@@ -13,11 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.mobilewebapp.client;
+package com.google.gwt.sample.mobilewebapp.client.event;
 
 /**
- * Just like javax.inject.Provider, makes things.
+ * Names of the {@link ActionEvent}s used in this app.
  */
-public interface Provider<T> {
-  T get();
+public interface ActionNames {
+  final String ADD_TASK = "addTask";
+  final String EDITING_CANCELED = "editingCanceled";
+  final String GO_HOME = "goHome";
+  final String TASK_SAVED = "taskSaved";
 }

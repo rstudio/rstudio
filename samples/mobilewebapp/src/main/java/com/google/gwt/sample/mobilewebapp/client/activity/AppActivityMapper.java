@@ -15,13 +15,16 @@
  */
 package com.google.gwt.sample.mobilewebapp.client.activity;
 
+import com.google.gwt.activity.shared.AbstractActivity;
 import com.google.gwt.activity.shared.Activity;
 import com.google.gwt.activity.shared.ActivityMapper;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
-import com.google.gwt.sample.mobilewebapp.client.Provider;
-import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
-import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
+import com.google.gwt.sample.mobilewebapp.presenter.task.TaskPlace;
+import com.google.gwt.sample.mobilewebapp.presenter.tasklist.TaskListPlace;
+import com.google.gwt.sample.mobilewebapp.presenter.tasklist.TaskListPresenter;
+import com.google.gwt.user.client.ui.AcceptsOneWidget;
 
 /**
  * A mapping of places to activities used by this application.
@@ -29,25 +32,34 @@ import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
 public class AppActivityMapper implements ActivityMapper {
 
   private final ClientFactory clientFactory;
-  private final Provider<Boolean> isTaskListIncluded;
 
-  public AppActivityMapper(ClientFactory clientFactory, Provider<Boolean> isTaskListIncluded) {
-    this.isTaskListIncluded = isTaskListIncluded;
+  public AppActivityMapper(ClientFactory clientFactory) {
     this.clientFactory = clientFactory;
   }
 
-  public Activity getActivity(Place place) {
+  public Activity getActivity(final Place place) {
     if (place instanceof TaskListPlace) {
       // The list of tasks.
-      if (!isTaskListIncluded.get()) {
-        // Do not start a task list activity if the task list is always visible.
-        return new TaskListActivity(clientFactory, (TaskListPlace) place);
-      }
-    } else if (place instanceof TaskEditPlace) {
-      // Editable view of a task.
-      return new TaskEditActivity(clientFactory, (TaskEditPlace) place);
+      return new AbstractActivity() {
+        @Override
+        public void start(AcceptsOneWidget panel, EventBus eventBus) {
+          TaskListPresenter presenter = new TaskListPresenter(clientFactory, (TaskListPlace) place);
+          presenter.start(eventBus);
+          panel.setWidget(presenter);
+        }
+
+        /*
+         * Note no call to presenter.stop(). The TaskListViews do that
+         * themselves as a side effect of setPresenter.
+         */
+      };
     }
+
+    if (place instanceof TaskPlace) {
+      // Editable view of a task.
+      return new TaskActivity(clientFactory, (TaskPlace) place);
+    }
+
     return null;
   }
-
 }

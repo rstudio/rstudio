@@ -18,25 +18,26 @@ package com.google.gwt.sample.mobilewebapp.client;
 import com.google.gwt.activity.shared.ActivityManager;
 import com.google.gwt.activity.shared.ActivityMapper;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.place.shared.PlaceController;
 import com.google.gwt.place.shared.PlaceHistoryHandler;
 import com.google.gwt.sample.gaerequest.client.GaeAuthRequestTransport;
 import com.google.gwt.sample.gaerequest.client.ReloadOnAuthenticationFailure;
 import com.google.gwt.sample.mobilewebapp.client.activity.AppActivityMapper;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
+import com.google.gwt.sample.mobilewebapp.client.activity.AppPlaceHistoryMapper;
 import com.google.gwt.sample.mobilewebapp.client.desktop.DesktopTaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.DesktopTaskListView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.DesktopTaskReadView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.MobileWebAppShellDesktop;
-import com.google.gwt.sample.mobilewebapp.client.place.AppPlaceHistoryMapper;
+import com.google.gwt.sample.mobilewebapp.client.ui.PieChart;
+import com.google.gwt.sample.mobilewebapp.presenter.task.TaskEditView;
+import com.google.gwt.sample.mobilewebapp.presenter.task.TaskReadView;
+import com.google.gwt.sample.mobilewebapp.presenter.taskchart.TaskChartPresenter;
+import com.google.gwt.sample.mobilewebapp.presenter.tasklist.TaskListView;
 import com.google.gwt.sample.mobilewebapp.shared.MobileWebAppRequestFactory;
 import com.google.gwt.storage.client.Storage;
 import com.google.gwt.user.client.Window;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.shared.RequestTransport;
 
 /**
@@ -57,7 +58,7 @@ class ClientFactoryImpl implements ClientFactory {
   private final TaskProxyLocalStorage taskProxyLocalStorage;
   private TaskEditView taskEditView;
   private TaskListView taskListView;
-  private final ActivityManager activityManager;
+  private ActivityManager activityManager;
 
   private final AppPlaceHistoryMapper historyMapper = GWT.create(AppPlaceHistoryMapper.class);
 
@@ -82,34 +83,19 @@ class ClientFactoryImpl implements ClientFactory {
       localStorage = null;
     }
     taskProxyLocalStorage = new TaskProxyLocalStorage(localStorage);
-
-    /*
-     * ActivityMapper determines an Activity to run for a particular place.
-     */
-    ActivityMapper activityMapper = new AppActivityMapper(this, getIsTaskListIncludedProvider());
-    /*
-     * Owns a panel in the window, in this case the entire {@link #shell}.
-     * Monitors the {@link #eventBus} for {@link PlaceChangeEvent}s posted by
-     * the {@link #placeController}, and chooses what {@link Activity} gets to
-     * take over the panel at the current place. Configured by an {@link
-     * AppActivityMapper}.
-     */
-    activityManager = new ActivityManager(activityMapper, eventBus);
   }
 
   public App getApp() {
-    return new App(getLocalStorageIfSupported(), getEventBus(), getPlaceController(),
-        historyMapper, historyHandler, new ReloadOnAuthenticationFailure(), getShell());
+    return new App(getLocalStorageIfSupported(), eventBus, getPlaceController(),
+        getActivityManager(), historyMapper, historyHandler, new ReloadOnAuthenticationFailure(),
+        getShell());
   }
 
+  @Override
   public EventBus getEventBus() {
     return eventBus;
   }
-
-  public Storage getLocalStorageIfSupported() {
-    return localStorage;
-  }
-
+  
   public PlaceController getPlaceController() {
     return placeController;
   }
@@ -150,8 +136,12 @@ class ClientFactoryImpl implements ClientFactory {
     return taskReadView;
   }
 
-  public void init() {
-    activityManager.setDisplay(getShell());
+  /**
+   * ActivityMapper determines an Activity to run for a particular place,
+   * configures the {@link #getActivityManager()}
+   */
+  protected ActivityMapper createActivityMapper() {
+    return new AppActivityMapper(this);
   }
 
   /**
@@ -160,7 +150,13 @@ class ClientFactoryImpl implements ClientFactory {
    * @return the UI shell
    */
   protected MobileWebAppShell createShell() {
-    return new MobileWebAppShellDesktop(eventBus, placeController, getTaskListView(),
+    PieChart pieChart = PieChart.createIfSupported();
+    TaskChartPresenter presenter = null;
+    if (pieChart != null) {
+      presenter = new TaskChartPresenter(pieChart);
+      presenter.start(getEventBus());
+    }
+    return new MobileWebAppShellDesktop(eventBus, presenter, placeController, getTaskListView(),
         getTaskEditView(), getTaskReadView());
   }
 
@@ -187,31 +183,22 @@ class ClientFactoryImpl implements ClientFactory {
   }
 
   /**
-   * Returns provider that indicates whether the task list is always visible.
-   * The default implementation returned by this method always indicates false.
-   * 
-   * @return provider that always provides false
+   * Owns a panel in the window, in this case the entire {@link #shell}.
+   * Monitors the {@link #eventBus} for
+   * {@link com.google.gwt.place.shared.PlaceChangeEvent PlaceChangeEvent}s posted by the
+   * {@link #placeController}, and chooses what
+   * {@link com.google.gwt.activity.shared.Activity Activity} gets to take
+   * over the panel at the current place. Configured by the
+   * {@link #createActivityMapper()}.
    */
-  protected Provider<Boolean> getIsTaskListIncludedProvider() {
-    return new Provider<Boolean>() {
-      @Override
-      public Boolean get() {
-        return false;
-      }
-    };
+  protected ActivityManager getActivityManager() {
+    if (activityManager == null) {
+      activityManager = new ActivityManager(createActivityMapper(), eventBus);
+    }
+    return activityManager;
   }
 
-  protected Provider<TaskListActivity> getTaskListActivityProvider() {
-    return new Provider<TaskListActivity>() {
-      @Override
-      public TaskListActivity get() {
-
-        /*
-         * TODO (rjrjr) the false arg is needed by MobileWebAppShellTablet,
-         * which shouldn't be using activities at all
-         */
-        return new TaskListActivity(ClientFactoryImpl.this, false);
-      }
-    };
+  private Storage getLocalStorageIfSupported() {
+    return localStorage;
   }
 }

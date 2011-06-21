@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 public class MobileWebApp implements EntryPoint {
   public void onModuleLoad() {
     ClientFactory clientFactory = GWT.create(ClientFactory.class);
-    clientFactory.init();
     clientFactory.getApp().run(RootLayoutPanel.get());
   }
 }

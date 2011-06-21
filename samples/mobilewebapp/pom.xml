@@ -12,7 +12,7 @@
   
   <properties>
     <!-- Convenience property to set the GWT version -->
-    <gwtVersion>2.3.0</gwtVersion>
+    <gwtVersion>2.4.0</gwtVersion>
 
     <!-- GWT needs at least java 1.6 -->
     <maven.compiler.source>1.6</maven.compiler.source>
@@ -55,6 +55,12 @@
   </pluginRepositories>
 
   <dependencies>
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+      <version>1</version>
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

@@ -15,20 +15,20 @@
  */
 package com.google.gwt.sample.gaerequest.client;
 
-import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.Event;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+
 
 /**
  * An event posted when an authentication failure is detected.
  */
-public class GaeAuthenticationFailureEvent extends GwtEvent<GaeAuthenticationFailureEvent.Handler> {
+public class GaeAuthenticationFailureEvent extends Event<GaeAuthenticationFailureEvent.Handler> {
 
   /**
    * Implemented by handlers of this type of event.
    */
-  public interface Handler extends EventHandler {
+  public interface Handler {
     /**
      * Called when a {@link GaeAuthenticationFailureEvent} is fired.
      * 
@@ -64,7 +64,7 @@ public class GaeAuthenticationFailureEvent extends GwtEvent<GaeAuthenticationFai
   }
 
   @Override
-  public GwtEvent.Type<Handler> getAssociatedType() {
+  public Type<Handler> getAssociatedType() {
     return TYPE;
   }
 

@@ -16,7 +16,7 @@
 package com.google.gwt.sample.mobilewebapp.client.desktop;
 
 import com.google.gwt.cell.client.DateCell;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
+import com.google.gwt.sample.mobilewebapp.presenter.tasklist.TaskListView;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
@@ -106,8 +106,10 @@ public class DesktopTaskListView extends ResizeComposite implements TaskListView
     taskList.setVisibleRangeAndClearData(taskList.getVisibleRange(), true);
   }
 
-  @Override
   public void setPresenter(Presenter presenter) {
+    if (this.presenter != null) {
+      this.presenter.stop();
+    }
     this.presenter = presenter;
   }
 
@@ -118,17 +120,5 @@ public class DesktopTaskListView extends ResizeComposite implements TaskListView
   @Override
   public void setTasks(List<TaskProxy> tasks) {
     taskList.setRowData(tasks);
-  }
-
-  @Override
-  public void start() {
-    //TODO
-    throw new UnsupportedOperationException("Auto-generated method stub");
-  }
-
-  @Override
-  public void stop() {
-    //TODO
-    throw new UnsupportedOperationException("Auto-generated method stub");
   }
 }

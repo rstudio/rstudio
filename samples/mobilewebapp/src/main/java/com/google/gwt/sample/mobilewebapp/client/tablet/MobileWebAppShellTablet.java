@@ -18,14 +18,13 @@ package com.google.gwt.sample.mobilewebapp.client.tablet;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
 import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShell;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
-import com.google.gwt.sample.mobilewebapp.client.event.AddTaskEvent;
-import com.google.gwt.sample.mobilewebapp.client.event.GoHomeEvent;
-import com.google.gwt.sample.mobilewebapp.client.ui.OrientationHelper;
+import com.google.gwt.sample.mobilewebapp.client.event.ActionEvent;
+import com.google.gwt.sample.mobilewebapp.client.event.ActionNames;
+import com.google.gwt.sample.mobilewebapp.presenter.tasklist.TaskListPresenter;
+import com.google.gwt.sample.mobilewebapp.presenter.tasklist.TaskListView;
+import com.google.gwt.sample.ui.client.OrientationHelper;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
@@ -37,24 +36,28 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.event.shared.EventBus;
 
 /**
  * Tablet version of the UI shell.
  * 
- * TODO(rjrjr): this thing needs a presenter. Not an activity. A presenter.
+ * TODO(rjrjr): this thing needs a presenter or two. Also, too much copy paste
+ * btw. this and the desktop version.
  */
 public class MobileWebAppShellTablet extends ResizeComposite implements MobileWebAppShell {
 
   interface MobileWebAppShellTabletUiBinder extends UiBinder<Widget, MobileWebAppShellTablet> {
   }
 
-  private static MobileWebAppShellTabletUiBinder uiBinder =
-      GWT.create(MobileWebAppShellTabletUiBinder.class);
+  private static MobileWebAppShellTabletUiBinder uiBinder = GWT
+      .create(MobileWebAppShellTabletUiBinder.class);
 
   /**
    * The width of the task list in landscape mode in PCT.
    */
   private static final double LANDSCAPE_TASK_LIST_WIDTH_PCT = 30.0;
+
+  private final ClientFactory clientFactory;
 
   /**
    * The button used to add items.
@@ -93,30 +96,23 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
   Label titleLabel;
 
   /**
-   * A reference to the handler for the add button.
-   */
-  private HandlerRegistration addButtonHandler;
-
-  /**
    * A boolean indicating that we have not yet seen the first content widget.
    */
   private boolean firstContentWidget = true;
-
-  private final EventBus eventBus;
 
   private final TaskListView taskListView;
 
   private boolean isShowingTaskList;
 
+  private final EventBus eventBus;
+
   /**
    * Construct a new {@link MobileWebAppShellTablet}.
-   * 
-   * @param clientFactory the {@link ClientFactory} of shared resources
    */
-  public MobileWebAppShellTablet(final EventBus eventBus, OrientationHelper orientationHelper,
+  public MobileWebAppShellTablet(ClientFactory clientFactory, OrientationHelper orientationHelper,
       TaskListView taskListView) {
-    this.eventBus = eventBus;
-
+    this.clientFactory = clientFactory;
+    this.eventBus = clientFactory.getEventBus();
     this.taskListView = taskListView;
 
     // Inject the tablet specific styles.
@@ -127,7 +123,13 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
     initWidget(uiBinder.createAndBindUi(this));
 
     // Initialize the add button.
-    setAddButtonHandler(null);
+    addButton.addClickHandler(new ClickHandler() {
+      @Override
+      public void onClick(ClickEvent event) {
+        ActionEvent.fire(eventBus, ActionNames.ADD_TASK);
+      }
+    });
+    setAddButtonVisible(false);
 
     orientationHelper.setCommands(this, new Command() {
       @Override
@@ -145,32 +147,14 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
     titleLabel.addClickHandler(new ClickHandler() {
       @Override
       public void onClick(ClickEvent event) {
-        eventBus.fireEvent(new GoHomeEvent());
+        ActionEvent.fire(eventBus, ActionNames.GO_HOME);
       }
     });
   }
 
-  /**
-   * Set the handler to invoke when the add button is pressed. If no handler is
-   * specified, the button is hidden.
-   * 
-   * @param handler the handler to add to the button, or null to hide
-   */
-  public void setAddButtonHandler(ClickHandler handler) {
-    // Clear the old handler.
-    if (addButtonHandler != null) {
-      addButtonHandler.removeHandler();
-      addButtonHandler = null;
-    }
-
-    if (handler == null) {
-      // Hide the button.
-      addButton.setVisible(false);
-    } else {
-      // Show the button and add the handler.
-      addButton.setVisible(true);
-      addButtonHandler = addButton.addClickHandler(handler);
-    }
+  @Override
+  public void setAddButtonVisible(boolean visible) {
+    addButton.setVisible(visible);
   }
 
   /**
@@ -183,12 +167,7 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
 
     // If the content is null and we are in landscape mode, show the add button.
     if (content == null && isShowingTaskList) {
-      setAddButtonHandler(new ClickHandler() {
-        @Override
-        public void onClick(ClickEvent event) {
-          eventBus.fireEvent(new AddTaskEvent());
-        }
-      });
+      setAddButtonVisible(true);
     }
 
     // Do not animate the first time we show a widget.
@@ -202,12 +181,19 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
     // Show the static task list view.
     splitPanel.setWidgetSize(taskListContainer, LANDSCAPE_TASK_LIST_WIDTH_PCT);
 
-    // TODO(rjrjr) View managing activity is an abomination
     if (!isShowingTaskList) {
-      taskListView.start();
       taskListContainer.add(taskListView);
-      // DeckLayoutPanel sets the display to none, so we need to clear it.
-      taskListView.asWidget().getElement().getStyle().clearDisplay();
+      TaskListPresenter taskListPresenter = new TaskListPresenter(clientFactory, false);
+
+      /*
+       * Sleaze alert: We know that TaskListPresenter doesn't add any event
+       * handlers to the bus If it did, we should have to give it a
+       * ResettableEventBus and clear it out on stop
+       */
+      taskListPresenter.start(eventBus);
+
+      // DeckLayoutPanel hides the view, so we need to show it.
+      taskListView.asWidget().setVisible(true);
       isShowingTaskList = true;
     }
 
@@ -223,8 +209,9 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
   private void onShiftToPortrait() {
     // Hide the static task list view.
     if (isShowingTaskList) {
-      taskListView.stop();
       isShowingTaskList = false;
+      // We don't stop the presenter started in onShiftToLandscape,
+      // because we know TaskListView#setPresenter will do so for us.
     }
     splitPanel.setWidgetSize(taskListContainer, 0);
 
@@ -241,7 +228,7 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
     // Ensure that something is displayed.
     Widget curWidget = contentContainer.getVisibleWidget();
     if (curWidget == null || curWidget == contentEmptyMessage) {
-      eventBus.fireEvent(new GoHomeEvent());
+      ActionEvent.fire(eventBus, ActionNames.GO_HOME);
       contentContainer.animate(0);
     }
   }
