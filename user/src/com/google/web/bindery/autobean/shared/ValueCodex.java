@@ -124,6 +124,11 @@ public class ValueCodex {
     },
     ENUM(Enum.class) {
       @Override
+      public boolean canUpcast(Object value) {
+        return value instanceof Enum;
+      }
+
+      @Override
       public Enum<?> decode(Class<?> clazz, Splittable value) {
         return (Enum<?>) clazz.getEnumConstants()[(int) value.asNumber()];
       }
@@ -352,7 +357,7 @@ public class ValueCodex {
    * May return <code>null</code>.
    */
   private static <T> Type findType(Class<T> clazz) {
-    if (clazz.isEnum()) {
+    if (clazz.isEnum() || (clazz.getSuperclass() != null && clazz.getSuperclass().isEnum())) {
       return Type.ENUM;
     }
     return TYPES_BY_CLASS.get(clazz);

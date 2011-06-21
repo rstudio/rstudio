@@ -19,5 +19,15 @@ package com.google.web.bindery.requestfactory.shared;
  * Test enum class.
  */
 public enum SimpleEnum {
-  FOO, BAR
+  FOO,
+  /**
+   * Contains a method that cannot even be called, but is enough to make
+   * SimpleEnum.BAR.getClass().isEnum()==false, because BAR's class is now an
+   * anonymous subclass of MyEnum.
+   */
+  BAR {
+    @SuppressWarnings("unused")
+    private void dummy() {
+    }
+  }
 }

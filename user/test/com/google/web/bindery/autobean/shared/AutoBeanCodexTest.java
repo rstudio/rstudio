@@ -141,7 +141,17 @@ public class AutoBeanCodexTest extends GWTTestCase {
   }
 
   enum MyEnum {
-    FOO, BAR,
+    FOO,
+    /**
+     * Contains a method that cannot even be called, but is enough to make
+     * MyEnum.BAR.getClass().isEnum()==false, because BAR's class is now an
+     * anonymous subclass of MyEnum.
+     */
+    BAR {
+      @SuppressWarnings("unused")
+      private void dummy() {
+      }
+    },
     // The eclipse formatter wants to put this annotation inline
     @PropertyName("quux")
     BAZ;
