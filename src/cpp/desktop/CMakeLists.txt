@@ -359,4 +359,16 @@ if(RSTUDIO_INSTALL_FREEDESKTOP)
    install(FILES ${RSTUDIO_ICONS_256}/application-x-r-data.png
            DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
 
+   # .Rproject icon
+   install(FILES ${RSTUDIO_ICONS_16}/application-x-r-project.png
+           DESTINATION /usr/share/icons/hicolor/16x16/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_24}/application-x-r-project.png
+           DESTINATION /usr/share/icons/hicolor/24x24/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_32}/application-x-r-project.png
+           DESTINATION /usr/share/icons/hicolor/32x32/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_48}/application-x-r-project.png
+           DESTINATION /usr/share/icons/hicolor/48x48/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_256}/application-x-r-project.png
+           DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
+
 endif()
