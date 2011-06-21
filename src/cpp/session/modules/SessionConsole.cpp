@@ -41,11 +41,15 @@ bool suppressOutput(const std::string& output)
    const char * const kGlibWarningToken = "GLib-WARNING **: getpwuid_r()";
    const char * const kAutoreleaseNoPool = "NSAutoreleaseNoPool";
    const char * const kSelectInterrupted = "select: Interrupted system call";
+   const char * const kNotAGitRepo = "Not a git repository";
+   const char * const kIsOutsideRepo = "is outside repository";
 
    // check tokens
    if (boost::algorithm::contains(output, kGlibWarningToken) ||
        boost::algorithm::contains(output, kAutoreleaseNoPool) ||
-       boost::algorithm::contains(output, kSelectInterrupted))
+       boost::algorithm::contains(output, kSelectInterrupted) ||
+       boost::algorithm::contains(output, kNotAGitRepo) ||
+       boost::algorithm::contains(output, kIsOutsideRepo))
    {
       return true;
    }
@@ -56,9 +60,8 @@ bool suppressOutput(const std::string& output)
 }
 
 void writeStandardOutput(const std::string& output)
-{
-   if (!suppressOutput(output))
-      module_context::consoleWriteOutput(output);
+{  
+   module_context::consoleWriteOutput(output);
 }
 
 void writeStandardError(const std::string& output)
