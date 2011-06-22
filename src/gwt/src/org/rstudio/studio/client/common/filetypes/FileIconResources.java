@@ -28,6 +28,7 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconPdf();
    ImageResource iconPng();
    ImageResource iconRdata();
+   ImageResource iconRproject();
    ImageResource iconRdoc();
    ImageResource iconRhistory();
    ImageResource iconRprofile();
