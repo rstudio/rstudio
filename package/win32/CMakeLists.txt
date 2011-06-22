@@ -31,7 +31,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR '.tex\\\\OpenWithList\\\\rstudio.exe' '' ''
    
    WriteRegStr HKCR '.Rproject' '' 'RStudio.RProject'
-   WriteRegStr HKCR 'RStudio.RProject' '' 'R Project File'
+   WriteRegStr HKCR 'RStudio.RProject' '' 'R Project'
    WriteRegStr HKCR 'RStudio.RProject\\\\DefaultIcon' '' '$INSTDIR\\\\bin\\\\rstudio.exe,-2'
    WriteRegStr HKCR 'RStudio.RProject\\\\\\\\shell\\\\open\\\\command' '' '$INSTDIR\\\\bin\\\\rstudio.exe \\\"%1\\\"'
    
