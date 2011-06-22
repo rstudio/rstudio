@@ -2,7 +2,7 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external popupContent;
-@external ace_sb;
+@external ace_sb, ace_cursor, ace_hidden;
 
 .console {
    font-family: fixedWidthFont;
@@ -36,6 +36,9 @@
 .input .ace_sb {
    display: none;
    width: 0 !important;
+}
+.input .ace_cursor.ace_hidden {
+   display: none;
 }
 
 .console .prompt {
