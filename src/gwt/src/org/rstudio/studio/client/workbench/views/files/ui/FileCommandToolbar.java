@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.files.ui;
 
 import com.google.inject.Inject;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -48,10 +49,20 @@ public class FileCommandToolbar extends Toolbar
       if (session.getSessionInfo().isVcsEnabled())
       {
          moreMenu.addSeparator();
-         commands.vcsRevert().setMenuLabel(
-               "[" + session.getSessionInfo().getVcsName() + "] " +
-               commands.vcsRevert().getMenuLabel(false));
-         moreMenu.addItem(commands.vcsRevert().createMenuItem(false));
+
+         AppCommand[] vcsCommands = {
+               commands.vcsAdd(),
+               commands.vcsRemove(),
+               commands.vcsRevert()
+         };
+
+         for (AppCommand cmd : vcsCommands)
+         {
+            cmd.setMenuLabel(
+                  "[" + session.getSessionInfo().getVcsName() + "] " +
+                  cmd.getMenuLabel(false));
+            moreMenu.addItem(cmd.createMenuItem(false));
+         }
       }
 
       ToolbarButton moreButton = new ToolbarButton("More",

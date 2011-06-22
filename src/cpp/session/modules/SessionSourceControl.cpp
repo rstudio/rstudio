@@ -50,6 +50,18 @@ public:
       return Success();
    }
 
+   virtual core::Error add(const std::vector<FilePath>& filePaths,
+                           std::string* pStdErr)
+   {
+      return Success();
+   }
+
+   virtual core::Error remove(const std::vector<FilePath>& filePaths,
+                              std::string* pStdErr)
+   {
+      return Success();
+   }
+
    virtual core::Error revert(const std::vector<FilePath>& filePaths,
                               std::string* pStdErr)
    {
@@ -126,7 +138,23 @@ public:
          switch (line[1])
          {
          case ' ':
-            file.status = VCSStatusUnmodified;
+            switch (line[0])
+            {
+            case 'M':
+               file.status = VCSStatusModified;
+               break;
+            case 'A':
+               file.status = VCSStatusAdded;
+               break;
+            case 'D':
+               file.status = VCSStatusDeleted;
+               break;
+            case 'R':
+               file.status = VCSStatusRenamed;
+               break;
+            default:
+               file.status = VCSStatusUnmodified;
+            }
             break;
          case 'M':
             file.status = VCSStatusModified;
@@ -166,11 +194,20 @@ public:
       return Success();
    }
 
-   core::Error revert(const std::vector<FilePath>& filePaths,
-                      std::string* pStdErr)
+   core::Error doSimpleCmd(const std::string& command,
+                           const std::vector<std::string>& options,
+                           const std::vector<FilePath>& filePaths,
+                           std::string* pStdErr)
    {
       std::vector<std::string> args;
-      args.push_back("checkout");
+      args.push_back(command);
+      args.push_back("--porcelain");
+      for (std::vector<std::string>::const_iterator it = options.begin();
+           it != options.end();
+           it++)
+      {
+         args.push_back(*it);
+      }
       args.push_back("--");
       for (std::vector<FilePath>::const_iterator it = filePaths.begin();
            it != filePaths.end();
@@ -186,6 +223,36 @@ public:
          *pStdErr = std::string();
 
       return Success();
+   }
+
+   core::Error add(const std::vector<FilePath>& filePaths,
+                   std::string* pStdErr)
+   {
+      return doSimpleCmd("add",
+                         std::vector<std::string>(),
+                         filePaths,
+                         pStdErr);
+   }
+
+   core::Error remove(const std::vector<FilePath>& filePaths,
+                      std::string* pStdErr)
+   {
+      return doSimpleCmd("remove",
+                         std::vector<std::string>(),
+                         filePaths,
+                         pStdErr);
+   }
+
+   core::Error revert(const std::vector<FilePath>& filePaths,
+                      std::string* pStdErr)
+   {
+      std::vector<std::string> args;
+      args.push_back("HEAD");
+      return doSimpleCmd("reset",  args, filePaths, pStdErr);
+      return doSimpleCmd("revert",
+                         std::vector<std::string>(),
+                         filePaths,
+                         pStdErr);
    }
 };
 
@@ -292,6 +359,20 @@ class SubversionVCSImpl : public VCSImpl
    }
 };
 
+std::vector<FilePath> resolveAliasedPaths(json::Array paths)
+{
+   std::vector<FilePath> parsedPaths;
+   for (json::Array::iterator it = paths.begin();
+        it != paths.end();
+        it++)
+   {
+      json::Value value = *it;
+      parsedPaths.push_back(
+            module_context::resolveAliasedPath(value.get_str()));
+   }
+   return parsedPaths;
+}
+
 } // anonymous namespace
 
 
@@ -320,6 +401,28 @@ core::Error status(const FilePath& dir, StatusResult* pStatusResult)
    return s_pVcsImpl_->status(dir, pStatusResult);
 }
 
+Error vcsAdd(const json::JsonRpcRequest& request,
+             json::JsonRpcResponse* pResponse)
+{
+   json::Array paths;
+   Error error = json::readParam(request.params, 0, &paths);
+   if (error)
+      return error ;
+
+   return s_pVcsImpl_->add(resolveAliasedPaths(paths), NULL);
+}
+
+Error vcsRemove(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   json::Array paths;
+   Error error = json::readParam(request.params, 0, &paths);
+   if (error)
+      return error ;
+
+   return s_pVcsImpl_->remove(resolveAliasedPaths(paths), NULL);
+}
+
 Error vcsRevert(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
@@ -328,17 +431,7 @@ Error vcsRevert(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   std::vector<FilePath> parsedPaths;
-   for (json::Array::iterator it = paths.begin();
-        it != paths.end();
-        it++)
-   {
-      json::Value value = *it;
-      parsedPaths.push_back(
-            module_context::resolveAliasedPath(value.get_str()));
-   }
-
-   return s_pVcsImpl_->revert(parsedPaths, NULL);
+   return s_pVcsImpl_->revert(resolveAliasedPaths(paths), NULL);
 }
 
 core::Error initialize()
@@ -356,6 +449,8 @@ core::Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "vcs_add", vcsAdd))
+      (bind(registerRpcMethod, "vcs_remove", vcsRemove))
       (bind(registerRpcMethod, "vcs_revert", vcsRevert));
    Error error = initBlock.execute();
    if (error)

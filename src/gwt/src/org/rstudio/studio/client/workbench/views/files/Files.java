@@ -553,6 +553,50 @@ public class Files
                        true);
    }
 
+   @Handler
+   void onVcsAdd()
+   {
+      // get currently selected files
+      final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
+
+      // validation: some selection exists
+      if  (selectedFiles.size() == 0)
+         return ;
+
+      ProgressIndicator progress = globalDisplay_.getProgressIndicator(
+            session_.getSessionInfo().getVcsName());
+      progress.onProgress("Adding file(s)...");
+
+      ArrayList<String> paths = new ArrayList<String>();
+      for (FileSystemItem file : selectedFiles)
+         paths.add(file.getPath());
+      server_.vcsAdd(
+            paths,
+            new VoidServerRequestCallback(progress));
+   }
+
+   @Handler
+   void onVcsRemove()
+   {
+      // get currently selected files
+      final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
+
+      // validation: some selection exists
+      if  (selectedFiles.size() == 0)
+         return ;
+
+      ProgressIndicator progress = globalDisplay_.getProgressIndicator(
+            session_.getSessionInfo().getVcsName());
+      progress.onProgress("Removing file(s)...");
+
+      ArrayList<String> paths = new ArrayList<String>();
+      for (FileSystemItem file : selectedFiles)
+         paths.add(file.getPath());
+      server_.vcsRemove(
+            paths,
+            new VoidServerRequestCallback(progress));
+   }
+
    void onGoToWorkingDir()
    {
       view_.bringToFront();

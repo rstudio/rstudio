@@ -7,6 +7,10 @@ import java.util.ArrayList;
 
 public interface VCSServerOperations
 {
+   void vcsAdd(ArrayList<String> paths,
+               ServerRequestCallback<Void> requestCallback);
+   void vcsRemove(ArrayList<String> paths,
+                  ServerRequestCallback<Void> requestCallback);
    void vcsRevert(ArrayList<String> paths,
                   ServerRequestCallback<Void> requestCallback);
 }

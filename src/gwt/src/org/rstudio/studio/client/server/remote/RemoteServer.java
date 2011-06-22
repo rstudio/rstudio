@@ -1082,6 +1082,30 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SEARCH_HISTORY_ARCHIVE_BY_PREFIX, params, requestCallback);
    }
    
+   public void vcsAdd(ArrayList<String> paths,
+                      ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray jsonPaths = new JSONArray();
+      for (int i = 0; i < paths.size(); i++)
+         jsonPaths.set(i, new JSONString(paths.get(i)));
+
+      JSONArray params = new JSONArray();
+      params.set(0, jsonPaths);
+      sendRequest(RPC_SCOPE, VCS_ADD, params, requestCallback);
+   }
+
+   public void vcsRemove(ArrayList<String> paths,
+                         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray jsonPaths = new JSONArray();
+      for (int i = 0; i < paths.size(); i++)
+         jsonPaths.set(i, new JSONString(paths.get(i)));
+
+      JSONArray params = new JSONArray();
+      params.set(0, jsonPaths);
+      sendRequest(RPC_SCOPE, VCS_REMOVE, params, requestCallback);
+   }
+
    public void vcsRevert(ArrayList<String> paths,
                          ServerRequestCallback<Void> requestCallback)
    {
@@ -1555,6 +1579,8 @@ public class RemoteServer implements Server
    private static final String SEARCH_HISTORY_ARCHIVE = "search_history_archive";
    private static final String SEARCH_HISTORY_ARCHIVE_BY_PREFIX = "search_history_archive_by_prefix";
 
+   private static final String VCS_ADD = "vcs_add";
+   private static final String VCS_REMOVE = "vcs_remove";
    private static final String VCS_REVERT = "vcs_revert";
 
    private static final String LOG = "log";

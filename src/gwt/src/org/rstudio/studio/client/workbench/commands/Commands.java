@@ -75,6 +75,8 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand setWorkingDirToFilesPane();
    public abstract AppCommand showFolder();
    public abstract AppCommand vcsRevert();
+   public abstract AppCommand vcsAdd();
+   public abstract AppCommand vcsRemove();
 
    // View
    public abstract AppCommand jumpToFunction();
