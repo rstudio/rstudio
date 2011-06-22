@@ -130,6 +130,14 @@ public class SourceShim extends Composite
 
       events.addHandler(FileEditEvent.TYPE, asyncSource);
    }
+   
+   public boolean hasBeforeQuitUnsavedChanges()
+   {
+      if (source_ != null)
+         return source_.hasBeforeQuitUnsavedChanges();
+      else
+         return false;
+   }
 
    public void saveChangesBeforeQuit(Command onCompleted)
    {
