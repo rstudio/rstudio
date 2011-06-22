@@ -607,15 +607,16 @@ public class Source implements InsertSourceHandler,
       
    }
    
+   public boolean hasBeforeQuitUnsavedChanges()
+   {
+      return dirtyFileBackedEditingTargets().size() > 0;
+   }
+   
    public void saveChangesBeforeQuit(Command onCompleted)
    {
       // collect up a list of dirty documents with paths (we leave
-      // untitled documents alone at exit)
-      // collect up a list of dirty documents
-      ArrayList<EditingTarget> dirtyTargets = new ArrayList<EditingTarget>();
-      for (EditingTarget target : editors_)
-         if (target.dirtyState().getValue() && target.getPath() != null)
-            dirtyTargets.add(target);
+      // untitled documents alone at exit)  
+      ArrayList<EditingTarget> dirtyTargets = dirtyFileBackedEditingTargets();
       
       // save targets
       saveEditingTargetsWithPrompt(dirtyTargets, 
@@ -623,7 +624,16 @@ public class Source implements InsertSourceHandler,
                                    onCompleted);
    }
 
-  
+   private ArrayList<EditingTarget> dirtyFileBackedEditingTargets()
+   {
+      ArrayList<EditingTarget> dirtyTargets = new ArrayList<EditingTarget>();
+      for (EditingTarget target : editors_)
+         if (target.dirtyState().getValue() && target.getPath() != null)
+            dirtyTargets.add(target);
+      return dirtyTargets;
+   }
+   
+   
    
    @Handler
    public void onOpenSourceDoc()

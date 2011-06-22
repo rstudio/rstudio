@@ -173,7 +173,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       {
          // if there are unsaved changes then resolve them before exiting
          QVariant hasUnsaved = pFrame->evaluateJavaScript(
-               QString::fromAscii("window.desktopHooks.hasUnsavedChanged()"));
+               QString::fromAscii("window.desktopHooks.hasBeforeQuitUnsavedChanged()"));
          if (hasUnsaved.toBool())
          {
             pFrame->evaluateJavaScript(QString::fromAscii("!!window.desktopHooks.saveChangesBeforeQuit()"));

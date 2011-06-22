@@ -122,9 +122,9 @@ public class DesktopHooks
    }-*/;
 
 
-   boolean hasUnsavedChanged()
+   boolean hasBeforeQuitUnsavedChanged()
    {
-      return commands_.saveAllSourceDocs().isEnabled();
+      return sourceShim_.hasBeforeQuitUnsavedChanges();
    }
    
    void saveChangesBeforeQuit()
