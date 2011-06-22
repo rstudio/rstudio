@@ -122,6 +122,9 @@ if(WIN32)
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/RStudio.ico
                    ${CMAKE_CURRENT_BINARY_DIR}/RStudio.ico COPYONLY)
 
+   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/RProject.ico
+                   ${CMAKE_CURRENT_BINARY_DIR}/RProject.ico COPYONLY)
+
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rstudio.exe.manifest
                    ${CMAKE_CURRENT_BINARY_DIR}/rstudio.exe.manifest COPYONLY)
 
@@ -137,7 +140,8 @@ if(WIN32)
          DEPENDS
             "${CMAKE_CURRENT_BINARY_DIR}/rstudio.rc"
             "${CMAKE_CURRENT_SOURCE_DIR}/rstudio.exe.manifest"
-            "${CMAKE_CURRENT_SOURCE_DIR}/RStudio.ico")
+            "${CMAKE_CURRENT_SOURCE_DIR}/RStudio.ico"
+            "${CMAKE_CURRENT_SOURCE_DIR}/RProject.ico")
       set(DESKTOP_SOURCE_FILES
          ${DESKTOP_SOURCE_FILES}
          "${CMAKE_CURRENT_BINARY_DIR}/res.o")

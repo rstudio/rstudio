@@ -1,6 +1,7 @@
 #include "winuser.h"
 
-rstudio ICON RStudio.ico
+1 ICON RStudio.ico
+2 ICON RProject.ico
 
 1 RT_MANIFEST "rstudio.exe.manifest"
 1 VERSIONINFO
