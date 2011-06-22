@@ -292,6 +292,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    initialEnvironmentFileOverride_ = core::system::getenv("RS_INITIAL_ENV");
    core::system::unsetenv("RS_INITIAL_ENV");
 
+   // initial project
+   initialProjectPath_ = core::system::getenv("RS_INITIAL_PROJECT");
+   core::system::unsetenv("RS_INITIAL_PROJECT");
+
    // limit rpc client uid
    limitRpcClientUid_ = -1;
    std::string limitUid = core::system::getenv(kRStudioLimitRpcClientUid);

@@ -215,6 +215,14 @@ public:
          return core::FilePath();
    }
 
+   core::FilePath initialProjectPath()
+   {
+      if (!initialProjectPath_.empty())
+         return core::FilePath(initialProjectPath_.c_str());
+      else
+         return core::FilePath();
+   }
+
 
    // The line ending we use when working with source documents
    // in memory. This doesn't really make sense for the user to
@@ -285,6 +293,9 @@ private:
    // overrides
    std::string initialWorkingDirOverride_;
    std::string initialEnvironmentFileOverride_;
+
+   // initial project
+   std::string initialProjectPath_;
 };
   
 } // namespace session
