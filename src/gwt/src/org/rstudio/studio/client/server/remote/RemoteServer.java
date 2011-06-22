@@ -1082,6 +1082,18 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SEARCH_HISTORY_ARCHIVE_BY_PREFIX, params, requestCallback);
    }
    
+   public void vcsRevert(ArrayList<String> paths,
+                         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray jsonPaths = new JSONArray();
+      for (int i = 0; i < paths.size(); i++)
+         jsonPaths.set(i, new JSONString(paths.get(i)));
+
+      JSONArray params = new JSONArray();
+      params.set(0, jsonPaths);
+      sendRequest(RPC_SCOPE, VCS_REVERT, params, requestCallback);
+   }
+
    // package-visible methods for peer classes RemoteServerAuth and
    // RemoveServerEventListener
 
@@ -1420,7 +1432,7 @@ public class RemoteServer implements Server
       disconnected_ = true;
       serverEventListener_.stop();
    }
-  
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean workbenchReady_;
@@ -1542,6 +1554,8 @@ public class RemoteServer implements Server
    private static final String GET_HISTORY_ARCHIVE_ITEMS = "get_history_archive_items";
    private static final String SEARCH_HISTORY_ARCHIVE = "search_history_archive";
    private static final String SEARCH_HISTORY_ARCHIVE_BY_PREFIX = "search_history_archive_by_prefix";
+
+   private static final String VCS_REVERT = "vcs_revert";
 
    private static final String LOG = "log";
 

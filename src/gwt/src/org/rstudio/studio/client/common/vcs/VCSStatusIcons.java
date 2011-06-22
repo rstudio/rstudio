@@ -21,11 +21,6 @@ public interface VCSStatusIcons extends ClientBundle
    public final static VCSStatusIcons INSTANCE =
          GWT.create(VCSStatusIcons.class);
 
-   public abstract ImageResource untracked();
-   public abstract ImageResource modified();
-   public abstract ImageResource added();
-   public abstract ImageResource deleted();
-   public abstract ImageResource renamed();
-   public abstract ImageResource copied();
-   public abstract ImageResource unmerged();
+   public abstract ImageResource bluedot();
+   public abstract ImageResource greendot();
 }

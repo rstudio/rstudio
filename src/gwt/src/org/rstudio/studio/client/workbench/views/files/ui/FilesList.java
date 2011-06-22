@@ -172,6 +172,7 @@ public class FilesList extends Composite
             }
          };
       iconColumn.setSortable(true);
+      iconColumn.setHorizontalAlignment(Column.ALIGN_CENTER);
       filesCellTable_.addColumn(iconColumn,
                                 SafeHtmlUtils.fromSafeConstant("<br/>"));
       filesCellTable_.setColumnWidth(iconColumn, 20, Unit.PX);

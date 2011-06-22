@@ -8,7 +8,7 @@ cd ace
 git checkout master
 
 # Point this to the upstream commit that we've tested
-git reset --hard 832707a82b3743243dfe
+git reset --hard 09bda1409610065
 
 git submodule update --init --recursive
 
@@ -26,8 +26,6 @@ git merge \
     origin/bugfix/search-regexp \
     origin/bugfix/selected-word-colors \
 
-
-git cherry-pick eb02e51
 
 make clean
 make

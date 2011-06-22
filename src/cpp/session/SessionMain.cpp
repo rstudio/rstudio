@@ -405,7 +405,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
 
-   sessionInfo["vcs"] = modules::source_control::activeVCS() != 0;
+   sessionInfo["vcs"] = modules::source_control::activeVCSName();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

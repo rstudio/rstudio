@@ -12,15 +12,18 @@
  */
 package org.rstudio.studio.client.workbench.views.files.ui;
 
+import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 
 public class FileCommandToolbar extends Toolbar
 {
-   public FileCommandToolbar(Commands commands)
+   @Inject
+   public FileCommandToolbar(Commands commands, Session session)
    {
       StandardIcons icons = StandardIcons.INSTANCE;
 
@@ -31,8 +34,8 @@ public class FileCommandToolbar extends Toolbar
       addLeftWidget(commands.deleteFiles().createToolbarButton());
       addLeftWidget(commands.renameFile().createToolbarButton());
       addLeftSeparator();
-      
-      // More 
+
+      // More
       ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
       moreMenu.addItem(commands.copyFile().createMenuItem(false));
       moreMenu.addItem(commands.moveFiles().createMenuItem(false));
@@ -42,6 +45,14 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addItem(commands.setAsWorkingDir().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands.showFolder().createMenuItem(false));
+      if (session.getSessionInfo().isVcsEnabled())
+      {
+         moreMenu.addSeparator();
+         commands.vcsRevert().setMenuLabel(
+               "[" + session.getSessionInfo().getVcsName() + "] " +
+               commands.vcsRevert().getMenuLabel(false));
+         moreMenu.addItem(commands.vcsRevert().createMenuItem(false));
+      }
 
       ToolbarButton moreButton = new ToolbarButton("More",
                                                   icons.more_actions(),

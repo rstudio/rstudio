@@ -17,6 +17,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -43,13 +44,15 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    public FilesPane(GlobalDisplay globalDisplay,
                     Commands commands,
                     FileDialogs fileDialogs,
-                    FileTypeRegistry fileTypeRegistry)
+                    FileTypeRegistry fileTypeRegistry,
+                    Provider<FileCommandToolbar> pFileCommandToolbar)
    {
       super("Files");
       globalDisplay_ = globalDisplay ;
       commands_ = commands;
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
+      pFileCommandToolbar_ = pFileCommandToolbar;
       ensureWidget();
    }
    
@@ -220,7 +223,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    @Override
    protected Toolbar createMainToolbar()
    {
-      return new FileCommandToolbar(commands_);
+      return pFileCommandToolbar_.get();
    }
 
    private boolean needsInit = false;
@@ -232,6 +235,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    private Files.Display.Observer observer_;
 
    private final FileTypeRegistry fileTypeRegistry_;
+   private final Provider<FileCommandToolbar> pFileCommandToolbar_;
 
-  
+
 }

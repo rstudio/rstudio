@@ -522,6 +522,37 @@ public class Files
                        true);
    }
 
+   @Handler
+   void onVcsRevert()
+   {
+      // get currently selected files
+      final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
+
+      // validation: some selection exists
+      if  (selectedFiles.size() == 0)
+         return ;
+
+      // confirm delete then execute it
+      globalDisplay_.showYesNoMessage(
+                        GlobalDisplay.MSG_QUESTION,
+                        "Confirm Revert",
+                        "Are you sure you want to revert the selected files?",
+                        new ProgressOperation() {
+                           public void execute(final ProgressIndicator progress)
+                           {
+                              progress.onProgress("Reverting files...");
+
+                              ArrayList<String> paths = new ArrayList<String>();
+                              for (FileSystemItem file : selectedFiles)
+                                 paths.add(file.getPath());
+                              server_.vcsRevert(
+                                    paths,
+                                    new VoidServerRequestCallback(progress));
+                           }
+                        },
+                       true);
+   }
+
    void onGoToWorkingDir()
    {
       view_.bringToFront();
