@@ -2758,7 +2758,7 @@ public class GwtAstBuilder {
     }
   }
 
-  public static boolean ENABLED = System.getProperties().containsKey("x.gwt.astBuilder");
+  public static boolean ENABLED = !System.getProperties().containsKey("x.gwt.noAstBuilder");
 
   /**
    * Manually tracked version count.
