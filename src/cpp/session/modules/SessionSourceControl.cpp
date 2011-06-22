@@ -96,7 +96,7 @@ class GitVCSImpl : public VCSImpl
 {
 public:
    VCS id() { return VCSGit; }
-   std::string name() { return "git"; }
+   std::string name() { return "Git"; }
 
    core::Error status(const FilePath& dir, StatusResult* pStatusResult)
    {
@@ -154,7 +154,10 @@ public:
             continue;
          }
 
-         file.path = root_.childPath(string_utils::systemToUtf8(line.substr(3)));
+         std::string filePath = line.substr(3);
+         if (filePath.length() > 1 && filePath[filePath.length() - 1] == '/')
+            filePath = filePath.substr(0, filePath.size() - 1);
+         file.path = root_.childPath(string_utils::systemToUtf8(filePath));
          files.push_back(file);
       }
 
@@ -189,7 +192,7 @@ public:
 class SubversionVCSImpl : public VCSImpl
 {
    VCS id() { return VCSSubversion; }
-   std::string name() { return "svn"; }
+   std::string name() { return "SVN"; }
 
    core::Error status(const FilePath& dir, StatusResult* pStatusResult)
    {
