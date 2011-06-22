@@ -201,7 +201,6 @@ public:
    {
       std::vector<std::string> args;
       args.push_back(command);
-      args.push_back("--porcelain");
       for (std::vector<std::string>::const_iterator it = options.begin();
            it != options.end();
            it++)
@@ -237,7 +236,7 @@ public:
    core::Error remove(const std::vector<FilePath>& filePaths,
                       std::string* pStdErr)
    {
-      return doSimpleCmd("remove",
+      return doSimpleCmd("rm",
                          std::vector<std::string>(),
                          filePaths,
                          pStdErr);
@@ -248,8 +247,11 @@ public:
    {
       std::vector<std::string> args;
       args.push_back("HEAD");
-      return doSimpleCmd("reset",  args, filePaths, pStdErr);
-      return doSimpleCmd("revert",
+      Error error = doSimpleCmd("reset",  args, filePaths, pStdErr);
+      if (error)
+         return error;
+
+      return doSimpleCmd("checkout",
                          std::vector<std::string>(),
                          filePaths,
                          pStdErr);
