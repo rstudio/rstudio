@@ -15,13 +15,15 @@ package org.rstudio.studio.client.workbench.views.files.model;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.ServerEventSource;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
 import java.util.ArrayList;
 
-public interface FilesServerOperations extends ServerEventSource
+public interface FilesServerOperations extends ServerEventSource,
+                                               VCSServerOperations
 {
    // get a file listing
    void listFiles(FileSystemItem directory,

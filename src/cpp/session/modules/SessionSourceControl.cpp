@@ -15,8 +15,10 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 
-#include "core/system/System.hpp"
-#include "core/StringUtils.hpp"
+#include <core/json/JsonRpc.hpp>
+#include <core/system/System.hpp>
+#include <core/Exec.hpp>
+#include <core/StringUtils.hpp>
 
 #include "session/SessionModuleContext.hpp"
 
@@ -38,6 +40,8 @@ public:
    {
    }
 
+   virtual std::string name() { return std::string(); }
+
    virtual core::Error status(const FilePath&,
                               StatusResult* pStatusResult)
    {
@@ -45,16 +49,21 @@ public:
       return Success();
    }
 
-   // TODO: Figure out why compile fails when args is const&
+   virtual core::Error revert(const std::vector<FilePath>& filePaths,
+                              std::string* pStdErr)
+   {
+      return Success();
+   }
+
    virtual core::Error runCommand(const std::string& command,
-                                  std::vector<std::string> args,
+                                  const std::vector<std::string>& args,
                                   std::vector<std::string>* pOutputLines)
    {
       std::string cmd("cd ");
       cmd.append(string_utils::bash_escape(root_));
       cmd.append("; ");
       cmd.append(command);
-      for (std::vector<std::string>::iterator it = args.begin();
+      for (std::vector<std::string>::const_iterator it = args.begin();
            it != args.end();
            it++)
       {
@@ -67,8 +76,11 @@ public:
       if (error)
          return error;
 
-      boost::algorithm::split(*pOutputLines, output,
-                              boost::algorithm::is_any_of("\r\n"));
+      if (pOutputLines)
+      {
+         boost::algorithm::split(*pOutputLines, output,
+                                 boost::algorithm::is_any_of("\r\n"));
+      }
 
       return Success();
    }
@@ -82,9 +94,7 @@ boost::scoped_ptr<VCSImpl> s_pVcsImpl_;
 class GitVCSImpl : public VCSImpl
 {
 public:
-   GitVCSImpl()
-   {
-   }
+   std::string name() { return "git"; }
 
    core::Error status(const FilePath& dir, StatusResult* pStatusResult)
    {
@@ -150,10 +160,34 @@ public:
 
       return Success();
    }
+
+   core::Error revert(const std::vector<FilePath>& filePaths,
+                      std::string* pStdErr)
+   {
+      std::vector<std::string> args;
+      args.push_back("checkout");
+      args.push_back("--");
+      for (std::vector<FilePath>::const_iterator it = filePaths.begin();
+           it != filePaths.end();
+           it++)
+      {
+        args.push_back(string_utils::utf8ToSystem((*it).absolutePath()));
+      }
+
+      runCommand("git", args, NULL);
+
+      // TODO: Once we capture stderr we need to set it here
+      if (pStdErr)
+         *pStdErr = std::string();
+
+      return Success();
+   }
 };
 
 class SubversionVCSImpl : public VCSImpl
 {
+   std::string name() { return "svn"; }
+
    core::Error status(const FilePath& dir, StatusResult* pStatusResult)
    {
       using namespace boost;
@@ -228,6 +262,28 @@ class SubversionVCSImpl : public VCSImpl
 
       return Success();
    }
+
+   core::Error revert(const std::vector<FilePath>& filePaths,
+                      std::string* pStdErr)
+   {
+      std::vector<std::string> args;
+      args.push_back("revert");
+      args.push_back("--");
+      for (std::vector<FilePath>::const_iterator it = filePaths.begin();
+           it != filePaths.end();
+           it++)
+      {
+        args.push_back(string_utils::utf8ToSystem((*it).absolutePath()));
+      }
+
+      runCommand("svn", args, NULL);
+
+      // TODO: Once we capture stderr we need to set it here
+      if (pStdErr)
+         *pStdErr = std::string();
+
+      return Success();
+   }
 };
 
 } // anonymous namespace
@@ -236,6 +292,11 @@ class SubversionVCSImpl : public VCSImpl
 VCS activeVCS()
 {
    return VCSNone;
+}
+
+std::string activeVCSName()
+{
+   return s_pVcsImpl_->name();
 }
 
 VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory)
@@ -253,6 +314,27 @@ core::Error status(const FilePath& dir, StatusResult* pStatusResult)
    return s_pVcsImpl_->status(dir, pStatusResult);
 }
 
+Error vcsRevert(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   json::Array paths;
+   Error error = json::readParam(request.params, 0, &paths);
+   if (error)
+      return error ;
+
+   std::vector<FilePath> parsedPaths;
+   for (json::Array::iterator it = paths.begin();
+        it != paths.end();
+        it++)
+   {
+      json::Value value = *it;
+      parsedPaths.push_back(
+            module_context::resolveAliasedPath(value.get_str()));
+   }
+
+   return s_pVcsImpl_->revert(parsedPaths, NULL);
+}
+
 core::Error initialize()
 {
    switch (activeVCS())
@@ -267,6 +349,16 @@ core::Error initialize()
       s_pVcsImpl_.reset(new VCSImpl());
       break;
    }
+
+   // install rpc methods
+   using boost::bind;
+   using namespace module_context;
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "vcs_revert", vcsRevert));
+   Error error = initBlock.execute();
+   if (error)
+      return error;
 
    return Success();
 }

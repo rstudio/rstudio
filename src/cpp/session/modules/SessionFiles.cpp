@@ -71,9 +71,26 @@ const char * const kTargetFile = "targetFile";
    
 void enqueFileChangeEvent(const core::system::FileChangeEvent& event)
 {
+   using namespace source_control;
+
    json::Object fileChange ;
    fileChange[kType] = event.type();
-   fileChange[kFile] = module_context::createFileSystemItem(event.fileInfo());
+
+   FilePath filePath(event.fileInfo().absolutePath());
+
+   StatusResult sr;
+   if (activeVCS() != VCSNone)
+   {
+      Error err = status(filePath.parent(), &sr);
+      if (err)
+         LOG_ERROR(err);
+   }
+
+   json::Object fileSystemItem = module_context::createFileSystemItem(event.fileInfo());
+   fileSystemItem["vcs_status"] = sr.getStatus(filePath);
+   fileChange[kFile] = fileSystemItem;
+
+
    ClientEvent clientEvent(client_events::kFileChanged, fileChange);
    module_context::enqueClientEvent(clientEvent);
 }

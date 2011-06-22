@@ -45,20 +45,19 @@ public enum VCSStatus
       switch (status)
       {
          case Untracked:
-            return VCSStatusIcons.INSTANCE.untracked();
+            return VCSStatusIcons.INSTANCE.greendot();
          case Modified:
-            return VCSStatusIcons.INSTANCE.modified();
+            return VCSStatusIcons.INSTANCE.bluedot();
          case Added:
-            return VCSStatusIcons.INSTANCE.added();
-         case Deleted:
-            return VCSStatusIcons.INSTANCE.deleted();
+            return VCSStatusIcons.INSTANCE.greendot();
          case Renamed:
-            return VCSStatusIcons.INSTANCE.renamed();
+            return VCSStatusIcons.INSTANCE.bluedot();
          case Copied:
-            return VCSStatusIcons.INSTANCE.copied();
+            return VCSStatusIcons.INSTANCE.greendot();
          case Unmerged:
-            return VCSStatusIcons.INSTANCE.unmerged();
+            return VCSStatusIcons.INSTANCE.bluedot();
          case Unmodified:
+         case Deleted:
          default:
             return null;
       }

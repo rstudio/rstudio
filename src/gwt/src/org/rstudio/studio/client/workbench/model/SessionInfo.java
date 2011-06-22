@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.model;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -122,8 +123,13 @@ public class SessionInfo extends JavaScriptObject
       return this.system_encoding;
    }-*/;
 
-   public final native boolean isVcsEnabled() /*-{
-      return !!this.vcs;
+   public final boolean isVcsEnabled()
+   {
+      return !StringUtil.isNullOrEmpty(getVcsName());
+   }
+
+   public final native String getVcsName() /*-{
+      return this.vcs;
    }-*/;
 
    // TODO: The check for null was for migration in the presence of 

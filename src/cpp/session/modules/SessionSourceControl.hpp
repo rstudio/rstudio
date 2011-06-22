@@ -82,6 +82,7 @@ private:
 };
 
 VCS activeVCS();
+std::string activeVCSName();
 core::Error status(const FilePath& dir, StatusResult* pStatusResult);
 core::Error initialize();
 
