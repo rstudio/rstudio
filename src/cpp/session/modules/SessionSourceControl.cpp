@@ -40,6 +40,7 @@ public:
    {
    }
 
+   virtual VCS id() { return VCSNone; }
    virtual std::string name() { return std::string(); }
 
    virtual core::Error status(const FilePath&,
@@ -94,6 +95,7 @@ boost::scoped_ptr<VCSImpl> s_pVcsImpl_;
 class GitVCSImpl : public VCSImpl
 {
 public:
+   VCS id() { return VCSGit; }
    std::string name() { return "git"; }
 
    core::Error status(const FilePath& dir, StatusResult* pStatusResult)
@@ -186,6 +188,7 @@ public:
 
 class SubversionVCSImpl : public VCSImpl
 {
+   VCS id() { return VCSSubversion; }
    std::string name() { return "svn"; }
 
    core::Error status(const FilePath& dir, StatusResult* pStatusResult)
@@ -291,7 +294,7 @@ class SubversionVCSImpl : public VCSImpl
 
 VCS activeVCS()
 {
-   return VCSNone;
+   return s_pVcsImpl_->id();
 }
 
 std::string activeVCSName()
@@ -337,18 +340,13 @@ Error vcsRevert(const json::JsonRpcRequest& request,
 
 core::Error initialize()
 {
-   switch (activeVCS())
-   {
-   case VCSGit:
+   FilePath workingDir = module_context::initialWorkingDirectory();
+   if (workingDir.childPath(".git").isDirectory())
       s_pVcsImpl_.reset(new GitVCSImpl());
-      break;
-   case VCSSubversion:
+   else if (workingDir.childPath(".svn").isDirectory())
       s_pVcsImpl_.reset(new SubversionVCSImpl());
-      break;
-   default:
+   else
       s_pVcsImpl_.reset(new VCSImpl());
-      break;
-   }
 
    // install rpc methods
    using boost::bind;
