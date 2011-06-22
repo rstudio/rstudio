@@ -130,7 +130,7 @@ void initializeWorkingDirectory(int argc,
 void initializeStartupEnvironment(QString* pFilename)
 {
    // if the filename ends with .RData or .rda then this is an
-   // environment file. if it ends with .Rproject then it is
+   // environment file. if it ends with .Rproj then it is
    // a project file. we handle both cases by setting an environment
    // var and then resetting the pFilename so it isn't processed
    // using the standard open file logic
@@ -143,7 +143,7 @@ void initializeStartupEnvironment(QString* pFilename)
          core::system::setenv("RS_INITIAL_ENV", filePath.absolutePath());
          pFilename->clear();
       }
-      else if (ext == ".rproject")
+      else if (ext == ".rproj")
       {
          core::system::setenv("RS_INITIAL_PROJECT", filePath.absolutePath());
          pFilename->clear();

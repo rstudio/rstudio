@@ -32,9 +32,9 @@
 
   <mime-type type="application/x-r-project">
     <comment>R Project</comment>
-    <glob pattern="*.Rproject"/>
-    <glob pattern="*.RProject"/>
-    <glob pattern="*.rproject"/>
+    <glob pattern="*.Rproj"/>
+    <glob pattern="*.RProj"/>
+    <glob pattern="*.rproj"/>
   </mime-type>
 
   <mime-type type="text/x-r-history">

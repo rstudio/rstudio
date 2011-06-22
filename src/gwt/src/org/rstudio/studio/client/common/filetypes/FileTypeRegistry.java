@@ -95,7 +95,7 @@ public class FileTypeRegistry
       register("*.rd", RD, icons.iconRd());
       register("*.rdata", RDATA, icons.iconRdata());
       register("*.rda", RDATA, icons.iconRdata());
-      register("*.rproject", RPROJECT, icons.iconRproject());
+      register("*.rproj", RPROJECT, icons.iconRproject());
       defaultType_ = BROWSER;
 
       registerIcon(".jpg", icons.iconPng());
