@@ -43,16 +43,24 @@
  
 (function() {
     
+var global = (function() {
+    return this;
+})();
+    
 // if we find an existing require function use it.
-if (window.require) {
+if (global.require && global.define) {
     require.packaged = true;
     return;
 }
     
-window.define = function(module, deps, payload) {
+var _define = function(module, deps, payload) {
     if (typeof module !== 'string') {
-        console.error('dropping module because define wasn\'t a string.');
-        console.trace();
+        if (_define.original)
+            _define.original.apply(window, arguments);
+        else {
+            console.error('dropping module because define wasn\'t a string.');
+            console.trace();
+        }
         return;
     }
 
@@ -64,15 +72,22 @@ window.define = function(module, deps, payload) {
         
     define.modules[module] = payload;
 };
+if (global.define)
+    _define.original = global.define;
+    
+global.define = _define;
+
 
 /**
  * Get at functionality define()ed using the function above
  */
-window.require = function(module, callback) {
+var _require = function(module, callback) {
     if (Object.prototype.toString.call(module) === "[object Array]") {
         var params = [];
         for (var i = 0, l = module.length; i < l; ++i) {
             var dep = lookup(module[i]);
+            if (!dep && _require.original)
+                return _require.original.apply(window, arguments);
             params.push(dep);
         }
         if (callback) {
@@ -81,6 +96,8 @@ window.require = function(module, callback) {
     }
     else if (typeof module === 'string') {
         var payload = lookup(module);
+        if (!payload && _require.original)
+            return _require.original.apply(window, arguments);
         
         if (callback) {
             callback();
@@ -88,7 +105,16 @@ window.require = function(module, callback) {
     
         return payload;
     }
+    else {
+        if (_require.original)
+            return _require.original.apply(window, arguments);
+    }
 };
+
+if (global.require)
+    _require.original = global.require;
+    
+global.require = _require;
 require.packaged = true;
 
 /**
@@ -3417,6 +3443,22 @@ exports.copyArray = function(array){
     return copy;
 };
 
+exports.deepCopy = function (obj) {
+    if (typeof obj != "object") {
+        return obj;
+    }
+    
+    var copy = obj.constructor();
+    for (var key in obj) {
+        if (typeof obj[key] == "object") {
+            copy[key] = this.deepCopy(obj[key]);
+        } else {
+            copy[key] = obj[key];
+        }
+    }
+    return copy;
+}
+
 exports.arrayToMap = function(arr) {
     var map = {};
     for (var i=0; i<arr.length; i++) {
@@ -5011,14 +5053,18 @@ else {
     };
 }
 
-exports.computedStyle = function(element, style) {
-    if (window.getComputedStyle) {
-        return (window.getComputedStyle(element, "") || {})[style] || "";
-    }
-    else {
-        return element.currentStyle[style];
-    }
-};
+if (window.getComputedStyle)
+    exports.computedStyle = function(element, style) {
+        if (style)
+            return (window.getComputedStyle(element, "") || {})[style] || "";
+        return window.getComputedStyle(element, "") || {}
+    };
+else
+    exports.computedStyle = function(element, style) {
+        if (style)
+            return element.currentStyle[style];
+        return element.currentStyle
+    };
 
 exports.scrollbarWidth = function() {
 
@@ -5850,6 +5896,14 @@ var Editor =function(renderer, session) {
         var mode = session.getMode();
 
         var cursor = this.getCursorPosition();
+        
+        if (this.getBehavioursEnabled()) {
+            // Get a transform if the current mode wants one.
+            var transform = mode.transformAction(session.getState(cursor.row), 'insertion', this, session, text);
+            if (transform)
+                text = transform.text;
+        }
+        
         text = text.replace("\t", this.session.getTabString());
 
         // remove selected text
@@ -5865,12 +5919,27 @@ var Editor =function(renderer, session) {
 
         this.clearSelection();
 
+        var start         = cursor.column;
         var lineState     = session.getState(cursor.row);
         var shouldOutdent = mode.checkOutdent(lineState, session.getLine(cursor.row), text);
         var line          = session.getLine(cursor.row);
         var lineIndent    = mode.getNextLineIndent(lineState, line.slice(0, cursor.column), session.getTabString(), this.session.getTabSize(), cursor.row);
         var end           = session.insert(cursor, text);
-
+        
+        if (transform && transform.selection) {
+            if (transform.selection.length == 2) { // Transform relative to the current column
+                this.selection.setSelectionRange(
+                    new Range(cursor.row, start + transform.selection[0],
+                              cursor.row, start + transform.selection[1]));
+            } else { // Transform relative to the current row.
+                this.selection.setSelectionRange(
+                    new Range(cursor.row + transform.selection[0],
+                              transform.selection[1],
+                              cursor.row + transform.selection[2],
+                              transform.selection[3]));
+            }
+        }
+        
         var lineState = session.getState(cursor.row);
 
         // TODO disabled multiline auto indent
@@ -5913,8 +5982,8 @@ var Editor =function(renderer, session) {
             if (shouldOutdent) {
                 mode.autoOutdent(lineState, session, cursor.row);
             }
-        };
-    }
+        }
+    };
 
     this.onTextInput = function(text) {
         this.keyBinding.onTextInput(text);
@@ -6020,6 +6089,15 @@ var Editor =function(renderer, session) {
     this.getReadOnly = function() {
         return this.$readOnly;
     };
+    
+    this.$modeBehaviours = false;
+    this.setBehavioursEnabled = function (enabled) {
+        this.$modeBehaviours = enabled;
+    }
+    
+    this.getBehavioursEnabled = function () {
+        return this.$modeBehaviours;
+    }
 
     this.removeRight = function() {
         if (this.$readOnly)
@@ -6038,8 +6116,18 @@ var Editor =function(renderer, session) {
 
         if (this.selection.isEmpty())
             this.selection.selectLeft();
+        
+        var range = this.getSelectionRange();
+        if (this.getBehavioursEnabled()) {
+            var session = this.session;
+            var state = session.getState(range.start.row);
+            var new_range = session.getMode().transformAction(state, 'deletion', this, session, range);
+            if (new_range !== false) {
+                range = new_range;
+            }
+        }
 
-        this.session.remove(this.getSelectionRange());
+        this.session.remove(range);
         this.clearSelection();
     };
 
@@ -6083,7 +6171,13 @@ var Editor =function(renderer, session) {
         if (this.selection.isEmpty())
             this.selection.selectLineEnd();
 
-        this.session.remove(this.getSelectionRange());
+        var range = this.getSelectionRange();
+        if (range.start.column == range.end.column && range.start.row == range.end.row) {
+            range.end.column = 0;
+            range.end.row++;
+        }
+
+        this.session.remove(range);
         this.clearSelection();
     };
 
@@ -10076,6 +10170,7 @@ exports.Range = Range;
  * Contributor(s):
  *      Fabian Jakobs <fabian AT ajax DOT org>
  *      Mihai Sucan <mihai DOT sucan AT gmail DOT com>
+ *      Chris Spencer <chris.ag.spencer AT googlemail DOT com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -10091,13 +10186,15 @@ exports.Range = Range;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/mode/text', ['require', 'exports', 'module' , 'ace/tokenizer', 'ace/mode/text_highlight_rules'], function(require, exports, module) {
+define('ace/mode/text', ['require', 'exports', 'module' , 'ace/tokenizer', 'ace/mode/text_highlight_rules', 'ace/mode/behaviour'], function(require, exports, module) {
 
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+var Behaviour = require("ace/mode/behaviour").Behaviour;
 
 var Mode = function() {
     this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
+    this.$behaviour = new Behaviour();
 };
 
 (function() {
@@ -10201,10 +10298,12 @@ var Mode = function() {
         }
         this.$modes = {};
         for (var i = 0; i < this.$embeds.length; i++) {
-            this.$modes[this.$embeds[i]] = new mapping[this.$embeds[i]]();
+            if (mapping[this.$embeds[i]]) {
+                this.$modes[this.$embeds[i]] = new mapping[this.$embeds[i]]();
+            }
         }
         
-        var delegations = ['toggleCommentLines', 'getNextLineIndent', 'checkOutdent', 'autoOutdent'];
+        var delegations = ['toggleCommentLines', 'getNextLineIndent', 'checkOutdent', 'autoOutdent', 'transformAction'];
 
         for (var i = 0; i < delegations.length; i++) {
             (function(scope) {
@@ -10221,18 +10320,34 @@ var Mode = function() {
         var state = args[0];
         
         for (var i = 0; i < this.$embeds.length; i++) {
+            if (!this.$modes[this.$embeds[i]]) continue;
+            
             var split = state.split(this.$embeds[i]);
-        
             if (!split[0] && split[1]) {
                 args[0] = split[1];
                 var mode = this.$modes[this.$embeds[i]];
                 return mode[method].apply(mode, args);
             }
         }
-        
-        return defaultHandler ? defaultHandler.apply(this, args) : undefined;
+        var ret = defaultHandler.apply(this, args);
+        return defaultHandler ? ret : undefined;
     };
-
+    
+    this.transformAction = function(state, action, editor, session, param) {
+        if (this.$behaviour) {
+            var behaviours = this.$behaviour.getBehaviours();
+            for (var key in behaviours) {
+                if (behaviours[key][action]) {
+                    var ret = behaviours[key][action].apply(this, arguments);
+                    if (ret !== false) {
+                        return ret;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
@@ -10439,7 +10554,9 @@ exports.Tokenizer = Tokenizer;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/mode/text_highlight_rules', ['require', 'exports', 'module' ], function(require, exports, module) {
+define('ace/mode/text_highlight_rules', ['require', 'exports', 'module' , 'pilot/lang'], function(require, exports, module) {
+
+var lang = require("pilot/lang");
 
 var TextHighlightRules = function() {
 
@@ -10493,7 +10610,7 @@ var TextHighlightRules = function() {
         this.addRules(embedRules, prefix);
         
         for (var i = 0; i < states.length; i++) {
-            Array.prototype.unshift.apply(this.$rules[states[i]], escapeRules);
+            Array.prototype.unshift.apply(this.$rules[states[i]], lang.deepCopy(escapeRules));
         }
         
         if (!this.$embeds) {
@@ -10510,7 +10627,103 @@ var TextHighlightRules = function() {
 
 exports.TextHighlightRules = TextHighlightRules;
 });
-/* ***** BEGIN LICENSE BLOCK *****
+/* vim:ts=4:sts=4:sw=4:
+ * ***** BEGIN LICENSE BLOCK *****
+ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ *
+ * The Original Code is Ajax.org Code Editor (ACE).
+ *
+ * The Initial Developer of the Original Code is
+ * Ajax.org B.V.
+ * Portions created by the Initial Developer are Copyright (C) 2010
+ * the Initial Developer. All Rights Reserved.
+ *
+ * Contributor(s):
+ *      Chris Spencer <chris.ag.spencer AT googlemail DOT com>
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the MPL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the MPL, the GPL or the LGPL.
+ *
+ * ***** END LICENSE BLOCK ***** */
+
+define('ace/mode/behaviour', ['require', 'exports', 'module' ], function(require, exports, module) {
+
+var Behaviour = function() {
+   this.$behaviours = {};
+};
+
+(function () {
+
+    this.add = function (name, action, callback) {
+        switch (undefined) {
+          case this.$behaviours:
+              this.$behaviours = {};
+          case this.$behaviours[name]:
+              this.$behaviours[name] = {};
+        }
+        this.$behaviours[name][action] = callback;
+    }
+    
+    this.addBehaviours = function (behaviours) {
+        for (var key in behaviours) {
+            for (var action in behaviours[key]) {
+                this.add(key, action, behaviours[key][action]);
+            }
+        }
+    }
+    
+    this.remove = function (name) {
+        if (this.$behaviours && this.$behaviours[name]) {
+            delete this.$behaviours[name];
+        }
+    }
+    
+    this.inherit = function (mode, filter) {
+        if (typeof mode === "function") {
+            var behaviours = new mode().getBehaviours(filter);
+        } else {
+            var behaviours = mode.getBehaviours(filter);
+        }
+        this.addBehaviours(behaviours);
+    }
+    
+    this.getBehaviours = function (filter) {
+        if (!filter) {
+            return this.$behaviours;
+        } else {
+            var ret = {}
+            for (var i = 0; i < filter.length; i++) {
+                if (this.$behaviours[filter[i]]) {
+                    ret[filter[i]] = this.$behaviours[filter[i]];
+                }
+            }
+            return ret;
+        }
+    }
+
+}).call(Behaviour.prototype);
+
+exports.Behaviour = Behaviour;
+});/* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
  * The contents of this file are subject to the Mozilla Public License Version
@@ -12649,7 +12862,7 @@ var VirtualRenderer = function(container, theme) {
     this.scrollBar = new ScrollBar(container);
     this.scrollBar.addEventListener("scroll", this.onScroll.bind(this));
 
-    this.scrollTop = this.desiredScrollTop = 0;
+    this.scrollTop = 0;
 
     this.cursorPos = {
         row : 0,
@@ -12832,7 +13045,7 @@ var VirtualRenderer = function(container, theme) {
 
     this.getShowGutter = function(){
         return this.showGutter;
-    }
+    };
 
     this.setShowGutter = function(show){
         if(this.showGutter === show)
@@ -12840,10 +13053,10 @@ var VirtualRenderer = function(container, theme) {
         this.$gutter.style.display = show ? "block" : "none";
         this.showGutter = show;
         this.onResize(true);
-    }
+    };
 
     this.$updatePrintMargin = function() {
-        var containerEl
+        var containerEl;
 
         if (!this.$showPrintMargin && !this.$printMarginEl)
             return;
@@ -12851,7 +13064,7 @@ var VirtualRenderer = function(container, theme) {
         if (!this.$printMarginEl) {
             containerEl = dom.createElement("div");
             containerEl.className = "ace_print_margin_layer";
-            this.$printMarginEl = dom.createElement("div")
+            this.$printMarginEl = dom.createElement("div");
             this.$printMarginEl.className = "ace_print_margin";
             containerEl.appendChild(this.$printMarginEl);
             this.content.insertBefore(containerEl, this.$textLayer.element);
@@ -12898,8 +13111,8 @@ var VirtualRenderer = function(container, theme) {
         if (!this.layerConfig)
             return 0;
 
-        return this.layerConfig.firstRow + (this.layerConfig.offset == 0 ? 0 : 1);
-    }
+        return this.layerConfig.firstRow + (this.layerConfig.offset === 0 ? 0 : 1);
+    };
 
     this.getLastFullyVisibleRow = function() {
         if (!this.layerConfig)
@@ -12907,7 +13120,7 @@ var VirtualRenderer = function(container, theme) {
 
         var flint = Math.floor((this.layerConfig.height + this.layerConfig.offset) / this.layerConfig.lineHeight);
         return this.layerConfig.firstRow - 1 + flint;
-    }
+    };
 
     this.getLastVisibleRow = function() {
         return (this.layerConfig || {}).lastRow || 0;
@@ -12923,7 +13136,7 @@ var VirtualRenderer = function(container, theme) {
 
     this.getHScrollBarAlwaysVisible = function() {
         return this.$horizScrollAlwaysVisible;
-    }
+    };
 
     this.setHScrollBarAlwaysVisible = function(alwaysVisible) {
         if (this.$horizScrollAlwaysVisible != alwaysVisible) {
@@ -12931,7 +13144,7 @@ var VirtualRenderer = function(container, theme) {
             if (!this.$horizScrollAlwaysVisible || !this.$horizScroll)
                 this.$loop.schedule(this.CHANGE_SCROLL);
         }
-    }
+    };
 
     this.onScroll = function(e) {
         this.scrollToY(e.data);
@@ -12959,7 +13172,8 @@ var VirtualRenderer = function(container, theme) {
         // full
         if (changes & this.CHANGE_FULL) {
             this.$textLayer.update(this.layerConfig);
-            this.showGutter && this.$gutterLayer.update(this.layerConfig);
+            if (this.showGutter)
+                this.$gutterLayer.update(this.layerConfig);
             this.$markerBack.update(this.layerConfig);
             this.$markerFront.update(this.layerConfig);
             this.$cursorLayer.update(this.layerConfig);
@@ -12973,7 +13187,9 @@ var VirtualRenderer = function(container, theme) {
                 this.$textLayer.update(this.layerConfig);
             else
                 this.$textLayer.scrollLines(this.layerConfig);
-            this.showGutter && this.$gutterLayer.update(this.layerConfig);
+                
+            if (this.showGutter)
+                this.$gutterLayer.update(this.layerConfig);
             this.$markerBack.update(this.layerConfig);
             this.$markerFront.update(this.layerConfig);
             this.$cursorLayer.update(this.layerConfig);
@@ -12983,14 +13199,17 @@ var VirtualRenderer = function(container, theme) {
 
         if (changes & this.CHANGE_TEXT) {
             this.$textLayer.update(this.layerConfig);
-            this.showGutter && this.$gutterLayer.update(this.layerConfig);
+            if (this.showGutter)
+                this.$gutterLayer.update(this.layerConfig);
         }
         else if (changes & this.CHANGE_LINES) {
             this.$updateLines();
             this.$updateScrollBar();
-            this.showGutter && this.$gutterLayer.update(this.layerConfig);
+            if (this.showGutter)
+                this.$gutterLayer.update(this.layerConfig);
         } else if (changes & this.CHANGE_GUTTER) {
-            this.showGutter && this.$gutterLayer.update(this.layerConfig);
+            if (this.showGutter)
+                this.$gutterLayer.update(this.layerConfig);
         }
 
         if (changes & this.CHANGE_CURSOR)
@@ -13024,8 +13243,7 @@ var VirtualRenderer = function(container, theme) {
             this.scroller.style.overflowX = horizScroll ? "scroll" : "hidden";
 
         var maxHeight = this.session.getScreenLength() * this.lineHeight;
-        this.scrollTop = this.desiredScrollTop =
-                Math.max(0, Math.min(this.desiredScrollTop, maxHeight - this.$size.scrollerHeight));
+        this.scrollTop = Math.max(0, Math.min(this.scrollTop, maxHeight - this.$size.scrollerHeight));
 
         var lineCount = Math.ceil(minHeight / this.lineHeight) - 1;
         var firstRow = Math.max(0, Math.round((this.scrollTop - offset) / this.lineHeight));
@@ -13102,7 +13320,8 @@ var VirtualRenderer = function(container, theme) {
 
         // if the last row is unknown -> redraw everything
         if (lastRow === Infinity) {
-            this.showGutter && this.$gutterLayer.update(layerConfig);
+            if (this.showGutter)
+                this.$gutterLayer.update(layerConfig);
             this.$textLayer.update(layerConfig);
             return;
         }
@@ -13132,12 +13351,12 @@ var VirtualRenderer = function(container, theme) {
     this.addGutterDecoration = function(row, className){
         this.$gutterLayer.addGutterDecoration(row, className);
         this.$loop.schedule(this.CHANGE_GUTTER);
-    }
+    };
 
     this.removeGutterDecoration = function(row, className){
         this.$gutterLayer.removeGutterDecoration(row, className);
         this.$loop.schedule(this.CHANGE_GUTTER);
-    }
+    };
 
     this.setBreakpoints = function(rows) {
         this.$gutterLayer.setBreakpoints(rows);
@@ -13171,12 +13390,11 @@ var VirtualRenderer = function(container, theme) {
         var left = pos.left + this.$padding;
         var top = pos.top;
 
-        if (this.getScrollTop() > top) {
+        if (this.scrollTop > top) {
             this.scrollToY(top);
         }
 
-        if (this.getScrollTop() + this.$size.scrollerHeight < top
-                + this.lineHeight) {
+        if (this.scrollTop + this.$size.scrollerHeight < top + this.lineHeight) {
             this.scrollToY(top + this.lineHeight - this.$size.scrollerHeight);
         }
 
@@ -13192,7 +13410,7 @@ var VirtualRenderer = function(container, theme) {
             else
                 this.scrollToX(Math.round(left + this.characterWidth - this.$size.scrollerWidth));
         }
-    },
+    };
 
     this.getScrollTop = function() {
         return this.scrollTop;
@@ -13208,7 +13426,7 @@ var VirtualRenderer = function(container, theme) {
 
     this.getScrollBottomRow = function() {
         return Math.max(0, Math.floor((this.scrollTop + this.$size.scrollerHeight) / this.lineHeight) - 1);
-    }
+    };
 
     this.scrollToRow = function(row) {
         this.scrollToY(row * this.lineHeight);
@@ -13230,9 +13448,10 @@ var VirtualRenderer = function(container, theme) {
     this.scrollToY = function(scrollTop) {
         // after calling scrollBar.setScrollTop
         // scrollbar sends us event with same scrollTop. ignore it
+        scrollTop = Math.max(0, scrollTop);
         if (this.scrollTop !== scrollTop) {
             this.$loop.schedule(this.CHANGE_SCROLL);
-            this.desiredScrollTop = scrollTop;
+            this.scrollTop = scrollTop;
         }
     };
 
@@ -13269,7 +13488,7 @@ var VirtualRenderer = function(container, theme) {
         return {
             pageX: canvasPos.left + x - this.getScrollLeft(),
             pageY: canvasPos.top + y - this.getScrollTop()
-        }
+        };
     };
 
     this.visualizeFocus = function() {
@@ -13315,6 +13534,7 @@ var VirtualRenderer = function(container, theme) {
 
     this.setTheme = function(theme) {
         var _self = this;
+        
         this.$themeValue = theme;
         if (!theme || typeof theme == "string") {
             theme = theme || "ace/theme/textmate";
@@ -13325,7 +13545,6 @@ var VirtualRenderer = function(container, theme) {
             afterLoad(theme);
         }
 
-        var _self = this;
         function afterLoad(theme) {
             if (_self.$theme)
                 dom.removeCssClass(_self.container, _self.$theme);
@@ -13345,24 +13564,24 @@ var VirtualRenderer = function(container, theme) {
 
     this.getTheme = function() {
         return this.$themeValue;
-    }
+    };
 
     // Methods allows to add / remove CSS classnames to the editor element.
     // This feature can be used by plug-ins to provide a visual indication of
     // a certain mode that editor is in.
 
     this.setStyle = function setStyle(style) {
-      dom.addCssClass(this.container, style)
+      dom.addCssClass(this.container, style);
     };
 
     this.unsetStyle = function unsetStyle(style) {
-      dom.removeCssClass(this.container, style)
+      dom.removeCssClass(this.container, style);
     };
 
     this.destroy = function() {
         this.$textLayer.destroy();
         this.$cursorLayer.destroy();
-    }
+    };
 
 }).call(VirtualRenderer.prototype);
 
@@ -13819,10 +14038,9 @@ var Text = function(parentEl) {
         }
 
         var style = this.$measureNode.style;
-        for (var prop in this.$fontStyles) {
-            var value = dom.computedStyle(this.element, prop);
-            style[prop] = value;
-        }
+        var computedStyle = dom.computedStyle(this.element);
+        for (var prop in this.$fontStyles)
+            style[prop] = computedStyle[prop];
 
         var size = {
             height: this.$measureNode.offsetHeight,
@@ -14000,7 +14218,7 @@ var Text = function(parentEl) {
             if(row > lastRow)
                 break;
 
-            html.push("<div class='ace_line'>")
+            html.push("<div class='ace_line'>");
             // Get the tokens per line as there might be some lines in between
             // beeing folded.
             // OPTIMIZE: If there is a long block of unfolded lines, just make
@@ -14008,7 +14226,7 @@ var Text = function(parentEl) {
             var tokens = this.session.getTokens(row, row);
             if (tokens.length == 1)
                 this.$renderLine(html, row, tokens[0].tokens);
-            html.push("</div>")
+            html.push("</div>");
 
             row++;
         }
@@ -14047,11 +14265,11 @@ var Text = function(parentEl) {
                 }
             } else {
                 screenColumn += 1;
-                return "<span class='ace_cjk' style='width:" 
-                    + (self.config.characterWidth * 2)
-                    + "px'>" + c + "</span>";
+                return "<span class='ace_cjk' style='width:" +
+                    (self.config.characterWidth * 2) +
+                    "px'>" + c + "</span>";
             }
-        }
+        };
 
         var output = value.replace(replaceReg, replaceFunc);
 
@@ -14063,7 +14281,7 @@ var Text = function(parentEl) {
             stringBuilder.push(output);
         }
         return value.length;
-    }
+    };
 
     this.$renderLineCore = function(stringBuilder, lastRow, tokens, splits) {
         var chars = 0,
@@ -14113,7 +14331,7 @@ var Text = function(parentEl) {
                     addToken(token, value);
                 }
             }
-        };
+        }
 
         if (this.showInvisibles) {
             if (lastRow !== this.session.getLength() - 1) {
@@ -14123,16 +14341,16 @@ var Text = function(parentEl) {
             }
         }
         stringBuilder.push("</div>");
-    }
+    };
 
     this.$renderLine = function(stringBuilder, row, tokens) {
         // Check if the line to render is folded or not. If not, things are
         // simple, otherwise, we need to fake some things...
         if (!this.session.isRowFolded(row)) {
             var splits = this.session.getRowSplitData(row);
-            this.$renderLineCore(stringBuilder, row, tokens, splits)
+            this.$renderLineCore(stringBuilder, row, tokens, splits);
         } else {
-            this.$renderFoldLine(stringBuilder, row, tokens, splits);
+            this.$renderFoldLine(stringBuilder, row, tokens);
         }
     };
 
@@ -14144,8 +14362,8 @@ var Text = function(parentEl) {
         function addTokens(tokens, from, to) {
             var idx = 0, col = 0;
             while ((col + tokens[idx].value.length) < from) {
-                col += tokens[idx].value.length
-                idx++
+                col += tokens[idx].value.length;
+                idx++;
 
                 if (idx == tokens.length) {
                     return;
@@ -14164,7 +14382,7 @@ var Text = function(parentEl) {
                 });
 
                 col = from + value.length;
-                idx += 1
+                idx += 1;
             }
 
             while (col < to) {
@@ -14260,7 +14478,8 @@ var Cursor = function(parentEl) {
     parentEl.appendChild(this.element);
 
     this.cursor = dom.createElement("div");
-    this.cursor.className = "ace_cursor";
+    this.cursor.className = "ace_cursor ace_hidden";
+    this.element.appendChild(this.cursor);
 
     this.isVisible = false;
 };
@@ -14273,18 +14492,14 @@ var Cursor = function(parentEl) {
 
     this.hideCursor = function() {
         this.isVisible = false;
-        if (this.cursor.parentNode) {
-            this.cursor.parentNode.removeChild(this.cursor);
-        }
+        dom.addCssClass(this.cursor, "ace_hidden");
         clearInterval(this.blinkId);
     };
 
     this.showCursor = function() {
-        this.isVisible = true;
-        this.element.appendChild(this.cursor);
-
-        var cursor = this.cursor;
-        cursor.style.visibility = "visible";
+        this.isVisible = true;   
+        dom.removeCssClass(this.cursor, "ace_hidden");
+        this.cursor.style.visibility = "visible";
         this.restartTimer();
     };
 
@@ -14596,7 +14811,6 @@ define('ace/theme/textmate', ['require', 'exports', 'module' , 'pilot/dom'], fun
 .ace-tm .ace_gutter {\
   width: 50px;\
   background: #e8e8e8;\
-  border-right: 1px solid rgb(159, 159, 159);	 \
   color: #333;\
   overflow : hidden;\
 }\
@@ -14989,6 +15203,10 @@ define("text/ace/css/editor.css", [], ".ace_editor {" +
   ".ace_cursor {" +
   "    z-index: 4;" +
   "    position: absolute;" +
+  "}" +
+  "" +
+  ".ace_cursor.ace_hidden {" +
+  "    opacity: 0.2;" +
   "}" +
   "" +
   ".ace_line {" +
