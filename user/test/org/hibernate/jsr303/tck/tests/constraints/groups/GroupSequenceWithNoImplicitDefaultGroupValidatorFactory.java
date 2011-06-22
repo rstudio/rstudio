@@ -20,24 +20,27 @@ import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
 import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
+import org.hibernate.jsr303.tck.tests.constraints.groups.DefaultGroupRedefinitionTest.AddressWithDefaultInGroupSequence;
+
 import javax.validation.Validator;
 
 /**
- * {@link AbstractGwtValidatorFactory} implementation that uses
- * {@link com.google.gwt.validation.client.GwtValidation GwtValidation}.
+ * ValidatorFactory for
+ * {@link DefaultGroupRedefinitionTest#testGroupSequenceWithNoImplicitDefaultGroup()}
  */
-public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
+public final class GroupSequenceWithNoImplicitDefaultGroupValidatorFactory extends
+    AbstractGwtValidatorFactory {
+
   /**
-   * Marker Interface to {@link GWT#create(Class)}.
+   * Validator for
+   * {@link DefaultGroupRedefinitionTest#testGroupSequenceWithNoImplicitDefaultGroup()}
    */
-  @GwtValidation(value = {
-      Address.class, Animal.class, Book.class, Car.class, Order.class,
-      User.class})
-  public static interface GwtValidator extends Validator {
+  @GwtValidation(value = {AddressWithDefaultInGroupSequence.class})
+  public static interface TestValidator extends Validator {
   }
 
   @Override
   public AbstractGwtValidator createValidator() {
-    return GWT.create(GwtValidator.class);
+    return GWT.create(TestValidator.class);
   }
 }

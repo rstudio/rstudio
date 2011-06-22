@@ -17,21 +17,17 @@ package com.google.gwt.validation.tck;
 
 import junit.framework.Test;
 
-import org.hibernate.jsr303.tck.tests.constraints.groups.DefaultGroupRedefinitionCompileTest;
-import org.hibernate.jsr303.tck.tests.constraints.groups.DefaultGroupRedefinitionGwtTest;
-import org.hibernate.jsr303.tck.tests.constraints.groups.GroupGwtTest;
+import org.hibernate.jsr303.tck.tests.constraints.groups.inheritance.GroupInheritanceGwtTest;
 import org.hibernate.jsr303.tck.util.TckTestSuiteWrapper;
 
 /**
- * Tck Tests for the {@code constraints groups} package.
+ * Tck Tests for the group inheritance.
  */
-public class ConstraintsGroupsGwtSuite {
+public class GroupInheritanceGwtSuite {
   public static Test suite() {
     TckTestSuiteWrapper suite = new TckTestSuiteWrapper(
-        "TCK for GWT Validation, constraints groups package");
-    suite.addTestSuite(DefaultGroupRedefinitionCompileTest.class);
-    suite.addTestSuite(DefaultGroupRedefinitionGwtTest.class);
-    suite.addTestSuite(GroupGwtTest.class);
+        "TCK for GWT Validation, group inheritance");
+    suite.addTestSuite(GroupInheritanceGwtTest.class);
     return suite;
   }
 }

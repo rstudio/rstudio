@@ -13,12 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.hibernate.jsr303.tck.tests.constraints.groups;
+package org.hibernate.jsr303.tck.tests.constraints.groups.groupsequence;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
 import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
+
+import org.hibernate.jsr303.tck.tests.constraints.groups.groupsequence.SequenceResolutionTest.Car;
 
 import javax.validation.Validator;
 
@@ -30,9 +32,7 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
   /**
    * Marker Interface to {@link GWT#create(Class)}.
    */
-  @GwtValidation(value = {
-      Address.class, Animal.class, Book.class, Car.class, Order.class,
-      User.class})
+  @GwtValidation(value = {Car.class, TestEntity.class})
   public static interface GwtValidator extends Validator {
   }
 
