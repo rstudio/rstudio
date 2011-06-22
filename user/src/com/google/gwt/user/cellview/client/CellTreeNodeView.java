@@ -192,7 +192,7 @@ class CellTreeNodeView<T> extends UIObject {
 
       @Override
       public void replaceAllChildren(List<C> values, SafeHtml html,
-          boolean stealFocus) {
+          boolean stealFocus, boolean contentChanged) {
         // Hide the child container so we can animate it.
         if (nodeView.tree.isAnimationEnabled()) {
           nodeView.ensureAnimationFrame().getStyle().setDisplay(Display.NONE);
@@ -201,7 +201,9 @@ class CellTreeNodeView<T> extends UIObject {
         // Replace the child nodes.
         nodeView.tree.isRefreshing = true;
         Map<Object, CellTreeNodeView<?>> savedViews = saveChildState(values, 0);
-        AbstractHasData.replaceAllChildren(nodeView.tree, childContainer, html);
+        if (contentChanged) {
+          AbstractHasData.replaceAllChildren(nodeView.tree, childContainer, html);
+        }
         nodeView.tree.isRefreshing = false;
 
         // Trim the list of children.

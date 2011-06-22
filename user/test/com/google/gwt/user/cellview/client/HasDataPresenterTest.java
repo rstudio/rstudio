@@ -68,6 +68,7 @@ public class HasDataPresenterTest extends GWTTestCase {
       eventFired = false;
     }
 
+    @Override
     public void onSelectionChange(SelectionChangeEvent event) {
       assertFalse(eventFired);
       eventFired = true;
@@ -105,8 +106,10 @@ public class HasDataPresenterTest extends GWTTestCase {
     private final List<SafeHtml> lastHtml = new ArrayList<SafeHtml>();
     private LoadingState loadingState;
     private boolean replaceAllChildrenCalled;
+    private boolean replaceAllChildrenCalledWithSameContent;
     private boolean replaceChildrenCalled;
 
+    @Override
     public <H extends EventHandler> HandlerRegistration addHandler(H handler,
         Type<H> type) {
       throw new UnsupportedOperationException();
@@ -149,6 +152,12 @@ public class HasDataPresenterTest extends GWTTestCase {
       replaceAllChildrenCalled = false;
     }
 
+    public void assertReplaceAllChildrenCalled(boolean expected, boolean sameContent) {
+      assertReplaceAllChildrenCalled(expected);
+      assertEquals(sameContent, replaceAllChildrenCalledWithSameContent);
+      replaceAllChildrenCalledWithSameContent = false;
+    }
+
     public void assertReplaceChildrenCalled(boolean expected) {
       assertEquals(expected, replaceChildrenCalled);
       replaceChildrenCalled = false;
@@ -158,19 +167,23 @@ public class HasDataPresenterTest extends GWTTestCase {
       return childCount;
     }
 
+    @Override
     public void render(SafeHtmlBuilder sb, List<T> values, int start,
         SelectionModel<? super T> selectionModel) {
       sb.appendHtmlConstant("start=").append(start);
       sb.appendHtmlConstant(",size=").append(values.size());
     }
 
+    @Override
     public void replaceAllChildren(List<T> values, SafeHtml html,
-        boolean stealFocus) {
+        boolean stealFocus, boolean contentChanged) {
+      replaceAllChildrenCalledWithSameContent = !contentChanged;
       childCount = values.size();
       replaceAllChildrenCalled = true;
       lastHtml.add(html);
     }
 
+    @Override
     public void replaceChildren(List<T> values, int start, SafeHtml html,
         boolean stealFocus) {
       childCount = Math.max(childCount, start + values.size());
@@ -178,15 +191,18 @@ public class HasDataPresenterTest extends GWTTestCase {
       lastHtml.add(html);
     }
 
+    @Override
     public void resetFocus() {
     }
 
+    @Override
     public void setKeyboardSelected(int index, boolean selected,
         boolean stealFocus) {
       keyboardSelectedRow.add(index);
       keyboardSelectedRowState.add(selected);
     }
 
+    @Override
     public void setLoadingState(LoadingState state) {
       this.loadingState = state;
     }
@@ -280,21 +296,26 @@ public class HasDataPresenterTest extends GWTTestCase {
    */
   public void testBadViewSelectionModel() {
     SelectionModel<String> badModel = new SelectionModel<String>() {
+      @Override
       public void fireEvent(GwtEvent<?> event) {
       }
 
+      @Override
       public Object getKey(String item) {
         return null;
       }
 
+      @Override
       public HandlerRegistration addSelectionChangeHandler(Handler handler) {
         return null;
       }
 
+      @Override
       public boolean isSelected(String object) {
         throw new NullPointerException();
       }
 
+      @Override
       public void setSelected(String object, boolean selected) {
         throw new NullPointerException();
       }
@@ -338,7 +359,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     MockView<String> badView = new MockView<String>() {
       @Override
       public void replaceAllChildren(List<String> values, SafeHtml html,
-          boolean stealFocus) {
+          boolean stealFocus, boolean contentChanged) {
         throw new NullPointerException();
       }
 
@@ -889,6 +910,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     // The pending command is scheduled. Wait for it to execute.
     delayTestFinish(5000);
     Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+      @Override
       public void execute() {
         assertFalse(presenter.hasPendingState());
         view.assertReplaceAllChildrenCalled(true);
@@ -1536,7 +1558,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setVisibleRange(new Range(0, 10));
     presenter.setRowData(0, createData(0, 10));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceAllChildrenCalled(true, false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
     view.assertLoadingState(LoadingState.LOADED);
@@ -1544,9 +1566,9 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Set the same data over the entire range.
     presenter.setRowData(0, createData(0, 10));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
+    view.assertReplaceAllChildrenCalled(true, true);
     view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml(null);
+    view.assertLastHtml("start=0,size=10");
     view.assertLoadingState(LoadingState.LOADED);
   }
 
@@ -1669,6 +1691,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Add a range change handler.
     final List<Range> events = new ArrayList<Range>();
     listView.addRangeChangeHandler(new RangeChangeEvent.Handler() {
+      @Override
       public void onRangeChange(RangeChangeEvent event) {
         events.add(event.getNewRange());
       }
@@ -1707,6 +1730,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Add a range change handler.
     final List<Range> events = new ArrayList<Range>();
     listView.addRangeChangeHandler(new RangeChangeEvent.Handler() {
+      @Override
       public void onRangeChange(RangeChangeEvent event) {
         events.add(event.getNewRange());
       }
@@ -1744,6 +1768,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Add a range change handler.
     final List<Range> events = new ArrayList<Range>();
     listView.addRangeChangeHandler(new RangeChangeEvent.Handler() {
+      @Override
       public void onRangeChange(RangeChangeEvent event) {
         events.add(event.getNewRange());
       }

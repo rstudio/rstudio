@@ -66,8 +66,7 @@ import java.util.TreeSet;
  * 
  * @param <T> the data type of items in the list
  */
-class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
-    HasKeyboardPagingPolicy {
+class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardPagingPolicy {
 
   /**
    * An iterator over DOM elements.
@@ -96,8 +95,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
      * @param handler the handler to add
      * @param type the event type
      */
-    <H extends EventHandler> HandlerRegistration addHandler(final H handler,
-        GwtEvent.Type<H> type);
+    <H extends EventHandler> HandlerRegistration addHandler(final H handler, GwtEvent.Type<H> type);
 
     /**
      * Construct the HTML that represents the list of values, taking the
@@ -117,8 +115,12 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
      * @param values the values of the new children
      * @param html the html to render in the child
      * @param stealFocus true if the row should steal focus, false if not
+     * @param contentChanged indicates whether or not the content has changed
+     *          since the last call. If the content has not changed, widgets can
+     *          choose not to rerender themselves
      */
-    void replaceAllChildren(List<T> values, SafeHtml html, boolean stealFocus);
+    void replaceAllChildren(List<T> values, SafeHtml html, boolean stealFocus,
+        boolean contentChanged);
 
     /**
      * Convert the specified HTML into DOM elements and replace the existing
@@ -131,8 +133,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
      * @param html the HTML to convert
      * @param stealFocus true if the row should steal focus, false if not
      */
-    void replaceChildren(List<T> values, int start, SafeHtml html,
-        boolean stealFocus);
+    void replaceChildren(List<T> values, int start, SafeHtml html, boolean stealFocus);
 
     /**
      * Re-establish focus on an element within the view if the view already had
@@ -463,8 +464,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    * @param view the view implementation
    * @param pageSize the default page size
    */
-  public HasDataPresenter(HasData<T> display, View<T> view, int pageSize,
-      ProvidesKey<T> keyProvider) {
+  public HasDataPresenter(HasData<T> display, View<T> view, int pageSize, ProvidesKey<T> keyProvider) {
     this.display = display;
     this.view = view;
     this.keyProvider = keyProvider;
@@ -472,25 +472,21 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   }
 
   @Override
-  public HandlerRegistration addCellPreviewHandler(
-      CellPreviewEvent.Handler<T> handler) {
+  public HandlerRegistration addCellPreviewHandler(CellPreviewEvent.Handler<T> handler) {
     return view.addHandler(handler, CellPreviewEvent.getType());
   }
 
-  public HandlerRegistration addLoadingStateChangeHandler(
-      LoadingStateChangeEvent.Handler handler) {
+  public HandlerRegistration addLoadingStateChangeHandler(LoadingStateChangeEvent.Handler handler) {
     return view.addHandler(handler, LoadingStateChangeEvent.TYPE);
   }
 
   @Override
-  public HandlerRegistration addRangeChangeHandler(
-      RangeChangeEvent.Handler handler) {
+  public HandlerRegistration addRangeChangeHandler(RangeChangeEvent.Handler handler) {
     return view.addHandler(handler, RangeChangeEvent.getType());
   }
 
   @Override
-  public HandlerRegistration addRowCountChangeHandler(
-      RowCountChangeEvent.Handler handler) {
+  public HandlerRegistration addRowCountChangeHandler(RowCountChangeEvent.Handler handler) {
     return view.addHandler(handler, RowCountChangeEvent.getType());
   }
 
@@ -559,8 +555,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    * @return the row index, or -1 if disabled
    */
   public int getKeyboardSelectedRow() {
-    return KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy ? -1
-        : getCurrentState().getKeyboardSelectedRow();
+    return KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy ? -1 : getCurrentState()
+        .getKeyboardSelectedRow();
   }
 
   /**
@@ -571,8 +567,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    * @return the row index, or -1 if disabled
    */
   public int getKeyboardSelectedRowInView() {
-    return KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy ? -1
-        : state.getKeyboardSelectedRow();
+    return KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy ? -1 : state
+        .getKeyboardSelectedRow();
   }
 
   /**
@@ -581,8 +577,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    * @return the value, or null if a value was not selected
    */
   public T getKeyboardSelectedRowValue() {
-    return KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy ? null
-        : getCurrentState().getKeyboardSelectedRowValue();
+    return KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy ? null : getCurrentState()
+        .getKeyboardSelectedRowValue();
   }
 
   @Override
@@ -727,8 +723,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       // 0th index of next page.
       setKeyboardSelectedRow(getPageSize(), true, false);
     } else if (KeyboardPagingPolicy.INCREASE_RANGE == keyboardPagingPolicy) {
-      setKeyboardSelectedRow(getKeyboardSelectedRow() + PAGE_INCREMENT, true,
-          false);
+      setKeyboardSelectedRow(getKeyboardSelectedRow() + PAGE_INCREMENT, true, false);
     }
   }
 
@@ -749,8 +744,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       // 0th index of previous page.
       setKeyboardSelectedRow(-getPageSize(), true, false);
     } else if (KeyboardPagingPolicy.INCREASE_RANGE == keyboardPagingPolicy) {
-      setKeyboardSelectedRow(getKeyboardSelectedRow() - PAGE_INCREMENT, true,
-          false);
+      setKeyboardSelectedRow(getKeyboardSelectedRow() - PAGE_INCREMENT, true, false);
     }
   }
 
@@ -777,8 +771,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    * @param stealFocus true to steal focus
    * @param forceUpdate force the update even if the row didn't change
    */
-  public void setKeyboardSelectedRow(int index, boolean stealFocus,
-      boolean forceUpdate) {
+  public void setKeyboardSelectedRow(int index, boolean stealFocus, boolean forceUpdate) {
     // Early exit if disabled.
     if (KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy) {
       return;
@@ -791,8 +784,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
      * Early exit if the keyboard selected row has not changed and the keyboard
      * selected value is already set.
      */
-    if (!forceUpdate && getKeyboardSelectedRow() == index
-        && getKeyboardSelectedRowValue() != null) {
+    if (!forceUpdate && getKeyboardSelectedRow() == index && getKeyboardSelectedRowValue() != null) {
       return;
     }
 
@@ -818,8 +810,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     pending.keyboardSelectedRowChanged = true;
     if (index >= 0 && index < pageSize) {
       pending.keyboardSelectedRow = index;
-      pending.keyboardSelectedRowValue = index < pending.getRowDataSize()
-          ? ensurePendingState().getRowDataValue(index) : null;
+      pending.keyboardSelectedRowValue =
+          index < pending.getRowDataSize() ? ensurePendingState().getRowDataValue(index) : null;
       pending.keyboardStealFocus = stealFocus;
       return;
     } else if (KeyboardPagingPolicy.CHANGE_PAGE == keyboardPagingPolicy) {
@@ -917,8 +909,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
     // Create placeholders up to the specified index.
     PendingState<T> pending = ensurePendingState();
-    int cacheOffset = Math.max(0, boundedStart - pageStart
-        - getVisibleItemCount());
+    int cacheOffset = Math.max(0, boundedStart - pageStart - getVisibleItemCount());
     for (int i = 0; i < cacheOffset; i++) {
       pending.rowData.add(null);
     }
@@ -950,13 +941,14 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     // Set the new selection model.
     this.selectionModel = selectionModel;
     if (selectionModel != null) {
-      selectionHandler = selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-        @Override
-        public void onSelectionChange(SelectionChangeEvent event) {
-          // Ensure that we resolve selection.
-          ensurePendingState();
-        }
-      });
+      selectionHandler =
+          selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
+            @Override
+            public void onSelectionChange(SelectionChangeEvent event) {
+              // Ensure that we resolve selection.
+              ensurePendingState();
+            }
+          });
     }
 
     // Update the current selection state based on the new model.
@@ -979,8 +971,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   }
 
   @Override
-  public void setVisibleRangeAndClearData(Range range,
-      boolean forceRangeChangeEvent) {
+  public void setVisibleRangeAndClearData(Range range, boolean forceRangeChangeEvent) {
     setVisibleRange(range, true, forceRangeChangeEvent);
   }
 
@@ -1009,8 +1000,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    * @param modifiedRows the indexes of modified rows
    * @return up to two ranges that encompass the modified rows
    */
-  List<Range> calculateModifiedRanges(TreeSet<Integer> modifiedRows,
-      int pageStart, int pageEnd) {
+  List<Range> calculateModifiedRanges(TreeSet<Integer> modifiedRows, int pageStart, int pageEnd) {
     int rangeStart0 = -1;
     int rangeEnd0 = -1;
     int rangeStart1 = -1;
@@ -1157,8 +1147,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    * @return the key
    */
   private Object getRowValueKey(T rowValue) {
-    return (keyProvider == null || rowValue == null) ? rowValue
-        : keyProvider.getKey(rowValue);
+    return (keyProvider == null || rowValue == null) ? rowValue : keyProvider.getKey(rowValue);
   }
 
   /**
@@ -1195,8 +1184,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       throw new IllegalStateException(
           "The Cell Widget is attempting to render itself within the render "
               + "loop. This usually happens when your render code modifies the "
-              + "state of the Cell Widget then accesses data or elements "
-              + "within the Widget.");
+              + "state of the Cell Widget then accesses data or elements " + "within the Widget.");
     }
     isResolvingState = true;
 
@@ -1216,25 +1204,26 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
      * If the row value exists in multiple places, use the closest index. If the
      * row value not longer exists, use the current index.
      */
-    pending.keyboardSelectedRow = Math.max(0,
-        Math.min(pending.keyboardSelectedRow, rowDataCount - 1));
+    pending.keyboardSelectedRow =
+        Math.max(0, Math.min(pending.keyboardSelectedRow, rowDataCount - 1));
     if (KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy) {
       // Clear the keyboard selected state.
       pending.keyboardSelectedRow = 0;
       pending.keyboardSelectedRowValue = null;
     } else if (pending.keyboardSelectedRowChanged) {
       // Choose the row value based on the index.
-      pending.keyboardSelectedRowValue = rowDataCount > 0
-          ? pending.getRowDataValue(pending.keyboardSelectedRow) : null;
+      pending.keyboardSelectedRowValue =
+          rowDataCount > 0 ? pending.getRowDataValue(pending.keyboardSelectedRow) : null;
     } else if (pending.keyboardSelectedRowValue != null) {
       // Choose the index based on the row value.
-      int bestMatchIndex = findIndexOfBestMatch(pending,
-          pending.keyboardSelectedRowValue, pending.keyboardSelectedRow);
+      int bestMatchIndex =
+          findIndexOfBestMatch(pending, pending.keyboardSelectedRowValue,
+              pending.keyboardSelectedRow);
       if (bestMatchIndex >= 0) {
         // A match was found.
         pending.keyboardSelectedRow = bestMatchIndex;
-        pending.keyboardSelectedRowValue = rowDataCount > 0
-            ? pending.getRowDataValue(pending.keyboardSelectedRow) : null;
+        pending.keyboardSelectedRowValue =
+            rowDataCount > 0 ? pending.getRowDataValue(pending.keyboardSelectedRow) : null;
       } else {
         // No match was found, so reset to 0.
         pending.keyboardSelectedRow = 0;
@@ -1253,8 +1242,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
           && selectionModel != null && pending.viewTouched) {
         T oldValue = oldState.getSelectedValue();
         Object oldKey = getRowValueKey(oldValue);
-        T newValue = rowDataCount > 0
-            ? pending.getRowDataValue(pending.getKeyboardSelectedRow()) : null;
+        T newValue =
+            rowDataCount > 0 ? pending.getRowDataValue(pending.getKeyboardSelectedRow()) : null;
         Object newKey = getRowValueKey(newValue);
         /*
          * Do not deselect the old value unless we have a new value to select,
@@ -1264,10 +1253,10 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
         if (newKey != null && !newKey.equals(oldKey)) {
           // Check both values for selection before setting selection, or the
           // selection model may resolve state early.
-          boolean oldValueWasSelected = (oldValue == null) ? false
-              : selectionModel.isSelected(oldValue);
-          boolean newValueWasSelected = (newValue == null) ? false
-              : selectionModel.isSelected(newValue);
+          boolean oldValueWasSelected =
+              (oldValue == null) ? false : selectionModel.isSelected(oldValue);
+          boolean newValueWasSelected =
+              (newValue == null) ? false : selectionModel.isSelected(newValue);
 
           // Deselect the old value.
           if (oldValueWasSelected) {
@@ -1288,9 +1277,10 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     }
 
     // If the keyboard row changes, add it to the modified set.
-    boolean keyboardRowChanged = pending.keyboardSelectedRowChanged
-        || (oldState.getKeyboardSelectedRow() != pending.keyboardSelectedRow)
-        || (oldState.getKeyboardSelectedRowValue() == null && pending.keyboardSelectedRowValue != null);
+    boolean keyboardRowChanged =
+        pending.keyboardSelectedRowChanged
+            || (oldState.getKeyboardSelectedRow() != pending.keyboardSelectedRow)
+            || (oldState.getKeyboardSelectedRowValue() == null && pending.keyboardSelectedRowValue != null);
 
     /*
      * Resolve selection. Check the selection status of all row values in the
@@ -1301,7 +1291,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     for (int i = pageStart; i < pageStart + rowDataCount; i++) {
       // Check the new selection state.
       T rowValue = pending.getRowDataValue(i - pageStart);
-      boolean isSelected = (rowValue != null && selectionModel != null && selectionModel.isSelected(rowValue));
+      boolean isSelected =
+          (rowValue != null && selectionModel != null && selectionModel.isSelected(rowValue));
 
       // Compare to the old selection state.
       boolean wasSelected = oldState.isRowSelected(i);
@@ -1350,8 +1341,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     }
 
     // Calculate the modified ranges.
-    List<Range> modifiedRanges = calculateModifiedRanges(modifiedRows,
-        pageStart, pageEnd);
+    List<Range> modifiedRanges = calculateModifiedRanges(modifiedRows, pageStart, pageEnd);
     Range range0 = modifiedRanges.size() > 0 ? modifiedRanges.get(0) : null;
     Range range1 = modifiedRanges.size() > 1 ? modifiedRanges.get(1) : null;
     int replaceDiff = 0; // The total number of rows to replace.
@@ -1372,13 +1362,11 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     } else if (rowDataCount < oldRowDataCount) {
       // Redraw if we have trimmed the row data.
       redrawRequired = true;
-    } else if (range1 == null && range0 != null
-        && range0.getStart() == pageStart
+    } else if (range1 == null && range0 != null && range0.getStart() == pageStart
         && (replaceDiff >= oldRowDataCount || replaceDiff > oldPageSize)) {
       // Redraw if the new data completely overlaps the old data.
       redrawRequired = true;
-    } else if (replaceDiff >= REDRAW_MINIMUM
-        && replaceDiff > REDRAW_THRESHOLD * oldRowDataCount) {
+    } else if (replaceDiff >= REDRAW_MINIMUM && replaceDiff > REDRAW_THRESHOLD * oldRowDataCount) {
       /*
        * Redraw if the number of modified rows represents a large portion of the
        * view, defined as greater than 30% of the rows (minimum of 5).
@@ -1405,11 +1393,10 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
         SafeHtmlBuilder sb = new SafeHtmlBuilder();
         view.render(sb, pending.rowData, pending.pageStart, selectionModel);
         SafeHtml newContents = sb.toSafeHtml();
-        if (!newContents.equals(lastContents)) {
-          lastContents = newContents;
-          view.replaceAllChildren(pending.rowData, newContents,
-              pending.keyboardStealFocus);
-        }
+        boolean contentChanged = !newContents.equals(lastContents);
+        lastContents = newContents;
+        view.replaceAllChildren(pending.rowData, newContents, pending.keyboardStealFocus,
+            contentChanged);
         view.resetFocus();
       } else if (range0 != null) {
         // Replace specific rows.
@@ -1420,11 +1407,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
           int absStart = range0.getStart();
           int relStart = absStart - pageStart;
           SafeHtmlBuilder sb = new SafeHtmlBuilder();
-          List<T> replaceValues = pending.rowData.subList(relStart, relStart
-              + range0.getLength());
+          List<T> replaceValues = pending.rowData.subList(relStart, relStart + range0.getLength());
           view.render(sb, replaceValues, absStart, selectionModel);
-          view.replaceChildren(replaceValues, relStart, sb.toSafeHtml(),
-              pending.keyboardStealFocus);
+          view.replaceChildren(replaceValues, relStart, sb.toSafeHtml(), pending.keyboardStealFocus);
         }
 
         // Replace range1 if it exists.
@@ -1432,11 +1417,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
           int absStart = range1.getStart();
           int relStart = absStart - pageStart;
           SafeHtmlBuilder sb = new SafeHtmlBuilder();
-          List<T> replaceValues = pending.rowData.subList(relStart, relStart
-              + range1.getLength());
+          List<T> replaceValues = pending.rowData.subList(relStart, relStart + range1.getLength());
           view.render(sb, replaceValues, absStart, selectionModel);
-          view.replaceChildren(replaceValues, relStart, sb.toSafeHtml(),
-              pending.keyboardStealFocus);
+          view.replaceChildren(replaceValues, relStart, sb.toSafeHtml(), pending.keyboardStealFocus);
         }
 
         view.resetFocus();
@@ -1451,8 +1434,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
         // Select the new keyboard row.
         int newSelectedRow = pending.getKeyboardSelectedRow();
         if (newSelectedRow >= 0 && newSelectedRow < rowDataCount) {
-          view.setKeyboardSelected(newSelectedRow, true,
-              pending.keyboardStealFocus);
+          view.setKeyboardSelected(newSelectedRow, true, pending.keyboardStealFocus);
         }
       }
     } catch (Error e) {
@@ -1476,8 +1458,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    * @param clearData true to clear all data
    * @param forceRangeChangeEvent true to force a {@link RangeChangeEvent}
    */
-  private void setVisibleRange(Range range, boolean clearData,
-      boolean forceRangeChangeEvent) {
+  private void setVisibleRange(Range range, boolean clearData, boolean forceRangeChangeEvent) {
     final int start = range.getStart();
     final int length = range.getLength();
     if (start < 0) {
@@ -1555,8 +1536,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    */
   private void updateCachedData() {
     int pageStart = getPageStart();
-    int expectedLastIndex = Math.max(0,
-        Math.min(getPageSize(), getRowCount() - pageStart));
+    int expectedLastIndex = Math.max(0, Math.min(getPageSize(), getRowCount() - pageStart));
     int lastIndex = getVisibleItemCount() - 1;
     while (lastIndex >= expectedLastIndex) {
       ensurePendingState().rowData.remove(lastIndex);

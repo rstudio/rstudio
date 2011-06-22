@@ -72,18 +72,26 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
       this.hasData = hasData;
     }
 
+    @Override
     public <H extends EventHandler> HandlerRegistration addHandler(H handler,
         Type<H> type) {
       return hasData.addHandler(handler, type);
     }
 
+    @Override
     public void render(SafeHtmlBuilder sb, List<T> values, int start,
         SelectionModel<? super T> selectionModel) {
       hasData.renderRowValues(sb, values, start, selectionModel);
     }
 
+    @Override
     public void replaceAllChildren(List<T> values, SafeHtml html,
-        boolean stealFocus) {
+        boolean stealFocus, boolean contentChanged) {
+      if (!contentChanged) {
+        // Early exit if the content is unchanged.
+        return;
+      }
+
       // Removing elements can fire a blur event, which we ignore.
       hasData.isFocused = hasData.isFocused || stealFocus;
       wasFocused = hasData.isFocused;
@@ -93,6 +101,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
       fireValueChangeEvent();
     }
 
+    @Override
     public void replaceChildren(List<T> values, int start, SafeHtml html,
         boolean stealFocus) {
       // Removing elements can fire a blur event, which we ignore.
@@ -104,9 +113,11 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
       fireValueChangeEvent();
     }
 
+    @Override
     public void resetFocus() {
       if (wasFocused) {
         CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
+          @Override
           public void execute() {
             if (!hasData.resetFocusOnCell()) {
               Element elem = hasData.getKeyboardSelectedElement();
@@ -119,12 +130,14 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
       }
     }
 
+    @Override
     public void setKeyboardSelected(int index, boolean seleted,
         boolean stealFocus) {
       hasData.isFocused = hasData.isFocused || stealFocus;
       hasData.setKeyboardSelected(index, seleted, stealFocus);
     }
 
+    @Override
     public void setLoadingState(LoadingState state) {
       hasData.isRefreshing = true;
       hasData.onLoadingStateChanged(state);
@@ -299,6 +312,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     selectionManagerReg = addCellPreviewHandler(DefaultSelectionEventManager.<T> createDefaultManager());
   }
 
+  @Override
   public HandlerRegistration addCellPreviewHandler(
       CellPreviewEvent.Handler<T> handler) {
     return presenter.addCellPreviewHandler(handler);
@@ -316,11 +330,13 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     return presenter.addLoadingStateChangeHandler(handler);
   }
 
+  @Override
   public HandlerRegistration addRangeChangeHandler(
       RangeChangeEvent.Handler handler) {
     return presenter.addRangeChangeHandler(handler);
   }
 
+  @Override
   public HandlerRegistration addRowCountChangeHandler(
       RowCountChangeEvent.Handler handler) {
     return presenter.addRowCountChangeHandler(handler);
@@ -361,14 +377,17 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     return getVisibleItems();
   }
 
+  @Override
   public KeyboardPagingPolicy getKeyboardPagingPolicy() {
     return presenter.getKeyboardPagingPolicy();
   }
 
+  @Override
   public KeyboardSelectionPolicy getKeyboardSelectionPolicy() {
     return presenter.getKeyboardSelectionPolicy();
   }
 
+  @Override
   public ProvidesKey<T> getKeyProvider() {
     return presenter.getKeyProvider();
   }
@@ -408,23 +427,28 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     return getChildContainer();
   }
 
+  @Override
   public int getRowCount() {
     return presenter.getRowCount();
   }
 
+  @Override
   public SelectionModel<? super T> getSelectionModel() {
     return presenter.getSelectionModel();
   }
 
+  @Override
   public int getTabIndex() {
     return tabIndex;
   }
 
+  @Override
   public T getVisibleItem(int indexOnPage) {
     checkRowBounds(indexOnPage);
     return presenter.getVisibleItem(indexOnPage);
   }
 
+  @Override
   public int getVisibleItemCount() {
     return presenter.getVisibleItemCount();
   }
@@ -435,14 +459,17 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
    * 
    * @return a List of displayed items
    */
+  @Override
   public List<T> getVisibleItems() {
     return presenter.getVisibleItems();
   }
 
+  @Override
   public Range getVisibleRange() {
     return presenter.getVisibleRange();
   }
 
+  @Override
   public boolean isRowCountExact() {
     return presenter.isRowCountExact();
   }
@@ -536,11 +563,13 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
    *
    * @see #getAccessKey()
    */
+  @Override
   public void setAccessKey(char key) {
     this.accessKey = key;
     setKeyboardSelected(getKeyboardSelectedRow(), true, false);
   }
 
+  @Override
   public void setFocus(boolean focused) {
     Element elem = getKeyboardSelectedElement();
     if (elem != null) {
@@ -552,10 +581,12 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     }
   }
 
+  @Override
   public void setKeyboardPagingPolicy(KeyboardPagingPolicy policy) {
     presenter.setKeyboardPagingPolicy(policy);
   }
 
+  @Override
   public void setKeyboardSelectionPolicy(KeyboardSelectionPolicy policy) {
     presenter.setKeyboardSelectionPolicy(policy);
   }
@@ -584,10 +615,12 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     setVisibleRange(pageStart, getPageSize());
   }
 
+  @Override
   public final void setRowCount(int count) {
     setRowCount(count, true);
   }
 
+  @Override
   public void setRowCount(int size, boolean isExact) {
     presenter.setRowCount(size, isExact);
   }
@@ -611,6 +644,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     setRowData(0, values);
   }
 
+  @Override
   public void setRowData(int start, List<? extends T> values) {
     presenter.setRowData(start, values);
   }
@@ -633,6 +667,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
    *      com.google.gwt.view.client.CellPreviewEvent.Handler)
    * @see #getSelectionModel()
    */
+  @Override
   public void setSelectionModel(SelectionModel<? super T> selectionModel) {
     presenter.setSelectionModel(selectionModel);
   }
@@ -662,19 +697,23 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     setSelectionModel(selectionModel);
   }
 
+  @Override
   public void setTabIndex(int index) {
     this.tabIndex = index;
     setKeyboardSelected(getKeyboardSelectedRow(), true, false);
   }
 
+  @Override
   public final void setVisibleRange(int start, int length) {
     setVisibleRange(new Range(start, length));
   }
 
+  @Override
   public void setVisibleRange(Range range) {
     presenter.setVisibleRange(range);
   }
 
+  @Override
   public void setVisibleRangeAndClearData(Range range,
       boolean forceRangeChangeEvent) {
     presenter.setVisibleRangeAndClearData(range, forceRangeChangeEvent);
