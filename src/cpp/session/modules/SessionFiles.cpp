@@ -81,7 +81,7 @@ void enqueFileChangeEvent(const core::system::FileChangeEvent& event)
    StatusResult sr;
    if (activeVCS() != VCSNone)
    {
-      Error err = status(filePath.parent(), &sr);
+      Error err = status(filePath, &sr);
       if (err)
          LOG_ERROR(err);
    }
