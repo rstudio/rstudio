@@ -20,20 +20,20 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.rda' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rd' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rnw' ''
-   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rproject' ''
+   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rproj' ''
 
    WriteRegStr HKCR '.R\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.RData\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.rda\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.Rd\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.Rnw\\\\OpenWithList\\\\rstudio.exe' '' ''
-   WriteRegStr HKCR '.Rproject\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.Rproj\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.tex\\\\OpenWithList\\\\rstudio.exe' '' ''
    
-   WriteRegStr HKCR '.Rproject' '' 'RStudio.RProject'
-   WriteRegStr HKCR 'RStudio.RProject' '' 'R Project'
-   WriteRegStr HKCR 'RStudio.RProject\\\\DefaultIcon' '' '$INSTDIR\\\\bin\\\\rstudio.exe,-2'
-   WriteRegStr HKCR 'RStudio.RProject\\\\\\\\shell\\\\open\\\\command' '' '$INSTDIR\\\\bin\\\\rstudio.exe \\\"%1\\\"'
+   WriteRegStr HKCR '.Rproj' '' 'RStudio.Rproj'
+   WriteRegStr HKCR 'RStudio.Rproj' '' 'R Project'
+   WriteRegStr HKCR 'RStudio.Rproj\\\\DefaultIcon' '' '$INSTDIR\\\\bin\\\\rstudio.exe,-2'
+   WriteRegStr HKCR 'RStudio.Rproj\\\\\\\\shell\\\\open\\\\command' '' '$INSTDIR\\\\bin\\\\rstudio.exe \\\"%1\\\"'
    
    System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
 ")
@@ -46,9 +46,9 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
    DeleteRegKey HKCR '.rda\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.Rd\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.Rnw\\\\OpenWithList\\\\rstudio.exe'
-   DeleteRegKey HKCR '.Rproject\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.Rproj\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.tex\\\\OpenWithList\\\\rstudio.exe'
-   DeleteRegKey HKCR 'RStudio.RProject'
+   DeleteRegKey HKCR 'RStudio.Rproj'
 #")
 
 # build installer
