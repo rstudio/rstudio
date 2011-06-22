@@ -31,7 +31,7 @@
   </mime-type>
 
   <mime-type type="application/x-r-project">
-    <comment>R Project File</comment>
+    <comment>R Project</comment>
     <glob pattern="*.Rproject"/>
     <glob pattern="*.RProject"/>
     <glob pattern="*.rproject"/>

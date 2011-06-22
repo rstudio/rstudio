@@ -37,7 +37,7 @@
          <key>CFBundleTypeIconFile</key>
          <string>RProject.icns</string>
          <key>CFBundleTypeName</key>
-         <string>R Project File</string>
+         <string>R Project</string>
          <key>CFBundleTypeRole</key>
          <string>Editor</string>
          <key>LSIsAppleDefaultForType</key>
