@@ -28,7 +28,6 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
@@ -42,14 +41,12 @@ public class FilesPane extends WorkbenchPane implements Files.Display
 {
    @Inject
    public FilesPane(GlobalDisplay globalDisplay,
-                    Commands commands,
                     FileDialogs fileDialogs,
                     FileTypeRegistry fileTypeRegistry,
                     Provider<FileCommandToolbar> pFileCommandToolbar)
    {
       super("Files");
       globalDisplay_ = globalDisplay ;
-      commands_ = commands;
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
       pFileCommandToolbar_ = pFileCommandToolbar;
@@ -230,7 +227,6 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    private FilesList filesList_ ;
    private FilePathToolbar filePathToolbar_;
    private final GlobalDisplay globalDisplay_ ;
-   private final Commands commands_;
    private final FileDialogs fileDialogs_;
    private Files.Display.Observer observer_;
 
