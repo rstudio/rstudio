@@ -223,6 +223,12 @@ public:
          return core::FilePath();
    }
 
+   void clearInitialContextSettings()
+   {
+      initialWorkingDirOverride_.clear();
+      initialEnvironmentFileOverride_.clear();
+      initialProjectPath_.clear();
+   }
 
    // The line ending we use when working with source documents
    // in memory. This doesn't really make sense for the user to

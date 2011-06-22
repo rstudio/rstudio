@@ -86,26 +86,29 @@ Error initialize()
       // reset next session project path so its a one shot deal
       persistentState().setNextSessionProjectPath(FilePath());
 
-      // wipe out any special environment variables which might
-      // have been passed from a desktop restart
-      core::system::unsetenv("RS_INITIAL_WD");
-      core::system::unsetenv("RS_INITIAL_ENV");
-      core::system::unsetenv("RS_INITIAL_PROJECT");
+      // clear any initial context settings which may be leftover
+      // by a re-instatiation of rsession by desktop
+      session::options().clearInitialContextSettings();
 
+      // set path
       s_activeProjectPath = nextSessionProjectPath;
    }
 
    // check for envrionment variable (file association)
-   else if (!core::system::getenv("RS_INITIAL_PROJECT").empty())
+   else if (!session::options().initialProjectPath().empty())
    {
-      s_activeProjectPath = FilePath(core::system::getenv("RS_INITIAL_PROJECT"));
+      s_activeProjectPath = session::options().initialProjectPath();
    }
 
-   // check for restore based on settings (but ignore if there is
-   // an initialWorkingDirOverride since that implies the user just
-   // wanted to launch the file and not the project)
-   else if (session::options().initialWorkingDirOverride().empty() &&
-            userSettings().alwaysRestoreLastProject() &&
+   // check for other working dir override (implies a launch of a file
+   // but not of a project)
+   else if (!session::options().initialWorkingDirOverride().empty())
+   {
+      s_activeProjectPath = FilePath();
+   }
+
+   // check for restore based on settings
+   else if (userSettings().alwaysRestoreLastProject() &&
             userSettings().lastProjectPath().exists())
    {
       s_activeProjectPath = userSettings().lastProjectPath();
