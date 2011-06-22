@@ -52,7 +52,7 @@ class GitVCSImpl : public VCSImpl
 public:
    GitVCSImpl()
    {
-      root_ = module_context::initialWorkingDirectory();
+      root_ = module_context::activeProjectDirectory();
    }
 
    core::Error status(const FilePath& dir, StatusResult* pStatusResult)

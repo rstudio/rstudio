@@ -28,6 +28,7 @@ set (SESSION_SOURCE_FILES
    SessionOptions.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
+   SessionProjects.cpp
    SessionSourceDatabase.cpp
    SessionUserSettings.cpp
    SessionWorkerContext.cpp

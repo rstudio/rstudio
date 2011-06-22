@@ -72,6 +72,7 @@
 #include "SessionAddins.hpp"
 
 #include "SessionPersistentState.hpp"
+#include "SessionProjects.hpp"
 #include "SessionModuleContextInternal.hpp"
 
 #include "SessionClientEventQueue.hpp"
@@ -260,6 +261,31 @@ FilePath getDefaultWorkingDirectory()
       return session::options().userHomePath();
 }
 
+FilePath getInitialWorkingDirectory()
+{
+   // get paths
+   FilePath projectDirPath = module_context::activeProjectDirectory();
+   FilePath workingDirPath = session::options().initialWorkingDirOverride();
+
+   // check for a project
+   if (!projectDirPath.empty())
+   {
+      return projectDirPath;
+   }
+
+   // see if there is an override from the environment (perhaps based
+   // on a folder drag and drop or other file association)
+   else if (workingDirPath.exists() && workingDirPath.isDirectory())
+   {
+      return workingDirPath;
+   }
+
+   else
+   {
+      // if not then just return default working dir
+      return getDefaultWorkingDirectory();
+   }
+}
 
 
 void handleClientInit(const boost::function<void()>& initFunction,
@@ -364,10 +390,18 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["ui_prefs"] = userSettings().uiPrefs();
    
-
+   // initial working directory
    std::string initialWorkingDir = module_context::createAliasedPath(
-                                module_context::initialWorkingDirectory());
+                                                getInitialWorkingDirectory());
    sessionInfo["initial_working_dir"] = initialWorkingDir;
+
+   // active project file
+   FilePath activeProjectFile = module_context::activeProjectFilePath();
+   if (!activeProjectFile.empty())
+      sessionInfo["active_project_file"] = module_context::createAliasedPath(
+                                                               activeProjectFile);
+   else
+      sessionInfo["active_project_file"] = json::Value();
 
    sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
 
@@ -1692,23 +1726,44 @@ void detectParentTermination()
 
 FilePath rEnvironmentDir()
 {
-   if (session::options().programMode() == kSessionProgramModeDesktop)
+   // for projects we always use the project directory
+   FilePath activeProjectDir = module_context::activeProjectDirectory();
+   if (!activeProjectDir.empty())
+   {
+      return activeProjectDir;
+   }
+
+   // for desktop the current path
+   else if (session::options().programMode() == kSessionProgramModeDesktop)
    {
       return FilePath::safeCurrentPath(session::options().userHomePath());
    }
+
+   // for server the initial working dir
    else
    {
-      return module_context::initialWorkingDirectory();
+      return getInitialWorkingDirectory();
    }
 }
 
 FilePath rHistoryDir()
 {
-   if (session::options().programMode() == kSessionProgramModeServer ||
-       userSettings().useGlobalHistory())
+   // for projects we always use the project directory
+   FilePath activeProjectDir = module_context::activeProjectDirectory();
+   if (!activeProjectDir.empty())
+   {
+      return activeProjectDir;
+   }
+
+   // for server or when in global history mode we use the default
+   // working directory
+   else if (session::options().programMode() == kSessionProgramModeServer ||
+            userSettings().useGlobalHistory())
    {
       return getDefaultWorkingDirectory();
    }
+
+   // for local history mode we take the current path
    else
    {
       return FilePath::safeCurrentPath(session::options().userHomePath());
@@ -1730,21 +1785,6 @@ FilePath getStartupEnvironmentFilePath()
 // provide definition methods for session::module_context
 namespace session { 
 namespace module_context {
-
-FilePath initialWorkingDirectory()
-{
-   // first see if there is an override from the environment
-   FilePath workingDirPath = session::options().initialWorkingDirOverride();
-   if (workingDirPath.exists() && workingDirPath.isDirectory())
-   {
-      return workingDirPath;
-   }
-   else
-   {
-      // if not then just return default working dir
-      return getDefaultWorkingDirectory();
-   }
-}
    
 Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler)
 {
@@ -1977,8 +2017,19 @@ int main (int argc, char * const argv[])
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION) ;
 
+      // initialize persistent state
+      error = session::persistentState().initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION) ;
+
+      // initialize projects -- must be after userSettings & persistentState are
+      // initialized must be before setting working directory
+      error = projects::initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
+
       // set working directory
-      FilePath workingDir = module_context::initialWorkingDirectory();
+      FilePath workingDir = getInitialWorkingDirectory();
       error = workingDir.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
@@ -1993,11 +2044,6 @@ int main (int argc, char * const argv[])
       error = runPreflightScript();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
-
-      // initialize persistent state
-      error = session::persistentState().initialize();
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION) ;
 
       // server-only user file/directory initialization
       if (serverMode)
@@ -2023,7 +2069,6 @@ int main (int argc, char * const argv[])
       r::session::ROptions rOptions ;
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
-      rOptions.defaultWorkingDir = getDefaultWorkingDirectory();
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
       rOptions.rEnvironmentDir = boost::bind(rEnvironmentDir);
       rOptions.rHistoryDir = boost::bind(rHistoryDir);

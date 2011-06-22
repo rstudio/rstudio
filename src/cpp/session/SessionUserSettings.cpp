@@ -36,6 +36,8 @@ namespace {
 const char * const kAgreementHash = kAgreementPrefix "agreedToHash";
 const char * const kAutoCreatedProfile = "autoCreatedProfile";
 const char * const kUiPrefs = "uiPrefs";
+const char * const kAlwaysRestoreLastProject = "alwaysRestoreLastProject";
+const char * const kLastProjectPath = "lastProjectPath";
 const char * const kSaveAction = "saveAction";
 const char * const kLoadRData = "loadRData";
 const char * const kInitialWorkingDirectory = "initialWorkingDirectory";
@@ -123,6 +125,31 @@ void UserSettings::setUiPrefs(const core::json::Object& prefsObject)
    std::ostringstream output;
    json::writeFormatted(prefsObject, output);
    settings_.set(kUiPrefs, output.str());
+}
+
+bool UserSettings::alwaysRestoreLastProject() const
+{
+   return settings_.getBool(kAlwaysRestoreLastProject, false);
+}
+
+void UserSettings::setAlwaysRestoreLastProject(bool alwaysRestore)
+{
+   settings_.set(kAlwaysRestoreLastProject, alwaysRestore);
+}
+
+
+FilePath UserSettings::lastProjectPath() const
+{
+   std::string path = settings_.get(kLastProjectPath);
+   if (!path.empty())
+      return FilePath(path);
+   else
+      return FilePath();
+}
+
+void UserSettings::setLastProjectPath(const FilePath& lastProjectPath)
+{
+   settings_.set(kLastProjectPath, lastProjectPath.absolutePath());
 }
 
 int UserSettings::saveAction() const

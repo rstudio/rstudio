@@ -134,4 +134,8 @@ public class SessionInfo extends JavaScriptObject
          this.initial_working_dir = "~/";
       return this.initial_working_dir;
    }-*/;
+   
+   public final native String getActiveProjectFile() /*-{
+      return this.active_project_file;
+   }-*/;
 }

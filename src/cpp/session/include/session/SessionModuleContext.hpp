@@ -47,7 +47,8 @@ core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 core::FilePath userScratchPath();
 bool isVisibleUserFile(const core::FilePath& filePath);
 
-core::FilePath initialWorkingDirectory();
+core::FilePath activeProjectDirectory();
+core::FilePath activeProjectFilePath();
 
 core::FilePath safeCurrentPath();
 
