@@ -151,7 +151,7 @@ public abstract class CompilationUnitBuilder {
         List<JDeclaredType> types, Dependencies dependencies,
         Collection<? extends JsniMethod> jsniMethods, MethodArgNamesLookup methodArgs,
         CategorizedProblem[] problems) {
-      return new SourceFileCompilationUnit(getResource(), contentId, compiledClasses, types,
+      return new SourceFileCompilationUnit(getResource(), getContentId(), compiledClasses, types,
           dependencies, jsniMethods, methodArgs, problems, getLastModified());
     }
   }
