@@ -4,6 +4,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenProjectFileHandler;
@@ -12,6 +13,12 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+// TODO: Auto-create the .Rproj file when opening directory or .RData
+
+// TODO: Aggregate the global environment into the save dialog
+//          - Eliminate desktop native codepath
+//          - Remember not to prompt for save again after first pass
+
 @Singleton
 public class Projects implements OpenProjectFileHandler
 {
@@ -19,11 +26,13 @@ public class Projects implements OpenProjectFileHandler
    
    @Inject
    public Projects(GlobalDisplay globalDisplay,
+                   FileDialogs fileDialogs,
                    EventBus eventBus,
                    Binder binder,
                    Commands commands)
    {
       globalDisplay_ = globalDisplay;
+      fileDialogs_ = fileDialogs;
       
       binder.bind(commands, this);
       
@@ -42,16 +51,17 @@ public class Projects implements OpenProjectFileHandler
    @Handler
    public void onOpenProject()
    {
-      globalDisplay_.showMessage(MessageDialog.INFO, 
-                                 "RStudio", 
-                                 "Open Project: Not Implemented");
+      
    }
-
-   private final GlobalDisplay globalDisplay_;
 
    @Override
    public void onOpenProjectFile(OpenProjectFileEvent event)
    {
   
    }
+   
+   private final GlobalDisplay globalDisplay_;
+   private final FileDialogs fileDialogs_;
+
+  
 }
