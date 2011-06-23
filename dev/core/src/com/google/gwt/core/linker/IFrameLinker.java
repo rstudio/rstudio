@@ -51,12 +51,6 @@ public class IFrameLinker extends SelectionScriptLinker {
   private static final String CHUNK_SIZE_PROPERTY = "iframe.linker.script.chunk.size";
 
   /**
-   * A configuration property that can be used to have the linker load from
-   * somewhere other than {@link #FRAGMENT_SUBDIR}.
-   */
-  private static final String PROP_FRAGMENT_SUBDIR_OVERRIDE = "iframe.linker.deferredjs.subdir";
-
-  /**
    * Split a JavaScript string into multiple chunks, at statement boundaries.
    * Insert and end-script tag and a start-script tag in between each chunk.
    * This method is made default access for testing.
@@ -135,30 +129,6 @@ public class IFrameLinker extends SelectionScriptLinker {
   protected String getCompilationExtension(TreeLogger logger,
       LinkerContext context) {
     return ".cache.html";
-  }
-
-  /**
-   * Returns the subdirectory name to be used by getModulPrefix when requesting
-   * a runAsync module. It is specified by
-   * {@link #PROP_FRAGMENT_SUBDIR_OVERRIDE} and, aside from test cases, is
-   * always {@link #FRAGMENT_SUBDIR}.
-   */
-  protected final String getFragmentSubdir(TreeLogger logger,
-      LinkerContext context) throws UnableToCompleteException {
-    String subdir = null;
-    for (ConfigurationProperty prop : context.getConfigurationProperties()) {
-      if (prop.getName().equals(PROP_FRAGMENT_SUBDIR_OVERRIDE)) {
-        subdir = prop.getValues().get(0);
-      }
-    }
-
-    if (subdir == null) {
-      logger.log(TreeLogger.ERROR, "Could not find property "
-          + PROP_FRAGMENT_SUBDIR_OVERRIDE);
-      throw new UnableToCompleteException();
-    }
-
-    return subdir;
   }
 
   @Override

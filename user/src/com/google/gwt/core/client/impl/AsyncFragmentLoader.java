@@ -37,8 +37,7 @@ import com.google.gwt.core.client.RunAsyncCallback;
  * 
  * <p>
  * Since the precise way to load code depends on the linker, linkers should
- * specify a rebind of {@link LoadingStrategy}. The default rebind is
- * {@link XhrLoadingStrategy}.
+ * specify a rebind of {@link LoadingStrategy}. 
  */
 public class AsyncFragmentLoader {
   /**

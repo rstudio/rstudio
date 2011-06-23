@@ -28,9 +28,4 @@ public class CrossSiteIframeRunAsyncFailureTest extends RunAsyncFailureTest {
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CrossSiteIframeRunAsyncFailure";
   }
-
-  @Override
-  public void testHttpFailureRetries() {
-    super.testHttpFailureRetries();
-  }
 }

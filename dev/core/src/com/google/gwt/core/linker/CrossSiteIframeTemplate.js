@@ -63,6 +63,10 @@ function __MODULE_FUNC__() {
 
   // Exposed for devmode.js
   __MODULE_FUNC__.__computePropValue = null;
+  
+  // Exposed for runAsync
+  __MODULE_FUNC__.__gwtInstallCode = function() {};
+  __MODULE_FUNC__.__gwtStartLoadingFragment = function() { return null; };
 
   // Exposed for property provider code
   var __gwt_isKnownPropertyValue = function() { return false; };
@@ -77,8 +81,15 @@ function __MODULE_FUNC__() {
    * files for readability and for easy sharing between linkers.  The linker
    * code will inject these functions in these placeholders.
    ***************************************************************************/
+  // Provides the getInstallLocation() and getInstallLocationDoc() functions
+  __INSTALL_LOCATION__
+
   // Provides the installScript() function.
   __INSTALL_SCRIPT__
+
+  // Sets the __MODULE_FUNC__.__installRunAsyncCode and 
+  // __MODULE_FUNC__.__startLoadingFragment functions
+  __RUN_ASYNC__
 
   // Provides the processMetas() function which sets the __gwt_getMetaProperty
   // __propertyErrorFunction and __MODULE_FUNC__.__errFn variables if needed

@@ -16,7 +16,6 @@
 
 package com.google.gwt.dev.jjs.test;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 
@@ -31,11 +30,7 @@ public class CrossSiteRunAsyncFailureTest extends RunAsyncFailureTest {
   }
 
   @Override
-  public void testHttpFailureRetries() {
-    if (!GWT.isScript()) {
-      // Cross-site linker is not supported in dev mode
-      return;
-    }
-    super.testHttpFailureRetries();
+  protected boolean supportsRetries() {
+    return false;
   }
 }

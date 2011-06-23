@@ -57,6 +57,22 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   private static final String FAIL_IF_SCRIPT_TAG_PROPERTY = "xsiframe.failIfScriptTag";
 
   @Override
+  protected String generateDeferredFragment(TreeLogger logger,
+      LinkerContext context, int fragment, String js) {
+    // TODO(unnurg): This assumes that the xsiframe linker is using the
+    // ScriptTagLoadingStrategy (since it is also xs compatible).  However,
+    // it should be completely valid to use the XhrLoadingStrategy with this
+    // linker, in which case we would not want to wrap the deferred fragment
+    // in this way.  Ideally, we should make a way for this code to be dependent
+    // on what strategy is being used. Otherwise, we should make a property which
+    // users can set to turn this wrapping off if they override the loading strategy.
+    return String.format("$wnd.%s.runAsyncCallback%d(%s)\n",
+        context.getModuleFunctionName(),
+        fragment,
+        JsToStringGenerationVisitor.javaScriptString(js));
+  }
+  
+  @Override
   public String getDescription() {
     return "Cross-Site-Iframe";
   }
@@ -74,21 +90,23 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
       replaceAll(ss, "__DOCUMENT_DEF__", "document");
     }
 
-    // Must do installScript before installLocation and waitForBodyLoaded
+    // Must do installScript before waitForBodyLoaded and we must do
+    // waitForBodyLoaded before isBodyLoaded
     includeJs(ss, logger, getJsInstallScript(context), "__INSTALL_SCRIPT__");
-    includeJs(ss, logger, getJsInstallLocation(context), "__INSTALL_LOCATION__");
-
-    // Must do waitForBodyLoaded before isBodyLoaded
     includeJs(ss, logger, getJsWaitForBodyLoaded(context), "__WAIT_FOR_BODY_LOADED__");
     includeJs(ss, logger, getJsIsBodyLoaded(context), "__IS_BODY_LOADED__");
 
     // Must do permutations before providers
     includeJs(ss, logger, getJsPermutations(context), "__PERMUTATIONS__");
     includeJs(ss, logger, getJsProperties(context), "__PROPERTIES__");
+    
+    // Order doesn't matter for the rest
     includeJs(ss, logger, getJsProcessMetas(context), "__PROCESS_METAS__");
+    includeJs(ss, logger, getJsInstallLocation(context), "__INSTALL_LOCATION__");
     includeJs(ss, logger, getJsComputeScriptBase(context), "__COMPUTE_SCRIPT_BASE__");
     includeJs(ss, logger, getJsComputeUrlForResource(context), "__COMPUTE_URL_FOR_RESOURCE__");
     includeJs(ss, logger, getJsLoadExternalStylesheets(context), "__LOAD_STYLESHEETS__");
+    includeJs(ss, logger, getJsRunAsync(context), "__RUN_ASYNC__");
 
     // This Linker does not support <script> tags in the gwt.xml
     SortedSet<ScriptReference> scripts = artifacts.find(ScriptReference.class);
@@ -281,6 +299,16 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   protected String getJsProperties(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/properties.js";
   }
+  
+  /**
+   * Returns the name of the {@code JsRunAsync} script.  By default,
+   * returns {@code "com/google/gwt/core/ext/linker/impl/runAsync.js"}.
+   *
+   * @param context a LinkerContext
+   */
+  protected String getJsRunAsync(LinkerContext context) {
+    return "com/google/gwt/core/ext/linker/impl/runAsync.js";
+  }
 
   /**
    * Returns the name of the {@code JsWaitForBodyLoaded} script.  By default,
@@ -293,7 +321,8 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected String getModulePrefix(TreeLogger logger, LinkerContext context, String strongName) {
+  protected String getModulePrefix(TreeLogger logger, LinkerContext context, String strongName)
+    throws UnableToCompleteException {
     TextOutput out = new DefaultTextOutput(context.isOutputCompact());
 
     // We assume that the $wnd has been set in the same scope as this code is
@@ -314,6 +343,22 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     out.newlineOpt();
     out.print("var $doc = $wnd.document;");
 
+    // The functions for runAsync are set up in the bootstrap script so they
+    // can be overriden in the same way as other bootstrap code is, however
+    // they will be called from, and expected to run in the scope of the GWT code
+    // (usually an iframe) so, here we set up those pointers.
+    out.print("function __gwtStartLoadingFragment(frag) {");
+    out.newlineOpt();
+    String fragDir = getFragmentSubdir(logger, context) + '/';
+    out.print("var fragFile = '" + fragDir + "' + $strongName + '/' + frag + '" + FRAGMENT_EXTENSION + "';");
+    out.newlineOpt();
+    out.print("return __gwtModuleFunction.__startLoadingFragment(fragFile);");
+    out.newlineOpt();
+    out.print("}");
+    out.newlineOpt();
+    out.print("function __gwtInstallCode(code) {return __gwtModuleFunction.__installRunAsyncCode(code);}");
+    out.newlineOpt();
+    
     // Even though we call the $sendStats function in the code written in this
     // linker, some of the compilation code still needs the $stats and
     // $sessionId

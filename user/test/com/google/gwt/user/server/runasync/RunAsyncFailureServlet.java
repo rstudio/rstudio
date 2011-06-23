@@ -32,8 +32,9 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class RunAsyncFailureServlet extends HttpServlet {
 
-  private static final boolean DEBUG = false;
-  private static final HashSet<String> errorFragments = new HashSet<String>();
+  private static final boolean DEBUG = true;
+  private static final HashSet<String> downloadErrorFragments = new HashSet<String>();
+  private static final HashSet<String> installErrorFragments = new HashSet<String>();
 
   /**
    * Sequence of response codes to send back. SC_OK must be last.
@@ -41,11 +42,16 @@ public class RunAsyncFailureServlet extends HttpServlet {
   private static final int[] responses = {
       HttpServletResponse.SC_SERVICE_UNAVAILABLE,
       HttpServletResponse.SC_GATEWAY_TIMEOUT,
-      HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-      HttpServletResponse.SC_GATEWAY_TIMEOUT, HttpServletResponse.SC_OK};
+      HttpServletResponse.SC_NOT_FOUND,
+      HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+      HttpServletResponse.SC_OK,
+  };
 
   static {
-    errorFragments.add("2.cache.js");
+    downloadErrorFragments.add("2.cache.js");
+    downloadErrorFragments.add("3.cache.js");
+    downloadErrorFragments.add("5.cache.js");
+    installErrorFragments.add("4.cache.js");
   }
 
   private static void debug(String message) {
@@ -67,32 +73,33 @@ public class RunAsyncFailureServlet extends HttpServlet {
 
     int response = getDesiredResponse(uri);
     String fragment = uri.substring(uri.lastIndexOf('/') + 1);
-    if (!errorFragments.contains(fragment)
+    if (!downloadErrorFragments.contains(fragment)
         || response == HttpServletResponse.SC_OK) {
-      // Delegate the actual data fetch to the main servlet
-
-      String host = req.getLocalName();
-      int port = req.getLocalPort();
-      String realUrl = "http://" + host + ":" + port + uri;
-      debug("Fetching: " + realUrl);
-
       int bytes = 0;
-      try {
-        URL url = new URL(realUrl);
-        InputStream is = url.openStream();
-        OutputStream os = resp.getOutputStream();
+      if (!installErrorFragments.contains(fragment)) {
+        // Delegate the actual data fetch to the main servlet
+        String host = req.getLocalName();
+        int port = req.getLocalPort();
+        String realUrl = "http://" + host + ":" + port + uri;
+        debug("Fetching: " + realUrl);
 
-        byte[] data = new byte[8192];
-        int nbytes;
-        while ((nbytes = is.read(data)) != -1) {
-          os.write(data, 0, nbytes);
-          bytes += nbytes;
+        try {
+          URL url = new URL(realUrl);
+          InputStream is = url.openStream();
+          OutputStream os = resp.getOutputStream();
+
+          byte[] data = new byte[8192];
+          int nbytes;
+          while ((nbytes = is.read(data)) != -1) {
+            os.write(data, 0, nbytes);
+            bytes += nbytes;
+          }
+          is.close();
+          os.close();
+        } catch (IOException e) {
+          debug("IOException fetching real data: " + e);
+          throw e;
         }
-        is.close();
-        os.close();
-      } catch (IOException e) {
-        debug("IOException fetching real data: " + e);
-        throw e;
       }
 
       resp.setContentType("text/javascript");

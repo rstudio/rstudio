@@ -17,7 +17,6 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.jjs.test.CrossSiteIframeRunAsyncFailureTest;
-import com.google.gwt.dev.jjs.test.CrossSiteIframeRunAsyncMetricsTest;
 import com.google.gwt.dev.jjs.test.CrossSiteIframeRunAsyncTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -30,7 +29,6 @@ public class CrossSiteIframeRunAsyncSuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite("Test for runAsync with the cross-site iframe linker");
 
-    suite.addTestSuite(CrossSiteIframeRunAsyncMetricsTest.class);
     suite.addTestSuite(CrossSiteIframeRunAsyncFailureTest.class);
     suite.addTestSuite(CrossSiteIframeRunAsyncTest.class);
 

@@ -3,9 +3,6 @@
 // installed into a script tag which is added to the install location (because
 // the script contents will be wrapped in a call to onScriptDownloaded()).
 function installScript(filename) {
-  // Provides the getInstallLocation() and getInstallLocationDoc() functions
-  __INSTALL_LOCATION__
-
   // Provides the setupWaitForBodyLoad() function
   __WAIT_FOR_BODY_LOADED__
 

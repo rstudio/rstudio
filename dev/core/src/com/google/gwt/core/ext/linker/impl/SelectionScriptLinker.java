@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.linker.AbstractLinker;
 import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
+import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.SoftPermutation;
@@ -72,11 +73,17 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * Utility class to handle insertion of permutations code.
    */
   protected static PermutationsUtil permutationsUtil = new PermutationsUtil();
-  
+
   /**
    * File name for processMetas.js.
    */
   protected static final String PROCESS_METAS_JS = "com/google/gwt/core/ext/linker/impl/processMetasOld.js";
+
+  /**
+   * A configuration property that can be used to have the linker load from
+   * somewhere other than {@link #FRAGMENT_SUBDIR}.
+   */
+  private static final String PROP_FRAGMENT_SUBDIR_OVERRIDE = "iframe.linker.deferredjs.subdir";
 
   protected static void replaceAll(StringBuffer buf, String search,
       String replace) {
@@ -266,6 +273,30 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   protected abstract String getCompilationExtension(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
 
+  /**
+   * Returns the subdirectory name to be used by getModulPrefix when requesting
+   * a runAsync module. It is specified by
+   * {@link #PROP_FRAGMENT_SUBDIR_OVERRIDE} and, aside from test cases, is
+   * always {@link #FRAGMENT_SUBDIR}.
+   */
+  protected final String getFragmentSubdir(TreeLogger logger,
+      LinkerContext context) throws UnableToCompleteException {
+    String subdir = null;
+    for (ConfigurationProperty prop : context.getConfigurationProperties()) {
+      if (prop.getName().equals(PROP_FRAGMENT_SUBDIR_OVERRIDE)) {
+        subdir = prop.getValues().get(0);
+      }
+    }
+
+    if (subdir == null) {
+      logger.log(TreeLogger.ERROR, "Could not find property "
+          + PROP_FRAGMENT_SUBDIR_OVERRIDE);
+      throw new UnableToCompleteException();
+    }
+
+    return subdir;
+  }
+  
   protected String getHostedFilename() {
     return "";
   }
