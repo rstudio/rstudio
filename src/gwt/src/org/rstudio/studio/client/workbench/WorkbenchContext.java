@@ -69,10 +69,9 @@ public class WorkbenchContext
       {
          FileSystemItem rEnvDir = null;
 
-         if (sessionInfo.getActiveProjectFile() != null)
+         if (getActiveProjectDir() != null)
          {
-            rEnvDir = FileSystemItem.createFile(
-                           sessionInfo.getActiveProjectFile()).getParentPath();
+            rEnvDir = getActiveProjectDir();
          }
          if (sessionInfo.getMode().equals(SessionInfo.DESKTOP_MODE))
          {
@@ -91,8 +90,24 @@ public class WorkbenchContext
       }
    }
    
+   public FileSystemItem getActiveProjectDir()
+   {
+      if (activeProjectDir_ == null)
+      {
+         SessionInfo sessionInfo = session_.getSessionInfo();
+         if (sessionInfo != null &&
+             sessionInfo.getActiveProjectFile() != null)
+         {
+            activeProjectDir_ = FileSystemItem.createFile(
+                           sessionInfo.getActiveProjectFile()).getParentPath();
+         }
+      }
+      return activeProjectDir_;
+   }
+   
    
    FileSystemItem currentWorkingDir_ = FileSystemItem.home();
    FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
+   FileSystemItem activeProjectDir_ = null;
    Session session_;
 }

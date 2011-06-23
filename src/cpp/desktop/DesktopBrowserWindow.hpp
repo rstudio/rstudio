@@ -26,6 +26,7 @@ class BrowserWindow : public QMainWindow
     Q_OBJECT
 public:
     explicit BrowserWindow(bool showToolbar,
+                           bool adjustTitle,
                            QUrl baseUrl = QUrl(),
                            QWidget *parent = NULL);
     QWebView* webView();
@@ -43,7 +44,8 @@ protected:
      QToolBar* pToolbar_;
 
 private:
-     int progress;
+     int progress_;
+     bool adjustTitle_;
 };
 
 } // namespace desktop

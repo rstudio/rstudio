@@ -368,7 +368,7 @@ void GwtCallback::openMinimalWindow(QString name,
 
    if (!browser)
    {
-      browser = new BrowserWindow(false);
+      browser = new BrowserWindow(false, true);
       browser->setAttribute(Qt::WA_DeleteOnClose);
       browser->setAttribute(Qt::WA_QuitOnClose, false);
       if (named)

@@ -121,6 +121,14 @@ public class DesktopHooks
       $wnd.addEventListener("cut", clean, true);
    }-*/;
 
+   
+   String getActiveProjectDir()
+   {
+      if (workbenchContext_.getActiveProjectDir() != null)
+         return workbenchContext_.getActiveProjectDir().getPath();
+      else
+         return "";
+   }
 
    boolean hasBeforeQuitUnsavedChanged()
    {

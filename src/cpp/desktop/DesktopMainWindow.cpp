@@ -35,7 +35,7 @@ extern QProcess* pRSessionProcess;
 namespace desktop {
 
 MainWindow::MainWindow(QUrl url) :
-      BrowserWindow(false, url, NULL),
+      BrowserWindow(false, false, url, NULL),
       menuCallback_(this),
       gwtCallback_(this),
       updateChecker_(this)
@@ -71,6 +71,8 @@ MainWindow::MainWindow(QUrl url) :
 
    setWindowIcon(QIcon(QString::fromAscii(":/icons/RStudio.ico")));
 
+   setWindowTitle(QString::fromAscii("RStudio"));
+
 #ifdef Q_OS_MAC
    QMenuBar* pDefaultMenu = new QMenuBar();
    pDefaultMenu->addMenu(new WindowMenu());
@@ -88,6 +90,14 @@ void MainWindow::onWorkbenchInitialized()
    // or reload for a new project context)
    quitConfirmed_ = false;
    saveConfirmed_ = false;
+
+   // see if there is a project dir to display in the titlebar
+   // if there are unsaved changes then resolve them before exiting
+   QVariant vProjectDir = webView()->page()->mainFrame()->evaluateJavaScript(
+         QString::fromAscii("window.desktopHooks.getActiveProjectDir()"));
+   QString projectDir = vProjectDir.toString();
+   if (projectDir.length() > 0)
+      setWindowTitle(projectDir + QString::fromAscii(" - RStudio"));
 
 #ifdef Q_WS_MACX
    webView()->page()->mainFrame()->evaluateJavaScript(
