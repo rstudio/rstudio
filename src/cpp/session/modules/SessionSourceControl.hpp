@@ -35,22 +35,17 @@ enum VCS
 };
 
 // Must stay in sync with VCSStatus enum in VCSStatus.java
-enum VCSStatus
+class VCSStatus
 {
-   VCSStatusUnmodified,
-   VCSStatusUntracked,
-   VCSStatusModified,
-   VCSStatusAdded,
-   VCSStatusDeleted,
-   VCSStatusRenamed,
-   VCSStatusCopied,
-   VCSStatusUnmerged,
-   // SVN specific
-   VCSStatusIgnored,
-   VCSStatusReplaced,
-   VCSStatusExternal,
-   VCSStatusMissing,
-   VCSStatusObstructed
+public:
+   VCSStatus(const std::string& status=std::string())
+   {
+      status_ = status;
+   }
+
+   std::string status() const { return status_; }
+private:
+   std::string status_;
 };
 
 struct FileWithStatus
@@ -75,6 +70,7 @@ public:
    }
 
    VCSStatus getStatus(const FilePath& fileOrDirectory) const;
+   std::vector<FileWithStatus> files() const { return files_; }
 
 private:
    std::vector<FileWithStatus> files_;

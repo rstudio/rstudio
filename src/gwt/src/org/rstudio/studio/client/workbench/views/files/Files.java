@@ -523,7 +523,7 @@ public class Files
    }
 
    @Handler
-   void onVcsRevert()
+   void onVcsRevertFiles()
    {
       // get currently selected files
       final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
@@ -554,7 +554,7 @@ public class Files
    }
 
    @Handler
-   void onVcsAdd()
+   void onVcsAddFiles()
    {
       // get currently selected files
       final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
@@ -576,7 +576,7 @@ public class Files
    }
 
    @Handler
-   void onVcsRemove()
+   void onVcsRemoveFiles()
    {
       // get currently selected files
       final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();

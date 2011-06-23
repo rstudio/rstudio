@@ -16,7 +16,8 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBundle;
 import org.rstudio.core.client.command.MenuCallback;
 
-public abstract class Commands extends CommandBundle
+public abstract class
+      Commands extends CommandBundle
 {
    public abstract void mainMenu(MenuCallback callback);
 
@@ -74,9 +75,17 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand setAsWorkingDir();
    public abstract AppCommand setWorkingDirToFilesPane();
    public abstract AppCommand showFolder();
+   public abstract AppCommand vcsRevertFiles();
+   public abstract AppCommand vcsAddFiles();
+   public abstract AppCommand vcsRemoveFiles();
+
+   // VCS
+   public abstract AppCommand vcsDiff();
+   public abstract AppCommand vcsCommit();
+   public abstract AppCommand vcsStage();
+   public abstract AppCommand vcsUnstage();
    public abstract AppCommand vcsRevert();
-   public abstract AppCommand vcsAdd();
-   public abstract AppCommand vcsRemove();
+   public abstract AppCommand vcsRefresh();
 
    // View
    public abstract AppCommand jumpToFunction();

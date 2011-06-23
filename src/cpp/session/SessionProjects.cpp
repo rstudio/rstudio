@@ -57,7 +57,7 @@ FilePath activeProjectDirectory()
    }
    else
    {
-      return FilePath();
+      return FilePath("/Users/jcheng/rstudio");
    }
 }
 

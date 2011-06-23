@@ -51,9 +51,9 @@ public class FileCommandToolbar extends Toolbar
          moreMenu.addSeparator();
 
          AppCommand[] vcsCommands = {
-               commands.vcsAdd(),
-               commands.vcsRemove(),
-               commands.vcsRevert()
+               commands.vcsAddFiles(),
+               commands.vcsRemoveFiles(),
+               commands.vcsRevertFiles()
          };
 
          for (AppCommand cmd : vcsCommands)

@@ -12,54 +12,30 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
-import com.google.gwt.resources.client.ImageResource;
+import org.rstudio.core.client.StringUtil;
 
-public enum VCSStatus
+public class VCSStatus implements Comparable<VCSStatus>
 {
-   // Must stay in sync with VCSStatus enum in SessionSourceControl.hpp
-   Unmodified,
-   Untracked,
-   Modified,
-   Added,
-   Deleted,
-   Renamed,
-   Copied,
-   Unmerged,
-   Ignored,
-   Replaced,
-   External,
-   Missing,
-   Obstructed;
-
-   private static VCSStatus[] all = values();
-
-   public static VCSStatus statusForInt(Integer intVal)
+   public VCSStatus(String status)
    {
-      if (intVal == null || intVal < 0 || intVal >= all.length)
-         return Unmodified;
-      return all[intVal];
+      status_ = StringUtil.notNull(status);
    }
 
-   public static ImageResource getIconForStatus(VCSStatus status)
+   public String getStatus()
    {
-      switch (status)
-      {
-         case Untracked:
-            return VCSStatusIcons.INSTANCE.greendot();
-         case Modified:
-            return VCSStatusIcons.INSTANCE.bluedot();
-         case Added:
-            return VCSStatusIcons.INSTANCE.greendot();
-         case Renamed:
-            return VCSStatusIcons.INSTANCE.bluedot();
-         case Copied:
-            return VCSStatusIcons.INSTANCE.greendot();
-         case Unmerged:
-            return VCSStatusIcons.INSTANCE.bluedot();
-         case Unmodified:
-         case Deleted:
-         default:
-            return null;
-      }
+      return status_;
    }
+
+   public char charAt(int offset)
+   {
+      return offset < status_.length() ? status_.charAt(offset) : ' ';
+   }
+
+   public int compareTo(VCSStatus vcsStatus)
+   {
+      // TODO: implement
+      return 0;
+   }
+
+   private String status_;
 }

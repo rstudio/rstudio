@@ -18,6 +18,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.vcs.VCSStatus;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.common.vcs.VCSStrategy;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -274,24 +275,13 @@ public class FileSystemItem extends JavaScriptObject
       return this.lastModified;
    }-*/;
 
-   private final native int getVCSStatusNative() /*-{
-      return this.vcs_status || -1;
+   private final native String getVCSStatusNative() /*-{
+      return this.vcs_status;
    }-*/;
 
    public final VCSStatus getVCSStatus()
    {
-      return VCSStatus.statusForInt(getVCSStatusNative());
-   }
-
-   public final ImageResource getVCSStatusIcon()
-   {
-      VCSStatus status;
-      int statusInt = getVCSStatusNative();
-      if (statusInt == -1)
-         status = VCSStatus.Unmodified;
-      else
-         status = VCSStatus.statusForInt(statusInt);
-      return VCSStatus.getIconForStatus(status);
+      return new VCSStatus(getVCSStatusNative());
    }
 
    // NOTE: should be synced with mime type database in FilePath.cpp

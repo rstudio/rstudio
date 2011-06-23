@@ -68,6 +68,12 @@ public:
       return Success();
    }
 
+   virtual core::Error unstage(const std::vector<FilePath>& filePaths,
+                               std::string* pStdErr)
+   {
+      return Success();
+   }
+
    virtual core::Error runCommand(const std::string& command,
                                   const std::vector<std::string>& args,
                                   std::vector<std::string>* pOutputLines)
@@ -135,57 +141,14 @@ public:
          if (line.length() < 4)
             continue;
          FileWithStatus file;
-         switch (line[1])
-         {
-         case ' ':
-            switch (line[0])
-            {
-            case 'M':
-               file.status = VCSStatusModified;
-               break;
-            case 'A':
-               file.status = VCSStatusAdded;
-               break;
-            case 'D':
-               file.status = VCSStatusDeleted;
-               break;
-            case 'R':
-               file.status = VCSStatusRenamed;
-               break;
-            default:
-               file.status = VCSStatusUnmodified;
-            }
-            break;
-         case 'M':
-            file.status = VCSStatusModified;
-            break;
-         case 'A':
-            file.status = VCSStatusAdded;
-            break;
-         case 'D':
-            file.status = VCSStatusDeleted;
-            break;
-         case 'R':
-            file.status = VCSStatusRenamed;
-            break;
-         case 'C':
-            file.status = VCSStatusCopied;
-            break;
-         case 'U':
-            file.status = VCSStatusUnmerged;
-            break;
-         case '?':
-            file.status = VCSStatusUntracked;
-            break;
-         default:
-            LOG_WARNING_MESSAGE("Unparseable git-status line: " + line);
-            continue;
-         }
+
+         file.status = line.substr(0, 2);
 
          std::string filePath = line.substr(3);
          if (filePath.length() > 1 && filePath[filePath.length() - 1] == '/')
             filePath = filePath.substr(0, filePath.size() - 1);
          file.path = root_.childPath(string_utils::systemToUtf8(filePath));
+
          files.push_back(file);
       }
 
@@ -256,6 +219,14 @@ public:
                          filePaths,
                          pStdErr);
    }
+
+   core::Error unstage(const std::vector<FilePath>& filePaths,
+                       std::string* pStdErr)
+   {
+      std::vector<std::string> args;
+      args.push_back("HEAD");
+      return doSimpleCmd("reset", args, filePaths, pStdErr);
+   }
 };
 
 class SubversionVCSImpl : public VCSImpl
@@ -289,47 +260,13 @@ class SubversionVCSImpl : public VCSImpl
          if (line.length() < 4)
             continue;
          FileWithStatus file;
-         switch (line[0])
-         {
-         case ' ':
-            file.status = VCSStatusUnmodified;
-            break;
-         case 'A':
-            file.status = VCSStatusAdded;
-            break;
-         case 'C':
-            file.status = VCSStatusUnmerged;
-            break;
-         case 'D':
-            file.status = VCSStatusDeleted;
-            break;
-         case 'I':
-            file.status = VCSStatusIgnored;
-            break;
-         case 'M':
-            file.status = VCSStatusModified;
-            break;
-         case 'R':
-            file.status = VCSStatusReplaced;
-            break;
-         case 'X':
-            file.status = VCSStatusExternal;
-            break;
-         case '?':
-            file.status = VCSStatusUntracked;
-            break;
-         case '!':
-            file.status = VCSStatusMissing;
-            break;
-         case '~':
-            file.status = VCSStatusObstructed;
-            break;
-         default:
-            LOG_WARNING_MESSAGE("Unparseable svn-status line: " + line);
-            continue;
-         }
 
-         file.path = FilePath(string_utils::systemToUtf8(line.substr(8)));
+         file.status = line.substr(0, 7);
+
+         std::string filePath = line.substr(8);
+         if (filePath.length() > 1 && filePath[filePath.length() - 1] == '/')
+            filePath = filePath.substr(0, filePath.size() - 1);
+         file.path = FilePath(string_utils::systemToUtf8(filePath));
          files.push_back(file);
       }
 
@@ -395,7 +332,7 @@ VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
    if (found != this->filesByPath_.end())
       return found->second;
 
-   return VCSStatusUnmodified;
+   return VCSStatus();
 }
 
 core::Error status(const FilePath& dir, StatusResult* pStatusResult)
@@ -436,6 +373,46 @@ Error vcsRevert(const json::JsonRpcRequest& request,
    return s_pVcsImpl_->revert(resolveAliasedPaths(paths), NULL);
 }
 
+Error vcsUnstage(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
+{
+   json::Array paths;
+   Error error = json::readParam(request.params, 0, &paths);
+   if (error)
+      return error ;
+
+   return s_pVcsImpl_->unstage(resolveAliasedPaths(paths), NULL);
+}
+
+Error vcsFullStatus(const json::JsonRpcRequest&,
+                    json::JsonRpcResponse* pResponse)
+{
+   StatusResult statusResult;
+   Error error = s_pVcsImpl_->status(module_context::activeProjectDirectory(),
+                                     &statusResult);
+   if (error)
+      return error;
+
+   std::vector<FileWithStatus> files = statusResult.files();
+   json::Array result;
+   for (std::vector<FileWithStatus>::const_iterator it = files.begin();
+        it != files.end();
+        it++)
+   {
+      VCSStatus status = it->status;
+      FilePath path = it->path;
+      json::Object obj;
+      obj["status"] = status.status();
+      obj["path"] = path.relativePath(module_context::activeProjectDirectory());
+      obj["raw_path"] = path.absolutePath();
+      result.push_back(obj);
+   }
+
+   pResponse->setResult(result);
+
+   return Success();
+}
+
 core::Error initialize()
 {
    FilePath workingDir = module_context::activeProjectDirectory();
@@ -453,7 +430,9 @@ core::Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "vcs_add", vcsAdd))
       (bind(registerRpcMethod, "vcs_remove", vcsRemove))
-      (bind(registerRpcMethod, "vcs_revert", vcsRevert));
+      (bind(registerRpcMethod, "vcs_revert", vcsRevert))
+      (bind(registerRpcMethod, "vcs_unstage", vcsUnstage))
+      (bind(registerRpcMethod, "vcs_full_status", vcsFullStatus));
    Error error = initBlock.execute();
    if (error)
       return error;

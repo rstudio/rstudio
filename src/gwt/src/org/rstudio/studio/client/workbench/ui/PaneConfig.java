@@ -39,6 +39,7 @@ public class PaneConfig extends JavaScriptObject
       JsArrayString tabSet1 = createArray().cast();
       tabSet1.push("Workspace");
       tabSet1.push("History");
+      tabSet1.push("VCS");
 
       JsArrayString tabSet2 = createArray().cast();
       tabSet2.push("Files");
@@ -57,7 +58,7 @@ public class PaneConfig extends JavaScriptObject
    public static String[] getAllTabs()
    {
       return new String[] {"Workspace", "History", "Files", "Plots",
-                           "Packages", "Help"};
+                           "Packages", "Help", "VCS"};
    }
 
    protected PaneConfig()
@@ -101,7 +102,7 @@ public class PaneConfig extends JavaScriptObject
       if (ts1.length() == 0 || ts2.length() == 0)
          return false;
 
-      if (!sameElements(concat(ts1, ts2), new String[] {"Workspace", "History", "Files", "Plots", "Packages", "Help"}))
+      if (!sameElements(concat(ts1, ts2), new String[] {"Workspace", "History", "Files", "Plots", "Packages", "Help", "VCS"}))
          return false;
 
       return true;

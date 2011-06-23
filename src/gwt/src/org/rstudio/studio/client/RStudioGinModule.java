@@ -28,6 +28,7 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
+import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
@@ -80,6 +81,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.vcs.VCS;
+import org.rstudio.studio.client.workbench.views.vcs.VCSPane;
+import org.rstudio.studio.client.workbench.views.vcs.VCSTab;
 import org.rstudio.studio.client.workbench.views.workspace.Workspace;
 import org.rstudio.studio.client.workbench.views.workspace.WorkspacePane;
 import org.rstudio.studio.client.workbench.views.workspace.WorkspaceTab;
@@ -120,6 +124,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Packages.Display.class).to(PackagesPane.class);
       bind(Help.Display.class).to(HelpPane.class);
       bind(Edit.Display.class).to(EditView.class);
+      bind(VCS.Display.class).to(VCSPane.class);
       bindTab("Workspace", WorkspaceTab.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);
@@ -127,6 +132,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Plots", PlotsTab.class);
       bindTab("Packages", PackagesTab.class);
       bindTab("Help", HelpTab.class);
+      bindTab("VCS", VCSTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
       bind(Search.Display.class).to(SearchWidget.class) ;
@@ -152,6 +158,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HelpServerOperations.class).to(RemoteServer.class) ;
       bind(EditServerOperations.class).to(RemoteServer.class) ;
       bind(MirrorsServerOperations.class).to(RemoteServer.class);
+      bind(VCSServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

@@ -32,6 +32,7 @@ import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.HttpLogEntry;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
@@ -1118,6 +1119,24 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, VCS_REVERT, params, requestCallback);
    }
 
+   public void vcsUnstage(ArrayList<String> paths,
+                          ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray jsonPaths = new JSONArray();
+      for (int i = 0; i < paths.size(); i++)
+         jsonPaths.set(i, new JSONString(paths.get(i)));
+
+      JSONArray params = new JSONArray();
+      params.set(0, jsonPaths);
+      sendRequest(RPC_SCOPE, VCS_UNSTAGE, params, requestCallback);
+   }
+
+   @Override
+   public void vcsFullStatus(ServerRequestCallback<JsArray<StatusAndPath>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, VCS_FULL_STATUS, requestCallback);
+   }
+
    // package-visible methods for peer classes RemoteServerAuth and
    // RemoveServerEventListener
 
@@ -1582,6 +1601,8 @@ public class RemoteServer implements Server
    private static final String VCS_ADD = "vcs_add";
    private static final String VCS_REMOVE = "vcs_remove";
    private static final String VCS_REVERT = "vcs_revert";
+   private static final String VCS_UNSTAGE = "vcs_unstage";
+   private static final String VCS_FULL_STATUS = "vcs_full_status";
 
    private static final String LOG = "log";
 

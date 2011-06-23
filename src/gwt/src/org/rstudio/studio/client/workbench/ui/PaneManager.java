@@ -54,7 +54,7 @@ import java.util.HashMap;
 public class PaneManager
 {
    public enum Tab {
-      Workspace, History, Files, Plots, Packages, Help
+      Workspace, History, Files, Plots, Packages, Help, VCS
    }
 
    class SelectedTabStateValue extends IntStateValue
@@ -96,7 +96,8 @@ public class PaneManager
                       @Named("Files") final WorkbenchTab filesTab,
                       @Named("Plots") final WorkbenchTab plotsTab,
                       @Named("Packages") final WorkbenchTab packagesTab,
-                      @Named("Help") final WorkbenchTab helpTab)
+                      @Named("Help") final WorkbenchTab helpTab,
+                      @Named("VCS") final WorkbenchTab vcsTab)
    {
       eventBus_ = eventBus;
       session_ = session;
@@ -110,6 +111,7 @@ public class PaneManager
       plotsTab_ = plotsTab;
       packagesTab_ = packagesTab;
       helpTab_ = helpTab;
+      vcsTab_ = vcsTab;
 
       PaneConfig config = validateConfig(uiPrefs.paneConfig().getValue());
       initPanes(config);
@@ -221,6 +223,8 @@ public class PaneManager
             return packagesTab_;
          case Help:
             return helpTab_;
+         case VCS:
+            return vcsTab_;
       }
       throw new IllegalArgumentException("Unknown tab");
    }
@@ -228,7 +232,8 @@ public class PaneManager
    public WorkbenchTab[] getAllTabs()
    {
       return new WorkbenchTab[] { workspaceTab_, historyTab_, filesTab_,
-                                  plotsTab_, packagesTab_, helpTab_ };
+                                  plotsTab_, packagesTab_, helpTab_,
+                                  vcsTab_ };
    }
 
    public void activateTab(Tab tab)
@@ -384,6 +389,7 @@ public class PaneManager
    private final WorkbenchTab plotsTab_;
    private final WorkbenchTab packagesTab_;
    private final WorkbenchTab helpTab_;
+   private final WorkbenchTab vcsTab_;
    private MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;
    private PrimaryWindowFrame consoleWindowFrame_;

@@ -80,7 +80,7 @@ void enqueFileChangeEvent(const source_control::StatusResult& statusResult,
    FilePath filePath(event.fileInfo().absolutePath());
 
    json::Object fileSystemItem = module_context::createFileSystemItem(event.fileInfo());
-   fileSystemItem["vcs_status"] = statusResult.getStatus(filePath);
+   fileSystemItem["vcs_status"] = statusResult.getStatus(filePath).status();
    fileChange[kFile] = fileSystemItem;
 
 
@@ -270,7 +270,7 @@ core::Error listFiles(const json::JsonRpcRequest& request,
       {
          source_control::VCSStatus status = vcsStatus.getStatus(filePath);
          json::Object fileObject = module_context::createFileSystemItem(filePath);
-         fileObject["vcs_status"] = status;
+         fileObject["vcs_status"] = status.status();
          jsonFiles.push_back(fileObject) ;
       }
    }
