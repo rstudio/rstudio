@@ -53,6 +53,7 @@ set (CORE_SOURCE_FILES
    http/URL.cpp
    http/UriHandler.cpp
    http/Util.cpp
+   r_util/RProjectFile.cpp
    system/System.cpp
    text/DcfParser.cpp
    text/TemplateFilter.cpp
