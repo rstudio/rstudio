@@ -54,6 +54,7 @@ set (CORE_SOURCE_FILES
    http/UriHandler.cpp
    http/Util.cpp
    system/System.cpp
+   text/DcfParser.cpp
    text/TemplateFilter.cpp
 )
 
