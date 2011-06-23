@@ -26,7 +26,8 @@ namespace text {
 
 core::Error parseDcfFile(const FilePath& dcfFilePath,
                          bool preserveKeyCase,
-                         std::map<std::string,std::string>* pFields);
+                         std::map<std::string,std::string>* pFields,
+                         std::string* pUserErrMsg);
 
 
 std::string dcfMultilineAsFolded(const std::string& line);

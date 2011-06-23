@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include <boost/format.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
 
@@ -34,14 +35,19 @@ namespace text {
 
 Error parseDcfFile(const FilePath& dcfFilePath,
                    bool preserveKeyCase,
-                   std::map<std::string,std::string>* pFields)
+                   std::map<std::string,std::string>* pFields,
+                   std::string* pUserErrMsg)
 {
    // read the file
    std::string dcfFileContents;
    Error error = readStringFromFile(dcfFilePath,
                                     &dcfFileContents);
    if (error)
+   {
+      *pUserErrMsg = "Error reading " + dcfFilePath.absolutePath() +
+                     ": " + error.summary();
       return error;
+   }
 
    // split into lines
    std::vector<std::string> dcfLines;
@@ -50,21 +56,21 @@ Error parseDcfFile(const FilePath& dcfFilePath,
                            boost::algorithm::is_any_of("\r\n"));
 
    // iterate over lines
+   int lineNumber = 0;
    std::string currentKey;
    std::string currentValue;
    for(std::vector<std::string>::const_iterator it = dcfLines.begin();
        it != dcfLines.end();
        ++it)
    {
-      // get a trimmed copy to check for blank and comment lines
-      std::string trimmedLine =  boost::algorithm::trim_copy(*it);
+      lineNumber++;
 
-      // skip fully blank lines
-      if (trimmedLine.empty())
+      // skip blank lines
+      if (it->empty() || boost::algorithm::trim_copy(*it).empty())
          continue;
 
       // skip comment lines
-      if (trimmedLine[0] == '#')
+      if (it->at(0) == '#')
          continue;
 
       // define regexes
@@ -103,7 +109,9 @@ Error parseDcfFile(const FilePath& dcfFilePath,
       {
          Error error = systemError(boost::system::errc::protocol_error,
                                    ERROR_LOCATION);
-         error.addProperty("invalid-line", *it);
+         boost::format fmt("Invalid line %1%: %2%");
+         *pUserErrMsg = boost::str(fmt % lineNumber % *it);
+         error.addProperty("parse-error", *pUserErrMsg);
          return error;
       }
    }
