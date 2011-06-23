@@ -517,7 +517,7 @@ public final class ResourceGeneratorUtil {
   /**
    * Get default list of resource Locators, in the default order.
    * 
-   * @param context
+   * @param genContext
    * @return an ordered array of Locator[]
    */
   private static Locator[] getDefaultLocators(GeneratorContext genContext) {
@@ -533,7 +533,7 @@ public final class ResourceGeneratorUtil {
    * Get the current locale string.
    * 
    * @param logger
-   * @param context
+   * @param genContext
    * @return the current locale
    */
   private static String getLocale(TreeLogger logger, GeneratorContext genContext) {
@@ -614,7 +614,7 @@ public final class ResourceGeneratorUtil {
       String resourceName, String locale) {
 
     URL toReturn = tryFindResource(locator, resourceName, locale);
-    if (toReturn != null && context != null) {
+    if (context != null) {
       ClientBundleRequirements reqs = context.getRequirements();
       if (reqs != null) {
         reqs.addResolvedResource(resourceName, toReturn);

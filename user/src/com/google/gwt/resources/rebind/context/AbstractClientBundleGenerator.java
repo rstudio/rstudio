@@ -335,7 +335,7 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
     boolean useCache = false;
     if (checkPropertyCacheability(logger, generatorContext)
         && checkSourceTypeCacheability(logger, generatorContext)
-        && checkDependentResourceCacheability(logger, generatorContext, null)) {
+        && checkDependentResourceCacheability(logger, generatorContext)) {
       useCache = true;
     }
     
@@ -586,7 +586,7 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
    * Check dependent resources for cacheability.
    */
   private boolean checkDependentResourceCacheability(TreeLogger logger,
-      GeneratorContextExt genContext, ResourceContext resourceContext) {
+      GeneratorContextExt genContext) {
 
     CachedRebindResult lastRebindResult = genContext.getCachedGeneratorResult();
 
@@ -608,9 +608,17 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
     for (Entry<String, URL> entry : cachedResolvedResources.entrySet()) {
       String resourceName = entry.getKey();
       URL resolvedUrl = entry.getValue();
-      URL currentUrl = ResourceGeneratorUtil.tryFindResource(logger, genContext,
-          resourceContext, resourceName);
-      if (currentUrl == null || resolvedUrl == null
+      URL currentUrl =
+          ResourceGeneratorUtil.tryFindResource(logger, genContext, null, resourceName);
+
+      if (resolvedUrl == null) {
+        if (currentUrl == null) {
+          continue;
+        } else {
+          logger.log(TreeLogger.TRACE, "Found newly available dependent resource: " + resourceName);
+          return false;
+        }
+      } else if (currentUrl == null
           || !resolvedUrl.toExternalForm().equals(currentUrl.toExternalForm())) {
         logger.log(TreeLogger.TRACE,
             "Found dependent resource that has moved or no longer exists: " + resourceName);
