@@ -388,9 +388,9 @@ std::string activeVCSName()
    return s_pVcsImpl_->name();
 }
 
-VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory)
+VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
 {
-   std::map<std::string, VCSStatus>::iterator found =
+   std::map<std::string, VCSStatus>::const_iterator found =
          this->filesByPath_.find(fileOrDirectory.absolutePath());
    if (found != this->filesByPath_.end())
       return found->second;

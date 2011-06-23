@@ -74,7 +74,7 @@ public:
       }
    }
 
-   VCSStatus getStatus(const FilePath& fileOrDirectory);
+   VCSStatus getStatus(const FilePath& fileOrDirectory) const;
 
 private:
    std::vector<FileWithStatus> files_;

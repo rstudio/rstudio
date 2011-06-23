@@ -69,7 +69,8 @@ const char * const kType = "type";
 const char * const kFile = "file";
 const char * const kTargetFile = "targetFile";
    
-void enqueFileChangeEvent(const core::system::FileChangeEvent& event)
+void enqueFileChangeEvent(const source_control::StatusResult& statusResult,
+                          const core::system::FileChangeEvent& event)
 {
    using namespace source_control;
 
@@ -78,16 +79,8 @@ void enqueFileChangeEvent(const core::system::FileChangeEvent& event)
 
    FilePath filePath(event.fileInfo().absolutePath());
 
-   StatusResult sr;
-   if (activeVCS() != VCSNone)
-   {
-      Error err = status(filePath, &sr);
-      if (err)
-         LOG_ERROR(err);
-   }
-
    json::Object fileSystemItem = module_context::createFileSystemItem(event.fileInfo());
-   fileSystemItem["vcs_status"] = sr.getStatus(filePath);
+   fileSystemItem["vcs_status"] = statusResult.getStatus(filePath);
    fileChange[kFile] = fileSystemItem;
 
 
@@ -101,7 +94,13 @@ void enqueFileChangeEvent(const core::system::FileChangeEvent& event)
 void enqueFileRemovedEvent(const FileInfo& fileInfo)
 {
    using core::system::FileChangeEvent;
-   enqueFileChangeEvent(FileChangeEvent(FileChangeEvent::FileRemoved, 
+   source_control::StatusResult statusResult;
+   Error error = source_control::status(FilePath(fileInfo.absolutePath()),
+                                        &statusResult);
+   if (error)
+      LOG_ERROR(error);
+   enqueFileChangeEvent(statusResult,
+                        FileChangeEvent(FileChangeEvent::FileRemoved,
                                         fileInfo));
 }
 
@@ -190,8 +189,20 @@ void onDetectChanges(module_context::ChangeSource source)
    if (error)
       LOG_ERROR(error);
 
+   if (events.empty())
+      return;
+
+   source_control::StatusResult statusResult;
+   error = source_control::status(
+         FilePath(events.front().fileInfo().absolutePath()).parent(),
+         &statusResult);
+   if (error)
+      LOG_ERROR(error);
+
    // fire client events as necessary
-   std::for_each(events.begin(), events.end(), enqueFileChangeEvent);
+   std::for_each(events.begin(), events.end(), boost::bind(enqueFileChangeEvent,
+                                                           statusResult,
+                                                           _1));
 }
    
 void onShutdown(bool terminatedNormally)
