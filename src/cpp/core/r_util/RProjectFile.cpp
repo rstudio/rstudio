@@ -37,7 +37,7 @@ Error writeDefaultProjectFile(const FilePath& filePath)
        "# Save .Rhistory even when not saving .RData (Yes/No)\n"
        "AlwaysSaveHistory: Yes\n";
 
-   return writeStringToFile(filePath, p);
+   return writeStringToFile(filePath, p, string_utils::LineEndingNative);
 }
 
 } // namespace r_util
