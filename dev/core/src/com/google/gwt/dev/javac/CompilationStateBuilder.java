@@ -340,13 +340,16 @@ public class CompilationStateBuilder {
    */
   public static void addArchive(CompilationUnitArchive module) {
     UnitCache unitCache = instance.unitCache;
-    for (CompilationUnit unit : module.getUnits().values()) {
-      CompilationUnit cachedCompilationUnit = unitCache.find(unit.getResourcePath());
+    for (CachedCompilationUnit archivedUnit : module.getUnits().values()) {
+      if (archivedUnit.getTypesSerializedVersion() != GwtAstBuilder.getSerializationVersion()) {
+        continue;
+      }
+      CompilationUnit cachedCompilationUnit = unitCache.find(archivedUnit.getResourcePath());
       // A previously cached unit might be from the persistent cache or another
-      // archive
+      // archive.
       if (cachedCompilationUnit == null
-          || cachedCompilationUnit.getLastModified() < unit.getLastModified()) {
-        unitCache.addArchivedUnit(unit);
+          || cachedCompilationUnit.getLastModified() < archivedUnit.getLastModified()) {
+        unitCache.addArchivedUnit(archivedUnit);
       }
     }
   }

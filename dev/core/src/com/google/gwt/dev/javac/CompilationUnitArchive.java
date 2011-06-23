@@ -66,7 +66,7 @@ public class CompilationUnitArchive implements Serializable {
   }
 
   private final String topModuleName;
-  private transient Map<String, CompilationUnit> units;
+  private transient Map<String, CachedCompilationUnit> units;
 
   /**
    * Create an archive object.  Note that data is retained in memory only until
@@ -77,7 +77,7 @@ public class CompilationUnitArchive implements Serializable {
    *          {@link com.google.gwt.dev.CompileModule}.
    */
   public CompilationUnitArchive(String topModuleName) {
-    units = new TreeMap<String, CompilationUnit>();
+    units = new TreeMap<String, CachedCompilationUnit>();
     this.topModuleName = topModuleName;
   }
 
@@ -85,10 +85,10 @@ public class CompilationUnitArchive implements Serializable {
    * Add a compilation unit to the archive.
    */
   public void addUnit(CompilationUnit unit) {
-    units.put(unit.getResourcePath(), unit);
+    units.put(unit.getResourcePath(), unit.asCachedCompilationUnit());
   }
 
-  public CompilationUnit findUnit(String resourcePath) {
+  public CachedCompilationUnit findUnit(String resourcePath) {
     return units.get(resourcePath);
   }
 
@@ -102,7 +102,7 @@ public class CompilationUnitArchive implements Serializable {
   /**
    * Retrieve all units stored in this archive.
    */
-  public Map<String, CompilationUnit> getUnits() {
+  public Map<String, CachedCompilationUnit> getUnits() {
     return ImmutableMap.copyOf(units);
   }
 
@@ -119,20 +119,20 @@ public class CompilationUnitArchive implements Serializable {
 
   private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
     stream.defaultReadObject();
-    units = new TreeMap<String, CompilationUnit>();
-    CompilationUnit unitsIn[] = (CompilationUnit[]) stream.readObject();
-    for (CompilationUnit unit : unitsIn) {
+    units = new TreeMap<String, CachedCompilationUnit>();
+    CachedCompilationUnit unitsIn[] = (CachedCompilationUnit[]) stream.readObject();
+    for (CachedCompilationUnit unit : unitsIn) {
       assert unit != null;
       addUnit(unit);
     }
   }
 
-  // CompilationUnits are serialized as a sorted array in order to make sure the
+  // CachedCompilationUnits are serialized as a sorted array in order to make sure the
   // output format is deterministic.
   private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.defaultWriteObject();
-    CompilationUnit unitsOut[] = units.values().toArray(new CompilationUnit[units.size()]);
-    Arrays.sort(unitsOut, CompilationUnit.COMPARATOR);
+    CachedCompilationUnit unitsOut[] = units.values().toArray(new CachedCompilationUnit[units.size()]);
+    Arrays.sort(unitsOut, CachedCompilationUnit.COMPARATOR);
     stream.writeObject(unitsOut);
   }
 }
