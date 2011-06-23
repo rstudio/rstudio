@@ -68,7 +68,7 @@ Error parseDcfFile(const FilePath& dcfFilePath,
          continue;
 
       // define regexes
-      boost::regex keyValueRegx("(.*?)\\s*\\:\\s*(.*)$");
+      boost::regex keyValueRegx("([^\\s]+?)\\s*\\:\\s*(.*)$");
       boost::regex continuationRegex("[\t\\s](.*)");
 
        // look for a key-value pair line
