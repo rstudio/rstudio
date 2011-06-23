@@ -17,7 +17,6 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
@@ -40,15 +39,17 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * Compiles a GWT module into a form that can be re-used by subsequent builds.
  * 
  * Takes all compilation units specified on the module source path and write out
- * CachedCompilationUnits for each one into a file named <module>.gwtar (rhymes 
- * with the musical instrument). This will reduce compile and dev mode startup 
+ * CachedCompilationUnits for each one into a file named <module>.gwtar (rhymes
+ * with the musical instrument). This will reduce compile and dev mode startup
  * time if a .gwtar file is up to date and doesn't need to be re-built.
  * 
  * Most developers using the GWT SDK won't need to invoke this tool to get
@@ -157,7 +158,7 @@ public class CompileModule {
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
         @Override
-        public boolean run(TreeLogger logger) throws UnableToCompleteException {
+        public boolean run(TreeLogger logger) {
           return new CompileModule(options).run(logger);
         }
       };
@@ -184,9 +185,19 @@ public class CompileModule {
    * module, and writes out all the compilation units that are not already
    * members of another archive into a new {@link CompilationUnitArchive} file.
    */
-  public boolean run(final TreeLogger logger) throws UnableToCompleteException {
+  public boolean run(final TreeLogger logger) {
+    // Remember units already seen so we don't write the same unit into multiple
+    // archives. Also used as an optimization to keep from de-serializing the
+    // same archive twice. Key is archive URL string. Maps to the set of unit resource paths
+    // for the archive.
+    Map<String, Set<String>> unitsInArchives = new HashMap<String, Set<String>>();
 
-    Set<String> alreadyLoadedArchives = new HashSet<String>();
+    File outputDir = options.getOutDir();
+    if (!outputDir.isDirectory() && !outputDir.mkdirs()) {
+      logger.log(Type.ERROR, "Error creating directories for ouptut: "
+          + outputDir.getAbsolutePath());
+      return false;
+    }
 
     // TODO(zundel): There is an optimal order to compile these modules in.
     // Modify ModuleDefLoader to be able to figure that out and sort them for
@@ -194,6 +205,9 @@ public class CompileModule {
 
     for (String moduleToCompile : options.getModuleNames()) {
       ModuleDef module;
+      // The units in this set already belong to an archive and should not be
+      // written out.
+      Set<String> currentModuleArchivedUnits = new HashSet<String>();
       try {
         module = ModuleDefLoader.loadFromClassPath(logger, moduleToCompile, false);
       } catch (Throwable e) {
@@ -201,7 +215,6 @@ public class CompileModule {
         return false;
       }
 
-      Set<String> archivedResourcePaths = new HashSet<String>();
       SpeedTracerLogger.Event loadAllArchives =
           SpeedTracerLogger.start(CompilerEventType.LOAD_ARCHIVE, "module", moduleToCompile);
       try {
@@ -213,14 +226,17 @@ public class CompileModule {
         }
 
         for (URL archiveURL : archiveURLs) {
-          String archiveURLstring = archiveURL.toString();
-          if (alreadyLoadedArchives.contains(archiveURLstring)) {
+          String archiveURLString = archiveURL.toString();
+          Set<String> unitPaths = unitsInArchives.get(archiveURLString);
+          // Don't bother deserializing archives that have already been read.
+          if (unitPaths != null) {
+            currentModuleArchivedUnits.addAll(unitPaths);
             continue;
           }
-          alreadyLoadedArchives.add(archiveURLstring);
+
           SpeedTracerLogger.Event loadArchive =
-            SpeedTracerLogger.start(CompilerEventType.LOAD_ARCHIVE, "dependentModule", archiveURL
-                .toString());
+              SpeedTracerLogger.start(CompilerEventType.LOAD_ARCHIVE, "dependentModule", archiveURL
+                  .toString());
           try {
             CompilationUnitArchive archive = CompilationUnitArchive.createFromURL(archiveURL);
             // Pre-populate CompilationStateBuilder with .gwtar files
@@ -228,9 +244,12 @@ public class CompileModule {
 
             // Remember already archived units - we don't want to add them back.
             if (!archive.getTopModuleName().equals(moduleToCompile)) {
+              Set<String> archivedUnits = new HashSet<String>();
+              unitsInArchives.put(archiveURLString, archivedUnits);
               for (CompilationUnit unit : archive.getUnits().values()) {
-                archivedResourcePaths.add(unit.getResourcePath());
+                archivedUnits.add(unit.getResourcePath());
               }
+              currentModuleArchivedUnits.addAll(archivedUnits);
             }
           } catch (IOException ex) {
             logger.log(TreeLogger.WARN, "Unable to read: " + archiveURL + ". Skipping: " + ex);
@@ -258,33 +277,25 @@ public class CompileModule {
         return false;
       }
 
-      CompilationUnitArchive outputModule = new CompilationUnitArchive(moduleToCompile);
+      CompilationUnitArchive outputArchive = new CompilationUnitArchive(moduleToCompile);
       for (CompilationUnit unit : compilationState.getCompilationUnits()) {
-        if (!archivedResourcePaths.contains(unit.getResourcePath())) {
-          outputModule.addUnit(unit);
+        if (!currentModuleArchivedUnits.contains(unit.getResourcePath())) {
+          outputArchive.addUnit(unit);
         }
-      }
-
-      File outputDir = options.getOutDir();
-      if (!outputDir.isDirectory() && !outputDir.mkdirs()) {
-        logger.log(Type.ERROR, "Error creating directories for ouptut: "
-            + outputDir.getAbsolutePath());
-        throw new UnableToCompleteException();
       }
 
       String slashedModuleName =
           module.getName().replace('.', '/') + ModuleDefLoader.COMPILATION_UNIT_ARCHIVE_SUFFIX;
       File outputFile = new File(outputDir, slashedModuleName);
       outputFile.getParentFile().mkdirs();
-      logger.log(TreeLogger.INFO, "Writing " + outputModule.getUnits().size() + " units to "
+      logger.log(TreeLogger.INFO, "Writing " + outputArchive.getUnits().size() + " units to "
           + outputFile.getAbsolutePath());
-
       try {
-        outputModule.writeToFile(outputFile);
+        outputArchive.writeToFile(outputFile);
       } catch (IOException ex) {
         logger.log(Type.ERROR, "Error writing module file: " + outputFile.getAbsolutePath() + ": "
             + ex);
-        throw new UnableToCompleteException();
+        return false;
       }
     }
     return true;
