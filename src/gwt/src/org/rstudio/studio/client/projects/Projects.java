@@ -1,6 +1,5 @@
 package org.rstudio.studio.client.projects;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.MessageDialog;

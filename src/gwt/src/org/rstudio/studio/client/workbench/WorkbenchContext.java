@@ -61,18 +61,28 @@ public class WorkbenchContext
       defaultFileDialogDir_ = dir;
    }
    
-   // mirrors behavior of rEnvironmentDir in SessionMain.cpp
+   // NOTE: mirrors behavior of rEnvironmentDir in SessionMain.cpp
    public String getREnvironmentPath()
    {
       SessionInfo sessionInfo = session_.getSessionInfo();
       if (sessionInfo != null)
       {
          FileSystemItem rEnvDir = null;
+
+         if (sessionInfo.getActiveProjectFile() != null)
+         {
+            rEnvDir = FileSystemItem.createFile(
+                           sessionInfo.getActiveProjectFile()).getParentPath();
+         }
          if (sessionInfo.getMode().equals(SessionInfo.DESKTOP_MODE))
+         {
             rEnvDir = currentWorkingDir_;
+         }
          else
+         {
             rEnvDir = FileSystemItem.createDir(
                                        sessionInfo.getInitialWorkingDir());
+         }
          return rEnvDir.completePath(".RData");
       }
       else

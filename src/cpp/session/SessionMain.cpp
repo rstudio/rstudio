@@ -1724,6 +1724,7 @@ void detectParentTermination()
    }
 }
 
+// NOTE: mirrors behavior of WorkbenchContext.getREnvironmentPath on the client
 FilePath rEnvironmentDir()
 {
    // for projects we always use the project directory
