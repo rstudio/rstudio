@@ -104,12 +104,8 @@ public class Source implements InsertSourceHandler,
       void manageChevronVisibility();
       void showOverflowPopup();
       
-      public static int CLOSE_ALL_UNSAVED_CHANGES = 0;
-      public static int QUIT_UNSAVED_CHANGES = 1;
-      
       void showUnsavedChangesDialog(
             ArrayList<EditingTarget> dirtyTargets,
-            int mode,
             OperationWithInput<ArrayList<EditingTarget>> saveOperation);
 
       void ensureVisible();
@@ -522,7 +518,6 @@ public class Source implements InsertSourceHandler,
    
    
    private void saveEditingTargetsWithPrompt(ArrayList<EditingTarget> targets,
-                                             int mode,
                                              final Command onCompleted)
    {
       // execute on completed right away if the list is empty
@@ -542,7 +537,6 @@ public class Source implements InsertSourceHandler,
       {
          view_.showUnsavedChangesDialog(
             targets, 
-            mode,
             new OperationWithInput<ArrayList<EditingTarget>>() 
             {
                @Override
@@ -602,38 +596,9 @@ public class Source implements InsertSourceHandler,
       
       // save targets
       saveEditingTargetsWithPrompt(dirtyTargets, 
-                                   Display.CLOSE_ALL_UNSAVED_CHANGES,
                                    closeAllTabsCommand);
       
    }
-   
-   public boolean hasBeforeQuitUnsavedChanges()
-   {
-      return dirtyFileBackedEditingTargets().size() > 0;
-   }
-   
-   public void saveChangesBeforeQuit(Command onCompleted)
-   {
-      // collect up a list of dirty documents with paths (we leave
-      // untitled documents alone at exit)  
-      ArrayList<EditingTarget> dirtyTargets = dirtyFileBackedEditingTargets();
-      
-      // save targets
-      saveEditingTargetsWithPrompt(dirtyTargets, 
-                                   Display.QUIT_UNSAVED_CHANGES,
-                                   onCompleted);
-   }
-
-   private ArrayList<EditingTarget> dirtyFileBackedEditingTargets()
-   {
-      ArrayList<EditingTarget> dirtyTargets = new ArrayList<EditingTarget>();
-      for (EditingTarget target : editors_)
-         if (target.dirtyState().getValue() && target.getPath() != null)
-            dirtyTargets.add(target);
-      return dirtyTargets;
-   }
-   
-   
    
    @Handler
    public void onOpenSourceDoc()

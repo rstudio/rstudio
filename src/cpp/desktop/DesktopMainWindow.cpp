@@ -35,13 +35,12 @@ extern QProcess* pRSessionProcess;
 namespace desktop {
 
 MainWindow::MainWindow(QUrl url) :
-      BrowserWindow(false, url, NULL),
+      BrowserWindow(false, false, url, NULL),
       menuCallback_(this),
       gwtCallback_(this),
       updateChecker_(this)
 {
    quitConfirmed_ = false;
-   saveConfirmed_ = false;
    pToolbar_->setVisible(false);
 
    // Dummy menu bar to deal with the fact that
@@ -71,6 +70,8 @@ MainWindow::MainWindow(QUrl url) :
 
    setWindowIcon(QIcon(QString::fromAscii(":/icons/RStudio.ico")));
 
+   setWindowTitle(QString::fromAscii("RStudio"));
+
 #ifdef Q_OS_MAC
    QMenuBar* pDefaultMenu = new QMenuBar();
    pDefaultMenu->addMenu(new WindowMenu());
@@ -87,7 +88,14 @@ void MainWindow::onWorkbenchInitialized()
    // reset state (in case this occurred in response to a manual reload
    // or reload for a new project context)
    quitConfirmed_ = false;
-   saveConfirmed_ = false;
+
+   // see if there is a project dir to display in the titlebar
+   // if there are unsaved changes then resolve them before exiting
+   QVariant vProjectDir = webView()->page()->mainFrame()->evaluateJavaScript(
+         QString::fromAscii("window.desktopHooks.getActiveProjectDir()"));
+   QString projectDir = vProjectDir.toString();
+   if (projectDir.length() > 0)
+      setWindowTitle(projectDir + QString::fromAscii(" - RStudio"));
 
 #ifdef Q_WS_MACX
    webView()->page()->mainFrame()->evaluateJavaScript(
@@ -111,12 +119,6 @@ void MainWindow::loadUrl(const QUrl& url)
 void MainWindow::quit()
 {
    quitConfirmed_ = true;
-   close();
-}
-
-void MainWindow::closeWithSaveConfirmed()
-{
-   saveConfirmed_ = true;
    close();
 }
 
@@ -168,25 +170,6 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
    }
    else
    {
-      // if save hasn't been confirmed yet then call into desktopHooks and bail
-      if (!saveConfirmed_)
-      {
-         // if there are unsaved changes then resolve them before exiting
-         QVariant hasUnsaved = pFrame->evaluateJavaScript(
-               QString::fromAscii("window.desktopHooks.hasBeforeQuitUnsavedChanged()"));
-         if (hasUnsaved.toBool())
-         {
-            pFrame->evaluateJavaScript(QString::fromAscii("!!window.desktopHooks.saveChangesBeforeQuit()"));
-            pEvent->ignore();
-            return;
-         }
-      }
-
-      // reset the saveConfirmed_ flag (if we exit this function without quitting
-      // R due to a cancel we want the user to get the chance to handle unsaved
-      // changes the next time they quit
-      saveConfirmed_ = false;
-
       // determine saveAction by calling hook
       QVariant saveAction = pFrame->evaluateJavaScript(
                                QString::fromAscii("window.desktopHooks.getSaveAction()"));

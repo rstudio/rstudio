@@ -17,10 +17,14 @@
 
 namespace desktop {
 
-BrowserWindow::BrowserWindow(bool showToolbar, QUrl baseUrl, QWidget* pParent) :
+BrowserWindow::BrowserWindow(bool showToolbar,
+                             bool adjustTitle,
+                             QUrl baseUrl,
+                             QWidget* pParent) :
    QMainWindow(pParent)
 {
-   progress = 0;
+   adjustTitle_ = adjustTitle;
+   progress_ = 0;
 
    pView_ = new WebView(baseUrl, this);
    QWebFrame* mainFrame = pView_->page()->mainFrame();
@@ -57,18 +61,19 @@ void BrowserWindow::printRequested(QWebFrame* frame)
 
 void BrowserWindow::adjustTitle()
 {
-   setWindowTitle(pView_->title());
+   if (adjustTitle_)
+      setWindowTitle(pView_->title());
 }
 
 void BrowserWindow::setProgress(int p)
 {
-   progress = p;
+   progress_ = p;
    adjustTitle();
 }
 
 void BrowserWindow::finishLoading(bool)
 {
-   progress = 100;
+   progress_ = 100;
    adjustTitle();
 }
 

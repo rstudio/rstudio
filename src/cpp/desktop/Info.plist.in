@@ -30,9 +30,9 @@
       <dict>
          <key>CFBundleTypeExtensions</key>
          <array>
-            <string>Rproject</string>
-            <string>RProject</string>
-            <string>rproject</string>
+            <string>Rproj</string>
+            <string>RProj</string>
+            <string>rproj</string>
          </array>
          <key>CFBundleTypeIconFile</key>
          <string>RProject.icns</string>

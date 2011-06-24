@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -121,20 +122,13 @@ public class DesktopHooks
       $wnd.addEventListener("cut", clean, true);
    }-*/;
 
-
-   boolean hasBeforeQuitUnsavedChanged()
-   {
-      return sourceShim_.hasBeforeQuitUnsavedChanges();
-   }
    
-   void saveChangesBeforeQuit()
+   String getActiveProjectDir()
    {
-      sourceShim_.saveChangesBeforeQuit(new Command() {
-         public void execute()
-         {
-            Desktop.getFrame().closeWithSaveConfirmed();
-         }
-      });
+      if (workbenchContext_.getActiveProjectDir() != null)
+         return workbenchContext_.getActiveProjectDir().getPath();
+      else
+         return "";
    }
 
    void quitR(final boolean saveChanges)
@@ -217,9 +211,16 @@ public class DesktopHooks
       // get the file system item
       FileSystemItem file = FileSystemItem.createFile(filePath);
       
-      // don't open directories (these can sneak in if the user 
-      // passes a directory on the command line)
-      if (!file.isDirectory())
+      if (file.isDirectory())
+         return;
+      
+      // special handling for open an Rproject on top of an 
+      // an existing session
+      if (file.getExtension().equalsIgnoreCase(".rproj"))
+      {
+         events_.fireEvent(new OpenProjectFileEvent(file));
+      }
+      else
       {
          // open the file. pass false for second param to prevent
          // the default handler (the browser) from taking it

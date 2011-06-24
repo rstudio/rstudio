@@ -26,6 +26,7 @@
 #include <core/FilePath.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/WaitUtils.hpp>
+#include <core/StringUtils.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/System.hpp>
 
@@ -127,10 +128,37 @@ void initializeWorkingDirectory(int argc,
       core::system::setenv("RS_INITIAL_WD", workingDir);
 }
 
+FilePath projectFromDirectory(const FilePath& directoryPath)
+{
+   std::vector<FilePath> children;
+   Error error = directoryPath.children(&children);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+   for (std::vector<FilePath>::const_iterator it = children.begin();
+        it != children.end();
+        ++it)
+   {
+      if (!it->isDirectory() && (it->extensionLowerCase() == ".rproj"))
+         return *it;
+   }
+
+   // didn't find one
+   return FilePath();
+}
+
+void setInitialProject(const FilePath& projectFile, QString* pFilename)
+{
+   core::system::setenv("RS_INITIAL_PROJECT", projectFile.absolutePath());
+   pFilename->clear();
+}
+
 void initializeStartupEnvironment(QString* pFilename)
 {
    // if the filename ends with .RData or .rda then this is an
-   // environment file. if it ends with .Rproject then it is
+   // environment file. if it ends with .Rproj then it is
    // a project file. we handle both cases by setting an environment
    // var and then resetting the pFilename so it isn't processed
    // using the standard open file logic
@@ -138,15 +166,35 @@ void initializeStartupEnvironment(QString* pFilename)
    if (filePath.exists())
    {
       std::string ext = filePath.extensionLowerCase();
-      if (ext == ".rdata" || ext == ".rda")
+
+      // if it is a directory or just an .rdata file then we can see
+      // whether there is a project file we can automatically attach to
+      if (filePath.isDirectory())
       {
-         core::system::setenv("RS_INITIAL_ENV", filePath.absolutePath());
-         pFilename->clear();
+         FilePath projectFile = projectFromDirectory(filePath);
+         if (!projectFile.empty())
+         {
+            setInitialProject(projectFile, pFilename);
+         }
       }
-      else if (ext == ".rproject")
+      else if (ext == ".rdata" || ext == ".rda")
       {
-         core::system::setenv("RS_INITIAL_PROJECT", filePath.absolutePath());
-         pFilename->clear();
+         // if there is no stem then see if there is a project here
+         FilePath projectFile;
+         if (filePath.stem().empty() &&
+            !(projectFile = projectFromDirectory(filePath.parent())).empty())
+         {
+            setInitialProject(projectFile, pFilename);
+         }
+         else
+         {
+            core::system::setenv("RS_INITIAL_ENV", filePath.absolutePath());
+            pFilename->clear();
+         }
+      }
+      else if (ext == ".rproj")
+      {
+         setInitialProject(filePath, pFilename);
       }
    }
 }

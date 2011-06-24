@@ -1724,6 +1724,7 @@ void detectParentTermination()
    }
 }
 
+// NOTE: mirrors behavior of WorkbenchContext.getREnvironmentPath on the client
 FilePath rEnvironmentDir()
 {
    // for projects we always use the project directory
@@ -1755,15 +1756,13 @@ FilePath rHistoryDir()
       return activeProjectDir;
    }
 
-   // for server or when in global history mode we use the default
-   // working directory
-   else if (session::options().programMode() == kSessionProgramModeServer ||
-            userSettings().useGlobalHistory())
+   // for server we use the default working directory
+   else if (session::options().programMode() == kSessionProgramModeServer)
    {
       return getDefaultWorkingDirectory();
    }
 
-   // for local history mode we take the current path
+   // for desktop we take the current path
    else
    {
       return FilePath::safeCurrentPath(session::options().userHomePath());

@@ -90,8 +90,17 @@ Error initialize()
       // by a re-instatiation of rsession by desktop
       session::options().clearInitialContextSettings();
 
-      // set path
-      s_activeProjectPath = nextSessionProjectPath;
+      // check for existence and set
+      if (nextSessionProjectPath.exists())
+      {
+         s_activeProjectPath = nextSessionProjectPath;
+      }
+      else
+      {
+         LOG_WARNING_MESSAGE("Next session project path doesn't exist: " +
+                             nextSessionProjectPath.absolutePath());
+         s_activeProjectPath = FilePath();
+      }
    }
 
    // check for envrionment variable (file association)

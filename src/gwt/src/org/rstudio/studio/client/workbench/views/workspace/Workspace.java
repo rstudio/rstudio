@@ -242,9 +242,9 @@ public class Workspace
    
    private void sendDefaultWorkspaceCommandToConsole(String command)
    {
-      FileSystemItem cwd = workbenchContext_.getCurrentWorkingDir();
-      FileSystemItem wsPath = FileSystemItem.createFile(cwd.completePath(".RData"));
-      consoleDispatcher_.executeCommand(command, wsPath);
+      String renvPath = workbenchContext_.getREnvironmentPath();
+      consoleDispatcher_.executeCommand(command, 
+                                        FileSystemItem.createFile(renvPath));
    }
    
    

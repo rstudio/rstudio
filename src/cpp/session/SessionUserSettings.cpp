@@ -48,7 +48,6 @@ const char * const kCRANMirrorCountry = "cranMirrorCountry";
 const char * const kBioconductorMirrorName = "bioconductorMirrorName";
 const char * const kBioconductorMirrorUrl = "bioconductorMirrorUrl";
 const char * const kAlwaysSaveHistory = "alwaysSaveHistory";
-const char * const kUseGlobalHistory = "useGlobalHistory";
 const char * const kRemoveHistoryDuplicates = "removeHistoryDuplicates";
 
 void setCRANReposOption(const std::string& url)
@@ -237,16 +236,6 @@ bool UserSettings::alwaysSaveHistory() const
 void UserSettings::setAlwaysSaveHistory(bool alwaysSave)
 {
    settings_.set(kAlwaysSaveHistory, alwaysSave);
-}
-
-bool UserSettings::useGlobalHistory() const
-{
-   return settings_.getBool(kUseGlobalHistory, true);
-}
-
-void UserSettings::setUseGlobalHistory(bool useGlobal)
-{
-   settings_.set(kUseGlobalHistory, useGlobal);
 }
 
 bool UserSettings::removeHistoryDuplicates() const
