@@ -743,7 +743,8 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         }
       }
 
-      if (shownChildMenu != null
+      if (vertical
+          && shownChildMenu != null
           && shownChildMenu == selectedItem.getSubMenu())
       {
         shownChildMenu.onHide(false);
