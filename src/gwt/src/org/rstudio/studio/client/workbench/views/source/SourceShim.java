@@ -28,7 +28,6 @@ import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.widget.BeforeShowCallback;
-import org.rstudio.core.client.widget.Widgetable;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
@@ -38,7 +37,7 @@ import org.rstudio.studio.client.workbench.views.source.events.*;
 
 @Singleton
 public class SourceShim extends Composite
-   implements Widgetable, HasEnsureVisibleHandlers, BeforeShowCallback,
+   implements IsWidget, HasEnsureVisibleHandlers, BeforeShowCallback,
               ProvidesResize, RequiresResize, RequiresVisibilityChanged
 {
    public interface Binder extends CommandBinder<Commands, AsyncSource> {}
@@ -79,7 +78,7 @@ public class SourceShim extends Composite
       @Override
       protected void onDelayLoadSuccess(final Source obj)
       {
-         final Widget child = obj.toWidget();
+         final Widget child = obj.asWidget();
          if (child instanceof HasEnsureVisibleHandlers)
          {
             ((HasEnsureVisibleHandlers)child).addEnsureVisibleHandler(
@@ -147,7 +146,7 @@ public class SourceShim extends Composite
          onCompleted.execute();
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
       return this;
    }

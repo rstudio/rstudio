@@ -54,7 +54,7 @@ public class TextEditingTargetWidget
       sourceOnSave_ = new CheckBox("Source on Save");
       statusBar_ = new StatusBarWidget();
       panel_ = new PanelWithToolbar(createToolbar(),
-                                    editor.toWidget(),
+                                    editor.asWidget(),
                                     statusBar_);
       adaptToFileType(fileType);
 

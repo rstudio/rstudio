@@ -210,7 +210,7 @@ public class SourcePane extends Composite implements Display,
       return tabPanel_.addBeforeSelectionHandler(handler);
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
       return this;
    }

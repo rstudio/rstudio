@@ -1,5 +1,5 @@
 /*
- * Widgetable.java
+ * WidgetableWithHeight.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -12,9 +12,9 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.IsWidget;
 
-public interface Widgetable
+public interface IsWidgetWithHeight extends IsWidget
 {
-   Widget toWidget();
+   int getHeight();
 }

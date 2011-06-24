@@ -12,18 +12,18 @@
  */
 package org.rstudio.studio.client.workbench.views;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.widget.Widgetable;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 
-public abstract class BasePresenter implements Widgetable
+public abstract class BasePresenter implements IsWidget
 {
    protected BasePresenter(WorkbenchView view)
    {
       view_ = view;
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
       return (Widget) view_;
    }

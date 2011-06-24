@@ -1,11 +1,11 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.widget.Widgetable;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
@@ -17,11 +17,11 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 
 import java.util.ArrayList;
 
-public class VCS extends BasePresenter implements Widgetable
+public class VCS extends BasePresenter implements IsWidget
 {
    public interface Binder extends CommandBinder<Commands, VCS> {}
 
-   public interface Display extends WorkbenchView, Widgetable
+   public interface Display extends WorkbenchView, IsWidget
    {
       void setItems(ArrayList<StatusAndPath> items);
 
@@ -44,9 +44,9 @@ public class VCS extends BasePresenter implements Widgetable
    }
 
    @Override
-   public Widget toWidget()
+   public Widget asWidget()
    {
-      return view_.toWidget();
+      return view_.asWidget();
    }
 
    @Handler
@@ -73,14 +73,15 @@ public class VCS extends BasePresenter implements Widgetable
       if (paths.size() == 0)
          return;
 
-      server_.vcsUnstage(paths, new SimpleRequestCallback<Void>("Unstage Changes")
-      {
-         @Override
-         public void onResponseReceived(Void response)
-         {
-            refresh();
-         }
-      });
+      server_.vcsUnstage(paths,
+                         new SimpleRequestCallback<Void>("Unstage Changes")
+                         {
+                            @Override
+                            public void onResponseReceived(Void response)
+                            {
+                               refresh();
+                            }
+                         });
    }
 
    @Handler

@@ -158,7 +158,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
       return 32;
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
       return toolbar_;
    }

@@ -53,7 +53,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
             ((Display)progressPanel_.getWidget()).print();
          }
 
-         public Widget toWidget()
+         public Widget asWidget()
          {
             return progressPanel_;
          }

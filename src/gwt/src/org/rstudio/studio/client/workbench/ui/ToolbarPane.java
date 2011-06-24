@@ -29,7 +29,7 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
                                                                HasEnsureVisibleHandlers
 {
-   public Widget toWidget()
+   public Widget asWidget()
    {
       ensureWidget();
       return this;

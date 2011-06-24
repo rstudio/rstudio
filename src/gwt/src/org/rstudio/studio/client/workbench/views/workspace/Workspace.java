@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.workspace;
 
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -52,7 +53,7 @@ public class Workspace
       extends BasePresenter
    implements WorkspaceObjectAssignedHandler,
               WorkspaceObjectRemovedHandler,
-              Widgetable,
+              IsWidget,
               WorkspaceRefreshHandler,
               OpenDataFileHandler,
               WorkspaceObjectTable.Observer

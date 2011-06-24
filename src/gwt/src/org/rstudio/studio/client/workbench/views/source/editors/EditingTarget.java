@@ -16,18 +16,18 @@ import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Provider;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
-import org.rstudio.core.client.widget.Widgetable;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import java.util.HashSet;
 
-public interface EditingTarget extends Widgetable,
+public interface EditingTarget extends IsWidget,
                                        HasEnsureVisibleHandlers,
                                        HasCloseHandlers<Void>
 {

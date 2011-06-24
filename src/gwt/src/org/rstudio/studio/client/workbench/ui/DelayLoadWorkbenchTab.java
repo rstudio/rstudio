@@ -17,15 +17,15 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
-import org.rstudio.core.client.widget.Widgetable;
 import org.rstudio.studio.client.RStudioGinjector;
 
-public abstract class DelayLoadWorkbenchTab<T extends Widgetable>
+public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
       implements WorkbenchTab
 {
    protected DelayLoadWorkbenchTab(
@@ -38,7 +38,7 @@ public abstract class DelayLoadWorkbenchTab<T extends Widgetable>
       shimmed_.setParentTab(this);
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
       return panel_;
    }

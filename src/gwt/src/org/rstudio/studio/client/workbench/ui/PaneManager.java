@@ -293,7 +293,7 @@ public class PaneManager
    private LogicalWindow createSource()
    {
       WindowFrame sourceFrame = new WindowFrame();
-      sourceFrame.setFillWidget(source_.toWidget());
+      sourceFrame.setFillWidget(source_.asWidget());
       source_.forceLoad();
       return sourceLogicalWindow_ = new LogicalWindow(
             sourceFrame,

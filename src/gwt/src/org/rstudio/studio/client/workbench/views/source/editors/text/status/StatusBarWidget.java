@@ -16,10 +16,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
-import org.rstudio.core.client.widget.WidgetableWithHeight;
+import org.rstudio.core.client.widget.IsWidgetWithHeight;
 
 public class StatusBarWidget extends Composite
-      implements StatusBar, WidgetableWithHeight
+      implements StatusBar, IsWidgetWithHeight
 {
    private int height_;
 
@@ -45,7 +45,7 @@ public class StatusBarWidget extends Composite
       return height_;
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
       return this;
    }

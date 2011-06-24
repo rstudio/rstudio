@@ -47,7 +47,7 @@ public class ApplicationWindow extends Composite
       applicationPanel_ = new LayoutPanel();
     
       // header bar
-      applicationHeader_ = applicationHeader.toWidget();
+      applicationHeader_ = applicationHeader.asWidget();
       applicationHeader_.setWidth("100%");
       applicationPanel_.add(applicationHeader_);
       headerHeight_ = applicationHeader.getPreferredHeight();

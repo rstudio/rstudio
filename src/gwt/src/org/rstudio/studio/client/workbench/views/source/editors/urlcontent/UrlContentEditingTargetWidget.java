@@ -51,7 +51,7 @@ public class UrlContentEditingTargetWidget extends Composite
       frameEl.getContentWindow().print();
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
       return this;
    }

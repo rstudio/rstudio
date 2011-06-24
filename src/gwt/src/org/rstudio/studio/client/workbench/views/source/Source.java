@@ -19,6 +19,7 @@ import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -32,7 +33,6 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
-import org.rstudio.core.client.widget.Widgetable;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -71,7 +71,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 public class Source implements InsertSourceHandler,
-                             Widgetable,
+                               IsWidget,
                              OpenSourceFileHandler,
                              TabClosingHandler,
                              SelectionHandler<Integer>,
@@ -81,7 +81,7 @@ public class Source implements InsertSourceHandler,
                              ShowDataHandler,
                              BeforeShowHandler
 {
-   public interface Display extends Widgetable,
+   public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
                                     HasTabClosedHandlers,
                                     HasBeforeSelectionHandlers<Integer>,
@@ -291,9 +291,9 @@ public class Source implements InsertSourceHandler,
       }
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
-      return view_.toWidget();
+      return view_.asWidget();
    }
 
    private void restoreDocuments(final Session session)
@@ -593,7 +593,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void execute(EditingTarget target, Command continuation)
                {
-                  view_.closeTab(target.toWidget(), false, continuation);
+                  view_.closeTab(target.asWidget(), false, continuation);
                }
             });
             
@@ -797,7 +797,7 @@ public class Source implements InsertSourceHandler,
                }
             });
       
-      final Widget widget = target.toWidget();
+      final Widget widget = target.asWidget();
 
       editors_.add(target);
       view_.addTab(widget,

@@ -294,7 +294,7 @@ public class WorkbenchScreen extends Composite
       optionsLoader_.showOptions();
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
       return this;
    }

@@ -797,7 +797,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       handlers_.fireEvent(event);
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
       return widget_;
    }

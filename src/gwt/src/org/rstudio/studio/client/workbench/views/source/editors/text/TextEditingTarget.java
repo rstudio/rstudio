@@ -24,10 +24,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.MenuItem;
-import com.google.gwt.user.client.ui.UIObject;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.*;
@@ -103,7 +100,7 @@ public class TextEditingTarget implements EditingTarget
    }
 
    public interface DocDisplay extends HasValueChangeHandlers<Void>,
-                                       Widgetable,
+                                       IsWidget,
                                        HasFocusHandlers,
                                        HasKeyDownHandlers
    {
@@ -1012,7 +1009,7 @@ public class TextEditingTarget implements EditingTarget
       return dirtyState_;
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
       return (Widget) view_;
    }

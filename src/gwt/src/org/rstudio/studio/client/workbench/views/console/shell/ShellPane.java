@@ -78,7 +78,7 @@ public class ShellPane extends Composite implements Shell.Display,
       input_.setUseWrapMode(true);
       input_.setPadding(0);
       input_.autoHeight();
-      final Widget inputWidget = input_.toWidget();
+      final Widget inputWidget = input_.asWidget();
       input_.addClickHandler(secondaryInputHandler) ;
       inputWidget.addStyleName(styles_.input());
       input_.addCursorChangedHandler(new CursorChangedHandler()
@@ -141,8 +141,8 @@ public class ShellPane extends Composite implements Shell.Display,
       inputLine_.setVerticalAlignment(DockPanel.ALIGN_TOP);
       inputLine_.add(prompt_, DockPanel.WEST);
       inputLine_.setCellWidth(prompt_, "1");
-      inputLine_.add(input_.toWidget(), DockPanel.CENTER);
-      inputLine_.setCellWidth(input_.toWidget(), "100%");
+      inputLine_.add(input_.asWidget(), DockPanel.CENTER);
+      inputLine_.setCellWidth(input_.asWidget(), "100%");
       inputLine_.setWidth("100%");
 
       verticalPanel_ = new VerticalPanel() ;
@@ -251,7 +251,7 @@ public class ShellPane extends Composite implements Shell.Display,
 
       // Deal gracefully with multi-line prompts
       int promptLines = StringUtil.notNull(prompt).split("\\n").length;
-      input_.toWidget().getElement().getStyle().setPaddingTop((promptLines - 1) * 15,
+      input_.asWidget().getElement().getStyle().setPaddingTop((promptLines - 1) * 15,
                                                    Unit.PX);
    }
 
@@ -499,7 +499,7 @@ public class ShellPane extends Composite implements Shell.Display,
                }
          }
          input_.setFocus(true);
-         delegateEvent(input_.toWidget(), event);
+         delegateEvent(input_.asWidget(), event);
       }
 
       public void setInput(AceEditor input)

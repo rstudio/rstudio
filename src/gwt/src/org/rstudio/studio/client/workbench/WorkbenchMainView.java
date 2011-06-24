@@ -13,9 +13,8 @@
 
 package org.rstudio.studio.client.workbench;
 
-import org.rstudio.core.client.widget.Widgetable;
+import com.google.gwt.user.client.ui.IsWidget;
 
-
-public interface WorkbenchMainView extends Widgetable
+public interface WorkbenchMainView extends IsWidget
 {     
 }

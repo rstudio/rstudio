@@ -13,10 +13,10 @@
 package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.IsWidget;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
-import org.rstudio.core.client.widget.Widgetable;
 
-public interface WorkbenchTab extends Widgetable, HasEnsureVisibleHandlers
+public interface WorkbenchTab extends IsWidget, HasEnsureVisibleHandlers
 {
    String getTitle();
    void onBeforeSelected();

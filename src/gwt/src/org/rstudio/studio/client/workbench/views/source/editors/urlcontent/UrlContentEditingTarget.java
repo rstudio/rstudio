@@ -19,6 +19,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -28,7 +29,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
-import org.rstudio.core.client.widget.Widgetable;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.Value;
@@ -46,7 +46,7 @@ import java.util.HashSet;
 
 public class UrlContentEditingTarget implements EditingTarget
 {
-   public interface Display extends Widgetable
+   public interface Display extends IsWidget
    {
       void print();
    }
@@ -204,9 +204,9 @@ public class UrlContentEditingTarget implements EditingTarget
       return Long.MAX_VALUE;
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
-      return view_.toWidget();
+      return view_.asWidget();
    }
 
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)

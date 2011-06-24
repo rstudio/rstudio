@@ -73,7 +73,7 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
          loaded = true;
          super.onDelayLoadSuccess(plots);
 
-         Widget child = plots.toWidget();
+         Widget child = plots.asWidget();
          ((HasResizeHandlers)child).addResizeHandler(new ResizeHandler()
          {
             public void onResize(ResizeEvent event)

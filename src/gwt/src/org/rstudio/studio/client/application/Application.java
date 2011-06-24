@@ -590,7 +590,7 @@ public class Application implements ApplicationEventHandlers,
          commands_.rstudioAgreement().setVisible(false);
       
       // show workbench
-      view_.showWorkbenchView(wb.getMainView().toWidget());
+      view_.showWorkbenchView(wb.getMainView().asWidget());
 
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
    }

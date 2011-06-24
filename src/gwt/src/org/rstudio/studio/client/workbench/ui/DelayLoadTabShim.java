@@ -12,14 +12,14 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.AsyncShim;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
-import org.rstudio.core.client.widget.Widgetable;
 
-public abstract class DelayLoadTabShim<T extends Widgetable,
+public abstract class DelayLoadTabShim<T extends IsWidget,
       TParentTab extends DelayLoadWorkbenchTab<T>> extends AsyncShim<T>
 {
 
@@ -38,7 +38,7 @@ public abstract class DelayLoadTabShim<T extends Widgetable,
    protected void onDelayLoadSuccess(T obj)
    {
       super.onDelayLoadSuccess(obj);
-      final Widget child = obj.toWidget();
+      final Widget child = obj.asWidget();
       
       if (child instanceof HasEnsureVisibleHandlers)
       {

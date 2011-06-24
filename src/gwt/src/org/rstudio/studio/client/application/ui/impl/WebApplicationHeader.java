@@ -324,7 +324,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       return link;
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
       return this;
    }

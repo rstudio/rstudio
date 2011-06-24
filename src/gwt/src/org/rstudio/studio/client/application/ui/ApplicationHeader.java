@@ -12,9 +12,9 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import org.rstudio.core.client.widget.Widgetable;
+import com.google.gwt.user.client.ui.IsWidget;
 
-public interface ApplicationHeader extends Widgetable
+public interface ApplicationHeader extends IsWidget
 {
    int getPreferredHeight();
 }

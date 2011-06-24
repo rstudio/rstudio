@@ -89,7 +89,7 @@ class WorkbenchTabPanel
    private void add(WorkbenchTab tab)
    {
       tabs_.add(tab);
-      final Widget widget = tab.toWidget();
+      final Widget widget = tab.asWidget();
       tabPanel_.add(widget, tab.getTitle());
       
       tab.addEnsureVisibleHandler(new EnsureVisibleHandler()

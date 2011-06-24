@@ -123,7 +123,7 @@ public class DataEditingTargetWidget extends Composite
       frameEl.getContentWindow().print();
    }
 
-   public Widget toWidget()
+   public Widget asWidget()
    {
       return this;
    }
