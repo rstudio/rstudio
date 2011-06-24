@@ -1,14 +1,18 @@
 content gwt-dev-plugin content/
 skin gwt-dev-plugin classic/1.0 skin/
 
-binary-component lib/Linux_x86_64-gcc3/ff50/libgwt_dev_ff50.so ABI=Linux_x86_64-gcc3 appversion<=5.0.*
-binary-component lib/Linux_x86-gcc3/ff50/libgwt_dev_ff50.so ABI=Linux_x86-gcc3 appversion<=5.0.*
+# This file is parsed top to bottom. List the lowest versions first
 
+# Firefox 4
 binary-component lib/Linux_x86_64-gcc3/ff40/libgwt_dev_ff40.so ABI=Linux_x86_64-gcc3 appversion<=4.0.*
 binary-component lib/Linux_x86-gcc3/ff40/libgwt_dev_ff40.so ABI=Linux_x86-gcc3 appversion<=4.0.*
 binary-component lib/Darwin-gcc3/ff40/libgwt_dev_ff40.dylib ABI=Darwin_x86_64-gcc3 appversion<=4.0.*
 binary-component lib/Darwin-gcc3/ff40/libgwt_dev_ff40.dylib ABI=Darwin_x86-gcc3 appversion<=4.0.*
 binary-component lib/WINNT_x86-msvc/ff40/xpGwtDevPlugin.dll ABI=WINNT_x86-msvc appversion<=4.0.*
+
+# Firefox 5
+binary-component lib/Linux_x86_64-gcc3/ff50/libgwt_dev_ff50.so ABI=Linux_x86_64-gcc3 appversion<=5.0.*
+binary-component lib/Linux_x86-gcc3/ff50/libgwt_dev_ff50.so ABI=Linux_x86-gcc3 appversion<=5.0.*
 
 interfaces components/IOOPHM.xpt
 contract @gwt.google.com/ExternalWrapper;1 {028DD88B-6D65-401D-AAFD-17E497D15D09}

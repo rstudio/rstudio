@@ -71,10 +71,12 @@ ifeq ($(ARCH),x86)
 MARCH=i386
 endif
 
+# Default to Debug off
+DEBUG ?=
 ifeq ($(DEBUG),TRUE)
 DEBUGCFLAGS= -g
 else
-DEBUGCFLAGS= -DGWT_DEBUGDISABLE
+DEBUGCFLAGS=
 endif
 
 # Set OS as well as CFLAGS, CXX, and other common make variables
