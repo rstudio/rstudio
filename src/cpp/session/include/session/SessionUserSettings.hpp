@@ -88,6 +88,9 @@ public:
    bool alwaysSaveHistory() const;
    void setAlwaysSaveHistory(bool alwaysSave);
 
+   bool useGlobalHistory() const;
+   void setUseGlobalHistory(bool useGlobal);
+
    bool removeHistoryDuplicates() const;
    void setRemoveHistoryDuplicates(bool removeDuplicates);
 

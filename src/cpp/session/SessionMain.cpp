@@ -1756,13 +1756,15 @@ FilePath rHistoryDir()
       return activeProjectDir;
    }
 
-   // for server we use the default working directory
-   else if (session::options().programMode() == kSessionProgramModeServer)
+   // for server or when in global history mode we use the default
+   // working directory
+   else if (session::options().programMode() == kSessionProgramModeServer ||
+            userSettings().useGlobalHistory())
    {
       return getDefaultWorkingDirectory();
    }
 
-   // for desktop we use the current path
+   // for local history mode we take the current path
    else
    {
       return FilePath::safeCurrentPath(session::options().userHomePath());

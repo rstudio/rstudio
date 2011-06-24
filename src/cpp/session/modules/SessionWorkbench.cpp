@@ -151,6 +151,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
       return error;
    userSettings().beginUpdate();
    userSettings().setAlwaysSaveHistory(alwaysSave);
+   userSettings().setUseGlobalHistory(useGlobal);
    userSettings().setRemoveHistoryDuplicates(removeDuplicates);
    userSettings().endUpdate();
 
@@ -230,6 +231,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    // get history prefs
    json::Object historyPrefs;
    historyPrefs["always_save"] = userSettings().alwaysSaveHistory();
+   historyPrefs["use_global"] = userSettings().useGlobalHistory();
    historyPrefs["remove_duplicates"] = userSettings().removeHistoryDuplicates();
 
    // get packages prefs
