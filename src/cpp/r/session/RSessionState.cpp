@@ -32,7 +32,6 @@
 
 #include "RClientMetrics.hpp"
 #include "RSearchPath.hpp"
-#include "graphics/RGraphicsPlotManager.hpp"
 
 using namespace core ;
 
@@ -50,7 +49,6 @@ const char * const kSettingsFile = "settings";
 const char * const kConsoleActionsFile = "console_actions";
 const char * const kOptionsFile = "options";
 const char * const kHistoryFile = "history";
-const char * const kPlotsFile = "plots";
 const char * const kSearchPath = "search_path";
 
 // settings
@@ -139,15 +137,6 @@ bool save(const FilePath& statePath)
       saved = false;
    }
    
-   // save plots state
-   FilePath plotsPath = statePath.complete(kPlotsFile);
-   error = graphics::plotManager().savePlotsState(plotsPath);
-   if (error)
-   {
-      reportError(kSaving, kPlotsFile, error, ERROR_LOCATION);
-      saved = false;
-   }
-   
    // save options 
    error = r::options::saveOptions(statePath.complete(kOptionsFile));
    if (error)
@@ -198,13 +187,7 @@ bool save(const FilePath& statePath)
 Error deferredRestore(const FilePath& statePath)
 {
    // search path
-   Error error = search_path::restore(statePath);
-   if (error)
-      return error;
-
-   // plots state
-   FilePath plotsPath = statePath.complete(kPlotsFile);
-   return graphics::plotManager().restorePlotsState(plotsPath);
+   return search_path::restore(statePath);
 }
    
 bool restore(const FilePath& statePath,
