@@ -15,5 +15,14 @@ public class VCSTab extends DelayLoadWorkbenchTab<VCS>
    protected VCSTab(VCSShim shim, Session session)
    {
       super(session.getSessionInfo().getVcsName(), shim);
+      session_ = session;
    }
+
+   @Override
+   public boolean isSuppressed()
+   {
+      return !session_.getSessionInfo().isVcsEnabled();
+   }
+
+   private final Session session_;
 }

@@ -68,6 +68,11 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
       shimmed_.onSelected();
    }
 
+   public boolean isSuppressed()
+   {
+      return false;
+   }
+
    public void ensureVisible()
    {
       handlers_.fireEvent(new EnsureVisibleEvent());

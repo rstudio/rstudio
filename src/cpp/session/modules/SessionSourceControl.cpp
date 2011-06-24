@@ -416,7 +416,9 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
 core::Error initialize()
 {
    FilePath workingDir = module_context::activeProjectDirectory();
-   if (workingDir.childPath(".git").isDirectory())
+   if (workingDir.empty())
+      s_pVcsImpl_.reset(new VCSImpl());
+   else if (workingDir.childPath(".git").isDirectory())
       s_pVcsImpl_.reset(new GitVCSImpl());
    else if (workingDir.childPath(".svn").isDirectory())
       s_pVcsImpl_.reset(new SubversionVCSImpl());

@@ -42,5 +42,11 @@ public abstract class WorkbenchPane extends ToolbarPane
    {
    }
 
+   @Override
+   public boolean isSuppressed()
+   {
+      return false;
+   }
+
    private String title_;
 }

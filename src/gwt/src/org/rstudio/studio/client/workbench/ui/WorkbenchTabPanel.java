@@ -88,6 +88,9 @@ class WorkbenchTabPanel
 
    private void add(WorkbenchTab tab)
    {
+      if (tab.isSuppressed())
+         return;
+
       tabs_.add(tab);
       final Widget widget = tab.asWidget();
       tabPanel_.add(widget, tab.getTitle());

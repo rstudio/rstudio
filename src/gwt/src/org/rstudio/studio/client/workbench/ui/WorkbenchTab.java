@@ -22,4 +22,5 @@ public interface WorkbenchTab extends IsWidget, HasEnsureVisibleHandlers
    void onBeforeSelected();
    void onSelected();
    void prefetch(Command continuation);
+   boolean isSuppressed();
 }
