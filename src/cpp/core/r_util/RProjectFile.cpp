@@ -23,19 +23,9 @@ namespace r_util {
 Error writeDefaultProjectFile(const FilePath& filePath)
 {
    std::string p;
-   p = "# R project file\n"
-       "\n"
-       "# Run .Rprofile file when loading project (Yes/No)\n"
-       "RunProfile: Yes\n"
-       "\n"
-       "# Restore .RData when loading project (Yes/No)\n"
-       "RestoreWorkspace: Yes\n"
-       "\n"
-       "# Save .RData when closing project (Yes/No/Ask)\n"
-       "SaveWorkspace: Yes\n"
-       "\n"
-       "# Save .Rhistory even when not saving .RData (Yes/No)\n"
-       "AlwaysSaveHistory: Yes\n";
+   p = "# R project config file\n"
+       "# http://www.rstudio.org/docs/r_project_config\n"
+       "#\n";
 
    return writeStringToFile(filePath, p, string_utils::LineEndingNative);
 }
