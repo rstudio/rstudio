@@ -154,21 +154,17 @@ public class CachedRpcTypeInformation implements Serializable {
    * Finds a last modified time for a type, for testing cacheability.
    */
   private long getLastModifiedTime(JType type) {
-    JType typeToCheck;
     if (type instanceof JArrayType) {
-      typeToCheck = type.getLeafType();
+      return getLastModifiedTime(type.getLeafType());
     } else if (type instanceof JRawType) {
-      typeToCheck = ((JRawType) type).getGenericType();
-    } else {
-      assert type instanceof JRealClassType;
-      typeToCheck = type;
+      return getLastModifiedTime(((JRawType) type).getGenericType());
     }
 
-    if (typeToCheck instanceof JRealClassType) {
-      return ((JRealClassType) typeToCheck).getLastModifiedTime();
+    if (type instanceof JRealClassType) {
+      return ((JRealClassType) type).getLastModifiedTime();
     } else {
       // we have a type that is an array with a primitive leafType
-      assert typeToCheck instanceof JPrimitiveType;
+      assert type instanceof JPrimitiveType;
       // this type is never out of date
       return Long.MAX_VALUE;
     }
