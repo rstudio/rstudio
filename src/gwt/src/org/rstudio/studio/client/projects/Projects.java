@@ -13,10 +13,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-// TODO: Aggregate the global environment into the save dialog
-//          - Eliminate desktop native codepath
-//          - Remember not to prompt for save again after first pass
-
 @Singleton
 public class Projects implements OpenProjectFileHandler
 {
