@@ -133,10 +133,21 @@ public class SourceShim extends Composite
    
    public boolean hasBeforeQuitUnsavedChanges()
    {
+      // we currently don't prompt for unsaved files prior to quit
+      // this is driven by the fact that we want to be consistent
+      // with our project switching UI, and prompting for unsaved
+      // changes while switching projects (while also accounting for
+      // a dirty workspace) is overly complex both for users and
+      // in terms of implementation. if we want to bring this 
+      // behavior back we can simply comment back in the code below
+      return false;
+      
+      /*
       if (source_ != null)
          return source_.hasBeforeQuitUnsavedChanges();
       else
          return false;
+      */
    }
 
    public void saveChangesBeforeQuit(Command onCompleted)

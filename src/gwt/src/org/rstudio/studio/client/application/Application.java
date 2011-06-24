@@ -282,7 +282,10 @@ public class Application implements ApplicationEventHandlers,
    @Handler
    public void onQuitSession()
    {
-      sourceShim_.saveChangesBeforeQuit(doQuitSession_);
+      if (sourceShim_.hasBeforeQuitUnsavedChanges())
+         sourceShim_.saveChangesBeforeQuit(doQuitSession_);
+      else
+         doQuitSession_.execute();
    }
 
    @Handler
