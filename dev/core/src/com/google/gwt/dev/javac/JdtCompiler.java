@@ -423,8 +423,10 @@ public class JdtCompiler {
       // resolve an outer type before trying to get the cached inner
       String cupName = typeName.substring(0, p);
       char[][] chars = CharOperation.splitOn('.', cupName.toCharArray());
-      if (lookupEnvironment.getType(chars) != null) {
+      ReferenceBinding outerType = lookupEnvironment.getType(chars);
+      if (outerType != null) {
         // outer class was found
+        resolveRecursive(outerType);
         chars = CharOperation.splitOn('.', typeName.toCharArray());
         type = lookupEnvironment.getCachedType(chars);
         if (type == null) {
@@ -470,6 +472,16 @@ public class JdtCompiler {
       b = ((NestedTypeBinding) b).enclosingType;
     }
     return false;
+  }
+
+  /**
+   * Recursively invoking {@link ReferenceBinding#memberTypes()} causes JDT to
+   * resolve and cache all nested types at arbitrary depth.
+   */
+  private static void resolveRecursive(ReferenceBinding outerType) {
+    for (ReferenceBinding memberType : outerType.memberTypes()) {
+      resolveRecursive(memberType);
+    }
   }
 
   private AdditionalTypeProviderDelegate additionalTypeProviderDelegate;
