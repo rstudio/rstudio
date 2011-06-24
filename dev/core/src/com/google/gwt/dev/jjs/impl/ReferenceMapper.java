@@ -141,14 +141,16 @@ public class ReferenceMapper {
       JDeclaredType declType = createType(refBinding);
       if (declType instanceof JClassType) {
         ReferenceBinding superclass = refBinding.superclass();
-        if (superclass != null) {
+        if (superclass != null && superclass.isValidBinding()) {
           ((JClassType) declType).setSuperClass((JClassType) get(superclass));
         }
       }
       ReferenceBinding[] superInterfaces = refBinding.superInterfaces();
       if (superInterfaces != null) {
         for (ReferenceBinding intf : superInterfaces) {
-          declType.addImplements((JInterfaceType) get(intf));
+          if (intf.isValidBinding()) {
+            declType.addImplements((JInterfaceType) get(intf));
+          }
         }
       }
       // Emulate clinit method for super clinit calls.
