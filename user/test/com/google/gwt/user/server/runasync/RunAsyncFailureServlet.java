@@ -20,7 +20,6 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -32,10 +31,17 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class RunAsyncFailureServlet extends HttpServlet {
 
-  private static final boolean DEBUG = true;
-  private static final HashSet<String> downloadErrorFragments = new HashSet<String>();
-  private static final HashSet<String> installErrorFragments = new HashSet<String>();
+  private static final boolean DEBUG = false;
+  private static final HashMap<String, RealContents> realContentsCache = new HashMap<String, RealContents>();
 
+  private static class RealContents {
+    public RealContents(int numBytes, byte[] bytes) {
+      this.numBytes = numBytes;
+      this.bytes = bytes;
+    }
+    public int numBytes;
+    public byte[] bytes;
+  }
   /**
    * Sequence of response codes to send back. SC_OK must be last.
    */
@@ -47,13 +53,6 @@ public class RunAsyncFailureServlet extends HttpServlet {
       HttpServletResponse.SC_OK,
   };
 
-  static {
-    downloadErrorFragments.add("2.cache.js");
-    downloadErrorFragments.add("3.cache.js");
-    downloadErrorFragments.add("5.cache.js");
-    installErrorFragments.add("4.cache.js");
-  }
-
   private static void debug(String message) {
     if (DEBUG) {
       System.out.println(message);
@@ -62,46 +61,28 @@ public class RunAsyncFailureServlet extends HttpServlet {
 
   HashMap<String, Integer> triesMap = new HashMap<String, Integer>();
 
-  private int sSerial = 0;
-
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
     String originalUri = req.getRequestURI();
-    debug("doGet: " + originalUri);
+    debug("doGet Original: " + originalUri);
     String uri = originalUri.replace("/runAsyncFailure", "");
 
     int response = getDesiredResponse(uri);
+    RealContents rc = this.getRealContents(req, uri);
+    String realContentsAsString = new String(rc.bytes);
+
     String fragment = uri.substring(uri.lastIndexOf('/') + 1);
-    if (!downloadErrorFragments.contains(fragment)
-        || response == HttpServletResponse.SC_OK) {
+      if (!realContentsAsString.contains("DOWNLOAD_FAILURE_TEST")
+          || response == HttpServletResponse.SC_OK) {      
       int bytes = 0;
-      if (!installErrorFragments.contains(fragment)) {
-        // Delegate the actual data fetch to the main servlet
-        String host = req.getLocalName();
-        int port = req.getLocalPort();
-        String realUrl = "http://" + host + ":" + port + uri;
-        debug("Fetching: " + realUrl);
-
-        try {
-          URL url = new URL(realUrl);
-          InputStream is = url.openStream();
-          OutputStream os = resp.getOutputStream();
-
-          byte[] data = new byte[8192];
-          int nbytes;
-          while ((nbytes = is.read(data)) != -1) {
-            os.write(data, 0, nbytes);
-            bytes += nbytes;
-          }
-          is.close();
-          os.close();
-        } catch (IOException e) {
-          debug("IOException fetching real data: " + e);
-          throw e;
-        }
+      if (!realContentsAsString.contains("INSTALL_FAILURE_TEST")) {
+        OutputStream os = resp.getOutputStream();
+        os.write(rc.bytes, 0, rc.numBytes);
+        bytes = rc.numBytes;
+        os.close();
       }
-
+      
       resp.setContentType("text/javascript");
       resp.setHeader("Cache-Control", "no-cache");
       resp.setContentLength(bytes);
@@ -110,7 +91,7 @@ public class RunAsyncFailureServlet extends HttpServlet {
       debug("doGet: served " + uri + " (" + bytes + " bytes)");
     } else {
       resp.setHeader("Cache-Control", "no-cache");
-      resp.sendError(response, "serial=" + getNextSerial());
+      resp.sendError(response);
 
       debug("doGet: sent error " + response + " for " + uri);
     }
@@ -124,7 +105,31 @@ public class RunAsyncFailureServlet extends HttpServlet {
     return responses[tries % responses.length];
   }
 
-  private synchronized int getNextSerial() {
-    return sSerial++;
+  private RealContents getRealContents(HttpServletRequest req, String uri) throws IOException {
+    if (realContentsCache.containsKey(uri)) {
+      return realContentsCache.get(uri);
+    }
+    
+    // Delegate the actual data fetch to the main servlet
+    String host = req.getLocalName();
+    int port = req.getLocalPort();
+    String realUrl = "http://" + host + ":" + port + uri;
+    debug("Fetching: " + realUrl);
+    int bytes = 0;
+    byte[] data = new byte[32768];
+    try {
+      URL url = new URL(realUrl);
+      InputStream is = url.openStream();
+
+      bytes = is.read(data);
+      is.close();
+    } catch (IOException e) {
+      debug("IOException fetching real data: " + e);
+      throw e;
+    }
+
+    RealContents rc = new RealContents(bytes, data);
+    realContentsCache.put(uri, rc);
+    return rc;
   }
 }

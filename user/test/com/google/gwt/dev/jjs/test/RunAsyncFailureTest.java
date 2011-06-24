@@ -47,13 +47,16 @@ public class RunAsyncFailureTest extends GWTTestCase {
       return token;
     }
     
-    public boolean onSuccessHelper() {
+    public boolean onSuccessHelper(String test) {
       int token = getToken();
       log("onSuccess: attempt = " + attempt + ", token = " + token);
       if (attempt == expectedSuccessfulAttempt) {
         return true;
       } else {
-        fail("Succeeded on attempt: " + attempt + 
+        // We don't really care about the test string, but we need to use it
+        // somewhere so it doesn't get dead stripped out.  Each test passes
+        // in a unique string so it ends up in it's fragment.
+        fail(test + " - Succeeded on attempt: " + attempt + 
             " but should have succeeded on attempt: " + expectedSuccessfulAttempt);
       }
       return false;
@@ -111,7 +114,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
       }
 
       public void onSuccess() {
-        if (onSuccessHelper()) { finishTest(); }
+        if (onSuccessHelper("DOWNLOAD_FAILURE_TEST_1")) { finishTest(); }
       }
     });
   }
@@ -130,7 +133,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
       }
 
       public void onSuccess() {
-        if (onSuccessHelper()) { finishTest(); }
+        if (onSuccessHelper("DOWNLOAD_FAILURE_TEST_2")) { finishTest(); }
       }
     });
   }
@@ -149,7 +152,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
       }
 
       public void onSuccess() {
-        if (onSuccessHelper()) { finishTest(); }
+        if (onSuccessHelper("DOWNLOAD_FAILURE_TEST_3")) { finishTest(); }
       }
     });
   }
@@ -164,7 +167,9 @@ public class RunAsyncFailureTest extends GWTTestCase {
         finishTest();
       }
       public void onSuccess() {
-        fail("Code should have failed to install!");
+        // Use the string "INSTALL_FAILURE_TEST" so we can identify this
+        // fragment on the server.  In the fail message is good enough.
+        fail("INSTALL_FAILURE_TEST - Code should have failed to install!");
       }
     });
   }
@@ -176,7 +181,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
   public void testHttpFailureRetries() {
     delayTestFinish(RUNASYNC_TIMEOUT);
     // Default is 3, but we set it explicitly, since other tests may run first
-    LoadingStrategyBase.MAX_RETRY_COUNT = 3;
+    LoadingStrategyBase.MAX_RETRY_COUNT = 2;
     // In RunAsyncFailureServlet, the 5th time is the charm, but the code
     // by default retries 3 times every time we call runAsync, so this
     // should succeed on the second runAsync call, which is attempt #1.
