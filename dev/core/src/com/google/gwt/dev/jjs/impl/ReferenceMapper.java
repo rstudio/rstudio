@@ -41,6 +41,7 @@ import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
+import org.eclipse.jdt.internal.compiler.problem.AbortCompilation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -139,19 +140,30 @@ public class ReferenceMapper {
     } else {
       ReferenceBinding refBinding = (ReferenceBinding) binding;
       JDeclaredType declType = createType(refBinding);
-      if (declType instanceof JClassType) {
-        ReferenceBinding superclass = refBinding.superclass();
-        if (superclass != null && superclass.isValidBinding()) {
-          ((JClassType) declType).setSuperClass((JClassType) get(superclass));
-        }
-      }
-      ReferenceBinding[] superInterfaces = refBinding.superInterfaces();
-      if (superInterfaces != null) {
-        for (ReferenceBinding intf : superInterfaces) {
-          if (intf.isValidBinding()) {
-            declType.addImplements((JInterfaceType) get(intf));
+      try {
+        if (declType instanceof JClassType) {
+          ReferenceBinding superclass = refBinding.superclass();
+          if (superclass != null && superclass.isValidBinding()) {
+            ((JClassType) declType).setSuperClass((JClassType) get(superclass));
           }
         }
+        ReferenceBinding[] superInterfaces = refBinding.superInterfaces();
+        if (superInterfaces != null) {
+          for (ReferenceBinding intf : superInterfaces) {
+            if (intf.isValidBinding()) {
+              declType.addImplements((JInterfaceType) get(intf));
+            }
+          }
+        }
+      } catch (AbortCompilation ignored) {
+        /*
+         * The currently-compiling unit has no errors; however, we're running
+         * into a case where it references something with a bad hierarchy. This
+         * doesn't cause an error in the current unit, but it does mean we run
+         * into a wall here trying to construct the hierarchy. Catch the error
+         * so that compilation can proceed; the error units themselves will
+         * eventually cause the full compile to error out.
+         */
       }
       // Emulate clinit method for super clinit calls.
       JMethod clinit =
