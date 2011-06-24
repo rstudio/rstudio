@@ -47,6 +47,7 @@
 
 #include "graphics/RGraphicsUtils.hpp"
 #include "graphics/RGraphicsDevice.hpp"
+#include "graphics/RGraphicsPlotManager.hpp"
 
 #include <Rembedded.h>
 #include <R_ext/Utils.h>
@@ -821,6 +822,19 @@ void RSuicide(const char* s)
    s_callbacks.suicide(s);
    s_internalCallbacks.suicide(s);
 }
+
+void commitWorkingState(ClientStateCommitType commitType)
+{
+   using namespace r::session;
+
+   r::session::clientState().commit(commitType, s_clientStatePath);
+
+   // save plots state
+   FilePath plotsPath = s_options.userScratchPath.complete("plots");
+   Error error = graphics::plotManager().savePlotsState(plotsPath);
+   if (error)
+      LOG_ERROR(error);
+}
   
 
 // prompt to save changes (will Rf_jump_to_toplevel if there is an error)
@@ -956,12 +970,12 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
             r::exec::error("Unable to quit (session cleanup failure)\n");
          }
 
-         // commit persistent client state
-         r::session::clientState().commit(ClientStateCommitPersistentOnly,
-                                          s_clientStatePath);
+         // commit working state (client state and plots)
+         commitWorkingState(ClientStateCommitPersistentOnly);
 
-         // clear display (closes the device). need to do this here
-         // so that all of the graphics files are deleted
+         // clear display (closes the device, however graphics files
+         // are not deleted because commitWorkingState turned off
+         // device events).
          r::session::graphics::display().clear();
          
          // print warnings (do this here even though R does it within 
@@ -1124,22 +1138,38 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    // keep compiler happy
    return Success() ;
 }
+
+void reportDeferredDeserializationError(const Error& error)
+{
+   // log error
+   LOG_ERROR(error);
+
+   // report to user
+   std::string errMsg = r::endUserErrorMessage(error);
+   REprintf((errMsg + "\n").c_str());
+}
    
 void ensureDeserialized()
 {
    if (s_deferredDeserializationAction)
    {
+      // do the deferred action
       Error error = s_deferredDeserializationAction();
       if (error)
-      {
-         // log error
-         LOG_ERROR(error);
-         
-         // report to user
-         std::string errMsg = r::endUserErrorMessage(error);
-         REprintf((errMsg + "\n").c_str());
-      }
-      
+         reportDeferredDeserializationError(error);
+
+      // always restore plots as well
+
+      // for migration we may need to restore from the suspended plots file
+      FilePath plotsFile = s_options.userScratchPath.childPath("plots");
+      if (!plotsFile.exists() && s_suspendedSessionPath.exists())
+         plotsFile = s_suspendedSessionPath.childPath("plots");
+
+      // restore the plots
+      Error plotError = graphics::plotManager().restorePlotsState(plotsFile);
+      if (plotError)
+         reportDeferredDeserializationError(plotError);
+
       s_deferredDeserializationAction.clear();
    }
 }
@@ -1198,9 +1228,9 @@ bool isSuspendable(const std::string& currentPrompt)
    
 bool suspend(bool force)
 {
-   // commit all client state
-   r::session::clientState().commit(ClientStateCommitAll, s_clientStatePath);
-   
+   // commit all working state
+   commitWorkingState(ClientStateCommitAll);
+
    // save the session state. errors are handled internally and reported
    // directly to the end user and written to the server log.
    bool suspend = saveSessionState();
