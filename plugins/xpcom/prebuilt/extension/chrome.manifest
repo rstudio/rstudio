@@ -13,6 +13,7 @@ binary-component lib/WINNT_x86-msvc/ff40/xpGwtDevPlugin.dll ABI=WINNT_x86-msvc a
 # Firefox 5
 binary-component lib/Linux_x86_64-gcc3/ff50/libgwt_dev_ff50.so ABI=Linux_x86_64-gcc3 appversion<=5.0.*
 binary-component lib/Linux_x86-gcc3/ff50/libgwt_dev_ff50.so ABI=Linux_x86-gcc3 appversion<=5.0.*
+binary-component lib/WINNT_x86-msvc/ff50/xpGwtDevPlugin.dll ABI=WINNT_x86-msvc appversion<=5.0.*
 
 interfaces components/IOOPHM.xpt
 contract @gwt.google.com/ExternalWrapper;1 {028DD88B-6D65-401D-AAFD-17E497D15D09}
