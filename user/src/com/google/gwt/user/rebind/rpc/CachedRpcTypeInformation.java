@@ -48,24 +48,15 @@ public class CachedRpcTypeInformation implements Serializable {
     recordTypes(serializableFromBrowser, instantiableFromBrowser, typesFromBrowser);
     recordTypes(serializableToBrowser, instantiableToBrowser, typesToBrowser);
 
+    assert (customSerializersUsed != null);
     for (JType type : customSerializersUsed) {
       addCustomSerializerType(type);
     }
 
+    assert (typesNotUsingCustomSerializers != null);
     for (JType type : typesNotUsingCustomSerializers) {
       addTypeNotUsingCustomSerializer(type);
     }
-  }
-
-  public void addCustomSerializerType(JType type) {
-    String sourceName = type.getQualifiedSourceName();
-    lastModifiedTimes.put(sourceName, getLastModifiedTime(type));
-    customSerializerTypes.add(sourceName);
-  }
-
-  public void addTypeNotUsingCustomSerializer(JType type) {
-    String sourceName = type.getQualifiedSourceName();
-    typesNotUsingCustomSerializer.add(sourceName);
   }
 
   public boolean checkLastModifiedTime(JType type) {
@@ -134,10 +125,35 @@ public class CachedRpcTypeInformation implements Serializable {
     return typesNotUsingCustomSerializer.contains(type.getQualifiedSourceName());
   }
 
+  private void addCustomSerializerType(JType type) {
+    String sourceName = type.getQualifiedSourceName();
+    lastModifiedTimes.put(sourceName, getLastModifiedTime(type));
+    customSerializerTypes.add(sourceName);
+  }
+
+  private void addTypeNotUsingCustomSerializer(JType type) {
+    String sourceName = type.getQualifiedSourceName();
+    typesNotUsingCustomSerializer.add(sourceName);
+  }
+
+  private boolean checkTypes(TreeLogger logger, Set<String> serializable, Set<String> instantiable,
+      SerializableTypeOracle sto) {
+    for (JType type : sto.getSerializableTypes()) {
+      String sourceName = type.getQualifiedSourceName();
+      if (sto.isSerializable(type) != serializable.contains(sourceName)
+          || sto.maybeInstantiated(type) != instantiable.contains(sourceName)
+          || !checkLastModifiedTime(type)) {
+        logger.log(TreeLogger.TRACE, "A change was detected in type " + sourceName);
+        return false;
+      }
+    }
+    return true;
+  }
+
   /*
    * Finds a last modified time for a type, for testing cacheability.
    */
-  public long getLastModifiedTime(JType type) {
+  private long getLastModifiedTime(JType type) {
     JType typeToCheck;
     if (type instanceof JArrayType) {
       typeToCheck = type.getLeafType();
@@ -158,20 +174,6 @@ public class CachedRpcTypeInformation implements Serializable {
     }
   }
 
-  private boolean checkTypes(TreeLogger logger, Set<String> serializable, Set<String> instantiable,
-      SerializableTypeOracle sto) {
-    for (JType type : sto.getSerializableTypes()) {
-      String sourceName = type.getQualifiedSourceName();
-      if (sto.isSerializable(type) != serializable.contains(sourceName)
-          || sto.maybeInstantiated(type) != instantiable.contains(sourceName)
-          || !checkLastModifiedTime(type)) {
-        logger.log(TreeLogger.TRACE, "A change was detected in type " + sourceName);
-        return false;
-      }
-    }
-    return true;
-  }
-
   private void logDifferencesBetweenCurrentAndCachedTypes(TreeLogger logger, JType[] currentTypes,
       Set<String> cachedTypes) {
 
@@ -190,6 +192,7 @@ public class CachedRpcTypeInformation implements Serializable {
 
   private void recordTypes(Set<String> serializable, Set<String> instantiable,
       SerializableTypeOracle sto) {
+    assert (sto != null);
     for (JType type : sto.getSerializableTypes()) {
       String sourceName = type.getQualifiedSourceName();
       lastModifiedTimes.put(sourceName, getLastModifiedTime(type));

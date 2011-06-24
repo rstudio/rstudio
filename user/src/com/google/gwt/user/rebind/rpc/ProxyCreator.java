@@ -325,8 +325,8 @@ public class ProxyCreator {
       event.end();
     }
 
-    // Check generator result cacheability, to see if we can return now
-    if (checkGeneratorResultCacheability(logger, context, typesSentFromBrowser, typesSentToBrowser)) {
+    // Check previous cached result, to see if we can return now
+    if (checkCachedGeneratorResultValid(logger, context, typesSentFromBrowser, typesSentToBrowser)) {
       logger.log(TreeLogger.TRACE, "Reusing all cached artifacts for " + getProxyQualifiedName());
       return new RebindResult(RebindStatus.USE_ALL_CACHED, getProxyQualifiedName());
     }
@@ -378,7 +378,7 @@ public class ProxyCreator {
           serializationPolicyStrongName, rpcLog));
     }
 
-    if (context.isGeneratorResultCachingEnabled()) {
+    if (checkGeneratorResultCacheability(context)) {
       // Remember the type info that we care about for cacheability testing.
       CachedClientDataMap clientData = new CachedClientDataMap();
       CachedRpcTypeInformation cti =
@@ -392,8 +392,8 @@ public class ProxyCreator {
 
       /*
        * Return with RebindStatus.USE_PARTIAL_CACHED, since we are allowing
-       * generator result caching for field serializers, but other generated
-       * types cannot be cached effectively.
+       * reuse of cached results for field serializers, when available, but
+       * all other types have been newly generated.
        */
       return new RebindResult(RebindStatus.USE_PARTIAL_CACHED, getProxyQualifiedName(), clientData);
     } else {
@@ -832,7 +832,7 @@ public class ProxyCreator {
     return typeOracle.findType(packageName, getProxySimpleName()) != null;
   }
 
-  private boolean checkGeneratorResultCacheability(TreeLogger logger, GeneratorContextExt ctx,
+  private boolean checkCachedGeneratorResultValid(TreeLogger logger, GeneratorContextExt ctx,
       SerializableTypeOracle typesSentFromBrowser, SerializableTypeOracle typesSentToBrowser) {
 
     CachedRebindResult lastResult = ctx.getCachedGeneratorResult();
@@ -862,6 +862,18 @@ public class ProxyCreator {
     }
 
     return true;
+  }
+
+  private boolean checkGeneratorResultCacheability(GeneratorContextExt context) {
+    /*
+     * Currently not supporting caching for implementations which sub-class this
+     * class, such as {@link RpcProxyCreator}, which implements deRPC.
+     */
+    if (!this.getClass().equals(ProxyCreator.class)) {
+      return false;
+    }
+
+    return context.isGeneratorResultCachingEnabled();
   }
 
   private void emitPolicyFileArtifact(TreeLogger logger, GeneratorContextExt context,
