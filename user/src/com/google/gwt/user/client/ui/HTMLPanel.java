@@ -20,6 +20,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
@@ -191,12 +192,57 @@ public class HTMLPanel extends ComplexPanel {
    * @deprecated use {@link #addAndReplaceElement(Widget, Element)}
    */
   @Deprecated
-  public void addAndReplaceElement(Widget widget,
-      com.google.gwt.user.client.Element toReplace) {
+  public void addAndReplaceElement(Widget widget, com.google.gwt.user.client.Element toReplace) {
+    /*
+     * Early exit if the element to replace and the replacement are the same. If
+     * we remove the new widget, we would also remove the element to replace.
+     */
+    if (toReplace == widget.getElement()) {
+      return;
+    }
+
     // Logic pulled from super.add(), replacing the element rather than adding.
+
+    // Detach new child. Okay if its a child of the element to replace.
     widget.removeFromParent();
+
+    // Logical detach of all children of the element to replace.
+    Widget toRemove = null;
+    Iterator<Widget> children = getChildren().iterator();
+    while (children.hasNext()) {
+      Widget next = children.next();
+      if (toReplace.isOrHasChild(next.getElement())) {
+        if (next.getElement() == toReplace) {
+          /*
+           * If the element that we are replacing is itself a widget, then we
+           * cannot remove it until the new widget has been inserted, or we lose
+           * the location of the element to replace. Save the widget to remove
+           * for now, and remove it after inserting the new widget.
+           */
+          toRemove = next;
+          break;
+        }
+        children.remove();
+      }
+    }
+
+    // Logical attach.
     getChildren().add(widget);
-    toReplace.getParentNode().replaceChild(widget.getElement(), toReplace);
+
+    // Physical attach.
+    if (toRemove == null) {
+      toReplace.getParentNode().replaceChild(widget.getElement(), toReplace);
+    } else {
+      /*
+       * The element being replaced is a widget, which needs to be removed.
+       * First insert the new widget at the same location, then remove the old
+       * widget.
+       */
+      toReplace.getParentNode().insertBefore(widget.getElement(), toReplace);
+      remove(toRemove);
+    }
+
+    // Adopt.
     adopt(widget);
   }
   
@@ -252,7 +298,7 @@ public class HTMLPanel extends ComplexPanel {
   }
 
   /**
-   * Performs a {@link DOM#getElementById(String)} after attaching the panel's
+   * Performs a {@link Document#getElementById(String)} after attaching the panel's
    * element into a hidden DIV in the document's body. Attachment is necessary
    * to be able to use the native getElementById. The panel's element will be
    * re-attached to its original parent (if any) after the method returns.

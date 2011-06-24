@@ -27,11 +27,13 @@ import com.google.gwt.safehtml.shared.SafeHtml;
  */
 public class HTMLPanelTest extends GWTTestCase {
   static class Adder implements HasWidgetsTester.WidgetAdder {
+    @Override
     public void addChild(HasWidgets container, Widget child) {
       ((HTMLPanel) container).add(child, "w00t");
     }
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
@@ -79,8 +81,7 @@ public class HTMLPanelTest extends GWTTestCase {
    */
   public void testAddToElement() {
     Label labelA = new Label("A"), labelB = new Label("B");
-    HTMLPanel p = new HTMLPanel(
-        "<div class=\"a\"></div><div class=\"b\"></div>");
+    HTMLPanel p = new HTMLPanel("<div class=\"a\"></div><div class=\"b\"></div>");
     Element first = p.getElement().getFirstChildElement();
     Element second = first.getNextSiblingElement();
 
@@ -146,12 +147,11 @@ public class HTMLPanelTest extends GWTTestCase {
   }
 
   /**
-   * Ensures that {@link HTMLPanel#addAndReplaceChild(Widget,String)} puts the
-   * widget in exactly the right place in the DOM.
+   * Ensures that {@link HTMLPanel#addAndReplaceElement(Widget, String)} puts
+   * the widget in exactly the right place in the DOM.
    */
   public void testAddAndReplaceElement() {
-    HTMLPanel hp = new HTMLPanel(
-        "<div id='parent'>foo<span id='placeholder'></span>bar</div>");
+    HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
     Button button = new Button("my button");
 
     hp.addAndReplaceElement(button, "placeholder");
@@ -161,14 +161,12 @@ public class HTMLPanelTest extends GWTTestCase {
   }
 
   /**
-   * Ensures that
-   * {@link HTMLPanel#addAndReplaceElement(Widget, com.google.gwt.user.client.Element)}
-   * puts the widget in exactly the right place in the DOM.
+   * Ensures that {@link HTMLPanel#addAndReplaceElement(Widget, Element)} puts
+   * the widget in exactly the right place in the DOM.
    */
   @SuppressWarnings("deprecation")
   public void testAddAndReplaceElementForUserElement() {
-    HTMLPanel hp = new HTMLPanel(
-        "<div id='parent'>foo<span id='placeholder'></span>bar</div>");
+    HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
     RootPanel.get().add(hp);
     com.google.gwt.user.client.Element placeholder = hp.getElementById("placeholder");
     Button button = new Button("my button");
@@ -185,8 +183,7 @@ public class HTMLPanelTest extends GWTTestCase {
    * for IsWidget puts the widget in exactly the right place in the DOM.
    */
   public void testAddAndReplaceElementForUserElementAsIsWidget() {
-    HTMLPanel hp = new HTMLPanel(
-        "<div id='parent'>foo<span id='placeholder'></span>bar</div>");
+    HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
     RootPanel.get().add(hp);
     com.google.gwt.user.client.Element placeholder = hp.getElementById("placeholder");
     Button button = new Button("my button");
@@ -204,8 +201,7 @@ public class HTMLPanelTest extends GWTTestCase {
    * the widget in exactly the right place in the DOM.
    */
   public void testAddAndReplaceElementForElement() {
-    HTMLPanel hp = new HTMLPanel(
-        "<div id='parent'>foo<span id='placeholder'></span>bar</div>");
+    HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
     RootPanel.get().add(hp);
     Element placeholder = hp.getElementById("placeholder");
     Button button = new Button("my button");
@@ -220,8 +216,7 @@ public class HTMLPanelTest extends GWTTestCase {
    * Tests {@link HTMLPanel#addAndReplaceElement(Widget, String)}.
    */
   public void testAddAndReplaceElementById() {
-    HTMLPanel hp = new HTMLPanel(
-        "<div id='parent'>foo<span id='placeholder'></span>bar</div>");
+    HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
     RootPanel.get().add(hp);
     Button button = new Button("my button");
 
@@ -230,13 +225,12 @@ public class HTMLPanelTest extends GWTTestCase {
     assertParentId(button, "parent");
     assertIsBetweenSiblings(button, "foo", "bar");
   }
-  
+
   /**
    * Tests {@link HTMLPanel#addAndReplaceElement(IsWidget, String)}.
    */
   public void testAddAndReplaceElementByIdAsIsWidget() {
-    HTMLPanel hp = new HTMLPanel(
-        "<div id='parent'>foo<span id='placeholder'></span>bar</div>");
+    HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
     RootPanel.get().add(hp);
     Button button = new Button("my button");
 
@@ -246,13 +240,106 @@ public class HTMLPanelTest extends GWTTestCase {
     assertParentId(button, "parent");
     assertIsBetweenSiblings(button, "foo", "bar");
   }
-  
+
+  /**
+   * Ensures that {@link HTMLPanel#addAndReplaceElement(Widget, Element)}
+   * correctly removes (physically and logically) the replaced element if the
+   * element is an ancestor of a widget.
+   */
+  @SuppressWarnings("deprecation")
+  public void testAddAndReplaceElementLogicalDetachWidgetChildOfElement() {
+    HTMLPanel hp = new HTMLPanel("<div id=\"container\"></div>");
+    RootPanel.get().add(hp);
+
+    hp.getElement().setId("parent");
+
+    Button button1 = new Button("my button 1");
+    Button button2 = new Button("my button 2");
+    Button button3 = new Button("my button 3");
+    Button button4 = new Button("my button 4");
+
+    hp.add(button1);
+    hp.add(button2, "container");
+    hp.add(button3, "container");
+    assertEquals(3, hp.getWidgetCount());
+
+    hp.addAndReplaceElement(button4, "container");
+    assertEquals(2, hp.getWidgetCount()); // 1,2,3 -> 1,4
+
+    assertParentId(button1, "parent");
+    assertEquals(hp, button1.getParent());
+    assertNull(button2.getElement().getParentElement());
+    assertNull(button2.getParent());
+    assertNull(button3.getElement().getParentElement());
+    assertNull(button3.getParent());
+    assertParentId(button4, "parent");
+    assertEquals(hp, button4.getParent());
+  }
+
+  /**
+   * Ensures that {@link HTMLPanel#addAndReplaceElement(Widget, Element)}
+   * correctly removes (physically and logically) the replaced element if the
+   * element itself is a widget (but not the same as the replacement).
+   */
+  @SuppressWarnings("deprecation")
+  public void testAddAndReplaceElementLogicalDetachWidgetIsElement() {
+    HTMLPanel hp = new HTMLPanel("");
+    RootPanel.get().add(hp);
+
+    hp.getElement().setId("parent");
+
+    Button button1 = new Button("my button 1");
+    Button button2 = new Button("my button 2");
+    Button button3 = new Button("my button 3");
+
+    hp.add(button1);
+    hp.add(button2);
+    assertEquals(2, hp.getWidgetCount());
+
+    hp.addAndReplaceElement(button3, button1.getElement());
+    assertEquals(2, hp.getWidgetCount()); // 1,2 -> 2,3
+
+    assertNull(button1.getElement().getParentElement());
+    assertNull(button1.getParent());
+    assertParentId(button2, "parent");
+    assertEquals(hp, button2.getParent());
+    assertParentId(button3, "parent");
+    assertEquals(hp, button3.getParent());
+  }
+
+  /**
+   * Ensures that {@link HTMLPanel#addAndReplaceElement(Widget, Element)}
+   * correctly removes (physically and logically) and reattaches the replaced
+   * element if the element both the widget being replaced and the replacement.
+   */
+  @SuppressWarnings("deprecation")
+  public void testAddAndReplaceElementSameWidget() {
+    HTMLPanel hp = new HTMLPanel("");
+    RootPanel.get().add(hp);
+
+    hp.getElement().setId("parent");
+
+    Button button1 = new Button("my button 1");
+    Button button2 = new Button("my button 2");
+
+    hp.add(button1);
+    hp.add(button2);
+    assertEquals(2, hp.getWidgetCount());
+
+    hp.addAndReplaceElement(button1, button1.getElement());
+    assertEquals(2, hp.getWidgetCount()); // 1,2 -> 1,2
+
+    assertParentId(button1, "parent");
+    assertEquals(hp, button1.getParent());
+    assertParentId(button1, "parent");
+    assertEquals(hp, button1.getParent());
+  }
+
   /**
    * Tests table root tag.
    */
   public void testCustomRootTagAsTable() {
-    HTMLPanel hp = new HTMLPanel("table",
-        "<tr><td>Hello <span id='labelHere'></span></td></tr>");
+    HTMLPanel hp = new HTMLPanel("table", "<tr><td>Hello <span id='labelHere'></span></td></tr>");
     InlineLabel label = new InlineLabel("World");
     hp.addAndReplaceElement(label, "labelHere");
 
@@ -303,10 +390,10 @@ public class HTMLPanelTest extends GWTTestCase {
     unattached.add(new Button("unattached"), "unattached");
     attached.add(new Button("attached"), "attached");
 
-    assertEquals("Unattached's parent element should be unaffected",
-        unattachedParentElem, unattached.getElement().getParentElement());
-    assertEquals("Unattached's parent element should be unaffected",
-        attachedParentElem, attached.getElement().getParentElement());
+    assertEquals("Unattached's parent element should be unaffected", unattachedParentElem,
+        unattached.getElement().getParentElement());
+    assertEquals("Unattached's parent element should be unaffected", attachedParentElem, attached
+        .getElement().getParentElement());
   }
 
   /**
