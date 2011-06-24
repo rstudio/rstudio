@@ -131,21 +131,6 @@ public class DesktopHooks
          return "";
    }
 
-   boolean hasBeforeQuitUnsavedChanged()
-   {
-      return sourceShim_.hasBeforeQuitUnsavedChanges();
-   }
-   
-   void saveChangesBeforeQuit()
-   {
-      sourceShim_.saveChangesBeforeQuit(new Command() {
-         public void execute()
-         {
-            Desktop.getFrame().closeWithSaveConfirmed();
-         }
-      });
-   }
-
    void quitR(final boolean saveChanges)
    {
       final ProgressDelayer progress = new ProgressDelayer(

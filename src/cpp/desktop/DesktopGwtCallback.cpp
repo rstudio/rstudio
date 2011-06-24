@@ -348,11 +348,6 @@ void GwtCallback::close()
    pOwnerWindow_->close();
 }
 
-void GwtCallback::closeWithSaveConfirmed()
-{
-   pOwnerWindow_->closeWithSaveConfirmed();
-}
-
 void GwtCallback::openMinimalWindow(QString name,
                                     QString url,
                                     int width,

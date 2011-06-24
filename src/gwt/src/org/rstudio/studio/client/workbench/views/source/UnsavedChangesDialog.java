@@ -48,20 +48,14 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
 {
    public UnsavedChangesDialog(
          ArrayList<EditingTarget> dirtyTargets,
-         int mode,
          final OperationWithInput<ArrayList<EditingTarget>> saveOperation)
    {
       super("Unsaved Changes", saveOperation);
       editingTargets_ = dirtyTargets;
-      mode_ = mode;
       
       setOkButtonCaption("Save Selected");
-      
-      String dontSaveCaption = mode_ == Source.Display.QUIT_UNSAVED_CHANGES ?
-                                              "Don't Save Now" : 
-                                              "Don't Save";
-         	     
-      addLeftButton(new ThemedButton(dontSaveCaption, new ClickHandler() {
+           	     
+      addLeftButton(new ThemedButton("Don't Save", new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {
@@ -107,9 +101,8 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
       
       // main widget
       VerticalPanel panel = new VerticalPanel();
-      Label captionLabel = mode_ == Source.Display.QUIT_UNSAVED_CHANGES ?
-         new Label("The following open files have unsaved changes:") :
-         new Label("The following documents have unsaved changes:");
+      Label captionLabel = new Label(
+                           "The following documents have unsaved changes:");
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       panel.add(captionLabel);
       panel.add(scrollPanel);      
@@ -239,7 +232,6 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
     };
    
    private final ArrayList<EditingTarget> editingTargets_;
-   private final int mode_;
    
    private CellTable<EditingTarget> targetsCellTable_; 
    private ListDataProvider<EditingTarget> dataProvider_;

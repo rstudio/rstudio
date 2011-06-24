@@ -61,7 +61,6 @@ public slots:
    bool canChooseRVersion();
 
    void close();
-   void closeWithSaveConfirmed();
    void openMinimalWindow(QString name, QString url, int width, int height);
 
    // Image coordinates are relative to the window contents

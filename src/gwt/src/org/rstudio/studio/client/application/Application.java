@@ -232,7 +232,7 @@ public class Application implements ApplicationEventHandlers,
       {
          if (Desktop.isDesktop())
          {
-            Desktop.getFrame().closeWithSaveConfirmed();
+            Desktop.getFrame().close();
          }
          else
          {
@@ -282,10 +282,7 @@ public class Application implements ApplicationEventHandlers,
    @Handler
    public void onQuitSession()
    {
-      if (sourceShim_.hasBeforeQuitUnsavedChanges())
-         sourceShim_.saveChangesBeforeQuit(doQuitSession_);
-      else
-         doQuitSession_.execute();
+      doQuitSession_.execute();
    }
 
    @Handler

@@ -95,8 +95,6 @@ public class SourceShim extends Composite
          parent_.panel_.add(child);
          parent_.panel_.setWidgetTopBottom(child, 0, Unit.PX, 0, Unit.PX);
          parent_.panel_.setWidgetLeftRight(child, 0, Unit.PX, 0, Unit.PX);
-
-         parent_.setSource(obj);
       }
 
       public void setParent(SourceShim parent)
@@ -131,33 +129,6 @@ public class SourceShim extends Composite
       events.addHandler(FileEditEvent.TYPE, asyncSource);
    }
    
-   public boolean hasBeforeQuitUnsavedChanges()
-   {
-      // we currently don't prompt for unsaved files prior to quit
-      // this is driven by the fact that we want to be consistent
-      // with our project switching UI, and prompting for unsaved
-      // changes while switching projects (while also accounting for
-      // a dirty workspace) is overly complex both for users and
-      // in terms of implementation. if we want to bring this 
-      // behavior back we can simply comment back in the code below
-      return false;
-      
-      /*
-      if (source_ != null)
-         return source_.hasBeforeQuitUnsavedChanges();
-      else
-         return false;
-      */
-   }
-
-   public void saveChangesBeforeQuit(Command onCompleted)
-   {
-      if (source_ != null)
-         source_.saveChangesBeforeQuit(onCompleted);
-      else
-         onCompleted.execute();
-   }
-
    public Widget toWidget()
    {
       return this;
@@ -192,13 +163,7 @@ public class SourceShim extends Composite
          if (w instanceof RequiresVisibilityChanged)
             ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
    }
-
-   public void setSource(Source source)
-   {
-      source_ = source;
-   }
-
+   
    private final LayoutPanel panel_;
    private AsyncSource asyncSource_;
-   private Source source_ = null;
 }
