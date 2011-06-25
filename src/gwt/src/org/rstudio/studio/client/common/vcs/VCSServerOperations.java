@@ -19,4 +19,9 @@ public interface VCSServerOperations
 
    void vcsFullStatus(
          ServerRequestCallback<JsArray<StatusAndPath>> requestCallback);
+
+   void vcsCommitGit(String message,
+                     boolean amend,
+                     boolean signOff,
+                     ServerRequestCallback<Void> requestCallback);
 }

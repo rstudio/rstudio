@@ -1137,6 +1137,18 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, VCS_FULL_STATUS, requestCallback);
    }
 
+   public void vcsCommitGit(String message,
+                            boolean amend,
+                            boolean signOff,
+                            ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(message));
+      params.set(1, JSONBoolean.getInstance(amend));
+      params.set(2, JSONBoolean.getInstance(signOff));
+      sendRequest(RPC_SCOPE, VCS_COMMIT_GIT, params, requestCallback);
+   }
+
    // package-visible methods for peer classes RemoteServerAuth and
    // RemoveServerEventListener
 
@@ -1603,6 +1615,7 @@ public class RemoteServer implements Server
    private static final String VCS_REVERT = "vcs_revert";
    private static final String VCS_UNSTAGE = "vcs_unstage";
    private static final String VCS_FULL_STATUS = "vcs_full_status";
+   private static final String VCS_COMMIT_GIT = "vcs_commit_git";
 
    private static final String LOG = "log";
 

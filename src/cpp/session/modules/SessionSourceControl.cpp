@@ -227,6 +227,37 @@ public:
       args.push_back("HEAD");
       return doSimpleCmd("reset", args, filePaths, pStdErr);
    }
+
+   core::Error commit(const std::string& message, bool amend, bool signOff)
+   {
+      FilePath tempFile = module_context::tempFile("gitmsg", ".txt");
+      boost::shared_ptr<std::ostream> pStream;
+
+      Error error = tempFile.open_w(&pStream);
+      if (error)
+         return error;
+
+      *pStream << message;
+      pStream->flush();
+
+      std::vector<std::string> args;
+      args.push_back("-F");
+      args.push_back(string_utils::bash_escape(tempFile));
+      if (amend)
+         args.push_back("--amend");
+      if (signOff)
+         args.push_back("--signoff");
+
+      std::string stdErr;
+      error = doSimpleCmd("commit", args, std::vector<FilePath>(), &stdErr);
+
+      // clean up commit message temp file
+      Error removeError = tempFile.remove();
+      if (removeError)
+         LOG_ERROR(removeError);
+
+      return error;
+   }
 };
 
 class SubversionVCSImpl : public VCSImpl
@@ -413,6 +444,26 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
    return Success();
 }
 
+Error vcsCommitGit(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   GitVCSImpl* pGit = dynamic_cast<GitVCSImpl*>(s_pVcsImpl_.get());
+   if (!pGit)
+      return systemError(boost::system::errc::operation_not_supported, ERROR_LOCATION);
+
+   std::string commitMsg;
+   bool amend, signOff;
+   Error error = json::readParams(request.params, &commitMsg, &amend, &signOff);
+   if (error)
+      return error;
+
+   error = pGit->commit(commitMsg, amend, signOff);
+   if (error)
+      return error;
+
+   return Success();
+}
+
 core::Error initialize()
 {
    FilePath workingDir = module_context::activeProjectDirectory();
@@ -434,7 +485,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_remove", vcsRemove))
       (bind(registerRpcMethod, "vcs_revert", vcsRevert))
       (bind(registerRpcMethod, "vcs_unstage", vcsUnstage))
-      (bind(registerRpcMethod, "vcs_full_status", vcsFullStatus));
+      (bind(registerRpcMethod, "vcs_full_status", vcsFullStatus))
+      (bind(registerRpcMethod, "vcs_commit_git", vcsCommitGit));
    Error error = initBlock.execute();
    if (error)
       return error;

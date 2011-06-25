@@ -81,6 +81,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.vcs.CommitDialog;
 import org.rstudio.studio.client.workbench.views.vcs.VCS;
 import org.rstudio.studio.client.workbench.views.vcs.VCSPane;
 import org.rstudio.studio.client.workbench.views.vcs.VCSTab;
@@ -125,6 +126,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Help.Display.class).to(HelpPane.class);
       bind(Edit.Display.class).to(EditView.class);
       bind(VCS.Display.class).to(VCSPane.class);
+      bind(VCS.CommitDisplay.class).to(CommitDialog.class);
       bindTab("Workspace", WorkspaceTab.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);

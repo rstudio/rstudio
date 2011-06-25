@@ -4,6 +4,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -28,14 +29,21 @@ public class VCS extends BasePresenter implements IsWidget
       ArrayList<String> getSelectedPaths();
    }
 
+   public interface CommitDisplay
+   {
+      void showModal();
+   }
+
    @Inject
    public VCS(Display view,
+              Provider<CommitDisplay> pCommitView,
               VCSServerOperations server,
               Commands commands,
               Binder commandBinder)
    {
       super(view);
       view_ = view;
+      pCommitView_ = pCommitView;
       server_ = server;
 
       commandBinder.bind(commands, this);
@@ -102,6 +110,12 @@ public class VCS extends BasePresenter implements IsWidget
    }
 
    @Handler
+   void onVcsCommit()
+   {
+      pCommitView_.get().showModal();
+   }
+
+   @Handler
    void onVcsRefresh()
    {
       refresh();
@@ -129,5 +143,6 @@ public class VCS extends BasePresenter implements IsWidget
    }
 
    private final Display view_;
+   private final Provider<CommitDisplay> pCommitView_;
    private final VCSServerOperations server_;
 }
