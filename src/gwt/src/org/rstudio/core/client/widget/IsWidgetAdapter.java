@@ -1,5 +1,5 @@
 /*
- * WidgetableAdapter.java
+ * IsWidgetAdapter.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
