@@ -55,7 +55,7 @@ public class CommitDialog extends ModalDialogBase
       commitMessage_.setCharacterWidth(40);
       commitMessage_.setVisibleLines(8);
 
-      amend_ = new CheckBox("Amend");
+      amend_ = new CheckBox("Amend\u00A0\u00A0");
       amend_.setTitle("Amend and replace the previous commit");
 
       signOff_ = new CheckBox("Sign-off");
