@@ -94,12 +94,7 @@ void enqueFileChangeEvent(const source_control::StatusResult& statusResult,
 void enqueFileRemovedEvent(const FileInfo& fileInfo)
 {
    using core::system::FileChangeEvent;
-   source_control::StatusResult statusResult;
-   Error error = source_control::status(FilePath(fileInfo.absolutePath()),
-                                        &statusResult);
-   if (error)
-      LOG_ERROR(error);
-   enqueFileChangeEvent(statusResult,
+   enqueFileChangeEvent(source_control::StatusResult(),
                         FileChangeEvent(FileChangeEvent::FileRemoved,
                                         fileInfo));
 }
