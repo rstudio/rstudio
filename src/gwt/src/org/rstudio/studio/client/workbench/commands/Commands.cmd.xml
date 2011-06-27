@@ -97,6 +97,9 @@ well as menu structures (for main menu and popup menus).
       <separator/>
 
       <menu label="_View">
+         <cmd refid="showToolbar"/>
+         <cmd refid="hideToolbar"/>
+         <separator/>
          <cmd refid="jumpToFunction"/>
          <separator/>
          <cmd refid="switchToTab"/>
@@ -344,6 +347,11 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Open an existing project"/>
 
+   <cmd id="showToolbar"
+        menuLabel="Show Toolbar"/>
+   <cmd id="hideToolbar"
+        menuLabel="Hide Toolbar"/>
+        
    <cmd id="activateSource"
         menuLabel="Move Cursor to _Source"/>
    <cmd id="activateConsole"

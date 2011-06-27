@@ -155,6 +155,25 @@ public class Application implements ApplicationEventHandlers,
    }
    
    
+   @Handler
+   public void onShowToolbar()
+   {
+      showToolbar(true);
+   }
+   
+   @Handler
+   public void onHideToolbar()
+   {
+      showToolbar(false);
+   }
+   
+   private void showToolbar(boolean showToolbar)
+   {
+      view_.showToolbar(showToolbar);
+      commands_.showToolbar().setVisible(!showToolbar);
+      commands_.hideToolbar().setVisible(showToolbar);
+   }
+   
    public void onUnauthorized(UnauthorizedEvent event)
    {
       navigateToSignIn();
@@ -588,6 +607,9 @@ public class Application implements ApplicationEventHandlers,
       // hide the agreement menu item if we don't have one
       if (!session_.getSessionInfo().hasAgreement())
          commands_.rstudioAgreement().setVisible(false);
+      
+      // hide the show toolbar command
+      commands_.showToolbar().setVisible(false);
       
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
