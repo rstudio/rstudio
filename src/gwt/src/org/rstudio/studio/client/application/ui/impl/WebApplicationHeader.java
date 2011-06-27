@@ -146,11 +146,11 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       });
       
       // create toolbar
-      GlobalToolbar toolbar = new GlobalToolbar(commands, fileTypeCommands);
-      toolbar.addStyleName(themeResources.themeStyles().webGlobalToolbar());
+      toolbar_ = new GlobalToolbar(commands, fileTypeCommands);
+      toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());
    
       // add widgets to header panel
-      outerPanel.add(new HeaderPanel(headerBarPanel, toolbar));
+      outerPanel.add(new HeaderPanel(headerBarPanel, toolbar_));
 
       // logo
       Image logo = new Image(ThemeResources.INSTANCE.rstudio());
@@ -163,6 +163,16 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
 
       // initialize widget
       initWidget(outerPanel);
+   }
+   
+   public boolean isToolbarVisible()
+   {
+      return toolbar_.isVisible();
+   }
+   
+   public void showToolbar(boolean showToolbar)
+   {
+      
    }
 
    private native final void suppressBrowserForwardBack() /*-{
@@ -333,6 +343,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
 
    private HorizontalPanel headerBarCommandsPanel_;
    private AppMenuBar mainMenu_;
+   private GlobalToolbar toolbar_;
    private EventBus eventBus_;
    private GlobalDisplay globalDisplay_;
 }

@@ -17,4 +17,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 public interface ApplicationHeader extends IsWidget
 {
    int getPreferredHeight();
+   
+   boolean isToolbarVisible();
+   void showToolbar(boolean showToolbar);
 }

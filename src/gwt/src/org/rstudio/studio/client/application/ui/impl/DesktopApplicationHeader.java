@@ -104,6 +104,16 @@ public class DesktopApplicationHeader implements ApplicationHeader
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles(); 
       toolbar_.addStyleName(styles.desktopGlobalToolbar());
    }
+   
+   public boolean isToolbarVisible()
+   {
+      return toolbar_.isVisible();
+   }
+   
+   public void showToolbar(boolean showToolbar)
+   {
+      
+   }
 
    @Handler
    void onUndoDummy()
@@ -155,7 +165,10 @@ public class DesktopApplicationHeader implements ApplicationHeader
 
    public int getPreferredHeight()
    {
-      return 32;
+      if (toolbar_.isVisible())
+         return 32;
+      else
+         return 5;
    }
 
    public Widget asWidget()

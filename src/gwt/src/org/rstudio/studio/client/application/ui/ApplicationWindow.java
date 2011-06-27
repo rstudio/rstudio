@@ -47,14 +47,15 @@ public class ApplicationWindow extends Composite
       applicationPanel_ = new LayoutPanel();
     
       // header bar
-      applicationHeader_ = applicationHeader.asWidget();
-      applicationHeader_.setWidth("100%");
+      applicationHeader_ = applicationHeader;
+      Widget applicationHeaderWidget = applicationHeader_.asWidget();
+      applicationHeaderWidget.setWidth("100%");
       applicationPanel_.add(applicationHeader_);
-      headerHeight_ = applicationHeader.getPreferredHeight();
+      int headerHeight = applicationHeader.getPreferredHeight();
       applicationPanel_.setWidgetTopHeight(applicationHeader_,
                                            0,
                                            Style.Unit.PX,
-                                           headerHeight_,
+                                           headerHeight,
                                            Style.Unit.PX);
       applicationPanel_.setWidgetLeftRight(applicationHeader_,
                                            0,
@@ -62,7 +63,7 @@ public class ApplicationWindow extends Composite
                                            0,
                                            Style.Unit.PX);
 
-      applicationHeader_.setVisible(false);
+      applicationHeaderWidget.setVisible(false);
 
       // main view container
       initWidget(applicationPanel_);
@@ -125,7 +126,7 @@ public class ApplicationWindow extends Composite
    {
       workbenchScreen_ = workbenchScreen;
 
-      applicationHeader_.setVisible(true);
+      applicationHeader_.asWidget().setVisible(true);
       applicationPanel_.add(workbenchScreen_);
       updateWorkbenchTopBottom();
       applicationPanel_.setWidgetLeftRight(workbenchScreen_,
@@ -171,7 +172,7 @@ public class ApplicationWindow extends Composite
    {
       applicationPanel_.setWidgetTopBottom(
             workbenchScreen_,
-            headerHeight_,
+            applicationHeader_.getPreferredHeight(),
             Unit.PX,
             workbenchBottom_,
             Unit.PX);
@@ -248,8 +249,7 @@ public class ApplicationWindow extends Composite
    
    // main applilcation UI components
    private LayoutPanel applicationPanel_ ;
-   private Widget applicationHeader_ ;
-   private int headerHeight_ ;
+   private ApplicationHeader applicationHeader_ ;
 
    // active serialization progress message
    private ApplicationSerializationProgress activeSerializationProgress_;
