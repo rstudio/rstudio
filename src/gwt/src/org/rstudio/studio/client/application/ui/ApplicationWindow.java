@@ -69,6 +69,17 @@ public class ApplicationWindow extends Composite
       initWidget(applicationPanel_);
    }
    
+   public boolean isToolbarVisible()
+   {
+      return applicationHeader_.isToolbarVisible();
+   }
+   
+   public void showToolbar(boolean showToolbar)
+   {
+      applicationHeader_.showToolbar(showToolbar);
+      updateWorkbenchTopBottom();
+   }
+   
    public void showApplicationAgreement(String title,
                                         String contents,
                                         Operation doNotAcceptOperation,

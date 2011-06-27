@@ -112,7 +112,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
    
    public void showToolbar(boolean showToolbar)
    {
-      
+      toolbar_.setVisible(showToolbar);
    }
 
    @Handler

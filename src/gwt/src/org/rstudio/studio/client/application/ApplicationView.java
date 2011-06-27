@@ -27,6 +27,10 @@ public interface ApplicationView
    // set current main view for application
    void showWorkbenchView(Widget widget);
    
+   // toolbar
+   boolean isToolbarVisible();
+   void showToolbar(boolean showToolbar);
+   
    // application exit states
    void showApplicationQuit();
    void showApplicationSuicide(String reason);
