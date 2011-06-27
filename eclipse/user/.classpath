@@ -59,10 +59,5 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jboss/test-harness/jboss-test-harness-api-1.0.0.jar" sourcepath="/GWT_TOOLS/lib/jboss/test-harness/jboss-test-harness-api-1.0.0-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/testng/testng-5.14.1-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/testng/testng-5.14.1-nojunit.jar" sourcepath="/GWT_TOOLS/lib/testng/testng-5.14.1-sources.jar"/>
-	<classpathentry kind="src" path=".apt_generated">
-		<attributes>
-			<attribute name="optional" value="true"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

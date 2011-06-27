@@ -101,6 +101,18 @@ Annotations:
 - Annotation is used as super interface
 - Enable @SuppressWarnings annotations
 
+------- Annotation Processor --------
+
+Some components of GWT (RequestFactory) use annotation processing.
+
+Select project 'gwt-user'
+
+Project->Preferences->Java Compiler->AnnotationProcessor
+- Check Enable project specific settings
+- Check Enable annotation processing
+
+This adds a directory named '.apt-generated' to the source path.
+
 == Checkstyle ==
 
 Checkstyle is used to enforce good programming style.
