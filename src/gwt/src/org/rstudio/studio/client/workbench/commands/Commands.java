@@ -88,6 +88,8 @@ public abstract class
    public abstract AppCommand vcsRefresh();
 
    // View
+   public abstract AppCommand showToolbar();
+   public abstract AppCommand hideToolbar();
    public abstract AppCommand jumpToFunction();
    public abstract AppCommand switchToTab();
    public abstract AppCommand previousTab();

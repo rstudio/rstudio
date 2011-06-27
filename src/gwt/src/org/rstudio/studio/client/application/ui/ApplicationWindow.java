@@ -76,8 +76,12 @@ public class ApplicationWindow extends Composite
    
    public void showToolbar(boolean showToolbar)
    {
-      applicationHeader_.showToolbar(showToolbar);
-      updateWorkbenchTopBottom();
+      if (applicationHeader_.isToolbarVisible() != showToolbar)
+      {
+         applicationHeader_.showToolbar(showToolbar);
+         updateWorkbenchTopBottom();
+         applicationPanel_.animate(250);
+      }
    }
    
    public void showApplicationAgreement(String title,
