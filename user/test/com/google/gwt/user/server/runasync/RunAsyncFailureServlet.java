@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.server.runasync;
 
+import com.google.gwt.dev.util.Util;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.InputStream;
@@ -32,16 +34,8 @@ import javax.servlet.http.HttpServletResponse;
 public class RunAsyncFailureServlet extends HttpServlet {
 
   private static final boolean DEBUG = false;
-  private static final HashMap<String, RealContents> realContentsCache = new HashMap<String, RealContents>();
+  private static final HashMap<String, String> realContentsCache = new HashMap<String, String>();
 
-  private static class RealContents {
-    public RealContents(int numBytes, byte[] bytes) {
-      this.numBytes = numBytes;
-      this.bytes = bytes;
-    }
-    public int numBytes;
-    public byte[] bytes;
-  }
   /**
    * Sequence of response codes to send back. SC_OK must be last.
    */
@@ -67,19 +61,16 @@ public class RunAsyncFailureServlet extends HttpServlet {
     String originalUri = req.getRequestURI();
     debug("doGet Original: " + originalUri);
     String uri = originalUri.replace("/runAsyncFailure", "");
-
     int response = getDesiredResponse(uri);
-    RealContents rc = this.getRealContents(req, uri);
-    String realContentsAsString = new String(rc.bytes);
-
+    String realContents = getRealContents(req, uri);
     String fragment = uri.substring(uri.lastIndexOf('/') + 1);
-      if (!realContentsAsString.contains("DOWNLOAD_FAILURE_TEST")
+      if (!realContents.contains("DOWNLOAD_FAILURE_TEST")
           || response == HttpServletResponse.SC_OK) {      
       int bytes = 0;
-      if (!realContentsAsString.contains("INSTALL_FAILURE_TEST")) {
+      if (!realContents.contains("INSTALL_FAILURE_TEST")) {
         OutputStream os = resp.getOutputStream();
-        os.write(rc.bytes, 0, rc.numBytes);
-        bytes = rc.numBytes;
+        os.write(realContents.getBytes());
+        bytes = realContents.getBytes().length;
         os.close();
       }
       
@@ -105,7 +96,7 @@ public class RunAsyncFailureServlet extends HttpServlet {
     return responses[tries % responses.length];
   }
 
-  private RealContents getRealContents(HttpServletRequest req, String uri) throws IOException {
+  private String getRealContents(HttpServletRequest req, String uri) throws IOException {
     if (realContentsCache.containsKey(uri)) {
       return realContentsCache.get(uri);
     }
@@ -115,21 +106,13 @@ public class RunAsyncFailureServlet extends HttpServlet {
     int port = req.getLocalPort();
     String realUrl = "http://" + host + ":" + port + uri;
     debug("Fetching: " + realUrl);
-    int bytes = 0;
-    byte[] data = new byte[32768];
-    try {
-      URL url = new URL(realUrl);
-      InputStream is = url.openStream();
 
-      bytes = is.read(data);
-      is.close();
-    } catch (IOException e) {
-      debug("IOException fetching real data: " + e);
-      throw e;
-    }
+    URL url = new URL(realUrl);
+    InputStream is = url.openStream();
+    String data = Util.readStreamAsString(is);
+    is.close();
 
-    RealContents rc = new RealContents(bytes, data);
-    realContentsCache.put(uri, rc);
-    return rc;
+    realContentsCache.put(uri, data);
+    return data;
   }
 }

@@ -100,8 +100,6 @@ public class RunAsyncFailureTest extends GWTTestCase {
   // otherwise the runAsync code will cache the fragment and later tests will
   // always succeed on the first try.
   
-  // Fragment for this call (5) should be on downloadErrorFragments list in the
-  // RunAsyncFailureServlet
   private void runAsync1(final int attempt, final int expectedSuccessfulAttempt) {
     GWT.runAsync(new MyRunAsyncCallback(attempt, expectedSuccessfulAttempt) {
       public void onFailure(Throwable caught) {
@@ -119,8 +117,6 @@ public class RunAsyncFailureTest extends GWTTestCase {
     });
   }
   
-  // Fragment for this call (2) should be on downloadErrorFragments list in the
-  // RunAsyncFailureServlet
   private void runAsync2(final int attempt, final int expectedSuccessfulAttempt) {
     GWT.runAsync(new MyRunAsyncCallback(attempt, expectedSuccessfulAttempt) {
       public void onFailure(Throwable caught) {
@@ -138,8 +134,6 @@ public class RunAsyncFailureTest extends GWTTestCase {
     });
   }
   
-  // Fragment for this call (3) should be on downloadErrorFragments list in the
-  // RunAsyncFailureServlet
   private void runAsync3(final int attempt, final int expectedSuccessfulAttempt) {
     GWT.runAsync(new MyRunAsyncCallback(attempt, expectedSuccessfulAttempt) {
       public void onFailure(Throwable caught) {
@@ -157,8 +151,6 @@ public class RunAsyncFailureTest extends GWTTestCase {
     });
   }
   
-  // Fragment for this call (4) should be on installErrorFragments list in the
-  // RunAsyncFailureServlet
   private void runAsync4() {
     GWT.runAsync(new RunAsyncCallback() {
       public void onFailure(Throwable caught) {
@@ -181,7 +173,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
   public void testHttpFailureRetries() {
     delayTestFinish(RUNASYNC_TIMEOUT);
     // Default is 3, but we set it explicitly, since other tests may run first
-    LoadingStrategyBase.MAX_RETRY_COUNT = 2;
+    LoadingStrategyBase.MAX_AUTO_RETRY_COUNT = 2;
     // In RunAsyncFailureServlet, the 5th time is the charm, but the code
     // by default retries 3 times every time we call runAsync, so this
     // should succeed on the second runAsync call, which is attempt #1.
@@ -190,7 +182,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
   
   public void testHttpFailureRetries2() {
     delayTestFinish(RUNASYNC_TIMEOUT);
-    LoadingStrategyBase.MAX_RETRY_COUNT = 0;
+    LoadingStrategyBase.MAX_AUTO_RETRY_COUNT = 0;
     // In RunAsyncFailureServlet, the 5th time is the charm, so if we do not
     // let the code do any retries, we'll need to retry 4 times before succeeding
     runAsync2(0, 4);
@@ -198,7 +190,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
   
   public void testBuiltInRetries() {
     delayTestFinish(RUNASYNC_TIMEOUT);
-    LoadingStrategyBase.MAX_RETRY_COUNT = 4;
+    LoadingStrategyBase.MAX_AUTO_RETRY_COUNT = 4;
     // In RunAsyncFailureServlet, the 5th time is the charm, so retrying 4 times
     // should be enough to get it on the first try.
     runAsync3(0, supportsRetries() ? 0 : 4);
@@ -206,7 +198,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
   
   public void testDownloadSuccessButInstallFailure() {
     delayTestFinish(RUNASYNC_TIMEOUT);
-    LoadingStrategyBase.MAX_RETRY_COUNT = 3;
+    LoadingStrategyBase.MAX_AUTO_RETRY_COUNT = 3;
     runAsync4();
   }
 }

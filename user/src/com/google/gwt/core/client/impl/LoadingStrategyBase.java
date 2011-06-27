@@ -15,6 +15,7 @@
  */
 package com.google.gwt.core.client.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadTerminatedHandler;
 import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadingStrategy;
 import com.google.gwt.core.client.impl.AsyncFragmentLoader.HttpInstallFailure;
@@ -59,7 +60,27 @@ public class LoadingStrategyBase implements LoadingStrategy {
   interface DownloadStrategy {
     void tryDownload(final RequestData request);
   }
+  
+  /**
+   * A trivial JavaScript map from ints to ints.  Used to keep a global count of
+   * how many times a user has manually retried fetching a fragment.
+   */
+  private static final class FragmentReloadTracker extends JavaScriptObject {
+    public static FragmentReloadTracker create() {
+      return (FragmentReloadTracker) JavaScriptObject.createArray();
+    }
 
+    protected FragmentReloadTracker() { }
+    
+    public native int get(int x) /*-{
+      return this[x] ? this[x] : 0;
+    }-*/;
+    
+    public native void put(int x, int y) /*-{
+      this[x] = y;
+    }-*/;
+  }
+  
   /**    
    * Since LoadingStrategy must support concurrent requests, we keep most of the
    * relevant info in the RequestData, and pass it around.  Once created, a
@@ -97,7 +118,8 @@ public class LoadingStrategyBase implements LoadingStrategy {
       if (mayRetry) {
         retryCount++;
         if (retryCount <= maxRetryCount) {
-          url = originalUrl + "?serial=" + retryCount;
+          char connector = originalUrl.contains("?") ? '&' : '?';
+          url = originalUrl + connector + "autoRetry=" + retryCount;
           downloadStrategy.tryDownload(this);
           return;
         }
@@ -126,7 +148,7 @@ public class LoadingStrategyBase implements LoadingStrategy {
    * The number of times that we will retry a download. Note that if the install
    * fails, we do not retry, since there's no reason to expect a different result.
    */
-  public static int MAX_RETRY_COUNT = 3;
+  public static int MAX_AUTO_RETRY_COUNT = 3;
   
   /**
    * Call the linker-supplied <code>__gwtInstallCode</code> method. This method
@@ -153,15 +175,14 @@ public class LoadingStrategyBase implements LoadingStrategy {
   }-*/;
   
   private DownloadStrategy downloadStrategy;
-  
+  private final FragmentReloadTracker manualRetryNumbers = FragmentReloadTracker.create();
+
   /**
    * Subclasses should create a DownloadStrategy and pass it into this constructor.
    */
   public LoadingStrategyBase(DownloadStrategy downloadStrategy) {
     this.downloadStrategy = downloadStrategy;
   }
-
-  protected int getMaxRetryCount() { return MAX_RETRY_COUNT; }
 
   @Override
   public void startLoadingFragment(int fragment,
@@ -171,8 +192,24 @@ public class LoadingStrategyBase implements LoadingStrategy {
       // The linker is going to handle this fetch - nothing more to do
       return;
     }
+    // Browsers will ignore too many script tags if it has previously failed
+    // to download that url, so we add a parameter to the url if
+    // this is not the first time we've tried to download this fragment.
+    int manualRetry = getManualRetryNum(fragment);
+    if (manualRetry > 0) {
+      char connector = url.contains("?") ? '&' : '?';
+      url += connector + "manualRetry=" + manualRetry; 
+    }
     RequestData request = new RequestData(url, loadErrorHandler, 
-        fragment, downloadStrategy, getMaxRetryCount());
+        fragment, downloadStrategy, getMaxAutoRetryCount());
     request.tryDownload();
+  }
+
+  protected int getMaxAutoRetryCount() { return MAX_AUTO_RETRY_COUNT; }
+
+  private int getManualRetryNum(int fragment) {
+    int ser = manualRetryNumbers.get(fragment);
+    manualRetryNumbers.put(fragment, ser + 1);
+    return ser;
   }
 }
