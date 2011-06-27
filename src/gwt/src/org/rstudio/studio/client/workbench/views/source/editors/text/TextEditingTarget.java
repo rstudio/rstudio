@@ -40,7 +40,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
@@ -1395,18 +1394,27 @@ public class TextEditingTarget implements EditingTarget
       {
          boolean sweave = fileType_.canCompilePDF();
          
-
-         server_.saveActiveDocument(code, sweave, new SimpleRequestCallback<Void>() {
-            @Override
-            public void onResponseReceived(Void response)
-            {
-               consoleDispatcher_.executeSourceCommand(
-                     "~/.active-rstudio-document",
-                     "UTF-8",
-                     activeCodeIsAscii(),
-                     echo);
-            }
-         });
+         if (dirtyState_.getValue() || sweave)
+         {
+            server_.saveActiveDocument(code, sweave, new SimpleRequestCallback<Void>() {
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  consoleDispatcher_.executeSourceCommand(
+                        "~/.active-rstudio-document",
+                        "UTF-8",
+                        activeCodeIsAscii(),
+                        echo);
+               }
+            });
+         }
+         else
+         {
+            consoleDispatcher_.executeSourceCommand(getPath(), 
+                                                   "UTF-8", 
+                                                   activeCodeIsAscii(), 
+                                                   echo);
+         }
       }
       
       // update pref if necessary
