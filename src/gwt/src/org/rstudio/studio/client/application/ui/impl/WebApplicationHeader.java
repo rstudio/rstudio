@@ -38,6 +38,7 @@ import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
 import org.rstudio.studio.client.application.ui.impl.header.HeaderPanel;
+import org.rstudio.studio.client.application.ui.impl.header.MenubarPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
@@ -64,21 +65,36 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
                   final Session session)
    {
       eventBus_ = eventBus;
-      globalDisplay_ = globalDisplay;
-      preferredHeight_ = 65;
-
+      globalDisplay_ = globalDisplay; 
+      
       // Use the outer panel to just aggregate the menu bar/account area,
       // with the logo. The logo can't be inside the HorizontalPanel because
       // it needs to overflow out of the top of the panel, and it was much
       // easier to do this with absolute positioning.
-      FlowPanel outerPanel = new FlowPanel();
-      outerPanel.getElement().getStyle().setPosition(Position.RELATIVE);
+      outerPanel_ = new FlowPanel();
+      outerPanel_.getElement().getStyle().setPosition(Position.RELATIVE);
+      
+      // large logo
+      logoLarge_ = new Image(ThemeResources.INSTANCE.rstudio());
+      ((ImageElement)logoLarge_.getElement().cast()).setAlt("RStudio");
+      Style style = logoLarge_.getElement().getStyle();
+      style.setPosition(Position.ABSOLUTE);
+      style.setTop(5, Unit.PX);
+      style.setLeft(18, Unit.PX);
+      
+      // small logo
+      logoSmall_ = new Image(ThemeResources.INSTANCE.rstudio_small());
+      ((ImageElement)logoSmall_.getElement().cast()).setAlt("RStudio");
+      style = logoSmall_.getElement().getStyle();
+      style.setPosition(Position.ABSOLUTE);
+      style.setTop(5, Unit.PX);
+      style.setLeft(18, Unit.PX);
 
       // header container
-      HorizontalPanel headerBarPanel = new HorizontalPanel() ;
-      headerBarPanel.setStylePrimaryName(themeResources.themeStyles().header());
-      headerBarPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-      headerBarPanel.setWidth("100%");
+      headerBarPanel_ = new HorizontalPanel() ;
+      headerBarPanel_.setStylePrimaryName(themeResources.themeStyles().header());
+      headerBarPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+      headerBarPanel_.setWidth("100%");
 
       if (BrowseCap.INSTANCE.suppressBrowserForwardBack())
          suppressBrowserForwardBack();
@@ -115,16 +131,16 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
                eventBus_.fireEvent(new GlassVisibilityEvent(false));
          }
       });
-      headerBarPanel.add(mainMenu_);
+      headerBarPanel_.add(mainMenu_);
 
       HTML spacer = new HTML();
-      headerBarPanel.add(spacer);
-      headerBarPanel.setCellWidth(spacer, "100%");
+      headerBarPanel_.add(spacer);
+      headerBarPanel_.setCellWidth(spacer, "100%");
 
       // commands panel (no widgets added until after session init)
       headerBarCommandsPanel_ = new HorizontalPanel();
-      headerBarPanel.add(headerBarCommandsPanel_);
-      headerBarPanel.setCellHorizontalAlignment(headerBarCommandsPanel_,
+      headerBarPanel_.add(headerBarCommandsPanel_);
+      headerBarPanel_.setCellHorizontalAlignment(headerBarCommandsPanel_,
                                                 HorizontalPanel.ALIGN_RIGHT);
 
       eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
@@ -148,31 +164,31 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       // create toolbar
       toolbar_ = new GlobalToolbar(commands, fileTypeCommands);
       toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());
-   
-      // add widgets to header panel
-      outerPanel.add(new HeaderPanel(headerBarPanel, toolbar_));
-
-      // logo
-      Image logo = new Image(ThemeResources.INSTANCE.rstudio());
-      ((ImageElement)logo.getElement().cast()).setAlt("RStudio");
-      Style style = logo.getElement().getStyle();
-      style.setPosition(Position.ABSOLUTE);
-      style.setTop(5, Unit.PX);
-      style.setLeft(18, Unit.PX);
-      outerPanel.add(logo);
-
+     
       // initialize widget
-      initWidget(outerPanel);
+      initWidget(outerPanel_);
    }
-   
-   public boolean isToolbarVisible()
-   {
-      return toolbar_.isVisible();
-   }
-   
+    
    public void showToolbar(boolean showToolbar)
    {
+      outerPanel_.clear();
       
+      if (showToolbar)
+      {
+         HeaderPanel headerPanel = new HeaderPanel(headerBarPanel_, toolbar_);
+         outerPanel_.add(headerPanel);
+         outerPanel_.add(logoLarge_);
+         mainMenu_.getElement().getStyle().setMarginLeft(18, Unit.PX);
+         preferredHeight_ = 65;
+      }
+      else
+      {
+         MenubarPanel menubarPanel = new MenubarPanel(headerBarPanel_);
+         outerPanel_.add(menubarPanel);
+         outerPanel_.add(logoSmall_);
+         mainMenu_.getElement().getStyle().setMarginLeft(0, Unit.PX);
+         preferredHeight_ = 40;
+      }
    }
 
    private native final void suppressBrowserForwardBack() /*-{
@@ -243,7 +259,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
 
    public int getPreferredHeight()
    {
-      return preferredHeight_ ;
+      return preferredHeight_;
    }
 
    /**
@@ -339,8 +355,11 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       return this;
    }
   
-   private int preferredHeight_ ;
-
+   private int preferredHeight_;
+   private FlowPanel outerPanel_;
+   private Image logoLarge_;
+   private Image logoSmall_;
+   private HorizontalPanel headerBarPanel_;
    private HorizontalPanel headerBarCommandsPanel_;
    private AppMenuBar mainMenu_;
    private GlobalToolbar toolbar_;

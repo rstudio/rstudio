@@ -18,8 +18,9 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 
-public interface ApplicationServerOperations
+public interface ApplicationServerOperations extends PrefsServerOperations
 {   
    // establish new session for this client
    void clientInit(ServerRequestCallback<SessionInfo> requestCallback);

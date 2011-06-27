@@ -37,6 +37,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
@@ -54,6 +55,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
@@ -97,7 +99,7 @@ public class Application implements ApplicationEventHandlers,
 
       // bind to commands
       binder.bind(commands_, this);
-      
+         
       // subscribe to events
       events.addHandler(LogoutRequestedEvent.TYPE, this);
       events.addHandler(UnauthorizedEvent.TYPE, this);
@@ -158,22 +160,15 @@ public class Application implements ApplicationEventHandlers,
    @Handler
    public void onShowToolbar()
    {
-      showToolbar(true);
+      showToolbar(true, true);
    }
    
    @Handler
    public void onHideToolbar()
    {
-      showToolbar(false);
+      showToolbar(false, true);
    }
-   
-   private void showToolbar(boolean showToolbar)
-   {
-      view_.showToolbar(showToolbar);
-      commands_.showToolbar().setVisible(!showToolbar);
-      commands_.hideToolbar().setVisible(showToolbar);
-   }
-   
+    
    public void onUnauthorized(UnauthorizedEvent event)
    {
       navigateToSignIn();
@@ -607,14 +602,36 @@ public class Application implements ApplicationEventHandlers,
       // hide the agreement menu item if we don't have one
       if (!session_.getSessionInfo().hasAgreement())
          commands_.rstudioAgreement().setVisible(false);
-      
-      // hide the show toolbar command
-      commands_.showToolbar().setVisible(false);
-      
+         
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
-
+      
+      // toolbar (must be after call to showWorkbenchView because
+      // showing the toolbar repositions the workbench view widget)
+      UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
+      showToolbar(uiPrefs.toolbarVisible().getValue(), false);
+      
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
+   }
+   
+   private void showToolbar(boolean showToolbar, boolean updatePref)
+   {
+      // show or hide the toolbar
+      view_.showToolbar(showToolbar);
+         
+      // manage commands
+      commands_.showToolbar().setVisible(!showToolbar);
+      commands_.hideToolbar().setVisible(showToolbar);
+      
+      // update prefs
+      if (updatePref)
+      {
+         UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
+         uiPrefs.toolbarVisible().setValue(showToolbar);
+         server_.setUiPrefs(
+                  session_.getSessionInfo().getUiPrefs(), 
+                  new SimpleRequestCallback<Void>("Error Saving Preference"));
+      }
    }
       
    private void cleanupWorkbench()

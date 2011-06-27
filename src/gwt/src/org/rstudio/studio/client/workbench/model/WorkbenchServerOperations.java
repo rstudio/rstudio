@@ -18,6 +18,7 @@ import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
@@ -43,20 +44,14 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    ChooseFileServerOperations,
                                                    HistoryServerOperations,
                                                    MirrorsServerOperations,
-                                                   VCSServerOperations
+                                                   VCSServerOperations,
+                                                   PrefsServerOperations
 {   
    void onWorkbenchReady();
    
    void setWorkbenchMetrics(WorkbenchMetrics clientMetrics,
                             ServerRequestCallback<Void> requestCallback);
    
-   void setPrefs(RPrefs rPrefs,
-                 JavaScriptObject uiPrefs,
-                 ServerRequestCallback<Void> requestCallback);
-   
-   void setUiPrefs(JavaScriptObject uiPrefs,
-                   ServerRequestCallback<Void> requestCallback);
-
    void getRPrefs(ServerRequestCallback<RPrefs> requestCallback);
  
    void updateClientState(JavaScriptObject temporary,

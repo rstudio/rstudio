@@ -51,37 +51,19 @@ public class ApplicationWindow extends Composite
       Widget applicationHeaderWidget = applicationHeader_.asWidget();
       applicationHeaderWidget.setWidth("100%");
       applicationPanel_.add(applicationHeader_);
-      int headerHeight = applicationHeader.getPreferredHeight();
-      applicationPanel_.setWidgetTopHeight(applicationHeader_,
-                                           0,
-                                           Style.Unit.PX,
-                                           headerHeight,
-                                           Style.Unit.PX);
-      applicationPanel_.setWidgetLeftRight(applicationHeader_,
-                                           0,
-                                           Style.Unit.PX,
-                                           0,
-                                           Style.Unit.PX);
-
+      updateHeaderTopBottom();
       applicationHeaderWidget.setVisible(false);
 
       // main view container
       initWidget(applicationPanel_);
    }
-   
-   public boolean isToolbarVisible()
-   {
-      return applicationHeader_.isToolbarVisible();
-   }
-   
+      
    public void showToolbar(boolean showToolbar)
    {
-      if (applicationHeader_.isToolbarVisible() != showToolbar)
-      {
-         applicationHeader_.showToolbar(showToolbar);
-         updateWorkbenchTopBottom();
-         applicationPanel_.animate(250);
-      }
+      applicationHeader_.showToolbar(showToolbar);
+      updateHeaderTopBottom();
+      updateWorkbenchTopBottom();
+      applicationPanel_.forceLayout();  
    }
    
    public void showApplicationAgreement(String title,
@@ -183,6 +165,21 @@ public class ApplicationWindow extends Composite
       warningBar_.setText(message);
    }
 
+   private void updateHeaderTopBottom()
+   {
+      int headerHeight = applicationHeader_.getPreferredHeight();
+      applicationPanel_.setWidgetTopHeight(applicationHeader_,
+                                           0,
+                                           Style.Unit.PX,
+                                           headerHeight,
+                                           Style.Unit.PX);
+      applicationPanel_.setWidgetLeftRight(applicationHeader_,
+                                           0,
+                                           Style.Unit.PX,
+                                           0,
+                                           Style.Unit.PX);
+   }
+   
    private void updateWorkbenchTopBottom()
    {
       applicationPanel_.setWidgetTopBottom(

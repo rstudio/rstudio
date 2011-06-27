@@ -105,11 +105,6 @@ public class DesktopApplicationHeader implements ApplicationHeader
       toolbar_.addStyleName(styles.desktopGlobalToolbar());
    }
    
-   public boolean isToolbarVisible()
-   {
-      return toolbar_.isVisible();
-   }
-   
    public void showToolbar(boolean showToolbar)
    {
       toolbar_.setVisible(showToolbar);

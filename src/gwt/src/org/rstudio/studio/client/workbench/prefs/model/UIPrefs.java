@@ -95,4 +95,9 @@ public class UIPrefs extends Prefs
    {
       return string("default_encoding", "");
    }
+   
+   public PrefValue<Boolean> toolbarVisible()
+   {
+      return bool("toolbar_visible", false);
+   }
 }

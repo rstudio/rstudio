@@ -38,6 +38,7 @@ import org.rstudio.studio.client.workbench.WorkbenchMainView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.ui.WorkbenchScreen;
 import org.rstudio.studio.client.workbench.ui.WorkbenchTab;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
@@ -161,6 +162,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(EditServerOperations.class).to(RemoteServer.class) ;
       bind(MirrorsServerOperations.class).to(RemoteServer.class);
       bind(VCSServerOperations.class).to(RemoteServer.class);
+      bind(PrefsServerOperations.class).to(RemoteServer.class);
+
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

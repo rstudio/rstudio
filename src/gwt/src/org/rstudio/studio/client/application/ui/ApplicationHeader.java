@@ -18,6 +18,5 @@ public interface ApplicationHeader extends IsWidget
 {
    int getPreferredHeight();
    
-   boolean isToolbarVisible();
    void showToolbar(boolean showToolbar);
 }

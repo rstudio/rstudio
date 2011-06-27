@@ -28,7 +28,6 @@ public interface ApplicationView
    void showWorkbenchView(Widget widget);
    
    // toolbar
-   boolean isToolbarVisible();
    void showToolbar(boolean showToolbar);
    
    // application exit states
