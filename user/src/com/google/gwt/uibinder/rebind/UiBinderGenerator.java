@@ -34,6 +34,7 @@ import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXParseException;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
@@ -200,6 +201,8 @@ public class UiBinderGenerator extends Generator {
       }
       doc = new W3cDomHelper(logger.getTreeLogger(), resourceOracle).documentFor(
           content, resource.getPath());
+    } catch (IOException iex) {
+      logger.die("Error opening resource:" + resource.getLocation(), iex);
     } catch (SAXParseException e) {
       logger.die(
           "Error parsing XML (line " + e.getLineNumber() + "): "

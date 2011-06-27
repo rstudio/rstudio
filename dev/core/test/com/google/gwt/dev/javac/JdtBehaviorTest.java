@@ -34,6 +34,7 @@ import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -150,7 +151,12 @@ public class JdtBehaviorTest extends TestCase {
     }
 
     public char[] getContents() {
-      return Shared.readSource(sourceFile).toCharArray();
+      try {
+        return Shared.readSource(sourceFile).toCharArray();
+      } catch (IOException ex) {
+        fail("Couldn't read sourceFile: " + sourceFile + " - " + ex);
+      }
+      return null;
     }
 
     public char[] getFileName() {

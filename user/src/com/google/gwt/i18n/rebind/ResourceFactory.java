@@ -29,6 +29,7 @@ import com.google.gwt.i18n.rebind.AnnotationsResource.AnnotationsError;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.i18n.shared.GwtLocaleFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -104,7 +105,7 @@ public abstract class ResourceFactory {
         resources = localizableCtx.getResourceList(key);
         if (resources == null) {
           resources = new ResourceList();
-          addFileResources(clazz, locale, resourceMap, resources);
+          addFileResources(logger, clazz, locale, resourceMap, resources);
           AnnotationsResource annotationsResource = annotations.get(key);
           if (annotationsResource != null) {
             resources.add(annotationsResource);
@@ -133,7 +134,7 @@ public abstract class ResourceFactory {
     return name;
   }
 
-  private static void addFileResources(JClassType clazz, GwtLocale locale,
+  private static void addFileResources(TreeLogger logger, JClassType clazz, GwtLocale locale,
       Map<String, Resource> resourceMap, ResourceList resources) {
     // TODO: handle classes in the default package?
     String targetPath = clazz.getPackage().getName() + '.'
@@ -156,7 +157,14 @@ public abstract class ResourceFactory {
         resource = resourceMap.get(path);
       }
       if (resource != null) {
-        AbstractResource found = element.load(resource.openContents(), locale);
+        InputStream resourceStream = null;
+        try {
+          resourceStream = resource.openContents();
+        } catch (IOException ex) {
+          logger.log(TreeLogger.ERROR, "Error opening resource: " + resource.getLocation());
+          throw new RuntimeException(ex);
+        }
+        AbstractResource found = element.load(resourceStream, locale);
         found.setPath(path);
         resources.add(found);
       }

@@ -296,6 +296,7 @@ public final class Util {
    */
   public static void deleteFilesStartingWith(File dir, final String prefix) {
     File[] toDelete = dir.listFiles(new FilenameFilter() {
+      @Override
       public boolean accept(File dir, String name) {
         return name.startsWith(prefix);
       }
@@ -714,6 +715,10 @@ public final class Util {
       throw new RuntimeException(
           "The JVM does not support the compiler's default encoding.", e);
     } catch (IOException e) {
+      // TODO(zundel): Consider allowing this exception out. The pattern in this
+      // file is to convert IOException to null, but in references to this
+      // method, there are few places that check for null and do something sane,
+      // the rest just throw an NPE and obscure the root cause.
       return null;
     }
   }

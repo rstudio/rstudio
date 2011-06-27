@@ -101,7 +101,7 @@ public class ResourceOracleImpl implements ResourceOracle {
     }
 
     @Override
-    public InputStream openContents() {
+    public InputStream openContents() throws IOException {
       return resource.openContents();
     }
 
@@ -121,6 +121,7 @@ public class ResourceOracleImpl implements ResourceOracle {
       this.pathPrefix = pathPrefix;
     }
 
+    @Override
     public int compareTo(ResourceData other) {
       // Rerooted takes precedence over not rerooted.
       if (this.resource.wasRerooted() != other.resource.wasRerooted()) {
@@ -393,12 +394,14 @@ public class ResourceOracleImpl implements ResourceOracle {
     this(getAllClassPathEntries(logger, classLoader));
   }
 
+  @Override
   public void clear() {
     exposedPathNames = Collections.emptySet();
     exposedResourceMap = Collections.emptyMap();
     exposedResources = Collections.emptySet();
   }
 
+  @Override
   public Set<String> getPathNames() {
     return exposedPathNames;
   }
@@ -407,10 +410,12 @@ public class ResourceOracleImpl implements ResourceOracle {
     return pathPrefixSet;
   }
 
+  @Override
   public Map<String, Resource> getResourceMap() {
     return exposedResourceMap;
   }
 
+  @Override
   public Set<Resource> getResources() {
     return exposedResources;
   }

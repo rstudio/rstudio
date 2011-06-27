@@ -50,7 +50,7 @@ class W3cDocumentBuilder extends DefaultHandler2 {
     this.logger = logger;
     document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
     eltStack.push(document);
-    resolver = new GwtResourceEntityResolver(resourceOracle, pathBase);
+    resolver = new GwtResourceEntityResolver(logger, resourceOracle, pathBase);
   }
 
   /**

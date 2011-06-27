@@ -15,6 +15,7 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.Util;
@@ -23,6 +24,8 @@ import com.google.gwt.dev.util.collect.Sets;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.util.Collections;
 import java.util.Map;
@@ -47,13 +50,16 @@ class GwtResourceEntityResolver implements EntityResolver {
   private String pathBase;
 
   private final ResourceOracle resourceOracle;
-
-  public GwtResourceEntityResolver(ResourceOracle resourceOracle,
+  private final TreeLogger logger;
+  
+  public GwtResourceEntityResolver(TreeLogger logger, ResourceOracle resourceOracle,
       String pathBase) {
+    this.logger = logger;
     this.resourceOracle = resourceOracle;
     this.pathBase = pathBase;
   }
 
+  @Override
   public InputSource resolveEntity(String publicId, String systemId) {
     String matchingPrefix = findMatchingPrefix(systemId);
 
@@ -69,7 +75,14 @@ class GwtResourceEntityResolver implements EntityResolver {
     }
 
     if (resource != null) {
-      String content = Util.readStreamAsString(resource.openContents());
+      String content;
+      try {
+        InputStream resourceStream = resource.openContents();
+        content = Util.readStreamAsString(resourceStream);
+      } catch (IOException ex) {
+        logger.log(TreeLogger.ERROR, "Error reading resource: " + resource.getLocation());
+        throw new RuntimeException(ex);
+      }
       InputSource inputSource = new InputSource(new StringReader(content));
       inputSource.setPublicId(publicId);
       inputSource.setSystemId(resource.getPath());

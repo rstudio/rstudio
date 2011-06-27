@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,9 +17,12 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.util.tools.Utility;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 
@@ -56,7 +59,15 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
   @Override
   public CachedCompilationUnit asCachedCompilationUnit() {
     if (sourceToken < 0) {
-      sourceToken = diskCache.transferFromStream(sourceFile.openContents());
+      InputStream in = null;
+      try {
+        in = sourceFile.openContents();
+        sourceToken = diskCache.transferFromStream(in);
+      } catch (IOException ex) {
+        throw new RuntimeException("Can't read resource:" + sourceFile.getLocation(), ex);
+      } finally {
+        Utility.close(in);
+      }
     }
     return new CachedCompilationUnit(this, sourceToken, astToken);
   }
@@ -79,12 +90,16 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
   @Deprecated
   @Override
   public String getSource() {
-    if (sourceToken < 0) {
-      String sourceCode = Shared.readSource(sourceFile);
-      sourceToken = diskCache.writeString(sourceCode);
-      return sourceCode;
-    } else {
-      return diskCache.readString(sourceToken);
+    try {
+      if (sourceToken < 0) {
+        String sourceCode = Shared.readSource(sourceFile);
+        sourceToken = diskCache.writeString(sourceCode);
+        return sourceCode;
+      } else {
+        return diskCache.readString(sourceToken);
+      }
+    } catch (IOException ex) {
+      throw new RuntimeException("Can't read resource:" + sourceFile, ex);
     }
   }
 

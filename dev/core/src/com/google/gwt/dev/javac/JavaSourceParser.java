@@ -19,9 +19,10 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.dev.javac.typemodel.JAbstractMethod;
 import com.google.gwt.dev.javac.typemodel.JClassType;
 import com.google.gwt.dev.javac.typemodel.JParameter;
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.Name.BinaryName;
+import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
@@ -31,6 +32,7 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.core.util.CodeSnippetParsingUtil;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
@@ -288,8 +290,13 @@ public class JavaSourceParser {
       Resource classSource = classSources.get(topType);
       String source = null;
       if (classSource != null) {
-        InputStream stream = classSource.openContents();
-        source = Util.readStreamAsString(stream);
+        try {
+          InputStream stream = classSource.openContents();
+          source = Util.readStreamAsString(stream);
+        } catch (IOException ex) {
+          throw new InternalCompilerException("Problem reading resource: "
+              + classSource.getLocation(), ex);
+        }
       }
       if (source == null) {
         // cache negative result so we don't try again

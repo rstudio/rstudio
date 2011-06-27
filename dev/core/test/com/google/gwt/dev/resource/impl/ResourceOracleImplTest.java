@@ -134,7 +134,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     }
 
     @SuppressWarnings("deprecation")
-    public void assertResourcesGetURL() {
+    public void assertResourcesGetURL() throws IOException {
       for (Resource resource : resources) {
         URL url = resource.getURL();
         assertNotNull("Resource " + resource + " had a null getURL()", url);
@@ -237,7 +237,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     testGetURLOnResourcesInCPE(cpe2zip);
   }
 
-  private void testGetURLOnResourcesInCPE(ClassPathEntry cpe) {
+  private void testGetURLOnResourcesInCPE(ClassPathEntry cpe) throws IOException {
     TreeLogger logger = createTestTreeLogger();
 
     ResourceOracleImpl oracle = createResourceOracle(cpe);
@@ -346,7 +346,6 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
    * multiple ResourceOracleImpls created from the same classloader return the
    * same list of ClassPathEntries.
    * 
-   * @throws MalformedURLException
    */
   public void testRemoveDuplicates() {
     TreeLogger logger = createTestTreeLogger();

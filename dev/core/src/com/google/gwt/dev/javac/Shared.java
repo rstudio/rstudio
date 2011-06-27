@@ -143,7 +143,7 @@ public class Shared {
     }
   }
 
-  public static String readSource(Resource sourceFile) {
+  public static String readSource(Resource sourceFile) throws IOException {
     InputStream contents = sourceFile.openContents();
     return Util.readStreamAsString(contents);
   }

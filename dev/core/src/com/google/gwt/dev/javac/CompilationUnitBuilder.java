@@ -134,9 +134,9 @@ public abstract class CompilationUnitBuilder {
        * as too stale than too fresh.
        */
       lastModifed = resource.getLastModified();
-      InputStream in = resource.openContents();
       ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
       try {
+        InputStream in = resource.openContents();
         Util.copy(in, out);
       } catch (IOException e) {
         throw new RuntimeException("Unexpected error reading resource '" + resource + "'", e);

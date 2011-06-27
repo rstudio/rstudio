@@ -71,13 +71,8 @@ public class ZipFileResource extends AbstractResource {
   }
 
   @Override
-  public InputStream openContents() {
-    try {
-      return classPathEntry.getZipFile().getInputStream(new ZipEntry(path));
-    } catch (IOException e) {
-      // The spec for this method says it can return null.
-      return null;
-    }
+  public InputStream openContents() throws IOException {
+    return classPathEntry.getZipFile().getInputStream(new ZipEntry(path));
   }
 
   @Override

@@ -47,6 +47,7 @@ public class DiskCache {
    */
 
   private static class Shutdown implements Runnable {
+    @Override
     public void run() {
       for (WeakReference<DiskCache> ref : shutdownList) {
         try {
@@ -136,11 +137,15 @@ public class DiskCache {
   }
 
   /**
-   * Write the rest of the data in an input stream to disk.
+   * Write the rest of the data in an input stream to disk. Note: this method
+   * does not close the InputStream.
+   * 
+   * @param in open stream containing the data to write to the disk cache.
    * 
    * @return a token to retrieve the data later
    */
   public synchronized long transferFromStream(InputStream in) {
+    assert in != null;
     byte[] buf = Util.takeThreadLocalBuf();
     try {
       long position = moveToEndPosition();

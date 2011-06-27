@@ -15,6 +15,7 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.resource.Resource;
@@ -44,7 +45,7 @@ public class GwtResourceEntityResolverTest extends TestCase {
 
   private MockResourceOracle oracle = new MockResourceOracle(xhtmlEntResource);
 
-  private GwtResourceEntityResolver resolver = new GwtResourceEntityResolver(
+  private GwtResourceEntityResolver resolver = new GwtResourceEntityResolver(TreeLogger.NULL,
       oracle, "");
 
   public void testAlmostCorrectAndOnceWorked() {

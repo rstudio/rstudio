@@ -17,7 +17,7 @@ package com.google.gwt.dev.resource.impl;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -29,8 +29,7 @@ public class FileResource extends AbstractResource {
   private final DirectoryClassPathEntry classPathEntry;
   private final File file;
 
-  public FileResource(DirectoryClassPathEntry classPathEntry,
-      String abstractPathName, File file) {
+  public FileResource(DirectoryClassPathEntry classPathEntry, String abstractPathName, File file) {
     assert (file.isFile()) : file + " is not a file.";
     this.classPathEntry = classPathEntry;
     this.abstractPathName = abstractPathName;
@@ -58,12 +57,8 @@ public class FileResource extends AbstractResource {
   }
 
   @Override
-  public InputStream openContents() {
-    try {
-      return new FileInputStream(file);
-    } catch (FileNotFoundException e) {
-      return null;
-    }
+  public InputStream openContents() throws IOException {
+    return new FileInputStream(file);
   }
 
   @Override

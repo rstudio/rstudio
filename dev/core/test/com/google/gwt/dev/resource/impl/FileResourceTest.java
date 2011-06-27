@@ -21,6 +21,7 @@ import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class FileResourceTest extends TestCase {
 
@@ -72,7 +73,15 @@ public class FileResourceTest extends TestCase {
     // Delete the file.
     f.delete();
 
-    // Get can't contents anymore, either.
-    assertNull(r.openContents());
+    /*
+     *  The resource is no longer available.  Check to make sure we can't access its contents
+     *  through the API. 
+     */
+    InputStream in = null;
+    try {
+      in = r.openContents();
+      fail("Open contents unexpectedly succeeded.");
+    } catch (IOException expected) {
+    }
   }
 }

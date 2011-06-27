@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.resource;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -81,11 +82,9 @@ public abstract class Resource {
   }
 
   /**
-   * Returns the contents of the resource. May return <code>null</code> if this
-   * {@link Resource} has been invalidated by its containing
-   * {@link ResourceOracle}. The caller is responsible for closing the stream.
+   * Returns the contents of the resource. The caller is responsible for closing the stream. 
    */
-  public abstract InputStream openContents();
+  public abstract InputStream openContents() throws IOException;
 
   /**
    * Overridden to finalize; always returns {@link #getLocation()}.

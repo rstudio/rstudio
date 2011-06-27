@@ -47,6 +47,7 @@ public class StandardPublicResource extends PublicResource {
       this.lastModified = lastModified;
     }
 
+    @SuppressWarnings("unused")
     @Override
     public InputStream getContents(TreeLogger logger)
         throws UnableToCompleteException {
@@ -80,7 +81,12 @@ public class StandardPublicResource extends PublicResource {
   @Override
   public InputStream getContents(TreeLogger logger)
       throws UnableToCompleteException {
-    return resource.openContents();
+    try {
+      return resource.openContents();
+    } catch (IOException ex) {
+      logger.log (TreeLogger.ERROR, "Problem reading resource: " + resource.getLocation(), ex);
+      throw new UnableToCompleteException();
+    }
   }
 
   @Override
