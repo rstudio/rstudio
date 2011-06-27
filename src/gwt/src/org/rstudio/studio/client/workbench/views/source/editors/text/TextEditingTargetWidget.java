@@ -14,6 +14,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -32,6 +34,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
@@ -78,12 +81,49 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(commands_.publishPDF().createToolbarButton());
 
       toolbar.addRightWidget(commands_.executeCode().createToolbarButton());
-      toolbar.addRightWidget(commands_.executeAllCode().createToolbarButton());
       toolbar.addRightSeparator();
       toolbar.addRightWidget(commands_.executeLastCode().createToolbarButton());
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.sourceActiveDocument().createToolbarButton());
-
+      final String SOURCE_BUTTON_TITLE = "Source the active document"; 
+      final UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
+      
+      final ToolbarButton sourceButton = new ToolbarButton(
+            "Source", 
+            commands_.sourceActiveDocument().getImageResource(), 
+            new ClickHandler() 
+            {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  if (uiPrefs.sourceWithEcho().getValue())
+                     commands_.sourceActiveDocumentWithEcho().execute();
+                  else
+                     commands_.sourceActiveDocument().execute();
+               }
+            });
+      
+      sourceButton.setTitle(SOURCE_BUTTON_TITLE);
+      toolbar.addRightWidget(sourceButton);
+      
+      uiPrefs.sourceWithEcho().addValueChangeHandler(
+                                       new ValueChangeHandler<Boolean>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            if (event.getValue())
+               sourceButton.setTitle(SOURCE_BUTTON_TITLE + " (with echo)");
+            else
+               sourceButton.setTitle(SOURCE_BUTTON_TITLE);
+         }
+      });
+            
+      ToolbarPopupMenu sourceMenu = new ToolbarPopupMenu();
+      sourceMenu.addItem(commands_.sourceActiveDocument().createMenuItem(false));
+      sourceMenu.addItem(commands_.sourceActiveDocumentWithEcho().createMenuItem(false));
+      
+      ToolbarButton sourceMenuButton = new ToolbarButton(sourceMenu, "");
+      toolbar.addRightWidget(sourceMenuButton);      
+            
       return toolbar;
    }
 

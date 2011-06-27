@@ -113,7 +113,8 @@ public class ConsoleDispatcher
  
    public void executeSourceCommand(String path, 
                                     String encoding, 
-                                    boolean contentKnownToBeAscii)
+                                    boolean contentKnownToBeAscii,
+                                    boolean echo)
    {
       String systemEncoding = session_.getSessionInfo().getSystemEncoding();
       boolean isSystemEncoding =
@@ -123,18 +124,22 @@ public class ConsoleDispatcher
                            path.replace("\\", "\\\\").replace("'", "\\'") +
                            "'";
 
-      String code = null;
+      StringBuilder code = new StringBuilder();
       
       if (contentKnownToBeAscii || isSystemEncoding)
-         code = "source(" + escapedPath + ")";
+         code.append("source(" + escapedPath);
       else
       {
-         code = "source.with.encoding(" + escapedPath + ", encoding='" +
-                   (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
-                   "')";
+         code.append("source.with.encoding(" + escapedPath + ", encoding='" +
+                     (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
+                     "'");
       }
       
-      eventBus_.fireEvent(new SendToConsoleEvent(code, true));
+      if (echo)
+         code.append(", echo=TRUE");
+      code.append(")");
+      
+      eventBus_.fireEvent(new SendToConsoleEvent(code.toString(), true));
    }
    
    private String normalizeEncoding(String str)

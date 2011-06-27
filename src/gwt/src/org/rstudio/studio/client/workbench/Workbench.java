@@ -233,6 +233,7 @@ public class Workbench implements BusyHandler,
                   
                   consoleDispatcher_.executeSourceCommand(input.getPath(), 
                                                           "UTF-8", 
+                                                          false,
                                                           false);
                     
                   commands_.activateConsole().execute();
