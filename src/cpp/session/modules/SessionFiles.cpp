@@ -91,7 +91,7 @@ void enqueFileChangeEvent(const source_control::StatusResult& statusResult,
 // NOTE: we explicitly fire removed events for directories because of
 // limitations in the way we use inotify in DirectoryMonitor. once we 
 // lift these restrictions we need to get rid of these explicit calls
-void enqueFileRemovedEvent(const FileInfo& fileInfo)
+void enqueDirectoryRemovedEvent(const FileInfo& fileInfo)
 {
    using core::system::FileChangeEvent;
    enqueFileChangeEvent(source_control::StatusResult(),
@@ -340,7 +340,7 @@ core::Error deleteFiles(const core::json::JsonRpcRequest& request,
       
       // post delete event (inotify doesn't pick up folder deletes)
       if (fileInfo.isDirectory())
-         enqueFileRemovedEvent(fileInfo);
+         enqueDirectoryRemovedEvent(fileInfo);
    }
 
    return Success() ;
@@ -454,7 +454,7 @@ Error moveFiles(const core::json::JsonRpcRequest& request,
       
       // enque delete event if necessary
       if (fileInfo.isDirectory())
-         enqueFileRemovedEvent(fileInfo);
+         enqueDirectoryRemovedEvent(fileInfo);
    }
 
    return Success() ;
@@ -486,7 +486,7 @@ core::Error renameFile(const core::json::JsonRpcRequest& request,
                            
    // generate delete event for folders (inotify doesn't do this right now)
    if (sourceFileInfo.isDirectory())
-      enqueFileRemovedEvent(sourceFileInfo);
+      enqueDirectoryRemovedEvent(sourceFileInfo);
    
    return Success() ;
 }
