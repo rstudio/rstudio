@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source;
+package org.rstudio.studio.client.workbench.ui.unsaved;
 
 import java.util.ArrayList;
 
@@ -18,7 +18,7 @@ import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.CheckboxCell;
@@ -44,14 +44,14 @@ import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 
-public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
+public class UnsavedChangesDialog extends ModalDialog<ArrayList<UnsavedChangesTarget>>
 {
    public UnsavedChangesDialog(
-         ArrayList<EditingTarget> dirtyTargets,
-         final OperationWithInput<ArrayList<EditingTarget>> saveOperation)
+         ArrayList<UnsavedChangesTarget> dirtyTargets,
+         final OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation)
    {
       super("Unsaved Changes", saveOperation);
-      editingTargets_ = dirtyTargets;
+      targets_ = dirtyTargets;
       
       setOkButtonCaption("Save Selected");
            	     
@@ -60,7 +60,7 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
          public void onClick(ClickEvent event)
          {
            closeDialog();
-           saveOperation.execute(new ArrayList<EditingTarget>());
+           saveOperation.execute(new ArrayList<UnsavedChangesTarget>());
          } 
       }));    
    }
@@ -69,14 +69,14 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
    protected Widget createMainWidget()
    {
       // create cell table
-      targetsCellTable_ = new CellTable<EditingTarget>(
+      targetsCellTable_ = new CellTable<UnsavedChangesTarget>(
                                           15,
                                           UnsavedChangesCellTableResources.INSTANCE,
                                           KEY_PROVIDER);
-      selectionModel_ = new MultiSelectionModel<EditingTarget>(KEY_PROVIDER);
+      selectionModel_ = new MultiSelectionModel<UnsavedChangesTarget>(KEY_PROVIDER);
       targetsCellTable_.setSelectionModel(
          selectionModel_, 
-         DefaultSelectionEventManager.<EditingTarget> createCheckboxManager());
+         DefaultSelectionEventManager.<UnsavedChangesTarget> createCheckboxManager());
       targetsCellTable_.setWidth("100%", true);
       
       // add columns
@@ -85,18 +85,18 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
       addNameAndPathColumn();
       
       // hook-up data provider 
-      dataProvider_ = new ListDataProvider<EditingTarget>();
-      dataProvider_.setList(editingTargets_);
+      dataProvider_ = new ListDataProvider<UnsavedChangesTarget>();
+      dataProvider_.setList(targets_);
       dataProvider_.addDataDisplay(targetsCellTable_);
-      targetsCellTable_.setPageSize(editingTargets_.size());
+      targetsCellTable_.setPageSize(targets_.size());
       
       // select all by default
-      for (EditingTarget editingTarget : dataProvider_.getList())
+      for (UnsavedChangesTarget editingTarget : dataProvider_.getList())
          selectionModel_.setSelected(editingTarget, true);
       
       // enclose cell table in scroll panel
       ScrollPanel scrollPanel = new ScrollPanel();
-      scrollPanel.setStylePrimaryName(RESOURCES.styles().editingTargetScrollPanel());
+      scrollPanel.setStylePrimaryName(RESOURCES.styles().targetScrollPanel());
       scrollPanel.setWidget(targetsCellTable_);
       
       // main widget
@@ -109,13 +109,13 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
       return panel;
    }
    
-   private Column<EditingTarget, Boolean> addSelectionColumn()
+   private Column<UnsavedChangesTarget, Boolean> addSelectionColumn()
    {
-      Column<EditingTarget, Boolean> checkColumn = 
-         new Column<EditingTarget, Boolean>(new CheckboxCell(true, false)) 
+      Column<UnsavedChangesTarget, Boolean> checkColumn = 
+         new Column<UnsavedChangesTarget, Boolean>(new CheckboxCell(true, false)) 
          {
             @Override
-            public Boolean getValue(EditingTarget object)
+            public Boolean getValue(UnsavedChangesTarget object)
             {
                return selectionModel_.isSelected(object);
             }   
@@ -128,13 +128,13 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
    }
   
    
-   private Column<EditingTarget, ImageResource> addIconColumn()
+   private Column<UnsavedChangesTarget, ImageResource> addIconColumn()
    {
-      Column<EditingTarget, ImageResource> iconColumn = 
-         new Column<EditingTarget, ImageResource>(new ImageResourceCell()) {
+      Column<UnsavedChangesTarget, ImageResource> iconColumn = 
+         new Column<UnsavedChangesTarget, ImageResource>(new ImageResourceCell()) {
 
             @Override
-            public ImageResource getValue(EditingTarget object)
+            public ImageResource getValue(UnsavedChangesTarget object)
             {
                return object.getIcon();
             }
@@ -145,13 +145,13 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
       return iconColumn;
    }
     
-   private class NameAndPathCell extends AbstractCell<EditingTarget>
+   private class NameAndPathCell extends AbstractCell<UnsavedChangesTarget>
    {
 
       @Override
       public void render(
             com.google.gwt.cell.client.Cell.Context context,
-            EditingTarget value, SafeHtmlBuilder sb)
+            UnsavedChangesTarget value, SafeHtmlBuilder sb)
       {
          if (value != null) 
          {
@@ -160,17 +160,14 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
            String path = value.getPath();
            if (path != null)
            {
-              SafeHtmlUtil.appendDiv(sb, 
-                                     styles.targetName(), 
-                                     value.getName().getValue());
-           
+              SafeHtmlUtil.appendDiv(sb, styles.targetName(), value.getTitle());
               SafeHtmlUtil.appendDiv(sb, styles.targetPath(), path); 
            }
            else
            {
               SafeHtmlUtil.appendDiv(sb, 
                                      styles.targetUntitled(), 
-                                     value.getName().getValue());
+                                     value.getTitle());
            }
          }
          
@@ -178,10 +175,10 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
       
    }
    
-   private IdentityColumn<EditingTarget> addNameAndPathColumn()
+   private IdentityColumn<UnsavedChangesTarget> addNameAndPathColumn()
    {
-      IdentityColumn<EditingTarget> nameAndPathColumn = 
-         new IdentityColumn<EditingTarget>(new NameAndPathCell());
+      IdentityColumn<UnsavedChangesTarget> nameAndPathColumn = 
+         new IdentityColumn<UnsavedChangesTarget>(new NameAndPathCell());
       
       targetsCellTable_.addColumn(nameAndPathColumn);
       targetsCellTable_.setColumnWidth(nameAndPathColumn, 350, Unit.PX);
@@ -189,20 +186,20 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
    }
    
    @Override
-   protected ArrayList<EditingTarget> collectInput()
+   protected ArrayList<UnsavedChangesTarget> collectInput()
    {
-      return new ArrayList<EditingTarget>(selectionModel_.getSelectedSet());
+      return new ArrayList<UnsavedChangesTarget>(selectionModel_.getSelectedSet());
    }
 
    @Override
-   protected boolean validate(ArrayList<EditingTarget> input)
+   protected boolean validate(ArrayList<UnsavedChangesTarget> input)
    {
       return true;
    }
    
    static interface Styles extends CssResource
    {
-      String editingTargetScrollPanel();
+      String targetScrollPanel();
       String captionLabel();
       String targetName();
       String targetPath();
@@ -222,20 +219,20 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<EditingTarget>>
       RESOURCES.styles().ensureInjected();
    }
    
-   private static final ProvidesKey<EditingTarget> KEY_PROVIDER = 
-      new ProvidesKey<EditingTarget>() {
+   private static final ProvidesKey<UnsavedChangesTarget> KEY_PROVIDER = 
+      new ProvidesKey<UnsavedChangesTarget>() {
          @Override
-         public Object getKey(EditingTarget item)
+         public Object getKey(UnsavedChangesTarget item)
          {
             return item.getId();
          }
     };
    
-   private final ArrayList<EditingTarget> editingTargets_;
+   private final ArrayList<UnsavedChangesTarget> targets_;
    
-   private CellTable<EditingTarget> targetsCellTable_; 
-   private ListDataProvider<EditingTarget> dataProvider_;
-   private MultiSelectionModel<EditingTarget> selectionModel_;
+   private CellTable<UnsavedChangesTarget> targetsCellTable_; 
+   private ListDataProvider<UnsavedChangesTarget> dataProvider_;
+   private MultiSelectionModel<UnsavedChangesTarget> selectionModel_;
 
 
 }

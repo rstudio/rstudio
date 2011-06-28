@@ -23,13 +23,15 @@ import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import java.util.HashSet;
 
 public interface EditingTarget extends IsWidget,
                                        HasEnsureVisibleHandlers,
-                                       HasCloseHandlers<Void>
+                                       HasCloseHandlers<Void>,
+                                       UnsavedChangesTarget
 {
    String getId();
 
@@ -37,6 +39,7 @@ public interface EditingTarget extends IsWidget,
     * Used as the tab name
     */
    HasValue<String> getName();
+   String getTitle();
    String getPath();
    ImageResource getIcon();
    String getTabTooltip();

@@ -74,6 +74,11 @@ public class UrlContentEditingTarget implements EditingTarget
       String title = getContentTitle();
       return new Value<String>(title);
    }
+   
+   public String getTitle()
+   {
+      return getContentTitle();
+   }
 
    public String getPath()
    {

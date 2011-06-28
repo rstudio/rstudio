@@ -51,6 +51,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
@@ -105,8 +106,8 @@ public class Source implements InsertSourceHandler,
       void showOverflowPopup();
       
       void showUnsavedChangesDialog(
-            ArrayList<EditingTarget> dirtyTargets,
-            OperationWithInput<ArrayList<EditingTarget>> saveOperation);
+            ArrayList<UnsavedChangesTarget> dirtyTargets,
+            OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation);
 
       void ensureVisible();
 
@@ -517,31 +518,50 @@ public class Source implements InsertSourceHandler,
    }
    
    
-   private void saveEditingTargetsWithPrompt(ArrayList<EditingTarget> targets,
-                                             final Command onCompleted)
+   private void saveEditingTargetsWithPrompt(
+                                       ArrayList<EditingTarget> editingTargets,
+                                       final Command onCompleted)
    {
       // execute on completed right away if the list is empty
-      if (targets.size() ==  0)
+      if (editingTargets.size() ==  0)
       {
          onCompleted.execute();
       }
       
       // if there is just one thing dirty then go straight to the save dialog
-      else if (targets.size() == 1)
+      else if (editingTargets.size() == 1)
       {
-         targets.get(0).saveWithPrompt(onCompleted);
+         editingTargets.get(0).saveWithPrompt(onCompleted);
       }
       
       // otherwise use the multi save changes dialog
       else
       {
+         // convert to UnsavedChangesTarget collection
+         ArrayList<UnsavedChangesTarget> unsavedTargets = 
+                                    new ArrayList<UnsavedChangesTarget>();
+         unsavedTargets.addAll(editingTargets);
+         
+         // show dialog
          view_.showUnsavedChangesDialog(
-            targets, 
-            new OperationWithInput<ArrayList<EditingTarget>>() 
+            unsavedTargets, 
+            new OperationWithInput<ArrayList<UnsavedChangesTarget>>() 
             {
                @Override
-               public void execute(ArrayList<EditingTarget> saveTargets)
+               public void execute(ArrayList<UnsavedChangesTarget> targets)
                {
+                  // convert back to editing targets
+                  ArrayList<EditingTarget> saveTargets = 
+                                                new ArrayList<EditingTarget>();
+                  for (UnsavedChangesTarget target: targets)
+                  {
+                     EditingTarget saveTarget = 
+                                       getEditingTargetForId(target.getId());
+                     if (saveTarget != null)
+                        saveTargets.add(saveTarget);
+                  }
+                    
+                  // execute the save
                   cpsExecuteForEachEditor(
                      
                      // targets the user chose to save
@@ -566,6 +586,16 @@ public class Source implements InsertSourceHandler,
       }
    }
           
+   
+   private EditingTarget getEditingTargetForId(String id)
+   {
+      for (EditingTarget target : editors_)
+         if (id.equals(target.getId()))
+            return target;
+
+      return null;
+   }
+   
    
    @Handler
    public void onCloseAllSourceDocs()

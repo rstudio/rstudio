@@ -1022,6 +1022,11 @@ public class TextEditingTarget implements EditingTarget
    {
       return name_; 
    }
+   
+   public String getTitle()
+   {
+      return getName().getValue();
+   }
 
    public String getPath()
    {

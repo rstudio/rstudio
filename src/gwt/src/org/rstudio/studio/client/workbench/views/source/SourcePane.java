@@ -37,8 +37,9 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.BeforeShowCallback;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.AutoGlassPanel;
+import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.Source.Display;
-import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 
 public class SourcePane extends Composite implements Display,
                                                      HasEnsureVisibleHandlers,
@@ -240,8 +241,8 @@ public class SourcePane extends Composite implements Display,
    
    @Override
    public void showUnsavedChangesDialog(
-         ArrayList<EditingTarget> dirtyTargets,
-         OperationWithInput<ArrayList<EditingTarget>> saveOperation)
+         ArrayList<UnsavedChangesTarget> dirtyTargets,
+         OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation)
    {
       new UnsavedChangesDialog(dirtyTargets, saveOperation).showModal();
    }
