@@ -54,7 +54,8 @@ public class GwtSafeStylesUtilsTest extends GWTTestCase {
       "escaped\\;semi-colon", "escaped\\:colon", "url(http://localhost)",
       "url('http://withSingleQuotes')", "url(\"http://withDoubleQuotes\")",
       "url(http://withSemiColon;)", "url(http://withUnmatchedBracket{[)",
-      "url(http://withUnmatchedCloseBracket}])", "end-in-escaped-backslash\\\\"};
+      "url(http://withUnmatchedCloseBracket}])", "end-in-escaped-backslash\\\\", "u-near-end-u",
+      "url-near-end-url", "absolute"};
 
   private static Boolean isAssertionEnabled;
 

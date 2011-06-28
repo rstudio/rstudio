@@ -189,7 +189,7 @@ public class SafeStylesHostedModeUtils {
         // Found an open quote.
         inQuote = ch;
         inQuotePos = i;
-      } else if ((ch == 'u' || ch == 'U') && value.length() >= i + 3
+      } else if ((ch == 'u' || ch == 'U') && value.length() >= i + 4
           && value.substring(i, i + 4).equalsIgnoreCase("url(")) {
         // Starting a URL.
         inUrl = true;

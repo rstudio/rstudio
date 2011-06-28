@@ -21,6 +21,7 @@
    <inherits name="com.google.gwt.animation.Animation"/>
    <inherits name="com.google.gwt.canvas.Canvas"/>
    <inherits name="com.google.gwt.core.Core"/>
+   <inherits name='com.google.gwt.dom.builder.DomBuilder'/>
    <inherits name="com.google.gwt.editor.Editor" />
    <inherits name="com.google.gwt.event.Event"/>
    <inherits name="com.google.gwt.geolocation.Geolocation" />
