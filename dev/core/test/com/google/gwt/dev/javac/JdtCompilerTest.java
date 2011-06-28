@@ -72,7 +72,7 @@ public class JdtCompilerTest extends TestCase {
   private void addAll(Collection<CompilationUnitBuilder> units,
       Resource... sourceFiles) {
     for (Resource sourceFile : sourceFiles) {
-      units.add(new ResourceCompilationUnitBuilder(sourceFile));
+      units.add(CompilationUnitBuilder.create(sourceFile));
     }
   }
 }

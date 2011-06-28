@@ -16,8 +16,6 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.javac.CompilationUnitBuilder.GeneratedCompilationUnitBuilder;
-import com.google.gwt.dev.javac.CompilationUnitBuilder.ResourceCompilationUnitBuilder;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
 import com.google.gwt.dev.javac.JdtCompiler.UnitProcessor;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
@@ -411,10 +409,8 @@ public class CompilationStateBuilder {
 
     // For each incoming Java source file...
     for (Resource resource : resources) {
-      String typeName = Shared.toTypeName(resource.getPath());
       // Create a builder for all incoming units.
-      ResourceCompilationUnitBuilder builder =
-          new ResourceCompilationUnitBuilder(typeName, resource);
+      CompilationUnitBuilder builder = CompilationUnitBuilder.create(resource);
 
       CompilationUnit cachedUnit = unitCache.find(resource.getPathPrefix() + resource.getPath());
 
@@ -474,13 +470,10 @@ public class CompilationStateBuilder {
     // For each incoming generated Java source file...
     for (GeneratedUnit generatedUnit : generatedUnits) {
       // Create a builder for all incoming units.
-      GeneratedCompilationUnitBuilder builder = new GeneratedCompilationUnitBuilder(generatedUnit);
-      // Try to get an existing unit from the cache.
-      ContentId contentId =
-          new ContentId(generatedUnit.getTypeName(), generatedUnit.getStrongHash());
+      CompilationUnitBuilder builder = CompilationUnitBuilder.create(generatedUnit);
 
       // Look for units previously compiled
-      CompilationUnit cachedUnit = unitCache.find(contentId);
+      CompilationUnit cachedUnit = unitCache.find(builder.getContentId());
       if (cachedUnit != null) {
         cachedUnits.put(builder, cachedUnit);
         compileMoreLater.addValidUnit(cachedUnit);
