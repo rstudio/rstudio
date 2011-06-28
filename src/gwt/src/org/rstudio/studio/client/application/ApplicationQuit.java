@@ -1,14 +1,11 @@
 package org.rstudio.studio.client.application;
 
-import java.util.ArrayList;
-
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -26,7 +23,6 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
-import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 import com.google.gwt.resources.client.ImageResource;
@@ -72,6 +68,41 @@ public class ApplicationQuit implements SaveActionChangedHandler
    @Handler
    public void onQuitSession()
    {
+      // prompt only for unsaved environment (see below for an implementation
+      // of unsaved prompting that also includes edited source documents)
+      
+      if (saveAction_.getAction() == SaveAction.SAVEASK)
+      {
+         // confirm quit and do it
+         String prompt = "Save workspace image to " + 
+                         workbenchContext_.getREnvironmentPath() + "?";
+         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+                                         "Quit R Session",
+                                         prompt,
+                                         true,
+                                         new QuitOperation(true),
+                                         new QuitOperation(false),
+                                         "Save",
+                                         "Don't Save",
+                                         true);        
+      }
+      else
+      {
+         new QuitCommand(saveAction_.getAction() == SaveAction.SAVE).execute();
+      }
+      
+      
+      /* 
+       * NOTE: This is the implementation of unsaved change prompting for
+       * edited files. This could be restored for either optional prompting
+       * or required prompting. Note however if we do use this in preference
+       * to the above then we should do a careful review of the 
+       * Source.handleUnsavedChangesBefore exit method to make sure that 
+       * the exit sequence behaves sanely. We also would need to implement
+       * the unsaved change prompting for the q() code path (note we could
+       * choose not to do this if the unsaved change prompting was optional)
+       * 
+       * 
       // see what the unsaved changes situation is and prompt accordingly
       final int saveAction = saveAction_.getAction();
       ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
@@ -140,9 +171,11 @@ public class ApplicationQuit implements SaveActionChangedHandler
             });
          dlg.showModal();
       }
+      */
    }
    
    
+   @SuppressWarnings("unused")
    private UnsavedChangesTarget globalEnvTarget_ = new UnsavedChangesTarget()
    {
       @Override
@@ -272,6 +305,7 @@ public class ApplicationQuit implements SaveActionChangedHandler
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final WorkbenchContext workbenchContext_;
+   @SuppressWarnings("unused")
    private final SourceShim sourceShim_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();
