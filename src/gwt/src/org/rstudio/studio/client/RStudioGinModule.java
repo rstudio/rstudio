@@ -17,6 +17,8 @@ import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+
+import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -100,6 +102,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Session.class).in(Singleton.class) ;
       bind(Projects.class).asEagerSingleton();
       bind(WorkbenchContext.class).asEagerSingleton();
+      bind(ApplicationQuit.class).asEagerSingleton();
       bind(ClientStateUpdater.class).asEagerSingleton();
       bind(Commands.class).in(Singleton.class);
       bind(DefaultCRANMirror.class).in(Singleton.class);

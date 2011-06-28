@@ -165,9 +165,30 @@ public abstract class MessageDisplay
                                 ProgressOperation noOperation,
                                 boolean yesIsDefault)
    {
+      showYesNoMessage(type, 
+                       caption, 
+                       message, 
+                       includeCancel, 
+                       yesOperation,
+                       noOperation,
+                       "Yes",
+                       "No",
+                       yesIsDefault);
+   }
+   
+   public void showYesNoMessage(int type,
+                                String caption,
+                                String message,
+                                boolean includeCancel,
+                                ProgressOperation yesOperation,
+                                ProgressOperation noOperation,
+                                String yesLabel,
+                                String noLabel,
+                                boolean yesIsDefault)
+   {
       DialogBuilder dialog = createDialog(type, caption, message)
-            .addButton("Yes", yesOperation)
-            .addButton("No", noOperation)
+            .addButton(yesLabel, yesOperation)
+            .addButton(noLabel, noOperation)
             .setDefaultButton(yesIsDefault ? 0 : 1);
       if (includeCancel)
          dialog.addButton("Cancel");

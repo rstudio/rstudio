@@ -47,10 +47,11 @@ import com.google.gwt.view.client.ProvidesKey;
 public class UnsavedChangesDialog extends ModalDialog<ArrayList<UnsavedChangesTarget>>
 {
    public UnsavedChangesDialog(
+         String title,
          ArrayList<UnsavedChangesTarget> dirtyTargets,
          final OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation)
    {
-      super("Unsaved Changes", saveOperation);
+      super(title, saveOperation);
       targets_ = dirtyTargets;
       
       setOkButtonCaption("Save Selected");
@@ -102,7 +103,7 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<UnsavedChangesTa
       // main widget
       VerticalPanel panel = new VerticalPanel();
       Label captionLabel = new Label(
-                           "The following documents have unsaved changes:");
+                           "The following files have unsaved changes:");
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       panel.add(captionLabel);
       panel.add(scrollPanel);      

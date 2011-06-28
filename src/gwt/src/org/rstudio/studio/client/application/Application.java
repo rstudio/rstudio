@@ -30,39 +30,28 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
-import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.CsvWriter;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.events.BarrierReleasedEvent;
-import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.events.*;
-import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.Workbench;
-import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 @Singleton
@@ -80,8 +69,6 @@ public class Application implements ApplicationEventHandlers,
                       Server server,
                       Session session,
                       Projects projects,
-                      WorkbenchContext workbenchContext,
-                      SourceShim sourceShim,
                       Provider<UIPrefs> uiPrefs,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
@@ -94,8 +81,6 @@ public class Application implements ApplicationEventHandlers,
       globalDisplay_ = globalDisplay;
       events_ = events;
       session_ = session;
-      workbenchContext_ = workbenchContext;
-      sourceShim_ = sourceShim;
       commands_ = commands;
       clientStateUpdater_ = clientStateUpdater;
       server_ = server;
@@ -118,7 +103,6 @@ public class Application implements ApplicationEventHandlers,
       events.addHandler(ServerUnavailableEvent.TYPE, this);
       events.addHandler(InvalidClientVersionEvent.TYPE, this);
       events.addHandler(ServerOfflineEvent.TYPE, this);
-      events.addHandler(SaveActionChangedEvent.TYPE, this);
       
       // set uncaught exception handler (first save default so we can call it)
       defaultUncaughtExceptionHandler_ = GWT.getUncaughtExceptionHandler();
@@ -247,113 +231,6 @@ public class Application implements ApplicationEventHandlers,
       $wnd.welfkjweg();
    }-*/;
    
-   
-   private void desktopQuitR(final boolean saveChanges)
-   {
-      final GlobalProgressDelayer progress = new GlobalProgressDelayer(
-            globalDisplay_,
-            "Quitting R Session...");
-
-      // Use a barrier and LastChanceSaveEvent to allow source documents
-      // and client state to be synchronized before quitting.
-
-      Barrier barrier = new Barrier();
-      barrier.addBarrierReleasedHandler(new BarrierReleasedHandler()
-      {
-         public void onBarrierReleased(BarrierReleasedEvent event)
-         {
-            // All last chance save operations have completed (or possibly
-            // failed). Now do the real quit.
-
-            server_.quitSession(
-                  saveChanges,
-                  new VoidServerRequestCallback(
-                        globalDisplay_.getProgressIndicator("Error Quitting R")) 
-                  {
-
-                     @Override
-                     public void onResponseReceived(Void response)
-                     {
-                        progress.dismiss();
-                        super.onResponseReceived(response);
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        progress.dismiss();
-                        super.onError(error);
-                     }
-                  });
-         }
-      });
-
-      // We acquire a token to make sure that the barrier doesn't fire before
-      // all the LastChanceSaveEvent listeners get a chance to acquire their
-      // own tokens.
-      Token token = barrier.acquire();
-      try
-      {
-         events_.fireEvent(new LastChanceSaveEvent(barrier));
-      }
-      finally
-      {
-         token.release();
-      }
-   }
-  
-   
-   @Handler
-   public void onQuitSession()
-   {
-      // quit session operation paramaterized by whether we save changes
-      class QuitOperation implements ProgressOperation
-      {
-         QuitOperation(boolean saveChanges)
-         {
-            saveChanges_ = saveChanges;
-         }
-         public void execute(ProgressIndicator indicator)
-         {
-            if (Desktop.isDesktop())
-            {
-               indicator.onCompleted();
-               desktopQuitR(saveChanges_);
-            }
-            else
-            {
-               indicator.onProgress("Quitting R Session...");
-               server_.quitSession(saveChanges_,
-                                new VoidServerRequestCallback(indicator));
-            }
-         }
-         private final boolean saveChanges_ ;
-      }
-
-      if (saveAction_.getAction() == SaveAction.SAVEASK) 
-      {    
-         // confirm quit and do it
-         String prompt = "Save workspace image to " + 
-                         workbenchContext_.getREnvironmentPath() + "?";
-         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-                                         "Quit R Session",
-                                         prompt,
-                                         true,
-                                         new QuitOperation(true),
-                                         new QuitOperation(false),
-                                         true);
-      }
-      else
-      {
-         // do the quit without prompting 
-         ProgressIndicator indicator =
-            globalDisplay_.getProgressIndicator("Error Quitting R");
-
-         boolean save = saveAction_.getAction() == SaveAction.SAVE;
-         new QuitOperation(save).execute(indicator);
-      }
-   }
-
    @Handler
    public void onShowRequestLog()
    {
@@ -389,12 +266,7 @@ public class Application implements ApplicationEventHandlers,
       Element el = DomUtils.getActiveElement();
       DomUtils.dump(el, "Focused Element: ");
    }
-  
-   public void onSaveActionChanged(SaveActionChangedEvent event)
-   {
-      saveAction_ = event.getAction();
-   }
-   
+ 
    
    public void onSessionSerialization(SessionSerializationEvent event)
    {
@@ -705,8 +577,6 @@ public class Application implements ApplicationEventHandlers,
    private final GlobalDisplay globalDisplay_ ;
    private final EventBus events_;
    private final Session session_;
-   private final WorkbenchContext workbenchContext_;
-   private final SourceShim sourceShim_;
    private final Commands commands_;
    private final Provider<ClientStateUpdater> clientStateUpdater_;
    private final Server server_;
@@ -717,8 +587,6 @@ public class Application implements ApplicationEventHandlers,
    private final Provider<AceThemes> pAceThemes_;
 
    private ClientStateUpdater clientStateUpdaterInstance_;
-   
-   private SaveAction saveAction_ = SaveAction.saveAsk();
    
    private final UncaughtExceptionHandler defaultUncaughtExceptionHandler_ ;
 }

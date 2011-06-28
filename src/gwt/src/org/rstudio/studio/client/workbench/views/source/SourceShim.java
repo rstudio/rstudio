@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import java.util.ArrayList;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
@@ -32,6 +34,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 
@@ -94,6 +97,8 @@ public class SourceShim extends Composite
          parent_.panel_.add(child);
          parent_.panel_.setWidgetTopBottom(child, 0, Unit.PX, 0, Unit.PX);
          parent_.panel_.setWidgetLeftRight(child, 0, Unit.PX, 0, Unit.PX);
+         
+         parent_.setSource(obj);
       }
 
       public void setParent(SourceShim parent)
@@ -163,6 +168,34 @@ public class SourceShim extends Composite
             ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
    }
    
+   public ArrayList<UnsavedChangesTarget> getUnsavedChanges()
+   {
+      if (source_ != null)
+         return source_.getUnsavedChanges();
+      else
+         return new ArrayList<UnsavedChangesTarget>();
+   }
+   
+   public void saveWithPrompt(UnsavedChangesTarget target, Command onCompleted)
+   {
+      if (source_ != null)
+         source_.saveWithPrompt(target, onCompleted);
+   }
+   
+   public void handleUnsavedChangesBeforeExit(
+                        ArrayList<UnsavedChangesTarget> saveTargets,
+                        Command onCompleted)
+   {
+      if (source_ != null)
+         source_.handleUnsavedChangesBeforeExit(saveTargets, onCompleted);
+   }
+   
+   void setSource(Source source)
+   {
+      source_ = source;
+   }
+   
    private final LayoutPanel panel_;
    private AsyncSource asyncSource_;
+   private Source source_ = null;
 }

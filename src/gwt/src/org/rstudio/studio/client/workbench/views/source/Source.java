@@ -106,6 +106,7 @@ public class Source implements InsertSourceHandler,
       void showOverflowPopup();
       
       void showUnsavedChangesDialog(
+            String title,
             ArrayList<UnsavedChangesTarget> dirtyTargets,
             OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation);
 
@@ -519,6 +520,7 @@ public class Source implements InsertSourceHandler,
    
    
    private void saveEditingTargetsWithPrompt(
+                                       String title,
                                        ArrayList<EditingTarget> editingTargets,
                                        final Command onCompleted)
    {
@@ -544,46 +546,53 @@ public class Source implements InsertSourceHandler,
          
          // show dialog
          view_.showUnsavedChangesDialog(
+            title,
             unsavedTargets, 
             new OperationWithInput<ArrayList<UnsavedChangesTarget>>() 
             {
                @Override
                public void execute(ArrayList<UnsavedChangesTarget> targets)
                {
-                  // convert back to editing targets
-                  ArrayList<EditingTarget> saveTargets = 
-                                                new ArrayList<EditingTarget>();
-                  for (UnsavedChangesTarget target: targets)
-                  {
-                     EditingTarget saveTarget = 
-                                       getEditingTargetForId(target.getId());
-                     if (saveTarget != null)
-                        saveTargets.add(saveTarget);
-                  }
-                    
-                  // execute the save
-                  cpsExecuteForEachEditor(
-                     
-                     // targets the user chose to save
-                     saveTargets, 
-                     
-                     // save each editor
-                     new CPSEditingTargetCommand()
-                     {
-                        @Override
-                        public void execute(EditingTarget saveTarget, 
-                                            Command continuation)
-                        {         
-                           saveTarget.save(continuation); 
-                        }
-                     },
-                     
-                     // onCompleted at the end
-                     onCompleted
-                  );          
+                  saveChanges(targets, onCompleted);
                }
             }); 
       }
+   }
+   
+   private void saveChanges(ArrayList<UnsavedChangesTarget> targets,
+                            Command onCompleted)
+   {
+      // convert back to editing targets
+      ArrayList<EditingTarget> saveTargets = 
+                                    new ArrayList<EditingTarget>();
+      for (UnsavedChangesTarget target: targets)
+      {
+         EditingTarget saveTarget = 
+                           getEditingTargetForId(target.getId());
+         if (saveTarget != null)
+            saveTargets.add(saveTarget);
+      }
+        
+      // execute the save
+      cpsExecuteForEachEditor(
+         
+         // targets the user chose to save
+         saveTargets, 
+         
+         // save each editor
+         new CPSEditingTargetCommand()
+         {
+            @Override
+            public void execute(EditingTarget saveTarget, 
+                                Command continuation)
+            {         
+               saveTarget.save(continuation); 
+            }
+         },
+         
+         // onCompleted at the end
+         onCompleted
+      );          
    }
           
    
@@ -596,7 +605,7 @@ public class Source implements InsertSourceHandler,
       return null;
    }
    
-   
+ 
    @Handler
    public void onCloseAllSourceDocs()
    { 
@@ -625,10 +634,86 @@ public class Source implements InsertSourceHandler,
       };
       
       // save targets
-      saveEditingTargetsWithPrompt(dirtyTargets, 
+      saveEditingTargetsWithPrompt("Close All",
+                                   dirtyTargets, 
                                    closeAllTabsCommand);
       
    }
+   
+   public ArrayList<UnsavedChangesTarget> getUnsavedChanges()
+   {
+      ArrayList<UnsavedChangesTarget> targets = 
+                                       new ArrayList<UnsavedChangesTarget>();
+      for (EditingTarget target : editors_)
+         if (target.dirtyState().getValue())
+            targets.add(target);
+      
+      return targets;
+   }
+   
+   public void saveWithPrompt(UnsavedChangesTarget target, Command onCompleted)
+   {
+      EditingTarget editingTarget = getEditingTargetForId(target.getId());
+      if (editingTarget != null)
+         editingTarget.saveWithPrompt(onCompleted);
+   }
+   
+   public void handleUnsavedChangesBeforeExit(
+                        ArrayList<UnsavedChangesTarget> saveTargets,
+                        final Command onCompleted)
+   {
+      // first handle saves, then revert unsaved, then callback on completed
+      saveChanges(saveTargets, new Command() {
+
+         @Override
+         public void execute()
+         {
+            // revert unsaved
+            revertUnsavedTargets(onCompleted);
+         }
+      });   
+   }
+   
+   private void revertUnsavedTargets(Command onCompleted)
+   {
+      // collect up unsaved targets
+      ArrayList<EditingTarget> unsavedTargets =  new ArrayList<EditingTarget>();
+      for (EditingTarget target : editors_)
+         if (target.dirtyState().getValue())
+            unsavedTargets.add(target);
+      
+      // revert all of them
+      cpsExecuteForEachEditor(
+         
+         // targets the user chose not to save
+         unsavedTargets, 
+         
+         // save each editor
+         new CPSEditingTargetCommand()
+         {
+            @Override
+            public void execute(EditingTarget saveTarget, 
+                                Command continuation)
+            {
+               if (saveTarget.getPath() != null)
+               {
+                  // file backed document -- revert it
+                  saveTarget.revertChanges(continuation);
+               }
+               else
+               {
+                  // untitled document -- just close the tab non-interactively
+                  view_.closeTab(saveTarget.asWidget(), false, continuation);
+               }
+            }
+         },
+         
+         // onCompleted at the end
+         onCompleted
+      );          
+            
+   }
+   
    
    @Handler
    public void onOpenSourceDoc()

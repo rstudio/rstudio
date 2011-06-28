@@ -813,6 +813,11 @@ public class TextEditingTarget implements EditingTarget
                       "Don't Save",
                       true);   
    }
+   
+   public void revertChanges(Command onCompleted)
+   {
+      docUpdateSentinel_.revert(onCompleted);
+   }
 
    private void saveThenExecute(String encodingOverride, final Command command)
    {

@@ -21,7 +21,6 @@ public interface ApplicationEventHandlers extends LogoutRequestedHandler,
                                                   ServerUnavailableHandler,
                                                   ClientDisconnectedHandler,
                                                   InvalidClientVersionHandler,
-                                                  ServerOfflineHandler,
-                                                  SaveActionChangedHandler
+                                                  ServerOfflineHandler
 {
 }

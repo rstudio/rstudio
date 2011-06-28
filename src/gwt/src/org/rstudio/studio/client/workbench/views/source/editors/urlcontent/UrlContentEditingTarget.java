@@ -183,6 +183,11 @@ public class UrlContentEditingTarget implements EditingTarget
    {
       onCompleted.execute();
    }
+   
+   public void revertChanges(Command onCompleted)
+   {
+      onCompleted.execute();
+   }
 
    public void initialize(SourceDocument document,
                           FileSystemContext fileContext,

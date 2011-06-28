@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.source.model;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
@@ -42,7 +43,15 @@ public class DocUpdateSentinel
 {
    private class ReopenFileCallback extends ServerRequestCallback<SourceDocument>
    {
-
+      public ReopenFileCallback()
+      {
+      }
+      
+      public ReopenFileCallback(Command onCompleted)
+      {
+         onCompleted_ = onCompleted;
+      }
+      
       @Override
       public void onResponseReceived(
             SourceDocument response)
@@ -53,6 +62,9 @@ public class DocUpdateSentinel
 
          if (progress_ != null)
             progress_.onCompleted();
+         
+         if (onCompleted_ != null)
+            onCompleted_.execute();
       }
 
       @Override
@@ -63,6 +75,8 @@ public class DocUpdateSentinel
             progress_.onError(error.getUserMessage());
          }
       }
+      
+      private Command onCompleted_ = null;
    }
 
    public DocUpdateSentinel(SourceServerOperations server,
@@ -442,10 +456,15 @@ public class DocUpdateSentinel
 
    public void revert()
    {
+      revert(null);
+   }
+   
+   public void revert(Command onCompleted)
+   {
       server_.revertDocument(
             sourceDoc_.getId(),
             sourceDoc_.getType(),
-            new ReopenFileCallback());
+            new ReopenFileCallback(onCompleted));
    }
 
    public void reopenWithEncoding(String encoding)
