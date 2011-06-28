@@ -36,4 +36,7 @@ public interface VCSServerOperations
                      boolean amend,
                      boolean signOff,
                      ServerRequestCallback<Void> requestCallback);
+
+   void vcsDiffFile(String path,
+                    ServerRequestCallback<String> requestCallback);
 }

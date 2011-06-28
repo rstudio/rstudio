@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.CellTable.Style;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -38,6 +37,10 @@ public class VCSPane extends WorkbenchPane implements Display
       @Override
       @Source("VCSPaneCellTableStyle.css")
       Style cellTableStyle();
+   }
+
+   protected interface Style extends CellTable.Style
+   {
    }
 
    @Inject

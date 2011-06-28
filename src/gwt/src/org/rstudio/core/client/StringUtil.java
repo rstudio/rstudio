@@ -18,9 +18,12 @@ import com.google.gwt.i18n.client.NumberFormat;
 import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 
 public class StringUtil
 {
@@ -234,6 +237,55 @@ public class StringUtil
          }
       }
       return path;
+   }
+
+   public static Iterable<String> getLineIterator(final String text)
+   {
+      return new Iterable<String>()
+      {
+         @Override
+         public Iterator<String> iterator()
+         {
+            return new Iterator<String>()
+            {
+               private int pos = 0;
+               private Pattern newline = Pattern.create("\\r?\\n");
+
+               @Override
+               public boolean hasNext()
+               {
+                  return pos < text.length();
+               }
+
+               @Override
+               public String next()
+               {
+                  if (pos >= text.length())
+                     return null;
+
+                  Match match = newline.match(text, pos);
+                  String result;
+                  if (match == null)
+                  {
+                     result = text.substring(pos);
+                     pos = text.length();
+                  }
+                  else
+                  {
+                     result = text.substring(pos, match.getIndex());
+                     pos = match.getIndex() + match.getValue().length();
+                  }
+                  return result;
+               }
+
+               @Override
+               public void remove()
+               {
+                  throw new UnsupportedOperationException();
+               }
+            };
+         }
+      };
    }
 
    private static final long[] SIZES = {

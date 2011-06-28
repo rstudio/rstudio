@@ -14,10 +14,12 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <core/json/JsonRpc.hpp>
 #include <core/system/System.hpp>
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 
 #include "session/SessionModuleContext.hpp"
@@ -74,9 +76,29 @@ public:
       return Success();
    }
 
-   virtual core::Error runCommand(const std::string& command,
-                                  const std::vector<std::string>& args,
-                                  std::vector<std::string>* pOutputLines)
+   core::Error runCommand(const std::string& command,
+                          const std::vector<std::string>& args,
+                          std::vector<std::string>* pOutputLines=NULL)
+   {
+      std::string output;
+      Error error = runCommand(command,
+                               args,
+                               &output);
+      if (error)
+         return error;
+
+      if (pOutputLines)
+      {
+         boost::algorithm::split(*pOutputLines, output,
+                                 boost::algorithm::is_any_of("\r\n"));
+      }
+
+      return Success();
+   }
+
+   core::Error runCommand(const std::string& command,
+                          const std::vector<std::string>& args,
+                          std::string* pOutput)
    {
       std::string cmd("cd ");
       cmd.append(string_utils::bash_escape(root_));
@@ -90,17 +112,17 @@ public:
          cmd.append(string_utils::bash_escape(*it));
       }
 
-      std::string output;
-      Error error = core::system::captureCommand(cmd, &output);
+      Error error = core::system::captureCommand(cmd, pOutput);
       if (error)
          return error;
 
-      if (pOutputLines)
-      {
-         boost::algorithm::split(*pOutputLines, output,
-                                 boost::algorithm::is_any_of("\r\n"));
-      }
+      return Success();
+   }
 
+   virtual core::Error diffFile(FilePath filePath,
+                                int contextLines,
+                                std::string* pOutput)
+   {
       return Success();
    }
 
@@ -178,7 +200,7 @@ public:
         args.push_back(string_utils::utf8ToSystem((*it).absolutePath()));
       }
 
-      runCommand("git", args, NULL);
+      runCommand("git", args);
 
       // TODO: Once we capture stderr we need to set it here
       if (pStdErr)
@@ -242,7 +264,7 @@ public:
 
       std::vector<std::string> args;
       args.push_back("-F");
-      args.push_back(string_utils::bash_escape(tempFile));
+      args.push_back(string_utils::utf8ToSystem(tempFile.absolutePath()));
       if (amend)
          args.push_back("--amend");
       if (signOff)
@@ -258,6 +280,22 @@ public:
 
       return error;
    }
+
+   virtual core::Error diffFile(FilePath filePath,
+                                int contextLines,
+                                std::string* pOutput)
+   {
+      std::vector<std::string> args;
+      args.push_back("diff");
+      args.push_back("-U" + boost::lexical_cast<std::string>(contextLines));
+      args.push_back("--");
+      args.push_back(string_utils::bash_escape(filePath));
+
+      runCommand("git", args, pOutput);
+
+      return Success();
+   }
+
 };
 
 class SubversionVCSImpl : public VCSImpl
@@ -319,7 +357,7 @@ class SubversionVCSImpl : public VCSImpl
         args.push_back(string_utils::utf8ToSystem((*it).absolutePath()));
       }
 
-      runCommand("svn", args, NULL);
+      runCommand("svn", args);
 
       // TODO: Once we capture stderr we need to set it here
       if (pStdErr)
@@ -464,6 +502,25 @@ Error vcsCommitGit(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsDiffFile(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   std::string path;
+   Error error = json::readParams(request.params, &path);
+   if (error)
+      return error;
+
+   std::string output;
+   error = s_pVcsImpl_->diffFile(module_context::resolveAliasedPath(path),
+                                 999999999,
+                                 &output);
+   if (error)
+      return error;
+
+   pResponse->setResult(output);
+   return Success();
+}
+
 core::Error initialize()
 {
    FilePath workingDir = module_context::activeProjectDirectory();
@@ -486,7 +543,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_revert", vcsRevert))
       (bind(registerRpcMethod, "vcs_unstage", vcsUnstage))
       (bind(registerRpcMethod, "vcs_full_status", vcsFullStatus))
-      (bind(registerRpcMethod, "vcs_commit_git", vcsCommitGit));
+      (bind(registerRpcMethod, "vcs_commit_git", vcsCommitGit))
+      (bind(registerRpcMethod, "vcs_diff_file", vcsDiffFile));
    Error error = initBlock.execute();
    if (error)
       return error;

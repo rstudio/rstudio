@@ -1160,6 +1160,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, VCS_COMMIT_GIT, params, requestCallback);
    }
 
+   @Override
+   public void vcsDiffFile(String path,
+                           ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, VCS_DIFF_FILE, path, requestCallback);
+   }
+
    // package-visible methods for peer classes RemoteServerAuth and
    // RemoveServerEventListener
 
@@ -1630,6 +1637,7 @@ public class RemoteServer implements Server
    private static final String VCS_UNSTAGE = "vcs_unstage";
    private static final String VCS_FULL_STATUS = "vcs_full_status";
    private static final String VCS_COMMIT_GIT = "vcs_commit_git";
+   private static final String VCS_DIFF_FILE = "vcs_diff_file";
 
    private static final String LOG = "log";
 
