@@ -6,8 +6,8 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
@@ -58,37 +58,51 @@ public class ApplicationQuit implements SaveActionChangedHandler
       eventBus.addHandler(SaveActionChangedEvent.TYPE, this);   
    }
    
-   
-   @Override
-   public void onSaveActionChanged(SaveActionChangedEvent event)
+  
+   // does whatever prompting is required before quit and then returns a 
+   // command which can be executed to actually implement the quit
+   public interface QuitContext
    {
-      saveAction_ = event.getAction();
+      void onReadyToQuit(boolean saveChanges);
    }
-     
-   @Handler
-   public void onQuitSession()
+   
+   public void prepareForQuit(String caption,
+                              final QuitContext quitContext)
    {
       // prompt only for unsaved environment (see below for an implementation
-      // of unsaved prompting that also includes edited source documents)
+      // of unsaved prompting that also includes edited source documents -- 
+      // note this implementation predated the quitContext.onReadyToQuit idiom
+      // so if re-introduced would need to use that mechanism rather than
+      // invoking a QuitOperation or QuitCommand directly.
       
       if (saveAction_.getAction() == SaveAction.SAVEASK)
       {
          // confirm quit and do it
          String prompt = "Save workspace image to " + 
                          workbenchContext_.getREnvironmentPath() + "?";
-         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-                                         "Quit R Session",
-                                         prompt,
-                                         true,
-                                         new QuitOperation(true),
-                                         new QuitOperation(false),
-                                         "Save",
-                                         "Don't Save",
-                                         true);        
+         globalDisplay_.showYesNoMessage(
+               GlobalDisplay.MSG_QUESTION,
+               caption,
+               prompt,
+               true,
+               new Operation() { public void execute()
+               {
+                  quitContext.onReadyToQuit(true);      
+               }},
+               new Operation() { public void execute()
+               {
+                  quitContext.onReadyToQuit(false);
+               }},
+               new Operation() { public void execute()
+               {
+               }},
+               "Save",
+               "Don't Save",
+               true);        
       }
       else
       {
-         new QuitCommand(saveAction_.getAction() == SaveAction.SAVE).execute();
+         quitContext.onReadyToQuit(saveAction_.getAction() == SaveAction.SAVE);
       }
       
       
@@ -100,8 +114,11 @@ public class ApplicationQuit implements SaveActionChangedHandler
        * Source.handleUnsavedChangesBefore exit method to make sure that 
        * the exit sequence behaves sanely. We also would need to implement
        * the unsaved change prompting for the q() code path (note we could
-       * choose not to do this if the unsaved change prompting was optional)
-       * 
+       * choose not to do this if the unsaved change prompting was optional).
+       * We also need to make this interface work with the prepareForQuit
+       * interface above (used by projects). this would just entail returing
+       * the quitCommand to the prepareForQuit caller rather than executing
+       * the quit directly
        * 
       // see what the unsaved changes situation is and prompt accordingly
       final int saveAction = saveAction_.getAction();
@@ -174,6 +191,28 @@ public class ApplicationQuit implements SaveActionChangedHandler
       */
    }
    
+   public void performQuit(boolean saveChanges, String switchToProjectPath)
+   {
+      new QuitCommand(saveChanges, switchToProjectPath).execute();
+   }
+   
+   @Override
+   public void onSaveActionChanged(SaveActionChangedEvent event)
+   {
+      saveAction_ = event.getAction();
+   }
+     
+   @Handler
+   public void onQuitSession()
+   {
+      prepareForQuit("Quit R Session", new QuitContext() {
+         public void onReadyToQuit(boolean saveChanges)
+         {
+            performQuit(saveChanges, null);
+         }   
+      });
+   }
+   
    
    @SuppressWarnings("unused")
    private UnsavedChangesTarget globalEnvTarget_ = new UnsavedChangesTarget()
@@ -206,46 +245,39 @@ public class ApplicationQuit implements SaveActionChangedHandler
    
    private class QuitCommand implements Command 
    {
-      public QuitCommand(boolean saveChanges)
+      public QuitCommand(boolean saveChanges, String switchToProjectPath)
       {
          saveChanges_ = saveChanges;
+         switchToProjectPath_ = switchToProjectPath;
       }
       
       public void execute()
       {
          ProgressIndicator indicator =
             globalDisplay_.getProgressIndicator("Error Quitting R");
-         new QuitOperation(saveChanges_).execute(indicator);
-      }
-      
-      private final boolean saveChanges_;
-   };
-   
-   // quit session operation paramaterized by whether we save changes
-   class QuitOperation implements ProgressOperation
-   {
-      QuitOperation(boolean saveChanges)
-      {
-         saveChanges_ = saveChanges;
-      }
-      public void execute(ProgressIndicator indicator)
-      {
+         
          if (Desktop.isDesktop())
          {
             indicator.onCompleted();
-            desktopQuitR(saveChanges_);
+            desktopQuitR(saveChanges_, switchToProjectPath_);
          }
          else
          {
             indicator.onProgress("Quitting R Session...");
             server_.quitSession(saveChanges_,
-                             new VoidServerRequestCallback(indicator));
+                                switchToProjectPath_,
+                                new VoidServerRequestCallback(indicator));
          }
       }
-      private final boolean saveChanges_ ;
-   }
+      
+      private final boolean saveChanges_;
+      private final String switchToProjectPath_;
+      
+   };
    
-   private void desktopQuitR(final boolean saveChanges)
+  
+   private void desktopQuitR(final boolean saveChanges,
+                             final String switchToProjectPath)
    {
       final GlobalProgressDelayer progress = new GlobalProgressDelayer(
             globalDisplay_,
@@ -264,6 +296,7 @@ public class ApplicationQuit implements SaveActionChangedHandler
 
             server_.quitSession(
                   saveChanges,
+                  switchToProjectPath,
                   new VoidServerRequestCallback(
                         globalDisplay_.getProgressIndicator("Error Quitting R")) 
                   {

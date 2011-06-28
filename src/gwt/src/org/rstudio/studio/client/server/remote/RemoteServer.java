@@ -24,6 +24,7 @@ import com.google.gwt.user.client.Random;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.*;
@@ -161,9 +162,13 @@ public class RemoteServer implements Server
    }
    
    public void quitSession(boolean saveWorkspace, 
+                           String switchToProject,
                            ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, QUIT_SESSION, saveWorkspace, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, JSONBoolean.getInstance(saveWorkspace));
+      params.set(1, new JSONString(StringUtil.notNull(switchToProject)));
+      sendRequest(RPC_SCOPE, QUIT_SESSION, params, requestCallback);
    }
    
    public void updateCredentials()
@@ -809,6 +814,12 @@ public class RemoteServer implements Server
       params.set(0, values);
       sendRequest(RPC_SCOPE, SET_MANIPULATOR_VALUES, params, requestCallback);
    }
+   
+   public void createProject(String projectDirectory,
+                             ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, CREATE_PROJECT, projectDirectory, requestCallback);
+   }
 
    public void newDocument(String filetype,
                            JsObject properties,
@@ -1189,6 +1200,7 @@ public class RemoteServer implements Server
       sendRequest(scope, method, new JSONArray(), requestCallback);
    }
 
+   @SuppressWarnings("unused")
    private <T> void sendRequest(String scope, 
                                 String method, 
                                 boolean param,
@@ -1581,6 +1593,8 @@ public class RemoteServer implements Server
    private static final String LOCATOR_COMPLETED = "locator_completed";
    private static final String SET_MANIPULATOR_VALUES = "set_manipulator_values";
 
+   private static final String CREATE_PROJECT = "create_project";
+   
    private static final String NEW_DOCUMENT = "new_document";
    private static final String OPEN_DOCUMENT = "open_document";
    private static final String LIST_DOCUMENTS = "list_documents";

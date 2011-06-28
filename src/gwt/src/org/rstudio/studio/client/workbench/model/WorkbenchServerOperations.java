@@ -16,6 +16,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
@@ -45,7 +46,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    HistoryServerOperations,
                                                    MirrorsServerOperations,
                                                    VCSServerOperations,
-                                                   PrefsServerOperations
+                                                   PrefsServerOperations,
+                                                   ProjectsServerOperations
 {   
    void onWorkbenchReady();
    

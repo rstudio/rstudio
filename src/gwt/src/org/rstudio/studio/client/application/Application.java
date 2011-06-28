@@ -23,6 +23,7 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.UmbrellaException;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -339,10 +340,27 @@ public class Application implements ApplicationEventHandlers,
    {
       cleanupWorkbench();  
       
-      // only show the quit state in server mode (in desktop mode the
-      // window will close)
+      // only show the quit state in server mode (desktop mode has its
+      // own handling triggered to process exit)
       if (!Desktop.isDesktop())
-         view_.showApplicationQuit();
+      {
+         // if we are switching projects then reload after a delay (to allow
+         // the R session to fully exit on the server)
+         if (event.getSwitchProjects())
+         {
+            new Timer() {
+               @Override
+               public void run()
+               {
+                  Window.Location.reload();
+               }
+            }.schedule(200);
+         }
+         else
+         {
+            view_.showApplicationQuit();
+         }
+      }
    }
    
    public void onSuicide(SuicideEvent event)
@@ -466,6 +484,7 @@ public class Application implements ApplicationEventHandlers,
                   if (Desktop.isDesktop())
                   {
                      server_.quitSession(false,
+                                         null,
                                          new SimpleRequestCallback<Void>());
                   }
                   else

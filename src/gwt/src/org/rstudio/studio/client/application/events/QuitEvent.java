@@ -19,8 +19,14 @@ public class QuitEvent extends GwtEvent<QuitHandler>
    public static final GwtEvent.Type<QuitHandler> TYPE =
       new GwtEvent.Type<QuitHandler>();
    
-   public QuitEvent()
+   public QuitEvent(boolean switchProjects)
    {
+      switchProjects_ = switchProjects;
+   }
+   
+   public boolean getSwitchProjects()
+   {
+      return switchProjects_;
    }
    
    @Override
@@ -34,4 +40,6 @@ public class QuitEvent extends GwtEvent<QuitHandler>
    {
       return TYPE;
    }
+   
+   private final boolean switchProjects_;
 }

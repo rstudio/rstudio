@@ -643,7 +643,8 @@ class RemoteServerEventListener
             sessionWasQuit_ = true;
         
             // fire event
-            eventBus.fireEvent(new QuitEvent());
+            boolean switchProjects = event.<Bool>getData().getValue();
+            eventBus.fireEvent(new QuitEvent(switchProjects));
          }
          else if (type.equals(ClientEvent.Suicide))
          {

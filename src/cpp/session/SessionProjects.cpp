@@ -15,7 +15,9 @@
 
 #include <core/FilePath.hpp>
 #include <core/Settings.hpp>
+#include <core/Exec.hpp>
 #include <core/system/System.hpp>
+#include <core/r_util/RProjectFile.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
@@ -67,16 +69,39 @@ FilePath activeProjectFilePath()
    return s_activeProjectPath;
 }
 
+Error createProject(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string projectDirectory;
+   Error error = json::readParam(request.params, 0, &projectDirectory);
+   if (error)
+      return error;
+
+   FilePath projectDirPath = module_context::resolveAliasedPath(projectDirectory);
+   FilePath projectFilePath = projectDirPath.complete(projectDirPath.stem() +
+                                                      ".Rproj");
+   if (!projectFilePath.exists())
+   {
+      error = r_util::writeDefaultProjectFile(projectFilePath);
+      if (error)
+         return error;
+   }
+
+   return Success();
+}
+
+
 } // namespace module_context
 
 
 namespace projects {
 
-Error initialize()
+Error startup()
 {
    // register suspend handler
    using namespace module_context;
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
+
    // see if there is a project path hard-wired for the next session
    // (this would be used for a switch to project or for the resuming of
    // a suspended session)
@@ -133,6 +158,17 @@ Error initialize()
    userSettings().setLastProjectPath(s_activeProjectPath);
 
    return Success();
+}
+
+Error initialize()
+{
+   using boost::bind;
+   using namespace module_context;
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "create_project", createProject))
+   ;
+   return initBlock.execute();
 }
 
 } // namespace projects

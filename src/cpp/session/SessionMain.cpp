@@ -579,11 +579,19 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
          {
             // see whether we should save the workspace
             bool saveWorkspace = true;
-            Error error = json::readParam(jsonRpcRequest.params,
-                                          0,
-                                          &saveWorkspace) ;
+            std::string switchToProjectPath;
+            Error error = json::readParams(jsonRpcRequest.params,
+                                           &saveWorkspace,
+                                           &switchToProjectPath) ;
             if (error)
                LOG_ERROR(error);
+
+            // note switch to project
+            if (!switchToProjectPath.empty())
+            {
+               persistentState().setNextSessionProjectPath(
+                     module_context::resolveAliasedPath(switchToProjectPath));
+            }
 
             // acknowledge request & quit session
             ptrConnection->sendJsonRpcResponse();
@@ -1131,6 +1139,9 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       // source database
       (source_database::initialize)
    
+      // projects
+      (projects::initialize)
+
       // modules with c++ implementations
       (modules::path::initialize)
       (modules::content_urls::initialize)
@@ -1550,7 +1561,8 @@ void rResumed()
 void rQuit()
 {   
    // enque a quit event
-   ClientEvent quitEvent(kQuit);
+   bool switchProjects = !persistentState().nextSessionProjectPath().empty();
+   ClientEvent quitEvent(kQuit, switchProjects);
    session::clientEventQueue().add(quitEvent);
 }
    
@@ -2021,9 +2033,9 @@ int main (int argc, char * const argv[])
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION) ;
 
-      // initialize projects -- must be after userSettings & persistentState are
+      // startup projects -- must be after userSettings & persistentState are
       // initialized must be before setting working directory
-      error = projects::initialize();
+      error = projects::startup();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 
