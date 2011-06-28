@@ -37,7 +37,6 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
@@ -76,6 +75,7 @@ public class Application implements ApplicationEventHandlers,
                       Projects projects,
                       WorkbenchContext workbenchContext,
                       SourceShim sourceShim,
+                      Provider<UIPrefs> uiPrefs,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
                       Provider<ClientStateUpdater> clientStateUpdater,
@@ -92,6 +92,7 @@ public class Application implements ApplicationEventHandlers,
       commands_ = commands;
       clientStateUpdater_ = clientStateUpdater;
       server_ = server;
+      uiPrefs_ = uiPrefs;
       workbench_ = workbench;
       eventBusProvider_ = eventBusProvider;
       pClientInit_ = pClientInit;
@@ -608,8 +609,7 @@ public class Application implements ApplicationEventHandlers,
       
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)
-      UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
-      showToolbar(uiPrefs.toolbarVisible().getValue(), false);
+      showToolbar( uiPrefs_.get().toolbarVisible().getValue(), false);
       
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
    }
@@ -626,8 +626,7 @@ public class Application implements ApplicationEventHandlers,
       // update prefs
       if (updatePref)
       {
-         UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
-         uiPrefs.toolbarVisible().setValue(showToolbar);
+         uiPrefs_.get().toolbarVisible().setValue(showToolbar);
          server_.setUiPrefs(
                   session_.getSessionInfo().getUiPrefs(), 
                   new SimpleRequestCallback<Void>("Error Saving Preference"));
@@ -657,6 +656,7 @@ public class Application implements ApplicationEventHandlers,
    private final Commands commands_;
    private final Provider<ClientStateUpdater> clientStateUpdater_;
    private final Server server_;
+   private final Provider<UIPrefs> uiPrefs_;
    private final Provider<Workbench> workbench_;
    private final Provider<EventBus> eventBusProvider_;
    private final Provider<ApplicationClientInit> pClientInit_;

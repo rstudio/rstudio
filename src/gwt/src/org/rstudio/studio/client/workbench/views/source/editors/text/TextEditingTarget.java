@@ -369,6 +369,7 @@ public class TextEditingTarget implements EditingTarget
       fileContext_ = fileContext;
       fileType_ = (TextFileType) type;
       view_ = new TextEditingTargetWidget(commands_,
+                                          prefs_,
                                           docDisplay_,
                                           fileType_,
                                           events_);

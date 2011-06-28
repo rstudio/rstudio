@@ -48,11 +48,13 @@ public class TextEditingTargetWidget
       implements Display, RequiresVisibilityChanged
 {
    public TextEditingTargetWidget(Commands commands,
+                                  UIPrefs uiPrefs,
                                   DocDisplay editor,
                                   TextFileType fileType,
                                   EventBus events)
    {
       commands_ = commands;
+      uiPrefs_ = uiPrefs;
       editor_ = editor;
       sourceOnSave_ = new CheckBox("Source on Save");
       statusBar_ = new StatusBarWidget();
@@ -85,7 +87,6 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(commands_.executeLastCode().createToolbarButton());
       toolbar.addRightSeparator();
       final String SOURCE_BUTTON_TITLE = "Source the active document"; 
-      final UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
       
       final ToolbarButton sourceButton = new ToolbarButton(
             "Source", 
@@ -95,7 +96,7 @@ public class TextEditingTargetWidget
                @Override
                public void onClick(ClickEvent event)
                {
-                  if (uiPrefs.sourceWithEcho().getValue())
+                  if (uiPrefs_.sourceWithEcho().getValue())
                      commands_.sourceActiveDocumentWithEcho().execute();
                   else
                      commands_.sourceActiveDocument().execute();
@@ -105,7 +106,7 @@ public class TextEditingTargetWidget
       sourceButton.setTitle(SOURCE_BUTTON_TITLE);
       toolbar.addRightWidget(sourceButton);
       
-      uiPrefs.sourceWithEcho().addValueChangeHandler(
+      uiPrefs_.sourceWithEcho().addValueChangeHandler(
                                        new ValueChangeHandler<Boolean>() {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -258,6 +259,7 @@ public class TextEditingTargetWidget
    }
 
    private final Commands commands_;
+   private final UIPrefs uiPrefs_;
    private final DocDisplay editor_;
    private CheckBox sourceOnSave_;
    private PanelWithToolbar panel_;
