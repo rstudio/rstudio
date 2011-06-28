@@ -170,63 +170,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
    }
    else
    {
-      // determine saveAction by calling hook
-      QVariant saveAction = pFrame->evaluateJavaScript(
-                               QString::fromAscii("window.desktopHooks.getSaveAction()"));
-
-      QVariant rEnvPath = pFrame->evaluateJavaScript(
-                               QString::fromAscii("window.desktopHooks.getREnvironmentPath()"));
-
-      bool save;
-      switch (saveAction.toInt())
-      {
-      case 0:
-         save = false;
-         break;
-      case 1:
-         save = true;
-         break;
-      case -1:
-      default:
-         QMessageBox prompt(safeMessageBoxIcon(QMessageBox::Warning),
-                            QString::fromUtf8("Quit R Session"),
-                            QString::fromUtf8("Save workspace image to ") +
-                            rEnvPath.toString() + QString::fromUtf8("?"),
-                            QMessageBox::NoButton,
-                            this,
-                            Qt::Sheet | Qt::Dialog |
-                            Qt::MSWindowsFixedSizeDialogHint);
-         prompt.setWindowModality(Qt::WindowModal);
-         QPushButton* pSave = prompt.addButton(QString::fromUtf8("&Save"),
-                                                   QMessageBox::AcceptRole);
-         prompt.addButton(QString::fromUtf8("&Don't Save"), QMessageBox::DestructiveRole);
-         QPushButton* pCancel = prompt.addButton(QString::fromUtf8("Cancel"),
-                                                     QMessageBox::RejectRole);
-         prompt.setDefaultButton(pSave);
-
-
-         FunctionSlotBinder aw(boost::bind(&QDialog::activateWindow, &prompt),
-                               &prompt);
-         QTimer::singleShot(10, &aw, SLOT(execute()));
-         QTimer::singleShot(25, &aw, SLOT(execute()));
-         QTimer::singleShot(50, &aw, SLOT(execute()));
-         QTimer::singleShot(100, &aw, SLOT(execute()));
-
-         prompt.exec();
-
-         QAbstractButton* pClicked = prompt.clickedButton();
-         if (!pClicked || pClicked == pCancel)
-         {
-            pEvent->ignore();
-            return;
-         }
-         save = pClicked == pSave;
-         break;
-      }
-
-      pFrame->evaluateJavaScript(QString::fromAscii("window.desktopHooks.quitR(") +
-                                 (save ? QString::fromAscii("true") : QString::fromAscii("false")) +
-                                 QString::fromAscii(")"));
+      pFrame->evaluateJavaScript(QString::fromAscii("window.desktopHooks.quitR()"));
       pEvent->ignore();
    }
 }

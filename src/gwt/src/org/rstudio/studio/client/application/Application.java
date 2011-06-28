@@ -29,11 +29,16 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+
+import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.CsvWriter;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.events.BarrierReleasedEvent;
+import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
@@ -42,6 +47,7 @@ import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.*;
@@ -50,6 +56,7 @@ import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.Workbench;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -239,65 +246,112 @@ public class Application implements ApplicationEventHandlers,
    public final native void onRaiseException2() /*-{
       $wnd.welfkjweg();
    }-*/;
-  
-   // implementatin of quit session
-   private Command doQuitSession_ = new Command()
+   
+   
+   private void desktopQuitR(final boolean saveChanges)
    {
-      public void execute()
+      final GlobalProgressDelayer progress = new GlobalProgressDelayer(
+            globalDisplay_,
+            "Quitting R Session...");
+
+      // Use a barrier and LastChanceSaveEvent to allow source documents
+      // and client state to be synchronized before quitting.
+
+      Barrier barrier = new Barrier();
+      barrier.addBarrierReleasedHandler(new BarrierReleasedHandler()
       {
-         if (Desktop.isDesktop())
+         public void onBarrierReleased(BarrierReleasedEvent event)
          {
-            Desktop.getFrame().close();
+            // All last chance save operations have completed (or possibly
+            // failed). Now do the real quit.
+
+            server_.quitSession(
+                  saveChanges,
+                  new VoidServerRequestCallback(
+                        globalDisplay_.getProgressIndicator("Error Quitting R")) 
+                  {
+
+                     @Override
+                     public void onResponseReceived(Void response)
+                     {
+                        progress.dismiss();
+                        super.onResponseReceived(response);
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        progress.dismiss();
+                        super.onError(error);
+                     }
+                  });
          }
-         else
-         {
-            // quit session operation paramaterized by whether we save changes
-            class QuitOperation implements ProgressOperation
-            {
-               QuitOperation(boolean saveChanges)
-               {
-                  saveChanges_ = saveChanges;
-               }
-               public void execute(ProgressIndicator indicator)
-               {
-                  indicator.onProgress("Quitting R Session...");
-                  server_.quitSession(saveChanges_,
-                                      new VoidServerRequestCallback(indicator));
-               }
-               private final boolean saveChanges_ ;
-            }
+      });
 
-            if (saveAction_.getAction() == SaveAction.SAVEASK) 
-            {    
-               // confirm quit and do it
-               String prompt = "Save workspace image to " + 
-                               workbenchContext_.getREnvironmentPath() + "?";
-               globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-                                               "Quit R Session",
-                                               prompt,
-                                               true,
-                                               new QuitOperation(true),
-                                               new QuitOperation(false),
-                                               true);
-            }
-            else
-            {
-               // do the quit without prompting 
-               
-               ProgressIndicator indicator =
-                  globalDisplay_.getProgressIndicator("Error Quitting R");
-
-               boolean save = saveAction_.getAction() == SaveAction.SAVE;
-               new QuitOperation(save).execute(indicator);
-            }
-         } 
-      } 
-   };
+      // We acquire a token to make sure that the barrier doesn't fire before
+      // all the LastChanceSaveEvent listeners get a chance to acquire their
+      // own tokens.
+      Token token = barrier.acquire();
+      try
+      {
+         events_.fireEvent(new LastChanceSaveEvent(barrier));
+      }
+      finally
+      {
+         token.release();
+      }
+   }
+  
    
    @Handler
    public void onQuitSession()
    {
-      doQuitSession_.execute();
+      // quit session operation paramaterized by whether we save changes
+      class QuitOperation implements ProgressOperation
+      {
+         QuitOperation(boolean saveChanges)
+         {
+            saveChanges_ = saveChanges;
+         }
+         public void execute(ProgressIndicator indicator)
+         {
+            if (Desktop.isDesktop())
+            {
+               indicator.onCompleted();
+               desktopQuitR(saveChanges_);
+            }
+            else
+            {
+               indicator.onProgress("Quitting R Session...");
+               server_.quitSession(saveChanges_,
+                                new VoidServerRequestCallback(indicator));
+            }
+         }
+         private final boolean saveChanges_ ;
+      }
+
+      if (saveAction_.getAction() == SaveAction.SAVEASK) 
+      {    
+         // confirm quit and do it
+         String prompt = "Save workspace image to " + 
+                         workbenchContext_.getREnvironmentPath() + "?";
+         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+                                         "Quit R Session",
+                                         prompt,
+                                         true,
+                                         new QuitOperation(true),
+                                         new QuitOperation(false),
+                                         true);
+      }
+      else
+      {
+         // do the quit without prompting 
+         ProgressIndicator indicator =
+            globalDisplay_.getProgressIndicator("Error Quitting R");
+
+         boolean save = saveAction_.getAction() == SaveAction.SAVE;
+         new QuitOperation(save).execute(indicator);
+      }
    }
 
    @Handler
