@@ -69,13 +69,13 @@ import java.util.concurrent.Semaphore;
  * any GUI dependencies.
  */
 public abstract class DevModeBase implements DoneCallback {
-
   /**
    * Implementation of BrowserWidgetHost that supports the abstract UI
    * interface.
    */
   public class UiBrowserWidgetHostImpl implements BrowserWidgetHost {
 
+    @Override
     public ModuleHandle createModuleLogger(String moduleName, String userAgent, String url,
         String tabKey, String sessionKey, BrowserChannelServer serverChannel, byte[] userAgentIcon) {
       if (sessionKey == null) {
@@ -91,6 +91,7 @@ public abstract class DevModeBase implements DoneCallback {
       return module;
     }
 
+    @Override
     public ModuleSpaceHost createModuleSpaceHost(ModuleHandle module, String moduleName)
         throws UnableToCompleteException {
       Event moduleSpaceHostCreateEvent =
@@ -477,34 +478,42 @@ public abstract class DevModeBase implements DoneCallback {
     private int remoteUIHostPort;
     private final List<String> startupURLs = new ArrayList<String>();
 
+    @Override
     public void addStartupURL(String url) {
       startupURLs.add(url);
     }
 
+    @Override
     public boolean alsoLogToFile() {
       return logDir != null;
     }
 
+    @Override
     public String getBindAddress() {
       return bindAddress;
     }
 
+    @Override
     public String getClientId() {
       return remoteUIClientId;
     }
 
+    @Override
     public int getCodeServerPort() {
       return codeServerPort;
     }
 
+    @Override
     public String getConnectAddress() {
       return connectAddress;
     }
 
+    @Override
     public File getLogDir() {
       return logDir;
     }
 
+    @Override
     public File getLogFile(String sublog) {
       if (logDir == null) {
         return null;
@@ -512,62 +521,77 @@ public abstract class DevModeBase implements DoneCallback {
       return new File(logDir, sublog);
     }
 
+    @Override
     public int getPort() {
       return port;
     }
 
+    @Override
     public String getRemoteUIHost() {
       return remoteUIHost;
     }
 
+    @Override
     public int getRemoteUIHostPort() {
       return remoteUIHostPort;
     }
 
+    @Override
     public List<String> getStartupURLs() {
       return Collections.unmodifiableList(startupURLs);
     }
 
+    @Override
     public boolean isNoServer() {
       return isNoServer;
     }
 
+    @Override
     public void setBindAddress(String bindAddress) {
       this.bindAddress = bindAddress;
     }
 
+    @Override
     public void setClientId(String clientId) {
       this.remoteUIClientId = clientId;
     }
 
+    @Override
     public void setCodeServerPort(int port) {
       codeServerPort = port;
     }
 
+    @Override
     public void setConnectAddress(String connectAddress) {
       this.connectAddress = connectAddress;
     }
 
+    @Override
     public void setLogFile(String filename) {
       logDir = new File(filename);
     }
 
+    @Override
     public void setNoServer(boolean isNoServer) {
       this.isNoServer = isNoServer;
     }
 
+    @Override
     public void setPort(int port) {
       this.port = port;
     }
 
+    @Override
     public void setRemoteUIHost(String remoteUIHost) {
       this.remoteUIHost = remoteUIHost;
     }
 
+    @Override
     public void setRemoteUIHostPort(int remoteUIHostPort) {
       this.remoteUIHostPort = remoteUIHostPort;
     }
 
+    @Override
     public boolean useRemoteUI() {
       return remoteUIHost != null;
     }
@@ -668,7 +692,7 @@ public abstract class DevModeBase implements DoneCallback {
       registerHandler(new ArgHandlerPort(options));
       registerHandler(new ArgHandlerWhitelist());
       registerHandler(new ArgHandlerBlacklist());
-      registerHandler(new ArgHandlerEnableGeneratorResultCaching(options));
+      registerHandler(new ArgHandlerEnableGeneratorResultCaching());
       registerHandler(new ArgHandlerLogDir(options));
       registerHandler(new ArgHandlerLogLevel(options));
       registerHandler(new ArgHandlerGenDir(options));
@@ -677,6 +701,9 @@ public abstract class DevModeBase implements DoneCallback {
       registerHandler(new ArgHandlerRemoteUI(options));
     }
   }
+
+  private static final boolean generatorResultCachingDisabled =
+      (System.getProperty("gwt.disableGeneratorResultCaching") != null);
 
   private static final Random RNG = new Random();
 
@@ -793,6 +820,7 @@ public abstract class DevModeBase implements DoneCallback {
   /**
    * Callback for the UI to indicate it is done.
    */
+  @Override
   public void onDone() {
     setDone();
   }
@@ -1114,6 +1142,7 @@ public abstract class DevModeBase implements DoneCallback {
       throws UnableToCompleteException {
     final StandardLinkerContext linkerContext = link(logger, module);
     return new ArtifactAcceptor() {
+      @Override
       public void accept(TreeLogger relinkLogger, ArtifactSet newArtifacts)
           throws UnableToCompleteException {
         relink(relinkLogger, linkerContext, module, newArtifacts);
@@ -1160,7 +1189,7 @@ public abstract class DevModeBase implements DoneCallback {
 
   private RebindCache getRebindCache(String moduleName) {
 
-    if (!options.isGeneratorResultCachingEnabled()) {
+    if (generatorResultCachingDisabled) {
       return null;
     }
 

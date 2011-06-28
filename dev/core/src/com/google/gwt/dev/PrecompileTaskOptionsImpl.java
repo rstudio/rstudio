@@ -103,11 +103,6 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   }
 
   @Override
-  public boolean isGeneratorResultCachingEnabled() {
-    return jjsOptions.isGeneratorResultCachingEnabled();
-  }
-
-  @Override
   public boolean isOptimizePrecompile() {
     return jjsOptions.isOptimizePrecompile();
   }
@@ -185,11 +180,6 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   @Override
   public void setGenDir(File genDir) {
     this.genDir = genDir;
-  }
-
-  @Override
-  public void setGeneratorResultCachingEnabled(boolean enabled) {
-    jjsOptions.setGeneratorResultCachingEnabled(enabled);
   }
 
   @Override

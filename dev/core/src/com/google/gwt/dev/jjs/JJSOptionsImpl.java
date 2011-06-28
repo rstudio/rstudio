@@ -29,7 +29,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean disableCastChecking = false;
   private boolean disableClassMetadata = false;
   private boolean enableAssertions;
-  private boolean enableGeneratorResultCaching = false;
   private int optimizationLevel = OptionOptimize.OPTIMIZE_LEVEL_MAX;
   private boolean optimizePrecompile = false;
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
@@ -52,7 +51,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setClassMetadataDisabled(other.isClassMetadataDisabled());
     setCompilerMetricsEnabled(other.isCompilerMetricsEnabled());
     setEnableAssertions(other.isEnableAssertions());
-    setGeneratorResultCachingEnabled(other.isGeneratorResultCachingEnabled());
     setOptimizationLevel(other.getOptimizationLevel());
     setOutput(other.getOutput());
     setRunAsyncEnabled(other.isRunAsyncEnabled());
@@ -62,26 +60,32 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setStrict(other.isStrict());
   }
 
+  @Override
   public int getOptimizationLevel() {
     return optimizationLevel;
   }
 
+  @Override
   public JsOutputOption getOutput() {
     return output;
   }
 
+  @Override
   public boolean isAggressivelyOptimize() {
     return aggressivelyOptimize;
   }
 
+  @Override
   public boolean isCastCheckingDisabled() {
     return disableCastChecking;
   }
 
+  @Override
   public boolean isClassMetadataDisabled() {
     return disableClassMetadata;
   }
 
+  @Override
   public boolean isCompilerMetricsEnabled() {
     return compilerMetricsEnabled;
   }
@@ -90,90 +94,102 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     return optimizationLevel == OptionOptimize.OPTIMIZE_LEVEL_DRAFT;
   }
 
+  @Override
   public boolean isEnableAssertions() {
     return enableAssertions;
   }
 
-  public boolean isGeneratorResultCachingEnabled() {
-    return enableGeneratorResultCaching;
-  }
-
+  @Override
   public boolean isOptimizePrecompile() {
     return optimizePrecompile;
   }
 
+  @Override
   public boolean isRunAsyncEnabled() {
     return runAsyncEnabled;
   }
 
+  @Override
   public boolean isSoycEnabled() {
     return soycEnabled;
   }
 
+  @Override
   public boolean isSoycExtra() {
     return soycExtra;
   }
   
+  @Override
   public boolean isSoycHtmlDisabled() {
     return soycHtmlDisabled;
   }
 
+  @Override
   public boolean isStrict() {
     return strict;
   }
 
+  @Override
   public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
     this.aggressivelyOptimize = aggressivelyOptimize;
   }
 
+  @Override
   public void setCastCheckingDisabled(boolean disabled) {
     disableCastChecking = disabled;
   }
 
+  @Override
   public void setClassMetadataDisabled(boolean disabled) {
     disableClassMetadata = disabled;
   }
 
+  @Override
   public void setCompilerMetricsEnabled(boolean enabled) {
     this.compilerMetricsEnabled = enabled;
   }
 
+  @Override
   public void setEnableAssertions(boolean enableAssertions) {
     this.enableAssertions = enableAssertions;
   }
 
-  public void setGeneratorResultCachingEnabled(boolean enabled) {
-    this.enableGeneratorResultCaching = enabled;
-  }
-
+  @Override
   public void setOptimizationLevel(int level) {
     optimizationLevel = level;
   }
 
+  @Override
   public void setOptimizePrecompile(boolean optimize) {
     optimizePrecompile = optimize;
   }
 
+  @Override
   public void setOutput(JsOutputOption output) {
     this.output = output;
   }
 
+  @Override
   public void setRunAsyncEnabled(boolean enabled) {
     runAsyncEnabled = enabled;
   }
 
+  @Override
   public void setSoycEnabled(boolean enabled) {
     soycEnabled = enabled;
   }
 
+  @Override
   public void setSoycExtra(boolean enabled) {
     soycExtra = enabled;
   }
   
+  @Override
   public void setSoycHtmlDisabled(boolean disabled) {
     soycHtmlDisabled = disabled;
   }
 
+  @Override
   public void setStrict(boolean strict) {
     this.strict = strict;
   }

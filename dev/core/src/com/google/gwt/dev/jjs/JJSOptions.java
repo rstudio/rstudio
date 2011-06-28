@@ -19,7 +19,6 @@ import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
 import com.google.gwt.dev.util.arg.OptionDisableCastChecking;
 import com.google.gwt.dev.util.arg.OptionDisableClassMetadata;
 import com.google.gwt.dev.util.arg.OptionEnableAssertions;
-import com.google.gwt.dev.util.arg.OptionEnableGeneratorResultCaching;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.OptionOptimizePrecompile;
 import com.google.gwt.dev.util.arg.OptionRunAsyncEnabled;
@@ -34,8 +33,7 @@ import com.google.gwt.dev.util.arg.OptionStrict;
  */
 public interface JJSOptions extends OptionOptimize, OptionAggressivelyOptimize,
     OptionDisableClassMetadata, OptionDisableCastChecking, OptionEnableAssertions,
-    OptionEnableGeneratorResultCaching, OptionRunAsyncEnabled, OptionScriptStyle,
-    OptionSoycEnabled, OptionSoycDetailed, OptionOptimizePrecompile, OptionStrict,
-    OptionSoycHtmlDisabled {
+    OptionRunAsyncEnabled, OptionScriptStyle, OptionSoycEnabled, OptionSoycDetailed,
+    OptionOptimizePrecompile, OptionStrict, OptionSoycHtmlDisabled {
 
 }

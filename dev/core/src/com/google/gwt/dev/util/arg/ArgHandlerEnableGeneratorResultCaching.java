@@ -19,18 +19,19 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
  * An ArgHandler to provide the -XenableGeneratorResultCaching flag.
+ * 
+ * Note: This is no longer needed since generator result caching is now enabled by default.
+ * It's left here for an interim period, so that uses of the flag can be removed.
+ * TODO(jbrosenberg): remove this after interim period.
  */
 public class ArgHandlerEnableGeneratorResultCaching extends ArgHandlerFlag {
 
-  private final OptionEnableGeneratorResultCaching option;
-
-  public ArgHandlerEnableGeneratorResultCaching(OptionEnableGeneratorResultCaching option) {
-    this.option = option;
+  public ArgHandlerEnableGeneratorResultCaching() {
   }
 
   @Override
   public String getPurpose() {
-    return "EXPERIMENTAL: enables generator result caching, for those generators that implement it";
+    return "Enables generator result caching, for those generators that implement it";
   }
 
   @Override
@@ -45,7 +46,6 @@ public class ArgHandlerEnableGeneratorResultCaching extends ArgHandlerFlag {
  
   @Override
   public boolean setFlag() {
-    option.setGeneratorResultCachingEnabled(true);
     return true;
   }
 }
