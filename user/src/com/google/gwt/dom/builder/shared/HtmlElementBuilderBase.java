@@ -84,6 +84,7 @@ public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> implements
   @SuppressWarnings("unchecked")
   @Override
   public <B extends ElementBuilderBase<?>> B end() {
+    // An explicit cast is required to satisfy some javac compilers.
     return (B) delegate.end();
   }
 
@@ -93,19 +94,22 @@ public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> implements
     return (B) delegate.end(tagName);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <B extends ElementBuilderBase<?>> B endDiv() {
-    return end("div");
+    return (B) end("div");
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <B extends ElementBuilderBase<?>> B endOption() {
-    return end("option");
+    return (B) end("option");
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <B extends ElementBuilderBase<?>> B endSelect() {
-    return end("select");
+    return (B) end("select");
   }
 
   @Override
