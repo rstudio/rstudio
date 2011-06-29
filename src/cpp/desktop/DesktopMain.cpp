@@ -12,9 +12,7 @@
  */
 
 #include <QtGui>
-#include <QProcess>
 #include <QtWebKit>
-#include <QtNetwork/QTcpSocket>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -25,18 +23,15 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/SafeConvert.hpp>
-#include <core/WaitUtils.hpp>
 #include <core/StringUtils.hpp>
-#include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/System.hpp>
 
 #include "DesktopApplicationLaunch.hpp"
-#include "DesktopMainWindow.hpp"
 #include "DesktopSlotBinders.hpp"
 #include "DesktopDetectRHome.hpp"
 #include "DesktopOptions.hpp"
-#include "DesktopNetworkProxyFactory.hpp"
 #include "DesktopUtils.hpp"
+#include "DesktopSessionLauncher.hpp"
 
 QProcess* pRSessionProcess;
 QString sharedSecret;
@@ -45,14 +40,6 @@ using namespace core;
 using namespace desktop;
 
 namespace {
-
-core::WaitResult serverReady(QString host, QString port)
-{
-   QTcpSocket socket;
-   socket.connectToHost(host, port.toInt());
-   return WaitResult(socket.waitForConnected() ? WaitSuccess : WaitContinue,
-                     Success());
-}
 
 void initializeSharedSecret()
 {
@@ -199,14 +186,6 @@ void initializeStartupEnvironment(QString* pFilename)
    }
 }
 
-void launchProcess(std::string absPath, QStringList argList, QProcess** ppProc)
-{
-   QProcess* pProcess = new QProcess();
-   pProcess->setProcessChannelMode(QProcess::SeparateChannels);
-   pProcess->start(QString::fromUtf8(absPath.c_str()), argList);
-   *ppProc = pProcess;
-}
-
 QString verifyAndNormalizeFilename(QString filename)
 {
    if (filename.isNull() || filename.isEmpty())
@@ -324,82 +303,24 @@ int main(int argc, char* argv[])
       }
       core::system::fixupExecutablePath(&sessionPath);
 
-      QString host = QString::fromAscii("127.0.0.1");
-      QString port = options.portNumber();
-      QUrl url(QString::fromAscii("http://") + host + QString::fromAscii(":") + port + QString::fromAscii("/"));
-
-      QStringList argList;
-      if (!confPath.empty())
-      {
-         argList << QString::fromAscii("--config-file") << QString::fromUtf8(confPath.absolutePath().c_str());
-       }
-      else
-      {
-         // explicitly pass "none" so that rsession doesn't read an
-         // /etc/rstudio/rsession.conf file which may be sitting around
-         // from a previous configuratin or install
-         argList << QString::fromAscii("--config-file") << QString::fromAscii("none");
-      }
-
-      argList << QString::fromAscii("--program-mode") << QString::fromAscii("desktop");
-
-      argList << QString::fromAscii("--www-port") << port;
-
-      error = parent_process_monitor::wrapFork(
-            boost::bind(launchProcess,
-                        sessionPath.absolutePath(),
-                        argList,
-                        &pRSessionProcess));
-      if (error)
-      {
-         LOG_ERROR(error);
-         return EXIT_FAILURE;
-      }
-
-      // jcheng 03/16/2011: Due to crashing caused by authenticating
-      // proxies, bypass all proxies from Qt until we can get the problem
-      // completely solved. This is only expected to affect CRAN mirror
-      // selection (which falls back to local mirror list) and update
-      // checking.
-      //NetworkProxyFactory* pProxyFactory = new NetworkProxyFactory();
-      //QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
-
-      MainWindow* browser = new MainWindow(url);
-      pAppLaunch->setActivationWindow(browser);
-
-      options.restoreMainWindowBounds(browser);
-
-      error = waitWithTimeout(boost::bind(serverReady, host, port),
-                              50, 25, 10);
-      int result;
+      // launch session
+      SessionLauncher sessionLauncher(sessionPath, confPath);
+      error = sessionLauncher.launchFirstSession(filename, pAppLaunch.get());
       if (!error)
       {
-         if (!filename.isNull() && !filename.isEmpty())
-         {
-            StringSlotBinder* filenameBinder = new StringSlotBinder(filename);
-            browser->connect(browser, SIGNAL(workbenchInitialized()),
-                             filenameBinder, SLOT(trigger()));
-            browser->connect(filenameBinder, SIGNAL(triggered(QString)),
-                             browser, SLOT(openFileInRStudio(QString)));
-         }
+         int result = pApp->exec();
 
-         browser->connect(pAppLaunch.get(), SIGNAL(openFileRequest(QString)),
-                          browser, SLOT(openFileInRStudio(QString)));
+         sessionLauncher.cleanupAtExit();
 
-         browser->connect(pRSessionProcess, SIGNAL(finished(int,QProcess::ExitStatus)),
-                          browser, SLOT(quit()));
-
-         browser->show();
-         browser->loadUrl(url);
-
-         result = pApp->exec();
-
-         options.saveMainWindowBounds(browser);
          options.cleanUpScratchTempDir();
+
+         return result;
       }
       else
       {
-         QString errorMessage = QString::fromUtf8("The R session failed to start.");
+         LOG_ERROR(error);
+
+         QString errMsg = QString::fromUtf8("The R session failed to start.");
 
          // These calls to processEvents() seem to be necessary to get
          // readAllStandardError to work.
@@ -407,28 +328,19 @@ int main(int argc, char* argv[])
          pApp->processEvents();
          pApp->processEvents();
 
-         if (pRSessionProcess)
-         {
-            QString errmsgs = QString::fromLocal8Bit(pRSessionProcess->readAllStandardError());
-            if (errmsgs.size())
-            {
-               errorMessage = errorMessage.append(QString::fromAscii("\n\n")).append(errmsgs);
-            }
-         }
+         QString launchErr = sessionLauncher.readFailedLaunchStandardError();
+         errMsg = errMsg.append(launchErr);
 
-         result = boost::system::errc::timed_out;
          QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
                               QString::fromUtf8("RStudio"),
-                              errorMessage);
-         errorMsg.addButton(new QPushButton(QString::fromUtf8("OK")), QMessageBox::AcceptRole);
+                              errMsg);
+         errorMsg.addButton(new QPushButton(QString::fromUtf8("OK")),
+                            QMessageBox::AcceptRole);
          errorMsg.show();
          pApp->exec();
+
+         return EXIT_FAILURE;
       }
-
-      //pRSessionProcess->kill();
-      //pRSessionProcess->waitForFinished(1000);
-
-      return result;
    }
    CATCH_UNEXPECTED_EXCEPTION
 }

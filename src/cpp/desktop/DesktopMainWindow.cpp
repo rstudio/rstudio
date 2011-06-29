@@ -30,15 +30,14 @@
 
 using namespace core;
 
-extern QProcess* pRSessionProcess;
-
 namespace desktop {
 
 MainWindow::MainWindow(QUrl url) :
       BrowserWindow(false, false, url, NULL),
       menuCallback_(this),
       gwtCallback_(this),
-      updateChecker_(this)
+      updateChecker_(this),
+      pCurrentSessionProcess_(NULL)
 {
    quitConfirmed_ = false;
    pToolbar_->setVisible(false);
@@ -164,7 +163,8 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
 
    if (quitConfirmed_
        || !hasQuitR.toBool()
-       || pRSessionProcess->state() != QProcess::Running)
+       || pCurrentSessionProcess_ == NULL
+       || pCurrentSessionProcess_->state() != QProcess::Running)
    {
       pEvent->accept();
    }

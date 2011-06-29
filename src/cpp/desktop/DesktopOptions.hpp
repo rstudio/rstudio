@@ -39,6 +39,7 @@ public:
    void restoreMainWindowBounds(QMainWindow* window);
    void saveMainWindowBounds(QMainWindow* window);
    QString portNumber() const;
+   QString newPortNumber();
 
    QString proportionalFont() const;
    QString fixedWidthFont() const;

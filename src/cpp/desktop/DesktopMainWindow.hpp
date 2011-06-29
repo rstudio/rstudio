@@ -14,6 +14,7 @@
 #ifndef DESKTOP_MAIN_WINDOW_HPP
 #define DESKTOP_MAIN_WINDOW_HPP
 
+#include <QProcess>
 #include <QtGui>
 #include "DesktopGwtCallback.hpp"
 #include "DesktopMenuCallback.hpp"
@@ -28,6 +29,11 @@ class MainWindow : public BrowserWindow
 
 public:
    MainWindow(QUrl url=QUrl());
+
+   void setSessionProcess(QProcess* pSessionProcess)
+   {
+      pCurrentSessionProcess_ = pSessionProcess;
+   }
 
 public slots:
    void quit();
@@ -53,6 +59,7 @@ private:
    MenuCallback menuCallback_;
    GwtCallback gwtCallback_;
    UpdateChecker updateChecker_;
+   QProcess* pCurrentSessionProcess_;
 };
 
 } // namespace desktop

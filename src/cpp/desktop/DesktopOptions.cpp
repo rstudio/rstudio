@@ -87,6 +87,12 @@ QString Options::portNumber() const
    return portNumber_;
 }
 
+QString Options::newPortNumber()
+{
+   portNumber_.clear();
+   return portNumber();
+}
+
 namespace {
 QString findFirstMatchingFont(const QStringList& fonts, QString defaultFont)
 {
