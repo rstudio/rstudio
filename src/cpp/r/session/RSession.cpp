@@ -84,7 +84,7 @@ FilePath s_suspendedSessionPath ;
 // the initialization process that are potentially highly latent. this allows
 // clients to bring their UI up and then receive an event indicating that the
 // latent deserialization actions are taking place
-boost::function<Error()> s_deferredDeserializationAction;
+boost::function<void()> s_deferredDeserializationAction;
    
 // have we completed our one-time initialization yet?
 bool s_initialized = false;
@@ -146,6 +146,30 @@ public:
    }
 };
    
+
+void reportDeferredDeserializationError(const Error& error)
+{
+   // log error
+   LOG_ERROR(error);
+
+   // report to user
+   std::string errMsg = r::endUserErrorMessage(error);
+   REprintf((errMsg + "\n").c_str());
+}
+
+void restorePlotsState()
+{
+   // for migration we may need to restore from the suspended plots file
+   FilePath plotsFile = plotsStateFilePath();
+   if (!plotsFile.exists() && s_suspendedSessionPath.exists())
+      plotsFile = s_suspendedSessionPath.childPath("plots");
+
+   // restore the plots
+   Error plotError = graphics::plotManager().restorePlotsState(plotsFile);
+   if (plotError)
+      reportDeferredDeserializationError(plotError);
+}
+
  
 bool saveSessionState()
 {
@@ -159,7 +183,7 @@ bool saveSessionState()
    return r::session::state::save(s_suspendedSessionPath);
 }
    
-Error deferredRestoreSessionState(
+void deferredRestoreSessionState(
                      const boost::function<Error()>& deferredRestoreAction)
 {
    // notify client of serialization status
@@ -174,8 +198,14 @@ Error deferredRestoreSessionState(
    // we suppress them
    SuppressOutputInScope suppressOutput;
    
-   // restore
-   return deferredRestoreAction();
+   // restore action
+   Error error = deferredRestoreAction();
+   if (error)
+      reportDeferredDeserializationError(error);
+
+   // plots
+   restorePlotsState();
+
 }
 
 Error saveDefaultGlobalEnvironment()
@@ -205,7 +235,7 @@ Error saveDefaultGlobalEnvironment()
    }
 }
    
-Error restoreDefaultGlobalEnvironment()
+void restoreDefaultGlobalEnvironment()
 {
    // restore the default global environment if there is one
    FilePath globalEnvPath = s_options.startupEnvironmentFilePath;
@@ -227,18 +257,23 @@ Error restoreDefaultGlobalEnvironment()
                                         globalEnvPath.absolutePath().c_str(),
                                         TRUE));
       if (error)   
-         return error;
-
-      // print path to console
-      std::string aliasedPath = createAliasedPath(globalEnvPath);
-      Rprintf(("[Workspace loaded from " + aliasedPath + "]\n\n").c_str());
+      {
+         reportDeferredDeserializationError(error);
+      }
+      else
+      {
+         // print path to console
+         std::string aliasedPath = createAliasedPath(globalEnvPath);
+         Rprintf(("[Workspace loaded from " + aliasedPath + "]\n\n").c_str());
+      }
    }
 
    // mark image clean (we need to do this due to our delayed handling
    // of workspace restoration)
    markImageClean();
 
-   return Success();
+   // restore plots
+   restorePlotsState();
 }
 
 void reportHistoryAccessError(const std::string& context,
@@ -1144,37 +1179,12 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    return Success() ;
 }
 
-void reportDeferredDeserializationError(const Error& error)
-{
-   // log error
-   LOG_ERROR(error);
-
-   // report to user
-   std::string errMsg = r::endUserErrorMessage(error);
-   REprintf((errMsg + "\n").c_str());
-}
-   
 void ensureDeserialized()
 {
    if (s_deferredDeserializationAction)
    {
       // do the deferred action
-      Error error = s_deferredDeserializationAction();
-      if (error)
-         reportDeferredDeserializationError(error);
-
-      // always restore plots as well
-
-      // for migration we may need to restore from the suspended plots file
-      FilePath plotsFile = plotsStateFilePath();
-      if (!plotsFile.exists() && s_suspendedSessionPath.exists())
-         plotsFile = s_suspendedSessionPath.childPath("plots");
-
-      // restore the plots
-      Error plotError = graphics::plotManager().restorePlotsState(plotsFile);
-      if (plotError)
-         reportDeferredDeserializationError(plotError);
-
+      s_deferredDeserializationAction();
       s_deferredDeserializationAction.clear();
    }
 }
