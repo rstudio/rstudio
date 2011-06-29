@@ -1,0 +1,3 @@
+<module>
+  <inherits name="com.google.gwt.dev.cfg.testdata.naming.Invalid..Foo"/>
+</module>

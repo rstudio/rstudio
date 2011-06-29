@@ -16,6 +16,8 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.util.UnitTestTreeLogger;
 
 import junit.framework.TestCase;
 
@@ -52,4 +54,59 @@ public class ModuleDefLoaderTest extends TestCase {
     assertNull(three.findSourceFile("com/google/gwt/dev/cfg/testdata/merging/client/Toxic.java"));
   }
 
+  /**
+   * The top level module has an invalid name.
+   */
+  public void testModuleNamingInvalid() {
+    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
+    builder.setLowestLogLevel(TreeLogger.ERROR);
+    builder.expectError("Invalid module name: 'com.google.gwt.dev.cfg.testdata.naming.Invalid..Foo'", null);
+    UnitTestTreeLogger logger = builder.createLogger();
+    try {
+      ModuleDefLoader.loadFromClassPath(logger,
+          "com.google.gwt.dev.cfg.testdata.naming.Invalid..Foo", false);
+      fail("Expected exception from invalid module name.");
+    } catch (UnableToCompleteException expected) {
+    }
+    logger.assertLogEntriesContainExpected();
+  }
+  
+  public void testModuleNamingValid() throws Exception {
+    TreeLogger logger = TreeLogger.NULL;
+    //TreeLogger logger = new PrintWriterTreeLogger();
+
+    ModuleDef module;
+    module = ModuleDefLoader.loadFromClassPath(logger,
+        "com.google.gwt.dev.cfg.testdata.naming.Foo-test", false);
+    assertNotNull(module.findSourceFile("com/google/gwt/dev/cfg/testdata/naming/client/Mock.java"));
+
+    module = ModuleDefLoader.loadFromClassPath(logger,
+        "com.google.gwt.dev.cfg.testdata.naming.7Foo", false);
+    assertNotNull(module.findSourceFile("com/google/gwt/dev/cfg/testdata/naming/client/Mock.java"));
+
+    module = ModuleDefLoader.loadFromClassPath(logger,
+        "com.google.gwt.dev.cfg.testdata.naming.Nested7Foo", false);
+    assertNotNull(module.findSourceFile("com/google/gwt/dev/cfg/testdata/naming/client/Mock.java"));
+
+    module = ModuleDefLoader.loadFromClassPath(logger,
+        "com.google.gwt.dev.cfg.testdata.naming.Nested7Foo", false);
+    assertNotNull(module.findSourceFile("com/google/gwt/dev/cfg/testdata/naming/client/Mock.java"));
+  }
+
+  /**
+   * The top level module has a valid name, but the inherited one does not.
+   */
+  public void testModuleNestedNamingInvalid() {
+    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
+    builder.setLowestLogLevel(TreeLogger.ERROR);
+    builder.expectError("Invalid module name: 'com.google.gwt.dev.cfg.testdata.naming.Invalid..Foo'", null);
+    UnitTestTreeLogger logger = builder.createLogger();
+    try {
+      ModuleDefLoader.loadFromClassPath(logger,
+          "com.google.gwt.dev.cfg.testdata.naming.NestedInvalid", false);
+      fail("Expected exception from invalid module name.");
+    } catch (UnableToCompleteException expected) {
+    }
+    logger.assertLogEntriesContainExpected();
+  }
 }

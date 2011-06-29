@@ -78,8 +78,13 @@ public class ModuleDef {
       };
 
   public static boolean isValidModuleName(String moduleName) {
+    // Check for an empty string between two periods.
+    if (moduleName.contains("..")) {
+      return false;
+    }
+    // Insure the package name components are a valid Java ident.
     String[] parts = moduleName.split("\\.");
-    for (int i = 0; i < parts.length; i++) {
+    for (int i = 0; i < parts.length - 1; i++) {
       String part = parts[i];
       if (!Util.isValidJavaIdent(part)) {
         return false;

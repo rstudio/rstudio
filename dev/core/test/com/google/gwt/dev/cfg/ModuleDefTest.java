@@ -237,4 +237,24 @@ public class ModuleDefTest extends TestCase {
     assertEquals(Arrays.asList(expectedClasses),
         new ArrayList<Class<? extends Linker>>(def.getActiveLinkers()));
   }
+
+  public void testValidModuleName() {
+    // Package names must contain valid Java identifiers.
+    assertFalse(ModuleDef.isValidModuleName("com.foo.."));
+    assertFalse(ModuleDef.isValidModuleName("com..Foo"));
+    assertFalse(ModuleDef.isValidModuleName("com.7.Foo"));
+    assertFalse(ModuleDef.isValidModuleName("com.7foo.Foo"));
+    
+    assertTrue(ModuleDef.isValidModuleName("com.foo.Foo"));
+    assertTrue(ModuleDef.isValidModuleName("com.$foo.Foo"));
+    assertTrue(ModuleDef.isValidModuleName("com._foo.Foo"));
+    assertTrue(ModuleDef.isValidModuleName("com.foo7.Foo"));
+    
+    // For legacy reasons, allow the last part of the name is not 
+    // required to be a valid ident.  In the past, naming rules 
+    // were enforced for top level modules, but not nested modules.    
+    assertTrue(ModuleDef.isValidModuleName("com.foo.F-oo"));
+    assertTrue(ModuleDef.isValidModuleName("com.foo.7Foo"));
+    assertTrue(ModuleDef.isValidModuleName("com.foo.+Foo"));
+  }
 }

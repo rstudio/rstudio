@@ -239,6 +239,12 @@ public final class ModuleDefLoader {
         + moduleName + "'", null);
     alreadyLoadedModules.add(moduleName);
 
+    if (!ModuleDef.isValidModuleName(moduleName)) {
+      logger.log(TreeLogger.ERROR, "Invalid module name: '" + moduleName + "'",
+          null);
+      throw new UnableToCompleteException();
+    }
+
     // Find the specified module using the classpath.
     //
     String slashedModuleName = moduleName.replace('.', '/');
@@ -308,11 +314,6 @@ public final class ModuleDefLoader {
    */
   private ModuleDef doLoadModule(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
-    if (!ModuleDef.isValidModuleName(moduleName)) {
-      logger.log(TreeLogger.ERROR, "Invalid module name: '" + moduleName + "'",
-          null);
-      throw new UnableToCompleteException();
-    }
 
     ModuleDef moduleDef = new ModuleDef(moduleName);
     Event moduleLoadEvent = SpeedTracerLogger.start(CompilerEventType.MODULE_DEF,

@@ -45,8 +45,7 @@ public class UnitTestTreeLogger extends TreeLogger {
       return new UnitTestTreeLogger(expected, loggableTypes);
     }
 
-    public void expect(TreeLogger.Type type, String msg,
-        Class<? extends Throwable> caught) {
+    public void expect(TreeLogger.Type type, String msg, Class<? extends Throwable> caught) {
       expected.add(new LogEntry(type, msg, caught));
     }
 
@@ -102,8 +101,7 @@ public class UnitTestTreeLogger extends TreeLogger {
     private final String msg;
     private final Type type;
 
-    public LogEntry(TreeLogger.Type type, String msg,
-        Class<? extends Throwable> caught) {
+    public LogEntry(TreeLogger.Type type, String msg, Class<? extends Throwable> caught) {
       assert (type != null);
       this.type = type;
       this.msg = msg;
@@ -139,28 +137,37 @@ public class UnitTestTreeLogger extends TreeLogger {
       }
       return sb.toString();
     }
+
+    private boolean matches(LogEntry other) {
+      if (!type.equals(other.type)) {
+        return false;
+      }
+      if (!msg.equals(other.msg)) {
+        return false;
+      }
+      if ((caught == null) != (other.caught == null)) {
+        return false;
+      }
+      if (caught != null && !caught.isAssignableFrom(other.caught)) {
+        return false;
+      }
+      return true;
+    }
   }
 
   private static void assertCorrectLogEntry(LogEntry expected, LogEntry actual) {
-    Assert.assertEquals("Log types do not match", expected.getType(),
-        actual.getType());
-    Assert.assertEquals("Log messages do not match", expected.getMessage(),
-        actual.getMessage());
+    Assert.assertEquals("Log types do not match", expected.getType(), actual.getType());
+    Assert.assertEquals("Log messages do not match", expected.getMessage(), actual.getMessage());
     if (expected.getCaught() == null) {
-      Assert.assertNull("Actual log exception type should have been null",
-          actual.getCaught());
+      Assert.assertNull("Actual log exception type should have been null", actual.getCaught());
     } else {
-      Assert.assertNotNull(
-          "Actual log exception type should not have been null",
-          actual.getCaught());
-      Assert.assertTrue("Actual log exception type ("
-          + actual.getCaught().getName()
+      Assert.assertNotNull("Actual log exception type should not have been null", actual
+          .getCaught());
+      Assert.assertTrue("Actual log exception type (" + actual.getCaught().getName()
           + ") cannot be assigned to expected log exception type ("
-          + expected.getCaught().getName() + ")",
-          expected.getCaught().isAssignableFrom(actual.getCaught()));
+          + expected.getCaught().getName() + ")", expected.getCaught().isAssignableFrom(
+          actual.getCaught()));
     }
-    Assert.assertEquals("Log types do not match", expected.getType(),
-        actual.getType());
   }
 
   private final List<LogEntry> actualEntries = new ArrayList<LogEntry>();
@@ -168,20 +175,22 @@ public class UnitTestTreeLogger extends TreeLogger {
 
   private final EnumSet<TreeLogger.Type> loggableTypes;
 
-  public UnitTestTreeLogger(List<LogEntry> expectedEntries,
-      EnumSet<TreeLogger.Type> loggableTypes) {
+  public UnitTestTreeLogger(List<LogEntry> expectedEntries, EnumSet<TreeLogger.Type> loggableTypes) {
     this.expectedEntries.addAll(expectedEntries);
     this.loggableTypes = loggableTypes;
 
     // Sanity check that all expected entries are actually loggable.
     for (LogEntry entry : expectedEntries) {
       Type type = entry.getType();
-      Assert.assertTrue("Cannot expect an entry of a non-loggable type!",
-          isLoggable(type));
+      Assert.assertTrue("Cannot expect an entry of a non-loggable type!", isLoggable(type));
       loggableTypes.add(type);
     }
   }
 
+  /**
+   * Asserts that all expected log entries were logged in the correct order and
+   * no other entries were logged.
+   */
   public void assertCorrectLogEntries() {
     if (expectedEntries.size() != actualEntries.size()) {
       Assert.fail("Wrong log count: expected=" + expectedEntries + ", actual=" + actualEntries);
@@ -191,9 +200,27 @@ public class UnitTestTreeLogger extends TreeLogger {
     }
   }
 
+  /**
+   * A more loose check than {@link #assertCorrectLogEntries} that just checks
+   * to see that the expected log messages are somewhere in the actual logged
+   * messages.
+   */
+  public void assertLogEntriesContainExpected() {
+    for (LogEntry expectedEntry : expectedEntries) {
+      boolean found = false;
+      for (LogEntry actualEntry : actualEntries) {
+        if (expectedEntry.matches(actualEntry)) {
+          found = true;
+          break;
+        }
+      }
+      Assert.assertTrue("No match for expected=" + expectedEntry + " in actual=" + actualEntries,
+          found);
+    }
+  }
+
   @Override
-  public TreeLogger branch(Type type, String msg, Throwable caught,
-      HelpInfo helpInfo) {
+  public TreeLogger branch(Type type, String msg, Throwable caught, HelpInfo helpInfo) {
     log(type, msg, caught);
     return this;
   }
