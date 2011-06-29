@@ -31,6 +31,7 @@ extern const int kDefaultHeight;
    
 // initialize
 core::Error initialize(
+          const core::FilePath& plotsStateFile,
           const core::FilePath& graphicsPath,
           const boost::function<bool(double*,double*)>& locatorFunction);
    

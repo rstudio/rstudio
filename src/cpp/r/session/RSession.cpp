@@ -101,6 +101,10 @@ public:
    ~SuppressOutputInScope() { s_suppressOuput = false; }
 };
 
+FilePath plotsStateFilePath()
+{
+   return s_options.userScratchPath.complete("plots");
+}
 
 FilePath rHistoryFilePath()
 {
@@ -300,7 +304,9 @@ Error initialize()
 
    // initialize graphics device
    FilePath graphicsPath = s_options.userScratchPath.complete("graphics");
-   error = graphics::device::initialize(graphicsPath, s_callbacks.locator);
+   error = graphics::device::initialize(plotsStateFilePath(),
+                                        graphicsPath,
+                                        s_callbacks.locator);
    if (error) 
       return error;
    
@@ -830,8 +836,7 @@ void commitWorkingState(ClientStateCommitType commitType)
    r::session::clientState().commit(commitType, s_clientStatePath);
 
    // save plots state
-   FilePath plotsPath = s_options.userScratchPath.complete("plots");
-   Error error = graphics::plotManager().savePlotsState(plotsPath);
+   Error error = graphics::plotManager().savePlotsState(plotsStateFilePath());
    if (error)
       LOG_ERROR(error);
 }
@@ -1161,7 +1166,7 @@ void ensureDeserialized()
       // always restore plots as well
 
       // for migration we may need to restore from the suspended plots file
-      FilePath plotsFile = s_options.userScratchPath.childPath("plots");
+      FilePath plotsFile = plotsStateFilePath();
       if (!plotsFile.exists() && s_suspendedSessionPath.exists())
          plotsFile = s_suspendedSessionPath.childPath("plots");
 

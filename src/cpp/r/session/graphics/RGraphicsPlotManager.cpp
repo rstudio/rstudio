@@ -77,7 +77,8 @@ PlotManager::PlotManager()
    plots_.set_capacity(30);
 }
       
-Error PlotManager::initialize(const FilePath& graphicsPath,
+Error PlotManager::initialize(const FilePath& plotsStateFile,
+                              const FilePath& graphicsPath,
                               const GraphicsDeviceFunctions& graphicsDevice,
                               GraphicsDeviceEvents* pEvents)
 {
@@ -85,6 +86,9 @@ Error PlotManager::initialize(const FilePath& graphicsPath,
    Error error = plotManipulatorManager().initialize();
    if (error)
       return error;
+
+   // save reference to plots state file
+   plotsStateFile_ = plotsStateFile;
 
    // save reference to graphics path and make sure it exists
    graphicsPath_ = graphicsPath ;
@@ -556,6 +560,10 @@ Error PlotManager::restorePlotsState(const FilePath& plotsStateFile)
    if (error)
       return error;
 
+   // if it is empty then return succes
+   if (plots.empty())
+      return Success();
+
    // read the storage id of the active plot them remove it from the list
    std::string activePlotStorageId ;
    if (!plots.empty())
@@ -706,7 +714,11 @@ void PlotManager::onDeviceClosed()
    displayHasChanges_ = true;
    
    // remove all files
-   Error error = graphicsPath_.removeIfExists();
+   Error error = plotsStateFile_.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+
+   error = graphicsPath_.removeIfExists();
    if (error)
       LOG_ERROR(error);
 }   

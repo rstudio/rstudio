@@ -59,7 +59,8 @@ private:
 public:
    virtual ~PlotManager() {}
    
-   core::Error initialize(const core::FilePath& graphicsPath,
+   core::Error initialize(const core::FilePath& plotsStateFile,
+                          const core::FilePath& graphicsPath,
                           const GraphicsDeviceFunctions& graphicsDevice,
                           GraphicsDeviceEvents* pEvents);
    
@@ -159,7 +160,8 @@ private:
 private:   
    friend class SuppressDeviceEventsScope;
 
-   // storage path
+   // storage paths
+   core::FilePath plotsStateFile_;
    core::FilePath graphicsPath_;
   
    // interface to graphics device
