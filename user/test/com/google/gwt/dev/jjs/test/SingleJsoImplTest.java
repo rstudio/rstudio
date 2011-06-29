@@ -442,6 +442,28 @@ public class SingleJsoImplTest extends GWTTestCase {
   }
 
   /**
+   * An interface that has dual JSO and non-JSO implementations.
+   */
+  interface DualSimple {
+    String a();
+  }
+
+  static class JavaDualSimple implements DualSimple {
+    public String a() {
+      return "object";
+    }
+  }
+
+  static final class JsoDualSimple extends JavaScriptObject implements DualSimple {
+    protected JsoDualSimple() {
+    }
+
+    public String a() {
+      return "jso";
+    }
+  }
+
+  /**
    * Ensure that a Java-only implementation of a SingleJsoImpl interface works.
    */
   static class SimpleOnlyJava implements SimpleOnlyJavaInterface {
@@ -512,6 +534,115 @@ public class SingleJsoImplTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
+  }
+
+  /*
+   * These "testAssign*" tests below are inspired by the issue reported here:
+   * 
+   * @see http://code.google.com/p/google-web-toolkit/issues/detail?id=6448
+   */
+  public void testAssignToDualJavaJsoImplInterfaceArray() {
+    int i = 0;
+    DualSimple[] dualSimples = new DualSimple[10];
+
+    DualSimple dualSimple = (DualSimple) JavaScriptObject.createObject();
+    dualSimples[i] = dualSimple;
+    assertEquals("jso", dualSimples[i++].a());
+
+    JsoDualSimple jsoDualSimple = (JsoDualSimple) JavaScriptObject.createObject();
+    dualSimples[i] = jsoDualSimple;
+    assertEquals("jso", dualSimples[i++].a());
+
+    DualSimple javaDualSimple = new JavaDualSimple();
+    dualSimples[i] = javaDualSimple;
+    assertEquals("object", dualSimples[i++].a());
+
+    Object[] objects = dualSimples;
+    objects[i++] = dualSimple;
+    objects[i++] = jsoDualSimple;
+    objects[i++] = javaDualSimple;
+    try {
+      objects[i++] = new Object();
+      fail("ArrayStoreException expected");
+    } catch (ArrayStoreException expected) {
+    }
+  }
+
+  public void testAssignToJsoArray() {
+    int i = 0;
+    JsoDualSimple[] jsoDualSimples = new JsoDualSimple[10];
+
+    JsoDualSimple jsoDualSimple = (JsoDualSimple) JavaScriptObject.createObject();
+    jsoDualSimples[i] = jsoDualSimple;
+    assertEquals("jso", jsoDualSimples[i++].a());
+
+    DualSimple dualSimple = (DualSimple) JavaScriptObject.createObject();
+    jsoDualSimples[i] = (JsoDualSimple) dualSimple;
+    assertEquals("jso", jsoDualSimples[i++].a());
+
+    DualSimple[] dualSimples = jsoDualSimples;
+    try {
+      DualSimple javaDualSimple = new JavaDualSimple();
+      dualSimples[i++] = javaDualSimple;
+      fail("ArrayStoreException expected");
+    } catch (ArrayStoreException expected) {
+    }
+  }
+
+  public void testAssignToJavaArray() {
+    int i = 0;
+    JavaDualSimple[] javaDualSimples = new JavaDualSimple[10];
+
+    JavaDualSimple javaDualSimple = new JavaDualSimple();
+    javaDualSimples[i] = javaDualSimple;
+    assertEquals("object", javaDualSimples[i++].a());
+
+    DualSimple[] dualSimples = javaDualSimples;
+    try {
+      DualSimple jsoDualSimple = (DualSimple) JavaScriptObject.createObject();
+      dualSimples[i++] = jsoDualSimple;
+      fail("ArrayStoreException expected");
+    } catch (ArrayStoreException expected) {
+    }
+  }
+
+  public void testAssignToObjectArray() {
+    int i = 0;
+    Object[] objects = new Object[10];
+
+    Simple simple = (Simple) JavaScriptObject.createObject();
+    objects[i++] = simple;
+
+    JsoSimple jsoSimple = (JsoSimple) JavaScriptObject.createObject();
+    objects[i++] = jsoSimple;
+
+    JavaScriptObject jso = JavaScriptObject.createObject();
+    objects[i++] = jso;
+
+    Object object = new Object();
+    objects[i++] = object;
+
+    Integer integer = new Integer(1);
+    objects[i++] = integer;
+  }
+
+  public void testAssignToSingleJsoImplInterfaceArray() {
+    int i = 0;
+    Simple[] simples = new Simple[10];
+    Simple simple = (Simple) JavaScriptObject.createObject();
+    simples[i] = simple;
+    assertEquals("a", simples[i++].a());
+
+    Simple jsoSimple = (JsoSimple) JavaScriptObject.createObject();
+    simples[i] = jsoSimple;
+    assertEquals("a", simples[i++].a());
+
+    Object[] objects = simples;
+    try {
+      objects[i++] = new Object();
+      fail("ArrayStoreException expected");
+    } catch (ArrayStoreException expected) {
+    }
   }
 
   public void testCallsToInnerTypes() {

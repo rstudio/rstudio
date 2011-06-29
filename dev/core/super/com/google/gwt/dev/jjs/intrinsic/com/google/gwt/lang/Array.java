@@ -180,14 +180,46 @@ public final class Array {
   }
 
   /**
-   * Performs an array assignment, checking for valid index and type.
+   * Performs an array assignment, after validating the type of the value being
+   * stored. The form of the type check depends on the value of queryId, as
+   * follows:
+   * <p>
+   * If the queryId is > 0, this indicates a normal cast check should be
+   * performed, using the queryId as the cast destination type.
+   * JavaScriptObjects cannot be stored in this case.
+   * <p>
+   * If the queryId == 0, this is the cast target for the Object type, in which
+   * case all types can be stored, including JavaScriptObject.
+   * <p>
+   * If the queryId == -1, this indicates that only JavaScriptObjects can be
+   * stored (-1 is the cast target for JavaScriptObject, by convention).
+   * <p>
+   * If the queryId is < -1, this indicates that both JavaScriptObjects, and
+   * Java types can be stored. In the case of Java types, the inverse of the
+   * queryId is used for castability testing. This case is provided to support
+   * arrays declared with an interface type, which has dual implementations
+   * (i.e. interface types which have both Java and JavaScriptObject
+   * implementations).
+   * <p>
+   * Note, by convention, a queryId of 1 is reserved for String, which is a
+   * final class, and can't implement an interface, and thus, it's inverse, -1,
+   * can safely be interpreted as a special case, as stated above.
+   * <p>
+   * Attempting to store an object that cannot satisfy the castability check
+   * throws an {@link ArrayStoreException}.
    */
   public static Object setCheck(Array array, int index, Object value) {
     if (value != null) {
       if (array.queryId > 0 && !Cast.canCastUnsafe(value, array.queryId)) {
+        // value must be castable to queryId
         throw new ArrayStoreException();
-      }
-      if (array.queryId < 0 && Cast.isJavaObject(value)) {
+      } else if (array.queryId == -1 && Cast.isJavaObject(value)) {
+        // value must be a JavaScriptObject
+        throw new ArrayStoreException();
+      } else if (array.queryId < -1 && !Cast.isJavaScriptObject(value)
+          && !Cast.canCastUnsafe(value, -array.queryId)) {
+        // value must be a JavaScriptObject, or else castable to the inverse of
+        // queryId
         throw new ArrayStoreException();
       }
     }
@@ -283,9 +315,10 @@ public final class Array {
   protected Class<?> arrayClass = null;
 
   /**
-   * The necessary cast target for objects stored into this array. Attempting to
-   * store an object that cannot satisfy the query id throws and
-   * {@link ArrayStoreException}.
+   * A representation of the necessary cast target for objects stored into this
+   * array.
+   * 
+   * @see #setCheck
    */
   protected int queryId = 0;
 }

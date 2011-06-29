@@ -104,7 +104,21 @@ public class ArrayNormalizer {
       if (elementType instanceof JReferenceType) {
         JReferenceType elementRefType = (JReferenceType) elementType;
         elementType = elementRefType.getUnderlyingType();
+        if (program.typeOracle.isEffectivelyJavaScriptObject(elementRefType)) {
+          /*
+           * treat types that are effectively JSO's as JSO's, for the purpose of
+           * castability checking
+           */
+          elementRefType = program.getJavaScriptObject();
+        }  
         elementQueryId = program.getQueryId(elementRefType);
+        if (program.typeOracle.isDualJsoInterface(elementRefType)) {
+          /*
+           * invert the queryId, to indicate dual castability for JSO's and the
+           * Java type represented by the inverse of the queryId
+           */
+          elementQueryId *= -1;
+        }
       }
       return new JsQueryType(sourceInfo, elementType, elementQueryId);
     }
