@@ -645,4 +645,22 @@ void GwtCallback::cleanClipboard(bool stripHtml)
 
 #endif
 
+void GwtCallback::setSwitchToProjectPending(bool switchPending)
+{
+   switchToProjectPending_ = switchPending;
+}
+
+bool GwtCallback::collectPendingSwitchToProjectRequest()
+{
+   if (switchToProjectPending_)
+   {
+      switchToProjectPending_ = false;
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
 } // namespace desktop

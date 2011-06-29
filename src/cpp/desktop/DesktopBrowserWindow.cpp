@@ -77,7 +77,7 @@ void BrowserWindow::finishLoading(bool)
    adjustTitle();
 }
 
-QWebView* BrowserWindow::webView()
+WebView* BrowserWindow::webView()
 {
    return pView_;
 }

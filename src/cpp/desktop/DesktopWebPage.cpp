@@ -29,6 +29,11 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent) :
    setNetworkAccessManager(new NetworkAccessManager(sharedSecret, parent));
 }
 
+void WebPage::setBaseUrl(const QUrl& baseUrl)
+{
+   baseUrl_ = baseUrl;
+}
+
 void WebPage::javaScriptConsoleMessage(const QString& message, int /*lineNumber*/, const QString& /*sourceID*/)
 {
    qDebug() << message;

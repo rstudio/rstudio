@@ -30,11 +30,6 @@ class MainWindow : public BrowserWindow
 public:
    MainWindow(QUrl url=QUrl());
 
-   void setSessionProcess(QProcess* pSessionProcess)
-   {
-      pCurrentSessionProcess_ = pSessionProcess;
-   }
-
 public slots:
    void quit();
    void loadUrl(const QUrl& url);
@@ -44,7 +39,7 @@ public slots:
    void openFileInRStudio(QString path);
    void checkForUpdates();
 signals:
-   void workbenchInitialized();
+   void firstWorkbenchInitialized();
 
 protected slots:
    void onJavaScriptWindowObjectCleared();
@@ -53,6 +48,17 @@ protected slots:
 
 protected:
    virtual void closeEvent(QCloseEvent*);
+
+// private interface for SessionLauncher
+private:
+   friend class SessionLauncher;
+
+   // allow SessionLauncher to give us a reference to the currently
+   // active rsession process so that we can use it in closeEvent handling
+   void setSessionProcess(QProcess* pSessionProcess);
+
+   // allow SessionLauncher to collect switch requests from GwtCallback
+   bool collectPendingSwitchToProjectRequest();
 
 private:
    bool quitConfirmed_;

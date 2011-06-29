@@ -19,6 +19,8 @@
 #include <QWebView>
 #include <QLineEdit>
 
+#include "DesktopWebView.hpp"
+
 namespace desktop {
 
 class BrowserWindow : public QMainWindow
@@ -29,7 +31,7 @@ public:
                            bool adjustTitle,
                            QUrl baseUrl = QUrl(),
                            QWidget *parent = NULL);
-    QWebView* webView();
+    WebView* webView();
 
 protected slots:
 
@@ -40,7 +42,7 @@ protected slots:
      void printRequested(QWebFrame* frame);
 
 protected:
-     QWebView* pView_;
+     WebView* pView_;
      QToolBar* pToolbar_;
 
 private:

@@ -26,6 +26,8 @@ class WebPage : public QWebPage
 public:
    explicit WebPage(QUrl baseUrl = QUrl(), QWidget *parent = NULL);
 
+   void setBaseUrl(const QUrl& baseUrl);
+
 protected:
    void javaScriptConsoleMessage(const QString& message, int lineNumber, const QString& sourceID);
    QString userAgentForUrl(const QUrl &url) const;

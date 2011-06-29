@@ -66,4 +66,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    boolean canChooseRVersion();
 
    void cleanClipboard();
+   
+   void setSwitchToProjectPending(boolean switchPending);
 }

@@ -320,23 +320,19 @@ int main(int argc, char* argv[])
       {
          LOG_ERROR(error);
 
-         QString errMsg = QString::fromUtf8("The R session failed to start.");
-
          // These calls to processEvents() seem to be necessary to get
          // readAllStandardError to work.
          pApp->processEvents();
          pApp->processEvents();
          pApp->processEvents();
 
-         QString launchErr = sessionLauncher.readFailedLaunchStandardError();
-         errMsg = errMsg.append(launchErr);
-
          QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
                               QString::fromUtf8("RStudio"),
-                              errMsg);
+                              sessionLauncher.launchFailedErrorMessage());
          errorMsg.addButton(new QPushButton(QString::fromUtf8("OK")),
                             QMessageBox::AcceptRole);
          errorMsg.show();
+
          pApp->exec();
 
          return EXIT_FAILURE;

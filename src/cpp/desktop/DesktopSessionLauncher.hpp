@@ -26,13 +26,15 @@
 
 namespace desktop {
 
-class SessionLauncher : boost::noncopyable
+class SessionLauncher : public QObject
 {
+   Q_OBJECT
 public:
    SessionLauncher(const core::FilePath& sessionPath,
                    const core::FilePath& confPath)
       : confPath_(confPath),
         sessionPath_(sessionPath),
+        pAppLaunch_(NULL),
         pMainWindow_(NULL),
         pRSessionProcess_(NULL)
    {
@@ -41,12 +43,21 @@ public:
    core::Error launchFirstSession(const QString& filename,
                                   ApplicationLaunch* pAppLaunch);
 
+   core::Error launchNextSession();
 
-   QString readFailedLaunchStandardError() const;
+   QString launchFailedErrorMessage() const;
 
    void cleanupAtExit();
 
+public slots:
+   void onRSessionExited();
+
 private:
+
+   core::Error launchSession(const QStringList& argList,
+                             QProcess** ppRSessionProcess);
+   core::Error waitForSession(const QString& host, const QString& port);
+
    void buildLaunchContext(QString* pHost,
                            QString* pPort,
                            QStringList* pArgList,
@@ -56,6 +67,7 @@ private:
 private:
    core::FilePath confPath_;
    core::FilePath sessionPath_;
+   ApplicationLaunch* pAppLaunch_;
    MainWindow* pMainWindow_;
    QProcess* pRSessionProcess_;
 };

@@ -28,12 +28,16 @@ class GwtCallback : public QObject
    Q_PROPERTY(QString fixedWidthFont READ fixedWidthFont)
 
 public:
-   GwtCallback(MainWindow* pOwnerWindow) : pOwnerWindow_(pOwnerWindow)
+   GwtCallback(MainWindow* pOwnerWindow)
+      : pOwnerWindow_(pOwnerWindow),
+        switchToProjectPending_(false)
    {
    }
 
    QString proportionalFont();
    QString fixedWidthFont();
+
+   bool collectPendingSwitchToProjectRequest();
 
 signals:
    void workbenchInitialized();
@@ -88,10 +92,13 @@ public slots:
 
    void cleanClipboard(bool stripHtml);
 
+   void setSwitchToProjectPending(bool switchPending);
+
 private:
    void doAction(QKeySequence::StandardKey key);
    QWebView* webView();
    MainWindow* pOwnerWindow_;
+   bool switchToProjectPending_;
 
 };
 

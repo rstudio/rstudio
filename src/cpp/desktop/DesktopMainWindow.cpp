@@ -63,7 +63,7 @@ MainWindow::MainWindow(QUrl url) :
            this, SLOT(manageCommand(QString,QAction*)));
 
    connect(&gwtCallback_, SIGNAL(workbenchInitialized()),
-           this, SIGNAL(workbenchInitialized()));
+           this, SIGNAL(firstWorkbenchInitialized()));
    connect(&gwtCallback_, SIGNAL(workbenchInitialized()),
            this, SLOT(onWorkbenchInitialized()));
 
@@ -112,6 +112,7 @@ void MainWindow::resetMargins()
 
 void MainWindow::loadUrl(const QUrl& url)
 {
+   webView()->setBaseUrl(url);
    webView()->load(url);
 }
 
@@ -198,6 +199,20 @@ void MainWindow::openFileInRStudio(QString path)
 void MainWindow::checkForUpdates()
 {
    updateChecker_.performCheck(true);
+}
+
+
+// private interface for SessionLauncher
+
+void MainWindow::setSessionProcess(QProcess* pSessionProcess)
+{
+   pCurrentSessionProcess_ = pSessionProcess;
+}
+
+// allow SessionLauncher to collect switch requests from GwtCallback
+bool MainWindow::collectPendingSwitchToProjectRequest()
+{
+   return gwtCallback_.collectPendingSwitchToProjectRequest();
 }
 
 } // namespace desktop

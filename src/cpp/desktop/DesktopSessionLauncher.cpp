@@ -21,6 +21,7 @@
 #include <QProcess>
 #include <QtNetwork/QTcpSocket>
 
+#include "DesktopUtils.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
 
@@ -55,6 +56,9 @@ core::WaitResult serverReady(QString host, QString port)
 Error SessionLauncher::launchFirstSession(const QString& filename,
                                           ApplicationLaunch* pAppLaunch)
 {
+   // save reference to app launch
+   pAppLaunch_ = pAppLaunch;
+
    // build a new new launch context
    QString host, port;
    QStringList argList;
@@ -62,11 +66,7 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
    buildLaunchContext(&host, &port, &argList, &url);
 
    // launch the process
-   Error error = parent_process_monitor::wrapFork(
-         boost::bind(launchProcess,
-                     sessionPath_.absolutePath(),
-                     argList,
-                     &pRSessionProcess_));
+   Error error = launchSession(argList, &pRSessionProcess_);
    if (error)
      return error;
 
@@ -84,16 +84,16 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
 
    desktop::options().restoreMainWindowBounds(pMainWindow_);
 
-   error = waitWithTimeout(boost::bind(serverReady, host, port),
-                           50, 25, 10);
+   error = waitForSession(host, port);
    if (error)
       return error;
 
+   // one-time workbench intiailized hook for startup file association
    if (!filename.isNull() && !filename.isEmpty())
    {
       StringSlotBinder* filenameBinder = new StringSlotBinder(filename);
       pMainWindow_->connect(pMainWindow_,
-                            SIGNAL(workbenchInitialized()),
+                            SIGNAL(firstWorkbenchInitialized()),
                             filenameBinder,
                             SLOT(trigger()));
       pMainWindow_->connect(filenameBinder,
@@ -102,14 +102,14 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
                             SLOT(openFileInRStudio(QString)));
    }
 
-   pMainWindow_->connect(pAppLaunch,
+   pMainWindow_->connect(pAppLaunch_,
                          SIGNAL(openFileRequest(QString)),
                          pMainWindow_,
                          SLOT(openFileInRStudio(QString)));
 
    pMainWindow_->connect(pRSessionProcess_,
                          SIGNAL(finished(int,QProcess::ExitStatus)),
-                         pMainWindow_, SLOT(quit()));
+                         this, SLOT(onRSessionExited()));
 
 
 
@@ -120,20 +120,107 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
 }
 
 
-QString SessionLauncher::readFailedLaunchStandardError() const
+void SessionLauncher::onRSessionExited()
 {
-   QString processStderr;
+   if (pMainWindow_->collectPendingSwitchToProjectRequest())
+   {
+      Error error = launchNextSession();
+      if (error)
+      {
+         LOG_ERROR(error);
+
+         showMessageBox(QMessageBox::Critical,
+                        pMainWindow_,
+                        QString::fromUtf8("RStudio"),
+                        launchFailedErrorMessage());
+
+         pMainWindow_->quit();
+      }
+   }
+   else
+   {
+      pMainWindow_->quit();
+   }
+}
+
+Error SessionLauncher::launchNextSession()
+{
+   // disconnect the firstWorkbenchInitialized event so it doesn't occur
+   // again when we launch the next session
+   pMainWindow_->disconnect(SIGNAL(firstWorkbenchInitialized()));
+
+   // delete the old process object
+   pMainWindow_->setSessionProcess(NULL);
+   if (pRSessionProcess_)
+   {
+      delete pRSessionProcess_;
+      pRSessionProcess_ = NULL;
+   }
+
+   // build a new new launch context
+   QString host, port;
+   QStringList argList;
+   QUrl url;
+   buildLaunchContext(&host, &port, &argList, &url);
+
+   // launch the process
+   Error error = launchSession(argList, &pRSessionProcess_);
+   if (error)
+     return error;
+
+   // update the main window's reference to the process object
+   pMainWindow_->setSessionProcess(pRSessionProcess_);
+
+   // wait for it to be available
+   error = waitForSession(host, port);
+   if (error)
+      return error;
+
+   // connect to quit event
+   pMainWindow_->connect(pRSessionProcess_,
+                         SIGNAL(finished(int,QProcess::ExitStatus)),
+                         this, SLOT(onRSessionExited()));
+
+   // laod url
+   pMainWindow_->loadUrl(url);
+
+   return Success();
+}
+
+Error SessionLauncher::launchSession(const QStringList& argList,
+                                     QProcess** ppRSessionProcess)
+{
+   return  parent_process_monitor::wrapFork(
+         boost::bind(launchProcess,
+                     sessionPath_.absolutePath(),
+                     argList,
+                     ppRSessionProcess));
+}
+
+Error SessionLauncher::waitForSession(const QString& host,
+                                      const QString& port)
+{
+   return waitWithTimeout(boost::bind(serverReady, host, port),
+                          50, 25, 10);
+}
+
+
+QString SessionLauncher::launchFailedErrorMessage() const
+{
+   QString errMsg = QString::fromUtf8("The R session failed to start.");
+
    if (pRSessionProcess_)
    {
       QString errmsgs = QString::fromLocal8Bit(
                               pRSessionProcess_->readAllStandardError());
       if (errmsgs.size())
       {
-         processStderr = processStderr.append(
+         errMsg = errMsg.append(
                            QString::fromAscii("\n\n")).append(errmsgs);
       }
    }
-   return processStderr;
+
+   return errMsg;
 }
 
 

@@ -17,6 +17,8 @@
 #include <QtGui>
 #include <QWebView>
 
+#include "DesktopWebPage.hpp"
+
 namespace desktop {
 
 class WebView : public ::QWebView
@@ -26,6 +28,8 @@ class WebView : public ::QWebView
 public:
    explicit WebView(QUrl baseUrl = QUrl(),
                     QWidget *parent = NULL);
+
+   void setBaseUrl(const QUrl& baseUrl);
 
 signals:
 
@@ -48,6 +52,7 @@ private:
    QUrl baseUrl_;
    QTimer* pMouseWheelTimer_;
    QList<QWheelEvent> mouseWheelEvents_;
+   WebPage* pWebPage_;
 };
 
 } // namespace desktop

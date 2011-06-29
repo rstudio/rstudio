@@ -293,6 +293,10 @@ public class ApplicationQuit implements SaveActionChangedHandler
          {
             // All last chance save operations have completed (or possibly
             // failed). Now do the real quit.
+            
+            // if a switch to project path is defined then set it
+            if (switchToProjectPath != null)
+               Desktop.getFrame().setSwitchToProjectPending(true);
 
             server_.quitSession(
                   saveChanges,
@@ -311,6 +315,7 @@ public class ApplicationQuit implements SaveActionChangedHandler
                      @Override
                      public void onError(ServerError error)
                      {
+                        Desktop.getFrame().setSwitchToProjectPending(false);
                         progress.dismiss();
                         super.onError(error);
                      }

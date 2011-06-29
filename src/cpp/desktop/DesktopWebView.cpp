@@ -31,7 +31,8 @@ WebView::WebView(QUrl baseUrl, QWidget *parent) :
    if (!core::system::getenv("KDE_FULL_SESSION").empty())
       setStyle(new QPlastiqueStyle());
 #endif
-   setPage(new WebPage(baseUrl, this));
+   pWebPage_ = new WebPage(baseUrl, this);
+   setPage(pWebPage_);
 
    page()->setForwardUnsupportedContent(true);
    if (desktop::options().webkitDevTools())
@@ -48,6 +49,14 @@ WebView::WebView(QUrl baseUrl, QWidget *parent) :
    connect(pMouseWheelTimer_, SIGNAL(timeout()),
            this, SLOT(mouseWheelTimerFired()));
 }
+
+void WebView::setBaseUrl(const QUrl& baseUrl)
+{
+   baseUrl_ = baseUrl;
+   pWebPage_->setBaseUrl(baseUrl_);
+}
+
+
 
 QWebView* WebView::createWindow(QWebPage::WebWindowType)
 {
