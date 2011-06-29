@@ -1070,19 +1070,24 @@ public class UnifyAst {
   }
 
   private JReferenceType translate(JReferenceType type) {
+    if (type instanceof JNonNullType) {
+      return translate(type.getUnderlyingType()).getNonNull();
+    }
+
     if (type instanceof JArrayType) {
       JArrayType arrayType = (JArrayType) type;
-      type = program.getTypeArray(translate(arrayType.getElementType()));
-    } else if (type.isExternal()) {
+      return program.getTypeArray(translate(arrayType.getElementType()));
+    }
+
+    if (type.isExternal()) {
       if (type instanceof JDeclaredType) {
         type = translate((JDeclaredType) type);
-      } else if (type instanceof JNonNullType) {
-        type = translate(type.getUnderlyingType()).getNonNull();
       } else {
         assert false : "Unknown external type";
       }
+      assert !type.isExternal();
     }
-    assert !type.isExternal();
+
     return type;
   }
 
