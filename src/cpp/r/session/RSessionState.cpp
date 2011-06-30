@@ -30,7 +30,6 @@
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
 
-#include "RClientMetrics.hpp"
 #include "RSearchPath.hpp"
 
 using namespace core ;
@@ -154,9 +153,6 @@ bool save(const FilePath& statePath)
       saved = false;
    }
    
-   // save client metrics
-   client_metrics::save(&settings);
-   
    // save aliased path to current working directory
    std::string workingDirectory = FilePath::createAliasedPath(
                                        utils::safeCurrentPath(),
@@ -220,10 +216,6 @@ bool restore(const FilePath& statePath,
    error = r::options::restoreOptions(statePath.complete(kOptionsFile));
    if (error)
       reportError(kRestoring, kOptionsFile, error, ERROR_LOCATION, er);
-
-   // restore client_metrics (must execute after restore of options for
-   // console width but prior to graphics::device for device size)
-   client_metrics::restore(settings);
    
    // restore history
    FilePath historyFilePath = statePath.complete(kHistoryFile);

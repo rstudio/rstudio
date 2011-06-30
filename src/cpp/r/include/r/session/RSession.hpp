@@ -56,6 +56,7 @@ struct ROptions
    core::FilePath userHomePath;
    core::FilePath userScratchPath;
    core::FilePath startupEnvironmentFilePath;
+   boost::function<core::Settings&()> persistentState;
    boost::function<core::FilePath()> rEnvironmentDir;
    boost::function<core::FilePath()> rHistoryDir;
    boost::function<bool()> alwaysSaveHistory;

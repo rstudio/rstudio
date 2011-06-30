@@ -2081,6 +2081,8 @@ int main (int argc, char * const argv[])
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
+      rOptions.persistentState = boost::bind(&PersistentState::settings,
+                                             &(persistentState()));
       rOptions.rEnvironmentDir = boost::bind(rEnvironmentDir);
       rOptions.rHistoryDir = boost::bind(rHistoryDir);
       rOptions.alwaysSaveHistory = boost::bind(&UserSettings::alwaysSaveHistory,

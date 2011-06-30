@@ -157,8 +157,11 @@ void reportDeferredDeserializationError(const Error& error)
    REprintf((errMsg + "\n").c_str());
 }
 
-void restorePlotsState()
+void restoreWorkingState()
 {
+   // restore client metrics so the plot doesn't need to re-render
+   client_metrics::restore(s_options.persistentState());
+
    // for migration we may need to restore from the suspended plots file
    FilePath plotsFile = plotsStateFilePath();
    if (!plotsFile.exists() && s_suspendedSessionPath.exists())
@@ -169,6 +172,27 @@ void restorePlotsState()
    if (plotError)
       reportDeferredDeserializationError(plotError);
 }
+
+
+void saveWorkingState(ClientStateCommitType commitType)
+{
+   using namespace r::session;
+
+   // save client state (note we don't explicitly restore this
+   // in restoreWorkingState, rather it is restored during
+   // initialize() so that the client always has access to it when
+   // for client_init)
+   r::session::clientState().commit(commitType, s_clientStatePath);
+
+   // save client metrics
+   client_metrics::save(&(s_options.persistentState()));
+
+   // save plots state
+   Error error = graphics::plotManager().savePlotsState(plotsStateFilePath());
+   if (error)
+      LOG_ERROR(error);
+}
+
 
  
 bool saveSessionState()
@@ -204,7 +228,7 @@ void deferredRestoreSessionState(
       reportDeferredDeserializationError(error);
 
    // plots
-   restorePlotsState();
+   restoreWorkingState();
 
 }
 
@@ -273,7 +297,7 @@ void restoreDefaultGlobalEnvironment()
    markImageClean();
 
    // restore plots
-   restorePlotsState();
+   restoreWorkingState();
 }
 
 void reportHistoryAccessError(const std::string& context,
@@ -864,19 +888,6 @@ void RSuicide(const char* s)
    s_internalCallbacks.suicide(s);
 }
 
-void commitWorkingState(ClientStateCommitType commitType)
-{
-   using namespace r::session;
-
-   r::session::clientState().commit(commitType, s_clientStatePath);
-
-   // save plots state
-   Error error = graphics::plotManager().savePlotsState(plotsStateFilePath());
-   if (error)
-      LOG_ERROR(error);
-}
-  
-
 // prompt to save changes (will Rf_jump_to_toplevel if there is an error)
 SA_TYPE saveAsk()
 {
@@ -1011,10 +1022,10 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
          }
 
          // commit working state (client state and plots)
-         commitWorkingState(ClientStateCommitPersistentOnly);
+         saveWorkingState(ClientStateCommitPersistentOnly);
 
          // clear display (closes the device, however graphics files
-         // are not deleted because commitWorkingState turned off
+         // are not deleted because saveWorkingState turned off
          // device events).
          r::session::graphics::display().clear();
          
@@ -1244,7 +1255,7 @@ bool isSuspendable(const std::string& currentPrompt)
 bool suspend(bool force)
 {
    // commit all working state
-   commitWorkingState(ClientStateCommitAll);
+   saveWorkingState(ClientStateCommitAll);
 
    // save the session state. errors are handled internally and reported
    // directly to the end user and written to the server log.
