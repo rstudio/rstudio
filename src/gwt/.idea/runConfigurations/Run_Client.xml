@@ -1,10 +1,11 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Run Client" type="GWT.ConfigurationType" factoryName="GWT Configuration">
     <module name="GWT" />
-    <option name="VM_PARAMETERS" value="-Xmx512m" />
+    <option name="VM_PARAMETERS" value="-Xmx1024m" />
     <option name="SHELL_PARAMETERS" value="-noserver -war www" />
     <option name="RUN_PAGE" value="http://localhost:8787" />
     <option name="GWT_MODULE" value="org.rstudio.studio.RStudio" />
+    <option name="OPEN_IN_BROWSER" value="false" />
     <RunnerSettings RunnerId="Debug">
       <option name="DEBUG_PORT" value="61866" />
       <option name="TRANSPORT" value="0" />
@@ -13,6 +14,8 @@
     <RunnerSettings RunnerId="Run" />
     <ConfigurationWrapper RunnerId="Debug" />
     <ConfigurationWrapper RunnerId="Run" />
-    <method />
+    <method>
+      <option name="Make" enabled="false" />
+    </method>
   </configuration>
 </component>

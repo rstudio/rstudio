@@ -8,6 +8,37 @@
    color: #888;
 }
 
+.same {
+
+}
+
+.insertion {
+   background-color: #DFD;
+   color: #444;
+}
+
+.deletion {
+   background-color: #FDD;
+   color: #444;
+}
+
+/* First column */
+.cellTableWidget > tbody > tr > td:first-child {
+   text-align: right;
+}
+.cellTableWidget > tbody > tr.same > td:first-child {
+   background-color: #F0F0F0;
+}
+
+/* Second column */
+.cellTableWidget > tbody > tr > td:first-child + td {
+   text-align: right;
+}
+.cellTableWidget > tbody > tr.same > td:first-child + td {
+   background-color: #F0F0F0;
+   border-right: 3px ridge;
+}
+
 .cellTableFirstColumn {
 }
 
@@ -36,7 +67,7 @@
 
 .cellTableCell {
   /* CHANGE: use less padding (originally was 15px) */
-  padding: 0 4px !important;
+  padding: 0 8px;
   overflow: hidden;
 
   /* CHANGE: use default cursor rather than pointer/caret */
@@ -106,16 +137,23 @@
 }
 
 
+/*
 .cellTableKeyboardSelectedRow {
   background: #ffc;
 }
+*/
+
+.cellTableWidget > tbody > tr.cellTableKeyboardSelectedRow > td:first-child + td + td {
+  background: #ffc;
+}
+
 
 .cellTableKeyboardSelectedRowCell {
 }
 
 .cellTableSelectedRow {
   /* CHANGE: use same selected background color as History table */
-  background: rgb(146, 193, 240);
+  background: rgb(146, 193, 240) !important;
   /* color: white; */
   height: auto;
   overflow: auto;
@@ -123,6 +161,7 @@
 
 .cellTableSelectedRowCell {
   /* CHANGE: use same selected background color as History table */
+   background: rgb(146, 193, 240) !important;
 }
 
 /**
@@ -133,18 +172,4 @@
 
 .cellTableLoading {
   margin: 30px;
-}
-
-.same {
-
-}
-
-.insertion {
-   background-color: #DFD !important;
-   color: #444;
-}
-
-.deletion {
-   background-color: #FDD !important;
-   color: #444;
 }

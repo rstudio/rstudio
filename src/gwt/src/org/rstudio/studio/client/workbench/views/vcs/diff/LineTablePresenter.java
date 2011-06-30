@@ -1,5 +1,5 @@
 /*
- * DiffFormatException.java
+ * LineTablePresenter.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -12,10 +12,14 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.diff;
 
-public class DiffFormatException extends IllegalArgumentException
+import java.util.ArrayList;
+
+public class LineTablePresenter
 {
-   public DiffFormatException(String tag)
+   public interface Display
    {
-      super("Invalid diff format [" + tag + "]");
+      void setData(ArrayList<Line> diffData);
+      void clear();
+      ArrayList<Line> getSelectedLines();
    }
 }

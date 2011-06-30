@@ -20,6 +20,24 @@ import java.util.ArrayList;
 
 public interface VCSServerOperations
 {
+   public enum PatchMode
+   {
+      Working(0),
+      Stage(1);
+
+      PatchMode(int intVal)
+      {
+         intVal_ = intVal;
+      }
+
+      public int getValue()
+      {
+         return intVal_;
+      }
+
+      private final int intVal_;
+   }
+
    void vcsAdd(ArrayList<String> paths,
                ServerRequestCallback<Void> requestCallback);
    void vcsRemove(ArrayList<String> paths,
@@ -39,4 +57,7 @@ public interface VCSServerOperations
 
    void vcsDiffFile(String path,
                     ServerRequestCallback<String> requestCallback);
+
+   void vcsApplyPatch(String patch, PatchMode mode,
+                      ServerRequestCallback<Void> requestCallback);
 }

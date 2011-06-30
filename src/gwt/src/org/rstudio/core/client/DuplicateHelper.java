@@ -12,6 +12,7 @@
  */
 package org.rstudio.core.client;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import java.util.*;
 
 public class DuplicateHelper
@@ -33,8 +34,8 @@ public class DuplicateHelper
       public int occurrences(T value)
       {
          for (Pair<T, Integer> count : valueCounts_)
-            if (0 == comparator_.compare(value, count.a))
-               return count.b;
+            if (0 == comparator_.compare(value, count.first))
+               return count.second;
          return 0;
       }
 
@@ -67,16 +68,31 @@ public class DuplicateHelper
             new ArrayList<Pair<T, Integer>>();
    }
 
-   private static class Pair<A,B>
+   private static class CaseInsensitiveStringComparator implements Comparator<String>
    {
-      private Pair(A a, B b)
+      public int compare(String s1, String s2)
       {
-         this.a = a;
-         this.b = b;
+         return s1.compareToIgnoreCase(s2);
+      }
+   }
+
+   public static <T> int dedupeSortedList(ArrayList<T> list)
+   {
+      int removedCount = 0;
+
+      for (int i = list.size() - 1; i > 0; i--)
+      {
+         T x = list.get(i-1);
+         T y = list.get(i);
+         if (((x == null) == (y == null)) &&
+             ((x == null) || x.equals(y)))
+         {
+            list.remove(i);
+            removedCount++;
+         }
       }
 
-      public final A a;
-      public final B b;
+      return removedCount;
    }
 
    /**
@@ -100,7 +116,7 @@ public class DuplicateHelper
          public int compare(Pair<Integer, T> left,
                             Pair<Integer, T> right)
          {
-            return comparator.compare(left.b, right.b);
+            return comparator.compare(left.second, right.second);
          }
       });
 
@@ -110,7 +126,7 @@ public class DuplicateHelper
       for (Pair<Integer, T> value : sorted)
       {
          if (lastSeenValue == null ||
-             comparator.compare(lastSeenValue, value.b) != 0)
+             comparator.compare(lastSeenValue, value.second) != 0)
          {
             // This value isn't the same as the previous one. If we've got
             // dupes in our list, then add them to the results. Then start
@@ -121,13 +137,130 @@ public class DuplicateHelper
          }
 
          // Add ourselves to the current list
-         currentDupes.add(value.a);
-         lastSeenValue = value.b;
+         currentDupes.add(value.first);
+         lastSeenValue = value.second;
       }
 
       if (currentDupes.size() > 0)
          dupeInfo.addDupeInfo(lastSeenValue, currentDupes);
 
       return dupeInfo;
+   }
+
+   /**
+    * Use Mac OS X style prettifying of paths. Display the filename,
+    * and if there are multiple entries with the same filename, append
+    * a disambiguating folder to those filenames.
+    */
+   public static ArrayList<String> getPathLabels(ArrayList<String> paths)
+   {
+      ArrayList<String> labels = new ArrayList<String>();
+      for (String entry : paths)
+         labels.add(FileSystemItem.getNameFromPath(entry));
+
+      DuplicationInfo<String> dupeInfo = DuplicateHelper.detectDupes(
+            labels, new CaseInsensitiveStringComparator());
+
+      for (ArrayList<Integer> dupeList : dupeInfo.dupes())
+      {
+         fixupDupes(paths, dupeList, labels);
+      }
+
+      dupeInfo = DuplicateHelper.detectDupes(
+            labels, new CaseInsensitiveStringComparator());
+
+      // There are edge cases where we may still end up with dupes at this
+      // point. In that case, just disambiguate using the full path.
+      // Example:
+      // ~/foo/tmp/README
+      // ~/bar/tmp/README
+      // ~/foo/README
+      // ~/bar/README
+      for (ArrayList<Integer> dupeList : dupeInfo.dupes())
+      {
+         for (Integer index : dupeList)
+         {
+            FileSystemItem fsi = FileSystemItem.createFile(
+                  paths.get(index));
+            labels.set(index, disambiguate(fsi.getName(),
+                                           fsi.getParentPathString()));
+         }
+      }
+
+
+      return labels;
+   }
+
+   private static void fixupDupes(ArrayList<String> fullPaths,
+                           ArrayList<Integer> indices,
+                           ArrayList<String> labels)
+   {
+      ArrayList<ArrayList<String>> pathElementListList =
+            new ArrayList<ArrayList<String>>();
+
+      for (Integer index : indices)
+         pathElementListList.add(toPathElements(fullPaths.get(index)));
+
+      while (indices.size() > 0)
+      {
+         ArrayList<String> lastPathElements = new ArrayList<String>();
+
+         for (int i = 0; i < pathElementListList.size(); i++)
+         {
+            ArrayList<String> pathElementList = pathElementListList.get(i);
+
+            if (pathElementList.size() == 0)
+            {
+               int trueIndex = indices.get(i);
+               String path = FileSystemItem.createFile(fullPaths.get(trueIndex))
+                     .getParentPathString();
+               labels.set(trueIndex,
+                          disambiguate(labels.get(trueIndex), path));
+
+               indices.remove(i);
+               pathElementListList.remove(i);
+               i--;
+            }
+            else
+            {
+               lastPathElements.add(
+                     pathElementList.remove(pathElementList.size() - 1));
+            }
+         }
+
+
+         DuplicationInfo<String> dupeInfo = DuplicateHelper.detectDupes(
+               lastPathElements,
+               new CaseInsensitiveStringComparator());
+
+         for (int i = 0; i < lastPathElements.size(); i++)
+         {
+            if (1 == dupeInfo.occurrences(lastPathElements.get(i)))
+            {
+               int trueIndex = indices.get(i);
+               labels.set(trueIndex, disambiguate(labels.get(trueIndex),
+                                          lastPathElements.get(i)));
+
+               indices.remove(i);
+               pathElementListList.remove(i);
+               lastPathElements.remove(i);
+               i--;
+            }
+         }
+
+         assert indices.size() == pathElementListList.size();
+      }
+   }
+
+   private static String disambiguate(String filename, String disambiguatingPath)
+   {
+      return filename + " \u2014 " + disambiguatingPath;
+   }
+
+   private static ArrayList<String> toPathElements(String path)
+   {
+      FileSystemItem fsi = FileSystemItem.createFile(path);
+      return new ArrayList<String>(
+            Arrays.asList(fsi.getParentPathString().split("/")));
    }
 }

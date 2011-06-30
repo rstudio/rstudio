@@ -31,14 +31,6 @@ import java.util.*;
 @Singleton
 public class MRUList
 {
-   private static class CaseInsensitiveStringComparator implements Comparator<String>
-   {
-      public int compare(String s1, String s2)
-      {
-         return s1.compareToIgnoreCase(s2);
-      }
-   }
-
    @Inject
    public MRUList(Commands commands,
                   FileTypeRegistry fileTypeRegistry,
@@ -149,7 +141,7 @@ public class MRUList
 
       commands_.clearRecentFiles().setEnabled(mruEntries_.size() > 0);
 
-      ArrayList<String> labels = getLabels();
+      ArrayList<String> labels = DuplicateHelper.getPathLabels(mruEntries_);
 
       for (int i = 0; i < mruCmds_.length; i++)
       {
@@ -166,123 +158,6 @@ public class MRUList
 
       if (persistClientState)
          session_.persistClientState();
-   }
-
-   /**
-    * Use Mac OS X style prettifying of paths. Display the filename,
-    * and if there are multiple entries with the same filename, append
-    * a disambiguating folder to those filenames. 
-    */
-   private ArrayList<String> getLabels()
-   {
-      ArrayList<String> labels = new ArrayList<String>();
-      for (String entry : mruEntries_)
-         labels.add(FileSystemItem.getNameFromPath(entry));
-
-      DuplicationInfo<String> dupeInfo = DuplicateHelper.detectDupes(
-            labels, new CaseInsensitiveStringComparator());
-
-      for (ArrayList<Integer> dupeList : dupeInfo.dupes())
-      {
-         fixupDupes(mruEntries_, dupeList, labels);
-      }
-
-      dupeInfo = DuplicateHelper.detectDupes(
-            labels, new CaseInsensitiveStringComparator());
-
-      // There are edge cases where we may still end up with dupes at this
-      // point. In that case, just disambiguate using the full path.
-      // Example:
-      // ~/foo/tmp/README
-      // ~/bar/tmp/README
-      // ~/foo/README
-      // ~/bar/README
-      for (ArrayList<Integer> dupeList : dupeInfo.dupes())
-      {
-         for (Integer index : dupeList)
-         {
-            FileSystemItem fsi = FileSystemItem.createFile(
-                  mruEntries_.get(index));
-            labels.set(index, disambiguate(fsi.getName(),
-                                           fsi.getParentPathString()));
-         }
-      }
-
-
-      return labels;
-   }
-
-   private void fixupDupes(ArrayList<String> fullPaths,
-                           ArrayList<Integer> indices,
-                           ArrayList<String> labels)
-   {
-      ArrayList<ArrayList<String>> pathElementListList =
-            new ArrayList<ArrayList<String>>();
-
-      for (Integer index : indices)
-         pathElementListList.add(toPathElements(fullPaths.get(index)));
-
-      while (indices.size() > 0)
-      {
-         ArrayList<String> lastPathElements = new ArrayList<String>();
-
-         for (int i = 0; i < pathElementListList.size(); i++)
-         {
-            ArrayList<String> pathElementList = pathElementListList.get(i);
-
-            if (pathElementList.size() == 0)
-            {
-               int trueIndex = indices.get(i);
-               String path = FileSystemItem.createFile(fullPaths.get(trueIndex))
-                     .getParentPathString();
-               labels.set(trueIndex,
-                          disambiguate(labels.get(trueIndex), path));
-
-               indices.remove(i);
-               pathElementListList.remove(i);
-               i--;
-            }
-            else
-            {
-               lastPathElements.add(
-                     pathElementList.remove(pathElementList.size() - 1));
-            }
-         }
-
-
-         DuplicationInfo<String> dupeInfo = DuplicateHelper.detectDupes(
-               lastPathElements,
-               new CaseInsensitiveStringComparator());
-
-         for (int i = 0; i < lastPathElements.size(); i++)
-         {
-            if (1 == dupeInfo.occurrences(lastPathElements.get(i)))
-            {
-               int trueIndex = indices.get(i);
-               labels.set(trueIndex, disambiguate(labels.get(trueIndex),
-                                          lastPathElements.get(i)));
-
-               indices.remove(i);
-               pathElementListList.remove(i);
-               lastPathElements.remove(i);
-               i--;
-            }
-         }
-
-         assert indices.size() == pathElementListList.size();
-      }
-   }
-
-   private String disambiguate(String filename, String disambiguatingPath)
-   {
-      return filename + " \u2014 " + disambiguatingPath;
-   }
-
-   private ArrayList<String> toPathElements(String path)
-   {
-      FileSystemItem fsi = FileSystemItem.createFile(path);
-      return new ArrayList<String>(
-            Arrays.asList(fsi.getParentPathString().split("/")));
    }
 
 

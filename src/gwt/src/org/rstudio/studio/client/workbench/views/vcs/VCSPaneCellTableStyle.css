@@ -3,7 +3,7 @@
 
 @def selectionBorderWidth 2px;
 .cellTableWidget {
-
+   font-size: 9pt;
 }
 
 .cellTableFirstColumn {
@@ -84,7 +84,7 @@
 }
 
 .cellTableEvenRow {
-  background: #ffffff;
+  /*background: #ffffff;*/
 }
 
 .cellTableEvenRowCell {
@@ -92,11 +92,12 @@
 }
 
 .cellTableOddRow {
-  background-color: #eef4fb;
+  /*background-color: #eef4fb;*/
 }
 
 .cellTableOddRowCell {
-  border: selectionBorderWidth solid #eef4fb;;
+  /*border: selectionBorderWidth solid #eef4fb;*/
+  border: selectionBorderWidth solid #ffffff;
 }
 
 .cellTableHoveredRow {

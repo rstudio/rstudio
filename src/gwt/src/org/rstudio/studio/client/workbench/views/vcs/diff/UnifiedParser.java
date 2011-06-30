@@ -1,39 +1,26 @@
+/*
+ * UnifiedParser.java
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.studio.client.workbench.views.vcs.diff;
 
 import org.rstudio.core.client.Pair;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.workbench.views.vcs.diff.Line.Type;
 
 import java.util.ArrayList;
 
 public class UnifiedParser
 {
-
-   public static class DiffChunk
-   {
-      public DiffChunk(int oldRowStart,
-                       int oldRowCount,
-                       int newRowStart,
-                       int newRowCount,
-                       String lineText,
-                       ArrayList<Line> diffLines)
-      {
-         this.oldRowStart = oldRowStart;
-         this.oldRowCount = oldRowCount;
-         this.newRowStart = newRowStart;
-         this.newRowCount = newRowCount;
-         this.lineText = lineText;
-         this.diffLines = diffLines;
-      }
-
-      public final int oldRowStart;
-      public final int oldRowCount;
-      public final int newRowStart;
-      public final int newRowCount;
-      public final String lineText;
-      public final ArrayList<Line> diffLines;
-   }
 
    public UnifiedParser(String data)
    {
@@ -96,17 +83,24 @@ public class UnifiedParser
             case ' ':
                oldRowsLeft--;
                newRowsLeft--;
-               lines.add(Line.createSame(oldRow++,
-                                         newRow++,
-                                         diffLine.substring(1)));
+               lines.add(new Line(Type.Same,
+                                  oldRow++,
+                                  newRow++,
+                                  diffLine.substring(1)));
                break;
             case '-':
                oldRowsLeft--;
-               lines.add(Line.createDel(oldRow++, diffLine.substring(1)));
+               lines.add(new Line(Type.Deletion,
+                                  oldRow++,
+                                  newRow-1,
+                                  diffLine.substring(1)));
                break;
             case '+':
                newRowsLeft--;
-               lines.add(Line.createIns(newRow++, diffLine.substring(1)));
+               lines.add(new Line(Type.Insertion,
+                                  oldRow-1,
+                                  newRow++,
+                                  diffLine.substring(1)));
                break;
             default:
                throw new DiffFormatException("Unexpected leading character");

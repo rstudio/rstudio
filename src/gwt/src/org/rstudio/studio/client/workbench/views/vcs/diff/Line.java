@@ -1,30 +1,57 @@
+/*
+ * Line.java
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.studio.client.workbench.views.vcs.diff;
 
-public class Line
+import java.util.ArrayList;
+
+public class Line implements Comparable<Line>
 {
    public enum Type
    {
-      Same,
-      Insertion,
-      Deletion
+      Same(' '),
+      Insertion('+'),
+      Deletion('-');
+
+      Type(char value)
+      {
+         value_ = value;
+      }
+
+      public char getValue()
+      {
+         return value_;
+      }
+
+      public Type getInverse()
+      {
+         switch (this)
+         {
+            case Same:
+               return Same;
+            case Insertion:
+               return Deletion;
+            case Deletion:
+               return Insertion;
+            default:
+               assert false : "Couldn't getInverse on Type value";
+               throw new IllegalStateException("Couldn't getInverse on Type value");
+         }
+      }
+
+      private final char value_;
    }
 
-   public static Line createIns(Integer newLine, String text)
-   {
-      return new Line(Type.Insertion, null, newLine, text);
-   }
-
-   public static Line createDel(Integer oldLine, String text)
-   {
-      return new Line(Type.Deletion, oldLine, null, text);
-   }
-
-   public static Line createSame(Integer oldLine, Integer newLine, String text)
-   {
-      return new Line(Type.Same, oldLine, newLine, text);
-   }
-
-   private Line(Type type, Integer oldLine, Integer newLine, String text)
+   public Line(Type type, int oldLine, int newLine, String text)
    {
       type_ = type;
       oldLine_ = oldLine;
@@ -37,12 +64,12 @@ public class Line
       return type_;
    }
 
-   public Integer getOldLine()
+   public int getOldLine()
    {
       return oldLine_;
    }
 
-   public Integer getNewLine()
+   public int getNewLine()
    {
       return newLine_;
    }
@@ -52,8 +79,47 @@ public class Line
       return text_;
    }
 
-   private Type type_;
-   private Integer oldLine_;
-   private Integer newLine_;
+   public Line reverse()
+   {
+      return new Line(type_.getInverse(),
+                      newLine_,
+                      oldLine_,
+                      text_);
+   }
+
+   @Override
+   public int compareTo(Line line)
+   {
+      int comp = oldLine_ - line.oldLine_;
+      if (comp == 0)
+         comp = newLine_ - line.newLine_;
+      if (comp == 0)
+         comp = type_.getValue() - line.type_.getValue();
+      return comp;
+   }
+
+   @Override
+   public int hashCode()
+   {
+      return (type_.getValue() + "/" + oldLine_ + ":" + newLine_).hashCode();
+   }
+
+   @Override
+   public boolean equals(Object o)
+   {
+      return o instanceof Line && compareTo((Line) o) == 0;
+   }
+
+   public static ArrayList<Line> reverseLines(ArrayList<Line> lines)
+   {
+      ArrayList<Line> rlines = new ArrayList<Line>(lines.size());
+      for (Line line : lines)
+         rlines.add(line.reverse());
+      return rlines;
+   }
+
+   private final Type type_;
+   private final int oldLine_;
+   private final int newLine_;
    private String text_;
 }

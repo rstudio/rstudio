@@ -30,6 +30,12 @@ namespace source_control {
 
 namespace {
 
+enum PatchMode
+{
+   PatchModeWorking = 0,
+   PatchModeStage = 1
+};
+
 class VCSImpl
 {
 public:
@@ -122,6 +128,13 @@ public:
    virtual core::Error diffFile(FilePath filePath,
                                 int contextLines,
                                 std::string* pOutput)
+   {
+      return Success();
+   }
+
+   virtual core::Error applyPatch(FilePath patchFile,
+                                  PatchMode patchMode,
+                                  std::string* pStdErr)
    {
       return Success();
    }
@@ -252,7 +265,7 @@ public:
 
    core::Error commit(const std::string& message, bool amend, bool signOff)
    {
-      FilePath tempFile = module_context::tempFile("gitmsg", ".txt");
+      FilePath tempFile = module_context::tempFile("gitmsg", "txt");
       boost::shared_ptr<std::ostream> pStream;
 
       Error error = tempFile.open_w(&pStream);
@@ -296,6 +309,20 @@ public:
       return Success();
    }
 
+   virtual core::Error applyPatch(FilePath patchFile,
+                                  PatchMode patchMode,
+                                  std::string* pStdErr)
+   {
+      std::vector<std::string> args;
+
+      if (patchMode == PatchModeStage)
+         args.push_back("--cached");
+
+      std::vector<FilePath> filePaths;
+      filePaths.push_back(patchFile);
+
+      return doSimpleCmd("apply", args, filePaths, pStdErr);
+   }
 };
 
 class SubversionVCSImpl : public VCSImpl
@@ -521,6 +548,32 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsApplyPatch(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string patch;
+   int mode;
+   Error error = json::readParams(request.params, &patch, &mode);
+   if (error)
+      return error;
+
+   FilePath patchFile = module_context::tempFile("rstudiovcs", "patch");
+   error = writeStringToFile(patchFile, patch);
+   if (error)
+      return error;
+
+   error = s_pVcsImpl_->applyPatch(patchFile, static_cast<PatchMode>(mode), NULL);
+
+   Error error2 = patchFile.remove();
+   if (error2)
+      LOG_ERROR(error2);
+
+   if (error)
+      return error;
+
+   return Success();
+}
+
 core::Error initialize()
 {
    FilePath workingDir = module_context::activeProjectDirectory();
@@ -544,7 +597,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_unstage", vcsUnstage))
       (bind(registerRpcMethod, "vcs_full_status", vcsFullStatus))
       (bind(registerRpcMethod, "vcs_commit_git", vcsCommitGit))
-      (bind(registerRpcMethod, "vcs_diff_file", vcsDiffFile));
+      (bind(registerRpcMethod, "vcs_diff_file", vcsDiffFile))
+      (bind(registerRpcMethod, "vcs_apply_patch", vcsApplyPatch));
    Error error = initBlock.execute();
    if (error)
       return error;
