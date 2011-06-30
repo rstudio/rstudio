@@ -85,10 +85,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
-import org.rstudio.studio.client.workbench.views.vcs.CommitDialog;
-import org.rstudio.studio.client.workbench.views.vcs.VCS;
-import org.rstudio.studio.client.workbench.views.vcs.VCSPane;
-import org.rstudio.studio.client.workbench.views.vcs.VCSTab;
+import org.rstudio.studio.client.workbench.views.vcs.*;
+import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.workspace.Workspace;
 import org.rstudio.studio.client.workbench.views.workspace.WorkspacePane;
 import org.rstudio.studio.client.workbench.views.workspace.WorkspaceTab;
@@ -146,6 +145,9 @@ public class RStudioGinModule extends AbstractGinModule
       bind(SuggestOracle.class)
             .annotatedWith(Names.named("Search"))
             .to(SearchOracle.class) ;
+
+      bind(ReviewPresenter.Display.class).to(ReviewPanel.class);
+      bind(LineTablePresenter.Display.class).to(LineTableView.class);
       
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)

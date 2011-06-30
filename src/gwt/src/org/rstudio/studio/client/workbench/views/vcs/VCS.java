@@ -19,6 +19,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.widget.ThemedPopupPanel;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
@@ -27,6 +29,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
 
 import java.util.ArrayList;
 
@@ -49,24 +52,51 @@ public class VCS extends BasePresenter implements IsWidget
    @Inject
    public VCS(Display view,
               Provider<CommitDisplay> pCommitView,
+              Provider<LineTableView> pLineTable,
+              Provider<ReviewPresenter> pReviewPresenter,
               VCSServerOperations server,
               Commands commands,
-              Binder commandBinder)
+              Binder commandBinder,
+              GlobalDisplay globalDisplay)
    {
       super(view);
       view_ = view;
       pCommitView_ = pCommitView;
+      pLineTable_ = pLineTable;
+      pReviewPresenter_ = pReviewPresenter;
       server_ = server;
+      globalDisplay_ = globalDisplay;
 
       commandBinder.bind(commands, this);
 
-      refresh();
+      refresh(false);
    }
 
    @Override
    public Widget asWidget()
    {
       return view_.asWidget();
+   }
+
+   @Handler
+   void onVcsDiff()
+   {
+/*
+      new ModalDialogBase() {
+         @Override
+         protected Widget createMainWidget()
+         {
+            Widget widget = pReviewPresenter_.get().asWidget();
+            widget.setSize("700px", "500px");
+            return widget;
+         }
+      }.showModal();
+*/
+      Widget widget = pReviewPresenter_.get().asWidget();
+      widget.setSize("900px", "600px");
+      ThemedPopupPanel panel = new ThemedPopupPanel(false, true);
+      panel.add(widget);
+      panel.center();
    }
 
    @Handler
@@ -81,7 +111,7 @@ public class VCS extends BasePresenter implements IsWidget
          @Override
          public void onResponseReceived(Void response)
          {
-            refresh();
+            refresh(true);
          }
       });
    }
@@ -99,7 +129,7 @@ public class VCS extends BasePresenter implements IsWidget
                             @Override
                             public void onResponseReceived(Void response)
                             {
-                               refresh();
+                               refresh(true);
                             }
                          });
    }
@@ -116,7 +146,7 @@ public class VCS extends BasePresenter implements IsWidget
          @Override
          public void onResponseReceived(Void response)
          {
-            refresh();
+            refresh(true);
          }
       });
    }
@@ -130,10 +160,10 @@ public class VCS extends BasePresenter implements IsWidget
    @Handler
    void onVcsRefresh()
    {
-      refresh();
+      refresh(true);
    }
 
-   private void refresh()
+   private void refresh(final boolean showError)
    {
       server_.vcsFullStatus(new ServerRequestCallback<JsArray<StatusAndPath>>()
       {
@@ -149,12 +179,19 @@ public class VCS extends BasePresenter implements IsWidget
          @Override
          public void onError(ServerError error)
          {
-            //To change body of implemented methods use File | Settings | File Templates.
+            if (showError)
+            {
+               globalDisplay_.showErrorMessage("Error",
+                                               error.getUserMessage());
+            }
          }
       });
    }
 
    private final Display view_;
    private final Provider<CommitDisplay> pCommitView_;
+   private final Provider<LineTableView> pLineTable_;
+   private final Provider<ReviewPresenter> pReviewPresenter_;
    private final VCSServerOperations server_;
+   private final GlobalDisplay globalDisplay_;
 }

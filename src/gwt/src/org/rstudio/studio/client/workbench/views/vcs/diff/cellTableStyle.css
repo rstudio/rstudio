@@ -3,15 +3,46 @@
 
 @def selectionBorderWidth 2px;
 .cellTableWidget {
-   font-size: 9pt;
+   font-family: fixedWidthFont;
+   white-space: pre;
+   color: #888;
+}
+
+.same {
+
+}
+
+.insertion {
+   background-color: #DFD;
+   color: #444;
+}
+
+.deletion {
+   background-color: #FDD;
+   color: #444;
+}
+
+/* First column */
+.cellTableWidget > tbody > tr > td:first-child {
+   text-align: right;
+}
+.cellTableWidget > tbody > tr.same > td:first-child {
+   background-color: #F0F0F0;
+}
+
+/* Second column */
+.cellTableWidget > tbody > tr > td:first-child + td {
+   text-align: right;
+}
+.cellTableWidget > tbody > tr.same > td:first-child + td {
+   background-color: #F0F0F0;
+   border-right: 3px ridge;
 }
 
 .cellTableFirstColumn {
-   font-family: fixedWidthFont;
 }
 
 .cellTableLastColumn {
-
 }
 
 .cellTableFooter {
@@ -36,7 +67,7 @@
 
 .cellTableCell {
   /* CHANGE: use less padding (originally was 15px) */
-  padding: 2px 4px;
+  padding: 0 8px;
   overflow: hidden;
 
   /* CHANGE: use default cursor rather than pointer/caret */
@@ -84,20 +115,15 @@
 }
 
 .cellTableEvenRow {
-  /*background: #ffffff;*/
 }
 
 .cellTableEvenRowCell {
-  border: selectionBorderWidth solid #ffffff;
 }
 
 .cellTableOddRow {
-  /*background-color: #eef4fb;*/
 }
 
 .cellTableOddRowCell {
-  /*border: selectionBorderWidth solid #eef4fb;*/
-  border: selectionBorderWidth solid #ffffff;
 }
 
 .cellTableHoveredRow {
@@ -111,17 +137,23 @@
 }
 
 
+/*
 .cellTableKeyboardSelectedRow {
   background: #ffc;
 }
+*/
+
+.cellTableWidget > tbody > tr.cellTableKeyboardSelectedRow > td:first-child + td + td {
+  background: #ffc;
+}
+
 
 .cellTableKeyboardSelectedRowCell {
-  border: selectionBorderWidth solid #ffc;
 }
 
 .cellTableSelectedRow {
   /* CHANGE: use same selected background color as History table */
-  background: rgb(146, 193, 240);
+  background: rgb(146, 193, 240) !important;
   /* color: white; */
   height: auto;
   overflow: auto;
@@ -129,17 +161,15 @@
 
 .cellTableSelectedRowCell {
   /* CHANGE: use same selected background color as History table */
-  border: selectionBorderWidth solid rgb(146, 193, 240);
+   background: rgb(146, 193, 240) !important;
 }
 
 /**
  * The keyboard selected cell is visible over selection.
  */
 .cellTableKeyboardSelectedCell {
-  border: selectionBorderWidth solid transparent;
 }
 
 .cellTableLoading {
   margin: 30px;
 }
-

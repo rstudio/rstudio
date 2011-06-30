@@ -1,5 +1,5 @@
 /*
- * UnsavedChangesTarget.java
+ * LineTablePresenter.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,15 +10,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.model;
+package org.rstudio.studio.client.workbench.views.vcs.diff;
 
-import com.google.gwt.resources.client.ImageResource;
+import java.util.ArrayList;
 
-public interface UnsavedChangesTarget
+public class LineTablePresenter
 {
-   String getId();
-   ImageResource getIcon();
-   String getTitle();
-   String getPath();
-
+   public interface Display
+   {
+      void setData(ArrayList<Line> diffData);
+      void clear();
+      ArrayList<Line> getSelectedLines();
+   }
 }

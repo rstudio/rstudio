@@ -1,5 +1,5 @@
 /*
- * UnsavedChangesTarget.java
+ * DiffFormatException.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,15 +10,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.model;
+package org.rstudio.studio.client.workbench.views.vcs.diff;
 
-import com.google.gwt.resources.client.ImageResource;
-
-public interface UnsavedChangesTarget
+public class DiffFormatException extends IllegalArgumentException
 {
-   String getId();
-   ImageResource getIcon();
-   String getTitle();
-   String getPath();
-
+   public DiffFormatException(String tag)
+   {
+      super("Invalid diff format [" + tag + "]");
+   }
 }

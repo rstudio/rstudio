@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.Manipulato
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
+import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportGoogleSpreadsheetDialog;
 
@@ -151,6 +152,7 @@ public class RStudio implements EntryPoint
       UnsavedChangesDialog.ensureStylesInjected();
       ChooseMirrorDialog.ensureStylesInjected();
       ResizeGripper.ensureStylesInjected();
+      LineTableView.ensureStylesInjected();
 
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
