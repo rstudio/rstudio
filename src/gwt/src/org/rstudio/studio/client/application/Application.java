@@ -354,7 +354,7 @@ public class Application implements ApplicationEventHandlers,
                {
                   Window.Location.reload();
                }
-            }.schedule(200);
+            }.schedule(100);
          }
          else
          {
