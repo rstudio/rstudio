@@ -28,10 +28,9 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
-import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.vcs.diff.*;
-import org.rstudio.studio.client.workbench.views.vcs.diff.DiffChunk;
 
 import java.util.ArrayList;
 
@@ -87,23 +86,6 @@ public class ReviewPresenter implements IsWidget
                updateDiff();
             }
          });
-/*
-         final TextArea ta = new TextArea();
-         ta.setText(patch);
-         ta.setSize("100%", "100%");
-         ta.getElement().getStyle().setZIndex(500);
-         ta.addClickHandler(new ClickHandler()
-         {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               RootLayoutPanel.get().remove(ta);
-            }
-         });
-         RootLayoutPanel.get().add(ta);
-         RootLayoutPanel.get().setWidgetLeftRight(ta, 0, Unit.PX, 0, Unit.PX);
-         RootLayoutPanel.get().setWidgetTopBottom(ta, 0, Unit.PX, 0, Unit.PX);
-*/
       }
 
       private final PatchMode patchMode_;

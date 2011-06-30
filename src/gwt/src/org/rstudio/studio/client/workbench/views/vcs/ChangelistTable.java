@@ -22,14 +22,9 @@ import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
-import org.rstudio.core.client.DuplicateHelper;
-import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.events.SelectionChangedEvent;
-import org.rstudio.core.client.widget.events.SelectionChangedHandler;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class ChangelistTable extends Composite
 {

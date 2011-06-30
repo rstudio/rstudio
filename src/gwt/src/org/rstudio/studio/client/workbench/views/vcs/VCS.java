@@ -19,12 +19,14 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
-import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -81,22 +83,19 @@ public class VCS extends BasePresenter implements IsWidget
    @Handler
    void onVcsDiff()
    {
-/*
-      new ModalDialogBase() {
+      ModalDialogBase dialog = new ModalDialogBase()
+      {
          @Override
          protected Widget createMainWidget()
          {
+            addCancelButton();
+
             Widget widget = pReviewPresenter_.get().asWidget();
-            widget.setSize("700px", "500px");
+            widget.setSize("900px", "600px");
             return widget;
          }
-      }.showModal();
-*/
-      Widget widget = pReviewPresenter_.get().asWidget();
-      widget.setSize("900px", "600px");
-      ThemedPopupPanel panel = new ThemedPopupPanel(false, true);
-      panel.add(widget);
-      panel.center();
+      };
+      dialog.showModal();
    }
 
    @Handler
