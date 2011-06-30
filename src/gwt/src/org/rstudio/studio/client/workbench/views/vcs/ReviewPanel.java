@@ -21,10 +21,15 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.workbench.views.vcs.ReviewPresenter.Display;
+import org.rstudio.studio.client.workbench.views.vcs.diff.Line;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
+import org.rstudio.studio.client.workbench.views.vcs.diff.NavGutter;
+
+import java.util.ArrayList;
 
 public class ReviewPanel extends Composite implements Display
 {
@@ -81,6 +86,12 @@ public class ReviewPanel extends Composite implements Display
       return changelist_;
    }
 
+   @Override
+   public ValueSink<ArrayList<Line>> getGutter()
+   {
+      return gutter_;
+   }
+
    @UiField(provided = true)
    ThemedButton stageButton_;
    @UiField(provided = true)
@@ -93,4 +104,6 @@ public class ReviewPanel extends Composite implements Display
    CheckBox stagedCheckBox_;
    @UiField(provided = true)
    LineTableView lines_;
+   @UiField
+   NavGutter gutter_;
 }

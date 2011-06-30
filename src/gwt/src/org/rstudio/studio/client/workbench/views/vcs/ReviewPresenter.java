@@ -26,6 +26,7 @@ import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
+import org.rstudio.core.client.ValueSink;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -45,6 +46,7 @@ public class ReviewPresenter implements IsWidget
       HasClickHandlers getDiscardButton();
       HasClickHandlers getUnstageButton();
       HasValue<Boolean> getStagedCheckBox();
+      ValueSink<ArrayList<Line>> getGutter();
       LineTablePresenter.Display getLineTableDisplay();
       ChangelistTable getChangelistTable();
    }
@@ -171,6 +173,7 @@ public class ReviewPresenter implements IsWidget
                   if (activeChunk_ != null)
                   {
                      view_.getLineTableDisplay().setData(activeChunk_.diffLines);
+                     view_.getGutter().setValue(activeChunk_.diffLines);
                   }
                }
             });
