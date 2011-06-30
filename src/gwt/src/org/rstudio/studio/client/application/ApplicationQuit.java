@@ -253,7 +253,7 @@ public class ApplicationQuit implements SaveActionChangedHandler
       
       public void execute()
       {
-         ProgressIndicator indicator =
+         final ProgressIndicator indicator =
             globalDisplay_.getProgressIndicator("Error Quitting R");
          
          if (Desktop.isDesktop())
@@ -264,9 +264,22 @@ public class ApplicationQuit implements SaveActionChangedHandler
          else
          {
             indicator.onProgress("Quitting R Session...");
-            server_.quitSession(saveChanges_,
-                                switchToProjectPath_,
-                                new VoidServerRequestCallback(indicator));
+            server_.quitSession(
+                  saveChanges_,
+                  switchToProjectPath_,
+                  new VoidServerRequestCallback(indicator) {
+                        
+                     @Override
+                     public void onSuccess()
+                     {
+                        if (switchToProjectPath_ != null)
+                        {
+                           indicator.onProgress("Switching to project " +
+                                                       switchToProjectPath_);
+                        }
+                     }
+                     
+                  });
          }
       }
       
@@ -309,6 +322,12 @@ public class ApplicationQuit implements SaveActionChangedHandler
                      public void onResponseReceived(Void response)
                      {
                         progress.dismiss();
+                        if (switchToProjectPath != null)
+                        {
+                           globalDisplay_.showProgress("Switching to project " +
+                                                       switchToProjectPath);
+                        }
+                        
                         super.onResponseReceived(response);
                      }
 

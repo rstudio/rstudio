@@ -16,6 +16,7 @@
 #include <core/FilePath.hpp>
 #include <core/Settings.hpp>
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 #include <core/r_util/RProjectFile.hpp>
 
@@ -69,32 +70,139 @@ FilePath activeProjectFilePath()
    return s_activeProjectPath;
 }
 
-Error createProject(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
-{
-   std::string projectDirectory;
-   Error error = json::readParam(request.params, 0, &projectDirectory);
-   if (error)
-      return error;
-
-   FilePath projectDirPath = module_context::resolveAliasedPath(projectDirectory);
-   FilePath projectFilePath = projectDirPath.complete(projectDirPath.stem() +
-                                                      ".Rproj");
-   if (!projectFilePath.exists())
-   {
-      error = r_util::writeDefaultProjectFile(projectFilePath);
-      if (error)
-         return error;
-   }
-
-   return Success();
-}
-
-
 } // namespace module_context
 
 
 namespace projects {
+
+namespace {
+
+const int kStatusOk = 0;
+const int kStatusNotExists = 1;
+const int kStatusAlreadyExists = 2;
+const int kStatusNoWriteAccess = 3;
+
+json::Object createProjectResult(int status, const FilePath& projectFilePath)
+{
+   json::Object result;
+   result["status"] = status;
+   if (!projectFilePath.empty())
+   {
+      result["project_file_path"] = module_context::createAliasedPath(
+                                                            projectFilePath);
+   }
+   else
+   {
+      result["project_file_path"] = json::Value();
+   }
+   return result;
+}
+
+json::Object createProjectResult(int status)
+{
+   return createProjectResult(status, FilePath());
+}
+
+bool canWriteToProjectDir(const FilePath& projectDirPath)
+{
+   FilePath testFile = projectDirPath.complete(core::system::generateUuid());
+   Error error = core::writeStringToFile(testFile, "test");
+   if (error)
+   {
+      return false;
+   }
+   else
+   {
+      error = testFile.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+
+      return true;
+   }
+}
+
+Error createProject(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   // determine project dir path
+   std::string projectDir;
+   Error error = json::readParam(request.params, 0, &projectDir);
+   if (error)
+      return error;
+   FilePath projectDirPath = module_context::resolveAliasedPath(projectDir);
+
+   // NOTE: currently we assume that the specified directory already
+   // exists (because it was chosen with the choose folder dialog). if
+   // our client ui changes and it doesn't exist (likely) then this
+   // code needs to auto-create it
+
+   // verify that it doesn't already have a project
+   FilePath existingProjFile = r_util::projectFromDirectory(projectDirPath);
+   if (!existingProjFile.empty())
+   {
+      pResponse->setResult(createProjectResult(kStatusAlreadyExists));
+      return Success();
+   }
+
+   // verify that we can write to the directory
+   if (!canWriteToProjectDir(projectDirPath))
+   {
+      pResponse->setResult(createProjectResult(kStatusNoWriteAccess));
+      return Success();
+   }
+
+   // create the project file
+   FilePath projectFilePath = projectDirPath.complete(
+                                    projectDirPath.filename() + ".Rproj");
+   error = r_util::writeDefaultProjectFile(projectFilePath);
+   if (error)
+      return error;
+
+   // return it
+   pResponse->setResult(createProjectResult(kStatusOk, projectFilePath));
+   return Success();
+}
+
+
+Error openProject(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
+{
+   // determine project dir path
+   std::string projectDir;
+   Error error = json::readParam(request.params, 0, &projectDir);
+   if (error)
+      return error;
+   FilePath projectDirPath = module_context::resolveAliasedPath(projectDir);
+
+   // verify that the directory exists
+   if (!projectDirPath.exists())
+   {
+      pResponse->setResult(createProjectResult(kStatusNotExists));
+      return Success();
+   }
+
+   // see if there is project file
+   FilePath projectFilePath = r_util::projectFromDirectory(projectDirPath);
+   if (projectFilePath.empty())
+   {
+      pResponse->setResult(createProjectResult(kStatusNotExists));
+      return Success();
+   }
+
+   // test for write access
+   if (!canWriteToProjectDir(projectDirPath))
+   {
+      pResponse->setResult(createProjectResult(kStatusNoWriteAccess));
+      return Success();
+   }
+
+   // return the project file
+   pResponse->setResult(createProjectResult(kStatusOk, projectFilePath));
+   return Success();
+}
+
+}  // anonymous namespace
+
 
 Error startup()
 {
@@ -167,6 +275,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "create_project", createProject))
+      (bind(registerRpcMethod, "open_project", openProject))
    ;
    return initBlock.execute();
 }

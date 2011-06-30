@@ -21,10 +21,12 @@ import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenProjectFileHandler;
+import org.rstudio.studio.client.projects.model.CreateProjectResult;
+import org.rstudio.studio.client.projects.model.OpenProjectResult;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -71,26 +73,53 @@ public class Projects implements OpenProjectFileHandler
          {
             // choose project folder
             fileDialogs_.chooseFolder(
-               "New Project Directory", 
+               "Choose New Project Directory", 
                fsContext_, 
-               workbenchContext_.getCurrentWorkingDir(),
-               new ProgressOperationWithInput<FileSystemItem>() {
-
+               FileSystemItem.home(),
+               new ProgressOperationWithInput<FileSystemItem>() 
+               {
                   @Override
                   public void execute(final FileSystemItem input,
                                       ProgressIndicator indicator)
                   {
+                     indicator.onCompleted();
+                     
                      // create the project
                      server_.createProject(
                         input.getPath(),
-                        new VoidServerRequestCallback() 
+                        new SimpleRequestCallback<CreateProjectResult>() 
                         {
                            @Override
-                           public void onSuccess()
+                           public void onResponseReceived(
+                                                CreateProjectResult result)
                            {
-                              applicationQuit_.performQuit(
-                                saveChanges,
-                                input.completePath(input.getStem() + ".Rproj"));
+                              if (result.getStatus() == 
+                                  CreateProjectResult.STATUS_ALREADY_EXISTS)
+                              {
+                                 globalDisplay_.showErrorMessage(
+                                       "New Project Error", 
+                                       "A project already exists in " + 
+                                       input.getPath());
+                              }
+                              
+                              else if (result.getStatus() == 
+                                       CreateProjectResult.STATUS_NO_WRITE_ACCESS)
+                              {
+                                 globalDisplay_.showErrorMessage(
+                                       "New Project Error", 
+                                       "You do not have write access to " + 
+                                       input.getPath());
+                              }
+                              
+                              else if (result.getStatus() == 
+                                       CreateProjectResult.STATUS_OK)
+                              {
+                                 applicationQuit_.performQuit(
+                                   saveChanges,
+                                   result.getProjectFilePath());
+                              }
+                              
+                              
                            }
                           
                            
@@ -107,7 +136,72 @@ public class Projects implements OpenProjectFileHandler
    @Handler
    public void onOpenProject()
    {
-      
+      // first resolve the quit context (potentially saving edited documents
+      // and determining whether to save the R environment on exit)
+      applicationQuit_.prepareForQuit("Switch Projects",
+                                      new ApplicationQuit.QuitContext() {
+         public void onReadyToQuit(final boolean saveChanges)
+         {
+            // choose project folder
+            fileDialogs_.chooseFolder(
+               "Choose Project Directory", 
+               fsContext_, 
+               FileSystemItem.home(),
+               new ProgressOperationWithInput<FileSystemItem>() 
+               {
+                  @Override
+                  public void execute(final FileSystemItem input,
+                                      ProgressIndicator indicator)
+                  {
+                     indicator.onCompleted();
+                     
+                     // open the project
+                     server_.openProject(
+                        input.getPath(),
+                        new SimpleRequestCallback<OpenProjectResult>() 
+                        {
+                           @Override
+                           public void onResponseReceived(
+                                                OpenProjectResult result)
+                           {
+                              if (result.getStatus() == 
+                                  OpenProjectResult.STATUS_NOT_EXISTS)
+                              {
+                                 globalDisplay_.showErrorMessage(
+                                       "Open Project Error", 
+                                       "There is no project in " + 
+                                       input.getPath());
+                              }
+                              
+                              else if (result.getStatus() == 
+                                       OpenProjectResult.STATUS_NO_WRITE_ACCESS)
+                              {
+                                 globalDisplay_.showErrorMessage(
+                                       "New Project Error", 
+                                       "You do not have write access to " + 
+                                       input.getPath());
+                              }
+                              
+                              else if (result.getStatus() == 
+                                       OpenProjectResult.STATUS_OK)
+                              {
+                                 applicationQuit_.performQuit(
+                                   saveChanges,
+                                   result.getProjectFilePath());
+                              }
+                              
+                              
+                           }
+                          
+                           
+                        });
+                     
+                  }
+                  
+               });
+            
+         }
+      }); 
    }
 
    @Override
