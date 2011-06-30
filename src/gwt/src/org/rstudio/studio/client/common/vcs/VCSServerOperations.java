@@ -56,6 +56,7 @@ public interface VCSServerOperations
                      ServerRequestCallback<Void> requestCallback);
 
    void vcsDiffFile(String path,
+                    PatchMode patchMode,
                     ServerRequestCallback<String> requestCallback);
 
    void vcsApplyPatch(String patch, PatchMode mode,

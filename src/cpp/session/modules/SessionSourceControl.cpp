@@ -126,6 +126,7 @@ public:
    }
 
    virtual core::Error diffFile(FilePath filePath,
+                                PatchMode mode,
                                 int contextLines,
                                 std::string* pOutput)
    {
@@ -295,12 +296,15 @@ public:
    }
 
    virtual core::Error diffFile(FilePath filePath,
+                                PatchMode mode,
                                 int contextLines,
                                 std::string* pOutput)
    {
       std::vector<std::string> args;
       args.push_back("diff");
       args.push_back("-U" + boost::lexical_cast<std::string>(contextLines));
+      if (mode == PatchModeStage)
+         args.push_back("--cached");
       args.push_back("--");
       args.push_back(string_utils::bash_escape(filePath));
 
@@ -533,12 +537,14 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
    std::string path;
-   Error error = json::readParams(request.params, &path);
+   int mode;
+   Error error = json::readParams(request.params, &path, &mode);
    if (error)
       return error;
 
    std::string output;
    error = s_pVcsImpl_->diffFile(module_context::resolveAliasedPath(path),
+                                 static_cast<PatchMode>(mode),
                                  999999999,
                                  &output);
    if (error)

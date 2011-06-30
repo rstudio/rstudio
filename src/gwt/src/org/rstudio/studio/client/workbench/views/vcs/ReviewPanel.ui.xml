@@ -16,11 +16,15 @@
    </ui:style>
 
    <g:SplitLayoutPanel styleName="{style.outer}">
-      <g:north size="50">
-         <g:FlowPanel>
-            <rs_widget:ThemedButton ui:field="stageButton_"/>
-            <rs_widget:ThemedButton ui:field="discardButton_"/>
-         </g:FlowPanel>
+      <g:north size="30">
+         <g:HorizontalPanel>
+            <g:FlowPanel>
+               <rs_widget:ThemedButton ui:field="stageButton_"/>
+               <rs_widget:ThemedButton ui:field="discardButton_"/>
+               <rs_widget:ThemedButton ui:field="unstageButton_"/>
+            </g:FlowPanel>
+            <g:CheckBox ui:field="stagedCheckBox_" text="Show staged changes"/>
+         </g:HorizontalPanel>
       </g:north>
       <g:south size="200">
          <vcs:ChangelistTable styleName="{style.whitebg}" ui:field="changelist_" width="100%" height="100%"/>

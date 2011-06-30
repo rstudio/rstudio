@@ -16,7 +16,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -36,6 +38,7 @@ public class ReviewPanel extends Composite implements Display
    {
       stageButton_ = new ThemedButton("Stage");
       discardButton_ = new ThemedButton("Discard");
+      unstageButton_ = new ThemedButton("Unstage");
       changelist_ = changelist;
       lines_ = diffPane;
 
@@ -55,6 +58,18 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Override
+   public HasClickHandlers getUnstageButton()
+   {
+      return unstageButton_;
+   }
+
+   @Override
+   public HasValue<Boolean> getStagedCheckBox()
+   {
+      return stagedCheckBox_;
+   }
+
+   @Override
    public LineTablePresenter.Display getLineTableDisplay()
    {
       return lines_;
@@ -71,7 +86,11 @@ public class ReviewPanel extends Composite implements Display
    @UiField(provided = true)
    ThemedButton discardButton_;
    @UiField(provided = true)
+   ThemedButton unstageButton_;
+   @UiField(provided = true)
    ChangelistTable changelist_;
+   @UiField
+   CheckBox stagedCheckBox_;
    @UiField(provided = true)
    LineTableView lines_;
 }

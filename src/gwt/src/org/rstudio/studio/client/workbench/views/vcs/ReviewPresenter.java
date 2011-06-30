@@ -16,6 +16,9 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -40,6 +43,8 @@ public class ReviewPresenter implements IsWidget
    {
       HasClickHandlers getStageButton();
       HasClickHandlers getDiscardButton();
+      HasClickHandlers getUnstageButton();
+      HasValue<Boolean> getStagedCheckBox();
       LineTablePresenter.Display getLineTableDisplay();
       ChangelistTable getChangelistTable();
    }
@@ -114,6 +119,18 @@ public class ReviewPresenter implements IsWidget
             new ApplyPatchClickHandler(PatchMode.Stage, false));
       view_.getDiscardButton().addClickHandler(
             new ApplyPatchClickHandler(PatchMode.Working, true));
+      view_.getUnstageButton().addClickHandler(
+            new ApplyPatchClickHandler(PatchMode.Stage, true));
+      view_.getStagedCheckBox().addValueChangeHandler(
+            new ValueChangeHandler<Boolean>()
+            {
+               @Override
+               public void onValueChange(ValueChangeEvent<Boolean> event)
+               {
+                  updateDiff();
+               }
+            }
+      );
 
       server_.vcsFullStatus(new SimpleRequestCallback<JsArray<StatusAndPath>>() {
          @Override
@@ -139,6 +156,7 @@ public class ReviewPresenter implements IsWidget
 
       server_.vcsDiffFile(
             paths.get(0),
+            view_.getStagedCheckBox().getValue() ? PatchMode.Stage : PatchMode.Working,
             new SimpleRequestCallback<String>("Diff Error")
             {
                @Override
