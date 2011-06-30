@@ -23,6 +23,8 @@ namespace r_util {
 
 core::Error writeDefaultProjectFile(const FilePath& filePath);
 
+core::FilePath projectFromDirectory(const core::FilePath& directoryPath);
+
 } // namespace r_util
 } // namespace core 
 

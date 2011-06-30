@@ -25,6 +25,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
+#include <core/r_util/RProjectFile.hpp>
 
 #include "DesktopApplicationLaunch.hpp"
 #include "DesktopSlotBinders.hpp"
@@ -115,27 +116,6 @@ void initializeWorkingDirectory(int argc,
       core::system::setenv("RS_INITIAL_WD", workingDir);
 }
 
-FilePath projectFromDirectory(const FilePath& directoryPath)
-{
-   std::vector<FilePath> children;
-   Error error = directoryPath.children(&children);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return FilePath();
-   }
-   for (std::vector<FilePath>::const_iterator it = children.begin();
-        it != children.end();
-        ++it)
-   {
-      if (!it->isDirectory() && (it->extensionLowerCase() == ".rproj"))
-         return *it;
-   }
-
-   // didn't find one
-   return FilePath();
-}
-
 void setInitialProject(const FilePath& projectFile, QString* pFilename)
 {
    core::system::setenv("RS_INITIAL_PROJECT", projectFile.absolutePath());
@@ -158,7 +138,7 @@ void initializeStartupEnvironment(QString* pFilename)
       // whether there is a project file we can automatically attach to
       if (filePath.isDirectory())
       {
-         FilePath projectFile = projectFromDirectory(filePath);
+         FilePath projectFile = r_util::projectFromDirectory(filePath);
          if (!projectFile.empty())
          {
             setInitialProject(projectFile, pFilename);
@@ -169,7 +149,8 @@ void initializeStartupEnvironment(QString* pFilename)
          // if there is no stem then see if there is a project here
          FilePath projectFile;
          if (filePath.stem().empty() &&
-            !(projectFile = projectFromDirectory(filePath.parent())).empty())
+             !(projectFile = r_util::projectFromDirectory(
+                                                filePath.parent())).empty())
          {
             setInitialProject(projectFile, pFilename);
          }
