@@ -89,7 +89,7 @@ public class TextEditingTargetWidget
       final String SOURCE_BUTTON_TITLE = "Source the active document"; 
       final UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
       
-      final ToolbarButton sourceButton = new ToolbarButton(
+      sourceButton_ = new ToolbarButton(
             "Source", 
             commands_.sourceActiveDocument().getImageResource(), 
             new ClickHandler() 
@@ -104,8 +104,8 @@ public class TextEditingTargetWidget
                }
             });
       
-      sourceButton.setTitle(SOURCE_BUTTON_TITLE);
-      toolbar.addRightWidget(sourceButton);
+      sourceButton_.setTitle(SOURCE_BUTTON_TITLE);
+      toolbar.addRightWidget(sourceButton_);
       
       uiPrefs.sourceWithEcho().addValueChangeHandler(
                                        new ValueChangeHandler<Boolean>() {
@@ -113,9 +113,9 @@ public class TextEditingTargetWidget
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             if (event.getValue())
-               sourceButton.setTitle(SOURCE_BUTTON_TITLE + " (with echo)");
+               sourceButton_.setTitle(SOURCE_BUTTON_TITLE + " (with echo)");
             else
-               sourceButton.setTitle(SOURCE_BUTTON_TITLE);
+               sourceButton_.setTitle(SOURCE_BUTTON_TITLE);
          }
       });
             
@@ -123,8 +123,8 @@ public class TextEditingTargetWidget
       sourceMenu.addItem(commands_.sourceActiveDocument().createMenuItem(false));
       sourceMenu.addItem(commands_.sourceActiveDocumentWithEcho().createMenuItem(false));
       
-      ToolbarButton sourceMenuButton = new ToolbarButton(sourceMenu, "");
-      toolbar.addRightWidget(sourceMenuButton);      
+      sourceMenuButton_ = new ToolbarButton(sourceMenu, "");
+      toolbar.addRightWidget(sourceMenuButton_);      
             
       return toolbar;
    }
@@ -169,6 +169,8 @@ public class TextEditingTargetWidget
       editor_.setFileType(fileType);
       sourceOnSave_.setVisible(fileType.canSourceOnSave());
       codeTransform_.setVisible(fileType.canExecuteCode());
+      sourceButton_.setVisible(fileType.canExecuteCode());
+      sourceMenuButton_.setVisible(fileType.canExecuteCode());
    }
 
    public HasValue<Boolean> getSourceOnSave()
@@ -267,4 +269,6 @@ public class TextEditingTargetWidget
    private FindReplaceBar findReplaceBar_;
    private ToolbarButton findReplaceButton_;
    private ToolbarButton codeTransform_;
+   private ToolbarButton sourceButton_;
+   private ToolbarButton sourceMenuButton_;
 }
