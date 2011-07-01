@@ -357,6 +357,19 @@ public final class CompilingClassLoader extends ClassLoader implements
     }
 
     @Override
+    public Class<?> loadClass(String name) throws ClassNotFoundException {
+      try {
+        return getParent().loadClass(name);
+      } catch (Throwable t) {
+        // Make a second attempt not only on ClassNotFoundExceptions, but also errors like 
+        // ClassCircularityError
+        Class c = findClass(name);
+        resolveClass(c);
+        return c;
+      }
+    }
+    
+    @Override
     protected synchronized Class<?> findClass(String name)
         throws ClassNotFoundException {
       String resourceName = name.replace('.', '/') + ".class";

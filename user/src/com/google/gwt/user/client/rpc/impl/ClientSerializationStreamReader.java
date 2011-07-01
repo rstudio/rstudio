@@ -15,41 +15,229 @@
  */
 package com.google.gwt.user.client.rpc.impl;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.UnsafeNativeLong;
+import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.js.JsParser;
+import com.google.gwt.dev.js.ast.JsArrayLiteral;
+import com.google.gwt.dev.js.ast.JsBooleanLiteral;
+import com.google.gwt.dev.js.ast.JsContext;
+import com.google.gwt.dev.js.ast.JsExpression;
+import com.google.gwt.dev.js.ast.JsInvocation;
+import com.google.gwt.dev.js.ast.JsModVisitor;
+import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
+import com.google.gwt.dev.js.ast.JsPostfixOperation;
+import com.google.gwt.dev.js.ast.JsPrefixOperation;
+import com.google.gwt.dev.js.ast.JsRootScope;
+import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.js.ast.JsStringLiteral;
+import com.google.gwt.dev.js.ast.JsUnaryOperator;
+import com.google.gwt.dev.js.ast.JsValueLiteral;
+import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.lang.LongLib;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
 
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * For internal use only. Used for server call serialization.
+ * A version of ClientSerializationStreamReader which is optimized for performance in
+ * devmode.
+ * 
+ * There is a super-src version of this class which is optimized for webmode performance.
  */
 public final class ClientSerializationStreamReader extends
     AbstractSerializationStreamReader {
 
-  private static native JavaScriptObject eval(String encoded) /*-{
-    return eval(encoded);
-  }-*/;
+  /**
+   * Decodes an RPC payload from a JS string. There is currently no design document that describes
+   * the payload, instead you must infer it from reading ServerSerializationStreamWriter.
+   * I'll briefly describe the payload here:
+   * <p> 
+   * The server sends down a string of JavaScript which is eval'ed by the webmode version of
+   * ClientSerializationStreamReader into an array. The array contains primitive values,
+   * followed by a nested array of strings, followed by a couple of header primitive values.  
+   * For example,
+   * <pre>
+   * [ 1, 0, 3, -7, 13, [ "string one", "string two", "string three" ], 7, 0 ] 
+   * </pre>
+   * Long primitives are encoded as strings in the outer array, and strings in the string table
+   * are referenced by index values in the outer array. 
+   * <p> 
+   * The payload is almost a JSON literal except for some nuances, like unicode and array concats.
+   * We have a specialized devmode version to decode this payload, because the webmode version
+   * requires multiple round-trips between devmode and the JSVM for every single element in the
+   * payload. This can require several seconds to decode a single RPC payload. The RpcDecoder
+   * operates by doing a limited JS parse on the payload within the devmode VM using Rhino,
+   * avoiding the cross-process RPCs.  
+   * <p> 
+   */
+  private static class RpcDecoder extends JsVisitor {
 
-  private static native int getLength(JavaScriptObject array) /*-{
-    return array.length;
-  }-*/;
+    private static final String JS_INFINITY_LITERAL = "Infinity";
+    private static final String JS_NAN_LITERAL = "NaN";
 
-  int index;
+    enum State {
+      EXPECTING_PAYLOAD_BEGIN,
+      EXPECTING_STRING_TABLE,
+      IN_STRING_TABLE,
+      EXPECTING_END
+    }
+    
+    State state = State.EXPECTING_PAYLOAD_BEGIN;
 
-  JavaScriptObject results;
+    List<String> stringTable = new ArrayList<String>();
+    List<JsValueLiteral> values = new ArrayList<JsValueLiteral>();
+    
+    boolean negative;
 
-  JavaScriptObject stringTable;
+    @Override
+    public void endVisit(JsArrayLiteral x, JsContext ctx) {
+      if (state == State.IN_STRING_TABLE) {
+        state = State.EXPECTING_END;
+      }
+    }
 
+    public List<String> getStringTable() {
+      return stringTable;
+    }
+
+    public List<JsValueLiteral> getValues() {
+      return values;
+    }
+    
+    @Override
+    public boolean visit(JsArrayLiteral x, JsContext ctx) {
+      switch (state) {
+        case EXPECTING_PAYLOAD_BEGIN:
+          state = State.EXPECTING_STRING_TABLE;
+        return true;
+        case EXPECTING_STRING_TABLE:
+          state = State.IN_STRING_TABLE;
+        return true;
+        default:
+        throw new RuntimeException("Unexpected array in RPC payload. The string table has " 
+              + "already started.");                  
+      }
+    }
+    
+    @Override
+    public boolean visit(JsBooleanLiteral x, JsContext ctx) {
+      values.add(x);
+      return true;
+    }
+
+    @Override
+    public boolean visit(JsNameRef x, JsContext ctx) {
+      String ident = x.getIdent();
+      
+      if (ident.equals(JS_NAN_LITERAL)) {
+        values.add(new JsNumberLiteral(SourceOrigin.UNKNOWN, Double.NaN));
+      } else if (ident.equals(JS_INFINITY_LITERAL)) {
+        double val = negative ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
+        negative = false;
+        values.add(new JsNumberLiteral(SourceOrigin.UNKNOWN, val));
+      } else {
+        throw new RuntimeException("Unexpected identifier: " + ident);
+      }
+
+      return true;
+    }
+
+    @Override
+    public boolean visit(JsNumberLiteral x, JsContext ctx) {
+      if (negative) {
+        x = new JsNumberLiteral(x.getSourceInfo(), -x.getValue());
+        negative = false;
+      }
+      values.add(x);
+      return true;
+    }
+
+    @Override
+    public boolean visit(JsPrefixOperation x, JsContext ctx) {
+      if (x.getOperator().equals(JsUnaryOperator.NEG)) {
+        negative = !negative;
+        return true;
+      }
+      
+      // Lots of prefix operators, but we only see negatives for literals
+      throw new RuntimeException("Unexpected prefix operator: " + x.toSource()); 
+    }
+
+    @Override
+    public boolean visit(JsPostfixOperation x, JsContext ctx) {
+      throw new RuntimeException("Unexpected postfix operator: " + x.toSource());
+    }
+
+    @Override
+    public boolean visit(JsStringLiteral x, JsContext ctx) {
+      if (state == State.IN_STRING_TABLE) {
+        stringTable.add(x.getValue());
+      } else {
+        values.add(x);
+      }
+      return true;
+    }
+  }
+
+  private RpcDecoder decoder;
+  private int index;
   private Serializer serializer;
 
+  /**
+   * The server breaks up large arrays in the RPC payload into smaller arrays using concat()
+   * expressions. For example, [1, 2, 3, 4, 5, 6, 7] can be broken up into
+   * [1, 2].concat([3, 4], [5, 6], [7,8])
+   * <p> 
+   * This visitor reverses that transform by reducing all concat invocations into a single array 
+   * literal. 
+   */
+  private static class ConcatEvaler extends JsModVisitor {
+
+    @Override
+    public boolean visit(JsInvocation invoke, JsContext ctx) {
+      JsExpression expr = invoke.getQualifier();
+      if (!(expr instanceof JsNameRef)) {
+        return super.visit(invoke, ctx);
+      }
+      
+      JsNameRef name = (JsNameRef) expr;
+      if (!name.getIdent().equals("concat")) {
+        return super.visit(invoke, ctx);
+      }
+
+      JsArrayLiteral headElements = (JsArrayLiteral) name.getQualifier();
+
+      for (JsExpression ex : invoke.getArguments()) {
+        JsArrayLiteral arg = (JsArrayLiteral) ex;
+        headElements.getExpressions().addAll(arg.getExpressions());
+      }
+      
+      ctx.replaceMe(headElements);
+      return true;
+    }
+  }
+  
   public ClientSerializationStreamReader(Serializer serializer) {
     this.serializer = serializer;
   }
 
   @Override
   public void prepareToRead(String encoded) throws SerializationException {
-    results = eval(encoded);
-    index = getLength(results);
+    try {
+      List<JsStatement> stmts = JsParser.parse(SourceOrigin.UNKNOWN, JsRootScope.INSTANCE,
+          new StringReader(encoded));
+      ConcatEvaler concatEvaler = new ConcatEvaler();
+      concatEvaler.acceptList(stmts);
+      decoder = new RpcDecoder();
+      decoder.acceptList(stmts);
+    } catch (Exception e) {
+      throw new SerializationException("Failed to parse RPC payload", e);
+    }
+
+    index = decoder.getValues().size();
     super.prepareToRead(encoded);
 
     if (getVersion() != SERIALIZATION_STREAM_VERSION) {
@@ -62,44 +250,56 @@ public final class ClientSerializationStreamReader extends
       throw new IncompatibleRemoteServiceException("Got an unknown flag from "
           + "server: " + getFlags());
     }
-
-    stringTable = readJavaScriptObject();
   }
 
-  public native boolean readBoolean() /*-{
-    return !!this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
-  }-*/;
+  @Override
+  public boolean readBoolean() {
+    JsValueLiteral literal = decoder.getValues().get(--index);
+    return literal.isBooleanTrue();
+  }
 
-  public native byte readByte() /*-{
-    return this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
-  }-*/;
-
-  public native char readChar() /*-{
-    return this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
-  }-*/;
-
-  public native double readDouble() /*-{
-    return this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
-  }-*/;
-
-  public native float readFloat() /*-{
-    return this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
-  }-*/;
-
-  public native int readInt() /*-{
-    return this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
-  }-*/;
+  @Override
+  public byte readByte() {    
+    JsNumberLiteral literal = (JsNumberLiteral) decoder.getValues().get(--index);
+    return (byte) literal.getValue();
+  }
   
-  @UnsafeNativeLong
-  public native long readLong() /*-{
-    var s = this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
-    return @com.google.gwt.lang.LongLib::longFromBase64(Ljava/lang/String;)(s);
-  }-*/;
-
-  public native short readShort() /*-{
-    return this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
-  }-*/;
-
+  @Override
+  public char readChar() {    
+    JsNumberLiteral literal = (JsNumberLiteral) decoder.getValues().get(--index);
+    return (char) literal.getValue();
+  }
+  
+  @Override
+  public double readDouble() {    
+    JsNumberLiteral literal = (JsNumberLiteral) decoder.getValues().get(--index);
+    return literal.getValue();
+  }
+  
+  @Override
+  public float readFloat() {    
+    JsNumberLiteral literal = (JsNumberLiteral) decoder.getValues().get(--index);
+    return (float) literal.getValue();
+  }
+  
+  @Override
+  public int readInt() {    
+    JsNumberLiteral literal = (JsNumberLiteral) decoder.getValues().get(--index);
+    return (int) literal.getValue();
+  }
+  
+  @Override
+  public long readLong() {    
+    return LongLib.longFromBase64(((JsStringLiteral)decoder.getValues().get(--index)).getValue());
+  }
+  
+  @Override
+  public short readShort() {    
+    JsNumberLiteral literal = (JsNumberLiteral) decoder.getValues().get(--index);
+    return (short) literal.getValue();
+  }
+  
+  @Override
   public String readString() {
     return getString(readInt());
   }
@@ -115,13 +315,8 @@ public final class ClientSerializationStreamReader extends
   }
 
   @Override
-  protected native String getString(int index) /*-{
+  protected String getString(int index) {
     // index is 1-based
-    return index > 0 ? this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::stringTable[index - 1] : null;
-  }-*/;
-
-  private native JavaScriptObject readJavaScriptObject() /*-{
-    return this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
-  }-*/;
-
+    return index > 0 ? decoder.getStringTable().get(index - 1) : null;
+  }  
 }
