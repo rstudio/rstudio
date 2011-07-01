@@ -36,7 +36,7 @@ enum PatchMode
    PatchModeStage = 1
 };
 
-class VCSImpl
+class VCSImpl : boost::noncopyable
 {
 public:
    VCSImpl()
