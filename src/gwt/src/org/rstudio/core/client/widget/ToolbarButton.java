@@ -90,6 +90,7 @@ public class ToolbarButton extends FocusWidget
       addMenuHandlers(menu);
       
       addStyleName(styles_.toolbarButtonMenu());
+      addStyleName(styles_.toolbarButtonMenuOnly());
    }
     
    public ToolbarButton(String text, 

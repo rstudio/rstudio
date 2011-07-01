@@ -700,6 +700,14 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    display: inline;
    margin: 4px 0 0 2px;
 }
+.toolbarButtonMenuOnly {
+   position: relative;
+   top: -2px;
+}
+.toolbarButtonMenuOnly.toolbarButtonPushed {
+   position: relative;
+   top: -1px;
+}
 .toolbarButtonLeftImage {
    margin-top: 2px;
 }
