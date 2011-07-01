@@ -68,6 +68,10 @@ public class TypeTokenResolver {
       }
       in.close();
     }
+
+    public TypeTokenResolver peek() {
+      return d;
+    }
   }
 
   public static final String TOKEN_MANIFEST = "META-INF/requestFactory/typeTokens";

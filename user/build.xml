@@ -151,7 +151,9 @@
   <target name="precompile.modules" depends="compile">
     <outofdate>
       <sourcefiles>
-        <fileset dir="${gwt.root}/user/src" />
+        <fileset dir="${gwt.root}/user/src" >
+          <exclude name="com/google/web/bindery/requestfactory/apt/**"/>
+        </fileset>
         <fileset dir="${gwt.root}/user/super" />
         <fileset dir="${gwt.root}/dev/core/src" />
         <fileset dir="${gwt.root}/dev/core/super" />

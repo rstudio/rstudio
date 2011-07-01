@@ -7,5 +7,10 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA.jar" sourcepath="/GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/redist/json/r2_20080312/json-1.5.jar"/>
+	<classpathentry kind="src" path=".apt_generated">
+		<attributes>
+			<attribute name="optional" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

@@ -32,6 +32,7 @@ import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Util;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.apt.RfApt;
+import com.google.web.bindery.requestfactory.apt.RfValidator;
 import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.ClassLoaderLoader;
 import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.ErrorContext;
 import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.Loader;
@@ -40,6 +41,7 @@ import com.google.web.bindery.requestfactory.shared.DefaultProxyStore;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
+import com.google.web.bindery.requestfactory.shared.ExtraTypes;
 import com.google.web.bindery.requestfactory.shared.InstanceRequest;
 import com.google.web.bindery.requestfactory.shared.JsonRpcContent;
 import com.google.web.bindery.requestfactory.shared.JsonRpcProxy;
@@ -631,13 +633,13 @@ public class RequestFactoryJarExtractor {
   @SuppressWarnings("deprecation")
   private static final Class<?>[] SHARED_CLASSES = {
       BaseProxy.class, DefaultProxyStore.class, EntityProxy.class, EntityProxyChange.class,
-      EntityProxyId.class, InstanceRequest.class, JsonRpcContent.class, JsonRpcProxy.class,
-      JsonRpcService.class, JsonRpcWireName.class, Locator.class, ProxyFor.class,
-      ProxyForName.class, ProxySerializer.class, ProxyStore.class, Receiver.class, Request.class,
-      RequestContext.class, RequestFactory.class, RequestTransport.class, ServerFailure.class,
-      Service.class, ServiceLocator.class, ServiceName.class, ValueProxy.class,
-      com.google.web.bindery.requestfactory.shared.Violation.class, WriteOperation.class,
-      RequestFactorySource.class, SimpleEventBus.class};
+      EntityProxyId.class, ExtraTypes.class, InstanceRequest.class, JsonRpcContent.class,
+      JsonRpcProxy.class, JsonRpcService.class, JsonRpcWireName.class, Locator.class,
+      ProxyFor.class, ProxyForName.class, ProxySerializer.class, ProxyStore.class, Receiver.class,
+      Request.class, RequestContext.class, RequestFactory.class, RequestTransport.class,
+      ServerFailure.class, Service.class, ServiceLocator.class, ServiceName.class,
+      ValueProxy.class, com.google.web.bindery.requestfactory.shared.Violation.class,
+      WriteOperation.class, RequestFactorySource.class, SimpleEventBus.class};
 
   /**
    * Maximum number of threads to use to run the Extractor.
@@ -645,18 +647,20 @@ public class RequestFactoryJarExtractor {
   private static final int MAX_THREADS = 4;
 
   static {
+    List<Class<?>> aptClasses =
+        Collections.unmodifiableList(Arrays.<Class<?>> asList(RfApt.class, RfValidator.class));
     List<Class<?>> sharedClasses = Arrays.<Class<?>> asList(SHARED_CLASSES);
 
     List<Class<?>> clientClasses = new ArrayList<Class<?>>();
     clientClasses.addAll(sharedClasses);
-    clientClasses.add(RfApt.class);
+    clientClasses.addAll(aptClasses);
     clientClasses.add(UrlRequestTransport.class);
 
     List<Class<?>> serverClasses = new ArrayList<Class<?>>();
     serverClasses.addAll(Arrays.<Class<?>> asList(SERVER_CLASSES));
     serverClasses.addAll(sharedClasses);
 
-    SEEDS.put("apt", Collections.unmodifiableList(Arrays.<Class<?>> asList(RfApt.class)));
+    SEEDS.put("apt", aptClasses);
     SEEDS.put("client", Collections.unmodifiableList(clientClasses));
     SEEDS.put("server", Collections.unmodifiableList(serverClasses));
 
@@ -719,7 +723,8 @@ public class RequestFactoryJarExtractor {
       // Add the annotation processor manifest
       resources =
           Collections.singletonMap("META-INF/services/" + Processor.class.getCanonicalName(),
-              RfApt.class.getCanonicalName().getBytes("UTF-8"));
+              (RfApt.class.getCanonicalName() + "\n" + RfValidator.class.getCanonicalName())
+                  .getBytes("UTF-8"));
     } else if (("test" + CODE_AND_SOURCE).equals(target)) {
       // Combine all type token maps to run tests
       ByteArrayOutputStream out = new ByteArrayOutputStream();

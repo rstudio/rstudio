@@ -39,8 +39,7 @@ import java.util.Set;
 /**
  * The default implementation of ProxySerializer.
  */
-class ProxySerializerImpl extends AbstractRequestContext implements
-    ProxySerializer {
+class ProxySerializerImpl extends AbstractRequestContext implements ProxySerializer {
 
   /**
    * Used internally to unwind the stack if data cannot be found in the backing
@@ -55,13 +54,15 @@ class ProxySerializerImpl extends AbstractRequestContext implements
    * ValueProxy), we'll assign a synthetic id that is local to the store being
    * used.
    */
-  private final Map<SimpleProxyId<?>, SimpleProxyId<?>> syntheticIds = new HashMap<SimpleProxyId<?>, SimpleProxyId<?>>();
+  private final Map<SimpleProxyId<?>, SimpleProxyId<?>> syntheticIds =
+      new HashMap<SimpleProxyId<?>, SimpleProxyId<?>>();
 
   /**
    * The ids of proxies whose content has been reloaded.
    */
   private final Set<SimpleProxyId<?>> restored = new HashSet<SimpleProxyId<?>>();
-  private final Map<SimpleProxyId<?>, AutoBean<?>> serialized = new HashMap<SimpleProxyId<?>, AutoBean<?>>();
+  private final Map<SimpleProxyId<?>, AutoBean<?>> serialized =
+      new HashMap<SimpleProxyId<?>, AutoBean<?>>();
 
   public ProxySerializerImpl(AbstractRequestFactory factory, ProxyStore store) {
     super(factory, Dialect.STANDARD);
@@ -73,7 +74,7 @@ class ProxySerializerImpl extends AbstractRequestContext implements
     if (store.get(key) == null) {
       return null;
     }
-    OperationMessage op = getOperation(proxyType, key);
+    OperationMessage op = getOperation(key);
     @SuppressWarnings("unchecked")
     SimpleProxyId<T> id = (SimpleProxyId<T>) getId(op);
     return doDeserialize(id);
@@ -123,13 +124,12 @@ class ProxySerializerImpl extends AbstractRequestContext implements
         }
 
         @Override
-        public void endVisitCollectionProperty(String propertyName,
-            AutoBean<Collection<?>> value, CollectionPropertyContext ctx) {
+        public void endVisitCollectionProperty(String propertyName, AutoBean<Collection<?>> value,
+            CollectionPropertyContext ctx) {
           if (value == null) {
             return;
           }
-          if (isEntityType(ctx.getElementType())
-              || isValueType(ctx.getElementType())) {
+          if (isEntityType(ctx.getElementType()) || isValueType(ctx.getElementType())) {
             for (Object o : value.as()) {
               serialize((BaseProxy) o);
             }
@@ -150,23 +150,20 @@ class ProxySerializerImpl extends AbstractRequestContext implements
   SimpleProxyId<BaseProxy> getId(IdMessage op) {
     if (Strength.SYNTHETIC.equals(op.getStrength())) {
       return getRequestFactory().allocateSyntheticId(
-          getRequestFactory().getTypeFromToken(op.getTypeToken()),
-          op.getSyntheticId());
+          getRequestFactory().getTypeFromToken(op.getTypeToken()), op.getSyntheticId());
     }
     return super.getId(op);
   }
 
   @Override
-  <Q extends BaseProxy> AutoBean<Q> getProxyForReturnPayloadGraph(
-      SimpleProxyId<Q> id) {
+  <Q extends BaseProxy> AutoBean<Q> getProxyForReturnPayloadGraph(SimpleProxyId<Q> id) {
     AutoBean<Q> toReturn = super.getProxyForReturnPayloadGraph(id);
     if (restored.add(id)) {
       /*
        * If we haven't seen the id before, use the data in the OperationMessage
        * to repopulate the properties of the canonical bean for this id.
        */
-      OperationMessage op = getOperation(id.getProxyClass(),
-          getRequestFactory().getHistoryToken(id));
+      OperationMessage op = getOperation(getRequestFactory().getHistoryToken(id));
       this.processReturnOperation(id, op);
       toReturn.setTag(Constants.STABLE_ID, super.getId(op));
     }
@@ -196,32 +193,29 @@ class ProxySerializerImpl extends AbstractRequestContext implements
    * Load the OperationMessage containing the object state from the backing
    * store.
    */
-  private <T> OperationMessage getOperation(Class<T> proxyType, String key) {
+  private OperationMessage getOperation(String key) {
     Splittable data = store.get(key);
     if (data == null) {
       throw new NoDataException();
     }
 
-    OperationMessage op = AutoBeanCodex.decode(MessageFactoryHolder.FACTORY,
-        OperationMessage.class, data).as();
+    OperationMessage op =
+        AutoBeanCodex.decode(MessageFactoryHolder.FACTORY, OperationMessage.class, data).as();
     return op;
   }
 
   /**
    * Convert any non-persistent ids into store-local synthetic ids.
    */
-  private <T extends BaseProxy> SimpleProxyId<T> serializedId(
-      SimpleProxyId<T> stableId) {
+  private <T extends BaseProxy> SimpleProxyId<T> serializedId(SimpleProxyId<T> stableId) {
     assert !stableId.isSynthetic();
     if (stableId.isEphemeral()) {
       @SuppressWarnings("unchecked")
       SimpleProxyId<T> syntheticId = (SimpleProxyId<T>) syntheticIds.get(stableId);
       if (syntheticId == null) {
         int nextId = store.nextId();
-        assert nextId >= 0 : "ProxyStore.nextId() returned a negative number "
-            + nextId;
-        syntheticId = getRequestFactory().allocateSyntheticId(
-            stableId.getProxyClass(), nextId + 1);
+        assert nextId >= 0 : "ProxyStore.nextId() returned a negative number " + nextId;
+        syntheticId = getRequestFactory().allocateSyntheticId(stableId.getProxyClass(), nextId + 1);
         syntheticIds.put(stableId, syntheticId);
       }
       return syntheticId;
@@ -231,10 +225,9 @@ class ProxySerializerImpl extends AbstractRequestContext implements
 
   private void serializeOneProxy(SimpleProxyId<?> idForSerialization,
       AutoBean<? extends BaseProxy> bean) {
-    AutoBean<OperationMessage> op = makeOperationMessage(
-        serializedId(BaseProxyCategory.stableId(bean)), bean, false);
+    AutoBean<OperationMessage> op =
+        makeOperationMessage(serializedId(BaseProxyCategory.stableId(bean)), bean, false);
 
-    store.put(getRequestFactory().getHistoryToken(idForSerialization),
-        AutoBeanCodex.encode(op));
+    store.put(getRequestFactory().getHistoryToken(idForSerialization), AutoBeanCodex.encode(op));
   }
 }

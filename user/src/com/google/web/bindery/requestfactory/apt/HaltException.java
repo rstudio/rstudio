@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,14 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.web.bindery.requestfactory.shared;
+package com.google.web.bindery.requestfactory.apt;
 
 /**
- * Just to test the
- * {@link com.google.web.bindery.requestfactory.gwt.rebind.RequestFactoryGenerator}
- * code.
+ * An un-logged RuntimeException used to abort processing.
  */
-@Service(com.google.web.bindery.requestfactory.server.SimpleFoo.class)
-public interface TestFooPolymorphicRequest extends RequestContext {
-  <P extends SimpleFooProxy> Request<P> echo(SimpleFooProxy proxy);
+class HaltException extends RuntimeException {
 }

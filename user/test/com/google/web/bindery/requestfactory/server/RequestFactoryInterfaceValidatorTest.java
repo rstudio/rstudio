@@ -42,7 +42,12 @@ import java.util.logging.Logger;
 /**
  * JRE tests for {@link RequestFactoryInterfaceValidator}.
  */
+@SkipInterfaceValidation
 public class RequestFactoryInterfaceValidatorTest extends TestCase {
+  /*
+   * The annotation is only used by the APT-based validator and is temporary
+   * until RFIV and this test are removed.
+   */
   static class ClinitEntity {
     static ClinitEntity findClinitEntity(@SuppressWarnings("unused") String key) {
       return null;
