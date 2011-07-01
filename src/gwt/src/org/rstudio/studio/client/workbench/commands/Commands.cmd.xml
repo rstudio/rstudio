@@ -85,6 +85,7 @@ well as menu structures (for main menu and popup menus).
          </menu>
          <separator/>
          <cmd refid="sourceActiveDocument"/>
+         <cmd refid="sourceActiveDocumentWithEcho"/>
          <cmd refid="sourceFile"/>
          <separator/>
          <cmd refid="extractFunction"/>
@@ -210,12 +211,13 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="closeSourceDoc" value="Cmd+W"/>
       <shortcut refid="compilePDF" value="Cmd+Shift+I"/>
       <shortcut refid="executeCode" value="Cmd+Enter"/>
-      <shortcut refid="executeAllCode" value="Cmd+Shift+Enter"/>
+      <shortcut refid="executeAllCode" value="Cmd+Shift+R"/>
       <shortcut refid="executeToCurrentLine" value="Cmd+Shift+B"/>
       <shortcut refid="executeFromCurrentLine" value="Cmd+Shift+E"/>
       <shortcut refid="executeCurrentFunction" value="Cmd+Shift+F"/>
       <shortcut refid="sourceFile" value="Cmd+Shift+O"/>
       <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S"/>
+      <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
       <shortcut refid="extractFunction" value="Cmd+Shift+U"/>
       <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
       <shortcut refid="commentUncomment" value="Cmd+/"/>
@@ -238,7 +240,6 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
       <shortcut refid="previousPlot" value="Cmd+Shift+PageUp" />
       <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
-      <shortcut refid="removePlot" value="Cmd+Shift+R" />
       <shortcut refid="showManipulator" value="Cmd+Shift+M"/>
       <shortcut refid="showRequestLog" value="Ctrl+`" />
       <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
@@ -389,8 +390,12 @@ well as menu structures (for main menu and popup menus).
         desc="Source the contents of an R file"/>
    <cmd id="sourceActiveDocument"
         buttonLabel="Source"
-        menuLabel="_Source Active Document"
+        menuLabel="_Source"
         desc="Source the contents of the active document"/>
+   <cmd id="sourceActiveDocumentWithEcho"
+        buttonLabel=""
+        menuLabel="Source with _Echo"
+        desc="Source the contents of the active document (with echo)"/>
    <cmd id="commentUncomment"
         menuLabel="C_omment/Uncomment Lines"
         desc="Comment or uncomment the current line/selection"/>

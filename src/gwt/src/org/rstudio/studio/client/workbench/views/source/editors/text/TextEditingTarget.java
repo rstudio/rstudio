@@ -43,6 +43,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
@@ -911,9 +912,7 @@ public class TextEditingTarget implements EditingTarget
                         if (d.getValue().isSaveAsDefault())
                         {
                            prefs_.defaultEncoding().setValue(newEncoding);
-                           server2_.setUiPrefs(
-                                 session_.getSessionInfo().getUiPrefs(), 
-                                 new SimpleRequestCallback<Void>("Error Saving Preference"));
+                           updateUIPrefs();
                         }
 
                         command.execute(newEncoding);
@@ -1366,12 +1365,24 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onSourceActiveDocument()
    {
+     sourceActiveDocument(false);
+   }
+   
+   @Handler
+   void onSourceActiveDocumentWithEcho()
+   {
+      sourceActiveDocument(true);
+   }
+  
+   private void sourceActiveDocument(final boolean echo)
+   {
       docDisplay_.focus();
 
       String code = docDisplay_.getCode();
       if (code != null && code.trim().length() > 0)
       {
          boolean sweave = fileType_.canCompilePDF();
+         
 
          server_.saveActiveDocument(code, sweave, new SimpleRequestCallback<Void>() {
             @Override
@@ -1380,12 +1391,20 @@ public class TextEditingTarget implements EditingTarget
                consoleDispatcher_.executeSourceCommand(
                      "~/.active-rstudio-document",
                      "UTF-8",
-                     activeCodeIsAscii());
+                     activeCodeIsAscii(),
+                     echo);
             }
          });
       }
+      
+      // update pref if necessary
+      if (prefs_.sourceWithEcho().getValue() != echo)
+      {
+         prefs_.sourceWithEcho().setValue(echo, true);
+         updateUIPrefs();
+      }
    }
-  
+   
 
    private boolean activeCodeIsAscii()
    {
@@ -1511,7 +1530,8 @@ public class TextEditingTarget implements EditingTarget
                consoleDispatcher_.executeSourceCommand(
                                              docUpdateSentinel_.getPath(), 
                                              docUpdateSentinel_.getEncoding(), 
-                                             activeCodeIsAscii());
+                                             activeCodeIsAscii(),
+                                             false);
             }
          }
       };
@@ -1621,6 +1641,13 @@ public class TextEditingTarget implements EditingTarget
                   Debug.logError(error);
                }
             });
+   }
+   
+   private void updateUIPrefs()
+   {
+      server2_.setUiPrefs(
+            session_.getSessionInfo().getUiPrefs(), 
+            new SimpleRequestCallback<Void>("Error Saving Preference"));
    }
 
    private StatusBar statusBar_;
