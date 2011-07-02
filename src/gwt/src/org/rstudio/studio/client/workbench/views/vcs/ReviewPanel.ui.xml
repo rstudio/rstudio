@@ -24,6 +24,13 @@
                <rs_widget:ThemedButton ui:field="unstageButton_"/>
             </g:FlowPanel>
             <g:CheckBox ui:field="stagedCheckBox_" text="Show staged changes"/>
+            <g:ListBox ui:field="contextLines_" visibleItemCount="1" selectedIndex="5">
+               <g:item value="5">5 line</g:item>
+               <g:item value="10">10 line</g:item>
+               <g:item value="25">25 line</g:item>
+               <g:item value="50">50 line</g:item>
+               <g:item value="-1">All lines</g:item>
+            </g:ListBox>
          </g:HorizontalPanel>
       </g:north>
       <g:south size="200">

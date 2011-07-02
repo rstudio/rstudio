@@ -49,9 +49,13 @@ public class UnifiedEmitter
       fileB_ = fileB;
    }
 
-   public void addDiffs(DiffChunk chunk, ArrayList<Line> lines)
+   public void addContext(DiffChunk chunk)
    {
       contextLines_.addAll(chunk.diffLines);
+   }
+
+   public void addDiffs(ArrayList<Line> lines)
+   {
       diffLines_.addAll(lines);
    }
 
@@ -140,9 +144,9 @@ public class UnifiedEmitter
       Line first = sublist.get(0);
       Line last = sublist.get(sublist.size() - 1);
       return new DiffChunk(first.getOldLine(),
-                           last.getOldLine() - first.getOldLine(),
+                           1 + last.getOldLine() - first.getOldLine(),
                            first.getNewLine(),
-                           last.getNewLine() - first.getNewLine(),
+                           1 + last.getNewLine() - first.getNewLine(),
                            "",
                            new ArrayList<Line>(sublist));
    }

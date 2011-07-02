@@ -538,14 +538,21 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
 {
    std::string path;
    int mode;
-   Error error = json::readParams(request.params, &path, &mode);
+   int contextLines;
+   Error error = json::readParams(request.params,
+                                  &path,
+                                  &mode,
+                                  &contextLines);
    if (error)
       return error;
+
+   if (contextLines < 0)
+      contextLines = 999999999;
 
    std::string output;
    error = s_pVcsImpl_->diffFile(module_context::resolveAliasedPath(path),
                                  static_cast<PatchMode>(mode),
-                                 999999999,
+                                 contextLines,
                                  &output);
    if (error)
       return error;

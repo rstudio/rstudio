@@ -1173,11 +1173,13 @@ public class RemoteServer implements Server
    @Override
    public void vcsDiffFile(String path,
                            PatchMode mode,
+                           int contextLines,
                            ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
       params.set(1, new JSONNumber(mode.getValue()));
+      params.set(2, new JSONNumber(contextLines));
       sendRequest(RPC_SCOPE, VCS_DIFF_FILE, params, requestCallback);
    }
 

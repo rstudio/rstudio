@@ -13,13 +13,17 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -33,6 +37,65 @@ import java.util.ArrayList;
 
 public class ReviewPanel extends Composite implements Display
 {
+   private static class ListBoxAdapter implements HasValue<Integer>
+   {
+      private ListBoxAdapter(ListBox listBox)
+      {
+         listBox_ = listBox;
+         listBox_.addChangeHandler(new ChangeHandler()
+         {
+            @Override
+            public void onChange(ChangeEvent event)
+            {
+               ValueChangeEvent.fire(ListBoxAdapter.this, getValue());
+            }
+         });
+      }
+
+      @Override
+      public Integer getValue()
+      {
+         return Integer.parseInt(
+               listBox_.getValue(listBox_.getSelectedIndex()));
+      }
+
+      @Override
+      public void setValue(Integer value)
+      {
+         setValue(value, true);
+      }
+
+      @Override
+      public void setValue(Integer value, boolean fireEvents)
+      {
+         String valueStr = value.toString();
+         for (int i = 0; i < listBox_.getItemCount(); i++)
+         {
+            if (listBox_.getValue(i).equals(valueStr))
+            {
+               listBox_.setSelectedIndex(i);
+               break;
+            }
+         }
+      }
+
+      @Override
+      public HandlerRegistration addValueChangeHandler(ValueChangeHandler<Integer> handler)
+      {
+         return handlers_.addHandler(ValueChangeEvent.getType(), handler);
+      }
+
+      @Override
+      public void fireEvent(GwtEvent<?> event)
+      {
+         handlers_.fireEvent(event);
+      }
+
+      private final ListBox listBox_;
+      private final HandlerManager handlers_ = new HandlerManager(this);
+   }
+
+
    interface Binder extends UiBinder<Widget, ReviewPanel>
    {
    }
@@ -48,6 +111,8 @@ public class ReviewPanel extends Composite implements Display
       lines_ = diffPane;
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
+
+      listBoxAdapter_ = new ListBoxAdapter(contextLines_);
    }
 
    @Override
@@ -92,6 +157,12 @@ public class ReviewPanel extends Composite implements Display
       return gutter_;
    }
 
+   @Override
+   public HasValue<Integer> getContextLines()
+   {
+      return listBoxAdapter_;
+   }
+
    @UiField(provided = true)
    ThemedButton stageButton_;
    @UiField(provided = true)
@@ -106,4 +177,7 @@ public class ReviewPanel extends Composite implements Display
    LineTableView lines_;
    @UiField
    NavGutter gutter_;
+   @UiField
+   ListBox contextLines_;
+   private ListBoxAdapter listBoxAdapter_;
 }

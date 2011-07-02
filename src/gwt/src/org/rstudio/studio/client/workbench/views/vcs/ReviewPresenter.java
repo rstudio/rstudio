@@ -49,6 +49,7 @@ public class ReviewPresenter implements IsWidget
       ValueSink<ArrayList<Line>> getGutter();
       LineTablePresenter.Display getLineTableDisplay();
       ChangelistTable getChangelistTable();
+      HasValue<Integer> getContextLines();
    }
 
    private class ApplyPatchClickHandler implements ClickHandler
@@ -63,19 +64,22 @@ public class ReviewPresenter implements IsWidget
       @Override
       public void onClick(ClickEvent event)
       {
-         DiffChunk chunk = activeChunk_;
+         ArrayList<DiffChunk> chunks = new ArrayList<DiffChunk>(activeChunks_);
          ArrayList<Line> selectedLines =
                view_.getLineTableDisplay().getSelectedLines();
 
          if (reverse_)
          {
-            chunk = chunk.reverse();
+            for (int i = 0; i < chunks.size(); i++)
+               chunks.set(i, chunks.get(i).reverse());
             selectedLines = Line.reverseLines(selectedLines);
          }
 
          UnifiedEmitter emitter = new UnifiedEmitter(
                view_.getChangelistTable().getSelectedPaths().get(0));
-         emitter.addDiffs(chunk, selectedLines);
+         for (DiffChunk chunk : chunks)
+            emitter.addContext(chunk);
+         emitter.addDiffs(selectedLines);
          String patch = emitter.createPatch();
 
          server_.vcsApplyPatch(patch, patchMode_,
@@ -134,6 +138,15 @@ public class ReviewPresenter implements IsWidget
             }
       );
 
+      view_.getContextLines().addValueChangeHandler(new ValueChangeHandler<Integer>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Integer> event)
+         {
+            updateDiff();
+         }
+      });
+
       server_.vcsFullStatus(new SimpleRequestCallback<JsArray<StatusAndPath>>() {
          @Override
          public void onResponseReceived(JsArray<StatusAndPath> response)
@@ -159,6 +172,7 @@ public class ReviewPresenter implements IsWidget
       server_.vcsDiffFile(
             paths.get(0),
             view_.getStagedCheckBox().getValue() ? PatchMode.Stage : PatchMode.Working,
+            view_.getContextLines().getValue(),
             new SimpleRequestCallback<String>("Diff Error")
             {
                @Override
@@ -169,12 +183,19 @@ public class ReviewPresenter implements IsWidget
 
                   UnifiedParser parser = new UnifiedParser(response);
                   parser.nextFilePair();
-                  activeChunk_ = parser.nextChunk();
-                  if (activeChunk_ != null)
+
+                  ArrayList<Line> allLines = new ArrayList<Line>();
+
+                  activeChunks_.clear();
+                  for (DiffChunk chunk;
+                       null != (chunk = parser.nextChunk()); )
                   {
-                     view_.getLineTableDisplay().setData(activeChunk_.diffLines);
-                     view_.getGutter().setValue(activeChunk_.diffLines);
+                     activeChunks_.add(chunk);
+                     allLines.addAll(chunk.diffLines);
                   }
+
+                  view_.getLineTableDisplay().setData(allLines);
+                  view_.getGutter().setValue(allLines);
                }
             });
    }
@@ -189,5 +210,5 @@ public class ReviewPresenter implements IsWidget
    private final VCSServerOperations server_;
    private final EventBus events_;
    private final Display view_;
-   private DiffChunk activeChunk_;
+   private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
 }
