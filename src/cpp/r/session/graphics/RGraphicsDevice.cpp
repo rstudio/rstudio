@@ -54,7 +54,7 @@ namespace device {
 namespace {
    
 // name of our graphics device
-const char * const kRStudioDevice = "RStudio";
+const char * const kRStudioDevice = "RStudioGD";
 
 // GE device description
 pGEDevDesc s_pGEDevDesc = NULL;   
