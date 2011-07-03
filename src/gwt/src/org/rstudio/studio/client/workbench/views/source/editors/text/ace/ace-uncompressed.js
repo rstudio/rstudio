@@ -14062,7 +14062,7 @@ var Text = function(parentEl) {
         else {
             stringBuilder.push(output);
         }
-        return value.length;
+        return screenColumn + value.length;
     }
 
     this.$renderLineCore = function(stringBuilder, lastRow, tokens, splits) {
@@ -14074,7 +14074,7 @@ var Text = function(parentEl) {
             self = this;
 
         function addToken(token, value) {
-            screenColumn += self.$renderToken(
+            screenColumn = self.$renderToken(
                 stringBuilder, screenColumn, token, value);
         }
 
