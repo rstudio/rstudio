@@ -526,38 +526,6 @@ SEXP devSetHook(SEXP call, SEXP op, SEXP args, SEXP rho)
    return s_originalDevSetFunction(call, op, args, rho);
 }
 
-   
-CCODE s_originalInteractiveFunction;   
-SEXP interactiveHook(SEXP call, SEXP op, SEXP args, SEXP rho) 
-{
-   try
-   {
-      // NOTE: this technique has the side effect that a call to interactive()
-      // when there is no device will result in our device being created
-      // and the Plots tab coming to the front. there are very few calls to
-      // the interactive() function within R so this may not be a practical
-      // issue. an alternative implementation would be to hook the R
-      // dev.interactive function directly and detect the "no devices" special
-      // case and return TRUE for this.
-
-
-      // call to interactive() is an indicator that that someone may be
-      // querying for dev.interactive(). in this case if we are not yet 
-      // initialized and there is no active device then we need to initialize
-      // and make ourselves active so that dev.interactive returns TRUE
-      if (Rf_NoDevices())
-      {
-         Error error = makeActive();
-         if (error)
-            LOG_ERROR(error);
-      }
-   }
-   CATCH_UNEXPECTED_EXCEPTION
-   
-   // always call original
-   return s_originalInteractiveFunction(call, op, args, rho);   
-}
-
 DisplaySize displaySize()
 {
    return DisplaySize(s_width, s_height);
@@ -677,14 +645,6 @@ Error initialize(
       error = function_hook::registerReplaceHook("dev.set",
                                                  devSetHook,
                                                  &s_originalDevSetFunction);
-      if (error)
-         return error;
-
-      // register interactive() hook to work around dev.interactive device
-      // bootstrapping bug
-      error = function_hook::registerReplaceHook("interactive",
-                                                 interactiveHook,
-                                                 &s_originalInteractiveFunction);
       if (error)
          return error;
 
