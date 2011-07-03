@@ -111,8 +111,18 @@ json::Value jsonValueForGlobalVar(const std::string& name)
    jsonObject["name"] = name;
    
    // get R alias to object and get its type and lengt
+   //
+   // NOTE: check for isLanguage is a temporary fix for error messages
+   // that were printed at the console for a <- bquote(test()) -- this
+   // was the result of errors being thrown from the .rs.valueDescription, etc.
+   // calls above used to probe for object info. interestingly when these
+   // same calls are made from .rs.rpc.list_objects no errors are thrown.
+   // the practical impact of this workaround is that immediately after
+   // assignment language expressions show up as "(unknown)" but then are
+   // correctly displayed in refreshed listings of the workspace.
+   //
    SEXP globalVar = findVar(name);
-   if (globalVar != R_UnboundValue)
+   if ((globalVar != R_UnboundValue) && !r::sexp::isLanguage(globalVar))
    {
       Protect rProtect(globalVar);
       jsonObject["type"] = classOfGlobalVar(globalVar);
