@@ -16,6 +16,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 
@@ -167,10 +168,13 @@ public class FileTypeRegistry
             return result;
          
          // last ditch -- see if this either a known text file type
-         // or NOT a known binary type. the result of this is that
-         // unknown files types are treated as text and opened in 
-         // the editor
-         String mimeType = file.mimeType();
+         // or (for server mode) NOT a known binary type. the result of
+         // this is that unknown files types are treated as text and
+         // opened in the editor (we don't do this on desktop because
+         // in that case users have the recourse of using a local editor)
+         String defaultType = Desktop.isDesktop() ? "application/octet-stream" :
+                                                    "text/plain";
+         String mimeType = file.mimeType(defaultType);
          if (mimeType.startsWith("text/"))
             return TEXT;
       }
