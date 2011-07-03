@@ -25,6 +25,7 @@ git merge \
     origin/patch-normalizeinput \
     origin/bugfix/search-regexp \
     origin/bugfix/selected-word-colors \
+    origin/bugfix/hardtab \
 
 
 git cherry-pick eb02e51
