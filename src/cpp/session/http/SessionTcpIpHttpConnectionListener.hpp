@@ -44,7 +44,7 @@ protected:
       if (secret_.empty())
          return true;
 
-      // Allow /help/* and /custom/* urls -- this is because the creators
+      // Allow /help, /custom, and /session urls -- this is because the creators
       // of custom http apps for R (either using tools:::http.handlers.env
       // directly or using Rack) will often instruct their users to paste
       // the url e.g. http://localhost:34302/custom/appname into their browser
@@ -55,6 +55,7 @@ protected:
       // logic applies)
       std::string uri = ptrConnection->request().uri();
       if (boost::algorithm::starts_with(uri, "/custom/") ||
+          boost::algorithm::starts_with(uri, "/session") ||
           boost::algorithm::starts_with(uri, "/help/"))
       {
          return true;

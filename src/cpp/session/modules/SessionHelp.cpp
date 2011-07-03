@@ -38,6 +38,7 @@
 #include <r/RFunctionHook.hpp>
 #include <r/ROptions.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -58,6 +59,7 @@ std::string s_localIP;
 std::string s_localPort;
 const char * const kHelpLocation = "/help";
 const char * const kCustomLocation = "/custom";
+const char * const kSessionLocation = "/session";
 const char * const kCustomHelprLocation = "/custom/helpr";
 
 // flag indicating whether we should send headers to custom handlers
@@ -149,6 +151,15 @@ bool handleLocalHttpUrl(const std::string& url)
    if (isLocalURL(url, "custom", &customPath))
    {
       ClientEvent event = browseUrlEvent(customPath);
+      module_context::enqueClientEvent(event);
+      return true;
+   }
+
+   // check for session
+   std::string sessionPath;
+   if (isLocalURL(url, "session", &sessionPath))
+   {
+      ClientEvent event = browseUrlEvent(sessionPath);
       module_context::enqueClientEvent(event);
       return true;
    }
@@ -682,6 +693,29 @@ void handleCustomRequest(const http::Request& request,
                       pResponse);
 }
 
+// handle requests for session temporary directory
+void handleSessionRequest(const http::Request& request, http::Response* pResponse)
+{
+   // get the raw uri & strip its location prefix
+   std::string sessionPrefix = std::string(kSessionLocation) + "/";
+   std::string uri = request.uri();
+   if (!uri.compare(0, sessionPrefix.length(), sessionPrefix))
+      uri = uri.substr(sessionPrefix.length());
+
+   // ensure that this path does not contain ..
+   if (uri.find("..") != std::string::npos)
+   {
+      pResponse->setError(http::status::NotFound, uri + " not found");
+      return;
+   }
+
+   // form a path to the temporary file
+   FilePath tempFilePath = r::session::utils::tempDir().childPath(uri);
+
+   // return the file
+   pResponse->setCacheableFile(tempFilePath, request);
+}
+
 // the ShowHelp event will result in the Help pane requesting the specified
 // help url. we handle this request directly by calling the R httpd function
 // to dynamically form the correct http response
@@ -728,6 +762,7 @@ Error initialize()
       (bind(registerUriHandler, kHelpLocation, handleHelpRequest))
       (bind(registerUriHandler, kCustomHelprLocation, handleCustomHelprRequest))
       (bind(registerUriHandler, kCustomLocation, handleCustomRequest))
+      (bind(registerUriHandler, kSessionLocation, handleSessionRequest))
       (bind(setHelpPort))
       (bind(sourceModuleRFile, "SessionHelp.R"));
    Error error = initBlock.execute();

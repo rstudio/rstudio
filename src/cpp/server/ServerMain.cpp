@@ -137,6 +137,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/help", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/files", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/custom", secureAsyncHttpHandler(proxyContentRequest, true));
+   uri_handlers::add("/session", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/docs", secureAsyncHttpHandler(secureAsyncFileHandler(), true));
 
    // establish logging handler
