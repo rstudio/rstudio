@@ -78,6 +78,17 @@ Error initialize()
 #ifdef __APPLE__
    if (session::options().programMode() == kSessionProgramModeDesktop)
    {
+      // do we need to add /opt/local/bin?
+      std::string probePath = core::system::getenv("PATH");
+      FilePath optLocalBinPath("/opt/local/bin");
+      if (!regex_search(probePath, boost::regex("(^|:)/opt/local/bin/?($|:)"))
+          && optLocalBinPath.exists())
+      {
+         // add opt/local/bin to path (prepend so we find macports texi2dvi
+         // first if it is installed there)
+         core::system::addToSystemPath(optLocalBinPath, true);
+      }
+
       // read /etc/paths
       std::vector<std::string> paths;
       safeReadPathsFromFile(FilePath("/etc/paths"), &paths);
