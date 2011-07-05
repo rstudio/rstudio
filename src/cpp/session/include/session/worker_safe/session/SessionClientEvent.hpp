@@ -61,6 +61,7 @@ extern const int kAsyncCompletion;
 extern const int kSaveActionChanged;
 extern const int kConsoleWritePrompt;
 extern const int kConsoleWriteInput;
+extern const int kShowWarningBar;
 }
    
 class ClientEvent

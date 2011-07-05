@@ -2010,7 +2010,9 @@ int main (int argc, char * const argv[])
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 
-      // initialize client event queue
+      // initialize client event queue. this must be done very early
+      // in main so that any other code which needs to enque an event
+      // has access to the queue
       session::initializeClientEventQueue();
 
       // detect parent termination

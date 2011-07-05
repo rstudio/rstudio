@@ -262,6 +262,24 @@ Error startup()
       s_activeProjectPath = FilePath();
    }
 
+   // last ditch check for writeabilty of the project directory
+   if (!s_activeProjectPath.empty() &&
+       !canWriteToProjectDir(s_activeProjectPath.parent()))
+   {
+      // enque a warning
+      json::Object warningBarEvent;
+      warningBarEvent["severe"] = false;
+      warningBarEvent["message"] =
+        "Project '" + s_activeProjectPath.parent().absolutePath() + "' "
+        "could not be opened because it is located in a read-only directory.";
+      ClientEvent event(client_events::kShowWarningBar, warningBarEvent);
+      module_context::enqueClientEvent(event);
+
+      // no project
+      s_activeProjectPath = FilePath();
+   }
+
+
    // save the active project path for the next session
    userSettings().setLastProjectPath(s_activeProjectPath);
 

@@ -37,6 +37,7 @@ import org.rstudio.studio.client.workbench.model.BrowseUrlInfo;
 import org.rstudio.studio.client.workbench.model.ErrorMessage;
 import org.rstudio.studio.client.workbench.model.OAuthApproval;
 import org.rstudio.studio.client.workbench.model.QuotaStatus;
+import org.rstudio.studio.client.workbench.model.WarningBarMessage;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsolePrompt;
@@ -109,6 +110,7 @@ class RemoteServerEventListener
       public static final String ShowData = "show_data";
       public static final String AsyncCompletion = "async_completion";
       public static final String SaveActionChanged = "save_action_changed";
+      public static final String ShowWarningBar = "show_warning_bar";
 
       protected ClientEvent()
       {
@@ -625,6 +627,11 @@ class RemoteServerEventListener
          else if (type.equals(ClientEvent.AbendWarning))
          {            
             eventBus.fireEvent(new SessionAbendWarningEvent());
+         }
+         else if (type.equals(ClientEvent.ShowWarningBar))
+         {
+            WarningBarMessage message = event.getData();
+            eventBus.fireEvent(new ShowWarningBarEvent(message));
          }
          else if (type.equals(ClientEvent.Quit))
          {

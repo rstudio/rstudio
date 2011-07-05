@@ -36,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateE
 
 public class Workbench implements BusyHandler,
                                   ShowErrorMessageHandler,
+                                  ShowWarningBarHandler,
                                   BrowseUrlHandler,
                                   QuotaStatusHandler,
                                   OAuthApprovalHandler,
@@ -70,6 +71,7 @@ public class Workbench implements BusyHandler,
       // edit
       eventBus.addHandler(BusyEvent.TYPE, this);
       eventBus.addHandler(ShowErrorMessageEvent.TYPE, this);
+      eventBus.addHandler(ShowWarningBarEvent.TYPE, this);
       eventBus.addHandler(BrowseUrlEvent.TYPE, this);
       eventBus.addHandler(QuotaStatusEvent.TYPE, this);
       eventBus.addHandler(OAuthApprovalEvent.TYPE, this);
@@ -111,6 +113,13 @@ public class Workbench implements BusyHandler,
                                       errorMessage.getMessage());
      
    }
+   
+   @Override
+   public void onShowWarningBar(ShowWarningBarEvent event)
+   {
+      WarningBarMessage message = event.getMessage();
+      globalDisplay_.showWarningBar(message.isSevere(), message.getMessage());
+   } 
    
    public void onBrowseUrl(BrowseUrlEvent event)
    {
