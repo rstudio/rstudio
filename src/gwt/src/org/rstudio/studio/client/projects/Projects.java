@@ -84,6 +84,9 @@ public class Projects implements OpenProjectFileHandler
                   {
                      indicator.onCompleted();
                      
+                     if (input == null)
+                        return;
+                     
                      // create the project
                      server_.createProject(
                         input.getPath(),
@@ -154,6 +157,9 @@ public class Projects implements OpenProjectFileHandler
                                       ProgressIndicator indicator)
                   {
                      indicator.onCompleted();
+                     
+                     if (input == null)
+                        return;
                      
                      // open the project
                      server_.openProject(

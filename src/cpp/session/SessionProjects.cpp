@@ -11,9 +11,6 @@
  *
  */
 
-// TODO: why does ESC in open project dir dialog cause js exception and/or
-// bad param error in client?
-
 // TODO: analyze plots, client_state, and source_database scoped scratch case
 
 // TODO: analyze other things in scratch path to see where they belong and
