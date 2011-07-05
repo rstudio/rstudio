@@ -11,6 +11,36 @@
  *
  */
 
+// TODO: why does ESC in open project dir dialog cause js exception and/or
+// bad param error in client?
+
+// TODO: analyze plots, client_state, and source_database scoped scratch case
+
+// TODO: analyze other things in scratch path to see where they belong and
+//       how they will behave
+
+// TODO: post a bug for some way to expose/cleanup project caches
+//       (could implement source database optimization)
+
+// TODO: detecting copy/move/network:
+/*
+    - read INDEX
+    - read id file
+
+    - if INDEX contains id mapped to correct path then use
+
+    - if INDEX doesn't not contain id or path then create new
+
+    - if INDEX has id but path doesn't match then may have been
+      a move or a copy so create a copy of the scratch dir and
+      associate it with a new id
+
+    - if has an id file but nothing in the index at all then
+      create a brand new entry/dir using that id
+*/
+
+
+
 #include "SessionProjects.hpp"
 
 #include <core/FilePath.hpp>
@@ -18,6 +48,7 @@
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/r_util/RProjectFile.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -32,6 +63,7 @@ namespace session {
 namespace {
 
 FilePath s_activeProjectPath;
+FilePath s_activeProjectScratchPath;
 
 void onSuspend(Settings*)
 {
@@ -43,6 +75,71 @@ void onSuspend(Settings*)
 }
 
 void onResume(const Settings&) {}
+
+FilePath determineActiveProjectScratchPath()
+{
+   // projects dir
+   FilePath projDir = module_context::userScratchPath().complete("projects");
+   Error error = projDir.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+
+   // read index file
+   std::map<std::string,std::string> projectIndex;
+   FilePath indexFilePath = projDir.complete("INDEX");
+   if (indexFilePath.exists())
+   {
+      error = core::readStringMapFromFile(indexFilePath, &projectIndex);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return FilePath();
+      }
+   }
+
+   // look for this directory in the index file
+   std::string projectId;
+   FilePath projectDir = module_context::activeProjectDirectory();
+   for (std::map<std::string,std::string>::const_iterator
+         it = projectIndex.begin(); it != projectIndex.end(); ++it)
+   {
+      if (it->second == projectDir.absolutePath())
+      {
+         projectId = it->first;
+         break;
+      }
+   }
+
+   // if it wasn't found then generate a new entry and re-write the index
+   if (projectId.empty())
+   {
+      std::string newId = core::system::generateUuid(false);
+      projectIndex[newId] = projectDir.absolutePath();
+      error = core::writeStringMapToFile(indexFilePath, projectIndex);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return FilePath();
+      }
+
+      projectId = newId;
+   }
+
+   // now we have the id, use it to get the directory
+   FilePath projectScratchPath = projDir.complete(projectId);
+   error = projectScratchPath.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+
+   // return the path
+   return projectScratchPath;
+}
 
 }  // anonymous namespace
 
@@ -68,6 +165,29 @@ FilePath activeProjectDirectory()
 FilePath activeProjectFilePath()
 {
    return s_activeProjectPath;
+}
+
+FilePath activeProjectScratchPath()
+{
+   if (s_activeProjectPath.empty())
+   {
+      return module_context::userScratchPath();
+   }
+   else
+   {
+      // one-time on-demand calculation of active project scratch path
+      if (s_activeProjectScratchPath.empty())
+      {
+         FilePath projectScratchPath = determineActiveProjectScratchPath();
+         if (!projectScratchPath.empty())
+            s_activeProjectScratchPath = projectScratchPath;
+         else
+            s_activeProjectScratchPath = module_context::userScratchPath();
+      }
+
+      // return the path
+      return s_activeProjectScratchPath;
+   }
 }
 
 } // namespace module_context

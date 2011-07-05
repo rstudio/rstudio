@@ -49,6 +49,7 @@ bool isVisibleUserFile(const core::FilePath& filePath);
 
 core::FilePath activeProjectDirectory();
 core::FilePath activeProjectFilePath();
+core::FilePath activeProjectScratchPath();
 
 core::FilePath safeCurrentPath();
 

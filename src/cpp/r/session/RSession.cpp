@@ -103,7 +103,7 @@ public:
 
 FilePath plotsStateFilePath()
 {
-   return s_options.userScratchPath.complete("plots");
+   return s_options.projectScratchPath.complete("plots");
 }
 
 FilePath rHistoryFilePath()
@@ -362,7 +362,7 @@ Error initialize()
    }
 
    // initialize graphics device
-   FilePath graphicsPath = s_options.userScratchPath.complete("graphics");
+   FilePath graphicsPath = s_options.projectScratchPath.complete("graphics");
    error = graphics::device::initialize(plotsStateFilePath(),
                                         graphicsPath,
                                         s_callbacks.locator);
@@ -1138,7 +1138,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    graphics::setCompatibleEngineVersion(engineVersion);
 
    // set graphics and client state paths
-   s_clientStatePath = s_options.userScratchPath.complete("client-state");
+   s_clientStatePath = s_options.projectScratchPath.complete("client-state");
    
    // set source reloading behavior
    sourceManager().setAutoReload(options.autoReloadSource);

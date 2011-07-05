@@ -1136,12 +1136,12 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       // main module context
       (module_context::initialize)
 
-      // source database
-      (source_database::initialize)
-   
       // projects
       (projects::initialize)
 
+      // source database
+      (source_database::initialize)
+   
       // modules with c++ implementations
       (modules::path::initialize)
       (modules::content_urls::initialize)
@@ -2082,6 +2082,7 @@ int main (int argc, char * const argv[])
       r::session::ROptions rOptions ;
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
+      rOptions.projectScratchPath = module_context::activeProjectScratchPath();
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
       rOptions.persistentState = boost::bind(&PersistentState::settings,
                                              &(persistentState()));

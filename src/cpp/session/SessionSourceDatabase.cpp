@@ -387,7 +387,8 @@ bool sortByCreated(const SourceDocument& doc1, const SourceDocument& doc2)
 
 FilePath path()
 {
-   return module_context::userScratchPath().complete("source_database");
+   return module_context::activeProjectScratchPath().complete(
+                                                      "source_database");
 }
    
 Error get(const std::string& id, SourceDocument* pDoc)
