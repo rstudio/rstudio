@@ -50,6 +50,7 @@ public:
         const DisplaySize& renderedSize);
    
    std::string storageUuid() const;  
+   bool hasValidStorage() const;
    const DisplaySize& renderedSize() const { return renderedSize_; }
 
    bool hasManipulator() const;

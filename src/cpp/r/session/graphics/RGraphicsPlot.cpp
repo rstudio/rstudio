@@ -64,6 +64,11 @@ std::string Plot::storageUuid() const
    return storageUuid_;
 }
 
+bool Plot::hasValidStorage() const
+{
+   return hasStorage() && snapshotFilePath().exists();
+}
+
 void Plot::invalidate()
 {
    needsUpdate_ = true;

@@ -590,15 +590,21 @@ Error PlotManager::restorePlotsState(const FilePath& plotsStateFile)
          renderedSize.height = boost::lexical_cast<int>(matches[3]);
       }
       
-      // add plot
-      plots_.push_back(PtrPlot(new Plot(graphicsDevice_, 
-                                        graphicsPath_, 
-                                        plotStorageId,
-                                        renderedSize)));
-      
-      // set it as active if necessary
-      if (plotStorageId == activePlotStorageId)
-         activePlot_ = i;
+      // create next plot
+      PtrPlot ptrPlot(new Plot(graphicsDevice_,
+                               graphicsPath_,
+                               plotStorageId,
+                               renderedSize));
+
+      // ensure it actually exists on disk before we add it
+      if (ptrPlot->hasValidStorage())
+      {
+         plots_.push_back(ptrPlot);
+
+         // set it as active if necessary
+         if (plotStorageId == activePlotStorageId)
+            activePlot_ = i;
+      }
    }
    
    // if we didn't find the active plot or if it exceeds the size
