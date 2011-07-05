@@ -111,11 +111,19 @@ Error initialize()
 
       }
 
-      // build and set the PATH
+      // build the PATH
       std::string path = core::system::getenv("PATH");
       std::for_each(paths.begin(),
                     paths.end(),
                     boost::bind(addToPathIfNecessary, _1, &path));
+
+      // do we need to add /usr/texbin (sometimes texlive doesn't get this
+      // written into /etc/paths.d)
+      FilePath texbinPath("/usr/texbin");
+      if (texbinPath.exists())
+         addToPathIfNecessary(texbinPath.absolutePath(), &path);
+
+      // set the path
       core::system::setenv("PATH", path);
    }
 #endif
