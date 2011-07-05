@@ -43,6 +43,9 @@ extern "C" void R_ProcessEvents(void);
 // from Startup.h
 extern "C" void R_CleanUp(SA_TYPE, int, int);
 
+// from system.c
+extern "C" UImode CharacterMode;
+
 // for do_edit fork
 extern "C" FILE *R_fopen(const char *filename, const char *mode);
 extern "C" void R_ResetConsole(void);
@@ -119,6 +122,8 @@ SEXP addHistoryHook(SEXP call, SEXP op, SEXP args, SEXP rho)
    s_callbacks.addhistory(call, op, args, rho);
    return R_NilValue;
 }
+
+
 
 // defines to allow us to make minimal mods to forked do_fileshow & do_edit
 extern "C" void Rf_checkArityCall(SEXP op, SEXP args, SEXP call);
@@ -372,9 +377,22 @@ void runEmbeddedR(const core::FilePath& rHome,
    ::GA_initapp(0, 0);
    ::readconsolecfg();
 
+   // Set CharacterMode to LinkDLL during main loop setup. The mode can't be
+   // RGui during setup_Rmainloop or calls to history functions (e.g. timestamp)
+   // which occur during .Rprofile execution will crash when R attempts to
+   // interact with the (non-existent) R gui console data structures. Note that
+   // there are no references to CharacterMode within setup_Rmainloop that we
+   // can see so the only side effect of this should be the disabling of the
+   // console history mechanism.
+   CharacterMode = LinkDLL;
+
+   // setup main loop
+   ::setup_Rmainloop();
+
+   // reset character mode to RGui
+   CharacterMode = RGui;
 
    // run main loop
-   ::setup_Rmainloop();
    ::run_Rmainloop();
 }
 
