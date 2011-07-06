@@ -28,6 +28,8 @@
 
 #include <core/http/Util.hpp>
 
+#include <core/system/FileChangeEvent.hpp>
+
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
 #include <r/RExec.hpp>
@@ -42,6 +44,8 @@
 
 #include <session/SessionOptions.hpp>
 #include "SessionClientEventQueue.hpp"
+
+#include <session/projects/SessionProjects.hpp>
 
 #include "modules/SessionContentUrls.hpp"
 
@@ -371,6 +375,14 @@ FilePath userScratchPath()
 {
    return session::options().userScratchPath();
 }
+
+FilePath scopedScratchPath()
+{
+   if (projects::projectIsActive())
+      return projects::projectScratchPath();
+   else
+      return userScratchPath();
+}
    
 bool isVisibleUserFile(const FilePath& filePath)
 {
@@ -434,6 +446,23 @@ void enqueClientEvent(const ClientEvent& event)
 {
    session::clientEventQueue().add(event);
 }
+
+// enque file changed event
+void enqueFileChangedEvent(const core::system::FileChangeEvent& event,
+                           const std::string& vcsStatus)
+{
+   // create file change object
+   json::Object fileChange ;
+   fileChange["type"] = event.type();
+   json::Object fileSystemItem = createFileSystemItem(event.fileInfo());
+   fileSystemItem["vcs_status"] = vcsStatus;
+   fileChange["file"] = fileSystemItem;
+
+   // enque it
+   ClientEvent clientEvent(client_events::kFileChanged, fileChange);
+   module_context::enqueClientEvent(clientEvent);
+}
+
 
 // NOTE: we used to call explicitly back into r::session to write output
 // and errors however the fact that these functions are called from

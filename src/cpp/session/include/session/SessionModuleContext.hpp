@@ -21,6 +21,7 @@
 #include <boost/signals.hpp>
 
 #include <core/system/System.hpp>
+#include <core/system/FileChangeEvent.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/Thread.hpp>
@@ -45,11 +46,8 @@ std::string createAliasedPath(const core::FileInfo& fileInfo);
 std::string createAliasedPath(const core::FilePath& path);
 core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 core::FilePath userScratchPath();
+core::FilePath scopedScratchPath();
 bool isVisibleUserFile(const core::FilePath& filePath);
-
-core::FilePath activeProjectDirectory();
-core::FilePath activeProjectFilePath();
-core::FilePath activeProjectScratchPath();
 
 core::FilePath safeCurrentPath();
 
@@ -168,7 +166,11 @@ core::Error sourceModuleRFile(const std::string& rSourceFile);
    
 // enque client events (note R methods can do this via .rs.enqueClientEvent)
 void enqueClientEvent(const ClientEvent& event);
-   
+
+// enque file changed event
+void enqueFileChangedEvent(const core::system::FileChangeEvent& event,
+                           const std::string& vcsStatus);
+
 // write output to the console (convenience wrapper for enquing a 
 // kConsoleWriteOutput event)
 void consoleWriteOutput(const std::string& output);   

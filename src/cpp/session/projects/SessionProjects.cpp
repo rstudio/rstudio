@@ -11,18 +11,7 @@
  *
  */
 
-// TODO: plot restoration doesn't work in server mode
-
-// TODO: when switching from hidden source to project with source docs
-//       need to show the source view
-
-// TODO: analyze plots, client_state, and source_database scoped scratch case
-
-// TODO: analyze other things in scratch path to see where they belong and
-//       how they will behave
-
-// TODO: post a bug for some way to expose/cleanup project caches
-//       (could implement source database optimization)
+// TODO: switch to file based semantics
 
 // TODO: detecting copy/move/network:
 /*
@@ -43,7 +32,7 @@
 
 
 
-#include "SessionProjects.hpp"
+#include <session/projects/SessionProjects.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/Settings.hpp>
@@ -55,17 +44,18 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
-
-#include "SessionPersistentState.hpp"
+#include <session/SessionPersistentState.hpp>
 
 using namespace core;
 
 namespace session {
+namespace projects {
 
 namespace {
 
-FilePath s_activeProjectPath;
-FilePath s_activeProjectScratchPath;
+FilePath s_projectFilePath;
+FilePath s_projectDirectory;
+FilePath s_projectScratchPath;
 
 void onSuspend(Settings*)
 {
@@ -73,7 +63,7 @@ void onSuspend(Settings*)
    // on resume. we read this back in initalize (rather than in
    // the onResume handler) becuase we need it very early in the
    // processes lifetime and onResume happens too late
-   persistentState().setNextSessionProjectPath(s_activeProjectPath);
+   persistentState().setNextSessionProjectPath(s_projectFilePath);
 }
 
 void onResume(const Settings&) {}
@@ -104,7 +94,7 @@ FilePath determineActiveProjectScratchPath()
 
    // look for this directory in the index file
    std::string projectId;
-   FilePath projectDir = module_context::activeProjectDirectory();
+   FilePath projectDir = projects::projectDirectory();
    for (std::map<std::string,std::string>::const_iterator
          it = projectIndex.begin(); it != projectIndex.end(); ++it)
    {
@@ -142,62 +132,6 @@ FilePath determineActiveProjectScratchPath()
    // return the path
    return projectScratchPath;
 }
-
-}  // anonymous namespace
-
-
-namespace module_context {
-
-FilePath activeProjectDirectory()
-{
-   if (!s_activeProjectPath.empty())
-   {
-      if (s_activeProjectPath.parent().exists())
-         return s_activeProjectPath.parent();
-      else
-         return FilePath();
-   }
-   else
-   {
-      return FilePath();
-   }
-}
-
-
-FilePath activeProjectFilePath()
-{
-   return s_activeProjectPath;
-}
-
-FilePath activeProjectScratchPath()
-{
-   if (s_activeProjectPath.empty())
-   {
-      return module_context::userScratchPath();
-   }
-   else
-   {
-      // one-time on-demand calculation of active project scratch path
-      if (s_activeProjectScratchPath.empty())
-      {
-         FilePath projectScratchPath = determineActiveProjectScratchPath();
-         if (!projectScratchPath.empty())
-            s_activeProjectScratchPath = projectScratchPath;
-         else
-            s_activeProjectScratchPath = module_context::userScratchPath();
-      }
-
-      // return the path
-      return s_activeProjectScratchPath;
-   }
-}
-
-} // namespace module_context
-
-
-namespace projects {
-
-namespace {
 
 const int kStatusOk = 0;
 const int kStatusNotExists = 1;
@@ -326,6 +260,26 @@ Error openProject(const json::JsonRpcRequest& request,
 }  // anonymous namespace
 
 
+bool projectIsActive()
+{
+   return !projectFilePath().empty();
+}
+
+FilePath projectFilePath()
+{
+   return s_projectFilePath;
+}
+
+FilePath projectDirectory()
+{
+   return s_projectDirectory;
+}
+
+FilePath projectScratchPath()
+{
+   return s_projectScratchPath;
+}
+
 Error startup()
 {
    // register suspend handler
@@ -348,62 +302,74 @@ Error startup()
       // check for existence and set
       if (nextSessionProjectPath.exists())
       {
-         s_activeProjectPath = nextSessionProjectPath;
+         s_projectFilePath = nextSessionProjectPath;
       }
       else
       {
          LOG_WARNING_MESSAGE("Next session project path doesn't exist: " +
                              nextSessionProjectPath.absolutePath());
-         s_activeProjectPath = FilePath();
+         s_projectFilePath = FilePath();
       }
    }
 
    // check for envrionment variable (file association)
    else if (!session::options().initialProjectPath().empty())
    {
-      s_activeProjectPath = session::options().initialProjectPath();
+      s_projectFilePath = session::options().initialProjectPath();
    }
 
    // check for other working dir override (implies a launch of a file
    // but not of a project)
    else if (!session::options().initialWorkingDirOverride().empty())
    {
-      s_activeProjectPath = FilePath();
+      s_projectFilePath = FilePath();
    }
 
    // check for restore based on settings
    else if (userSettings().alwaysRestoreLastProject() &&
             userSettings().lastProjectPath().exists())
    {
-      s_activeProjectPath = userSettings().lastProjectPath();
+      s_projectFilePath = userSettings().lastProjectPath();
    }
 
    // else no active project for this session
    else
    {
-      s_activeProjectPath = FilePath();
+      s_projectFilePath = FilePath();
    }
 
    // last ditch check for writeabilty of the project directory
-   if (!s_activeProjectPath.empty() &&
-       !canWriteToProjectDir(s_activeProjectPath.parent()))
+   if (!s_projectFilePath.empty() &&
+       !canWriteToProjectDir(s_projectFilePath.parent()))
    {
       // enque a warning
       json::Object warningBarEvent;
       warningBarEvent["severe"] = false;
       warningBarEvent["message"] =
-        "Project '" + s_activeProjectPath.parent().absolutePath() + "' "
+        "Project '" + s_projectFilePath.parent().absolutePath() + "' "
         "could not be opened because it is located in a read-only directory.";
       ClientEvent event(client_events::kShowWarningBar, warningBarEvent);
       module_context::enqueClientEvent(event);
 
       // no project
-      s_activeProjectPath = FilePath();
+      s_projectFilePath = FilePath();
    }
 
-
    // save the active project path for the next session
-   userSettings().setLastProjectPath(s_activeProjectPath);
+   userSettings().setLastProjectPath(s_projectFilePath);
+
+   // if we have a project file then compute the directory & scratch path
+   if (!s_projectFilePath.empty())
+   {
+      // project directory
+      s_projectDirectory = s_projectFilePath.parent();
+
+      // project scratch path (fault back to userScratch if for some
+      // reason we can't determine the project scratch path)
+      s_projectScratchPath = determineActiveProjectScratchPath();
+      if (s_projectScratchPath.empty())
+         s_projectScratchPath = module_context::userScratchPath();
+   }
 
    return Success();
 }

@@ -129,6 +129,12 @@ public class PaneManager
          sourceLogicalWindow_.onWindowStateChange(
                new WindowStateChangeEvent(WindowState.HIDE));
       }
+      else if (session_.getSessionInfo().getSourceDocuments().length() > 0
+               && sourceLogicalWindow_.getState() == WindowState.HIDE)
+      {
+         sourceLogicalWindow_.onWindowStateChange(
+               new WindowStateChangeEvent(WindowState.NORMAL));
+      }
 
       uiPrefs.paneConfig().addValueChangeHandler(new ValueChangeHandler<PaneConfig>()
       {

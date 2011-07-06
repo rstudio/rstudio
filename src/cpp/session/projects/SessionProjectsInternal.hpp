@@ -11,8 +11,8 @@
  *
  */
 
-#ifndef SESSION_PROJECTS_HPP
-#define SESSION_PROJECTS_HPP
+#ifndef SESSION_PROJECTS_PROJECTS_INTERNAL_HPP
+#define SESSION_PROJECTS_PROJECTS_INTERNAL_HPP
 
 #include <string>
 
@@ -31,4 +31,4 @@ core::Error initialize();
 } // namespace projects
 } // namesapce session
 
-#endif // SESSION_PROJECTS_HPP
+#endif // SESSION_PROJECTS_PROJECTS_INTERNAL_HPP

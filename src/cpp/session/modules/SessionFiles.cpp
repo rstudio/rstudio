@@ -64,28 +64,15 @@ namespace {
 // record previously monitored path for restoration after pause
 std::string s_pausedDirectoryMonitorPath;
 
-// constants for enquing file changed events
-const char * const kType = "type";
-const char * const kFile = "file";
 const char * const kTargetFile = "targetFile";
    
 void enqueFileChangeEvent(const source_control::StatusResult& statusResult,
                           const core::system::FileChangeEvent& event)
 {
    using namespace source_control;
-
-   json::Object fileChange ;
-   fileChange[kType] = event.type();
-
    FilePath filePath(event.fileInfo().absolutePath());
-
-   json::Object fileSystemItem = module_context::createFileSystemItem(event.fileInfo());
-   fileSystemItem["vcs_status"] = statusResult.getStatus(filePath).status();
-   fileChange[kFile] = fileSystemItem;
-
-
-   ClientEvent clientEvent(client_events::kFileChanged, fileChange);
-   module_context::enqueClientEvent(clientEvent);
+   std::string vcsStatus = statusResult.getStatus(filePath).status();
+   module_context::enqueFileChangedEvent(event, vcsStatus);
 }
    
 // NOTE: we explicitly fire removed events for directories because of

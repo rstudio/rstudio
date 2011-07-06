@@ -23,10 +23,13 @@
 #include <core/Exec.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 
 #include <core/json/JsonRpc.hpp>
+
+#include <core/system/FileChangeEvent.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -38,6 +41,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionSourceControl.hpp"
 
 using namespace core;
 
@@ -216,6 +220,9 @@ Error saveDocumentCore(const std::string& contents,
          r::exec::printWarnings();
       }
 
+      // note whether the file existed prior to writing
+      bool newFile = !fullDocPath.exists();
+
       // write the contents to the file
       error = writeStringToFile(fullDocPath, encoded,
                                 options().sourcePersistLineEnding());
@@ -226,6 +233,17 @@ Error saveDocumentCore(const std::string& contents,
       error = pDoc->setPathAndContents(path);
       if (error)
          return error ;
+
+      // enque file changed event
+      using core::system::FileChangeEvent;
+      FileChangeEvent changeEvent(newFile ? FileChangeEvent::FileAdded :
+                                            FileChangeEvent::FileModified,
+                                  FileInfo(fullDocPath));
+      source_control::VCSStatus vcsStatus;
+      error = source_control::fileStatus(fullDocPath, &vcsStatus);
+      if (error)
+         LOG_ERROR(error);
+      module_context::enqueFileChangedEvent(changeEvent, vcsStatus.status());
    }
 
    // always update the contents so it holds the original UTF-8 data
