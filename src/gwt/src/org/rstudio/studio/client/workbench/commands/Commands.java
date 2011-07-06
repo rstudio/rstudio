@@ -86,6 +86,7 @@ public abstract class
    public abstract AppCommand vcsStage();
    public abstract AppCommand vcsUnstage();
    public abstract AppCommand vcsRevert();
+   public abstract AppCommand vcsShowHistory();
    public abstract AppCommand vcsRefresh();
 
    // View

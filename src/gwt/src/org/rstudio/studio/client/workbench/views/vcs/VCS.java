@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
+import org.rstudio.studio.client.workbench.views.vcs.history.HistoryPresenter;
 
 import java.util.ArrayList;
 
@@ -56,6 +57,7 @@ public class VCS extends BasePresenter implements IsWidget
               Provider<CommitDisplay> pCommitView,
               Provider<LineTableView> pLineTable,
               Provider<ReviewPresenter> pReviewPresenter,
+              Provider<HistoryPresenter> pHistoryPresenter,
               VCSServerOperations server,
               Commands commands,
               Binder commandBinder,
@@ -66,6 +68,7 @@ public class VCS extends BasePresenter implements IsWidget
       pCommitView_ = pCommitView;
       pLineTable_ = pLineTable;
       pReviewPresenter_ = pReviewPresenter;
+      pHistoryPresenter_ = pHistoryPresenter;
       server_ = server;
       globalDisplay_ = globalDisplay;
 
@@ -157,6 +160,12 @@ public class VCS extends BasePresenter implements IsWidget
    }
 
    @Handler
+   void onVcsShowHistory()
+   {
+      pHistoryPresenter_.get().showModal();
+   }
+
+   @Handler
    void onVcsRefresh()
    {
       refresh(true);
@@ -191,6 +200,7 @@ public class VCS extends BasePresenter implements IsWidget
    private final Provider<CommitDisplay> pCommitView_;
    private final Provider<LineTableView> pLineTable_;
    private final Provider<ReviewPresenter> pReviewPresenter_;
+   private final Provider<HistoryPresenter> pHistoryPresenter_;
    private final VCSServerOperations server_;
    private final GlobalDisplay globalDisplay_;
 }

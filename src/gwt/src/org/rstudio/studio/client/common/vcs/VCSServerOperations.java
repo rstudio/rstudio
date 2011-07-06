@@ -13,8 +13,10 @@
 package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.core.client.JsArray;
+import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.vcs.history.CommitInfo;
 
 import java.util.ArrayList;
 
@@ -62,4 +64,7 @@ public interface VCSServerOperations
 
    void vcsApplyPatch(String patch, PatchMode mode,
                       ServerRequestCallback<Void> requestCallback);
+
+   void vcsHistory(String spec,
+                   ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback);
 }

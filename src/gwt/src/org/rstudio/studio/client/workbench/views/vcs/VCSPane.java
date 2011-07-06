@@ -43,6 +43,8 @@ public class VCSPane extends WorkbenchPane implements Display
       toolbar.addLeftWidget(commands_.vcsRevert().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.vcsShowHistory().createToolbarButton());
 
       toolbar.addRightWidget(commands_.vcsRefresh().createToolbarButton());
       return toolbar;

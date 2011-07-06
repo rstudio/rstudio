@@ -14,6 +14,8 @@ package org.rstudio.core.client.jsonrpc;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import java.util.ArrayList;
+
 public class RpcObjectList<T extends JavaScriptObject> extends JavaScriptObject
 {
    protected RpcObjectList()
@@ -35,4 +37,12 @@ public class RpcObjectList<T extends JavaScriptObject> extends JavaScriptObject
       }
       return el;
    }-*/;
+
+   public final ArrayList<T> toArrayList()
+   {
+      ArrayList<T> result = new ArrayList<T>(length());
+      for (int i = 0; i < length(); i++)
+         result.add(get(i));
+      return result;
+   }
 }

@@ -88,6 +88,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import org.rstudio.studio.client.workbench.views.vcs.*;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
+import org.rstudio.studio.client.workbench.views.vcs.history.HistoryPanel;
+import org.rstudio.studio.client.workbench.views.vcs.history.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.workspace.Workspace;
 import org.rstudio.studio.client.workbench.views.workspace.WorkspacePane;
 import org.rstudio.studio.client.workbench.views.workspace.WorkspaceTab;
@@ -148,7 +150,8 @@ public class RStudioGinModule extends AbstractGinModule
 
       bind(ReviewPresenter.Display.class).to(ReviewPanel.class);
       bind(LineTablePresenter.Display.class).to(LineTableView.class);
-      
+      bind(HistoryPresenter.Display.class).to(HistoryPanel.class);
+
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)
             .in(Singleton.class) ;

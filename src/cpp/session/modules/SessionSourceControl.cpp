@@ -14,7 +14,9 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 
 #include <core/json/JsonRpc.hpp>
 #include <core/system/System.hpp>
@@ -34,6 +36,14 @@ enum PatchMode
 {
    PatchModeWorking = 0,
    PatchModeStage = 1
+};
+
+struct CommitInfo
+{
+   std::string id;
+   std::string author;
+   std::string subject;
+   long date; // millis since epoch, UTC
 };
 
 class VCSImpl : boost::noncopyable
@@ -125,7 +135,7 @@ public:
       return Success();
    }
 
-   virtual core::Error diffFile(FilePath filePath,
+   virtual core::Error diffFile(const FilePath& filePath,
                                 PatchMode mode,
                                 int contextLines,
                                 std::string* pOutput)
@@ -133,9 +143,14 @@ public:
       return Success();
    }
 
-   virtual core::Error applyPatch(FilePath patchFile,
+   virtual core::Error applyPatch(const FilePath& patchFile,
                                   PatchMode patchMode,
                                   std::string* pStdErr)
+   {
+      return Success();
+   }
+
+   virtual core::Error log(std::vector<CommitInfo>* pOutput)
    {
       return Success();
    }
@@ -295,10 +310,10 @@ public:
       return error;
    }
 
-   virtual core::Error diffFile(FilePath filePath,
-                                PatchMode mode,
-                                int contextLines,
-                                std::string* pOutput)
+   core::Error diffFile(const FilePath& filePath,
+                        PatchMode mode,
+                        int contextLines,
+                        std::string* pOutput)
    {
       std::vector<std::string> args;
       args.push_back("diff");
@@ -313,9 +328,30 @@ public:
       return Success();
    }
 
-   virtual core::Error applyPatch(FilePath patchFile,
-                                  PatchMode patchMode,
-                                  std::string* pStdErr)
+   long convertGitRawDate(const std::string& time,
+                          const std::string& timeZone)
+   {
+      long millis = boost::lexical_cast<long>(time);
+
+      int offset = boost::lexical_cast<int>(timeZone);
+
+      // Positive timezone offset means we have to SUBTRACT
+      // the offset to get UTC time, and vice versa
+      int factor = offset > 0 ? -1 : 1;
+
+      offset = abs(offset);
+      int hours = offset / 100;
+      int minutes = offset % 100;
+
+      millis += factor * (hours * 1000*60*60);
+      millis += factor * (minutes * 1000*60);
+
+      return millis;
+   }
+
+   core::Error applyPatch(const FilePath& patchFile,
+                          PatchMode patchMode,
+                          std::string* pStdErr)
    {
       std::vector<std::string> args;
 
@@ -326,6 +362,79 @@ public:
       filePaths.push_back(patchFile);
 
       return doSimpleCmd("apply", args, filePaths, pStdErr);
+   }
+
+   core::Error log(std::vector<CommitInfo>* pOutput)
+   {
+      std::vector<std::string> outLines;
+
+      std::vector<std::string> args;
+      args.push_back("log");
+      args.push_back("--pretty=raw");
+      args.push_back("--abbrev-commit");
+      args.push_back("--abbrev=8");
+
+      Error error = runCommand("git", args, &outLines);
+      if (error)
+         return error;
+
+      boost::regex kvregex("^(\\w+) (.*)$");
+      boost::regex authTimeRegex("^(.*?) (\\d+) ([+\\-]?\\d+)$");
+
+      CommitInfo currentCommit;
+
+      for (std::vector<std::string>::const_iterator it = outLines.begin();
+           it != outLines.end();
+           it++)
+      {
+         boost::smatch smatch;
+         if (boost::regex_search(*it, smatch, kvregex))
+         {
+            std::string key = smatch[1];
+            std::string value = smatch[2];
+            if (key == "commit")
+            {
+               if (!currentCommit.id.empty())
+                  pOutput->push_back(currentCommit);
+
+               currentCommit = CommitInfo();
+
+               currentCommit.id = value;
+            }
+            else if (key == "author" || key == "committer")
+            {
+               boost::smatch authTimeMatch;
+               if (boost::regex_search(value, authTimeMatch, authTimeRegex))
+               {
+                  std::string author = authTimeMatch[1];
+                  std::string time = authTimeMatch[2];
+                  std::string tz = authTimeMatch[3];
+
+                  if (key == "author")
+                     currentCommit.author = author;
+                  else // if (key == "committer")
+                     currentCommit.date = convertGitRawDate(time, tz);
+               }
+            }
+         }
+         else if (boost::starts_with(*it, "    "))
+         {
+            if (currentCommit.subject.empty())
+               currentCommit.subject = it->substr(4);
+         }
+         else if (it->length() == 0)
+         {
+         }
+         else
+         {
+            LOG_ERROR_MESSAGE("Unexpected git-log output");
+         }
+      }
+
+      if (!currentCommit.id.empty())
+         pOutput->push_back(currentCommit);
+
+      return Success();
    }
 };
 
@@ -587,6 +696,40 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsHistory(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
+{
+   std::vector<CommitInfo> commits;
+   Error error = s_pVcsImpl_->log(&commits);
+   if (error)
+      return error;
+
+   json::Array ids;
+   json::Array authors;
+   json::Array subjects;
+   json::Array dates;
+
+   for (std::vector<CommitInfo>::const_iterator it = commits.begin();
+        it != commits.end();
+        it++)
+   {
+      ids.push_back(it->id);
+      authors.push_back(it->author);
+      subjects.push_back(it->subject);
+      dates.push_back(static_cast<double>(it->date));
+   }
+
+   json::Object result;
+   result["id"] = ids;
+   result["author"] = authors;
+   result["subject"] = subjects;
+   result["date"] = dates;
+
+   pResponse->setResult(result);
+
+   return Success();
+}
+
 core::Error initialize()
 {
    FilePath workingDir = module_context::activeProjectDirectory();
@@ -611,7 +754,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_full_status", vcsFullStatus))
       (bind(registerRpcMethod, "vcs_commit_git", vcsCommitGit))
       (bind(registerRpcMethod, "vcs_diff_file", vcsDiffFile))
-      (bind(registerRpcMethod, "vcs_apply_patch", vcsApplyPatch));
+      (bind(registerRpcMethod, "vcs_apply_patch", vcsApplyPatch))
+      (bind(registerRpcMethod, "vcs_history", vcsHistory));
    Error error = initBlock.execute();
    if (error)
       return error;
