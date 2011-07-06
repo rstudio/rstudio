@@ -11,24 +11,24 @@
  *
  */
 
-#ifndef SESSION_PROJECTS_HPP
-#define SESSION_PROJECTS_HPP
+#ifndef SESSION_PROJECTS_PROJECTS_HPP
+#define SESSION_PROJECTS_PROJECTS_HPP
 
-#include <string>
 
 namespace core {
-   class Error;
    class FilePath;
 }
  
 namespace session {
 namespace projects {
 
-core::Error startup();
+bool projectIsActive();
+core::FilePath projectFilePath();
+core::FilePath projectDirectory();
+core::FilePath projectScratchPath();
 
-core::Error initialize();
 
 } // namespace projects
 } // namesapce session
 
-#endif // SESSION_PROJECTS_HPP
+#endif // SESSION_PROJECTS_PROJECTS_HPP
