@@ -11,11 +11,6 @@
  *
  */
 
-// TODO: when switching from hidden source to project with source docs
-//       need to show the source view
-
-// TODO: project file changed event
-
 // TODO: switch to file based semantics
 
 // TODO: detecting copy/move/network:

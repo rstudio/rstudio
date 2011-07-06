@@ -21,8 +21,6 @@ namespace core {
    class Error;
 }
 
-using namespace core;
-
 namespace session {
 namespace modules {
 namespace source_control {
@@ -51,7 +49,7 @@ private:
 struct FileWithStatus
 {
    VCSStatus status;
-   FilePath path;
+   core::FilePath path;
 };
 
 class StatusResult
@@ -69,7 +67,7 @@ public:
       }
    }
 
-   VCSStatus getStatus(const FilePath& fileOrDirectory) const;
+   VCSStatus getStatus(const core::FilePath& fileOrDirectory) const;
    std::vector<FileWithStatus> files() const { return files_; }
 
 private:
@@ -79,7 +77,8 @@ private:
 
 VCS activeVCS();
 std::string activeVCSName();
-core::Error status(const FilePath& dir, StatusResult* pStatusResult);
+core::Error status(const core::FilePath& dir, StatusResult* pStatusResult);
+core::Error fileStatus(const core::FilePath& filePath, VCSStatus* pStatus);
 core::Error initialize();
 
 } // namespace source_control

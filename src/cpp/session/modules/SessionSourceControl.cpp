@@ -27,6 +27,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+using namespace core;
+
 namespace session {
 namespace modules {
 namespace source_control {
@@ -548,6 +550,18 @@ VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
 core::Error status(const FilePath& dir, StatusResult* pStatusResult)
 {
    return s_pVcsImpl_->status(dir, pStatusResult);
+}
+
+Error fileStatus(const FilePath& filePath, VCSStatus* pStatus)
+{
+   StatusResult statusResult;
+   Error error = source_control::status(filePath.parent(), &statusResult);
+   if (error)
+      return error;
+
+   *pStatus = statusResult.getStatus(filePath);
+
+   return Success();
 }
 
 Error vcsAdd(const json::JsonRpcRequest& request,

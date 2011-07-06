@@ -21,6 +21,7 @@
 #include <boost/signals.hpp>
 
 #include <core/system/System.hpp>
+#include <core/system/FileChangeEvent.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/Thread.hpp>
@@ -165,7 +166,11 @@ core::Error sourceModuleRFile(const std::string& rSourceFile);
    
 // enque client events (note R methods can do this via .rs.enqueClientEvent)
 void enqueClientEvent(const ClientEvent& event);
-   
+
+// enque file changed event
+void enqueFileChangedEvent(const core::system::FileChangeEvent& event,
+                           const std::string& vcsStatus);
+
 // write output to the console (convenience wrapper for enquing a 
 // kConsoleWriteOutput event)
 void consoleWriteOutput(const std::string& output);   
