@@ -43,6 +43,7 @@ import com.google.gwt.uibinder.rebind.model.OwnerClass;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
 import com.google.gwt.user.client.ui.IsRenderable;
 import com.google.gwt.user.client.ui.IsWidget;
+import com.google.gwt.user.client.ui.RenderableStamper;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -219,6 +220,8 @@ public class UiBinderWriter implements Statements {
   private int fieldIndex;
 
   private String gwtPrefix;
+
+  private int renderableStamper = 0;
 
   private String rendered;
   /**
@@ -508,6 +511,23 @@ public class UiBinderWriter implements Statements {
       }
     }
     return fieldName;
+  }
+
+  /**
+   * Declare a {@link RenderableStamper} instance that will be filled at runtime
+   * with a unique token. This instance can then be used to stamp a single {@link IsRenderable}.
+   *
+   * @return that variable's name.
+   */
+  public String declareRenderableStamper() throws UnableToCompleteException {
+    String renderableStamperName = "renderableStamper" + renderableStamper++;
+    FieldWriter domField = fieldManager.registerField(FieldWriterType.RENDERABLE_STAMPER,
+        oracle.findType(RenderableStamper.class.getName()), renderableStamperName);
+    domField.setInitializer(formatCode(
+        "new %s(com.google.gwt.dom.client.Document.get().createUniqueId())",
+        RenderableStamper.class.getName()));
+
+    return renderableStamperName;
   }
 
   /**

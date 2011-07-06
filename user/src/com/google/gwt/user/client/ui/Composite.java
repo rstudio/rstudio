@@ -93,22 +93,25 @@ public abstract class Composite extends Widget implements IsRenderable {
   }
 
   @Override
-  public final SafeHtml render(String id) {
+  public final SafeHtml render(RenderableStamper stamper) {
     if (renderable != null) {
-      return renderable.render(id);
+      return renderable.render(stamper);
     } else {
       SafeHtmlBuilder builder = new SafeHtmlBuilder();
-      render(id, builder);
+      render(stamper, builder);
       return builder.toSafeHtml();
     }
   }
 
   @Override
-  public final void render(String id, SafeHtmlBuilder builder) {
+  @SuppressWarnings("deprecation")
+  public final void render(RenderableStamper stamper, SafeHtmlBuilder builder) {
     if (renderable != null) {
-      renderable.render(id, builder);
+      renderable.render(stamper, builder);
     } else {
-      builder.append(TEMPLATE.renderWithId(id));
+      // TODO(rdcastro): Investigate whether SafeHtml or ElementBuilder stamping should be used
+      // to avoid any performance regressions.
+      builder.append(TEMPLATE.renderWithId(stamper.getToken()));
     }
   }
 

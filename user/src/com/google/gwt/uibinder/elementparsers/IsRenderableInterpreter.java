@@ -44,21 +44,15 @@ class IsRenderableInterpreter implements XMLElement.Interpreter<String> {
       return null;
     }
 
-    String idHolder = uiWriter.declareDomIdHolder();
+    String stamper = uiWriter.declareRenderableStamper();
     FieldManager fieldManager = uiWriter.getFieldManager();
     FieldWriter fieldWriter = fieldManager.require(fieldName);
-
     FieldWriter childFieldWriter = uiWriter.parseElementToFieldWriter(elem);
 
-    String elementPointer = idHolder + "Element";
     fieldWriter.addAttachStatement(
-        "com.google.gwt.user.client.Element %s = " +
-        "com.google.gwt.dom.client.Document.get().getElementById(%s).cast();",
-        elementPointer, fieldManager.convertFieldToGetter(idHolder));
-    fieldWriter.addAttachStatement(
-        "%s.claimElement(%s);",
+        "%s.claimElement(%s.findStampedElement());",
         fieldManager.convertFieldToGetter(childFieldWriter.getName()),
-        elementPointer);
+        fieldManager.convertFieldToGetter(stamper));
 
     // Some operations are more efficient when the Widget isn't attached to
     // the document. Perform them here.
@@ -73,7 +67,7 @@ class IsRenderableInterpreter implements XMLElement.Interpreter<String> {
 
     // TODO(rdcastro): use the render() call that receives the SafeHtmlBuilder
     String elementHtml = fieldManager.convertFieldToGetter(childFieldWriter.getName()) + ".render("
-        + fieldManager.convertFieldToGetter(idHolder) + ")";
+        + fieldManager.convertFieldToGetter(stamper) + ")";
     return uiWriter.tokenForSafeHtmlExpression(elementHtml);
   }
 }

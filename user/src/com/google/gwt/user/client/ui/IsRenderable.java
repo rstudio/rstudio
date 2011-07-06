@@ -42,14 +42,15 @@ public interface IsRenderable {
   void initializeClaimedElement();
 
   /**
-   * @see #render(String, SafeHtmlBuilder)
+   * @see #render(RendearbleStamper, SafeHtmlBuilder)
    * TODO(rdcastro): Remove this once UiBinder doesn't rely on it anymore.
    */
-  SafeHtml render(String id);
+  SafeHtml render(RenderableStamper stamper);
 
   /**
    * Tells this object to render itself as HTML and append it to the given builder.
-   * The root element of the HTML must be identifies by the given id.
+   * If the implementation expects to be able to claim an element later, it must be
+   * marked by the given stamper.
    */
-  void render(String id, SafeHtmlBuilder builder);
+  void render(RenderableStamper stamper, SafeHtmlBuilder builder);
 }

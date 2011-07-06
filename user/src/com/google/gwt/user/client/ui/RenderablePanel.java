@@ -186,15 +186,20 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
   }
 
   @Override
-  public SafeHtml render(String id) {
+  public SafeHtml render(RenderableStamper stamper) {
     SafeHtmlBuilder builder = new SafeHtmlBuilder();
-    render(id, builder);
+    render(stamper, builder);
     return builder.toSafeHtml();
   }
 
   @Override
-  public void render(String id, SafeHtmlBuilder builder) {
+  @SuppressWarnings("deprecation")
+  public void render(RenderableStamper stamper, SafeHtmlBuilder builder) {
     String styleName = getStyleName();
+
+    // TODO(rdcastro): Investigate whether SafeHtml or ElementBuilder stamping should be used here
+    // to avoid any performance regressions.
+    String id = stamper.getToken();
     if (styleName != null) {
       builder.append(TEMPLATE.renderWithIdAndClass(id, styleName, getInnerHtml()));
       styleName = null;
