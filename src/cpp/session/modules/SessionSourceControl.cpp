@@ -24,7 +24,8 @@
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 
-#include "session/SessionModuleContext.hpp"
+#include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 namespace session {
 namespace modules {
@@ -51,7 +52,7 @@ class VCSImpl : boost::noncopyable
 public:
    VCSImpl()
    {
-      root_ = module_context::activeProjectDirectory();
+      root_ = projects::projectDirectory();
    }
 
    virtual ~VCSImpl()
@@ -597,7 +598,7 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
                     json::JsonRpcResponse* pResponse)
 {
    StatusResult statusResult;
-   Error error = s_pVcsImpl_->status(module_context::activeProjectDirectory(),
+   Error error = s_pVcsImpl_->status(projects::projectDirectory(),
                                      &statusResult);
    if (error)
       return error;
@@ -612,7 +613,7 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
       FilePath path = it->path;
       json::Object obj;
       obj["status"] = status.status();
-      obj["path"] = path.relativePath(module_context::activeProjectDirectory());
+      obj["path"] = path.relativePath(projects::projectDirectory());
       obj["raw_path"] = path.absolutePath();
       result.push_back(obj);
    }
@@ -732,7 +733,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
 
 core::Error initialize()
 {
-   FilePath workingDir = module_context::activeProjectDirectory();
+   FilePath workingDir = projects::projectDirectory();
    if (workingDir.empty())
       s_pVcsImpl_.reset(new VCSImpl());
    else if (workingDir.childPath(".git").isDirectory())

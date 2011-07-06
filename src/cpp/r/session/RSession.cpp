@@ -103,7 +103,7 @@ public:
 
 FilePath plotsStateFilePath()
 {
-   return s_options.projectScratchPath.complete("plots");
+   return s_options.scopedScratchPath.complete("plots");
 }
 
 FilePath rHistoryFilePath()
@@ -362,7 +362,7 @@ Error initialize()
    }
 
    // initialize graphics device
-   FilePath graphicsPath = s_options.projectScratchPath.complete("graphics");
+   FilePath graphicsPath = s_options.scopedScratchPath.complete("graphics");
    error = graphics::device::initialize(plotsStateFilePath(),
                                         graphicsPath,
                                         s_callbacks.locator);

@@ -11,7 +11,7 @@
  *
  */
 
-#include "SessionPersistentState.hpp"
+#include <session/SessionPersistentState.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>

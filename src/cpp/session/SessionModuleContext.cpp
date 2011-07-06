@@ -43,6 +43,8 @@
 #include <session/SessionOptions.hpp>
 #include "SessionClientEventQueue.hpp"
 
+#include <session/projects/SessionProjects.hpp>
+
 #include "modules/SessionContentUrls.hpp"
 
 #include "config.h"
@@ -370,6 +372,14 @@ FilePath resolveAliasedPath(const std::string& aliasedPath)
 FilePath userScratchPath()
 {
    return session::options().userScratchPath();
+}
+
+FilePath scopedScratchPath()
+{
+   if (projects::projectIsActive())
+      return projects::projectScratchPath();
+   else
+      return userScratchPath();
 }
    
 bool isVisibleUserFile(const FilePath& filePath)

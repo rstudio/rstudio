@@ -68,11 +68,10 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionSourceDatabase.hpp>
+#include <session/SessionPersistentState.hpp>
 
 #include "SessionAddins.hpp"
 
-#include "SessionPersistentState.hpp"
-#include "SessionProjects.hpp"
 #include "SessionModuleContextInternal.hpp"
 
 #include "SessionClientEventQueue.hpp"
@@ -95,6 +94,9 @@
 #include "modules/SessionHistory.hpp"
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionContentUrls.hpp"
+
+#include <session/projects/SessionProjects.hpp>
+#include "projects/SessionProjectsInternal.hpp"
 
 #include "workers/SessionWebRequestWorker.hpp"
 
@@ -263,23 +265,17 @@ FilePath getDefaultWorkingDirectory()
 
 FilePath getInitialWorkingDirectory()
 {
-   // get paths
-   FilePath projectDirPath = module_context::activeProjectDirectory();
-   FilePath workingDirPath = session::options().initialWorkingDirOverride();
-
    // check for a project
-   if (!projectDirPath.empty())
-   {
-      return projectDirPath;
-   }
+   if (projects::projectIsActive())
+      return projects::projectDirectory();
 
    // see if there is an override from the environment (perhaps based
    // on a folder drag and drop or other file association)
-   else if (workingDirPath.exists() && workingDirPath.isDirectory())
+   FilePath workingDirPath = session::options().initialWorkingDirOverride();
+   if (workingDirPath.exists() && workingDirPath.isDirectory())
    {
       return workingDirPath;
    }
-
    else
    {
       // if not then just return default working dir
@@ -396,10 +392,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["initial_working_dir"] = initialWorkingDir;
 
    // active project file
-   FilePath activeProjectFile = module_context::activeProjectFilePath();
-   if (!activeProjectFile.empty())
+   if (projects::projectIsActive())
       sessionInfo["active_project_file"] = module_context::createAliasedPath(
-                                                               activeProjectFile);
+                                                projects::projectFilePath());
    else
       sessionInfo["active_project_file"] = json::Value();
 
@@ -1740,10 +1735,9 @@ void detectParentTermination()
 FilePath rEnvironmentDir()
 {
    // for projects we always use the project directory
-   FilePath activeProjectDir = module_context::activeProjectDirectory();
-   if (!activeProjectDir.empty())
+   if (projects::projectIsActive())
    {
-      return activeProjectDir;
+      return projects::projectDirectory();
    }
 
    // for desktop the current path
@@ -1762,10 +1756,9 @@ FilePath rEnvironmentDir()
 FilePath rHistoryDir()
 {
    // for projects we always use the project directory
-   FilePath activeProjectDir = module_context::activeProjectDirectory();
-   if (!activeProjectDir.empty())
+   if (projects::projectIsActive())
    {
-      return activeProjectDir;
+      return projects::projectDirectory();
    }
 
    // for server we use the default working directory
@@ -2082,7 +2075,7 @@ int main (int argc, char * const argv[])
       r::session::ROptions rOptions ;
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
-      rOptions.projectScratchPath = module_context::activeProjectScratchPath();
+      rOptions.scopedScratchPath = module_context::scopedScratchPath();
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
       rOptions.persistentState = boost::bind(&PersistentState::settings,
                                              &(persistentState()));

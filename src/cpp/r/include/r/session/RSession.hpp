@@ -55,7 +55,7 @@ struct ROptions
    }
    core::FilePath userHomePath;
    core::FilePath userScratchPath;
-   core::FilePath projectScratchPath;
+   core::FilePath scopedScratchPath;
    core::FilePath startupEnvironmentFilePath;
    boost::function<core::Settings&()> persistentState;
    boost::function<core::FilePath()> rEnvironmentDir;

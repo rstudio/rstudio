@@ -37,6 +37,7 @@
 #include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 // NOTE: if a file is deleted then its properties database entry is not
 // deleted. this has two implications:
@@ -387,8 +388,7 @@ bool sortByCreated(const SourceDocument& doc1, const SourceDocument& doc2)
 
 FilePath path()
 {
-   return module_context::activeProjectScratchPath().complete(
-                                                      "source_database");
+   return module_context::scopedScratchPath().complete("source_database");
 }
    
 Error get(const std::string& id, SourceDocument* pDoc)
