@@ -11,18 +11,8 @@
  *
  */
 
-// TODO: plot restoration doesn't work in server mode
-
 // TODO: when switching from hidden source to project with source docs
 //       need to show the source view
-
-// TODO: analyze plots, client_state, and source_database scoped scratch case
-
-// TODO: analyze other things in scratch path to see where they belong and
-//       how they will behave
-
-// TODO: post a bug for some way to expose/cleanup project caches
-//       (could implement source database optimization)
 
 // TODO: detecting copy/move/network:
 /*
