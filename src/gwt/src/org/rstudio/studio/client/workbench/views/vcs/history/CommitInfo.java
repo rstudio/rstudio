@@ -22,7 +22,7 @@ public class CommitInfo extends JavaScriptObject
 
    public final Date getDate()
    {
-      return new Date((long) getDateRaw());
+      return new Date((long) getDateRaw() * 1000);
    }
 
    public native final double getDateRaw() /*-{

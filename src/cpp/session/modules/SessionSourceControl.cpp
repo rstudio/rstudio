@@ -43,7 +43,7 @@ struct CommitInfo
    std::string id;
    std::string author;
    std::string subject;
-   long date; // millis since epoch, UTC
+   boost::int64_t date; // millis since epoch, UTC
 };
 
 class VCSImpl : boost::noncopyable
@@ -328,12 +328,12 @@ public:
       return Success();
    }
 
-   long convertGitRawDate(const std::string& time,
+   boost::int64_t convertGitRawDate(const std::string& time,
                           const std::string& timeZone)
    {
-      long millis = boost::lexical_cast<long>(time);
+      boost::int64_t secs = boost::lexical_cast<boost::int64_t>(time);
 
-      int offset = boost::lexical_cast<int>(timeZone);
+      int offset = safe_convert::stringTo<int>(timeZone, 0);
 
       // Positive timezone offset means we have to SUBTRACT
       // the offset to get UTC time, and vice versa
@@ -343,10 +343,10 @@ public:
       int hours = offset / 100;
       int minutes = offset % 100;
 
-      millis += factor * (hours * 1000*60*60);
-      millis += factor * (minutes * 1000*60);
+      secs += factor * (hours * 60*60);
+      secs += factor * (minutes * 60);
 
-      return millis;
+      return secs;
    }
 
    core::Error applyPatch(const FilePath& patchFile,
