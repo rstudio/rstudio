@@ -1182,6 +1182,7 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(patch));
+      params.set(1, new JSONNumber(mode.getValue()));
       sendRequest(RPC_SCOPE, VCS_APPLY_PATCH, params, requestCallback);
    }
 

@@ -2,6 +2,15 @@
 
 
 @def selectionBorderWidth 2px;
+
+
+span.status {
+   white-space: nowrap;
+}
+span.status img:first-child {
+   margin-right: 6px;
+}
+
 .cellTableWidget {
    font-size: 9pt;
 }
@@ -24,12 +33,16 @@
 }
 
 .cellTableHeader {
-  /* CHANGE: more conservative/elegant style */
-  border-bottom: 1px solid #BBB;
-  padding: 3px 4px;
+  border-bottom: 1px solid #d6dadc;
+  border-right: 1px solid #d6dadc;
+  border-top: 1px solid white;
+  border-left: 1px solid white;
+  padding: 1px 2px;
   text-align: left;
   font-weight: normal;
-  background-color: #F3F4F4;
+  font-size: 11px;
+  color: #3c474d;
+  background-color: #eeeff1;
   overflow: hidden;
   cursor: default;
 }
@@ -42,6 +55,10 @@
   /* CHANGE: use default cursor rather than pointer/caret */
   cursor: default;
 
+}
+
+.cellTableCell:first-child {
+   padding: 0 4px;
 }
 
 .cellTableCell input[type=checkbox] {

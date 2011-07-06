@@ -12,16 +12,28 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs;
 
+import com.google.gwt.cell.client.*;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 
 import java.util.ArrayList;
@@ -30,6 +42,15 @@ public class ChangelistTable extends Composite
 {
    protected interface CellTableResources extends CellTable.Resources
    {
+      ImageResource statusAdded();
+      ImageResource statusDeleted();
+      ImageResource statusModified();
+      ImageResource statusNone();
+      ImageResource statusCopied();
+      ImageResource statusUntracked();
+      ImageResource statusUnmerged();
+      ImageResource statusRenamed();
+
       @Override
       @Source("VCSPaneCellTableStyle.css")
       Style cellTableStyle();
@@ -37,32 +58,82 @@ public class ChangelistTable extends Composite
 
    protected interface Style extends CellTable.Style
    {
+      String status();
+   }
+
+   private class StatusRenderer implements SafeHtmlRenderer<String>
+   {
+
+      @Override
+      public SafeHtml render(String str)
+      {
+         if (str.length() != 2)
+            return null;
+
+         ImageResource indexImg = imgForStatus(str.charAt(0));
+         ImageResource treeImg = imgForStatus(str.charAt(1));
+
+         SafeHtmlBuilder builder = new SafeHtmlBuilder();
+         builder.append(SafeHtmlUtils.fromTrustedString(
+               "<span " +
+               "class=\"" + resources_.cellTableStyle().status() + "\" " +
+               "title=\"" +
+               SafeHtmlUtils.htmlEscape(descForStatus(str)) +
+               "\">"));
+
+         builder.append(SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(indexImg).getHTML()));
+         builder.append(SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(treeImg).getHTML()));
+
+         builder.appendHtmlConstant("</span>");
+
+         return builder.toSafeHtml();
+      }
+
+      private String descForStatus(String str)
+      {
+         return "hey that's cool";
+      }
+
+      private ImageResource imgForStatus(char c)
+      {
+         switch (c)
+         {
+            case 'A':
+               return resources_.statusAdded();
+            case 'M':
+               return resources_.statusModified();
+            case 'D':
+               return resources_.statusDeleted();
+            case 'R':
+               return resources_.statusRenamed();
+            case 'C':
+               return resources_.statusCopied();
+            case '?':
+               return resources_.statusUntracked();
+            case 'U':
+               return resources_.statusUnmerged();
+            case ' ':
+               return resources_.statusNone();
+            default:
+               return resources_.statusNone();
+         }
+      }
+
+      @Override
+      public void render(String str, SafeHtmlBuilder builder)
+      {
+         SafeHtml safeHtml = render(str);
+         if (safeHtml != null)
+            builder.append(safeHtml);
+      }
    }
 
    public ChangelistTable()
    {
       table_ = new CellTable<StatusAndPath>(
-            100, (CellTable.Resources) GWT.create(CellTableResources.class));
+            100, resources_);
 
-      TextColumn<StatusAndPath> statusColumn = new TextColumn<StatusAndPath>()
-      {
-         @Override
-         public String getValue(StatusAndPath object)
-         {
-            return object.getStatus().replaceAll(" ", "\u00A0");
-         }
-      };
-      table_.addColumn(statusColumn);
-
-      TextColumn<StatusAndPath> pathColumn = new TextColumn<StatusAndPath>()
-      {
-         @Override
-         public String getValue(StatusAndPath object)
-         {
-            return object.getPath();
-         }
-      };
-      table_.addColumn(pathColumn);
+      configureTable();
 
       selectionModel_ = new MultiSelectionModel<StatusAndPath>(
             new ProvidesKey<StatusAndPath>()
@@ -78,6 +149,52 @@ public class ChangelistTable extends Composite
       table_.setSize("100%", "auto");
 
       initWidget(new ScrollPanel(table_));
+   }
+
+   private void configureTable()
+   {
+      Column<StatusAndPath, Boolean> stagedColumn = new Column<StatusAndPath, Boolean>(new AbstractCell<Boolean>()
+      {
+         @Override
+         public void render(Context context, Boolean value, SafeHtmlBuilder sb)
+         {
+         }
+      })
+      {
+         @Override
+         public Boolean getValue(StatusAndPath object)
+         {
+            return object.getStatus().charAt(1) == ' ';
+         }
+      };
+
+      stagedColumn.setSortable(true);
+      stagedColumn.setHorizontalAlignment(Column.ALIGN_CENTER);
+      table_.addColumn(stagedColumn, "Staged");
+
+      Column<StatusAndPath, String> statusColumn = new Column<StatusAndPath, String>(
+            new TextCell(new StatusRenderer()))
+      {
+         @Override
+         public String getValue(StatusAndPath object)
+         {
+            return object.getStatus();
+         }
+      };
+      statusColumn.setSortable(true);
+      statusColumn.setHorizontalAlignment(Column.ALIGN_CENTER);
+      table_.addColumn(statusColumn, "Status");
+
+      TextColumn<StatusAndPath> pathColumn = new TextColumn<StatusAndPath>()
+      {
+         @Override
+         public String getValue(StatusAndPath object)
+         {
+            return object.getPath();
+         }
+      };
+      pathColumn.setSortable(true);
+      table_.addColumn(pathColumn, "Path");
    }
 
    public HandlerRegistration addSelectionChangeHandler(
@@ -109,4 +226,5 @@ public class ChangelistTable extends Composite
    private final CellTable<StatusAndPath> table_;
    private ArrayList<StatusAndPath> items_;
    private final MultiSelectionModel<StatusAndPath> selectionModel_;
+   private static final CellTableResources resources_ = GWT.<CellTableResources>create(CellTableResources.class);
 }
