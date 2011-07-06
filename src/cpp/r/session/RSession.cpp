@@ -207,7 +207,7 @@ bool saveSessionState()
    return r::session::state::save(s_suspendedSessionPath);
 }
    
-void deferredRestoreSessionState(
+void deferredRestoreSuspendedSession(
                      const boost::function<Error()>& deferredRestoreAction)
 {
    // notify client of serialization status
@@ -259,11 +259,11 @@ Error saveDefaultGlobalEnvironment()
    }
 }
    
-void restoreDefaultGlobalEnvironment()
+void deferredRestoreNewSession()
 {
    // restore the default global environment if there is one
    FilePath globalEnvPath = s_options.startupEnvironmentFilePath;
-   if (globalEnvPath.exists())
+   if (s_options.restoreWorkspace && globalEnvPath.exists())
    {
       // notify client of serialization status
       SerializationCallbackScope cb(kSerializationActionLoadDefaultWorkspace,
@@ -398,7 +398,7 @@ Error initialize()
          if (deferredRestoreAction)
          {
             s_deferredDeserializationAction = boost::bind(
-                                                deferredRestoreSessionState, 
+                                                deferredRestoreSuspendedSession,
                                                 deferredRestoreAction);
          }
       }
@@ -423,9 +423,8 @@ Error initialize()
       if (error)
          reportHistoryAccessError("read history from", historyPath, error);
       
-      // defer loading of global environment
-      if (s_options.restoreWorkspace)
-         s_deferredDeserializationAction = restoreDefaultGlobalEnvironment;
+      // defer loading of global environment and plots
+      s_deferredDeserializationAction = deferredRestoreNewSession;
    }
    
    // initialize client
