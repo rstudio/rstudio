@@ -45,10 +45,12 @@ signals:
 public slots:
    void browseUrl(QString url);
    QString getOpenFileName(const QString& caption,
-                           const QString& dir);
+                           const QString& dir,
+                           const QString& filter);
    QString getSaveFileName(const QString& caption,
                            const QString& dir,
-                           const QString& defaultExtension);
+                           const QString& defaultExtension,
+                           bool forceDefaultExtension);
    QString getExistingDirectory(const QString& caption,
                                 const QString& dir);
    void undo();

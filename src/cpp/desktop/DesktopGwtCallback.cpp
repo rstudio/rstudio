@@ -140,17 +140,22 @@ QString resolveAliasedPath(const QString& path)
 } // anonymous namespace
 
 QString GwtCallback::getOpenFileName(const QString& caption,
-                                    const QString& dir)
+                                    const QString& dir,
+                                    const QString& filter)
 {
    QString resolvedDir = resolveAliasedPath(dir);
-   QString result = QFileDialog::getOpenFileName(pOwnerWindow_, caption, resolvedDir);
+   QString result = QFileDialog::getOpenFileName(pOwnerWindow_,
+                                                 caption,
+                                                 resolvedDir,
+                                                 filter);
    webView()->page()->mainFrame()->setFocus();
    return createAliasedPath(result);
 }
 
 QString GwtCallback::getSaveFileName(const QString& caption,
                                      const QString& dir,
-                                     const QString& defaultExtension)
+                                     const QString& defaultExtension,
+                                     bool forceDefaultExtension)
 {
    QString resolvedDir = resolveAliasedPath(dir);
 
@@ -164,7 +169,9 @@ QString GwtCallback::getSaveFileName(const QString& caption,
       if (!defaultExtension.isEmpty())
       {
          FilePath fp(result.toUtf8().constData());
-         if (fp.extension().empty())
+         if (fp.extension().empty() ||
+            (forceDefaultExtension &&
+            (fp.extension() != defaultExtension.toStdString())))
          {
             result += defaultExtension;
             FilePath newExtPath(result.toUtf8().constData());

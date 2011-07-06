@@ -22,11 +22,18 @@ public interface FileDialogs
                  FileSystemContext fsContext,
                  FileSystemItem initialFilePath,
                  ProgressOperationWithInput<FileSystemItem> operation);
+   
+   void openFile(String caption,
+                 FileSystemContext fsContext,
+                 FileSystemItem initialFilePath,
+                 String filter,
+                 ProgressOperationWithInput<FileSystemItem> operation);
 
    void saveFile(String caption,
                  FileSystemContext fsContext,
                  FileSystemItem initialFilePath,
                  String defaultExtension,
+                 boolean forceDefaultExtension,
                  ProgressOperationWithInput<FileSystemItem> operation);
 
    void chooseFolder(String caption,

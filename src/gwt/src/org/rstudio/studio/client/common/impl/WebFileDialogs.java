@@ -28,8 +28,18 @@ public class WebFileDialogs implements FileDialogs
                         FileSystemItem initialFilePath,
                         ProgressOperationWithInput<FileSystemItem> operation)
    {
+      openFile(caption, fsContext, initialFilePath, "", operation);
+   }
+   
+   public void openFile(String caption,
+                        FileSystemContext fsContext,
+                        FileSystemItem initialFilePath,
+                        String filter,
+                        ProgressOperationWithInput<FileSystemItem> operation)
+   {
       OpenFileDialog dialog = new OpenFileDialog(caption,
                                                  fsContext,
+                                                 filter,
                                                  operation);
 
       dialog.setInvokeOperationEvenOnCancel(true);
@@ -41,11 +51,13 @@ public class WebFileDialogs implements FileDialogs
                         FileSystemContext fsContext,
                         FileSystemItem initialFilePath,
                         String defaultExtension,
+                        boolean forceDefaultExtension,
                         ProgressOperationWithInput<FileSystemItem> operation)
    {
       SaveFileDialog dialog = new SaveFileDialog(caption,
                                                  fsContext,
                                                  defaultExtension,
+                                                 forceDefaultExtension,
                                                  operation);
 
       dialog.setInvokeOperationEvenOnCancel(true);

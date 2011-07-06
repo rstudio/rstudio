@@ -25,10 +25,12 @@ public class SaveFileDialog extends FileDialog
    public SaveFileDialog(String title,
                          FileSystemContext context,
                          String defaultExtension,
+                         boolean forceDefaultExtension,
                          ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, "Save", true, true, context, operation);
+      super(title, null, "Save", true, true, context, "", operation);
       defaultExtension_ = defaultExtension;
+      forceDefaultExtension_ = forceDefaultExtension;
    }
 
    @Override
@@ -59,12 +61,18 @@ public class SaveFileDialog extends FileDialog
       {
          // if there is no extension then we need to add one
          String ext = FileSystemItem.getExtensionFromPath(filename);
-         if (ext.length() == 0)
+         if (ext.length() == 0 ||
+             (forceDefaultExtension_ && (ext != defaultExtension_)))
+         {
             return filename + defaultExtension_;
+         }
          else
+         {
             return filename;
+         }
       }
    }
 
    private final String defaultExtension_;
+   private final boolean forceDefaultExtension_;
 }

@@ -74,6 +74,7 @@ public class ConsoleDispatcher
             fsContext_,
             workbenchContext_.getCurrentWorkingDir(),
             defaultExtension,
+            false,
             new ProgressOperationWithInput<FileSystemItem>()
             {
                public void execute(

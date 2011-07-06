@@ -953,6 +953,7 @@ public class TextEditingTarget implements EditingTarget
             fileContext_,
             fsi,
             fileType_.getDefaultExtension(),
+            false,
             new ProgressOperationWithInput<FileSystemItem>()
             {
                public void execute(final FileSystemItem saveItem,

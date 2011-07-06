@@ -20,14 +20,10 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenProjectFileHandler;
-import org.rstudio.studio.client.projects.model.CreateProjectResult;
-import org.rstudio.studio.client.projects.model.OpenProjectResult;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
-import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 
@@ -40,22 +36,18 @@ public class Projects implements OpenProjectFileHandler
    public interface Binder extends CommandBinder<Commands, Projects> {}
    
    @Inject
-   public Projects(GlobalDisplay globalDisplay,
-                   FileDialogs fileDialogs,
+   public Projects(FileDialogs fileDialogs,
                    RemoteFileSystemContext fsContext,
-                   WorkbenchContext workbenchContext,
                    ApplicationQuit applicationQuit,
                    ProjectsServerOperations server,
                    EventBus eventBus,
                    Binder binder,
                    Commands commands)
    {
-      globalDisplay_ = globalDisplay;
       applicationQuit_ = applicationQuit;
       server_ = server;
       fileDialogs_ = fileDialogs;
       fsContext_ = fsContext;
-      workbenchContext_ = workbenchContext;
       
       binder.bind(commands, this);
       
@@ -72,60 +64,36 @@ public class Projects implements OpenProjectFileHandler
          public void onReadyToQuit(final boolean saveChanges)
          {
             // choose project folder
-            fileDialogs_.chooseFolder(
-               "Choose New Project Directory", 
+            fileDialogs_.saveFile(
+               "New Project", 
                fsContext_, 
                FileSystemItem.home(),
+               ".Rproj",
+               true,
                new ProgressOperationWithInput<FileSystemItem>() 
                {
                   @Override
                   public void execute(final FileSystemItem input,
                                       ProgressIndicator indicator)
-                  {
-                     indicator.onCompleted();
-                     
+                  {  
                      if (input == null)
+                     {
+                        indicator.onCompleted();
                         return;
+                     }
                      
                      // create the project
+                     indicator.onProgress("Creating project...");
                      server_.createProject(
                         input.getPath(),
-                        new SimpleRequestCallback<CreateProjectResult>() 
+                        new VoidServerRequestCallback(indicator) 
                         {
-                           @Override
-                           public void onResponseReceived(
-                                                CreateProjectResult result)
+                           @Override 
+                           public void onSuccess()
                            {
-                              if (result.getStatus() == 
-                                  CreateProjectResult.STATUS_ALREADY_EXISTS)
-                              {
-                                 globalDisplay_.showErrorMessage(
-                                       "New Project Error", 
-                                       "A project already exists in " + 
-                                       input.getPath());
-                              }
-                              
-                              else if (result.getStatus() == 
-                                       CreateProjectResult.STATUS_NO_WRITE_ACCESS)
-                              {
-                                 globalDisplay_.showErrorMessage(
-                                       "New Project Error", 
-                                       "You do not have write access to " + 
-                                       input.getPath());
-                              }
-                              
-                              else if (result.getStatus() == 
-                                       CreateProjectResult.STATUS_OK)
-                              {
-                                 applicationQuit_.performQuit(
-                                   saveChanges,
-                                   result.getProjectFilePath());
-                              }
-                              
-                              
-                           }
-                          
-                           
+                              applicationQuit_.performQuit(saveChanges,
+                                                           input.getPath());
+                           } 
                         });
                      
                   }
@@ -145,11 +113,12 @@ public class Projects implements OpenProjectFileHandler
                                       new ApplicationQuit.QuitContext() {
          public void onReadyToQuit(final boolean saveChanges)
          {
-            // choose project folder
-            fileDialogs_.chooseFolder(
-               "Choose Project Directory", 
+            // choose project file
+            fileDialogs_.openFile(
+               "Open Project", 
                fsContext_, 
                FileSystemItem.home(),
+               "R Projects (*.Rproj)",
                new ProgressOperationWithInput<FileSystemItem>() 
                {
                   @Override
@@ -161,47 +130,8 @@ public class Projects implements OpenProjectFileHandler
                      if (input == null)
                         return;
                      
-                     // open the project
-                     server_.openProject(
-                        input.getPath(),
-                        new SimpleRequestCallback<OpenProjectResult>() 
-                        {
-                           @Override
-                           public void onResponseReceived(
-                                                OpenProjectResult result)
-                           {
-                              if (result.getStatus() == 
-                                  OpenProjectResult.STATUS_NOT_EXISTS)
-                              {
-                                 globalDisplay_.showErrorMessage(
-                                       "Open Project Error", 
-                                       "There is no project in " + 
-                                       input.getPath());
-                              }
-                              
-                              else if (result.getStatus() == 
-                                       OpenProjectResult.STATUS_NO_WRITE_ACCESS)
-                              {
-                                 globalDisplay_.showErrorMessage(
-                                       "New Project Error", 
-                                       "You do not have write access to " + 
-                                       input.getPath());
-                              }
-                              
-                              else if (result.getStatus() == 
-                                       OpenProjectResult.STATUS_OK)
-                              {
-                                 applicationQuit_.performQuit(
-                                   saveChanges,
-                                   result.getProjectFilePath());
-                              }
-                              
-                              
-                           }
-                          
-                           
-                        });
-                     
+                     // perform quit
+                     applicationQuit_.performQuit(saveChanges, input.getPath());
                   }
                   
                });
@@ -215,14 +145,11 @@ public class Projects implements OpenProjectFileHandler
    {
   
    }
-   
-   @SuppressWarnings("unused")
-   private final GlobalDisplay globalDisplay_;
+
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations server_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fsContext_;
-   private final WorkbenchContext workbenchContext_;
 
   
 }

@@ -20,8 +20,9 @@ public class OpenFileDialog extends FileDialog
 {
    public OpenFileDialog(String title,
                          FileSystemContext context,
+                         String filter,
                          ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, "Open", false, false, context, operation);
+      super(title, null, "Open", false, false, context, filter, operation);
    }
 }

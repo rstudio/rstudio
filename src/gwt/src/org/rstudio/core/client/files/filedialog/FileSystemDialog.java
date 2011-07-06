@@ -19,17 +19,22 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.*;
+
 import org.rstudio.core.client.Point;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 
@@ -81,10 +86,12 @@ public abstract class FileSystemDialog extends ModalDialogBase
                            String caption,
                            String buttonName,
                            FileSystemContext context,
+                           String filter,
                            ProgressOperationWithInput<FileSystemItem> operation)
    {
       context_ = context;
       context_.setCallbacks(this);
+      filterExtension_ = extractFilterExtension(filter);
       operation_ = operation;
 
       setTitle(caption);
@@ -309,16 +316,27 @@ public abstract class FileSystemDialog extends ModalDialogBase
       if (items == null)
          return new FileSystemItem[0];
       
-      FileSystemItem[] clone = new FileSystemItem[items.length];
+      ArrayList<FileSystemItem> filtered = new ArrayList<FileSystemItem>();
       for (int i = 0; i < items.length; i++)
-         clone[i] = items[i];
-      Arrays.sort(clone, new Comparator<FileSystemItem>() {
+      {
+         if (items[i].isDirectory())
+            filtered.add(items[i]);
+         else if (filterExtension_ == null)
+            filtered.add(items[i]);
+         else if (filterExtension_.equalsIgnoreCase(items[i].getExtension()))
+            filtered.add(items[i]);
+      }
+       
+      Collections.sort(filtered, new Comparator<FileSystemItem>() {
          public int compare(FileSystemItem o1, FileSystemItem o2)
          {
             return o1.compareTo(o2);
          }
-      });
-      return clone;
+       });
+      FileSystemItem[] clone = new FileSystemItem[filtered.size()];
+      return filtered.toArray(clone);
+      
+      
    }
 
    public void onProgress(String message)
@@ -357,9 +375,31 @@ public abstract class FileSystemDialog extends ModalDialogBase
       invokeOperationEvenOnCancel_ = invoke;
    }
 
+   // NOTE: web mode only supports a single one-extension filter (whereas
+   // desktop mode supports full multi-filetype, multi-extension filtering).
+   // to support more sophisticated filtering we'd need to both add the 
+   // UI as well as update this function to extract a list of filters
+   private String extractFilterExtension(String filter)
+   {
+      if (StringUtil.isNullOrEmpty(filter))
+      {
+         return null;
+      }
+      else
+      {
+         Pattern p = Pattern.create("\\(\\*(\\.[^)]*)\\)$");
+         Match m = p.match(filter, 0);
+         if (m == null)
+            return null;
+         else
+            return m.getGroup(1);
+      }
+   }
+   
 
    private final HashMap<String, Point> scrollPositions_ =
                                                    new HashMap<String, Point>();
+   private final String filterExtension_;
    private String currentDir_; 
    protected final FileSystemContext context_;
    private final ProgressOperationWithInput<FileSystemItem> operation_;

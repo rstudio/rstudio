@@ -78,12 +78,23 @@ public class DesktopFileDialogs implements FileDialogs
                         final FileSystemItem initialFilePath,
                         final ProgressOperationWithInput<FileSystemItem> operation)
    {
+      openFile(caption, fsContext, initialFilePath, "", operation);
+   }
+   
+   public void openFile(final String caption,
+                        final FileSystemContext fsContext,
+                        final FileSystemItem initialFilePath,
+                        final String filter,
+                        final ProgressOperationWithInput<FileSystemItem> operation)
+   {
       new FileDialogOperation()
       {
          @Override
          String operation(String caption, String dir)
          {
-            String fileName = Desktop.getFrame().getOpenFileName(caption, dir);
+            String fileName = Desktop.getFrame().getOpenFileName(caption, 
+                                                                 dir, 
+                                                                 filter);
             if (fileName != null)
             {
                updateWorkingDirectory(fileName, fsContext);
@@ -97,6 +108,7 @@ public class DesktopFileDialogs implements FileDialogs
                         final FileSystemContext fsContext,
                         final FileSystemItem initialFilePath,
                         final String defaultExtension,
+                        final boolean forceDefaultExtension,
                         final ProgressOperationWithInput<FileSystemItem> operation)
    {
       new FileDialogOperation()
@@ -105,7 +117,7 @@ public class DesktopFileDialogs implements FileDialogs
          String operation(String caption, String dir)
          {
             String fileName = Desktop.getFrame().getSaveFileName(
-                  caption, dir, defaultExtension);
+                  caption, dir, defaultExtension, forceDefaultExtension);
 
             if (fileName != null)
             {

@@ -23,8 +23,11 @@ import org.rstudio.core.client.js.JavaScriptPassthrough;
 public interface DesktopFrame extends JavaScriptPassthrough
 {
    void browseUrl(String url);
-   String getOpenFileName(String caption, String dir);
-   String getSaveFileName(String caption, String dir, String defaultExtension);
+   String getOpenFileName(String caption, String dir, String filter);
+   String getSaveFileName(String caption, 
+                          String dir, 
+                          String defaultExtension, 
+                          boolean forceDefaultExtension);
    String getExistingDirectory(String caption, String dir);
    void undo();
    void redo();

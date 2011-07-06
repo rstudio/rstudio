@@ -144,26 +144,16 @@ void initializeStartupEnvironment(QString* pFilename)
             setInitialProject(projectFile, pFilename);
          }
       }
-      else if (ext == ".rdata" || ext == ".rda")
-      {
-         // if there is no stem then see if there is a project here
-         FilePath projectFile;
-         if (filePath.stem().empty() &&
-             !(projectFile = r_util::projectFromDirectory(
-                                                filePath.parent())).empty())
-         {
-            setInitialProject(projectFile, pFilename);
-         }
-         else
-         {
-            core::system::setenv("RS_INITIAL_ENV", filePath.absolutePath());
-            pFilename->clear();
-         }
-      }
       else if (ext == ".rproj")
       {
          setInitialProject(filePath, pFilename);
       }
+      else if (ext == ".rdata" || ext == ".rda")
+      {   
+         core::system::setenv("RS_INITIAL_ENV", filePath.absolutePath());
+         pFilename->clear();
+      }
+
    }
 }
 

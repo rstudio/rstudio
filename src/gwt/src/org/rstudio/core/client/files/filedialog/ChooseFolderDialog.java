@@ -31,7 +31,7 @@ public class ChooseFolderDialog extends FileSystemDialog
                              FileSystemContext context,
                              ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, "Choose", context, operation);
+      super(title, null, "Choose", context, "", operation);
    }
 
    @Override
