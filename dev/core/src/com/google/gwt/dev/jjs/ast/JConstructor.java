@@ -50,8 +50,9 @@ public class JConstructor extends JMethod {
   private boolean isEmpty = false;
 
   public JConstructor(SourceInfo info, JClassType enclosingType) {
+    // Access only matters for virtual methods, just use public.
     super(info, enclosingType.getShortName(), enclosingType, JPrimitiveType.VOID, false, false,
-        true, false);
+        true, AccessModifier.PUBLIC);
   }
 
   @Override

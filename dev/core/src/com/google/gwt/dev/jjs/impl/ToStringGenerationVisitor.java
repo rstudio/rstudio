@@ -1063,10 +1063,18 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   protected void printMethodHeader(JMethod x) {
     // Modifiers
-    if (x.isPrivate()) {
-      print(CHARS_PRIVATE);
-    } else {
-      print(CHARS_PUBLIC);
+    switch (x.getAccess()) {
+      case PUBLIC:
+        print(CHARS_PUBLIC);
+        break;
+      case PROTECTED:
+        print(CHARS_PROTECTED);
+        break;
+      case PRIVATE:
+        print(CHARS_PRIVATE);
+        break;
+      case DEFAULT:
+        break;
     }
     printStaticFlag(x);
     printAbstractFlag(x);

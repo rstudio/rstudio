@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
@@ -226,7 +227,7 @@ public class JsoDevirtualizer {
     String name = polyMethod.getName() + "__devirtual$";
     JMethod newMethod =
         program.createMethod(sourceInfo, name, jsoType, polyMethod.getType(), false, true, true,
-            false, false);
+            AccessModifier.PUBLIC, false);
     newMethod.setSynthetic();
 
     // Setup parameters.

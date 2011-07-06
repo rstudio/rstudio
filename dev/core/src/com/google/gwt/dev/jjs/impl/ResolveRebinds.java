@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JCaseStatement;
@@ -199,7 +200,8 @@ public class ResolveRebinds {
     SourceInfo info = program.createSourceInfoSynthetic(getClass());
     toReturn =
         program.createMethod(info, requestType.replace("_", "_1").replace('.', '_'), holderType,
-            program.getTypeJavaLangObject().getNonNull(), false, true, true, false, false);
+            program.getTypeJavaLangObject().getNonNull(), false, true, true,
+            AccessModifier.PUBLIC, false);
     toReturn.freezeParamTypes();
     info.addCorrelation(info.getCorrelator().by(toReturn));
     rebindMethods.put(requestType, toReturn);

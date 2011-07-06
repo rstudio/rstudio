@@ -112,14 +112,14 @@ public class PrunerTest extends OptimizerTestBase {
     assertNull(result.findClass("UninstantiatedClass"));
 
     assertEquals(
-        "public static null returnUninstantiatedClass(){\n" + 
+        "static null returnUninstantiatedClass(){\n" +
         "  return null;\n" +
-        "}", 
+        "}",
         result.findMethod("returnUninstantiatedClass").toSource());
     
     assertEquals(
-        "public static void methodWithUninstantiatedParam(){\n" + 
-        "}", 
+        "static void methodWithUninstantiatedParam(){\n" +
+        "}",
         result.findMethod("methodWithUninstantiatedParam").toSource());
 
     assertEquals(

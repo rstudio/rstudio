@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -676,7 +677,7 @@ public class BuildTypeMap {
     SourceInfo child = info.makeChild();
     JMethod clinit =
         program.createMethod(child, "$clinit", newType, program.getTypeVoid(), false, true, true,
-            true, false);
+            AccessModifier.PRIVATE, false);
     clinit.freezeParamTypes();
     clinit.setSynthetic();
     child.addCorrelation(info.getCorrelator().by(clinit));
@@ -685,7 +686,7 @@ public class BuildTypeMap {
       child = info.makeChild();
       JMethod init =
           program.createMethod(child, "$init", newType, program.getTypeVoid(), false, false, true,
-              true, false);
+              AccessModifier.PRIVATE, false);
       init.freezeParamTypes();
       init.setSynthetic();
       child.addCorrelation(info.getCorrelator().by(init));
@@ -767,7 +768,7 @@ public class BuildTypeMap {
         SourceInfo info = type.getSourceInfo().makeChild();
         JMethod getClassMethod =
             program.createMethod(info, "getClass", type, program.getTypeJavaLangClass(), false,
-                false, false, false, false);
+                false, false, AccessModifier.PUBLIC, false);
         assert (type.getMethods().get(2) == getClassMethod);
         getClassMethod.freezeParamTypes();
         getClassMethod.setSynthetic();
@@ -951,7 +952,8 @@ public class BuildTypeMap {
     JType returnType = getType(b.returnType);
     JMethod newMethod =
         program.createMethod(info, String.valueOf(b.selector), enclosingType, returnType, b
-            .isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate(), b.isNative());
+            .isAbstract(), b.isStatic(), b.isFinal(), AccessModifier.fromMethodBinding(b), b
+            .isNative());
     addThrownExceptions(b, newMethod);
     if (b.isSynthetic()) {
       newMethod.setSynthetic();

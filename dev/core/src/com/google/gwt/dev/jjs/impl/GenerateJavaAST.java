@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
@@ -2055,7 +2056,7 @@ public class GenerateJavaAST {
       JMethod bridgeMethod =
           program.createMethod(info, String.valueOf(jdtBridgeMethod.selector), clazz,
               (JType) typeMap.get(jdtBridgeMethod.returnType.erasure()), false, false, implmeth
-                  .isFinal(), false, false);
+                  .isFinal(), implmeth.getAccess(), false);
       bridgeMethod.setSynthetic();
       int paramIdx = 0;
       List<JParameter> implParams = implmeth.getParams();
@@ -2742,7 +2743,7 @@ public class GenerateJavaAST {
         JDeclarationStatement declStmt = new JDeclarationStatement(methodInfo, mapRef, call);
         JMethod clinit =
             program.createMethod(methodInfo, "$clinit", mapClass, program.getTypeVoid(), false,
-                true, true, true, false);
+                true, true, AccessModifier.PRIVATE, false);
         clinit.freezeParamTypes();
         methodInfo.addCorrelation(methodInfo.getCorrelator().by(clinit));
         JBlock clinitBlock = ((JMethodBody) clinit.getBody()).getBlock();

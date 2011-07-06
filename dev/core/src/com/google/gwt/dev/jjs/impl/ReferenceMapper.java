@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
@@ -168,7 +169,7 @@ public class ReferenceMapper {
       // Emulate clinit method for super clinit calls.
       JMethod clinit =
           new JMethod(SourceOrigin.UNKNOWN, "$clinit", declType, JPrimitiveType.VOID, false, true,
-              true, true);
+              true, AccessModifier.PRIVATE);
       clinit.freezeParamTypes();
       clinit.setSynthetic();
       declType.addMethod(clinit);
@@ -238,7 +239,7 @@ public class ReferenceMapper {
     JDeclaredType enclosingType = (JDeclaredType) get(b.declaringClass);
     JMethod method =
         new JMethod(info, intern(b.selector), enclosingType, get(b.returnType), b.isAbstract(), b
-            .isStatic(), b.isFinal(), b.isPrivate());
+            .isStatic(), b.isFinal(), AccessModifier.fromMethodBinding(b));
     enclosingType.addMethod(method);
     if (paramNames == null) {
       mapParameters(info, method, b, 0);

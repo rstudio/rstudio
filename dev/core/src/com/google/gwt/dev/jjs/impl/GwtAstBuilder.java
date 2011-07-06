@@ -21,6 +21,7 @@ import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
@@ -1999,7 +2000,8 @@ public class GwtAstBuilder {
       SourceInfo info = implmeth.getSourceInfo();
       JMethod bridgeMethod =
           new JMethod(info, implmeth.getName(), curClass.type, typeMap
-              .get(jdtBridgeMethod.returnType), false, false, implmeth.isFinal(), false);
+              .get(jdtBridgeMethod.returnType), false, false, implmeth.isFinal(), implmeth
+              .getAccess());
       typeMap.setMethod(jdtBridgeMethod, bridgeMethod);
       bridgeMethod.setBody(new JMethodBody(info));
       curClass.type.addMethod(bridgeMethod);
@@ -2684,7 +2686,7 @@ public class GwtAstBuilder {
         JDeclarationStatement declStmt = new JDeclarationStatement(info, mapRef, call);
         JMethod clinit =
             createSyntheticMethod(info, "$clinit", mapClass, JPrimitiveType.VOID, false, true,
-                true, true);
+                true, AccessModifier.PRIVATE);
         JBlock clinitBlock = ((JMethodBody) clinit.getBody()).getBlock();
         clinitBlock.addStmt(declStmt);
       }
@@ -2765,7 +2767,7 @@ public class GwtAstBuilder {
    * 
    * TODO(zundel): something much more awesome?
    */
-  private static final long AST_VERSION = 1;
+  private static final long AST_VERSION = 2;
 
   private static final char[] _STRING = "_String".toCharArray();
   private static final String ARRAY_LENGTH_FIELD = "length";
@@ -3023,16 +3025,19 @@ public class GwtAstBuilder {
        * is always in slot 1.
        */
       assert type.getMethods().size() == 0;
-      createSyntheticMethod(info, "$clinit", type, JPrimitiveType.VOID, false, true, true, true);
+      createSyntheticMethod(info, "$clinit", type, JPrimitiveType.VOID, false, true, true,
+          AccessModifier.PRIVATE);
 
       if (type instanceof JClassType) {
         assert type.getMethods().size() == 1;
-        createSyntheticMethod(info, "$init", type, JPrimitiveType.VOID, false, false, true, true);
+        createSyntheticMethod(info, "$init", type, JPrimitiveType.VOID, false, false, true,
+            AccessModifier.PRIVATE);
 
         // Add a getClass() implementation for all non-Object classes.
         if (type != javaLangObject && !JSORestrictionsChecker.isJsoSubclass(binding)) {
           assert type.getMethods().size() == 2;
-          createSyntheticMethod(info, "getClass", type, javaLangClass, false, false, false, false);
+          createSyntheticMethod(info, "getClass", type, javaLangClass, false, false, false,
+              AccessModifier.PUBLIC);
         }
       }
 
@@ -3125,7 +3130,7 @@ public class GwtAstBuilder {
     } else {
       method =
           new JMethod(info, intern(b.selector), enclosingType, typeMap.get(b.returnType), b
-              .isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate());
+              .isAbstract(), b.isStatic(), b.isFinal(), AccessModifier.fromMethodBinding(b));
     }
 
     // User args.
@@ -3182,9 +3187,9 @@ public class GwtAstBuilder {
   }
 
   private JMethod createSyntheticMethod(SourceInfo info, String name, JDeclaredType enclosingType,
-      JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal, boolean isPrivate) {
+      JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal, AccessModifier access) {
     JMethod method =
-        new JMethod(info, name, enclosingType, returnType, isAbstract, isStatic, isFinal, isPrivate);
+        new JMethod(info, name, enclosingType, returnType, isAbstract, isStatic, isFinal, access);
     method.freezeParamTypes();
     method.setSynthetic();
     method.setBody(new JMethodBody(info));

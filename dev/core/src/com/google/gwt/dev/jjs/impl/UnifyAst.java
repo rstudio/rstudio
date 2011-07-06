@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
+import com.google.gwt.dev.javac.Shared;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JJSOptions;
@@ -675,6 +676,19 @@ public class UnifyAst {
     }
   }
 
+  private boolean canAccessSuperMethod(JDeclaredType type, JMethod method) {
+    if (method.isPrivate()) {
+      return false;
+    }
+    if (method.isDefault()) {
+      // Check package access.
+      String typePackage = Shared.getPackageName(type.getName());
+      String methodPackage = Shared.getPackageName(method.getEnclosingType().getName());
+      return typePackage.equals(methodPackage);
+    }
+    return true;
+  }
+
   private void collectUpRefs(JDeclaredType type, Map<String, Set<JMethod>> collected) {
     if (type == null) {
       return;
@@ -711,8 +725,11 @@ public class UnifyAst {
       collectUpRefsInSupers(type, collected);
       for (JMethod method : type.getMethods()) {
         if (method.canBePolymorphic()) {
-          Set<JMethod> uprefs = collected.get(method.getSignature());
-          method.addOverrides(Lists.create(uprefs));
+          for (JMethod upref : collected.get(method.getSignature())) {
+            if (canAccessSuperMethod(type, upref)) {
+              method.addOverride(upref);
+            }
+          }
         }
       }
     }

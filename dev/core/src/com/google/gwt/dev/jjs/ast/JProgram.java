@@ -482,21 +482,21 @@ public class JProgram extends JNode {
   }
 
   public JMethod createMethod(SourceInfo info, String name, JDeclaredType enclosingType,
-      JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal, boolean isPrivate,
-      boolean isNative) {
+      JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal,
+      AccessModifier access, boolean isNative) {
     assert (name != null);
     assert (enclosingType != null);
     assert (returnType != null);
     assert (!isAbstract || !isNative);
     JMethod x =
-        new JMethod(info, name, enclosingType, returnType, isAbstract, isStatic, isFinal, isPrivate);
+        new JMethod(info, name, enclosingType, returnType, isAbstract, isStatic, isFinal, access);
     if (isNative) {
       x.setBody(new JsniMethodBody(info));
     } else if (!isAbstract) {
       x.setBody(new JMethodBody(info));
     }
 
-    if (!isPrivate && indexedTypes.containsValue(enclosingType)) {
+    if (access != AccessModifier.PRIVATE && indexedTypes.containsValue(enclosingType)) {
       indexedMethods.put(enclosingType.getShortName() + '.' + name, x);
     }
 

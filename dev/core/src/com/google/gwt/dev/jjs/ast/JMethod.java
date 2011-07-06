@@ -60,7 +60,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   }
 
   public static final JMethod NULL_METHOD = new JMethod(SourceOrigin.UNKNOWN, "nullMethod", null,
-      JNullType.INSTANCE, false, false, true, false);
+      JNullType.INSTANCE, false, false, true, AccessModifier.PUBLIC);
 
   private static final String TRACE_METHOD_WILDCARD = "*";
 
@@ -91,13 +91,18 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   protected transient String signature;
 
   /**
+   * The access modifier; stored as an int to reduce memory / serialization
+   * footprint.
+   */
+  private int access;
+
+  /**
    * Special serialization treatment.
    */
   private transient JAbstractMethodBody body = null;
   private final JDeclaredType enclosingType;
   private boolean isAbstract;
   private boolean isFinal;
-  private final boolean isPrivate;
   private final boolean isStatic;
   private boolean isSynthetic = false;
   private final String name;
@@ -124,7 +129,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
    * These are only supposed to be constructed by JProgram.
    */
   public JMethod(SourceInfo info, String name, JDeclaredType enclosingType, JType returnType,
-      boolean isAbstract, boolean isStatic, boolean isFinal, boolean isPrivate) {
+      boolean isAbstract, boolean isStatic, boolean isFinal, AccessModifier access) {
     super(info);
     this.name = StringInterner.get().intern(name);
     this.enclosingType = enclosingType;
@@ -132,7 +137,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     this.isAbstract = isAbstract;
     this.isStatic = isStatic;
     this.isFinal = isFinal;
-    this.isPrivate = isPrivate;
+    this.access = access.ordinal();
   }
 
   /**
@@ -145,7 +150,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     this.signature = signature;
     this.isAbstract = false;
     this.isStatic = false;
-    this.isPrivate = false;
+    this.access = AccessModifier.PUBLIC.ordinal();
   }
 
   /**
@@ -194,6 +199,10 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
       paramTypes.add(param.getType());
     }
     setOriginalTypes(returnType, paramTypes);
+  }
+
+  public AccessModifier getAccess() {
+    return AccessModifier.values()[access];
   }
 
   public JAbstractMethodBody getBody() {
@@ -258,6 +267,10 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     return isAbstract;
   }
 
+  public boolean isDefault() {
+    return access == AccessModifier.DEFAULT.ordinal();
+  }
+
   public boolean isExternal() {
     return getEnclosingType() != null && getEnclosingType().isExternal();
   }
@@ -275,7 +288,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   }
 
   public boolean isPrivate() {
-    return isPrivate;
+    return access == AccessModifier.PRIVATE.ordinal();
   }
 
   public boolean isStatic() {

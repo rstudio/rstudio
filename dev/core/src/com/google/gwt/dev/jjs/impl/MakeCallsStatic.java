@@ -155,7 +155,7 @@ public class MakeCallsStatic {
        */
       JMethod newMethod =
           new JMethod(sourceInfo, newName, enclosingType, returnType, false, true, true, x
-              .isPrivate());
+              .getAccess());
       newMethod.setSynthetic();
       newMethod.addThrownExceptions(x.getThrownExceptions());
 
