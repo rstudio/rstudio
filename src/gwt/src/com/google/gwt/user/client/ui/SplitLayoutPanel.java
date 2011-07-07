@@ -133,6 +133,9 @@ public class SplitLayoutPanel extends DockLayoutPanel {
           offset = getEventPosition(event) - getAbsolutePosition();
           Event.setCapture(getElement());
           event.preventDefault();
+
+          fireEvent(new SplitterBeforeResizeEvent());
+
           break;
 
         case Event.ONMOUSEUP:
@@ -142,6 +145,9 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
           Event.releaseCapture(getElement());
           event.preventDefault();
+
+          fireEvent(new SplitterResizedEvent());
+
           break;
 
         case Event.ONMOUSEMOVE:
