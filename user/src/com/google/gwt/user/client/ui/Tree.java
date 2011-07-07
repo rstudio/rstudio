@@ -300,6 +300,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * @see com.google.gwt.user.client.ui.HasWidgets#add(com.google.gwt.user.client.ui.Widget)
    * @param widget widget to add.
    */
+  @Override
   public void add(Widget widget) {
     addItem(widget);
   }
@@ -309,18 +310,22 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * 
    * @see #add(Widget)
    */
+  @Override
   public void add(IsWidget w) {
     this.add(asWidgetOrNull(w));
   }
 
+  @Override
   public HandlerRegistration addBlurHandler(BlurHandler handler) {
     return addDomHandler(handler, BlurEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addCloseHandler(CloseHandler<TreeItem> handler) {
     return addHandler(handler, CloseEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addFocusHandler(FocusHandler handler) {
     return addDomHandler(handler, FocusEvent.getType());
   }
@@ -328,6 +333,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   /**
    * @deprecated Use {@link #addFocusHandler} instead
    */
+  @Override
   @Deprecated
   public void addFocusListener(FocusListener listener) {
     ListenerWrapper.WrappedFocusListener.add(this, listener);
@@ -349,6 +355,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * @param itemHtml the html of the item to be added
    * @return the item that was added
    */
+  @Override
   public TreeItem addItem(SafeHtml itemHtml) {
     return root.addItem(itemHtml);
   }
@@ -358,6 +365,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * 
    * @param item the item to be added
    */
+  @Override
   public void addItem(TreeItem item) {
     root.addItem(item);
   }
@@ -367,6 +375,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * 
    * @param isItem the wrapper of item to be added
    */
+  @Override
   public void addItem(IsTreeItem isItem) {
     root.addItem(isItem);
   }
@@ -377,6 +386,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * @param widget the widget to be added
    * @return the new item
    */
+  @Override
   public TreeItem addItem(Widget widget) {
     return root.addItem(widget);
   }
@@ -386,6 +396,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * 
    * @see #addItem(Widget)
    */
+  @Override
   public TreeItem addItem(IsWidget w) {
     return this.addItem(asWidgetOrNull(w));
   }
@@ -394,23 +405,28 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * @deprecated Use {@link #addKeyDownHandler}, {@link #addKeyUpHandler} and
    *             {@link #addKeyPressHandler} instead
    */
+  @Override
   @Deprecated
   public void addKeyboardListener(KeyboardListener listener) {
     ListenerWrapper.WrappedKeyboardListener.add(this, listener);
   }
 
+  @Override
   public HandlerRegistration addKeyDownHandler(KeyDownHandler handler) {
     return addDomHandler(handler, KeyDownEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addKeyPressHandler(KeyPressHandler handler) {
     return addDomHandler(handler, KeyPressEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addKeyUpHandler(KeyUpHandler handler) {
     return addDomHandler(handler, KeyUpEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler) {
     return addHandler(handler, MouseDownEvent.getType());
   }
@@ -420,35 +436,43 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    *             {@link #addMouseDownHandler}, {@link #addMouseUpHandler} and
    *             {@link #addMouseOutHandler} instead
    */
+  @Override
   @Deprecated
   public void addMouseListener(MouseListener listener) {
     ListenerWrapper.WrappedMouseListener.add(this, listener);
   }
 
+  @Override
   public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler) {
     return addDomHandler(handler, MouseMoveEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addMouseOutHandler(MouseOutHandler handler) {
     return addDomHandler(handler, MouseOutEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addMouseOverHandler(MouseOverHandler handler) {
     return addDomHandler(handler, MouseOverEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addMouseUpHandler(MouseUpHandler handler) {
     return addDomHandler(handler, MouseUpEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addMouseWheelHandler(MouseWheelHandler handler) {
     return addDomHandler(handler, MouseWheelEvent.getType());
   }
 
+  @Override
   public final HandlerRegistration addOpenHandler(OpenHandler<TreeItem> handler) {
     return addHandler(handler, OpenEvent.getType());
   }
 
+  @Override
   public HandlerRegistration addSelectionHandler(
       SelectionHandler<TreeItem> handler) {
     return addHandler(handler, SelectionEvent.getType());
@@ -460,6 +484,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * @param itemText the text of the item to be added
    * @return the item that was added
    */
+  @Override
   public TreeItem addTextItem(String itemText) {
     return root.addTextItem(itemText);
   }
@@ -468,6 +493,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * @deprecated Use {@link #addSelectionHandler}, {@link #addOpenHandler}, and
    *             {@link #addCloseHandler} instead
    */
+  @Override
   @Deprecated
   public void addTreeListener(TreeListener listener) {
     ListenerWrapper.WrappedTreeListener.add(this, listener);
@@ -476,6 +502,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   /**
    * Clears all tree items from the current tree.
    */
+  @Override
   public void clear() {
     int size = root.getChildCount();
     for (int i = size - 1; i >= 0; i--) {
@@ -527,6 +554,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     return curSelection;
   }
 
+  @Override
   public int getTabIndex() {
     return FocusPanel.impl.getTabIndex(focusable);
   }
@@ -581,10 +609,12 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     return root.insertItem(beforeIndex, widget);
   }
 
+  @Override
   public boolean isAnimationEnabled() {
     return isAnimationEnabled;
   }
 
+  @Override
   public Iterator<Widget> iterator() {
     final Widget[] widgets = new Widget[childWidgets.size()];
     childWidgets.keySet().toArray(widgets);
@@ -626,7 +656,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
           // The click event should have given focus to this element already.
           // Avoid moving focus back up to the tree (so that focusable widgets
           // attached to TreeItems can receive keyboard events).
-        } else if (curSelection != null) {
+        } else if ((curSelection != null) && curSelection.getContentElem().isOrHasChild(e)) {
           setFocus(true);
         }
         break;
@@ -686,6 +716,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     super.onBrowserEvent(event);
   }
 
+  @Override
   public boolean remove(Widget w) {
     // Validate.
     TreeItem item = childWidgets.get(w);
@@ -703,6 +734,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * 
    * @see #remove(Widget)
    */
+  @Override
   public boolean remove(IsWidget w) {
     return this.remove(w.asWidget());
   }
@@ -711,6 +743,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
    *             object returned by {@link #addFocusHandler} instead
    */
+  @Override
   @Deprecated
   public void removeFocusListener(FocusListener listener) {
     ListenerWrapper.WrappedFocusListener.remove(this, listener);
@@ -721,6 +754,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * 
    * @param item the item to be removed
    */
+  @Override
   public void removeItem(TreeItem item) {
     root.removeItem(item);
   }
@@ -730,6 +764,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * 
    * @param isItem the wrapper of item to be removed
    */
+  @Override
   public void removeItem(IsTreeItem isItem) {
     if (isItem != null) { 
       TreeItem item = isItem.asTreeItem();
@@ -740,6 +775,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   /**
    * Removes all items from the root level of this tree.
    */
+  @Override
   public void removeItems() {
     while (getItemCount() > 0) {
       removeItem(getItem(0));
@@ -750,6 +786,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
    *             object returned by an add*Handler method instead
    */
+  @Override
   @Deprecated
   public void removeKeyboardListener(KeyboardListener listener) {
     ListenerWrapper.WrappedKeyboardListener.remove(this, listener);
@@ -759,6 +796,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
    *             object returned by an add*Handler method instead
    */
+  @Override
   @Deprecated
   public void removeMouseListener(MouseListener listener) {
     ListenerWrapper.WrappedMouseListener.remove(this, listener);
@@ -768,19 +806,23 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
    * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
    *             object returned by an add*Handler method instead
    */
+  @Override
   @Deprecated
   public void removeTreeListener(TreeListener listener) {
     ListenerWrapper.WrappedTreeListener.remove(this, listener);
   }
 
+  @Override
   public void setAccessKey(char key) {
     FocusPanel.impl.setAccessKey(focusable, key);
   }
 
+  @Override
   public void setAnimationEnabled(boolean enable) {
     isAnimationEnabled = enable;
   }
 
+  @Override
   public void setFocus(boolean focus) {
     if (focus) {
       FocusPanel.impl.focus(focusable);
@@ -819,6 +861,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     onSelection(item, fireEvents, true);
   }
 
+  @Override
   public void setTabIndex(int index) {
     FocusPanel.impl.setTabIndex(focusable, index);
   }
