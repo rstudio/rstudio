@@ -186,7 +186,7 @@ public class ChangelistTable extends Composite
       statusColumn.setSortable(true);
       statusColumn.setHorizontalAlignment(Column.ALIGN_CENTER);
       table_.addColumn(statusColumn, "Status");
-      table_.setColumnWidth(statusColumn, "40px");
+      table_.setColumnWidth(statusColumn, "55px");
 
       TextColumn<StatusAndPath> pathColumn = new TextColumn<StatusAndPath>()
       {
