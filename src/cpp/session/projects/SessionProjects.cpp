@@ -273,22 +273,41 @@ Error startup()
       s_projectFilePath = FilePath();
    }
 
-   // last ditch check for writeabilty of the project directory
-   if (!s_projectFilePath.empty() &&
-       !canWriteToProjectDir(s_projectFilePath.parent()))
+   // read and validate the project file if we have one
+   if (!s_projectFilePath.empty())
    {
-      // enque a warning
-      json::Object warningBarEvent;
-      warningBarEvent["severe"] = false;
-      warningBarEvent["message"] =
-        "Project '" + s_projectFilePath.parent().absolutePath() + "' "
-        "could not be opened because it is located in a read-only directory.";
-      ClientEvent event(client_events::kShowWarningBar, warningBarEvent);
-      module_context::enqueClientEvent(event);
+      if (!canWriteToProjectDir(s_projectFilePath.parent()))
+      {
+         // enque a warning
+         json::Object warningBarEvent;
+         warningBarEvent["severe"] = false;
+         warningBarEvent["message"] =
+           "Project '" + s_projectFilePath.parent().absolutePath() + "' "
+           "could not be opened because it is located in a read-only directory.";
+         ClientEvent event(client_events::kShowWarningBar, warningBarEvent);
+         module_context::enqueClientEvent(event);
 
-      // no project
-      s_projectFilePath = FilePath();
+         // no project
+         s_projectFilePath = FilePath();
+      }
+      else
+      {
+         std::string userErrMsg;
+         r_util::RProjectConfig rProjConfig;
+         Error error = r_util::readProjectFile(s_projectFilePath,
+                                               &rProjConfig,
+                                               &userErrMsg);
+         if (error)
+         {
+            // TODO: warning for error
+
+
+         }
+      }
    }
+
+
+
 
    // save the active project path for the next session
    userSettings().setLastProjectPath(s_projectFilePath);

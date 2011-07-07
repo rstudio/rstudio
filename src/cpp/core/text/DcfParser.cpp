@@ -44,8 +44,8 @@ Error parseDcfFile(const FilePath& dcfFilePath,
                                     &dcfFileContents);
    if (error)
    {
-      *pUserErrMsg = "Error reading " + dcfFilePath.absolutePath() +
-                     ": " + error.summary();
+      error.addProperty("dcf-file", dcfFilePath.absolutePath());
+      *pUserErrMsg = error.summary();
       return error;
    }
 
@@ -109,9 +109,11 @@ Error parseDcfFile(const FilePath& dcfFilePath,
       {
          Error error = systemError(boost::system::errc::protocol_error,
                                    ERROR_LOCATION);
-         boost::format fmt("Invalid line %1%: %2%");
-         *pUserErrMsg = boost::str(fmt % lineNumber % *it);
+         boost::format fmt("Line %1% is invalid");
+         *pUserErrMsg = boost::str(fmt % lineNumber);
+         error.addProperty("dcf-file", dcfFilePath.absolutePath());
          error.addProperty("parse-error", *pUserErrMsg);
+         error.addProperty("line-contents", *it);
          return error;
       }
    }

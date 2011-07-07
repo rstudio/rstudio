@@ -23,10 +23,43 @@ class FilePath;
 
 namespace r_util {
 
-core::Error writeProjectFile(const std::string& uuid,
-                             const FilePath& filePath);
+enum YesNoAskValue
+{
+   DefaultValue,
+   YesValue,
+   NoValue,
+   AskValue
+};
 
-core::FilePath projectFromDirectory(const core::FilePath& directoryPath);
+struct RProjectConfig
+{
+   RProjectConfig()
+      : version(0.0),
+        id(""),
+        saveWorkspace(DefaultValue),
+        restoreWorkspace(DefaultValue),
+        alwaysSaveHistory(DefaultValue)
+   {
+   }
+
+   bool empty() const { return id.empty(); }
+
+   double version;
+   std::string id;
+   YesNoAskValue saveWorkspace;
+   YesNoAskValue restoreWorkspace;
+   YesNoAskValue alwaysSaveHistory;
+};
+
+
+Error readProjectFile(const FilePath& projectFilePath,
+                      RProjectConfig* pConfig,
+                      std::string* pUserErrMsg);
+
+Error writeProjectFile(const std::string& uuid,
+                       const FilePath& filePath);
+
+FilePath projectFromDirectory(const FilePath& directoryPath);
 
 } // namespace r_util
 } // namespace core 
