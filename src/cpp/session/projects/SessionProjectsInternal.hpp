@@ -24,7 +24,7 @@ namespace core {
 namespace session {
 namespace projects {
 
-core::Error startup();
+void startup();
 
 core::Error initialize();
 

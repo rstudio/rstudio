@@ -54,7 +54,7 @@ class VCSImpl : boost::noncopyable
 public:
    VCSImpl()
    {
-      root_ = projects::projectDirectory();
+      root_ = projects::projectContext().directory();
    }
 
    virtual ~VCSImpl()
@@ -612,7 +612,7 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
                     json::JsonRpcResponse* pResponse)
 {
    StatusResult statusResult;
-   Error error = s_pVcsImpl_->status(projects::projectDirectory(),
+   Error error = s_pVcsImpl_->status(projects::projectContext().directory(),
                                      &statusResult);
    if (error)
       return error;
@@ -627,7 +627,7 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
       FilePath path = it->path;
       json::Object obj;
       obj["status"] = status.status();
-      obj["path"] = path.relativePath(projects::projectDirectory());
+      obj["path"] = path.relativePath(projects::projectContext().directory());
       obj["raw_path"] = path.absolutePath();
       result.push_back(obj);
    }
@@ -747,7 +747,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
 
 core::Error initialize()
 {
-   FilePath workingDir = projects::projectDirectory();
+   FilePath workingDir = projects::projectContext().directory();
    if (workingDir.empty())
       s_pVcsImpl_.reset(new VCSImpl());
    else if (workingDir.childPath(".git").isDirectory())

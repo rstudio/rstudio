@@ -15,18 +15,58 @@
 #define SESSION_PROJECTS_PROJECTS_HPP
 
 
-namespace core {
-   class FilePath;
-}
+#include <boost/utility.hpp>
+
+#include <core/FilePath.hpp>
+
+#include <core/r_util/RProjectFile.hpp>
  
 namespace session {
 namespace projects {
 
-bool projectIsActive();
-core::FilePath projectFilePath();
-core::FilePath projectDirectory();
-core::FilePath projectScratchPath();
+class ProjectContext : boost::noncopyable
+{
+public:
+   ProjectContext() {}
+   virtual ~ProjectContext() {}
 
+   core::Error initialize(const core::FilePath& projectFile,
+                          std::string* pUserErrMsg);
+
+public:
+   bool empty() const { return file_.empty(); }
+
+   const core::FilePath& file() const { return file_; }
+   const core::FilePath& directory() const { return directory_; }
+   const core::FilePath& scratchPath() const { return scratchPath_; }
+
+   core::r_util::YesNoAskValue restoreWorkspace() const
+   {
+      return config_.restoreWorkspace;
+   }
+
+   core::r_util::YesNoAskValue saveWorkspace() const
+   {
+      return config_.saveWorkspace;
+   }
+
+   core::r_util::YesNoAskValue alwaysSaveHistory() const
+   {
+      return config_.alwaysSaveHistory;
+   }
+
+private:
+   core::Error computeScratchPath(core::FilePath* pScratchPath) const;
+
+private:
+   core::FilePath file_;
+   core::FilePath directory_;
+   core::FilePath scratchPath_;
+   core::r_util::RProjectConfig config_;
+
+};
+
+const ProjectContext& projectContext();
 
 } // namespace projects
 } // namesapce session

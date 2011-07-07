@@ -32,11 +32,8 @@ namespace {
 Error requiredFieldError(const std::string& field,
                          std::string* pUserErrMsg)
 {
-   *pUserErrMsg = "Required field '" + field + "' not correctly specified";
-   Error error = systemError(boost::system::errc::protocol_error,
-                             ERROR_LOCATION);
-   error.addProperty("summary", *pUserErrMsg);
-   return error;
+   *pUserErrMsg = field + " not correctly specified in project config file";
+   return systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
 }
 
 bool interpretYesNoAskValue(const std::string& value,
@@ -82,14 +79,14 @@ Error readProjectFile(const FilePath& projectFilePath,
    typedef std::map<std::string,std::string> Fields;
    Fields dcfFields;
    Error error = text::parseDcfFile(projectFilePath,
-                                    true,
+                                    false,
                                     &dcfFields,
                                     pUserErrMsg);
    if (error)
       return error;
 
    // extract version
-   Fields::const_iterator it = dcfFields.find("Version");
+   Fields::const_iterator it = dcfFields.find("version");
    if (it == dcfFields.end())
       return requiredFieldError("Version", pUserErrMsg);
    pConfig->version = safe_convert::stringTo<double>(it->second, 0.0);
@@ -97,7 +94,7 @@ Error readProjectFile(const FilePath& projectFilePath,
       return requiredFieldError("Version", pUserErrMsg);
 
    // extract id
-   it = dcfFields.find("Id");
+   it = dcfFields.find("id");
    if (it == dcfFields.end())
       return requiredFieldError("Id", pUserErrMsg);
    boost::regex guidRegex("^(\\{{0,1}([0-9a-fA-F]){8}-?([0-9a-fA-F]){4}-?([0-9a-fA-F]){4}-?([0-9a-fA-F]){4}-?([0-9a-fA-F]){12}\\}{0,1})$");
@@ -107,7 +104,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    pConfig->id = it->second;
 
    // extract restore workspace (optional)
-   it = dcfFields.find("RestoreWorkspace");
+   it = dcfFields.find("restoreworkspace");
    if (it != dcfFields.end())
    {
       if (!interpretYesNoAskValue(it->second, false, &(pConfig->restoreWorkspace)))
@@ -119,7 +116,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
 
    // extract save workspace (optional)
-   it = dcfFields.find("SaveWorkspace");
+   it = dcfFields.find("saveworkspace");
    if (it != dcfFields.end())
    {
       if (!interpretYesNoAskValue(it->second, true, &(pConfig->saveWorkspace)))
@@ -131,7 +128,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
 
    // extract always save history (optional)
-   it = dcfFields.find("AlwaysSaveHistory");
+   it = dcfFields.find("alwayssavehistory");
    if (it != dcfFields.end())
    {
       if (!interpretYesNoAskValue(it->second, false, &(pConfig->alwaysSaveHistory)))
@@ -155,7 +152,7 @@ Error writeProjectFile(const std::string& uuid, const FilePath& filePath)
       "Version: 1.0\n"
       "Id: %1%\n"
       "\n"
-      "# These settings enable per-project workspace save/load behavior\n"
+      "# Project-specific overrides to global save/load preferences\n"
       "# (Default means use the current global preference)\n"
       "RestoreWorkspace: Default\n"
       "SaveWorkspace: Default\n"

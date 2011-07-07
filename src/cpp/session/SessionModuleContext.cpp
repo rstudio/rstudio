@@ -378,8 +378,8 @@ FilePath userScratchPath()
 
 FilePath scopedScratchPath()
 {
-   if (projects::projectIsActive())
-      return projects::projectScratchPath();
+   if (!projects::projectContext().empty())
+      return projects::projectContext().scratchPath();
    else
       return userScratchPath();
 }

@@ -266,8 +266,8 @@ FilePath getDefaultWorkingDirectory()
 FilePath getInitialWorkingDirectory()
 {
    // check for a project
-   if (projects::projectIsActive())
-      return projects::projectDirectory();
+   if (!projects::projectContext().empty())
+      return projects::projectContext().directory();
 
    // see if there is an override from the environment (perhaps based
    // on a folder drag and drop or other file association)
@@ -392,11 +392,15 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["initial_working_dir"] = initialWorkingDir;
 
    // active project file
-   if (projects::projectIsActive())
+    if (!projects::projectContext().empty())
+   {
       sessionInfo["active_project_file"] = module_context::createAliasedPath(
-                                                projects::projectFilePath());
+                              projects::projectContext().file());
+   }
    else
+   {
       sessionInfo["active_project_file"] = json::Value();
+   }
 
    sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
 
@@ -1735,9 +1739,9 @@ void detectParentTermination()
 FilePath rEnvironmentDir()
 {
    // for projects we always use the project directory
-   if (projects::projectIsActive())
+   if (!projects::projectContext().empty())
    {
-      return projects::projectDirectory();
+      return projects::projectContext().directory();
    }
 
    // for desktop the current path
@@ -1756,9 +1760,9 @@ FilePath rEnvironmentDir()
 FilePath rHistoryDir()
 {
    // for projects we always use the project directory
-   if (projects::projectIsActive())
+   if (!projects::projectContext().empty())
    {
-      return projects::projectDirectory();
+      return projects::projectContext().directory();
    }
 
    // for server we use the default working directory
@@ -2030,9 +2034,7 @@ int main (int argc, char * const argv[])
 
       // startup projects -- must be after userSettings & persistentState are
       // initialized must be before setting working directory
-      error = projects::startup();
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION);
+      projects::startup();
 
       // set working directory
       FilePath workingDir = getInitialWorkingDirectory();
