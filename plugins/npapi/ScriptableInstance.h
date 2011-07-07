@@ -64,8 +64,7 @@ public:
   void dumpJSresult(const char* js);
   
   int getLocalObjectRef(NPObject* obj);
-
-  NPObject* getLocalObject(int refid) { return localObjects.getById(refid); }
+  NPObject* getLocalObject(int refid) { return localObjects.get(refid); }
   
   bool tryGetStringPrimitive(NPObject* obj, NPVariant& result);
 
@@ -88,7 +87,6 @@ private:
   HostChannel* _channel;
   LocalObjectTable localObjects;
 
-  static bool jsIdentitySafe;
   int savedValueIdx;
 
   // Identifiers
@@ -102,10 +100,10 @@ private:
   const NPIdentifier urlID;
   const NPIdentifier includeID;
   const NPIdentifier getHostPermissionID;
-  const NPIdentifier testJsIdentityID;
   
   const NPIdentifier connectedID;
   const NPIdentifier statsID;
+  const NPIdentifier gwtId;
 
   const NPIdentifier jsDisconnectedID;
   const NPIdentifier jsInvokeID;
@@ -135,7 +133,7 @@ private:
   void init(const NPVariant* args, unsigned argCount, NPVariant* result);
   void loadHostEntries(const NPVariant* args, unsigned argCount, NPVariant* result);
   void getHostPermission(const NPVariant* args, unsigned argCount, NPVariant* result);
-  void testJsIdentity(const NPVariant* args, unsigned argCount, NPVariant* result);
+  
   Value clientMethod_getProperty(HostChannel& channel, int numArgs, const Value* const args);
   Value clientMethod_setProperty(HostChannel& channel, int numArgs, const Value* const args);
   

@@ -65,9 +65,6 @@ function devModeTabListener(tabId, changeInfo, tab) {
     var icon = null;
     console.log("got permission " + permission + " for host " + host + '/ code ' + code);
 
-    var idObject = {};
-    plugin.testJsIdentity( idObject, idObject );
-
     if (permission == 'include') {
       icon = enabledIcon;
     } else if (permission == 'exclude') {
