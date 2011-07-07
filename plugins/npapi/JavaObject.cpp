@@ -18,6 +18,7 @@
 
 #include "JavaObject.h"
 #include "Plugin.h"
+#include "NPVariantUtil.h"
 #include "NPVariantWrapper.h"
 
 using std::string;
@@ -116,8 +117,8 @@ bool JavaObject::hasProperty(NPIdentifier prop) {
 }
 
 bool JavaObject::invokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result) {
-  if (argCount < 2 || !NPVariantProxy::isInt(args[0])
-      || (!NPVariantProxy::isNull(args[1]) && !NPVariantProxy::isObject(args[1]))) {
+  if (argCount < 2 || !NPVariantUtil::isInt(args[0])
+      || (!NPVariantUtil::isNull(args[1]) && !NPVariantUtil::isObject(args[1]))) {
     Debug::log(Debug::Error) << "incorrect arguments to invokeDefault" << Debug::flush;
     return false;
   }
@@ -132,10 +133,10 @@ bool JavaObject::invokeDefault(const NPVariant *args, uint32_t argCount, NPVaria
     Debug::log(Debug::Debugging) << ", " << NPVariantProxy::toString(args[i]);
   }
   Debug::log(Debug::Debugging) << ")" << Debug::flush;
-  int dispId = NPVariantProxy::getAsInt(args[0]);
+  int dispId = NPVariantUtil::getAsInt(args[0]);
   int objId = objectId;
-  if (!NPVariantProxy::isNull(args[1])) {
-    NPObject* thisObj = NPVariantProxy::getAsObject(args[1]);
+  if (!NPVariantUtil::isNull(args[1])) {
+    NPObject* thisObj = NPVariantUtil::getAsObject(args[1]);
     if (isInstance(thisObj)) {
       JavaObject* thisJavaObj = static_cast<JavaObject*>(thisObj);
       objId = thisJavaObj->objectId;

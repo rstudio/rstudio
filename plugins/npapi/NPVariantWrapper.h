@@ -15,6 +15,7 @@
 #include "Platform.h"
 
 #include "mozincludes.h"
+#include "NPVariantUtil.h"
 
 #include "Value.h"
 #include "LocalObjectTable.h"
@@ -62,105 +63,39 @@ public:
   }
 
   int isBoolean() const {
-    return isBoolean(variant);
-  }
-
-  static int isBoolean(const NPVariant& variant) {
-    return NPVARIANT_IS_BOOLEAN(variant);
+    return NPVariantUtil::isBoolean(variant);
   }
 
   bool getAsBoolean() const {
-    return getAsBoolean(variant);
-  }
-
-  static bool getAsBoolean(const NPVariant& variant) {
-    return NPVARIANT_TO_BOOLEAN(variant);
+    return NPVariantUtil::getAsBoolean(variant);
   }
 
   int isInt() const {
-    return isInt(variant);
+    return NPVariantUtil::isInt(variant);
   }
   
-  // Return true if the variant is holding a regular integer or an integral double.
-  static int isInt(const NPVariant& variant) {
-    if (NPVARIANT_IS_INT32(variant)) {
-      return 1;
-    } else if (NPVARIANT_IS_DOUBLE(variant)) {
-      // As of http://trac.webkit.org/changeset/72974 we get doubles for all
-      // numerical variants out of V8.
-      double d = NPVARIANT_TO_DOUBLE(variant);
-      int i = static_cast<int>(d);
-      // Verify that d is an integral value in range.
-      return (d == static_cast<double>(i));
-    } else {
-      return 0;
-    }
-  }
-
   int getAsInt() const {
-    return getAsInt(variant);
-  }
-
-  static int getAsInt(const NPVariant& variant) {
-    if (isInt(variant)) {
-      if (NPVARIANT_IS_INT32(variant)) {
-        return NPVARIANT_TO_INT32(variant);
-      } else if (NPVARIANT_IS_DOUBLE(variant)) {
-        return static_cast<int>(NPVARIANT_TO_DOUBLE(variant));
-      }
-    }
-
-    Debug::log(Debug::Error) << "getAsInt: variant " <<
-      NPVariantProxy::toString(variant) << "not int" << Debug::flush;
-    return 0;
+    return NPVariantUtil::getAsInt(variant);
   }
 
   int isNull() const {
-    return isNull(variant);
+    return NPVariantUtil::isNull(variant);
   }
   
-  static int isNull(const NPVariant& variant) {
-    return NPVARIANT_IS_NULL(variant);
-  }
-
   int isObject() const {
-    return isObject(variant);
+    return NPVariantUtil::isObject(variant);
   }
   
-  static int isObject(const NPVariant& variant) {
-    return NPVARIANT_IS_OBJECT(variant);
-  }
-
   NPObject* getAsObject() const {
-    return getAsObject(variant);
-  }
-
-  static NPObject* getAsObject(const NPVariant& variant) {
-    if (NPVARIANT_IS_OBJECT(variant)) {
-      return NPVARIANT_TO_OBJECT(variant);
-    }
-    Debug::log(Debug::Error) << "getAsObject: variant not object" << Debug::flush;
-    return 0;
+    return NPVariantUtil::getAsObject(variant);
   }
 
   int isString() const {
-    return isString(variant);
+    return NPVariantUtil::isString(variant);
   }
   
-  static int isString(const NPVariant& variant) {
-    return NPVARIANT_IS_STRING(variant);
-  }
-
   const NPString* getAsNPString() const {
-    return getAsNPString(variant);
-  }
-
-  static const NPString* getAsNPString(const NPVariant& variant) {
-    if (NPVARIANT_IS_STRING(variant)) {
-      return &NPVARIANT_TO_STRING(variant);
-    }
-    Debug::log(Debug::Error) << "getAsNPString: variant not string" << Debug::flush;
-    return 0;
+    return NPVariantUtil::getAsNPString(variant);
   }
 
   Value getAsValue(ScriptableInstance& scriptInstance, bool unwrapJava = true) const {
@@ -465,35 +400,35 @@ public:
   }
   
   bool isBoolean() const {
-    return NPVariantProxy::isBoolean(variant);
+    return NPVariantUtil::isBoolean(variant);
   }
 
   int isInt() const {
-    return NPVariantProxy::isInt(variant);
+    return NPVariantUtil::isInt(variant);
   }
   
   int isObject() const {
-    return NPVariantProxy::isObject(variant);
+    return NPVariantUtil::isObject(variant);
   }
   
   int isString() const {
-    return NPVariantProxy::isString(variant);
+    return NPVariantUtil::isString(variant);
   }
   
   bool getAsBoolean() const {
-    return NPVariantProxy::getAsBoolean(variant);
+    return NPVariantUtil::getAsBoolean(variant);
   }
 
   int getAsInt() const {
-    return NPVariantProxy::getAsInt(variant);
+    return NPVariantUtil::getAsInt(variant);
   }
 
   NPObject* getAsObject() const {
-    return NPVariantProxy::getAsObject(variant);
+    return NPVariantUtil::getAsObject(variant);
   }
 
   const NPString* getAsNPString() const {
-    return NPVariantProxy::getAsNPString(variant);
+    return NPVariantUtil::getAsNPString(variant);
   }
 
   Value getAsValue(ScriptableInstance& scriptInstance, bool unwrapJava = true) const {
