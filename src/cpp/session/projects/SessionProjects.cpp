@@ -151,14 +151,11 @@ void startup()
          error.addProperty("user-msg", userErrMsg);
          LOG_ERROR(error);
 
-         // enque a warning
-         json::Object warningBarEvent;
-         warningBarEvent["severe"] = false;
-         warningBarEvent["message"] =
-           "Project '" + projectFilePath.filename() + "' "
+         // show the error
+         std::string msg =
+           "Project '" + projectFilePath.absolutePath() + "' "
            "could not be opened: " + userErrMsg;
-         ClientEvent event(client_events::kShowWarningBar, warningBarEvent);
-         module_context::enqueClientEvent(event);
+          module_context::showErrorMessage("Error Opening Project", msg);
       }
    }
 

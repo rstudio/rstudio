@@ -79,14 +79,14 @@ Error readProjectFile(const FilePath& projectFilePath,
    typedef std::map<std::string,std::string> Fields;
    Fields dcfFields;
    Error error = text::parseDcfFile(projectFilePath,
-                                    false,
+                                    true,
                                     &dcfFields,
                                     pUserErrMsg);
    if (error)
       return error;
 
    // extract version
-   Fields::const_iterator it = dcfFields.find("version");
+   Fields::const_iterator it = dcfFields.find("Version");
    if (it == dcfFields.end())
       return requiredFieldError("Version", pUserErrMsg);
    pConfig->version = safe_convert::stringTo<double>(it->second, 0.0);
@@ -94,7 +94,7 @@ Error readProjectFile(const FilePath& projectFilePath,
       return requiredFieldError("Version", pUserErrMsg);
 
    // extract id
-   it = dcfFields.find("id");
+   it = dcfFields.find("Id");
    if (it == dcfFields.end())
       return requiredFieldError("Id", pUserErrMsg);
    boost::regex guidRegex("^(\\{{0,1}([0-9a-fA-F]){8}-?([0-9a-fA-F]){4}-?([0-9a-fA-F]){4}-?([0-9a-fA-F]){4}-?([0-9a-fA-F]){12}\\}{0,1})$");
@@ -104,7 +104,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    pConfig->id = it->second;
 
    // extract restore workspace (optional)
-   it = dcfFields.find("restoreworkspace");
+   it = dcfFields.find("RestoreWorkspace");
    if (it != dcfFields.end())
    {
       if (!interpretYesNoAskValue(it->second, false, &(pConfig->restoreWorkspace)))
@@ -116,7 +116,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
 
    // extract save workspace (optional)
-   it = dcfFields.find("saveworkspace");
+   it = dcfFields.find("SaveWorkspace");
    if (it != dcfFields.end())
    {
       if (!interpretYesNoAskValue(it->second, true, &(pConfig->saveWorkspace)))
@@ -128,7 +128,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
 
    // extract always save history (optional)
-   it = dcfFields.find("alwayssavehistory");
+   it = dcfFields.find("AlwaysSaveHistory");
    if (it != dcfFields.end())
    {
       if (!interpretYesNoAskValue(it->second, false, &(pConfig->alwaysSaveHistory)))

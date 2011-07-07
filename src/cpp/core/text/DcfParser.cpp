@@ -109,9 +109,8 @@ Error parseDcfFile(const FilePath& dcfFilePath,
       {
          Error error = systemError(boost::system::errc::protocol_error,
                                    ERROR_LOCATION);
-         boost::format fmt("Line %1% is invalid");
+         boost::format fmt("file line number %1% is invalid");
          *pUserErrMsg = boost::str(fmt % lineNumber);
-         error.addProperty("dcf-file", dcfFilePath.absolutePath());
          error.addProperty("parse-error", *pUserErrMsg);
          error.addProperty("line-contents", *it);
          return error;
