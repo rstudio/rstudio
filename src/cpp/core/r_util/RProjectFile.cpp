@@ -13,6 +13,8 @@
 
 #include <core/r_util/RProjectFile.hpp>
 
+#include <boost/format.hpp>
+
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
@@ -20,14 +22,24 @@
 namespace core {
 namespace r_util {
 
-Error writeDefaultProjectFile(const FilePath& filePath)
-{
-   std::string p;
-   p = "# R project config file\n"
-       "# http://www.rstudio.org/docs/r_project_config\n"
-       "#\n";
+Error writeProjectFile(const std::string& uuid, const FilePath& filePath)
+{  
+   // generate project file contents
+   boost::format fmt(
+      "# R project config file\n"
+      "# http://www.rstudio.org/docs/r_project/v1.0\n"
+      "Version: 1.0\n"
+      "Id: %1%\n"
+      "\n"
+      "# These settings enable per-project workspace save/load behavior\n"
+      "# (Default means use the current global preference)\n"
+      "RestoreWorkspace: Default\n"
+      "SaveWorkspace: Default\n"
+      "AlwaysSaveHistory: Default\n");
+   std::string contents = boost::str(fmt % uuid);
 
-   return writeStringToFile(filePath, p, string_utils::LineEndingNative);
+   // write it
+   return writeStringToFile(filePath, contents, string_utils::LineEndingNative);
 }
 
 FilePath projectFromDirectory(const FilePath& directoryPath)

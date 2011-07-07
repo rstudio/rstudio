@@ -14,6 +14,8 @@
 #ifndef CORE_R_UTIL_R_PROJECT_FILE_HPP
 #define CORE_R_UTIL_R_PROJECT_FILE_HPP
 
+#include <string>
+
 namespace core {
 
 class Error;
@@ -21,7 +23,8 @@ class FilePath;
 
 namespace r_util {
 
-core::Error writeDefaultProjectFile(const FilePath& filePath);
+core::Error writeProjectFile(const std::string& uuid,
+                             const FilePath& filePath);
 
 core::FilePath projectFromDirectory(const core::FilePath& directoryPath);
 

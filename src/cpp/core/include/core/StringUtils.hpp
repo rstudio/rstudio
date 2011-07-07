@@ -137,6 +137,11 @@ Error utf8Advance(InputIterator begin,
 std::string bash_escape(const std::string& arg);
 std::string bash_escape(const FilePath& filePath);
 
+inline bool stringNotEmpty(const std::string& str)
+{
+   return !str.empty();
+}
+
 } // namespace string_utils
 } // namespace core 
 

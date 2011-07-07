@@ -50,7 +50,7 @@
 #include <r/RJson.hpp>
 
 #include <core/Error.hpp>
-#include <core/text/StringUtils.hpp>
+#include <core/StringUtils.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RErrorCategory.hpp>
@@ -195,7 +195,7 @@ bool isNamedList(SEXP listSEXP)
       return false ;
    int nameCount = std::count_if(fieldNames.begin(), 
                                  fieldNames.end(),
-                                 &core::text::stringNotEmpty);
+                                 &core::string_utils::stringNotEmpty);
    if (nameCount != listLength)
       return false;   
    

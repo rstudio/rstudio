@@ -185,8 +185,11 @@ Error createProject(const json::JsonRpcRequest& request,
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
+   // new uuid for project
+   std::string uuid = core::system::generateUuid();
+
    // create the project file
-   return r_util::writeDefaultProjectFile(projectFilePath);
+   return r_util::writeProjectFile(uuid, projectFilePath);
 }
 
 }  // anonymous namespace
