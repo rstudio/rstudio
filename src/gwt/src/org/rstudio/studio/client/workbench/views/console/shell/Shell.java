@@ -26,6 +26,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
@@ -107,6 +108,7 @@ public class Shell implements ConsoleInputHandler,
       view_ = display ;
       globalDisplay_ = globalDisplay;
       input_ = view_.getInputEditorDisplay() ;
+      historyManager_ = new CommandLineHistory(input_);
 
       view_.setMaxOutputLines(session.getSessionInfo().getConsoleActionsLimit());
 
@@ -284,13 +286,12 @@ public class Shell implements ConsoleInputHandler,
             && initialInput_ != null
             && initialInput_.length() > 0)
       {
-         view_.getInputEditorDisplay().setInputText(initialInput_);
+         view_.getInputEditorDisplay().setText(initialInput_);
          view_.ensureInputVisible();
       }
 
       addToHistory_ = addToHistory;
-      historyPos_ = history_.size();
-      historyTail_ = "";
+      historyManager_.resetPosition();
       lastPromptText_ = prompt ;
 
       if (restoreFocus_)
@@ -309,32 +310,17 @@ public class Shell implements ConsoleInputHandler,
    {
       String commandText = view_.processCommandEntry() ;
       if (addToHistory_ && (commandText.length() > 0))
-         addToHistory(commandText);
+         historyManager_.addToHistory(commandText);
 
       // fire event 
       eventBus_.fireEvent(new ConsoleInputEvent(commandText));
-   }
-
-   private void addToHistory(String command)
-   {
-      if (command == null)
-         return;
-
-      if (history_.size() > 0
-          && command.equals(history_.get(history_.size() - 1)))
-      {
-         // do not allow dupes
-         return;
-      }
-
-      history_.add(command);
    }
 
    public void onSendToConsole(SendToConsoleEvent event)
    {
       InputEditorDisplay display = view_.getInputEditorDisplay();
       display.clear();
-      display.setInputText(event.getCode());
+      display.setText(event.getCode());
       if (event.shouldExecute())
          processCommandEntry();
       else
@@ -478,24 +464,7 @@ public class Shell implements ConsoleInputHandler,
 
    private void navigateHistory(int offset)
    {
-      int newPos = historyPos_ + offset;
-
-      newPos = Math.max(0, Math.min(newPos, history_.size()));
-
-      if (newPos == historyPos_)
-         return; // no-op due to boundary limits
-
-      if (historyPos_ == history_.size())
-      {
-         historyTail_ = input_.getText();
-      }
-
-      input_.setInputText(
-            newPos < history_.size() ? history_.get(newPos) :
-            historyTail_ != null ? historyTail_ :
-            "");
-      historyPos_ = newPos;
-
+      historyManager_.navigateHistory(offset);
       view_.ensureInputVisible();
    }
 
@@ -506,11 +475,10 @@ public class Shell implements ConsoleInputHandler,
    
    private void setHistory(JsArrayString history)
    {
-      history_.clear();
+      ArrayList<String> historyList = new ArrayList<String>(history.length());
       for (int i = 0; i < history.length(); i++)
-         addToHistory(history.get(i));
-      historyPos_ = history_.size();
-      historyTail_ = "";
+         historyList.add(history.get(i));
+      historyManager_.setHistory(historyList);
    }
 
    private final ConsoleServerOperations server_ ;
@@ -522,14 +490,9 @@ public class Shell implements ConsoleInputHandler,
    private final ArrayList<KeyPressPreviewHandler> keyPressPreviewHandlers_ ;
    // indicates whether the next command should be added to history
    private boolean addToHistory_ ;
-   private final ArrayList<String> history_ = new ArrayList<String>() ;
-   private int historyPos_ ;
-   // If you start typing a command, then go up in history, then go down,
-   // then what you had previously typed should still be there. This is
-   // that value--it is loaded/saved whenever history nagivation takes you
-   // into/out of that final history position (history_.size()).
-   private String historyTail_;
    private String lastPromptText_ ;
+
+   private final CommandLineHistory historyManager_;
 
    private String initialInput_ ;
 

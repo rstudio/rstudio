@@ -370,7 +370,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
             getSession().getSelection().getCursor().getRow());
    }
 
-   public void setInputText(String string)
+   public void setText(String string)
    {
       setCode(string, false);
       getSession().getSelection().moveCursorFileEnd();

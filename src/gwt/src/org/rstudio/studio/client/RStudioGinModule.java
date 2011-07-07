@@ -86,6 +86,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.vcs.*;
+import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarView;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.history.HistoryPanel;
@@ -151,6 +153,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ReviewPresenter.Display.class).to(ReviewPanel.class);
       bind(LineTablePresenter.Display.class).to(LineTableView.class);
       bind(HistoryPresenter.Display.class).to(HistoryPanel.class);
+      bind(ConsoleBarPresenter.Display.class).to(ConsoleBarView.class);
 
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)

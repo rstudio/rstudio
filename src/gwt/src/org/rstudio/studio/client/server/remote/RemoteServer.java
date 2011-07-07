@@ -33,6 +33,7 @@ import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.HttpLogEntry;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.vcs.ExecuteCommandResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.Server;
@@ -1193,6 +1194,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, VCS_HISTORY, spec, requestCallback);
    }
 
+   @Override
+   public void vcsExecuteCommand(String command,
+                                 ServerRequestCallback<ExecuteCommandResult> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, VCS_EXECUTE_COMMAND, command, requestCallback);
+   }
+
    // package-visible methods for peer classes RemoteServerAuth and
    // RemoveServerEventListener
 
@@ -1666,6 +1674,7 @@ public class RemoteServer implements Server
    private static final String VCS_DIFF_FILE = "vcs_diff_file";
    private static final String VCS_APPLY_PATCH = "vcs_apply_patch";
    private static final String VCS_HISTORY = "vcs_history";
+   private static final String VCS_EXECUTE_COMMAND = "vcs_execute_command";
 
    private static final String LOG = "log";
 

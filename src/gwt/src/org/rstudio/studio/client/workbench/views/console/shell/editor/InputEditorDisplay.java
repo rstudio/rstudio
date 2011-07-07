@@ -14,13 +14,13 @@ package org.rstudio.studio.client.workbench.views.console.shell.editor;
 
 import com.google.gwt.event.dom.client.HasAllFocusHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.user.client.ui.HasText;
 import org.rstudio.core.client.Rectangle;
 
 public interface InputEditorDisplay extends HasAllFocusHandlers,
-                                            HasClickHandlers
+                                            HasClickHandlers,
+                                            HasText
 {
-   String getText() ;
-   void setInputText(String string) ;
    boolean hasSelection() ;
    InputEditorSelection getSelection() ;
    void setSelection(InputEditorSelection selection) ;

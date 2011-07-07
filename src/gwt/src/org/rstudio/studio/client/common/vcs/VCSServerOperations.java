@@ -67,4 +67,8 @@ public interface VCSServerOperations
 
    void vcsHistory(String spec,
                    ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback);
+
+   void vcsExecuteCommand(
+         String command,
+         ServerRequestCallback<ExecuteCommandResult> requestCallback);
 }

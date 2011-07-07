@@ -745,6 +745,33 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsExecuteCommand(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   std::string command;
+   Error error = json::readParams(request.params, &command);
+   if (error)
+      return error;
+
+   // TODO: Capture stderr
+   // TODO: Indicate error in result if exit code != 0
+   // TODO: Make interruptible, and not on main thread
+   // TODO: Stream results
+
+   std::string output;
+   error = core::system::captureCommand(command, &output);
+   if (error)
+      return error;
+
+   json::Object result;
+   result["output"] = output;
+   result["error"] = 0;
+
+   pResponse->setResult(result);
+
+   return Success();
+}
+
 core::Error initialize()
 {
    FilePath workingDir = projects::projectContext().directory();
@@ -770,7 +797,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_commit_git", vcsCommitGit))
       (bind(registerRpcMethod, "vcs_diff_file", vcsDiffFile))
       (bind(registerRpcMethod, "vcs_apply_patch", vcsApplyPatch))
-      (bind(registerRpcMethod, "vcs_history", vcsHistory));
+      (bind(registerRpcMethod, "vcs_history", vcsHistory))
+      (bind(registerRpcMethod, "vcs_execute_command", vcsExecuteCommand));
    Error error = initBlock.execute();
    if (error)
       return error;

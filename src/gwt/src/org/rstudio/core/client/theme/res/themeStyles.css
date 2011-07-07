@@ -1,6 +1,7 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+@external fixedWidthFont;
 @external ace_editor, ace_text-layer, ace_gutter;
 @external cueText;
 @external search;
@@ -108,6 +109,9 @@ body {
 
 input[type=text] {
    font-family: proportionalFont;
+}
+.fixedWidthFont {
+   font-family: fixedWidthFont !important;
 }
 .gwt-DialogBox input[type=text] {
    border: 1px solid #999;

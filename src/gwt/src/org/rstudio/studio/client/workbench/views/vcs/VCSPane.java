@@ -12,8 +12,11 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs;
 
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -23,15 +26,19 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.vcs.VCS.Display;
+import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarPresenter;
 
 import java.util.ArrayList;
 
 public class VCSPane extends WorkbenchPane implements Display
 {
    @Inject
-   public VCSPane(Session session, Commands commands)
+   public VCSPane(Provider<ConsoleBarPresenter> pConsoleBar,
+                  Session session,
+                  Commands commands)
    {
       super(session.getSessionInfo().getVcsName());
+      pConsoleBar_ = pConsoleBar;
       commands_ = commands;
    }
 
@@ -66,7 +73,12 @@ public class VCSPane extends WorkbenchPane implements Display
    protected Widget createMainWidget()
    {
       table_ = new ChangelistTable();
-      return table_;
+
+      DockLayoutPanel dockLayoutPanel = new DockLayoutPanel(Unit.PX);
+      dockLayoutPanel.addSouth(pConsoleBar_.get().asWidget(), 40);
+      dockLayoutPanel.add(table_);
+
+      return dockLayoutPanel;
    }
 
    @Override
@@ -81,6 +93,7 @@ public class VCSPane extends WorkbenchPane implements Display
       return table_.getSelectedPaths();
    }
 
+   private final Provider<ConsoleBarPresenter> pConsoleBar_;
    private final Commands commands_;
    private ChangelistTable table_;
    private ArrayList<StatusAndPath> items_;

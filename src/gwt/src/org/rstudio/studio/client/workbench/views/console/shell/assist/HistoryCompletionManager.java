@@ -66,7 +66,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
          }
          else if (event.getKeyCode() == KeyCodes.KEY_ENTER)
          {
-            input_.setInputText(popup_.getSelectedValue());
+            input_.setText(popup_.getSelectedValue());
             dismiss();
             return true;
          }
@@ -163,7 +163,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
                   {
                      public void onSelectionCommit(SelectionCommitEvent<String> e)
                      {
-                        input_.setInputText(e.getSelectedItem());
+                        input_.setText(e.getSelectedItem());
                         dismiss();
                      }
                   });
