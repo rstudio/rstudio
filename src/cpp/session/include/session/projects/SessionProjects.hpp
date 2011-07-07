@@ -56,9 +56,6 @@ public:
    }
 
 private:
-   core::Error computeScratchPath(core::FilePath* pScratchPath) const;
-
-private:
    core::FilePath file_;
    core::FilePath directory_;
    core::FilePath scratchPath_;

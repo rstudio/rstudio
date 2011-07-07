@@ -144,7 +144,7 @@ suppressMessages(tools::startDynamicHelp())
    if (name != "history" && name != "favorites")
       return ()
    
-   historyFile = file.path(.rs.scratchPath(), paste(name, ".csv", sep=""))
+   historyFile = file.path(.rs.scopedScratchPath(), paste(name, ".csv", sep=""))
    if (!file.exists(historyFile))
       return ()
    
@@ -162,7 +162,7 @@ suppressMessages(tools::startDynamicHelp())
    if (name != "history" && name != "favorites")
       return ()
    
-   historyFile = file.path(.rs.scratchPath(), paste(name, ".csv", sep=""))
+   historyFile = file.path(.rs.scopedScratchPath(), paste(name, ".csv", sep=""))
    df = data.frame(url=as.character(history.urls), title=as.character(history.titles))
    utils::write.csv(df, file=historyFile)
 })

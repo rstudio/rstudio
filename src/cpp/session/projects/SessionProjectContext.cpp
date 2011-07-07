@@ -44,10 +44,7 @@ bool canWriteToProjectDir(const FilePath& projectDirPath)
    }
 }
 
-}  // anonymous namespace
-
-
-Error ProjectContext::computeScratchPath(FilePath* pScratchPath) const
+Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
 {
    // projects dir
    FilePath projDir = module_context::userScratchPath().complete("projects");
@@ -67,11 +64,10 @@ Error ProjectContext::computeScratchPath(FilePath* pScratchPath) const
 
    // look for this directory in the index file
    std::string projectId;
-   FilePath projectDir = this->directory();
    for (std::map<std::string,std::string>::const_iterator
          it = projectIndex.begin(); it != projectIndex.end(); ++it)
    {
-      if (it->second == projectDir.absolutePath())
+      if (it->second == projectFile.absolutePath())
       {
          projectId = it->first;
          break;
@@ -82,7 +78,7 @@ Error ProjectContext::computeScratchPath(FilePath* pScratchPath) const
    if (projectId.empty())
    {
       std::string newId = core::system::generateUuid(false);
-      projectIndex[newId] = projectDir.absolutePath();
+      projectIndex[newId] = projectFile.absolutePath();
       error = core::writeStringMapToFile(indexFilePath, projectIndex);
       if (error)
          return error;
@@ -101,6 +97,7 @@ Error ProjectContext::computeScratchPath(FilePath* pScratchPath) const
    return Success();
 }
 
+}  // anonymous namespace
 
 
 Error ProjectContext::initialize(const FilePath& projectFile,
@@ -124,7 +121,7 @@ Error ProjectContext::initialize(const FilePath& projectFile,
    // calculate project scratch path (fault back to userScratch if for some
    // reason we can't determine the project scratch path)
    FilePath scratchPath;
-   Error error = computeScratchPath(&scratchPath);
+   Error error = computeScratchPath(projectFile, &scratchPath);
    if (error)
    {
       LOG_ERROR(error);
