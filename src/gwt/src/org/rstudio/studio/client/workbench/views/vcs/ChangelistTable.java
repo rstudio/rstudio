@@ -91,7 +91,8 @@ public class ChangelistTable extends Composite
 
       private String descForStatus(String str)
       {
-         return "hey that's cool";
+         // TODO: Provide a suitable tooltip value for status
+         return "";
       }
 
       private ImageResource imgForStatus(char c)
@@ -171,6 +172,7 @@ public class ChangelistTable extends Composite
       stagedColumn.setSortable(true);
       stagedColumn.setHorizontalAlignment(Column.ALIGN_CENTER);
       table_.addColumn(stagedColumn, "Staged");
+      table_.setColumnWidth(stagedColumn, "45px");
 
       Column<StatusAndPath, String> statusColumn = new Column<StatusAndPath, String>(
             new TextCell(new StatusRenderer()))
@@ -184,6 +186,7 @@ public class ChangelistTable extends Composite
       statusColumn.setSortable(true);
       statusColumn.setHorizontalAlignment(Column.ALIGN_CENTER);
       table_.addColumn(statusColumn, "Status");
+      table_.setColumnWidth(statusColumn, "40px");
 
       TextColumn<StatusAndPath> pathColumn = new TextColumn<StatusAndPath>()
       {

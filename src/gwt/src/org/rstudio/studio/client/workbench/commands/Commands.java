@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.commands;
 
+import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBundle;
 import org.rstudio.core.client.command.MenuCallback;
@@ -88,6 +89,9 @@ public abstract class
    public abstract AppCommand vcsRevert();
    public abstract AppCommand vcsShowHistory();
    public abstract AppCommand vcsRefresh();
+   public abstract AppCommand vcsIgnore();
+   public abstract AppCommand vcsPull();
+   public abstract AppCommand vcsPush();
 
    // View
    public abstract AppCommand showToolbar();
