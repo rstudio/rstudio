@@ -14,6 +14,7 @@ package org.rstudio.core.client;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public class SafeHtmlUtil
 {
@@ -21,11 +22,8 @@ public class SafeHtmlUtil
                                 String style, 
                                 String textContent)
    {
-      StringBuilder div = new StringBuilder();
-      div.append("<div class=\"");
-      div.append(style);
-      div.append("\">");
-      sb.appendHtmlConstant(div.toString());
+      sb.append(createOpenTag("div",
+                              "class", style));
       sb.appendEscaped(textContent);
       sb.appendHtmlConstant("</div>");
    }
@@ -34,13 +32,27 @@ public class SafeHtmlUtil
                                 String style, 
                                 SafeHtml htmlContent)
    {
-      StringBuilder div = new StringBuilder();
-      div.append("<div class=\"");
-      div.append(style);
-      div.append("\">");
-      sb.appendHtmlConstant(div.toString());
+      sb.append(createOpenTag("div",
+                              "class", style));
       sb.append(htmlContent);
       sb.appendHtmlConstant("</div>");
+   }
+
+   public static SafeHtml createOpenTag(String tagName,
+                                        String... attribs)
+   {
+      StringBuilder builder = new StringBuilder();
+      builder.append("<").append(tagName);
+      for (int i = 0; i < attribs.length; i += 2)
+      {
+         builder.append(' ')
+               .append(SafeHtmlUtils.htmlEscape(attribs[i]))
+               .append("=\"")
+               .append(SafeHtmlUtils.htmlEscape(attribs[i+1]))
+               .append("\"");
+      }
+      builder.append(">");
+      return SafeHtmlUtils.fromTrustedString(builder.toString());
    }
 }
 
