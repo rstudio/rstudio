@@ -426,7 +426,17 @@ Error getDurableProperties(const std::string& path, json::Object* pProperties)
 {
    return getProperties(path, pProperties);
 }
-   
+
+bool isSourceDocument(const FilePath& filePath)
+{
+   if (filePath.isDirectory())
+      return false;
+   else if (filePath.filename() == ".DS_Store")
+      return false;
+   else
+      return true;
+}
+
 Error list(std::vector<SourceDocument>* pDocs)
 {
    std::vector<FilePath> files ;
@@ -436,7 +446,7 @@ Error list(std::vector<SourceDocument>* pDocs)
    
    BOOST_FOREACH( FilePath& filePath, files )
    {
-      if (!filePath.isDirectory())
+      if (isSourceDocument(filePath))
       {
          // get the source doc
          SourceDocument doc ;
