@@ -129,7 +129,13 @@ void startup()
    else if (userSettings().alwaysRestoreLastProject() &&
             !userSettings().lastProjectPath().empty())
    {
+      // get last project path
       projectFilePath = userSettings().lastProjectPath();
+
+      // reset it to empty so that we only attempt to load the "lastProject"
+      // a single time (this will be reset to the path below after we
+      // clear the s_projectContext.initialize)
+      userSettings().setLastProjectPath(FilePath());
    }
 
    // else no active project for this session
