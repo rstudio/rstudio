@@ -15,16 +15,25 @@
  */
 package com.google.gwt.uibinder.test.client;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.uibinder.test.client.UiRendererUi.HtmlRenderer;
 
 /**
  * Functional test of UiBinder.
  */
 public class UiRendererTest extends GWTTestCase {
+
+  private static final String RENDERED_VALUE = "bar";
+
+  private DivElement docDiv;
+  private SafeHtml renderedHtml;
+  private HtmlRenderer renderer;
   private UiRendererUi safeHtmlUi;
 
   @Override
@@ -37,15 +46,172 @@ public class UiRendererTest extends GWTTestCase {
     super.gwtSetUp();
     UiRendererTestApp app = UiRendererTestApp.getInstance();
     safeHtmlUi = app.getSafeHtmlUi();
+    renderedHtml = safeHtmlUi.render(RENDERED_VALUE);
+    renderer = safeHtmlUi.getRenderer();
+
+    docDiv = Document.get().createDivElement();
+    docDiv.setInnerHTML(renderedHtml.asString());
+    Document.get().getBody().appendChild(docDiv);
+  }
+
+  public void testFieldGetters() {
+    assertTrue(renderer.isParentOrRenderer(docDiv));
+    // Get root from parent
+    DivElement root = renderer.getRoot(docDiv);
+    assertTrue(renderer.isParentOrRenderer(root));
+    assertNotNull(root);
+
+    // For example, the rendered value should be inside
+    assertSpanContainsRenderedValue(root);
+
+    // Get nameSpan
+    SpanElement nameSpan = renderer.getNameSpan(docDiv);
+    assertSpanContainsRenderedValueText(nameSpan.getFirstChild());
+
+    // Getters also work from the root element
+    DivElement root2 = renderer.getRoot(root);
+    assertTrue(renderer.isParentOrRenderer(root2));
+    assertNotNull(root2);
+    assertSpanContainsRenderedValue(root2);
+    nameSpan = renderer.getNameSpan(root);
+    assertSpanContainsRenderedValueText(nameSpan.getFirstChild());
+  }
+
+  public void testFieldGettersDetachedRoot() {
+    // Detach root
+    DivElement root = renderer.getRoot(docDiv);
+    root.removeFromParent();
+
+    // Getting the root element is still fine
+    DivElement rootAgain = renderer.getRoot(root);
+    assertEquals(root, rootAgain);
+
+    if (GWT.isProdMode()) {
+      // In prod mode we avoid checking whether the parent is attached
+      try {
+        renderer.getNameSpan(root);
+        fail("Expected a IllegalArgumentException because root is not attached to the DOM");
+      } catch (IllegalArgumentException e) {
+        // Expected
+      }
+    } else {
+      // In dev Mode we explicitly check to see if parent is attached
+      try {
+        renderer.getNameSpan(root);
+        fail("Expected a RuntimeException because root is not attached to the DOM");
+      } catch (RuntimeException e) {
+        // Expected
+      }
+    }
+  }
+
+  public void testFieldGettersNoPreviouslyRenderedElement() {
+    assertFalse(renderer.isParentOrRenderer(null));
+
+    try {
+      renderer.getRoot(null);
+      fail("Expected NPE");
+    } catch (NullPointerException e) {
+      // Expected
+    }
+
+    try {
+      renderer.getNameSpan(null);
+      fail("Expected NPE");
+    } catch (NullPointerException e) {
+      // Expected
+    }
+
+    DivElement root = renderer.getRoot(docDiv);
+    SpanElement nameSpan = renderer.getNameSpan(docDiv);
+
+    // remove nameSpan
+    nameSpan.removeFromParent();
+    try {
+      renderer.getNameSpan(docDiv);
+      fail("Expected IllegalStateException because nameSpan was removed");
+    } catch (IllegalStateException e) {
+      // In dev mode this is different from not being attached
+      assertFalse(GWT.isProdMode());
+    } catch (IllegalArgumentException e) {
+      // Otherwise the same error as being not attached
+      assertTrue(GWT.isProdMode());
+    }
+
+    // Add a a sibling to the root element and remove the root from the parent altogether
+    SpanElement spanElement = Document.get().createSpanElement();
+    docDiv.appendChild(spanElement);
+    root.removeFromParent();
+
+    assertFalse(renderer.isParentOrRenderer(docDiv));
+    if (GWT.isProdMode()) {
+      // In prod mode no attempt is made to check whether root is still attached
+      assertTrue(renderer.isParentOrRenderer(root));
+    } else {
+      assertFalse(renderer.isParentOrRenderer(root));
+    }
+    try {
+      renderer.getRoot(docDiv);
+      fail("Expected an IllegalArgumentException to fail because parent does not contain the root");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+
+    try {
+      renderer.getNameSpan(docDiv);
+      fail("Expected an IllegalArgumentException to fail because parent does not contain the root");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+
+    // Finally remove the spanElement too
+    spanElement.removeFromParent();
+
+    assertFalse(renderer.isParentOrRenderer(docDiv));
+    try {
+      renderer.getRoot(docDiv);
+      fail("Expected an IllegalArgumentException to fail because parent does not contain the root");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+
+    try {
+      renderer.getNameSpan(docDiv);
+      fail("Expected an IllegalArgumentException to fail because parent does not contain the root");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+  }
+
+  public void testFieldGettersNotOnlyChild() {
+    DivElement root = renderer.getRoot(docDiv);
+
+    // Add a a sibling to the root element
+    docDiv.appendChild(Document.get().createSpanElement());
+
+    // Getting the root element is still fine
+    DivElement rootAgain = renderer.getRoot(docDiv);
+    assertEquals(root, rootAgain);
+
+    if (GWT.isProdMode()) {
+      // In prod mode we avoid checking for being the only child
+      assertTrue(renderer.isParentOrRenderer(docDiv));
+      SpanElement nameSpan = renderer.getNameSpan(docDiv);
+      assertSpanContainsRenderedValueText(nameSpan.getFirstChild());
+    } else {
+      // in dev mode an explicit check is made
+      assertFalse(renderer.isParentOrRenderer(docDiv));
+      try {
+        renderer.getNameSpan(docDiv);
+        fail("Expected an IllegalArgumentException to fail because root is not the only child");
+      } catch (IllegalArgumentException e) {
+        // Expected
+      }
+    }
   }
 
   public void testSafeHtmlRendererText() {
-    SafeHtml render = safeHtmlUi.render();
-
-    LabelElement renderedHtml = Document.get().createLabelElement();
-    renderedHtml.setInnerHTML(render.asString());
-
-    Node innerDiv = renderedHtml.getFirstChild();
+    Node innerDiv = docDiv.getFirstChild();
 
     // Was the first span rendered as a "HTML-safe" text string?
     Node spanWithConstantTextNode = innerDiv.getChild(0);
@@ -58,15 +224,38 @@ public class UiRendererTest extends GWTTestCase {
     assertEquals(Node.TEXT_NODE, firstRawTextNode.getNodeType());
     assertEquals(" Hello, ", firstRawTextNode.getNodeValue());
 
-    // Fields not present in owning class produce no content
-    Node firstFieldNode = innerDiv.getChild(2);
-    assertEquals(Node.ELEMENT_NODE, firstFieldNode.getNodeType());
-    assertEquals("span", firstFieldNode.getNodeName().toLowerCase());
-    assertFalse(firstFieldNode.hasChildNodes());
+    // The value passed to render() was rendered correctly
+    assertSpanContainsRenderedValue(innerDiv);
 
     // ui:msg tags get rendered but the "<ui:msg>" tag is not
     Node secondRawTextNode = innerDiv.getChild(3);
     assertEquals(Node.TEXT_NODE, secondRawTextNode.getNodeType());
     assertEquals(". How goes it? ", secondRawTextNode.getNodeValue());
+
+    // Fields not present in owning class produce no content
+    Node spanNode = innerDiv.getChild(4);
+    assertEquals(Node.ELEMENT_NODE, spanNode.getNodeType());
+    assertEquals("span", spanNode.getNodeName().toLowerCase());
+    assertFalse(spanNode.hasChildNodes());
+  }
+
+  @Override
+  protected void gwtTearDown() throws Exception {
+    docDiv.removeFromParent();
+    docDiv = null;
+  }
+
+  private void assertSpanContainsRenderedValue(Node root) {
+    Node firstFieldNode = root.getChild(2);
+    assertEquals(Node.ELEMENT_NODE, firstFieldNode.getNodeType());
+    assertEquals("span", firstFieldNode.getNodeName().toLowerCase());
+    assertTrue(firstFieldNode.hasChildNodes());
+    Node renderedValue = firstFieldNode.getFirstChild();
+    assertSpanContainsRenderedValueText(renderedValue);
+  }
+
+  private void assertSpanContainsRenderedValueText(Node renderedValue) {
+    assertEquals(Node.TEXT_NODE, renderedValue.getNodeType());
+    assertEquals(RENDERED_VALUE, renderedValue.getNodeValue());
   }
 }

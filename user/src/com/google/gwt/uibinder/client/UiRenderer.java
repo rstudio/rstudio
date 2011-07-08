@@ -1,0 +1,46 @@
+/*
+ * Copyright 2011 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.google.gwt.uibinder.client;
+
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+
+/**
+ * Marker interface for classes whose implementation is to be provided via UiBinder code
+ * generation for SafeHtml rendering.
+ * 
+ * @param <T> the type to render
+ */
+public interface UiRenderer<T> {
+
+  /**
+   * Checks whether {@code parent} is a valid element to use as an argument for field getters.
+   * 
+   * @return {@code true} if parent contains or directly points to a previously rendered element.
+   *         In DevMode it also checks whether the parent is attached to the DOM
+   */
+  boolean isParentOrRenderer(Element parent);
+
+  /**
+   * Receives an event and dispatches it to the appropriate handler method annotated
+   * with {@code @UiHandler}.
+   *
+   * @param receiver of events
+   * @param parent element containing a previously rendered element
+   * @param event received by the browser
+   */
+  void onBrowserEvent(T receiver, Element parent, NativeEvent event);
+}

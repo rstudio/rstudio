@@ -492,6 +492,17 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource SAFEHTML_BUILDER = new MockJavaResource(
+      "com.google.gwt.safehtml.shared.SafeHtmlBuilder") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.safehtml.shared;\n");
+      code.append("public class SafeHtmlBuilder {");
+      code.append("}");
+      return code;
+    }
+  };
   public static final MockJavaResource SPLIT_LAYOUT_PANEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.SplitLayoutPanel") {
     @Override
@@ -640,6 +651,26 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource UI_FIELD = new MockJavaResource(
+      "com.google.gwt.uibinder.client.UiField") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.uibinder.client;");
+      code.append("import java.lang.annotation.Documented;");
+      code.append("import java.lang.annotation.ElementType;");
+      code.append("import java.lang.annotation.Retention;");
+      code.append("import java.lang.annotation.RetentionPolicy;");
+      code.append("import java.lang.annotation.Target;");
+      code.append("@Documented");
+      code.append("@Retention(RetentionPolicy.RUNTIME)");
+      code.append("@Target(ElementType.FIELD)");
+      code.append("public @interface UiField {");
+      code.append("  boolean provided() default false;");
+      code.append("}");
+      return code;
+    }
+  };
   public static final MockJavaResource UI_OBJECT = new MockJavaResource(
       "com.google.gwt.user.client.ui.UIObject") {
     @Override
@@ -648,6 +679,17 @@ public class UiJavaResources {
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class UIObject {\n");
       code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource UI_RENDERER = new MockJavaResource(
+      "com.google.gwt.uibinder.client.UiRenderer") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.uibinder.client;\n");
+      code.append("public interface UiRenderer<T> {");
+      code.append("}");
       return code;
     }
   };
@@ -720,6 +762,7 @@ public class UiJavaResources {
     rtn.add(NUMBER_FORMAT);
     rtn.add(RENDERER);
     rtn.add(SAFEHTML);
+    rtn.add(SAFEHTML_BUILDER);
     rtn.add(SPLIT_LAYOUT_PANEL);
     rtn.add(STACK_LAYOUT_PANEL);
     rtn.add(STACK_PANEL);
@@ -734,6 +777,8 @@ public class UiJavaResources {
     rtn.add(UI_OBJECT);
     rtn.add(UI_BINDER);
     rtn.add(UI_FACTORY);
+    rtn.add(UI_FIELD);
+    rtn.add(UI_RENDERER);
     rtn.add(VALUE_LABEL);
     rtn.add(WIDGET);
     return rtn;

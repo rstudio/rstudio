@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
@@ -41,7 +42,7 @@ import java.util.LinkedHashSet;
  */
 public class UiBinderParser {
 
-  private enum Resource {
+  enum Resource {
     DATA {
       @Override
       void create(UiBinderParser parser, XMLElement elem)
@@ -153,7 +154,10 @@ public class UiBinderParser {
 
   private JClassType consumeTypeAttribute(XMLElement elem)
       throws UnableToCompleteException {
-    String resourceTypeName = elem.consumeRequiredRawAttribute(TYPE_ATTRIBUTE);
+    if (!elem.hasAttribute(TYPE_ATTRIBUTE)) {
+      return null;
+    }
+    String resourceTypeName = elem.consumeRawAttribute(TYPE_ATTRIBUTE);
 
     JClassType resourceType = oracle.findType(resourceTypeName);
     if (resourceType == null) {
@@ -256,56 +260,122 @@ public class UiBinderParser {
    */
   private void createResource(XMLElement elem) throws UnableToCompleteException {
     String resourceName = elem.consumeRequiredRawAttribute(FIELD_ATTRIBUTE);
+
     JClassType resourceType = consumeTypeAttribute(elem);
+
     if (elem.getAttributeCount() > 0) {
-      writer.die(elem, "Should only find attributes \"field\" and \"type\"");
+      writer.die(elem, "Should only find attributes \"%s\" and \"%s\".", FIELD_ATTRIBUTE,
+          TYPE_ATTRIBUTE);
     }
 
-    FieldWriter fieldWriter = fieldManager.registerField(
-        FieldWriterType.IMPORTED, resourceType, resourceName);
-    OwnerField ownerField = writer.getOwnerClass().getUiField(resourceName);
+    /* Is it a parameter passed to a render method? */
 
-    /* Perhaps it is provided via @UiField */
-
-    if (ownerField != null) {
-      if (!resourceType.getErasedType().equals(ownerField.getType().getRawType()
-          .getErasedType())) {
-        writer.die(elem, "Type must match %s", ownerField);
-      }
-      if (ownerField.isProvided()) {
-        String initializer;
-        if (writer.getDesignTime().isDesignTime()) {
-          String typeName = ownerField.getType().getRawType().getQualifiedSourceName();
-          initializer = writer.getDesignTime().getProvidedField(typeName,
-              ownerField.getName());
-        } else {
-          initializer = "owner." + ownerField.getName();
-        }
-        fieldWriter.setInitializer(initializer);
+    if (writer.isRenderer()) {
+      JClassType matchingResourceType = findRenderParameterType(resourceName);
+      if (matchingResourceType != null) {
+        createResourceUiRenderer(elem, resourceName, resourceType, matchingResourceType);
         return;
       }
     }
 
-    /* Nope. Maybe a @UiFactory will make it */
+    /* Perhaps it is provided via @UiField */
 
-    JMethod factoryMethod = writer.getOwnerClass().getUiFactoryMethod(
-        resourceType);
-    if (factoryMethod != null) {
-      String initializer;
-      if (writer.getDesignTime().isDesignTime()) {
-        String typeName = factoryMethod.getReturnType().getQualifiedSourceName();
-        initializer = writer.getDesignTime().getProvidedFactory(typeName,
-            factoryMethod.getName(), "");
-      } else {
-        initializer = String.format("owner.%s()", factoryMethod.getName());
+    if (writer.getOwnerClass() == null) {
+      writer.die("No owner provided for %s", writer.getBaseClass().getQualifiedSourceName());
+    }
+
+    if (writer.getOwnerClass().getUiField(resourceName) != null) {
+      // If the resourceType is present, is it the same as the one in the base class?
+      OwnerField ownerField = writer.getOwnerClass().getUiField(resourceName);
+
+      // If the resourceType was given, it must match the one declared with @UiField
+      if (resourceType != null && !resourceType.getErasedType()
+          .equals(ownerField.getType().getRawType().getErasedType())) {
+        writer.die(elem, "Type must match %s.", ownerField);
       }
-      fieldWriter.setInitializer(initializer);
+
+      if (ownerField.isProvided()) {
+        createResourceUiField(resourceName, resourceType, ownerField);
+        return;
+      } else {
+        // Let's keep trying, but we know the type at least.
+        resourceType = ownerField.getType().getRawType().getErasedType();
+      }
+    }
+
+    /* Nope. If we know the type, maybe a @UiFactory will make it */
+
+    if (resourceType != null && writer.getOwnerClass().getUiFactoryMethod(resourceType) != null) {
+      createResourceUiFactory(elem, resourceName, resourceType);
+      return;
     }
 
     /*
      * If neither of the above, the FieldWriter's default GWT.create call will
      * do just fine.
      */
+    if (resourceType != null) {
+      fieldManager.registerField(FieldWriterType.IMPORTED, resourceType, resourceName);
+    } else {
+      writer.die(elem, "Could not infer type for field %s.", resourceName);
+    }
+  }
+
+  private void createResourceUiFactory(XMLElement elem, String resourceName, JClassType resourceType)
+      throws UnableToCompleteException {
+    FieldWriter fieldWriter;
+    JMethod factoryMethod = writer.getOwnerClass().getUiFactoryMethod(resourceType);
+    JClassType methodReturnType = factoryMethod.getReturnType().getErasedType()
+        .isClassOrInterface();
+    if (!resourceType.getErasedType().equals(methodReturnType)) {
+      writer.die(elem, "Type must match %s.", methodReturnType);
+    }
+
+    String initializer;
+    if (writer.getDesignTime().isDesignTime()) {
+      String typeName = factoryMethod.getReturnType().getQualifiedSourceName();
+      initializer = writer.getDesignTime().getProvidedFactory(typeName,
+          factoryMethod.getName(), "");
+    } else {
+      initializer = String.format("owner.%s()", factoryMethod.getName());
+    }
+    fieldWriter = fieldManager.registerField(
+        FieldWriterType.IMPORTED, resourceType, resourceName);
+    fieldWriter.setInitializer(initializer);
+  }
+
+  private void createResourceUiField(String resourceName, JClassType resourceType,
+      OwnerField ownerField)
+      throws UnableToCompleteException {
+    FieldWriter fieldWriter;
+    String initializer;
+
+    if (writer.getDesignTime().isDesignTime()) {
+      String typeName = ownerField.getType().getRawType().getQualifiedSourceName();
+      initializer = writer.getDesignTime().getProvidedField(typeName, ownerField.getName());
+    } else {
+      initializer = "owner." + ownerField.getName();
+    }
+    fieldWriter = fieldManager.registerField(
+        FieldWriterType.IMPORTED,
+        ownerField.getType().getRawType().getErasedType(),
+        resourceName);
+    fieldWriter.setInitializer(initializer);
+  }
+
+  private void createResourceUiRenderer(XMLElement elem, String resourceName,
+      JClassType resourceType, JClassType matchingResourceType) throws UnableToCompleteException {
+    FieldWriter fieldWriter;
+    if (resourceType != null
+        && !resourceType.getErasedType().isAssignableFrom(matchingResourceType.getErasedType())) {
+      writer.die(elem, "Type must match the type of parameter %s in %s#render method.",
+          resourceName,
+          writer.getBaseClass().getQualifiedSourceName());
+    }
+
+    fieldWriter = fieldManager.registerField(
+        FieldWriterType.IMPORTED, matchingResourceType.getErasedType(), resourceName);
+    fieldWriter.setInitializer("this." + resourceName);
   }
 
   private void createSingleImport(XMLElement elem, JClassType enclosingType,
@@ -372,6 +442,27 @@ public class UiBinderParser {
           cssResourceType.getQualifiedSourceName());
     }
     return publicType;
+  }
+
+  private JClassType findRenderParameterType(String resourceName) {
+    JMethod renderMethod = null;
+    for (JMethod method : writer.getBaseClass().getMethods()) {
+      if (method.getName().equals("render")) {
+        renderMethod = method;
+        break;
+      }
+    }
+    if (renderMethod == null) {
+      return null;
+    }
+    JClassType matchingResourceType = null;
+    for (JParameter jParameter : renderMethod.getParameters()) {
+      if (jParameter.getName().equals(resourceName)) {
+        matchingResourceType = jParameter.getType().isClassOrInterface();
+        break;
+      }
+    }
+    return matchingResourceType;
   }
 
   private void findResources(XMLElement binderElement)

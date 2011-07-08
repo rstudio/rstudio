@@ -97,7 +97,7 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
       name = "widget" + (++serial);
     }
 
-    String idHolder = uiWriter.declareDomIdHolder();
+    String idHolder = uiWriter.declareDomIdHolder(null);
     idToWidgetElement.put(idHolder, elem);
 
     if (oracle.findType(HasHTML.class.getName()).isAssignableFrom(type)) {

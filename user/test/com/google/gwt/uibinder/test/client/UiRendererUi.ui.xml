@@ -16,12 +16,14 @@
   xmlns:res='urn:with:com.google.gwt.uibinder.test.client.DomBasedUi.Resources'
   >
   <ui:with field="constants" type="com.google.gwt.uibinder.test.client.Constants"/>
+  <ui:with field="aValue"/>
   <div ui:field='root' res:class="style.bodyColor style.bodyFont"
       title="The title of this div is localizable">
     <ui:attribute name='title'/>
     <span><ui:text from="{constants.getText}" /></span>
-    Hello, <span ui:field="nameSpan" />.
+    Hello, <span ui:field="nameSpan"><ui:text from="{aValue.getBar}"/></span>.
     <ui:msg>How goes it?</ui:msg>
+    <span/>
       <h2 res:class="style.bodyColor style.bodyFont">Placeholders in localizables</h2>
       <p><ui:msg>When you mark up your text for translation, there will be bits
       that you don't want the translators to mess with. You can protect

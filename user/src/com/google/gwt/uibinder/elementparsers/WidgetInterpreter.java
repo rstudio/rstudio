@@ -82,7 +82,7 @@ class WidgetInterpreter implements XMLElement.Interpreter<String> {
     // that idHolder is a local variable reference, not a string id. We
     // have to generate the ids at runtime, not compile time, or else
     // we'll reuse ids for any template rendered more than once.
-    String idHolder = uiWriter.declareDomIdHolder();
+    String idHolder = uiWriter.declareDomIdHolder(null);
     uiWriter.ensureCurrentFieldAttached();
 
     FieldWriter childFieldWriter = uiWriter.parseElementToFieldWriter(elem);
