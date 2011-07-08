@@ -764,6 +764,47 @@ public class JsInliner {
   }
 
   /**
+   * Collect names in a hoisted statement that are local to the original
+   * scope.  These names will need to be copied to the destination scope
+   * once the statement becomes hoisted.
+   */
+  private static class HoistedNameVisitor extends JsVisitor {
+    private final JsScope toScope;
+    private final JsScope fromScope;
+    private final List<JsName> hoistedNames;
+
+    public HoistedNameVisitor(JsScope toScope, JsScope fromScope) {
+      this.toScope = toScope;
+      this.fromScope = fromScope;
+      this.hoistedNames = new ArrayList<JsName>();
+    }
+    
+    public List<JsName> getHoistedNames() {
+      return hoistedNames;
+    }
+
+    /*
+     * We need to hoist names that are only visible in fromScope, but not in
+     * toScope (i.e. we don't want to hoist names that are visible to both
+     * scopes, such as a global). Also, we don't want to hoist names that have a
+     * staticRef, which indicates a formal parameter, or a function name.
+     */
+    @Override
+    public boolean visit(JsNameRef nameRef, JsContext ctx) {
+      JsName name = nameRef.getName();
+      JsName fromScopeName = fromScope.findExistingName(name.getIdent());
+      JsName toScopeName = toScope.findExistingName(name.getIdent());
+      if (name.getStaticRef() == null
+          && name == fromScopeName
+          && name != toScopeName
+          && !hoistedNames.contains(name)) {
+        hoistedNames.add(name);
+      }
+      return true;
+    }
+  }
+
+  /**
    * Collect all of the idents used in an AST node. The collector can be
    * configured to collect idents from qualified xor unqualified JsNameRefs.
    */
@@ -1097,10 +1138,11 @@ public class JsInliner {
         statements = Collections.emptyList();
       }
 
-      List<JsExpression> hoisted = new ArrayList<JsExpression>(
-          statements.size());
+      List<JsExpression> hoisted = new ArrayList<JsExpression>(statements.size());
       JsExpression thisExpr = ((JsNameRef) x.getQualifier()).getQualifier();
-      List<JsName> localVariableNames = new ArrayList<JsName>();
+      HoistedNameVisitor hoistedNameVisitor =
+          new HoistedNameVisitor(callerFunction.getScope(), invokedFunction.getScope());
+      
       boolean sawReturnStatement = false;
 
       for (JsStatement statement : statements) {
@@ -1128,10 +1170,16 @@ public class JsInliner {
          * distinct objects, it would not be possible to substitute different
          * JsNameRefs at different call sites.
          */
-        JsExpression h = hoistedExpression(statement, localVariableNames);
+        JsExpression h = hoistedExpression(statement);
         if (h == null) {
           return x;
         }
+
+        /*
+         * Visit the statement to find names that will be moved to the caller's
+         * scope from the invoked function.
+         */
+        hoistedNameVisitor.accept(statement);
 
         if (isReturnStatement(statement)) {
           sawReturnStatement = true;
@@ -1140,6 +1188,11 @@ public class JsInliner {
           hoisted.add(h);
         }
       }
+
+      /*
+       * Get the referenced names that need to be copied to the caller's scope.
+       */
+      List<JsName> hoistedNames = hoistedNameVisitor.getHoistedNames();
 
       /*
        * If the inlined method has no return statement, synthesize an undefined
@@ -1179,7 +1232,7 @@ public class JsInliner {
       // Perform the name replacement
       NameRefReplacerVisitor v = new NameRefReplacerVisitor(thisExpr,
           x.getArguments(), invokedFunction.getParameters());
-      for (ListIterator<JsName> nameIterator = localVariableNames.listIterator(); nameIterator.hasNext();) {
+      for (ListIterator<JsName> nameIterator = hoistedNames.listIterator(); nameIterator.hasNext();) {
         JsName name = nameIterator.next();
 
         /*
@@ -1210,7 +1263,7 @@ public class JsInliner {
       op = v.accept(op);
 
       // Normalize any nested comma expressions that we may have generated.
-      op = (new CommaNormalizer(localVariableNames)).accept(op);
+      op = (new CommaNormalizer(hoistedNames)).accept(op);
 
       /*
        * Compare the relative complexity of the original invocation versus the
@@ -1224,13 +1277,13 @@ public class JsInliner {
         return x;
       }
 
-      if (callerFunction == programFunction && localVariableNames.size() > 0) {
+      if (callerFunction == programFunction && hoistedNames.size() > 0) {
         // Don't add additional variables to the top-level program.
         return x;
       }
 
       // We've committed to the inlining, ensure the vars are created
-      newLocalVariableStack.peek().addAll(localVariableNames);
+      newLocalVariableStack.peek().addAll(hoistedNames);
 
       // update invocation counts according to this inlining
       invocationCountingVisitor.removeCountsFor(x);
@@ -1558,7 +1611,6 @@ public class JsInliner {
   private static class RefersToNameVisitor extends JsVisitor {
     private final Collection<JsName> names;
     private boolean refersToName;
-    private boolean refersToUnbound;
 
     public RefersToNameVisitor(Collection<JsName> names) {
       this.names = names;
@@ -1568,19 +1620,13 @@ public class JsInliner {
     public void endVisit(JsNameRef x, JsContext ctx) {
       JsName name = x.getName();
 
-      if (name == null) {
-        refersToUnbound = true;
-      } else {
+      if (name != null) {
         refersToName = refersToName || names.contains(name);
       }
     }
 
     public boolean refersToName() {
       return refersToName;
-    }
-
-    public boolean refersToUnbound() {
-      return refersToUnbound;
     }
   }
 
@@ -1701,7 +1747,7 @@ public class JsInliner {
 
   /**
    * @param program
-   * @return
+   * @return stats
    */
   private static OptimizerStats execImpl(JsProgram program) {
     OptimizerStats stats = new OptimizerStats(NAME);
@@ -1783,15 +1829,12 @@ public class JsInliner {
    * constructs a mutable copy of the expression that can be manipulated
    * at-will.
    * 
-   * @param program the enclosing JsProgram
    * @param statement the statement from which to extract the expressions
-   * @param localVariableNames accumulates any local varables declared by
-   *          <code>statement</code>
    * @return a JsExpression representing all expressions that would have been
    *         evaluated by the statement
    */
-  private static JsExpression hoistedExpression(JsStatement statement,
-      List<JsName> localVariableNames) {
+  private static JsExpression hoistedExpression(JsStatement statement) {
+
     JsExpression expression;
     if (statement instanceof JsExprStmt) {
       // Extract the expression
@@ -1815,9 +1858,6 @@ public class JsInliner {
       expression = JsNullLiteral.INSTANCE;
 
       for (JsVar var : vars) {
-        // Record the locally-defined variable
-        localVariableNames.add(var.getName());
-
         // Extract the initialization expression
         JsExpression init = var.getInitExpr();
         if (init != null) {
@@ -1856,7 +1896,7 @@ public class JsInliner {
   }
 
   /**
-   * Given an expression, determine if it it is a JsNameRef that refers to a
+   * Given an expression, determine if it is a JsNameRef that refers to a
    * statically-defined JsFunction.
    */
   private static JsFunction isFunction(JsExpression e) {

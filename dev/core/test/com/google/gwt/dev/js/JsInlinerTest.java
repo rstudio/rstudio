@@ -48,22 +48,22 @@ public class JsInlinerTest extends OptimizerTestBase {
   public void testInlineArrayLiterals() throws Exception {
     String input = "function a1(arg, x) { arg.x = x; return arg; }"
         + "function b1() { var x=a1([], 10); } b1();";
-    compare(input, input);
+    verifyNoChange(input);
   }
 
   public void testInlineFunctionLiterals() throws Exception {
     String input = "function a1(arg, x) { arg.x = x; return arg; }"
         + "function b1() { var x=a1(function (){}, 10); } b1();";
-    compare(input, input);
+    verifyNoChange(input);
     String input2 = "function a1(arg, x) { arg.x = x; return arg; }"
         + "function b1() { var x=a1(function blah(){}, 10); } b1();";
-    compare(input2, input2);
+    verifyNoChange(input2);
   }
 
   public void testInlineObjectLiterals() throws Exception {
     String input = "function a1(arg, x) { arg.x = x; return arg; }"
         + "function b1() { var x=a1({}, 10); } b1();";
-    compare(input, input);
+    verifyNoChange(input);
   }
 
   /**
@@ -81,7 +81,7 @@ public class JsInlinerTest extends OptimizerTestBase {
         + "function c1() { return ex2? a1():c1(); } c1()";
     String expected = "function a1() { return ex ? (ex2 ? a1() : c1()) : c1() }"
         + "function c1() { return ex2 ? a1() :c1(); } c1()";
-    compare(expected, input);
+    verifyOptimized(expected, input);
   }
 
   /**
@@ -102,7 +102,7 @@ public class JsInlinerTest extends OptimizerTestBase {
     // bootstrap the program
     code.append("caller();");
 
-    compare(code.toString(), code.toString());
+    verifyNoChange(code.toString());
   }
 
   /**
@@ -127,7 +127,7 @@ public class JsInlinerTest extends OptimizerTestBase {
     expected.append("function caller() { var array; array[0] + (clinit(), 2); }");
     expected.append("caller();");
 
-    compare(expected.toString(), code.toString());
+    verifyOptimized(expected.toString(), code.toString());
   }
 
   /**
@@ -147,7 +147,7 @@ public class JsInlinerTest extends OptimizerTestBase {
     // bootstrap the program
     code.append("caller();");
 
-    compare(code.toString(), code.toString());
+    verifyNoChange(code.toString());
   }
 
   /**
@@ -170,7 +170,7 @@ public class JsInlinerTest extends OptimizerTestBase {
     // bootstrap the program
     code.append("caller();");
 
-    compare(code.toString(), code.toString());
+    verifyNoChange(code.toString());
   }
 
   /**
@@ -195,7 +195,7 @@ public class JsInlinerTest extends OptimizerTestBase {
     expected.append("function clinit() { clinit = null; }");
     expected.append("function caller() {var y; return y=2,clinit(),3;}");
     expected.append("caller();");
-    compare(expected.toString(), code.toString());
+    verifyOptimized(expected.toString(), code.toString());
   }
 
   /**
@@ -218,7 +218,7 @@ public class JsInlinerTest extends OptimizerTestBase {
     // bootstrap the program
     code.append("caller();");
 
-    compare(code.toString(), code.toString());
+    verifyNoChange(code.toString());
   }
 
   public void testSelfRecursion() throws Exception {
@@ -228,13 +228,58 @@ public class JsInlinerTest extends OptimizerTestBase {
     String expected = "function a1() { return blah && bar && a1() }"
         + "function c() { a1() } c()";
 
-    compare(expected, input);
+    verifyOptimized(expected, input);
   }
 
-  private void compare(String expected, String input) throws Exception {
-    input = optimize(input, JsSymbolResolver.class, FixStaticRefsVisitor.class,
+  /*
+   * This is inspired by issue 5936:
+   * @see http://code.google.com/p/google-web-toolkit/issues/detail?id=5936
+   */
+  public void testPreserveNameScopeWithDoubleInliningAndObfuscation() throws Exception {
+    StringBuffer code = new StringBuffer();
+    
+    code.append("function getA(){"
+                + "var s;"
+                + "s = getB();"
+                + "return s;"
+                + "}");
+
+    code.append("function getB(){"
+                + "var t;"
+                + "t = 't';"
+                + "t = t + '';"
+                + "return t;"
+                + "}");
+
+    code.append("function start(y){"
+                + "getA();"
+                + "if (y != 10) {$wnd.alert('y != 10');}"
+                + "}");
+    
+    code.append("var x = 10; start(x);");
+
+    StringBuffer expected = new StringBuffer();
+    expected.append("function c(a){var b;b='t';if(a!=10){$wnd.alert('y != 10')}}");
+    expected.append("var d=10;c(d);");
+    
+    verifyOptimizedObfuscated(expected.toString(), code.toString());
+  }
+
+  private void verifyNoChange(String input) throws Exception {
+    verifyOptimized(input, input);
+  }
+
+  private void verifyOptimized(String expected, String input) throws Exception {
+    String actual = optimize(input, JsSymbolResolver.class, FixStaticRefsVisitor.class,
         JsInliner.class, JsUnusedFunctionRemover.class);
-    expected = optimize(expected);
-    assertEquals(expected, input);
+    String expectedAfterParse = optimize(expected);
+    assertEquals(expectedAfterParse, actual);
+  }
+
+  private void verifyOptimizedObfuscated(String expected, String input) throws Exception {
+    String actual = optimize(input, JsSymbolResolver.class, FixStaticRefsVisitor.class,
+        JsInliner.class, JsUnusedFunctionRemover.class, JsObfuscateNamer.class);
+    String expectedAfterParse = optimize(expected);
+    assertEquals(expectedAfterParse, actual);
   }
 }
