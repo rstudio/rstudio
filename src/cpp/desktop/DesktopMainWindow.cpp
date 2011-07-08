@@ -95,6 +95,8 @@ void MainWindow::onWorkbenchInitialized()
    QString projectDir = vProjectDir.toString();
    if (projectDir.length() > 0)
       setWindowTitle(projectDir + QString::fromAscii(" - RStudio"));
+   else
+      setWindowTitle(QString::fromAscii("RStudio"));
 
 #ifdef Q_WS_MACX
    webView()->page()->mainFrame()->evaluateJavaScript(

@@ -93,6 +93,15 @@ Error readProjectFile(const FilePath& projectFilePath,
    if (pConfig->version == 0.0)
       return requiredFieldError("Version", pUserErrMsg);
 
+   // this version of the parser can only handle v1.0
+   if (pConfig->version != 1.0)
+   {
+      *pUserErrMsg = "The project file was created by a more recent "
+                     "version of RStudio";
+       return systemError(boost::system::errc::protocol_error,
+                          ERROR_LOCATION);
+   }
+
    // extract id
    it = dcfFields.find("Id");
    if (it == dcfFields.end())
