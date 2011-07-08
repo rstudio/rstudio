@@ -14,7 +14,9 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.dom.DomUtils;
 
 /**
@@ -34,6 +36,12 @@ public class BottomScrollPanel extends ScrollPanel
                 == getElement().getScrollHeight();
          }
       });
+   }
+
+   public BottomScrollPanel(Widget widget)
+   {
+      this();
+      setWidget(widget);
    }
 
    @Override

@@ -2,12 +2,16 @@
              xmlns:g='urn:import:com.google.gwt.user.client.ui'>
 
    <ui:style>
+      .outer {
+         padding: 2px;
+      }
       .input {
          width: 100%;
          border: none;
          margin: 0;
          padding: 0;
          outline: 0;
+         background-color: transparent;
       }
       .commandBar {
          white-space: nowrap;
@@ -17,12 +21,12 @@
       }
    </ui:style>
 
-   <g:HTMLPanel>
+   <g:HTMLPanel styleName="{style.outer}">
       <table cellpadding="0" cellspacing="0" width="100%">
          <tr>
             <td width="1"><g:Label text="&gt;&#xA0;" styleName="{style.inline}"/></td>
             <td width="100%"><g:TextBox ui:field="input_" styleName="{style.input} fixedWidthFont"/></td>
-            <td width="1"><g:Image ui:field="expand_"/></td></tr>
+         </tr>
       </table>
    </g:HTMLPanel>
 

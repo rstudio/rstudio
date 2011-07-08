@@ -1,32 +1,41 @@
 package org.rstudio.studio.client.workbench.views.vcs.console;
 
-import com.google.gwt.event.dom.client.HasKeyDownHandlers;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.ExecuteCommandResult;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 
-public class ConsoleBarPresenter implements IsWidget
+public class ConsoleBarPresenter
 {
-   public interface Display extends HasText, HasKeyDownHandlers, IsWidget
+   public interface Display extends HasText, HasKeyDownHandlers, IsWidget,
+                                    HasClickHandlers
    {
+      void notifyOutputVisible(boolean visible);
+   }
+
+   public interface OutputDisplay extends IsWidget, HasEnsureVisibleHandlers
+   {
+      void addCommand(String command);
+      void addOutput(String output);
+      void clearOutput();
    }
 
    @Inject
    public ConsoleBarPresenter(Display consoleBarView,
+                              OutputDisplay outputView,
                               VCSServerOperations server,
                               GlobalDisplay globalDisplay)
    {
       consoleBarView_ = consoleBarView;
+      outputView_ = outputView;
       server_ = server;
       globalDisplay_ = globalDisplay;
 
@@ -62,9 +71,20 @@ public class ConsoleBarPresenter implements IsWidget
                   processCommand();
                }
             }
+/*
+            else if (mod == KeyboardShortcut.CTRL)
+            {
+               if (event.getNativeKeyCode() == 'L')
+               {
+                  event.preventDefault();
+                  event.stopPropagation();
+
+                  outputView_.clearOutput();
+               }
+            }
+*/
          }
       });
-
    }
 
    private void processCommand()
@@ -74,27 +94,37 @@ public class ConsoleBarPresenter implements IsWidget
       history_.resetPosition();
       consoleBarView_.setText(defaultText_);
 
+      outputView_.addCommand(command);
+
       server_.vcsExecuteCommand(command, new SimpleRequestCallback<ExecuteCommandResult>()
       {
          @Override
          public void onResponseReceived(ExecuteCommandResult response)
          {
-            globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
-                                       "Output",
-                                       response.getOutput());
+            outputView_.addOutput(response.getOutput());
          }
       });
    }
 
-   @Override
-   public Widget asWidget()
+   public OutputDisplay getOutputView()
    {
-      return consoleBarView_.asWidget();
+      return outputView_;
    }
 
-   private CommandLineHistory history_;
-   private String defaultText_ = "git ";
+   public Display getConsoleBarView()
+   {
+      return consoleBarView_;
+   }
+
+   public void setOutputVisible(boolean visible)
+   {
+      consoleBarView_.notifyOutputVisible(visible);
+   }
+
+   private final CommandLineHistory history_;
+   private final String defaultText_ = "git ";
    private final Display consoleBarView_;
+   private final OutputDisplay outputView_;
    private final VCSServerOperations server_;
    private final GlobalDisplay globalDisplay_;
 }
