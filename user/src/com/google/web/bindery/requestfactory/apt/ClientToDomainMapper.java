@@ -62,6 +62,12 @@ class ClientToDomainMapper extends TypeVisitorBase<TypeMirror> {
     if (state.types.isAssignable(x, state.entityProxyType)
         || state.types.isAssignable(x, state.valueProxyType)) {
       // FooProxy -> FooDomain
+      /*
+       * TODO(bobv): This if statement should be widened to baseProxy to support
+       * heterogenous collections of any proxy type. The BaseProxy interface
+       * would also need to be annotated with an @ProxyFor mapping. This can be
+       * done once RFIV is removed, since it only allows homogenous collections.
+       */
       TypeElement domainType = state.getClientToDomainMap().get(state.types.asElement(x));
       if (domainType == null) {
         return defaultAction(x, state);
@@ -120,10 +126,7 @@ class ClientToDomainMapper extends TypeVisitorBase<TypeMirror> {
   @Override
   public TypeMirror visitWildcard(WildcardType x, State state) {
     // Convert <? extends FooProxy> to FooDomain
-    if (x.getExtendsBound() != null) {
-      return x.getExtendsBound().accept(this, state);
-    }
-    return defaultAction(x, state);
+    return state.types.erasure(x).accept(this, state);
   }
 
   /**

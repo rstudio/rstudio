@@ -105,7 +105,7 @@ class TransportableTypeVisitor extends TypeVisitorBase<Boolean> {
   @Override
   public Boolean visitWildcard(WildcardType t, State state) {
     // Allow List<? extends FooProxy>
-    return t.getExtendsBound() != null && t.getExtendsBound().accept(this, state);
+    return state.types.erasure(t).accept(this, state);
   }
 
   @Override
