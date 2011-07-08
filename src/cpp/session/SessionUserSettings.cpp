@@ -17,6 +17,7 @@
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/system/System.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
@@ -33,6 +34,7 @@ namespace session {
 #define kAgreementPrefix "agreement."
    
 namespace {
+const char * const kContextId ="contextId";
 const char * const kAgreementHash = kAgreementPrefix "agreedToHash";
 const char * const kAutoCreatedProfile = "autoCreatedProfile";
 const char * const kUiPrefs = "uiPrefs";
@@ -84,7 +86,26 @@ Error UserSettings::initialize()
 {
    FilePath scratchPath = session::options().userScratchPath();
    FilePath settingsPath = scratchPath.complete("user-settings");
-   return settings_.initialize(settingsPath);
+
+   Error error = settings_.initialize(settingsPath);
+   if (error)
+      return error;
+
+   // make sure we have a context id
+   if (contextId().empty())
+      setContextId(core::system::generateUuid());
+
+   return Success();
+}
+
+std::string UserSettings::contextId() const
+{
+   return settings_.get(kContextId);
+}
+
+void UserSettings::setContextId(const std::string& contextId)
+{
+   settings_.set(kContextId, contextId);
 }
 
 std::string UserSettings::agreementHash() const

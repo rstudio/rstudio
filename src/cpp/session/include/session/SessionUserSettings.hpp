@@ -59,6 +59,10 @@ public:
    void beginUpdate() { settings_.beginUpdate(); }
    void endUpdate() { settings_.endUpdate(); }
 
+   // context id
+   std::string contextId() const;
+   void setContextId(const std::string& contextId);
+
    // agreement hash code
    std::string agreementHash() const;
    void setAgreementHash(const std::string& hash) ;

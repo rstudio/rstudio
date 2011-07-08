@@ -15,8 +15,11 @@
 
 #include <map>
 
+#include <boost/format.hpp>
+
 #include <core/FileSerializer.hpp>
 
+#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
 using namespace core;
@@ -46,54 +49,41 @@ bool canWriteToProjectDir(const FilePath& projectDirPath)
 
 Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
 {
-   // projects dir
-   FilePath projDir = module_context::userScratchPath().complete("projects");
-   Error error = projDir.ensureDirectory();
-   if (error)
-      return error;
-
-   // read index file
-   std::map<std::string,std::string> projectIndex;
-   FilePath indexFilePath = projDir.complete("INDEX");
-   if (indexFilePath.exists())
+   // ensure project user dir
+   FilePath projectUserDir = projectFile.parent().complete(".Rproj.user");
+   if (!projectUserDir.exists())
    {
-      error = core::readStringMapFromFile(indexFilePath, &projectIndex);
+      // create
+      Error error = projectUserDir.ensureDirectory();
+      if (error)
+         return error;
+
+      // mark hidden if we are on win32
+#ifdef _WIN32
+      error = core::system::makeFileHidden(projectUserDir);
+      if (error)
+         return error;
+#endif
+   }
+
+   // create user subdirectory if we have a username
+   std::string username = core::system::username();
+   if (!username.empty())
+   {
+      projectUserDir = projectUserDir.complete(username);
+      Error error = projectUserDir.ensureDirectory();
       if (error)
          return error;
    }
 
-   // look for this directory in the index file
-   std::string projectId;
-   for (std::map<std::string,std::string>::const_iterator
-         it = projectIndex.begin(); it != projectIndex.end(); ++it)
-   {
-      if (it->second == projectFile.absolutePath())
-      {
-         projectId = it->first;
-         break;
-      }
-   }
-
-   // if it wasn't found then generate a new entry and re-write the index
-   if (projectId.empty())
-   {
-      std::string newId = core::system::generateUuid(false);
-      projectIndex[newId] = projectFile.absolutePath();
-      error = core::writeStringMapToFile(indexFilePath, projectIndex);
-      if (error)
-         return error;
-
-      projectId = newId;
-   }
-
-   // now we have the id, use it to get the directory
-   FilePath projectScratchPath = projDir.complete(projectId);
-   error = projectScratchPath.ensureDirectory();
+   // now add context id to form scratch path
+   FilePath scratchPath = projectUserDir.complete(userSettings().contextId());
+   Error error = scratchPath.ensureDirectory();
    if (error)
       return error;
 
    // return the path
-   *pScratchPath = projectScratchPath;
+   *pScratchPath = scratchPath;
    return Success();
 }
 

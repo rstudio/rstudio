@@ -15,9 +15,6 @@
 
 #include <map>
 
-#include <boost/format.hpp>
-#include <boost/regex.hpp>
-
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
@@ -87,13 +84,25 @@ Error readProjectFile(const FilePath& projectFilePath,
 
    // extract version
    Fields::const_iterator it = dcfFields.find("Version");
+
+   // no version field
    if (it == dcfFields.end())
-      return requiredFieldError("Version", pUserErrMsg);
+   {
+      *pUserErrMsg = "The project file did not include a Version attribute "
+                     "(it may have been created by a more recent version "
+                     "of RStudio)";
+      return systemError(boost::system::errc::protocol_error,
+                         ERROR_LOCATION);
+   }
+
+   // invalid version field
    pConfig->version = safe_convert::stringTo<double>(it->second, 0.0);
    if (pConfig->version == 0.0)
+   {
       return requiredFieldError("Version", pUserErrMsg);
+   }
 
-   // this version of the parser can only handle v1.0
+   // version later than 1.0
    if (pConfig->version != 1.0)
    {
       *pUserErrMsg = "The project file was created by a more recent "
@@ -101,16 +110,6 @@ Error readProjectFile(const FilePath& projectFilePath,
        return systemError(boost::system::errc::protocol_error,
                           ERROR_LOCATION);
    }
-
-   // extract id
-   it = dcfFields.find("Id");
-   if (it == dcfFields.end())
-      return requiredFieldError("Id", pUserErrMsg);
-   boost::regex guidRegex("^(\\{{0,1}([0-9a-fA-F]){8}-?([0-9a-fA-F]){4}-?([0-9a-fA-F]){4}-?([0-9a-fA-F]){4}-?([0-9a-fA-F]){12}\\}{0,1})$");
-   boost::smatch matches;
-   if (!regex_match(it->second, matches, guidRegex))
-      return requiredFieldError("Id", pUserErrMsg);
-   pConfig->id = it->second;
 
    // extract restore workspace (optional)
    it = dcfFields.find("RestoreWorkspace");
@@ -152,24 +151,24 @@ Error readProjectFile(const FilePath& projectFilePath,
 }
 
 
-Error writeProjectFile(const std::string& uuid, const FilePath& filePath)
+Error writeProjectFile(const FilePath& filePath)
 {  
    // generate project file contents
-   boost::format fmt(
+   std::string contents =
       "# R project config file\n"
       "# http://www.rstudio.org/docs/r_project/v1.0\n"
       "Version: 1.0\n"
-      "Id: %1%\n"
       "\n"
       "# Project-specific overrides to global save/load preferences\n"
       "# (Default means use the current global preference)\n"
       "RestoreWorkspace: Default\n"
       "SaveWorkspace: Default\n"
-      "AlwaysSaveHistory: Default\n");
-   std::string contents = boost::str(fmt % uuid);
+      "AlwaysSaveHistory: Default\n";
 
    // write it
-   return writeStringToFile(filePath, contents, string_utils::LineEndingNative);
+   return writeStringToFile(filePath,
+                            contents,
+                            string_utils::LineEndingNative);
 }
 
 FilePath projectFromDirectory(const FilePath& directoryPath)
