@@ -15,8 +15,6 @@
  */
 package com.google.web.bindery.requestfactory.apt;
 
-import com.google.web.bindery.autobean.shared.ValueCodex;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -30,14 +28,13 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.WildcardType;
-import javax.lang.model.util.SimpleTypeVisitor6;
 
 /**
  * Uses information in a State object to convert client types to their domain
  * equivalents. This types assumes that any incoming type has already been
  * determined to be a transportable type.
  */
-class ClientToDomainMapper extends SimpleTypeVisitor6<TypeMirror, State> {
+class ClientToDomainMapper extends TypeVisitorBase<TypeMirror> {
   public static class UnmappedTypeException extends RuntimeException {
     private final TypeMirror clientType;
 
@@ -83,12 +80,8 @@ class ClientToDomainMapper extends SimpleTypeVisitor6<TypeMirror, State> {
       // InstanceRequest<FooProxy, X> -> FooDomain
       return convertSingleParamType(x, state.instanceRequestType, 1, state);
     }
-    for (Class<?> clazz : ValueCodex.getAllValueTypes()) {
-      if (clazz.isPrimitive()) {
-        continue;
-      }
-
-      if (state.types.isAssignable(x, state.findType(clazz))) {
+    for (DeclaredType valueType : getValueTypes(state)) {
+      if (state.types.isAssignable(x, valueType)) {
         // Value types map straight through
         return x;
       }

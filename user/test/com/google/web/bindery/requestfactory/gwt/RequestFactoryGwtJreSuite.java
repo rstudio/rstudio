@@ -15,6 +15,7 @@
  */
 package com.google.web.bindery.requestfactory.gwt;
 
+import com.google.web.bindery.requestfactory.apt.RfValidatorTest;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.RequestFactoryModelTest;
 
 import junit.framework.Test;
@@ -33,6 +34,7 @@ public class RequestFactoryGwtJreSuite {
     TestSuite suite = new TestSuite(
         "requestfactory package tests that require the JRE and gwt-user");
     suite.addTestSuite(RequestFactoryModelTest.class);
+    suite.addTestSuite(RfValidatorTest.class);
 
     return suite;
   }

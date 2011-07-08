@@ -24,6 +24,7 @@ import com.google.web.bindery.requestfactory.shared.ProxyFor;
 import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.Service;
+import com.google.web.bindery.requestfactory.shared.SkipInterfaceValidation;
 
 import java.util.Arrays;
 import java.util.logging.Logger;
@@ -32,7 +33,13 @@ import java.util.logging.Logger;
  * A JRE version of {@link BoxesAndPrimitivesTest} with additional validation
  * tests.
  */
+@SkipInterfaceValidation
 public class BoxesAndPrimitivesJreTest extends BoxesAndPrimitivesTest {
+  /*
+   * The SkipInterfaceValidation annotation is to prevent RfValidator from
+   * blowing up. This annotation, the inner interfaces, and the tests here can
+   * be removed when RequestFactoryInterfaceValidator is retired.
+   */
 
   @Service(ServiceImpl.class)
   interface ContextMismatchedParameterA extends RequestContext {

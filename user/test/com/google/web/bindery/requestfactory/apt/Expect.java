@@ -13,23 +13,31 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.web.bindery.requestfactory.shared;
+package com.google.web.bindery.requestfactory.apt;
 
 import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 
 /**
- * Annotation on methods of {@link RequestContext}, {@link EntityProxy}, or
- * {@link ValueProxy} interfaces so that the
- * {@link com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator
- * RequestFactoryInterfaceValidator} doesn't enforce the presence of a
- * corresponding method on the domain type.
+ * This annotation is applied to any element that is expected to be the target
+ * of an error or a warning from the validator.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.PACKAGE, ElementType.TYPE})
-public @interface SkipInterfaceValidation {
+@interface Expect {
+  /**
+   * The arguments to be passed to {@code method}.
+   */
+  String[] args() default {};
+
+  /**
+   * The name of a method defined in {@link Messages}.
+   */
+  String method();
+
+  /**
+   * Specifies whether the diagnostic will be a warning or an error.
+   */
+  boolean warning() default false;
 }

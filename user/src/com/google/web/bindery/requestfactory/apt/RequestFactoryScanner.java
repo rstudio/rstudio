@@ -33,18 +33,19 @@ class RequestFactoryScanner extends ScannerBase<Void> {
       return null;
     }
     if (!x.getParameters().isEmpty()) {
-      state.poison(x, "This method must have no parameters");
+      state.poison(x, Messages.factoryNoMethodParameters());
     }
     TypeMirror returnType = x.getReturnType();
     if (state.types.isAssignable(returnType, state.requestContextType)) {
       Element returnTypeElement = state.types.asElement(returnType);
       if (!returnTypeElement.getKind().equals(ElementKind.INTERFACE)) {
-        state.poison(x, "The return type %s must be an interface", returnType.toString());
+        state.poison(x, Messages.factoryMustReturnInterface(returnTypeElement.getSimpleName()));
       } else {
         state.maybeScanContext((TypeElement) returnTypeElement);
       }
     } else {
-      state.poison(x, "This method must return a %s", state.requestContextType);
+      state.poison(x, Messages.factoryMustBeAssignable(state.requestContextType.asElement()
+          .getSimpleName()));
     }
     return null;
   }

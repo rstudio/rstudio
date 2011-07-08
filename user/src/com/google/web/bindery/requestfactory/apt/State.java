@@ -15,9 +15,6 @@
  */
 package com.google.web.bindery.requestfactory.apt;
 
-import com.google.web.bindery.requestfactory.shared.JsonRpcProxy;
-import com.google.web.bindery.requestfactory.shared.ProxyFor;
-import com.google.web.bindery.requestfactory.shared.ProxyForName;
 import com.google.web.bindery.requestfactory.shared.SkipInterfaceValidation;
 
 import java.io.PrintWriter;
@@ -48,6 +45,20 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
 class State {
+  /**
+   * Slightly tweaked implementation used when running tests.
+   */
+  static class ForTesting extends State {
+    public ForTesting(ProcessingEnvironment processingEnv) {
+      super(processingEnv);
+    }
+
+    @Override
+    boolean respectAnnotations() {
+      return false;
+    }
+  }
+
   private static class Job {
     public final TypeElement element;
     public final ScannerBase<?> scanner;
@@ -103,19 +114,20 @@ class State {
   final DeclaredType requestType;
   final DeclaredType serviceLocatorType;
   final Set<TypeElement> seen;
-  final boolean suppressErrors;
-  final boolean suppressWarnings;
   final Types types;
   final DeclaredType valueProxyType;
-  final boolean verbose;
   private final Map<TypeElement, TypeElement> clientToDomainMain;
   private final List<Job> jobs = new LinkedList<Job>();
   private final Messager messager;
   private boolean poisoned;
+  private final boolean suppressErrors;
+  private final boolean suppressWarnings;
+  private final boolean verbose;
   /**
    * Prevents duplicate messages from being emitted.
    */
   private final Map<Element, Set<String>> previousMessages = new HashMap<Element, Set<String>>();
+
   private final Set<TypeElement> proxiesRequiringMapping = new LinkedHashSet<TypeElement>();
 
   public State(ProcessingEnvironment processingEnv) {
@@ -123,9 +135,9 @@ class State {
     elements = processingEnv.getElementUtils();
     messager = processingEnv.getMessager();
     types = processingEnv.getTypeUtils();
-    verbose = Boolean.parseBoolean(processingEnv.getOptions().get("verbose"));
     suppressErrors = Boolean.parseBoolean(processingEnv.getOptions().get("suppressErrors"));
     suppressWarnings = Boolean.parseBoolean(processingEnv.getOptions().get("suppressWarnings"));
+    verbose = Boolean.parseBoolean(processingEnv.getOptions().get("verbose"));
 
     entityProxyType = findType("EntityProxy");
     entityProxyIdType = findType("EntityProxyId");
@@ -197,13 +209,21 @@ class State {
     }).scan(x, this);
   }
 
+  /**
+   * Print a warning message if verbose mode is enabled. A warning is used to
+   * ensure that the message shows up in Eclipse's editor (a note only makes it
+   * into the error console).
+   */
+  public void debug(Element elt, String message, Object... args) {
+    if (verbose) {
+      messager.printMessage(Kind.WARNING, String.format(message, args), elt);
+    }
+  }
+
   public void executeJobs() {
     while (!jobs.isEmpty()) {
       Job job = jobs.remove(0);
-      if (verbose) {
-        messager.printMessage(Kind.NOTE, String.format("Scanning %s", elements
-            .getBinaryName(job.element)));
-      }
+      debug(job.element, "Scanning");
       try {
         job.scanner.scan(job.element, this);
       } catch (HaltException ignored) {
@@ -216,9 +236,7 @@ class State {
     }
     for (TypeElement proxyElement : proxiesRequiringMapping) {
       if (!getClientToDomainMap().containsKey(proxyElement)) {
-        poison(proxyElement, "A proxy must be annotated with %s, %s, or %s", ProxyFor.class
-            .getSimpleName(), ProxyForName.class.getSimpleName(), JsonRpcProxy.class
-            .getSimpleName());
+        poison(proxyElement, Messages.proxyMustBeAnnotated());
       }
     }
   }
@@ -287,28 +305,29 @@ class State {
    * eclosing type is annotated with {@link SkipInterfaceValidation} the message
    * will be dropped.
    */
-  public void poison(Element elt, String message, Object... args) {
+  public void poison(Element elt, String message) {
     if (suppressErrors) {
       return;
     }
 
-    String formatted = String.format(message, args);
-    if (squelchMessage(elt, formatted)) {
+    if (squelchMessage(elt, message)) {
       return;
     }
 
-    Element check = elt;
-    while (check != null) {
-      if (check.getAnnotation(SkipInterfaceValidation.class) != null) {
-        return;
+    if (respectAnnotations()) {
+      Element check = elt;
+      while (check != null) {
+        if (check.getAnnotation(SkipInterfaceValidation.class) != null) {
+          return;
+        }
+        check = check.getEnclosingElement();
       }
-      check = check.getEnclosingElement();
     }
 
     if (elt == null) {
-      messager.printMessage(Kind.ERROR, formatted);
+      messager.printMessage(Kind.ERROR, message);
     } else {
-      messager.printMessage(Kind.ERROR, formatted, elt);
+      messager.printMessage(Kind.ERROR, message, elt);
     }
   }
 
@@ -320,30 +339,41 @@ class State {
    * Emits a warning message, unless the element or an enclosing element are
    * annotated with a {@code @SuppressWarnings("requestfactory")}.
    */
-  public void warn(Element elt, String message, Object... args) {
+  public void warn(Element elt, String message) {
     if (suppressWarnings) {
       return;
     }
 
-    String formatted = String.format(message, args);
-    if (squelchMessage(elt, formatted)) {
+    if (squelchMessage(elt, message)) {
       return;
     }
 
-    SuppressWarnings suppress;
-    Element check = elt;
-    while (check != null) {
-      suppress = check.getAnnotation(SuppressWarnings.class);
-      if (suppress != null) {
-        if (Arrays.asList(suppress.value()).contains("requestfactory")) {
+    if (respectAnnotations()) {
+      SuppressWarnings suppress;
+      Element check = elt;
+      while (check != null) {
+        if (check.getAnnotation(SkipInterfaceValidation.class) != null) {
           return;
         }
+        suppress = check.getAnnotation(SuppressWarnings.class);
+        if (suppress != null) {
+          if (Arrays.asList(suppress.value()).contains("requestfactory")) {
+            return;
+          }
+        }
+        check = check.getEnclosingElement();
       }
-      check = check.getEnclosingElement();
     }
 
-    messager.printMessage(Kind.WARNING, formatted
-        + "\n\nAdd @SuppressWarnings(\"requestfactory\") to dismiss.", elt);
+    messager.printMessage(Kind.WARNING, message + Messages.warnSuffix(), elt);
+  }
+
+  /**
+   * This switch allows the RfValidatorTest code to be worked on in the IDE
+   * without causing compilation failures.
+   */
+  boolean respectAnnotations() {
+    return true;
   }
 
   private boolean fastFail(TypeElement element) {

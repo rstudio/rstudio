@@ -48,14 +48,16 @@ class DomainChecker extends ScannerBase<Void> {
   static class MethodFinder extends ScannerBase<ExecutableElement> {
     private TypeElement domainType;
     private ExecutableElement found;
+    private final boolean boxReturnType;
     private final CharSequence name;
     private final TypeMirror returnType;
     private final List<TypeMirror> params;
 
     public MethodFinder(CharSequence name, TypeMirror returnType, List<TypeMirror> params,
-        State state) {
+        boolean boxReturnType, State state) {
+      this.boxReturnType = boxReturnType;
       this.name = name;
-      this.returnType = TypeSimplifier.simplify(returnType, true, state);
+      this.returnType = TypeSimplifier.simplify(returnType, boxReturnType, state);
       List<TypeMirror> temp = new ArrayList<TypeMirror>(params.size());
       for (TypeMirror param : params) {
         temp.add(TypeSimplifier.simplify(param, false, state));
@@ -80,11 +82,9 @@ class DomainChecker extends ScannerBase<Void> {
           returnTypeMatches = true;
         } else {
           TypeMirror domainReturn =
-              TypeSimplifier.simplify(domainMethod.getReturnType(), true, state);
+              TypeSimplifier.simplify(domainMethod.getReturnType(), boxReturnType, state);
           // The isSameType handles the NONE case.
-          returnTypeMatches =
-              state.types.isSameType(domainReturn, returnType)
-                  || state.types.isAssignable(domainReturn, returnType);
+          returnTypeMatches = state.types.isSubtype(domainReturn, returnType);
         }
         if (returnTypeMatches) {
           boolean paramsMatch = true;
@@ -94,8 +94,7 @@ class DomainChecker extends ScannerBase<Void> {
             assert domainParam.hasNext();
             TypeMirror requestedType = lookFor.next();
             TypeMirror paramType = TypeSimplifier.simplify(domainParam.next(), false, state);
-            if (!state.types.isSameType(requestedType, paramType)
-                && !state.types.isAssignable(requestedType, paramType)) {
+            if (!state.types.isSubtype(requestedType, paramType)) {
               paramsMatch = false;
             }
           }
@@ -134,11 +133,11 @@ class DomainChecker extends ScannerBase<Void> {
    * This is used as the target for errors since generic methods show up as
    * synthetic elements that don't correspond to any source.
    */
-  private TypeElement checkedType;
+  private TypeElement checkedElement;
   private boolean currentTypeIsProxy;
+  private TypeElement domainElement;
   private boolean requireInstanceDomainMethods;
   private boolean requireStaticDomainMethods;
-  private TypeElement domainType;
 
   @Override
   public Void visitExecutable(ExecutableElement clientMethodElement, State state) {
@@ -152,7 +151,7 @@ class DomainChecker extends ScannerBase<Void> {
       return null;
     }
 
-    ExecutableType clientMethod = viewIn(checkedType, clientMethodElement, state);
+    ExecutableType clientMethod = viewIn(checkedElement, clientMethodElement, state);
     List<TypeMirror> lookFor = new ArrayList<TypeMirror>();
     // Convert client method signature to domain types
     TypeMirror returnType;
@@ -173,16 +172,23 @@ class DomainChecker extends ScannerBase<Void> {
     if (currentTypeIsProxy && isSetter(clientMethodElement, state)) {
       // Look for void setFoo(...)
       domainMethod =
-          new MethodFinder(name, state.types.getNoType(TypeKind.VOID), lookFor, state).scan(
-              domainType, state);
+          new MethodFinder(name, state.types.getNoType(TypeKind.VOID), lookFor, false, state).scan(
+              domainElement, state);
       if (domainMethod == null) {
         // Try a builder style
         domainMethod =
-            new MethodFinder(name, domainType.asType(), lookFor, state).scan(domainType, state);
+            new MethodFinder(name, domainElement.asType(), lookFor, false, state).scan(
+                domainElement, state);
       }
     } else {
-      // The usual case for getters and all service methods
-      domainMethod = new MethodFinder(name, returnType, lookFor, state).scan(domainType, state);
+      /*
+       * The usual case for getters and all service methods. Only box return
+       * types when matching context methods since there's a significant
+       * semantic difference between a null Integer and 0.
+       */
+      domainMethod =
+          new MethodFinder(name, returnType, lookFor, !currentTypeIsProxy, state).scan(
+              domainElement, state);
     }
 
     if (domainMethod == null) {
@@ -194,7 +200,7 @@ class DomainChecker extends ScannerBase<Void> {
       }
       sb.append(")");
 
-      state.poison(clientMethodElement, "Could not find domain method similar to %s", sb);
+      state.poison(clientMethodElement, Messages.domainMissingMethod(sb));
       return null;
     }
 
@@ -203,21 +209,19 @@ class DomainChecker extends ScannerBase<Void> {
      * InstanceRequests assume instance methods on the domain type.
      */
     boolean isInstanceRequest =
-        state.types.isAssignable(clientMethod.getReturnType(), state.instanceRequestType);
+        state.types.isSubtype(clientMethod.getReturnType(), state.instanceRequestType);
 
     if ((isInstanceRequest || requireInstanceDomainMethods)
         && domainMethod.getModifiers().contains(Modifier.STATIC)) {
-      state.poison(checkedType, "Found static domain method %s when instance method required",
-          domainMethod.getSimpleName());
+      state.poison(checkedElement, Messages.domainMethodWrongModifier(false, domainMethod
+          .getSimpleName()));
     }
     if (!isInstanceRequest && requireStaticDomainMethods
         && !domainMethod.getModifiers().contains(Modifier.STATIC)) {
-      state.poison(checkedType, "Found instance domain method %s when static method required",
-          domainMethod.getSimpleName());
+      state.poison(checkedElement, Messages.domainMethodWrongModifier(true, domainMethod
+          .getSimpleName()));
     }
-    if (state.verbose) {
-      state.warn(clientMethodElement, "Found domain method %s", domainMethod.toString());
-    }
+    state.debug(clientMethodElement, "Found domain method %s", domainMethod.toString());
 
     return null;
   }
@@ -225,12 +229,11 @@ class DomainChecker extends ScannerBase<Void> {
   @Override
   public Void visitType(TypeElement clientTypeElement, State state) {
     TypeMirror clientType = clientTypeElement.asType();
-    checkedType = clientTypeElement;
-    boolean isEntityProxy = state.types.isAssignable(clientType, state.entityProxyType);
-    currentTypeIsProxy =
-        isEntityProxy || state.types.isAssignable(clientType, state.valueProxyType);
-    domainType = state.getClientToDomainMap().get(clientTypeElement);
-    if (domainType == null) {
+    checkedElement = clientTypeElement;
+    boolean isEntityProxy = state.types.isSubtype(clientType, state.entityProxyType);
+    currentTypeIsProxy = isEntityProxy || state.types.isSubtype(clientType, state.valueProxyType);
+    domainElement = state.getClientToDomainMap().get(clientTypeElement);
+    if (domainElement == null) {
       // A proxy with an unresolved domain type (e.g. ProxyForName(""))
       return null;
     }
@@ -243,11 +246,10 @@ class DomainChecker extends ScannerBase<Void> {
       requireInstanceDomainMethods = true;
       if (!hasProxyLocator(clientTypeElement, state)) {
         // Domain types without a Locator should have a no-arg constructor
-        if (!hasNoArgConstructor(domainType)) {
-          state.warn(clientTypeElement, "The domain type %s has no default constructor."
-              + " Calling %s.create(%s.class) will cause a server error.", domainType,
-              state.requestContextType.asElement().getSimpleName(), clientTypeElement
-                  .getSimpleName());
+        if (!hasNoArgConstructor(domainElement)) {
+          state.warn(clientTypeElement, Messages.domainNoDefaultConstructor(domainElement
+              .getSimpleName(), clientTypeElement.getSimpleName(), state.requestContextType
+              .asElement().getSimpleName()));
         }
 
         /*
@@ -279,40 +281,35 @@ class DomainChecker extends ScannerBase<Void> {
    */
   private void checkDomainEntityMethods(State state) {
     ExecutableElement getId =
-        new MethodFinder("getId", null, Collections.<TypeMirror> emptyList(), state).scan(
-            domainType, state);
+        new MethodFinder("getId", null, Collections.<TypeMirror> emptyList(), false, state).scan(
+            domainElement, state);
     if (getId == null) {
-      state.poison(checkedType, "Domain type %s does not have a getId() method", domainType
-          .asType());
+      state.poison(checkedElement, Messages.domainNoGetId(domainElement.asType()));
     } else {
       if (getId.getModifiers().contains(Modifier.STATIC)) {
-
-        state.poison(checkedType, "The domain type's getId() method must not be static");
+        state.poison(checkedElement, Messages.domainGetIdStatic());
       }
 
       // Can only check findFoo() if we have a getId
       ExecutableElement find =
-          new MethodFinder("find" + domainType.getSimpleName(), domainType.asType(), Collections
-              .singletonList(getId.getReturnType()), state).scan(domainType, state);
+          new MethodFinder("find" + domainElement.getSimpleName(), domainElement.asType(),
+              Collections.singletonList(getId.getReturnType()), false, state).scan(domainElement,
+              state);
       if (find == null) {
-        state.warn(checkedType, "The domain type %s has no %s find%s(%s) method. "
-            + "Attempting to send a %s to the server will result in a server error.", domainType
-            .asType(), domainType.getSimpleName(), domainType.getSimpleName(), getId
-            .getReturnType(), checkedType.getSimpleName());
+        state.warn(checkedElement, Messages.domainMissingFind(domainElement.asType(), domainElement
+            .getSimpleName(), getId.getReturnType(), checkedElement.getSimpleName()));
       } else if (!find.getModifiers().contains(Modifier.STATIC)) {
-        state.poison(checkedType, "The domain object's find%s() method is not static", domainType
-            .getSimpleName());
+        state.poison(checkedElement, Messages.domainFindNotStatic(domainElement.getSimpleName()));
       }
     }
 
     ExecutableElement getVersion =
-        new MethodFinder("getVersion", null, Collections.<TypeMirror> emptyList(), state).scan(
-            domainType, state);
+        new MethodFinder("getVersion", null, Collections.<TypeMirror> emptyList(), false, state)
+            .scan(domainElement, state);
     if (getVersion == null) {
-      state.poison(checkedType, "Domain type %s does not have a getVersion() method", domainType
-          .asType());
+      state.poison(checkedElement, Messages.domainNoGetVersion(domainElement.asType()));
     } else if (getVersion.getModifiers().contains(Modifier.STATIC)) {
-      state.poison(checkedType, "The domain type's getVersion() method must not be static");
+      state.poison(checkedElement, Messages.domainGetVersionStatic());
     }
   }
 
@@ -338,8 +335,7 @@ class DomainChecker extends ScannerBase<Void> {
     } catch (UnmappedTypeException e) {
       error = true;
       returnType = null;
-      state.warn(warnTo, "Cannot validate this method because the domain mapping for the"
-          + " return type (%s) could not be resolved to a domain type", e.getClientType());
+      state.warn(warnTo, Messages.methodNoDomainPeer(e.getClientType(), false));
     }
     for (TypeMirror param : clientMethod.getParameterTypes()) {
       try {
@@ -347,8 +343,7 @@ class DomainChecker extends ScannerBase<Void> {
       } catch (UnmappedTypeException e) {
         parameterAccumulator.add(null);
         error = true;
-        state.warn(warnTo, "Cannot validate this method because the domain mapping for a"
-            + " parameter of type (%s) could not be resolved to a domain type", e.getClientType());
+        state.warn(warnTo, Messages.methodNoDomainPeer(e.getClientType(), true));
       }
     }
     if (error) {

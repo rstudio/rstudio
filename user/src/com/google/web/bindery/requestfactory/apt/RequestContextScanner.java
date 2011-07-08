@@ -44,11 +44,11 @@ class RequestContextScanner extends ScannerBase<Void> {
       // Extract Request<Foo> type
       DeclaredType asRequest = (DeclaredType) State.viewAs(state.requestType, returnType, state);
       if (asRequest.getTypeArguments().isEmpty()) {
-        state.poison(x, "A raw return type may not be used here");
+        state.poison(x, Messages.rawType());
       } else {
         TypeMirror requestReturn = asRequest.getTypeArguments().get(0);
         if (!state.isTransportableType(requestReturn)) {
-          state.poison(x, "The type %s cannot be used as a return value", requestReturn.toString());
+          state.poison(x, Messages.untransportableType(requestReturn));
         }
       }
     } else if (state.types.isAssignable(returnType, state.instanceRequestType)) {
@@ -56,23 +56,20 @@ class RequestContextScanner extends ScannerBase<Void> {
       DeclaredType asInstanceRequest =
           (DeclaredType) State.viewAs(state.instanceRequestType, returnType, state);
       if (asInstanceRequest.getTypeArguments().isEmpty()) {
-        state.poison(x, "A raw return type may not be used here");
+        state.poison(x, Messages.rawType());
       } else {
         TypeMirror instanceType = asInstanceRequest.getTypeArguments().get(0);
-        if (!state.isTransportableType(instanceType)) {
-          state.poison(x, "The type %s cannot be used as an invocation target", instanceType
-              .toString());
-        }
+        state.maybeScanProxy((TypeElement) state.types.asElement(instanceType));
         TypeMirror requestReturn = asInstanceRequest.getTypeArguments().get(1);
         if (!state.isTransportableType(requestReturn)) {
-          state.poison(x, "The type %s cannot be used as a return value", requestReturn.toString());
+          state.poison(x, Messages.untransportableType(requestReturn));
         }
       }
     } else if (isSetter(x, state)) {
       // Parameter checked in visitVariable
     } else {
-      state.poison(x, "The return type must be a %s or %s", state.requestType.asElement()
-          .getSimpleName(), state.instanceRequestType.asElement().getSimpleName());
+      state.poison(x, Messages.contextRequiredReturnTypes(state.requestType.asElement()
+          .getSimpleName(), state.instanceRequestType.asElement().getSimpleName()));
     }
     return super.visitExecutable(x, state);
   }
@@ -83,9 +80,8 @@ class RequestContextScanner extends ScannerBase<Void> {
     ServiceName serviceName = x.getAnnotation(ServiceName.class);
     JsonRpcService jsonRpcService = x.getAnnotation(JsonRpcService.class);
     if (service == null && serviceName == null && jsonRpcService == null) {
-      state.poison(x, "A %s must be annotated with %s, %s, or %s", state.types.asElement(
-          state.requestContextType).getSimpleName(), Service.class.getSimpleName(),
-          ServiceName.class.getSimpleName(), JsonRpcService.class.getSimpleName());
+      state.poison(x, Messages.contextMustBeAnnotated(state.requestContextType.asElement()
+          .getSimpleName()));
     }
     if (service != null) {
       poisonIfAnnotationPresent(state, x, serviceName, jsonRpcService);
@@ -104,8 +100,7 @@ class RequestContextScanner extends ScannerBase<Void> {
       TypeElement domain =
           state.elements.getTypeElement(BinaryName.toSourceName(serviceName.value()));
       if (domain == null) {
-        state.warn(x, "Cannot fully validate context since type %s is not available", serviceName
-            .value());
+        state.warn(x, Messages.contextMissingDomainType(serviceName.value()));
       } else {
         state.addMapping(x, domain);
       }
@@ -120,7 +115,7 @@ class RequestContextScanner extends ScannerBase<Void> {
   public Void visitTypeParameter(TypeParameterElement x, State state) {
     for (TypeMirror bound : x.getBounds()) {
       if (!state.isTransportableType(bound)) {
-        state.poison(x, "The type %s cannot be used here", bound);
+        state.poison(x, Messages.untransportableType(bound));
       }
     }
     return super.visitTypeParameter(x, state);
@@ -129,7 +124,7 @@ class RequestContextScanner extends ScannerBase<Void> {
   @Override
   public Void visitVariable(VariableElement x, State state) {
     if (!state.isTransportableType(x.asType())) {
-      state.poison(x, "The type %s cannot be used here", x.asType());
+      state.poison(x, Messages.untransportableType(x.asType()));
     }
     return super.visitVariable(x, state);
   }

@@ -42,7 +42,7 @@ class ScannerBase<R> extends ElementScanner6<R, State> {
       Annotation... annotations) {
     for (Annotation a : annotations) {
       if (a != null) {
-        state.poison(x, "Redundant annotation: %s", a.annotationType().getSimpleName());
+        state.poison(x, Messages.redundantAnnotation(a.annotationType().getSimpleName()));
       }
     }
   }

@@ -41,10 +41,10 @@ class ProxyScanner extends ScannerBase<Void> {
     if (isGetter(x, state)) {
       TypeMirror returnType = x.getReturnType();
       if (!state.isTransportableType(returnType)) {
-        state.poison(x, "The return type %s cannot be used here", returnType.toString());
+        state.poison(x, Messages.untransportableType(returnType));
       }
     } else if (!isSetter(x, state)) {
-      state.poison(x, "Only getters and setters allowed");
+      state.poison(x, Messages.proxyOnlyGettersSetters());
     }
     // Parameters checked by visitVariable
     return super.visitExecutable(x, state);
@@ -72,8 +72,7 @@ class ProxyScanner extends ScannerBase<Void> {
       TypeElement domain =
           state.elements.getTypeElement(BinaryName.toSourceName(proxyForName.value()));
       if (domain == null) {
-        state.warn(x, "Cannot fully validate proxy since type %s is not available", proxyForName
-            .value());
+        state.warn(x, Messages.proxyMissingDomainType(proxyForName.value()));
       }
       state.addMapping(x, domain);
     }
@@ -86,7 +85,7 @@ class ProxyScanner extends ScannerBase<Void> {
   @Override
   public Void visitVariable(VariableElement x, State state) {
     if (!state.isTransportableType(x.asType())) {
-      state.poison(x, "The type %s cannot be used here", x.asType().toString());
+      state.poison(x, Messages.untransportableType(x.asType()));
     }
     return super.visitVariable(x, state);
   }

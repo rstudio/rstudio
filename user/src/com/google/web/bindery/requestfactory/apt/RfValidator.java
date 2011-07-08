@@ -34,12 +34,13 @@ import javax.lang.model.util.ElementFilter;
 @SupportedOptions({"suppressErrors", "suppressWarnings", "verbose"})
 public class RfValidator extends AbstractProcessor {
 
+  private boolean forceErrors;
   private State state;
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     if (state == null) {
-      state = new State(processingEnv);
+      state = forceErrors ? new State.ForTesting(processingEnv) : new State(processingEnv);
     }
 
     try {
@@ -56,5 +57,9 @@ public class RfValidator extends AbstractProcessor {
       // Already logged. Let any unhandled RuntimeExceptions fall out.
     }
     return false;
+  }
+
+  void setForceErrors(boolean forceErrors) {
+    this.forceErrors = forceErrors;
   }
 }

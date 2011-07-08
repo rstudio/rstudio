@@ -15,8 +15,6 @@
  */
 package com.google.web.bindery.requestfactory.apt;
 
-import com.google.web.bindery.autobean.shared.ValueCodex;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -28,12 +26,11 @@ import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.WildcardType;
-import javax.lang.model.util.SimpleTypeVisitor6;
 
 /**
  * Scans a TypeMirror to determine if it can be transported by RequestFactory.
  */
-class TransportableTypeVisitor extends SimpleTypeVisitor6<Boolean, State> {
+class TransportableTypeVisitor extends TypeVisitorBase<Boolean> {
 
   /**
    * AutoBeans supports arbitrary parameterizations, but there's work that needs
@@ -62,12 +59,8 @@ class TransportableTypeVisitor extends SimpleTypeVisitor6<Boolean, State> {
       }
       return asId.getTypeArguments().get(0).accept(this, state);
     }
-    for (Class<?> clazz : ValueCodex.getAllValueTypes()) {
-      if (clazz.isPrimitive()) {
-        continue;
-      }
-
-      if (state.types.isAssignable(t, state.findType(clazz))) {
+    for (DeclaredType valueType : getValueTypes(state)) {
+      if (state.types.isAssignable(t, valueType)) {
         return true;
       }
     }
