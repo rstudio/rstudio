@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(DListElement.TAG)
 public class DListElement extends Element {
 
-  static final String TAG = "dl";
+  public static final String TAG = "dl";
 
   public static DListElement as(Element elem) {
     assert elem.getTagName().equalsIgnoreCase(TAG);

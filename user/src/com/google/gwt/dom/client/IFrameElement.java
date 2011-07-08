@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(IFrameElement.TAG)
 public class IFrameElement extends Element {
 
-  static final String TAG = "iframe";
+  public static final String TAG = "iframe";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(AnchorElement.TAG)
 public class AnchorElement extends Element {
 
-  static final String TAG = "a";
+  public static final String TAG = "a";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

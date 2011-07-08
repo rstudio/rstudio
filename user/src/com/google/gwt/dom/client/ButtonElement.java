@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(ButtonElement.TAG)
 public class ButtonElement extends Element {
 
-  static final String TAG = "button";
+  public static final String TAG = "button";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

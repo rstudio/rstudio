@@ -21,8 +21,13 @@ package com.google.gwt.dom.builder.shared;
 public class HtmlOptionBuilderTest extends ElementBuilderTestBase<OptionBuilder> {
 
   @Override
-  protected OptionBuilder createElementBuilder() {
-    return HtmlBuilderFactory.get().createOptionBuilder();
+  protected OptionBuilder createElementBuilder(ElementBuilderFactory factory) {
+    return factory.createOptionBuilder();
+  }
+
+  @Override
+  protected OptionBuilder endElement(ElementBuilderBase<?> builder) {
+    return builder.endOption();
   }
 
   @Override

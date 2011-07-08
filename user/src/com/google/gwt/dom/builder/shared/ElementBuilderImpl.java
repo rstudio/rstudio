@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Utility implementation of {@link ElementBuilderBase} that handles state, but
+ * Base implementation of {@link ElementBuilderBase} that handles state, but
  * nothing else.
  * 
  * <p>
@@ -101,7 +101,11 @@ public abstract class ElementBuilderImpl {
      * End the tag. The tag name is safe because it comes from the stack, and
      * tag names are checked before they are added to the stack.
      */
-    doEndTagImpl(tagName);
+    if (getCurrentBuilder().isEndTagForbidden()) {
+      doEndStartTagImpl();
+    } else {
+      doEndTagImpl(tagName);
+    }
 
     // Popup the item off the top of the stack.
     isStartTagOpen = false; // Closed because this element was added.
@@ -162,17 +166,23 @@ public abstract class ElementBuilderImpl {
   public void html(SafeHtml html) {
     assertStartTagOpen("html cannot be set on an element that already "
         + "contains other content or elements.");
-    maybeCloseStartTag();
-    isHtmlOrTextAdded = true;
+    lockCurrentElement();
     doHtmlImpl(html);
   }
 
   public void onStart(String tagName, ElementBuilderBase<?> builder) {
-    // Check that we aren't creating another top level element.
     if (isEmpty) {
       isEmpty = false;
     } else if (stackTags.size() == 0) {
+      // Check that we aren't creating another top level element.
       throw new IllegalStateException("You can only build one top level element.");
+    } else {
+      // Check that the element supports children.
+      assertEndTagNotForbidden(getCurrentTagName() + " does not support child elements.");
+      if (!builder.isChildElementSupported()) {
+        throw new UnsupportedOperationException(getCurrentTagName()
+            + " does not support child elements.");
+      }
     }
 
     // Check that asElement hasn't already been called.
@@ -203,8 +213,7 @@ public abstract class ElementBuilderImpl {
   public void text(String text) {
     assertStartTagOpen("text cannot be set on an element that already "
         + "contains other content or elements.");
-    maybeCloseStartTag();
-    isHtmlOrTextAdded = true;
+    lockCurrentElement();
     doTextImpl(text);
   }
 
@@ -262,6 +271,12 @@ public abstract class ElementBuilderImpl {
   protected abstract void doCloseStyleAttributeImpl();
 
   /**
+   * Self-close the start tag. This method is called for elements that forbid
+   * the end tag.
+   */
+  protected abstract void doEndStartTagImpl();
+
+  /**
    * End the specified tag.
    * 
    * @param tagName the name of the tag to end
@@ -305,6 +320,28 @@ public abstract class ElementBuilderImpl {
   protected void endAllTags() {
     while (!stackTags.isEmpty()) {
       end();
+    }
+  }
+
+  /**
+   * Lock the current element, preventing any additional changes to it. The only
+   * valid option is to call {@link #end()}.
+   */
+  protected void lockCurrentElement() {
+    maybeCloseStartTag();
+    assertEndTagNotForbidden(getCurrentTagName() + " does not support html.");
+    isHtmlOrTextAdded = true;
+  }
+
+  /**
+   * Assert that the current builder does not forbid end tags.
+   * 
+   * @param message the error message if not supported
+   * @throw {@link UnsupportedOperationException} if not supported
+   */
+  private void assertEndTagNotForbidden(String message) {
+    if (getCurrentBuilder().isEndTagForbidden()) {
+      throw new UnsupportedOperationException(message);
     }
   }
 
@@ -353,7 +390,14 @@ public abstract class ElementBuilderImpl {
     maybeCloseStyleAttribute();
     if (isStartTagOpen) {
       isStartTagOpen = false;
-      doCloseStartTagImpl();
+      /*
+       * Close the start tag, unless the end tag is forbidden. If the end tag is
+       * forbidden, the only valid call is to #end(), which will self end the
+       * start tag.
+       */
+      if (!getCurrentBuilder().isEndTagForbidden()) {
+        doCloseStartTagImpl();
+      }
     }
   }
 

@@ -127,7 +127,462 @@ public interface ElementBuilderBase<T extends ElementBuilderBase<?>> {
    *           specified class
    * @see #end()
    */
+  <B extends ElementBuilderBase<?>> B endAnchor();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endArea();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endAudio();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endBase();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endBlockQuote();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endBody();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endBR();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endButton();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endCanvas();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endCol();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endColGroup();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
   <B extends ElementBuilderBase<?>> B endDiv();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endDList();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endFieldSet();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endForm();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endFrame();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endFrameSet();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endH1();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endH2();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endH3();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endH4();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endH5();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endH6();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endHead();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endHR();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endIFrame();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endImage();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endInput();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endLabel();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endLegend();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endLI();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endLink();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endMap();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endMeta();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endOList();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endOptGroup();
 
   /**
    * End the current element.
@@ -153,7 +608,254 @@ public interface ElementBuilderBase<T extends ElementBuilderBase<?>> {
    *           specified class
    * @see #end()
    */
+  <B extends ElementBuilderBase<?>> B endParagraph();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endParam();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endPre();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endQuote();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endScript();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
   <B extends ElementBuilderBase<?>> B endSelect();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endSource();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endSpan();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endStyle();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endTable();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endTableCaption();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endTBody();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endTD();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endTextArea();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endTFoot();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endTH();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endTHead();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endTR();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endUList();
+
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
+  <B extends ElementBuilderBase<?>> B endVideo();
 
   /**
    * Return the built DOM as an {@link Element}.
@@ -188,11 +890,111 @@ public interface ElementBuilderBase<T extends ElementBuilderBase<?>> {
   T id(String id);
 
   /**
+   * Check if child elements are supported.
+   * 
+   * @return true if supported, false if not.
+   */
+  boolean isChildElementSupported();
+
+  /**
+   * Check if an end tag is forbidden for this element. If the end tag is
+   * forbidden, then setting inner html or text or appending an element will
+   * trigger an {@link UnsupportedOperationException}.
+   * 
+   * @return true if forbidden, false if not
+   */
+  boolean isEndTagForbidden();
+
+  /**
    * Language code defined in RFC 1766.
    * 
    * @return this builder
    */
   T lang(String lang);
+
+  /**
+   * Append a anchor element.
+   * 
+   * @return the builder for the new element
+   */
+  AnchorBuilder startAnchor();
+
+  /**
+   * Append a area element.
+   * 
+   * @return the builder for the new element
+   */
+  AreaBuilder startArea();
+
+  /**
+   * Append a audio element.
+   * 
+   * @return the builder for the new element
+   */
+  AudioBuilder startAudio();
+
+  /**
+   * Append a base element.
+   * 
+   * @return the builder for the new element
+   */
+  BaseBuilder startBase();
+
+  /**
+   * Append a block quote element.
+   * 
+   * @return the builder for the new element
+   */
+  QuoteBuilder startBlockQuote();
+
+  /**
+   * Append a body element.
+   * 
+   * @return the builder for the new element
+   */
+  BodyBuilder startBody();
+
+  /**
+   * Append a br element.
+   * 
+   * @return the builder for the new element
+   */
+  BRBuilder startBR();
+
+  /**
+   * Append an &lt;input type='button'&gt; element.
+   * 
+   * @return the builder for the new element
+   */
+  InputBuilder startButtonInput();
+
+  /**
+   * Append a canvas element.
+   * 
+   * @return the builder for the new element
+   */
+  CanvasBuilder startCanvas();
+
+  /**
+   * Append an &lt;input type='check'&gt; element.
+   * 
+   * @return the builder for the new element
+   */
+  InputBuilder startCheckInput();
+
+  /**
+   * Append a tablecol element.
+   * 
+   * @return the builder for the new element
+   */
+  TableColBuilder startCol();
+
+  /**
+   * Append a tablecol element.
+   * 
+   * @return the builder for the new element
+   */
+  TableColBuilder startColGroup();
 
   /**
    * Append a div element.
@@ -202,6 +1004,188 @@ public interface ElementBuilderBase<T extends ElementBuilderBase<?>> {
   DivBuilder startDiv();
 
   /**
+   * Append a dlist element.
+   * 
+   * @return the builder for the new element
+   */
+  DListBuilder startDList();
+
+  /**
+   * Append a fieldset element.
+   * 
+   * @return the builder for the new element
+   */
+  FieldSetBuilder startFieldSet();
+
+  /**
+   * Append an &lt;input type='file'&gt; element.
+   * 
+   * @return the builder for the new element
+   */
+  InputBuilder startFileInput();
+
+  /**
+   * Append a form element.
+   * 
+   * @return the builder for the new element
+   */
+  FormBuilder startForm();
+
+  /**
+   * Append a frame element.
+   * 
+   * @return the builder for the new element
+   */
+  FrameBuilder startFrame();
+
+  /**
+   * Append a frameset element.
+   * 
+   * @return the builder for the new element
+   */
+  FrameSetBuilder startFrameSet();
+
+  /**
+   * Append a heading element.
+   * 
+   * @return the builder for the new element
+   */
+  HeadingBuilder startH1();
+
+  /**
+   * Append a heading element.
+   * 
+   * @return the builder for the new element
+   */
+  HeadingBuilder startH2();
+
+  /**
+   * Append a heading element.
+   * 
+   * @return the builder for the new element
+   */
+  HeadingBuilder startH3();
+
+  /**
+   * Append a heading element.
+   * 
+   * @return the builder for the new element
+   */
+  HeadingBuilder startH4();
+
+  /**
+   * Append a heading element.
+   * 
+   * @return the builder for the new element
+   */
+  HeadingBuilder startH5();
+
+  /**
+   * Append a heading element.
+   * 
+   * @return the builder for the new element
+   */
+  HeadingBuilder startH6();
+
+  /**
+   * Append a head element.
+   * 
+   * @return the builder for the new element
+   */
+  HeadBuilder startHead();
+
+  /**
+   * Append an &lt;input type='hidden'&gt; element.
+   * 
+   * @return the builder for the new element
+   */
+  InputBuilder startHiddenInput();
+
+  /**
+   * Append a hr element.
+   * 
+   * @return the builder for the new element
+   */
+  HRBuilder startHR();
+
+  /**
+   * Append a iframe element.
+   * 
+   * @return the builder for the new element
+   */
+  IFrameBuilder startIFrame();
+
+  /**
+   * Append a image element.
+   * 
+   * @return the builder for the new element
+   */
+  ImageBuilder startImage();
+
+  /**
+   * Append an &lt;input type='image'&gt; element.
+   * 
+   * @return the builder for the new element
+   */
+  InputBuilder startImageInput();
+
+  /**
+   * Append a label element.
+   * 
+   * @return the builder for the new element
+   */
+  LabelBuilder startLabel();
+
+  /**
+   * Append a legend element.
+   * 
+   * @return the builder for the new element
+   */
+  LegendBuilder startLegend();
+
+  /**
+   * Append a li element.
+   * 
+   * @return the builder for the new element
+   */
+  LIBuilder startLI();
+
+  /**
+   * Append a link element.
+   * 
+   * @return the builder for the new element
+   */
+  LinkBuilder startLink();
+
+  /**
+   * Append a map element.
+   * 
+   * @return the builder for the new element
+   */
+  MapBuilder startMap();
+
+  /**
+   * Append a meta element.
+   * 
+   * @return the builder for the new element
+   */
+  MetaBuilder startMeta();
+
+  /**
+   * Append a olist element.
+   * 
+   * @return the builder for the new element
+   */
+  OListBuilder startOList();
+
+  /**
+   * Append a optgroup element.
+   * 
+   * @return the builder for the new element
+   */
+  OptGroupBuilder startOptGroup();
+
+  /**
    * Append an option element.
    * 
    * @return the builder for the new element
@@ -209,11 +1193,201 @@ public interface ElementBuilderBase<T extends ElementBuilderBase<?>> {
   OptionBuilder startOption();
 
   /**
+   * Append a paragraph element.
+   * 
+   * @return the builder for the new element
+   */
+  ParagraphBuilder startParagraph();
+
+  /**
+   * Append a param element.
+   * 
+   * @return the builder for the new element
+   */
+  ParamBuilder startParam();
+
+  /**
+   * Append an &lt;input type='password'&gt; element.
+   * 
+   * @return the builder for the new element
+   */
+  InputBuilder startPasswordInput();
+
+  /**
+   * Append a pre element.
+   * 
+   * @return the builder for the new element
+   */
+  PreBuilder startPre();
+
+  /**
+   * Append a button element with type "button".
+   * 
+   * @return the builder for the new element
+   */
+  ButtonBuilder startPushButton();
+
+  /**
+   * Append a quote element.
+   * 
+   * @return the builder for the new element
+   */
+  QuoteBuilder startQuote();
+
+  /**
+   * Append an &lt;input type='radio'&gt; element.
+   * 
+   * @param name name the name of the radio input (used for grouping)
+   * @return the builder for the new element
+   */
+  InputBuilder startRadioInput(String name);
+
+  /**
+   * Append a button element with type "reset".
+   * 
+   * @return the builder for the new element
+   */
+  ButtonBuilder startResetButton();
+
+  /**
+   * Append an &lt;input type='reset'&gt; element.
+   * 
+   * @return the builder for the new element
+   */
+  InputBuilder startResetInput();
+
+  /**
+   * Append a script element.
+   * 
+   * @return the builder for the new element
+   */
+  ScriptBuilder startScript();
+
+  /**
    * Append a select element.
    * 
    * @return the builder for the new element
    */
   SelectBuilder startSelect();
+
+  /**
+   * Append a source element.
+   * 
+   * @return the builder for the new element
+   */
+  SourceBuilder startSource();
+
+  /**
+   * Append a span element.
+   * 
+   * @return the builder for the new element
+   */
+  SpanBuilder startSpan();
+
+  /**
+   * Append a style element.
+   * 
+   * @return the builder for the new element
+   */
+  StyleBuilder startStyle();
+
+  /**
+   * Append a button element with type "submit".
+   * 
+   * @return the builder for the new element
+   */
+  ButtonBuilder startSubmitButton();
+
+  /**
+   * Append an &lt;input type='submit'&gt; element.
+   * 
+   * @return the builder for the new element
+   */
+  InputBuilder startSubmitInput();
+
+  /**
+   * Append a table element.
+   * 
+   * @return the builder for the new element
+   */
+  TableBuilder startTable();
+
+  /**
+   * Append a table caption element.
+   * 
+   * @return the builder for the new element
+   */
+  TableCaptionBuilder startTableCaption();
+
+  /**
+   * Append a tbody element.
+   * 
+   * @return the builder for the new element
+   */
+  TableSectionBuilder startTBody();
+
+  /**
+   * Append a td element.
+   * 
+   * @return the builder for the new element
+   */
+  TableCellBuilder startTD();
+
+  /**
+   * Append a textarea element.
+   * 
+   * @return the builder for the new element
+   */
+  TextAreaBuilder startTextArea();
+
+  /**
+   * Append an &lt;input type='text'&gt; element.
+   * 
+   * @return the builder for the new element
+   */
+  InputBuilder startTextInput();
+
+  /**
+   * Append a tfoot element.
+   * 
+   * @return the builder for the new element
+   */
+  TableSectionBuilder startTFoot();
+
+  /**
+   * Append a th element.
+   * 
+   * @return the builder for the new element
+   */
+  TableCellBuilder startTH();
+
+  /**
+   * Append a thead element.
+   * 
+   * @return the builder for the new element
+   */
+  TableSectionBuilder startTHead();
+
+  /**
+   * Append a tablerow element.
+   * 
+   * @return the builder for the new element
+   */
+  TableRowBuilder startTR();
+
+  /**
+   * Append a ulist element.
+   * 
+   * @return the builder for the new element
+   */
+  UListBuilder startUList();
+
+  /**
+   * Append a video element.
+   * 
+   * @return the builder for the new element
+   */
+  VideoBuilder startVideo();
 
   /**
    * Start the {@link StylesBuilder} used to add style properties to the style

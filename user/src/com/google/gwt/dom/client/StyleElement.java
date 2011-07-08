@@ -25,7 +25,7 @@ package com.google.gwt.dom.client;
 @TagName(StyleElement.TAG)
 public class StyleElement extends Element {
 
-  static final String TAG = "style";
+  public static final String TAG = "style";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(MapElement.TAG)
 public class MapElement extends Element {
 
-  static final String TAG = "map";
+  public static final String TAG = "map";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

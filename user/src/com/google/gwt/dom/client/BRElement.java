@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(BRElement.TAG)
 public class BRElement extends Element {
 
-  static final String TAG = "br";
+  public static final String TAG = "br";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

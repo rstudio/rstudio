@@ -16,17 +16,47 @@
 package com.google.gwt.dom.builder.shared;
 
 /**
- * Implementation of {@link SelectBuilder}.
+ * HTML-based implementation of {@link SelectBuilder}.
  */
-public class HtmlSelectBuilder extends HtmlElementBuilderBase<SelectBuilder>
-    implements SelectBuilder {
+public class HtmlSelectBuilder extends HtmlElementBuilderBase<SelectBuilder> implements
+    SelectBuilder {
 
   HtmlSelectBuilder(HtmlBuilderImpl delegate) {
     super(delegate);
   }
 
   @Override
+  public SelectBuilder disabled() {
+    return attribute("disabled", "disabled");
+  }
+
+  @Override
+  public SelectBuilder multiple() {
+    return attribute("multiple", "multiple");
+  }
+
+  @Override
+  public SelectBuilder name(String name) {
+    return attribute("name", name);
+  }
+
+  @Override
+  public SelectBuilder selectedIndex(int index) {
+    return attribute("index", index);
+  }
+
+  @Override
   public SelectBuilder size(int size) {
     return attribute("size", size);
+  }
+
+  @Override
+  public SelectBuilder type(String type) {
+    return attribute("type", type);
+  }
+
+  @Override
+  public SelectBuilder value(String value) {
+    return attribute("value", value);
   }
 }

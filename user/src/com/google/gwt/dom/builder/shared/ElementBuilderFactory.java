@@ -117,11 +117,147 @@ public abstract class ElementBuilderFactory {
   protected ElementBuilderFactory() {
   }
 
+  public abstract AnchorBuilder createAnchorBuilder();
+
+  public abstract AreaBuilder createAreaBuilder();
+
+  public abstract AudioBuilder createAudioBuilder();
+
+  public abstract BaseBuilder createBaseBuilder();
+
+  public abstract QuoteBuilder createBlockQuoteBuilder();
+
+  public abstract BodyBuilder createBodyBuilder();
+
+  public abstract BRBuilder createBRBuilder();
+
+  public abstract InputBuilder createButtonInputBuilder();
+
+  public abstract CanvasBuilder createCanvasBuilder();
+
+  public abstract InputBuilder createCheckInputBuilder();
+
+  public abstract TableColBuilder createColBuilder();
+
+  public abstract TableColBuilder createColGroupBuilder();
+
   public abstract DivBuilder createDivBuilder();
+
+  public abstract DListBuilder createDListBuilder();
+
+  public abstract FieldSetBuilder createFieldSetBuilder();
+
+  public abstract InputBuilder createFileInputBuilder();
+
+  public abstract FormBuilder createFormBuilder();
+
+  public abstract FrameBuilder createFrameBuilder();
+
+  public abstract FrameSetBuilder createFrameSetBuilder();
+
+  public abstract HeadingBuilder createH1Builder();
+
+  public abstract HeadingBuilder createH2Builder();
+
+  public abstract HeadingBuilder createH3Builder();
+
+  public abstract HeadingBuilder createH4Builder();
+
+  public abstract HeadingBuilder createH5Builder();
+
+  public abstract HeadingBuilder createH6Builder();
+
+  public abstract HeadBuilder createHeadBuilder();
+
+  public abstract InputBuilder createHiddenInputBuilder();
+
+  public abstract HRBuilder createHRBuilder();
+
+  public abstract IFrameBuilder createIFrameBuilder();
+
+  public abstract ImageBuilder createImageBuilder();
+
+  public abstract InputBuilder createImageInputBuilder();
+
+  public abstract LabelBuilder createLabelBuilder();
+
+  public abstract LegendBuilder createLegendBuilder();
+
+  public abstract LIBuilder createLIBuilder();
+
+  public abstract LinkBuilder createLinkBuilder();
+
+  public abstract MapBuilder createMapBuilder();
+
+  public abstract MetaBuilder createMetaBuilder();
+
+  public abstract OListBuilder createOListBuilder();
+
+  public abstract OptGroupBuilder createOptGroupBuilder();
 
   public abstract OptionBuilder createOptionBuilder();
 
+  public abstract ParagraphBuilder createParagraphBuilder();
+
+  public abstract ParamBuilder createParamBuilder();
+
+  public abstract InputBuilder createPasswordInputBuilder();
+
+  public abstract PreBuilder createPreBuilder();
+
+  public abstract ButtonBuilder createPushButtonBuilder();
+
+  public abstract QuoteBuilder createQuoteBuilder();
+
+  /**
+   * Create a builder for an &lt;input type='radio'&gt; element.
+   * 
+   * @param name name the name of the radio input (used for grouping)
+   * @return the builder for the new element
+   */
+  public abstract InputBuilder createRadioInputBuilder(String name);
+
+  public abstract ButtonBuilder createResetButtonBuilder();
+
+  public abstract InputBuilder createResetInputBuilder();
+
+  public abstract ScriptBuilder createScriptBuilder();
+
   public abstract SelectBuilder createSelectBuilder();
+
+  public abstract SourceBuilder createSourceBuilder();
+
+  public abstract SpanBuilder createSpanBuilder();
+
+  public abstract StyleBuilder createStyleBuilder();
+
+  public abstract ButtonBuilder createSubmitButtonBuilder();
+
+  public abstract InputBuilder createSubmitInputBuilder();
+
+  public abstract TableBuilder createTableBuilder();
+
+  public abstract TableCaptionBuilder createTableCaptionBuilder();
+
+  public abstract TableSectionBuilder createTBodyBuilder();
+
+  public abstract TableCellBuilder createTDBuilder();
+
+  public abstract TextAreaBuilder createTextAreaBuilder();
+
+  public abstract InputBuilder createTextInputBuilder();
+
+  public abstract TableSectionBuilder createTFootBuilder();
+
+  public abstract TableCellBuilder createTHBuilder();
+
+  public abstract TableSectionBuilder createTHeadBuilder();
+
+  public abstract TableRowBuilder createTRBuilder();
+
+  public abstract UListBuilder createUListBuilder();
+
+  public abstract VideoBuilder createVideoBuilder();
 
   /**
    * Create an {@link ElementBuilder} for an arbitrary tag name. The tag name

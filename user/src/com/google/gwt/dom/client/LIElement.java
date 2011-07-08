@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(LIElement.TAG)
 public class LIElement extends Element {
 
-  static final String TAG = "li";
+  public static final String TAG = "li";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

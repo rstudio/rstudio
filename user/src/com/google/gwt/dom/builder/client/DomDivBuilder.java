@@ -19,7 +19,7 @@ import com.google.gwt.dom.builder.shared.DivBuilder;
 import com.google.gwt.dom.client.DivElement;
 
 /**
- * Implementation of {@link DivBuilder}.
+ * DOM-based implementation of {@link DivBuilder}.
  */
 public class DomDivBuilder extends DomElementBuilderBase<DivBuilder, DivElement>
     implements DivBuilder {

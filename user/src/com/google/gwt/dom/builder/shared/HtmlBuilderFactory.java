@@ -50,8 +50,198 @@ public class HtmlBuilderFactory extends ElementBuilderFactory {
   }
 
   @Override
+  public HtmlAnchorBuilder createAnchorBuilder() {
+    return impl().startAnchor();
+  }
+
+  @Override
+  public HtmlAreaBuilder createAreaBuilder() {
+    return impl().startArea();
+  }
+
+  @Override
+  public HtmlAudioBuilder createAudioBuilder() {
+    return impl().startAudio();
+  }
+
+  @Override
+  public HtmlBaseBuilder createBaseBuilder() {
+    return impl().startBase();
+  }
+
+  @Override
+  public HtmlQuoteBuilder createBlockQuoteBuilder() {
+    return impl().startBlockQuote();
+  }
+
+  @Override
+  public HtmlBodyBuilder createBodyBuilder() {
+    return impl().startBody();
+  }
+
+  @Override
+  public HtmlBRBuilder createBRBuilder() {
+    return impl().startBR();
+  }
+
+  @Override
+  public InputBuilder createButtonInputBuilder() {
+    return impl().startButtonInput();
+  }
+
+  @Override
+  public HtmlCanvasBuilder createCanvasBuilder() {
+    return impl().startCanvas();
+  }
+
+  @Override
+  public InputBuilder createCheckInputBuilder() {
+    return impl().startCheckInput();
+  }
+
+  @Override
+  public HtmlTableColBuilder createColBuilder() {
+    return impl().startCol();
+  }
+
+  @Override
+  public HtmlTableColBuilder createColGroupBuilder() {
+    return impl().startColGroup();
+  }
+
+  @Override
   public HtmlDivBuilder createDivBuilder() {
     return impl().startDiv();
+  }
+
+  @Override
+  public HtmlDListBuilder createDListBuilder() {
+    return impl().startDList();
+  }
+
+  @Override
+  public HtmlFieldSetBuilder createFieldSetBuilder() {
+    return impl().startFieldSet();
+  }
+
+  @Override
+  public InputBuilder createFileInputBuilder() {
+    return impl().startFileInput();
+  }
+
+  @Override
+  public HtmlFormBuilder createFormBuilder() {
+    return impl().startForm();
+  }
+
+  @Override
+  public HtmlFrameBuilder createFrameBuilder() {
+    return impl().startFrame();
+  }
+
+  @Override
+  public HtmlFrameSetBuilder createFrameSetBuilder() {
+    return impl().startFrameSet();
+  }
+
+  @Override
+  public HtmlHeadingBuilder createH1Builder() {
+    return impl().startH1();
+  }
+
+  @Override
+  public HtmlHeadingBuilder createH2Builder() {
+    return impl().startH2();
+  }
+
+  @Override
+  public HtmlHeadingBuilder createH3Builder() {
+    return impl().startH3();
+  }
+
+  @Override
+  public HtmlHeadingBuilder createH4Builder() {
+    return impl().startH4();
+  }
+
+  @Override
+  public HtmlHeadingBuilder createH5Builder() {
+    return impl().startH5();
+  }
+
+  @Override
+  public HtmlHeadingBuilder createH6Builder() {
+    return impl().startH6();
+  }
+
+  @Override
+  public HtmlHeadBuilder createHeadBuilder() {
+    return impl().startHead();
+  }
+
+  @Override
+  public InputBuilder createHiddenInputBuilder() {
+    return impl().startHiddenInput();
+  }
+
+  @Override
+  public HtmlHRBuilder createHRBuilder() {
+    return impl().startHR();
+  }
+
+  @Override
+  public HtmlIFrameBuilder createIFrameBuilder() {
+    return impl().startIFrame();
+  }
+
+  @Override
+  public HtmlImageBuilder createImageBuilder() {
+    return impl().startImage();
+  }
+
+  @Override
+  public InputBuilder createImageInputBuilder() {
+    return impl().startImageInput();
+  }
+
+  @Override
+  public HtmlLabelBuilder createLabelBuilder() {
+    return impl().startLabel();
+  }
+
+  @Override
+  public HtmlLegendBuilder createLegendBuilder() {
+    return impl().startLegend();
+  }
+
+  @Override
+  public HtmlLIBuilder createLIBuilder() {
+    return impl().startLI();
+  }
+
+  @Override
+  public HtmlLinkBuilder createLinkBuilder() {
+    return impl().startLink();
+  }
+
+  @Override
+  public HtmlMapBuilder createMapBuilder() {
+    return impl().startMap();
+  }
+
+  @Override
+  public HtmlMetaBuilder createMetaBuilder() {
+    return impl().startMeta();
+  }
+
+  @Override
+  public HtmlOListBuilder createOListBuilder() {
+    return impl().startOList();
+  }
+
+  @Override
+  public HtmlOptGroupBuilder createOptGroupBuilder() {
+    return impl().startOptGroup();
   }
 
   @Override
@@ -60,8 +250,147 @@ public class HtmlBuilderFactory extends ElementBuilderFactory {
   }
 
   @Override
+  public HtmlParagraphBuilder createParagraphBuilder() {
+    return impl().startParagraph();
+  }
+
+  @Override
+  public HtmlParamBuilder createParamBuilder() {
+    return impl().startParam();
+  }
+
+  @Override
+  public InputBuilder createPasswordInputBuilder() {
+    return impl().startPasswordInput();
+  }
+
+  @Override
+  public HtmlPreBuilder createPreBuilder() {
+    return impl().startPre();
+  }
+
+  @Override
+  public HtmlButtonBuilder createPushButtonBuilder() {
+    return impl().startPushButton();
+  }
+
+  @Override
+  public HtmlQuoteBuilder createQuoteBuilder() {
+    return impl().startQuote();
+  }
+
+  @Override
+  public InputBuilder createRadioInputBuilder(String name) {
+    return impl().startRadioInput(name);
+  }
+
+  @Override
+  public HtmlButtonBuilder createResetButtonBuilder() {
+    return impl().startResetButton();
+  }
+
+  @Override
+  public InputBuilder createResetInputBuilder() {
+    return impl().startResetInput();
+  }
+
+  @Override
+  public HtmlScriptBuilder createScriptBuilder() {
+    return impl().startScript();
+  }
+
+  @Override
   public HtmlSelectBuilder createSelectBuilder() {
     return impl().startSelect();
+  }
+
+  @Override
+  public HtmlSourceBuilder createSourceBuilder() {
+    return impl().startSource();
+  }
+
+  @Override
+  public HtmlSpanBuilder createSpanBuilder() {
+    return impl().startSpan();
+  }
+
+  @Override
+  public HtmlStyleBuilder createStyleBuilder() {
+    return impl().startStyle();
+  }
+
+  @Override
+  public HtmlButtonBuilder createSubmitButtonBuilder() {
+    return impl().startSubmitButton();
+  }
+
+  @Override
+  public InputBuilder createSubmitInputBuilder() {
+    return impl().startSubmitInput();
+  }
+
+  @Override
+  public HtmlTableBuilder createTableBuilder() {
+    return impl().startTable();
+  }
+
+  @Override
+  public HtmlTableCaptionBuilder createTableCaptionBuilder() {
+    return impl().startTableCaption();
+  }
+
+  @Override
+  public HtmlTableSectionBuilder createTBodyBuilder() {
+    return impl().startTBody();
+  }
+
+  @Override
+  public HtmlTableCellBuilder createTDBuilder() {
+    return impl().startTD();
+  }
+
+  @Override
+  public HtmlTextAreaBuilder createTextAreaBuilder() {
+    return impl().startTextArea();
+  }
+
+  @Override
+  public InputBuilder createTextInputBuilder() {
+    return impl().startTextInput();
+  }
+
+  @Override
+  public HtmlTableSectionBuilder createTFootBuilder() {
+    return impl().startTFoot();
+  }
+
+  @Override
+  public HtmlTableCellBuilder createTHBuilder() {
+    return impl().startTH();
+  }
+
+  @Override
+  public HtmlTableSectionBuilder createTHeadBuilder() {
+    return impl().startTHead();
+  }
+
+  public HtmlTitleBuilder createTitleBuilder() {
+    return impl().startTitle();
+  }
+
+  @Override
+  public HtmlTableRowBuilder createTRBuilder() {
+    return impl().startTR();
+  }
+
+  @Override
+  public HtmlUListBuilder createUListBuilder() {
+    return impl().startUList();
+  }
+
+  @Override
+  public HtmlVideoBuilder createVideoBuilder() {
+    return impl().startVideo();
   }
 
   @Override

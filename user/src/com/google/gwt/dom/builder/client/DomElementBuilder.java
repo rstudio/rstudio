@@ -19,7 +19,7 @@ import com.google.gwt.dom.builder.shared.ElementBuilder;
 import com.google.gwt.dom.client.Element;
 
 /**
- * Implementation of {@link ElementBuilder}.
+ * DOM-based implementation of {@link ElementBuilder}.
  */
 public class DomElementBuilder extends DomElementBuilderBase<ElementBuilder, Element> implements
     ElementBuilder {

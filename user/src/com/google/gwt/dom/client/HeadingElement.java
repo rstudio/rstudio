@@ -30,12 +30,12 @@ public class HeadingElement extends Element {
       HeadingElement.TAG_H1, HeadingElement.TAG_H2, HeadingElement.TAG_H3,
       HeadingElement.TAG_H4, HeadingElement.TAG_H5, HeadingElement.TAG_H6};
 
-  static final String TAG_H1 = "h1";
-  static final String TAG_H2 = "h2";
-  static final String TAG_H3 = "h3";
-  static final String TAG_H4 = "h4";
-  static final String TAG_H5 = "h5";
-  static final String TAG_H6 = "h6";
+  public static final String TAG_H1 = "h1";
+  public static final String TAG_H2 = "h2";
+  public static final String TAG_H3 = "h3";
+  public static final String TAG_H4 = "h4";
+  public static final String TAG_H5 = "h5";
+  public static final String TAG_H6 = "h6";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

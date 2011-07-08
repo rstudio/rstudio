@@ -16,7 +16,7 @@
 package com.google.gwt.dom.builder.shared;
 
 /**
- * Implementation of {@link OptionBuilder}.
+ * HTML-based implementation of {@link OptionBuilder}.
  */
 public class HtmlOptionBuilder extends HtmlElementBuilderBase<OptionBuilder>
     implements OptionBuilder {

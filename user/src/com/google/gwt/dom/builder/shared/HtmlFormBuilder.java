@@ -1,0 +1,56 @@
+/*
+ * Copyright 2011 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.google.gwt.dom.builder.shared;
+
+/**
+ * HTML-based implementation of {@link FormBuilder}.
+ */
+public class HtmlFormBuilder extends HtmlElementBuilderBase<FormBuilder> implements FormBuilder {
+
+  HtmlFormBuilder(HtmlBuilderImpl delegate) {
+    super(delegate);
+  }
+
+  @Override
+  public FormBuilder acceptCharset(String acceptCharset) {
+    return attribute("acceptCharset", acceptCharset);
+  }
+
+  @Override
+  public FormBuilder action(String action) {
+    return attribute("action", action);
+  }
+
+  @Override
+  public FormBuilder enctype(String enctype) {
+    return attribute("enctype", enctype);
+  }
+
+  @Override
+  public FormBuilder method(String method) {
+    return attribute("method", method);
+  }
+
+  @Override
+  public FormBuilder name(String name) {
+    return attribute("name", name);
+  }
+
+  @Override
+  public FormBuilder target(String target) {
+    return attribute("target", target);
+  }
+}

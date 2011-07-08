@@ -25,9 +25,9 @@ public class TableSectionElement extends Element {
   static final String[] TAGS = {TableSectionElement.TAG_TBODY, TableSectionElement.TAG_TFOOT, 
     TableSectionElement.TAG_THEAD};
 
-  static final String TAG_TBODY = "tbody";
-  static final String TAG_TFOOT = "tfoot";
-  static final String TAG_THEAD = "thead";
+  public static final String TAG_TBODY = "tbody";
+  public static final String TAG_TFOOT = "tfoot";
+  public static final String TAG_THEAD = "thead";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

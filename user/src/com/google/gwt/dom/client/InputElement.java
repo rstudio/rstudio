@@ -28,7 +28,7 @@ package com.google.gwt.dom.client;
 @TagName(InputElement.TAG)
 public class InputElement extends Element {
 
-  static final String TAG = "input";
+  public static final String TAG = "input";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

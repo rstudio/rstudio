@@ -1,0 +1,62 @@
+/*
+ * Copyright 2011 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.google.gwt.dom.builder.shared;
+
+/**
+ * HTML-based implementation of {@link TableCellBuilder}.
+ */
+public class HtmlTableCellBuilder extends HtmlElementBuilderBase<TableCellBuilder> implements
+    TableCellBuilder {
+
+  HtmlTableCellBuilder(HtmlBuilderImpl delegate) {
+    super(delegate);
+  }
+
+  @Override
+  public TableCellBuilder align(String align) {
+    return attribute("align", align);
+  }
+
+  @Override
+  public TableCellBuilder ch(String ch) {
+    return attribute("ch", ch);
+  }
+
+  @Override
+  public TableCellBuilder chOff(String chOff) {
+    return attribute("chOff", chOff);
+  }
+
+  @Override
+  public TableCellBuilder colSpan(int colSpan) {
+    return attribute("colSpan", colSpan);
+  }
+
+  @Override
+  public TableCellBuilder headers(String headers) {
+    return attribute("headers", headers);
+  }
+
+  @Override
+  public TableCellBuilder rowSpan(int rowSpan) {
+    return attribute("rowSpan", rowSpan);
+  }
+
+  @Override
+  public TableCellBuilder vAlign(String vAlign) {
+    return attribute("vAlign", vAlign);
+  }
+}

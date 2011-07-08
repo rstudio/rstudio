@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(FrameElement.TAG)
 public class FrameElement extends Element {
 
-  static final String TAG = "frame";
+  public static final String TAG = "frame";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

@@ -16,7 +16,7 @@
 package com.google.gwt.dom.builder.shared;
 
 /**
- * Implementation of {@link ElementBuilder}.
+ * HTML-based implementation of {@link ElementBuilder}.
  */
 public class HtmlElementBuilder extends HtmlElementBuilderBase<ElementBuilder> implements
     ElementBuilder {

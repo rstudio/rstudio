@@ -21,8 +21,13 @@ package com.google.gwt.dom.builder.shared;
 public class HtmlDivBuilderTest extends ElementBuilderTestBase<DivBuilder> {
 
   @Override
-  protected DivBuilder createElementBuilder() {
-    return HtmlBuilderFactory.get().createDivBuilder();
+  protected DivBuilder createElementBuilder(ElementBuilderFactory factory) {
+    return factory.createDivBuilder();
+  }
+
+  @Override
+  protected DivBuilder endElement(ElementBuilderBase<?> builder) {
+    return builder.endDiv();
   }
 
   @Override

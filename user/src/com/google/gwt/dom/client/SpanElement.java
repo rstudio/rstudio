@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(SpanElement.TAG)
 public class SpanElement extends Element {
 
-  static final String TAG = "span";
+  public static final String TAG = "span";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

@@ -26,7 +26,7 @@ package com.google.gwt.dom.client;
 @TagName(SelectElement.TAG)
 public class SelectElement extends Element {
 
-  static final String TAG = "select";
+  public static final String TAG = "select";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

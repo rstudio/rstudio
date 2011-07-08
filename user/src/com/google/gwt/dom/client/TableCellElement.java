@@ -23,8 +23,8 @@ package com.google.gwt.dom.client;
 @TagName({TableCellElement.TAG_TD, TableCellElement.TAG_TH})
 public class TableCellElement extends Element {
 
-  static final String TAG_TD = "td";
-  static final String TAG_TH = "th";
+  public static final String TAG_TD = "td";
+  public static final String TAG_TH = "th";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

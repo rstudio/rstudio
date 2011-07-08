@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dom.builder.shared;
 
-import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.TitleElement;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
@@ -34,8 +34,8 @@ import com.google.gwt.safehtml.shared.SafeHtml;
  * 
  * @param <R> the builder type returned from build methods
  */
-public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> implements
-    ElementBuilderBase<R> {
+public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> extends
+    AbstractElementBuilderBase<R> {
 
   private final HtmlBuilderImpl delegate;
 
@@ -45,6 +45,17 @@ public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> implements
    * @param delegate the delegate that builds the element
    */
   HtmlElementBuilderBase(HtmlBuilderImpl delegate) {
+    this(delegate, false);
+  }
+
+  /**
+   * Construct a new {@link HtmlElementBuilderBase}.
+   * 
+   * @param delegate the delegate that builds the element
+   * @param isEndTagForbidden true if the end tag is forbidden for this element
+   */
+  HtmlElementBuilderBase(HtmlBuilderImpl delegate, boolean isEndTagForbidden) {
+    super(delegate, isEndTagForbidden);
     this.delegate = delegate;
   }
 
@@ -53,11 +64,6 @@ public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> implements
    */
   public SafeHtml asSafeHtml() {
     return delegate.asSafeHtml();
-  }
-
-  @Override
-  public R attribute(String name, int value) {
-    return attribute(name, String.valueOf(value));
   }
 
   @Override
@@ -81,46 +87,20 @@ public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> implements
     return attribute("draggable", draggable);
   }
 
+  /**
+   * End the current element.
+   * 
+   * @param <B> the type of the parent element
+   * @return the {@link ElementBuilderBase} for the parent element, or null if
+   *         the current element does not have a parent
+   * @throws IllegalStateException if the current element has the wrong tag
+   * @throws ClassCastException if the parent builder does not match the
+   *           specified class
+   * @see #end()
+   */
   @SuppressWarnings("unchecked")
-  @Override
-  public <B extends ElementBuilderBase<?>> B end() {
-    // An explicit cast is required to satisfy some javac compilers.
-    return (B) delegate.end();
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <B extends ElementBuilderBase<?>> B end(String tagName) {
-    return (B) delegate.end(tagName);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <B extends ElementBuilderBase<?>> B endDiv() {
-    return (B) end("div");
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <B extends ElementBuilderBase<?>> B endOption() {
-    return (B) end("option");
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <B extends ElementBuilderBase<?>> B endSelect() {
-    return (B) end("select");
-  }
-
-  @Override
-  public Element finish() {
-    return delegate.finish();
-  }
-
-  @Override
-  public R html(SafeHtml html) {
-    delegate.html(html);
-    return getReturnBuilder();
+  public <B extends ElementBuilderBase<?>> B endTitle() {
+    return (B) end(TitleElement.TAG);
   }
 
   @Override
@@ -134,8 +114,198 @@ public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> implements
   }
 
   @Override
+  public AnchorBuilder startAnchor() {
+    return delegate.startAnchor();
+  }
+
+  @Override
+  public AreaBuilder startArea() {
+    return delegate.startArea();
+  }
+
+  @Override
+  public AudioBuilder startAudio() {
+    return delegate.startAudio();
+  }
+
+  @Override
+  public BaseBuilder startBase() {
+    return delegate.startBase();
+  }
+
+  @Override
+  public QuoteBuilder startBlockQuote() {
+    return delegate.startBlockQuote();
+  }
+
+  @Override
+  public BodyBuilder startBody() {
+    return delegate.startBody();
+  }
+
+  @Override
+  public BRBuilder startBR() {
+    return delegate.startBR();
+  }
+
+  @Override
+  public InputBuilder startButtonInput() {
+    return delegate.startButtonInput();
+  }
+
+  @Override
+  public CanvasBuilder startCanvas() {
+    return delegate.startCanvas();
+  }
+
+  @Override
+  public InputBuilder startCheckInput() {
+    return delegate.startCheckInput();
+  }
+
+  @Override
+  public TableColBuilder startCol() {
+    return delegate.startCol();
+  }
+
+  @Override
+  public TableColBuilder startColGroup() {
+    return delegate.startColGroup();
+  }
+
+  @Override
   public DivBuilder startDiv() {
     return delegate.startDiv();
+  }
+
+  @Override
+  public DListBuilder startDList() {
+    return delegate.startDList();
+  }
+
+  @Override
+  public FieldSetBuilder startFieldSet() {
+    return delegate.startFieldSet();
+  }
+
+  @Override
+  public InputBuilder startFileInput() {
+    return delegate.startFileInput();
+  }
+
+  @Override
+  public FormBuilder startForm() {
+    return delegate.startForm();
+  }
+
+  @Override
+  public FrameBuilder startFrame() {
+    return delegate.startFrame();
+  }
+
+  @Override
+  public FrameSetBuilder startFrameSet() {
+    return delegate.startFrameSet();
+  }
+
+  @Override
+  public HeadingBuilder startH1() {
+    return delegate.startH1();
+  }
+
+  @Override
+  public HeadingBuilder startH2() {
+    return delegate.startH2();
+  }
+
+  @Override
+  public HeadingBuilder startH3() {
+    return delegate.startH3();
+  }
+
+  @Override
+  public HeadingBuilder startH4() {
+    return delegate.startH4();
+  }
+
+  @Override
+  public HeadingBuilder startH5() {
+    return delegate.startH5();
+  }
+
+  @Override
+  public HeadingBuilder startH6() {
+    return delegate.startH6();
+  }
+
+  @Override
+  public HeadBuilder startHead() {
+    return delegate.startHead();
+  }
+
+  @Override
+  public InputBuilder startHiddenInput() {
+    return delegate.startHiddenInput();
+  }
+
+  @Override
+  public HRBuilder startHR() {
+    return delegate.startHR();
+  }
+
+  @Override
+  public IFrameBuilder startIFrame() {
+    return delegate.startIFrame();
+  }
+
+  @Override
+  public ImageBuilder startImage() {
+    return delegate.startImage();
+  }
+
+  @Override
+  public InputBuilder startImageInput() {
+    return delegate.startImageInput();
+  }
+
+  @Override
+  public LabelBuilder startLabel() {
+    return delegate.startLabel();
+  }
+
+  @Override
+  public LegendBuilder startLegend() {
+    return delegate.startLegend();
+  }
+
+  @Override
+  public LIBuilder startLI() {
+    return delegate.startLI();
+  }
+
+  @Override
+  public LinkBuilder startLink() {
+    return delegate.startLink();
+  }
+
+  @Override
+  public MapBuilder startMap() {
+    return delegate.startMap();
+  }
+
+  @Override
+  public MetaBuilder startMeta() {
+    return delegate.startMeta();
+  }
+
+  @Override
+  public OListBuilder startOList() {
+    return delegate.startOList();
+  }
+
+  @Override
+  public OptGroupBuilder startOptGroup() {
+    return delegate.startOptGroup();
   }
 
   @Override
@@ -144,24 +314,157 @@ public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> implements
   }
 
   @Override
+  public ParagraphBuilder startParagraph() {
+    return delegate.startParagraph();
+  }
+
+  @Override
+  public ParamBuilder startParam() {
+    return delegate.startParam();
+  }
+
+  @Override
+  public InputBuilder startPasswordInput() {
+    return delegate.startPasswordInput();
+  }
+
+  @Override
+  public PreBuilder startPre() {
+    return delegate.startPre();
+  }
+
+  @Override
+  public ButtonBuilder startPushButton() {
+    return delegate.startPushButton();
+  }
+
+  @Override
+  public QuoteBuilder startQuote() {
+    return delegate.startQuote();
+  }
+
+  @Override
+  public InputBuilder startRadioInput(String name) {
+    return delegate.startRadioInput(name);
+  }
+
+  @Override
+  public ButtonBuilder startResetButton() {
+    return delegate.startResetButton();
+  }
+
+  @Override
+  public InputBuilder startResetInput() {
+    return delegate.startResetInput();
+  }
+
+  @Override
+  public ScriptBuilder startScript() {
+    return delegate.startScript();
+  }
+
+  @Override
   public SelectBuilder startSelect() {
     return delegate.startSelect();
   }
 
   @Override
-  public StylesBuilder style() {
-    return delegate.style();
+  public SourceBuilder startSource() {
+    return delegate.startSource();
+  }
+
+  @Override
+  public SpanBuilder startSpan() {
+    return delegate.startSpan();
+  }
+
+  @Override
+  public StyleBuilder startStyle() {
+    return delegate.startStyle();
+  }
+
+  @Override
+  public ButtonBuilder startSubmitButton() {
+    return delegate.startSubmitButton();
+  }
+
+  @Override
+  public InputBuilder startSubmitInput() {
+    return delegate.startSubmitInput();
+  }
+
+  @Override
+  public TableBuilder startTable() {
+    return delegate.startTable();
+  }
+
+  @Override
+  public TableCaptionBuilder startTableCaption() {
+    return delegate.startTableCaption();
+  }
+
+  @Override
+  public TableSectionBuilder startTBody() {
+    return delegate.startTBody();
+  }
+
+  @Override
+  public TableCellBuilder startTD() {
+    return delegate.startTD();
+  }
+
+  @Override
+  public TextAreaBuilder startTextArea() {
+    return delegate.startTextArea();
+  }
+
+  @Override
+  public InputBuilder startTextInput() {
+    return delegate.startTextInput();
+  }
+
+  @Override
+  public TableSectionBuilder startTFoot() {
+    return delegate.startTFoot();
+  }
+
+  @Override
+  public TableCellBuilder startTH() {
+    return delegate.startTH();
+  }
+
+  @Override
+  public TableSectionBuilder startTHead() {
+    return delegate.startTHead();
+  }
+
+  /**
+   * Append a title element.
+   * 
+   * @return the builder for the new element
+   */
+  public TitleBuilder startTitle() {
+    return delegate.startTitle();
+  }
+
+  @Override
+  public TableRowBuilder startTR() {
+    return delegate.startTR();
+  }
+
+  @Override
+  public UListBuilder startUList() {
+    return delegate.startUList();
+  }
+
+  @Override
+  public VideoBuilder startVideo() {
+    return delegate.startVideo();
   }
 
   @Override
   public R tabIndex(int tabIndex) {
     return attribute("tabIndex", tabIndex);
-  }
-
-  @Override
-  public R text(String text) {
-    delegate.text(text);
-    return getReturnBuilder();
   }
 
   @Override
@@ -172,15 +475,5 @@ public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> implements
   @Override
   public ElementBuilder trustedStart(String tagName) {
     return delegate.trustedStart(tagName);
-  }
-
-  /**
-   * Get the builder to return from build methods.
-   * 
-   * @return the return builder
-   */
-  @SuppressWarnings("unchecked")
-  private R getReturnBuilder() {
-    return (R) this;
   }
 }

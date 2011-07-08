@@ -23,8 +23,8 @@ package com.google.gwt.dom.client;
 @TagName({TableColElement.TAG_COL, TableColElement.TAG_COLGROUP})
 public class TableColElement extends Element {
 
-  static final String TAG_COL = "col";
-  static final String TAG_COLGROUP = "colgroup";
+  public static final String TAG_COL = "col";
+  public static final String TAG_COLGROUP = "colgroup";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

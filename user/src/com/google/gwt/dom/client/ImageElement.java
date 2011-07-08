@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(ImageElement.TAG)
 public class ImageElement extends Element {
 
-  static final String TAG = "img";
+  public static final String TAG = "img";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

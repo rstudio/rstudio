@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(HRElement.TAG)
 public class HRElement extends Element {
 
-  static final String TAG = "hr";
+  public static final String TAG = "hr";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

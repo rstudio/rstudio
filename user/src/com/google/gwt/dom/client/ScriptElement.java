@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(ScriptElement.TAG)
 public class ScriptElement extends Element {
 
-  static final String TAG = "script";
+  public static final String TAG = "script";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

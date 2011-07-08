@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(TextAreaElement.TAG)
 public class TextAreaElement extends Element {
 
-  static final String TAG = "textarea";
+  public static final String TAG = "textarea";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

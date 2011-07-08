@@ -15,14 +15,57 @@
  */
 package com.google.gwt.dom.builder.client;
 
+import com.google.gwt.dom.builder.shared.AbstractElementBuilderBase;
+import com.google.gwt.dom.builder.shared.AnchorBuilder;
+import com.google.gwt.dom.builder.shared.AreaBuilder;
+import com.google.gwt.dom.builder.shared.AudioBuilder;
+import com.google.gwt.dom.builder.shared.BRBuilder;
+import com.google.gwt.dom.builder.shared.BaseBuilder;
+import com.google.gwt.dom.builder.shared.BodyBuilder;
+import com.google.gwt.dom.builder.shared.ButtonBuilder;
+import com.google.gwt.dom.builder.shared.CanvasBuilder;
+import com.google.gwt.dom.builder.shared.DListBuilder;
 import com.google.gwt.dom.builder.shared.DivBuilder;
 import com.google.gwt.dom.builder.shared.ElementBuilder;
 import com.google.gwt.dom.builder.shared.ElementBuilderBase;
+import com.google.gwt.dom.builder.shared.FieldSetBuilder;
+import com.google.gwt.dom.builder.shared.FormBuilder;
+import com.google.gwt.dom.builder.shared.FrameBuilder;
+import com.google.gwt.dom.builder.shared.FrameSetBuilder;
+import com.google.gwt.dom.builder.shared.HRBuilder;
+import com.google.gwt.dom.builder.shared.HeadBuilder;
+import com.google.gwt.dom.builder.shared.HeadingBuilder;
+import com.google.gwt.dom.builder.shared.IFrameBuilder;
+import com.google.gwt.dom.builder.shared.ImageBuilder;
+import com.google.gwt.dom.builder.shared.InputBuilder;
+import com.google.gwt.dom.builder.shared.LIBuilder;
+import com.google.gwt.dom.builder.shared.LabelBuilder;
+import com.google.gwt.dom.builder.shared.LegendBuilder;
+import com.google.gwt.dom.builder.shared.LinkBuilder;
+import com.google.gwt.dom.builder.shared.MapBuilder;
+import com.google.gwt.dom.builder.shared.MetaBuilder;
+import com.google.gwt.dom.builder.shared.OListBuilder;
+import com.google.gwt.dom.builder.shared.OptGroupBuilder;
 import com.google.gwt.dom.builder.shared.OptionBuilder;
+import com.google.gwt.dom.builder.shared.ParagraphBuilder;
+import com.google.gwt.dom.builder.shared.ParamBuilder;
+import com.google.gwt.dom.builder.shared.PreBuilder;
+import com.google.gwt.dom.builder.shared.QuoteBuilder;
+import com.google.gwt.dom.builder.shared.ScriptBuilder;
 import com.google.gwt.dom.builder.shared.SelectBuilder;
-import com.google.gwt.dom.builder.shared.StylesBuilder;
+import com.google.gwt.dom.builder.shared.SourceBuilder;
+import com.google.gwt.dom.builder.shared.SpanBuilder;
+import com.google.gwt.dom.builder.shared.StyleBuilder;
+import com.google.gwt.dom.builder.shared.TableBuilder;
+import com.google.gwt.dom.builder.shared.TableCaptionBuilder;
+import com.google.gwt.dom.builder.shared.TableCellBuilder;
+import com.google.gwt.dom.builder.shared.TableColBuilder;
+import com.google.gwt.dom.builder.shared.TableRowBuilder;
+import com.google.gwt.dom.builder.shared.TableSectionBuilder;
+import com.google.gwt.dom.builder.shared.TextAreaBuilder;
+import com.google.gwt.dom.builder.shared.UListBuilder;
+import com.google.gwt.dom.builder.shared.VideoBuilder;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
  * Implementation of {@link ElementBuilderBase} that delegates to a
@@ -33,11 +76,11 @@ import com.google.gwt.safehtml.shared.SafeHtml;
  * {@link Element} being built.
  * </p>
  * 
- * @param <T> the builder type returned from build methods
+ * @param <R> the builder type returned from build methods
  * @param <E> the {@link Element} type
  */
-public class DomElementBuilderBase<T extends ElementBuilderBase<?>, E extends Element> implements
-    ElementBuilderBase<T> {
+public class DomElementBuilderBase<R extends ElementBuilderBase<?>, E extends Element> extends
+    AbstractElementBuilderBase<R> {
 
   private final DomBuilderImpl delegate;
 
@@ -47,90 +90,114 @@ public class DomElementBuilderBase<T extends ElementBuilderBase<?>, E extends El
    * @param delegate the delegate that builds the element
    */
   DomElementBuilderBase(DomBuilderImpl delegate) {
+    this(delegate, false);
+  }
+
+  /**
+   * Construct a new {@link DomElementBuilderBase}.
+   * 
+   * @param delegate the delegate that builds the element
+   * @param isEndTagForbidden true if the end tag is forbidden for this element
+   */
+  DomElementBuilderBase(DomBuilderImpl delegate, boolean isEndTagForbidden) {
+    super(delegate, isEndTagForbidden);
     this.delegate = delegate;
   }
 
   @Override
-  public T attribute(String name, int value) {
-    return attribute(name, String.valueOf(value));
-  }
-
-  @Override
-  public T attribute(String name, String value) {
+  public R attribute(String name, String value) {
     assertCanAddAttribute().setAttribute(name, value);
     return getReturnBuilder();
   }
 
   @Override
-  public T className(String className) {
+  public R className(String className) {
     assertCanAddAttribute().setClassName(className);
     return getReturnBuilder();
   }
 
   @Override
-  public T dir(String dir) {
+  public R dir(String dir) {
     assertCanAddAttribute().setDir(dir);
     return getReturnBuilder();
   }
 
   @Override
-  public T draggable(String draggable) {
+  public R draggable(String draggable) {
     assertCanAddAttribute().setDraggable(draggable);
     return getReturnBuilder();
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B end() {
-    // An explicit cast is required to satisfy some javac compilers.
-    return (B) delegate.end();
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <B extends ElementBuilderBase<?>> B end(String tagName) {
-    return (B) delegate.end(tagName);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <B extends ElementBuilderBase<?>> B endDiv() {
-    return (B) end("div");
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <B extends ElementBuilderBase<?>> B endOption() {
-    return (B) end("option");
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <B extends ElementBuilderBase<?>> B endSelect() {
-    return (B) end("select");
-  }
-
-  @Override
-  public Element finish() {
-    return delegate.finish();
-  }
-
-  @Override
-  public T html(SafeHtml html) {
-    delegate.html(html);
-    return getReturnBuilder();
-  }
-
-  @Override
-  public T id(String id) {
+  public R id(String id) {
     assertCanAddAttribute().setId(id);
     return getReturnBuilder();
   }
 
   @Override
-  public T lang(String lang) {
+  public R lang(String lang) {
     assertCanAddAttribute().setLang(lang);
     return getReturnBuilder();
+  }
+
+  @Override
+  public AnchorBuilder startAnchor() {
+    return delegate.startAnchor();
+  }
+
+  @Override
+  public AreaBuilder startArea() {
+    return delegate.startArea();
+  }
+
+  @Override
+  public AudioBuilder startAudio() {
+    return delegate.startAudio();
+  }
+
+  @Override
+  public BaseBuilder startBase() {
+    return delegate.startBase();
+  }
+
+  @Override
+  public QuoteBuilder startBlockQuote() {
+    return delegate.startBlockQuote();
+  }
+
+  @Override
+  public BodyBuilder startBody() {
+    return delegate.startBody();
+  }
+
+  @Override
+  public BRBuilder startBR() {
+    return delegate.startBR();
+  }
+
+  @Override
+  public InputBuilder startButtonInput() {
+    return delegate.startButtonInput();
+  }
+
+  @Override
+  public CanvasBuilder startCanvas() {
+    return delegate.startCanvas();
+  }
+
+  @Override
+  public InputBuilder startCheckInput() {
+    return delegate.startCheckInput();
+  }
+
+  @Override
+  public TableColBuilder startCol() {
+    return delegate.startCol();
+  }
+
+  @Override
+  public TableColBuilder startColGroup() {
+    return delegate.startColGroup();
   }
 
   @Override
@@ -139,8 +206,188 @@ public class DomElementBuilderBase<T extends ElementBuilderBase<?>, E extends El
   }
 
   @Override
+  public DListBuilder startDList() {
+    return delegate.startDList();
+  }
+
+  @Override
+  public FieldSetBuilder startFieldSet() {
+    return delegate.startFieldSet();
+  }
+
+  @Override
+  public InputBuilder startFileInput() {
+    return delegate.startFileInput();
+  }
+
+  @Override
+  public FormBuilder startForm() {
+    return delegate.startForm();
+  }
+
+  @Override
+  public FrameBuilder startFrame() {
+    return delegate.startFrame();
+  }
+
+  @Override
+  public FrameSetBuilder startFrameSet() {
+    return delegate.startFrameSet();
+  }
+
+  @Override
+  public HeadingBuilder startH1() {
+    return delegate.startH1();
+  }
+
+  @Override
+  public HeadingBuilder startH2() {
+    return delegate.startH2();
+  }
+
+  @Override
+  public HeadingBuilder startH3() {
+    return delegate.startH3();
+  }
+
+  @Override
+  public HeadingBuilder startH4() {
+    return delegate.startH4();
+  }
+
+  @Override
+  public HeadingBuilder startH5() {
+    return delegate.startH5();
+  }
+
+  @Override
+  public HeadingBuilder startH6() {
+    return delegate.startH6();
+  }
+
+  @Override
+  public HeadBuilder startHead() {
+    return delegate.startHead();
+  }
+
+  @Override
+  public InputBuilder startHiddenInput() {
+    return delegate.startHiddenInput();
+  }
+
+  @Override
+  public HRBuilder startHR() {
+    return delegate.startHR();
+  }
+
+  @Override
+  public IFrameBuilder startIFrame() {
+    return delegate.startIFrame();
+  }
+
+  @Override
+  public ImageBuilder startImage() {
+    return delegate.startImage();
+  }
+
+  @Override
+  public InputBuilder startImageInput() {
+    return delegate.startImageInput();
+  }
+
+  @Override
+  public LabelBuilder startLabel() {
+    return delegate.startLabel();
+  }
+
+  @Override
+  public LegendBuilder startLegend() {
+    return delegate.startLegend();
+  }
+
+  @Override
+  public LIBuilder startLI() {
+    return delegate.startLI();
+  }
+
+  @Override
+  public LinkBuilder startLink() {
+    return delegate.startLink();
+  }
+
+  @Override
+  public MapBuilder startMap() {
+    return delegate.startMap();
+  }
+
+  @Override
+  public MetaBuilder startMeta() {
+    return delegate.startMeta();
+  }
+
+  @Override
+  public OListBuilder startOList() {
+    return delegate.startOList();
+  }
+
+  @Override
+  public OptGroupBuilder startOptGroup() {
+    return delegate.startOptGroup();
+  }
+
+  @Override
   public OptionBuilder startOption() {
     return delegate.startOption();
+  }
+
+  @Override
+  public ParagraphBuilder startParagraph() {
+    return delegate.startParagraph();
+  }
+
+  @Override
+  public ParamBuilder startParam() {
+    return delegate.startParam();
+  }
+
+  @Override
+  public InputBuilder startPasswordInput() {
+    return delegate.startPasswordInput();
+  }
+
+  @Override
+  public PreBuilder startPre() {
+    return delegate.startPre();
+  }
+
+  @Override
+  public ButtonBuilder startPushButton() {
+    return delegate.startPushButton();
+  }
+
+  @Override
+  public QuoteBuilder startQuote() {
+    return delegate.startQuote();
+  }
+
+  @Override
+  public InputBuilder startRadioInput(String name) {
+    return delegate.startRadioInput(name);
+  }
+
+  @Override
+  public ButtonBuilder startResetButton() {
+    return delegate.startResetButton();
+  }
+
+  @Override
+  public InputBuilder startResetInput() {
+    return delegate.startResetInput();
+  }
+
+  @Override
+  public ScriptBuilder startScript() {
+    return delegate.startScript();
   }
 
   @Override
@@ -149,24 +396,98 @@ public class DomElementBuilderBase<T extends ElementBuilderBase<?>, E extends El
   }
 
   @Override
-  public StylesBuilder style() {
-    return delegate.style();
+  public SourceBuilder startSource() {
+    return delegate.startSource();
   }
 
   @Override
-  public T tabIndex(int tabIndex) {
+  public SpanBuilder startSpan() {
+    return delegate.startSpan();
+  }
+
+  @Override
+  public StyleBuilder startStyle() {
+    return delegate.startStyle();
+  }
+
+  @Override
+  public ButtonBuilder startSubmitButton() {
+    return delegate.startSubmitButton();
+  }
+
+  @Override
+  public InputBuilder startSubmitInput() {
+    return delegate.startSubmitInput();
+  }
+
+  @Override
+  public TableBuilder startTable() {
+    return delegate.startTable();
+  }
+
+  @Override
+  public TableCaptionBuilder startTableCaption() {
+    return delegate.startTableCaption();
+  }
+
+  @Override
+  public TableSectionBuilder startTBody() {
+    return delegate.startTBody();
+  }
+
+  @Override
+  public TableCellBuilder startTD() {
+    return delegate.startTD();
+  }
+
+  @Override
+  public TextAreaBuilder startTextArea() {
+    return delegate.startTextArea();
+  }
+
+  @Override
+  public InputBuilder startTextInput() {
+    return delegate.startTextInput();
+  }
+
+  @Override
+  public TableSectionBuilder startTFoot() {
+    return delegate.startTFoot();
+  }
+
+  @Override
+  public TableCellBuilder startTH() {
+    return delegate.startTH();
+  }
+
+  @Override
+  public TableSectionBuilder startTHead() {
+    return delegate.startTHead();
+  }
+
+  @Override
+  public TableRowBuilder startTR() {
+    return delegate.startTR();
+  }
+
+  @Override
+  public UListBuilder startUList() {
+    return delegate.startUList();
+  }
+
+  @Override
+  public VideoBuilder startVideo() {
+    return delegate.startVideo();
+  }
+
+  @Override
+  public R tabIndex(int tabIndex) {
     assertCanAddAttribute().setTabIndex(tabIndex);
     return getReturnBuilder();
   }
 
   @Override
-  public T text(String text) {
-    delegate.text(text);
-    return getReturnBuilder();
-  }
-
-  @Override
-  public T title(String title) {
+  public R title(String title) {
     assertCanAddAttribute().setTitle(title);
     return getReturnBuilder();
   }
@@ -189,13 +510,7 @@ public class DomElementBuilderBase<T extends ElementBuilderBase<?>, E extends El
     return delegate.assertCanAddAttribute().<E> cast();
   }
 
-  /**
-   * Get the builder to return from build methods.
-   * 
-   * @return the return builder
-   */
-  @SuppressWarnings("unchecked")
-  private T getReturnBuilder() {
-    return (T) this;
+  DomBuilderImpl getDelegate() {
+    return delegate;
   }
 }

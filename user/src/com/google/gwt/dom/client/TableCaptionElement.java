@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(TableCaptionElement.TAG)
 public class TableCaptionElement extends Element {
 
-  static final String TAG = "caption";
+  public static final String TAG = "caption";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

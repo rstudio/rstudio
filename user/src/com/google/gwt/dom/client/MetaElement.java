@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(MetaElement.TAG)
 public class MetaElement extends Element {
 
-  static final String TAG = "meta";
+  public static final String TAG = "meta";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

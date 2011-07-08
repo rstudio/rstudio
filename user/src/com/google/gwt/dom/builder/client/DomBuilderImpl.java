@@ -17,10 +17,16 @@ package com.google.gwt.dom.builder.client;
 
 import com.google.gwt.dom.builder.shared.ElementBuilderBase;
 import com.google.gwt.dom.builder.shared.ElementBuilderImpl;
+import com.google.gwt.dom.builder.shared.InputBuilder;
 import com.google.gwt.dom.builder.shared.StylesBuilder;
+import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.dom.client.QuoteElement;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.TableColElement;
+import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
 import java.util.ArrayList;
@@ -38,11 +44,55 @@ class DomBuilderImpl extends ElementBuilderImpl {
    * Less common element builders are created lazily to avoid unnecessary object
    * creation.
    */
-  private final DomDivBuilder divElementBuilder = new DomDivBuilder(this);
+  private DomAnchorBuilder anchorBuilder;
+  private DomAreaBuilder areaBuilder;
+  private DomAudioBuilder audioBuilder;
+  private DomBaseBuilder baseBuilder;
+  private DomBodyBuilder bodyBuilder;
+  private DomBRBuilder brBuilder;
+  private DomButtonBuilder buttonBuilder;
+  private DomCanvasBuilder canvasBuilder;
+  private final DomDivBuilder divBuilder = new DomDivBuilder(this);
+  private DomDListBuilder dListBuilder;
   private final DomElementBuilder elementBuilder = new DomElementBuilder(this);
-  private DomOptionBuilder optionElementBuilder;
-  private DomSelectBuilder selectElementBuilder;
-  private final StylesBuilder styleBuilder = new DomStylesBuilder(this);
+  private DomFieldSetBuilder fieldSetBuilder;
+  private DomFormBuilder formBuilder;
+  private DomFrameBuilder frameBuilder;
+  private DomFrameSetBuilder frameSetBuilder;
+  private DomHeadBuilder headBuilder;
+  private DomHeadingBuilder headingBuilder;
+  private DomHRBuilder hrBuilder;
+  private DomIFrameBuilder iFrameBuilder;
+  private DomImageBuilder imageBuilder;
+  private final DomInputBuilder inputBuilder = new DomInputBuilder(this);
+  private DomLabelBuilder labelBuilder;
+  private DomLegendBuilder legendBuilder;
+  private final DomLIBuilder liBuilder = new DomLIBuilder(this);
+  private DomLinkBuilder linkBuilder;
+  private DomMapBuilder mapBuilder;
+  private DomMetaBuilder metaBuilder;
+  private DomOListBuilder oListBuilder;
+  private final DomOptionBuilder optionBuilder = new DomOptionBuilder(this);
+  private DomOptGroupBuilder optGroupBuilder;
+  private DomParagraphBuilder paragraphBuilder;
+  private DomParamBuilder paramBuilder;
+  private DomPreBuilder preBuilder;
+  private DomQuoteBuilder quoteBuilder;
+  private DomScriptBuilder scriptBuilder;
+  private DomSelectBuilder selectBuilder;
+  private DomSourceBuilder sourceBuilder;
+  private final DomSpanBuilder spanBuilder = new DomSpanBuilder(this);
+  private final StylesBuilder stylesBuilder = new DomStylesBuilder(this);
+  private DomStyleBuilder styleBuilder;
+  private DomTableBuilder tableBuilder;
+  private final DomTableCellBuilder tableCellBuilder = new DomTableCellBuilder(this);
+  private DomTableCaptionBuilder tableCaptionBuilder;
+  private DomTableColBuilder tableColBuilder;
+  private final DomTableRowBuilder tableRowBuilder = new DomTableRowBuilder(this);
+  private DomTableSectionBuilder tableSectionBuilder;
+  private DomTextAreaBuilder textAreaBuilder;
+  private DomUListBuilder uListBuilder;
+  private DomVideoBuilder videoBuilder;
 
   private Element root;
 
@@ -63,27 +113,389 @@ class DomBuilderImpl extends ElementBuilderImpl {
     return builder;
   }
 
+  public DomAnchorBuilder startAnchor() {
+    if (anchorBuilder == null) {
+      anchorBuilder = new DomAnchorBuilder(this);
+    }
+    return start(Document.get().createAnchorElement(), anchorBuilder);
+  }
+
+  public DomAreaBuilder startArea() {
+    if (areaBuilder == null) {
+      areaBuilder = new DomAreaBuilder(this);
+    }
+    return start(Document.get().createAreaElement(), areaBuilder);
+  }
+
+  public DomAudioBuilder startAudio() {
+    if (audioBuilder == null) {
+      audioBuilder = new DomAudioBuilder(this);
+    }
+    return start(Document.get().createAudioElement(), audioBuilder);
+  }
+
+  public DomBaseBuilder startBase() {
+    if (baseBuilder == null) {
+      baseBuilder = new DomBaseBuilder(this);
+    }
+    return start(Document.get().createBaseElement(), baseBuilder);
+  }
+
+  public DomQuoteBuilder startBlockQuote() {
+    return startQuote(Document.get().createBlockQuoteElement());
+  }
+
+  public DomBodyBuilder startBody() {
+    if (bodyBuilder == null) {
+      bodyBuilder = new DomBodyBuilder(this);
+    }
+    return start(Document.get().createElement("body"), bodyBuilder);
+  }
+
+  public DomBRBuilder startBR() {
+    if (brBuilder == null) {
+      brBuilder = new DomBRBuilder(this);
+    }
+    return start(Document.get().createBRElement(), brBuilder);
+  }
+
+  public InputBuilder startButtonInput() {
+    return startInput(Document.get().createButtonInputElement());
+  }
+
+  public DomCanvasBuilder startCanvas() {
+    if (canvasBuilder == null) {
+      canvasBuilder = new DomCanvasBuilder(this);
+    }
+    return start(Document.get().createCanvasElement(), canvasBuilder);
+  }
+
+  public InputBuilder startCheckInput() {
+    return startInput(Document.get().createCheckInputElement());
+  }
+
+  public DomTableColBuilder startCol() {
+    return startTableCol(Document.get().createColElement());
+  }
+
+  public DomTableColBuilder startColGroup() {
+    return startTableCol(Document.get().createColGroupElement());
+  }
+
   public DomDivBuilder startDiv() {
-    return start(Document.get().createDivElement(), divElementBuilder);
+    return start(Document.get().createDivElement(), divBuilder);
+  }
+
+  public DomDListBuilder startDList() {
+    if (dListBuilder == null) {
+      dListBuilder = new DomDListBuilder(this);
+    }
+    return start(Document.get().createDLElement(), dListBuilder);
+  }
+
+  public DomFieldSetBuilder startFieldSet() {
+    if (fieldSetBuilder == null) {
+      fieldSetBuilder = new DomFieldSetBuilder(this);
+    }
+    return start(Document.get().createFieldSetElement(), fieldSetBuilder);
+  }
+
+  public InputBuilder startFileInput() {
+    return startInput(Document.get().createFileInputElement());
+  }
+
+  public DomFormBuilder startForm() {
+    if (formBuilder == null) {
+      formBuilder = new DomFormBuilder(this);
+    }
+    return start(Document.get().createFormElement(), formBuilder);
+  }
+
+  public DomFrameBuilder startFrame() {
+    if (frameBuilder == null) {
+      frameBuilder = new DomFrameBuilder(this);
+    }
+    return start(Document.get().createFrameElement(), frameBuilder);
+  }
+
+  public DomFrameSetBuilder startFrameSet() {
+    if (frameSetBuilder == null) {
+      frameSetBuilder = new DomFrameSetBuilder(this);
+    }
+    return start(Document.get().createFrameSetElement(), frameSetBuilder);
+  }
+
+  public DomHeadingBuilder startH1() {
+    return startHeading(1);
+  }
+
+  public DomHeadingBuilder startH2() {
+    return startHeading(2);
+  }
+
+  public DomHeadingBuilder startH3() {
+    return startHeading(3);
+  }
+
+  public DomHeadingBuilder startH4() {
+    return startHeading(4);
+  }
+
+  public DomHeadingBuilder startH5() {
+    return startHeading(5);
+  }
+
+  public DomHeadingBuilder startH6() {
+    return startHeading(6);
+  }
+
+  public DomHeadBuilder startHead() {
+    if (headBuilder == null) {
+      headBuilder = new DomHeadBuilder(this);
+    }
+    return start(Document.get().createHeadElement(), headBuilder);
+  }
+
+  public InputBuilder startHiddenInput() {
+    return startInput(Document.get().createHiddenInputElement());
+  }
+
+  public DomHRBuilder startHR() {
+    if (hrBuilder == null) {
+      hrBuilder = new DomHRBuilder(this);
+    }
+    return start(Document.get().createHRElement(), hrBuilder);
+  }
+
+  public DomIFrameBuilder startIFrame() {
+    if (iFrameBuilder == null) {
+      iFrameBuilder = new DomIFrameBuilder(this);
+    }
+    return start(Document.get().createIFrameElement(), iFrameBuilder);
+  }
+
+  public DomImageBuilder startImage() {
+    if (imageBuilder == null) {
+      imageBuilder = new DomImageBuilder(this);
+    }
+    return start(Document.get().createImageElement(), imageBuilder);
+  }
+
+  public InputBuilder startImageInput() {
+    return startInput(Document.get().createImageInputElement());
+  }
+
+  /**
+   * Start an input using the specified InputElement.
+   */
+  public DomInputBuilder startInput(InputElement input) {
+    return start(input, inputBuilder);
+  }
+
+  public DomLabelBuilder startLabel() {
+    if (labelBuilder == null) {
+      labelBuilder = new DomLabelBuilder(this);
+    }
+    return start(Document.get().createLabelElement(), labelBuilder);
+  }
+
+  public DomLegendBuilder startLegend() {
+    if (legendBuilder == null) {
+      legendBuilder = new DomLegendBuilder(this);
+    }
+    return start(Document.get().createLegendElement(), legendBuilder);
+  }
+
+  public DomLIBuilder startLI() {
+    return start(Document.get().createLIElement(), liBuilder);
+  }
+
+  public DomLinkBuilder startLink() {
+    if (linkBuilder == null) {
+      linkBuilder = new DomLinkBuilder(this);
+    }
+    return start(Document.get().createLinkElement(), linkBuilder);
+  }
+
+  public DomMapBuilder startMap() {
+    if (mapBuilder == null) {
+      mapBuilder = new DomMapBuilder(this);
+    }
+    return start(Document.get().createMapElement(), mapBuilder);
+  }
+
+  public DomMetaBuilder startMeta() {
+    if (metaBuilder == null) {
+      metaBuilder = new DomMetaBuilder(this);
+    }
+    return start(Document.get().createMetaElement(), metaBuilder);
+  }
+
+  public DomOListBuilder startOList() {
+    if (oListBuilder == null) {
+      oListBuilder = new DomOListBuilder(this);
+    }
+    return start(Document.get().createOLElement(), oListBuilder);
+  }
+
+  public DomOptGroupBuilder startOptGroup() {
+    if (optGroupBuilder == null) {
+      optGroupBuilder = new DomOptGroupBuilder(this);
+    }
+    return start(Document.get().createOptGroupElement(), optGroupBuilder);
   }
 
   public DomOptionBuilder startOption() {
-    if (optionElementBuilder == null) {
-      optionElementBuilder = new DomOptionBuilder(this);
+    return start(Document.get().createOptionElement(), optionBuilder);
+  }
+
+  public DomParagraphBuilder startParagraph() {
+    if (paragraphBuilder == null) {
+      paragraphBuilder = new DomParagraphBuilder(this);
     }
-    return start(Document.get().createOptionElement(), optionElementBuilder);
+    return start(Document.get().createPElement(), paragraphBuilder);
+  }
+
+  public DomParamBuilder startParam() {
+    if (paramBuilder == null) {
+      paramBuilder = new DomParamBuilder(this);
+    }
+    return start(Document.get().createParamElement(), paramBuilder);
+  }
+
+  public InputBuilder startPasswordInput() {
+    return startInput(Document.get().createPasswordInputElement());
+  }
+
+  public DomPreBuilder startPre() {
+    if (preBuilder == null) {
+      preBuilder = new DomPreBuilder(this);
+    }
+    return start(Document.get().createPreElement(), preBuilder);
+  }
+
+  public DomButtonBuilder startPushButton() {
+    return startButton(Document.get().createPushButtonElement());
+  }
+
+  public DomQuoteBuilder startQuote() {
+    return startQuote(Document.get().createQElement());
+  }
+
+  public InputBuilder startRadioInput(String name) {
+    return startInput(Document.get().createRadioInputElement(name));
+  }
+
+  public DomButtonBuilder startResetButton() {
+    return startButton(Document.get().createResetButtonElement());
+  }
+
+  public InputBuilder startResetInput() {
+    return startInput(Document.get().createSubmitInputElement());
+  }
+
+  public DomScriptBuilder startScript() {
+    if (scriptBuilder == null) {
+      scriptBuilder = new DomScriptBuilder(this);
+    }
+    return start(Document.get().createScriptElement(), scriptBuilder);
   }
 
   public DomSelectBuilder startSelect() {
-    if (selectElementBuilder == null) {
-      selectElementBuilder = new DomSelectBuilder(this);
+    if (selectBuilder == null) {
+      selectBuilder = new DomSelectBuilder(this);
     }
-    return start(Document.get().createSelectElement(), selectElementBuilder);
+    return start(Document.get().createSelectElement(), selectBuilder);
+  }
+
+  public DomSourceBuilder startSource() {
+    if (sourceBuilder == null) {
+      sourceBuilder = new DomSourceBuilder(this);
+    }
+    return start(Document.get().createSourceElement(), sourceBuilder);
+  }
+
+  public DomSpanBuilder startSpan() {
+    return start(Document.get().createSpanElement(), spanBuilder);
+  }
+
+  public DomStyleBuilder startStyle() {
+    if (styleBuilder == null) {
+      styleBuilder = new DomStyleBuilder(this);
+    }
+    return start(Document.get().createStyleElement(), styleBuilder);
+  }
+
+  public DomButtonBuilder startSubmitButton() {
+    return startButton(Document.get().createSubmitButtonElement());
+  }
+
+  public InputBuilder startSubmitInput() {
+    return startInput(Document.get().createSubmitInputElement());
+  }
+
+  public DomTableBuilder startTable() {
+    if (tableBuilder == null) {
+      tableBuilder = new DomTableBuilder(this);
+    }
+    return start(Document.get().createTableElement(), tableBuilder);
+  }
+
+  public DomTableCaptionBuilder startTableCaption() {
+    if (tableCaptionBuilder == null) {
+      tableCaptionBuilder = new DomTableCaptionBuilder(this);
+    }
+    return start(Document.get().createCaptionElement(), tableCaptionBuilder);
+  }
+
+  public DomTableSectionBuilder startTBody() {
+    return startTableSection(Document.get().createTBodyElement());
+  }
+
+  public DomTableCellBuilder startTD() {
+    return start(Document.get().createTDElement(), tableCellBuilder);
+  }
+
+  public DomTextAreaBuilder startTextArea() {
+    if (textAreaBuilder == null) {
+      textAreaBuilder = new DomTextAreaBuilder(this);
+    }
+    return start(Document.get().createTextAreaElement(), textAreaBuilder);
+  }
+
+  public DomTableSectionBuilder startTFoot() {
+    return startTableSection(Document.get().createTFootElement());
+  }
+
+  public DomTableCellBuilder startTH() {
+    return start(Document.get().createTHElement(), tableCellBuilder);
+  }
+
+  public DomTableSectionBuilder startTHead() {
+    return startTableSection(Document.get().createTHeadElement());
+  }
+
+  public DomTableRowBuilder startTR() {
+    return start(Document.get().createTRElement(), tableRowBuilder);
+  }
+
+  public DomUListBuilder startUList() {
+    if (uListBuilder == null) {
+      uListBuilder = new DomUListBuilder(this);
+    }
+    return start(Document.get().createULElement(), uListBuilder);
+  }
+
+  public DomVideoBuilder startVideo() {
+    if (videoBuilder == null) {
+      videoBuilder = new DomVideoBuilder(this);
+    }
+    return start(Document.get().createVideoElement(), videoBuilder);
   }
 
   @Override
   public StylesBuilder style() {
-    return styleBuilder;
+    return stylesBuilder;
   }
 
   public DomElementBuilder trustedStart(String tagName) {
@@ -103,6 +515,11 @@ class DomBuilderImpl extends ElementBuilderImpl {
 
   @Override
   protected void doCloseStyleAttributeImpl() {
+    // No-op.
+  }
+
+  @Override
+  protected void doEndStartTagImpl() {
     // No-op.
   }
 
@@ -129,6 +546,12 @@ class DomBuilderImpl extends ElementBuilderImpl {
   @Override
   protected void doTextImpl(String text) {
     getCurrentElement().setInnerText(text);
+  }
+
+  @Override
+  protected void lockCurrentElement() {
+    // Overridden for visibility.
+    super.lockCurrentElement();
   }
 
   /**
@@ -161,6 +584,10 @@ class DomBuilderImpl extends ElementBuilderImpl {
       throw new IllegalStateException("There are no elements on the stack.");
     }
     return currentElement;
+  }
+
+  InputBuilder startTextInput() {
+    return startInput(Document.get().createTextInputElement());
   }
 
   private void popElement() {
@@ -201,5 +628,55 @@ class DomBuilderImpl extends ElementBuilderImpl {
     pushElement(element);
 
     return builder;
+  }
+
+  /**
+   * Start a button using the specified {@link ButtonElement}.
+   */
+  private DomButtonBuilder startButton(ButtonElement button) {
+    if (buttonBuilder == null) {
+      buttonBuilder = new DomButtonBuilder(this);
+    }
+    return start(button, buttonBuilder);
+  }
+
+  /**
+   * Start one of the many headers.
+   */
+  private DomHeadingBuilder startHeading(int level) {
+    if (headingBuilder == null) {
+      headingBuilder = new DomHeadingBuilder(this);
+    }
+    return start(Document.get().createHElement(level), headingBuilder);
+  }
+
+  /**
+   * Start a quote or blockquote.
+   */
+  private DomQuoteBuilder startQuote(QuoteElement quote) {
+    if (quoteBuilder == null) {
+      quoteBuilder = new DomQuoteBuilder(this);
+    }
+    return start(quote, quoteBuilder);
+  }
+
+  /**
+   * Start a table col or colgroup.
+   */
+  private DomTableColBuilder startTableCol(TableColElement element) {
+    if (tableColBuilder == null) {
+      tableColBuilder = new DomTableColBuilder(this);
+    }
+    return start(element, tableColBuilder);
+  }
+
+  /**
+   * Start a table section using the specified {@link TableSectionElement}.
+   */
+  private DomTableSectionBuilder startTableSection(TableSectionElement section) {
+    if (tableSectionBuilder == null) {
+      tableSectionBuilder = new DomTableSectionBuilder(this);
+    }
+    return start(section, tableSectionBuilder);
   }
 }

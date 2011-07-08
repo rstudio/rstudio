@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(FieldSetElement.TAG)
 public class FieldSetElement extends Element {
 
-  static final String TAG = "fieldset";
+  public static final String TAG = "fieldset";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

@@ -17,6 +17,9 @@ package com.google.gwt.dom.builder.shared;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.TableElement;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -56,6 +59,32 @@ public abstract class GwtElementBuilderImplTestBase extends GWTTestCase {
       fail("Expected IllegalStateException: cannot call finish() twice");
     } catch (IllegalStateException e) {
       // Expected.
+    }
+  }
+
+  public void testBuildTable() {
+    // Build a table.
+    TableBuilder tableBuilder = factory.createTableBuilder().id("mytable");
+    TableSectionBuilder tbody = tableBuilder.startTBody();
+    for (int r = 0; r < 5; r++) {
+      TableRowBuilder tr = tbody.startTR().id("row" + r);
+      for (int c = 0; c < 3; c++) {
+        tr.startTD().text(r + ":" + c).endTD();
+      }
+      tr.endTR();
+    }
+    tbody.endTBody().endTable();
+
+    // Check the rendered element.
+    TableElement table = tableBuilder.finish().cast();
+    assertEquals(5, table.getRows().getLength());
+    for (int r = 0; r < 5; r++) {
+      TableRowElement tr = table.getRows().getItem(r);
+      assertEquals(3, tr.getCells().getLength());
+      for (int c = 0; c < 3; c++) {
+        TableCellElement td = tr.getCells().getItem(c);
+        assertEquals(r + ":" + c, td.getInnerText());
+      }
     }
   }
 

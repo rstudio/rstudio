@@ -19,18 +19,54 @@ import com.google.gwt.dom.builder.shared.SelectBuilder;
 import com.google.gwt.dom.client.SelectElement;
 
 /**
- * Implementation of {@link SelectBuilder}.
+ * DOM-based implementation of {@link SelectBuilder}.
  */
-public class DomSelectBuilder extends
-    DomElementBuilderBase<SelectBuilder, SelectElement> implements SelectBuilder {
+public class DomSelectBuilder extends DomElementBuilderBase<SelectBuilder, SelectElement> implements
+    SelectBuilder {
 
   DomSelectBuilder(DomBuilderImpl delegate) {
     super(delegate);
   }
 
   @Override
+  public SelectBuilder disabled() {
+    assertCanAddAttribute().setDisabled(true);
+    return this;
+  }
+
+  @Override
+  public SelectBuilder multiple() {
+    assertCanAddAttribute().setMultiple(true);
+    return this;
+  }
+
+  @Override
+  public SelectBuilder name(String name) {
+    assertCanAddAttribute().setName(name);
+    return this;
+  }
+
+  @Override
+  public SelectBuilder selectedIndex(int index) {
+    assertCanAddAttribute().setSelectedIndex(index);
+    return this;
+  }
+
+  @Override
   public SelectBuilder size(int size) {
     assertCanAddAttribute().setSize(size);
+    return this;
+  }
+
+  @Override
+  public SelectBuilder type(String type) {
+    assertCanAddAttribute().setType(type);
+    return this;
+  }
+
+  @Override
+  public SelectBuilder value(String value) {
+    assertCanAddAttribute().setValue(value);
     return this;
   }
 }

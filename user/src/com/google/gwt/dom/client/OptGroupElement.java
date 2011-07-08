@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(OptGroupElement.TAG)
 public class OptGroupElement extends Element {
 
-  static final String TAG = "optgroup";
+  public static final String TAG = "optgroup";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

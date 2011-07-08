@@ -23,8 +23,8 @@ package com.google.gwt.dom.client;
 @TagName({QuoteElement.TAG_BLOCKQUOTE, QuoteElement.TAG_Q})
 public class QuoteElement extends Element {
 
-  static final String TAG_BLOCKQUOTE = "blockquote";
-  static final String TAG_Q = "q";
+  public static final String TAG_BLOCKQUOTE = "blockquote";
+  public static final String TAG_Q = "q";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

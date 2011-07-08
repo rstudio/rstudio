@@ -16,7 +16,7 @@
 package com.google.gwt.dom.builder.shared;
 
 /**
- * Implementation of {@link DivBuilder}.
+ * HTML-based implementation of {@link DivBuilder}.
  */
 public class HtmlDivBuilder extends HtmlElementBuilderBase<DivBuilder> implements
     DivBuilder {

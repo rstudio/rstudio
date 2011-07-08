@@ -19,7 +19,7 @@ import com.google.gwt.dom.builder.shared.OptionBuilder;
 import com.google.gwt.dom.client.OptionElement;
 
 /**
- * Implementation of {@link OptionBuilder}.
+ * DOM-based implementation of {@link OptionBuilder}.
  */
 public class DomOptionBuilder extends
     DomElementBuilderBase<OptionBuilder, OptionElement> implements OptionBuilder {

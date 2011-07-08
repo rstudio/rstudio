@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(PreElement.TAG)
 public class PreElement extends Element {
 
-  static final String TAG = "pre";
+  public static final String TAG = "pre";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

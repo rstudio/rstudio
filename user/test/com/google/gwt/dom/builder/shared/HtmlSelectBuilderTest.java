@@ -21,8 +21,13 @@ package com.google.gwt.dom.builder.shared;
 public class HtmlSelectBuilderTest extends ElementBuilderTestBase<SelectBuilder> {
 
   @Override
-  protected SelectBuilder createElementBuilder() {
-    return HtmlBuilderFactory.get().createSelectBuilder();
+  protected SelectBuilder createElementBuilder(ElementBuilderFactory factory) {
+    return factory.createSelectBuilder();
+  }
+
+  @Override
+  protected SelectBuilder endElement(ElementBuilderBase<?> builder) {
+    return builder.endSelect();
   }
 
   @Override

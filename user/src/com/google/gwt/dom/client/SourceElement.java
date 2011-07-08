@@ -25,7 +25,7 @@ package com.google.gwt.dom.client;
 @TagName(SourceElement.TAG)
 public class SourceElement extends Element {
 
-  static final String TAG = "source";
+  public static final String TAG = "source";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

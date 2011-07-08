@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(ParamElement.TAG)
 public class ParamElement extends Element {
 
-  static final String TAG = "param";
+  public static final String TAG = "param";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

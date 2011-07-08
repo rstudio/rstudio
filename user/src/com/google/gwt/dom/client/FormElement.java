@@ -25,7 +25,7 @@ package com.google.gwt.dom.client;
 @TagName(FormElement.TAG)
 public class FormElement extends Element {
 
-  static final String TAG = "form";
+  public static final String TAG = "form";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
 @TagName(OListElement.TAG)
 public class OListElement extends Element {
 
-  static final String TAG = "ol";
+  public static final String TAG = "ol";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

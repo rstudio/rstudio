@@ -24,8 +24,8 @@ package com.google.gwt.dom.client;
 @TagName({ModElement.TAG_INS, ModElement.TAG_DEL})
 public class ModElement extends Element {
 
-  static final String TAG_INS = "ins";
-  static final String TAG_DEL = "del";
+  public static final String TAG_INS = "ins";
+  public static final String TAG_DEL = "del";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

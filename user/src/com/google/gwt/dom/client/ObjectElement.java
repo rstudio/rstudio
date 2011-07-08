@@ -27,7 +27,7 @@ package com.google.gwt.dom.client;
 @TagName(ObjectElement.TAG)
 public class ObjectElement extends Element {
 
-  static final String TAG = "object";
+  public static final String TAG = "object";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and

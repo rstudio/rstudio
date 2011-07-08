@@ -24,7 +24,7 @@ package com.google.gwt.dom.client;
 @TagName(BodyElement.TAG)
 public class BodyElement extends Element {
 
-  static final String TAG = "body";
+  public static final String TAG = "body";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
