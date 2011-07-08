@@ -188,6 +188,8 @@ void showFile(const core::FilePath& filePath,
 
 void showContent(const std::string& title, const core::FilePath& filePath);
 
+int saveWorkspaceAction();
+
 bool isGoogleDocsIntegrationEnabled();
 void setGoogleDocsIntegrationEnabled(bool enabled);
 

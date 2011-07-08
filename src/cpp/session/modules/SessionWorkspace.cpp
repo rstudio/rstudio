@@ -182,8 +182,8 @@ void checkForSaveActionChanged()
 {
    // compute current save action
    int currentSaveAction = r::session::imageIsDirty() ?
-                                          userSettings().saveAction() :
-                                          r::session::kSaveActionNoSave;
+                                 module_context::saveWorkspaceAction() :
+                                 r::session::kSaveActionNoSave;
 
    // compare and fire event if necessary
    if (s_lastSaveAction != currentSaveAction)

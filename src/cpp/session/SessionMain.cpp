@@ -1757,6 +1757,41 @@ FilePath rEnvironmentDir()
    }
 }
 
+SA_TYPE saveWorkspaceOption()
+{
+   // convert from internal type to R type
+   int saveAction = module_context::saveWorkspaceAction();
+   if (saveAction == r::session::kSaveActionSave)
+      return SA_SAVE;
+   else if (saveAction == r::session::kSaveActionNoSave)
+      return SA_NOSAVE;
+   else
+      return SA_SAVEASK;
+}
+
+bool restoreWorkspaceOption()
+{
+   // allow project override
+   const projects::ProjectContext& projContext = projects::projectContext();
+   if (projContext.hasProject())
+   {
+      switch(projContext.restoreWorkspace())
+      {
+      case r_util::YesValue:
+         return true;
+      case r_util::NoValue:
+         return false;
+      default:
+         // fall through
+         break;
+      }
+   }
+
+   // no project override
+   return userSettings().loadRData() ||
+          !session::options().initialEnvironmentFileOverride().empty();
+}
+
 FilePath rHistoryDir()
 {
    // for projects we always use the project directory
@@ -1776,6 +1811,27 @@ FilePath rHistoryDir()
    {
       return FilePath::safeCurrentPath(session::options().userHomePath());
    }
+}
+
+bool alwaysSaveHistoryOption()
+{
+   // allow project override
+   const projects::ProjectContext& projContext = projects::projectContext();
+   if (projContext.hasProject())
+   {
+      switch(projContext.alwaysSaveHistory())
+      {
+      case r_util::YesValue:
+         return true;
+      case r_util::NoValue:
+         return false;
+      default:
+         // fall through
+         break;
+      }
+   }
+
+   return userSettings().alwaysSaveHistory();
 }
 
 FilePath getStartupEnvironmentFilePath()
@@ -1861,6 +1917,31 @@ Error executeInterruptableChild(std::string path,
                                                          100,
                                                          continueChildProcess);
 }
+
+int saveWorkspaceAction()
+{
+   // allow project override
+   const projects::ProjectContext& projContext = projects::projectContext();
+   if (projContext.hasProject())
+   {
+      switch(projContext.saveWorkspace())
+      {
+      case r_util::YesValue:
+         return r::session::kSaveActionSave;
+      case r_util::NoValue:
+         return r::session::kSaveActionNoSave;
+      case r_util::AskValue:
+         return r::session::kSaveActionAsk;
+      default:
+         // fall through
+         break;
+      }
+   }
+
+   // no project override, read from settings
+   return userSettings().saveAction();
+}
+
 
 } // namespace module_context
 } // namespace session
@@ -2083,8 +2164,7 @@ int main (int argc, char * const argv[])
                                              &(persistentState()));
       rOptions.rEnvironmentDir = boost::bind(rEnvironmentDir);
       rOptions.rHistoryDir = boost::bind(rHistoryDir);
-      rOptions.alwaysSaveHistory = boost::bind(&UserSettings::alwaysSaveHistory,
-                                               &(userSettings()));
+      rOptions.alwaysSaveHistory = boost::bind(alwaysSaveHistoryOption);
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
@@ -2098,16 +2178,8 @@ int main (int argc, char * const argv[])
       rOptions.serverMode = serverMode;
       rOptions.autoReloadSource = options.autoReloadSource();
       rOptions.shellEscape = options.rShellEscape();
-      rOptions.restoreWorkspace = userSettings().loadRData() ||
-                                  !options.initialEnvironmentFileOverride().empty();
-      // save action
-      int saveAction = userSettings().saveAction();
-      if (saveAction == r::session::kSaveActionSave)
-         rOptions.saveWorkspace = SA_SAVE;
-      else if (saveAction == r::session::kSaveActionNoSave)
-         rOptions.saveWorkspace = SA_NOSAVE;
-      else
-         rOptions.saveWorkspace = SA_SAVEASK;
+      rOptions.restoreWorkspace = restoreWorkspaceOption();
+      rOptions.saveWorkspace = saveWorkspaceOption();
       
       // r callbacks
       r::session::RCallbacks rCallbacks;
