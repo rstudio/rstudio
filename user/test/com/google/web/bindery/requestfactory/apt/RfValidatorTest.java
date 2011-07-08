@@ -131,6 +131,10 @@ public class RfValidatorTest extends TestCase {
    */
   private void testGeneratedMessages(Class<?>... classes) {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    if (compiler == null) {
+      // This test is being run without a full JDK
+      return;
+    }
 
     List<JavaFileObject> files = new ArrayList<JavaFileObject>(classes.length);
     for (Class<?> clazz : classes) {
