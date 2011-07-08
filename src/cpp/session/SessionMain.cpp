@@ -266,7 +266,7 @@ FilePath getDefaultWorkingDirectory()
 FilePath getInitialWorkingDirectory()
 {
    // check for a project
-   if (!projects::projectContext().empty())
+   if (projects::projectContext().hasProject())
       return projects::projectContext().directory();
 
    // see if there is an override from the environment (perhaps based
@@ -392,7 +392,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["initial_working_dir"] = initialWorkingDir;
 
    // active project file
-    if (!projects::projectContext().empty())
+   if (projects::projectContext().hasProject())
    {
       sessionInfo["active_project_file"] = module_context::createAliasedPath(
                               projects::projectContext().file());
@@ -1739,7 +1739,7 @@ void detectParentTermination()
 FilePath rEnvironmentDir()
 {
    // for projects we always use the project directory
-   if (!projects::projectContext().empty())
+   if (projects::projectContext().hasProject())
    {
       return projects::projectContext().directory();
    }
@@ -1760,7 +1760,7 @@ FilePath rEnvironmentDir()
 FilePath rHistoryDir()
 {
    // for projects we always use the project directory
-   if (!projects::projectContext().empty())
+   if (projects::projectContext().hasProject())
    {
       return projects::projectContext().directory();
    }

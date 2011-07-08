@@ -34,7 +34,7 @@ public:
                           std::string* pUserErrMsg);
 
 public:
-   bool empty() const { return file_.empty(); }
+   bool hasProject() const { return !file_.empty(); }
 
    const core::FilePath& file() const { return file_; }
    const core::FilePath& directory() const { return directory_; }

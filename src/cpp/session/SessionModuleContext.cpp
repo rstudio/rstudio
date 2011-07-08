@@ -393,7 +393,7 @@ FilePath userScratchPath()
 
 FilePath scopedScratchPath()
 {
-   if (!projects::projectContext().empty())
+   if (projects::projectContext().hasProject())
       return projects::projectContext().scratchPath();
    else
       return userScratchPath();
