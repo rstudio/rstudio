@@ -112,13 +112,15 @@ BioconductorMirror toBioconductorMirror(const json::Object& mirrorJson)
 Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 {
    // read params
-   json::Object uiPrefs, generalPrefs, historyPrefs, packagesPrefs;
+   json::Object generalPrefs, historyPrefs, packagesPrefs, projectsPrefs;
    Error error = json::readObjectParam(request.params, 0,
                                        "general_prefs", &generalPrefs,
                                        "history_prefs", &historyPrefs,
-                                       "packages_prefs", &packagesPrefs);
+                                       "packages_prefs", &packagesPrefs,
+                                       "projects_prefs", &projectsPrefs);
    if (error)
       return error;
+   json::Object uiPrefs;
    error = json::readParam(request.params, 1, &uiPrefs);
    if (error)
       return error;
@@ -172,7 +174,17 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setBioconductorMirror(toBioconductorMirror(
                                                 bioconductorMirrorJson));
    */
+   userSettings().endUpdate();
 
+
+   // read and set projects prefs
+   bool restoreLastProject;
+   error = json::readObject(projectsPrefs,
+                            "restore_last_project", &restoreLastProject);
+   if (error)
+      return error;
+   userSettings().beginUpdate();
+   userSettings().setAlwaysRestoreLastProject(restoreLastProject);
    userSettings().endUpdate();
 
    // set ui prefs
@@ -238,11 +250,16 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    packagesPrefs["bioconductor_mirror"] = toBioconductorMirrorJson(
                                       userSettings().bioconductorMirror());
 
+   // get projects prefs
+   json::Object projectsPrefs;
+   projectsPrefs["restore_last_project"] = userSettings().alwaysRestoreLastProject();
+
    // initialize and set result object
    json::Object result;
    result["general_prefs"] = generalPrefs;
    result["history_prefs"] = historyPrefs;
    result["packages_prefs"] = packagesPrefs;
+   result["projects_prefs"] = projectsPrefs;
 
    pResponse->setResult(result);
 

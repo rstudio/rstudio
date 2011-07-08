@@ -36,7 +36,7 @@ namespace {
 const char * const kAgreementHash = kAgreementPrefix "agreedToHash";
 const char * const kAutoCreatedProfile = "autoCreatedProfile";
 const char * const kUiPrefs = "uiPrefs";
-const char * const kAlwaysRestoreLastProject = "alwaysRestoreLastProject";
+const char * const kAlwaysRestoreLastProject = "restoreLastProject";
 const char * const kLastProjectPath = "lastProjectPath";
 const char * const kSaveAction = "saveAction";
 const char * const kLoadRData = "loadRData";
@@ -128,7 +128,7 @@ void UserSettings::setUiPrefs(const core::json::Object& prefsObject)
 
 bool UserSettings::alwaysRestoreLastProject() const
 {
-   return settings_.getBool(kAlwaysRestoreLastProject, false);
+   return settings_.getBool(kAlwaysRestoreLastProject, true);
 }
 
 void UserSettings::setAlwaysRestoreLastProject(bool alwaysRestore)
