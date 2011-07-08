@@ -31,7 +31,5 @@ public class CodeSplitterTest extends JJSTestBase {
     ControlFlowAnalyzer cfa = CodeSplitter.computeInitiallyLive(program);
 
     assertTrue(cfa.getInstantiatedTypes().contains(findType(program, "com.google.gwt.lang.Array")));
-    assertTrue(cfa.getLiveFieldsAndMethods().contains(
-        findMethod(findType(program, "com.google.gwt.lang.Array"), "getClass")));
   }
 }

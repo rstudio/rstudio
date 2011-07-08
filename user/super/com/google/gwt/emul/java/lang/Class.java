@@ -30,16 +30,20 @@ public final class Class<T> {
   private static final int ARRAY = 0x00000004;
   private static final int ENUM = 0x00000008;
 
+  static native String asString(int number) /*-{
+    return number;
+  }-*/;
+
   /**
    * Create a Class object for an array.
    * 
    * @skip
    */
   static <T> Class<T> createForArray(String packageName, String className,
-      String seedName, Class<?> componentType) {
+      int seedId, Class<?> componentType) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
-    setName(clazz, packageName, className, seedName);
+    setName(clazz, packageName, className, -1);
     clazz.modifiers = ARRAY;
     clazz.superclass = Object.class;
     clazz.componentType = componentType;
@@ -52,10 +56,10 @@ public final class Class<T> {
    * @skip
    */
   static <T> Class<T> createForClass(String packageName, String className,
-      String seedName, Class<? super T> superclass) {
+      int seedId, Class<? super T> superclass) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
-    setName(clazz, packageName, className, seedName);
+    setName(clazz, packageName, className, seedId);
     clazz.superclass = superclass;
     return clazz;
   }
@@ -66,11 +70,11 @@ public final class Class<T> {
    * @skip
    */
   static <T> Class<T> createForEnum(String packageName, String className,
-      String seedName, Class<? super T> superclass,
+      int seedId, Class<? super T> superclass,
       JavaScriptObject enumConstantsFunc, JavaScriptObject enumValueOfFunc) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
-    setName(clazz, packageName, className, seedName);
+    setName(clazz, packageName, className, seedId);
     clazz.modifiers = (enumConstantsFunc != null) ? ENUM : 0;
     clazz.superclass = clazz.enumSuperclass = superclass;
     clazz.enumConstantsFunc = enumConstantsFunc;
@@ -86,7 +90,7 @@ public final class Class<T> {
   static <T> Class<T> createForInterface(String packageName, String className) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
-    setName(clazz, packageName, className, null);
+    setName(clazz, packageName, className, -1);
     clazz.modifiers = INTERFACE;
     return clazz;
   }
@@ -97,21 +101,73 @@ public final class Class<T> {
    * @skip
    */
   static Class<?> createForPrimitive(String packageName, String className,
-      String seedName) {
+      int seedId) {
     // Initialize here to avoid method inliner
     Class<?> clazz = new Class<Object>();
-    setName(clazz, packageName, className, seedName);
+    setName(clazz, packageName, className, seedId);
     clazz.modifiers = PRIMITIVE;
     return clazz;
   }
+
+  /**
+    * Used by {@link WebModePayloadSink} to create uninitialized instances.
+    */
+   static native JavaScriptObject getSeedFunction(Class<?> clazz) /*-{
+     var func = @com.google.gwt.lang.SeedUtil::seedTable[clazz.@java.lang.Class::seedId];
+     clazz = null; // HACK: prevent pruning via inlining by using param as lvalue
+     return func;
+   }-*/;
 
   static boolean isClassMetadataEnabled() {
     // This body may be replaced by the compiler
     return true;
   }
 
+  /**
+   * null or -1 implies lack of seed function / non-instantiable type
+   */
+  static native boolean isInstantiable(int seedId) /*-{
+    return seedId != null && seedId > -1;
+  }-*/;
+
+  /**
+   * Install class literal into seed.prototype.clazz field such that
+   * Object.getClass() returning this.clazz returns the literal. Also stores
+   * seedId on class literal for looking up prototypes given a literal. This
+   * is used for deRPC at the moment, but may be used to implement
+   * Class.newInstance() in the future.
+   */
+  static native void setClassLiteral(int seedId, Class<?> clazz) /*-{
+    var proto;
+    clazz.@java.lang.Class::seedId = seedId;
+    // String is the exception to the usual vtable setup logic
+    if (seedId == 2) {
+      proto = String.prototype
+    } else {
+      if (seedId > -1) {
+        // Guarantees virtual method won't be pruned by using a JSNI ref
+        // This is required because deRPC needs to call it.
+        var seed = @java.lang.Class::getSeedFunction(Ljava/lang/Class;)(clazz);
+        // A class literal may be referenced prior to an async-loaded vtable setup
+        // For example, class literal lives in inital fragment,
+        // but type is instantiated in another fragment
+        if (seed) {
+          proto = seed.prototype;
+        } else {
+          // Leave a place holder for now to be filled in by __defineSeed__ later
+          seed = @com.google.gwt.lang.SeedUtil::seedTable[seedId] = function(){};
+          seed.@java.lang.Object::___clazz = clazz;
+          return;
+        }
+      } else {
+        return;
+      }
+    }
+    proto.@java.lang.Object::___clazz = clazz;
+  }-*/;
+
   static void setName(Class<?> clazz, String packageName, String className,
-      String seedName) {
+      int seedId) {
     if (clazz.isClassMetadataEnabled()) {
       clazz.typeName = packageName + className;
     } else {
@@ -121,7 +177,10 @@ public final class Class<T> {
        * during application start up, before class Integer has been initialized.
        */
       clazz.typeName = "Class$"
-          + (seedName != null ? seedName : "" + clazz.hashCode());
+          + (seedId != -1 ? asString(seedId) : "" + clazz.hashCode());
+    }
+    if (isInstantiable(seedId)) {
+      setClassLiteral(seedId, clazz);
     }
   }
 
@@ -139,6 +198,8 @@ public final class Class<T> {
   private Class<? super T> superclass;
 
   private String typeName;
+
+  private int seedId;
 
   /**
    * Not publicly instantiable.
