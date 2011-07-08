@@ -125,9 +125,12 @@ void startup()
       projectFilePath = FilePath();
    }
 
-   // check for restore based on settings
+   // check for restore based last project (but surpress this if we
+   // had an abend on our last session -- this might have been a
+   // result of something in the project)
    else if (userSettings().alwaysRestoreLastProject() &&
-            !userSettings().lastProjectPath().empty())
+            !userSettings().lastProjectPath().empty() &&
+            !session::persistentState().hadAbend())
    {
       // get last project path
       projectFilePath = userSettings().lastProjectPath();
