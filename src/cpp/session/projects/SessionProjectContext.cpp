@@ -108,14 +108,13 @@ Error ProjectContext::initialize(const FilePath& projectFile,
                          ERROR_LOCATION);
    }
 
-   // calculate project scratch path (fault back to userScratch if for some
-   // reason we can't determine the project scratch path)
+   // calculate project scratch path
    FilePath scratchPath;
    Error error = computeScratchPath(projectFile, &scratchPath);
    if (error)
    {
-      LOG_ERROR(error);
-      scratchPath = module_context::userScratchPath();
+      *pUserErrMsg = "unable to initialize project - " + error.summary();
+      return error;
    }
 
    // read project file config
