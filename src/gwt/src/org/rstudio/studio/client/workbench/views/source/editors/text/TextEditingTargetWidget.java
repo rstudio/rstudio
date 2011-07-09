@@ -71,7 +71,8 @@ public class TextEditingTargetWidget
    private Toolbar createToolbar()
    {
       Toolbar toolbar = new Toolbar();
-
+      
+      toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       toolbar.addLeftWidget(sourceOnSave_);
 
       toolbar.addLeftSeparator();
