@@ -4,16 +4,21 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.*;
+import org.rstudio.core.client.events.EnsureHiddenEvent;
+import org.rstudio.core.client.events.EnsureHiddenHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.widget.BottomScrollPanel;
+import org.rstudio.core.client.widget.ClickImage;
 import org.rstudio.core.client.widget.NineUpBorder;
 import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarPresenter.OutputDisplay;
 
@@ -59,6 +64,9 @@ public class ConsoleOutputPane extends ResizeComposite implements OutputDisplay
       @Override
       @Source("GitCommandOutputRight.png")
       ImageResource bottomRight();
+
+      @Source("GitCommandCloseIcon.png")
+      ImageResource closeIcon();
    }
 
    interface Styles extends CssResource
@@ -81,6 +89,24 @@ public class ConsoleOutputPane extends ResizeComposite implements OutputDisplay
       nineUpBorder.setWidget(scrollPanel_);
       nineUpBorder.setFillColor("#fff");
 
+      Image closeIcon = new ClickImage(res_.closeIcon());
+      LayoutPanel borderLayoutPanel = nineUpBorder.getLayoutPanel();
+      borderLayoutPanel.add(closeIcon);
+      borderLayoutPanel.setWidgetTopHeight(closeIcon,
+                                           5, Unit.PX,
+                                           closeIcon.getHeight(), Unit.PX);
+      borderLayoutPanel.setWidgetRightWidth(closeIcon,
+                                            7, Unit.PX,
+                                            closeIcon.getWidth(), Unit.PX);
+      closeIcon.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            ensureHidden();
+         }
+      });
+
       initWidget(nineUpBorder);
    }
 
@@ -88,6 +114,12 @@ public class ConsoleOutputPane extends ResizeComposite implements OutputDisplay
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
+   }
+
+   @Override
+   public HandlerRegistration addEnsureHiddenHandler(EnsureHiddenHandler handler)
+   {
+      return addHandler(handler, EnsureHiddenEvent.TYPE);
    }
 
    @Override
@@ -123,6 +155,11 @@ public class ConsoleOutputPane extends ResizeComposite implements OutputDisplay
    private void ensureVisible()
    {
       fireEvent(new EnsureVisibleEvent());
+   }
+
+   private void ensureHidden()
+   {
+      fireEvent(new EnsureHiddenEvent());
    }
 
    private final HTML html_;

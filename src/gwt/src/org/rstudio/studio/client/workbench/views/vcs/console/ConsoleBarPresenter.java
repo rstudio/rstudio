@@ -3,9 +3,9 @@ package org.rstudio.studio.client.workbench.views.vcs.console;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -21,7 +21,9 @@ public class ConsoleBarPresenter
       void notifyOutputVisible(boolean visible);
    }
 
-   public interface OutputDisplay extends IsWidget, HasEnsureVisibleHandlers
+   public interface OutputDisplay extends IsWidget,
+                                          HasEnsureVisibleHandlers,
+                                          HasEnsureHiddenHandlers
    {
       void addCommand(String command);
       void addOutput(String output);

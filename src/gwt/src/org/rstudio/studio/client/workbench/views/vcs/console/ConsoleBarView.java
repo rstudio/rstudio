@@ -6,7 +6,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
@@ -16,9 +15,8 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
-import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.ClickImage;
 import org.rstudio.core.client.widget.LeftCenterRightBorder;
-import org.rstudio.core.client.widget.LeftCenterRightBorder.Resources;
 
 public class ConsoleBarView extends Composite
    implements ConsoleBarPresenter.Display,
@@ -69,10 +67,18 @@ public class ConsoleBarView extends Composite
       outer.setWidgetTopHeight(border, 3, Unit.PX, 18, Unit.PX);
       outer.setWidgetLeftRight(border, 3, Unit.PX, 21, Unit.PX);
 
-      expand_ = new Image(res_.chevronUp());
+      expand_ = new ClickImage(res_.chevronUp());
       outer.add(expand_);
-      outer.setWidgetTopHeight(expand_, 6, Unit.PX, expand_.getHeight(), Unit.PX);
-      outer.setWidgetRightWidth(expand_, 5, Unit.PX, expand_.getWidth(), Unit.PX);
+      outer.setWidgetTopHeight(expand_,
+                               6,
+                               Unit.PX,
+                               expand_.getHeight(),
+                               Unit.PX);
+      outer.setWidgetRightWidth(expand_,
+                                5,
+                                Unit.PX,
+                                expand_.getWidth(),
+                                Unit.PX);
 
       initWidget(outer);
 

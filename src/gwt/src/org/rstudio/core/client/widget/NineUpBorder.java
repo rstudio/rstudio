@@ -138,6 +138,11 @@ public class NineUpBorder extends ResizeComposite implements AcceptsOneWidget
       }
    }
 
+   public LayoutPanel getLayoutPanel()
+   {
+      return panel_;
+   }
+
    public void setFillColor(String fillColor)
    {
       fillColor_ = fillColor;

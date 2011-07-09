@@ -23,6 +23,8 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.rstudio.core.client.events.EnsureHiddenEvent;
+import org.rstudio.core.client.events.EnsureHiddenHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.widget.Toolbar;
@@ -105,6 +107,14 @@ public class VCSPane extends WorkbenchPane implements Display
          public void onEnsureVisible(EnsureVisibleEvent event)
          {
             setOutputPaneVisible(true);
+         }
+      });
+      outputView_.addEnsureHiddenHandler(new EnsureHiddenHandler()
+      {
+         @Override
+         public void onEnsureHidden(EnsureHiddenEvent event)
+         {
+            setOutputPaneVisible(false);
          }
       });
 
