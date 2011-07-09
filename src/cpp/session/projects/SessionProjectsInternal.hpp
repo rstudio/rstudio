@@ -1,5 +1,5 @@
 /*
- * SessionProjects.hpp
+ * SessionProjectsInternal.hpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *

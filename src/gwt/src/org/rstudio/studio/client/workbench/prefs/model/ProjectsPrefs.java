@@ -1,5 +1,5 @@
 /*
- * HistoryPrefs.java
+ * ProjectsPrefs.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
