@@ -108,11 +108,6 @@ public interface SymbolData extends Serializable {
   int getQueryId();
 
   /**
-   * Returns the seedId for types.
-   */
-  int getSeedId();
-
-  /**
    * Returns the line number on which the symbol was originally declared or
    * <code>-1</code> if the line number is unknown.
    */

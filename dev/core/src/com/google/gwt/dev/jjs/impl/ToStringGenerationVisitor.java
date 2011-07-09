@@ -76,7 +76,6 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
-import com.google.gwt.dev.jjs.ast.JSeedIdOf;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JSwitchStatement;
@@ -136,7 +135,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   protected static final char[] CHARS_PROTECTED = "protected ".toCharArray();
   protected static final char[] CHARS_PUBLIC = "public ".toCharArray();
   protected static final char[] CHARS_RETURN = "return".toCharArray();
-  protected static final char[] CHARS_SEEDIDOF = " JSeedIdOf ".toCharArray();
   protected static final char[] CHARS_SLASHSTAR = "/*".toCharArray();
   protected static final char[] CHARS_STARSLASH = "*/".toCharArray();
   protected static final char[] CHARS_STATIC = "static ".toCharArray();
@@ -679,7 +677,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JNameOf x, Context ctx) {
     print(CHARS_SLASHSTAR);
-    print(x instanceof JSeedIdOf ? CHARS_SEEDIDOF : CHARS_NAMEOF);
+    print(CHARS_NAMEOF);
     print(CHARS_STARSLASH);
     printStringLiteral(x.getNode().getName());
     return false;

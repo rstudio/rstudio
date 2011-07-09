@@ -24,7 +24,6 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
-import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -455,7 +454,7 @@ public class CodeSplitter {
     cfa.setDependencyRecorder(dependencyRecorder);
     cfa.traverseEntryMethods();
     traverseClassArray(jprogram, cfa);
-    traverseImmortalTypes(jprogram, cfa);
+
     dependencyRecorder.endDependencyGraph();
     return cfa;
   }
@@ -577,21 +576,6 @@ public class CodeSplitter {
     for (JMethod method : typeArray.getMethods()) {
       if (method.needsVtable()) {
         cfa.traverseFrom(method);
-      }
-    }
-  }
-
-  /**
-   * Any immortal codegen types must be part of the initial download.
-   */
-  private static void traverseImmortalTypes(JProgram jprogram,
-      ControlFlowAnalyzer cfa) {
-    for (JClassType type : jprogram.immortalCodeGenTypes) {
-      cfa.traverseFromInstantiationOf(type);
-      for (JMethod method : type.getMethods()) {
-        if (!method.needsVtable()) {
-          cfa.traverseFrom(method);
-        }
       }
     }
   }

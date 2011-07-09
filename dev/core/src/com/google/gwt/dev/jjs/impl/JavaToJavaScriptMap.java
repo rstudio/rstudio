@@ -55,11 +55,6 @@ public interface JavaToJavaScriptMap {
   JClassType nameToType(JsName name);
 
   /**
-   * Return the seed id corresponding to the Java type.
-   */
-  int seedIdForType(JClassType type);
-
-  /**
    * If <code>stat</code> is used to set up the definition of some class, return
    * that class. Otherwise, return null.
    */

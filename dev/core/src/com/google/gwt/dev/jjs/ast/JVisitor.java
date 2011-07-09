@@ -417,10 +417,6 @@ public class JVisitor {
     endVisit((JExpression) x, ctx);
   }
 
-  public void endVisit(JSeedIdOf x, Context ctx) {
-    endVisit((JNameOf) x, ctx);
-  }
-
   public void endVisit(JsCastMap x, Context ctx) {
     endVisit((JsonArray) x, ctx);
   }
@@ -743,10 +739,6 @@ public class JVisitor {
 
   public boolean visit(JRunAsync x, Context ctx) {
     return visit((JExpression) x, ctx);
-  }
-
-  public boolean visit(JSeedIdOf x, Context ctx) {
-    return visit((JNameOf) x, ctx);
   }
 
   public boolean visit(JsCastMap x, Context ctx) {

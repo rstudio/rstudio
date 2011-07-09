@@ -257,14 +257,12 @@ public class WebModePayloadSink extends CommandSink {
 
       byte[] currentBackRef = begin(x);
       byte[] constructorFunction = constructorFunction(x);
+      String seedName = clientOracle.getSeedName(x.getTargetClass());
 
-      String getSeedFunc = clientOracle.getMethodId("java.lang.Class",
-          "getSeedFunction", "Ljava/lang/Class;");
-      String classLitId = clientOracle.getFieldId(
-               "com.google.gwt.lang.ClassLiteralHolder",
-               getJavahSignatureName(x.getTargetClass()) + "_classLit");
-           assert classLitId != null : "No class literal for "
-               + x.getTargetClass().getName();
+      if (seedName == null) {
+        throw new IncompatibleRemoteServiceException(
+            "The client cannot create type " + x.getTargetClass());
+      }
 
       /*
        * If we need to maintain a backreference to the object, it's established
@@ -272,7 +270,7 @@ public class WebModePayloadSink extends CommandSink {
        * constructorFunction. This is done in case one of the fields should
        * require a reference to the object that is currently being constructed.
        */
-      // constructorFunctionFoo(x = new (classLit.getSeedFunction()), field1, field2)
+      // constructorFunctionFoo(x = new Foo, field1, field2)
       push(constructorFunction);
       lparen();
       if (hasBackRef) {
@@ -280,12 +278,7 @@ public class WebModePayloadSink extends CommandSink {
         eq();
       }
       _new();
-      lparen();
-      push(getSeedFunc);
-      lparen();
-      push(classLitId);
-      rparen();
-      rparen();
+      push(seedName);
       for (SetCommand setter : x.getSetters()) {
         comma();
         accept(setter.getValue());
@@ -569,7 +562,7 @@ public class WebModePayloadSink extends CommandSink {
 
       byte[] ident = getBytes("_0");
 
-      // function foo(_0) {return initValues(classLit, castableTypeData, queryId, _0)}
+      // function foo(_0) {return initValues(classLid, castableTypeData, queryId, _0)}
       function();
       push(functionName);
       lparen();
