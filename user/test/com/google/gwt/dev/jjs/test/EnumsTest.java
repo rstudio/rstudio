@@ -83,6 +83,40 @@ public class EnumsTest extends GWTTestCase {
     }
   }
 
+  /*
+   * An enum that will have a static impl generated, which will allow it to
+   * become ordinalizable. Once ordinalized, need to make sure it's clinit
+   * is handled properly.
+   */
+  enum EnumWithStaticImpl {
+    VALUE1;
+
+    // a mock formatter, to simulate the case that inspired this test
+    private static class MockFormat {
+      private String pattern;
+      
+      public MockFormat(String pattern) {
+        this.pattern = pattern;
+      }
+    
+      public String format(Long date) {
+        return pattern + date.toString();
+      }
+    }
+
+    private static final MockFormat FORMATTER = new MockFormat("asdf");
+
+    public String formatDate(long date) {
+      switch (this) {
+        case VALUE1:
+          return FORMATTER.format(new Long(date)); 
+        default:
+          return null;
+      }
+    }
+  }
+
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.EnumsSuite";
   }
@@ -231,6 +265,7 @@ public class EnumsTest extends GWTTestCase {
     }
     
     try {
+      @SuppressWarnings("all")
       Class fakeEnumClass = String.class;
       Enum.valueOf(fakeEnumClass, "foo");
       fail("Passed a non enum class to Enum.valueOf; expected " 
@@ -283,7 +318,22 @@ public class EnumsTest extends GWTTestCase {
     assertEquals(Subclassing.B, subs[1]);
     assertEquals(Subclassing.C, subs[2]);
   }
-  
+
+  /*
+   * Test that a call to an enum instance method, which gets transformed to a
+   * static impl, produces valid executable javascript, once the enum gets
+   * ordinalized. This test is in response to a case where invalid javascript
+   * was being generated, by not generating a clinit for the enum prior to
+   * referencing a static impl method.
+   */
+  public void testEnumWithStaticImpl() {
+    EnumWithStaticImpl ewsi = EnumWithStaticImpl.VALUE1;
+    Long submitTime = new Long(1234567890);
+    String fmtDate = ewsi.formatDate(submitTime);
+    // we just need to make sure we get to this point without timing out
+    assertTrue(fmtDate != null);
+  }
+
   private <T extends Enum<T>> void enumValuesTest(Class<T> enumClass) {
     T[] constants = enumClass.getEnumConstants();
     for (T constant : constants) {

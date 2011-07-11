@@ -663,10 +663,24 @@ public class EnumOrdinalizer {
         return false;
       }
 
-      // cleanup clinit method for ordinalizable enums
       if (canBeOrdinal(x)) {
-        // method 0 is always the clinit
+        /*
+         * Cleanup clinit method for ordinalizable enums. Note, method 0 is
+         * always the clinit.
+         */
         updateClinit(x.getMethods().get(0));
+
+        /*
+         * Remove any static impl mappings for any methods in an ordinal enum
+         * class. An ordinalized enum will no longer have an instance passed as
+         * the first argument for a static impl (it will just be an int). This
+         * is needed to preserve proper assumptions about static impls by other
+         * optimizers (e.g. we might need to insert a clinit, when it wouldn't
+         * be needed if a method call still had a static impl target).
+         */
+        for (JMethod method : x.getMethods()) {
+          program.removeStaticImplMapping(method);
+        }
       }
       return true;
     }

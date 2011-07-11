@@ -1017,6 +1017,13 @@ public class JProgram extends JNode {
     this.typesByQueryId = typesByQueryId;
   }
 
+  public void removeStaticImplMapping(JMethod staticImpl) {
+    JMethod instanceMethod = staticToInstanceMap.remove(staticImpl);
+    if (instanceMethod != null) {
+      instanceToStaticMap.remove(instanceMethod);
+    }
+  }
+
   public void setRunAsyncs(List<JRunAsync> runAsyncs) {
     this.runAsyncs = Lists.normalizeUnmodifiable(runAsyncs);
   }
