@@ -18,6 +18,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -79,6 +80,12 @@ public class GlobalToolbar extends Toolbar
       addLeftSeparator();
       
       addLeftWidget(commands.printSourceDoc().createToolbarButton());
+   }
+   
+   public void addProjectTools()
+   {
+      ToolbarPopupMenu projectMenu = new ToolbarPopupMenu();
+        
    }
 
    @Override

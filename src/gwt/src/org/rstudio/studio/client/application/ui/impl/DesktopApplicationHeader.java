@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderHandler;
 
@@ -81,12 +82,17 @@ public class DesktopApplicationHeader implements ApplicationHeader
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          public void onSessionInit(SessionInitEvent sie)
          {
+            final SessionInfo sessionInfo = session.getSessionInfo();
+            
+            if (sessionInfo.isProjectsEnabled())
+               toolbar_.addProjectTools();
+            
             Scheduler.get().scheduleFinally(new ScheduledCommand()
             {
                public void execute()
                {
                   Desktop.getFrame().onWorkbenchInitialized(
-                        session.getSessionInfo().getScratchDir());
+                        sessionInfo.getScratchDir());
                }
             });
          }
