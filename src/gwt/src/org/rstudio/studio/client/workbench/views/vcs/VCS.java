@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.history.HistoryPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter;
 
 import java.util.ArrayList;
 

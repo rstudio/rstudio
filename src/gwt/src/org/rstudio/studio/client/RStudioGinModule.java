@@ -93,6 +93,8 @@ import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.history.HistoryPanel;
 import org.rstudio.studio.client.workbench.views.vcs.history.HistoryPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPanel;
+import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter;
 import org.rstudio.studio.client.workbench.views.workspace.Workspace;
 import org.rstudio.studio.client.workbench.views.workspace.WorkspacePane;
 import org.rstudio.studio.client.workbench.views.workspace.WorkspaceTab;
