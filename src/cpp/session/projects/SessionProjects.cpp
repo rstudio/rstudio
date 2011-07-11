@@ -173,11 +173,13 @@ void startup()
          error.addProperty("user-msg", userErrMsg);
          LOG_ERROR(error);
 
-         // show the error
-         std::string msg =
-           "Project '" + projectFilePath.absolutePath() + "' "
-           "could not be opened: " + userErrMsg;
-          module_context::showErrorMessage("Error Opening Project", msg);
+         // enque the error
+         json::Object openProjError;
+         openProjError["project"] = module_context::createAliasedPath(
+                                                            projectFilePath);
+         openProjError["message"] = userErrMsg;
+         ClientEvent event(client_events::kOpenProjectError, openProjError);
+         module_context::enqueClientEvent(event);
       }
    }
 

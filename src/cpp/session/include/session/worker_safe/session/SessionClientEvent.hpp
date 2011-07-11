@@ -62,6 +62,7 @@ extern const int kSaveActionChanged;
 extern const int kConsoleWritePrompt;
 extern const int kConsoleWriteInput;
 extern const int kShowWarningBar;
+extern const int kOpenProjectError;
 }
    
 class ClientEvent

@@ -20,8 +20,11 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.common.filetypes.events.OpenProjectFileEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenProjectFileHandler;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
+import org.rstudio.studio.client.projects.events.OpenProjectFileHandler;
+import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
+import org.rstudio.studio.client.projects.events.OpenProjectErrorHandler;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
@@ -39,12 +42,14 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class Projects implements OpenProjectFileHandler,
-                                 SwitchToProjectHandler
+                                 SwitchToProjectHandler,
+                                 OpenProjectErrorHandler
 {
    public interface Binder extends CommandBinder<Commands, Projects> {}
    
    @Inject
-   public Projects(final Session session,
+   public Projects(GlobalDisplay globalDisplay,
+                   final Session session,
                    Provider<ProjectMRUList> pMRUList,
                    FileDialogs fileDialogs,
                    RemoteFileSystemContext fsContext,
@@ -54,6 +59,7 @@ public class Projects implements OpenProjectFileHandler,
                    Binder binder,
                    final Commands commands)
    {
+      globalDisplay_ = globalDisplay;
       pMRUList_ = pMRUList;
       applicationQuit_ = applicationQuit;
       server_ = server;
@@ -62,6 +68,7 @@ public class Projects implements OpenProjectFileHandler,
       
       binder.bind(commands, this);
       
+      eventBus.addHandler(OpenProjectErrorEvent.TYPE, this);
       eventBus.addHandler(SwitchToProjectEvent.TYPE, this);
       eventBus.addHandler(OpenProjectFileEvent.TYPE, this);
       
@@ -223,14 +230,29 @@ public class Projects implements OpenProjectFileHandler,
             applicationQuit_.performQuit(saveChanges, event.getProject());
          }});
    }
+   
+   @Override
+   public void onOpenProjectError(OpenProjectErrorEvent event)
+   {
+      // show error dialog
+      String msg = "Project '" + event.getProject() + "' " +
+                   "could not be opened: " + event.getMessage();
+      globalDisplay_.showErrorMessage("Error Opening Project", msg);
+       
+      // remove from mru list
+      pMRUList_.get().remove(event.getProject());
+   }
+ 
 
    private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations server_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fsContext_;
+   private final GlobalDisplay globalDisplay_;
    
    private static final String NONE = "none";
- 
+
+   
   
 }

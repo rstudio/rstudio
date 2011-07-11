@@ -10,11 +10,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.filetypes.events;
+package org.rstudio.studio.client.projects.events;
 
 import com.google.gwt.event.shared.EventHandler;
 
-public interface OpenProjectFileHandler extends EventHandler
+public interface OpenProjectErrorHandler extends EventHandler
 {
-   void onOpenProjectFile(OpenProjectFileEvent event);
+   void onOpenProjectError(OpenProjectErrorEvent event);
 }

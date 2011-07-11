@@ -41,7 +41,6 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.workbench.FileMRUList;
-import org.rstudio.studio.client.workbench.MRUList;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;

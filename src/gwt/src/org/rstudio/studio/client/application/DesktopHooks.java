@@ -24,7 +24,7 @@ import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.filetypes.events.OpenProjectFileEvent;
+import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;

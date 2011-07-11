@@ -63,6 +63,7 @@ const int kSaveActionChanged = 36;
 const int kConsoleWritePrompt = 37;
 const int kConsoleWriteInput = 38;
 const int kShowWarningBar = 39;
+const int kOpenProjectError = 40;
 
 }   
 
@@ -157,6 +158,8 @@ std::string ClientEvent::typeName() const
          return "console_write_input";
       case client_events::kShowWarningBar:
          return "show_warning_bar";
+      case client_events::kOpenProjectError:
+         return "open_project_error";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

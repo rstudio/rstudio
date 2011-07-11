@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.filetypes.events;
+package org.rstudio.studio.client.projects.events;
 
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.core.client.files.FileSystemItem;

@@ -29,6 +29,8 @@ import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
+import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -111,6 +113,7 @@ class RemoteServerEventListener
       public static final String AsyncCompletion = "async_completion";
       public static final String SaveActionChanged = "save_action_changed";
       public static final String ShowWarningBar = "show_warning_bar";
+      public static final String OpenProjectError = "open_project_error";
 
       protected ClientEvent()
       {
@@ -632,6 +635,11 @@ class RemoteServerEventListener
          {
             WarningBarMessage message = event.getData();
             eventBus.fireEvent(new ShowWarningBarEvent(message));
+         }
+         else if (type.equals(ClientEvent.OpenProjectError))
+         {
+            OpenProjectError error = event.getData();
+            eventBus.fireEvent(new OpenProjectErrorEvent(error));
          }
          else if (type.equals(ClientEvent.Quit))
          {
