@@ -140,6 +140,5 @@ public class ConsoleBarView extends Composite
    @UiField
    TextBox input_;
 
-   private String defaultText_ = "git ";
    private final Resources res_ = GWT.create(Resources.class);
 }

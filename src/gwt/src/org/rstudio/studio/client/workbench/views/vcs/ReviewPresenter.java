@@ -27,7 +27,6 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.ValueSink;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
@@ -105,11 +104,9 @@ public class ReviewPresenter implements IsWidget
 
    @Inject
    public ReviewPresenter(VCSServerOperations server,
-                          EventBus events,
                           Display view)
    {
       server_ = server;
-      events_ = events;
       view_ = view;
 
       view_.getChangelistTable().addSelectionChangeHandler(new Handler()
@@ -208,7 +205,6 @@ public class ReviewPresenter implements IsWidget
 
    private final Invalidation diffInvalidation_ = new Invalidation();
    private final VCSServerOperations server_;
-   private final EventBus events_;
    private final Display view_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
 }

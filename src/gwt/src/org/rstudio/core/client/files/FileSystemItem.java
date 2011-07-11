@@ -18,7 +18,6 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.vcs.VCSStatus;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
-import org.rstudio.studio.client.common.vcs.VCSStrategy;
 
 import java.util.Date;
 import java.util.HashMap;

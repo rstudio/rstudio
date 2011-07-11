@@ -14,8 +14,6 @@ package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.cell.client.*;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -32,8 +30,6 @@ import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
-import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 
 import java.util.ArrayList;

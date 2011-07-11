@@ -16,7 +16,6 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.DuplicateHelper;
-import org.rstudio.core.client.DuplicateHelper.DuplicationInfo;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.files.FileSystemItem;

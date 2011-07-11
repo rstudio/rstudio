@@ -14,6 +14,8 @@ package org.rstudio.studio.client.workbench.views.vcs.diff;
 
 public class DiffFormatException extends IllegalArgumentException
 {
+   private static final long serialVersionUID = 7949356716139877435L;
+
    public DiffFormatException(String tag)
    {
       super("Invalid diff format [" + tag + "]");

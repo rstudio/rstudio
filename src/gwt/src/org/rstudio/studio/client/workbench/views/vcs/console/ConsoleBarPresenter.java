@@ -20,7 +20,6 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.studio.client.common.CommandLineHistory;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.ExecuteCommandResult;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
@@ -45,13 +44,11 @@ public class ConsoleBarPresenter
    @Inject
    public ConsoleBarPresenter(Display consoleBarView,
                               OutputDisplay outputView,
-                              VCSServerOperations server,
-                              GlobalDisplay globalDisplay)
+                              VCSServerOperations server)
    {
       consoleBarView_ = consoleBarView;
       outputView_ = outputView;
       server_ = server;
-      globalDisplay_ = globalDisplay;
 
       history_ = new CommandLineHistory(consoleBarView_);
 
@@ -140,5 +137,4 @@ public class ConsoleBarPresenter
    private final Display consoleBarView_;
    private final OutputDisplay outputView_;
    private final VCSServerOperations server_;
-   private final GlobalDisplay globalDisplay_;
 }

@@ -20,7 +20,6 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.ModalDialogBase;
-import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -31,7 +30,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.history.HistoryPresenter;
 
 import java.util.ArrayList;
@@ -55,7 +53,6 @@ public class VCS extends BasePresenter implements IsWidget
    @Inject
    public VCS(Display view,
               Provider<CommitDisplay> pCommitView,
-              Provider<LineTableView> pLineTable,
               Provider<ReviewPresenter> pReviewPresenter,
               Provider<HistoryPresenter> pHistoryPresenter,
               VCSServerOperations server,
@@ -66,7 +63,6 @@ public class VCS extends BasePresenter implements IsWidget
       super(view);
       view_ = view;
       pCommitView_ = pCommitView;
-      pLineTable_ = pLineTable;
       pReviewPresenter_ = pReviewPresenter;
       pHistoryPresenter_ = pHistoryPresenter;
       server_ = server;
@@ -198,7 +194,6 @@ public class VCS extends BasePresenter implements IsWidget
 
    private final Display view_;
    private final Provider<CommitDisplay> pCommitView_;
-   private final Provider<LineTableView> pLineTable_;
    private final Provider<ReviewPresenter> pReviewPresenter_;
    private final Provider<HistoryPresenter> pHistoryPresenter_;
    private final VCSServerOperations server_;

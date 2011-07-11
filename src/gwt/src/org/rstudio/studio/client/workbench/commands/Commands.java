@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.commands;
 
-import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBundle;
 import org.rstudio.core.client.command.MenuCallback;
