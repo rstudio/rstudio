@@ -21,7 +21,9 @@
 #endif
 
 #include <boost/version.hpp>
-#if BOOST_VERSION >= 104400
+#ifdef __APPLE__
+#define BOOST_FILESYSTEM_VERSION 2
+#elif BOOST_VERSION >= 104400
 #define BOOST_FILESYSTEM_VERSION 3
 #endif
 #define BOOST_FILESYSTEM_NARROW_ONLY
