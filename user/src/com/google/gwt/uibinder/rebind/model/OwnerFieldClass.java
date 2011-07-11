@@ -294,8 +294,8 @@ public class OwnerFieldClass {
    */
   private void findUiChildren(JClassType ownerType)
       throws UnableToCompleteException {
-    JMethod[] methods = ownerType.getMethods();
     while (ownerType != null) {
+      JMethod[] methods = ownerType.getMethods();
       for (JMethod method : methods) {
         UiChild annotation = method.getAnnotation(UiChild.class);
         if (annotation != null) {
