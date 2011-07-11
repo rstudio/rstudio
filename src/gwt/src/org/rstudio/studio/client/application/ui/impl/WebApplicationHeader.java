@@ -187,7 +187,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
          outerPanel_.add(menubarPanel);
          outerPanel_.add(logoSmall_);
          mainMenu_.getElement().getStyle().setMarginLeft(0, Unit.PX);
-         preferredHeight_ = 40;
+         preferredHeight_ = 45;
       }
    }
 
