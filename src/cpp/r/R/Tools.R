@@ -89,11 +89,16 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
    invisible (NULL)
 })
 
+.rs.addGlobalFunction( "RStudioGD", function()
+{
+   .Call("rs_createGD")
+})
+
 # set our graphics device as the default and cause it to be created/set
 .rs.addFunction( "initGraphicsDevice", function()
 {
-   options(device=function() .Call("rs_createGD"))
-   grDevices::deviceIsInteractive("RStudio")
+   options(device="RStudioGD")
+   grDevices::deviceIsInteractive("RStudioGD")
 })
 
 .rs.addFunction( "activateGraphicsDevice", function()
