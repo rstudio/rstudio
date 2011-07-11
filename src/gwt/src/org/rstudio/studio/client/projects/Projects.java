@@ -22,6 +22,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.filetypes.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenProjectFileHandler;
+import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
+import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -32,15 +34,18 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class Projects implements OpenProjectFileHandler
+public class Projects implements OpenProjectFileHandler,
+                                 SwitchToProjectHandler
 {
    public interface Binder extends CommandBinder<Commands, Projects> {}
    
    @Inject
    public Projects(final Session session,
+                   Provider<ProjectMRUList> pMRUList,
                    FileDialogs fileDialogs,
                    RemoteFileSystemContext fsContext,
                    ApplicationQuit applicationQuit,
@@ -49,6 +54,7 @@ public class Projects implements OpenProjectFileHandler
                    Binder binder,
                    final Commands commands)
    {
+      pMRUList_ = pMRUList;
       applicationQuit_ = applicationQuit;
       server_ = server;
       fileDialogs_ = fileDialogs;
@@ -56,6 +62,7 @@ public class Projects implements OpenProjectFileHandler
       
       binder.bind(commands, this);
       
+      eventBus.addHandler(SwitchToProjectEvent.TYPE, this);
       eventBus.addHandler(OpenProjectFileEvent.TYPE, this);
       
       eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
@@ -63,10 +70,19 @@ public class Projects implements OpenProjectFileHandler
          {
             SessionInfo sessionInfo = session.getSessionInfo();
             
+            // ensure mru is initialized
+            ProjectMRUList mruList = pMRUList_.get();
+            
             if(sessionInfo.isProjectsEnabled())
             {
-               boolean hasProject = sessionInfo.getActiveProjectFile() != null;
+               String activeProjectFile = sessionInfo.getActiveProjectFile();
+               boolean hasProject = activeProjectFile != null;
+          
                commands.closeProject().setEnabled(hasProject);
+              
+               // maintain mru
+               if (hasProject)
+                  mruList.add(activeProjectFile);
             }
             else
             {
@@ -126,7 +142,7 @@ public class Projects implements OpenProjectFileHandler
                            @Override 
                            public void onSuccess()
                            {
-                              applicationQuit_.performQuit(saveChanges,
+                              applicationQuit_.performQuit(saveChanges, 
                                                            input.getPath());
                            } 
                         });
@@ -185,21 +201,36 @@ public class Projects implements OpenProjectFileHandler
                                       new ApplicationQuit.QuitContext() {
          public void onReadyToQuit(final boolean saveChanges)
          {
-            applicationQuit_.performQuit(saveChanges, "none");
+            applicationQuit_.performQuit(saveChanges, NONE);
          }});
    }
+   
+   
 
    @Override
    public void onOpenProjectFile(OpenProjectFileEvent event)
    {
   
    }
+   
+   @Override
+   public void onSwitchToProject(final SwitchToProjectEvent event)
+   {
+      applicationQuit_.prepareForQuit("Switch Projects",
+                                      new ApplicationQuit.QuitContext() {
+         public void onReadyToQuit(final boolean saveChanges)
+         {
+            applicationQuit_.performQuit(saveChanges, event.getProject());
+         }});
+   }
 
-
+   private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations server_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fsContext_;
-
+   
+   private static final String NONE = "none";
+ 
   
 }

@@ -152,11 +152,17 @@ public class DuplicateHelper
     * and if there are multiple entries with the same filename, append
     * a disambiguating folder to those filenames.
     */
-   public static ArrayList<String> getPathLabels(ArrayList<String> paths)
+   public static ArrayList<String> getPathLabels(ArrayList<String> paths,
+                                                 boolean includeExtension)
    {
       ArrayList<String> labels = new ArrayList<String>();
       for (String entry : paths)
-         labels.add(FileSystemItem.getNameFromPath(entry));
+      {
+         if (includeExtension)
+            labels.add(FileSystemItem.getNameFromPath(entry));
+         else
+            labels.add(FileSystemItem.createFile(entry).getStem());
+      }
 
       DuplicationInfo<String> dupeInfo = DuplicateHelper.detectDupes(
             labels, new CaseInsensitiveStringComparator());
@@ -182,7 +188,8 @@ public class DuplicateHelper
          {
             FileSystemItem fsi = FileSystemItem.createFile(
                   paths.get(index));
-            labels.set(index, disambiguate(fsi.getName(),
+            String name = includeExtension ? fsi.getName() : fsi.getStem();
+            labels.set(index, disambiguate(name,
                                            fsi.getParentPathString()));
          }
       }

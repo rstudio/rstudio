@@ -46,6 +46,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.MRUList;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -137,7 +138,7 @@ public class Source implements InsertSourceHandler,
                  EventBus events,
                  Session session,
                  WorkbenchContext workbenchContext,
-                 MRUList mruList,
+                 FileMRUList mruList,
                  UIPrefs uiPrefs)
    {
       commands_ = commands;
@@ -1155,7 +1156,7 @@ public class Source implements InsertSourceHandler,
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileContext_;
    private final EventBus events_;
-   private final MRUList mruList_;
+   private final FileMRUList mruList_;
    private final UIPrefs uiPrefs_;
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();
    private final HashSet<AppCommand> dynamicCommands_;

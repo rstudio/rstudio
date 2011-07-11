@@ -13,48 +13,39 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.JsArrayString;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandHandler;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
 import java.util.*;
 
-@Singleton
 public class MRUList
 {
-   @Inject
    public MRUList(Commands commands,
-                  FileTypeRegistry fileTypeRegistry,
-                  Session session)
+                  Session session,
+                  String clientStateGroup,
+                  AppCommand[] mruCmds,
+                  AppCommand clearCommand,
+                  boolean includeExt,
+                  OperationWithInput<String> operation)
    {
       commands_ = commands;
-      fileTypeRegistry_ = fileTypeRegistry;
       session_ = session;
-      mruCmds_ = new AppCommand[] {
-            commands.mru0(),
-            commands.mru1(),
-            commands.mru2(),
-            commands.mru3(),
-            commands.mru4(),
-            commands.mru5(),
-            commands.mru6(),
-            commands.mru7(),
-            commands.mru8(),
-            commands.mru9()
-      };
+      mruCmds_ = mruCmds;
+      includeExt_ = includeExt;
+      operation_ = operation;
+     
 
       for (int i = 0; i < mruCmds_.length; i++)
          bindCommand(i);
       
-      commands.clearRecentFiles().addHandler(new CommandHandler()
+      clearCommand.addHandler(new CommandHandler()
       {
          public void onCommand(AppCommand command)
          {
@@ -62,7 +53,7 @@ public class MRUList
          }
       });
 
-      new JSObjectStateValue("mru", "entries", true,
+      new JSObjectStateValue(clientStateGroup, "entries", true,
                              session.getSessionInfo().getClientState(),
                              false) {
          @Override
@@ -104,10 +95,7 @@ public class MRUList
          public void onCommand(AppCommand command)
          {
             if (i < mruEntries_.size())
-            {
-               fileTypeRegistry_.editFile(
-                     FileSystemItem.createFile(mruEntries_.get(i)));
-            }
+               operation_.execute(mruEntries_.get(i));
          }
       });
    }
@@ -140,7 +128,8 @@ public class MRUList
 
       commands_.clearRecentFiles().setEnabled(mruEntries_.size() > 0);
 
-      ArrayList<String> labels = DuplicateHelper.getPathLabels(mruEntries_);
+      ArrayList<String> labels = DuplicateHelper.getPathLabels(mruEntries_,
+                                                               includeExt_);
 
       for (int i = 0; i < mruCmds_.length; i++)
       {
@@ -163,7 +152,8 @@ public class MRUList
    private boolean dirty_;
    private AppCommand[] mruCmds_;
    private final Commands commands_;
-   private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
+   private final boolean includeExt_;
    private final ArrayList<String> mruEntries_ = new ArrayList<String>();
+   private final OperationWithInput<String> operation_;
 }
