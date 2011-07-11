@@ -33,6 +33,8 @@ const static string UNKNOWN_STR = "unknown";
 const static string INCLUDE_STR = "include";
 const static string EXCLUDE_STR = "exclude";
 
+bool ScriptableInstance::jsIdentitySafe = false;
+
 static inline string convertToString(const NPString& str) {
   return string(GetNPStringUTF8Characters(str), GetNPStringUTF8Length(str));
 }
@@ -58,7 +60,7 @@ void ScriptableInstance::dumpObjectBytes(NPObject* obj) {
 ScriptableInstance::ScriptableInstance(NPP npp) : NPObjectWrapper<ScriptableInstance>(npp),
     plugin(*reinterpret_cast<Plugin*>(npp->pdata)),
     _channel(new HostChannel()),
-    localObjects(),
+    localObjects(npp,ScriptableInstance::jsIdentitySafe),
     _connectId(NPN_GetStringIdentifier("connect")),
     initID(NPN_GetStringIdentifier("init")),
     toStringID(NPN_GetStringIdentifier("toString")),
@@ -68,9 +70,9 @@ ScriptableInstance::ScriptableInstance(NPP npp) : NPObjectWrapper<ScriptableInst
     urlID(NPN_GetStringIdentifier("url")),
     includeID(NPN_GetStringIdentifier("include")),
     getHostPermissionID(NPN_GetStringIdentifier("getHostPermission")),
+    testJsIdentityID(NPN_GetStringIdentifier("testJsIdentity")),
     connectedID(NPN_GetStringIdentifier("connected")),
     statsID(NPN_GetStringIdentifier("stats")),
-    gwtId(NPN_GetStringIdentifier("__gwt_ObjectId")),
     jsDisconnectedID(NPN_GetStringIdentifier("__gwt_disconnected")),
     jsInvokeID(NPN_GetStringIdentifier("__gwt_jsInvoke")),
     jsResultID(NPN_GetStringIdentifier("__gwt_makeResult")),
@@ -82,6 +84,7 @@ ScriptableInstance::ScriptableInstance(NPP npp) : NPObjectWrapper<ScriptableInst
   if (NPN_GetValue(npp, NPNVWindowNPObject, &window) != NPERR_NO_ERROR) {
     Debug::log(Debug::Error) << "Error getting window object" << Debug::flush;
   }
+
 }
 
 ScriptableInstance::~ScriptableInstance() {
@@ -115,7 +118,7 @@ void ScriptableInstance::dumpJSresult(const char* js) {
 bool ScriptableInstance::tryGetStringPrimitive(NPObject* obj, NPVariant& result) {
   if (NPN_HasMethod(getNPP(), obj, jsValueOfID)) {
     if (NPN_Invoke(getNPP(), obj, jsValueOfID, 0, 0, &result)
-        && NPVariantProxy::isString(result)) {
+        && NPVariantUtil::isString(result)) {
       return true;
     }
     NPVariantProxy::release(result);
@@ -188,7 +191,8 @@ bool ScriptableInstance::hasMethod(NPIdentifier name) {
       name == initID ||
       name == toStringID ||
       name == loadHostEntriesID ||
-      name == getHostPermissionID) {
+      name == getHostPermissionID ||
+      name == testJsIdentityID ) {
     return true;
   }
   return false;
@@ -214,6 +218,8 @@ bool ScriptableInstance::invoke(NPIdentifier name, const NPVariant* args, unsign
     loadHostEntries(args, argCount, result);
   } else if (name == getHostPermissionID) {
     getHostPermission(args, argCount, result);
+  } else if (name == testJsIdentityID) {
+    testJsIdentity(args, argCount, result);
   }
   return true;
 }
@@ -242,7 +248,7 @@ bool ScriptableInstance::enumeration(NPIdentifier** propReturn, uint32_t* count)
 //=============================================================================
 
 void ScriptableInstance::init(const NPVariant* args, unsigned argCount, NPVariant* result) {
-  if (argCount != 1 || !NPVariantProxy::isObject(args[0])) {
+  if (argCount != 1 || !NPVariantUtil::isObject(args[0])) {
     // TODO: better failure?
     Debug::log(Debug::Error) << "ScriptableInstance::init called with incorrect arguments:\n";
     for (unsigned i = 0; i < argCount; ++i) {
@@ -256,7 +262,7 @@ void ScriptableInstance::init(const NPVariant* args, unsigned argCount, NPVarian
     NPN_ReleaseObject(window);
   }
   // replace our window object with that passed by the caller
-  window = NPVariantProxy::getAsObject(args[0]);
+  window = NPVariantUtil::getAsObject(args[0]);
   NPN_RetainObject(window);
   BOOLEAN_TO_NPVARIANT(true, *result);
   result->type = NPVariantType_Bool;
@@ -271,7 +277,7 @@ string ScriptableInstance::getLocationHref() {
   //window.location.href
   NPN_GetProperty(getNPP(), locationVariant.getAsObject(), hrefID, hrefVariant.addressForReturn());
 
-  const NPString* locationHref = NPVariantProxy::getAsNPString(hrefVariant);
+  const NPString* locationHref = NPVariantUtil::getAsNPString(hrefVariant);
   return convertToString(*locationHref);
 }
 
@@ -282,7 +288,7 @@ void ScriptableInstance::loadHostEntries(const NPVariant* args, unsigned argCoun
     AllowedConnections::clearRules();
     for (unsigned i = 0; i < argCount; ++i) {
       //Get the host entry object {url: "somehost.net", include: true/false}
-      NPObject* hostEntry = NPVariantProxy::getAsObject(args[i]);
+      NPObject* hostEntry = NPVariantUtil::getAsObject(args[i]);
       if (!hostEntry) {
         Debug::log(Debug::Error) << "Got a host entry that is not an object.\n";
         break;
@@ -322,7 +328,7 @@ void ScriptableInstance::loadHostEntries(const NPVariant* args, unsigned argCoun
 }
 
 void ScriptableInstance::getHostPermission(const NPVariant* args, unsigned argCount, NPVariant* result) {
-  if (argCount != 1 || !NPVariantProxy::isString(args[0])) {
+  if (argCount != 1 || !NPVariantUtil::isString(args[0])) {
     Debug::log(Debug::Error) << "ScriptableInstance::getHostPermission called with incorrect arguments.\n";
   }
 
@@ -347,12 +353,34 @@ void ScriptableInstance::getHostPermission(const NPVariant* args, unsigned argCo
   NPVariantProxy(*this, *result) = retStr;
 }
 
+void ScriptableInstance::testJsIdentity(const NPVariant* args, unsigned argCount, NPVariant* result) {
+  if (argCount != 2 || !NPVariantUtil::isObject(args[0]) ||
+      !NPVariantUtil::isObject(args[1]) ) {
+    Debug::log(Debug::Error) << "ScriptableInstance::testJsIdentity called"
+        << " with incorrect arguments.\n";
+  }
+  NPObject* obj1 = NPVariantUtil::getAsObject(args[0]);
+  NPObject* obj2 = NPVariantUtil::getAsObject(args[1]);
+  Debug::log(Debug::Info) << "obj1:" << obj1 << " obj2:" << obj2
+      << Debug::flush;
+  if( obj1 == obj2 ) {
+    Debug::log(Debug::Info) << "Idenity check passed; not using expando!"
+        << Debug::flush;
+    ScriptableInstance::jsIdentitySafe = true;
+  } else {
+    Debug::log(Debug::Info) << "Idenity check failed; using expando"
+        << Debug::flush;
+    ScriptableInstance::jsIdentitySafe = false;
+  }
+}
+
+
 void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVariant* result) {
-  if (argCount != 5 || !NPVariantProxy::isString(args[0])
-      || !NPVariantProxy::isString(args[1])
-      || !NPVariantProxy::isString(args[2])
-      || !NPVariantProxy::isString(args[3])
-      || !NPVariantProxy::isString(args[4])) {
+  if (argCount != 5 || !NPVariantUtil::isString(args[0])
+      || !NPVariantUtil::isString(args[1])
+      || !NPVariantUtil::isString(args[2])
+      || !NPVariantUtil::isString(args[3])
+      || !NPVariantUtil::isString(args[4])) {
     // TODO: better failure?
     Debug::log(Debug::Error) << "ScriptableInstance::connect called with incorrect arguments:\n";
     for (unsigned i = 0; i < argCount; ++i) {
@@ -432,18 +460,9 @@ void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVar
 }
 
 int ScriptableInstance::getLocalObjectRef(NPObject* obj) {
-  NPVariantWrapper wrappedRetVal(*this);
-  int id;
-  if (NPN_GetProperty(getNPP(), obj, gwtId, wrappedRetVal.addressForReturn())
-      && wrappedRetVal.isInt()) {
-    id = wrappedRetVal.getAsInt();
-    localObjects.set(id, obj);
-  } else {
+  int id = localObjects.getObjectId(obj);
+  if(id == -1) {
     id = localObjects.add(obj);
-    wrappedRetVal = id;
-    if (!NPN_SetProperty(getNPP(), obj, gwtId, wrappedRetVal.address())) {
-      Debug::log(Debug::Error) << "Setting GWT id on object failed" << Debug::flush;
-    }
   }
   return id;
 }
@@ -464,13 +483,8 @@ void ScriptableInstance::dupString(const char* str, NPString& npString) {
 void ScriptableInstance::freeValue(HostChannel& channel, int idCount, const int* const ids) {
   Debug::log(Debug::Debugging) << "freeValue(#ids=" << idCount << ")" << Debug::flush;
   for (int i = 0; i < idCount; ++i) {
-	  Debug::log(Debug::Spam) << " id=" << ids[i] << Debug::flush;
-    NPObject* obj = localObjects.get(ids[i]);
-    if (!NPN_RemoveProperty(getNPP(), obj, gwtId)) {
-      Debug::log(Debug::Error) << "Unable to remove GWT ID from object " << ids[i] << Debug::flush;
-    } else {
-      localObjects.free(ids[i]);
-    }
+    Debug::log(Debug::Spam) << " id=" << ids[i] << Debug::flush;
+    localObjects.free(ids[i]);
   }
 }
 
@@ -494,7 +508,7 @@ Value ScriptableInstance::clientMethod_getProperty(HostChannel& channel, int num
     return Value();
   }
   int id = args[0].getInt();
-  NPObject* obj = localObjects.get(id);
+  NPObject* obj = localObjects.getById(id);
   NPIdentifier propID;
   if (args[1].isString()) {
     string propName = args[1].getString();
@@ -523,7 +537,7 @@ Value ScriptableInstance::clientMethod_setProperty(HostChannel& channel, int num
     return Value();
   }
   int id = args[0].getInt();
-  NPObject* obj = localObjects.get(id);
+  NPObject* obj = localObjects.getById(id);
   NPIdentifier propID;
   if (args[1].isString()) {
     string propName = args[1].getString();
@@ -677,7 +691,7 @@ bool ScriptableInstance::JavaObject_getProperty(int objectId, int dispId,
   Value propertyValue = ServerMethods::getProperty(*_channel, this, objectId, dispId);
   if (propertyValue.isJsObject()) {
     // TODO(jat): special-case for testing
-    NPObject* npObj = localObjects.get(propertyValue.getJsObjectId());
+    NPObject* npObj = localObjects.getById(propertyValue.getJsObjectId());
     OBJECT_TO_NPVARIANT(npObj, *result);
     NPN_RetainObject(npObj);
   } else {
@@ -685,12 +699,12 @@ bool ScriptableInstance::JavaObject_getProperty(int objectId, int dispId,
   }
   Debug::log(Debug::Debugging) << " return val=" << propertyValue
       << ", NPVariant=" << *result << Debug::flush;
-  if (NPVariantProxy::isObject(*result)) {
-    dumpObjectBytes(NPVariantProxy::getAsObject(*result));
+  if (NPVariantUtil::isObject(*result)) {
+    dumpObjectBytes(NPVariantUtil::getAsObject(*result));
   }
-  if (NPVariantProxy::isObject(*result)) {
+  if (NPVariantUtil::isObject(*result)) {
     Debug::log(Debug::Debugging) << "  final return refcount = "
-        << NPVariantProxy::getAsObject(*result)->referenceCount << Debug::flush; 
+        << NPVariantUtil::getAsObject(*result)->referenceCount << Debug::flush;
   }
   return true;
 }
@@ -699,17 +713,17 @@ bool ScriptableInstance::JavaObject_setProperty(int objectId, int dispId,
     const NPVariant* npValue) {
   Debug::log(Debug::Debugging) << "JavaObject_setProperty(objectid="
       << objectId << ", dispId=" << dispId << ", value=" << *npValue << ")" << Debug::flush;
-  if (NPVariantProxy::isObject(*npValue)) {
+  if (NPVariantUtil::isObject(*npValue)) {
     Debug::log(Debug::Debugging) << "  before localObj: refcount = "
-        << NPVariantProxy::getAsObject(*npValue)->referenceCount << Debug::flush; 
+        << NPVariantUtil::getAsObject(*npValue)->referenceCount << Debug::flush;
   }
   Value value = NPVariantProxy::getAsValue(*npValue, *this, true);
-  if (NPVariantProxy::isObject(*npValue)) {
+  if (NPVariantUtil::isObject(*npValue)) {
     Debug::log(Debug::Debugging) << "  after localObj: refcount = "
-        << NPVariantProxy::getAsObject(*npValue)->referenceCount << Debug::flush; 
+        << NPVariantUtil::getAsObject(*npValue)->referenceCount << Debug::flush;
   }
-  if (NPVariantProxy::isObject(*npValue)) {
-    dumpObjectBytes(NPVariantProxy::getAsObject(*npValue));
+  if (NPVariantUtil::isObject(*npValue)) {
+    dumpObjectBytes(NPVariantUtil::getAsObject(*npValue));
   }
   Debug::log(Debug::Debugging) << "  as value: " << value << Debug::flush;
   // TODO: no way to set an actual exception object! (Could ClassCastException on server.)
