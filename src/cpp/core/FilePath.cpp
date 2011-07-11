@@ -259,7 +259,10 @@ uintmax_t FilePath::size() const
 {
    try 
    {
-      return boost::filesystem::file_size(pImpl_->path) ;
+      if (!exists())
+         return 0;
+      else
+         return boost::filesystem::file_size(pImpl_->path) ;
    }
    catch(const boost::filesystem::filesystem_error& e) 
    {
@@ -400,7 +403,10 @@ std::time_t FilePath::lastWriteTime() const
 {
    try 
    {
-     return boost::filesystem::last_write_time(pImpl_->path) ;
+      if (!exists())
+         return 0;
+      else
+         return boost::filesystem::last_write_time(pImpl_->path) ;
    }
    catch(const boost::filesystem::filesystem_error& e) 
    {
@@ -541,7 +547,10 @@ bool FilePath::isDirectory() const
 {
    try 
    {
-      return boost::filesystem::is_directory(pImpl_->path) ;
+      if (!exists())
+         return false;
+      else
+         return boost::filesystem::is_directory(pImpl_->path) ;
    }
    catch(const boost::filesystem::filesystem_error& e) 
    {
