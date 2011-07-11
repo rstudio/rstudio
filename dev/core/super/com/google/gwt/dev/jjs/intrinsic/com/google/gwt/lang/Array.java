@@ -173,7 +173,7 @@ public final class Array {
   public static Array initValues(Class<?> arrayClass,
       JavaScriptObject castableTypeMap, int queryId, Array array) {
     ExpandoWrapper.wrapArray(array);
-    array.arrayClass = arrayClass;
+    setClass(array, arrayClass);
     Util.setCastableTypeMap(array, castableTypeMap);
     array.queryId = queryId;
     return array;
@@ -302,17 +302,15 @@ public final class Array {
     return array[index] = value;
   }-*/;
 
+  // violator pattern so that the field remains private
+  private static native void setClass(Object o, Class<?> clazz) /*-{
+    o.@java.lang.Object::___clazz = clazz;
+  }-*/;
+
   /*
    * Explicitly initialize all fields to JS false values; see comment in
    * ExpandoWrapper.initExpandos().
    */
-  
-  /**
-   * Holds the real type-specific Class object for a given array instance. The
-   * compiler produces a magic implementation of getClass() which returns this
-   * field directly.
-   */
-  protected Class<?> arrayClass = null;
 
   /**
    * A representation of the necessary cast target for objects stored into this
