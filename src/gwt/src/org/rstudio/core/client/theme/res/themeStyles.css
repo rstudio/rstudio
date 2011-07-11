@@ -726,14 +726,14 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
  @if user.agent gecko1_8 { .webGlobalToolbar {
       margin-left: 53px;
+      padding-right: 49px;
    }
  }
  @else { .webGlobalToolbar {
       margin-left: 55px;
+      padding-right: 51px;
    }
  }
-
-
 
 .desktopGlobalToolbar {
    background: DESKTOPGLOBALTOOLBARBACKGROUND bottom repeat-x;

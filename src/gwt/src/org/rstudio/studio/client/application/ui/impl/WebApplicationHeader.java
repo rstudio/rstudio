@@ -153,10 +153,24 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
            if (sessionInfo.getMode().equals(SessionInfo.SERVER_MODE))
                initCommandsPanel(sessionInfo);
 
+            // enable/disable google docs commands
             if (!sessionInfo.isGoogleDocsIntegrationEnabled())
             {
                commands.publishPDF().remove();
                commands.importDatasetFromGoogleSpreadsheet().remove();
+            }
+            
+            // remove Projects menu if necessary
+            if (!sessionInfo.isProjectsEnabled())
+            {
+               for (MenuItem menuItem : mainMenu_.getItems())
+               {
+                  if (menuItem.getText().equals("Project"))
+                  {
+                     mainMenu_.removeItem(menuItem);
+                     break;
+                  }
+               }
             }
          }
       });

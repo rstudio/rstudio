@@ -45,6 +45,7 @@ public class PreferencesDialog extends ModalDialogBase
                             PreferencesDialogResources res,
                             final SectionChooser sectionChooser,
                             Provider<GeneralPreferencesPane> pR,
+                            ProjectsPreferencesPane projects,
                             EditingPreferencesPane source,
                             AppearancePreferencesPane appearance,
                             PaneLayoutPreferencesPane paneLayout)
@@ -86,11 +87,22 @@ public class PreferencesDialog extends ModalDialogBase
 
       addStyleName(res.styles().preferencesDialog());
 
-      panes_ = new PreferencesPane[] {pR.get(), 
-                                     source, 
-                                     appearance, 
-                                     paneLayout};
-
+      if (session_.getSessionInfo().isProjectsEnabled())
+      {
+         panes_ = new PreferencesPane[] {pR.get(),
+                                        projects,
+                                        source, 
+                                        appearance, 
+                                        paneLayout};
+      }
+      else
+      {
+         panes_ = new PreferencesPane[] {pR.get(),
+                                         source, 
+                                         appearance, 
+                                         paneLayout};
+      }
+         
       for (final PreferencesPane pane : panes_)
       {
          sectionChooser.addSection(pane.getIcon(), pane.getName());

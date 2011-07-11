@@ -56,6 +56,17 @@ public abstract class
    // Projects
    public abstract AppCommand newProject();
    public abstract AppCommand openProject();
+   public abstract AppCommand projectMru0();
+   public abstract AppCommand projectMru1();
+   public abstract AppCommand projectMru2();
+   public abstract AppCommand projectMru3();
+   public abstract AppCommand projectMru4();
+   public abstract AppCommand projectMru5();
+   public abstract AppCommand projectMru6();
+   public abstract AppCommand projectMru7();
+   public abstract AppCommand projectMru8();
+   public abstract AppCommand projectMru9();
+   public abstract AppCommand clearRecentProjects();
 
    // Console
    public abstract AppCommand consoleClear();
