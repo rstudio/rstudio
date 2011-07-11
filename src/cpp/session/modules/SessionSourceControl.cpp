@@ -24,6 +24,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 
+#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
@@ -775,7 +776,10 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
 core::Error initialize()
 {
    FilePath workingDir = projects::projectContext().directory();
-   if (workingDir.empty())
+
+   if (!userSettings().vcsEnabled())
+      s_pVcsImpl_.reset(new VCSImpl());
+   else if (workingDir.empty())
       s_pVcsImpl_.reset(new VCSImpl());
    else if (workingDir.childPath(".git").isDirectory())
       s_pVcsImpl_.reset(new GitVCSImpl());

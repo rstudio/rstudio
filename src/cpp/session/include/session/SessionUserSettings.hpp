@@ -101,6 +101,9 @@ public:
    BioconductorMirror bioconductorMirror() const;
    void setBioconductorMirror(const BioconductorMirror& bioconductorMirror);
 
+   bool projectsEnabled() const;
+   bool vcsEnabled() const;
+
 private:
    core::FilePath getWorkingDirectoryValue(const std::string& key) const;
    void setWorkingDirectoryValue(const std::string& key,

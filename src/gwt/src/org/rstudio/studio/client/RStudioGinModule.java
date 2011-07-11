@@ -105,7 +105,7 @@ public class RStudioGinModule extends AbstractGinModule
    {
       bind(EventBus.class).in(Singleton.class) ;
       bind(Session.class).in(Singleton.class) ;
-      bind(Projects.class).asEagerSingleton();
+      bind(Projects.class).in(Singleton.class);
       bind(WorkbenchContext.class).asEagerSingleton();
       bind(ApplicationQuit.class).asEagerSingleton();
       bind(ClientStateUpdater.class).asEagerSingleton();

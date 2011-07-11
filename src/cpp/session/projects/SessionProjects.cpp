@@ -95,7 +95,14 @@ void startup()
    // (this would be used for a switch to project or for the resuming of
    // a suspended session)
    FilePath nextSessionProjectPath = persistentState().nextSessionProjectPath();
-   if (!nextSessionProjectPath.empty())
+
+   // make sure projects are enabled
+   if (!userSettings().projectsEnabled())
+   {
+      projectFilePath = FilePath();
+   }
+   // check for next session project path (see above for comment)
+   else if (!nextSessionProjectPath.empty())
    {
       // reset next session project path so its a one shot deal
       persistentState().setNextSessionProjectPath(FilePath());

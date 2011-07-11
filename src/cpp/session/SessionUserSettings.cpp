@@ -248,6 +248,16 @@ void UserSettings::setBioconductorMirror(
    setBioconductorReposOption(bioconductorMirror.url);
 }
 
+bool UserSettings::projectsEnabled() const
+{
+   return settings_.getBool("projectsEnabled", false);
+}
+
+bool UserSettings::vcsEnabled() const
+{
+   return settings_.getBool("vcsEnabled", false);
+}
+
 
 bool UserSettings::alwaysSaveHistory() const
 {

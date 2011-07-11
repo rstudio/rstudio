@@ -26,6 +26,7 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -36,7 +37,8 @@ public class Projects implements OpenProjectFileHandler
    public interface Binder extends CommandBinder<Commands, Projects> {}
    
    @Inject
-   public Projects(FileDialogs fileDialogs,
+   public Projects(Session session,
+                   FileDialogs fileDialogs,
                    RemoteFileSystemContext fsContext,
                    ApplicationQuit applicationQuit,
                    ProjectsServerOperations server,
@@ -44,6 +46,7 @@ public class Projects implements OpenProjectFileHandler
                    Binder binder,
                    Commands commands)
    {
+      session_ = session;
       applicationQuit_ = applicationQuit;
       server_ = server;
       fileDialogs_ = fileDialogs;
@@ -57,6 +60,9 @@ public class Projects implements OpenProjectFileHandler
    @Handler
    public void onNewProject()
    {
+      if (!projectsEnabled())
+         return;
+      
       // first resolve the quit context (potentially saving edited documents
       // and determining whether to save the R environment on exit)
       applicationQuit_.prepareForQuit("Switch Projects",
@@ -107,6 +113,9 @@ public class Projects implements OpenProjectFileHandler
    @Handler
    public void onOpenProject()
    {
+      if (!projectsEnabled())
+         return;
+      
       // first resolve the quit context (potentially saving edited documents
       // and determining whether to save the R environment on exit)
       applicationQuit_.prepareForQuit("Switch Projects",
@@ -146,6 +155,12 @@ public class Projects implements OpenProjectFileHandler
   
    }
 
+   private boolean projectsEnabled()
+   {
+      return session_.getSessionInfo().isProjectsEnabled();
+   }
+   
+   private final Session session_;
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations server_;
    private final FileDialogs fileDialogs_;

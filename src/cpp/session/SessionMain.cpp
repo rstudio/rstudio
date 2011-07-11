@@ -406,6 +406,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["vcs"] = modules::source_control::activeVCSName();
 
+   sessionInfo["projects_enabled"] = userSettings().projectsEnabled();
+
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
    json::JsonRpcResponse jsonRpcResponse ;

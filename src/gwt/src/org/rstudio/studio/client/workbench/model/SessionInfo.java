@@ -141,6 +141,10 @@ public class SessionInfo extends JavaScriptObject
       return this.initial_working_dir;
    }-*/;
    
+   public final native boolean isProjectsEnabled() /*-{
+      return this.projects_enabled;
+   }-*/;
+   
    public final native String getActiveProjectFile() /*-{
       return this.active_project_file;
    }-*/;
