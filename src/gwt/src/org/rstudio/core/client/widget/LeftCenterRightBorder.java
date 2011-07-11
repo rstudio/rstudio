@@ -24,9 +24,12 @@ public class LeftCenterRightBorder extends ResizeComposite implements AcceptsOne
 {
    public interface Resources extends ClientBundle
    {
+      @Source("empty.gif")
       ImageResource left();
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+      @Source("empty.gif")
       ImageResource center();
+      @Source("empty.gif")
       ImageResource right();
    }
 
