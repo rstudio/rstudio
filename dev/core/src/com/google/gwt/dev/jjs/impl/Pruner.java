@@ -42,6 +42,7 @@ import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JSeedIdOf;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
@@ -202,6 +203,10 @@ public class Pruner {
         JMethodCall newCall = new JNewInstance(x);
         replaceForPrunedParameters(x, newCall, ctx);
       }
+    }
+
+    @Override
+    public void endVisit(JSeedIdOf x, Context ctx) {
     }
 
     @Override
