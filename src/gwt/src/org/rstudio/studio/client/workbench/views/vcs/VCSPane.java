@@ -152,6 +152,7 @@ public class VCSPane extends WorkbenchPane implements Display
             @Override
             public void execute()
             {
+               outputView_.onShow();
                layoutPanel_.setWidgetTopBottom(outputWidget_,
                                                OUTPUT_TOP_MARGIN, Unit.PX,
                                                CONSOLE_BAR_HEIGHT, Unit.PX);
@@ -179,6 +180,7 @@ public class VCSPane extends WorkbenchPane implements Display
             @Override
             public void onAnimationComplete()
             {
+               outputView_.onBeforeHide();
                layoutPanel_.setWidgetVisible(outputWidget_, false);
                consoleBarPresenter_.setOutputVisible(false);
             }

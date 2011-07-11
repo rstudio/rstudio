@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.vcs;
+package org.rstudio.studio.client.workbench.views.vcs.review;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -27,7 +27,8 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.workbench.views.vcs.ReviewPresenter.Display;
+import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
+import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.diff.Line;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
