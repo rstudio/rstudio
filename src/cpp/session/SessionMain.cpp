@@ -580,19 +580,16 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
          {
             // see whether we should save the workspace
             bool saveWorkspace = true;
-            std::string switchToProjectPath;
+            std::string switchToProject;
             Error error = json::readParams(jsonRpcRequest.params,
                                            &saveWorkspace,
-                                           &switchToProjectPath) ;
+                                           &switchToProject) ;
             if (error)
                LOG_ERROR(error);
 
             // note switch to project
-            if (!switchToProjectPath.empty())
-            {
-               persistentState().setNextSessionProjectPath(
-                     module_context::resolveAliasedPath(switchToProjectPath));
-            }
+            if (!switchToProject.empty())
+               persistentState().setNextSessionProject(switchToProject);
 
             // acknowledge request & quit session
             ptrConnection->sendJsonRpcResponse();
@@ -1562,7 +1559,7 @@ void rResumed()
 void rQuit()
 {   
    // enque a quit event
-   bool switchProjects = !persistentState().nextSessionProjectPath().empty();
+   bool switchProjects = !persistentState().nextSessionProject().empty();
    ClientEvent quitEvent(kQuit, switchProjects);
    session::clientEventQueue().add(quitEvent);
 }

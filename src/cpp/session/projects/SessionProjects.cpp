@@ -60,7 +60,8 @@ void onSuspend(Settings*)
    // on resume. we read this back in initalize (rather than in
    // the onResume handler) becuase we need it very early in the
    // processes lifetime and onResume happens too late
-   persistentState().setNextSessionProjectPath(s_projectContext.file());
+   persistentState().setNextSessionProject(
+                              s_projectContext.file().absolutePath());
 }
 
 void onResume(const Settings&) {}
@@ -94,7 +95,7 @@ void startup()
    // see if there is a project path hard-wired for the next session
    // (this would be used for a switch to project or for the resuming of
    // a suspended session)
-   FilePath nextSessionProjectPath = persistentState().nextSessionProjectPath();
+   std::string nextSessionProject = persistentState().nextSessionProject();
 
    // make sure projects are enabled
    if (!userSettings().projectsEnabled())
@@ -102,17 +103,25 @@ void startup()
       projectFilePath = FilePath();
    }
    // check for next session project path (see above for comment)
-   else if (!nextSessionProjectPath.empty())
+   else if (!nextSessionProject.empty())
    {
       // reset next session project path so its a one shot deal
-      persistentState().setNextSessionProjectPath(FilePath());
+      persistentState().setNextSessionProject("");
 
       // clear any initial context settings which may be leftover
       // by a re-instatiation of rsession by desktop
       session::options().clearInitialContextSettings();
 
-      // set project path
-      projectFilePath = nextSessionProjectPath;
+      // check for special "none" value (used for close project)
+      if (nextSessionProject == "none")
+      {
+         projectFilePath = FilePath();
+      }
+      else
+      {
+         projectFilePath = module_context::resolveAliasedPath(
+                                                   nextSessionProject);
+      }
    }
 
    // check for envrionment variable (file association)

@@ -67,6 +67,7 @@ public abstract class
    public abstract AppCommand projectMru8();
    public abstract AppCommand projectMru9();
    public abstract AppCommand clearRecentProjects();
+   public abstract AppCommand closeProject();
 
    // Console
    public abstract AppCommand consoleClear();

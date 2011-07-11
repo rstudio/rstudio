@@ -203,9 +203,9 @@ public class ApplicationQuit implements SaveActionChangedHandler
       */
    }
    
-   public void performQuit(boolean saveChanges, String switchToProjectPath)
+   public void performQuit(boolean saveChanges, String switchToProject)
    {
-      new QuitCommand(saveChanges, switchToProjectPath).execute();
+      new QuitCommand(saveChanges, switchToProject).execute();
    }
    
    @Override
@@ -255,12 +255,20 @@ public class ApplicationQuit implements SaveActionChangedHandler
       
    };
    
+   private String buildSwitchMessage(String switchToProject)
+   {
+      String msg = !switchToProject.equals("none") ?
+            "Switching to project " + switchToProject:
+            "Closing project";
+      return msg + "...";
+   }
+   
    private class QuitCommand implements Command 
    {
-      public QuitCommand(boolean saveChanges, String switchToProjectPath)
+      public QuitCommand(boolean saveChanges, String switchToProject)
       {
          saveChanges_ = saveChanges;
-         switchToProjectPath_ = switchToProjectPath;
+         switchToProject_ = switchToProject;
       }
       
       public void execute()
@@ -271,23 +279,25 @@ public class ApplicationQuit implements SaveActionChangedHandler
          if (Desktop.isDesktop())
          {
             indicator.onCompleted();
-            desktopQuitR(saveChanges_, switchToProjectPath_);
+            desktopQuitR(saveChanges_, switchToProject_);
          }
          else
          {
             indicator.onProgress("Quitting R Session...");
             server_.quitSession(
                   saveChanges_,
-                  switchToProjectPath_,
+                  switchToProject_,
                   new VoidServerRequestCallback(indicator) {
                         
                      @Override
                      public void onSuccess()
                      {
-                        if (switchToProjectPath_ != null)
+                        if (switchToProject_ != null)
                         {
-                           indicator.onProgress("Switching to project " +
-                                                       switchToProjectPath_);
+                           new GlobalProgressDelayer(
+                                 globalDisplay_, 
+                                 buildSwitchMessage(switchToProject_));
+                            
                         }
                      }
                      
@@ -296,13 +306,13 @@ public class ApplicationQuit implements SaveActionChangedHandler
       }
       
       private final boolean saveChanges_;
-      private final String switchToProjectPath_;
+      private final String switchToProject_;
       
    };
    
   
    private void desktopQuitR(final boolean saveChanges,
-                             final String switchToProjectPath)
+                             final String switchToProject)
    {
       final GlobalProgressDelayer progress = new GlobalProgressDelayer(
             globalDisplay_,
@@ -320,12 +330,12 @@ public class ApplicationQuit implements SaveActionChangedHandler
             // failed). Now do the real quit.
             
             // if a switch to project path is defined then set it
-            if (switchToProjectPath != null)
+            if (switchToProject != null)
                Desktop.getFrame().setSwitchToProjectPending(true);
 
             server_.quitSession(
                   saveChanges,
-                  switchToProjectPath,
+                  switchToProject,
                   new VoidServerRequestCallback(
                         globalDisplay_.getProgressIndicator("Error Quitting R")) 
                   {
@@ -334,10 +344,10 @@ public class ApplicationQuit implements SaveActionChangedHandler
                      public void onResponseReceived(Void response)
                      {
                         progress.dismiss();
-                        if (switchToProjectPath != null)
+                        if (switchToProject != null)
                         {
-                           globalDisplay_.showProgress("Switching to project " +
-                                                       switchToProjectPath);
+                           globalDisplay_.showProgress(
+                                       buildSwitchMessage(switchToProject));
                         }
                         
                         super.onResponseReceived(response);

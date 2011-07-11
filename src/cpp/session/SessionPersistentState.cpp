@@ -27,7 +27,7 @@ namespace session {
 namespace {
 const char * const kActiveClientId = "active-client-id";
 const char * const kAbend = "abend";
-const char * const kNextSessionProjectPath = "next-session-project-path";
+const char * const kNextSessionProject = "next-session-project";
 }
    
 PersistentState& persistentState()
@@ -69,19 +69,15 @@ void PersistentState::setAbend(bool abend)
    settings_.set(kAbend, abend); 
 }
 
-FilePath PersistentState::nextSessionProjectPath() const
+std::string PersistentState::nextSessionProject() const
 {
-   std::string path = settings_.get(kNextSessionProjectPath);
-   if (!path.empty())
-      return FilePath(path);
-   else
-      return FilePath();
+   return settings_.get(kNextSessionProject);
 }
 
-void PersistentState::setNextSessionProjectPath(
-                           const FilePath& nextSessionProjectPath)
+void PersistentState::setNextSessionProject(
+                        const std::string& nextSessionProject)
 {
-   settings_.set(kNextSessionProjectPath, nextSessionProjectPath.absolutePath());
+   settings_.set(kNextSessionProject, nextSessionProject);
 }
    
 } // namespace session

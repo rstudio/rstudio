@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -60,7 +61,14 @@ public class Projects implements OpenProjectFileHandler
       eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          public void onSessionInit(SessionInitEvent sie)
          {
-            if (!session.getSessionInfo().isProjectsEnabled())
+            SessionInfo sessionInfo = session.getSessionInfo();
+            
+            if(sessionInfo.isProjectsEnabled())
+            {
+               boolean hasProject = sessionInfo.getActiveProjectFile() != null;
+               commands.closeProject().setEnabled(hasProject);
+            }
+            else
             {
                commands.newProject().remove();
                commands.openProject().remove();
@@ -75,6 +83,7 @@ public class Projects implements OpenProjectFileHandler
                commands.projectMru8().remove();
                commands.projectMru9().remove();
                commands.clearRecentProjects().remove();
+               commands.closeProject().remove();
             }
          }
       });
@@ -164,6 +173,20 @@ public class Projects implements OpenProjectFileHandler
             
          }
       }); 
+   }
+   
+   
+   @Handler
+   public void onCloseProject()
+   {
+      // first resolve the quit context (potentially saving edited documents
+      // and determining whether to save the R environment on exit)
+      applicationQuit_.prepareForQuit("Close Project",
+                                      new ApplicationQuit.QuitContext() {
+         public void onReadyToQuit(final boolean saveChanges)
+         {
+            applicationQuit_.performQuit(saveChanges, "none");
+         }});
    }
 
    @Override

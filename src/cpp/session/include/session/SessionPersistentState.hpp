@@ -46,8 +46,8 @@ public:
    void setAbend(bool abend);
 
    // next session project path
-   core::FilePath nextSessionProjectPath() const;
-   void setNextSessionProjectPath(const core::FilePath& nextSessionProjectPath);
+   std::string nextSessionProject() const;
+   void setNextSessionProject(const std::string& nextSessionProject);
 
    // get underlying settings
    core::Settings& settings() { return settings_; }
