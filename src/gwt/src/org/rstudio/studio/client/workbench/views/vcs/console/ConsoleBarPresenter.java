@@ -39,6 +39,9 @@ public class ConsoleBarPresenter
       void addCommand(String command);
       void addOutput(String output);
       void clearOutput();
+
+      void onShow();
+      void onBeforeHide();
    }
 
    @Inject

@@ -23,27 +23,19 @@ import com.google.gwt.user.client.ui.*;
 
 public class NineUpBorder extends ResizeComposite implements AcceptsOneWidget
 {
-   public interface Resources extends ClientBundle
+   public interface Resources
    {
-      @Source("empty.gif")
       ImageResource topLeft();
-      @Source("empty.gif")
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
       ImageResource top();
-      @Source("empty.gif")
       ImageResource topRight();
       @ImageOptions(repeatStyle = RepeatStyle.Vertical)
-      @Source("empty.gif")
       ImageResource left();
-      @Source("empty.gif")
       @ImageOptions(repeatStyle = RepeatStyle.Vertical)
       ImageResource right();
-      @Source("empty.gif")
       ImageResource bottomLeft();
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-      @Source("empty.gif")
       ImageResource bottom();
-      @Source("empty.gif")
       ImageResource bottomRight();
    }
 

@@ -20,11 +20,15 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.ResizeComposite;
 import org.rstudio.core.client.events.EnsureHiddenEvent;
 import org.rstudio.core.client.events.EnsureHiddenHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
@@ -36,7 +40,7 @@ import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarPresenter
 
 public class ConsoleOutputPane extends ResizeComposite implements OutputDisplay
 {
-   interface Resources extends NineUpBorder.Resources
+   interface Resources extends NineUpBorder.Resources, ClientBundle
    {
       @Source("ConsoleOutputPane.css")
       Styles styles();
@@ -92,7 +96,6 @@ public class ConsoleOutputPane extends ResizeComposite implements OutputDisplay
    {
       html_ = new HTML();
       html_.setStyleName(styles_.outer());
-      html_.addStyleName("ace_text-layer ace_line");
 
       scrollPanel_ = new BottomScrollPanel(html_);
       scrollPanel_.setSize("100%", "100%");
@@ -137,7 +140,7 @@ public class ConsoleOutputPane extends ResizeComposite implements OutputDisplay
    @Override
    public void addCommand(String command)
    {
-      addText("> " + command).setClassName(styles_.command() + " ace_keyword");
+      addText("> " + command).setClassName(styles_.command());
       scrollPanel_.onContentSizeChanged();
    }
 
@@ -152,6 +155,34 @@ public class ConsoleOutputPane extends ResizeComposite implements OutputDisplay
    public void clearOutput()
    {
       html_.getElement().setInnerHTML("");
+   }
+
+   @Override
+   public void onShow()
+   {
+      // Use scrollPos_ to restore scroll position (based on the bottom of the
+      // scroll panel)
+
+      if (scrollPos_ == null)
+         scrollPanel_.scrollToBottom();
+      else
+      {
+         int vscroll = Math.max(0, scrollPos_ - scrollPanel_.getOffsetHeight());
+         scrollPanel_.setVerticalScrollPosition(vscroll);
+      }
+   }
+
+   @Override
+   public void onBeforeHide()
+   {
+      // Save scroll position to scrollPos_ (based on the bottom of the scroll
+      // panel)
+
+      if (scrollPanel_.isScrolledToBottom())
+         scrollPos_ = null;
+      else
+         scrollPos_ = scrollPanel_.getVerticalScrollPosition() +
+                      scrollPanel_.getOffsetHeight();
    }
 
    private Element addText(String command)
@@ -176,6 +207,7 @@ public class ConsoleOutputPane extends ResizeComposite implements OutputDisplay
 
    private final HTML html_;
    private final BottomScrollPanel scrollPanel_;
+   private Integer scrollPos_ = null;
 
    private static final Resources res_ = GWT.create(Resources.class);
    private static final Styles styles_ = res_.styles();

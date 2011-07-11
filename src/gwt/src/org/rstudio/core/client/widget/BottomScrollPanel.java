@@ -43,6 +43,11 @@ public class BottomScrollPanel extends ScrollPanel
       setWidget(widget);
    }
 
+   public boolean isScrolledToBottom()
+   {
+      return scrolledToBottom_;
+   }
+
    @Override
    protected void onLoad()
    {
