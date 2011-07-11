@@ -410,8 +410,21 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
             }
             else
             {
-               // return indent up to next token position
-               var indentWidth = nextTokenPos.column;
+               // Return indent up to next token position.
+               // Note that in hard tab mode, the tab character only counts 
+               // as a single character unfortunately. What we really want
+               // is the screen column, but what we have is the document
+               // column, which we can't convert to screen column without
+               // copy-and-pasting a bunch of code from layer/text.js.
+               // As a shortcut, we just pull off the leading whitespace
+               // from the line and include it verbatim in the new indent.
+               // This strategy works fine unless there is a tab in the
+               // line that comes after a non-whitespace character, which
+               // seems like it should be rare.
+               var line = this.$getLine(nextTokenPos.row);
+               var leadingIndent = line.replace(/[^\s].*$/, '');
+
+               var indentWidth = nextTokenPos.column - leadingIndent.length;
                var tabsToUse = Math.floor(indentWidth / tabSize);
                var spacesToAdd = indentWidth - (tabSize * tabsToUse);
                var buffer = "";
@@ -419,7 +432,7 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
                   buffer += tab;
                for (var j = 0; j < spacesToAdd; j++)
                   buffer += " ";
-               return buffer;
+               return leadingIndent + buffer;
             }
          }
 
