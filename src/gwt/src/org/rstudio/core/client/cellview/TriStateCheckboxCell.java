@@ -22,11 +22,12 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.view.client.SelectionModel;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class TriStateCheckboxCell implements Cell<Boolean>
+public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
 {
    interface Resources extends ClientBundle
    {
@@ -35,11 +36,14 @@ public class TriStateCheckboxCell implements Cell<Boolean>
       ImageResource checkboxOff();
    }
 
-   public TriStateCheckboxCell()
+   public TriStateCheckboxCell(SelectionModel<TKey> selectionModel)
    {
+      selectionModel_ = selectionModel;
       consumedEvents_ = new HashSet<String>();
       consumedEvents_.add("click");
       consumedEvents_.add("keydown");
+      consumedEvents_.add("mouseover");
+      consumedEvents_.add("mouseout");
    }
 
    @Override
@@ -63,7 +67,11 @@ public class TriStateCheckboxCell implements Cell<Boolean>
    @Override
    public boolean isEditing(Context context, Element parent, Boolean value)
    {
-      return false;
+      // We aren't actually editing here, of course. All we're trying to do
+      // is prevent selection from changing, if the user is clicking on the
+      // checkbox of a cell that's in a selected row.
+      return mouseInCheckbox_ &&
+             selectionModel_.isSelected((TKey) context.getKey());
    }
 
    @Override
@@ -73,9 +81,21 @@ public class TriStateCheckboxCell implements Cell<Boolean>
                               NativeEvent event,
                               ValueUpdater<Boolean> booleanValueUpdater)
    {
-      if ("click".equals(event.getType()))
+      if (Element.is(event.getEventTarget()) &&
+          Element.as(event.getEventTarget()).getTagName().equalsIgnoreCase("img"))
       {
-         booleanValueUpdater.update(value == null ? true : !value);
+         if ("click".equals(event.getType()))
+         {
+            booleanValueUpdater.update(value == null ? true : !value);
+         }
+         else if ("mouseover".equals(event.getType()))
+         {
+            mouseInCheckbox_ = true;
+         }
+         else if ("mouseout".equals(event.getType()))
+         {
+            mouseInCheckbox_ = false;
+         }
       }
    }
 
@@ -109,5 +129,7 @@ public class TriStateCheckboxCell implements Cell<Boolean>
    }
 
    private final HashSet<String> consumedEvents_;
+   private boolean mouseInCheckbox_;
+   private final SelectionModel<TKey> selectionModel_;
    private static final Resources RES = GWT.create(Resources.class);
 }

@@ -133,8 +133,6 @@ public class ChangelistTable extends Composite
       table_ = new CellTable<StatusAndPath>(
             100, resources_);
 
-      configureTable();
-
       selectionModel_ = new MultiSelectionModel<StatusAndPath>(
             new ProvidesKey<StatusAndPath>()
             {
@@ -146,6 +144,8 @@ public class ChangelistTable extends Composite
             });
       table_.setSelectionModel(selectionModel_);
 
+      configureTable();
+
       table_.setSize("100%", "auto");
 
       initWidget(new ScrollPanel(table_));
@@ -154,7 +154,7 @@ public class ChangelistTable extends Composite
    private void configureTable()
    {
       Column<StatusAndPath, Boolean> stagedColumn = new Column<StatusAndPath, Boolean>(
-            new TriStateCheckboxCell())
+            new TriStateCheckboxCell<StatusAndPath>(selectionModel_))
       {
          @Override
          public Boolean getValue(StatusAndPath object)
@@ -172,9 +172,7 @@ public class ChangelistTable extends Composite
                             final StatusAndPath object,
                             Boolean value)
          {
-            ArrayList<StatusAndPath> paths = new ArrayList<StatusAndPath>();
-            paths.add(object);
-            fireEvent(new StageUnstageEvent(!value, paths));
+            fireEvent(new StageUnstageEvent(!value, getSelectedItems()));
          }
       });
       table_.addColumn(stagedColumn, "Staged");
@@ -217,6 +215,19 @@ public class ChangelistTable extends Composite
       items_ = items;
       table_.setPageSize(items.size());
       table_.setRowData(items);
+   }
+
+   public ArrayList<StatusAndPath> getSelectedItems()
+   {
+      SelectionModel<? super StatusAndPath> selectionModel = table_.getSelectionModel();
+
+      ArrayList<StatusAndPath> results = new ArrayList<StatusAndPath>();
+      for (StatusAndPath item : items_)
+      {
+         if (selectionModel.isSelected(item))
+            results.add(item);
+      }
+      return results;
    }
 
    public ArrayList<String> getSelectedPaths()
