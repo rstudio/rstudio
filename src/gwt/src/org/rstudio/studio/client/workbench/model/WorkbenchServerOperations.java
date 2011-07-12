@@ -58,6 +58,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
  
    void updateClientState(JavaScriptObject temporary,
                           JavaScriptObject persistent,
+                          JavaScriptObject projectPersistent,
                           ServerRequestCallback<Void> requestCallback);
    
     

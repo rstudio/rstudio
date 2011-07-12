@@ -36,6 +36,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
@@ -62,7 +63,7 @@ public class PaneManager
       SelectedTabStateValue(String name,
                             WorkbenchTabPanel tabPanel)
       {
-         super("workbenchp", name, true,
+         super("workbenchp", name, ClientState.PERSISTENT,
                session_.getSessionInfo().getClientState(), true);
          tabPanel_ = tabPanel;
          finishInit(session_.getSessionInfo().getClientState());

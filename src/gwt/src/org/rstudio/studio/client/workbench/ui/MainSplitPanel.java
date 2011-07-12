@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.NotifyingSplitLayoutPanel;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
@@ -112,7 +113,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
       new JSObjectStateValue(GROUP_WORKBENCH,
                              KEY_RIGHTPANESIZE,
-                             true,
+                             ClientState.PERSISTENT,
                              session_.getSessionInfo().getClientState(),
                              false) {
 

@@ -38,10 +38,10 @@ public abstract class ClientStateValue<T> implements SaveClientStateHandler
 {
    protected ClientStateValue(String group,
                               String name,
-                              boolean persistent,
+                              int persist,
                               ClientInitState state)
    {
-      this(group, name, persistent, state, false);
+      this(group, name, persist, state, false);
    }
 
    /**
@@ -50,13 +50,13 @@ public abstract class ClientStateValue<T> implements SaveClientStateHandler
     */
    protected ClientStateValue(String group,
                               String name,
-                              boolean persistent,
+                              int persist,
                               ClientInitState state,
                               boolean delayedInit)
    {
       group_ = group;
       name_ = name;
-      persistent_ = persistent;
+      persist_ = persist;
 
       if (!delayedInit)
          finishInit(state);
@@ -78,7 +78,7 @@ public abstract class ClientStateValue<T> implements SaveClientStateHandler
                                  String group,
                                  String name,
                                  T value,
-                                 boolean persist);
+                                 int persist);
 
    protected abstract void onInit(T value);
    protected abstract T getValue();
@@ -106,11 +106,11 @@ public abstract class ClientStateValue<T> implements SaveClientStateHandler
 
    protected void put(ClientState clientState, T newValue)
    {
-      doSet(clientState, group_, name_, newValue, persistent_);
+      doSet(clientState, group_, name_, newValue, persist_);
    }
 
    private ValueChangeTracker<T> valueTracker_;
    private String group_;
    private String name_;
-   private boolean persistent_;
+   private int persist_;
 }

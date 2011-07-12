@@ -32,6 +32,7 @@ namespace {
   
 const char * const kTemporaryExt = ".temporary";
 const char * const kPersistentExt = ".persistent";
+const char * const kProjPersistentExt = ".proj_persistent";
    
 void putState(const std::string& scope, 
               const json::Object::value_type& entry,
@@ -121,7 +122,49 @@ void restoreState(const core::FilePath& stateFilePath,
    pStateContainer->insert(std::make_pair(stateFilePath.stem(), value));
 }
 
+Error removeAndRecreateStateDir(const FilePath& stateDir)
+{
+   Error error = stateDir.removeIfExists();
+   if (error)
+      return error;
+   return stateDir.ensureDirectory();
 }
+
+Error restoreStateFiles(const FilePath& sourceDir,
+                        boost::function<void(const FilePath&)> restoreFunc)
+{
+   // ignore if the directory doesn't exist
+   if (!sourceDir.exists())
+      return Success();
+
+   // list the files
+   std::vector<FilePath> childPaths ;
+   Error error = sourceDir.children(&childPaths);
+   if (error)
+      return error ;
+
+   // restore files
+   std::for_each(childPaths.begin(), childPaths.end(), restoreFunc);
+   return Success();
+}
+
+void appendAndValidateState(const json::Object& sourceState,
+                            json::Object* pTargetState)
+{
+   // append (log warning if there are dupes)
+   for (json::Object::const_iterator it = sourceState.begin();
+        it != sourceState.end();
+        ++it)
+   {
+      if (pTargetState->find(it->first) != pTargetState->end())
+         LOG_WARNING_MESSAGE("duplicate state key: " + it->first);
+      else
+         pTargetState->insert(*it);
+   }
+}
+
+
+} // anonymous namespace
    
 // singleton
 ClientState& clientState()
@@ -134,11 +177,26 @@ ClientState& clientState()
 ClientState::ClientState()
 {
 }
+
+void ClientState::restoreGlobalState(const FilePath& stateFile)
+{
+   if (stateFile.extension() == kTemporaryExt)
+      restoreState(stateFile, &temporaryState_);
+   else if (stateFile.extension() == kPersistentExt)
+      restoreState(stateFile, &persistentState_);
+}
+
+void ClientState::restoreProjectState(const FilePath& stateFile)
+{
+   if (stateFile.extension() == kProjPersistentExt)
+      restoreState(stateFile, &projectPersistentState_);
+}
    
 void ClientState::clear()  
 {
    temporaryState_.clear();
    persistentState_.clear();
+   projectPersistentState_.clear();
 }
  
 void ClientState::putTemporary(const std::string& scope, 
@@ -169,19 +227,37 @@ void ClientState::putPersistent(const json::Object& persistentState)
    mergeState(persistentState, &persistentState_);
 }
 
-Error ClientState::commit(ClientStateCommitType commitType, 
-                          const core::FilePath& stateDir)
+void ClientState::putProjectPersistent(const std::string& scope,
+                                       const std::string& name,
+                                       const json::Value& value)
 {
-   // remote and re-create the stateDir
-   Error error = stateDir.removeIfExists();
+   json::Object stateContainer;
+   putState(scope, std::make_pair(name, value), &stateContainer);
+   putProjectPersistent(stateContainer);
+}
+
+void ClientState::putProjectPersistent(
+                              const json::Object& projectPersistentState)
+{
+   mergeState(projectPersistentState, &projectPersistentState_);
+}
+
+
+Error ClientState::commit(ClientStateCommitType commitType, 
+                          const core::FilePath& stateDir,
+                          const core::FilePath& projectStateDir)
+{
+   // remove and re-create the stateDirs
+   Error error = removeAndRecreateStateDir(stateDir);
    if (error)
       return error;
-   error = stateDir.ensureDirectory();
+   error = removeAndRecreateStateDir(projectStateDir);
    if (error)
       return error;
-   
+
    // always commit persistent state
    commitState(persistentState_, kPersistentExt, stateDir);
+   commitState(projectPersistentState_, kProjPersistentExt, projectStateDir);
   
    // commit all state if requested
    if (commitType == ClientStateCommitAll)
@@ -192,39 +268,25 @@ Error ClientState::commit(ClientStateCommitType commitType,
    return Success();
 }
    
-   
-Error ClientState::restore(const FilePath& stateDir)
+Error ClientState::restore(const FilePath& stateDir,
+                           const FilePath& projectStateDir)
 {
    // clear existing values
    clear();
    
-   // if the directory doesn't exist then simply exit
-   if (!stateDir.exists())
-      return Success();
-   
-   // list the files
-   std::vector<FilePath> childPaths ;
-   Error error = stateDir.children(&childPaths);
+   // restore global state
+   Error error = restoreStateFiles(
+                  stateDir,
+                  boost::bind(&ClientState::restoreGlobalState, this, _1));
    if (error)
-      return error ;
-   
-   // restore each file
-   for (std::vector<FilePath>::const_iterator it = childPaths.begin();
-        it != childPaths.end();
-        it++)
-   {
-      if (it->extension() == kTemporaryExt)
-         restoreState(*it, &temporaryState_);
-      else if (it->extension() == kPersistentExt)
-         restoreState(*it, &persistentState_);
-      else
-         LOG_WARNING_MESSAGE("unexpected client state extension: " +
-                             it->extension());
-   }
-   
-   return Success();
+      return error;
+
+   // restore project state
+   return restoreStateFiles(
+                  projectStateDir,
+                  boost::bind(&ClientState::restoreProjectState, this, _1));
 }
-   
+
 // generate current state by merging temporary and persistent states
 void ClientState::currentState(json::Object* pCurrentState) const
 {
@@ -232,21 +294,11 @@ void ClientState::currentState(json::Object* pCurrentState) const
    pCurrentState->clear();
    pCurrentState->insert(persistentState_.begin(), persistentState_.end());
    
-   // add items from temporary state (log warning if there are dupes)
-   for (json::Object::const_iterator it = temporaryState_.begin();
-        it != temporaryState_.end();
-        ++it)
-   {
-      if (pCurrentState->find(it->first) != pCurrentState->end())
-         LOG_WARNING_MESSAGE("duplicate state key: " + it->first);
-      else
-         pCurrentState->insert(*it);
-   }
+   // add and validate other state collections
+   appendAndValidateState(projectPersistentState_, pCurrentState);
+   appendAndValidateState(temporaryState_, pCurrentState);
 }
 
-   
-   
-      
 } // namespace session
 } // namespace r
 

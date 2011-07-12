@@ -39,6 +39,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -147,7 +148,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
          });
             
       // export plot options
-      new JSObjectStateValue("plotspane", "exportPlotOptions", true,
+      new JSObjectStateValue("plotspane", "exportPlotOptions", ClientState.PERSISTENT,
             session.getSessionInfo().getClientState(), false)
       {
          @Override
@@ -182,7 +183,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    
    
    // save plot as pdf options
-   new JSObjectStateValue("plotspane", "savePlotAsPdfOptions", true,
+   new JSObjectStateValue("plotspane", "savePlotAsPdfOptions", ClientState.PERSISTENT,
          session.getSessionInfo().getClientState(), false)
    {
       @Override

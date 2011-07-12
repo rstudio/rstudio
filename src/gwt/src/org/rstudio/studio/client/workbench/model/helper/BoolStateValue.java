@@ -20,12 +20,12 @@ public abstract class BoolStateValue extends ClientStateValue<Boolean>
 {
    public BoolStateValue(String group,
                          String name,
-                         boolean persistent,
+                         int persist,
                          ClientInitState state)
    {
       super(group,
             name,
-            persistent,
+            persist,
             state);
    }
 
@@ -40,7 +40,7 @@ public abstract class BoolStateValue extends ClientStateValue<Boolean>
                         String group,
                         String name,
                         Boolean value,
-                        boolean persist)
+                        int persist)
    {
       state.putBoolean(group, name, value, persist);
    }

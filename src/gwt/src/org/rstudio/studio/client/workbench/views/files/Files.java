@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientInitState;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -155,7 +156,7 @@ public class Files
       ClientInitState state = sessionInfo.getClientState();
 
       // make the column sort order persistent
-      new JSObjectStateValue(MODULE_FILES, KEY_SORT_ORDER, false, state, false)
+      new JSObjectStateValue(MODULE_FILES, KEY_SORT_ORDER, ClientState.PROJECT_PERSISTENT, state, false)
       {
          @Override
          protected void onInit(JsObject value)
@@ -198,7 +199,7 @@ public class Files
       
       
       // navigate to previous directory (works for resumed case)
-      new StringStateValue(MODULE_FILES, KEY_PATH, false, state) {
+      new StringStateValue(MODULE_FILES, KEY_PATH, ClientState.PROJECT_PERSISTENT, state) {
          @Override
          protected void onInit(final String value)
          {
@@ -676,7 +677,7 @@ public class Files
    private boolean hasNavigatedToDirectory_ = false;
    private final Provider<FilesCopy> pFilesCopy_;
    private final Provider<FilesUpload> pFilesUpload_;
-   private static final String MODULE_FILES = "filespane";
+   private static final String MODULE_FILES = "files-pane";
    private static final String KEY_PATH = "path";
    private static final String KEY_SORT_ORDER = "sortOrder";
    private JsArray<FilesColumnSortInfo> columnSortOrder_ = null;

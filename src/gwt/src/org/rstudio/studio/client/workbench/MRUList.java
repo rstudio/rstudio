@@ -20,6 +20,7 @@ import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
@@ -53,7 +54,7 @@ public class MRUList
          }
       });
 
-      new JSObjectStateValue(clientStateGroup, "entries", true,
+      new JSObjectStateValue(clientStateGroup, "entries", ClientState.PERSISTENT,
                              session.getSessionInfo().getClientState(),
                              false) {
          @Override

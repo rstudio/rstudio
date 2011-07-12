@@ -21,13 +21,13 @@ public abstract class JSObjectStateValue extends ClientStateValue<JsObject>
 {
    public JSObjectStateValue(String group,
                              String name,
-                             boolean persistent,
+                             int persist,
                              ClientInitState state,
                              boolean delayedInit)
    {
       super(group,
             name,
-            persistent,
+            persist,
             state,
             delayedInit);
    }
@@ -43,7 +43,7 @@ public abstract class JSObjectStateValue extends ClientStateValue<JsObject>
                         String group,
                         String name,
                         JsObject value,
-                        boolean persist)
+                        int persist)
    {
       state.putObject(group, name, value, persist);
    }
