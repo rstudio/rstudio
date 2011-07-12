@@ -64,6 +64,7 @@ import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
+import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceObjectRemovedEvent;
 import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceRefreshEvent;
@@ -114,6 +115,7 @@ class RemoteServerEventListener
       public static final String SaveActionChanged = "save_action_changed";
       public static final String ShowWarningBar = "show_warning_bar";
       public static final String OpenProjectError = "open_project_error";
+      public static final String VcsRefresh = "vcs_refresh";
 
       protected ClientEvent()
       {
@@ -640,6 +642,10 @@ class RemoteServerEventListener
          {
             OpenProjectError error = event.getData();
             eventBus.fireEvent(new OpenProjectErrorEvent(error));
+         }
+         else if (type.equals(ClientEvent.VcsRefresh))
+         {
+            eventBus.fireEvent(new VcsRefreshEvent());
          }
          else if (type.equals(ClientEvent.Quit))
          {

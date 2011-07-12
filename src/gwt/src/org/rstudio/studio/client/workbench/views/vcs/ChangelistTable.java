@@ -30,7 +30,10 @@ import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
+import org.rstudio.core.client.cellview.TriStateCheckboxCell;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageEvent;
+import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageHandler;
 
 import java.util.ArrayList;
 
@@ -48,7 +51,7 @@ public class ChangelistTable extends Composite
       ImageResource statusRenamed();
 
       @Override
-      @Source("VCSPaneCellTableStyle.css")
+      @Source("ChangelistTable.css")
       Style cellTableStyle();
    }
 
@@ -150,13 +153,8 @@ public class ChangelistTable extends Composite
 
    private void configureTable()
    {
-      Column<StatusAndPath, Boolean> stagedColumn = new Column<StatusAndPath, Boolean>(new AbstractCell<Boolean>()
-      {
-         @Override
-         public void render(Context context, Boolean value, SafeHtmlBuilder sb)
-         {
-         }
-      })
+      Column<StatusAndPath, Boolean> stagedColumn = new Column<StatusAndPath, Boolean>(
+            new TriStateCheckboxCell())
       {
          @Override
          public Boolean getValue(StatusAndPath object)
@@ -167,6 +165,18 @@ public class ChangelistTable extends Composite
 
       stagedColumn.setSortable(true);
       stagedColumn.setHorizontalAlignment(Column.ALIGN_CENTER);
+      stagedColumn.setFieldUpdater(new FieldUpdater<StatusAndPath, Boolean>()
+      {
+         @Override
+         public void update(final int index,
+                            final StatusAndPath object,
+                            Boolean value)
+         {
+            ArrayList<StatusAndPath> paths = new ArrayList<StatusAndPath>();
+            paths.add(object);
+            fireEvent(new StageUnstageEvent(!value, paths));
+         }
+      });
       table_.addColumn(stagedColumn, "Staged");
       table_.setColumnWidth(stagedColumn, "45px");
 
@@ -220,6 +230,11 @@ public class ChangelistTable extends Composite
             results.add(item.getPath());
       }
       return results;
+   }
+
+   public HandlerRegistration addStageUnstageHandler(StageUnstageHandler handler)
+   {
+      return addHandler(handler, StageUnstageEvent.TYPE);
    }
 
    private final CellTable<StatusAndPath> table_;

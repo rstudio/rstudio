@@ -57,8 +57,15 @@ span.status img:first-child {
 
 }
 
+.cellTableCell:first-child {
+   padding: 0 4px;
+}
 .cellTableCell:first-child+.cellTableCell {
    padding: 0 4px;
+}
+.cellTableCell:first-child img {
+   position: relative;
+   top: 3px;
 }
 .cellTableCell:first-child+.cellTableCell img {
    position: relative;

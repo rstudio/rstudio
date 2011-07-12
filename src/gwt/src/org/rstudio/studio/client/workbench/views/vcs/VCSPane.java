@@ -45,11 +45,13 @@ public class VCSPane extends WorkbenchPane implements Display
 {
    @Inject
    public VCSPane(Provider<ConsoleBarPresenter> pConsoleBar,
+                  Provider<ChangelistTablePresenter> pChangelistTable,
                   Session session,
                   Commands commands)
    {
       super(session.getSessionInfo().getVcsName());
       pConsoleBar_ = pConsoleBar;
+      pChangelistTable_ = pChangelistTable;
       commands_ = commands;
    }
 
@@ -83,7 +85,7 @@ public class VCSPane extends WorkbenchPane implements Display
    @Override
    protected Widget createMainWidget()
    {
-      table_ = new ChangelistTable();
+      table_ = pChangelistTable_.get().getView();
 
       layoutPanel_ = new LayoutPanel();
       layoutPanel_.add(table_);
@@ -215,6 +217,7 @@ public class VCSPane extends WorkbenchPane implements Display
    }
 
    private final Provider<ConsoleBarPresenter> pConsoleBar_;
+   private final Provider<ChangelistTablePresenter> pChangelistTable_;
    private final Commands commands_;
    private ChangelistTable table_;
    private LayoutPanel layoutPanel_;

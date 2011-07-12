@@ -14,6 +14,7 @@
 #ifndef CORE_SCOPE_HPP
 #define CORE_SCOPE_HPP
 
+#include <boost/function.hpp>
 
 namespace core {
 namespace scope {
@@ -42,6 +43,23 @@ public:
  private:
    T* pLocation_;
    T value_;
+};
+
+class CallOnExit
+{
+public:
+   CallOnExit(const boost::function<void()>& func)
+   {
+      func_ = func;
+   }
+
+   ~CallOnExit()
+   {
+      func_();
+   }
+
+private:
+   boost::function<void()> func_;
 };
 
 } // namespace scope

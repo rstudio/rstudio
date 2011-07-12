@@ -20,6 +20,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -30,6 +31,8 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
+import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.history.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter;
 
@@ -58,6 +61,7 @@ public class VCS extends BasePresenter implements IsWidget
               Provider<HistoryPresenter> pHistoryPresenter,
               VCSServerOperations server,
               Commands commands,
+              EventBus events,
               Binder commandBinder,
               GlobalDisplay globalDisplay)
    {
@@ -70,6 +74,14 @@ public class VCS extends BasePresenter implements IsWidget
       globalDisplay_ = globalDisplay;
 
       commandBinder.bind(commands, this);
+
+      events.addHandler(VcsRefreshEvent.TYPE, new VcsRefreshHandler() {
+         @Override
+         public void onVcsRefresh(VcsRefreshEvent event)
+         {
+            refresh(false);
+         }
+      });
 
       refresh(false);
    }

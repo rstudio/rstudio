@@ -46,6 +46,8 @@ public interface VCSServerOperations
                   ServerRequestCallback<Void> requestCallback);
    void vcsRevert(ArrayList<String> paths,
                   ServerRequestCallback<Void> requestCallback);
+   void vcsStage(ArrayList<String> paths,
+                 ServerRequestCallback<Void> requestCallback);
    void vcsUnstage(ArrayList<String> paths,
                    ServerRequestCallback<Void> requestCallback);
 

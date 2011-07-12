@@ -15,6 +15,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/foreach.hpp>
+#include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 
@@ -22,6 +24,7 @@
 #include <core/system/System.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Scope.hpp>
 #include <core/StringUtils.hpp>
 
 #include <session/SessionUserSettings.hpp>
@@ -86,6 +89,12 @@ public:
 
    virtual core::Error revert(const std::vector<FilePath>& filePaths,
                               std::string* pStdErr)
+   {
+      return Success();
+   }
+
+   virtual core::Error stage(const std::vector<FilePath>& filePaths,
+                             std::string* pStdErr)
    {
       return Success();
    }
@@ -273,6 +282,45 @@ public:
                          std::vector<std::string>(),
                          filePaths,
                          pStdErr);
+   }
+
+   core::Error stage(const std::vector<FilePath> &filePaths,
+                     std::string *pStdErr)
+   {
+      StatusResult statusResult;
+      this->status(FilePath("."), &statusResult);
+
+      std::vector<FilePath> filesToAdd;
+      std::vector<FilePath> filesToRm;
+
+      BOOST_FOREACH(const FilePath& path, filePaths)
+      {
+         std::string status = statusResult.getStatus(path).status();
+         if (status.size() < 2)
+            continue;
+         if (status[1] == 'D')
+            filesToRm.push_back(path);
+         else if (status[1] != ' ')
+            filesToAdd.push_back(path);
+      }
+
+      Error error;
+
+      if (!filesToAdd.empty())
+      {
+         error = this->add(filesToAdd, pStdErr);
+         if (error)
+            return error;
+      }
+
+      if (!filesToRm.empty())
+      {
+         error = this->remove(filesToRm, pStdErr);
+         if (error)
+            return error;
+      }
+
+      return Success();
    }
 
    core::Error unstage(const std::vector<FilePath>& filePaths,
@@ -565,9 +613,20 @@ Error fileStatus(const FilePath& filePath, VCSStatus* pStatus)
    return Success();
 }
 
+namespace {
+
+void enqueueVcsRefresh()
+{
+   module_context::enqueClientEvent(ClientEvent(client_events::kVcsRefresh));
+}
+
+#define REFRESH_ON_EXIT scope::CallOnExit(boost::function<void()>(&enqueueVcsRefresh));
+
 Error vcsAdd(const json::JsonRpcRequest& request,
              json::JsonRpcResponse* pResponse)
 {
+   REFRESH_ON_EXIT
+
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
    if (error)
@@ -579,6 +638,8 @@ Error vcsAdd(const json::JsonRpcRequest& request,
 Error vcsRemove(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
+   REFRESH_ON_EXIT
+
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
    if (error)
@@ -590,6 +651,8 @@ Error vcsRemove(const json::JsonRpcRequest& request,
 Error vcsRevert(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
+   REFRESH_ON_EXIT
+
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
    if (error)
@@ -598,9 +661,24 @@ Error vcsRevert(const json::JsonRpcRequest& request,
    return s_pVcsImpl_->revert(resolveAliasedPaths(paths), NULL);
 }
 
+Error vcsStage(const json::JsonRpcRequest& request,
+               json::JsonRpcResponse* pResponse)
+{
+   REFRESH_ON_EXIT
+
+   json::Array paths;
+   Error error = json::readParam(request.params, 0, &paths);
+   if (error)
+      return error ;
+
+   return s_pVcsImpl_->stage(resolveAliasedPaths(paths), NULL);
+}
+
 Error vcsUnstage(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
+   REFRESH_ON_EXIT
+
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
    if (error)
@@ -641,6 +719,8 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
 Error vcsCommitGit(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
 {
+   REFRESH_ON_EXIT
+
    GitVCSImpl* pGit = dynamic_cast<GitVCSImpl*>(s_pVcsImpl_.get());
    if (!pGit)
       return systemError(boost::system::errc::operation_not_supported, ERROR_LOCATION);
@@ -689,6 +769,8 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
 Error vcsApplyPatch(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
+   REFRESH_ON_EXIT
+
    std::string patch;
    int mode;
    Error error = json::readParams(request.params, &patch, &mode);
@@ -749,6 +831,8 @@ Error vcsHistory(const json::JsonRpcRequest& request,
 Error vcsExecuteCommand(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
+   REFRESH_ON_EXIT
+
    std::string command;
    Error error = json::readParams(request.params, &command);
    if (error)
@@ -773,6 +857,8 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
    return Success();
 }
 
+} // anonymous namespace
+
 core::Error initialize()
 {
    FilePath workingDir = projects::projectContext().directory();
@@ -796,6 +882,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_add", vcsAdd))
       (bind(registerRpcMethod, "vcs_remove", vcsRemove))
       (bind(registerRpcMethod, "vcs_revert", vcsRevert))
+      (bind(registerRpcMethod, "vcs_stage", vcsStage))
       (bind(registerRpcMethod, "vcs_unstage", vcsUnstage))
       (bind(registerRpcMethod, "vcs_full_status", vcsFullStatus))
       (bind(registerRpcMethod, "vcs_commit_git", vcsCommitGit))
