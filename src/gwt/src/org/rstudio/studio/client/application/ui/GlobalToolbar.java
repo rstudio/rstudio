@@ -109,7 +109,7 @@ public class GlobalToolbar extends Toolbar
       
       String menuText = activeProjectFile != null ?
         FileSystemItem.createFile(activeProjectFile).getParentPath().getStem() :
-        "";
+        "Project: (None)";
                
       ToolbarButton projectButton = new ToolbarButton(
             menuText, 
