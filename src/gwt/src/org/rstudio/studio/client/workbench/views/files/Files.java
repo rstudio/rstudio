@@ -212,8 +212,13 @@ public class Files
                   if (hasNavigatedToDirectory_)
                      return;
 
-                  FileSystemItem start = value != null
-                                    ? FileSystemItem.createDir(value)
+                  // only respect the value if we are in a project
+                  String path = value;
+                  if (session_.getSessionInfo().getActiveProjectFile() == null)
+                     path = null;
+                  
+                  FileSystemItem start = path != null
+                                    ? FileSystemItem.createDir(path)
                                     : FileSystemItem.createDir(
                                           sessionInfo.getInitialWorkingDir());
                   navigateToDirectory(start);
