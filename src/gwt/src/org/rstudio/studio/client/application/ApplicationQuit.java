@@ -18,6 +18,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -258,8 +259,9 @@ public class ApplicationQuit implements SaveActionChangedHandler
    private String buildSwitchMessage(String switchToProject)
    {
       String msg = !switchToProject.equals("none") ?
-            "Switching to project " + switchToProject:
-            "Closing project";
+        "Switching to project " + 
+           FileSystemItem.createFile(switchToProject).getParentPathString() :
+        "Closing project";
       return msg + "...";
    }
    

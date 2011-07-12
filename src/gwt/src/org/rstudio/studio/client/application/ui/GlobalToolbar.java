@@ -14,15 +14,19 @@ package org.rstudio.studio.client.application.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 
 
 public class GlobalToolbar extends Toolbar
@@ -30,6 +34,7 @@ public class GlobalToolbar extends Toolbar
    public GlobalToolbar(Commands commands, FileTypeCommands fileTypeCommands)
    {
       super();
+      commands_ = commands;
       ThemeResources res = ThemeResources.INSTANCE;
       addStyleName(res.themeStyles().globalToolbar());
       
@@ -69,8 +74,8 @@ public class GlobalToolbar extends Toolbar
       mruMenu.addSeparator();
       mruMenu.addItem(commands.clearRecentFiles().createMenuItem(false));
       
-      ToolbarButton mruButton = new ToolbarButton(mruMenu,
-                                                  "Open recent files");
+      ToolbarButton mruButton = new ToolbarButton(mruMenu, false);
+      mruButton.setTitle("Open recent files");
       addLeftWidget(mruButton);
       addLeftSeparator();
       
@@ -82,10 +87,43 @@ public class GlobalToolbar extends Toolbar
       addLeftWidget(commands.printSourceDoc().createToolbarButton());
    }
    
-   public void addProjectTools()
+   public void addProjectTools(String activeProjectFile)
    {
       ToolbarPopupMenu projectMenu = new ToolbarPopupMenu();
-        
+      
+      projectMenu.addItem(commands_.newProject().createMenuItem(false));
+      projectMenu.addItem(commands_.openProject().createMenuItem(false));
+      projectMenu.addSeparator();
+      projectMenu.addItem(commands_.projectMru0().createMenuItem(false));
+      projectMenu.addItem(commands_.projectMru1().createMenuItem(false));
+      projectMenu.addItem(commands_.projectMru2().createMenuItem(false));
+      projectMenu.addItem(commands_.projectMru3().createMenuItem(false));
+      projectMenu.addItem(commands_.projectMru4().createMenuItem(false));
+      projectMenu.addItem(commands_.projectMru5().createMenuItem(false));
+      projectMenu.addItem(commands_.projectMru6().createMenuItem(false));
+      projectMenu.addItem(commands_.projectMru7().createMenuItem(false));
+      projectMenu.addItem(commands_.projectMru8().createMenuItem(false));
+      projectMenu.addItem(commands_.projectMru9().createMenuItem(false));
+      projectMenu.addSeparator();
+      projectMenu.addItem(commands_.closeProject().createMenuItem(false));
+      
+      String menuText = activeProjectFile != null ?
+        FileSystemItem.createFile(activeProjectFile).getParentPath().getStem() :
+        "";
+               
+      ToolbarButton projectButton = new ToolbarButton(
+            menuText, 
+            RESOURCES.projectMenu(),
+            projectMenu, 
+            true);
+      
+      if (activeProjectFile == null)
+      {
+         projectButton.addStyleName(
+               ThemeResources.INSTANCE.themeStyles().emptyProjectMenu());
+      }
+    
+      addRightWidget(projectButton);
    }
 
    @Override
@@ -93,4 +131,14 @@ public class GlobalToolbar extends Toolbar
    {
       return 27;
    }
+     
+   private final Commands commands_;
+   
+   interface Resources extends ClientBundle
+   {
+      ImageResource projectMenu();
+   }
+   
+   private static final Resources RESOURCES =  
+                              (Resources) GWT.create(Resources.class);
 }

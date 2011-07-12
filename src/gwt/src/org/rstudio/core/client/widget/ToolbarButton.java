@@ -27,6 +27,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -78,33 +79,40 @@ public class ToolbarButton extends FocusWidget
       this(null, image, clickHandler);
    }
    
-   public ToolbarButton(ToolbarPopupMenu menu, String tooltipText)
+   public ToolbarButton(ToolbarPopupMenu menu, boolean rightAlignMenu)
    {
       this((String)null, 
            ThemeResources.INSTANCE.menuDownArrow(), 
            (ImageResource) null,
            (ClickHandler) null);
       
-      setTitle(tooltipText);
-      
-      addMenuHandlers(menu);
+      addMenuHandlers(menu, rightAlignMenu);
       
       addStyleName(styles_.toolbarButtonMenu());
       addStyleName(styles_.toolbarButtonMenuOnly());
    }
-    
+      
    public ToolbarButton(String text, 
                         ImageResource leftImage,
                         ToolbarPopupMenu menu)
    {
+      this(text, leftImage, menu, false);
+   }
+    
+   public ToolbarButton(String text, 
+                        ImageResource leftImage,
+                        ToolbarPopupMenu menu,
+                        boolean rightAlignMenu)
+   {
       this(text, leftImage, ThemeResources.INSTANCE.menuDownArrow(), null);
 
-      addMenuHandlers(menu);
+      addMenuHandlers(menu, rightAlignMenu);
       
       addStyleName(styles_.toolbarButtonMenu());
    }
    
-   private void addMenuHandlers(final ToolbarPopupMenu menu)
+   private void addMenuHandlers(final ToolbarPopupMenu menu, 
+                                final boolean rightAlign)
    {
       /*
        * We want clicks on this button to toggle the visibility of the menu,
@@ -128,7 +136,26 @@ public class ToolbarButton extends FocusWidget
                menu.hide();
             else
             {
-               menu.showRelativeTo(ToolbarButton.this);
+               if (rightAlign)
+               {
+                  menu.setPopupPositionAndShow(new PositionCallback() {
+                     @Override
+                     public void setPosition(int offsetWidth, int offsetHeight)
+                     {
+                        menu.setPopupPosition(
+                           (rightImageWidget_ != null ?
+                                 rightImageWidget_.getAbsoluteLeft() :
+                                 leftImageWidget_.getAbsoluteLeft())
+                           + 20 - offsetWidth, 
+                           ToolbarButton.this.getAbsoluteTop() +
+                           ToolbarButton.this.getOffsetHeight());
+                     } 
+                  });
+               }
+               else
+               {
+                  menu.showRelativeTo(ToolbarButton.this);
+               }
                menuShowing[0] = true;
                addStyleName(styles_.toolbarButtonPushed());
             }
@@ -168,14 +195,17 @@ public class ToolbarButton extends FocusWidget
          label_.getStyle().setDisplay(Display.NONE);
          addStyleName(styles_.noLabel());
       }
-      leftImageWidget_ = new Image(leftImage);
+      if (leftImage != null)
+         leftImageWidget_ = new Image(leftImage);
+      else
+         leftImageWidget_ = new Image();
       leftImageWidget_.setStylePrimaryName(styles_.toolbarButtonLeftImage());
       leftImageCell_.appendChild(leftImageWidget_.getElement());
       if (rightImage != null)
       {
-         Image rightImageWidget = new Image(rightImage);
-         rightImageWidget.setStylePrimaryName(styles_.toolbarButtonRightImage());
-         rightImageCell_.appendChild(rightImageWidget.getElement());
+         rightImageWidget_ = new Image(rightImage);
+         rightImageWidget_.setStylePrimaryName(styles_.toolbarButtonRightImage());
+         rightImageCell_.appendChild(rightImageWidget_.getElement());
       }
 
       if (clickHandler != null)
@@ -288,4 +318,5 @@ public class ToolbarButton extends FocusWidget
    @UiField
    DivElement label_;
    private Image leftImageWidget_;
+   private Image rightImageWidget_;
 }

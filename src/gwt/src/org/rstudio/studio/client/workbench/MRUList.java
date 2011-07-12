@@ -128,7 +128,13 @@ public class MRUList
 
       commands_.clearRecentFiles().setEnabled(mruEntries_.size() > 0);
 
-      ArrayList<String> labels = DuplicateHelper.getPathLabels(mruEntries_,
+      // optionally transform paths
+      ArrayList<String> entries = new ArrayList<String>();
+      for (String entry : mruEntries_)
+         entries.add(transformMruEntryPath(entry));
+      
+      // generate labels
+      ArrayList<String> labels = DuplicateHelper.getPathLabels(entries,
                                                                includeExt_);
 
       for (int i = 0; i < mruCmds_.length; i++)
@@ -148,6 +154,11 @@ public class MRUList
          session_.persistClientState();
    }
 
+   
+   protected String transformMruEntryPath(String entryPath)
+   {
+      return entryPath;
+   }
 
    private boolean dirty_;
    private AppCommand[] mruCmds_;

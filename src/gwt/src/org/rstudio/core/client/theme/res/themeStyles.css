@@ -719,6 +719,15 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    margin-top: -1px;
 }
 
+.globalToolbar .toolbarButtonMenu .toolbarButtonLabel {
+   margin-left: 4px;
+   margin-right: 2px;
+}
+
+.globalToolbar .emptyProjectMenu .toolbarButtonRightImage {
+	margin-left: 4px;
+}
+
 .webGlobalToolbar {
    margin-top: -3px;
    background: none;

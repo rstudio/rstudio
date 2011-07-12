@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.projects;
 
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
@@ -56,6 +57,12 @@ public class ProjectMRUList extends MRUList
                   eventBus.fireEvent(new SwitchToProjectEvent(file));
                }
             });
+   }
+   
+   @Override
+   protected String transformMruEntryPath(String entryPath)
+   {
+      return FileSystemItem.createFile(entryPath).getParentPathString();
    }
 
 }

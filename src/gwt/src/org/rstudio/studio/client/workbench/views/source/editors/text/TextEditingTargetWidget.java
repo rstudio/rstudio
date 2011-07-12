@@ -123,7 +123,7 @@ public class TextEditingTargetWidget
       sourceMenu.addItem(commands_.sourceActiveDocument().createMenuItem(false));
       sourceMenu.addItem(commands_.sourceActiveDocumentWithEcho().createMenuItem(false));
       
-      sourceMenuButton_ = new ToolbarButton(sourceMenu, "");
+      sourceMenuButton_ = new ToolbarButton(sourceMenu, true);
       toolbar.addRightWidget(sourceMenuButton_);      
             
       return toolbar;
