@@ -357,10 +357,13 @@ public class PaneManager
       }
       tabPanel.setTabs(tabList);
 
-      String[] labels = new String[tabs.size()];
-      for (int i = 0; i < labels.length; i++)
-         labels[i] = getTabLabel(tabs.get(i));
-      minimized.setTabs(labels);
+      ArrayList<String> labels = new ArrayList<String>();
+      for (Tab tab : tabs)
+      {
+         if (!getTab(tab).isSuppressed())
+            labels.add(getTabLabel(tab));
+      }
+      minimized.setTabs(labels.toArray(new String[labels.size()]));
    }
 
    private String getTabLabel(Tab tab)
@@ -379,6 +382,8 @@ public class PaneManager
             return "Packages";
          case Help:
             return "Help";
+         case VCS:
+            return getTab(tab).getTitle();
       }
       return "??";
    }
