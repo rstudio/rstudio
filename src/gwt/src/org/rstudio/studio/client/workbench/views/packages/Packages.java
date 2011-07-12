@@ -35,6 +35,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -105,7 +106,7 @@ public class Packages
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
       
       // make the install options persistent
-      new JSObjectStateValue("packages", "installOptions", true,
+      new JSObjectStateValue("packages-pane", "installOptions", ClientState.PROJECT_PERSISTENT,
             session.getSessionInfo().getClientState(), false)
       {
          @Override

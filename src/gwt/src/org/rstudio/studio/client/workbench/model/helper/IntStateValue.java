@@ -20,18 +20,18 @@ public abstract class IntStateValue extends ClientStateValue<Integer>
 {
    public IntStateValue(String group,
                         String name,
-                        boolean persistent,
+                        int persist,
                         ClientInitState state)
    {
-      super(group, name, persistent, state);
+      super(group, name, persist, state);
    }
 
    protected IntStateValue(String group,
                            String name,
-                           boolean persistent,
+                           int persist,
                            ClientInitState state, boolean delayedInit)
    {
-      super(group, name, persistent, state, delayedInit);
+      super(group, name, persist, state, delayedInit);
    }
 
    @Override
@@ -45,7 +45,7 @@ public abstract class IntStateValue extends ClientStateValue<Integer>
                         String group,
                         String name,
                         Integer value,
-                        boolean persist)
+                        int persist)
    {
       state.putInt(group, name, value, persist);
    }

@@ -53,10 +53,11 @@ Error setClientState(const json::JsonRpcRequest& request,
    pResponse->setSuppressDetectChanges(true);
 
    // extract params
-   json::Object temporaryState, persistentState;
+   json::Object temporaryState, persistentState, projPersistentState;
    Error error = json::readParams(request.params, 
                                   &temporaryState,
-                                  &persistentState);
+                                  &persistentState,
+                                  &projPersistentState);
    if (error)
       return error ;
    
@@ -64,6 +65,7 @@ Error setClientState(const json::JsonRpcRequest& request,
    r::session::ClientState& clientState = r::session::clientState();
    clientState.putTemporary(temporaryState);
    clientState.putPersistent(persistentState);
+   clientState.putProjectPersistent(projPersistentState);
    
    return Success();
 }

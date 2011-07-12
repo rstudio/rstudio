@@ -17,6 +17,10 @@ import com.google.gwt.core.client.JsArrayString;
 
 public final class ClientState extends JavaScriptObject
 {
+   public static final int TEMPORARY = 0;
+   public static final int PERSISTENT = 1;
+   public static final int PROJECT_PERSISTENT = 2;
+   
    protected ClientState()
    {
    }
@@ -25,8 +29,13 @@ public final class ClientState extends JavaScriptObject
       return {
          temporary: {},
          persistent: {},
+         project_persistent: {},
          set: function(group, name, value, persist) {
-            var base = persist ? this.persistent : this.temporary;
+            var base = this.temporary;
+            if (persist == 1)
+               base = this.persistent;
+            else if (persist == 2)
+               base = this.project_persistent;
             var grp = base[group];
             if (!grp)
                grp = base[group] = {};
@@ -44,6 +53,10 @@ public final class ClientState extends JavaScriptObject
    public native final JavaScriptObject getPersistentData() /*-{
       return this.persistent;
    }-*/;
+   
+   public native final JavaScriptObject getProjectPersistentData() /*-{
+      return this.project_persistent;
+   }-*/;
 
    public native final boolean isEmpty() /*-{
       return this.isEmpty;
@@ -52,35 +65,35 @@ public final class ClientState extends JavaScriptObject
    public native final void putObject(String group,
                                       String name,
                                       JavaScriptObject value,
-                                      boolean persist) /*-{
+                                      int persist) /*-{
       this.set(group, name, value, persist);
    }-*/;
 
    public native final void putString(String group,
                                       String name,
                                       String value,
-                                      boolean persist) /*-{
+                                      int persist) /*-{
       this.set(group, name, value, persist);
    }-*/;
 
    public native final void putInt(String group,
                                    String name,
                                    int value,
-                                   boolean persist) /*-{
+                                   int persist) /*-{
       this.set(group, name, value, persist);
    }-*/;
 
    public native final void putBoolean(String group,
                                        String name,
                                        boolean value,
-                                       boolean persist) /*-{
+                                       int persist) /*-{
       this.set(group, name, value, persist);
    }-*/;
 
    public void putStrings(String group,
                           String name,
                           String[] value,
-                          boolean persist)
+                          int persist)
    {
       JsArrayString array = JsArrayString.createArray().cast();
       for (String v : value)

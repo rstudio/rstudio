@@ -25,6 +25,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.model.ClientInitState;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
@@ -233,7 +234,7 @@ public class DualWindowLayoutPanel extends SimplePanel
       {
          super("windowlayout",
                clientStateKeyName,
-               true,
+               ClientState.PERSISTENT,
                clientState,
                true);
          topWindowDefaultState_ = topWindowDefaultState;

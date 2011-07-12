@@ -59,17 +59,30 @@ public:
                       const core::json::Value& value);
    
    void putPersistent(const core::json::Object& persistentState); 
+
+   void putProjectPersistent(const std::string& scope,
+                             const std::string& name,
+                             const core::json::Value& value);
+
+   void putProjectPersistent(const core::json::Object& projectPersistentState);
                   
    core::Error commit(ClientStateCommitType commitType,
-                      const core::FilePath& stateDir);
+                      const core::FilePath& stateDir,
+                      const core::FilePath& projectStateDir);
    
-   core::Error restore(const core::FilePath& stateDir);
+   core::Error restore(const core::FilePath& stateDir,
+                       const core::FilePath& projectStateDir);
    
    void currentState(core::json::Object* pCurrentState) const;
    
 private:
+   void restoreGlobalState(const core::FilePath& stateFile);
+   void restoreProjectState(const core::FilePath& stateFile);
+
+private:
    core::json::Object temporaryState_ ;
    core::json::Object persistentState_ ;
+   core::json::Object projectPersistentState_;
 };
       
 } // namespace session

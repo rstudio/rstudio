@@ -49,6 +49,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
@@ -238,7 +239,7 @@ public class Source implements InsertSourceHandler,
 
       restoreDocuments(session);
 
-      new IntStateValue(MODULE_SOURCE, KEY_ACTIVETAB, true,
+      new IntStateValue(MODULE_SOURCE, KEY_ACTIVETAB, ClientState.PROJECT_PERSISTENT,
                         session.getSessionInfo().getClientState())
       {
          @Override
@@ -1160,7 +1161,7 @@ public class Source implements InsertSourceHandler,
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();
    private final HashSet<AppCommand> dynamicCommands_;
 
-   private static final String MODULE_SOURCE = "source";
+   private static final String MODULE_SOURCE = "source-pane";
    private static final String KEY_ACTIVETAB = "activeTab";
    private boolean initialized_;
 

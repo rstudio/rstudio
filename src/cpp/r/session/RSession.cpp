@@ -74,8 +74,9 @@ ROptions s_options;
 // callbacks
 RCallbacks s_callbacks;
    
-// client-state path
+// client-state paths
 FilePath s_clientStatePath;
+FilePath s_projectClientStatePath;
    
 // session state path
 FilePath s_suspendedSessionPath ; 
@@ -203,7 +204,9 @@ void saveWorkingState(ClientStateCommitType commitType)
    // in restoreWorkingState, rather it is restored during
    // initialize() so that the client always has access to it when
    // for client_init)
-   r::session::clientState().commit(commitType, s_clientStatePath);
+   r::session::clientState().commit(commitType,
+                                    s_clientStatePath,
+                                    s_projectClientStatePath);
 
    // save client metrics
    client_metrics::save(&(s_options.persistentState()));
@@ -391,7 +394,8 @@ Error initialize()
       return error;
    
    // restore client state
-   session::clientState().restore(s_clientStatePath);
+   session::clientState().restore(s_clientStatePath,
+                                  s_projectClientStatePath);
       
    // restore suspended session if we have one
    bool wasResumed = false;
@@ -1159,6 +1163,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
 
    // set graphics and client state paths
    s_clientStatePath = s_options.userScratchPath.complete("client-state");
+   s_projectClientStatePath = s_options.scopedScratchPath.complete("client-state");
    
    // set source reloading behavior
    sourceManager().setAutoReload(options.autoReloadSource);

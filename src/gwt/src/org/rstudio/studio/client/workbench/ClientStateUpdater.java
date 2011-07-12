@@ -97,6 +97,7 @@ public class ClientStateUpdater extends TimeBufferedCommand
       server_.updateClientState(
             state.getTemporaryData(),
             state.getPersistentData(),
+            state.getProjectPersistentData(),
             new ServerRequestCallback<Void>() {
                @Override
                public void onError(ServerError error)

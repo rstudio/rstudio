@@ -226,11 +226,13 @@ public class RemoteServer implements Server
 
    public void updateClientState(JavaScriptObject temporary,
                                  JavaScriptObject persistent,
+                                 JavaScriptObject projectPersistent,
                                  ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(temporary));
       params.set(1, new JSONObject(persistent));
+      params.set(2, new JSONObject(projectPersistent));
       sendRequest(RPC_SCOPE,
                   SET_CLIENT_STATE,
                   params,

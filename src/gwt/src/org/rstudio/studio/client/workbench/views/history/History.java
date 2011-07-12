@@ -45,6 +45,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -287,7 +288,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
                            commands.historyDismissContext(),
                            null));
 
-      new StringStateValue("history", "query", false,
+      new StringStateValue("history", "query", ClientState.TEMPORARY,
                            session.getSessionInfo().getClientState())
       {
          @Override

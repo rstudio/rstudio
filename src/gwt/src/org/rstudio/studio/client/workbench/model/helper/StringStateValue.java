@@ -20,12 +20,12 @@ public abstract class StringStateValue extends ClientStateValue<String>
 {
    public StringStateValue(String group,
                            String name,
-                           boolean persistent,
+                           int persist,
                            ClientInitState state)
    {
       super(group,
             name,
-            persistent,
+            persist,
             state);
    }
 
@@ -40,7 +40,7 @@ public abstract class StringStateValue extends ClientStateValue<String>
                         String group,
                         String name,
                         String value,
-                        boolean persist)
+                        int persist)
    {
       state.putString(group, name, value, persist);
    }

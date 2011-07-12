@@ -37,6 +37,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.ClientInitState;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -165,7 +166,7 @@ public class Shell implements ConsoleInputHandler,
       SessionInfo sessionInfo = session.getSessionInfo();
       ClientInitState clientState = sessionInfo.getClientState();
 
-      new StringStateValue(GROUP_CONSOLE, STATE_INPUT, false, clientState) {
+      new StringStateValue(GROUP_CONSOLE, STATE_INPUT, ClientState.TEMPORARY, clientState) {
          @Override
          protected void onInit(String value)
          {
