@@ -19,6 +19,7 @@ import java.util.Set;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -28,7 +29,6 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.VCSStrategy;
 import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
-import org.rstudio.studio.client.workbench.views.files.model.FilesColumnSortInfo;
 
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ImageResourceCell;
@@ -43,7 +43,6 @@ import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.ColumnSortEvent.Handler;
-import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -297,7 +296,7 @@ public class FilesList extends Composite
                   forceSizeSortDescending = false;
                   forceModifiedSortDescending = true;
                   sortList.insert(0, 
-                                  new ColumnSortInfo(event.getColumn(), false));
+                                  new com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo(event.getColumn(), false));
                }
                else if (event.getColumn().equals(modifiedColumn_) && 
                         forceModifiedSortDescending)
@@ -305,7 +304,7 @@ public class FilesList extends Composite
                   forceModifiedSortDescending = false;
                   forceSizeSortDescending = true;
                   sortList.insert(0, 
-                                  new ColumnSortInfo(event.getColumn(), false));
+                                  new com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo(event.getColumn(), false));
                }
                else
                {
@@ -315,11 +314,11 @@ public class FilesList extends Composite
             }
             
             // record sort order and fire event to observer
-            JsArray<FilesColumnSortInfo> sortOrder = newSortOrderArray();
+            JsArray<ColumnSortInfo> sortOrder = newSortOrderArray();
             for (int i=0; i<sortList.size(); i++)
             {
                // match the column index
-               ColumnSortInfo sortInfo = sortList.get(i);     
+               com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo sortInfo = sortList.get(i);
                Object column = sortInfo.getColumn();
                
                for (int c=0; c<filesCellTable_.getColumnCount(); c++)
@@ -327,7 +326,7 @@ public class FilesList extends Composite
                   if (filesCellTable_.getColumn(c).equals(column))
                   { 
                      boolean ascending = sortInfo.isAscending();
-                     sortOrder.push(FilesColumnSortInfo.create(c, ascending));
+                     sortOrder.push(ColumnSortInfo.create(c, ascending));
                      break;
                   }
                }
@@ -341,7 +340,7 @@ public class FilesList extends Composite
             sortHandler_.onColumnSort(event);
          }
          
-         private native final JsArray<FilesColumnSortInfo> newSortOrderArray()
+         private native final JsArray<ColumnSortInfo> newSortOrderArray()
          /*-{
             return [];
          }-*/;       
@@ -352,25 +351,16 @@ public class FilesList extends Composite
    
   
   
-   public void setColumnSortOrder(JsArray<FilesColumnSortInfo> sortOrder)
+   public void setColumnSortOrder(JsArray<ColumnSortInfo> sortOrder)
    {
-      ColumnSortList columnSortList = filesCellTable_.getColumnSortList();
-      columnSortList.clear();
-      
       if (sortOrder != null)
       {
-         for (int i=0; i< sortOrder.length(); i++)
-         {
-            FilesColumnSortInfo filesSortInfo = sortOrder.get(i);
-            Column<?,?> column = filesCellTable_.getColumn(
-                                          filesSortInfo.getColumnIndex());
-            boolean ascending = filesSortInfo.getAscending();
-            ColumnSortInfo sortInfo = new ColumnSortInfo(column, ascending);
-            columnSortList.insert(i, sortInfo);
-         }
+         ColumnSortInfo.setSortList(filesCellTable_, sortOrder);
       }
       else
       {
+         ColumnSortList columnSortList = filesCellTable_.getColumnSortList();
+         columnSortList.clear();
          columnSortList.push(nameColumn_);
       }
    }

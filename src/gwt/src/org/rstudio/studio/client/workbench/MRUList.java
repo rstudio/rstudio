@@ -84,7 +84,12 @@ public class MRUList
          @Override
          protected boolean hasChanged()
          {
-            return dirty_;
+            if (dirty_)
+            {
+               dirty_ = false;
+               return true;
+            }
+            return false;
          }
       };
    }

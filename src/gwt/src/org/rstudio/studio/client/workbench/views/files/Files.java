@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -50,7 +51,6 @@ import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.files.events.*;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
-import org.rstudio.studio.client.workbench.views.files.model.FilesColumnSortInfo;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 
@@ -76,13 +76,13 @@ public class Files
       public interface Observer extends NavigationObserver
       {
          void onFileSelectionChanged();
-         void onColumnSortOrderChanaged(JsArray<FilesColumnSortInfo> sortOrder);
+         void onColumnSortOrderChanaged(JsArray<ColumnSortInfo> sortOrder);
       }
       
       void setObserver(Observer observer);
            
       
-      void setColumnSortOrder(JsArray<FilesColumnSortInfo> sortOrder);
+      void setColumnSortOrder(JsArray<ColumnSortInfo> sortOrder);
       
       void listDirectory(FileSystemItem directory, 
                          ServerDataSource<JsArray<FileSystemItem>> filesDS);
@@ -194,7 +194,7 @@ public class Files
             }
          }
 
-         private JsArray<FilesColumnSortInfo> lastKnownState_ = null;
+         private JsArray<ColumnSortInfo> lastKnownState_ = null;
       };
       
       
@@ -267,7 +267,7 @@ public class Files
       }
 
       public void onColumnSortOrderChanaged(
-                                    JsArray<FilesColumnSortInfo> sortOrder)
+                                    JsArray<ColumnSortInfo> sortOrder)
       {
          columnSortOrder_ = sortOrder;
       }
@@ -685,5 +685,5 @@ public class Files
    private static final String MODULE_FILES = "files-pane";
    private static final String KEY_PATH = "path";
    private static final String KEY_SORT_ORDER = "sortOrder";
-   private JsArray<FilesColumnSortInfo> columnSortOrder_ = null;
+   private JsArray<ColumnSortInfo> columnSortOrder_ = null;
 }

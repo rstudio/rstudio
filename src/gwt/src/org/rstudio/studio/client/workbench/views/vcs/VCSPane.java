@@ -85,7 +85,9 @@ public class VCSPane extends WorkbenchPane implements Display
    @Override
    protected Widget createMainWidget()
    {
-      table_ = pChangelistTable_.get().getView();
+      ChangelistTablePresenter changelistTable = pChangelistTable_.get();
+      changelistTable.initializeClientState();
+      table_ = changelistTable.getView();
 
       layoutPanel_ = new LayoutPanel();
       layoutPanel_.add(table_);

@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.cell.client.*;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -22,20 +23,20 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.view.client.MultiSelectionModel;
-import com.google.gwt.view.client.ProvidesKey;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionModel;
+import com.google.gwt.view.client.*;
+import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.cellview.TriStateCheckboxCell;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageHandler;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 public class ChangelistTable extends Composite
 {
@@ -49,6 +50,14 @@ public class ChangelistTable extends Composite
       ImageResource statusUntracked();
       ImageResource statusUnmerged();
       ImageResource statusRenamed();
+
+      @Override
+      @Source("ascendingArrow.png")
+      ImageResource cellTableSortAscending();
+
+      @Override
+      @Source("descendingArrow.png")
+      ImageResource cellTableSortDescending();
 
       @Override
       @Source("ChangelistTable.css")
@@ -133,6 +142,11 @@ public class ChangelistTable extends Composite
       table_ = new CellTable<StatusAndPath>(
             100, resources_);
 
+      dataProvider_ = new ListDataProvider<StatusAndPath>();
+      sortHandler_ = new ColumnSortEvent.ListHandler<StatusAndPath>(
+            dataProvider_.getList());
+      table_.addColumnSortHandler(sortHandler_);
+
       selectionModel_ = new MultiSelectionModel<StatusAndPath>(
             new ProvidesKey<StatusAndPath>()
             {
@@ -143,6 +157,7 @@ public class ChangelistTable extends Composite
                }
             });
       table_.setSelectionModel(selectionModel_);
+      dataProvider_.addDataDisplay(table_);
 
       configureTable();
 
@@ -153,17 +168,19 @@ public class ChangelistTable extends Composite
 
    private void configureTable()
    {
-      Column<StatusAndPath, Boolean> stagedColumn = new Column<StatusAndPath, Boolean>(
+      final Column<StatusAndPath, Boolean> stagedColumn = new Column<StatusAndPath, Boolean>(
             new TriStateCheckboxCell<StatusAndPath>(selectionModel_))
       {
          @Override
          public Boolean getValue(StatusAndPath object)
          {
-            return object.getStatus().charAt(1) == ' ';
+            return "??".equals(object.getStatus()) ? Boolean.FALSE :
+                   object.getStatus().charAt(1) == ' ' ? Boolean.TRUE :
+                   object.getStatus().charAt(0) == ' ' ? Boolean.FALSE :
+                   null;
          }
       };
 
-      stagedColumn.setSortable(true);
       stagedColumn.setHorizontalAlignment(Column.ALIGN_CENTER);
       stagedColumn.setFieldUpdater(new FieldUpdater<StatusAndPath, Boolean>()
       {
@@ -175,8 +192,22 @@ public class ChangelistTable extends Composite
             fireEvent(new StageUnstageEvent(!value, getSelectedItems()));
          }
       });
+      stagedColumn.setSortable(true);
+      sortHandler_.setComparator(stagedColumn, new Comparator<StatusAndPath>()
+      {
+         @Override
+         public int compare(StatusAndPath a, StatusAndPath b)
+         {
+            Boolean a1 = stagedColumn.getValue(a);
+            Boolean b1 = stagedColumn.getValue(b);
+            int a2 = a1 == null ? 0 : a1 ? -1 : 1;
+            int b2 = b1 == null ? 0 : b1 ? -1 : 1;
+            return a2 - b2;
+         }
+      });
       table_.addColumn(stagedColumn, "Staged");
       table_.setColumnWidth(stagedColumn, "45px");
+
 
       Column<StatusAndPath, String> statusColumn = new Column<StatusAndPath, String>(
             new TextCell(new StatusRenderer()))
@@ -191,6 +222,14 @@ public class ChangelistTable extends Composite
       statusColumn.setHorizontalAlignment(Column.ALIGN_CENTER);
       table_.addColumn(statusColumn, "Status");
       table_.setColumnWidth(statusColumn, "55px");
+      sortHandler_.setComparator(statusColumn, new Comparator<StatusAndPath>()
+      {
+         @Override
+         public int compare(StatusAndPath a, StatusAndPath b)
+         {
+            return a.getStatus().compareTo(b.getStatus());
+         }
+      });
 
       TextColumn<StatusAndPath> pathColumn = new TextColumn<StatusAndPath>()
       {
@@ -201,6 +240,14 @@ public class ChangelistTable extends Composite
          }
       };
       pathColumn.setSortable(true);
+      sortHandler_.setComparator(pathColumn, new Comparator<StatusAndPath>()
+      {
+         @Override
+         public int compare(StatusAndPath a, StatusAndPath b)
+         {
+            return a.getPath().compareToIgnoreCase(b.getPath());
+         }
+      });
       table_.addColumn(pathColumn, "Path");
    }
 
@@ -212,9 +259,9 @@ public class ChangelistTable extends Composite
 
    public void setItems(ArrayList<StatusAndPath> items)
    {
-      items_ = items;
       table_.setPageSize(items.size());
-      table_.setRowData(items);
+      dataProvider_.getList().clear();
+      dataProvider_.getList().addAll(items);
    }
 
    public ArrayList<StatusAndPath> getSelectedItems()
@@ -222,7 +269,7 @@ public class ChangelistTable extends Composite
       SelectionModel<? super StatusAndPath> selectionModel = table_.getSelectionModel();
 
       ArrayList<StatusAndPath> results = new ArrayList<StatusAndPath>();
-      for (StatusAndPath item : items_)
+      for (StatusAndPath item : dataProvider_.getList())
       {
          if (selectionModel.isSelected(item))
             results.add(item);
@@ -235,7 +282,7 @@ public class ChangelistTable extends Composite
       SelectionModel<? super StatusAndPath> selectionModel = table_.getSelectionModel();
 
       ArrayList<String> results = new ArrayList<String>();
-      for (StatusAndPath item : items_)
+      for (StatusAndPath item : dataProvider_.getList())
       {
          if (selectionModel.isSelected(item))
             results.add(item.getPath());
@@ -248,8 +295,24 @@ public class ChangelistTable extends Composite
       return addHandler(handler, StageUnstageEvent.TYPE);
    }
 
+   public void setSortOrder(JsArray<ColumnSortInfo> sortInfoArray)
+   {
+      ColumnSortInfo.setSortList(table_, sortInfoArray);
+   }
+
+   public JsArray<ColumnSortInfo> getSortOrder()
+   {
+      return ColumnSortInfo.getSortList(table_);
+   }
+
+   public int getSortOrderHashCode()
+   {
+      return table_.getColumnSortList().hashCode();
+   }
+
    private final CellTable<StatusAndPath> table_;
-   private ArrayList<StatusAndPath> items_;
    private final MultiSelectionModel<StatusAndPath> selectionModel_;
+   private final ColumnSortEvent.ListHandler<StatusAndPath> sortHandler_;
+   private final ListDataProvider<StatusAndPath> dataProvider_;
    private static final CellTableResources resources_ = GWT.<CellTableResources>create(CellTableResources.class);
 }

@@ -18,6 +18,7 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -31,7 +32,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
-import org.rstudio.studio.client.workbench.views.files.model.FilesColumnSortInfo;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 import org.rstudio.studio.client.workbench.views.files.ui.*;
 
@@ -80,7 +80,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
       }
       
       public void onColumnSortOrderChanaged(
-                                    JsArray<FilesColumnSortInfo> sortOrder)
+                                    JsArray<ColumnSortInfo> sortOrder)
       {
          if (observer_ != null)
             observer_.onColumnSortOrderChanaged(sortOrder);
@@ -88,7 +88,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    }
    
    @Override
-   public void setColumnSortOrder(JsArray<FilesColumnSortInfo> sortOrder)
+   public void setColumnSortOrder(JsArray<ColumnSortInfo> sortOrder)
    {
       filesList_.setColumnSortOrder(sortOrder);
    }
