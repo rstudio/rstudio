@@ -40,19 +40,10 @@ public:
    const core::FilePath& directory() const { return directory_; }
    const core::FilePath& scratchPath() const { return scratchPath_; }
 
-   core::r_util::YesNoAskValue restoreWorkspace() const
+   const core::r_util::RProjectConfig& config() const { return config_; }
+   void setConfig(const core::r_util::RProjectConfig& config)
    {
-      return config_.restoreWorkspace;
-   }
-
-   core::r_util::YesNoAskValue saveWorkspace() const
-   {
-      return config_.saveWorkspace;
-   }
-
-   core::r_util::YesNoAskValue alwaysSaveHistory() const
-   {
-      return config_.alwaysSaveHistory;
+      config_ = config;
    }
 
 private:

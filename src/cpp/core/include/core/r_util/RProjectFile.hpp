@@ -15,6 +15,7 @@
 #define CORE_R_UTIL_R_PROJECT_FILE_HPP
 
 #include <string>
+#include <iosfwd>
 
 namespace core {
 
@@ -25,16 +26,18 @@ namespace r_util {
 
 enum YesNoAskValue
 {
-   DefaultValue,
-   YesValue,
-   NoValue,
-   AskValue
+   DefaultValue = 0,
+   YesValue = 1,
+   NoValue = 2,
+   AskValue = 3
 };
+
+std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
 
 struct RProjectConfig
 {
    RProjectConfig()
-      : version(0.0),
+      : version(1.0),
         saveWorkspace(DefaultValue),
         restoreWorkspace(DefaultValue),
         alwaysSaveHistory(DefaultValue)
@@ -42,9 +45,9 @@ struct RProjectConfig
    }
 
    double version;
-   YesNoAskValue saveWorkspace;
-   YesNoAskValue restoreWorkspace;
-   YesNoAskValue alwaysSaveHistory;
+   int saveWorkspace;
+   int restoreWorkspace;
+   int alwaysSaveHistory;
 };
 
 
@@ -52,7 +55,8 @@ Error readProjectFile(const FilePath& projectFilePath,
                       RProjectConfig* pConfig,
                       std::string* pUserErrMsg);
 
-Error writeProjectFile(const FilePath& filePath);
+Error writeProjectFile(const FilePath& projectFilePath,
+                       const RProjectConfig& config);
 
 FilePath projectFromDirectory(const FilePath& directoryPath);
 

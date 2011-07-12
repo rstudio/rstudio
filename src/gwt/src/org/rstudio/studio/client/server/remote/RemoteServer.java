@@ -35,6 +35,7 @@ import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.vcs.ExecuteCommandResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
@@ -824,6 +825,17 @@ public class RemoteServer implements Server
          ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, CREATE_PROJECT, projectDirectory, requestCallback);
+   }
+   
+   public void readProjectConfig(ServerRequestCallback<RProjectConfig> callback)
+   {
+      sendRequest(RPC_SCOPE, READ_PROJECT_CONFIG, callback);
+   }
+   
+   public void writeProjectConfig(RProjectConfig config,
+                                  ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, WRITE_PROJECT_CONFIG, config, callback);
    }
    
    public void newDocument(String filetype,
@@ -1649,6 +1661,8 @@ public class RemoteServer implements Server
    private static final String SET_MANIPULATOR_VALUES = "set_manipulator_values";
 
    private static final String CREATE_PROJECT = "create_project";
+   private static final String READ_PROJECT_CONFIG = "read_project_config";
+   private static final String WRITE_PROJECT_CONFIG = "write_project_config";
    
    private static final String NEW_DOCUMENT = "new_document";
    private static final String OPEN_DOCUMENT = "open_document";

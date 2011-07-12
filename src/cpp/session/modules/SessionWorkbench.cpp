@@ -145,6 +145,9 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
    userSettings().endUpdate();
 
+   // sync underlying R save action
+   module_context::syncRSaveAction();
+
    // read and set history prefs
    bool alwaysSave, removeDuplicates;
    error = json::readObject(historyPrefs,

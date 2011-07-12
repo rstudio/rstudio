@@ -180,9 +180,6 @@ int UserSettings::saveAction() const
 void UserSettings::setSaveAction(int saveAction)
 {
    settings_.set(kSaveAction, saveAction);
-
-   // update in underlying R session
-   r::session::setSaveAction(saveAction);
 }
 
 

@@ -11,25 +11,6 @@
  *
  */
 
-// TODO: detecting copy/move/network:
-/*
-    - read INDEX
-    - read id file
-
-    - if INDEX contains id mapped to correct path then use
-
-    - if INDEX doesn't not contain id or path then create new
-
-    - if INDEX has id but path doesn't match then may have been
-      a move or a copy so create a copy of the scratch dir and
-      associate it with a new id
-
-    - if has an id file but nothing in the index at all then
-      create a brand new entry/dir using that id
-*/
-
-
-
 #include <session/projects/SessionProjects.hpp>
 
 #include <core/FilePath.hpp>
@@ -37,7 +18,6 @@
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
-#include <core/FileSerializer.hpp>
 #include <core/r_util/RProjectFile.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -77,8 +57,55 @@ Error createProject(const json::JsonRpcRequest& request,
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
    // create the project file
-   return r_util::writeProjectFile(projectFilePath);
+   r_util::RProjectConfig config;
+   return r_util::writeProjectFile(projectFilePath, config);
 }
+
+json::Object projectConfigJson(const r_util::RProjectConfig& config)
+{
+   json::Object configJson;
+   configJson["version"] = config.version;
+   configJson["restore_workspace"] = config.restoreWorkspace;
+   configJson["save_workspace"] = config.saveWorkspace;
+   configJson["always_save_history"] = config.alwaysSaveHistory;
+   return configJson;
+}
+
+Error readProjectConfig(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(projectConfigJson(s_projectContext.config()));
+   return Success();
+}
+
+Error writeProjectConfig(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   // read the config
+   r_util::RProjectConfig config;
+   Error error = json::readObjectParam(
+                    request.params, 0,
+                    "version", &(config.version),
+                    "restore_workspace", &(config.restoreWorkspace),
+                    "save_workspace", &(config.saveWorkspace),
+                    "always_save_history", &(config.alwaysSaveHistory));
+   if (error)
+      return error;
+
+   // write it
+   error = r_util::writeProjectFile(s_projectContext.file(), config);
+   if (error)
+      return error;
+
+   // set it
+   s_projectContext.setConfig(config);
+
+   // sync underlying R setting
+   module_context::syncRSaveAction();
+
+   return Success();
+}
+
 
 }  // anonymous namespace
 
@@ -194,6 +221,8 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "create_project", createProject))
+      (bind(registerRpcMethod, "read_project_config", readProjectConfig))
+      (bind(registerRpcMethod, "write_project_config", writeProjectConfig))
    ;
    return initBlock.execute();
 }

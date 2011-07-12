@@ -1774,7 +1774,7 @@ bool restoreWorkspaceOption()
    const projects::ProjectContext& projContext = projects::projectContext();
    if (projContext.hasProject())
    {
-      switch(projContext.restoreWorkspace())
+      switch(projContext.config().restoreWorkspace)
       {
       case r_util::YesValue:
          return true;
@@ -1818,7 +1818,7 @@ bool alwaysSaveHistoryOption()
    const projects::ProjectContext& projContext = projects::projectContext();
    if (projContext.hasProject())
    {
-      switch(projContext.alwaysSaveHistory())
+      switch(projContext.config().alwaysSaveHistory)
       {
       case r_util::YesValue:
          return true;
@@ -1923,7 +1923,7 @@ int saveWorkspaceAction()
    const projects::ProjectContext& projContext = projects::projectContext();
    if (projContext.hasProject())
    {
-      switch(projContext.saveWorkspace())
+      switch(projContext.config().saveWorkspace)
       {
       case r_util::YesValue:
          return r::session::kSaveActionSave;
@@ -1939,6 +1939,11 @@ int saveWorkspaceAction()
 
    // no project override, read from settings
    return userSettings().saveAction();
+}
+
+void syncRSaveAction()
+{
+   r::session::setSaveAction(saveWorkspaceOption());
 }
 
 

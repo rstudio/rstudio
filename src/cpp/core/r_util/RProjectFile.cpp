@@ -14,6 +14,9 @@
 #include <core/r_util/RProjectFile.hpp>
 
 #include <map>
+#include <iomanip>
+
+#include <boost/format.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -35,7 +38,7 @@ Error requiredFieldError(const std::string& field,
 
 bool interpretYesNoAskValue(const std::string& value,
                             bool acceptAsk,
-                            YesNoAskValue* pValue)
+                            int* pValue)
 {
    std::string valueLower = string_utils::toLower(value);
    boost::algorithm::trim(valueLower);
@@ -65,8 +68,30 @@ bool interpretYesNoAskValue(const std::string& value,
    }
 }
 
-
 } // anonymous namespace
+
+std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
+{
+   switch(val)
+   {
+   case YesValue:
+      stream << "Yes";
+      break;
+   case NoValue:
+      stream << "No";
+      break;
+   case AskValue:
+      stream << "Ask";
+      break;
+   case DefaultValue:
+   default:
+      stream << "Default";
+      break;
+   }
+
+   return stream ;
+}
+
 
 Error readProjectFile(const FilePath& projectFilePath,
                       RProjectConfig* pConfig,
@@ -151,22 +176,25 @@ Error readProjectFile(const FilePath& projectFilePath,
 }
 
 
-Error writeProjectFile(const FilePath& filePath)
+Error writeProjectFile(const FilePath& projectFilePath,
+                       const RProjectConfig& config)
 {  
    // generate project file contents
-   std::string contents =
-      "# R project config file\n"
-      "# http://www.rstudio.org/docs/r_project/v1.0\n"
-      "Version: 1.0\n"
+   boost::format fmt(
+      "Version: %1%\n"
       "\n"
-      "# Project-specific overrides to global save/load preferences\n"
-      "# (Default means use the current global preference)\n"
-      "RestoreWorkspace: Default\n"
-      "SaveWorkspace: Default\n"
-      "AlwaysSaveHistory: Default\n";
+      "RestoreWorkspace: %2%\n"
+      "SaveWorkspace: %3%\n"
+      "AlwaysSaveHistory: %4%\n");
+
+   std::string contents = boost::str(fmt %
+        boost::io::group(std::fixed, std::setprecision(1), config.version) %
+        config.restoreWorkspace %
+        config.saveWorkspace %
+        config.alwaysSaveHistory);
 
    // write it
-   return writeStringToFile(filePath,
+   return writeStringToFile(projectFilePath,
                             contents,
                             string_utils::LineEndingNative);
 }

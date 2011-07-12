@@ -19,4 +19,9 @@ public interface ProjectsServerOperations
 {  
    void createProject(String projectDirectory, 
                       ServerRequestCallback<Void> callback);
+   
+   void readProjectConfig(ServerRequestCallback<RProjectConfig> callback);
+   
+   void writeProjectConfig(RProjectConfig config,
+                           ServerRequestCallback<Void> callback);
 }
