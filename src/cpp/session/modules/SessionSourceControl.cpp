@@ -383,7 +383,7 @@ public:
    boost::int64_t convertGitRawDate(const std::string& time,
                           const std::string& timeZone)
    {
-      boost::int64_t secs = boost::lexical_cast<boost::int64_t>(time);
+      boost::int64_t secs = safe_convert::stringTo<boost::int64_t>(time, 0);
 
       int offset = safe_convert::stringTo<int>(timeZone, 0);
 
@@ -615,17 +615,18 @@ Error fileStatus(const FilePath& filePath, VCSStatus* pStatus)
 
 namespace {
 
-void enqueueVcsRefresh()
+struct RefreshOnExit : public boost::noncopyable
 {
-   module_context::enqueClientEvent(ClientEvent(client_events::kVcsRefresh));
-}
-
-#define REFRESH_ON_EXIT scope::CallOnExit(boost::function<void()>(&enqueueVcsRefresh));
+   ~RefreshOnExit()
+   {
+      module_context::enqueClientEvent(ClientEvent(client_events::kVcsRefresh));
+   }
+};
 
 Error vcsAdd(const json::JsonRpcRequest& request,
              json::JsonRpcResponse* pResponse)
 {
-   REFRESH_ON_EXIT
+   RefreshOnExit refreshOnExit;
 
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
@@ -638,7 +639,7 @@ Error vcsAdd(const json::JsonRpcRequest& request,
 Error vcsRemove(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
-   REFRESH_ON_EXIT
+   RefreshOnExit refreshOnExit;
 
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
@@ -651,7 +652,7 @@ Error vcsRemove(const json::JsonRpcRequest& request,
 Error vcsRevert(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
-   REFRESH_ON_EXIT
+   RefreshOnExit refreshOnExit;
 
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
@@ -664,7 +665,7 @@ Error vcsRevert(const json::JsonRpcRequest& request,
 Error vcsStage(const json::JsonRpcRequest& request,
                json::JsonRpcResponse* pResponse)
 {
-   REFRESH_ON_EXIT
+   RefreshOnExit refreshOnExit;
 
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
@@ -677,7 +678,7 @@ Error vcsStage(const json::JsonRpcRequest& request,
 Error vcsUnstage(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
-   REFRESH_ON_EXIT
+   RefreshOnExit refreshOnExit;
 
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
@@ -719,7 +720,7 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
 Error vcsCommitGit(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
 {
-   REFRESH_ON_EXIT
+   RefreshOnExit refreshOnExit;
 
    GitVCSImpl* pGit = dynamic_cast<GitVCSImpl*>(s_pVcsImpl_.get());
    if (!pGit)
@@ -769,7 +770,7 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
 Error vcsApplyPatch(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
-   REFRESH_ON_EXIT
+   RefreshOnExit refreshOnExit;
 
    std::string patch;
    int mode;
@@ -831,7 +832,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
 Error vcsExecuteCommand(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   REFRESH_ON_EXIT
+   RefreshOnExit refreshOnExit;
 
    std::string command;
    Error error = json::readParams(request.params, &command);

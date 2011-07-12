@@ -15,12 +15,13 @@
 #define CORE_SCOPE_HPP
 
 #include <boost/function.hpp>
+#include <boost/noncopyable.hpp>
 
 namespace core {
 namespace scope {
 
 template <class T>
-class SetOnExit
+class SetOnExit : boost::noncopyable
 {
 public:
    SetOnExit(T* pLocation, const T& value)
@@ -45,7 +46,7 @@ public:
    T value_;
 };
 
-class CallOnExit
+class CallOnExit : boost::noncopyable
 {
 public:
    CallOnExit(const boost::function<void()>& func)
