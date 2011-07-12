@@ -402,7 +402,7 @@ public class ArraysTest extends EmulTestBase {
   /**
    * Test Arrays.binarySearch(Object[], Object, Comparator).
    * 
-   * <pre>                                                  -draftCompile
+   * <pre>
    * Verify the following cases:
    *   empty array
    *   odd numbers of elements

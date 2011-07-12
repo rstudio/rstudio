@@ -76,7 +76,6 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
-import com.google.gwt.dev.jjs.ast.JSeedIdOf;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JSwitchStatement;
 import com.google.gwt.dev.jjs.ast.JThisRef;
@@ -139,7 +138,6 @@ import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsReturn;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.js.ast.JsScope;
-import com.google.gwt.dev.js.ast.JsSeedIdOf;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsSwitch;
 import com.google.gwt.dev.js.ast.JsSwitchMember;
@@ -389,7 +387,7 @@ public class GenerateJavaScriptAST {
          * as var foo = function blah() {} and introduce a separate scope for
          * the function's name according to EcmaScript-262, but this would mess
          * up stack traces by allowing two inner scope function names to
-         * obfuscate to the same identifier, making function names no longer a
+         * onfuscate to the same identifier, making function names no longer a
          * 1:1 mapping to obfuscated symbols. Leaving them in global scope
          * causes no harm.
          */
@@ -406,7 +404,6 @@ public class GenerateJavaScriptAST {
             Maps.put(indexedFunctions, x.getEnclosingType().getShortName() + "." + x.getName(),
                 jsFunction);
       }
-
       return true;
     }
 
@@ -501,8 +498,7 @@ public class GenerateJavaScriptAST {
 
       StandardSymbolData symbolData =
           StandardSymbolData.forClass(x.getName(), x.getSourceInfo().getFileName(), x
-              .getSourceInfo().getStartLine(), program.getQueryId(x), castableTypeMap,
-              x instanceof JClassType ? getSeedId((JClassType) x) : -1);
+              .getSourceInfo().getStartLine(), program.getQueryId(x), castableTypeMap);
       assert !symbolTable.containsKey(symbolData);
       symbolTable.put(symbolData, jsName);
     }
@@ -571,7 +567,6 @@ public class GenerateJavaScriptAST {
         JsName name = topScope.declareName("Q$" + longName, "Q$" + shortName);
         namesByQueryId.add(name);
       }
-      // TODO(cromwellian): see about moving this into an immortal type
       StringBuilder sb = new StringBuilder();
       sb.append("function makeCastMap(a) {");
       sb.append("  var result = {};");
@@ -611,16 +606,12 @@ public class GenerateJavaScriptAST {
 
     private final JsName prototype = objectScope.declareName("prototype");
 
-
     {
       globalTemp.setObfuscatable(false);
       prototype.setObfuscatable(false);
       arrayLength.setObfuscatable(false);
     }
 
-    public GenerateJavaScriptVisitor() {
-    }
-    
     @Override
     public void endVisit(JAbsentArrayDimension x, Context ctx) {
       throw new InternalCompilerException("Should not get here.");
@@ -727,11 +718,6 @@ public class GenerateJavaScriptAST {
         return;
       }
 
-      if (program.immortalCodeGenTypes.contains(x)) {
-        // Handled in generateImmortalTypes
-        return;
-      }
-
       alreadyRan.add(x);
 
       List<JsFunction> jsFuncs = popList(x.getMethods().size()); // methods
@@ -751,7 +737,6 @@ public class GenerateJavaScriptAST {
       // declare all methods into the global scope
       for (int i = 0; i < jsFuncs.size(); ++i) {
         JsFunction func = jsFuncs.get(i);
-
         // don't add polymorphic JsFuncs, inline decl into vtable assignment
         if (func != null && !polymorphicJsFunctions.contains(func)) {
           globalStmts.add(func.makeStmt());
@@ -1271,7 +1256,7 @@ public class GenerateJavaScriptAST {
 
       // Long lits must go at the top, they can be constant field initializers.
       generateLongLiterals(vars);
-      generateImmortalTypes(vars);
+
       generateQueryIdConstants(vars);
 
       // Class objects, but only if there are any.
@@ -1306,12 +1291,6 @@ public class GenerateJavaScriptAST {
       } else {
         push(new JsReturn(x.getSourceInfo()));
       }
-    }
-
-    @Override
-    public void endVisit(JSeedIdOf x, Context ctx) {
-      JsName name = names.get(x.getNode());
-      push(new JsSeedIdOf(x.getSourceInfo(), name, getSeedId((JClassType) x.getNode())));
     }
 
     @Override
@@ -1435,11 +1414,6 @@ public class GenerateJavaScriptAST {
         return false;
       }
 
-      if (program.immortalCodeGenTypes.contains(x)) {
-        // Handled in generateImmortalTypes
-        return false;
-      }
-
       // force super type to generate code first, this is required for prototype
       // chaining to work properly
       if (x.getSuperClass() != null && !alreadyRan.contains(x)) {
@@ -1470,7 +1444,6 @@ public class GenerateJavaScriptAST {
       for (int i = 0; i < entryMethods.size(); i++) {
         entryMethodToIndex.put(entryMethods.get(i), i);
       }
-
       return true;
     }
 
@@ -1650,20 +1623,27 @@ public class GenerateJavaScriptAST {
       return new JsBinaryOperation(lhs.getSourceInfo(), JsBinaryOperator.COMMA, lhs, rhs);
     }
 
-    private JsExpression generateCastableTypeMap(JClassType x) {
+    private void generateCastableTypeMap(JClassType x, List<JsStatement> globalStmts) {
       JsCastMap castMap = program.getCastMap(x);
       if (castMap != null) {
         JField castableTypeMapField = program.getIndexedField("Object.castableTypeMap");
         JsName castableTypeMapName = names.get(castableTypeMapField);
         if (castableTypeMapName == null) {
           // Was pruned; this compilation must have no dynamic casts.
-          return new JsObjectLiteral(SourceOrigin.UNKNOWN);
+          return;
         }
 
+        // Generate castableTypeMap for each type prototype
+        // _.castableTypeMap$ = ...
+        SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(GenerateJavaScriptAST.class);
+        JsNameRef fieldRef = castableTypeMapName.makeRef(sourceInfo);
+        fieldRef.setQualifier(globalTemp.makeRef(sourceInfo));
         accept(castMap);
-        return (JsExpression) pop();
+        JsExpression asg = createAssignment(fieldRef, (JsExpression) pop());
+        JsExprStmt asgStmt = asg.makeStmt();
+        globalStmts.add(asgStmt);
+        typeForStatMap.put(asgStmt, x);
       }
-      return new JsObjectLiteral(SourceOrigin.UNKNOWN);
     }
 
     private void generateClassLiteral(JDeclarationStatement decl, JsVars vars) {
@@ -1700,6 +1680,8 @@ public class GenerateJavaScriptAST {
         // special: setup the identifying typeMarker field
         generateTypeMarker(globalStmts);
       }
+
+      generateCastableTypeMap(x, globalStmts);
     }
 
     private void generateGwtOnLoad(List<JsFunction> entryFuncs, List<JsStatement> globalStmts) {
@@ -1800,78 +1782,6 @@ public class GenerateJavaScriptAST {
       errCall.getArguments().add(modName.makeRef(sourceInfo));
     }
 
-    private void generateImmortalTypes(JsVars globals) {
-      List<JsStatement> globalStmts = jsProgram.getGlobalBlock().getStatements();
-      List<JClassType> immortalTypes = new ArrayList<JClassType>(
-          program.immortalCodeGenTypes);
-      // visit in reverse order since insertions start at head
-      Collections.reverse(immortalTypes);
-      JMethod createObjMethod = program.getIndexedMethod("JavaScriptObject.createObject");
-      JMethod createArrMethod = program.getIndexedMethod("JavaScriptObject.createArray");
-
-      for (JClassType x : immortalTypes) {
-        // should not be pruned
-        assert x.getMethods().size() > 0;
-        // insert all static methods
-        for (JMethod method : x.getMethods()) {
-          /*
-           * Skip virtual methods and constructors. Even in cases where there is no constructor
-           * defined, the compiler will synthesize a default constructor which invokes
-           * a synthensized $init() method. We must skip both of these inserted methods.
-           */
-          if (method.needsVtable() || method instanceof JConstructor) {
-            continue;
-          }
-          if (JProgram.isClinit(method)) {
-            /**
-             * Emit empty clinits that will be pruned. If a type B extends A, then even if
-             * B and A have no fields to initialize, there will be a call inserted in B's clinit
-             * to invoke A's clinit. Likewise, if you have a static field initialized to
-             * JavaScriptObject.createObject(), the clinit() will include this initializer code,
-             * which we don't want.
-             */
-            JsFunction func = new JsFunction(x.getSourceInfo(), topScope,
-                topScope.declareName(mangleNameForGlobal(method)), true);
-            func.setBody(new JsBlock(method.getBody().getSourceInfo()));
-            push(func);
-          } else {
-            accept(method);
-          }
-          // add after var declaration, but before everything else
-          JsFunction func = (JsFunction) pop();
-          assert func.getName() != null;
-          globalStmts.add(1, func.makeStmt());
-        }
-
-        // insert fields into global var declaration
-        for (JField field : x.getFields()) {
-          assert field.isStatic() : "All fields on immortal types must be static.";
-          accept(field);
-          JsNode node = pop();
-          assert node instanceof JsVar;
-          JsVar fieldVar = (JsVar) node;
-          JExpression init = field.getInitializer();
-          if (init != null
-              && field.getLiteralInitializer() == null) {
-            // no literal, but it could be a JavaScriptObject
-            if (init.getType() == program.getJavaScriptObject()) {
-              assert init instanceof JMethodCall;
-              JMethod meth = ((JMethodCall) init).getTarget();
-              // immortal types can only have non-primitive literal initializers of createArray,createObject
-              if (meth == createObjMethod) {
-                fieldVar.setInitExpr(new JsObjectLiteral(init.getSourceInfo()));
-              } else if (meth == createArrMethod) {
-                fieldVar.setInitExpr(new JsArrayLiteral(init.getSourceInfo()));
-              } else {
-                assert false : "Illegal initializer expression for immortal field " + field;
-              }
-            }
-          }
-          globals.add(fieldVar);
-        }
-      }
-    }
-
     private void generateLongLiterals(JsVars vars) {
       for (Entry<Long, JsName> entry : longLits.entrySet()) {
         JsName jsName = entry.getValue();
@@ -1897,31 +1807,44 @@ public class GenerateJavaScriptAST {
     private void generateSeedFuncAndPrototype(JClassType x, List<JsStatement> globalStmts) {
       SourceInfo sourceInfo = x.getSourceInfo();
       if (x != program.getTypeJavaLangString()) {
-        JsInvocation defineSeed = new JsInvocation(x.getSourceInfo());
-        JsName seedNameRef = indexedFunctions.get(
-            "SeedUtil.defineSeed").getName();
-        defineSeed.setQualifier(seedNameRef.makeRef(x.getSourceInfo()));
-        int newSeed = getSeedId(x);
-        assert newSeed > 0;
-        JClassType superClass = x.getSuperClass();
-        int superSeed = (superClass == null) ? -1 : getSeedId(x.getSuperClass());
-        // SeedUtil.defineSeed(queryId, superId, castableMap, constructors)
-        defineSeed.getArguments().add(new JsNumberLiteral(x.getSourceInfo(),
-            newSeed));
-        defineSeed.getArguments().add(new JsNumberLiteral(x.getSourceInfo(),
-            superSeed));
-        JsExpression castMap = generateCastableTypeMap(x);
-        defineSeed.getArguments().add(castMap);
-       
+        JsName seedFuncName = names.get(x);
+
+        // seed function
+        // function com_example_foo_Foo() { }
+        JsFunction seedFunc = new JsFunction(sourceInfo, topScope, seedFuncName, true);
+        seedFuncName.setStaticRef(seedFunc);
+        JsBlock body = new JsBlock(sourceInfo);
+        seedFunc.setBody(body);
+        JsExprStmt seedFuncStmt = seedFunc.makeStmt();
+        globalStmts.add(seedFuncStmt);
+        typeForStatMap.put(seedFuncStmt, x);
+
+        // Setup prototype chain.
+        // _ = Foo__V.prototype = FooSeed.prototype = new FooSuper();
+        JsNameRef seedProtoRef = prototype.makeRef(sourceInfo);
+        seedProtoRef.setQualifier(seedFuncName.makeRef(sourceInfo));
+        JsExpression protoObj;
+        if (x.getSuperClass() != null) {
+          JsNameRef superPrototypeRef = names.get(x.getSuperClass()).makeRef(sourceInfo);
+          JsNew newExpr = new JsNew(sourceInfo, superPrototypeRef);
+          protoObj = newExpr;
+        } else {
+          protoObj = new JsObjectLiteral(sourceInfo);
+        }
+        JsExpression protoAsg = createAssignment(seedProtoRef, protoObj);
+
         // Chain assign the same prototype to every live constructor.
         for (JMethod method : x.getMethods()) {
           if (liveCtors.contains(method)) {
-            defineSeed.getArguments().add(names.get(method).makeRef(
-                sourceInfo));
+            JsNameRef protoRef = prototype.makeRef(sourceInfo);
+            protoRef.setQualifier(names.get(method).makeRef(sourceInfo));
+            protoAsg = createAssignment(protoRef, protoAsg);
           }
         }
 
-        JsStatement tmpAsgStmt = defineSeed.makeStmt();
+        // Finally, assign to the temp var for setup code.
+        JsExpression tmpAsg = createAssignment(globalTemp.makeRef(sourceInfo), protoAsg);
+        JsExprStmt tmpAsgStmt = tmpAsg.makeStmt();
         globalStmts.add(tmpAsgStmt);
         typeForStatMap.put(tmpAsgStmt, x);
       } else {
@@ -1936,16 +1859,6 @@ public class GenerateJavaScriptAST {
         JsExprStmt tmpAsgStmt = tmpAsg.makeStmt();
         globalStmts.add(tmpAsgStmt);
         typeForStatMap.put(tmpAsgStmt, x);
-        JField castableTypeMapField = program.getIndexedField("Object.castableTypeMap");
-        JsName castableTypeMapName = names.get(castableTypeMapField);
-        JsNameRef ctmRef = castableTypeMapName.makeRef(sourceInfo);
-        ctmRef.setQualifier(globalTemp.makeRef(sourceInfo));
-        JsExpression castMapLit = generateCastableTypeMap(x);
-        JsExpression ctmAsg = createAssignment(ctmRef,
-            castMapLit);
-        JsExprStmt ctmAsgStmt = ctmAsg.makeStmt();
-        globalStmts.add(ctmAsgStmt);
-        typeForStatMap.put(ctmAsgStmt, x);
       }
     }
 
@@ -2248,7 +2161,6 @@ public class GenerateJavaScriptAST {
   private final Map<JAbstractMethodBody, JsFunction> methodBodyMap =
       new IdentityHashMap<JAbstractMethodBody, JsFunction>();
   private final Map<HasName, JsName> names = new IdentityHashMap<HasName, JsName>();
-  private int nextSeedId = 1;
   private List<JsName> namesByQueryId;
   private JsFunction nullFunc;
 
@@ -2261,11 +2173,6 @@ public class GenerateJavaScriptAST {
   private final Set<JsFunction> polymorphicJsFunctions = new IdentityHashSet<JsFunction>();
   private final Map<JMethod, JsName> polymorphicNames = new IdentityHashMap<JMethod, JsName>();
   private final JProgram program;
-
-  /**
-   * Map of class type to allocated seed id.
-   */
-  private final Map<JClassType, Integer> seedIdMap = new HashMap<JClassType, Integer>();
 
   /**
    * All of the fields in String and Array need special handling for interop.
@@ -2349,8 +2256,8 @@ public class GenerateJavaScriptAST {
     namesToIdents.put("expando", "eX");
     namesToIdents.put("typeMarker", "tM");
     namesToIdents.put("castableTypeMap", "cM");
-    namesToIdents.put("___clazz", "cZ");
     // Array magic field
+    namesToIdents.put("arrayClass", "aC");
     namesToIdents.put("queryId", "qI");
 
     List<JField> fields = new ArrayList<JField>(program.getTypeJavaLangObject().getFields());
@@ -2362,30 +2269,11 @@ public class GenerateJavaScriptAST {
         specialObfuscatedFields.put(field, ident);
       }
     }
-
-    // force java.lang.Object,java.lang.String
-    // to have seed ids 1,2
-    getSeedId(program.getTypeJavaLangObject());
-    getSeedId(program.getTypeJavaLangString());
   }
 
   String getNameString(HasName hasName) {
     String s = hasName.getName().replaceAll("_", "_1").replace('.', '_');
     return s;
-  }
-
-  /**
-   * Looks up or assigns a seed id for a type..
-   */
-  int getSeedId(JClassType type) {
-    Integer val = seedIdMap.get(type);
-    int seedId = val == null ? 0 : val;
-
-    if (seedId == 0) {
-      seedId = nextSeedId++;
-      seedIdMap.put(type, seedId);
-    }
-    return seedId;
   }
 
   String mangleName(JField x) {

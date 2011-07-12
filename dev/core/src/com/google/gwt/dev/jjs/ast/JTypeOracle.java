@@ -565,10 +565,6 @@ public class JTypeOracle implements Serializable {
     return results;
   }
 
-  public Set<JReferenceType> getInstantiatedTypes() {
-    return instantiatedTypes;
-  }
-
   public JMethod getPolyMethod(JClassType type, String signature) {
     return getOrCreatePolyMap(type).get(signature);
   }

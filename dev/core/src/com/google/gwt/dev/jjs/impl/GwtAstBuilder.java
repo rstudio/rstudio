@@ -2158,13 +2158,15 @@ public class GwtAstBuilder {
       assert ("getClass".equals(method.getName()));
       SourceInfo info = method.getSourceInfo();
       if ("com.google.gwt.lang.Array".equals(type.getName())) {
-        /*
-         * Don't implement, fall through to Object.getClass(). Array emulation code
-         * in com.google.gwt.lang.Array invokes Array.getClass() and expects to get the
-         * class literal for the actual runtime type of the array (e.g. Foo[].class) and
-         * not Array.class.
-         */
-        type.getMethods().remove(2);
+        // Special implementation: return this.arrayClass
+        JField arrayClassField = null;
+        for (JField field : type.getFields()) {
+          if ("arrayClass".equals(field.getName())) {
+            arrayClassField = field;
+          }
+        }
+        assert arrayClassField != null;
+        implementMethod(method, new JFieldRef(info, makeThisRef(info), arrayClassField, type));
       } else {
         implementMethod(method, new JClassLiteral(info, type));
       }
@@ -2765,7 +2767,8 @@ public class GwtAstBuilder {
    * 
    * TODO(zundel): something much more awesome?
    */
-  private static final long AST_VERSION = 3;
+  private static final long AST_VERSION = 2;
+
   private static final char[] _STRING = "_String".toCharArray();
   private static final String ARRAY_LENGTH_FIELD = "length";
 

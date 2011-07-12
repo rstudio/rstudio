@@ -99,7 +99,6 @@ import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RecordRebinds;
 import com.google.gwt.dev.jjs.impl.RemoveEmptySuperCalls;
-import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
 import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
@@ -308,8 +307,6 @@ public class JavaToJavaScriptCompiler {
       // (6) Perform further post-normalization optimizations
       // Prune everything
       Pruner.exec(jprogram, false);
-      // prune all Object.getClass() overrides and replace with inline field ref
-      ReplaceGetClassOverrides.exec(jprogram);
 
       // (7) Generate a JavaScript code DOM from the Java type declarations
       jprogram.typeOracle.recomputeAfterOptimizations();
@@ -338,7 +335,7 @@ public class JavaToJavaScriptCompiler {
       /*
        * Creates new variables, must run before code splitter and namer.
        */
-      JsStackEmulator.exec(jprogram, jsProgram, propertyOracles, jjsmap);
+      JsStackEmulator.exec(jsProgram, propertyOracles);
 
       /*
        * Work around Safari 5 bug by rewriting a >> b as ~~a >> b.
