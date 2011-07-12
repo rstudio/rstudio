@@ -94,6 +94,7 @@
       <arg value="Google Web Toolkit API Reference" />
       <arg value="-header" />
       <arg value="GWT ${gwt.version}" />
+      <arg value="-package" />
       <arg value="-encoding"/>
       <arg value="UTF-8"/>
       <arg value="-d" />
