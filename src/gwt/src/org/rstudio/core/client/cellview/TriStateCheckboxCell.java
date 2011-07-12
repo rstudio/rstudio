@@ -65,6 +65,7 @@ public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public boolean isEditing(Context context, Element parent, Boolean value)
    {
       // We aren't actually editing here, of course. All we're trying to do
