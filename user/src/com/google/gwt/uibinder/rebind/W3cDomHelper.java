@@ -35,6 +35,9 @@ import javax.xml.parsers.SAXParserFactory;
  * UiBinder likes it. Used by both prod and test.
  */
 public class W3cDomHelper {
+  private static final String LOAD_EXTERNAL_DTD =
+      "http://apache.org/xml/features/nonvalidating/load-external-dtd";
+
   private final SAXParserFactory factory;
   private final TreeLogger logger;
   private final ResourceOracle resourceOracle;
@@ -43,6 +46,13 @@ public class W3cDomHelper {
     this.logger = logger;
     this.resourceOracle = resourceOracle;
     factory = SAXParserFactory.newInstance();
+    try {
+      factory.setFeature(LOAD_EXTERNAL_DTD, true);
+    } catch (ParserConfigurationException e) {
+      throw new RuntimeException(e);
+    } catch (SAXException e) {
+      // ignore since parser doesn't know about this feature
+    }
     factory.setNamespaceAware(true);
   }
 
