@@ -18,6 +18,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
@@ -39,7 +40,7 @@ public class ConsoleBarView extends Composite
    interface MyBinder extends UiBinder<Widget, ConsoleBarView>
    {}
 
-   interface Resources extends LeftCenterRightBorder.Resources
+   interface Resources extends LeftCenterRightBorder.Resources, ClientBundle
    {
       ImageResource chevronUp();
       ImageResource chevronDown();

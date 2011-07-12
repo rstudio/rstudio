@@ -14,7 +14,6 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
@@ -22,14 +21,11 @@ import com.google.gwt.user.client.ui.*;
 
 public class LeftCenterRightBorder extends ResizeComposite implements AcceptsOneWidget
 {
-   public interface Resources extends ClientBundle
+   public interface Resources 
    {
-      @Source("empty.gif")
       ImageResource left();
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-      @Source("empty.gif")
       ImageResource center();
-      @Source("empty.gif")
       ImageResource right();
    }
 
