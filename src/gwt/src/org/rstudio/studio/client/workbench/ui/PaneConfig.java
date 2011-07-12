@@ -14,6 +14,8 @@ package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.dom.DomUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -89,7 +91,7 @@ public class PaneConfig extends JavaScriptObject
       this.tabSet2 = tabSet;
    }-*/;
 
-   public final boolean isValid()
+   public final boolean validateAndAutoCorrect()
    {
       JsArrayString panes = getPanes();
       if (panes == null)
@@ -103,7 +105,13 @@ public class PaneConfig extends JavaScriptObject
          return false;
 
       if (!sameElements(concat(ts1, ts2), new String[] {"Workspace", "History", "Files", "Plots", "Packages", "Help", "VCS"}))
-         return false;
+      {
+         if (!sameElements(concat(ts1, ts2), new String[] {"Workspace", "History", "Files", "Plots", "Packages", "Help"}))
+            return false;
+
+         // It's only that the VCS tab is missing. Add it to tabset 1.
+         ts1.push("VCS");
+      }
 
       return true;
    }

@@ -13,6 +13,9 @@
 package org.rstudio.core.client.dom;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayMixed;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.*;
@@ -23,6 +26,8 @@ import org.rstudio.core.client.dom.impl.DomUtilsImpl;
 import org.rstudio.core.client.dom.impl.NodeRelativePosition;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+
+import java.lang.reflect.Array;
 
 /**
  * Helper methods that are mostly useful for interacting with 
@@ -60,6 +65,24 @@ public class DomUtils
 
    public static native void scrollToBottom(Element element) /*-{
       element.scrollTop = element.scrollHeight;
+   }-*/;
+
+   public static JsArrayString splice(JsArrayString array,
+                                      int index,
+                                      int howMany,
+                                      String... elements)
+   {
+      JsArrayMixed args = JavaScriptObject.createArray().cast();
+      args.push(index);
+      args.push(howMany);
+      for (String el : elements)
+         args.push(el);
+      return spliceInternal(array, args);
+   }
+
+   private static native JsArrayString spliceInternal(JsArrayString array,
+                                                      JsArrayMixed args) /*-{
+      return Array.prototype.splice.apply(array, args);
    }-*/;
 
    private static final Pattern NEWLINE = Pattern.create("\\n");

@@ -172,7 +172,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       }
 
       PaneConfig value = uiPrefs.paneConfig().getValue();
-      if (value == null || !value.isValid())
+      if (value == null || !value.validateAndAutoCorrect())
          uiPrefs.paneConfig().setValue(PaneConfig.createDefault(), false);
 
       JsArrayString origPanes = uiPrefs.paneConfig().getValue().getPanes();

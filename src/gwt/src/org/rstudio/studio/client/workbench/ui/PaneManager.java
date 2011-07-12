@@ -201,7 +201,7 @@ public class PaneManager
    {
       if (config == null)
          config = PaneConfig.createDefault();
-      if (!config.isValid())
+      if (!config.validateAndAutoCorrect())
       {
          Debug.log("Pane config is not valid");
          config = PaneConfig.createDefault();
