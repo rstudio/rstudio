@@ -179,7 +179,16 @@ final class JsArrayOf<T> extends JavaScriptObject {
   }-*/;
 
   public native int indexOf(T value) /*-{
-    return this.indexOf(value);
+    if(this.indexOf) {
+      return this.indexOf(value);
+    } else {
+      for(var i=0; i<this.length; i++) {
+        if(this[i]==value) {
+          return i;
+        }
+      }
+      return -1;
+    }
   }-*/;
 
   public native int length() /*-{
