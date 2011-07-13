@@ -26,8 +26,8 @@ public class HtmlAudioBuilderTest extends ElementBuilderTestBase<AudioBuilder> {
   }
 
   @Override
-  protected AudioBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endAudio();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endAudio();
   }
 
   @Override

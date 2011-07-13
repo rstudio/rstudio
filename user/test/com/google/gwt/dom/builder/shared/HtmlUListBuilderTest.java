@@ -26,8 +26,8 @@ public class HtmlUListBuilderTest extends ElementBuilderTestBase<UListBuilder> {
   }
 
   @Override
-  protected UListBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endUList();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endUList();
   }
 
   @Override

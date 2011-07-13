@@ -27,36 +27,36 @@ public class HtmlTableCellBuilder extends HtmlElementBuilderBase<TableCellBuilde
 
   @Override
   public TableCellBuilder align(String align) {
-    return attribute("align", align);
+    return trustedAttribute("align", align);
   }
 
   @Override
   public TableCellBuilder ch(String ch) {
-    return attribute("ch", ch);
+    return trustedAttribute("ch", ch);
   }
 
   @Override
   public TableCellBuilder chOff(String chOff) {
-    return attribute("chOff", chOff);
+    return trustedAttribute("chOff", chOff);
   }
 
   @Override
   public TableCellBuilder colSpan(int colSpan) {
-    return attribute("colSpan", colSpan);
+    return trustedAttribute("colSpan", colSpan);
   }
 
   @Override
   public TableCellBuilder headers(String headers) {
-    return attribute("headers", headers);
+    return trustedAttribute("headers", headers);
   }
 
   @Override
   public TableCellBuilder rowSpan(int rowSpan) {
-    return attribute("rowSpan", rowSpan);
+    return trustedAttribute("rowSpan", rowSpan);
   }
 
   @Override
   public TableCellBuilder vAlign(String vAlign) {
-    return attribute("vAlign", vAlign);
+    return trustedAttribute("vAlign", vAlign);
   }
 }

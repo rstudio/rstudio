@@ -29,31 +29,31 @@ public class HtmlMediaBuilderBase<R extends MediaBuilder<?>> extends HtmlElement
 
   @Override
   public R autoplay() {
-    return attribute("autoplay", "autoplay");
+    return trustedAttribute("autoplay", "autoplay");
   }
 
   @Override
   public R controls() {
-    return attribute("controls", "controls");
+    return trustedAttribute("controls", "controls");
   }
 
   @Override
   public R loop() {
-    return attribute("loop", "loop");
+    return trustedAttribute("loop", "loop");
   }
 
   @Override
   public R muted() {
-    return attribute("muted", "muted");
+    return trustedAttribute("muted", "muted");
   }
 
   @Override
   public R preload(String preload) {
-    return attribute("preload", preload);
+    return trustedAttribute("preload", preload);
   }
 
   @Override
   public R src(String url) {
-    return attribute("src", url);
+    return trustedAttribute("src", url);
   }
 }

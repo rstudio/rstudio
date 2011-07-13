@@ -26,8 +26,8 @@ public class HtmlTableBuilderTest extends ElementBuilderTestBase<TableBuilder> {
   }
 
   @Override
-  protected TableBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endTable();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endTable();
   }
 
   @Override

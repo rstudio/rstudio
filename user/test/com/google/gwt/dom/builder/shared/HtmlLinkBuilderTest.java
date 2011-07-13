@@ -26,8 +26,8 @@ public class HtmlLinkBuilderTest extends ElementBuilderTestBase<LinkBuilder> {
   }
 
   @Override
-  protected LinkBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endLink();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endLink();
   }
 
   @Override

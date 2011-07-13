@@ -26,8 +26,8 @@ public class HtmlDivBuilderTest extends ElementBuilderTestBase<DivBuilder> {
   }
 
   @Override
-  protected DivBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endDiv();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endDiv();
   }
 
   @Override

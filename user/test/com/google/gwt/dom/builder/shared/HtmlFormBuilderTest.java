@@ -26,8 +26,8 @@ public class HtmlFormBuilderTest extends ElementBuilderTestBase<FormBuilder> {
   }
 
   @Override
-  protected FormBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endForm();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endForm();
   }
 
   @Override

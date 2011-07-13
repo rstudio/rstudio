@@ -29,7 +29,7 @@ public class HtmlScriptBuilder extends HtmlElementBuilderBase<ScriptBuilder> imp
 
   @Override
   public ScriptBuilder defer(String defer) {
-    return attribute("defer", defer);
+    return trustedAttribute("defer", defer);
   }
 
   @Override
@@ -44,11 +44,11 @@ public class HtmlScriptBuilder extends HtmlElementBuilderBase<ScriptBuilder> imp
 
   @Override
   public ScriptBuilder src(String src) {
-    return attribute("src", src);
+    return trustedAttribute("src", src);
   }
 
   @Override
   public ScriptBuilder type(String type) {
-    return attribute("type", type);
+    return trustedAttribute("type", type);
   }
 }

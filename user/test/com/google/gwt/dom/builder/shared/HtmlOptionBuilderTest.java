@@ -26,8 +26,8 @@ public class HtmlOptionBuilderTest extends ElementBuilderTestBase<OptionBuilder>
   }
 
   @Override
-  protected OptionBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endOption();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endOption();
   }
 
   @Override

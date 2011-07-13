@@ -26,8 +26,8 @@ public class HtmlBRBuilderTest extends ElementBuilderTestBase<BRBuilder> {
   }
 
   @Override
-  protected BRBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endBR();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endBR();
   }
 
   @Override

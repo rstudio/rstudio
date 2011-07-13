@@ -26,8 +26,8 @@ public class HtmlPreBuilderTest extends ElementBuilderTestBase<PreBuilder> {
   }
 
   @Override
-  protected PreBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endPre();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endPre();
   }
 
   @Override

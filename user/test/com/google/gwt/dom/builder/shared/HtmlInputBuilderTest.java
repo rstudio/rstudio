@@ -26,8 +26,8 @@ public class HtmlInputBuilderTest extends ElementBuilderTestBase<InputBuilder> {
   }
 
   @Override
-  protected InputBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endInput();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endInput();
   }
 
   @Override

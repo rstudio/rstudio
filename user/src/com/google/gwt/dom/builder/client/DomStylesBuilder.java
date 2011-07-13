@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dom.builder.client;
 
-import com.google.gwt.dom.builder.shared.ElementBuilderBase;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.builder.shared.StylesBuilder;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Cursor;
@@ -35,9 +35,6 @@ import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.safehtml.shared.SafeUri;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Builds the style object.
  */
@@ -49,8 +46,11 @@ class DomStylesBuilder implements StylesBuilder {
    * The set of style property names is limited, and common ones are reused
    * frequently, so caching saves us from converting every style property name
    * from hyphenated to camelCase form.
+   * 
+   * Use a {@link JavaScriptObject} to avoid the dynamic casts associated with
+   * the emulated version of {@link java.util.Map}.
    */
-  private static Map<String, String> hyphenatedMap;
+  private static JavaScriptObject hyphenatedMap;
 
   /**
    * Regex to match a word in a hyphenated phrase. A word starts with an a
@@ -70,7 +70,7 @@ class DomStylesBuilder implements StylesBuilder {
   static String toCamelCaseForm(String name) {
     // Static initializers.
     if (hyphenatedMap == null) {
-      hyphenatedMap = new HashMap<String, String>();
+      hyphenatedMap = JavaScriptObject.createObject();
       maybeHyphenatedWord = RegExp.compile("([-]?)([a-z])([a-z0-9]*)", "g");
     }
 
@@ -80,7 +80,7 @@ class DomStylesBuilder implements StylesBuilder {
     }
 
     // Check for the name in the cache.
-    String camelCase = hyphenatedMap.get(name);
+    String camelCase = getCamelCaseName(hyphenatedMap, name);
 
     // Convert the name to camelCase format if not in the cache.
     if (camelCase == null) {
@@ -108,11 +108,31 @@ class DomStylesBuilder implements StylesBuilder {
           }
         }
       }
-      hyphenatedMap.put(name, camelCase);
+      putCamelCaseName(hyphenatedMap, name, camelCase);
     }
 
     return camelCase;
   }
+
+  /**
+   * Get the camelCase form of a style name to a map.
+   * 
+   * @param name the user specified style name
+   * @return the camelCase name, or null if not set
+   */
+  private static native String getCamelCaseName(JavaScriptObject map, String name) /*-{
+    return map[name] || null;
+  }-*/;
+
+  /**
+   * Save the camelCase form of a style name to a map.
+   * 
+   * @param name the user specified style name
+   * @param camelCase the camelCase name
+   */
+  private static native void putCamelCaseName(JavaScriptObject map, String name, String camelCase) /*-{
+    map[name] = camelCase;
+  }-*/;
 
   private final DomBuilderImpl delegate;
 
@@ -161,10 +181,9 @@ class DomStylesBuilder implements StylesBuilder {
     return this;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endStyle() {
-    return (B) delegate.endStyle();
+  public void endStyle() {
+    delegate.endStyle();
   }
 
   @Override

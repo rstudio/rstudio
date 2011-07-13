@@ -26,36 +26,36 @@ public class HtmlLinkBuilder extends HtmlElementBuilderBase<LinkBuilder> impleme
 
   @Override
   public LinkBuilder disabled() {
-    return attribute("disabled", "disabled");
+    return trustedAttribute("disabled", "disabled");
   }
 
   @Override
   public LinkBuilder href(String href) {
-    return attribute("href", href);
+    return trustedAttribute("href", href);
   }
 
   @Override
   public LinkBuilder hreflang(String hreflang) {
-    return attribute("hreflang", hreflang);
+    return trustedAttribute("hreflang", hreflang);
   }
 
   @Override
   public LinkBuilder media(String media) {
-    return attribute("media", media);
+    return trustedAttribute("media", media);
   }
 
   @Override
   public LinkBuilder rel(String rel) {
-    return attribute("rel", rel);
+    return trustedAttribute("rel", rel);
   }
 
   @Override
   public LinkBuilder target(String target) {
-    return attribute("target", target);
+    return trustedAttribute("target", target);
   }
 
   @Override
   public LinkBuilder type(String type) {
-    return attribute("type", type);
+    return trustedAttribute("type", type);
   }
 }

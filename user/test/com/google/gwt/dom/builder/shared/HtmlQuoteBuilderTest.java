@@ -26,8 +26,8 @@ public class HtmlQuoteBuilderTest extends ElementBuilderTestBase<QuoteBuilder> {
   }
 
   @Override
-  protected QuoteBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endQuote();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endQuote();
   }
 
   @Override

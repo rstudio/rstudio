@@ -26,8 +26,8 @@ public class HtmlStyleBuilderTest extends ElementBuilderTestBase<StyleBuilder> {
   }
 
   @Override
-  protected StyleBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endStyle();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endStyle();
   }
 
   @Override

@@ -26,11 +26,11 @@ public class HtmlLabelBuilder extends HtmlElementBuilderBase<LabelBuilder> imple
 
   @Override
   public LabelBuilder accessKey(String accessKey) {
-    return attribute("accessKey", accessKey);
+    return trustedAttribute("accessKey", accessKey);
   }
 
   @Override
   public LabelBuilder htmlFor(String htmlFor) {
-    return attribute("htmlFor", htmlFor);
+    return trustedAttribute("for", htmlFor);
   }
 }

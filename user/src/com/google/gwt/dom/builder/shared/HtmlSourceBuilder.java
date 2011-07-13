@@ -27,11 +27,11 @@ public class HtmlSourceBuilder extends HtmlElementBuilderBase<SourceBuilder> imp
 
   @Override
   public SourceBuilder src(String url) {
-    return attribute("url", url);
+    return trustedAttribute("url", url);
   }
 
   @Override
   public SourceBuilder type(String type) {
-    return attribute("type", type);
+    return trustedAttribute("type", type);
   }
 }

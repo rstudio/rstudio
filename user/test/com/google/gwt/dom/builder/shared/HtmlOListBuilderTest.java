@@ -26,8 +26,8 @@ public class HtmlOListBuilderTest extends ElementBuilderTestBase<OListBuilder> {
   }
 
   @Override
-  protected OListBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endOList();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endOList();
   }
 
   @Override

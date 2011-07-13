@@ -26,8 +26,8 @@ public class HtmlBaseBuilderTest extends ElementBuilderTestBase<BaseBuilder> {
   }
 
   @Override
-  protected BaseBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endBase();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endBase();
   }
 
   @Override

@@ -26,8 +26,8 @@ public class HtmlBodyBuilderTest extends ElementBuilderTestBase<BodyBuilder> {
   }
 
   @Override
-  protected BodyBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endBody();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endBody();
   }
 
   @Override

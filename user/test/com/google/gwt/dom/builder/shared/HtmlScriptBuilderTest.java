@@ -26,8 +26,8 @@ public class HtmlScriptBuilderTest extends ElementBuilderTestBase<ScriptBuilder>
   }
 
   @Override
-  protected ScriptBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endScript();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endScript();
   }
 
   @Override

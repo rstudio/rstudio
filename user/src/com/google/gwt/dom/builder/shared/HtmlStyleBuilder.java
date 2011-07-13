@@ -34,7 +34,7 @@ public class HtmlStyleBuilder extends HtmlElementBuilderBase<StyleBuilder> imple
 
   @Override
   public StyleBuilder disabled() {
-    return attribute("disabled", "disabled");
+    return trustedAttribute("disabled", "disabled");
   }
 
   @Override
@@ -49,7 +49,7 @@ public class HtmlStyleBuilder extends HtmlElementBuilderBase<StyleBuilder> imple
 
   @Override
   public StyleBuilder media(String media) {
-    return attribute("media", media);
+    return trustedAttribute("media", media);
   }
 
   @Override
@@ -59,6 +59,6 @@ public class HtmlStyleBuilder extends HtmlElementBuilderBase<StyleBuilder> imple
 
   @Override
   public StyleBuilder type(String type) {
-    return attribute("type", type);
+    return trustedAttribute("type", type);
   }
 }

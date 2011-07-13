@@ -26,8 +26,8 @@ public class HtmlFieldSetBuilderTest extends ElementBuilderTestBase<FieldSetBuil
   }
 
   @Override
-  protected FieldSetBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endFieldSet();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endFieldSet();
   }
 
   @Override

@@ -27,26 +27,26 @@ public class HtmlOptionBuilder extends HtmlElementBuilderBase<OptionBuilder>
 
   @Override
   public OptionBuilder defaultSelected() {
-    return attribute("defaultSelected", "defaultSelected");
+    return trustedAttribute("defaultSelected", "defaultSelected");
   }
 
   @Override
   public OptionBuilder disabled() {
-    return attribute("disabled", "disabled");
+    return trustedAttribute("disabled", "disabled");
   }
 
   @Override
   public OptionBuilder label(String label) {
-    return attribute("label", label);
+    return trustedAttribute("label", label);
   }
 
   @Override
   public OptionBuilder selected() {
-    return attribute("selected", "selected");
+    return trustedAttribute("selected", "selected");
   }
 
   @Override
   public OptionBuilder value(String value) {
-    return attribute("value", value);
+    return trustedAttribute("value", value);
   }
 }

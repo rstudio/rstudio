@@ -26,66 +26,66 @@ public class HtmlInputBuilder extends HtmlElementBuilderBase<InputBuilder> imple
 
   @Override
   public InputBuilder accept(String accept) {
-    return attribute("accept", accept);
+    return trustedAttribute("accept", accept);
   }
 
   @Override
   public InputBuilder accessKey(String accessKey) {
-    return attribute("accessKey", accessKey);
+    return trustedAttribute("accessKey", accessKey);
   }
 
   @Override
   public InputBuilder alt(String alt) {
-    return attribute("alt", alt);
+    return trustedAttribute("alt", alt);
   }
 
   @Override
   public InputBuilder checked() {
-    return attribute("checked", "checked");
+    return trustedAttribute("checked", "checked");
   }
 
   @Override
   public InputBuilder defaultChecked() {
-    return attribute("defaultChecked", "defaultChecked");
+    return trustedAttribute("defaultChecked", "defaultChecked");
   }
 
   @Override
   public InputBuilder defaultValue(String defaultValue) {
-    return attribute("defaultValue", defaultValue);
+    return trustedAttribute("defaultValue", defaultValue);
   }
 
   @Override
   public InputBuilder disabled() {
-    return attribute("disabled", "disabled");
+    return trustedAttribute("disabled", "disabled");
   }
 
   @Override
   public InputBuilder maxLength(int maxLength) {
-    return attribute("maxlength", maxLength);
+    return trustedAttribute("maxlength", maxLength);
   }
 
   @Override
   public InputBuilder name(String name) {
-    return attribute("name", name);
+    return trustedAttribute("name", name);
   }
 
   @Override
   public InputBuilder readOnly() {
-    return attribute("readonly", "readonly");
+    return trustedAttribute("readonly", "readonly");
   }
 
   @Override
   public InputBuilder size(int size) {
-    return attribute("size", size);
+    return trustedAttribute("size", size);
   }
 
   @Override
   public InputBuilder src(String src) {
-    return attribute("src", src);
+    return trustedAttribute("src", src);
   }
 
   @Override
   public InputBuilder value(String value) {
-    return attribute("value", value);
+    return trustedAttribute("value", value);
   }
 }

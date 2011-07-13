@@ -26,16 +26,16 @@ public class HtmlMetaBuilder extends HtmlElementBuilderBase<MetaBuilder> impleme
 
   @Override
   public MetaBuilder content(String content) {
-    return attribute("content", content);
+    return trustedAttribute("content", content);
   }
 
   @Override
   public MetaBuilder httpEquiv(String httpEquiv) {
-    return attribute("httpEquiv", httpEquiv);
+    return trustedAttribute("httpEquiv", httpEquiv);
   }
 
   @Override
   public MetaBuilder name(String name) {
-    return attribute("name", name);
+    return trustedAttribute("name", name);
   }
 }

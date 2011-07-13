@@ -26,8 +26,8 @@ public class HtmlHRBuilderTest extends ElementBuilderTestBase<HRBuilder> {
   }
 
   @Override
-  protected HRBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endHR();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endHR();
   }
 
   @Override

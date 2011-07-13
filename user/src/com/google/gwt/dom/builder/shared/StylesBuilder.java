@@ -79,38 +79,9 @@ public interface StylesBuilder {
   /**
    * End the current style attribute.
    * 
-   * <p>
-   * By default, this method returns the {@link ElementBuilderBase} instance for
-   * the element that contains the style attribute.
-   * </p>
-   * 
-   * <pre>
-   * DivBuilder div = ElementBuilderFactory.get().createDivBuilder();
-   * StylesBuilder styles = div.style();
-   * styles.fontSize(12.0, Unit.PT);
-   * ElementBuilderBase&lt;?&gt; sameAs_div = styles.endStyle();
-   * </pre>
-   * 
-   * <p>
-   * You can cast the return type by parameterizing the return value. If the
-   * parameterized type does not match the builder type of the element that
-   * contains this style, a {@link ClassCastException} is thrown.
-   * </p>
-   * 
-   * <pre>
-   * DivBuilder div = ElementBuilderFactory.get().createDivBuilder();
-   * StylesBuilder styles = div.style();
-   * styles.fontSize(12.0, Unit.PT);
-   * DivBuilder sameAsDiv = styles.&lt;DivBuilder&gt; endStyle();
-   * </pre>
-   * 
-   * @param <B> the type of the element that contains the styles
-   * @return the {@link ElementBuilderBase} for the containing element
    * @throws IllegalStateException if the style attribute is already closed
-   * @throws ClassCastException if the parent builder does not match the
-   *           specified return type
    */
-  <B extends ElementBuilderBase<?>> B endStyle();
+  void endStyle();
 
   /**
    * Set the float css property.
@@ -325,7 +296,7 @@ public interface StylesBuilder {
    * <code>font: 'foo &lt;style&gt;&lt;script&gt;evil&lt;/script&gt;</code>'" is
    * used in a style sheet in a &lt;style&gt; tag, this could then break out of
    * the style context into HTML.
-   *
+   * 
    * @param unit the units of the value
    * @return this {@link StylesBuilder}
    */

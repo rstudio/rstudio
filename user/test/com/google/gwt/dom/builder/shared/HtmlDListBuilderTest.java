@@ -26,8 +26,8 @@ public class HtmlDListBuilderTest extends ElementBuilderTestBase<DListBuilder> {
   }
 
   @Override
-  protected DListBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endDList();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endDList();
   }
 
   @Override

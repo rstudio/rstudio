@@ -26,8 +26,8 @@ public class HtmlLegendBuilderTest extends ElementBuilderTestBase<LegendBuilder>
   }
 
   @Override
-  protected LegendBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endLegend();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endLegend();
   }
 
   @Override

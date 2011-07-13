@@ -26,8 +26,8 @@ public class HtmlMetaBuilderTest extends ElementBuilderTestBase<MetaBuilder> {
   }
 
   @Override
-  protected MetaBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endMeta();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endMeta();
   }
 
   @Override

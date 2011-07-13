@@ -26,8 +26,8 @@ public class HtmlTableCaptionBuilderTest extends ElementBuilderTestBase<TableCap
   }
 
   @Override
-  protected TableCaptionBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endTableCaption();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endTableCaption();
   }
 
   @Override

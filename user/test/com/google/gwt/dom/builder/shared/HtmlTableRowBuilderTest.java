@@ -26,8 +26,8 @@ public class HtmlTableRowBuilderTest extends ElementBuilderTestBase<TableRowBuil
   }
 
   @Override
-  protected TableRowBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endTR();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endTR();
   }
 
   @Override

@@ -26,8 +26,8 @@ public class HtmlVideoBuilderTest extends ElementBuilderTestBase<VideoBuilder> {
   }
 
   @Override
-  protected VideoBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endVideo();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endVideo();
   }
 
   @Override

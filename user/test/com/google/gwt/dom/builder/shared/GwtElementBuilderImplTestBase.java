@@ -73,7 +73,8 @@ public abstract class GwtElementBuilderImplTestBase extends GWTTestCase {
       }
       tr.endTR();
     }
-    tbody.endTBody().endTable();
+    tbody.endTBody();
+    tableBuilder.endTable();
 
     // Check the rendered element.
     TableElement table = tableBuilder.finish().cast();
@@ -167,9 +168,9 @@ public abstract class GwtElementBuilderImplTestBase extends GWTTestCase {
    * </pre>
    */
   public void testStyleProperties() {
-    Element div =
-        factory.createDivBuilder().style().trustedColor("red").position(Position.ABSOLUTE)
-            .endStyle().text("hello world").finish();
+    DivBuilder divBuilder = factory.createDivBuilder();
+    divBuilder.style().trustedColor("red").position(Position.ABSOLUTE).endStyle();
+    Element div = divBuilder.text("hello world").finish();
     assertTrue("div".equalsIgnoreCase(div.getTagName()));
     assertEquals("hello world", div.getInnerText());
     assertEquals("red", div.getStyle().getColor());

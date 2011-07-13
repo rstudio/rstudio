@@ -27,11 +27,11 @@ public class HtmlOptGroupBuilder extends HtmlElementBuilderBase<OptGroupBuilder>
 
   @Override
   public OptGroupBuilder disabled() {
-    return attribute("disabled", "disabled");
+    return trustedAttribute("disabled", "disabled");
   }
 
   @Override
   public OptGroupBuilder label(String label) {
-    return attribute("label", label);
+    return trustedAttribute("label", label);
   }
 }

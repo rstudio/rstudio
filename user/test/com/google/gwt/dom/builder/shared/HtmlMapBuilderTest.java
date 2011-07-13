@@ -26,8 +26,8 @@ public class HtmlMapBuilderTest extends ElementBuilderTestBase<MapBuilder> {
   }
 
   @Override
-  protected MapBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endMap();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endMap();
   }
 
   @Override

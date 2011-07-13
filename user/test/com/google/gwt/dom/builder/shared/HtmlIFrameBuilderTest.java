@@ -26,8 +26,8 @@ public class HtmlIFrameBuilderTest extends ElementBuilderTestBase<IFrameBuilder>
   }
 
   @Override
-  protected IFrameBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endIFrame();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endIFrame();
   }
 
   @Override

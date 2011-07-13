@@ -26,13 +26,13 @@ public class HtmlTableSectionBuilderTest extends ElementBuilderTestBase<TableSec
   public void testEndAll() {
     for (ElementBuilderFactory factory : getFactories()) {
       TableSectionBuilder tbody = factory.createTBodyBuilder();
-      assertNull(tbody.endTBody());
+      tbody.endTBody();
 
       TableSectionBuilder thead = factory.createTHeadBuilder();
-      assertNull(thead.endTHead());
+      thead.endTHead();
 
       TableSectionBuilder tfoot = factory.createTFootBuilder();
-      assertNull(tfoot.endTFoot());
+      tfoot.endTFoot();
     }
   }
 
@@ -42,8 +42,8 @@ public class HtmlTableSectionBuilderTest extends ElementBuilderTestBase<TableSec
   }
 
   @Override
-  protected TableSectionBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endTBody();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endTBody();
   }
 
   @Override

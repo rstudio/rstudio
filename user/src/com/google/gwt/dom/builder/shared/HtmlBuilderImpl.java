@@ -151,37 +151,44 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     return SafeHtmlUtils.fromTrustedString(sb.toString());
   }
 
+  public void attribute(String name, int value) {
+    trustedAttribute(escape(name), value);
+  }
+
   public void attribute(String name, String value) {
-    assertCanAddAttributeImpl();
-    sb.append(" ").append(escape(name)).append("=\"").append(escape(value)).append("\"");
+    trustedAttribute(escape(name), value);
   }
 
   public HtmlAnchorBuilder startAnchor() {
     if (anchorBuilder == null) {
       anchorBuilder = new HtmlAnchorBuilder(this);
     }
-    return trustedStart(AnchorElement.TAG, anchorBuilder);
+    trustedStart(AnchorElement.TAG, anchorBuilder);
+    return anchorBuilder;
   }
 
   public HtmlAreaBuilder startArea() {
     if (areaBuilder == null) {
       areaBuilder = new HtmlAreaBuilder(this);
     }
-    return trustedStart(AreaElement.TAG, areaBuilder);
+    trustedStart(AreaElement.TAG, areaBuilder);
+    return areaBuilder;
   }
 
   public HtmlAudioBuilder startAudio() {
     if (audioBuilder == null) {
       audioBuilder = new HtmlAudioBuilder(this);
     }
-    return trustedStart(AudioElement.TAG, audioBuilder);
+    trustedStart(AudioElement.TAG, audioBuilder);
+    return audioBuilder;
   }
 
   public HtmlBaseBuilder startBase() {
     if (baseBuilder == null) {
       baseBuilder = new HtmlBaseBuilder(this);
     }
-    return trustedStart(BaseElement.TAG, baseBuilder);
+    trustedStart(BaseElement.TAG, baseBuilder);
+    return baseBuilder;
   }
 
   public HtmlQuoteBuilder startBlockQuote() {
@@ -192,14 +199,16 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (bodyBuilder == null) {
       bodyBuilder = new HtmlBodyBuilder(this);
     }
-    return trustedStart(BodyElement.TAG, bodyBuilder);
+    trustedStart(BodyElement.TAG, bodyBuilder);
+    return bodyBuilder;
   }
 
   public HtmlBRBuilder startBR() {
     if (brBuilder == null) {
       brBuilder = new HtmlBRBuilder(this);
     }
-    return trustedStart(BRElement.TAG, brBuilder);
+    trustedStart(BRElement.TAG, brBuilder);
+    return brBuilder;
   }
 
   public InputBuilder startButtonInput() {
@@ -210,11 +219,12 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (canvasBuilder == null) {
       canvasBuilder = new HtmlCanvasBuilder(this);
     }
-    return trustedStart(CanvasElement.TAG, canvasBuilder);
+    trustedStart(CanvasElement.TAG, canvasBuilder);
+    return canvasBuilder;
   }
 
-  public InputBuilder startCheckInput() {
-    return startInput("check");
+  public InputBuilder startCheckboxInput() {
+    return startInput("checkbox");
   }
 
   public HtmlTableColBuilder startCol() {
@@ -226,21 +236,24 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
   }
 
   public HtmlDivBuilder startDiv() {
-    return trustedStart(DivElement.TAG, divBuilder);
+    trustedStart(DivElement.TAG, divBuilder);
+    return divBuilder;
   }
 
   public HtmlDListBuilder startDList() {
     if (dListBuilder == null) {
       dListBuilder = new HtmlDListBuilder(this);
     }
-    return trustedStart(DListElement.TAG, dListBuilder);
+    trustedStart(DListElement.TAG, dListBuilder);
+    return dListBuilder;
   }
 
   public HtmlFieldSetBuilder startFieldSet() {
     if (fieldSetBuilder == null) {
       fieldSetBuilder = new HtmlFieldSetBuilder(this);
     }
-    return trustedStart(FieldSetElement.TAG, fieldSetBuilder);
+    trustedStart(FieldSetElement.TAG, fieldSetBuilder);
+    return fieldSetBuilder;
   }
 
   public InputBuilder startFileInput() {
@@ -251,21 +264,24 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (formBuilder == null) {
       formBuilder = new HtmlFormBuilder(this);
     }
-    return trustedStart(FormElement.TAG, formBuilder);
+    trustedStart(FormElement.TAG, formBuilder);
+    return formBuilder;
   }
 
   public HtmlFrameBuilder startFrame() {
     if (frameBuilder == null) {
       frameBuilder = new HtmlFrameBuilder(this);
     }
-    return trustedStart(FrameElement.TAG, frameBuilder);
+    trustedStart(FrameElement.TAG, frameBuilder);
+    return frameBuilder;
   }
 
   public HtmlFrameSetBuilder startFrameSet() {
     if (frameSetBuilder == null) {
       frameSetBuilder = new HtmlFrameSetBuilder(this);
     }
-    return trustedStart(FrameSetElement.TAG, frameSetBuilder);
+    trustedStart(FrameSetElement.TAG, frameSetBuilder);
+    return frameSetBuilder;
   }
 
   public HtmlHeadingBuilder startH1() {
@@ -296,7 +312,8 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (headBuilder == null) {
       headBuilder = new HtmlHeadBuilder(this);
     }
-    return trustedStart(HeadElement.TAG, headBuilder);
+    trustedStart(HeadElement.TAG, headBuilder);
+    return headBuilder;
   }
 
   public InputBuilder startHiddenInput() {
@@ -307,21 +324,24 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (hrBuilder == null) {
       hrBuilder = new HtmlHRBuilder(this);
     }
-    return trustedStart(HRElement.TAG, hrBuilder);
+    trustedStart(HRElement.TAG, hrBuilder);
+    return hrBuilder;
   }
 
   public HtmlIFrameBuilder startIFrame() {
     if (iFrameBuilder == null) {
       iFrameBuilder = new HtmlIFrameBuilder(this);
     }
-    return trustedStart(IFrameElement.TAG, iFrameBuilder);
+    trustedStart(IFrameElement.TAG, iFrameBuilder);
+    return iFrameBuilder;
   }
 
   public HtmlImageBuilder startImage() {
     if (imageBuilder == null) {
       imageBuilder = new HtmlImageBuilder(this);
     }
-    return trustedStart(ImageElement.TAG, imageBuilder);
+    trustedStart(ImageElement.TAG, imageBuilder);
+    return imageBuilder;
   }
 
   public InputBuilder startImageInput() {
@@ -332,71 +352,82 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (labelBuilder == null) {
       labelBuilder = new HtmlLabelBuilder(this);
     }
-    return trustedStart(LabelElement.TAG, labelBuilder);
+    trustedStart(LabelElement.TAG, labelBuilder);
+    return labelBuilder;
   }
 
   public HtmlLegendBuilder startLegend() {
     if (legendBuilder == null) {
       legendBuilder = new HtmlLegendBuilder(this);
     }
-    return trustedStart(LegendElement.TAG, legendBuilder);
+    trustedStart(LegendElement.TAG, legendBuilder);
+    return legendBuilder;
   }
 
   public HtmlLIBuilder startLI() {
-    return trustedStart(LIElement.TAG, liBuilder);
+    trustedStart(LIElement.TAG, liBuilder);
+    return liBuilder;
   }
 
   public HtmlLinkBuilder startLink() {
     if (linkBuilder == null) {
       linkBuilder = new HtmlLinkBuilder(this);
     }
-    return trustedStart(LinkElement.TAG, linkBuilder);
+    trustedStart(LinkElement.TAG, linkBuilder);
+    return linkBuilder;
   }
 
   public HtmlMapBuilder startMap() {
     if (mapBuilder == null) {
       mapBuilder = new HtmlMapBuilder(this);
     }
-    return trustedStart(MapElement.TAG, mapBuilder);
+    trustedStart(MapElement.TAG, mapBuilder);
+    return mapBuilder;
   }
 
   public HtmlMetaBuilder startMeta() {
     if (metaBuilder == null) {
       metaBuilder = new HtmlMetaBuilder(this);
     }
-    return trustedStart(MetaElement.TAG, metaBuilder);
+    trustedStart(MetaElement.TAG, metaBuilder);
+    return metaBuilder;
   }
 
   public HtmlOListBuilder startOList() {
     if (oListBuilder == null) {
       oListBuilder = new HtmlOListBuilder(this);
     }
-    return trustedStart(OListElement.TAG, oListBuilder);
+    trustedStart(OListElement.TAG, oListBuilder);
+    return oListBuilder;
   }
 
   public HtmlOptGroupBuilder startOptGroup() {
     if (optGroupBuilder == null) {
       optGroupBuilder = new HtmlOptGroupBuilder(this);
     }
-    return trustedStart(OptGroupElement.TAG, optGroupBuilder);
+    trustedStart(OptGroupElement.TAG, optGroupBuilder);
+    return optGroupBuilder;
   }
 
   public HtmlOptionBuilder startOption() {
-    return trustedStart(OptionElement.TAG, optionBuilder);
+    trustedStart(OptionElement.TAG, optionBuilder);
+    return optionBuilder;
   }
 
   public HtmlParagraphBuilder startParagraph() {
     if (paragraphBuilder == null) {
       paragraphBuilder = new HtmlParagraphBuilder(this);
     }
-    return trustedStart(ParagraphElement.TAG, paragraphBuilder);
+    trustedStart(ParagraphElement.TAG, paragraphBuilder);
+    return paragraphBuilder;
   }
 
   public HtmlParamBuilder startParam() {
     if (paramBuilder == null) {
       paramBuilder = new HtmlParamBuilder(this);
     }
-    return trustedStart(ParamElement.TAG, paramBuilder);
+    trustedStart(ParamElement.TAG, paramBuilder);
+    return paramBuilder;
   }
 
   public InputBuilder startPasswordInput() {
@@ -407,7 +438,8 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (preBuilder == null) {
       preBuilder = new HtmlPreBuilder(this);
     }
-    return trustedStart(PreElement.TAG, preBuilder);
+    trustedStart(PreElement.TAG, preBuilder);
+    return preBuilder;
   }
 
   public HtmlButtonBuilder startPushButton() {
@@ -436,32 +468,37 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (scriptBuilder == null) {
       scriptBuilder = new HtmlScriptBuilder(this);
     }
-    return trustedStart(ScriptElement.TAG, scriptBuilder);
+    trustedStart(ScriptElement.TAG, scriptBuilder);
+    return scriptBuilder;
   }
 
   public HtmlSelectBuilder startSelect() {
     if (selectBuilder == null) {
       selectBuilder = new HtmlSelectBuilder(this);
     }
-    return trustedStart(SelectElement.TAG, selectBuilder);
+    trustedStart(SelectElement.TAG, selectBuilder);
+    return selectBuilder;
   }
 
   public HtmlSourceBuilder startSource() {
     if (sourceBuilder == null) {
       sourceBuilder = new HtmlSourceBuilder(this);
     }
-    return trustedStart(SourceElement.TAG, sourceBuilder);
+    trustedStart(SourceElement.TAG, sourceBuilder);
+    return sourceBuilder;
   }
 
   public HtmlSpanBuilder startSpan() {
-    return trustedStart(SpanElement.TAG, spanBuilder);
+    trustedStart(SpanElement.TAG, spanBuilder);
+    return spanBuilder;
   }
 
   public HtmlStyleBuilder startStyle() {
     if (styleBuilder == null) {
       styleBuilder = new HtmlStyleBuilder(this);
     }
-    return trustedStart(StyleElement.TAG, styleBuilder);
+    trustedStart(StyleElement.TAG, styleBuilder);
+    return styleBuilder;
   }
 
   public HtmlButtonBuilder startSubmitButton() {
@@ -476,14 +513,16 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (tableBuilder == null) {
       tableBuilder = new HtmlTableBuilder(this);
     }
-    return trustedStart(TableElement.TAG, tableBuilder);
+    trustedStart(TableElement.TAG, tableBuilder);
+    return tableBuilder;
   }
 
   public HtmlTableCaptionBuilder startTableCaption() {
     if (tableCaptionBuilder == null) {
       tableCaptionBuilder = new HtmlTableCaptionBuilder(this);
     }
-    return trustedStart(TableCaptionElement.TAG, tableCaptionBuilder);
+    trustedStart(TableCaptionElement.TAG, tableCaptionBuilder);
+    return tableCaptionBuilder;
   }
 
   public HtmlTableSectionBuilder startTBody() {
@@ -491,14 +530,16 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
   }
 
   public HtmlTableCellBuilder startTD() {
-    return trustedStart(TableCellElement.TAG_TD, tableCellBuilder);
+    trustedStart(TableCellElement.TAG_TD, tableCellBuilder);
+    return tableCellBuilder;
   }
 
   public HtmlTextAreaBuilder startTextArea() {
     if (textAreaBuilder == null) {
       textAreaBuilder = new HtmlTextAreaBuilder(this);
     }
-    return trustedStart(TextAreaElement.TAG, textAreaBuilder);
+    trustedStart(TextAreaElement.TAG, textAreaBuilder);
+    return textAreaBuilder;
   }
 
   public InputBuilder startTextInput() {
@@ -510,7 +551,8 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
   }
 
   public HtmlTableCellBuilder startTH() {
-    return trustedStart(TableCellElement.TAG_TH, tableCellBuilder);
+    trustedStart(TableCellElement.TAG_TH, tableCellBuilder);
+    return tableCellBuilder;
   }
 
   public HtmlTableSectionBuilder startTHead() {
@@ -521,25 +563,29 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (titleBuilder == null) {
       titleBuilder = new HtmlTitleBuilder(this);
     }
-    return trustedStart(TitleElement.TAG, titleBuilder);
+    trustedStart(TitleElement.TAG, titleBuilder);
+    return titleBuilder;
   }
 
   public HtmlTableRowBuilder startTR() {
-    return trustedStart(TableRowElement.TAG, tableRowBuilder);
+    trustedStart(TableRowElement.TAG, tableRowBuilder);
+    return tableRowBuilder;
   }
 
   public HtmlUListBuilder startUList() {
     if (uListBuilder == null) {
       uListBuilder = new HtmlUListBuilder(this);
     }
-    return trustedStart(UListElement.TAG, uListBuilder);
+    trustedStart(UListElement.TAG, uListBuilder);
+    return uListBuilder;
   }
 
   public HtmlVideoBuilder startVideo() {
     if (videoBuilder == null) {
       videoBuilder = new HtmlVideoBuilder(this);
     }
-    return trustedStart(VideoElement.TAG, videoBuilder);
+    trustedStart(VideoElement.TAG, videoBuilder);
+    return videoBuilder;
   }
 
   @Override
@@ -553,8 +599,26 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     return style();
   }
 
+  /**
+   * Add a trusted attribute without escaping the name.
+   */
+  public void trustedAttribute(String name, int value) {
+    assertCanAddAttributeImpl();
+    sb.append(" ").append(name).append("=\"").append(value).append("\"");
+  }
+
+  /**
+   * Add a trusted attribute without escaping the name. The value is still
+   * escaped.
+   */
+  public void trustedAttribute(String name, String value) {
+    assertCanAddAttributeImpl();
+    sb.append(" ").append(name).append("=\"").append(escape(value)).append("\"");
+  }
+
   public HtmlElementBuilder trustedStart(String tagName) {
-    return trustedStart(tagName, elementBuilder);
+    trustedStart(tagName, elementBuilder);
+    return elementBuilder;
   }
 
   @Override
@@ -625,9 +689,9 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (buttonBuilder == null) {
       buttonBuilder = new HtmlButtonBuilder(this);
     }
-    HtmlButtonBuilder builder = trustedStart("button", buttonBuilder);
-    builder.attribute("type", type);
-    return builder;
+    trustedStart("button", buttonBuilder);
+    buttonBuilder.attribute("type", type);
+    return buttonBuilder;
   }
 
   /**
@@ -637,7 +701,8 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (headingBuilder == null) {
       headingBuilder = new HtmlHeadingBuilder(this);
     }
-    return trustedStart("h" + level, headingBuilder);
+    trustedStart("h" + level, headingBuilder);
+    return headingBuilder;
   }
 
   /**
@@ -656,7 +721,8 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (quoteBuilder == null) {
       quoteBuilder = new HtmlQuoteBuilder(this);
     }
-    return trustedStart(tagName, quoteBuilder);
+    trustedStart(tagName, quoteBuilder);
+    return quoteBuilder;
   }
 
   /**
@@ -666,7 +732,8 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (tableColBuilder == null) {
       tableColBuilder = new HtmlTableColBuilder(this);
     }
-    return trustedStart(tagName, tableColBuilder);
+    trustedStart(tagName, tableColBuilder);
+    return tableColBuilder;
   }
 
   /**
@@ -676,18 +743,16 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     if (tableSectionBuilder == null) {
       tableSectionBuilder = new HtmlTableSectionBuilder(this);
     }
-    return trustedStart(tagName, tableSectionBuilder);
+    trustedStart(tagName, tableSectionBuilder);
+    return tableSectionBuilder;
   }
 
   /**
    * Start a tag using the specified builder. The tagName is not checked or
    * escaped.
-   * 
-   * @return the builder
    */
-  private <B extends ElementBuilderBase<?>> B trustedStart(String tagName, B builder) {
+  private void trustedStart(String tagName, ElementBuilderBase<?> builder) {
     onStart(tagName, builder);
     sb.append("<").append(tagName);
-    return builder;
   }
 }

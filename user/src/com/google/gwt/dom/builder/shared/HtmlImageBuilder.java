@@ -26,26 +26,26 @@ public class HtmlImageBuilder extends HtmlElementBuilderBase<ImageBuilder> imple
 
   @Override
   public ImageBuilder alt(String alt) {
-    return attribute("alt", alt);
+    return trustedAttribute("alt", alt);
   }
 
   @Override
   public ImageBuilder height(int height) {
-    return attribute("height", height);
+    return trustedAttribute("height", height);
   }
 
   @Override
   public ImageBuilder isMap() {
-    return attribute("ismap", "ismap");
+    return trustedAttribute("ismap", "ismap");
   }
 
   @Override
   public ImageBuilder src(String src) {
-    return attribute("src", src);
+    return trustedAttribute("src", src);
   }
 
   @Override
   public ImageBuilder width(int width) {
-    return attribute("width", width);
+    return trustedAttribute("width", width);
   }
 }

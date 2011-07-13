@@ -29,22 +29,22 @@ public class HtmlTextAreaBuilder extends HtmlElementBuilderBase<TextAreaBuilder>
 
   @Override
   public TextAreaBuilder accessKey(String accessKey) {
-    return attribute("accessKey", accessKey);
+    return trustedAttribute("accessKey", accessKey);
   }
 
   @Override
   public TextAreaBuilder cols(int cols) {
-    return attribute("cols", cols);
+    return trustedAttribute("cols", cols);
   }
 
   @Override
   public TextAreaBuilder defaultValue(String defaultValue) {
-    return attribute("defaultValue", defaultValue);
+    return trustedAttribute("defaultValue", defaultValue);
   }
 
   @Override
   public TextAreaBuilder disabled() {
-    return attribute("disabled", "disabled");
+    return trustedAttribute("disabled", "disabled");
   }
 
   @Override
@@ -59,21 +59,21 @@ public class HtmlTextAreaBuilder extends HtmlElementBuilderBase<TextAreaBuilder>
 
   @Override
   public TextAreaBuilder name(String name) {
-    return attribute("name", name);
+    return trustedAttribute("name", name);
   }
 
   @Override
   public TextAreaBuilder readOnly() {
-    return attribute("readonly", "readonly");
+    return trustedAttribute("readonly", "readonly");
   }
 
   @Override
   public TextAreaBuilder rows(int rows) {
-    return attribute("rows", rows);
+    return trustedAttribute("rows", rows);
   }
 
   @Override
   public TextAreaBuilder value(String value) {
-    return attribute("value", value);
+    return trustedAttribute("value", value);
   }
 }

@@ -26,8 +26,8 @@ public class HtmlLIBuilderTest extends ElementBuilderTestBase<LIBuilder> {
   }
 
   @Override
-  protected LIBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endLI();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endLI();
   }
 
   @Override

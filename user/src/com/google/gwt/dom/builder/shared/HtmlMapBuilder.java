@@ -26,6 +26,6 @@ public class HtmlMapBuilder extends HtmlElementBuilderBase<MapBuilder> implement
 
   @Override
   public MapBuilder name(String name) {
-    return attribute("name", name);
+    return trustedAttribute("name", name);
   }
 }

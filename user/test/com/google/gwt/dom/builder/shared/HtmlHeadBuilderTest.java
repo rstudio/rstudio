@@ -26,8 +26,8 @@ public class HtmlHeadBuilderTest extends ElementBuilderTestBase<HeadBuilder> {
   }
 
   @Override
-  protected HeadBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endHead();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endHead();
   }
 
   @Override

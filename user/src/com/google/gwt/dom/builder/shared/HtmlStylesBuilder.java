@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.builder.shared;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Display;
@@ -43,13 +45,79 @@ import java.util.Map;
 class HtmlStylesBuilder implements StylesBuilder {
 
   /**
+   * A very fast map implemented using a {@link JavaScriptObject} when running
+   * in production.
+   */
+  private static interface FastStringMap {
+    /**
+     * Get a value.
+     * 
+     * @return the value, or null if not in the map
+     */
+    String get(String key);
+
+    /**
+     * Set a value.
+     */
+    void put(String key, String value);
+  }
+
+  /**
+   * JRE implementation of {@link FastStringMap}.
+   */
+  private static class FastStringMapJre implements FastStringMap {
+
+    private final Map<String, String> map = new HashMap<String, String>();
+
+    @Override
+    public String get(String key) {
+      return map.get(key);
+    }
+
+    @Override
+    public void put(String key, String value) {
+      map.put(key, value);
+    }
+  }
+
+  /**
+   * Native implementation of {@link FastStringMap}.
+   * 
+   * The native implementation sets and retrieves properties on a
+   * {@link JavaScriptObject}, which avoids the dynamic casts associated with
+   * the emulated version of {@link java.util.Map}.
+   */
+  private static class FastStringMapClient implements FastStringMap {
+
+    private final JavaScriptObject map = JavaScriptObject.createObject();
+
+    @Override
+    public String get(String key) {
+      return getImpl(map, key);
+    }
+
+    @Override
+    public void put(String key, String value) {
+      putImpl(map, key, value);
+    }
+
+    private native String getImpl(JavaScriptObject map, String key) /*-{
+      return map[key] || null;
+    }-*/;
+
+    private native void putImpl(JavaScriptObject map, String key, String value) /*-{
+      map[key] = value;
+    }-*/;
+  }
+
+  /**
    * A map of camelCase style properties to their hyphenated equivalents.
    * 
    * The set of style property names is limited, and common ones are reused
    * frequently, so caching saves us from converting every style property name
    * from camelCase to hyphenated form.
    */
-  private static Map<String, String> camelCaseMap;
+  private static FastStringMap camelCaseMap;
 
   /**
    * Regex to match a word in a camelCase phrase. A word starts with an
@@ -77,7 +145,7 @@ class HtmlStylesBuilder implements StylesBuilder {
   static String toHyphenatedForm(String name) {
     // Static initializers.
     if (camelCaseWord == null) {
-      camelCaseMap = new HashMap<String, String>();
+      camelCaseMap = GWT.isClient() ? new FastStringMapClient() : new FastStringMapJre();
       camelCaseWord = RegExp.compile("([A-Za-z])([^A-Z]*)", "g");
       caseWord = RegExp.compile("[A-Z]([^A-Z]*)");
     }
@@ -154,10 +222,9 @@ class HtmlStylesBuilder implements StylesBuilder {
     return delegate.styleProperty(SafeStylesUtils.forDisplay(value));
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endStyle() {
-    return (B) delegate.endStyle();
+  public void endStyle() {
+    delegate.endStyle();
   }
 
   @Override

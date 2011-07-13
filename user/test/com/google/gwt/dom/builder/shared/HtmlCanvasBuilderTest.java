@@ -26,8 +26,8 @@ public class HtmlCanvasBuilderTest extends ElementBuilderTestBase<CanvasBuilder>
   }
 
   @Override
-  protected CanvasBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endCanvas();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endCanvas();
   }
 
   @Override

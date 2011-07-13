@@ -29,7 +29,7 @@ public class HtmlIFrameBuilder extends HtmlElementBuilderBase<IFrameBuilder> imp
 
   @Override
   public IFrameBuilder frameBorder(int frameBorder) {
-    return attribute("frameBorder", frameBorder);
+    return trustedAttribute("frameBorder", frameBorder);
   }
 
   @Override
@@ -44,32 +44,32 @@ public class HtmlIFrameBuilder extends HtmlElementBuilderBase<IFrameBuilder> imp
 
   @Override
   public IFrameBuilder marginHeight(int marginHeight) {
-    return attribute("marginHeight", marginHeight);
+    return trustedAttribute("marginHeight", marginHeight);
   }
 
   @Override
   public IFrameBuilder marginWidth(int marginWidth) {
-    return attribute("marginWidth", marginWidth);
+    return trustedAttribute("marginWidth", marginWidth);
   }
 
   @Override
   public IFrameBuilder name(String name) {
-    return attribute("name", name);
+    return trustedAttribute("name", name);
   }
 
   @Override
   public IFrameBuilder noResize() {
-    return attribute("noresize", "noresize");
+    return trustedAttribute("noresize", "noresize");
   }
 
   @Override
   public IFrameBuilder scrolling(String scrolling) {
-    return attribute("scrolling", scrolling);
+    return trustedAttribute("scrolling", scrolling);
   }
 
   @Override
   public IFrameBuilder src(String src) {
-    return attribute("src", src);
+    return trustedAttribute("src", src);
   }
 
   @Override

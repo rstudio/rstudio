@@ -29,17 +29,17 @@ public class HtmlTableRowBuilder extends HtmlElementBuilderBase<TableRowBuilder>
 
   @Override
   public TableRowBuilder align(String align) {
-    return attribute("align", align);
+    return trustedAttribute("align", align);
   }
 
   @Override
   public TableRowBuilder ch(String ch) {
-    return attribute("ch", ch);
+    return trustedAttribute("ch", ch);
   }
 
   @Override
   public TableRowBuilder chOff(String chOff) {
-    return attribute("chOff", chOff);
+    return trustedAttribute("chOff", chOff);
   }
 
   @Override
@@ -54,6 +54,6 @@ public class HtmlTableRowBuilder extends HtmlElementBuilderBase<TableRowBuilder>
 
   @Override
   public TableRowBuilder vAlign(String vAlign) {
-    return attribute("vAlign", vAlign);
+    return trustedAttribute("vAlign", vAlign);
   }
 }

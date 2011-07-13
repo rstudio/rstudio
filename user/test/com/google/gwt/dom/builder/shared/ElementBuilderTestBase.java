@@ -135,11 +135,13 @@ public abstract class ElementBuilderTestBase<T extends ElementBuilderBase<?>> ex
         }
       }
 
-      try {
-        builder.startDiv();
-        fail("Expected IllegalStateException: appending a div after setting text");
-      } catch (IllegalStateException e) {
-        // Expected.
+      if (isChildElementSupported) {
+        try {
+          builder.startDiv();
+          fail("Expected IllegalStateException: appending a div after setting text");
+        } catch (IllegalStateException e) {
+          // Expected.
+        }
       }
     }
   }
@@ -198,41 +200,13 @@ public abstract class ElementBuilderTestBase<T extends ElementBuilderBase<?>> ex
     }, "Cannot add attribute after appending html");
   }
 
-  public void testEndReturnType() {
-    if (!isChildElementSupported) {
-      return;
-    }
-
-    for (ElementBuilderFactory factory : getFactories()) {
-      T builder = createElementBuilder(factory);
-      DivBuilder divBuilder0 = builder.startDiv();
-      DivBuilder divBuilder1 = divBuilder0.startDiv();
-      assertEquals(divBuilder0, divBuilder1.end());
-      assertEquals(builder, divBuilder0.end());
-      assertNull(builder.end());
-    }
-  }
-
-  public void testEndReturnTypeSpecified() {
-    if (!isChildElementSupported) {
-      return;
-    }
-
-    for (ElementBuilderFactory factory : getFactories()) {
-      T builder = createElementBuilder(factory);
-      DivBuilder divBuilder0 = builder.startDiv();
-      DivBuilder divBuilder1 = divBuilder0.startDiv();
-      assertEquals(divBuilder0, divBuilder1.<DivBuilder> end());
-    }
-  }
-
-  public void testEndSpecifiedType() {
+  public void testEnd() {
     for (ElementBuilderFactory factory : getFactories()) {
       // Test that a builder can be ended if it comes directly from the factory.
       {
         T builder = createElementBuilder(factory);
         builder.id("myid");
-        assertNull(endElement(builder));
+        endElement(builder);
       }
 
       /*
@@ -244,8 +218,8 @@ public abstract class ElementBuilderTestBase<T extends ElementBuilderBase<?>> ex
       if (isChildElementSupported) {
         T builder = createElementBuilder(factory);
         T elem = startElement(builder);
-        assertEquals(builder, endElement(elem));
-        assertNull(builder.end());
+        endElement(elem);
+        builder.end();
       }
     }
   }
@@ -640,9 +614,8 @@ public abstract class ElementBuilderTestBase<T extends ElementBuilderBase<?>> ex
    * End the element within an existing builder.
    * 
    * @param builder the existing builder
-   * @return the builder for the new element
    */
-  protected abstract T endElement(ElementBuilderBase<?> builder);
+  protected abstract void endElement(ElementBuilderBase<?> builder);
 
   /**
    * Get the array of factories to test.

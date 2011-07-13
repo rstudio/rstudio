@@ -26,11 +26,11 @@ public class HtmlParamBuilder extends HtmlElementBuilderBase<ParamBuilder> imple
 
   @Override
   public ParamBuilder name(String name) {
-    return attribute("name", name);
+    return trustedAttribute("name", name);
   }
 
   @Override
   public ParamBuilder value(String value) {
-    return attribute("value", value);
+    return trustedAttribute("value", value);
   }
 }

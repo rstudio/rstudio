@@ -26,41 +26,41 @@ public class HtmlFrameBuilder extends HtmlElementBuilderBase<FrameBuilder> imple
 
   @Override
   public FrameBuilder frameBorder(int frameBorder) {
-    return attribute("frameBorder", frameBorder);
+    return trustedAttribute("frameBorder", frameBorder);
   }
 
   @Override
   public FrameBuilder longDesc(String longDesc) {
-    return attribute("longDesc", longDesc);
+    return trustedAttribute("longDesc", longDesc);
   }
 
   @Override
   public FrameBuilder marginHeight(int marginHeight) {
-    return attribute("marginHeight", marginHeight);
+    return trustedAttribute("marginHeight", marginHeight);
   }
 
   @Override
   public FrameBuilder marginWidth(int marginWidth) {
-    return attribute("marginWidth", marginWidth);
+    return trustedAttribute("marginWidth", marginWidth);
   }
 
   @Override
   public FrameBuilder name(String name) {
-    return attribute("name", name);
+    return trustedAttribute("name", name);
   }
 
   @Override
   public FrameBuilder noResize() {
-    return attribute("noresize", "noresize");
+    return trustedAttribute("noresize", "noresize");
   }
 
   @Override
   public FrameBuilder scrolling(String scrolling) {
-    return attribute("scrolling", scrolling);
+    return trustedAttribute("scrolling", scrolling);
   }
 
   @Override
   public FrameBuilder src(String src) {
-    return attribute("src", src);
+    return trustedAttribute("src", src);
   }
 }

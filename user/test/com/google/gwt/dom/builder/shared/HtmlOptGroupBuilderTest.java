@@ -26,8 +26,8 @@ public class HtmlOptGroupBuilderTest extends ElementBuilderTestBase<OptGroupBuil
   }
 
   @Override
-  protected OptGroupBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endOptGroup();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endOptGroup();
   }
 
   @Override

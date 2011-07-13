@@ -29,7 +29,7 @@ public class HtmlFrameSetBuilder extends HtmlElementBuilderBase<FrameSetBuilder>
 
   @Override
   public FrameSetBuilder cols(String cols) {
-    return attribute("cols", cols);
+    return trustedAttribute("cols", cols);
   }
 
   @Override
@@ -39,7 +39,7 @@ public class HtmlFrameSetBuilder extends HtmlElementBuilderBase<FrameSetBuilder>
 
   @Override
   public FrameSetBuilder rows(String rows) {
-    return attribute("rows", rows);
+    return trustedAttribute("rows", rows);
   }
 
   @Override

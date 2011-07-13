@@ -26,8 +26,8 @@ public class HtmlTitleBuilderTest extends ElementBuilderTestBase<TitleBuilder> {
   }
 
   @Override
-  protected TitleBuilder endElement(ElementBuilderBase<?> builder) {
-    return ((HtmlElementBuilderBase<?>) builder).endTitle();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    ((HtmlElementBuilderBase<?>) builder).endTitle();
   }
 
   @Override

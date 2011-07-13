@@ -25,8 +25,8 @@ public class HtmlParagraphBuilderTest extends ElementBuilderTestBase<ParagraphBu
     return factory.createParagraphBuilder();
   }
   @Override
-  protected ParagraphBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endParagraph();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endParagraph();
   }
 
   @Override

@@ -27,21 +27,21 @@ public class HtmlButtonBuilder extends HtmlElementBuilderBase<ButtonBuilder> imp
 
   @Override
   public ButtonBuilder accessKey(String accessKey) {
-    return attribute("accessKey", accessKey);
+    return trustedAttribute("accessKey", accessKey);
   }
 
   @Override
   public ButtonBuilder disabled() {
-    return attribute("disabled", "disabled");
+    return trustedAttribute("disabled", "disabled");
   }
 
   @Override
   public ButtonBuilder name(String name) {
-    return attribute("name", name);
+    return trustedAttribute("name", name);
   }
 
   @Override
   public ButtonBuilder value(String value) {
-    return attribute("value", value);
+    return trustedAttribute("value", value);
   }
 }

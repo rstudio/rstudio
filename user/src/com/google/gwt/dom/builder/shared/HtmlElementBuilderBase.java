@@ -67,6 +67,12 @@ public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> extends
   }
 
   @Override
+  public R attribute(String name, int value) {
+    delegate.attribute(name, value);
+    return getReturnBuilder();
+  }
+
+  @Override
   public R attribute(String name, String value) {
     delegate.attribute(name, value);
     return getReturnBuilder();
@@ -74,43 +80,36 @@ public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> extends
 
   @Override
   public R className(String className) {
-    return attribute("class", className);
+    return trustedAttribute("class", className);
   }
 
   @Override
   public R dir(String dir) {
-    return attribute("dir", dir);
+    return trustedAttribute("dir", dir);
   }
 
   @Override
   public R draggable(String draggable) {
-    return attribute("draggable", draggable);
+    return trustedAttribute("draggable", draggable);
   }
 
   /**
    * End the current element.
    * 
-   * @param <B> the type of the parent element
-   * @return the {@link ElementBuilderBase} for the parent element, or null if
-   *         the current element does not have a parent
-   * @throws IllegalStateException if the current element has the wrong tag
-   * @throws ClassCastException if the parent builder does not match the
-   *           specified class
    * @see #end()
    */
-  @SuppressWarnings("unchecked")
-  public <B extends ElementBuilderBase<?>> B endTitle() {
-    return (B) end(TitleElement.TAG);
+  public void endTitle() {
+    end(TitleElement.TAG);
   }
 
   @Override
   public R id(String id) {
-    return attribute("id", id);
+    return trustedAttribute("id", id);
   }
 
   @Override
   public R lang(String lang) {
-    return attribute("lang", lang);
+    return trustedAttribute("lang", lang);
   }
 
   @Override
@@ -159,8 +158,8 @@ public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> extends
   }
 
   @Override
-  public InputBuilder startCheckInput() {
-    return delegate.startCheckInput();
+  public InputBuilder startCheckboxInput() {
+    return delegate.startCheckboxInput();
   }
 
   @Override
@@ -464,16 +463,32 @@ public class HtmlElementBuilderBase<R extends ElementBuilderBase<?>> extends
 
   @Override
   public R tabIndex(int tabIndex) {
-    return attribute("tabIndex", tabIndex);
+    return trustedAttribute("tabIndex", tabIndex);
   }
 
   @Override
   public R title(String title) {
-    return attribute("title", title);
+    return trustedAttribute("title", title);
   }
 
   @Override
   public ElementBuilder trustedStart(String tagName) {
     return delegate.trustedStart(tagName);
+  }
+
+  /**
+   * Add an attribute with a trusted name.
+   */
+  R trustedAttribute(String name, int value) {
+    delegate.trustedAttribute(name, value);
+    return getReturnBuilder();
+  }
+
+  /**
+   * Add an attribute with a trusted name. The name is still escaped.
+   */
+  R trustedAttribute(String name, String value) {
+    delegate.trustedAttribute(name, value);
+    return getReturnBuilder();
   }
 }

@@ -26,8 +26,8 @@ public class HtmlSelectBuilderTest extends ElementBuilderTestBase<SelectBuilder>
   }
 
   @Override
-  protected SelectBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endSelect();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endSelect();
   }
 
   @Override

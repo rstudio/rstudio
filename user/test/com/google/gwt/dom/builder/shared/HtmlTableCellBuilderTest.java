@@ -26,8 +26,8 @@ public class HtmlTableCellBuilderTest extends ElementBuilderTestBase<TableCellBu
   }
 
   @Override
-  protected TableCellBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endTD();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endTD();
   }
 
   @Override

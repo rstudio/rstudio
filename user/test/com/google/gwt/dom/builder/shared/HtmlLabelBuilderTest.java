@@ -26,8 +26,8 @@ public class HtmlLabelBuilderTest extends ElementBuilderTestBase<LabelBuilder> {
   }
 
   @Override
-  protected LabelBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endLabel();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endLabel();
   }
 
   @Override

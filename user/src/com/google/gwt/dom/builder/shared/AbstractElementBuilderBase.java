@@ -84,370 +84,310 @@ public abstract class AbstractElementBuilderBase<R extends ElementBuilderBase<?>
 
   private final ElementBuilderImpl delegate;
   private final boolean isEndTagForbidden;
+  private final R returnBuilder;
 
+  @SuppressWarnings("unchecked")
   protected AbstractElementBuilderBase(ElementBuilderImpl delegate, boolean isEndTagForbidden) {
     this.delegate = delegate;
     this.isEndTagForbidden = isEndTagForbidden;
+
+    // Cache the return builder to avoid repeated cast checks.
+    this.returnBuilder = (R) this;
   }
 
   @Override
-  public R attribute(String name, int value) {
-    return attribute(name, String.valueOf(value));
+  public void end() {
+    delegate.end();
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B end() {
-    // An explicit cast is required to satisfy some javac compilers.
-    return (B) delegate.end();
+  public void end(String tagName) {
+    delegate.end(tagName);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B end(String tagName) {
-    return (B) delegate.end(tagName);
+  public void endAnchor() {
+    end(AnchorElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endAnchor() {
-    return (B) end(AnchorElement.TAG);
+  public void endArea() {
+    end(AreaElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endArea() {
-    return (B) end(AreaElement.TAG);
+  public void endAudio() {
+    end(AudioElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endAudio() {
-    return (B) end(AudioElement.TAG);
+  public void endBase() {
+    end(BaseElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endBase() {
-    return (B) end(BaseElement.TAG);
+  public void endBlockQuote() {
+    end(QuoteElement.TAG_BLOCKQUOTE);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endBlockQuote() {
-    return (B) end(QuoteElement.TAG_BLOCKQUOTE);
+  public void endBody() {
+    end(BodyElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endBody() {
-    return (B) end(BodyElement.TAG);
+  public void endBR() {
+    end(BRElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endBR() {
-    return (B) end(BRElement.TAG);
+  public void endButton() {
+    end(ButtonElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endButton() {
-    return (B) end(ButtonElement.TAG);
+  public void endCanvas() {
+    end(CanvasElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endCanvas() {
-    return (B) end(CanvasElement.TAG);
+  public void endCol() {
+    end(TableColElement.TAG_COL);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endCol() {
-    return (B) end(TableColElement.TAG_COL);
+  public void endColGroup() {
+    end(TableColElement.TAG_COLGROUP);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endColGroup() {
-    return (B) end(TableColElement.TAG_COLGROUP);
+  public void endDiv() {
+    end(DivElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endDiv() {
-    return (B) end(DivElement.TAG);
+  public void endDList() {
+    end(DListElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endDList() {
-    return (B) end(DListElement.TAG);
+  public void endFieldSet() {
+    end(FieldSetElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endFieldSet() {
-    return (B) end(FieldSetElement.TAG);
+  public void endForm() {
+    end(FormElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endForm() {
-    return (B) end(FormElement.TAG);
+  public void endFrame() {
+    end(FrameElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endFrame() {
-    return (B) end(FrameElement.TAG);
+  public void endFrameSet() {
+    end(FrameSetElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endFrameSet() {
-    return (B) end(FrameSetElement.TAG);
+  public void endH1() {
+    end(HeadingElement.TAG_H1);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endH1() {
-    return (B) end(HeadingElement.TAG_H1);
+  public void endH2() {
+    end(HeadingElement.TAG_H2);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endH2() {
-    return (B) end(HeadingElement.TAG_H2);
+  public void endH3() {
+    end(HeadingElement.TAG_H3);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endH3() {
-    return (B) end(HeadingElement.TAG_H3);
+  public void endH4() {
+    end(HeadingElement.TAG_H4);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endH4() {
-    return (B) end(HeadingElement.TAG_H4);
+  public void endH5() {
+    end(HeadingElement.TAG_H5);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endH5() {
-    return (B) end(HeadingElement.TAG_H5);
+  public void endH6() {
+    end(HeadingElement.TAG_H6);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endH6() {
-    return (B) end(HeadingElement.TAG_H6);
+  public void endHead() {
+    end(HeadElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endHead() {
-    return (B) end(HeadElement.TAG);
+  public void endHR() {
+    end(HRElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endHR() {
-    return (B) end(HRElement.TAG);
+  public void endIFrame() {
+    end(IFrameElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endIFrame() {
-    return (B) end(IFrameElement.TAG);
+  public void endImage() {
+    end(ImageElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endImage() {
-    return (B) end(ImageElement.TAG);
+  public void endInput() {
+    end(InputElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endInput() {
-    return (B) end(InputElement.TAG);
+  public void endLabel() {
+    end(LabelElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endLabel() {
-    return (B) end(LabelElement.TAG);
+  public void endLegend() {
+    end(LegendElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endLegend() {
-    return (B) end(LegendElement.TAG);
+  public void endLI() {
+    end(LIElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endLI() {
-    return (B) end(LIElement.TAG);
+  public void endLink() {
+    end(LinkElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endLink() {
-    return (B) end(LinkElement.TAG);
+  public void endMap() {
+    end(MapElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endMap() {
-    return (B) end(MapElement.TAG);
+  public void endMeta() {
+    end(MetaElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endMeta() {
-    return (B) end(MetaElement.TAG);
+  public void endOList() {
+    end(OListElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endOList() {
-    return (B) end(OListElement.TAG);
+  public void endOptGroup() {
+    end(OptGroupElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endOptGroup() {
-    return (B) end(OptGroupElement.TAG);
+  public void endOption() {
+    end(OptionElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endOption() {
-    return (B) end(OptionElement.TAG);
+  public void endParagraph() {
+    end(ParagraphElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endParagraph() {
-    return (B) end(ParagraphElement.TAG);
+  public void endParam() {
+    end(ParamElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endParam() {
-    return (B) end(ParamElement.TAG);
+  public void endPre() {
+    end(PreElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endPre() {
-    return (B) end(PreElement.TAG);
+  public void endQuote() {
+    end(QuoteElement.TAG_Q);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endQuote() {
-    return (B) end(QuoteElement.TAG_Q);
+  public void endScript() {
+    end(ScriptElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endScript() {
-    return (B) end(ScriptElement.TAG);
+  public void endSelect() {
+    end(SelectElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endSelect() {
-    return (B) end(SelectElement.TAG);
+  public void endSource() {
+    end(SourceElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endSource() {
-    return (B) end(SourceElement.TAG);
+  public void endSpan() {
+    end(SpanElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endSpan() {
-    return (B) end(SpanElement.TAG);
+  public void endStyle() {
+    end(StyleElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endStyle() {
-    return (B) end(StyleElement.TAG);
+  public void endTable() {
+    end(TableElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endTable() {
-    return (B) end(TableElement.TAG);
+  public void endTableCaption() {
+    end(TableCaptionElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endTableCaption() {
-    return (B) end(TableCaptionElement.TAG);
+  public void endTBody() {
+    end(TableSectionElement.TAG_TBODY);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endTBody() {
-    return (B) end(TableSectionElement.TAG_TBODY);
+  public void endTD() {
+    end(TableCellElement.TAG_TD);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endTD() {
-    return (B) end(TableCellElement.TAG_TD);
+  public void endTextArea() {
+    end(TextAreaElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endTextArea() {
-    return (B) end(TextAreaElement.TAG);
+  public void endTFoot() {
+    end(TableSectionElement.TAG_TFOOT);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endTFoot() {
-    return (B) end(TableSectionElement.TAG_TFOOT);
+  public void endTH() {
+    end(TableCellElement.TAG_TH);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endTH() {
-    return (B) end(TableCellElement.TAG_TH);
+  public void endTHead() {
+    end(TableSectionElement.TAG_THEAD);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endTHead() {
-    return (B) end(TableSectionElement.TAG_THEAD);
+  public void endTR() {
+    end(TableRowElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endTR() {
-    return (B) end(TableRowElement.TAG);
+  public void endUList() {
+    end(UListElement.TAG);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <B extends ElementBuilderBase<?>> B endUList() {
-    return (B) end(UListElement.TAG);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <B extends ElementBuilderBase<?>> B endVideo() {
-    return (B) end(VideoElement.TAG);
+  public void endVideo() {
+    end(VideoElement.TAG);
   }
 
   @Override
@@ -487,8 +427,7 @@ public abstract class AbstractElementBuilderBase<R extends ElementBuilderBase<?>
    * 
    * @return the return builder
    */
-  @SuppressWarnings("unchecked")
   protected R getReturnBuilder() {
-    return (R) this;
+    return returnBuilder;
   }
 }

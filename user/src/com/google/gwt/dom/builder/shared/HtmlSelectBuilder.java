@@ -27,36 +27,36 @@ public class HtmlSelectBuilder extends HtmlElementBuilderBase<SelectBuilder> imp
 
   @Override
   public SelectBuilder disabled() {
-    return attribute("disabled", "disabled");
+    return trustedAttribute("disabled", "disabled");
   }
 
   @Override
   public SelectBuilder multiple() {
-    return attribute("multiple", "multiple");
+    return trustedAttribute("multiple", "multiple");
   }
 
   @Override
   public SelectBuilder name(String name) {
-    return attribute("name", name);
+    return trustedAttribute("name", name);
   }
 
   @Override
   public SelectBuilder selectedIndex(int index) {
-    return attribute("index", index);
+    return trustedAttribute("index", index);
   }
 
   @Override
   public SelectBuilder size(int size) {
-    return attribute("size", size);
+    return trustedAttribute("size", size);
   }
 
   @Override
   public SelectBuilder type(String type) {
-    return attribute("type", type);
+    return trustedAttribute("type", type);
   }
 
   @Override
   public SelectBuilder value(String value) {
-    return attribute("value", value);
+    return trustedAttribute("value", value);
   }
 }

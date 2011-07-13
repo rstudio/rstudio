@@ -26,8 +26,8 @@ public class HtmlImageBuilderTest extends ElementBuilderTestBase<ImageBuilder> {
   }
 
   @Override
-  protected ImageBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endImage();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endImage();
   }
 
   @Override

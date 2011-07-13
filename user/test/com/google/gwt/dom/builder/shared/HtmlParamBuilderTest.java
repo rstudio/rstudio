@@ -26,8 +26,8 @@ public class HtmlParamBuilderTest extends ElementBuilderTestBase<ParamBuilder> {
   }
 
   @Override
-  protected ParamBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endParam();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endParam();
   }
 
   @Override

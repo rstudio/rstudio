@@ -135,7 +135,7 @@ public abstract class ElementBuilderFactory {
 
   public abstract CanvasBuilder createCanvasBuilder();
 
-  public abstract InputBuilder createCheckInputBuilder();
+  public abstract InputBuilder createCheckboxInputBuilder();
 
   public abstract TableColBuilder createColBuilder();
 

@@ -105,6 +105,12 @@ public class DomElementBuilderBase<R extends ElementBuilderBase<?>, E extends El
   }
 
   @Override
+  public R attribute(String name, int value) {
+    assertCanAddAttribute().setAttribute(name, String.valueOf(value));
+    return getReturnBuilder();
+  }
+
+  @Override
   public R attribute(String name, String value) {
     assertCanAddAttribute().setAttribute(name, value);
     return getReturnBuilder();
@@ -186,8 +192,8 @@ public class DomElementBuilderBase<R extends ElementBuilderBase<?>, E extends El
   }
 
   @Override
-  public InputBuilder startCheckInput() {
-    return delegate.startCheckInput();
+  public InputBuilder startCheckboxInput() {
+    return delegate.startCheckboxInput();
   }
 
   @Override

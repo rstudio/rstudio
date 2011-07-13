@@ -26,8 +26,8 @@ public class HtmlButtonBuilderTest extends ElementBuilderTestBase<ButtonBuilder>
   }
 
   @Override
-  protected ButtonBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endButton();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endButton();
   }
 
   @Override

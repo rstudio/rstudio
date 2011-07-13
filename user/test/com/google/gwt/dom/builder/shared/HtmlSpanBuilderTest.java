@@ -26,8 +26,8 @@ public class HtmlSpanBuilderTest extends ElementBuilderTestBase<SpanBuilder> {
   }
 
   @Override
-  protected SpanBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endSpan();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endSpan();
   }
 
   @Override

@@ -26,8 +26,8 @@ public class HtmlTableColBuilderTest extends ElementBuilderTestBase<TableColBuil
   }
 
   @Override
-  protected TableColBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endCol();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endCol();
   }
 
   @Override

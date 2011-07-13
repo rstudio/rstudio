@@ -26,8 +26,8 @@ public class HtmlAreaBuilderTest extends ElementBuilderTestBase<AreaBuilder> {
   }
 
   @Override
-  protected AreaBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endArea();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endArea();
   }
 
   @Override

@@ -95,8 +95,8 @@ public class HtmlBuilderFactory extends ElementBuilderFactory {
   }
 
   @Override
-  public InputBuilder createCheckInputBuilder() {
-    return impl().startCheckInput();
+  public InputBuilder createCheckboxInputBuilder() {
+    return impl().startCheckboxInput();
   }
 
   @Override

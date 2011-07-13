@@ -26,8 +26,8 @@ public class HtmlFrameBuilderTest extends ElementBuilderTestBase<FrameBuilder> {
   }
 
   @Override
-  protected FrameBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endFrame();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endFrame();
   }
 
   @Override

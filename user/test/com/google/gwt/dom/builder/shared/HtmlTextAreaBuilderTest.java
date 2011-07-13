@@ -26,8 +26,8 @@ public class HtmlTextAreaBuilderTest extends ElementBuilderTestBase<TextAreaBuil
   }
 
   @Override
-  protected TextAreaBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endTextArea();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endTextArea();
   }
 
   @Override

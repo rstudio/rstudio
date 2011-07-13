@@ -27,31 +27,31 @@ public class HtmlTableColBuilder extends HtmlElementBuilderBase<TableColBuilder>
 
   @Override
   public TableColBuilder align(String align) {
-    return attribute("align", align);
+    return trustedAttribute("align", align);
   }
 
   @Override
   public TableColBuilder ch(String ch) {
-    return attribute("ch", ch);
+    return trustedAttribute("ch", ch);
   }
 
   @Override
   public TableColBuilder chOff(String chOff) {
-    return attribute("chOff", chOff);
+    return trustedAttribute("chOff", chOff);
   }
 
   @Override
   public TableColBuilder span(int span) {
-    return attribute("span", span);
+    return trustedAttribute("span", span);
   }
 
   @Override
   public TableColBuilder vAlign(String vAlign) {
-    return attribute("vAlign", vAlign);
+    return trustedAttribute("vAlign", vAlign);
   }
 
   @Override
   public TableColBuilder width(String width) {
-    return attribute("width", width);
+    return trustedAttribute("width", width);
   }
 }

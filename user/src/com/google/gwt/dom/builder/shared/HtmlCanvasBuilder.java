@@ -27,11 +27,11 @@ public class HtmlCanvasBuilder extends HtmlElementBuilderBase<CanvasBuilder> imp
 
   @Override
   public CanvasBuilder height(int height) {
-    return attribute("height", height);
+    return trustedAttribute("height", height);
   }
 
   @Override
   public CanvasBuilder width(int width) {
-    return attribute("width", width);
+    return trustedAttribute("width", width);
   }
 }

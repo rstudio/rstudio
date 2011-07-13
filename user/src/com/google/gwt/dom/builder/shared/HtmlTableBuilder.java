@@ -28,22 +28,22 @@ public class HtmlTableBuilder extends HtmlElementBuilderBase<TableBuilder> imple
 
   @Override
   public TableBuilder border(int border) {
-    return attribute("border", border);
+    return trustedAttribute("border", border);
   }
 
   @Override
   public TableBuilder cellPadding(int cellPadding) {
-    return attribute("cellPadding", cellPadding);
+    return trustedAttribute("cellPadding", cellPadding);
   }
 
   @Override
   public TableBuilder cellSpacing(int cellSpacing) {
-    return attribute("cellSpacing", cellSpacing);
+    return trustedAttribute("cellSpacing", cellSpacing);
   }
 
   @Override
   public TableBuilder frame(String frame) {
-    return attribute("frame", frame);
+    return trustedAttribute("frame", frame);
   }
 
   @Override
@@ -53,7 +53,7 @@ public class HtmlTableBuilder extends HtmlElementBuilderBase<TableBuilder> imple
 
   @Override
   public TableBuilder rules(String rules) {
-    return attribute("rules", rules);
+    return trustedAttribute("rules", rules);
   }
 
   @Override
@@ -63,6 +63,6 @@ public class HtmlTableBuilder extends HtmlElementBuilderBase<TableBuilder> imple
 
   @Override
   public TableBuilder width(String width) {
-    return attribute("width", width);
+    return trustedAttribute("width", width);
   }
 }

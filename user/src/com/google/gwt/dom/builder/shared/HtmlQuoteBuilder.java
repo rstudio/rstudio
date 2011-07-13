@@ -26,6 +26,6 @@ public class HtmlQuoteBuilder extends HtmlElementBuilderBase<QuoteBuilder> imple
 
   @Override
   public QuoteBuilder cite(String cite) {
-    return attribute("cite", cite);
+    return trustedAttribute("cite", cite);
   }
 }

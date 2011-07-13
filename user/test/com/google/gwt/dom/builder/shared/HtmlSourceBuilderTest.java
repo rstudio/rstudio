@@ -26,8 +26,8 @@ public class HtmlSourceBuilderTest extends ElementBuilderTestBase<SourceBuilder>
   }
 
   @Override
-  protected SourceBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endSource();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endSource();
   }
 
   @Override

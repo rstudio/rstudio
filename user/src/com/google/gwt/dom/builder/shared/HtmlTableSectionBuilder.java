@@ -29,17 +29,17 @@ public class HtmlTableSectionBuilder extends HtmlElementBuilderBase<TableSection
 
   @Override
   public TableSectionBuilder align(String align) {
-    return attribute("align", align);
+    return trustedAttribute("align", align);
   }
 
   @Override
   public TableSectionBuilder ch(String ch) {
-    return attribute("ch", ch);
+    return trustedAttribute("ch", ch);
   }
 
   @Override
   public TableSectionBuilder chOff(String chOff) {
-    return attribute("chOff", chOff);
+    return trustedAttribute("chOff", chOff);
   }
 
   @Override
@@ -54,6 +54,6 @@ public class HtmlTableSectionBuilder extends HtmlElementBuilderBase<TableSection
 
   @Override
   public TableSectionBuilder vAlign(String vAlign) {
-    return attribute("vAlign", vAlign);
+    return trustedAttribute("vAlign", vAlign);
   }
 }

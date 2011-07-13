@@ -26,31 +26,31 @@ public class HtmlAreaBuilder extends HtmlElementBuilderBase<AreaBuilder> impleme
 
   @Override
   public AreaBuilder accessKey(String accessKey) {
-    return attribute("accessKey", accessKey);
+    return trustedAttribute("accessKey", accessKey);
   }
 
   @Override
   public AreaBuilder alt(String alt) {
-    return attribute("alt", alt);
+    return trustedAttribute("alt", alt);
   }
 
   @Override
   public AreaBuilder coords(String coords) {
-    return attribute("coords", coords);
+    return trustedAttribute("coords", coords);
   }
 
   @Override
   public AreaBuilder href(String href) {
-    return attribute("href", href);
+    return trustedAttribute("href", href);
   }
 
   @Override
   public AreaBuilder shape(String shape) {
-    return attribute("shape", shape);
+    return trustedAttribute("shape", shape);
   }
 
   @Override
   public AreaBuilder target(String target) {
-    return attribute("target", target);
+    return trustedAttribute("target", target);
   }
 }

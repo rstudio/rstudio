@@ -26,22 +26,22 @@ public class HtmlHeadingBuilderTest extends ElementBuilderTestBase<HeadingBuilde
   public void testEndAll() {
     for (ElementBuilderFactory factory : getFactories()) {
       HeadingBuilder h1 = factory.createH1Builder();
-      assertNull(h1.endH1());
+      h1.endH1();
 
       HeadingBuilder h2 = factory.createH2Builder();
-      assertNull(h2.endH2());
+      h2.endH2();
 
       HeadingBuilder h3 = factory.createH3Builder();
-      assertNull(h3.endH3());
+      h3.endH3();
 
       HeadingBuilder h4 = factory.createH4Builder();
-      assertNull(h4.endH4());
+      h4.endH4();
 
       HeadingBuilder h5 = factory.createH5Builder();
-      assertNull(h5.endH5());
+      h5.endH5();
 
       HeadingBuilder h6 = factory.createH6Builder();
-      assertNull(h6.endH6());
+      h6.endH6();
     }
   }
 
@@ -51,8 +51,8 @@ public class HtmlHeadingBuilderTest extends ElementBuilderTestBase<HeadingBuilde
   }
 
   @Override
-  protected HeadingBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endH1();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endH1();
   }
 
   @Override

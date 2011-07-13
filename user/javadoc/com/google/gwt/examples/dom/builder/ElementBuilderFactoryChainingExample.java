@@ -52,8 +52,9 @@ public class ElementBuilderFactoryChainingExample implements EntryPoint {
      * must be the "parent" builder. endDiv() does not need the optional
      * argument because we are finished building the element.
      */
-    divBuilder.id("myId").title("This is a div").style().trustedBackgroundColor("red")
-        .<DivBuilder> endStyle().text("Hello World!").endDiv();
+    divBuilder.id("myId").title("This is a div");
+    divBuilder.style().trustedBackgroundColor("red").endStyle();
+    divBuilder.text("Hello World!").endDiv();
 
     // Get the element out of the builder.
     Element div = divBuilder.finish();

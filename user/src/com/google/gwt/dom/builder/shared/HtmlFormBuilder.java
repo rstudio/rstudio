@@ -26,31 +26,31 @@ public class HtmlFormBuilder extends HtmlElementBuilderBase<FormBuilder> impleme
 
   @Override
   public FormBuilder acceptCharset(String acceptCharset) {
-    return attribute("acceptCharset", acceptCharset);
+    return trustedAttribute("acceptCharset", acceptCharset);
   }
 
   @Override
   public FormBuilder action(String action) {
-    return attribute("action", action);
+    return trustedAttribute("action", action);
   }
 
   @Override
   public FormBuilder enctype(String enctype) {
-    return attribute("enctype", enctype);
+    return trustedAttribute("enctype", enctype);
   }
 
   @Override
   public FormBuilder method(String method) {
-    return attribute("method", method);
+    return trustedAttribute("method", method);
   }
 
   @Override
   public FormBuilder name(String name) {
-    return attribute("name", name);
+    return trustedAttribute("name", name);
   }
 
   @Override
   public FormBuilder target(String target) {
-    return attribute("target", target);
+    return trustedAttribute("target", target);
   }
 }

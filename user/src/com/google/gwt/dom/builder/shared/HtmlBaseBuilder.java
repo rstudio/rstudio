@@ -26,11 +26,11 @@ public class HtmlBaseBuilder extends HtmlElementBuilderBase<BaseBuilder> impleme
 
   @Override
   public BaseBuilder href(String href) {
-    return attribute("href", href);
+    return trustedAttribute("href", href);
   }
 
   @Override
   public BaseBuilder target(String target) {
-    return attribute("target", target);
+    return trustedAttribute("target", target);
   }
 }

@@ -26,16 +26,16 @@ public class HtmlVideoBuilder extends HtmlMediaBuilderBase<VideoBuilder> impleme
 
   @Override
   public VideoBuilder height(int height) {
-    return attribute("height", height);
+    return trustedAttribute("height", height);
   }
 
   @Override
   public VideoBuilder poster(String url) {
-    return attribute("url", url);
+    return trustedAttribute("url", url);
   }
 
   @Override
   public VideoBuilder width(int width) {
-    return attribute("width", width);
+    return trustedAttribute("width", width);
   }
 }

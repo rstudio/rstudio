@@ -26,8 +26,8 @@ public class HtmlAnchorBuilderTest extends ElementBuilderTestBase<AnchorBuilder>
   }
 
   @Override
-  protected AnchorBuilder endElement(ElementBuilderBase<?> builder) {
-    return builder.endAnchor();
+  protected void endElement(ElementBuilderBase<?> builder) {
+    builder.endAnchor();
   }
 
   @Override

@@ -29,9 +29,6 @@ import com.google.gwt.dom.client.TableColElement;
 import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Implementation of methods in
  * {@link com.google.gwt.dom.builder.shared.ElementBuilderBase} used to render
@@ -94,51 +91,47 @@ class DomBuilderImpl extends ElementBuilderImpl {
   private DomUListBuilder uListBuilder;
   private DomVideoBuilder videoBuilder;
 
-  private Element root;
+  /**
+   * The root element of the DOM structure being built.
+   */
+  private Element rootElement;
 
   /**
-   * The element at the top of the stack.
-   * 
-   * With normal usage, the current element will be accessed repeatedly to add
-   * attributes and styles. We maintain the current element outside of the stack
-   * to avoid a list access on each operation.
+   * The element at the top of the stack. We use DOM manipulation to move up and
+   * down the stack.
    */
   private Element currentElement;
-  private final List<Element> stackElements = new ArrayList<Element>();
-
-  @Override
-  public ElementBuilderBase<?> end() {
-    ElementBuilderBase<?> builder = super.end();
-    popElement();
-    return builder;
-  }
 
   public DomAnchorBuilder startAnchor() {
     if (anchorBuilder == null) {
       anchorBuilder = new DomAnchorBuilder(this);
     }
-    return start(Document.get().createAnchorElement(), anchorBuilder);
+    start(Document.get().createAnchorElement(), anchorBuilder);
+    return anchorBuilder;
   }
 
   public DomAreaBuilder startArea() {
     if (areaBuilder == null) {
       areaBuilder = new DomAreaBuilder(this);
     }
-    return start(Document.get().createAreaElement(), areaBuilder);
+    start(Document.get().createAreaElement(), areaBuilder);
+    return areaBuilder;
   }
 
   public DomAudioBuilder startAudio() {
     if (audioBuilder == null) {
       audioBuilder = new DomAudioBuilder(this);
     }
-    return start(Document.get().createAudioElement(), audioBuilder);
+    start(Document.get().createAudioElement(), audioBuilder);
+    return audioBuilder;
   }
 
   public DomBaseBuilder startBase() {
     if (baseBuilder == null) {
       baseBuilder = new DomBaseBuilder(this);
     }
-    return start(Document.get().createBaseElement(), baseBuilder);
+    start(Document.get().createBaseElement(), baseBuilder);
+    return baseBuilder;
   }
 
   public DomQuoteBuilder startBlockQuote() {
@@ -149,14 +142,16 @@ class DomBuilderImpl extends ElementBuilderImpl {
     if (bodyBuilder == null) {
       bodyBuilder = new DomBodyBuilder(this);
     }
-    return start(Document.get().createElement("body"), bodyBuilder);
+    start(Document.get().createElement("body"), bodyBuilder);
+    return bodyBuilder;
   }
 
   public DomBRBuilder startBR() {
     if (brBuilder == null) {
       brBuilder = new DomBRBuilder(this);
     }
-    return start(Document.get().createBRElement(), brBuilder);
+    start(Document.get().createBRElement(), brBuilder);
+    return brBuilder;
   }
 
   public InputBuilder startButtonInput() {
@@ -167,10 +162,11 @@ class DomBuilderImpl extends ElementBuilderImpl {
     if (canvasBuilder == null) {
       canvasBuilder = new DomCanvasBuilder(this);
     }
-    return start(Document.get().createCanvasElement(), canvasBuilder);
+    start(Document.get().createCanvasElement(), canvasBuilder);
+    return canvasBuilder;
   }
 
-  public InputBuilder startCheckInput() {
+  public InputBuilder startCheckboxInput() {
     return startInput(Document.get().createCheckInputElement());
   }
 
@@ -183,21 +179,24 @@ class DomBuilderImpl extends ElementBuilderImpl {
   }
 
   public DomDivBuilder startDiv() {
-    return start(Document.get().createDivElement(), divBuilder);
+    start(Document.get().createDivElement(), divBuilder);
+    return divBuilder;
   }
 
   public DomDListBuilder startDList() {
     if (dListBuilder == null) {
       dListBuilder = new DomDListBuilder(this);
     }
-    return start(Document.get().createDLElement(), dListBuilder);
+    start(Document.get().createDLElement(), dListBuilder);
+    return dListBuilder;
   }
 
   public DomFieldSetBuilder startFieldSet() {
     if (fieldSetBuilder == null) {
       fieldSetBuilder = new DomFieldSetBuilder(this);
     }
-    return start(Document.get().createFieldSetElement(), fieldSetBuilder);
+    start(Document.get().createFieldSetElement(), fieldSetBuilder);
+    return fieldSetBuilder;
   }
 
   public InputBuilder startFileInput() {
@@ -208,21 +207,24 @@ class DomBuilderImpl extends ElementBuilderImpl {
     if (formBuilder == null) {
       formBuilder = new DomFormBuilder(this);
     }
-    return start(Document.get().createFormElement(), formBuilder);
+    start(Document.get().createFormElement(), formBuilder);
+    return formBuilder;
   }
 
   public DomFrameBuilder startFrame() {
     if (frameBuilder == null) {
       frameBuilder = new DomFrameBuilder(this);
     }
-    return start(Document.get().createFrameElement(), frameBuilder);
+    start(Document.get().createFrameElement(), frameBuilder);
+    return frameBuilder;
   }
 
   public DomFrameSetBuilder startFrameSet() {
     if (frameSetBuilder == null) {
       frameSetBuilder = new DomFrameSetBuilder(this);
     }
-    return start(Document.get().createFrameSetElement(), frameSetBuilder);
+    start(Document.get().createFrameSetElement(), frameSetBuilder);
+    return frameSetBuilder;
   }
 
   public DomHeadingBuilder startH1() {
@@ -253,7 +255,8 @@ class DomBuilderImpl extends ElementBuilderImpl {
     if (headBuilder == null) {
       headBuilder = new DomHeadBuilder(this);
     }
-    return start(Document.get().createHeadElement(), headBuilder);
+    start(Document.get().createHeadElement(), headBuilder);
+    return headBuilder;
   }
 
   public InputBuilder startHiddenInput() {
@@ -264,21 +267,24 @@ class DomBuilderImpl extends ElementBuilderImpl {
     if (hrBuilder == null) {
       hrBuilder = new DomHRBuilder(this);
     }
-    return start(Document.get().createHRElement(), hrBuilder);
+    start(Document.get().createHRElement(), hrBuilder);
+    return hrBuilder;
   }
 
   public DomIFrameBuilder startIFrame() {
     if (iFrameBuilder == null) {
       iFrameBuilder = new DomIFrameBuilder(this);
     }
-    return start(Document.get().createIFrameElement(), iFrameBuilder);
+    start(Document.get().createIFrameElement(), iFrameBuilder);
+    return iFrameBuilder;
   }
 
   public DomImageBuilder startImage() {
     if (imageBuilder == null) {
       imageBuilder = new DomImageBuilder(this);
     }
-    return start(Document.get().createImageElement(), imageBuilder);
+    start(Document.get().createImageElement(), imageBuilder);
+    return imageBuilder;
   }
 
   public InputBuilder startImageInput() {
@@ -289,78 +295,90 @@ class DomBuilderImpl extends ElementBuilderImpl {
    * Start an input using the specified InputElement.
    */
   public DomInputBuilder startInput(InputElement input) {
-    return start(input, inputBuilder);
+    start(input, inputBuilder);
+    return inputBuilder;
   }
 
   public DomLabelBuilder startLabel() {
     if (labelBuilder == null) {
       labelBuilder = new DomLabelBuilder(this);
     }
-    return start(Document.get().createLabelElement(), labelBuilder);
+    start(Document.get().createLabelElement(), labelBuilder);
+    return labelBuilder;
   }
 
   public DomLegendBuilder startLegend() {
     if (legendBuilder == null) {
       legendBuilder = new DomLegendBuilder(this);
     }
-    return start(Document.get().createLegendElement(), legendBuilder);
+    start(Document.get().createLegendElement(), legendBuilder);
+    return legendBuilder;
   }
 
   public DomLIBuilder startLI() {
-    return start(Document.get().createLIElement(), liBuilder);
+    start(Document.get().createLIElement(), liBuilder);
+    return liBuilder;
   }
 
   public DomLinkBuilder startLink() {
     if (linkBuilder == null) {
       linkBuilder = new DomLinkBuilder(this);
     }
-    return start(Document.get().createLinkElement(), linkBuilder);
+    start(Document.get().createLinkElement(), linkBuilder);
+    return linkBuilder;
   }
 
   public DomMapBuilder startMap() {
     if (mapBuilder == null) {
       mapBuilder = new DomMapBuilder(this);
     }
-    return start(Document.get().createMapElement(), mapBuilder);
+    start(Document.get().createMapElement(), mapBuilder);
+    return mapBuilder;
   }
 
   public DomMetaBuilder startMeta() {
     if (metaBuilder == null) {
       metaBuilder = new DomMetaBuilder(this);
     }
-    return start(Document.get().createMetaElement(), metaBuilder);
+    start(Document.get().createMetaElement(), metaBuilder);
+    return metaBuilder;
   }
 
   public DomOListBuilder startOList() {
     if (oListBuilder == null) {
       oListBuilder = new DomOListBuilder(this);
     }
-    return start(Document.get().createOLElement(), oListBuilder);
+    start(Document.get().createOLElement(), oListBuilder);
+    return oListBuilder;
   }
 
   public DomOptGroupBuilder startOptGroup() {
     if (optGroupBuilder == null) {
       optGroupBuilder = new DomOptGroupBuilder(this);
     }
-    return start(Document.get().createOptGroupElement(), optGroupBuilder);
+    start(Document.get().createOptGroupElement(), optGroupBuilder);
+    return optGroupBuilder;
   }
 
   public DomOptionBuilder startOption() {
-    return start(Document.get().createOptionElement(), optionBuilder);
+    start(Document.get().createOptionElement(), optionBuilder);
+    return optionBuilder;
   }
 
   public DomParagraphBuilder startParagraph() {
     if (paragraphBuilder == null) {
       paragraphBuilder = new DomParagraphBuilder(this);
     }
-    return start(Document.get().createPElement(), paragraphBuilder);
+    start(Document.get().createPElement(), paragraphBuilder);
+    return paragraphBuilder;
   }
 
   public DomParamBuilder startParam() {
     if (paramBuilder == null) {
       paramBuilder = new DomParamBuilder(this);
     }
-    return start(Document.get().createParamElement(), paramBuilder);
+    start(Document.get().createParamElement(), paramBuilder);
+    return paramBuilder;
   }
 
   public InputBuilder startPasswordInput() {
@@ -371,7 +389,8 @@ class DomBuilderImpl extends ElementBuilderImpl {
     if (preBuilder == null) {
       preBuilder = new DomPreBuilder(this);
     }
-    return start(Document.get().createPreElement(), preBuilder);
+    start(Document.get().createPreElement(), preBuilder);
+    return preBuilder;
   }
 
   public DomButtonBuilder startPushButton() {
@@ -398,32 +417,37 @@ class DomBuilderImpl extends ElementBuilderImpl {
     if (scriptBuilder == null) {
       scriptBuilder = new DomScriptBuilder(this);
     }
-    return start(Document.get().createScriptElement(), scriptBuilder);
+    start(Document.get().createScriptElement(), scriptBuilder);
+    return scriptBuilder;
   }
 
   public DomSelectBuilder startSelect() {
     if (selectBuilder == null) {
       selectBuilder = new DomSelectBuilder(this);
     }
-    return start(Document.get().createSelectElement(), selectBuilder);
+    start(Document.get().createSelectElement(), selectBuilder);
+    return selectBuilder;
   }
 
   public DomSourceBuilder startSource() {
     if (sourceBuilder == null) {
       sourceBuilder = new DomSourceBuilder(this);
     }
-    return start(Document.get().createSourceElement(), sourceBuilder);
+    start(Document.get().createSourceElement(), sourceBuilder);
+    return sourceBuilder;
   }
 
   public DomSpanBuilder startSpan() {
-    return start(Document.get().createSpanElement(), spanBuilder);
+    start(Document.get().createSpanElement(), spanBuilder);
+    return spanBuilder;
   }
 
   public DomStyleBuilder startStyle() {
     if (styleBuilder == null) {
       styleBuilder = new DomStyleBuilder(this);
     }
-    return start(Document.get().createStyleElement(), styleBuilder);
+    start(Document.get().createStyleElement(), styleBuilder);
+    return styleBuilder;
   }
 
   public DomButtonBuilder startSubmitButton() {
@@ -438,14 +462,16 @@ class DomBuilderImpl extends ElementBuilderImpl {
     if (tableBuilder == null) {
       tableBuilder = new DomTableBuilder(this);
     }
-    return start(Document.get().createTableElement(), tableBuilder);
+    start(Document.get().createTableElement(), tableBuilder);
+    return tableBuilder;
   }
 
   public DomTableCaptionBuilder startTableCaption() {
     if (tableCaptionBuilder == null) {
       tableCaptionBuilder = new DomTableCaptionBuilder(this);
     }
-    return start(Document.get().createCaptionElement(), tableCaptionBuilder);
+    start(Document.get().createCaptionElement(), tableCaptionBuilder);
+    return tableCaptionBuilder;
   }
 
   public DomTableSectionBuilder startTBody() {
@@ -453,14 +479,16 @@ class DomBuilderImpl extends ElementBuilderImpl {
   }
 
   public DomTableCellBuilder startTD() {
-    return start(Document.get().createTDElement(), tableCellBuilder);
+    start(Document.get().createTDElement(), tableCellBuilder);
+    return tableCellBuilder;
   }
 
   public DomTextAreaBuilder startTextArea() {
     if (textAreaBuilder == null) {
       textAreaBuilder = new DomTextAreaBuilder(this);
     }
-    return start(Document.get().createTextAreaElement(), textAreaBuilder);
+    start(Document.get().createTextAreaElement(), textAreaBuilder);
+    return textAreaBuilder;
   }
 
   public DomTableSectionBuilder startTFoot() {
@@ -468,7 +496,8 @@ class DomBuilderImpl extends ElementBuilderImpl {
   }
 
   public DomTableCellBuilder startTH() {
-    return start(Document.get().createTHElement(), tableCellBuilder);
+    start(Document.get().createTHElement(), tableCellBuilder);
+    return tableCellBuilder;
   }
 
   public DomTableSectionBuilder startTHead() {
@@ -476,21 +505,24 @@ class DomBuilderImpl extends ElementBuilderImpl {
   }
 
   public DomTableRowBuilder startTR() {
-    return start(Document.get().createTRElement(), tableRowBuilder);
+    start(Document.get().createTRElement(), tableRowBuilder);
+    return tableRowBuilder;
   }
 
   public DomUListBuilder startUList() {
     if (uListBuilder == null) {
       uListBuilder = new DomUListBuilder(this);
     }
-    return start(Document.get().createULElement(), uListBuilder);
+    start(Document.get().createULElement(), uListBuilder);
+    return uListBuilder;
   }
 
   public DomVideoBuilder startVideo() {
     if (videoBuilder == null) {
       videoBuilder = new DomVideoBuilder(this);
     }
-    return start(Document.get().createVideoElement(), videoBuilder);
+    start(Document.get().createVideoElement(), videoBuilder);
+    return videoBuilder;
   }
 
   @Override
@@ -505,7 +537,8 @@ class DomBuilderImpl extends ElementBuilderImpl {
      * IllegalArgumentException.
      */
     assertValidTagName(tagName);
-    return start(Document.get().createElement(tagName), elementBuilder);
+    start(Document.get().createElement(tagName), elementBuilder);
+    return elementBuilder;
   }
 
   @Override
@@ -520,17 +553,17 @@ class DomBuilderImpl extends ElementBuilderImpl {
 
   @Override
   protected void doEndStartTagImpl() {
-    // No-op.
+    popElement();
   }
 
   @Override
   protected void doEndTagImpl(String tagName) {
-    // No-op.
+    popElement();
   }
 
   @Override
   protected Element doFinishImpl() {
-    return root;
+    return rootElement;
   }
 
   @Override
@@ -590,20 +623,11 @@ class DomBuilderImpl extends ElementBuilderImpl {
     return startInput(Document.get().createTextInputElement());
   }
 
+  /**
+   * Pop to the previous element in the stack.
+   */
   private void popElement() {
-    Element toRet = getCurrentElement();
-    int itemCount = stackElements.size(); // Greater than or equal to one.
-    stackElements.remove(itemCount - 1);
-    if (itemCount == 1) {
-      currentElement = null;
-    } else {
-      currentElement = stackElements.get(itemCount - 2);
-    }
-  }
-
-  private void pushElement(Element e) {
-    stackElements.add(e);
-    currentElement = e;
+    currentElement = getCurrentElement().getParentElement();
   }
 
   /**
@@ -612,22 +636,20 @@ class DomBuilderImpl extends ElementBuilderImpl {
    * @param element the element to start
    * @param builder the builder used to builder the new element
    */
-  private <B extends ElementBuilderBase<?>> B start(Element element, B builder) {
+  private void start(Element element, ElementBuilderBase<?> builder) {
     onStart(element.getTagName(), builder);
 
     // Set the root element.
-    if (root == null) {
+    if (rootElement == null) {
       // This is the new root element.
-      root = element;
+      rootElement = element;
     } else {
       // Appending to the current element.
       getCurrentElement().appendChild(element);
     }
 
     // Add the element to the stack.
-    pushElement(element);
-
-    return builder;
+    currentElement = element;
   }
 
   /**
@@ -637,7 +659,8 @@ class DomBuilderImpl extends ElementBuilderImpl {
     if (buttonBuilder == null) {
       buttonBuilder = new DomButtonBuilder(this);
     }
-    return start(button, buttonBuilder);
+    start(button, buttonBuilder);
+    return buttonBuilder;
   }
 
   /**
@@ -647,7 +670,8 @@ class DomBuilderImpl extends ElementBuilderImpl {
     if (headingBuilder == null) {
       headingBuilder = new DomHeadingBuilder(this);
     }
-    return start(Document.get().createHElement(level), headingBuilder);
+    start(Document.get().createHElement(level), headingBuilder);
+    return headingBuilder;
   }
 
   /**
@@ -657,7 +681,8 @@ class DomBuilderImpl extends ElementBuilderImpl {
     if (quoteBuilder == null) {
       quoteBuilder = new DomQuoteBuilder(this);
     }
-    return start(quote, quoteBuilder);
+    start(quote, quoteBuilder);
+    return quoteBuilder;
   }
 
   /**
@@ -667,7 +692,8 @@ class DomBuilderImpl extends ElementBuilderImpl {
     if (tableColBuilder == null) {
       tableColBuilder = new DomTableColBuilder(this);
     }
-    return start(element, tableColBuilder);
+    start(element, tableColBuilder);
+    return tableColBuilder;
   }
 
   /**
@@ -677,6 +703,7 @@ class DomBuilderImpl extends ElementBuilderImpl {
     if (tableSectionBuilder == null) {
       tableSectionBuilder = new DomTableSectionBuilder(this);
     }
-    return start(section, tableSectionBuilder);
+    start(section, tableSectionBuilder);
+    return tableSectionBuilder;
   }
 }

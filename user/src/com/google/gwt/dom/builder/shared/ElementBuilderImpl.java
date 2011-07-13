@@ -20,9 +20,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Base implementation of {@link ElementBuilderBase} that handles state, but
  * nothing else.
@@ -39,6 +36,83 @@ import java.util.List;
  * error. Otherwise, they would not be swappable.
  */
 public abstract class ElementBuilderImpl {
+
+  /**
+   * A node in the builder stack.
+   */
+  private static class StackNode {
+    private final ElementBuilderBase<?> builder;
+    private StackNode next;
+    private final String tagName;
+
+    public StackNode(String tagName, ElementBuilderBase<?> builder) {
+      this.builder = builder;
+      this.tagName = tagName;
+    }
+  }
+
+  /**
+   * A stack that allows quick access to its top element.
+   * 
+   * <p>
+   * FastPeekStack is implemented using a simple linked list of nodes to avoid
+   * the dynamic casts associated with the emulated version of
+   * {@link java.util.ArrayList}. When constructing a large DOM structure, such
+   * as a table, the dynamic casts in ArrayList can significantly degrade
+   * performance.
+   * </p>
+   */
+  private class FastPeekStack {
+
+    private static final String EMPTY_STACK_MESSAGE = "There are no elements on the stack.";
+
+    /**
+     * The top item in the stack.
+     */
+    private StackNode top;
+
+    public boolean isEmpty() {
+      return (top == null);
+    }
+
+    public StackNode peek() {
+      assertNotEmpty();
+      return top;
+    }
+
+    /**
+     * Pop the current {@link StackNode} and return it.
+     * 
+     * <p>
+     * The popped node will be recycled and should not be saved.
+     * </p>
+     * 
+     * @return the popped node
+     */
+    public StackNode pop() {
+      assertNotEmpty();
+      StackNode toRet = top;
+      top = top.next;
+      return toRet;
+    }
+
+    public void push(ElementBuilderBase<?> builder, String tagName) {
+      StackNode node = new StackNode(tagName, builder);
+      node.next = top;
+      top = node;
+    }
+
+    /**
+     * Assert that the stack is not empty.
+     * 
+     * @throws IllegalStateException if empty
+     */
+    private void assertNotEmpty() {
+      if (isEmpty()) {
+        throw new IllegalStateException(EMPTY_STACK_MESSAGE);
+      }
+    }
+  }
 
   /**
    * A regex for matching valid HTML tags.
@@ -76,12 +150,7 @@ public abstract class ElementBuilderImpl {
   /**
    * The stack of element builders.
    */
-  private final List<ElementBuilderBase<?>> stackBuilders = new ArrayList<ElementBuilderBase<?>>();
-
-  /**
-   * The stack of tag names.
-   */
-  private final List<String> stackTags = new ArrayList<String>();
+  private final FastPeekStack stack = new FastPeekStack();
 
   public ElementBuilderImpl() {
     if (HTML_TAG_REGEX == null) {
@@ -90,39 +159,11 @@ public abstract class ElementBuilderImpl {
     }
   }
 
-  public ElementBuilderBase<?> end() {
-    // Get the top item (also verifies there is a top item).
-    String tagName = getCurrentTagName();
-
-    // Close the start tag.
-    maybeCloseStartTag();
-
-    /*
-     * End the tag. The tag name is safe because it comes from the stack, and
-     * tag names are checked before they are added to the stack.
-     */
-    if (getCurrentBuilder().isEndTagForbidden()) {
-      doEndStartTagImpl();
-    } else {
-      doEndTagImpl(tagName);
-    }
-
-    // Popup the item off the top of the stack.
-    isStartTagOpen = false; // Closed because this element was added.
-    isStyleClosed = true; // Too late to add styles.
-    stackTags.remove(stackTags.size() - 1);
-    stackBuilders.remove(stackBuilders.size() - 1);
-
-    /*
-     * If this element was added, then we did not add html or text to the
-     * parent.
-     */
-    isHtmlOrTextAdded = false;
-
-    return getCurrentBuilder();
+  public void end() {
+    endImpl(getCurrentTagName());
   }
 
-  public ElementBuilderBase<?> end(String tagName) {
+  public void end(String tagName) {
     // Verify the tag name matches the expected tag.
     String topItem = getCurrentTagName();
     if (!topItem.equalsIgnoreCase(tagName)) {
@@ -131,16 +172,15 @@ public abstract class ElementBuilderImpl {
     }
 
     // End the element.
-    return end();
+    endImpl(topItem);
   }
 
-  public ElementBuilderBase<?> endStyle() {
+  public void endStyle() {
     if (!isStyleOpen) {
       throw new IllegalStateException(
           "Attempting to close a style attribute, but the style attribute isn't open");
     }
     maybeCloseStyleAttribute();
-    return getCurrentBuilder();
   }
 
   /**
@@ -173,13 +213,13 @@ public abstract class ElementBuilderImpl {
   public void onStart(String tagName, ElementBuilderBase<?> builder) {
     if (isEmpty) {
       isEmpty = false;
-    } else if (stackTags.size() == 0) {
+    } else if (stack.isEmpty()) {
       // Check that we aren't creating another top level element.
       throw new IllegalStateException("You can only build one top level element.");
     } else {
       // Check that the element supports children.
-      assertEndTagNotForbidden(getCurrentTagName() + " does not support child elements.");
-      if (!builder.isChildElementSupported()) {
+      assertEndTagNotForbidden("child elements");
+      if (!getCurrentBuilder().isChildElementSupported()) {
         throw new UnsupportedOperationException(getCurrentTagName()
             + " does not support child elements.");
       }
@@ -194,8 +234,7 @@ public abstract class ElementBuilderImpl {
     assertValidTagName(tagName);
 
     maybeCloseStartTag();
-    stackTags.add(tagName);
-    stackBuilders.add(builder);
+    stack.push(builder, tagName);
     isStartTagOpen = true;
     isStyleOpen = false;
     isStyleClosed = false;
@@ -223,7 +262,8 @@ public abstract class ElementBuilderImpl {
    * @throw {@link IllegalStateException} if the start tag is closed
    */
   protected void assertCanAddAttributeImpl() {
-    assertStartTagOpen("Attributes cannot be added after appending HTML or adding a child element.");
+    assertStartTagOpen("Attributes cannot be added after appending HTML or adding a child "
+        + "element.");
     maybeCloseStyleAttribute();
   }
 
@@ -318,7 +358,7 @@ public abstract class ElementBuilderImpl {
    * </p>
    */
   protected void endAllTags() {
-    while (!stackTags.isEmpty()) {
+    while (!stack.isEmpty()) {
       end();
     }
   }
@@ -329,19 +369,20 @@ public abstract class ElementBuilderImpl {
    */
   protected void lockCurrentElement() {
     maybeCloseStartTag();
-    assertEndTagNotForbidden(getCurrentTagName() + " does not support html.");
+    assertEndTagNotForbidden("html");
     isHtmlOrTextAdded = true;
   }
 
   /**
    * Assert that the current builder does not forbid end tags.
    * 
-   * @param message the error message if not supported
+   * @param operation the operation that the user is attempting
    * @throw {@link UnsupportedOperationException} if not supported
    */
-  private void assertEndTagNotForbidden(String message) {
+  private void assertEndTagNotForbidden(String operation) {
     if (getCurrentBuilder().isEndTagForbidden()) {
-      throw new UnsupportedOperationException(message);
+      throw new UnsupportedOperationException(getCurrentTagName() + " does not support "
+          + operation);
     }
   }
 
@@ -358,13 +399,44 @@ public abstract class ElementBuilderImpl {
   }
 
   /**
+   * End the current element without checking the tag name.
+   * 
+   * @param tagName the tag name to end
+   */
+  private void endImpl(String tagName) {
+    // Close the start tag.
+    maybeCloseStartTag();
+
+    /*
+     * End the tag. The tag name is safe because it comes from the stack, and
+     * tag names are checked before they are added to the stack.
+     */
+    if (getCurrentBuilder().isEndTagForbidden()) {
+      doEndStartTagImpl();
+    } else {
+      doEndTagImpl(tagName);
+    }
+
+    // Popup the item off the top of the stack.
+    isStartTagOpen = false; // Closed because this element was added.
+    isStyleClosed = true; // Too late to add styles.
+    stack.pop();
+
+    /*
+     * If this element was added, then we did not add html or text to the
+     * parent.
+     */
+    isHtmlOrTextAdded = false;
+  }
+
+  /**
    * Get the builder at the top of the stack.
    * 
-   * @return an {@link ElementBuilderBase}, or null if there are non left
+   * @return an {@link ElementBuilderBase}
+   * @throws IllegalStateException if there are no elements on the stack
    */
   private ElementBuilderBase<?> getCurrentBuilder() {
-    int stackSize = stackBuilders.size();
-    return (stackSize == 0) ? null : stackBuilders.get(stackSize - 1);
+    return stack.peek().builder;
   }
 
   /**
@@ -374,13 +446,7 @@ public abstract class ElementBuilderImpl {
    * @throws IllegalStateException if there are no elements on the stack
    */
   private String getCurrentTagName() {
-    // Verify there is something on the stack.
-    int stackSize = stackTags.size();
-    if (stackSize == 0) {
-      throw new IllegalStateException("There are no elements on the stack.");
-    }
-
-    return stackTags.get(stackSize - 1);
+    return stack.peek().tagName;
   }
 
   /**

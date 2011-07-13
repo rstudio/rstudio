@@ -27,6 +27,6 @@ public class HtmlLegendBuilder extends HtmlElementBuilderBase<LegendBuilder> imp
 
   @Override
   public LegendBuilder accessKey(String accessKey) {
-    return attribute("accessKey", accessKey);
+    return trustedAttribute("accessKey", accessKey);
   }
 }

@@ -27,36 +27,36 @@ public class HtmlAnchorBuilder extends HtmlElementBuilderBase<AnchorBuilder> imp
 
   @Override
   public AnchorBuilder accessKey(String accessKey) {
-    return attribute("accessKey", accessKey);
+    return trustedAttribute("accessKey", accessKey);
   }
 
   @Override
   public AnchorBuilder href(String href) {
-    return attribute("href", href);
+    return trustedAttribute("href", href);
   }
 
   @Override
   public AnchorBuilder hreflang(String hreflang) {
-    return attribute("hreflang", hreflang);
+    return trustedAttribute("hreflang", hreflang);
   }
 
   @Override
   public AnchorBuilder name(String name) {
-    return attribute("name", name);
+    return trustedAttribute("name", name);
   }
 
   @Override
   public AnchorBuilder rel(String rel) {
-    return attribute("rel", rel);
+    return trustedAttribute("rel", rel);
   }
 
   @Override
   public AnchorBuilder target(String target) {
-    return attribute("target", target);
+    return trustedAttribute("target", target);
   }
 
   @Override
   public AnchorBuilder type(String type) {
-    return attribute("type", type);
+    return trustedAttribute("type", type);
   }
 }
