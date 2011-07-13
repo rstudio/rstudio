@@ -26,6 +26,7 @@
       <fileset dir="${gwt.dev.bin}">
         <include name="com/google/gwt/dev/asm/**" />
         <include name="com/google/gwt/dev/util/Name*.class" />
+        <include name="com/google/gwt/dev/util/StringKey.class" />
       </fileset>
       <fileset dir="${gwt.user.bin}">
         <exclude name="**/rebind/**" />
