@@ -27,8 +27,6 @@ import org.rstudio.core.client.dom.impl.NodeRelativePosition;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 
-import java.lang.reflect.Array;
-
 /**
  * Helper methods that are mostly useful for interacting with 
  * contentEditable regions.
