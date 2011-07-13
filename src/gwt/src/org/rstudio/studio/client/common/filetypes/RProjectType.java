@@ -20,7 +20,7 @@ public class RProjectType extends FileType
 {
    RProjectType()
    {
-      super("r_project");
+      super("r_proj");
    }
 
    @Override
