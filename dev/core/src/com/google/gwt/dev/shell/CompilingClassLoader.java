@@ -70,6 +70,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.Stack;
 import java.util.TreeSet;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * An isolated {@link ClassLoader} for running all user code. All user files are
@@ -353,22 +354,10 @@ public final class CompilingClassLoader extends ClassLoader implements
 
     public MultiParentClassLoader(ClassLoader parent, ClassLoader resources) {
       super(parent);
+      assert parent != null;
       this.resources = resources;
     }
 
-    @Override
-    public Class<?> loadClass(String name) throws ClassNotFoundException {
-      try {
-        return getParent().loadClass(name);
-      } catch (Throwable t) {
-        // Make a second attempt not only on ClassNotFoundExceptions, but also errors like 
-        // ClassCircularityError
-        Class c = findClass(name);
-        resolveClass(c);
-        return c;
-      }
-    }
-    
     @Override
     protected synchronized Class<?> findClass(String name)
         throws ClassNotFoundException {
@@ -380,6 +369,28 @@ public final class CompilingClassLoader extends ClassLoader implements
       byte[] bytes = Util.readURLAsBytes(url);
       return defineClass(name, bytes, 0, bytes.length);
     }
+    
+    @Override
+    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+      try {
+        Class c = findLoadedClass(name);
+        if (c != null) {
+          if (resolve) {
+            resolveClass(c);
+          }
+          return c;
+        }
+        return getParent().loadClass(name);
+      } catch (Throwable t) {
+        // Make a second attempt not only on ClassNotFoundExceptions, but also errors like 
+        // ClassCircularityError
+        Class c = findClass(name);
+        if (resolve) {
+          resolveClass(c);
+        }
+        return c;
+      }
+    }    
   }
 
   /**
@@ -706,6 +717,11 @@ public final class CompilingClassLoader extends ClassLoader implements
   }
 
   /**
+   * Only loads bootstrap classes, specifically excluding classes from the classpath. 
+   */
+  private static final ClassLoader bootstrapClassLoader = new ClassLoader(null) { };
+  
+  /**
    * The names of the bridge classes.
    */
   private static final Map<String, Class<?>> BRIDGE_CLASS_NAMES = new HashMap<String, Class<?>>();
@@ -902,6 +918,8 @@ public final class CompilingClassLoader extends ClassLoader implements
    */
   private boolean isInjectingClass = false;
 
+  private final ReentrantLock loadLock = new ReentrantLock();
+  
   private final TreeLogger logger;
 
   private final Set<String> scriptOnlyClasses = new HashSet<String>();
@@ -1044,8 +1062,7 @@ public final class CompilingClassLoader extends ClassLoader implements
   }
 
   @Override
-  protected synchronized Class<?> findClass(String className)
-      throws ClassNotFoundException {
+  protected Class<?> findClass(String className) throws ClassNotFoundException {
     if (className == null) {
       throw new ClassNotFoundException("null class name",
           new NullPointerException());
@@ -1057,87 +1074,132 @@ public final class CompilingClassLoader extends ClassLoader implements
       // happens to look.
       return ClassLoader.getSystemClassLoader().loadClass(className);
     }
-    
-    if (scriptOnlyClasses.contains(className)) {
-      // Allow the child ClassLoader to handle this
-      throw new ClassNotFoundException();
-    }
 
-    // Check for a bridge class that spans hosted and user space.
-    if (BRIDGE_CLASS_NAMES.containsKey(className)) {
-      return BRIDGE_CLASS_NAMES.get(className);
-    }
+    loadLock.lock();
+    try {
 
-    // Get the bytes, compiling if necessary.
-    byte[] classBytes = findClassBytes(className);
-    if (classBytes == null) {
-      throw new ClassNotFoundException(className);
-    }
-
-    if (HasAnnotation.hasAnnotation(classBytes, GwtScriptOnly.class)) {
-      scriptOnlyClasses.add(className);
-      maybeInitializeScriptOnlyClassLoader();
-      return Class.forName(className, true, scriptOnlyClassLoader);
-    }
-
-    /*
-     * Prevent reentrant problems where classes that need to be injected have
-     * circular dependencies on one another via JSNI and inheritance. This check
-     * ensures that a class's supertype can refer to the subtype (static
-     * members, etc) via JSNI references by ensuring that the Class for the
-     * subtype will have been defined before injecting the JSNI for the
-     * supertype.
-     */
-    boolean localInjection;
-    if (!isInjectingClass) {
-      localInjection = isInjectingClass = true;
-    } else {
-      localInjection = false;
-    }
-
-    Class<?> newClass = defineClass(className, classBytes, 0, classBytes.length);
-    if (className.equals(JavaScriptHost.class.getName())) {
-      javaScriptHostClass = newClass;
-      updateJavaScriptHost();
-    }
-
-    /*
-     * We have to inject the JSNI code after defining the class, since dispId
-     * assignment is based around reflection on Class objects. Don't inject JSNI
-     * when loading a JSO interface class; just wait until the implementation
-     * class is loaded.
-     */
-    if (!classRewriter.isJsoIntf(className)) {
-      CompilationUnit unit = getUnitForClassName(canonicalizeClassName(className));
-      if (unit != null) {
-        toInject.push(unit);
+      if (scriptOnlyClasses.contains(className)) {
+        // Allow the child ClassLoader to handle this
+        throw new ClassNotFoundException();
       }
-    }
 
-    if (localInjection) {
-      try {
+      // Check for a bridge class that spans hosted and user space.
+      if (BRIDGE_CLASS_NAMES.containsKey(className)) {
+        return BRIDGE_CLASS_NAMES.get(className);
+      }
+
+      // Get the bytes, compiling if necessary.
+      byte[] classBytes = findClassBytes(className);
+      if (classBytes == null) {
+        throw new ClassNotFoundException(className);
+      }
+
+      if (HasAnnotation.hasAnnotation(classBytes, GwtScriptOnly.class)) {
+        scriptOnlyClasses.add(className);
+        maybeInitializeScriptOnlyClassLoader();
+
         /*
-         * Can't use an iterator here because calling injectJsniFor may cause
-         * additional entries to be added.
+         * Release the lock before side-loading from scriptOnlyClassLoader. This prevents deadlock
+         * conditions when a class from scriptOnlyClassLoader ends up trying to call back into this
+         * classloader from another thread. 
          */
-        while (toInject.size() > 0) {
-          CompilationUnit unit = toInject.remove(0);
-          if (!alreadyInjected.contains(unit)) {
-            injectJsniMethods(unit);
-            alreadyInjected.add(unit);
-          }
+        loadLock.unlock();
+
+        // Also don't run the static initializer to lower the risk of deadlock. 
+        return Class.forName(className, false, scriptOnlyClassLoader);
+      }
+
+     /*
+      * Prevent reentrant problems where classes that need to be injected have
+      * circular dependencies on one another via JSNI and inheritance. This check
+      * ensures that a class's supertype can refer to the subtype (static
+      * members, etc) via JSNI references by ensuring that the Class for the
+      * subtype will have been defined before injecting the JSNI for the
+      * supertype.
+      */
+      boolean localInjection;
+      if (!isInjectingClass) {
+        localInjection = isInjectingClass = true;
+      } else {
+        localInjection = false;
+      }
+
+      Class<?> newClass = defineClass(className, classBytes, 0, classBytes.length);
+      if (className.equals(JavaScriptHost.class.getName())) {
+        javaScriptHostClass = newClass;
+        updateJavaScriptHost();
+      }
+
+      /*
+      * We have to inject the JSNI code after defining the class, since dispId
+      * assignment is based around reflection on Class objects. Don't inject JSNI
+      * when loading a JSO interface class; just wait until the implementation
+      * class is loaded.
+      */
+      if (!classRewriter.isJsoIntf(className)) {
+        CompilationUnit unit = getUnitForClassName(canonicalizeClassName(className));
+        if (unit != null) {
+          toInject.push(unit);
         }
-      } finally {
-        isInjectingClass = false;
+      }
+
+      if (localInjection) {
+        try {
+          /*
+          * Can't use an iterator here because calling injectJsniFor may cause
+          * additional entries to be added.
+          */
+          while (toInject.size() > 0) {
+            CompilationUnit unit = toInject.remove(0);
+            if (!alreadyInjected.contains(unit)) {
+              injectJsniMethods(unit);
+              alreadyInjected.add(unit);
+            }
+          }
+        } finally {
+          isInjectingClass = false;
+        }
+      }
+
+      if (className.equals("com.google.gwt.core.client.GWT")) {
+        gwtClass = newClass;
+        updateGwtClass();
+      }
+
+      return newClass;
+    } finally {
+      if (loadLock.isLocked()) {
+        loadLock.unlock();
       }
     }
+  }
 
-    if (className.equals("com.google.gwt.core.client.GWT")) {
-      gwtClass = newClass;
-      updateGwtClass();
+  /**
+   * Remove some of the excess locking that we'd normally inherit from loadClass.
+   */
+  @Override
+  protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    Class c = findLoadedClass(name);
+    if (c != null) {
+      if (resolve) {
+        resolveClass(c);
+      }
+      return c;
     }
-
-    return newClass;
+    
+    assert getParent() == null;
+    
+    try {
+      c = bootstrapClassLoader.loadClass(name);
+    } catch (ClassNotFoundException e) {
+      c = findClass(name);
+    }
+    
+    if (resolve) {
+      resolveClass(c);
+    }
+    
+    return c;
   }
 
   void clear() {
