@@ -15,6 +15,7 @@
 
 #include <map>
 #include <iomanip>
+#include <ostream>
 
 #include <boost/format.hpp>
 
@@ -34,6 +35,13 @@ Error requiredFieldError(const std::string& field,
 {
    *pUserErrMsg = field + " not correctly specified in project config file";
    return systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+}
+
+std::string yesNoAskValueToString(int value)
+{
+   std::ostringstream ostr;
+   ostr << (YesNoAskValue) value;
+   return ostr.str();
 }
 
 bool interpretYesNoAskValue(const std::string& value,
@@ -189,9 +197,9 @@ Error writeProjectFile(const FilePath& projectFilePath,
 
    std::string contents = boost::str(fmt %
         boost::io::group(std::fixed, std::setprecision(1), config.version) %
-        config.restoreWorkspace %
-        config.saveWorkspace %
-        config.alwaysSaveHistory);
+        yesNoAskValueToString(config.restoreWorkspace) %
+        yesNoAskValueToString(config.saveWorkspace) %
+        yesNoAskValueToString(config.alwaysSaveHistory));
 
    // write it
    return writeStringToFile(projectFilePath,
