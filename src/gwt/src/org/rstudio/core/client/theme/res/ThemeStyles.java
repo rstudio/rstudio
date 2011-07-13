@@ -141,4 +141,6 @@ public interface ThemeStyles extends CssResource
    String miniDialogContainer();
    String miniDialogCaption();
    String miniDialogTools();
+   
+   String selectWidget();
 }

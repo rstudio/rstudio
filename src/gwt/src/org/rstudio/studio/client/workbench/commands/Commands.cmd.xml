@@ -143,6 +143,8 @@ well as menu structures (for main menu and popup menus).
          </menu>
          <separator/>
          <cmd refid="closeProject"/>
+         <separator/>
+         <cmd refid="projectOptions"/>
       </menu>
 
       <separator/>
@@ -386,6 +388,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Close Project"
         buttonLabel=""
         desc="Close the currently open project"/>
+
+   <cmd id="projectOptions"
+        menuLabel="Project _Options..."
+        buttonLabel=""
+        desc="Edit options for the current project"/>
 
    <cmd id="showToolbar"
         menuLabel="Show Toolbar"/>

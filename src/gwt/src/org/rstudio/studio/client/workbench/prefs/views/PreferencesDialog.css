@@ -6,12 +6,8 @@
    margin-bottom: 12px;
 }
 
-.selectWidget, .numericValueWidget, .textBoxWithButton, .spaced {
+.numericValueWidget, .textBoxWithButton, .spaced {
    margin-bottom: 12px;
-}
-
-.selectWidget .gwt-Label {
-   margin-right: 4px;	
 }
 
 .extraSpaced {

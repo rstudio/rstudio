@@ -15,12 +15,15 @@ package org.rstudio.studio.client.projects;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectFileHandler;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
@@ -28,6 +31,8 @@ import org.rstudio.studio.client.projects.events.OpenProjectErrorHandler;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.ui.ProjectOptionsDialog;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -65,6 +70,7 @@ public class Projects implements OpenProjectFileHandler,
       server_ = server;
       fileDialogs_ = fileDialogs;
       fsContext_ = fsContext;
+      session_ = session;
       
       binder.bind(commands, this);
       
@@ -86,6 +92,7 @@ public class Projects implements OpenProjectFileHandler,
                boolean hasProject = activeProjectFile != null;
           
                commands.closeProject().setEnabled(hasProject);
+               commands.projectOptions().setEnabled(hasProject);
               
                // maintain mru
                if (hasProject)
@@ -107,6 +114,7 @@ public class Projects implements OpenProjectFileHandler,
                commands.projectMru9().remove();
                commands.clearRecentProjects().remove();
                commands.closeProject().remove();
+               commands.projectOptions().remove();
             }
          }
       });
@@ -212,23 +220,66 @@ public class Projects implements OpenProjectFileHandler,
          }});
    }
    
+   @Handler
+   public void onProjectOptions()
+   {
+      final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
+                  "Error Reading Options");
+      indicator.onProgress("Reading options...");
+
+      server_.readProjectConfig(new SimpleRequestCallback<RProjectConfig>() {
+
+         @Override
+         public void onResponseReceived(RProjectConfig config)
+         {
+            indicator.onCompleted();
+            ProjectOptionsDialog dlg = new ProjectOptionsDialog(
+               config,
+               new ProgressOperationWithInput<RProjectConfig>() {
+                  @Override
+                  public void execute(RProjectConfig input,
+                                      ProgressIndicator indicator)
+                  {
+                      indicator.onProgress("Saving options...");
+                      server_.writeProjectConfig(
+                            input, 
+                            new VoidServerRequestCallback(indicator));
+                  }
+               });
+            dlg.showModal();
+        
+         }});
+   }
+
+   @Override
+   public void onOpenProjectFile(final OpenProjectFileEvent event)
+   {
+      // no-op for current project
+      FileSystemItem projFile = event.getFile();
+      if (projFile.getPath().equals(
+                  session_.getSessionInfo().getActiveProjectFile()))
+         return;
+      
+      // prompt to confirm
+      String projectPath = projFile.getParentPathString();
+      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,  
+         "Confirm Open Project",                             
+         "Do you want to open the project " + projectPath + "?",                         
+          new Operation() 
+          { 
+             public void execute()
+             {
+                 switchToProject(event.getFile().getPath());
+             }
+          },  
+          true);   
+   }
    
 
    @Override
-   public void onOpenProjectFile(OpenProjectFileEvent event)
-   {
-  
-   }
-   
-   @Override
    public void onSwitchToProject(final SwitchToProjectEvent event)
    {
-      applicationQuit_.prepareForQuit("Switch Projects",
-                                      new ApplicationQuit.QuitContext() {
-         public void onReadyToQuit(final boolean saveChanges)
-         {
-            applicationQuit_.performQuit(saveChanges, event.getProject());
-         }});
+      switchToProject(event.getProject());
    }
    
    @Override
@@ -242,14 +293,25 @@ public class Projects implements OpenProjectFileHandler,
       // remove from mru list
       pMRUList_.get().remove(event.getProject());
    }
- 
-
+   
+   
+   private void switchToProject(final String projectFilePath)
+   {
+      applicationQuit_.prepareForQuit("Switch Projects",
+                                 new ApplicationQuit.QuitContext() {
+         public void onReadyToQuit(final boolean saveChanges)
+         {
+            applicationQuit_.performQuit(saveChanges, projectFilePath);
+         }}); 
+   }
+   
    private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations server_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fsContext_;
    private final GlobalDisplay globalDisplay_;
+   private final Session session_;
    
    private static final String NONE = "none";
 

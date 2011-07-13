@@ -56,17 +56,13 @@ public class FileTypeRegistry
                           true,
                           false, false, false, false, true);
    
-   public static final PlainTextFileType RPROJECT =
-      new PlainTextFileType("r_project", "R Project", ".Rproj",
-                            ICONS.iconRproject(),
-                            true);
-   
    public static final PlainTextFileType RHISTORY =
       new PlainTextFileType("r_history", "R History", ".Rhistory",
                             ICONS.iconRhistory(),
                             true);
 
    public static final RDataType RDATA = new RDataType();
+   public static final RProjectType RPROJECT = new RProjectType();
    
    public static final DataFrameType DATAFRAME = new DataFrameType();
    public static final UrlContentType URLCONTENT = new UrlContentType();
@@ -105,6 +101,7 @@ public class FileTypeRegistry
       register("*.rd", RD, icons.iconRd());
       register("*.rdata", RDATA, icons.iconRdata());
       register("*.rda", RDATA, icons.iconRdata());
+      register("*.Rproj", RPROJECT, icons.iconRproject());
       defaultType_ = BROWSER;
 
       registerIcon(".jpg", icons.iconPng());

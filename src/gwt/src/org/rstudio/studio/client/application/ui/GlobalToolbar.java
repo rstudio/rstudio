@@ -106,6 +106,8 @@ public class GlobalToolbar extends Toolbar
       projectMenu.addItem(commands_.projectMru9().createMenuItem(false));
       projectMenu.addSeparator();
       projectMenu.addItem(commands_.closeProject().createMenuItem(false));
+      projectMenu.addSeparator();
+      projectMenu.addItem(commands_.projectOptions().createMenuItem(false));
       
       String menuText = activeProjectFile != null ?
         FileSystemItem.createFile(activeProjectFile).getParentPath().getStem() :

@@ -980,3 +980,13 @@ body.windows .searchBox {
    min-width: 130px;
    width: 100%;
 }
+
+.selectWidget {
+   margin-bottom: 12px;
+}
+
+.selectWidget .gwt-Label {
+   margin-right: 4px;  
+   margin-left: 4px; 
+}
+

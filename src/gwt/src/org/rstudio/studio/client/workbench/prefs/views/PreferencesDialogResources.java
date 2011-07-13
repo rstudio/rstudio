@@ -31,7 +31,6 @@ public interface PreferencesDialogResources extends ClientBundle
       String textBoxWithButton();
       String paneLayoutTable();
       String tight();
-      String selectWidget();
       String numericValueWidget();
       String themeChooser();
       String spaced();

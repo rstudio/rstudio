@@ -10,9 +10,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.prefs.views;
+package org.rstudio.core.client.widget;
 
-import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.theme.res.ThemeResources;
+
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
@@ -22,10 +23,15 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Panel;
 
 public class SelectWidget extends Composite
-{
+{   
    public SelectWidget(String label, String[] options)
    {
-      this(label, options, null, false, true);
+      this(label, options, false);
+   }
+   
+   public SelectWidget(String label, String[] options, boolean listOnLeft)
+   {
+      this(label, options, null, false, true, listOnLeft);
    }
 
    public SelectWidget(String label,
@@ -33,24 +39,39 @@ public class SelectWidget extends Composite
                        String[] values,
                        boolean isMultipleSelect)
    {
-      this(label, options, values, isMultipleSelect, false);
+      this(label, options, values, isMultipleSelect, false, false);
    }
    
    public SelectWidget(String label,
                        String[] options,
                        String[] values,
                        boolean isMultipleSelect,
-                       boolean horizontalLayout)
+                       boolean horizontalLayout,
+                       boolean listOnLeft)
    {
       if (values == null)
          values = options;
 
+      listBox_ = new ListBox(isMultipleSelect);
+      for (int i = 0; i < options.length; i++)
+         listBox_.addItem(options[i], values[i]);
+      
       Panel panel = null;
       if (horizontalLayout)
       {
          HorizontalPanel horizontalPanel = new HorizontalPanel();
          Label labelWidget = new Label(label);
-         horizontalPanel.add(labelWidget);
+         if (listOnLeft)
+         {
+            horizontalPanel.add(listBox_);
+            horizontalPanel.add(labelWidget);
+         }
+         else
+         {
+            horizontalPanel.add(labelWidget);
+            horizontalPanel.add(listBox_);
+         }
+        
          horizontalPanel.setCellVerticalAlignment(
                                           labelWidget, 
                                           HasVerticalAlignment.ALIGN_MIDDLE);
@@ -61,16 +82,11 @@ public class SelectWidget extends Composite
          FlowPanel flowPanel = new FlowPanel();
          flowPanel.add(new Label(label, true));
          panel = flowPanel;
+         panel.add(listBox_);
       }
 
-      listBox_ = new ListBox(isMultipleSelect);
-      for (int i = 0; i < options.length; i++)
-         listBox_.addItem(options[i], values[i]);
-      panel.add(listBox_);
-
       initWidget(panel);
-      PreferencesDialogResources res = GWT.create(PreferencesDialogResources.class);
-      addStyleName(res.styles().selectWidget());
+      addStyleName(ThemeResources.INSTANCE.themeStyles().selectWidget());
    }
 
    public ListBox getListBox()

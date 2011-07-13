@@ -24,6 +24,17 @@ public class RProjectConfig extends JavaScriptObject
    protected RProjectConfig()
    {
    }
+   
+   public native static final RProjectConfig create(int restoreWorkspace,
+                                                    int saveWorkspace,
+                                                    int alwaysSaveHistory) /*-{
+      var config = new Object();
+      config.version = 1.0;
+      config.restore_workspace = restoreWorkspace;
+      config.save_workspace = saveWorkspace;
+      config.always_save_history = alwaysSaveHistory;
+      return config;
+   }-*/;
 
    public native final double getVersion() /*-{
       return this.version;

@@ -40,6 +40,7 @@ import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.impl.BrowserFence;
+import org.rstudio.studio.client.projects.ui.ProjectOptionsDialog;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
@@ -153,6 +154,7 @@ public class RStudio implements EntryPoint
       ChooseMirrorDialog.ensureStylesInjected();
       ResizeGripper.ensureStylesInjected();
       LineTableView.ensureStylesInjected();
+      ProjectOptionsDialog.ensureStylesInjected();
 
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
