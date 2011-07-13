@@ -16,6 +16,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationQuit;
@@ -31,6 +32,7 @@ import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.ui.NewProjectDialog;
 import org.rstudio.studio.client.projects.ui.ProjectOptionsDialog;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -119,55 +121,117 @@ public class Projects implements OpenProjectFileHandler,
       });
    }
    
+   
    @Handler
    public void onNewProject()
    {
       // first resolve the quit context (potentially saving edited documents
       // and determining whether to save the R environment on exit)
-      applicationQuit_.prepareForQuit("Switch Projects",
+      applicationQuit_.prepareForQuit("Save Current Workspace",
                                       new ApplicationQuit.QuitContext() {
+     
+         @Override
          public void onReadyToQuit(final boolean saveChanges)
          {
-            // choose project folder
-            fileDialogs_.saveFile(
-               "New Project", 
-               fsContext_, 
-               FileSystemItem.home(),
-               ".Rproj",
-               true,
-               new ProgressOperationWithInput<FileSystemItem>() 
+            NewProjectDialog dlg = new NewProjectDialog(
+                                          new OperationWithInput<Boolean>() {
+               @Override
+               public void execute(Boolean newEmptyProject)
                {
-                  @Override
-                  public void execute(final FileSystemItem input,
-                                      ProgressIndicator indicator)
-                  {  
-                     if (input == null)
+                  if (newEmptyProject)
+                     createNewEmptyProject(saveChanges);
+                  else
+                     createProjectFromExistingDirectory(saveChanges);
+                   
+   
+               }
+   
+            });
+            dlg.showModal();
+         }
+      });
+   }
+   
+   private void createNewEmptyProject(final boolean saveChanges)
+   {
+      // choose project folder
+      fileDialogs_.saveFile(
+         "New Project", 
+         fsContext_, 
+         FileSystemItem.home(),
+         ".Rproj",
+         true,
+         new ProgressOperationWithInput<FileSystemItem>() 
+         {
+            @Override
+            public void execute(final FileSystemItem input,
+                                ProgressIndicator indicator)
+            {  
+               if (input == null)
+               {
+                  indicator.onCompleted();
+                  return;
+               }
+               
+               // create the project
+               indicator.onProgress("Creating project...");
+               server_.createProject(
+                  input.getPath(),
+                  new VoidServerRequestCallback(indicator) 
+                  {
+                     @Override 
+                     public void onSuccess()
                      {
-                        indicator.onCompleted();
-                        return;
-                     }
-                     
-                     // create the project
-                     indicator.onProgress("Creating project...");
-                     server_.createProject(
-                        input.getPath(),
-                        new VoidServerRequestCallback(indicator) 
-                        {
-                           @Override 
-                           public void onSuccess()
-                           {
-                              applicationQuit_.performQuit(saveChanges, 
-                                                           input.getPath());
-                           } 
-                        });
-                     
+                        applicationQuit_.performQuit(saveChanges, 
+                                                     input.getPath());
+                     } 
+                  });
+               
+            }
+            
+         });
+   }
+   
+   
+   private void createProjectFromExistingDirectory(final boolean saveChanges)
+   {
+      fileDialogs_.chooseFolder(
+            "Choose Project Directory",
+            fsContext_, 
+            FileSystemItem.home(),
+            new ProgressOperationWithInput<FileSystemItem>() 
+            {
+               @Override
+               public void execute(final FileSystemItem input,
+                                   ProgressIndicator indicator)
+               {  
+                  if (input == null)
+                  {
+                     indicator.onCompleted();
+                     return;
                   }
                   
-               });
-            
-         }
-      }); 
+                  // create the project
+                  final String projectFile = 
+                              input.completePath(input.getStem() + ".Rproj");
+                  indicator.onProgress("Creating project...");
+                  server_.createProject(
+                     projectFile,
+                     new VoidServerRequestCallback(indicator) 
+                     {
+                        @Override 
+                        public void onSuccess()
+                        {
+                           applicationQuit_.performQuit(saveChanges, 
+                                                        projectFile);
+                        } 
+                     });
+                  
+               }
+               
+            });
    }
+    
    
    @Handler
    public void onOpenProject()
