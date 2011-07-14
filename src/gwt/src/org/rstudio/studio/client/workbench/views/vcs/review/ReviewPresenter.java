@@ -185,7 +185,14 @@ public class ReviewPresenter implements IsWidget
             server_.vcsCommitGit(view_.getCommitMessage().getText(),
                                  view_.getCommitIsAmend().getValue(),
                                  false,
-                                 new SimpleRequestCallback<Void>());
+                                 new SimpleRequestCallback<Void>() {
+                                    @Override
+                                    public void onResponseReceived(Void resp)
+                                    {
+                                       super.onResponseReceived(resp);
+                                       view_.getCommitMessage().setText("");
+                                    }
+                                 });
          }
       });
 
