@@ -18,9 +18,12 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayNumber;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.*;
 import com.google.gwt.user.client.Random;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
@@ -165,13 +168,44 @@ public class RemoteServer implements Server
    }
    
    public void quitSession(boolean saveWorkspace, 
-                           String switchToProject,
-                           ServerRequestCallback<Void> requestCallback)
+                           final String switchToProject,
+                           final ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, JSONBoolean.getInstance(saveWorkspace));
       params.set(1, new JSONString(StringUtil.notNull(switchToProject)));
-      sendRequest(RPC_SCOPE, QUIT_SESSION, params, requestCallback);
+      sendRequest(
+            RPC_SCOPE, 
+            QUIT_SESSION, 
+            params, 
+            new ServerRequestCallback<Void>() {
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  // special case of switching projects when we aren't 
+                  // listening for events (in server mode). in this case 
+                  // we don't get the quit event so we fire it manually 
+                  if (!Desktop.isDesktop() && (switchToProject != null))    
+                  {
+                     new Timer() { 
+                        public void run() 
+                        {
+                           eventBus_.fireEvent(new QuitEvent(true));
+                        }
+                     }.schedule(5000);
+                  }
+                  
+                  // delegate
+                  requestCallback.onResponseReceived(response);
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  // delegate
+                  requestCallback.onError(error);    
+               }          
+            });
    }
    
    public void updateCredentials()

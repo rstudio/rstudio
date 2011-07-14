@@ -40,6 +40,7 @@
 #include <r/session/RClientState.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/session/RDiscovery.hpp>
+#include <r/session/REventLoop.hpp>
 
 #include "RClientMetrics.hpp"
 #include "RSessionState.hpp"
@@ -267,7 +268,7 @@ Error saveDefaultGlobalEnvironment()
 
    // suppress interrupts which occur during saving
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
-         
+
    // save global environment
    Error error = r::exec::executeSafely(
                         boost::bind(R_SaveGlobalEnvToFile,
@@ -1044,6 +1045,9 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
             // this will cause us to jump back to the REPL loop
             r::exec::error("Unable to quit (session cleanup failure)\n");
          }
+
+         // make sure no client code can sneak in after this
+         r::session::event_loop::permanentlyDisablePolledEventHandler();
 
          // commit working state (client state and plots)
          saveWorkingState(ClientStateCommitPersistentOnly);
