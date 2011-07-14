@@ -203,23 +203,31 @@ void ClientEventService::run()
       
       // accept loop
       bool stopServer = false ;
-      while (!stopServer)
+      while (!stopServer || clientEventQueue.hasEvents())
       {
          boost::shared_ptr<HttpConnection> ptrConnection ;
          try
          {
             // wait for up to 1 second for a connection
+            long secondsToWait = stopServer ? 4 : 1;
             ptrConnection =
              httpConnectionListener().eventsConnectionQueue().dequeConnection(
-                                             boost::posix_time::seconds(1));
+                                             boost::posix_time::seconds(secondsToWait));
 
             // if we didn't get one then check for interruption requested
             // and then continue waiting
             if (!ptrConnection)
             {
+               if (stopServer)
+               {
+                  // This was our last chance. There are still some events
+                  // left in the queue, but we waited and nobody came.
+                  break;
+               }
+
                // check for interruption and set stopServer flag if we were
                if (boost::this_thread::interruption_requested())
-                  stopServer = true;
+                  throw boost::thread_interrupted();
 
                // accept next request (assuming we weren't interrupted)
                continue;
