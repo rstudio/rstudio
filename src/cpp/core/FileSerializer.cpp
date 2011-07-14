@@ -29,7 +29,7 @@ namespace core {
 
 std::string stringifyStringPair(const std::pair<std::string,std::string>& pair)
 {
-   return pair.first + "=\"" + string_utils::jsonStringLiteralEscape(pair.second) + "\"" ;
+   return pair.first + "=\"" + string_utils::jsonLiteralEscape(pair.second) + "\"" ;
 }
 
 Error writeStringMapToFile(const core::FilePath& filePath,
@@ -54,7 +54,7 @@ ReadCollectionAction parseStringPair(
       boost::algorithm::trim(value) ;
       if (value.length() >= 2 && value[0] == '"' && value[value.length() - 1] == '"')
       {
-         value = string_utils::jsonStringLiteralUnescape(value);
+         value = string_utils::jsonLiteralUnescape(value);
       }
     
       // HACK: workaround the fact that std::map uses const for the Key
