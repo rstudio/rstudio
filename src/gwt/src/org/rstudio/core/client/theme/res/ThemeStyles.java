@@ -143,4 +143,5 @@ public interface ThemeStyles extends CssResource
    String miniDialogTools();
    
    String selectWidget();
+   String textBoxWithButton();
 }

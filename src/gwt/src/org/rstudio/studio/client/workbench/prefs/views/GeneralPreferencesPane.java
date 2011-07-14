@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -70,6 +71,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                   });
             rVersion_.setWidth("100%");
             rVersion_.setText(Desktop.getFrame().getRVersion());
+            rVersion_.addStyleName(res_.styles().spaced());
             add(rVersion_);
          }
       }
@@ -97,6 +99,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                   });
          }
       }));
+      dirChooser_.addStyleName(res_.styles().spaced());
       dirChooser_.setWidth("90%");
 
       saveWorkspace_ = new SelectWidget(

@@ -28,7 +28,6 @@ public interface PreferencesDialogResources extends ClientBundle
       String activeSection();
       String outer();
       String indent();
-      String textBoxWithButton();
       String paneLayoutTable();
       String tight();
       String numericValueWidget();

@@ -990,3 +990,9 @@ body.windows .searchBox {
    margin-left: 4px; 
 }
 
+.textBoxWithButton input[type=text] {
+   position: relative;
+   top: 1px;
+   height: 21px;
+   border: 1px solid #999;
+}

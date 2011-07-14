@@ -1,10 +1,15 @@
 
-@external gwt-RadioButton;
 
 .mainWidget {
   padding-top: 7px;
+  width: 400px;
 }
 
-.mainWidget .gwt-RadioButton {
+.newProjectLocationPanel {
+   margin-top: 5px;
+   margin-left: 20px;	
+}
 
+.projectNameTextBox {
+	width: 300px;
 }

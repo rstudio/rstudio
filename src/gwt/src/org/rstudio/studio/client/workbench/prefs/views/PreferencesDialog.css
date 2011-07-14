@@ -6,7 +6,7 @@
    margin-bottom: 12px;
 }
 
-.numericValueWidget, .textBoxWithButton, .spaced {
+.numericValueWidget, .spaced {
    margin-bottom: 12px;
 }
 
@@ -47,13 +47,6 @@
 
 .indent {
    margin-left: 20px;
-}
-
-.textBoxWithButton input[type=text] {
-   position: relative;
-   top: 1px;
-   height: 21px;
-   border: 1px solid #999;
 }
 
 .encodingChooser {

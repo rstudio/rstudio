@@ -10,19 +10,17 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.prefs.views;
+package org.rstudio.core.client.widget;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.*;
-import org.rstudio.core.client.widget.ThemedButton;
+
+import org.rstudio.core.client.theme.res.ThemeResources;
 
 public class TextBoxWithButton extends Composite
 {
    public TextBoxWithButton(String label, String action, ClickHandler handler)
    {
-      PreferencesDialogResources res = GWT.create(PreferencesDialogResources.class);
-
       textBox_ = new TextBox();
       textBox_.setWidth("100%");
       textBox_.setReadOnly(true);
@@ -43,7 +41,7 @@ public class TextBoxWithButton extends Composite
       outer.add(inner);
       initWidget(outer);
 
-      this.addStyleName(res.styles().textBoxWithButton());
+      addStyleName(ThemeResources.INSTANCE.themeStyles().textBoxWithButton());
    }
 
    public void setText(String text)
