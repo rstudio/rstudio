@@ -1161,9 +1161,9 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    int engineVersion = s_options.rCompatibleGraphicsEngineVersion;
    graphics::setCompatibleEngineVersion(engineVersion);
 
-   // set graphics and client state paths
+   // set client state paths
    s_clientStatePath = s_options.userScratchPath.complete("client-state");
-   s_projectClientStatePath = s_options.scopedScratchPath.complete("client-state");
+   s_projectClientStatePath = s_options.scopedScratchPath.complete("project-client-state");
    
    // set source reloading behavior
    sourceManager().setAutoReload(options.autoReloadSource);
