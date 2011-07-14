@@ -13,8 +13,6 @@
 package org.rstudio.studio.client.workbench.views.vcs.review;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.*;
-import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
