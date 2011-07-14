@@ -37,7 +37,8 @@ std::string textToHtml(const std::string& str);
 
 std::string htmlEscape(const std::string& str, bool isAttributeValue);
 std::string jsLiteralEscape(const std::string& str);
-std::string jsLiteralUnescape(const std::string& str);
+std::string jsonStringLiteralEscape(const std::string& str);
+std::string jsonStringLiteralUnescape(const std::string& str);
 
 void convertLineEndings(std::string* str, LineEnding type);
 
