@@ -77,6 +77,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       add(tight(new Label("Default working directory (when not in a project):")));
       add(dirChooser_ = new DirectoryChooserTextBox(null, 
+                                                    null,
                                                     fileDialogs_, 
                                                     fsContext_));  
       dirChooser_.addStyleName(res_.styles().spaced());

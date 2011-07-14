@@ -170,10 +170,12 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
       emptyLocationPanel.add(txtProjectName_); 
       
       // project dir
-      newProjectParent_ = new DirectoryChooserTextBox("Create in:");
+      newProjectParent_ = new DirectoryChooserTextBox("Create in:", 
+                                                      txtProjectName_);
       newProjectParent_.setText(defaultNewProjectLocation_.getPath());
+      
       emptyLocationPanel.add(newProjectParent_);
-           
+      
       verticalPanel.add(emptyLocationPanel);
       
       verticalPanel.add(new HTML("<br/>"));
@@ -207,7 +209,7 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
       VerticalPanel existingLocationPanel = new VerticalPanel();
       existingLocationPanel.addStyleName(styles.newProjectLocationPanel());
       
-      existingProjectDir_ = new DirectoryChooserTextBox("Directory:");
+      existingProjectDir_ = new DirectoryChooserTextBox("Directory:", null);
       existingLocationPanel.add(existingProjectDir_);
       verticalPanel.add(existingLocationPanel);
       
