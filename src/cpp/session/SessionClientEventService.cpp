@@ -38,12 +38,21 @@ namespace session {
    
 namespace {
 
+const int kLastChanceWaitSecs = 4;
+
 bool hasEventIdLessThanOrEqualTo(const json::Value& event, int targetId)
 {
    const json::Object& eventJSON = event.get_obj();
    int eventId = eventJSON.find("id")->second.get_int();
    return eventId <= targetId;
 }
+
+ boost::shared_ptr<HttpConnection> waitForConnection(int seconds)
+ {
+   return httpConnectionListener().eventsConnectionQueue().dequeConnection(
+                                        boost::posix_time::seconds(seconds));
+ }
+
          
 } // anonymous namespace
 
@@ -88,10 +97,11 @@ void ClientEventService::stop()
       {
          serviceThread_.interrupt();
 
-         // wait for up to 3 seconds for the service thread to stop
-         if (!serviceThread_.timed_join(boost::posix_time::seconds(3)))
+         // wait forthe service thread to stop
+         if (!serviceThread_.timed_join(
+               boost::posix_time::seconds(kLastChanceWaitSecs + 1)))
          {
-            LOG_WARNING_MESSAGE("ClientEventService didn't stop within 3 sec");
+            LOG_WARNING_MESSAGE("ClientEventService didn't stop");
          }
 
          serviceThread_.detach();
@@ -209,9 +219,7 @@ void ClientEventService::run()
          try
          {
             // wait for up to 1 second for a connection
-            ptrConnection =
-             httpConnectionListener().eventsConnectionQueue().dequeConnection(
-                                             boost::posix_time::seconds(1));
+            ptrConnection = waitForConnection(1);
 
             // if we didn't get one then check for interruption requested
             // and then continue waiting
@@ -219,16 +227,37 @@ void ClientEventService::run()
             {
                // check for interruption and set stopServer flag if we were
                if (boost::this_thread::interruption_requested())
+               {
                   stopServer = true;
 
-               // accept next request (assuming we weren't interrupted)
-               continue;
+                  // last chance listen
+                  if (clientEventQueue.hasEvents())
+                     ptrConnection = waitForConnection(kLastChanceWaitSecs);
+
+                  if (!ptrConnection)
+                     continue;
+               }
+               else
+               {
+                  // accept next request
+                  continue;
+               }
             }
          }
          catch(const boost::thread_interrupted&)
          {
+            if (stopServer)
+               continue;
+
             stopServer = true;
-            continue;
+
+            // last chance listen (no try catch to keep code simpler -
+            // we would never interrupt the thread twice)
+            if (clientEventQueue.hasEvents())
+               ptrConnection = waitForConnection(kLastChanceWaitSecs);
+
+            if (!ptrConnection)
+               continue;
          }
 
          // parse the json rpc request
