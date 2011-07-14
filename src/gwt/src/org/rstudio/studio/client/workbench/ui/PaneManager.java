@@ -63,7 +63,7 @@ public class PaneManager
       SelectedTabStateValue(String name,
                             WorkbenchTabPanel tabPanel)
       {
-         super("workbenchp", name, ClientState.PERSISTENT,
+         super("workbench-pane", name, ClientState.PROJECT_PERSISTENT,
                session_.getSessionInfo().getClientState(), true);
          tabPanel_ = tabPanel;
          finishInit(session_.getSessionInfo().getClientState());

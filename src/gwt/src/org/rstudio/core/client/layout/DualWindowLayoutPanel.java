@@ -232,9 +232,9 @@ public class DualWindowLayoutPanel extends SimplePanel
                                     WindowState topWindowDefaultState,
                                     int defaultSplitterPos)
       {
-         super("windowlayout",
+         super("windowlayoutstate",
                clientStateKeyName,
-               ClientState.PERSISTENT,
+               ClientState.PROJECT_PERSISTENT,
                clientState,
                true);
          topWindowDefaultState_ = topWindowDefaultState;
