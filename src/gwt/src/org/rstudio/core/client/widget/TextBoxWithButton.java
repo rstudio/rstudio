@@ -13,11 +13,12 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.theme.res.ThemeResources;
 
-public class TextBoxWithButton extends Composite
+public class TextBoxWithButton extends Composite 
 {
    public TextBoxWithButton(String label, String action, ClickHandler handler)
    {
@@ -43,6 +44,12 @@ public class TextBoxWithButton extends Composite
 
       addStyleName(ThemeResources.INSTANCE.themeStyles().textBoxWithButton());
    }
+   
+   public HandlerRegistration addClickHandler(ClickHandler handler)
+   {
+      return themedButton_.addClickHandler(handler);
+   }
+   
 
    public void setText(String text)
    {

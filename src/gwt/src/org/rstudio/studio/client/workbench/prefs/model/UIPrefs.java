@@ -14,6 +14,8 @@ package org.rstudio.studio.client.workbench.prefs.model;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 
@@ -94,6 +96,11 @@ public class UIPrefs extends Prefs
    public PrefValue<String> defaultEncoding()
    {
       return string("default_encoding", "");
+   }
+   
+   public PrefValue<String> defaultProjectLocation()
+   {
+      return string("default_project_location", FileSystemItem.HOME_PATH);
    }
    
    public PrefValue<Boolean> toolbarVisible()

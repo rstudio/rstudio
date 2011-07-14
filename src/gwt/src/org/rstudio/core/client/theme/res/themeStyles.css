@@ -996,3 +996,7 @@ body.windows .searchBox {
    height: 21px;
    border: 1px solid #999;
 }
+
+.textBoxWithButton .gwt-Label {
+   margin-bottom: 1px;	
+}

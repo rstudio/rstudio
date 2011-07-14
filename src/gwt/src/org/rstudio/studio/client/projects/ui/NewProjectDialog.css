@@ -2,14 +2,23 @@
 
 .mainWidget {
   padding-top: 7px;
-  width: 400px;
+  padding-bottom: 14px;
+  width: 380px;
 }
 
 .newProjectLocationPanel {
-   margin-top: 5px;
-   margin-left: 20px;	
+   margin-top: 8px;
+   margin-left: 20px;
+   margin-bottom: 5px;	
+   width: 360px;
 }
 
 .projectNameTextBox {
-	width: 300px;
+	width: 277px;
+	margin-top: 2px;
+	margin-bottom: 5px;
+}
+
+.projectTypeRadioButton {
+  
 }

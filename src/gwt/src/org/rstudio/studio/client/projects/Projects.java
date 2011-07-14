@@ -12,11 +12,11 @@
  */
 package org.rstudio.studio.client.projects;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationQuit;
@@ -33,7 +33,11 @@ import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.ui.NewProjectDialog;
+import org.rstudio.studio.client.projects.ui.NewProjectDialog.Result;
 import org.rstudio.studio.client.projects.ui.ProjectOptionsDialog;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -41,7 +45,9 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -63,7 +69,8 @@ public class Projects implements OpenProjectFileHandler,
                    ProjectsServerOperations server,
                    EventBus eventBus,
                    Binder binder,
-                   final Commands commands)
+                   final Commands commands,
+                   Provider<UIPrefs> pUIPrefs)
    {
       globalDisplay_ = globalDisplay;
       pMRUList_ = pMRUList;
@@ -72,6 +79,7 @@ public class Projects implements OpenProjectFileHandler,
       fileDialogs_ = fileDialogs;
       fsContext_ = fsContext;
       session_ = session;
+      pUIPrefs_ = pUIPrefs;
       
       binder.bind(commands, this);
       
@@ -134,16 +142,72 @@ public class Projects implements OpenProjectFileHandler,
          public void onReadyToQuit(final boolean saveChanges)
          {
             NewProjectDialog dlg = new NewProjectDialog(
-                                          new OperationWithInput<Boolean>() {
+              globalDisplay_,
+              FileSystemItem.createDir(
+                       pUIPrefs_.get().defaultProjectLocation().getValue()),
+              new ProgressOperationWithInput<NewProjectDialog.Result>() {
+
                @Override
-               public void execute(Boolean newEmptyProject)
-               {
-                  if (newEmptyProject)
-                     createNewEmptyProject(saveChanges);
+               public void execute(final Result newProject, 
+                                   final ProgressIndicator indicator)
+               {      
+                  // create project command which can be invoked from 
+                  // multiple contexts
+                  final Command createProjCmd = new Command() {
+                     @Override
+                     public void execute()
+                     {
+                        // TODO Auto-generated method stub
+                        indicator.onProgress("Creating project...");
+                        
+                        server_.createProject(
+                           newProject.getProjectFile(),
+                           new VoidServerRequestCallback(indicator) 
+                           {
+                              @Override 
+                              public void onSuccess()
+                              {
+                                 applicationQuit_.performQuit(
+                                                 saveChanges, 
+                                                 newProject.getProjectFile());
+                              } 
+                           });
+                     }
+                     
+                  };
+                  
+                  
+                  // update default project location pref if necessary
+                  if (newProject.getNewDefaultProjectLocation() != null)
+                  {
+                     indicator.onProgress("Saving default project location...");
+                     
+                     pUIPrefs_.get().defaultProjectLocation().setValue(
+                                    newProject.getNewDefaultProjectLocation());
+                     
+                     // call the server -- in all cases continue on with
+                     // creating the project (swallow errors updating the pref)
+                     server_.setUiPrefs(
+                          session_.getSessionInfo().getUiPrefs(), 
+                          new ServerRequestCallback<Void>() {
+                             @Override
+                             public void onResponseReceived(Void response)
+                             {
+                                createProjCmd.execute();
+                             }
+                             
+                             @Override
+                             public void onError(ServerError error)
+                             {
+                                Debug.log(error.getUserMessage());
+                                createProjCmd.execute();
+                             }
+                          });
+                  }
                   else
-                     createProjectFromExistingDirectory(saveChanges);
-                   
-   
+                  {
+                     createProjCmd.execute();
+                  }  
                }
    
             });
@@ -152,85 +216,7 @@ public class Projects implements OpenProjectFileHandler,
       });
    }
    
-   private void createNewEmptyProject(final boolean saveChanges)
-   {
-      // choose project folder
-      fileDialogs_.saveFile(
-         "New Project", 
-         fsContext_, 
-         FileSystemItem.home(),
-         ".Rproj",
-         true,
-         new ProgressOperationWithInput<FileSystemItem>() 
-         {
-            @Override
-            public void execute(final FileSystemItem input,
-                                ProgressIndicator indicator)
-            {  
-               if (input == null)
-               {
-                  indicator.onCompleted();
-                  return;
-               }
-               
-               // create the project
-               indicator.onProgress("Creating project...");
-               server_.createProject(
-                  input.getPath(),
-                  new VoidServerRequestCallback(indicator) 
-                  {
-                     @Override 
-                     public void onSuccess()
-                     {
-                        applicationQuit_.performQuit(saveChanges, 
-                                                     input.getPath());
-                     } 
-                  });
-               
-            }
-            
-         });
-   }
-   
-   
-   private void createProjectFromExistingDirectory(final boolean saveChanges)
-   {
-      fileDialogs_.chooseFolder(
-            "Choose Project Directory",
-            fsContext_, 
-            FileSystemItem.home(),
-            new ProgressOperationWithInput<FileSystemItem>() 
-            {
-               @Override
-               public void execute(final FileSystemItem input,
-                                   ProgressIndicator indicator)
-               {  
-                  if (input == null)
-                  {
-                     indicator.onCompleted();
-                     return;
-                  }
-                  
-                  // create the project
-                  final String projectFile = 
-                              input.completePath(input.getStem() + ".Rproj");
-                  indicator.onProgress("Creating project...");
-                  server_.createProject(
-                     projectFile,
-                     new VoidServerRequestCallback(indicator) 
-                     {
-                        @Override 
-                        public void onSuccess()
-                        {
-                           applicationQuit_.performQuit(saveChanges, 
-                                                        projectFile);
-                        } 
-                     });
-                  
-               }
-               
-            });
-   }
+  
     
    
    @Handler
@@ -375,6 +361,7 @@ public class Projects implements OpenProjectFileHandler,
    private final RemoteFileSystemContext fsContext_;
    private final GlobalDisplay globalDisplay_;
    private final Session session_;
+   private final Provider<UIPrefs> pUIPrefs_;
    
    private static final String NONE = "none";
 

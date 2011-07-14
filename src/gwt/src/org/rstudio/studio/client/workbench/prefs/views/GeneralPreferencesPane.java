@@ -20,10 +20,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
-import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.application.Desktop;
@@ -77,28 +75,9 @@ public class GeneralPreferencesPane extends PreferencesPane
       }
 
       add(tight(new Label("Default working directory (when not in a project):")));
-      add(dirChooser_ = new TextBoxWithButton(null, "Browse...", new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            fileDialogs_.chooseFolder(
-                  "Choose Directory",
-                  fsContext_,
-                  FileSystemItem.createDir(dirChooser_.getText()),
-                  new ProgressOperationWithInput<FileSystemItem>()
-                  {
-                     public void execute(FileSystemItem input,
-                                         ProgressIndicator indicator)
-                     {
-                        if (input == null)
-                           return;
-
-                        dirChooser_.setText(input.getPath());
-                        indicator.onCompleted();
-                     }
-                  });
-         }
-      }));
+      add(dirChooser_ = new DirectoryChooserTextBox(null, 
+                                                    fileDialogs_, 
+                                                    fsContext_));  
       dirChooser_.addStyleName(res_.styles().spaced());
       dirChooser_.setWidth("90%");
 

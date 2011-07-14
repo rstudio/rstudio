@@ -56,6 +56,11 @@ Error createProject(const json::JsonRpcRequest& request,
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
+   // ensure that the parent directory exists
+   error = projectFilePath.parent().ensureDirectory();
+   if (error)
+      return error;
+
    // create the project file
    r_util::RProjectConfig config;
    return r_util::writeProjectFile(projectFilePath, config);
