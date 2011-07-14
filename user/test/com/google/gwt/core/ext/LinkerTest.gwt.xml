@@ -17,4 +17,7 @@
 <module>
 	<inherits name='com.google.gwt.junit.JUnit' />
 	<source path='test' />
+    <set-configuration-property name="iframe.linker.script.chunk.size"
+    value="100" />
+  
 </module>

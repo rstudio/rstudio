@@ -26,6 +26,7 @@ import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.SoftPermutation;
+import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.Util;
@@ -41,6 +42,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 
 /**
@@ -53,6 +55,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * TODO(bobv): Move this class into c.g.g.core.linker when HostedModeLinker
    * goes away?
    */
+
+  /**
+   * A configuration property indicating how large each script tag should be.
+   */
+  private static final String CHUNK_SIZE_PROPERTY = "iframe.linker.script.chunk.size";
 
   /**
    * File name for computeScriptBase.js.
@@ -92,6 +99,56 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
         pos + 1)) {
       buf.replace(pos, pos + len, replace);
     }
+  }
+
+  /**
+   * Split a JavaScript string into multiple chunks, at statement boundaries.
+   * This method is made default access for testing.
+   * 
+   * @param ranges Describes where the statements are located within the
+   *          JavaScript code. If <code>null</code>, then return <code>js</code>
+   *          unchanged.
+   * @param js The JavaScript code to be split up.
+   * @param charsPerChunk The number of characters to be put in each script tag.
+   * @param scriptChunkSeparator The string to insert between chunks.
+   */
+  public static String splitPrimaryJavaScript(StatementRanges ranges, String js,
+      int charsPerChunk, String scriptChunkSeparator) {
+    if (charsPerChunk < 0 || ranges == null) {
+      return js;
+    }
+
+    StringBuilder sb = new StringBuilder();
+    int bytesInCurrentChunk = 0;
+
+    for (int i = 0; i < ranges.numStatements(); i++) {
+      int start = ranges.start(i);
+      int end = ranges.end(i);
+      int length = end - start;
+      if (bytesInCurrentChunk > 0 && bytesInCurrentChunk + length > charsPerChunk) {
+        if (lastChar(sb) != '\n') {
+          sb.append('\n');
+        }
+        sb.append(scriptChunkSeparator);
+        bytesInCurrentChunk = 0;
+      }
+      if (bytesInCurrentChunk > 0) {
+        char lastChar = lastChar(sb);
+        if (lastChar != '\n' && lastChar != ';' && lastChar != '}') {
+          /*
+           * Make sure this statement has a separator from the last one.
+           */
+          sb.append(";");
+        }
+      }
+      sb.append(js, start, end);
+      bytesInCurrentChunk += length;
+    }
+    return sb.toString();
+  }
+
+  private static char lastChar(StringBuilder sb) {
+    return sb.charAt(sb.length() - 1);
   }
 
   /**
@@ -139,7 +196,27 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   public boolean supportsDevModeInJunit(LinkerContext context) {
     return (getHostedFilename() != "");
   }
-  
+
+  /**
+   * Extract via {@link #CHUNK_SIZE_PROPERTY} the number of characters to be
+   * included in each chunk.
+   */
+  protected int charsPerChunk(LinkerContext context, TreeLogger logger) {
+    SortedSet<ConfigurationProperty> configProps = context.getConfigurationProperties();
+    for (ConfigurationProperty prop : configProps) {
+      if (prop.getName().equals(CHUNK_SIZE_PROPERTY)) {
+        return Integer.parseInt(prop.getValues().get(0));
+      }
+    }
+    // CompilerParameters.gwt.xml indicates that if this property is -1, then
+    // no chunking is performed, so we return that as the default.  Since
+    // Core.gwt.xml contains a definition for this property, this should never
+    // happen in production, but some tests mock out the ConfigurationProperties
+    // so we want to have a reasonable default rather than making them all add
+    // a value for this property.
+    return -1;
+  }
+
   protected Collection<Artifact<?>> doEmitCompilation(TreeLogger logger,
       LinkerContext context, CompilationResult result, ArtifactSet artifacts)
       throws UnableToCompleteException {
@@ -235,8 +312,10 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       LinkerContext context, CompilationResult result, String[] js,
       ArtifactSet artifacts) throws UnableToCompleteException {
     TextOutput to = new DefaultTextOutput(context.isOutputCompact());
+    String temp = splitPrimaryJavaScript(result.getStatementRanges()[0], js[0],
+        charsPerChunk(context, logger), getScriptChunkSeparator(logger, context));
     to.print(generatePrimaryFragmentString(
-        logger, context, result, js[0], js.length, artifacts));
+        logger, context, result, temp, js.length, artifacts));
     return Util.getBytes(to.toString());
   }
   
@@ -325,7 +404,16 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
 
   protected abstract String getModuleSuffix(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
-  
+
+  /**
+   * Some subclasses support "chunking" of the primary fragment. If chunking will
+   * be supported, this function should be overridden to return the string which
+   * should be inserted between each chunk.
+   */
+  protected String getScriptChunkSeparator(TreeLogger logger, LinkerContext context) {
+    return "";
+  }
+
   protected abstract String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
   

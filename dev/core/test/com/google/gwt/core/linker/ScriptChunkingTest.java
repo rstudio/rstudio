@@ -16,6 +16,7 @@
 package com.google.gwt.core.linker;
 
 import com.google.gwt.core.ext.linker.StatementRanges;
+import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.core.ext.linker.impl.StandardStatementRanges;
 
 import junit.framework.TestCase;
@@ -23,7 +24,7 @@ import junit.framework.TestCase;
 import java.util.ArrayList;
 
 /**
- * Tests the script chunking in the {@link IFrameLinker}.
+ * Tests the script chunking in the {@link SelectionScriptLinker}.
  */
 public class ScriptChunkingTest extends TestCase {
   /**
@@ -71,12 +72,37 @@ public class ScriptChunkingTest extends TestCase {
     builder.addStatement(stmt4);
     builder.addNonStatement("}");
 
-    String split = IFrameLinker.splitPrimaryJavaScript(builder.getRanges(),
-        builder.getJavaScript(), stmt1.length() + stmt2.length());
+    String split = SelectionScriptLinker.splitPrimaryJavaScript(builder.getRanges(),
+        builder.getJavaScript(), stmt1.length() + stmt2.length(),
+        IFrameLinker.SCRIPT_CHUNK_SEPARATOR);
     assertEquals(stmt1 + stmt2 + IFrameLinker.SCRIPT_CHUNK_SEPARATOR + stmt3
         + ';' + stmt4, split);
   }
 
+  
+  /**
+   * Test that with the default chunk separator (""), splitting is a no-op.
+   */
+  public void testEmptyStringSeparator() {
+    ScriptWithRangesBuilder builder = new ScriptWithRangesBuilder();
+    builder.addNonStatement("{");
+    builder.addNonStatement("{");
+    String stmt1 = "x=1;";
+    builder.addStatement(stmt1);
+    String stmt2 = "function x(){x = 2}\n";
+    builder.addStatement(stmt2);
+    String stmt3 = "x=3";
+    builder.addStatement(stmt3);
+    builder.addNonStatement("}\n{");
+    String stmt4 = "x=5";
+    builder.addStatement(stmt4);
+    builder.addNonStatement("}");
+
+    String split = SelectionScriptLinker.splitPrimaryJavaScript(builder.getRanges(),
+        builder.getJavaScript(), stmt1.length() + stmt2.length(), "");
+    assertEquals(stmt1 + stmt2 + stmt3 + ';' + stmt4, split);
+  }
+  
   /**
    * Test a chunk size large enough that no splitting happens.
    */
@@ -95,8 +121,8 @@ public class ScriptChunkingTest extends TestCase {
     builder.addStatement(stmt4);
     builder.addNonStatement("}");
 
-    String split = IFrameLinker.splitPrimaryJavaScript(builder.getRanges(),
-        builder.getJavaScript(), 10000);
+    String split = SelectionScriptLinker.splitPrimaryJavaScript(builder.getRanges(),
+        builder.getJavaScript(), 10000, IFrameLinker.SCRIPT_CHUNK_SEPARATOR);
     assertEquals(stmt1 + stmt2 + stmt3 + ';' + stmt4, split);
   }
 
@@ -114,8 +140,8 @@ public class ScriptChunkingTest extends TestCase {
     builder.addStatement("x=5");
     builder.addNonStatement("}");
 
-    String split = IFrameLinker.splitPrimaryJavaScript(builder.getRanges(),
-        builder.getJavaScript(), -1);
+    String split = SelectionScriptLinker.splitPrimaryJavaScript(builder.getRanges(),
+        builder.getJavaScript(), -1, IFrameLinker.SCRIPT_CHUNK_SEPARATOR);
     assertEquals(builder.getJavaScript(), split);
   }
 
@@ -133,8 +159,8 @@ public class ScriptChunkingTest extends TestCase {
     builder.addStatement("x=5");
     builder.addNonStatement("}");
 
-    String split = IFrameLinker.splitPrimaryJavaScript(null,
-        builder.getJavaScript(), 5);
+    String split = SelectionScriptLinker.splitPrimaryJavaScript(null,
+        builder.getJavaScript(), 5, IFrameLinker.SCRIPT_CHUNK_SEPARATOR);
     assertEquals(builder.getJavaScript(), split);
   }
 }

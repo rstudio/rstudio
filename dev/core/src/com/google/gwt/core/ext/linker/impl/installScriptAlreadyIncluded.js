@@ -9,14 +9,18 @@ function installScript(filename) {
 
   function installCode(code) {
     var docbody = getInstallLocation();
-    var script = getInstallLocationDoc().createElement('script');
-    script.language='javascript';
-    script.text = code;
-    docbody.appendChild(script);
+    for (var i = 0; i < code.length; i++) {
+      var script = getInstallLocationDoc().createElement('script');
+      script.language='javascript';
+      script.text = code[i];
+      docbody.appendChild(script);
 
-    // Remove the tags to shrink the DOM a little.
-    // It should have installed its code immediately after being added.
-    docbody.removeChild(script);
+      // Unless we're in pretty mode, remove the tags to shrink the DOM a little.
+      // It should have installed its code immediately after being added.
+      __START_OBFUSCATED_ONLY__
+      docbody.removeChild(script);
+      __END_OBFUSCATED_ONLY__
+    }
   }
   
   // Set up a script tag to start downloading immediately, as well as a

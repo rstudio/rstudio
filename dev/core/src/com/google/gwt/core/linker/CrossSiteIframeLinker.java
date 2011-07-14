@@ -387,6 +387,11 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   }
 
   @Override
+  protected String getScriptChunkSeparator(TreeLogger logger, LinkerContext context) {
+    return shouldInstallCode(context) ? "__SCRIPT_CHUNK_SEPARATOR_MARKER__" : "";
+  }
+
+  @Override
   protected String getSelectionScriptTemplate(TreeLogger logger, LinkerContext context) {
     return "com/google/gwt/core/linker/CrossSiteIframeTemplate.js";
   }
@@ -511,9 +516,17 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
       // Rewrite the code so it can be installed with
       // __MODULE_FUNC__.onScriptDownloaded
       out.append(context.getModuleFunctionName());
-      out.append(".onScriptDownloaded(");
-      out.append(JsToStringGenerationVisitor.javaScriptString(script));
-      out.append(")");
+      out.append(".onScriptDownloaded([");
+      String[] chunks = script.split(getScriptChunkSeparator(logger, context));
+      boolean first = true;
+      for (String chunk : chunks) {
+        if (!first) {
+          out.append(", ");
+        }
+        out.append(JsToStringGenerationVisitor.javaScriptString(chunk));
+        first = false;
+      }
+      out.append("])");
     } else {
       out.append(script);
     }

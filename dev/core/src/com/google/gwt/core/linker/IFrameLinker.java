@@ -20,17 +20,13 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
-import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.Shardable;
-import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Util;
-
-import java.util.SortedSet;
 
 /**
  * Implements the canonical GWT bootstrap sequence that loads the GWT module in
@@ -44,61 +40,6 @@ public class IFrameLinker extends SelectionScriptLinker {
    * for testing.
    */
   static final String SCRIPT_CHUNK_SEPARATOR = "--></script>\n<script><!--\n";
-
-  /**
-   * A configuration property indicating how large each script tag should be.
-   */
-  private static final String CHUNK_SIZE_PROPERTY = "iframe.linker.script.chunk.size";
-
-  /**
-   * Split a JavaScript string into multiple chunks, at statement boundaries.
-   * Insert and end-script tag and a start-script tag in between each chunk.
-   * This method is made default access for testing.
-   * 
-   * @param ranges Describes where the statements are located within the
-   *          JavaScript code. If <code>null</code>, then return <code>js</code>
-   *          unchanged.
-   * @param js The JavaScript code to be split up.
-   * @param charsPerChunk The number of characters to be put in each script tag
-   */
-  static String splitPrimaryJavaScript(StatementRanges ranges, String js,
-      int charsPerChunk) {
-    if (charsPerChunk < 0 || ranges == null) {
-      return js;
-    }
-
-    StringBuilder sb = new StringBuilder();
-    int bytesInCurrentTag = 0;
-
-    for (int i = 0; i < ranges.numStatements(); i++) {
-      int start = ranges.start(i);
-      int end = ranges.end(i);
-      int length = end - start;
-      if (bytesInCurrentTag > 0 && bytesInCurrentTag + length > charsPerChunk) {
-        if (lastChar(sb) != '\n') {
-          sb.append('\n');
-        }
-        sb.append(SCRIPT_CHUNK_SEPARATOR);
-        bytesInCurrentTag = 0;
-      }
-      if (bytesInCurrentTag > 0) {
-        char lastChar = lastChar(sb);
-        if (lastChar != '\n' && lastChar != ';' && lastChar != '}') {
-          /*
-           * Make sure this statement has a separator from the last one.
-           */
-          sb.append(";");
-        }
-      }
-      sb.append(js, start, end);
-      bytesInCurrentTag += length;
-    }
-    return sb.toString();
-  }
-
-  private static char lastChar(StringBuilder sb) {
-    return sb.charAt(sb.length() - 1);
-  }
 
   @Override
   public String getDescription() {
@@ -120,7 +61,7 @@ public class IFrameLinker extends SelectionScriptLinker {
     StringBuffer b = new StringBuffer();
     b.append(getModulePrefix(logger, context, result.getStrongName(), js.length));
     b.append(splitPrimaryJavaScript(result.getStatementRanges()[0], js[0],
-        charsPerChunk(context, logger)));
+        charsPerChunk(context, logger), getScriptChunkSeparator(logger, context)));
     b.append(getModuleSuffix(logger, context));
     return Util.getBytes(b.toString());
   }
@@ -169,30 +110,17 @@ public class IFrameLinker extends SelectionScriptLinker {
   }
 
   @Override
+  protected String getScriptChunkSeparator(TreeLogger logger, LinkerContext context) {
+    return SCRIPT_CHUNK_SEPARATOR;
+  }
+
+  @Override
   protected String getSelectionScriptTemplate(TreeLogger logger, LinkerContext context) {
     return "com/google/gwt/core/linker/IFrameTemplate.js";
   }
-
+  
   protected String modifyPrimaryJavaScript(String js) {
     return js;
-  }
-
-  /**
-   * Extract via {@link #CHUNK_SIZE_PROPERTY} the number of characters to be
-   * included in each script tag.
-   */
-  private int charsPerChunk(LinkerContext context, TreeLogger logger)
-      throws UnableToCompleteException {
-    SortedSet<ConfigurationProperty> configProps = context.getConfigurationProperties();
-    for (ConfigurationProperty prop : configProps) {
-      if (prop.getName().equals(CHUNK_SIZE_PROPERTY)) {
-        return Integer.parseInt(prop.getValues().get(0));
-      }
-    }
-
-    logger.log(TreeLogger.ERROR, "Unable to find configuration property "
-        + CHUNK_SIZE_PROPERTY);
-    throw new UnableToCompleteException();
   }
 
   /**

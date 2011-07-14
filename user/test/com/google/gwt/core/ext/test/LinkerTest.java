@@ -16,6 +16,8 @@
 package com.google.gwt.core.ext.test;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * Tests that all the linkers work well enough to run the
@@ -24,5 +26,10 @@ import com.google.gwt.junit.client.GWTTestCase;
 public abstract class LinkerTest extends GWTTestCase {
   public void testSomethingTrivial() {
     assertTrue(true);
+  }
+  
+  public void testSomethingBigEnoughToTriggerChunking() {
+    RootPanel.get().add(new Label("Hello there"));
+    assertEquals(1, RootPanel.get().getWidgetCount());
   }
 }
