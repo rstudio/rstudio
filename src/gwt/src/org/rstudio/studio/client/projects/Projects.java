@@ -232,7 +232,8 @@ public class Projects implements OpenProjectFileHandler,
             fileDialogs_.openFile(
                "Open Project", 
                fsContext_, 
-               FileSystemItem.home(),
+               FileSystemItem.createDir(
+                     pUIPrefs_.get().defaultProjectLocation().getValue()),
                "R Projects (*.Rproj)",
                new ProgressOperationWithInput<FileSystemItem>() 
                {
