@@ -13,20 +13,28 @@
 package org.rstudio.studio.client.workbench.views.vcs.review;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.dom.client.Style.*;
+import com.google.gwt.dom.client.Style.Float;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.ImageResource.ImageOptions;
+import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.diff.Line;
@@ -38,6 +46,64 @@ import java.util.ArrayList;
 
 public class ReviewPanel extends Composite implements Display
 {
+   interface Resources extends ClientBundle
+   {
+      @Source("ReviewPanel.css")
+      Styles styles();
+
+      @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+      @Source("images/toolbarTile.png")
+      ImageResource toolbarTile();
+
+      @Source("images/stageAllFiles.png")
+      ImageResource stageAllFiles();
+
+      @Source("images/discard.png")
+      ImageResource discard();
+
+      @Source("images/ignore.png")
+      ImageResource ignore();
+
+      @Source("images/pull.png")
+      ImageResource pull();
+
+      @Source("images/push.png")
+      ImageResource push();
+
+      @Source("images/stage.png")
+      ImageResource stage();
+
+      @Source("images/splitterTileV.png")
+      @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+      ImageResource splitterTileV();
+
+      @Source("images/splitterTileH.png")
+      @ImageOptions(repeatStyle = RepeatStyle.Vertical)
+      ImageResource splitterTileH();
+   }
+
+   interface Styles extends CssResource
+   {
+      String splitPanel();
+      String whitebg();
+
+      String toolbar();
+      String toolbarWrapper();
+      String diffToolbar();
+
+      String stagedLabel();
+      String staged();
+
+      String unstaged();
+
+      String diffViewOptions();
+
+      String commitMessage();
+      String commitButton();
+
+      String splitPanelCommit();
+   }
+
    private static class ListBoxAdapter implements HasValue<Integer>
    {
       private ListBoxAdapter(ListBox listBox)
@@ -105,33 +171,96 @@ public class ReviewPanel extends Composite implements Display
    public ReviewPanel(ChangelistTable changelist,
                       LineTableView diffPane)
    {
-      stageButton_ = new ThemedButton("Stage");
-      discardButton_ = new ThemedButton("Discard");
-      unstageButton_ = new ThemedButton("Unstage");
+      splitPanel_ = new SplitLayoutPanel(4);
+      splitPanelCommit_ = new SplitLayoutPanel(4);
+
+      commitButton_ = new ThemedButton("Commit");
+      commitButton_.addStyleName(RES.styles().commitButton());
+
       changelist_ = changelist;
       lines_ = diffPane;
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
+      topToolbar_.addStyleName(RES.styles().toolbar());
+
+      stageAllFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
+            "Stage All Files", RES.stageAllFiles(), (ClickHandler) null));
+
+      topToolbar_.addLeftSeparator();
+
+      ToolbarPopupMenu discardMenu = new ToolbarPopupMenu();
+      topToolbar_.addLeftWidget(new ToolbarButton(
+            "Discard", RES.discard(), discardMenu));
+
+      topToolbar_.addLeftSeparator();
+
+      ignoreButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
+            "Ignore", RES.ignore(), (ClickHandler) null));
+
+      pullButton_ = topToolbar_.addRightWidget(new ToolbarButton(
+            "Pull", RES.pull(), (ClickHandler) null));
+
+      topToolbar_.addRightSeparator();
+
+      pushButton_ = topToolbar_.addRightWidget(new ToolbarButton(
+            "Push", RES.push(), (ClickHandler) null));
+
+      diffToolbar_.addStyleName(RES.styles().toolbar());
+      diffToolbar_.addStyleName(RES.styles().diffToolbar());
+      diffToolbar_.getElement().getStyle().setFloat(Float.LEFT);
+
+      stageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
+            "Stage All", RES.stage(), (ClickHandler) null));
+      diffToolbar_.addLeftSeparator();
+      discardAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
+            "Discard All", RES.discard(), (ClickHandler) null));
+      unstageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
+            "Unstage All", RES.discard(), (ClickHandler) null));
+
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
    }
 
    @Override
-   public HasClickHandlers getStageButton()
+   public ToolbarButton getStageAllFilesButton()
    {
-      return stageButton_;
+      return stageAllFilesButton_;
    }
 
    @Override
-   public HasClickHandlers getDiscardButton()
+   public ToolbarButton getIgnoreButton()
    {
-      return discardButton_;
+      return ignoreButton_;
    }
 
    @Override
-   public HasClickHandlers getUnstageButton()
+   public ToolbarButton getPullButton()
    {
-      return unstageButton_;
+      return pullButton_;
+   }
+
+   @Override
+   public ToolbarButton getPushButton()
+   {
+      return pushButton_;
+   }
+
+   @Override
+   public ToolbarButton getStageAllButton()
+   {
+      return stageAllButton_;
+   }
+
+   @Override
+   public ToolbarButton getDiscardAllButton()
+   {
+      return discardAllButton_;
+   }
+
+   @Override
+   public ToolbarButton getUnstageAllButton()
+   {
+      return unstageAllButton_;
    }
 
    @Override
@@ -165,20 +294,38 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @UiField(provided = true)
-   ThemedButton stageButton_;
+   SplitLayoutPanel splitPanel_;
    @UiField(provided = true)
-   ThemedButton discardButton_;
-   @UiField(provided = true)
-   ThemedButton unstageButton_;
+   SplitLayoutPanel splitPanelCommit_;
    @UiField(provided = true)
    ChangelistTable changelist_;
+   @UiField(provided = true)
+   ThemedButton commitButton_;
    @UiField
-   CheckBox stagedCheckBox_;
+   RadioButton stagedCheckBox_;
    @UiField(provided = true)
    LineTableView lines_;
    @UiField
    NavGutter gutter_;
    @UiField
    ListBox contextLines_;
+   @UiField
+   Toolbar topToolbar_;
+   @UiField
+   Toolbar diffToolbar_;
+
    private ListBoxAdapter listBoxAdapter_;
+
+   private ToolbarButton stageAllFilesButton_;
+   private ToolbarButton ignoreButton_;
+   private ToolbarButton pullButton_;
+   private ToolbarButton pushButton_;
+   private ToolbarButton stageAllButton_;
+   private ToolbarButton discardAllButton_;
+   private ToolbarButton unstageAllButton_;
+
+   private static final Resources RES = GWT.create(Resources.class);
+   static {
+      RES.styles().ensureInjected();
+   }
 }

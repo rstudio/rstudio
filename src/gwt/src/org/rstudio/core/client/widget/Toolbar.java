@@ -142,17 +142,21 @@ public class Toolbar extends Composite
       }
    }
 
-   public void addLeftWidget(Widget widget)
+   public <TWidget extends Widget> TWidget addLeftWidget(TWidget widget)
    {
       leftToolbarPanel_.add(widget);
       invalidateSeparators();
+      return widget;
    }
    
-   public void addLeftWidget(Widget widget, VerticalAlignmentConstant alignment)
+   public <TWidget extends Widget> TWidget addLeftWidget(
+         TWidget widget,
+         VerticalAlignmentConstant alignment)
    {
       addLeftWidget(widget);
       leftToolbarPanel_.setCellVerticalAlignment(widget, alignment);
       invalidateSeparators();
+      return widget;
    }
 
    public Widget addLeftSeparator()
@@ -173,10 +177,11 @@ public class Toolbar extends Composite
       return sep;
    }
    
-   public void addRightWidget(Widget widget)
+   public <TWidget extends Widget> TWidget addRightWidget(TWidget widget)
    {
       rightToolbarPanel_.add(widget);
       invalidateSeparators();
+      return widget;
    }
 
    public void removeLeftWidgets()

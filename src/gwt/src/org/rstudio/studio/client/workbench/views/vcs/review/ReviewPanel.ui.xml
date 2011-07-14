@@ -4,49 +4,79 @@
              xmlns:vcs_diff='urn:import:org.rstudio.studio.client.workbench.views.vcs.diff'
              xmlns:rs_widget='urn:import:org.rstudio.core.client.widget'>
 
-   <ui:style>
-      .outer {
-         background-color: #e1e2e5;
-         /*border: 1px solid #999;*/
-         margin: -4px;
-      }
-      .whitebg {
-         background-color: white;
-      }
-   </ui:style>
+   <ui:with field="res" type="org.rstudio.studio.client.workbench.views.vcs.review.ReviewPanel.Resources"/>
 
-   <g:SplitLayoutPanel styleName="{style.outer}">
-      <g:north size="30">
-         <g:HorizontalPanel>
-            <g:FlowPanel>
-               <rs_widget:ThemedButton ui:field="stageButton_"/>
-               <rs_widget:ThemedButton ui:field="discardButton_"/>
-               <rs_widget:ThemedButton ui:field="unstageButton_"/>
-            </g:FlowPanel>
-            <g:CheckBox ui:field="stagedCheckBox_" text="Show staged changes"/>
-            <g:ListBox ui:field="contextLines_" visibleItemCount="1" selectedIndex="5">
-               <g:item value="5">5 line</g:item>
-               <g:item value="10">10 line</g:item>
-               <g:item value="25">25 line</g:item>
-               <g:item value="50">50 line</g:item>
-               <g:item value="-1">All lines</g:item>
-            </g:ListBox>
-         </g:HorizontalPanel>
+   <g:SplitLayoutPanel ui:field="splitPanel_" styleName="{res.styles.splitPanel}">
+      <g:north size="230">
+         <g:DockLayoutPanel>
+            <g:north size="28">
+               <g:SimplePanel styleName="{res.styles.toolbarWrapper}">
+                  <rs_widget:Toolbar ui:field="topToolbar_"/>
+               </g:SimplePanel>
+            </g:north>
+            <g:center>
+               <g:SplitLayoutPanel ui:field="splitPanelCommit_" styleName="{res.styles.splitPanelCommit}">
+                  <g:east size="400">
+                     <g:LayoutPanel>
+                        <g:layer left="6px" right="6px" top="4px" height="20px">
+                           <g:Label text="Commit message"/>
+                        </g:layer>
+                        <g:layer left="6px" right="6px" top="20px" bottom="34px">
+                           <g:TextArea styleName="{res.styles.commitMessage}"/>
+                        </g:layer>
+                        <g:layer left="6px" right="6px" bottom="0" height="30px">
+                           <g:FlowPanel>
+                              <rs_widget:ThemedButton ui:field="commitButton_"/>
+                           </g:FlowPanel>
+                        </g:layer>
+                     </g:LayoutPanel>
+                  </g:east>
+                  <g:center>
+                     <vcs:ChangelistTable styleName="{res.styles.whitebg}" ui:field="changelist_" width="100%" height="100%"/>
+                  </g:center>
+               </g:SplitLayoutPanel>
+            </g:center>
+         </g:DockLayoutPanel>
       </g:north>
-      <g:south size="200">
-         <vcs:ChangelistTable styleName="{style.whitebg}" ui:field="changelist_" width="100%" height="100%"/>
-      </g:south>
       <g:center>
-         <g:LayoutPanel>
-            <g:layer left="0" right="8px" top="0" bottom="0">
-               <g:ScrollPanel styleName="{style.whitebg}" width="100%" height="100%">
-                  <vcs_diff:LineTableView ui:field="lines_" width="100%"/>
-               </g:ScrollPanel>
-            </g:layer>
-            <g:layer right="0" width="8px" top="16px" bottom="16px">
-               <vcs_diff:NavGutter ui:field="gutter_" width="100%" height="100%"/>
-            </g:layer>
-         </g:LayoutPanel>
+         <g:DockLayoutPanel>
+            <g:north size="28">
+               <g:FlowPanel styleName="{res.styles.toolbarWrapper}">
+                  <rs_widget:Toolbar ui:field="diffToolbar_"/>
+                  <g:FlowPanel styleName="{res.styles.diffViewOptions}">
+                     <g:Label text="Show" styleName="{res.styles.stagedLabel}"/>
+                     <g:RadioButton ui:field="stagedCheckBox_"
+                                    name="ReviewPanelShow"
+                                    text="Staged"
+                                    styleName="{res.styles.staged}"/>
+                     <g:RadioButton name="ReviewPanelShow"
+                                    text="Unstaged"
+                                    checked="true"
+                                    styleName="{res.styles.unstaged}"/>
+                     <g:Label text="Context" styleName="{res.styles.stagedLabel}"/>
+                     <g:ListBox ui:field="contextLines_" visibleItemCount="1" selectedIndex="5">
+                        <g:item value="5">5 line</g:item>
+                        <g:item value="10">10 line</g:item>
+                        <g:item value="25">25 line</g:item>
+                        <g:item value="50">50 line</g:item>
+                        <g:item value="-1">All lines</g:item>
+                     </g:ListBox>
+                  </g:FlowPanel>
+               </g:FlowPanel>
+            </g:north>
+            <g:center>
+               <g:LayoutPanel>
+                  <g:layer left="0" right="8px" top="0" bottom="0">
+                     <g:ScrollPanel styleName="{res.styles.whitebg}" width="100%" height="100%">
+                        <vcs_diff:LineTableView ui:field="lines_" width="100%"/>
+                     </g:ScrollPanel>
+                  </g:layer>
+                  <g:layer right="0" width="8px" top="16px" bottom="16px">
+                     <vcs_diff:NavGutter ui:field="gutter_" width="100%" height="100%"/>
+                  </g:layer>
+               </g:LayoutPanel>
+            </g:center>
+         </g:DockLayoutPanel>
       </g:center>
    </g:SplitLayoutPanel>
 

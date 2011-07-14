@@ -27,6 +27,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.ValueSink;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
@@ -42,14 +43,19 @@ public class ReviewPresenter implements IsWidget
 {
    public interface Display extends IsWidget
    {
-      HasClickHandlers getStageButton();
-      HasClickHandlers getDiscardButton();
-      HasClickHandlers getUnstageButton();
       HasValue<Boolean> getStagedCheckBox();
       ValueSink<ArrayList<Line>> getGutter();
       LineTablePresenter.Display getLineTableDisplay();
       ChangelistTable getChangelistTable();
       HasValue<Integer> getContextLines();
+
+      ToolbarButton getStageAllFilesButton();
+      ToolbarButton getIgnoreButton();
+      ToolbarButton getPullButton();
+      ToolbarButton getPushButton();
+      ToolbarButton getStageAllButton();
+      ToolbarButton getDiscardAllButton();
+      ToolbarButton getUnstageAllButton();
    }
 
    private class ApplyPatchClickHandler implements ClickHandler
@@ -119,11 +125,11 @@ public class ReviewPresenter implements IsWidget
          }
       });
 
-      view_.getStageButton().addClickHandler(
+      view_.getStageAllButton().addClickHandler(
             new ApplyPatchClickHandler(PatchMode.Stage, false));
-      view_.getDiscardButton().addClickHandler(
+      view_.getDiscardAllButton().addClickHandler(
             new ApplyPatchClickHandler(PatchMode.Working, true));
-      view_.getUnstageButton().addClickHandler(
+      view_.getUnstageAllButton().addClickHandler(
             new ApplyPatchClickHandler(PatchMode.Stage, true));
       view_.getStagedCheckBox().addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
@@ -133,8 +139,7 @@ public class ReviewPresenter implements IsWidget
                {
                   updateDiff();
                }
-            }
-      );
+            });
 
       view_.getContextLines().addValueChangeHandler(new ValueChangeHandler<Integer>()
       {

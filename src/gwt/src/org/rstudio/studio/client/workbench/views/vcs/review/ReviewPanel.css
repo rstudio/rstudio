@@ -1,0 +1,72 @@
+@external gwt-SplitLayoutPanel-VDragger, gwt-SplitLayoutPanel-HDragger;
+
+.splitPanel {
+   background-color: #f3f4f4;
+   margin: -12px -40px 0 -11px;
+}
+.splitPanelCommit {
+   background-color: #f3f4f4;
+   font-size: 11px;
+}
+@sprite .splitPanel .gwt-SplitLayoutPanel-VDragger {
+   gwt-image: 'splitterTileV';
+}
+@sprite .splitPanelCommit .gwt-SplitLayoutPanel-HDragger {
+   gwt-image: 'splitterTileH';
+}
+
+.whitebg {
+   background-color: white;
+}
+
+.toolbar {
+   background-image: none !important;
+}
+
+@sprite .toolbarWrapper {
+   position: relative;
+   gwt-image: 'toolbarTile';
+   padding-top: 2px;
+   font-size: 11px;
+}
+
+.stagedLabel {
+   display: inline;
+   margin-right: 8px;
+}
+
+.staged {
+   margin-right: 8px;
+}
+
+.unstaged {
+   margin-right: 22px;
+}
+
+.diffToolbar {
+   width: auto;
+}
+
+.diffViewOptions {
+   position: absolute;
+   right: 6px;
+   top: 2px;
+   bottom: 2px;
+   width: auto;
+   text-align: right;
+}
+
+.commitMessage {
+   width: auto;
+   height: auto;
+   resize: none;
+   border-color: #c3c5c7;
+   border-radius: 4px;
+   padding: 3px;
+   margin: 0;
+}
+
+.commitButton {
+   float: right;
+   margin-right: -1px;
+}
