@@ -9,6 +9,8 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
@@ -148,6 +150,8 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
+            manageEnabled();
+            
             if (event.getValue())
                txtProjectName_.setFocus(true);
          }
@@ -182,8 +186,18 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
+            manageEnabled();
+            
             if (event.getValue() && existingProjectDir_.getText().length() == 0)
-               existingProjectDir_.click();
+            {
+               Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+                  @Override
+                  public void execute()
+                  {
+                     existingProjectDir_.click();     
+                  }       
+               });          
+            }
          }
          
       });
@@ -196,6 +210,8 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
       existingProjectDir_ = new DirectoryChooserTextBox("Directory:");
       existingLocationPanel.add(existingProjectDir_);
       verticalPanel.add(existingLocationPanel);
+      
+      manageEnabled();
       
       return verticalPanel;
    }
@@ -211,6 +227,16 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
       FileSystemItem dirItem = FileSystemItem.createDir(dir);
       return FileSystemItem.createFile(
         dirItem.completePath(dirItem.getStem() + ".Rproj")).getPath();
+   }
+   
+   private void manageEnabled()
+   {
+      boolean createNewDir = newDirButton_.getValue();
+      
+      txtProjectName_.setEnabled(createNewDir);
+      newProjectParent_.setEnabled(createNewDir);
+      existingProjectDir_.setEnabled(!createNewDir);
+      
    }
    
    static interface Styles extends CssResource
