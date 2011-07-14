@@ -12,6 +12,7 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -62,8 +63,15 @@ public class ChooseFolderDialog2 extends FileSystemDialog
    }
 
    @Override
+   public void onSelection(SelectionEvent<FileSystemItem> event)
+   {
+      super.onSelection(event);
+      filename_.setText(event.getSelectedItem().getPath());
+   }
+
+   @Override
    protected FileSystemItem getSelectedItem()
    {
-      return FileSystemItem.createDir(context_.pwd());
+      return FileSystemItem.createDir(filename_.getText());
    }
 }
