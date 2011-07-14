@@ -15,8 +15,10 @@ package org.rstudio.studio.client.workbench.views.vcs.review;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -48,13 +50,19 @@ public class ReviewPresenter implements IsWidget
       ChangelistTable getChangelistTable();
       HasValue<Integer> getContextLines();
 
-      ToolbarButton getStageAllFilesButton();
-      ToolbarButton getIgnoreButton();
-      ToolbarButton getPullButton();
-      ToolbarButton getPushButton();
-      ToolbarButton getStageAllButton();
-      ToolbarButton getDiscardAllButton();
-      ToolbarButton getUnstageAllButton();
+      HasClickHandlers getStageAllFilesButton();
+      HasClickHandlers getIgnoreButton();
+      HasClickHandlers getRefreshButton();
+      HasClickHandlers getPullButton();
+      HasClickHandlers getPushButton();
+      HasClickHandlers getStageAllButton();
+      HasClickHandlers getDiscardAllButton();
+      HasClickHandlers getUnstageAllButton();
+
+      HasText getCommitMessage();
+      HasClickHandlers getCommitButton();
+
+      HasValue<Boolean> getCommitIsAmend();
    }
 
    private class ApplyPatchClickHandler implements ClickHandler
@@ -124,6 +132,27 @@ public class ReviewPresenter implements IsWidget
          }
       });
 
+      view_.getStageAllFilesButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            server_.vcsFullStatus(new SimpleRequestCallback<JsArray<StatusAndPath>>() {
+               @Override
+               public void onResponseReceived(JsArray<StatusAndPath> response)
+               {
+                  super.onResponseReceived(response);
+
+                  ArrayList<String> paths = new ArrayList<String>();
+                  for (int i = 0; i < response.length(); i++)
+                     paths.add(response.get(i).getPath());
+
+                  server_.vcsStage(paths, new SimpleRequestCallback<Void>());
+               }
+            });
+         }
+      });
+
       view_.getStageAllButton().addClickHandler(
             new ApplyPatchClickHandler(PatchMode.Stage, false));
       view_.getDiscardAllButton().addClickHandler(
@@ -146,6 +175,17 @@ public class ReviewPresenter implements IsWidget
          public void onValueChange(ValueChangeEvent<Integer> event)
          {
             updateDiff();
+         }
+      });
+
+      view_.getCommitButton().addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            server_.vcsCommitGit(view_.getCommitMessage().getText(),
+                                 view_.getCommitIsAmend().getValue(),
+                                 false,
+                                 new SimpleRequestCallback<Void>());
          }
       });
 

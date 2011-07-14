@@ -13,7 +13,10 @@
 package org.rstudio.studio.client.workbench.views.vcs.review;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -34,12 +37,14 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
-import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter.Display;
+import org.rstudio.studio.client.workbench.views.vcs.ChangelistTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.diff.Line;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.diff.NavGutter;
+import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter.Display;
 
 import java.util.ArrayList;
 
@@ -173,8 +178,9 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Inject
-   public ReviewPanel(ChangelistTable changelist,
-                      LineTableView diffPane)
+   public ReviewPanel(ChangelistTablePresenter changelist,
+                      LineTableView diffPane,
+                      Commands commands)
    {
       splitPanel_ = new SplitLayoutPanel(4);
       splitPanelCommit_ = new SplitLayoutPanel(4);
@@ -182,7 +188,7 @@ public class ReviewPanel extends Composite implements Display
       commitButton_ = new ThemedButton("Commit");
       commitButton_.addStyleName(RES.styles().commitButton());
 
-      changelist_ = changelist;
+      changelist_ = changelist.getView();
       lines_ = diffPane;
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
@@ -205,6 +211,12 @@ public class ReviewPanel extends Composite implements Display
 
       ignoreButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Ignore", RES.ignore(), (ClickHandler) null));
+
+      refreshButton_ = topToolbar_.addRightWidget(new ToolbarButton(
+            "Refresh", commands.vcsRefresh().getImageResource(),
+            (ClickHandler) null));
+
+      topToolbar_.addRightSeparator();
 
       pullButton_ = topToolbar_.addRightWidget(new ToolbarButton(
             "Pull", RES.pull(), (ClickHandler) null));
@@ -243,6 +255,12 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Override
+   public ToolbarButton getRefreshButton()
+   {
+      return refreshButton_;
+   }
+
+   @Override
    public ToolbarButton getPullButton()
    {
       return pullButton_;
@@ -270,6 +288,24 @@ public class ReviewPanel extends Composite implements Display
    public ToolbarButton getUnstageAllButton()
    {
       return unstageAllButton_;
+   }
+
+   @Override
+   public HasText getCommitMessage()
+   {
+      return commitMessage_;
+   }
+
+   @Override
+   public HasClickHandlers getCommitButton()
+   {
+      return commitButton_;
+   }
+
+   @Override
+   public HasValue<Boolean> getCommitIsAmend()
+   {
+      return commitIsAmend_;
    }
 
    @Override
@@ -326,11 +362,16 @@ public class ReviewPanel extends Composite implements Display
    Image fileIcon_;
    @UiField
    Label filenameLabel_;
+   @UiField
+   TextArea commitMessage_;
+   @UiField
+   CheckBox commitIsAmend_;
 
    private ListBoxAdapter listBoxAdapter_;
 
    private ToolbarButton stageAllFilesButton_;
    private ToolbarButton ignoreButton_;
+   private ToolbarButton refreshButton_;
    private ToolbarButton pullButton_;
    private ToolbarButton pushButton_;
    private ToolbarButton stageAllButton_;

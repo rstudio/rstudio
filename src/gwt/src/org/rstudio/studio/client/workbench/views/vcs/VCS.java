@@ -75,14 +75,6 @@ public class VCS extends BasePresenter implements IsWidget
 
       commandBinder.bind(commands, this);
 
-      events.addHandler(VcsRefreshEvent.TYPE, new VcsRefreshHandler() {
-         @Override
-         public void onVcsRefresh(VcsRefreshEvent event)
-         {
-            refresh(false);
-         }
-      });
-
       refresh(false);
    }
 

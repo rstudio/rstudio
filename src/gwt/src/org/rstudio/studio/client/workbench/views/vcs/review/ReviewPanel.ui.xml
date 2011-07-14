@@ -22,10 +22,11 @@
                            <g:Label text="Commit message"/>
                         </g:layer>
                         <g:layer left="6px" right="6px" top="20px" bottom="34px">
-                           <g:TextArea styleName="{res.styles.commitMessage}"/>
+                           <g:TextArea ui:field="commitMessage_" styleName="{res.styles.commitMessage}"/>
                         </g:layer>
                         <g:layer left="6px" right="6px" bottom="0" height="30px">
                            <g:FlowPanel>
+                              <g:CheckBox ui:field="commitIsAmend_" text="Amend previous commit"/>
                               <rs_widget:ThemedButton ui:field="commitButton_"/>
                            </g:FlowPanel>
                         </g:layer>
@@ -44,7 +45,7 @@
                <g:FlowPanel styleName="{res.styles.toolbarWrapper}">
                   <g:FlowPanel styleName="{res.styles.fileInfoWrapper}">
                      <g:Image ui:field="fileIcon_" styleName="{res.styles.fileIcon}"/>
-                     <g:Label ui:field="filenameLabel_" text="Filename.R" styleName="{res.styles.filenameLabel}"/>
+                     <g:Label ui:field="filenameLabel_" text="Ragamuffin.R" styleName="{res.styles.filenameLabel}"/>
                   </g:FlowPanel>
                   <rs_widget:Toolbar ui:field="diffToolbar_"/>
                   <g:FlowPanel styleName="{res.styles.diffViewOptions}">
