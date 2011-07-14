@@ -55,6 +55,9 @@ public class BeanParser implements ElementParser {
    */
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
+
+    writer.getDesignTime().handleUIObject(writer, elem, fieldName);
+
     final Map<String, String> setterValues = new HashMap<String, String>();
     final Map<String, String> localizedValues = fetchLocalizedAttributeValues(
         elem, writer);

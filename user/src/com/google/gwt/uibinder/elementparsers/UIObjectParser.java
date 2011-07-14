@@ -29,9 +29,6 @@ public class UIObjectParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
-
-    writer.getDesignTime().handleUIObject(writer, elem, fieldName);
-
     String debugId = elem.consumeStringAttribute("debugId", null);
     if (null != debugId) {
       writer.addStatement("%s.ensureDebugId(%s);", fieldName, debugId);
