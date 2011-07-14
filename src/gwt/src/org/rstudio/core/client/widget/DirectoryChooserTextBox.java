@@ -7,31 +7,32 @@ import org.rstudio.studio.client.common.FileDialogs;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.Focusable;
 
 public class DirectoryChooserTextBox extends TextBoxWithButton
 {
-   public DirectoryChooserTextBox(String label)
+   public DirectoryChooserTextBox(String label, Focusable focusAfter)
    {
       this(label, 
+           focusAfter,
            RStudioGinjector.INSTANCE.getFileDialogs(),
            RStudioGinjector.INSTANCE.getRemoteFileSystemContext());
    }
    
    public DirectoryChooserTextBox(String label, 
-                                  FileDialogs fileDialogs,
-                                  FileSystemContext fsContext)
+                                  final Focusable focusAfter,
+                                  final FileDialogs fileDialogs,
+                                  final FileSystemContext fsContext)
    {
       super(label, "Browse...", null);
-      fileDialogs_ = fileDialogs;
-      fsContext_ = fsContext;
       
       addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
-            fileDialogs_.chooseFolder(
+            fileDialogs.chooseFolder(
                   "Choose Directory",
-                  fsContext_,
+                  fsContext,
                   FileSystemItem.createDir(getText()),
                   new ProgressOperationWithInput<FileSystemItem>()
                   {
@@ -43,13 +44,12 @@ public class DirectoryChooserTextBox extends TextBoxWithButton
 
                         setText(input.getPath());
                         indicator.onCompleted();
+                        if (focusAfter != null)
+                           focusAfter.setFocus(true);
                      }
                   });
          }
       });
       
    }    
-  
-   private final FileDialogs fileDialogs_;
-   private final FileSystemContext fsContext_;
 }

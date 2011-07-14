@@ -168,6 +168,8 @@ void enqueAssignedEvent(const r::sexp::Variable& variable)
 // server mode. this means that if you are ever suspended then you will always
 // end up with a 'dirty' workspace. not a big deal considering how infrequently
 // quit occurs in server mode.
+// TODO: this now affects switching projects after a suspend. we should try
+// to figure out how to preserve dirty state of the workspace accross suspend
 int s_lastSaveAction = r::session::kSaveActionAsk;
 
 void enqueSaveActionChanged()
