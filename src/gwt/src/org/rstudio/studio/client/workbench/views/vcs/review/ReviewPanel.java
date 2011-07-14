@@ -35,6 +35,7 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.diff.Line;
@@ -102,6 +103,12 @@ public class ReviewPanel extends Composite implements Display
       String commitButton();
 
       String splitPanelCommit();
+
+      String filenameLabel();
+
+      String fileInfoWrapper();
+
+      String fileIcon();
    }
 
    private static class ListBoxAdapter implements HasValue<Integer>
@@ -182,6 +189,9 @@ public class ReviewPanel extends Composite implements Display
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
+      fileIcon_.setResource(FileTypeRegistry.R.getDefaultIcon());
+      fileIcon_.addStyleName(RES.styles().fileIcon());
+
       topToolbar_.addStyleName(RES.styles().toolbar());
 
       stageAllFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
@@ -208,15 +218,16 @@ public class ReviewPanel extends Composite implements Display
 
       diffToolbar_.addStyleName(RES.styles().toolbar());
       diffToolbar_.addStyleName(RES.styles().diffToolbar());
-      diffToolbar_.getElement().getStyle().setFloat(Float.LEFT);
 
       stageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
             "Stage All", RES.stage(), (ClickHandler) null));
       diffToolbar_.addLeftSeparator();
       discardAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
             "Discard All", RES.discard(), (ClickHandler) null));
+
       unstageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
             "Unstage All", RES.discard(), (ClickHandler) null));
+      unstageAllButton_.setVisible(false);
 
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
    }
@@ -313,6 +324,10 @@ public class ReviewPanel extends Composite implements Display
    Toolbar topToolbar_;
    @UiField
    Toolbar diffToolbar_;
+   @UiField
+   Image fileIcon_;
+   @UiField
+   Label filenameLabel_;
 
    private ListBoxAdapter listBoxAdapter_;
 

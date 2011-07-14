@@ -44,6 +44,7 @@
 }
 
 .diffToolbar {
+   float: left;
    width: auto;
 }
 
@@ -69,4 +70,26 @@
 .commitButton {
    float: right;
    margin-right: -1px;
+}
+
+.filenameLabel {
+   display: inline;
+   position: relative;
+   top: 3px;
+   font-size: 12px;
+   font-weight: bold;
+   margin-right: 30px;
+}
+
+.fileInfoWrapper {
+   float: left;
+   margin-left: 6px;
+}
+
+.fileIcon {
+   float: left;
+   display: block;
+   position: relative;
+   top: 2px;
+   margin-right: 3px;
 }
