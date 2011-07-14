@@ -295,12 +295,20 @@ gwtOnLoad = function(errFn, modName, modBase){
       if (errFn) {
         errFn(modName);
       } else {
-        __gwt_displayGlassMessage("Plugin failed to connect to Development Mode server at " + $hosted,
+        __gwt_displayGlassMessage("Plugin failed to connect to Development Mode server at " +
+            simpleEscape($hosted),
             "Follow the underlying troubleshooting instructions");
         loadIframe("http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM");
       }
     }
   }
+}
+
+function simpleEscape(originalString) {
+  return originalString.replace("&","&amp;")
+    .replace("<","&lt;")
+    .replace(">","&gt;")
+    .replace("\"","&quot;");
 }
 
 window.onunload = function() {
