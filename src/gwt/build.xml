@@ -105,7 +105,7 @@
          <arg value="-war"/>
          <arg value="www"/>
          <arg value="-localWorkers"/>
-         <arg value="2"/>
+         <arg value="4"/>
          <arg value="-XdisableClassMetadata"/>
          <arg value="-XdisableCastChecking"/>
          <arg line="-gen gen"/>
