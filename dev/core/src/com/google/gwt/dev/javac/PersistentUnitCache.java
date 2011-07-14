@@ -500,12 +500,20 @@ class PersistentUnitCache extends MemoryUnitCache {
                 }
               }
               UnitCacheEntry entry = new UnitCacheEntry(unit, UnitOrigin.PERSISTENT);
-              UnitCacheEntry oldEntry = unitMap.get(unit.getResourcePath());
-              if (oldEntry != null && unit.getLastModified() > oldEntry.getUnit().getLastModified()) {
-                super.remove(oldEntry.getUnit());
+              UnitCacheEntry existingEntry = unitMap.get(unit.getResourcePath());
+              /*
+               * Don't assume that an existing entry is stale - an entry might
+               * have been loaded already from another source like a
+               * CompilationUnitArchive that is more up to date. If the
+               * timestamps are the same, accept the latest version. If it turns
+               * out to be stale, it will be recompiled and the updated unit
+               * will win this test the next time the session starts.
+               */
+              if (existingEntry != null && unit.getLastModified() >= existingEntry.getUnit().getLastModified()) {
+                super.remove(existingEntry.getUnit());
                 unitMap.put(unit.getResourcePath(), entry);
                 unitMapByContentId.put(unit.getContentId(), entry);
-              } else if (oldEntry == null) {
+              } else if (existingEntry == null) {
                 unitMap.put(unit.getResourcePath(), entry);
                 unitMapByContentId.put(unit.getContentId(), entry);
               }
