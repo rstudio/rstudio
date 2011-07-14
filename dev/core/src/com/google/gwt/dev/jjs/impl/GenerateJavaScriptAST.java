@@ -153,6 +153,7 @@ import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
+import com.google.gwt.dev.util.collect.Sets;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -774,6 +775,9 @@ public class GenerateJavaScriptAST {
           }
         }
       }
+      
+      // TODO(zundel): Check that each unique method has a unique
+      // name / poly name.
     }
 
     @Override
@@ -1419,7 +1423,13 @@ public class GenerateJavaScriptAST {
       if (x.getSuperClass() != null && !alreadyRan.contains(x)) {
         accept(x.getSuperClass());
       }
+      
+      return super.visit(x, ctx);
+    }
 
+    @Override
+    public boolean visit(JDeclaredType x, Context ctx) {
+      checkForDupMethods(x);
       return true;
     }
 
@@ -1608,6 +1618,20 @@ public class GenerateJavaScriptAST {
 
       push(jsSwitch);
       return false;
+    }
+
+    private void checkForDupMethods(JDeclaredType x) {
+      // Sanity check to see that all methods are uniquely named.
+      List<JMethod> methods = x.getMethods();
+      Set<String> methodSignatures = Sets.create();
+      for (JMethod method : methods) {
+        String sig = method.getSignature();
+        if (methodSignatures.contains(sig)) {
+          throw new InternalCompilerException("Signature collision in Type " + x.getName()
+              + " for method " + sig);
+        }
+        methodSignatures = Sets.add(methodSignatures, sig);
+      }
     }
 
     private JsExpression createAssignment(JsExpression lhs, JsExpression rhs) {

@@ -151,6 +151,12 @@ public class JsoDevirtualizer {
   private final JMethod isJavaObjectMethod;
 
   /**
+   * Key is the method signature, value is the number of unique instances with
+   * the same signature.
+   */
+  private Map<String, Integer> jsoMethodInstances = new HashMap<String, Integer>();
+
+  /**
    * Contains the set of devirtualizing methods that replace polymorphic calls
    * to Object methods.
    */
@@ -224,10 +230,21 @@ public class JsoDevirtualizer {
     SourceInfo sourceInfo = jsoType.getSourceInfo().makeChild(SourceOrigin.UNKNOWN);
 
     // Create the new method.
-    String name = polyMethod.getName() + "__devirtual$";
+    String prefix;
+    Integer methodCount;
+    methodCount = jsoMethodInstances.get(polyMethod.getSignature());
+    if (methodCount == null) {
+      prefix = polyMethod.getName();
+      methodCount = 0;
+    } else {
+      prefix = polyMethod.getName() + methodCount;
+      methodCount++;
+    }
+    jsoMethodInstances.put(polyMethod.getSignature(), methodCount);
+    String devirtualName = prefix + "__devirtual$";
     JMethod newMethod =
-        program.createMethod(sourceInfo, name, jsoType, polyMethod.getType(), false, true, true,
-            AccessModifier.PUBLIC, false);
+        program.createMethod(sourceInfo, devirtualName, jsoType, polyMethod.getType(), false, true,
+            true, AccessModifier.PUBLIC, false);
     newMethod.setSynthetic();
 
     // Setup parameters.
