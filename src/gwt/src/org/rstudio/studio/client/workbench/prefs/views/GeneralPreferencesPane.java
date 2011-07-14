@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.ProjectsPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
 /**
@@ -120,9 +121,14 @@ public class GeneralPreferencesPane extends PreferencesPane
                  
                }
             });
+      cranMirrorTextBox_.addStyleName(res.styles().spaced());
       cranMirrorTextBox_.setWidth("90%");
       cranMirrorTextBox_.setText("");
       add(cranMirrorTextBox_);
+      
+      restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
+      restoreLastProject_.addStyleName(res.styles().extraSpaced());
+      add(restoreLastProject_);
         
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
@@ -130,6 +136,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       alwaysSaveHistory_.setEnabled(false);
       removeHistoryDuplicates_.setEnabled(false);
       cranMirrorTextBox_.setEnabled(false);
+      restoreLastProject_.setEnabled(false);
    }
    
    @Override
@@ -178,6 +185,11 @@ public class GeneralPreferencesPane extends PreferencesPane
          cranMirror_ = packagesPrefs.getCRANMirror();
          cranMirrorTextBox_.setText(cranMirror_.getDisplay());
       }     
+      
+      // projects prefs
+     ProjectsPrefs projectsPrefs = rPrefs.getProjectsPrefs();
+     restoreLastProject_.setEnabled(true);
+     restoreLastProject_.setValue(projectsPrefs.getRestoreLastProject());
    }
    
 
@@ -224,6 +236,11 @@ public class GeneralPreferencesPane extends PreferencesPane
          // set packages prefs
          PackagesPrefs packagesPrefs = PackagesPrefs.create(cranMirror_, null);
          rPrefs.setPackagesPrefs(packagesPrefs);
+         
+         // set projects prefs
+         ProjectsPrefs projectsPrefs = ProjectsPrefs.create(
+                                             restoreLastProject_.getValue());
+         rPrefs.setProjectsPrefs(projectsPrefs);
       }
    }
 
@@ -244,4 +261,5 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final CheckBox removeHistoryDuplicates_;
    private CRANMirror cranMirror_ = CRANMirror.empty();
    private TextBoxWithButton cranMirrorTextBox_;
+   private CheckBox restoreLastProject_;
 }
