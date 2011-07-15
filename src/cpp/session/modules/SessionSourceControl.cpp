@@ -50,6 +50,7 @@ struct CommitInfo
    std::string id;
    std::string author;
    std::string subject;
+   std::string description;
    boost::int64_t date; // millis since epoch, UTC
 };
 
@@ -169,7 +170,9 @@ public:
       return Success();
    }
 
-   virtual core::Error log(std::vector<CommitInfo>* pOutput)
+   virtual core::Error log(const std::string& rev,
+                           int maxentries,
+                           std::vector<CommitInfo>* pOutput)
    {
       return Success();
    }
@@ -435,7 +438,9 @@ public:
       return doSimpleCmd("apply", args, filePaths, pStdErr);
    }
 
-   core::Error log(std::vector<CommitInfo>* pOutput)
+   core::Error log(const std::string& rev,
+                   int maxentries,
+                   std::vector<CommitInfo>* pOutput)
    {
       std::vector<std::string> outLines;
 
@@ -444,6 +449,10 @@ public:
       args.push_back("--pretty=raw");
       args.push_back("--abbrev-commit");
       args.push_back("--abbrev=8");
+      if (maxentries >= 0)
+         args.push_back("-" + boost::lexical_cast<std::string>(maxentries));
+      if (!rev.empty())
+         args.push_back(rev);
 
       Error error = runCommand("git", args, &outLines);
       if (error)
@@ -492,6 +501,10 @@ public:
          {
             if (currentCommit.subject.empty())
                currentCommit.subject = it->substr(4);
+
+            if (!currentCommit.description.empty())
+               currentCommit.description.append("\n");
+            currentCommit.description.append(it->substr(4));
          }
          else if (it->length() == 0)
          {
@@ -831,8 +844,14 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
 Error vcsHistory(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
+   std::string rev;
+   int maxentries;
+   Error error = json::readParams(request.params, &rev, &maxentries);
+   if (error)
+      return error;
+
    std::vector<CommitInfo> commits;
-   Error error = s_pVcsImpl_->log(&commits);
+   error = s_pVcsImpl_->log(rev, maxentries, &commits);
    if (error)
       return error;
 
@@ -840,6 +859,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    json::Array authors;
    json::Array subjects;
    json::Array dates;
+   json::Array descriptions;
 
    for (std::vector<CommitInfo>::const_iterator it = commits.begin();
         it != commits.end();
@@ -848,6 +868,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
       ids.push_back(it->id);
       authors.push_back(it->author);
       subjects.push_back(it->subject);
+      descriptions.push_back(it->description);
       dates.push_back(static_cast<double>(it->date));
    }
 
@@ -855,6 +876,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    result["id"] = ids;
    result["author"] = authors;
    result["subject"] = subjects;
+   result["description"] = descriptions;
    result["date"] = dates;
 
    pResponse->setResult(result);

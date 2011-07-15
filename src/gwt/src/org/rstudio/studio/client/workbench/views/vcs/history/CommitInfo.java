@@ -32,6 +32,10 @@ public class CommitInfo extends JavaScriptObject
       return this.subject;
    }-*/;
 
+   public native final String getDescription() /*-{
+      return this.description;
+   }-*/;
+
    public final Date getDate()
    {
       return new Date((long) getDateRaw() * 1000);

@@ -69,7 +69,12 @@ public interface VCSServerOperations
    void vcsApplyPatch(String patch, PatchMode mode,
                       ServerRequestCallback<Void> requestCallback);
 
+   /**
+    * @param spec Revision list or description. "" for default.
+    * @param maxentries Limit the number of entries returned. -1 for no limit.
+    */
    void vcsHistory(String spec,
+                   int maxentries,
                    ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback);
 
    void vcsExecuteCommand(

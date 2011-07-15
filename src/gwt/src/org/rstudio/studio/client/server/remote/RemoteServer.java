@@ -1227,9 +1227,13 @@ public class RemoteServer implements Server
 
    @Override
    public void vcsHistory(String spec,
+                          int maxentries,
                           ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_HISTORY, spec, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(spec));
+      params.set(1, new JSONNumber(maxentries));
+      sendRequest(RPC_SCOPE, VCS_HISTORY, params, requestCallback);
    }
 
    @Override

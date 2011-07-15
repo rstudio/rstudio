@@ -34,7 +34,9 @@ public class HistoryPresenter
       server_ = server;
       view_ = view;
 
-      server_.vcsHistory("", new SimpleRequestCallback<RpcObjectList<CommitInfo>>()
+      server_.vcsHistory("",
+                         -1,
+                         new SimpleRequestCallback<RpcObjectList<CommitInfo>>()
       {
          @Override
          public void onResponseReceived(RpcObjectList<CommitInfo> response)

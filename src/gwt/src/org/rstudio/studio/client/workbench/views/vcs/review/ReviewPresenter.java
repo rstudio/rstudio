@@ -25,18 +25,22 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.ValueSink;
+import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.diff.*;
+import org.rstudio.studio.client.workbench.views.vcs.history.CommitInfo;
 
 import java.util.ArrayList;
 
@@ -196,6 +200,41 @@ public class ReviewPresenter implements IsWidget
 
                   if (paths.size() > 0)
                      server_.vcsDiscard(paths, new SimpleRequestCallback<Void>());
+               }
+            });
+         }
+      });
+
+      view_.getCommitIsAmend().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> booleanValueChangeEvent)
+         {
+            server_.vcsHistory("", 1, new ServerRequestCallback<RpcObjectList<CommitInfo>>() {
+               @Override
+               public void onResponseReceived(RpcObjectList<CommitInfo> response)
+               {
+                  if (response.length() == 1)
+                  {
+                     String description = response.get(0).getDescription();
+
+                     if (view_.getCommitIsAmend().getValue())
+                     {
+                        if (view_.getCommitMessage().getText().length() == 0)
+                           view_.getCommitMessage().setText(description);
+                     }
+                     else
+                     {
+                        if (view_.getCommitMessage().getText().equals(description))
+                           view_.getCommitMessage().setText("");
+                     }
+                  }
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
                }
             });
          }
