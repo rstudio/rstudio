@@ -20,7 +20,6 @@ import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
@@ -29,9 +28,9 @@ import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
-import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
@@ -275,113 +274,75 @@ public class ApplicationQuit implements SaveActionChangedHandler
       
       public void execute()
       {
-         final ProgressIndicator indicator =
-            globalDisplay_.getProgressIndicator("Error Quitting R");
-         
-         if (Desktop.isDesktop())
+         // show delayed progress
+         String msg = switchToProject_ != null ? 
+                                    buildSwitchMessage(switchToProject_) :
+                                    "Quitting R Session...";
+         final GlobalProgressDelayer progress = new GlobalProgressDelayer(
+                                                               globalDisplay_,
+                                                               250,
+                                                               msg);
+
+         // Use a barrier and LastChanceSaveEvent to allow source documents
+         // and client state to be synchronized before quitting.
+         Barrier barrier = new Barrier();
+         barrier.addBarrierReleasedHandler(new BarrierReleasedHandler()
          {
-            indicator.onCompleted();
-            desktopQuitR(saveChanges_, switchToProject_);
-         }
-         else
-         {
-            indicator.onProgress("Quitting R Session...");
-            server_.quitSession(
+            public void onBarrierReleased(BarrierReleasedEvent event)
+            {
+               // All last chance save operations have completed (or possibly
+               // failed). Now do the real quit.
+
+               // if a switch to project path is defined then set it
+               if (Desktop.isDesktop() && (switchToProject_ != null))
+                  Desktop.getFrame().setSwitchToProjectPending(true);
+
+               server_.quitSession(
                   saveChanges_,
                   switchToProject_,
-                  new VoidServerRequestCallback(indicator) {
-                        
-                     @Override
-                     public void onSuccess()
-                     {
-                        if (switchToProject_ != null)
-                        {
-                           new GlobalProgressDelayer(
-                                 globalDisplay_, 
-                                 buildSwitchMessage(switchToProject_));
-                            
-                        }
-                     }
-                     
-                  });
-         }
-      }
-      
-      private final boolean saveChanges_;
-      private final String switchToProject_;
-      
-   };
-   
-  
-   private void desktopQuitR(final boolean saveChanges,
-                             final String switchToProject)
-   {
-      final GlobalProgressDelayer progress = new GlobalProgressDelayer(
-            globalDisplay_,
-            "Quitting R Session...");
-
-      // Use a barrier and LastChanceSaveEvent to allow source documents
-      // and client state to be synchronized before quitting.
-
-      Barrier barrier = new Barrier();
-      barrier.addBarrierReleasedHandler(new BarrierReleasedHandler()
-      {
-         public void onBarrierReleased(BarrierReleasedEvent event)
-         {
-            // All last chance save operations have completed (or possibly
-            // failed). Now do the real quit.
-            
-            // if a switch to project path is defined then set it
-            if (switchToProject != null)
-               Desktop.getFrame().setSwitchToProjectPending(true);
-
-            server_.quitSession(
-                  saveChanges,
-                  switchToProject,
-                  new VoidServerRequestCallback(
-                        globalDisplay_.getProgressIndicator("Error Quitting R")) 
+                  new ServerRequestCallback<Void>()
                   {
-
                      @Override
                      public void onResponseReceived(Void response)
                      {
-                        progress.dismiss();
-                        if (switchToProject != null)
-                        {
-                           globalDisplay_.showProgress(
-                                       buildSwitchMessage(switchToProject));
-                        }
-                        
-                        super.onResponseReceived(response);
+                        // clear progress only if we aren't switching projects
+                        // (otherwise we want to leave progress up until
+                        // the app reloads)
+                        if (switchToProject_ == null)
+                           progress.dismiss();
                      }
 
                      @Override
                      public void onError(ServerError error)
                      {
-                        Desktop.getFrame().setSwitchToProjectPending(false);
                         progress.dismiss();
-                        super.onError(error);
+
+                        if (Desktop.isDesktop())
+                           Desktop.getFrame().setSwitchToProjectPending(false);
                      }
                   });
-         }
-      });
+            }
+         });
 
-      // We acquire a token to make sure that the barrier doesn't fire before
-      // all the LastChanceSaveEvent listeners get a chance to acquire their
-      // own tokens.
-      Token token = barrier.acquire();
-      try
-      {
-         eventBus_.fireEvent(new LastChanceSaveEvent(barrier));
+         // We acquire a token to make sure that the barrier doesn't fire before
+         // all the LastChanceSaveEvent listeners get a chance to acquire their
+         // own tokens.
+         Token token = barrier.acquire();
+         try
+         {
+            eventBus_.fireEvent(new LastChanceSaveEvent(barrier));
+         }
+         finally
+         {
+            token.release();
+         }
       }
-      finally
-      {
-         token.release();
-      }
-   }
- 
-   
-   
+
+      private final boolean saveChanges_;
+      private final String switchToProject_;
+
+   };
+
    private final ApplicationServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;

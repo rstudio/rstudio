@@ -12,34 +12,71 @@
  */
 package org.rstudio.studio.client.common;
 
-import com.google.gwt.user.client.Command;
+import org.rstudio.core.client.widget.ProgressIndicator;
+
 import com.google.gwt.user.client.Timer;
 
 public class GlobalProgressDelayer
 {
-   public GlobalProgressDelayer(final GlobalDisplay globalDisplay,
-                                final String progressMessage)
+   public GlobalProgressDelayer(GlobalDisplay globalDisplay,
+                                final int delayMillis,
+                                String progressMessage)
    {
-      final int DELAY_MILLIS = 250;
+      globalDisplay_ = globalDisplay;
+      progressMessage_ = progressMessage;
 
       timer_ = new Timer()
       {
          @Override
          public void run()
          {
-            dismiss_ = globalDisplay.showProgress(progressMessage);
+            ensureIndicator();
          }
       };
-      timer_.schedule(DELAY_MILLIS);
+      timer_.schedule(delayMillis);
+   }
+
+   // NOTE: auto-creates the indicator if it doesn't already exist
+   public ProgressIndicator getIndicator()
+   {
+      ensureIndicator();
+      return indicator_;
+   }
+
+   public void setMessage(String progressMessage)
+   {
+      if (indicator_ != null)
+         indicator_.onProgress(progressMessage);
+      else
+         progressMessage_ = progressMessage;
    }
 
    public void dismiss()
    {
-      timer_.cancel();
-      if (dismiss_ != null)
-         dismiss_.execute();
+      if (timer_ != null )
+      {
+         timer_.cancel();
+         timer_ = null;
+      }
+      
+      if (indicator_ != null)
+      {
+         indicator_.onCompleted();
+         indicator_ = null;
+      }
    }
 
-   private final Timer timer_;
-   private Command dismiss_;
+   private void ensureIndicator()
+   {
+      if (indicator_ == null)
+      {
+         indicator_ = globalDisplay_.getProgressIndicator("Error");
+         indicator_.onProgress(progressMessage_);
+      }
+   }
+
+   private final GlobalDisplay globalDisplay_;
+   private String progressMessage_;
+   private Timer timer_;
+   private ProgressIndicator indicator_ = null;
 }
