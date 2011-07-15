@@ -44,6 +44,9 @@ public class ReviewPresenter implements IsWidget
 {
    public interface Display extends IsWidget
    {
+      ArrayList<String> getSelectedPaths();
+      ArrayList<String> getSelectedDiscardablePaths();
+
       HasValue<Boolean> getStagedCheckBox();
       ValueSink<ArrayList<Line>> getGutter();
       LineTablePresenter.Display getLineTableDisplay();
@@ -51,6 +54,8 @@ public class ReviewPresenter implements IsWidget
       HasValue<Integer> getContextLines();
 
       HasClickHandlers getStageAllFilesButton();
+      HasClickHandlers getDiscardSelectedFiles();
+      HasClickHandlers getDiscardAllFiles();
       HasClickHandlers getIgnoreButton();
       HasClickHandlers getRefreshButton();
       HasClickHandlers getPullButton();
@@ -68,10 +73,12 @@ public class ReviewPresenter implements IsWidget
    private class ApplyPatchClickHandler implements ClickHandler
    {
       public ApplyPatchClickHandler(PatchMode patchMode,
-                                    boolean reverse)
+                                    boolean reverse,
+                                    boolean selected)
       {
          patchMode_ = patchMode;
          reverse_ = reverse;
+         selected_ = selected;
       }
 
       @Override
@@ -79,7 +86,9 @@ public class ReviewPresenter implements IsWidget
       {
          ArrayList<DiffChunk> chunks = new ArrayList<DiffChunk>(activeChunks_);
          ArrayList<Line> selectedLines =
-               view_.getLineTableDisplay().getSelectedLines();
+               selected_ ?
+               view_.getLineTableDisplay().getSelectedLines() :
+               view_.getLineTableDisplay().getAllLines();
 
          if (reverse_)
          {
@@ -114,6 +123,7 @@ public class ReviewPresenter implements IsWidget
 
       private final PatchMode patchMode_;
       private final boolean reverse_;
+      private final boolean selected_;
    }
 
    @Inject
@@ -153,12 +163,50 @@ public class ReviewPresenter implements IsWidget
          }
       });
 
+      view_.getDiscardSelectedFiles().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            ArrayList<String> selectedPaths = view_.getSelectedDiscardablePaths();
+
+            if (selectedPaths.size() > 0)
+            {
+               server_.vcsDiscard(selectedPaths,
+                                  new SimpleRequestCallback<Void>());
+            }
+         }
+      });
+
+      view_.getDiscardAllFiles().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            server_.vcsFullStatus(new SimpleRequestCallback<JsArray<StatusAndPath>>() {
+               @Override
+               public void onResponseReceived(JsArray<StatusAndPath> response)
+               {
+                  super.onResponseReceived(response);
+
+                  ArrayList<String> paths = new ArrayList<String>();
+                  for (int i = 0; i < response.length(); i++)
+                     if (response.get(i).isDiscardable())
+                        paths.add(response.get(i).getPath());
+
+                  if (paths.size() > 0)
+                     server_.vcsDiscard(paths, new SimpleRequestCallback<Void>());
+               }
+            });
+         }
+      });
+
       view_.getStageAllButton().addClickHandler(
-            new ApplyPatchClickHandler(PatchMode.Stage, false));
+            new ApplyPatchClickHandler(PatchMode.Stage, false, false));
       view_.getDiscardAllButton().addClickHandler(
-            new ApplyPatchClickHandler(PatchMode.Working, true));
+            new ApplyPatchClickHandler(PatchMode.Working, true, false));
       view_.getUnstageAllButton().addClickHandler(
-            new ApplyPatchClickHandler(PatchMode.Stage, true));
+            new ApplyPatchClickHandler(PatchMode.Stage, true, false));
       view_.getStagedCheckBox().addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
             {

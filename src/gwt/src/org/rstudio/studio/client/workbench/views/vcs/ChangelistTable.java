@@ -290,6 +290,19 @@ public class ChangelistTable extends Composite
       return results;
    }
 
+   public ArrayList<String> getSelectedDiscardablePaths()
+   {
+      SelectionModel<? super StatusAndPath> selectionModel = table_.getSelectionModel();
+
+      ArrayList<String> results = new ArrayList<String>();
+      for (StatusAndPath item : dataProvider_.getList())
+      {
+         if (selectionModel.isSelected(item) && item.isDiscardable())
+            results.add(item.getPath());
+      }
+      return results;
+   }
+
    public HandlerRegistration addStageUnstageHandler(StageUnstageHandler handler)
    {
       return addHandler(handler, StageUnstageEvent.TYPE);

@@ -13,10 +13,8 @@
 package org.rstudio.studio.client.workbench.views.vcs.review;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -29,6 +27,7 @@ import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.ValueSink;
@@ -112,6 +111,31 @@ public class ReviewPanel extends Composite implements Display
       String fileInfoWrapper();
 
       String fileIcon();
+   }
+
+   private static class ClickCommand implements HasClickHandlers, Command
+   {
+      @Override
+      public void execute()
+      {
+         ClickEvent.fireNativeEvent(
+               Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false),
+               this);
+      }
+
+      @Override
+      public HandlerRegistration addClickHandler(ClickHandler handler)
+      {
+         return handlerManager_.addHandler(ClickEvent.getType(), handler);
+      }
+
+      @Override
+      public void fireEvent(GwtEvent<?> event)
+      {
+         handlerManager_.fireEvent(event);
+      }
+
+      private final HandlerManager handlerManager_ = new HandlerManager(this);
    }
 
    private static class ListBoxAdapter implements HasValue<Integer>
@@ -204,6 +228,11 @@ public class ReviewPanel extends Composite implements Display
       topToolbar_.addLeftSeparator();
 
       ToolbarPopupMenu discardMenu = new ToolbarPopupMenu();
+      discardSelectedFiles_ = new ClickCommand();
+      discardAllFiles_ = new ClickCommand();
+      discardMenu.addItem(new MenuItem("Discard Selected",
+                                       discardSelectedFiles_));
+      discardMenu.addItem(new MenuItem("Discard All Files", discardAllFiles_));
       topToolbar_.addLeftWidget(new ToolbarButton(
             "Discard", RES.discard(), discardMenu));
 
@@ -239,53 +268,86 @@ public class ReviewPanel extends Composite implements Display
             "Unstage All", RES.discard(), (ClickHandler) null));
       unstageAllButton_.setVisible(false);
 
+      unstagedCheckBox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> e)
+         {
+            ValueChangeEvent.fire(stagedCheckBox_, stagedCheckBox_.getValue());
+         }
+      });
+
+      stagedCheckBox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> e)
+         {
+            stageAllButton_.setVisible(!e.getValue());
+            discardAllButton_.setVisible(!e.getValue());
+            unstageAllButton_.setVisible(e.getValue());
+            diffToolbar_.invalidateSeparators();
+         }
+      });
+
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
    }
 
    @Override
-   public ToolbarButton getStageAllFilesButton()
+   public HasClickHandlers getStageAllFilesButton()
    {
       return stageAllFilesButton_;
    }
 
    @Override
-   public ToolbarButton getIgnoreButton()
+   public HasClickHandlers getDiscardSelectedFiles()
+   {
+      return discardSelectedFiles_;
+   }
+
+   @Override
+   public HasClickHandlers getDiscardAllFiles()
+   {
+      return discardAllFiles_;
+   }
+
+   @Override
+   public HasClickHandlers getIgnoreButton()
    {
       return ignoreButton_;
    }
 
    @Override
-   public ToolbarButton getRefreshButton()
+   public HasClickHandlers getRefreshButton()
    {
       return refreshButton_;
    }
 
    @Override
-   public ToolbarButton getPullButton()
+   public HasClickHandlers getPullButton()
    {
       return pullButton_;
    }
 
    @Override
-   public ToolbarButton getPushButton()
+   public HasClickHandlers getPushButton()
    {
       return pushButton_;
    }
 
    @Override
-   public ToolbarButton getStageAllButton()
+   public HasClickHandlers getStageAllButton()
    {
       return stageAllButton_;
    }
 
    @Override
-   public ToolbarButton getDiscardAllButton()
+   public HasClickHandlers getDiscardAllButton()
    {
       return discardAllButton_;
    }
 
    @Override
-   public ToolbarButton getUnstageAllButton()
+   public HasClickHandlers getUnstageAllButton()
    {
       return unstageAllButton_;
    }
@@ -306,6 +368,18 @@ public class ReviewPanel extends Composite implements Display
    public HasValue<Boolean> getCommitIsAmend()
    {
       return commitIsAmend_;
+   }
+
+   @Override
+   public ArrayList<String> getSelectedPaths()
+   {
+      return changelist_.getSelectedPaths();
+   }
+
+   @Override
+   public ArrayList<String> getSelectedDiscardablePaths()
+   {
+      return changelist_.getSelectedDiscardablePaths();
    }
 
    @Override
@@ -348,6 +422,8 @@ public class ReviewPanel extends Composite implements Display
    ThemedButton commitButton_;
    @UiField
    RadioButton stagedCheckBox_;
+   @UiField
+   RadioButton unstagedCheckBox_;
    @UiField(provided = true)
    LineTableView lines_;
    @UiField
@@ -377,6 +453,8 @@ public class ReviewPanel extends Composite implements Display
    private ToolbarButton stageAllButton_;
    private ToolbarButton discardAllButton_;
    private ToolbarButton unstageAllButton_;
+   private ClickCommand discardSelectedFiles_;
+   private ClickCommand discardAllFiles_;
 
    private static final Resources RES = GWT.create(Resources.class);
    static {

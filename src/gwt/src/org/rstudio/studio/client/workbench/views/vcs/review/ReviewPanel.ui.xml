@@ -54,7 +54,8 @@
                                     name="ReviewPanelShow"
                                     text="Staged"
                                     styleName="{res.styles.staged}"/>
-                     <g:RadioButton name="ReviewPanelShow"
+                     <g:RadioButton ui:field="unstagedCheckBox_"
+                                    name="ReviewPanelShow"
                                     text="Unstaged"
                                     checked="true"
                                     styleName="{res.styles.unstaged}"/>

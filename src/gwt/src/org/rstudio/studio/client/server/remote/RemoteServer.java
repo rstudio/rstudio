@@ -1135,6 +1135,18 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, VCS_REMOVE, params, requestCallback);
    }
 
+   public void vcsDiscard(ArrayList<String> paths,
+                          ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray jsonPaths = new JSONArray();
+      for (int i = 0; i < paths.size(); i++)
+         jsonPaths.set(i, new JSONString(paths.get(i)));
+
+      JSONArray params = new JSONArray();
+      params.set(0, jsonPaths);
+      sendRequest(RPC_SCOPE, VCS_DISCARD, params, requestCallback);
+   }
+
    public void vcsRevert(ArrayList<String> paths,
                          ServerRequestCallback<Void> requestCallback)
    {
@@ -1695,6 +1707,7 @@ public class RemoteServer implements Server
 
    private static final String VCS_ADD = "vcs_add";
    private static final String VCS_REMOVE = "vcs_remove";
+   private static final String VCS_DISCARD = "vcs_discard";
    private static final String VCS_REVERT = "vcs_revert";
    private static final String VCS_STAGE = "vcs_stage";
    private static final String VCS_UNSTAGE = "vcs_unstage";

@@ -147,6 +147,15 @@ public class LineTableView extends CellTable<Line> implements Display
       return selected;
    }
 
+   @Override
+   public ArrayList<Line> getAllLines()
+   {
+      ArrayList<Line> selected = new ArrayList<Line>();
+      for (Line line : lines_)
+         selected.add(line);
+      return selected;
+   }
+
    public static void ensureStylesInjected()
    {
       LineTableResources res = GWT.create(LineTableResources.class);

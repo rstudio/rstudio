@@ -30,4 +30,8 @@ public class StatusAndPath extends JavaScriptObject
    public native final String getRawPath() /*-{
       return this.raw_path;
    }-*/;
+
+   public native final boolean isDiscardable() /*-{
+      return this.discardable;
+   }-*/;
 }

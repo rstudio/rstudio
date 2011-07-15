@@ -87,6 +87,12 @@ public:
       return Success();
    }
 
+   virtual core::Error discard(const std::vector<FilePath>& filePaths,
+                               std::string* pStdErr)
+   {
+      return Success();
+   }
+
    virtual core::Error revert(const std::vector<FilePath>& filePaths,
                               std::string* pStdErr)
    {
@@ -269,6 +275,17 @@ public:
                          pStdErr);
    }
 
+   core::Error discard(const std::vector<FilePath>& filePaths,
+                       std::string* pStdErr)
+   {
+      std::vector<std::string> args;
+      args.push_back("-f"); // don't fail on unmerged entries
+      return doSimpleCmd("checkout",
+                         args,
+                         filePaths,
+                         pStdErr);
+   }
+
    core::Error revert(const std::vector<FilePath>& filePaths,
                       std::string* pStdErr)
    {
@@ -278,8 +295,10 @@ public:
       if (error)
          return error;
 
+      std::vector<std::string> args2;
+      args2.push_back("-f"); // don't fail on unmerged entries
       return doSimpleCmd("checkout",
-                         std::vector<std::string>(),
+                         args2,
                          filePaths,
                          pStdErr);
    }
@@ -649,6 +668,19 @@ Error vcsRemove(const json::JsonRpcRequest& request,
    return s_pVcsImpl_->remove(resolveAliasedPaths(paths), NULL);
 }
 
+Error vcsDiscard(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
+{
+   RefreshOnExit refreshOnExit;
+
+   json::Array paths;
+   Error error = json::readParam(request.params, 0, &paths);
+   if (error)
+      return error ;
+
+   return s_pVcsImpl_->discard(resolveAliasedPaths(paths), NULL);
+}
+
 Error vcsRevert(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
@@ -709,6 +741,7 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
       obj["status"] = status.status();
       obj["path"] = path.relativePath(projects::projectContext().directory());
       obj["raw_path"] = path.absolutePath();
+      obj["discardable"] = status.status()[1] != ' ' && status.status()[1] != '?';
       result.push_back(obj);
    }
 
@@ -882,6 +915,7 @@ core::Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "vcs_add", vcsAdd))
       (bind(registerRpcMethod, "vcs_remove", vcsRemove))
+      (bind(registerRpcMethod, "vcs_discard", vcsDiscard))
       (bind(registerRpcMethod, "vcs_revert", vcsRevert))
       (bind(registerRpcMethod, "vcs_stage", vcsStage))
       (bind(registerRpcMethod, "vcs_unstage", vcsUnstage))

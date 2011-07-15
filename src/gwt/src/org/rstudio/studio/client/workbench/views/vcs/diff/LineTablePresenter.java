@@ -21,5 +21,6 @@ public class LineTablePresenter
       void setData(ArrayList<Line> diffData);
       void clear();
       ArrayList<Line> getSelectedLines();
+      ArrayList<Line> getAllLines();
    }
 }
