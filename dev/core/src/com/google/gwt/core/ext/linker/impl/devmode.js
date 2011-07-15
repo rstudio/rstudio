@@ -123,8 +123,8 @@ function __gwt_displayGlassMessage(summary, details) {
   outer.innerHTML = 
     '<div style="position:absolute;z-index:' + __gwt_glassMessageZIndex-- +
     ';left:50px;top:50px;width:600px;color:#FFF;font-family:verdana;text-align:left;">' +
-    '<div style="font-size:30px;font-weight:bold;">' + summary + '</div>' +
-    '<div style="font-size:15px;">' + details + '</div>' +
+    '<div style="font-size:30px;font-weight:bold;">' + simpleEscape(summary) + '</div>' +
+    '<div style="font-size:15px;">' + simpleEscape(details) + '</div>' +
     '</div>' +
     '<div style="position:absolute;z-index:' + __gwt_glassMessageZIndex-- +
     ';left:0px;top:0px;right:0px;bottom:0px;filter:alpha(opacity=60);opacity:0.6;background-color:#000;"></div>'
@@ -155,7 +155,7 @@ function __gwt_displayGlassMessage(summary, details) {
     glassStyle.setExpression("height", "document.documentElement.clientHeight");
   }
 
-  $doc.title = summary + " [" + $doc.title + "]";
+  $doc.title = simpleEscape(summary) + " [" + $doc.title + "]";
 }
 
 
@@ -314,8 +314,7 @@ function pluginConnectionError(codeServer) {
   if ($errFn) {
     $errFn($moduleName);
   } else {
-    __gwt_displayGlassMessage("Plugin failed to connect to Development Mode server at " +
-        simpleEscape(codeServer),
+    __gwt_displayGlassMessage("Plugin failed to connect to Development Mode server at " + codeServer,
         "Follow the underlying troubleshooting instructions");
     loadIframe("http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM");
   }
@@ -325,6 +324,7 @@ function simpleEscape(originalString) {
   return originalString.replace("&","&amp;")
     .replace("<","&lt;")
     .replace(">","&gt;")
+    .replace("\'", "&#39;")
     .replace("\"","&quot;");
 }
 
