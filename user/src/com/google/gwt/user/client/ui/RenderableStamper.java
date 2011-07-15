@@ -15,7 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.dom.builder.shared.ElementBuilderBase;
+import com.google.gwt.dom.builder.shared.HtmlElementBuilderBase;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -55,15 +55,6 @@ public class RenderableStamper {
   }
 
   /**
-   * Exposes the token used for stamping {@link IsRenderable} objects.
-   * @deprecated This method is born deprecated, and should not be used in new code.
-   */
-  @Deprecated
-  public String getToken() {
-    return token;
-  }
-
-  /**
    * Stamps an HTML element in such a way that it can be later found in the DOM tree.
    * To be used by {@link IsRenderable} objects built using {@link SafeHtml} directly, this assumes
    * the element to be stamped is the first found in the given {@link SafeHtml}.
@@ -94,7 +85,12 @@ public class RenderableStamper {
    * To be used by {@link IsRenderable} objects built using ElementBuilder, this assumes
    * the given elementBuilder is for the root element that should later be claimed.
    */
-  public void stamp(ElementBuilderBase<?> elementBuilder) {
+  public <T extends HtmlElementBuilderBase<?>> T stamp(T elementBuilder) {
     elementBuilder.id(token);
+    return elementBuilder;
+  }
+
+  private String getToken() {
+    return token;
   }
 }

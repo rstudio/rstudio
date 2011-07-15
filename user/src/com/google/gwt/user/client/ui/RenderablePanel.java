@@ -15,10 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.builder.shared.HtmlDivBuilder;
+import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
@@ -37,16 +37,6 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
   private static Element hiddenDiv;
 
   private static String TAG_NAME = "div";
-
-  interface HTMLTemplates extends SafeHtmlTemplates {
-    @Template("<div id=\"{0}\">{1}</div>")
-    SafeHtml renderWithId(String id, SafeHtml innerHtml);
-
-    @Template("<div id=\"{0}\" class=\"{1}\">{2}</div>")
-    SafeHtml renderWithIdAndClass(String id, String styleName, SafeHtml innerHtml);
-  }
-  private static final HTMLTemplates TEMPLATE =
-      GWT.create(HTMLTemplates.class);
 
   private static void ensureHiddenDiv() {
     // If it's already been created, don't do anything.
@@ -193,19 +183,19 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
   public void render(RenderableStamper stamper, SafeHtmlBuilder builder) {
     String styleName = getStyleName();
 
-    // TODO(rdcastro): Investigate whether SafeHtml or ElementBuilder stamping should be used here
-    // to avoid any performance regressions.
-    String id = stamper.getToken();
+    HtmlDivBuilder divBuilder = HtmlBuilderFactory.get()
+        .createDivBuilder();
     if (styleName != null) {
-      builder.append(TEMPLATE.renderWithIdAndClass(id, styleName, getInnerHtml()));
+      divBuilder.className(styleName);
       styleName = null;
-    } else {
-      builder.append(TEMPLATE.renderWithId(id, getInnerHtml()));
     }
+    stamper.stamp(divBuilder);
+    divBuilder.html(getInnerHtml()).end();
+
+    builder.append(divBuilder.asSafeHtml());
   }
 
   @Override

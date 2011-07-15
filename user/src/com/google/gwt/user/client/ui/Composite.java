@@ -15,12 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
+import com.google.gwt.dom.builder.shared.HtmlSpanBuilder;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 
@@ -42,13 +42,6 @@ import com.google.gwt.user.client.Event;
  * TODO(rdcastro): Remove the final qualifier from IsRenderable overrides.
  */
 public abstract class Composite extends Widget implements IsRenderable {
-
-  interface HTMLTemplates extends SafeHtmlTemplates {
-    @Template("<span id=\"{0}\"></span>")
-     SafeHtml renderWithId(String id);
-  }
-  private static final HTMLTemplates TEMPLATE =
-      GWT.create(HTMLTemplates.class);
 
   private Widget widget;
 
@@ -104,14 +97,14 @@ public abstract class Composite extends Widget implements IsRenderable {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
   public final void render(RenderableStamper stamper, SafeHtmlBuilder builder) {
     if (renderable != null) {
       renderable.render(stamper, builder);
     } else {
-      // TODO(rdcastro): Investigate whether SafeHtml or ElementBuilder stamping should be used
-      // to avoid any performance regressions.
-      builder.append(TEMPLATE.renderWithId(stamper.getToken()));
+      HtmlSpanBuilder spanBuilder = HtmlBuilderFactory.get()
+          .createSpanBuilder();
+      stamper.stamp(spanBuilder).end();
+      builder.append(spanBuilder.asSafeHtml());
     }
   }
 
