@@ -38,6 +38,8 @@ namespace session {
    
 namespace {
 
+const int kLastChanceWaitSeconds = 4;
+
 bool hasEventIdLessThanOrEqualTo(const json::Value& event, int targetId)
 {
    const json::Object& eventJSON = event.get_obj();
@@ -88,10 +90,11 @@ void ClientEventService::stop()
       {
          serviceThread_.interrupt();
 
-         // wait for up to 3 seconds for the service thread to stop
-         if (!serviceThread_.timed_join(boost::posix_time::seconds(3)))
+         // wait for for the service thread to stop
+         if (!serviceThread_.timed_join(
+               boost::posix_time::seconds(kLastChanceWaitSeconds + 1)))
          {
-            LOG_WARNING_MESSAGE("ClientEventService didn't stop within 3 sec");
+            LOG_WARNING_MESSAGE("ClientEventService didn't stop on its own");
          }
 
          serviceThread_.detach();
@@ -209,7 +212,7 @@ void ClientEventService::run()
          try
          {
             // wait for up to 1 second for a connection
-            long secondsToWait = stopServer ? 4 : 1;
+            long secondsToWait = stopServer ? kLastChanceWaitSeconds : 1;
             ptrConnection =
              httpConnectionListener().eventsConnectionQueue().dequeConnection(
                                              boost::posix_time::seconds(secondsToWait));
