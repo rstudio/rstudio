@@ -51,6 +51,7 @@ public:
 
 public slots:
    void onRSessionExited();
+   void onReloadFrameForNextSession();
 
 private:
 
@@ -70,6 +71,7 @@ private:
    ApplicationLaunch* pAppLaunch_;
    MainWindow* pMainWindow_;
    QProcess* pRSessionProcess_;
+   QUrl nextSessionUrl_;
 };
 
 } // namespace desktop

@@ -181,11 +181,21 @@ Error SessionLauncher::launchNextSession()
                          SIGNAL(finished(int,QProcess::ExitStatus)),
                          this, SLOT(onRSessionExited()));
 
-   // laod url
-   pMainWindow_->loadUrl(url);
+   // laod url -- use a delay because on occation we've seen the
+   // mac client crash during switching of projects and this could
+   // be some type of timing related issue
+   nextSessionUrl_ = url;
+   QTimer::singleShot(50, this, SLOT(onReloadFrameForNextSession()));
 
    return Success();
 }
+
+void SessionLauncher::onReloadFrameForNextSession()
+{
+   pMainWindow_->loadUrl(nextSessionUrl_);
+   nextSessionUrl_.clear();
+}
+
 
 Error SessionLauncher::launchSession(const QStringList& argList,
                                      QProcess** ppRSessionProcess)
