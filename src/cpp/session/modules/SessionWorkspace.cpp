@@ -172,6 +172,9 @@ void enqueAssignedEvent(const r::sexp::Variable& variable)
 // to figure out how to preserve dirty state of the workspace accross suspend
 int s_lastSaveAction = r::session::kSaveActionAsk;
 
+const char * const kSaveActionState = "saveActionState";
+const char * const kImageDirtyState = "imageDirtyState";
+
 void enqueSaveActionChanged()
 {
    json::Object saveAction;
@@ -193,6 +196,22 @@ void checkForSaveActionChanged()
       s_lastSaveAction = currentSaveAction;
       enqueSaveActionChanged();
    }
+}
+
+void onSuspend(Settings* pSettings)
+{
+   pSettings->set(kSaveActionState, s_lastSaveAction);
+   pSettings->set(kImageDirtyState, r::session::imageIsDirty());
+}
+
+void onResume(const Settings& settings)
+{
+   s_lastSaveAction = settings.getInt(kSaveActionState,
+                                      r::session::kSaveActionAsk);
+
+   r::session::setImageDirty(settings.getBool(kImageDirtyState, true));
+
+   enqueSaveActionChanged();
 }
 
 
@@ -322,9 +341,12 @@ void onDetectChanges(module_context::ChangeSource source)
  
 Error initialize()
 {         
+   // add suspend handler
+   using namespace session::module_context;
+   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+
    // subscribe to events
    using boost::bind;
-   using namespace session::module_context;
    events().onClientInit.connect(bind(onClientInit));
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
    

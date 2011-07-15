@@ -318,7 +318,7 @@ void deferredRestoreNewSession()
 
    // mark image clean (we need to do this due to our delayed handling
    // of workspace restoration)
-   markImageClean();
+   setImageDirty(false);
 
    // restore plots
    restoreWorkingState();
@@ -1339,9 +1339,9 @@ void setSaveAction(int saveAction)
 
 }
 
-void markImageClean()
+void setImageDirty(bool imageDirty)
 {
-   R_DirtyImage = 0;
+   R_DirtyImage = imageDirty ? 1 : 0;
 }
 
 bool imageIsDirty()

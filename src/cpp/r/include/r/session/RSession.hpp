@@ -152,7 +152,7 @@ extern const int kSaveActionAsk;
 void setSaveAction(int saveAction);
 
 // image dirty state
-void markImageClean();
+void setImageDirty(bool imageDirty);
 bool imageIsDirty();
 
 // check whether there is a browser context active
