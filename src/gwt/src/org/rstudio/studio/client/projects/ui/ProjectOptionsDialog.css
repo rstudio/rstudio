@@ -2,5 +2,14 @@
 
 .headerLabel {
    font-weight: bold;
+   margin-bottom: 3px;	
+}
+
+.infoLabel {
+   font-style: italic;
+   font-size: 0.9em;	
+}
+
+.workspaceGrid {
    margin-bottom: 10px;	
 }

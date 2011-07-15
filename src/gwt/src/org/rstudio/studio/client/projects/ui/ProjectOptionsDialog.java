@@ -2,12 +2,12 @@ package org.rstudio.studio.client.projects.ui;
 
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
-import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -46,59 +46,67 @@ public class ProjectOptionsDialog extends ModalDialog<RProjectConfig>
       Label generalLabel = new Label("Workspace and History");
       generalLabel.addStyleName(RESOURCES.styles().headerLabel());
       mainPanel.add(generalLabel);
+        
+      Grid grid = new Grid(4, 2);
+      grid.addStyleName(RESOURCES.styles().workspaceGrid());
+      grid.setCellSpacing(8);
+      
+      Label infoLabel = new Label("Use (Default) to inherit the global default setting");
+      infoLabel.addStyleName(RESOURCES.styles().infoLabel());
+      grid.setWidget(0, 0, infoLabel);
       
       // restore workspace
-      restoreWorkspace_ = new YesNoAskDefault(
-                            "Restore .RData into workspace at startup",
-                            false);
+      grid.setWidget(1, 0, new Label("Restore .RData into workspace at startup"));
+      grid.setWidget(1, 1, restoreWorkspace_ = new YesNoAskDefault(false));
       restoreWorkspace_.setSelectedValue(initialSettings_.getRestoreWorkspace());
-      mainPanel.add(restoreWorkspace_);
       
-      // save workspace
-      saveWorkspace_ = new YesNoAskDefault(
-                           "Save workspace to .RData on exit",
-                           true);
+      // save workspace      
+      grid.setWidget(2, 0, new Label("Save workspace to .RData on exit"));
+      grid.setWidget(2, 1, saveWorkspace_ = new YesNoAskDefault(true));
       saveWorkspace_.setSelectedValue(initialSettings_.getSaveWorkspace());
-      mainPanel.add(saveWorkspace_);
 
       // always save history
-      alwaysSaveHistory_ = new YesNoAskDefault(
-                           "Always save history (even when not saving .RData)",
-                           false);
+      grid.setWidget(3, 0, new Label("Always save history (even when not saving .RData)"));
+      grid.setWidget(3, 1, alwaysSaveHistory_ = new YesNoAskDefault(false));
       alwaysSaveHistory_.setSelectedValue(initialSettings_.getAlwaysSaveHistory());
-      mainPanel.add(alwaysSaveHistory_);
+      
+      mainPanel.add(grid);
       
       return mainPanel;
    }
    
-   private class YesNoAskDefault extends SelectWidget
+   private class YesNoAskDefault extends ListBox
    {
-      public YesNoAskDefault(String label, boolean includeAsk)
+      public YesNoAskDefault(boolean includeAsk)
       {
-         super(label, 
-               includeAsk ? new String[] {USE_DEFAULT, YES, NO, ASK} :
-                            new String[] {USE_DEFAULT, YES, NO},
-               true);
+         super(false);
+         
+         String[] items = includeAsk ? new String[] {USE_DEFAULT, YES, NO, ASK}:
+                                       new String[] {USE_DEFAULT, YES, NO};
+         
+         for (int i=0; i<items.length; i++)
+            addItem(items[i]);
       }
       
       public void setSelectedValue(int value)
       {
-         ListBox listBox = getListBox();
-         if (value < listBox.getItemCount())
-            listBox.setSelectedIndex(value);
+         if (value < getItemCount())
+            setSelectedIndex(value);
          else
-            listBox.setSelectedIndex(0);
+            setSelectedIndex(0);
       }
       
       public int getSelectedValue()
       {
-         return getListBox().getSelectedIndex();
+         return getSelectedIndex();
       }
    }
    
    static interface Styles extends CssResource
    {
       String headerLabel();
+      String infoLabel();
+      String workspaceGrid();
    }
   
    static interface Resources extends ClientBundle
