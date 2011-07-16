@@ -30,7 +30,6 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
-import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;

@@ -31,8 +31,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
-import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.history.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter;
 
