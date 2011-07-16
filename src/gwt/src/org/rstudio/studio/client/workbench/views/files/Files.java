@@ -212,11 +212,8 @@ public class Files
                   if (hasNavigatedToDirectory_)
                      return;
 
-                  // only respect the value if we are in a project
-                  String path = value;
-                  if (session_.getSessionInfo().getActiveProjectFile() == null)
-                     path = null;
-                  
+                  // compute start dir
+                  String path = transformPathStateValue(value);
                   FileSystemItem start = path != null
                                     ? FileSystemItem.createDir(path)
                                     : FileSystemItem.createDir(
@@ -231,8 +228,31 @@ public class Files
          {
             return currentPath_.getPath();
          }
+         
+         private String transformPathStateValue(String value)
+         {
+            // if the value is null then return null
+            if (value == null)
+               return null;
+            
+            // only respect the value for projects
+            String projectFile = session_.getSessionInfo().getActiveProjectFile();
+            if (projectFile == null)
+               return null;
+            
+            // ensure that the value is within the project dir (it wouldn't 
+            // be if the project directory has been moved or renamed)
+            String projectDirPath = 
+               FileSystemItem.createFile(projectFile).getParentPathString();
+            if (value.startsWith(projectDirPath))
+               return value;
+            else
+               return null;
+         }
       };
    }
+   
+   
 
    public Display getDisplay()
    {
