@@ -129,13 +129,8 @@ void startup()
    // a suspended session)
    std::string nextSessionProject = persistentState().nextSessionProject();
 
-   // make sure projects are enabled
-   if (!userSettings().projectsEnabled())
-   {
-      projectFilePath = FilePath();
-   }
    // check for next session project path (see above for comment)
-   else if (!nextSessionProject.empty())
+   if (!nextSessionProject.empty())
    {
       // reset next session project path so its a one shot deal
       persistentState().setNextSessionProject("");

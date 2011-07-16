@@ -84,8 +84,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          {
             final SessionInfo sessionInfo = session.getSessionInfo();
             
-            if (sessionInfo.isProjectsEnabled())
-               toolbar_.addProjectTools(sessionInfo.getActiveProjectFile());
+            toolbar_.addProjectTools(sessionInfo.getActiveProjectFile());
             
             Scheduler.get().scheduleFinally(new ScheduledCommand()
             {

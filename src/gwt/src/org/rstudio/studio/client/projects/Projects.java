@@ -95,36 +95,15 @@ public class Projects implements OpenProjectFileHandler,
             // ensure mru is initialized
             ProjectMRUList mruList = pMRUList_.get();
             
-            if(sessionInfo.isProjectsEnabled())
-            {
-               String activeProjectFile = sessionInfo.getActiveProjectFile();
-               boolean hasProject = activeProjectFile != null;
-          
-               commands.closeProject().setEnabled(hasProject);
-               commands.projectOptions().setEnabled(hasProject);
+            // enable/disable commands
+            String activeProjectFile = sessionInfo.getActiveProjectFile();
+            boolean hasProject = activeProjectFile != null;
+            commands.closeProject().setEnabled(hasProject);
+            commands.projectOptions().setEnabled(hasProject);
               
-               // maintain mru
-               if (hasProject)
-                  mruList.add(activeProjectFile);
-            }
-            else
-            {
-               commands.newProject().remove();
-               commands.openProject().remove();
-               commands.projectMru0().remove();
-               commands.projectMru1().remove();
-               commands.projectMru2().remove();
-               commands.projectMru3().remove();
-               commands.projectMru4().remove();
-               commands.projectMru5().remove();
-               commands.projectMru6().remove();
-               commands.projectMru7().remove();
-               commands.projectMru8().remove();
-               commands.projectMru9().remove();
-               commands.clearRecentProjects().remove();
-               commands.closeProject().remove();
-               commands.projectOptions().remove();
-            }
+            // maintain mru
+            if (hasProject)
+               mruList.add(activeProjectFile);
          }
       });
    }

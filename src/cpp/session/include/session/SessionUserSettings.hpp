@@ -101,7 +101,6 @@ public:
    BioconductorMirror bioconductorMirror() const;
    void setBioconductorMirror(const BioconductorMirror& bioconductorMirror);
 
-   bool projectsEnabled() const;
    bool vcsEnabled() const;
 
 private:

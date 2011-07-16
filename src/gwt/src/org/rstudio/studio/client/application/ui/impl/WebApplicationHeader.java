@@ -160,22 +160,8 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
                commands.importDatasetFromGoogleSpreadsheet().remove();
             }
             
-            // remove Projects menu if necessary
-            if (!sessionInfo.isProjectsEnabled())
-            {
-               for (MenuItem menuItem : mainMenu_.getItems())
-               {
-                  if (menuItem.getText().equals("Project"))
-                  {
-                     mainMenu_.removeItem(menuItem);
-                     break;
-                  }
-               }
-            }
-            else
-            {
-               toolbar_.addProjectTools(sessionInfo.getActiveProjectFile());
-            }
+            // add project tools
+            toolbar_.addProjectTools(sessionInfo.getActiveProjectFile());
          }
       });
       
