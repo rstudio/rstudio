@@ -7,7 +7,6 @@ used by these components are included below):
 - QtSingleApplication (LGPL v2.1)
 - Ace (LGPL v2.1)
 - Boost
-- Boost.Process
 - RapidXml
 - JSON Spirit
 - Google Web Toolkit
