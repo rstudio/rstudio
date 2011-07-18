@@ -13,7 +13,6 @@
 
 #include <core/process/Process.hpp>
 
-#include <core/Thread.hpp>
 
 // NOTE: Boost.Process is a proposed boost library for process management
 //
@@ -33,6 +32,7 @@
 //
 //   http://thread.gmane.org/gmane.comp.lib.boost.devel/207594/
 //
+#include <core/BoostThread.hpp>
 #include <boost/process/all.hpp>
 
 
