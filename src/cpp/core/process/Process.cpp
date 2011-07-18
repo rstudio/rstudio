@@ -13,8 +13,6 @@
 
 #include <core/process/Process.hpp>
 
-#include <core/Thread.hpp>
-
 // NOTE: Boost.Process is a proposed boost library for process management
 //
 // We have an emdedded version of the library which was download on 7/18/2011
