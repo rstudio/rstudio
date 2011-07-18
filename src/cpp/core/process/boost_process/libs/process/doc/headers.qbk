@@ -1,0 +1,15 @@
+[section:headers Header files]
+
+There is only one header file you need to include to make use of all Boost.Process features: 
+
+    #include <boost/process/all.hpp> 
+
+All examples in this tutorial assume this header file is included. 
+
+As many Boost libraries put the main header file in the boost directory you have another option: 
+
+    #include <boost/process.hpp> 
+
+Please note that the Boost C++ community plans to remove header files from the boost directory. As newer libraries are expected to put all header files in a subdirectory like boost/process including all.hpp is recommended. 
+
+[endsect]

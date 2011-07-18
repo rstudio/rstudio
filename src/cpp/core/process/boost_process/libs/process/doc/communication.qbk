@@ -1,0 +1,11 @@
+[section:communicating Communicating with child processes]
+
+The most interesting stream behaviors are _behavior_pipe_, _behavior_named_pipe_ and _behavior_async_pipe_. You use them to exchange data between a parent and a child process. 
+
+[create_child_context_pipe]
+
+If a parent process wants to communicate with a child process the return value of _create_child_ should not be discarded. The return value of type _child_ provides access to the newly created child process. The member function _child_get_handle_ is provided to access the other ends of the child process' standard streams. 
+
+The handles returned by _child_get_handle_ can be used to instantiate _pistream_ or _postream_. These classes are defined to support synchronous I/O. They are derived from `std::istream` and `std::ostream` and provide two additional member functions `close()` and `handle()`. For asynchronous I/O another class called _pipe_ has to be instantiated. 
+
+[endsect]

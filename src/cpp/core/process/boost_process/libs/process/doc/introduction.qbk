@@ -1,0 +1,22 @@
+[section:introduction Introduction]
+
+Boost.Process is a library to manage system processes. It can be used to: 
+
+* create child processes 
+* run shell commands 
+* setup environment variables for child processes 
+* setup standard streams for child processes (and other streams on POSIX platforms) 
+* communicate with child processes through standard streams (synchronously or asynchronously) 
+* wait for processes to exit (synchronously or asynchronously) 
+* terminate processes 
+
+While Boost.Process does not support platform specific features it provides extension points. Developers can plug in functions, eg. to set the `uid` of a child process on a POSIX system. 
+
+Here's an example of how easy it is to start a program with Boost.Process. 
+
+[import ../example/create_child.cpp]
+[create_child]
+
+The example searches for an executable hostname in the directories of the environment variable PATH and starts the program. As the standard output stream is inherited the hostname is printed when you run the example. 
+
+[endsect]

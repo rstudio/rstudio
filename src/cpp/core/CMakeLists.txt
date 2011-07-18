@@ -53,6 +53,7 @@ set (CORE_SOURCE_FILES
    http/URL.cpp
    http/UriHandler.cpp
    http/Util.cpp
+   process/Process.cpp
    r_util/RProjectFile.cpp
    system/System.cpp
    text/DcfParser.cpp
@@ -144,6 +145,7 @@ endif()
 include_directories(
    ${CORE_INCLUDE_DIRS}
    ${CMAKE_CURRENT_BINARY_DIR}
+   process/boost_process
    ${Boost_INCLUDE_DIRS}
 )
 

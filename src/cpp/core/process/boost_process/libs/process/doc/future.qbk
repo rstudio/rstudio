@@ -1,0 +1,37 @@
+[section:future_improvements Future improvements]
+
+This is a collection of some ideas on how Boost.Process could be improved in the future. 
+
+[h3 Communicate with a parent process]
+
+While it's rather easy to communicate with a child process through the `child` class Boost.Process could provide a `parent` class to make it as easy to communicate with a parent process. This would be especially helpful to easily support asynchronous I/O as the standard streams only support blocking I/O operations. 
+
+Here's how such a program could look like: 
+
+    boost::asio::io_service ioservice; 
+
+    void handler(const boost::system::error_code &ec) 
+    { 
+    } 
+
+    int main() 
+    { 
+        boost::process::parent p; 
+        boost::process::pipe write_end(ioservice, p.get_handle(boost::process::stdin_id).release()); 
+        boost::asio::async_write(write_end, boost::asio::buffer("Hello, world!"), handler); 
+        ioservice.run(); 
+    } 
+
+[h3 Create a snapshot of system processes]
+
+As of today Boost.Process is most useful when creating and managing child processes. Boost.Process could provide a free-standing function `create_snapshot` though to create a snapshot of all system processes. 
+
+    int main() 
+    { 
+        std::vector<boost::process::process> processes; 
+        boost::process::create_snapshot(std::back_inserter(processes)); 
+        boost::process::process p = processes.front(); 
+        int exit_code = p.wait(); 
+    } 
+
+[endsect]

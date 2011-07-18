@@ -1,0 +1,66 @@
+[library Boost.Process
+    [quickbook 1.5]
+    [authors [Schaeling, Boris], [Tanus, Felipe]]
+    [copyright 2006, 2007, 2008, 2009, 2010 Julio M. Merino Vidal, Boris Schaeling, Ilya Sokolov, Felipe Tanus]
+    [id process]
+    [dirname process]
+    [license
+        Distributed under the Boost Software License, Version 1.0.
+        (See accompanying file LICENSE_1_0.txt or copy at
+        http://www.boost.org/LICENSE_1_0.txt)
+    ]
+]
+
+[def _fork_ [@http://www.opengroup.org/onlinepubs/000095399/functions/fork.html `fork()`]]
+[def _execve_ [@http://www.opengroup.org/onlinepubs/009695399/functions/exec.html `execve()`]]
+[def _chroot_ [@http://opengroup.org/onlinepubs/007908799/xsh/chroot.html `chroot()`]]
+[def _createprocess_ [@http://msdn.microsoft.com/en-us/library/ms682425(VS.85).aspx `CreateProcess()`]]
+[def _sys/wait.h_ [@http://www.opengroup.org/onlinepubs/000095399/basedefs/sys/wait.h.html `sys/wait.h`]]
+[def _child_ [classref boost::process::child `child`]]
+[def _context_ [classref boost::process::context `context`]]
+[def _handle_ [classref boost::process::handle `handle`]]
+[def _pipe_ [classref boost::process::pipe `pipe`]]
+[def _pistream_ [classref boost::process::pistream `pistream`]]
+[def _postream_ [classref boost::process::postream `postream`]]
+[def _stream_ends_ [classref boost::process::stream_ends `stream_ends`]]
+[def _stream_id_ [classref boost::process::stream_id `stream_id`]]
+[def _status_ [classref boost::process::status `status`]]
+[def _behavior_close_ [classref boost::process::behavior::close `behavior::close`]]
+[def _behavior_inherit_ [classref boost::process::behavior::inherit `behavior::inherit`]]
+[def _behavior_pipe_ [classref boost::process::behavior::pipe `behavior::pipe`]]
+[def _behavior_named_pipe_ [classref boost::process::behavior::named_pipe `behavior::named_pipe`]]
+[def _behavior_async_pipe_ [classref boost::process::behavior::async_pipe `behavior::async_pipe`]]
+[def _behavior_null_ [classref boost::process::behavior::null `behavior::null`]]
+[def _child_get_handle_ [memberref boost::process::child::get_handle `child::get_handle()`]]
+[def _child_wait_ [memberref boost::process::process::wait `child::wait()`]]
+[def _child_terminate_ [memberref boost::process::process::terminate `child::terminate()`]]
+[def _handle_release_ [memberref boost::process::handle::release `handle::release()`]]
+[def _status_async_wait_ [memberref boost::process::detail::basic_status::async_wait `status::async_wait()`]]
+[def _create_child_ [funcref boost::process::create_child `create_child()`]]
+[def _shell_ [funcref boost::process::shell `shell()`]]
+[def _find_executable_in_path_ [funcref boost::process::find_executable_in_path `find_executable_in_path()`]]
+
+[include introduction.qbk]
+
+[section User Guide]
+
+[include headers.qbk]
+[include childprocess.qbk]
+[include context.qbk]
+[include communication.qbk]
+[include asyncio.qbk]
+[include waiting.qbk]
+[include terminating.qbk]
+[include userstreambehaviors.qbk]
+[include posix.qbk]
+[include windows.qbk]
+
+[endsect]
+
+[xinclude autodoc.xml]
+
+[section Appendices]
+
+[include future.qbk]
+
+[endsect]

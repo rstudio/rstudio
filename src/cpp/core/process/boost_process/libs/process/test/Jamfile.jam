@@ -1,0 +1,50 @@
+# 
+# Boost.Process 
+# ~~~~~~~~~~~~~ 
+# 
+# Copyright (c) 2006, 2007 Julio M. Merino Vidal 
+# Copyright (c) 2008 Ilya Sokolov, Boris Schaeling 
+# Copyright (c) 2009 Boris Schaeling 
+# Copyright (c) 2010 Felipe Tanus, Boris Schaeling 
+# 
+# Distributed under the Boost Software License, Version 1.0. (See accompanying 
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt) 
+# 
+
+alias bfs : /boost//filesystem : : : <link>shared:<source>/boost//system ; 
+explicit bfs ; 
+
+alias bt : /boost//thread ; 
+explicit bt ; 
+
+alias bio : /boost//iostreams ; 
+explicit bio ; 
+
+project : requirements 
+        <threading>multi 
+        <target-os>windows:<define>WIN32_LEAN_AND_MEAN ; 
+
+exe helpers : util/helpers.cpp bfs ; 
+explicit helpers ; 
+
+lib rpcrt4 : : <name>rpcrt4 ; 
+
+using testing ; 
+
+for local i in [ glob inclusion/*.cpp ] 
+{ 
+    compile $(i) : : include_$(i:B) ; 
+} 
+
+run context.cpp bfs ; 
+run environment.cpp bfs ; 
+run handle.cpp bfs ; 
+run self.cpp bfs ; 
+run systembuf.cpp bfs ; 
+
+run arguments.cpp bfs : : helpers : <dependency>helpers ; 
+run child.cpp bfs bio : : helpers : <dependency>helpers <target-os>windows:<library>rpcrt4 ; 
+run executable.cpp bfs : : helpers : <dependency>helpers ; 
+run process.cpp bfs : : helpers : <dependency>helpers ; 
+run status.cpp bfs : : helpers : <dependency>helpers ; 
+run wait.cpp bfs bt : : helpers : <dependency>helpers ; 

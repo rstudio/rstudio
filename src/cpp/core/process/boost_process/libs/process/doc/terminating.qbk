@@ -1,0 +1,8 @@
+[section:terminating Terminating a process]
+
+If you don't want to wait for a process to exit you can call _child_terminate_ to terminate a process. 
+
+[import ../example/terminate.cpp]
+[terminate]
+
+[endsect]

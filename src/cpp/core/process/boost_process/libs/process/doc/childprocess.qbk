@@ -1,0 +1,23 @@
+[section:childprocess Creating child processes]
+
+Boost.Process provides the free-standing function _create_child_ to create child processes. You only need to pass the name of an executable as a `std::string`. 
+
+[import ../example/create_child_overloads.cpp]
+[create_child_overloads_exe]
+
+The function throws an exception of type `boost::system::system_error` if no executable hostname is found in the current work directory. _create_child_ does not automatically search the filesystem for an executable. If you know the executable is not in the current work directory you must add the path (either relative or absolute). 
+
+If you know the executable can be found in the directories of the environment variable PATH you can call _find_executable_in_path_. This function returns the absolute path to the executable. If it can't find the executable in PATH it throws `boost::filesystem::filesystem_error`. 
+
+[create_child_overloads_exe_in_path]
+
+Additionally you can pass command line options to _create_child_. While the command line options must be of type `std::string` you can store them in any STL container. 
+
+[create_child_overloads_args]
+
+If you like to run a command on the shell you can use another free-standing function called _shell_. 
+
+[import ../example/shell.cpp]
+[shell]
+
+[endsect]

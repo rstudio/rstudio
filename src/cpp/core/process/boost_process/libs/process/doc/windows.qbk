@@ -1,0 +1,12 @@
+[section:windows Windows extensions]
+
+`context::setup` can be used to configure a child process using Windows specific options. On Windows a reference to a `STARTUPINFOA` object is passed to `context::setup`. 
+
+[import ../example/startupinfo_setup.cpp]
+[startupinfo_setup_function]
+
+Here window position and size are set (as a hint) and Notepad is launched. 
+
+[startupinfo_setup_main]
+
+[endsect]

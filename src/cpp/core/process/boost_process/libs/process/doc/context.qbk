@@ -1,0 +1,31 @@
+[section:context Configuring runtime contexts]
+
+Apart from the executable name and command line options a third parameter can be passed to _create_child_: The _context_ class is used to configure the runtime context of a new process. 
+
+The _context_ class provides only a few member variables. You can set the process name with `context::process_name`, the work directory with `context::work_dir` and environment variables with `context::env`. 
+
+[import ../example/create_child_context.cpp]
+[create_child_context_configuration]
+
+In practice you are probably more often using the member variable `context::streams` which is used to configure child standard streams. 
+
+The type of `context::streams` is `std::map<stream_id, boost::function<stream_ends (stream_type)> >`. While _stream_id_ is an identifier for a stream the value is a so-called stream behavior. These are functions or function objects which describe how a child stream should be configured. They return a pair of handles - a so-called _stream_ends_ - of which one is used as a child stream and the other possibly to access the child stream from the parent process (it's the other end of a pipe). 
+
+Boost.Process provides the following stream behavior classes: 
+
+* _behavior_inherit_
+* _behavior_close_
+* _behavior_pipe_
+* _behavior_named_pipe_
+* _behavior_async_pipe_
+* _behavior_null_
+
+It depends on these classes if and how a stream can be used by a child process. As `context::streams` is based on `boost::function` you are free to [link boost_process.user_guide.user_stream_behaviors define new stream behaviors]. 
+
+By default, standard streams are inherited. If you want to configure standard streams differently simply assign a stream behavior function.
+
+[create_child_context_null]
+
+In the code above the behavior of the standard output stream is changed. Instead of inheriting the standard output stream data written to it will be discarded. The stream is not closed by _behavior_null_ but any data is ignored. 
+
+[endsect]

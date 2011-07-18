@@ -1,0 +1,19 @@
+[section:waiting Waiting for a process to exit]
+
+_child_ provides the member function _child_wait_ to wait for a process to exit. 
+
+[import ../example/sync_wait.cpp]
+[sync_wait]
+
+[caution On POSIX systems you must use the macros defined in _sys/wait.h_ to interpret exit codes.]
+
+_child_ does not provide any member function to wait asynchronously as Boost.Process follows Boost.Asio guidelines. Instead _status_ must be used to create an I/O object. 
+
+[import ../example/async_wait.cpp]
+[async_wait]
+
+By passing a process ID to _status_async_wait_ an asynchronous wait operation is initiated. As _status_async_wait_ expects a process ID _status_ is loosely coupled with other components of Boost.Process. Even if you don't create processes with _create_child_ you can use _status_ to wait asynchronously as long as you have a process ID. 
+
+[note The type of the process ID is `boost::process::pid_type`. It is a `typedef` for `pid_t` on POSIX and `DWORD` on Windows platforms.]
+
+[endsect]
