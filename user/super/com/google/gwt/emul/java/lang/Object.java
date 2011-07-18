@@ -26,6 +26,14 @@ import com.google.gwt.core.client.impl.Impl;
 public class Object {
 
   /**
+   * Holds class literal for subtypes of Object.
+   */
+  // BUG: If this field name conflicts with a method param name, JDT will complain
+  // CHECKSTYLE_OFF
+  private transient Class<?> ___clazz;
+  // CHECKSTYLE_ON
+
+  /**
    * Used by {@link com.google.gwt.core.client.impl.WeakMapping} in web mode
    * to store an expando containing a String -> Object mapping.
    * 
@@ -60,14 +68,11 @@ public class Object {
   }
 
   /*
-   * Note: Unlike the real JRE, we don't spec this method as final because the
-   * compiler generates a polymorphic override on every other class which will
-   * return the correct class object.
-   * 
-   * TODO(scottb, compiler magician): declare this final, but have the compiler fix it up.
+   * magic; Actual assignment to this field is done by Class.createFor() methods by injecting it
+   * into the prototype.
    */
   public Class<? extends Object> getClass() {
-    return Object.class;
+    return ___clazz;
   }
 
   public int hashCode() {

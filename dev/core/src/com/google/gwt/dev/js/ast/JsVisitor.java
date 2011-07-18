@@ -219,6 +219,10 @@ public class JsVisitor {
   public void endVisit(JsReturn x, JsContext ctx) {
   }
 
+  public void endVisit(JsSeedIdOf x, JsContext ctx) {
+    endVisit((JsNameOf) x, ctx);
+  }
+
   public void endVisit(JsStringLiteral x, JsContext ctx) {
   }
 
@@ -381,6 +385,10 @@ public class JsVisitor {
 
   public boolean visit(JsReturn x, JsContext ctx) {
     return true;
+  }
+
+  public boolean visit(JsSeedIdOf x, JsContext ctx) {
+    return visit((JsNameOf) x, ctx);
   }
 
   public boolean visit(JsStringLiteral x, JsContext ctx) {
