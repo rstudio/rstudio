@@ -32,7 +32,7 @@ public final class Class<T> {
 
   static native String asString(int number) /*-{
     // for primitives, the seedId isn't a number, but a string like ' Z'
-    return typeof(number) == 'number' ?  "S" + (number < -1 ? -number : number): number;
+    return typeof(number) == 'number' ?  "S" + (number < 0 ? -number : number) : number;
   }-*/;
 
   /**
@@ -44,7 +44,7 @@ public final class Class<T> {
       int seedId, Class<?> componentType) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
-    setName(clazz, packageName, className, seedId != -1 ? -seedId : -1);
+    setName(clazz, packageName, className, seedId != 0 ? -seedId : 0);
     clazz.modifiers = ARRAY;
     clazz.superclass = Object.class;
     clazz.componentType = componentType;
@@ -91,7 +91,7 @@ public final class Class<T> {
   static <T> Class<T> createForInterface(String packageName, String className) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
-    setName(clazz, packageName, className, -1);
+    setName(clazz, packageName, className, 0);
     clazz.modifiers = INTERFACE;
     return clazz;
   }
@@ -125,10 +125,17 @@ public final class Class<T> {
   }
 
   /**
-   * null or -1 implies lack of seed function / non-instantiable type
+   * null or 0 implies lack of seed function / non-instantiable type
    */
   static native boolean isInstantiable(int seedId) /*-{
-    return seedId != null && typeof (seedId) == 'number' && seedId > -1;
+    return typeof (seedId) == 'number' && seedId > 0;
+  }-*/;
+
+  /**
+   * null implies pruned.
+   */
+  static native boolean isInstantiableOrPrimitive(int seedId) /*-{
+    return seedId != null && seedId != 0;
   }-*/;
 
   /**
@@ -145,7 +152,7 @@ public final class Class<T> {
     if (seedId == 2) {
       proto = String.prototype
     } else {
-      if (seedId > -1) {
+      if (seedId > 0) {
         // Guarantees virtual method won't be pruned by using a JSNI ref
         // This is required because deRPC needs to call it.
         var seed = @java.lang.Class::getSeedFunction(Ljava/lang/Class;)(clazz);
@@ -167,6 +174,13 @@ public final class Class<T> {
     proto.@java.lang.Object::___clazz = clazz;
   }-*/;
 
+  /**
+   * The seedId parameter can take on the following values:
+   * > 0 =>  type is instantiable class
+   * < 0 => type is instantiable array
+   * null => type is not instantiable
+   * string => type is primitive
+   */
   static void setName(Class<?> clazz, String packageName, String className,
       int seedId) {
     if (clazz.isClassMetadataEnabled()) {
@@ -178,7 +192,7 @@ public final class Class<T> {
        * during application start up, before class Integer has been initialized.
        */
       clazz.typeName = "Class$"
-          + (seedId != -1 ? asString(seedId) : asString(clazz.hashCode()));
+          + (isInstantiableOrPrimitive(seedId) ? asString(seedId) : "" + clazz.hashCode());
     }
 
     if (isInstantiable(seedId)) {

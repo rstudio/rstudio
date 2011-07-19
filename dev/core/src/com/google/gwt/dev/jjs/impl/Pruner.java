@@ -207,6 +207,9 @@ public class Pruner {
 
     @Override
     public void endVisit(JSeedIdOf x, Context ctx) {
+      if (x.getNode() instanceof JClassType) {
+        endVisit((JNameOf) x, ctx);  
+      }
     }
 
     @Override
