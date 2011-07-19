@@ -1,5 +1,5 @@
 /*
- * Win32ChildProcess.cpp
+ * Win32AsyncChildProcess.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,7 +11,7 @@
  *
  */
 
-#include <core/system/ChildProcess.hpp>
+#include <core/system/AsyncChildProcess.hpp>
 
 
 namespace core {

@@ -103,7 +103,7 @@ if (UNIX)
       system/PosixOutputCapture.cpp
       system/PosixSystem.cpp
       system/PosixUser.cpp
-      system/PosixChildProcess.cpp
+      system/PosixAsyncChildProcess.cpp
    )
 
 
@@ -121,7 +121,7 @@ else()
       system/Win32ParentProcessMonitor.cpp
       system/Win32OutputCapture.cpp
       system/Win32System.cpp
-      system/Win32ChildProcess.cpp
+      system/Win32AsyncChildProcess.cpp
    )
 
 endif()

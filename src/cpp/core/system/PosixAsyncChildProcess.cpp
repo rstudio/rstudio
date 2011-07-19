@@ -1,5 +1,5 @@
 /*
- * PosixChildProcess.cpp
+ * PosixAsyncChildProcess.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,7 +11,7 @@
  *
  */
 
-#include <core/system/ChildProcess.hpp>
+#include <core/system/AsyncChildProcess.hpp>
 
 // PStreams 0.7.0
 //
