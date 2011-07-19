@@ -11,6 +11,9 @@
  *
  */
 
+// TODO: once we resolve the signal delivery issues could this
+//       actually run on a background thread?
+
 // TODO: add some comments on semantics
 
 // TODO: test with lots of concurrent subprocesses
