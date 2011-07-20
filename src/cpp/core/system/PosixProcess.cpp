@@ -1,5 +1,5 @@
 /*
- * PosixChildProcess.cpp
+ * PosixProcess.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,23 +11,14 @@
  *
  */
 
-// TODO: once we resolve the signal delivery issues could this
-//       actually run on a background thread?
+#include <core/system/Process.hpp>
 
-// TODO: add some comments on semantics
-
-// TODO: test with lots of concurrent subprocesses
+// TODO: make sure processes don't get snagged up as a result
+// of being part of the process monitor (take longer)
 
 // TODO: test on linux
 
-// TODO: wrapper for single callback
-
 // TODO: wrapper for synchronous invocation
-
-// TODO: some type of protection against permanent hanging if a child
-// doesn't exit? (perhaps calling exited during poll rather than close)
-// this is sensible because a never-exiting process would result in
-// only file handle and memory leakage rather than freezing all of rsession
 
 // TODO: address semantics of SIGCHLD:
 //
@@ -45,6 +36,11 @@
 //    ignoreChildExits to reapChildren however it may have been enough
 //    to simply get rid of ignoreChildExits
 //
+//  - On the Mac R_system (in sysutils.c) uses a special cocoa run process
+//    impl if useAqua is defined. Could it be that this implementation does
+//    not block child signals which is why we couldn't get texi2dvi
+//    exit codes?
+//
 //  - In server we need to reapChildren since we have session processes
 //    which are exiting at random times (however we did have problems
 //    with exit codes for PAM helper!). this simply may not be necessary
@@ -54,8 +50,9 @@
 //    reaping the rsession processes so that we don't interfere with
 //    the exit code handing for other scenarios.
 //
+// TODO: once we resolve the signal delivery issues could this
+//       actually run on a background thread?
 
-#include <core/system/ChildProcess.hpp>
 
 // PStreams 0.7.0
 //
@@ -73,13 +70,30 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 
-#include "ChildProcessImpl.hpp"
+#include "ChildProcess.hpp"
 
 namespace core {
 namespace system {
 
 namespace {
 
+void reportError(const Error& error)
+{
+   LOG_ERROR(error);
+}
+
+void reportIOError(const char* what, const ErrorLocation& location)
+{
+   Error error = systemError(boost::system::errc::io_error, location);
+   if (what != NULL)
+      error.addProperty("what", what);
+   reportError(error);
+}
+
+void reportIOError(const ErrorLocation& location)
+{
+   reportIOError(NULL, location);
+}
 
 void readFromStream(redi::basic_pstream<char>& stream, std::string* pOutput)
 {
@@ -117,34 +131,37 @@ Error checkStreamState(redi::basic_pstream<char>& stream,
 
 
 
-struct ChildProcessImpl::Impl
+struct ChildProcess::Impl
 {
    Impl()
-      : finishedStdout_(false), finishedStderr_(false)
+      : calledOnStarted_(false),
+        finishedStdout_(false),
+        finishedStderr_(false)
    {
    }
 
    redi::basic_pstreambuf<char>& rdbuf() { return *pstream_.rdbuf(); }
 
    redi::basic_pstream<char> pstream_;
+   bool calledOnStarted_;
    bool finishedStdout_;
    bool finishedStderr_;
 };
 
 
 
-ChildProcessImpl::ChildProcessImpl(const std::string& cmd,
-                                     const std::vector<std::string>& args)
+ChildProcess::ChildProcess(const std::string& cmd,
+                           const std::vector<std::string>& args)
   : cmd_(cmd), args_(args), pImpl_(new Impl())
 {
 }
 
-ChildProcessImpl::~ChildProcessImpl()
+ChildProcess::~ChildProcess()
 {
 }
 
 
-Error ChildProcessImpl::run()
+Error ChildProcess::run(const ProcessCallbacks& callbacks)
 {
    // create set of args to pass (needs to include the cmd)
    std::vector<std::string> args;
@@ -159,6 +176,7 @@ Error ChildProcessImpl::run()
    // return success if we are running
    if (pImpl_->pstream_.is_open())
    {
+      callbacks_ = callbacks;
       return Success();
    }
    else
@@ -167,7 +185,7 @@ Error ChildProcessImpl::run()
    }
 }
 
-Error ChildProcessImpl::writeToStdin(const std::string& input, bool eof)
+Error ChildProcess::writeToStdin(const std::string& input, bool eof)
 {
    try
    {
@@ -199,52 +217,83 @@ Error ChildProcessImpl::writeToStdin(const std::string& input, bool eof)
 }
 
 
-void ChildProcessImpl::poll()
+void ChildProcess::poll()
 {
    // check for output
    try
    {
-      // check stdout and fire event if we got output
-      std::string out;
-      readFromStream(pImpl_->pstream_.out(), &out);
-      if (!out.empty() && callbacks_.onStdout)
-         callbacks_.onStdout(*this, out);
-
-      // check stram state
-      Error error = checkStreamState(pImpl_->pstream_,
-                                     &(pImpl_->finishedStdout_),
-                                     pImpl_->finishedStderr_);
-      if (error)
-         reportError(error);
-
-      // check stderr and fire event if we got output
-      std::string err;
-      readFromStream(pImpl_->pstream_.err(), &err);
-      if (!err.empty() && callbacks_.onStderr)
-         callbacks_.onStderr(*this, err);
-
-      // check stream state
-      error = checkStreamState(pImpl_->pstream_,
-                               &(pImpl_->finishedStderr_),
-                               pImpl_->finishedStdout_);
-      if (error)
-         reportError(error);
-
-      // if both streams are finished then close the stream
-      if (pImpl_->finishedStdout_ && pImpl_->finishedStderr_)
+      // call onStarted if we haven't yet
+      if (!(pImpl_->calledOnStarted_))
       {
-         // close the stream
-         pImpl_->pstream_.close();
-
-         // check for and log errors
-         if (pImpl_->pstream_.fail())
-            reportIOError(ERROR_LOCATION);
-
-         // fire exit event
-         if (callbacks_.onExit)
-            callbacks_.onExit(pImpl_->rdbuf().status());
+         if (callbacks_.onStarted)
+            callbacks_.onStarted(*this);
+         pImpl_->calledOnStarted_ = true;
       }
 
+      // check stdout and fire event if we got output
+      if (!pImpl_->finishedStdout_)
+      {
+         std::string out;
+         readFromStream(pImpl_->pstream_.out(), &out);
+         if (!out.empty() && callbacks_.onStdout)
+            callbacks_.onStdout(*this, out);
+
+         // check stream state
+         Error error = checkStreamState(pImpl_->pstream_,
+                                        &(pImpl_->finishedStdout_),
+                                        pImpl_->finishedStderr_);
+         if (error)
+            reportError(error);
+      }
+
+      // check stderr and fire event if we got output
+      if (!pImpl_->finishedStderr_)
+      {
+         std::string err;
+         readFromStream(pImpl_->pstream_.err(), &err);
+         if (!err.empty() && callbacks_.onStderr)
+            callbacks_.onStderr(*this, err);
+
+         // check stream state
+         Error error = checkStreamState(pImpl_->pstream_,
+                                        &(pImpl_->finishedStderr_),
+                                        pImpl_->finishedStdout_);
+         if (error)
+            reportError(error);
+      }
+
+      // if both streams are finished then check for exited
+      if (pImpl_->finishedStdout_ && pImpl_->finishedStderr_)
+      {
+         // Attempt to reap child. Note that this method specifies WNOHANG
+         // so we don't block forever waiting for a process the exit. We may
+         // not be able to reap the child due to EINTR, in that case we'll
+         // just call exited again at the next polling interval. We may not
+         // be able to reap the child due to ECHILD (reaped by a global
+         // handler, which is documented to incompatible with this class!)
+         // or another unanticipated error in which case we'll end up calling
+         // wait forever and leaking this object (but at least we won't hang
+         // the caller of poll forever, which is what would happen if we
+         // called close rather than exited).
+         if (pImpl_->rdbuf().exited())
+         {
+            // close the stream (this won't block because we have
+            // already successfully reaped the child)
+            pImpl_->pstream_.close();
+
+            // fire exit event
+            if (callbacks_.onExit)
+            {
+               // recover exit code
+               int status = pImpl_->rdbuf().status();
+               if (WIFEXITED(status))
+                  status = WEXITSTATUS(status);
+
+               // call onExit
+               callbacks_.onExit(status);
+            }
+         }
+      }
    }
    catch(const std::ios_base::failure& e)
    {
@@ -254,12 +303,12 @@ void ChildProcessImpl::poll()
    }
 }
 
-bool ChildProcessImpl::isRunning()
+bool ChildProcess::exited()
 {
-   return pImpl_->pstream_.is_open();
+   return !pImpl_->pstream_.is_open();
 }
 
-Error ChildProcessImpl::terminate()
+Error ChildProcess::terminate()
 {
    // only send signal if the process is open
    if (!pImpl_->pstream_.is_open())

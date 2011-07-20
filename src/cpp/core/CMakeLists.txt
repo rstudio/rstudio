@@ -54,7 +54,7 @@ set (CORE_SOURCE_FILES
    http/UriHandler.cpp
    http/Util.cpp
    r_util/RProjectFile.cpp
-   system/ChildProcess.cpp
+   system/ProcessSupervisor.cpp
    system/System.cpp
    text/DcfParser.cpp
    text/TemplateFilter.cpp
@@ -104,7 +104,7 @@ if (UNIX)
       system/PosixOutputCapture.cpp
       system/PosixSystem.cpp
       system/PosixUser.cpp
-      system/PosixChildProcess.cpp
+      system/PosixProcess.cpp
    )
 
 
@@ -122,7 +122,7 @@ else()
       system/Win32ParentProcessMonitor.cpp
       system/Win32OutputCapture.cpp
       system/Win32System.cpp
-      system/Win32ChildProcess.cpp
+      system/Win32Process.cpp
    )
 
 endif()

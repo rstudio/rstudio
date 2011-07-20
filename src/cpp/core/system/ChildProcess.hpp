@@ -1,5 +1,5 @@
 /*
- * ChildProcessImpl.hpp
+ * ChildProcess.hpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,7 +11,7 @@
  *
  */
 
-#include <core/system/ChildProcess.hpp>
+#include <core/system/Process.hpp>
 
 namespace core {
 
@@ -20,21 +20,17 @@ class ErrorLocation;
 
 namespace system {
      
-class ChildProcessImpl : boost::noncopyable, public ChildProcess
+class ChildProcess : boost::noncopyable, public ProcessOperations
 {
 public:
-   ChildProcessImpl(const std::string& cmd,
-                    const std::vector<std::string>& args);
-   virtual ~ChildProcessImpl();
+   ChildProcess(const std::string& cmd, const std::vector<std::string>& args);
+   virtual ~ChildProcess();
 
    // run process
-   Error run();
+   Error run(const ProcessCallbacks& callbacks);
 
-   // set callbacks
-   void setCallbacks(const ProcessCallbacks& callbacks);
-
-   // check running status
-   bool isRunning();
+   // has it exited?
+   bool exited();
 
    // write (synchronously) to std input
    virtual Error writeToStdin(const std::string& input, bool eof);
@@ -44,12 +40,6 @@ public:
 
    // poll for input and exit status
    void poll();
-
-// private helpers
-private:
-   void reportError(const Error& error);
-   void reportIOError(const char* what, const ErrorLocation& location);
-   void reportIOError(const ErrorLocation& location);
 
 private:
    // command and args
