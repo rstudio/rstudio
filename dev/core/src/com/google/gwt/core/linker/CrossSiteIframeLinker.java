@@ -36,9 +36,13 @@ import com.google.gwt.dev.About;
 import com.google.gwt.dev.js.JsToStringGenerationVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.base.Splitter;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.SortedSet;
 
 /**
@@ -517,15 +521,12 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
       // __MODULE_FUNC__.onScriptDownloaded
       out.append(context.getModuleFunctionName());
       out.append(".onScriptDownloaded([");
-      String[] chunks = script.split(getScriptChunkSeparator(logger, context));
-      boolean first = true;
+      Iterable<String> chunks = Splitter.on(getScriptChunkSeparator(logger, context)).split(script);
+      List<String> newChunks = new ArrayList<String>();
       for (String chunk : chunks) {
-        if (!first) {
-          out.append(", ");
-        }
-        out.append(JsToStringGenerationVisitor.javaScriptString(chunk));
-        first = false;
+        newChunks.add(JsToStringGenerationVisitor.javaScriptString(chunk));
       }
+      out.append(Joiner.on(", ").join(newChunks));
       out.append("])");
     } else {
       out.append(script);
