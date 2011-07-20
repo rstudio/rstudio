@@ -15,8 +15,6 @@
 
 // TODO: consider whether onError should default to log and terminate
 
-// TODO: test on linux
-
 // TODO: wrapper for synchronous invocation
 
 // TODO: address semantics of SIGCHLD:

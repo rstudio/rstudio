@@ -27,6 +27,7 @@ class Error;
 
 namespace system {
 
+// Struct for returning output and exit status from a process
 struct ProcessResult
 {
    ProcessResult() : exitStatus(-1) {}
@@ -42,6 +43,7 @@ struct ProcessResult
    int exitStatus;
 };
 
+// Operations that can be performed from within ProcessCallbacks
 class ProcessOperations
 {
 public:
@@ -52,6 +54,8 @@ public:
    virtual Error terminate() = 0;
 };
 
+// Callbacks for reporting various states and streaming output (note that
+// all callbacks are optional)
 struct ProcessCallbacks
 {
    // Called after the process begins running (note: is called during
@@ -94,8 +98,8 @@ public:
    // Run a child asynchronously, invoking the onCompleted callback when
    // the process exits. Note that if input is provided then then the
    // standard input stream is closed (so EOF is sent) after the input
-   // is written (if you want more customized input handling then you
-   // can use the more granular runAsync call above)
+   // is written. If you want more customized handling of input then you
+   // can use the more granular runAsync call above.
    Error runAsync(
             const std::string& command,
             const std::vector<std::string>& args,
