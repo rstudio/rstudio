@@ -96,10 +96,10 @@ struct ChildCallbacks
       stdErr.append(output);
    }
 
-   void onExit(int status)
+   void onExit(int exitStatus)
    {
       ProcessResult result;
-      result.status = status;
+      result.exitStatus = exitStatus;
       result.stdOut = stdOut;
       result.stdErr = stdErr;
       onCompleted(result);

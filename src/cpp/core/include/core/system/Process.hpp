@@ -29,10 +29,17 @@ namespace system {
 
 struct ProcessResult
 {
-   ProcessResult() : status(-1) {}
+   ProcessResult() : exitStatus(-1) {}
+
+   // Standard output from process
    std::string stdOut;
+
+   // Standard error from process
    std::string stdErr;
-   int status;
+
+   // Process exit status (exit code if the child was successfully reaped
+   // otherwise -1)
+   int exitStatus;
 };
 
 class ProcessOperations
@@ -59,17 +66,15 @@ struct ProcessCallbacks
    boost::function<void(ProcessOperations&, const std::string&)> onStderr;
 
    // Called after the process has exited. Note that if the child cannot
-   // be sucessfully reaped then this is never called.
-   boost::function<void(int status)> onExit;
+   // be sucessfully reaped (e.g. if there is a global SIGCHLD handler
+   // which automatically reaps all children) then exitStatus is -1
+   boost::function<void(int)> onExit;
 };
 
 
 // Class for running processes asynchronously. Any number of processes
 // can be run by calling runAsync and their results will be delivered
-// using the provided callbacks. Note that the use of this class is
-// incompatible with global SIGCHLD handlers that automatically reap
-// all children (because it relies on wait returning a valid value
-// rather than -1 for the processes that it manages).
+// using the provided callbacks.
 class ProcessSupervisor : boost::noncopyable
 {
 public:

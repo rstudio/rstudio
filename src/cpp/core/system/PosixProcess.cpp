@@ -13,8 +13,7 @@
 
 #include <core/system/Process.hpp>
 
-// TODO: make sure processes don't get snagged up as a result
-// of being part of the process monitor (take longer)
+// TODO: consider whether onError should default to log and terminate
 
 // TODO: test on linux
 
@@ -136,7 +135,8 @@ struct ChildProcess::Impl
    Impl()
       : calledOnStarted_(false),
         finishedStdout_(false),
-        finishedStderr_(false)
+        finishedStderr_(false),
+        exited_(false)
    {
    }
 
@@ -146,6 +146,7 @@ struct ChildProcess::Impl
    bool calledOnStarted_;
    bool finishedStdout_;
    bool finishedStderr_;
+   bool exited_;
 };
 
 
@@ -270,15 +271,17 @@ void ChildProcess::poll()
          // not be able to reap the child due to EINTR, in that case we'll
          // just call exited again at the next polling interval. We may not
          // be able to reap the child due to ECHILD (reaped by a global
-         // handler, which is documented to incompatible with this class!)
-         // or another unanticipated error in which case we'll end up calling
-         // wait forever and leaking this object (but at least we won't hang
-         // the caller of poll forever, which is what would happen if we
-         // called close rather than exited).
-         if (pImpl_->rdbuf().exited())
+         // handler) in which case we'll allow the exit sequence to proceed
+         // and simply pass -1 as the exit status. If we fail to reap the
+         // the child for any other reason (there aren't actually any other
+         // failure codes defined for waitpid) then we'll simply continue
+         // calling exited in every polling interval (and this leak this
+         // object). Note that we don't anticipate this ever occuring based
+         // on our understanding of waitpid, PStreams, etc.
+         if (pImpl_->rdbuf().exited() || (pImpl_->rdbuf().error() == ECHILD))
          {
             // close the stream (this won't block because we have
-            // already successfully reaped the child)
+            // already established that the child is not running)
             pImpl_->pstream_.close();
 
             // fire exit event
@@ -292,6 +295,11 @@ void ChildProcess::poll()
                // call onExit
                callbacks_.onExit(status);
             }
+
+            // set exited_ flag so that our exited function always
+            // returns the right value (even if we haven't been able
+            // to successfully wait/reap the child)
+            pImpl_->exited_ = true;
          }
       }
    }
@@ -305,7 +313,7 @@ void ChildProcess::poll()
 
 bool ChildProcess::exited()
 {
-   return !pImpl_->pstream_.is_open();
+   return pImpl_->exited_;
 }
 
 Error ChildProcess::terminate()
