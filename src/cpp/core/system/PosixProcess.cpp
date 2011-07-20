@@ -13,6 +13,8 @@
 
 #include <core/system/Process.hpp>
 
+// TODO: rename to AsyncChildProcess?
+
 // TODO: consider whether onError should default to log and terminate
 
 // TODO: wrapper for synchronous invocation
