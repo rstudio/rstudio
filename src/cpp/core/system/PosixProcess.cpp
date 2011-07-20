@@ -13,7 +13,11 @@
 
 #include <core/system/Process.hpp>
 
-// TODO: rename to AsyncChildProcess?
+// TODO: rename to AsyncChildProcess and AsyncProcessSupervisor?
+
+// TODO: add docs on potential exitStatus values
+
+// TODO: consider onRunning callback (for timeouts)
 
 // TODO: consider whether onError should default to log and terminate
 
