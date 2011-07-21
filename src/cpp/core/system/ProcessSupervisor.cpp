@@ -63,9 +63,8 @@ namespace {
 // class which implements all of the callbacks
 struct ChildCallbacks
 {
-   ChildCallbacks(
-         const std::string& input,
-         const boost::function<void(const ProcessResult&)>& onCompleted)
+   ChildCallbacks(const std::string& input,
+                  const boost::function<void(const ProcessResult&)>& onCompleted)
       : input(input), onCompleted(onCompleted)
    {
    }
@@ -114,25 +113,24 @@ struct ChildCallbacks
 
 } // anonymous namespace
 
-// run the child
+
 Error ProcessSupervisor::runAsync(
-         const std::string& command,
-         const std::vector<std::string>& args,
-         const std::string& input,
-         const boost::function<void(const ProcessResult&)>& onCompleted)
+                  const std::string& command,
+                  const std::vector<std::string>& args,
+                  const std::string& input,
+                  const boost::function<void(const ProcessResult&)>& onCompleted)
 {
    // create a shared_ptr to the ChildCallbacks. it will stay alive
    // as long as one of its members is referenced in a bind context
-   boost::shared_ptr<ChildCallbacks> pCallbacks(
-                              new ChildCallbacks(input, onCompleted));
+   boost::shared_ptr<ChildCallbacks> pCC(new ChildCallbacks(input, onCompleted));
 
    // bind in the callbacks
    using boost::bind;
    ProcessCallbacks cb;
-   cb.onStarted = bind(&ChildCallbacks::onStarted, pCallbacks, _1);
-   cb.onStdout = bind(&ChildCallbacks::onStdout, pCallbacks, _1, _2);
-   cb.onStderr = bind(&ChildCallbacks::onStderr, pCallbacks, _1, _2);
-   cb.onExit = bind(&ChildCallbacks::onExit, pCallbacks, _1);
+   cb.onStarted = bind(&ChildCallbacks::onStarted, pCC, _1);
+   cb.onStdout = bind(&ChildCallbacks::onStdout, pCC, _1, _2);
+   cb.onStderr = bind(&ChildCallbacks::onStderr, pCC, _1, _2);
+   cb.onExit = bind(&ChildCallbacks::onExit, pCC, _1);
 
    // run the child
    return runAsync(command, args, cb);

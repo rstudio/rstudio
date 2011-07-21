@@ -90,21 +90,19 @@ public:
    // but note that output is collected at a polling interval so it is
    // possible that e.g. two writes to standard output which had an
    // intervening write to standard input might still be concatenated.
-   Error runAsync(
-            const std::string& command,
-            const std::vector<std::string>& args,
-            const ProcessCallbacks& callbacks);
+   Error runAsync(const std::string& command,
+                  const std::vector<std::string>& args,
+                  const ProcessCallbacks& callbacks);
 
    // Run a child asynchronously, invoking the onCompleted callback when
    // the process exits. Note that if input is provided then then the
    // standard input stream is closed (so EOF is sent) after the input
    // is written. If you want more customized handling of input then you
    // can use the more granular runAsync call above.
-   Error runAsync(
-            const std::string& command,
-            const std::vector<std::string>& args,
-            const std::string& input,
-            const boost::function<void(const ProcessResult&)>& onCompleted);
+   Error runAsync(const std::string& command,
+                  const std::vector<std::string>& args,
+                  const std::string& input,
+                  const boost::function<void(const ProcessResult&)>& onCompleted);
 
 
    // Poll for child (output and exit) events. returns true if there
