@@ -138,9 +138,6 @@ Error executeInterruptableChildProcess(
            int checkContinueIntervalMs,
            const boost::function<bool()>& checkContinueFunction);
 
-Error captureCommand(const std::string& command, std::string* pOutput);
-
-
 // log
 void log(LogLevel level, const std::string& message) ;
 

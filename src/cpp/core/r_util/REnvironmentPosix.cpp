@@ -23,6 +23,7 @@
 #include <core/FilePath.hpp>
 #include <core/ConfigUtils.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Process.hpp>
 
 namespace core {
 namespace r_util {
@@ -177,11 +178,12 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
    }
 
    // run script to capture paths
-   std::string libraryPaths;
    std::string command = ldPathsScript.absolutePath() + " " + rHome;
-   Error error = system::captureCommand(command, &libraryPaths);
+   system::ProcessResult result;
+   Error error = runCommand(command, &result);
    if (error)
       LOG_ERROR(error);
+   std::string libraryPaths = result.stdOut;
    boost::algorithm::trim(libraryPaths);
    return libraryPaths;
 }
@@ -189,8 +191,9 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
 FilePath systemDefaultRScript(std::string* pErrMsg)
 {
    // ask system which R to use
-   std::string whichR;
-   Error error = core::system::captureCommand("which R", &whichR);
+   system::ProcessResult result;
+   Error error = core::system::runCommand("which R", &result);
+   std::string whichR = result.stdOut;
    boost::algorithm::trim(whichR);
    if (error || whichR.empty())
    {
@@ -241,9 +244,9 @@ bool getRHomeAndLibPath(const FilePath& rScriptPath,
    core::system::setenv("R_HOME", "");
 
    // run R script to detect R home
-   std::string rHomeOutput;
    std::string command = rScriptPath.absolutePath() + " RHOME";
-   Error error = core::system::captureCommand(command, &rHomeOutput);
+   system::ProcessResult result;
+   Error error = runCommand(command, &result);
    if (error)
    {
       *pErrMsg = "Error running R (" + rScriptPath.absolutePath() + "): " +
@@ -253,6 +256,7 @@ bool getRHomeAndLibPath(const FilePath& rScriptPath,
    }
    else
    {
+      std::string rHomeOutput = result.stdOut;
       boost::algorithm::trim(rHomeOutput);
       *pRHome = rHomeOutput;
       *pRLibPath = FilePath(*pRHome).complete("lib").absolutePath();
@@ -445,14 +449,14 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
    core::system::setenv("R_HOME", "");
 
    // call R to determine the locations
-   std::string output;
    std::string command = rScriptPath +
      " --slave --vanilla -e \"cat(paste("
             "R.home('home'),"
             "R.home('share'),"
             "R.home('include'),"
             "R.home('doc'),sep=':'))\"";
-   Error error = core::system::captureCommand(command, &output);
+   system::ProcessResult result;
+   Error error = runCommand(command, &result);
    if (error)
    {
       LOG_ERROR(error);
@@ -461,6 +465,7 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
       LOG_ERROR_MESSAGE(*pErrMsg);
       return false;
    }
+   std::string output = result.stdOut;
    boost::algorithm::trim(output);
 
    if (output.empty())

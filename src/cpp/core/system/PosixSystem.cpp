@@ -636,38 +636,6 @@ Error executeInterruptableChildProcess(
    return Success() ;
 }   
 
-Error captureCommand(const std::string& command, std::string* pOutput)
-{
-   // start process
-   FILE* fp = ::popen(command.c_str(), "r");
-   if (fp == NULL)
-      return systemError(errno, ERROR_LOCATION);
-
-   // collect output
-   const int kBuffSize = 1024;
-   char buffer[kBuffSize];
-   while (::fgets(buffer, kBuffSize, fp) != NULL)
-      *pOutput += buffer;
-
-   // close file
-   if (::pclose(fp) == -1)
-   {
-      // ECHILD expected if process was reaped elsewhere by wait or waitpid
-      // NOTE: only log errors so we don't get spurious failures b/c
-      // we can't pclose. the calling semantics of popen are already such
-      // that all variety of errors (including file not found, non-zero
-      // exit code, printing to stderr, etc.) are already manifested as
-      // no output captured, so a pclose error can join this group. the
-      // benefit of doing this is that if output was indeed captured and
-      // the error is spurious then the calling program can continue
-      // executing.
-      if (errno != ECHILD)
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
-   }
-
-   return Success();
-}
-
 bool isHiddenFile(const FilePath& filePath) 
 {
    std::string filename = filePath.filename() ;
