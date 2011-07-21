@@ -33,8 +33,8 @@ Error runProcess(const std::string& command,
                  const std::string& input,
                  ProcessResult* pResult)
 {
-
-   return Success();
+   ChildProcess childProcess(command, args);
+   return childProcess.run(input, pResult);
 }
 
 
