@@ -90,9 +90,10 @@ public abstract class Composite extends Widget implements IsRenderable {
     if (renderable != null) {
       return renderable.render(stamper);
     } else {
-      SafeHtmlBuilder builder = new SafeHtmlBuilder();
-      render(stamper, builder);
-      return builder.toSafeHtml();
+      HtmlSpanBuilder spanBuilder = HtmlBuilderFactory.get()
+          .createSpanBuilder();
+      stamper.stamp(spanBuilder).end();
+      return spanBuilder.asSafeHtml();
     }
   }
 
@@ -101,10 +102,7 @@ public abstract class Composite extends Widget implements IsRenderable {
     if (renderable != null) {
       renderable.render(stamper, builder);
     } else {
-      HtmlSpanBuilder spanBuilder = HtmlBuilderFactory.get()
-          .createSpanBuilder();
-      stamper.stamp(spanBuilder).end();
-      builder.append(spanBuilder.asSafeHtml());
+      builder.append(render(stamper));
     }
   }
 

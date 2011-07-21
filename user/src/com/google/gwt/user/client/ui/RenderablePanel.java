@@ -177,13 +177,6 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
 
   @Override
   public SafeHtml render(RenderableStamper stamper) {
-    SafeHtmlBuilder builder = new SafeHtmlBuilder();
-    render(stamper, builder);
-    return builder.toSafeHtml();
-  }
-
-  @Override
-  public void render(RenderableStamper stamper, SafeHtmlBuilder builder) {
     String styleName = getStyleName();
 
     HtmlDivBuilder divBuilder = HtmlBuilderFactory.get()
@@ -195,7 +188,12 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
     stamper.stamp(divBuilder);
     divBuilder.html(getInnerHtml()).end();
 
-    builder.append(divBuilder.asSafeHtml());
+    return divBuilder.asSafeHtml();
+  }
+
+  @Override
+  public void render(RenderableStamper stamper, SafeHtmlBuilder builder) {
+    builder.append(render(stamper));
   }
 
   @Override
