@@ -11,7 +11,7 @@
  *
  */
 
-#include <core/system/ChildProcess.hpp>
+#include <core/system/Process.hpp>
 
 
 namespace core {

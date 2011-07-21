@@ -15,6 +15,8 @@
 
 // TODO: rename to AsyncChildProcess and AsyncProcessSupervisor?
 
+// TODO: consider documenting shared_ptr idiom
+
 // TODO: add docs on potential exitStatus values
 
 // TODO: consider onRunning callback (for timeouts)
