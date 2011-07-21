@@ -38,8 +38,11 @@ struct ProcessResult
    // Standard error from process
    std::string stdErr;
 
-   // Process exit status (exit code if the child was successfully reaped
-   // otherwise -1)
+   // Process exit status. Potential values:
+   //   0   - exit code for successful execution
+   //   1   - application defined failure code (1, 2, 3, etc.)
+   //  15   - process killed by SIGTERM
+   //  -1   - unable to reap exit code of child
    int exitStatus;
 };
 
@@ -63,22 +66,36 @@ struct ProcessCallbacks
    // be used for writing initial standard input to the child
    boost::function<void(ProcessOperations&)> onStarted;
 
+   // Called periodically (at whatever interval poll is called) during the
+   // lifetime of the child process (will not be called until after the
+   // first call to onStarted)
+   boost::function<void(ProcessOperations&)> onRunning;
+
    // Streaming callback for standard output
    boost::function<void(ProcessOperations&, const std::string&)> onStdout;
 
    // Streaming callback for standard error
    boost::function<void(ProcessOperations&, const std::string&)> onStderr;
 
-   // Called after the process has exited. Note that if the child cannot
-   // be sucessfully reaped (e.g. if there is a global SIGCHLD handler
-   // which automatically reaps all children) then exitStatus is -1
+   // Called if an IO error occurs while reading from standard streams. The
+   // default behavior if no callback is specified is to log and then terminate
+   // the child (which will result in onExit being called w/ exitStatus == 15)
+   boost::function<void(const Error&)> onError;
+
+   // Called after the process has exited. Passes exitStatus (see ProcessResult
+   // comment above for potential values)
    boost::function<void(int)> onExit;
 };
 
 
 // Class for running processes asynchronously. Any number of processes
 // can be run by calling runAsync and their results will be delivered
-// using the provided callbacks.
+// using the provided callbacks. If you want to pair a call to runAsync
+// with an object which will live for the duration of the child processes
+// lifetime you should create a shared_ptr to that object and then bind
+// the applicable members to the callback function(s) -- the bind will
+// keep the reference to the shared_ptr alive (see the implementation of
+// the single-callback version of runAsync for an example)
 class ProcessSupervisor : boost::noncopyable
 {
 public:

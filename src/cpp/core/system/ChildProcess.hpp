@@ -13,9 +13,10 @@
 
 #include <core/system/Process.hpp>
 
+#include <core/Error.hpp>
+
 namespace core {
 
-class Error;
 class ErrorLocation;
 
 namespace system {
@@ -35,11 +36,37 @@ public:
    // write (synchronously) to std input
    virtual Error writeToStdin(const std::string& input, bool eof);
 
-   // terminate the process
+   // terminate the process (note that the implementation of this function
+   // must never call reportError since it in turn calls terminate)
    virtual Error terminate();
 
    // poll for input and exit status
    void poll();
+
+private:
+
+   void reportError(const Error& error)
+   {
+      if (callbacks_.onError)
+      {
+         callbacks_.onError(error);
+      }
+      else
+      {
+         LOG_ERROR(error);
+         Error termError = terminate();
+         if (termError)
+            LOG_ERROR(termError);
+      }
+   }
+
+   void reportIOError(const char* what, const ErrorLocation& location)
+   {
+      Error error = systemError(boost::system::errc::io_error, location);
+      if (what != NULL)
+         error.addProperty("what", what);
+      reportError(error);
+   }
 
 private:
    // command and args
