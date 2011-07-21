@@ -46,6 +46,12 @@ struct ProcessResult
    int exitStatus;
 };
 
+// run a process synchronously
+Error runProcess(const std::string& command,
+                 const std::vector<std::string>& args,
+                 const std::string& input,
+                 ProcessResult* pResult);
+
 // Operations that can be performed from within ProcessCallbacks
 class ProcessOperations
 {

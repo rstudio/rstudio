@@ -20,10 +20,23 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 
+#include <core/PerformanceTimer.hpp>
+
 #include "ChildProcess.hpp"
 
 namespace core {
 namespace system {
+
+
+Error runProcess(const std::string& command,
+                 const std::vector<std::string>& args,
+                 const std::string& input,
+                 ProcessResult* pResult)
+{
+
+   return Success();
+}
+
 
 struct ProcessSupervisor::Impl
 {
@@ -47,7 +60,7 @@ Error ProcessSupervisor::runAsync(const std::string& command,
    boost::shared_ptr<ChildProcess> pChild(new ChildProcess(command, args));
 
    // run the child
-   Error error = pChild->run(callbacks);
+   Error error = pChild->runAsync(callbacks);
    if (error)
       return error;
 

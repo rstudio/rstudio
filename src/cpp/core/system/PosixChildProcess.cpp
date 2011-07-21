@@ -13,16 +13,6 @@
 
 #include <core/system/Process.hpp>
 
-// TODO: rename to AsyncChildProcess and AsyncProcessSupervisor?
-
-// TODO: consider documenting shared_ptr idiom
-
-// TODO: add docs on potential exitStatus values
-
-// TODO: consider onRunning callback (for timeouts)
-
-// TODO: consider whether onError should default to log and terminate
-
 // TODO: wrapper for synchronous invocation
 
 // TODO: address semantics of SIGCHLD:
@@ -82,24 +72,6 @@ namespace system {
 
 namespace {
 
-void reportError(const Error& error)
-{
-   LOG_ERROR(error);
-}
-
-void reportIOError(const char* what, const ErrorLocation& location)
-{
-   Error error = systemError(boost::system::errc::io_error, location);
-   if (what != NULL)
-      error.addProperty("what", what);
-   reportError(error);
-}
-
-void reportIOError(const ErrorLocation& location)
-{
-   reportIOError(NULL, location);
-}
-
 void readFromStream(redi::basic_pstream<char>& stream, std::string* pOutput)
 {
    char ch;
@@ -124,7 +96,7 @@ Error checkStreamState(redi::basic_pstream<char>& stream,
       error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
    }
 
-   // clear any error bit if stderr is still pending
+   // clear any error bit if the other stream isn't finished yet
    if (!stream.good() && !otherFinished)
       stream.clear();
 
@@ -168,7 +140,12 @@ ChildProcess::~ChildProcess()
 }
 
 
-Error ChildProcess::run(const ProcessCallbacks& callbacks)
+Error ChildProcess::run(const std::string& input, ProcessResult* pResult)
+{
+   return Success();
+}
+
+Error ChildProcess::runAsync(const ProcessCallbacks& callbacks)
 {
    // create set of args to pass (needs to include the cmd)
    std::vector<std::string> args;
@@ -236,6 +213,10 @@ void ChildProcess::poll()
             callbacks_.onStarted(*this);
          pImpl_->calledOnStarted_ = true;
       }
+
+      // call onRunning
+      if (callbacks_.onRunning)
+         callbacks_.onRunning(*this);
 
       // check stdout and fire event if we got output
       if (!pImpl_->finishedStdout_)
@@ -322,6 +303,8 @@ bool ChildProcess::exited()
    return pImpl_->exited_;
 }
 
+// NOTE: never call reportError from within this implementation since
+// reportError can end up calling terminate!
 Error ChildProcess::terminate()
 {
    // only send signal if the process is open

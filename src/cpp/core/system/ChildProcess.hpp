@@ -27,8 +27,14 @@ public:
    ChildProcess(const std::string& cmd, const std::vector<std::string>& args);
    virtual ~ChildProcess();
 
-   // run process
-   Error run(const ProcessCallbacks& callbacks);
+   // run process synchronously
+   Error run(const std::string& input, ProcessResult* pResult);
+
+   // run process asynchronously
+   Error runAsync(const ProcessCallbacks& callbacks);
+
+   // poll for input and exit status
+   void poll();
 
    // has it exited?
    bool exited();
@@ -39,9 +45,6 @@ public:
    // terminate the process (note that the implementation of this function
    // must never call reportError since it in turn calls terminate)
    virtual Error terminate();
-
-   // poll for input and exit status
-   void poll();
 
 private:
 
