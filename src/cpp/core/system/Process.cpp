@@ -33,14 +33,14 @@ Error runProcess(const std::string& command,
                  const std::string& input,
                  ProcessResult* pResult)
 {
-   ChildProcess childProcess(command, args);
-   return childProcess.run(input, pResult);
+   SyncChildProcess child(command, args);
+   return child.run(input, pResult);
 }
 
 
 struct ProcessSupervisor::Impl
 {
-   std::vector<boost::shared_ptr<ChildProcess> > children;
+   std::vector<boost::shared_ptr<AsyncChildProcess> > children;
 };
 
 ProcessSupervisor::ProcessSupervisor()
@@ -52,15 +52,15 @@ ProcessSupervisor::~ProcessSupervisor()
 {
 }
 
-Error ProcessSupervisor::runAsync(const std::string& command,
+Error ProcessSupervisor::runAsync(const std::string& cmd,
                                   const std::vector<std::string>& args,
                                   const ProcessCallbacks& callbacks)
 {
    // create the child
-   boost::shared_ptr<ChildProcess> pChild(new ChildProcess(command, args));
+   boost::shared_ptr<AsyncChildProcess> pChild(new AsyncChildProcess(cmd, args));
 
    // run the child
-   Error error = pChild->runAsync(callbacks);
+   Error error = pChild->run(callbacks);
    if (error)
       return error;
 
@@ -155,13 +155,13 @@ bool ProcessSupervisor::poll()
    // call poll on all of our children
    std::for_each(pImpl_->children.begin(),
                  pImpl_->children.end(),
-                 boost::bind(&ChildProcess::poll, _1));
+                 boost::bind(&AsyncChildProcess::poll, _1));
 
    // remove any children who have exited from our list
    pImpl_->children.erase(std::remove_if(
                              pImpl_->children.begin(),
                              pImpl_->children.end(),
-                             boost::bind(&ChildProcess::exited, _1)),
+                             boost::bind(&AsyncChildProcess::exited, _1)),
                           pImpl_->children.end());
 
    // return status

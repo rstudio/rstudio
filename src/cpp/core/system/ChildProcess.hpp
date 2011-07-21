@@ -11,40 +11,91 @@
  *
  */
 
+#ifndef CORE_SYSTEM_CHILD_PROCESS_HPP
+#define CORE_SYSTEM_CHILD_PROCESS_HPP
+
 #include <core/system/Process.hpp>
 
 #include <core/Error.hpp>
+#include <core/Log.hpp>
 
 namespace core {
 
 class ErrorLocation;
 
 namespace system {
-     
+
+// Base class for child processes
 class ChildProcess : boost::noncopyable, public ProcessOperations
 {
-public:
+protected:
    ChildProcess(const std::string& cmd, const std::vector<std::string>& args);
+
+public:
    virtual ~ChildProcess();
 
-   // run process synchronously
+public:
+   // write (synchronously) to std input
+   virtual Error writeToStdin(const std::string& input, bool eof);
+
+   // terminate the process
+   virtual Error terminate();
+
+protected:
+   Error run();
+
+protected:
+   // platform specific impl
+   struct Impl;
+   boost::scoped_ptr<Impl> pImpl_;
+
+private:
+   // command and args
+   std::string cmd_;
+   std::vector<std::string> args_;
+};
+
+
+// Child process which can be run synchronously
+class SyncChildProcess : public ChildProcess
+{
+public:
+   SyncChildProcess(const std::string& cmd, const std::vector<std::string>& args)
+      : ChildProcess(cmd, args)
+   {
+   }
+
    Error run(const std::string& input, ProcessResult* pResult);
+};
+
+
+// Child process which can be run asynchronously
+class AsyncChildProcess : public ChildProcess
+{
+public:
+   AsyncChildProcess(const std::string& cmd, const std::vector<std::string>& args);
+   virtual ~AsyncChildProcess();
 
    // run process asynchronously
-   Error runAsync(const ProcessCallbacks& callbacks);
+   Error run(const ProcessCallbacks& callbacks)
+   {
+      Error error = ChildProcess::run();
+      if (!error)
+      {
+         callbacks_ = callbacks;
+         return Success();
+      }
+      else
+      {
+         return error;
+      }
+   }
 
    // poll for input and exit status
    void poll();
 
    // has it exited?
    bool exited();
-
-   // write (synchronously) to std input
-   virtual Error writeToStdin(const std::string& input, bool eof);
-
-   // terminate the process (note that the implementation of this function
-   // must never call reportError since it in turn calls terminate)
-   virtual Error terminate();
 
 private:
 
@@ -72,19 +123,15 @@ private:
    }
 
 private:
-   // command and args
-   std::string cmd_;
-   std::vector<std::string> args_;
-
    // callbacks
    ProcessCallbacks callbacks_;
 
    // platform specific impl
-   struct Impl;
-   boost::scoped_ptr<Impl> pImpl_;
+   struct AsyncImpl;
+   boost::scoped_ptr<AsyncImpl> pAsyncImpl_;
 };
-
 
 } // namespace system
 } // namespace core
 
+#endif // CORE_SYSTEM_CHILD_PROCESS_HPP

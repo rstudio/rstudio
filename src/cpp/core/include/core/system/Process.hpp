@@ -27,6 +27,12 @@ class Error;
 
 namespace system {
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// Run child process synchronously
+//
+//
+
 // Struct for returning output and exit status from a process
 struct ProcessResult
 {
@@ -51,6 +57,24 @@ Error runProcess(const std::string& command,
                  const std::vector<std::string>& args,
                  const std::string& input,
                  ProcessResult* pResult);
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// ProcessSupervisor -- run child processes asynchronously
+//
+// Any number of processes can be run by calling runAsync and their results will
+// be delivered using the provided callbacks. Note that the poll() method must
+// be called periodically (e.g. during standard event pumping / idle time) in
+// order to check for output & status of managed children.
+//
+// If you want to pair a call to runAsync with an object which will live for the
+// lifetime of the child process you should create a shared_ptr to that object
+// and then bind the applicable members to the callback function(s) -- the bind
+// will keep the shared_ptr alive (see the implementation of the single-callback
+// version of runAsync for an example)
+//
+//
 
 // Operations that can be performed from within ProcessCallbacks
 class ProcessOperations
@@ -94,14 +118,7 @@ struct ProcessCallbacks
 };
 
 
-// Class for running processes asynchronously. Any number of processes
-// can be run by calling runAsync and their results will be delivered
-// using the provided callbacks. If you want to pair a call to runAsync
-// with an object which will live for the duration of the child processes
-// lifetime you should create a shared_ptr to that object and then bind
-// the applicable members to the callback function(s) -- the bind will
-// keep the reference to the shared_ptr alive (see the implementation of
-// the single-callback version of runAsync for an example)
+// Process supervisor
 class ProcessSupervisor : boost::noncopyable
 {
 public:
@@ -117,11 +134,12 @@ public:
                   const std::vector<std::string>& args,
                   const ProcessCallbacks& callbacks);
 
-   // Run a child asynchronously, invoking the onCompleted callback when
-   // the process exits. Note that if input is provided then then the
-   // standard input stream is closed (so EOF is sent) after the input
-   // is written. If you want more customized handling of input then you
-   // can use the more granular runAsync call above.
+   // Run a child asynchronously, invoking the onCompleted callback when the
+   // process exits. Note that if input is provided then then the standard
+   // input stream is closed (so EOF is sent) after the input is written.
+   // Note also that the standard error handler (log and terminate) is also
+   // used. If you want more customized behavior then you can use the more
+   // granular runAsync call above.
    Error runAsync(const std::string& command,
                   const std::vector<std::string>& args,
                   const std::string& input,
