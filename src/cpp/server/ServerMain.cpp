@@ -174,9 +174,8 @@ void handleSIGCHLD(int)
 {
 }
 
-// wait for and handle signals -- return when we either encounter an error
-// or receive a termination signal (in which case we return Success()
-Error waitForSignals(int *pExitStatus)
+// wait for and handle child exit signals
+Error waitForChildExits()
 {
    // setup bogus handler for SIGCHLD (if we don't do this then
    // we can't successfully block/wait for the signal). This also
@@ -190,22 +189,15 @@ Error waitForSignals(int *pExitStatus)
    if (result != 0)
       return systemError(errno, ERROR_LOCATION);
 
-   // block signals that we want to wait synchronously for
+   // block SIGCHLD (so we can sigwait on it below)
    sigset_t wait_mask;
    sigemptyset(&wait_mask);
    sigaddset(&wait_mask, SIGCHLD);
-   sigaddset(&wait_mask, SIGHUP);
-   sigaddset(&wait_mask, SIGINT);
-   sigaddset(&wait_mask, SIGQUIT);
-   sigaddset(&wait_mask, SIGTERM);
-   sigaddset(&wait_mask, SIGABRT);
-   sigaddset(&wait_mask, SIGSEGV);
-   sigaddset(&wait_mask, SIGILL);
    result = ::pthread_sigmask(SIG_BLOCK, &wait_mask, NULL);
    if (result != 0)
       return systemError(result, ERROR_LOCATION);
 
-   // wait for signals
+   // wait for child exits
    for(;;)
    {
       // perform wait
@@ -220,27 +212,15 @@ Error waitForSignals(int *pExitStatus)
          sessionManager().notifySIGCHLD();
       }
 
-      // SIGHUP
-      else if (sig == SIGHUP)
-      {
-         // do nothing
-      }
-
-      // Normal termination
-      else if (sig == SIGINT || sig == SIGQUIT || sig == SIGTERM)
-      {
-         *pExitStatus = EXIT_SUCCESS;
-         break;
-      }
-
-      // Abornmal termination
+      // Unexpected signal
       else
       {
-         *pExitStatus = sig;
-         break;
+         LOG_WARNING_MESSAGE("Unexpected signal returned from sigwait: " +
+                             boost::lexical_cast<std::string>(sig));
       }
    }
 
+   // keep compiler happy (we never get here)
    return Success();
 }
 
@@ -407,14 +387,13 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
-      // wait for signals
-      int exitStatus = -1;
-      error = waitForSignals(&exitStatus);
+      // wait for child exits
+      error = waitForChildExits();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
-      // return status
-      return exitStatus;
+      // NOTE: we never get here because waitForChildExits waits forever
+      return EXIT_SUCCESS;
    }
    CATCH_UNEXPECTED_EXCEPTION
    
