@@ -17,26 +17,75 @@
 
 #include <boost/foreach.hpp>
 
+#include <core/Log.hpp>
+
+// TODO: detailed code review after all of the changes (including diffs)
+
+// TODO: review error handling strategy
+
+// TODO: should we close the stdout and stderr handles after readPipe?
+
 namespace core {
 namespace system {
 
 namespace {
 
+void closeHandleLogError(HANDLE handle, const ErrorLocation& location)
+{
+   if (!::CloseHandle(handle))
+      LOG_ERROR(systemError(::GetLastError(), location));
+}
+
 // close a handle then set it to NULL (so we can call this function
 // repeatedly without failure or other side effects)
 Error safeCloseHandle(HANDLE* pHandle)
 {
-   Error error;
-
    if (*pHandle != NULL)
    {
-      if (!::CloseHandle(*pHandle))
-         error = systemError(::GetLastError(), ERROR_LOCATION);
-
+      BOOL result = ::CloseHandle(*pHandle);
       *pHandle = NULL;
+
+      if (!result)
+         return systemError(::GetLastError(), ERROR_LOCATION);
+      else
+         return Success();
+   }
+   else
+   {
+      return Success();
+   }
+}
+
+Error readPipe(HANDLE hPipe, std::string* pOutput)
+{
+   CHAR buff[256];
+   DWORD nBytesRead;
+
+   while(TRUE)
+   {
+      // read from pipe
+      BOOL result = ::ReadFile(hPipe, buff, sizeof(buff), &nBytesRead, NULL);
+
+      // end of file
+      if (nBytesRead == 0)
+          break;
+
+      // check for success and/or expected error states
+      if (result)
+      {
+          pOutput->append(buff, nBytesRead);
+      }
+      else if (::GetLastError() == ERROR_BROKEN_PIPE)
+      {
+         break;
+      }
+      else
+      {
+         return systemError(::GetLastError(), ERROR_LOCATION);
+      }
    }
 
-   return error;
+   return Success();
 }
 
 } // anonymous namespace
@@ -44,41 +93,32 @@ Error safeCloseHandle(HANDLE* pHandle)
 struct ChildProcess::Impl
 {
    Impl()
-      : hStdInRead(NULL),
-        hStdInWrite(NULL),
+      : hStdInWrite(NULL),
         hStdOutRead(NULL),
-        hStdOutWrite(NULL),
         hStdErrRead(NULL),
-        hStdErrWrite(NULL)
+        hProcess(NULL)
    {
-      ::ZeroMemory( &pi, sizeof(PROCESS_INFORMATION));
    }
 
    virtual ~Impl()
    {
       try
       {
-         safeCloseHandle(&hStdInRead);
          safeCloseHandle(&hStdInWrite);
          safeCloseHandle(&hStdOutRead);
-         safeCloseHandle(&hStdOutWrite);
          safeCloseHandle(&hStdErrRead);
-         safeCloseHandle(&hStdErrWrite);
-         safeCloseHandle(&pi.hProcess);
-         safeCloseHandle(&pi.hThread);
+         safeCloseHandle(&hProcess);
       }
       catch(...)
       {
       }
    }
 
-   HANDLE hStdInRead;
    HANDLE hStdInWrite;
    HANDLE hStdOutRead;
-   HANDLE hStdOutWrite;
    HANDLE hStdErrRead;
-   HANDLE hStdErrWrite;
-   PROCESS_INFORMATION pi;
+   HANDLE hProcess;
+
 };
 
 
@@ -95,14 +135,17 @@ ChildProcess::~ChildProcess()
 Error ChildProcess::writeToStdin(const std::string& input, bool eof)
 {
    // write synchronously to the pipe
-   DWORD dwWritten;
-   BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
-                               input.data(),
-                               input.length(),
-                               &dwWritten,
-                               NULL);
-   if (!bSuccess)
-      return systemError(::GetLastError(), ERROR_LOCATION);
+   if (!input.empty())
+   {
+      DWORD dwWritten;
+      BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
+                                  input.data(),
+                                  input.length(),
+                                  &dwWritten,
+                                  NULL);
+      if (!bSuccess)
+         return systemError(::GetLastError(), ERROR_LOCATION);
+   }
 
    // close pipe if requested
    Error error;
@@ -115,7 +158,7 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
 
 Error ChildProcess::terminate()
 {
-   if (!::TerminateProcess(pImpl_->pi.hProcess, 0))
+   if (!::TerminateProcess(pImpl_->hProcess, 0))
       return systemError(::GetLastError(), ERROR_LOCATION);
    else
       return Success();
@@ -130,19 +173,22 @@ Error ChildProcess::run()
    sa.lpSecurityDescriptor = NULL;
 
    // Standard input pipe
-   if (!::CreatePipe(&pImpl_->hStdInRead, &pImpl_->hStdInWrite, &sa, 0))
+   HANDLE hStdInRead;
+   if (!::CreatePipe(&hStdInRead, &pImpl_->hStdInWrite, &sa, 0))
       return systemError(::GetLastError(), ERROR_LOCATION);
    if (!::SetHandleInformation(pImpl_->hStdInWrite, HANDLE_FLAG_INHERIT, 0) )
       return systemError(::GetLastError(), ERROR_LOCATION);
 
    // Standard output pipe
-   if (!::CreatePipe(&pImpl_->hStdOutRead, &pImpl_->hStdOutWrite, &sa, 0))
+   HANDLE hStdOutWrite;
+   if (!::CreatePipe(&pImpl_->hStdOutRead, &hStdOutWrite, &sa, 0))
       return systemError(::GetLastError(), ERROR_LOCATION);
    if (!::SetHandleInformation(pImpl_->hStdOutRead, HANDLE_FLAG_INHERIT, 0) )
       return systemError(::GetLastError(), ERROR_LOCATION);
 
    // Standard error pipe
-   if (!::CreatePipe(&pImpl_->hStdErrRead, &pImpl_->hStdErrWrite, &sa, 0))
+   HANDLE hStdErrWrite;
+   if (!::CreatePipe(&pImpl_->hStdErrRead, &hStdErrWrite, &sa, 0))
       return systemError(::GetLastError(), ERROR_LOCATION);
    if (!::SetHandleInformation(pImpl_->hStdErrRead, HANDLE_FLAG_INHERIT, 0) )
       return systemError(::GetLastError(), ERROR_LOCATION);
@@ -152,9 +198,9 @@ Error ChildProcess::run()
    ZeroMemory(&si,sizeof(STARTUPINFO));
    si.cb = sizeof(STARTUPINFO);
    si.dwFlags |= STARTF_USESTDHANDLES;
-   si.hStdOutput = pImpl_->hStdOutWrite;
-   si.hStdError = pImpl_->hStdErrWrite;
-   si.hStdInput = pImpl_->hStdInRead;
+   si.hStdOutput = hStdOutWrite;
+   si.hStdError = hStdErrWrite;
+   si.hStdInput = hStdInRead;
 
    // build command line
    std::vector<TCHAR> cmdLine;
@@ -166,38 +212,85 @@ Error ChildProcess::run()
    cmdLine.push_back('\0');
 
    // Start the child process.
+   PROCESS_INFORMATION pi;
+   ::ZeroMemory( &pi, sizeof(PROCESS_INFORMATION));
    BOOL success = ::CreateProcess(
      cmd_.c_str(),    // Process
      &(cmdLine[0]),   // Command line
      NULL,            // Process handle not inheritable
      NULL,            // Thread handle not inheritable
      TRUE,            // Set handle inheritance to TRUE
-     CREATE_NO_WINDOW,// No console widnow
+     0,               // No creation flags
      NULL,            // Use parent's environment block
      NULL,            // Use parent's starting directory
      &si,             // Pointer to STARTUPINFO structure
-     &pImpl_->pi );   // Pointer to PROCESS_INFORMATION structure
+     &pi );   // Pointer to PROCESS_INFORMATION structure
+   DWORD dwLastError = ::GetLastError();
+
+   // close the handles which we passed to the child
+   closeHandleLogError(hStdOutWrite, ERROR_LOCATION);
+   closeHandleLogError(hStdInRead, ERROR_LOCATION);
+   closeHandleLogError(hStdErrWrite, ERROR_LOCATION);
 
    if (!success)
-      return systemError(::GetLastError(), ERROR_LOCATION);
+   {
+      return systemError(dwLastError, ERROR_LOCATION);
+   }
    else
+   {
+      // save handle to process
+      pImpl_->hProcess = pi.hProcess;
+
+      // close handle to thread
+      closeHandleLogError(pi.hThread, ERROR_LOCATION);
+
+      // success
       return Success();
+   }
 }
 
 
 Error SyncChildProcess::readStdOut(std::string* pOutput)
-{
-   return Success();
+{  
+   return readPipe(pImpl_->hStdOutRead, pOutput);
 }
 
 Error SyncChildProcess::readStdErr(std::string* pOutput)
 {
-  return Success();
+  return readPipe(pImpl_->hStdErrRead, pOutput);
 }
 
-void SyncChildProcess::waitForExit(int* pExitStatus)
+Error SyncChildProcess::waitForExit(int* pExitStatus)
 {
+   // wait
+   DWORD result = ::WaitForSingleObject(pImpl_->hProcess, INFINITE);
 
+   // check for error
+   if (result != WAIT_OBJECT_0)
+   {
+      if (result == WAIT_FAILED)
+      {
+         return systemError(::GetLastError(), ERROR_LOCATION);
+      }
+      else
+      {
+         using namespace boost::system;
+         error_code ec(errc::result_out_of_range, get_system_category());
+         Error error(ec, ERROR_LOCATION);
+         error.addProperty("result", result);
+         return error;
+      }
+   }
+   else
+   {
+      // get exit code
+      DWORD dwStatus;
+      if (!::GetExitCodeProcess(pImpl_->hProcess, &dwStatus))
+         return systemError(::GetLastError(), ERROR_LOCATION);
+
+      *pExitStatus = dwStatus;
+      return Success();
+   }
 }
 
 struct AsyncChildProcess::AsyncImpl

@@ -240,10 +240,11 @@ Error SyncChildProcess::readStdErr(std::string* pOutput)
    return readStream(pImpl_->pstream_.err(), pOutput);
 }
 
-void SyncChildProcess::waitForExit(int* pExitStatus)
+Error SyncChildProcess::waitForExit(int* pExitStatus)
 {
    pImpl_->pstream_.close();
    *pExitStatus = resolveExitStatus(pImpl_->rdbuf().status());
+   return Success();
 }
 
 struct AsyncChildProcess::AsyncImpl

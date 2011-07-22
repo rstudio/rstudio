@@ -72,16 +72,13 @@ public:
       if (error)
          return error;
 
-      // write input if we have it
-      if (!input.empty())
+      // write input
+      error = writeToStdin(input, true);
+      if (error)
       {
-         error = writeToStdin(input, true);
-         if (error)
-         {
-            Error terminateError = terminate();
-            if (terminateError)
-               LOG_ERROR(terminateError);
-         }
+         Error terminateError = terminate();
+         if (terminateError)
+            LOG_ERROR(terminateError);
       }
 
       // read standard out if we didn't have a previous problem
@@ -92,9 +89,17 @@ public:
       if (!error)
          error = readStdErr(&(pResult->stdErr));
 
-      // wait on exit and get exit status. note we always need to do this even if
-      // we called terminate due to an earlier error (so we always reap the child)
-      waitForExit(&(pResult->exitStatus));
+      // wait on exit and get exit status. note we always need to do this
+      // even if we called terminate due to an earlier error (so we always
+      // reap the child)
+      Error waitError = waitForExit(&(pResult->exitStatus));
+      if (waitError)
+      {
+         if (!error)
+            error = waitError;
+         else
+            LOG_ERROR(waitError);
+      }
 
       // return error status
       return error;
@@ -103,7 +108,7 @@ public:
 private:
    Error readStdOut(std::string* pOutput);
    Error readStdErr(std::string* pOutput);
-   void waitForExit(int* pExitStatus);
+   Error waitForExit(int* pExitStatus);
 };
 
 
