@@ -13,6 +13,8 @@
 
 #include "ServerSessionManager.hpp"
 
+#include <sys/wait.h>
+
 #include <vector>
 
 #include <boost/foreach.hpp>
