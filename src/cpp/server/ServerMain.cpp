@@ -176,7 +176,7 @@ void handleSIGCHLD(int)
 
 // wait for and handle signals -- return when we either encounter an error
 // or receive a termination signal (in which case we return Success()
-Error waitForSignals()
+Error waitForSignals(int *pExitStatus)
 {
    // setup bogus handler for SIGCHLD (if we don't do this then
    // we can't successfully block/wait for the signal). This also
@@ -229,6 +229,7 @@ Error waitForSignals()
       // Termination signal
       else
       {
+         *pExitStatus = sig;
          break;
       }
    }
@@ -400,12 +401,13 @@ int main(int argc, char * const argv[])
          return core::system::exitFailure(error, ERROR_LOCATION);
 
       // wait for signals
-      error = waitForSignals();
+      int exitStatus = -1;
+      error = waitForSignals(&exitStatus);
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
-      // return success
-      return EXIT_SUCCESS;
+      // return status
+      return exitStatus;
    }
    CATCH_UNEXPECTED_EXCEPTION
    
