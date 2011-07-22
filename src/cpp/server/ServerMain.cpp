@@ -226,7 +226,14 @@ Error waitForSignals(int *pExitStatus)
          // do nothing
       }
 
-      // Termination signal
+      // Normal termination
+      else if (sig == SIGINT || sig == SIGQUIT || sig == SIGTERM)
+      {
+         *pExitStatus = EXIT_SUCCESS;
+         break;
+      }
+
+      // Abornmal termination
       else
       {
          *pExitStatus = sig;
