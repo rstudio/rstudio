@@ -133,12 +133,6 @@ Error checkStreamState(redi::basic_pstream<char>& stream,
    return error;
 }
 
-void terminateChild(ChildProcess* pChild)
-{
-   Error error = pChild->terminate();
-   if (error)
-      LOG_ERROR(error);
-}
 
 int resolveExitStatus(int status)
 {
@@ -236,38 +230,21 @@ Error ChildProcess::run()
 }
 
 
-Error SyncChildProcess::run(const std::string& input, ProcessResult* pResult)
+Error SyncChildProcess::readStdOut(std::string* pOutput)
 {
-   // run the process
-   Error error = ChildProcess::run();
-   if (error)
-      return error;
-
-   // write input if we have it
-   if (!input.empty())
-   {
-      error = writeToStdin(input, true);
-      if (error)
-         terminateChild(this);
-   }
-
-   // read standard out if we didn't have a previous problem
-   if (!error)
-      error = readStream(pImpl_->pstream_.out(), &(pResult->stdOut));
-
-   // read standard error if we didn't have a previous problem
-   if (!error)
-      error = readStream(pImpl_->pstream_.err(), &(pResult->stdErr));
-
-   // wait on exit and get exit status. note we always need to do this even if
-   // we called terminate due to an earlier error (so we always reap the child)
-   pImpl_->pstream_.close();
-   pResult->exitStatus = resolveExitStatus(pImpl_->rdbuf().status());
-
-   // return error state
-   return error;
+   return readStream(pImpl_->pstream_.out(), pOutput);
 }
 
+Error SyncChildProcess::readStdErr(std::string* pOutput)
+{
+   return readStream(pImpl_->pstream_.err(), pOutput);
+}
+
+void SyncChildProcess::waitForExit(int* pExitStatus)
+{
+   pImpl_->pstream_.close();
+   *pExitStatus = resolveExitStatus(pImpl_->rdbuf().status());
+}
 
 struct AsyncChildProcess::AsyncImpl
 {

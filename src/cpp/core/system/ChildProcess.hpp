@@ -65,7 +65,45 @@ public:
    {
    }
 
-   Error run(const std::string& input, ProcessResult* pResult);
+   Error run(const std::string& input, ProcessResult* pResult)
+   {
+      // run the process
+      Error error = ChildProcess::run();
+      if (error)
+         return error;
+
+      // write input if we have it
+      if (!input.empty())
+      {
+         error = writeToStdin(input, true);
+         if (error)
+         {
+            Error terminateError = terminate();
+            if (terminateError)
+               LOG_ERROR(terminateError);
+         }
+      }
+
+      // read standard out if we didn't have a previous problem
+      if (!error)
+         error = readStdOut(&(pResult->stdOut));
+
+      // read standard error if we didn't have a previous problem
+      if (!error)
+         error = readStdErr(&(pResult->stdErr));
+
+      // wait on exit and get exit status. note we always need to do this even if
+      // we called terminate due to an earlier error (so we always reap the child)
+      waitForExit(&(pResult->exitStatus));
+
+      // return error status
+      return error;
+   }
+
+private:
+   Error readStdOut(std::string* pOutput);
+   Error readStdErr(std::string* pOutput);
+   void waitForExit(int* pExitStatus);
 };
 
 
