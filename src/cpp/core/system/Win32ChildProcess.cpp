@@ -17,28 +17,14 @@
 
 #include <boost/foreach.hpp>
 
-#include <core/Log.hpp>
-
-// TODO: detailed code review after all of the changes (including diffs)
-
-// TODO: review error handling strategy
-
-// TODO: should we close the stdout and stderr handles after readPipe?
-
 namespace core {
 namespace system {
 
 namespace {
 
-void closeHandleLogError(HANDLE handle, const ErrorLocation& location)
-{
-   if (!::CloseHandle(handle))
-      LOG_ERROR(systemError(::GetLastError(), location));
-}
-
 // close a handle then set it to NULL (so we can call this function
 // repeatedly without failure or other side effects)
-Error safeCloseHandle(HANDLE* pHandle)
+Error closeHandle(HANDLE* pHandle, const ErrorLocation& location)
 {
    if (*pHandle != NULL)
    {
@@ -46,7 +32,7 @@ Error safeCloseHandle(HANDLE* pHandle)
       *pHandle = NULL;
 
       if (!result)
-         return systemError(::GetLastError(), ERROR_LOCATION);
+         return systemError(::GetLastError(), location);
       else
          return Success();
    }
@@ -55,6 +41,33 @@ Error safeCloseHandle(HANDLE* pHandle)
       return Success();
    }
 }
+
+class CloseHandleOnExitScope
+{
+public:
+   CloseHandleOnExitScope(HANDLE* pHandle, const ErrorLocation& location)
+      : pHandle_(pHandle), location_(location)
+   {
+   }
+
+   virtual ~CloseHandleOnExitScope()
+   {
+      try
+      {
+         Error error = closeHandle(pHandle_, location_);
+         if (error)
+            LOG_ERROR(error);
+      }
+      catch(...)
+      {
+      }
+   }
+
+private:
+   HANDLE* pHandle_;
+   ErrorLocation location_;
+};
+
 
 Error readPipe(HANDLE hPipe, std::string* pOutput)
 {
@@ -68,21 +81,19 @@ Error readPipe(HANDLE hPipe, std::string* pOutput)
 
       // end of file
       if (nBytesRead == 0)
-          break;
-
-      // check for success and/or expected error states
-      if (result)
-      {
-          pOutput->append(buff, nBytesRead);
-      }
-      else if (::GetLastError() == ERROR_BROKEN_PIPE)
-      {
          break;
-      }
-      else
-      {
+
+      // pipe broken
+      else if (!result && (::GetLastError() == ERROR_BROKEN_PIPE))
+         break;
+
+      // unexpected error
+      else if (!result)
          return systemError(::GetLastError(), ERROR_LOCATION);
-      }
+
+      // got input, append it
+      else
+         pOutput->append(buff, nBytesRead);
    }
 
    return Success();
@@ -96,22 +107,12 @@ struct ChildProcess::Impl
       : hStdInWrite(NULL),
         hStdOutRead(NULL),
         hStdErrRead(NULL),
-        hProcess(NULL)
+        hProcess(NULL),
+        closeStdIn_(&hStdInWrite, ERROR_LOCATION),
+        closeStdOut_(&hStdOutRead, ERROR_LOCATION),
+        closeStdErr_(&hStdErrRead, ERROR_LOCATION),
+        closeProcess_(&hProcess, ERROR_LOCATION)
    {
-   }
-
-   virtual ~Impl()
-   {
-      try
-      {
-         safeCloseHandle(&hStdInWrite);
-         safeCloseHandle(&hStdOutRead);
-         safeCloseHandle(&hStdErrRead);
-         safeCloseHandle(&hProcess);
-      }
-      catch(...)
-      {
-      }
    }
 
    HANDLE hStdInWrite;
@@ -119,6 +120,11 @@ struct ChildProcess::Impl
    HANDLE hStdErrRead;
    HANDLE hProcess;
 
+private:
+   CloseHandleOnExitScope closeStdIn_;
+   CloseHandleOnExitScope closeStdOut_;
+   CloseHandleOnExitScope closeStdErr_;
+   CloseHandleOnExitScope closeProcess_;
 };
 
 
@@ -148,11 +154,10 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
    }
 
    // close pipe if requested
-   Error error;
    if (eof)
-      error = safeCloseHandle(&pImpl_->hStdInWrite);
-
-   return error;
+      return closeHandle(&pImpl_->hStdInWrite, ERROR_LOCATION);
+   else
+      return Success();
 }
 
 
@@ -176,6 +181,7 @@ Error ChildProcess::run()
    HANDLE hStdInRead;
    if (!::CreatePipe(&hStdInRead, &pImpl_->hStdInWrite, &sa, 0))
       return systemError(::GetLastError(), ERROR_LOCATION);
+   CloseHandleOnExitScope closeStdIn(&hStdInRead, ERROR_LOCATION);
    if (!::SetHandleInformation(pImpl_->hStdInWrite, HANDLE_FLAG_INHERIT, 0) )
       return systemError(::GetLastError(), ERROR_LOCATION);
 
@@ -183,6 +189,7 @@ Error ChildProcess::run()
    HANDLE hStdOutWrite;
    if (!::CreatePipe(&pImpl_->hStdOutRead, &hStdOutWrite, &sa, 0))
       return systemError(::GetLastError(), ERROR_LOCATION);
+   CloseHandleOnExitScope closeStdOut(&hStdOutWrite, ERROR_LOCATION);
    if (!::SetHandleInformation(pImpl_->hStdOutRead, HANDLE_FLAG_INHERIT, 0) )
       return systemError(::GetLastError(), ERROR_LOCATION);
 
@@ -190,6 +197,7 @@ Error ChildProcess::run()
    HANDLE hStdErrWrite;
    if (!::CreatePipe(&pImpl_->hStdErrRead, &hStdErrWrite, &sa, 0))
       return systemError(::GetLastError(), ERROR_LOCATION);
+   CloseHandleOnExitScope closeStdErr(&hStdErrWrite, ERROR_LOCATION);
    if (!::SetHandleInformation(pImpl_->hStdErrRead, HANDLE_FLAG_INHERIT, 0) )
       return systemError(::GetLastError(), ERROR_LOCATION);
 
@@ -225,28 +233,18 @@ Error ChildProcess::run()
      NULL,            // Use parent's starting directory
      &si,             // Pointer to STARTUPINFO structure
      &pi );   // Pointer to PROCESS_INFORMATION structure
-   DWORD dwLastError = ::GetLastError();
-
-   // close the handles which we passed to the child
-   closeHandleLogError(hStdOutWrite, ERROR_LOCATION);
-   closeHandleLogError(hStdInRead, ERROR_LOCATION);
-   closeHandleLogError(hStdErrWrite, ERROR_LOCATION);
 
    if (!success)
-   {
-      return systemError(dwLastError, ERROR_LOCATION);
-   }
-   else
-   {
-      // save handle to process
-      pImpl_->hProcess = pi.hProcess;
+      return systemError(::GetLastError(), ERROR_LOCATION);
 
-      // close handle to thread
-      closeHandleLogError(pi.hThread, ERROR_LOCATION);
+   // close thread handle on exit
+   CloseHandleOnExitScope closeThread(&pi.hThread, ERROR_LOCATION);
 
-      // success
-      return Success();
-   }
+   // save handle to process
+   pImpl_->hProcess = pi.hProcess;
+
+   // success
+   return Success();
 }
 
 
@@ -274,9 +272,8 @@ Error SyncChildProcess::waitForExit(int* pExitStatus)
       }
       else
       {
-         using namespace boost::system;
-         error_code ec(errc::result_out_of_range, get_system_category());
-         Error error(ec, ERROR_LOCATION);
+         Error error = systemError(boost::system::errc::result_out_of_range,
+                                   ERROR_LOCATION);
          error.addProperty("result", result);
          return error;
       }
