@@ -45,10 +45,10 @@ struct ProcessResult
    std::string stdErr;
 
    // Process exit status. Potential values:
-   //   0   - exit code for successful execution
+   //   0   - successful execution
    //   1   - application defined failure code (1, 2, 3, etc.)
-   //  15   - process killed by SIGTERM
-   //  -1   - unable to reap exit code of child
+   //  15   - process killed by terminate()
+   //  -1   - unable to determine exit status
    int exitStatus;
 };
 

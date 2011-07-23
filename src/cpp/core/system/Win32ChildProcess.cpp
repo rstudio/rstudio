@@ -17,6 +17,15 @@
 
 #include <boost/foreach.hpp>
 
+// TODO: test locating of executables
+
+// TODO: note on PeekNamedPipe blocking in multithreaded app with
+// other blocking call to ReadFile active
+
+// TODO: consider a peek, read, sleep loop to avoid global read block
+
+// TODO: kb article on race condition in creating processes
+
 namespace core {
 namespace system {
 
@@ -69,7 +78,36 @@ private:
 };
 
 
-Error readPipe(HANDLE hPipe, std::string* pOutput)
+Error readPipeAvailableBytes(HANDLE hPipe, std::string* pOutput)
+{
+   // check for available bytes
+   DWORD dwAvail = 0;
+   if (!::PeekNamedPipe(hPipe, NULL, 0, NULL, &dwAvail, NULL))
+   {
+      if (::GetLastError() == ERROR_BROKEN_PIPE)
+         return Success();
+      else
+         return systemError(::GetLastError(), ERROR_LOCATION);
+   }
+
+   // no data available
+   if (dwAvail == 0)
+      return Success();
+
+   // read data which is available
+   DWORD nBytesRead;
+   std::vector<CHAR> buffer(dwAvail, 0);
+   if (!::ReadFile(hPipe, &(buffer[0]), dwAvail, &nBytesRead, NULL))
+      return systemError(::GetLastError(), ERROR_LOCATION);
+
+   // append to output
+   pOutput->append(&(buffer[0]), nBytesRead);
+
+   // success
+   return Success();
+}
+
+Error readPipeUntilDone(HANDLE hPipe, std::string* pOutput)
 {
    CHAR buff[256];
    DWORD nBytesRead;
@@ -163,7 +201,8 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
 
 Error ChildProcess::terminate()
 {
-   if (!::TerminateProcess(pImpl_->hProcess, 0))
+   // terminate with exit code 15 (15 is SIGTERM on posix)
+   if (!::TerminateProcess(pImpl_->hProcess, 15))
       return systemError(::GetLastError(), ERROR_LOCATION);
    else
       return Success();
@@ -250,12 +289,12 @@ Error ChildProcess::run()
 
 Error SyncChildProcess::readStdOut(std::string* pOutput)
 {  
-   return readPipe(pImpl_->hStdOutRead, pOutput);
+   return readPipeUntilDone(pImpl_->hStdOutRead, pOutput);
 }
 
 Error SyncChildProcess::readStdErr(std::string* pOutput)
 {
-  return readPipe(pImpl_->hStdErrRead, pOutput);
+  return readPipeUntilDone(pImpl_->hStdErrRead, pOutput);
 }
 
 Error SyncChildProcess::waitForExit(int* pExitStatus)
@@ -292,6 +331,12 @@ Error SyncChildProcess::waitForExit(int* pExitStatus)
 
 struct AsyncChildProcess::AsyncImpl
 {
+   AsyncImpl()
+      : calledOnStarted_(false)
+   {
+   }
+
+   bool calledOnStarted_;
 };
 
 AsyncChildProcess::AsyncChildProcess(const std::string& cmd,
@@ -306,12 +351,84 @@ AsyncChildProcess::~AsyncChildProcess()
 
 void AsyncChildProcess::poll()
 {
+   // call onStarted if we haven't yet
+   if (!(pAsyncImpl_->calledOnStarted_))
+   {
+      if (callbacks_.onStarted)
+         callbacks_.onStarted(*this);
+      pAsyncImpl_->calledOnStarted_ = true;
+   }
 
+   // call onRunning
+   if (callbacks_.onRunning)
+      callbacks_.onRunning(*this);
+
+   // check stdout
+   std::string stdOut;
+   Error error = readPipeAvailableBytes(pImpl_->hStdOutRead, &stdOut);
+   if (error)
+      reportError(error);
+   if (!stdOut.empty() && callbacks_.onStdout)
+      callbacks_.onStdout(*this, stdOut);
+
+   // check stderr
+   std::string stdErr;
+   error = readPipeAvailableBytes(pImpl_->hStdErrRead, &stdErr);
+   if (error)
+      reportError(error);
+   if (!stdErr.empty() && callbacks_.onStderr)
+      callbacks_.onStderr(*this, stdErr);
+
+   // check for process exit
+   DWORD result = ::WaitForSingleObject(pImpl_->hProcess, 0);
+
+   // check for process exit (or error waiting)
+   if (result != WAIT_TIMEOUT)
+   {
+      // try to get exit status
+      int exitStatus = -1;
+
+      // normal wait for process state
+      if (result == WAIT_OBJECT_0)
+      {
+         // get the exit status
+         DWORD dwStatus;
+         if (!::GetExitCodeProcess(pImpl_->hProcess, &dwStatus))
+            LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+         exitStatus = dwStatus;
+      }
+
+      // error state, return -1 and try to log a meaningful error
+      else
+      {
+         Error error;
+         if (result == WAIT_FAILED)
+         {
+            error = systemError(::GetLastError(), ERROR_LOCATION);
+         }
+         else
+         {
+            error = systemError(boost::system::errc::result_out_of_range,
+                                ERROR_LOCATION);
+            error.addProperty("result", result);
+         }
+         LOG_ERROR(error);
+      }
+
+      // close the process handle
+      Error error = closeHandle(&pImpl_->hProcess, ERROR_LOCATION);
+      if (error)
+         LOG_ERROR(error);
+
+      // call onExit
+      if (callbacks_.onExit)
+         callbacks_.onExit(exitStatus);
+   }
 }
 
 bool AsyncChildProcess::exited()
 {
-   return true;
+   return pImpl_->hProcess == NULL;
 }
 
 } // namespace system
