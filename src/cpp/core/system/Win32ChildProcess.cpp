@@ -19,19 +19,18 @@
 
 #include "CriticalSection.hpp"
 
-// TODO: test locating of executables
+// TODO: consider whether we should do PathFindOnPath if the provided
+// command isn't a full path:
+//     http://msdn.microsoft.com/en-us/library/bb773594(VS.85).aspx
 
 // TODO: note on PeekNamedPipe blocking in multithreaded app with
 // other blocking call to ReadFile active
-
 // TODO: consider a peek, read, sleep loop to avoid global read block
 
 namespace core {
 namespace system {
 
 namespace {
-
-
 
 // close a handle then set it to NULL (so we can call this function
 // repeatedly without failure or other side effects)
