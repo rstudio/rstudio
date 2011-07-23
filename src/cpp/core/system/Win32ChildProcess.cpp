@@ -17,6 +17,8 @@
 
 #include <boost/foreach.hpp>
 
+#include "CriticalSection.hpp"
+
 // TODO: test locating of executables
 
 // TODO: note on PeekNamedPipe blocking in multithreaded app with
@@ -24,12 +26,12 @@
 
 // TODO: consider a peek, read, sleep loop to avoid global read block
 
-// TODO: kb article on race condition in creating processes
-
 namespace core {
 namespace system {
 
 namespace {
+
+
 
 // close a handle then set it to NULL (so we can call this function
 // repeatedly without failure or other side effects)
@@ -208,36 +210,44 @@ Error ChildProcess::terminate()
       return Success();
 }
 
-
 Error ChildProcess::run()
-{
-   SECURITY_ATTRIBUTES sa;
-   sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-   sa.bInheritHandle = TRUE;
-   sa.lpSecurityDescriptor = NULL;
+{   
+   // NOTE: if the run method is called from multiple threads in single app
+   // concurrently then a race condition can cause handles to get incorrectly
+   // directed. the workaround suggested by microsoft is to wrap the process
+   // creation code in a critical section. see this article for details:
+   //   http://support.microsoft.com/kb/315939
+   static CriticalSection s_runCriticalSection;
+   CriticalSection::Scope csScope(s_runCriticalSection);
 
    // Standard input pipe
    HANDLE hStdInRead;
-   if (!::CreatePipe(&hStdInRead, &pImpl_->hStdInWrite, &sa, 0))
+   if (!::CreatePipe(&hStdInRead, &pImpl_->hStdInWrite, NULL, 0))
       return systemError(::GetLastError(), ERROR_LOCATION);
    CloseHandleOnExitScope closeStdIn(&hStdInRead, ERROR_LOCATION);
-   if (!::SetHandleInformation(pImpl_->hStdInWrite, HANDLE_FLAG_INHERIT, 0) )
+   if (!::SetHandleInformation(hStdInRead,
+                               HANDLE_FLAG_INHERIT,
+                               HANDLE_FLAG_INHERIT))
       return systemError(::GetLastError(), ERROR_LOCATION);
 
    // Standard output pipe
    HANDLE hStdOutWrite;
-   if (!::CreatePipe(&pImpl_->hStdOutRead, &hStdOutWrite, &sa, 0))
+   if (!::CreatePipe(&pImpl_->hStdOutRead, &hStdOutWrite, NULL, 0))
       return systemError(::GetLastError(), ERROR_LOCATION);
    CloseHandleOnExitScope closeStdOut(&hStdOutWrite, ERROR_LOCATION);
-   if (!::SetHandleInformation(pImpl_->hStdOutRead, HANDLE_FLAG_INHERIT, 0) )
+   if (!::SetHandleInformation(hStdOutWrite,
+                               HANDLE_FLAG_INHERIT,
+                               HANDLE_FLAG_INHERIT) )
       return systemError(::GetLastError(), ERROR_LOCATION);
 
    // Standard error pipe
    HANDLE hStdErrWrite;
-   if (!::CreatePipe(&pImpl_->hStdErrRead, &hStdErrWrite, &sa, 0))
+   if (!::CreatePipe(&pImpl_->hStdErrRead, &hStdErrWrite, NULL, 0))
       return systemError(::GetLastError(), ERROR_LOCATION);
    CloseHandleOnExitScope closeStdErr(&hStdErrWrite, ERROR_LOCATION);
-   if (!::SetHandleInformation(pImpl_->hStdErrRead, HANDLE_FLAG_INHERIT, 0) )
+   if (!::SetHandleInformation(hStdErrWrite,
+                               HANDLE_FLAG_INHERIT,
+                               HANDLE_FLAG_INHERIT) )
       return systemError(::GetLastError(), ERROR_LOCATION);
 
    // populate startup info
