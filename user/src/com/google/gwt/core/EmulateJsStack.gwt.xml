@@ -17,8 +17,7 @@
 <module>
   <inherits name="com.google.gwt.core.Core" />
 
-  <!-- Legacy property, use 'compiler.stackMode' instead -->
-  <!-- If set to true, emulated stack frames will be emitted into the JS -->
+  <!-- Legacy property. Do NOT use. See 'compiler.stackMode' instead. -->
   <define-property name="compiler.emulatedStack" values="true,false" />
   <set-property name="compiler.emulatedStack" value="false" />
 
