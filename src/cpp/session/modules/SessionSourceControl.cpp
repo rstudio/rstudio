@@ -22,6 +22,7 @@
 
 #include <core/json/JsonRpc.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Process.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Scope.hpp>
@@ -148,9 +149,12 @@ public:
          cmd.append(string_utils::bash_escape(*it));
       }
 
-      Error error = core::system::captureCommand(cmd, pOutput);
+      core::system::ProcessResult result;
+      Error error = core::system::runCommand(cmd, "", &result);
       if (error)
          return error;
+
+      *pOutput = result.stdOut;
 
       return Success();
    }
