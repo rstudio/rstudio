@@ -1958,7 +1958,7 @@ Error executeInterruptableChild(const std::string& path,
       return error;
 
    // wait for process
-   supervisor.waitForAll();
+   supervisor.wait();
 
    return Success();
 }

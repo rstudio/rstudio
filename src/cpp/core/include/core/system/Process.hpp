@@ -198,7 +198,7 @@ public:
    bool poll();
 
    // Wait for all children to exit
-   void waitForAll(int pollingIntervalMs = 100);
+   void wait(int pollingIntervalMs = 100);
 
 private:
    struct Impl;

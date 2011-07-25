@@ -247,7 +247,7 @@ bool ProcessSupervisor::poll()
    return hasRunningChildren();
 }
 
-void ProcessSupervisor::waitForAll(int pollingIntervalMs)
+void ProcessSupervisor::wait(int pollingIntervalMs)
 {
    while (poll())
    {
