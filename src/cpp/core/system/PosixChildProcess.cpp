@@ -13,8 +13,6 @@
 
 #include "ChildProcess.hpp"
 
-// TODO: on posix sleep seems to affect everyone -- is readsome blocking?
-
 // TODO: address semantics of SIGCHLD:
 //
 //  - We've been calling reapChildren in SessionMain.cpp. this prevents
