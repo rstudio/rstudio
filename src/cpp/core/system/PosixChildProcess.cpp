@@ -1,5 +1,5 @@
 /*
- * PosixProcess.cpp
+ * PosixChildProcess.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -12,40 +12,6 @@
  */
 
 #include "ChildProcess.hpp"
-
-// TODO: address semantics of SIGCHLD:
-//
-//  - We've been calling reapChildren in SessionMain.cpp. this prevents
-//    us from getting exit codes in the ChildProcessSupervisor! it appears
-//    as if the semantics of system is to block SIGCHLD during execution
-//    so we get away with it, however some other cases we might not be
-//    (see pg. 345 of Advanced Unix Programming for more on this)
-//
-//  - Are the popen issues we've seen on the mac a result of the fact
-//    that popen is not ignoring SIGCHLD on the mac? -- experiment
-//
-//  - Are the sweave/texi2dvi exit code issues we saw actually still
-//    present if we do away with reapChildren? (we moved away from
-//    ignoreChildExits to reapChildren however it may have been enough
-//    to simply get rid of ignoreChildExits
-//
-//  - On the Mac R_system (in sysutils.c) uses a special cocoa run process
-//    impl if useAqua is defined. Could it be that this implementation does
-//    not block child signals which is why we couldn't get texi2dvi
-//    exit codes?
-//
-//  - In server we need to reapChildren since we have session processes
-//    which are exiting at random times (however we did have problems
-//    with exit codes for PAM helper!). this simply may not be necessary
-//    in session
-//
-//  - Furthermore, we may want to go with a more explicit method of
-//    reaping the rsession processes so that we don't interfere with
-//    the exit code handing for other scenarios.
-//
-// TODO: once we resolve the signal delivery issues could this
-//       actually run on a background thread?
-
 
 // PStreams 0.7.0
 //

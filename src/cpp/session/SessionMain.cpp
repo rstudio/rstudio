@@ -2083,13 +2083,6 @@ int main (int argc, char * const argv[])
          return sessionExitFailure(error, ERROR_LOCATION);
       }   
       
-      // automatically reap children. note that dong this rather than
-      // than SIGIGN on SIGCHILD allowed R_system/system to get correct
-      // process exit codes back
-      Error error = core::system::reapChildren();
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION);
-
       // initialize client event queue. this must be done very early
       // in main so that any other code which needs to enque an event
       // has access to the queue
@@ -2101,7 +2094,7 @@ int main (int argc, char * const argv[])
 
       // ensure that the user scratch path exists
       FilePath userScratchPath = options.userScratchPath();
-      error = userScratchPath.ensureDirectory();
+      Error error = userScratchPath.ensureDirectory();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 
