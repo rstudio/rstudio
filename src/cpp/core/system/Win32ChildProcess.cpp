@@ -16,7 +16,6 @@
 #include <windows.h>
 #include <Shlwapi.h>
 
-#include <iostream>
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -25,15 +24,74 @@
 
 #include "CriticalSection.hpp"
 
-// TODO: consider whether we should do PathFindOnPath if the provided
-// command isn't a full path:
-//     http://msdn.microsoft.com/en-us/library/bb773594(VS.85).aspx
-
-
 namespace core {
 namespace system {
 
 namespace {
+
+
+std::string findOnPath(const std::string& cmd,
+                       const std::string& appendExt = "")
+{
+   // make sure it has the specified extension
+   std::string resolvedCmd = cmd;
+   if (!appendExt.empty() &&
+       !boost::algorithm::ends_with(resolvedCmd, appendExt))
+   {
+      resolvedCmd += appendExt;
+   }
+
+   // do the search
+   std::vector<TCHAR> cmdBuffer(MAX_PATH*4);
+   cmdBuffer.insert(cmdBuffer.begin(), resolvedCmd.begin(), resolvedCmd.end());
+   cmdBuffer.push_back('\0');
+   if (::PathFindOnPath(&(cmdBuffer[0]), NULL))
+   {
+      return std::string(&(cmdBuffer[0]));
+   }
+   else
+   {
+      return std::string();
+   }
+}
+
+
+// resolve the passed command and arguments to the form required for a
+// call to CreateProcess (do path lookup if necessary and invoke the
+// command within a command processor if it is a batch file)
+void resolveCommand(std::string* pCmd, std::vector<std::string>* pArgs)
+{
+   // if this is a root path or it exists then leave it as is
+   if (!FilePath::isRootPath(*pCmd) && !FilePath::exists(*pCmd))
+   {
+      // try to find it on the path as a .exe
+      std::string exePath = findOnPath(*pCmd, ".exe");
+      if (!exePath.empty())
+      {
+         *pCmd = exePath;
+      }
+      else
+      {
+         // try to find it on the path as a cmd
+         std::string cmdPath = findOnPath(*pCmd, ".cmd");
+         if (!cmdPath.empty())
+         {
+            // set the pCmd to cmd.exe
+            std::string cmdExePath = findOnPath("cmd.exe");
+            if (!cmdExePath.empty())
+            {
+               // set to cmd.exe
+               *pCmd = cmdExePath;
+
+               // manipulate args to have cmd.exe invoke the batch file
+               pArgs->insert(pArgs->begin(), "\""  + cmdPath + "\"");
+               pArgs->insert(pArgs->begin(), "/C");
+
+            }
+         }
+      }
+   }
+}
 
 // close a handle then set it to NULL (so we can call this function
 // repeatedly without failure or other side effects)
@@ -172,32 +230,9 @@ private:
 
 ChildProcess::ChildProcess(const std::string& cmd,
                            const std::vector<std::string>& args)
-  : pImpl_(new Impl()), args_(args)
+  : pImpl_(new Impl()), cmd_(cmd), args_(args)
 {
-   // if this a root path or a relative path that exists then just
-   // record the cmd string as-is
-   if (FilePath::isRootPath(cmd) || FilePath(cmd).exists())
-   {
-      cmd_ = cmd;
-   }
-
-   // otherwise search for it on the path
-   else
-   {
-      // make sure it has a .exe extension
-      std::string resolvedCmd = cmd;
-      if (!boost::algorithm::ends_with(resolvedCmd, ".exe"))
-         resolvedCmd += ".exe";
-
-      // search for
-      std::vector<TCHAR> cmdBuffer(MAX_PATH+1);
-      cmdBuffer.insert(cmdBuffer.end(), resolvedCmd.begin(), resolvedCmd.end());
-      cmdBuffer.push_back('\0');
-      if (::PathFindOnPath(&(cmdBuffer[0]), NULL))
-      {
-         cmd_ = std::string(&(cmdBuffer[0]));
-      }
-   }
+   resolveCommand(&cmd_, &args_);
 }
 
 ChildProcess::~ChildProcess()

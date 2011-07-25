@@ -217,8 +217,28 @@ FilePath FilePath::resolveAliasedPath(const std::string& aliasedPath,
    }
 }
 
+bool FilePath::exists(const std::string& path)
+{
+   if (path.empty())
+      return false;
+
+   path_t p(fromString(path));
+   try
+   {
+      return boost::filesystem::exists(p);
+   }
+   catch(const boost::filesystem::filesystem_error& e)
+   {
+      logError(p, e, ERROR_LOCATION) ;
+      return false ;
+   }
+}
+
 bool FilePath::isRootPath(const std::string& path)
 {
+   if (path.empty())
+      return false;
+
    path_t p(fromString(path));
    try
    {

@@ -52,7 +52,11 @@ struct ProcessResult
    int exitStatus;
 };
 
-// run a process synchronously
+// Run a process synchronously. Note that if command is not an absolute path
+// then runProcess will duplicate the actions of the shell in searching for
+// a command to run. On Win32 this includes auto-appending .exe and .cmd (in
+// that order) for the path search and invoking cmd.exe if the target is a
+// batch (.cmd) file.
 Error runProcess(const std::string& command,
                  const std::vector<std::string>& args,
                  const std::string& input,
@@ -129,7 +133,8 @@ public:
    // produces output, and exits. Output callbacks are streamed/interleaved,
    // but note that output is collected at a polling interval so it is
    // possible that e.g. two writes to standard output which had an
-   // intervening write to standard input might still be concatenated.
+   // intervening write to standard input might still be concatenated. See
+   // comment on runProcess above for the semantics of the "command" argument.
    Error runAsync(const std::string& command,
                   const std::vector<std::string>& args,
                   const ProcessCallbacks& callbacks);
@@ -139,11 +144,12 @@ public:
    // input stream is closed (so EOF is sent) after the input is written.
    // Note also that the standard error handler (log and terminate) is also
    // used. If you want more customized behavior then you can use the more
-   // granular runAsync call above.
+   // granular runAsync call above. See comment on runProcess above for the
+   // semantics of the "command" argument.
    Error runAsync(const std::string& command,
                   const std::vector<std::string>& args,
                   const std::string& input,
-                  const boost::function<void(const ProcessResult&)>& onCompleted);
+                  const boost::function<void(const ProcessResult&)>& completed);
 
 
    // Poll for child (output and exit) events. returns true if there
