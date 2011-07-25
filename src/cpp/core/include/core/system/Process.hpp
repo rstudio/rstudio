@@ -53,8 +53,8 @@ struct ProcessResult
 };
 
 
-// Run a process synchronously. Note that if executable is not an absolute
-// path then runProcess will duplicate the actions of the shell in searching
+// Run a program synchronously. Note that if executable is not an absolute
+// path then runProgram will duplicate the actions of the shell in searching
 // for an executable to run. Some platform specific notes:
 //
 //  - Posix: The executable path is not executed by /bin/sh, rather it is
@@ -66,15 +66,14 @@ struct ProcessResult
 //    and .cmd (in that order) for the path search and invoking cmd.exe if
 //    the target is a batch (.cmd) file.
 //
-// Note that it would be straightforward to execute using /bin/sh on
-// Posix (and thus support shell metacharacters, etc.) however these
-// would be non-portable constructs so we leave those semantics out of
-// this portable API layer. If desired, this behavior can manually achieved
-// on Poix by passing "/bin/sh" as the executable and including -c as the
-// first value in args.
-//
-Error runProcess(const std::string& executable,
+Error runProgram(const std::string& executable,
                  const std::vector<std::string>& args,
+                 const std::string& input,
+                 ProcessResult* pResult);
+
+// Run a command synchronously. The command will be passed to and executed
+// by a command shell (/bin/sh on posix, cmd.exe on windows).
+Error runCommand(const std::string& command,
                  const std::string& input,
                  ProcessResult* pResult);
 
@@ -83,16 +82,16 @@ Error runProcess(const std::string& executable,
 //
 // ProcessSupervisor -- run child processes asynchronously
 //
-// Any number of processes can be run by calling runAsync and their results will
-// be delivered using the provided callbacks. Note that the poll() method must
-// be called periodically (e.g. during standard event pumping / idle time) in
-// order to check for output & status of managed children.
+// Any number of processes can be run by calling runProgram or runCommand and
+// their results will be delivered using the provided callbacks. Note that
+// the poll() method must be called periodically (e.g. during standard event
+// pumping / idle time) in  order to check for output & status of children.
 //
-// If you want to pair a call to runAsync with an object which will live for the
-// lifetime of the child process you should create a shared_ptr to that object
-// and then bind the applicable members to the callback function(s) -- the bind
-// will keep the shared_ptr alive (see the implementation of the single-callback
-// version of runAsync for an example)
+// If you want to pair a call to runProgam or runCommand with an object which
+// will live for the lifetime of the child process you should create a
+// shared_ptr to that object and then bind the applicable members to the
+// callback function(s) -- the bind will keep the shared_ptr alive (see the
+// implementation of the single-callback version of runProgram for an example)
 //
 //
 
@@ -150,23 +149,36 @@ public:
    // but note that output is collected at a polling interval so it is
    // possible that e.g. two writes to standard output which had an
    // intervening write to standard input might still be concatenated. See
-   // comment on runProcess above for the semantics of the "executable"
+   // comment on runProgram above for the semantics of the "executable"
    // argument.
-   Error runAsync(const std::string& executable,
-                  const std::vector<std::string>& args,
-                  const ProcessCallbacks& callbacks);
+   Error runProgram(const std::string& executable,
+                    const std::vector<std::string>& args,
+                    const ProcessCallbacks& callbacks);
+
+   // Run a command asynchronously (same as above but uses a command shell
+   // rather than running the executable directly)
+   Error runCommand(const std::string& command,
+                    const ProcessCallbacks& callbacks);
 
    // Run a child asynchronously, invoking the completed callback when the
    // process exits. Note that if input is provided then then the standard
    // input stream is closed (so EOF is sent) after the input is written.
    // Note also that the standard error handler (log and terminate) is also
    // used. If you want more customized behavior then you can use the more
-   // granular runAsync call above. See comment on runProcess above for the
+   // granular runProgram call above. See comment on runProgram above for the
    // semantics of the "command" argument.
-   Error runAsync(const std::string& executable,
-                  const std::vector<std::string>& args,
-                  const std::string& input,
-                  const boost::function<void(const ProcessResult&)>& completed);
+   Error runProgram(
+            const std::string& executable,
+            const std::vector<std::string>& args,
+            const std::string& input,
+            const boost::function<void(const ProcessResult&)>& onCompleted);
+
+   // Run a command asynchronously (same as above but uses a command shell
+   // rather than running the executable directly)
+   Error runCommand(
+            const std::string& command,
+            const std::string& input,
+            const boost::function<void(const ProcessResult&)>& onCompleted);
 
 
    // Check whether any children are currently active

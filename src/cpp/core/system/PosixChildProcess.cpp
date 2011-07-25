@@ -116,10 +116,24 @@ struct ChildProcess::Impl
 };
 
 
-ChildProcess::ChildProcess(const std::string& exe,
-                           const std::vector<std::string>& args)
-  : pImpl_(new Impl()), exe_(exe), args_(args)
+ChildProcess::ChildProcess()
+  : pImpl_(new Impl())
 {
+}
+
+void ChildProcess::init(const std::string& exe,
+                        const std::vector<std::string>& args)
+{
+   exe_ = exe;
+   args_ = args;
+}
+
+void ChildProcess::init(const std::string& command)
+{
+   std::vector<std::string> args;
+   args.push_back("-c");
+   args.push_back(command);
+   init("/bin/sh", args);
 }
 
 ChildProcess::~ChildProcess()
@@ -195,7 +209,6 @@ Error ChildProcess::run()
    }
 }
 
-
 Error SyncChildProcess::readStdOut(std::string* pOutput)
 {
    return readStream(pImpl_->pstream_.out(), pOutput);
@@ -231,8 +244,15 @@ struct AsyncChildProcess::AsyncImpl
 
 AsyncChildProcess::AsyncChildProcess(const std::string& exe,
                                      const std::vector<std::string>& args)
-   : ChildProcess(exe, args), pAsyncImpl_(new AsyncImpl())
+   : ChildProcess(), pAsyncImpl_(new AsyncImpl())
 {
+   init(exe, args);
+}
+
+AsyncChildProcess::AsyncChildProcess(const std::string& command)
+      : ChildProcess(), pAsyncImpl_(new AsyncImpl())
+{
+   init(command);
 }
 
 AsyncChildProcess::~AsyncChildProcess()

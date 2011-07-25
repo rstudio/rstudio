@@ -28,12 +28,20 @@ namespace core {
 namespace system {
 
 
-Error runProcess(const std::string& executable,
+Error runProgram(const std::string& executable,
                  const std::vector<std::string>& args,
                  const std::string& input,
                  ProcessResult* pResult)
 {
    SyncChildProcess child(executable, args);
+   return child.run(input, pResult);
+}
+
+Error runCommand(const std::string& command,
+                 const std::string& input,
+                 ProcessResult* pResult)
+{
+   SyncChildProcess child(command);
    return child.run(input, pResult);
 }
 
@@ -52,24 +60,47 @@ ProcessSupervisor::~ProcessSupervisor()
 {
 }
 
-Error ProcessSupervisor::runAsync(const std::string& executable,
-                                  const std::vector<std::string>& args,
-                                  const ProcessCallbacks& callbacks)
+namespace {
+
+Error runChild(boost::shared_ptr<AsyncChildProcess> pChild,
+               std::vector<boost::shared_ptr<AsyncChildProcess> >* pChildren,
+               const ProcessCallbacks& callbacks)
+{
+   // run the child
+   Error error = pChild->run(callbacks);
+   if (error)
+      return error;
+
+   // add to the list of children
+   pChildren->push_back(pChild);
+
+   // success
+   return Success();
+}
+
+} // anonymous namespace
+
+Error ProcessSupervisor::runProgram(const std::string& executable,
+                                    const std::vector<std::string>& args,
+                                    const ProcessCallbacks& callbacks)
 {
    // create the child
    boost::shared_ptr<AsyncChildProcess> pChild(
                                  new AsyncChildProcess(executable, args));
 
    // run the child
-   Error error = pChild->run(callbacks);
-   if (error)
-      return error;
+   return runChild(pChild, &(pImpl_->children), callbacks);
+}
 
-   // add to our list of children
-   pImpl_->children.push_back(pChild);
+Error ProcessSupervisor::runCommand(const std::string& command,
+                                    const ProcessCallbacks& callbacks)
+{
+   // create the child
+   boost::shared_ptr<AsyncChildProcess> pChild(
+                                 new AsyncChildProcess(command));
 
-   // success
-   return Success();
+   // run the child
+   return runChild(pChild, &(pImpl_->children), callbacks);
 }
 
 namespace {
@@ -124,19 +155,14 @@ struct ChildCallbacks
    boost::function<void(const ProcessResult&)> onCompleted;
 };
 
-
-} // anonymous namespace
-
-
-Error ProcessSupervisor::runAsync(
-                  const std::string& executable,
-                  const std::vector<std::string>& args,
-                  const std::string& input,
-                  const boost::function<void(const ProcessResult&)>& onCompleted)
+ProcessCallbacks createProcessCallbacks(
+               const std::string& input,
+               const boost::function<void(const ProcessResult&)>& onCompleted)
 {
    // create a shared_ptr to the ChildCallbacks. it will stay alive
    // as long as one of its members is referenced in a bind context
-   boost::shared_ptr<ChildCallbacks> pCC(new ChildCallbacks(input, onCompleted));
+   boost::shared_ptr<ChildCallbacks> pCC(new ChildCallbacks(input,
+                                                            onCompleted));
 
    // bind in the callbacks
    using boost::bind;
@@ -146,9 +172,40 @@ Error ProcessSupervisor::runAsync(
    cb.onStderr = bind(&ChildCallbacks::onStderr, pCC, _1, _2);
    cb.onExit = bind(&ChildCallbacks::onExit, pCC, _1);
 
-   // run the child
-   return runAsync(executable, args, cb);
+   // return it
+   return cb;
 }
+
+
+} // anonymous namespace
+
+
+Error ProcessSupervisor::runProgram(
+            const std::string& executable,
+            const std::vector<std::string>& args,
+            const std::string& input,
+            const boost::function<void(const ProcessResult&)>& onCompleted)
+{
+   // create proces callbacks
+   ProcessCallbacks cb = createProcessCallbacks(input, onCompleted);
+
+   // run the child
+   return runProgram(executable, args, cb);
+}
+
+
+Error ProcessSupervisor::runCommand(
+             const std::string& command,
+             const std::string& input,
+             const boost::function<void(const ProcessResult&)>& onCompleted)
+{
+   // create proces callbacks
+   ProcessCallbacks cb = createProcessCallbacks(input, onCompleted);
+
+   // run the child
+   return runCommand(command, cb);
+}
+
 
 
 bool ProcessSupervisor::hasRunningChildren()

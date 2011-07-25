@@ -29,7 +29,15 @@ namespace system {
 class ChildProcess : boost::noncopyable, public ProcessOperations
 {
 protected:
-   ChildProcess(const std::string& exe, const std::vector<std::string>& args);
+   ChildProcess();
+
+   // separate init from construction so subclassees can use custom
+   // processing to calculate exe and args (e.g. lookup paths or
+   // invoke within a command processor)
+   void init(const std::string& exe, const std::vector<std::string>& args);
+
+   // init from a command (platform specific)
+   void init(const std::string& command);
 
 public:
    virtual ~ChildProcess();
@@ -61,8 +69,15 @@ class SyncChildProcess : public ChildProcess
 {
 public:
    SyncChildProcess(const std::string& exe, const std::vector<std::string>& args)
-      : ChildProcess(exe, args)
+      : ChildProcess()
    {
+      init(exe, args);
+   }
+
+   SyncChildProcess(const std::string& command)
+      : ChildProcess()
+   {
+      init(command);
    }
 
    Error run(const std::string& input, ProcessResult* pResult)
@@ -117,6 +132,7 @@ class AsyncChildProcess : public ChildProcess
 {
 public:
    AsyncChildProcess(const std::string& exe, const std::vector<std::string>& args);
+   AsyncChildProcess(const std::string& command);
    virtual ~AsyncChildProcess();
 
    // run process asynchronously

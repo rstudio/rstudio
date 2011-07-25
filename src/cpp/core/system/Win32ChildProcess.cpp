@@ -228,11 +228,25 @@ private:
 };
 
 
-ChildProcess::ChildProcess(const std::string& exe,
-                           const std::vector<std::string>& args)
-  : pImpl_(new Impl()), exe_(exe), args_(args)
+ChildProcess::ChildProcess()
+  : pImpl_(new Impl())
 {
+}
+
+
+void ChildProcess::init(const std::string& exe,
+                        const std::vector<std::string>& args)
+{
+   exe_ = exe;
+   args_ = args;
    resolveCommand(&exe_, &args_);
+}
+
+void ChildProcess::init(const std::string& command)
+{
+   exe_ = findOnPath("cmd.exe");
+   args_.push_back("/C");
+   args_.push_back(command);
 }
 
 ChildProcess::~ChildProcess()
@@ -412,8 +426,15 @@ struct AsyncChildProcess::AsyncImpl
 
 AsyncChildProcess::AsyncChildProcess(const std::string& exe,
                                      const std::vector<std::string>& args)
-   : ChildProcess(exe, args), pAsyncImpl_(new AsyncImpl())
+   : ChildProcess(), pAsyncImpl_(new AsyncImpl())
 {
+   init(exe, args);
+}
+
+AsyncChildProcess::AsyncChildProcess(const std::string& command)
+   : ChildProcess(), pAsyncImpl_(new AsyncImpl())
+{
+   init(command);
 }
 
 AsyncChildProcess::~AsyncChildProcess()
