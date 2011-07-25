@@ -35,6 +35,9 @@ namespace core {
    class FilePath;
    class FileInfo;
    class Settings;
+   namespace system {
+      class ProcessSupervisor;
+   }
 }
 
 namespace session {   
@@ -160,6 +163,10 @@ Events& events();
 // standard mechanisms
 core::Error executeInterruptableChild(std::string path,
                                       core::system::Options args);
+
+
+// ProcessSupervisor
+core::system::ProcessSupervisor& processSupervisor();
 
 // source R files
 core::Error sourceModuleRFile(const std::string& rSourceFile);   

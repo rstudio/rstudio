@@ -151,8 +151,17 @@ Error ProcessSupervisor::runAsync(
 }
 
 
+bool ProcessSupervisor::hasRunningChildren()
+{
+   return !pImpl_->children.empty();
+}
+
 bool ProcessSupervisor::poll()
 {
+   // bail immediately if we have no children
+   if (!hasRunningChildren())
+      return false;
+
    // call poll on all of our children
    std::for_each(pImpl_->children.begin(),
                  pImpl_->children.end(),
@@ -166,7 +175,7 @@ bool ProcessSupervisor::poll()
                           pImpl_->children.end());
 
    // return status
-   return !pImpl_->children.empty();
+   return hasRunningChildren();
 }
 
 

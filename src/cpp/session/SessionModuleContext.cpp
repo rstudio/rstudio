@@ -28,6 +28,7 @@
 
 #include <core/http/Util.hpp>
 
+#include <core/system/Process.hpp>
 #include <core/system/FileChangeEvent.hpp>
 
 #include <r/RSexp.hpp>
@@ -586,6 +587,13 @@ void setGoogleDocsIntegrationEnabled(bool enabled)
 Events& events()
 {
    static Events instance;
+   return instance;
+}
+
+
+core::system::ProcessSupervisor& processSupervisor()
+{
+   static core::system::ProcessSupervisor instance;
    return instance;
 }
    

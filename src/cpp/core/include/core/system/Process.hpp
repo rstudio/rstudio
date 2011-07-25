@@ -169,6 +169,9 @@ public:
                   const boost::function<void(const ProcessResult&)>& completed);
 
 
+   // Check whether any children are currently active
+   bool hasRunningChildren();
+
    // Poll for child (output and exit) events. returns true if there
    // are still children being supervised after the poll
    bool poll();

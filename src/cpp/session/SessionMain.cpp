@@ -48,6 +48,7 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
+#include <core/system/Process.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/text/TemplateFilter.hpp>
 
@@ -110,6 +111,9 @@ using namespace session::client_events;
 
 namespace {
    
+// background processing signal
+boost::signal<void()> s_onBackgroundProcessing;
+
 // uri handlers
 http::UriHandlers s_uriHandlers;
 http::UriHandlerFunction s_defaultUriHandler;
@@ -683,6 +687,26 @@ void setupForkHandlers()
 #endif
 
 
+void performBackgroundProcessing()
+{
+   // static lastPerformed value used for throttling
+   using namespace boost::posix_time;
+   static ptime s_lastPerformed;
+   if (s_lastPerformed.is_not_a_date_time())
+      s_lastPerformed = microsec_clock::universal_time();
+
+   // throttle to no more than once every 25ms
+   static time_duration s_intervalMs = milliseconds(25);
+   if (microsec_clock::universal_time() > (s_lastPerformed + s_intervalMs))
+   {
+      // fire signal
+      s_onBackgroundProcessing();
+
+      // set last performed
+      s_lastPerformed = microsec_clock::universal_time();
+   }
+}
+
 void polledEventHandler()
 {
    // if R is getting called after a fork this is likely multicore or
@@ -697,6 +721,9 @@ void polledEventHandler()
       // done
       return;
    }
+
+   // perform background processing
+   performBackgroundProcessing();
 
    // check for a pending connections only while R is processing
    // (otherwise we'll handle them directly in waitForMethod)
@@ -794,6 +821,13 @@ void suspendIfRequested(const boost::function<bool()>& allowSuspend)
    }
 }
 
+bool canSuspend(const std::string& prompt)
+{
+   return r::session::isSuspendable(prompt) &&
+          !module_context::processSupervisor().hasRunningChildren();
+}
+
+
 bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
 {
    // never time out in desktop mode
@@ -851,17 +885,10 @@ bool waitForMethod(const std::string& method,
       return false;
    }
 
-   // determine mode
-   bool desktopMode = session::options().programMode() ==
-                                             kSessionProgramModeDesktop;
-
    // establish timeouts
    boost::posix_time::ptime timeoutTime = timeoutTimeFromNow();
-   boost::posix_time::time_duration connectionQueueTimeout;
-   if (desktopMode)
-      connectionQueueTimeout =  boost::posix_time::milliseconds(50);
-   else
-      connectionQueueTimeout = boost::posix_time::milliseconds(500);
+   boost::posix_time::time_duration connectionQueueTimeout =
+                                   boost::posix_time::milliseconds(50);
 
    // wait until we get the method we are looking for
    while(true)
@@ -888,6 +915,10 @@ bool waitForMethod(const std::string& method,
       boost::shared_ptr<HttpConnection> ptrConnection =
           httpConnectionListener().mainConnectionQueue().dequeConnection(
                                             connectionQueueTimeout);
+
+
+      // perform background processing
+      performBackgroundProcessing();
 
       // process pending events in desktop mode
       processDesktopGuiEvents();
@@ -1215,6 +1246,11 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    r::session::consoleHistory().setRemoveDuplicates(
                                  userSettings().removeHistoryDuplicates());
 
+   // connect ProcessSupervisor::poll to background processing
+   s_onBackgroundProcessing.connect(boost::bind(
+                              &core::system::ProcessSupervisor::poll,
+                              &module_context::processSupervisor()));
+
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
@@ -1275,7 +1311,7 @@ bool rConsoleRead(const std::string& prompt,
       bool succeeded = waitForMethod(
                         kConsoleInput,
                         boost::bind(consolePrompt, prompt, addToHistory),
-                        boost::bind(r::session::isSuspendable, prompt),
+                        boost::bind(canSuspend, prompt),
                         &request);
 
       // exit process if we failed
