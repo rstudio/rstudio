@@ -1119,8 +1119,8 @@ Error runPreflightScript()
             // run the script (ignore errors and continue no matter what
             // the outcome of the script is)
             std::string script = preflightScriptPath.absolutePath();
-            std::string output;
-            Error error = core::system::captureCommand(script, &output);
+            core::system::ProcessResult result;
+            Error error = runCommand(script, &result);
             if (error)
             {
                error.addProperty("preflight-script", script);
