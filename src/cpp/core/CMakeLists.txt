@@ -107,12 +107,11 @@ if (UNIX)
       system/PosixChildProcess.cpp
    )
 
-
 # Win32 specific
 else()
 
    # system libraries
-   set (CORE_SYSTEM_LIBRARIES -lws2_32 -lmswsock -lrpcrt4)
+   set (CORE_SYSTEM_LIBRARIES -lws2_32 -lmswsock -lrpcrt4 -lShlwapi)
 
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}

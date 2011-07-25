@@ -216,6 +216,21 @@ FilePath FilePath::resolveAliasedPath(const std::string& aliasedPath,
       return FilePath::safeCurrentPath(userHomePath).complete(aliasedPath);
    }
 }
+
+bool FilePath::isRootPath(const std::string& path)
+{
+   path_t p(fromString(path));
+   try
+   {
+      return p.has_root_path();
+   }
+   catch(const boost::filesystem::filesystem_error& e)
+   {
+      logError(p, e, ERROR_LOCATION) ;
+      return false ;
+   }
+}
+
  
 FilePath::FilePath()
    : pImpl_(new Impl())

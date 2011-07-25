@@ -50,6 +50,8 @@ public:
                                         const FilePath& userHomePath);
    static FilePath resolveAliasedPath(const std::string& aliasedPath,
                                       const FilePath& userHomePath) ;
+
+   static bool isRootPath(const std::string& path);
    
 public:
    FilePath() ;

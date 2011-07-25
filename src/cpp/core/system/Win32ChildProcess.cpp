@@ -14,8 +14,14 @@
 #include "ChildProcess.hpp"
 
 #include <windows.h>
+#include <Shlwapi.h>
+
+#include <iostream>
 
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+
+#include <core/FilePath.hpp>
 
 #include "CriticalSection.hpp"
 
@@ -23,9 +29,6 @@
 // command isn't a full path:
 //     http://msdn.microsoft.com/en-us/library/bb773594(VS.85).aspx
 
-// TODO: note on PeekNamedPipe blocking in multithreaded app with
-// other blocking call to ReadFile active
-// TODO: consider a peek, read, sleep loop to avoid global read block
 
 namespace core {
 namespace system {
@@ -169,8 +172,32 @@ private:
 
 ChildProcess::ChildProcess(const std::string& cmd,
                            const std::vector<std::string>& args)
-  : pImpl_(new Impl()), cmd_(cmd), args_(args)
+  : pImpl_(new Impl()), args_(args)
 {
+   // if this a root path or a relative path that exists then just
+   // record the cmd string as-is
+   if (FilePath::isRootPath(cmd) || FilePath(cmd).exists())
+   {
+      cmd_ = cmd;
+   }
+
+   // otherwise search for it on the path
+   else
+   {
+      // make sure it has a .exe extension
+      std::string resolvedCmd = cmd;
+      if (!boost::algorithm::ends_with(resolvedCmd, ".exe"))
+         resolvedCmd += ".exe";
+
+      // search for
+      std::vector<TCHAR> cmdBuffer(MAX_PATH+1);
+      cmdBuffer.insert(cmdBuffer.end(), resolvedCmd.begin(), resolvedCmd.end());
+      cmdBuffer.push_back('\0');
+      if (::PathFindOnPath(&(cmdBuffer[0]), NULL))
+      {
+         cmd_ = std::string(&(cmdBuffer[0]));
+      }
+   }
 }
 
 ChildProcess::~ChildProcess()
