@@ -30,24 +30,24 @@ namespace system {
 namespace {
 
 
-std::string findOnPath(const std::string& cmd,
+std::string findOnPath(const std::string& exe,
                        const std::string& appendExt = "")
 {
    // make sure it has the specified extension
-   std::string resolvedCmd = cmd;
+   std::string resolvedExe = exe;
    if (!appendExt.empty() &&
-       !boost::algorithm::ends_with(resolvedCmd, appendExt))
+       !boost::algorithm::ends_with(resolvedExe, appendExt))
    {
-      resolvedCmd += appendExt;
+      resolvedExe += appendExt;
    }
 
    // do the search
-   std::vector<TCHAR> cmdBuffer(MAX_PATH*4);
-   cmdBuffer.insert(cmdBuffer.begin(), resolvedCmd.begin(), resolvedCmd.end());
-   cmdBuffer.push_back('\0');
-   if (::PathFindOnPath(&(cmdBuffer[0]), NULL))
+   std::vector<TCHAR> exeBuffer(MAX_PATH*4);
+   exeBuffer.insert(exeBuffer.begin(), resolvedExe.begin(), resolvedExe.end());
+   exeBuffer.push_back('\0');
+   if (::PathFindOnPath(&(exeBuffer[0]), NULL))
    {
-      return std::string(&(cmdBuffer[0]));
+      return std::string(&(exeBuffer[0]));
    }
    else
    {
@@ -59,21 +59,21 @@ std::string findOnPath(const std::string& cmd,
 // resolve the passed command and arguments to the form required for a
 // call to CreateProcess (do path lookup if necessary and invoke the
 // command within a command processor if it is a batch file)
-void resolveCommand(std::string* pCmd, std::vector<std::string>* pArgs)
+void resolveCommand(std::string* pExecutable, std::vector<std::string>* pArgs)
 {
    // if this is a root path or it exists then leave it as is
-   if (!FilePath::isRootPath(*pCmd) && !FilePath::exists(*pCmd))
+   if (!FilePath::isRootPath(*pExecutable) && !FilePath::exists(*pExecutable))
    {
       // try to find it on the path as a .exe
-      std::string exePath = findOnPath(*pCmd, ".exe");
+      std::string exePath = findOnPath(*pExecutable, ".exe");
       if (!exePath.empty())
       {
-         *pCmd = exePath;
+         *pExecutable = exePath;
       }
       else
       {
          // try to find it on the path as a cmd
-         std::string cmdPath = findOnPath(*pCmd, ".cmd");
+         std::string cmdPath = findOnPath(*pExecutable, ".cmd");
          if (!cmdPath.empty())
          {
             // set the pCmd to cmd.exe
@@ -81,7 +81,7 @@ void resolveCommand(std::string* pCmd, std::vector<std::string>* pArgs)
             if (!cmdExePath.empty())
             {
                // set to cmd.exe
-               *pCmd = cmdExePath;
+               *pExecutable = cmdExePath;
 
                // manipulate args to have cmd.exe invoke the batch file
                pArgs->insert(pArgs->begin(), "\""  + cmdPath + "\"");
@@ -228,11 +228,11 @@ private:
 };
 
 
-ChildProcess::ChildProcess(const std::string& cmd,
+ChildProcess::ChildProcess(const std::string& exe,
                            const std::vector<std::string>& args)
-  : pImpl_(new Impl()), cmd_(cmd), args_(args)
+  : pImpl_(new Impl()), exe_(exe), args_(args)
 {
-   resolveCommand(&cmd_, &args_);
+   resolveCommand(&exe_, &args_);
 }
 
 ChildProcess::~ChildProcess()
@@ -333,7 +333,7 @@ Error ChildProcess::run()
    PROCESS_INFORMATION pi;
    ::ZeroMemory( &pi, sizeof(PROCESS_INFORMATION));
    BOOL success = ::CreateProcess(
-     cmd_.c_str(),    // Process
+     exe_.c_str(),    // Process
      &(cmdLine[0]),   // Command line
      NULL,            // Process handle not inheritable
      NULL,            // Thread handle not inheritable
@@ -410,9 +410,9 @@ struct AsyncChildProcess::AsyncImpl
    bool calledOnStarted_;
 };
 
-AsyncChildProcess::AsyncChildProcess(const std::string& cmd,
+AsyncChildProcess::AsyncChildProcess(const std::string& exe,
                                      const std::vector<std::string>& args)
-   : ChildProcess(cmd, args), pAsyncImpl_(new AsyncImpl())
+   : ChildProcess(exe, args), pAsyncImpl_(new AsyncImpl())
 {
 }
 
