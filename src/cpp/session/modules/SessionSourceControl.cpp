@@ -903,13 +903,13 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
    // TODO: Make interruptible, and not on main thread
    // TODO: Stream results
 
-   std::string output;
-   error = core::system::captureCommand(command, &output);
+   core::system::ProcessResult processResult;
+   error = core::system::runCommand(command, &processResult);
    if (error)
       return error;
 
    json::Object result;
-   result["output"] = output;
+   result["output"] = processResult.stdOut;
    result["error"] = 0;
 
    pResponse->setResult(result);
