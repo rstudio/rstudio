@@ -54,9 +54,17 @@ struct ProcessResult
 
 // Run a process synchronously. Note that if command is not an absolute path
 // then runProcess will duplicate the actions of the shell in searching for
-// a command to run. On Win32 this includes auto-appending .exe and .cmd (in
-// that order) for the path search and invoking cmd.exe if the target is a
-// batch (.cmd) file.
+// a command to run. Some platform specific notes:
+//
+//  - Posix: The command path is not executed by /bin/sh, rather it is
+//    executed directly by ::execvp. This means that shell metacharacters
+//    (e.g. stream redirection, piping, etc.) are not supported in the
+//    command string.
+//
+//  - Win32: The search for the command path includes auto-appending .exe
+//    and .cmd (in that order) for the path search and invoking cmd.exe if
+//    the target is a batch (.cmd) file.
+//
 Error runProcess(const std::string& command,
                  const std::vector<std::string>& args,
                  const std::string& input,
