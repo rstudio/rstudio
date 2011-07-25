@@ -46,15 +46,17 @@ void callSweave(const std::string& rBinDir,
    // build R exe path and args
 #ifdef _WIN32
    std::string path = FilePath(rBinDir).complete("Rterm.exe").absolutePath();
-   core::system::Options args;
+   std::vector<std::string> args;
    std::string sweaveCmd = "\"Sweave('" + file + "')\"";
-   args.push_back(std::make_pair("-e", sweaveCmd));
-   args.push_back(std::make_pair("--silent", ""));
+   args.push_back("-e");
+   args.push_back(sweaveCmd);
+   args.push_back("--silent");
 #else
    std::string path = FilePath(rBinDir).complete("R").absolutePath();
-   core::system::Options args;
-   args.push_back(std::make_pair("CMD", "Sweave"));
-   args.push_back(std::make_pair(file, ""));
+   std::vector<std::string> args;
+   args.push_back("CMD");
+   args.push_back("Sweave");
+   args.push_back(file);
 #endif
 
    // call sweave

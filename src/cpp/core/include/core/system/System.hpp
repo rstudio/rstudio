@@ -132,12 +132,6 @@ bool currentUserIsPrivilleged(unsigned int minimumUserId);
 typedef std::pair<std::string,std::string> Option;
 typedef std::vector<Option> Options;
 
-Error executeInterruptableChildProcess(
-           std::string path,
-           Options args,
-           int checkContinueIntervalMs,
-           const boost::function<bool()>& checkContinueFunction);
-
 // log
 void log(LogLevel level, const std::string& message) ;
 

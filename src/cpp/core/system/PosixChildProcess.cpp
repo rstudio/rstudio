@@ -308,42 +308,38 @@ void AsyncChildProcess::poll()
             reportError(error);
       }
 
-      // if both streams are finished then check for exited
-      if (pAsyncImpl_->finishedStdout_ && pAsyncImpl_->finishedStderr_)
+      // Check for exited. Note that this method specifies WNOHANG
+      // so we don't block forever waiting for a process the exit. We may
+      // not be able to reap the child due to EINTR, in that case we'll
+      // just call exited again at the next polling interval. We may not
+      // be able to reap the child due to ECHILD (reaped by a global
+      // handler) in which case we'll allow the exit sequence to proceed
+      // and simply pass -1 as the exit status. If we fail to reap the
+      // the child for any other reason (there aren't actually any other
+      // failure codes defined for waitpid) then we'll simply continue
+      // calling exited in every polling interval (and this leak this
+      // object). Note that we don't anticipate this ever occuring based
+      // on our understanding of waitpid, PStreams, etc.
+      if (pImpl_->rdbuf().exited() || (pImpl_->rdbuf().error() == ECHILD))
       {
-         // Attempt to reap child. Note that this method specifies WNOHANG
-         // so we don't block forever waiting for a process the exit. We may
-         // not be able to reap the child due to EINTR, in that case we'll
-         // just call exited again at the next polling interval. We may not
-         // be able to reap the child due to ECHILD (reaped by a global
-         // handler) in which case we'll allow the exit sequence to proceed
-         // and simply pass -1 as the exit status. If we fail to reap the
-         // the child for any other reason (there aren't actually any other
-         // failure codes defined for waitpid) then we'll simply continue
-         // calling exited in every polling interval (and this leak this
-         // object). Note that we don't anticipate this ever occuring based
-         // on our understanding of waitpid, PStreams, etc.
-         if (pImpl_->rdbuf().exited() || (pImpl_->rdbuf().error() == ECHILD))
+         // close the stream (this won't block because we have
+         // already established that the child is not running)
+         pImpl_->pstream_.close();
+
+         // fire exit event
+         if (callbacks_.onExit)
          {
-            // close the stream (this won't block because we have
-            // already established that the child is not running)
-            pImpl_->pstream_.close();
+            // resolve exit status
+            int status = resolveExitStatus(pImpl_->rdbuf().status());
 
-            // fire exit event
-            if (callbacks_.onExit)
-            {
-               // resolve exit status
-               int status = resolveExitStatus(pImpl_->rdbuf().status());
-
-               // call onExit
-               callbacks_.onExit(status);
-            }
-
-            // set exited_ flag so that our exited function always
-            // returns the right value (even if we haven't been able
-            // to successfully wait/reap the child)
-            pAsyncImpl_->exited_ = true;
+            // call onExit
+            callbacks_.onExit(status);
          }
+
+         // set exited_ flag so that our exited function always
+         // returns the right value (even if we haven't been able
+         // to successfully wait/reap the child)
+         pAsyncImpl_->exited_ = true;
       }
    }
    catch(const std::ios_base::failure& e)

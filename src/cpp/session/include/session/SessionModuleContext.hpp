@@ -161,8 +161,8 @@ Events& events();
 
 // launch a child process which can still be interrupted using the
 // standard mechanisms
-core::Error executeInterruptableChild(std::string path,
-                                      core::system::Options args);
+core::Error executeInterruptableChild(const std::string& path,
+                                      const std::vector<std::string>& args);
 
 
 // ProcessSupervisor

@@ -1940,15 +1940,38 @@ bool continueChildProcess()
    return true;
 }
 
+void onRunning(core::system::ProcessOperations& operations)
+{
+   if (!continueChildProcess())
+   {
+      Error error = operations.terminate();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 } // anonymous namespace
 
-Error executeInterruptableChild(std::string path,
-                                core::system::Options args)
+Error executeInterruptableChild(const std::string& path,
+                                const std::vector<std::string>& args)
 {
-   return core::system::executeInterruptableChildProcess(path,
-                                                         args,
-                                                         100,
-                                                         continueChildProcess);
+   // setup callbacks
+   core::system::ProcessCallbacks cb;
+   cb.onRunning = onRunning;
+   cb.onStdout = boost::bind(rConsoleWrite, _2, 0);
+   cb.onStderr = boost::bind(rConsoleWrite, _2, 1);
+
+   // run process with a supervisor (so we can poll & have onRunning called)
+   core::system::ProcessSupervisor supervisor;
+   Error error = supervisor.runProgram(path, args, cb);
+   if (error)
+      return error;
+
+   // wait for process
+   while (supervisor.poll())
+      boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+
+   return Success();
 }
 
 int saveWorkspaceAction()
