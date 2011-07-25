@@ -1922,6 +1922,7 @@ Error registerRpcMethod(const std::string& name,
 }
 
 namespace {
+
 bool continueChildProcess()
 {
    // pump events so we can actually receive an interrupt
@@ -1940,16 +1941,6 @@ bool continueChildProcess()
    return true;
 }
 
-void onRunning(core::system::ProcessOperations& operations)
-{
-   if (!continueChildProcess())
-   {
-      Error error = operations.terminate();
-      if (error)
-         LOG_ERROR(error);
-   }
-}
-
 } // anonymous namespace
 
 Error executeInterruptableChild(const std::string& path,
@@ -1957,11 +1948,11 @@ Error executeInterruptableChild(const std::string& path,
 {
    // setup callbacks
    core::system::ProcessCallbacks cb;
-   cb.onRunning = onRunning;
    cb.onStdout = boost::bind(rConsoleWrite, _2, 0);
    cb.onStderr = boost::bind(rConsoleWrite, _2, 1);
+   cb.onContinue = continueChildProcess;
 
-   // run process with a supervisor (so we can poll & have onRunning called)
+   // run process with a supervisor
    core::system::ProcessSupervisor supervisor;
    Error error = supervisor.runProgram(path, args, cb);
    if (error)

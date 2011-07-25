@@ -120,8 +120,9 @@ struct ProcessCallbacks
 
    // Called periodically (at whatever interval poll is called) during the
    // lifetime of the child process (will not be called until after the
-   // first call to onStarted)
-   boost::function<void(ProcessOperations&)> onRunning;
+   // first call to onStarted). If it returns false then the child process
+   // is terminated.
+   boost::function<bool()> onContinue;
 
    // Streaming callback for standard output
    boost::function<void(ProcessOperations&, const std::string&)> onStdout;
