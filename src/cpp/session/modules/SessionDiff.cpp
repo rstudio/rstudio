@@ -105,7 +105,7 @@ void handleDiffViewRequest(const http::Request& request, http::Response* pRespon
 
    // execute the command and capture the diff
    core::system::ProcessResult result;
-   error = runCommand(command, "", &result);
+   error = runCommand(command, &result);
    if (error)
    {
       pResponse->setError(error);

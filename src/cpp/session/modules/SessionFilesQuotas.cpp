@@ -171,7 +171,7 @@ void checkQuotaThread()
    {
       // run the command
       core::system::ProcessResult result;
-      Error error = runCommand("xfs_quota -c 'quota -N'", "", &result);
+      Error error = runCommand("xfs_quota -c 'quota -N'", &result);
       if (error)
       {
          LOG_ERROR(error);

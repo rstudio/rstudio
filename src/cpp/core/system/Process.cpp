@@ -37,6 +37,11 @@ Error runProgram(const std::string& executable,
    return child.run(input, pResult);
 }
 
+Error runCommand(const std::string& command, ProcessResult* pResult)
+{
+   return runCommand(command, "", pResult);
+}
+
 Error runCommand(const std::string& command,
                  const std::string& input,
                  ProcessResult* pResult)
@@ -193,6 +198,12 @@ Error ProcessSupervisor::runProgram(
    return runProgram(executable, args, cb);
 }
 
+Error ProcessSupervisor::runCommand(
+             const std::string& command,
+             const boost::function<void(const ProcessResult&)>& onCompleted)
+{
+   return runCommand(command, "", onCompleted);
+}
 
 Error ProcessSupervisor::runCommand(
              const std::string& command,

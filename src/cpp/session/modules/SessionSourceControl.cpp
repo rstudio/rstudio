@@ -150,7 +150,7 @@ public:
       }
 
       core::system::ProcessResult result;
-      Error error = core::system::runCommand(cmd, "", &result);
+      Error error = core::system::runCommand(cmd, &result);
       if (error)
          return error;
 

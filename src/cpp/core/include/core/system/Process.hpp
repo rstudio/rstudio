@@ -73,6 +73,9 @@ Error runProgram(const std::string& executable,
 
 // Run a command synchronously. The command will be passed to and executed
 // by a command shell (/bin/sh on posix, cmd.exe on windows).
+//
+Error runCommand(const std::string& command, ProcessResult* pResult);
+
 Error runCommand(const std::string& command,
                  const std::string& input,
                  ProcessResult* pResult);
@@ -175,6 +178,11 @@ public:
 
    // Run a command asynchronously (same as above but uses a command shell
    // rather than running the executable directly)
+   //
+   Error runCommand(
+            const std::string& command,
+            const boost::function<void(const ProcessResult&)>& onCompleted);
+
    Error runCommand(
             const std::string& command,
             const std::string& input,
