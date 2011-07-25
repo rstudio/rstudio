@@ -1958,8 +1958,7 @@ Error executeInterruptableChild(const std::string& path,
       return error;
 
    // wait for process
-   while (supervisor.poll())
-      boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+   supervisor.waitForAll();
 
    return Success();
 }

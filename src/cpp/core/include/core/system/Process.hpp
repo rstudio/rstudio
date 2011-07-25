@@ -197,6 +197,9 @@ public:
    // are still children being supervised after the poll
    bool poll();
 
+   // Wait for all children to exit
+   void waitForAll(int pollingIntervalMs = 100);
+
 private:
    struct Impl;
    boost::scoped_ptr<Impl> pImpl_;

@@ -19,6 +19,7 @@
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
+#include <core/BoostThread.hpp>
 
 #include <core/PerformanceTimer.hpp>
 
@@ -246,6 +247,14 @@ bool ProcessSupervisor::poll()
    return hasRunningChildren();
 }
 
+void ProcessSupervisor::waitForAll(int pollingIntervalMs)
+{
+   while (poll())
+   {
+      boost::this_thread::sleep(
+           boost::posix_time::milliseconds(pollingIntervalMs));
+  }
+}
 
 } // namespace system
 } // namespace core
