@@ -128,6 +128,9 @@ class HandlerEvaluator {
             boundMethod);
       }
       JClassType eventType = parameters[0].getType().isClass();
+      if (eventType == null) {
+        logger.die("Parameter type is not a class.");
+      }
 
       JClassType handlerType = getHandlerForEvent(eventType);
       if (handlerType == null) {
