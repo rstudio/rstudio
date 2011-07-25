@@ -22,6 +22,7 @@
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Process.hpp>
 
 #include <core/http/Util.hpp>
 #include <core/http/Request.hpp>
@@ -103,15 +104,15 @@ void handleDiffViewRequest(const http::Request& request, http::Response* pRespon
    }
 
    // execute the command and capture the diff
-   std::string diff;
-   error = core::system::captureCommand(command, &diff);
+   core::system::ProcessResult result;
+   error = runCommand(command, "", &result);
    if (error)
    {
       pResponse->setError(error);
       return;
    }
 
-   diff = core::string_utils::textToHtml(diff);
+   std::string diff = core::string_utils::textToHtml(result.stdOut);
    const boost::regex index("^(Index: [^\n]*\n=+)$");
    const boost::regex plus("^(\\+[^\n]*)$");
    const boost::regex minus("^(\\-[^\n]*)$");
