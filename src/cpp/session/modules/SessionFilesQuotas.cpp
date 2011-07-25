@@ -13,8 +13,6 @@
 
 #include "SessionFilesQuotas.hpp"
 
-#include <stdio.h>
-
 #include <iostream>
 
 #include <boost/tokenizer.hpp>
@@ -25,6 +23,8 @@
 #include <core/Error.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/Log.hpp>
+
+#include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
 
@@ -169,36 +169,19 @@ void checkQuotaThread()
 {
    try
    {
-      // start process
-      FILE* fp = ::popen("xfs_quota -c 'quota -N'", "r");
-      if (fp == NULL)
+      // run the command
+      using namespace core::system;
+      ProcessResult result;
+      Error error = runCommand("xfs_quota -c 'quota -N'", "", &result);
+      if (error)
       {
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+         LOG_ERROR(error);
          return;
       }
-      
-      // collect output
-      std::string output;
-      const int kBuffSize = 1024;
-      char buffer[kBuffSize];
-      while (::fgets(buffer, kBuffSize, fp) != NULL)
-         output += buffer;
-      
-      // log if an error terminated our output
-      if (::ferror(fp))
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
-         
-      // close file
-      if (::pclose(fp) == -1)
-      {
-         // ECHILD expected if process was reaped elsewhere by wait or waitpid
-         if (errno != ECHILD)
-            LOG_ERROR(systemError(errno, ERROR_LOCATION));
-      }
-      
+
       // parse output
       QuotaInfo quotaInfo;
-      Error error = parseQuotaInfo(output, &quotaInfo);
+      error = parseQuotaInfo(result.stdOut, &quotaInfo);
       if (error)
       {
          LOG_ERROR(error);
