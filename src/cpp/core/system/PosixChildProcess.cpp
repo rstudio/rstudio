@@ -116,9 +116,9 @@ struct ChildProcess::Impl
 };
 
 
-ChildProcess::ChildProcess(const std::string& cmd,
+ChildProcess::ChildProcess(const std::string& exe,
                            const std::vector<std::string>& args)
-  : pImpl_(new Impl()), cmd_(cmd), args_(args)
+  : pImpl_(new Impl()), exe_(exe), args_(args)
 {
 }
 
@@ -176,11 +176,11 @@ Error ChildProcess::run()
 {
    // create set of args to pass (needs to include the cmd)
    std::vector<std::string> args;
-   args.push_back(cmd_);
+   args.push_back(exe_);
    args.insert(args.end(), args_.begin(), args_.end());
 
    // open the process
-   pImpl_->pstream_.open(cmd_, args, redi::pstreambuf::pstdin |
+   pImpl_->pstream_.open(exe_, args, redi::pstreambuf::pstdin |
                                      redi::pstreambuf::pstdout |
                                      redi::pstreambuf::pstderr);
 
@@ -229,9 +229,9 @@ struct AsyncChildProcess::AsyncImpl
    bool exited_;
 };
 
-AsyncChildProcess::AsyncChildProcess(const std::string& cmd,
+AsyncChildProcess::AsyncChildProcess(const std::string& exe,
                                      const std::vector<std::string>& args)
-   : ChildProcess(cmd, args), pAsyncImpl_(new AsyncImpl())
+   : ChildProcess(exe, args), pAsyncImpl_(new AsyncImpl())
 {
 }
 

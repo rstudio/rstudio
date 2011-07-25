@@ -29,7 +29,7 @@ namespace system {
 class ChildProcess : boost::noncopyable, public ProcessOperations
 {
 protected:
-   ChildProcess(const std::string& cmd, const std::vector<std::string>& args);
+   ChildProcess(const std::string& exe, const std::vector<std::string>& args);
 
 public:
    virtual ~ChildProcess();
@@ -51,7 +51,7 @@ protected:
 
 private:
    // command and args
-   std::string cmd_;
+   std::string exe_;
    std::vector<std::string> args_;
 };
 
@@ -60,8 +60,8 @@ private:
 class SyncChildProcess : public ChildProcess
 {
 public:
-   SyncChildProcess(const std::string& cmd, const std::vector<std::string>& args)
-      : ChildProcess(cmd, args)
+   SyncChildProcess(const std::string& exe, const std::vector<std::string>& args)
+      : ChildProcess(exe, args)
    {
    }
 
@@ -116,7 +116,7 @@ private:
 class AsyncChildProcess : public ChildProcess
 {
 public:
-   AsyncChildProcess(const std::string& cmd, const std::vector<std::string>& args);
+   AsyncChildProcess(const std::string& exe, const std::vector<std::string>& args);
    virtual ~AsyncChildProcess();
 
    // run process asynchronously

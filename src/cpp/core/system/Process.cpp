@@ -28,12 +28,12 @@ namespace core {
 namespace system {
 
 
-Error runProcess(const std::string& command,
+Error runProcess(const std::string& executable,
                  const std::vector<std::string>& args,
                  const std::string& input,
                  ProcessResult* pResult)
 {
-   SyncChildProcess child(command, args);
+   SyncChildProcess child(executable, args);
    return child.run(input, pResult);
 }
 
@@ -52,12 +52,13 @@ ProcessSupervisor::~ProcessSupervisor()
 {
 }
 
-Error ProcessSupervisor::runAsync(const std::string& cmd,
+Error ProcessSupervisor::runAsync(const std::string& executable,
                                   const std::vector<std::string>& args,
                                   const ProcessCallbacks& callbacks)
 {
    // create the child
-   boost::shared_ptr<AsyncChildProcess> pChild(new AsyncChildProcess(cmd, args));
+   boost::shared_ptr<AsyncChildProcess> pChild(
+                                 new AsyncChildProcess(executable, args));
 
    // run the child
    Error error = pChild->run(callbacks);
@@ -128,7 +129,7 @@ struct ChildCallbacks
 
 
 Error ProcessSupervisor::runAsync(
-                  const std::string& command,
+                  const std::string& executable,
                   const std::vector<std::string>& args,
                   const std::string& input,
                   const boost::function<void(const ProcessResult&)>& onCompleted)
@@ -146,7 +147,7 @@ Error ProcessSupervisor::runAsync(
    cb.onExit = bind(&ChildCallbacks::onExit, pCC, _1);
 
    // run the child
-   return runAsync(command, args, cb);
+   return runAsync(executable, args, cb);
 }
 
 
