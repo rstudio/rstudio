@@ -11,6 +11,10 @@
  *
  */
 
+
+#include <pthread.h>
+#include <signal.h>
+
 #include <core/Error.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
@@ -46,6 +50,7 @@
 #include "ServerPAMAuth.hpp"
 #include "ServerSessionProxy.hpp"
 #include "ServerREnvironment.hpp"
+#include "ServerSessionManager.hpp"
 
 using namespace core ;
 using namespace server;
@@ -163,6 +168,74 @@ void httpServerAddHandlers()
    uri_handlers::setBlockingDefault(blockingFileHandler());
 }
 
+
+// bogus SIGCHLD handler (never called)
+void handleSIGCHLD(int)
+{
+}
+
+// wait for and handle signals -- return when we either encounter an error
+// or receive a termination signal (in which case we return Success()
+Error waitForSignals()
+{
+   // setup bogus handler for SIGCHLD (if we don't do this then
+   // we can't successfully block/wait for the signal). This also
+   // allows us to specify SA_NOCLDSTOP
+   struct sigaction sa;
+   ::memset(&sa, 0, sizeof sa);
+   sa.sa_handler = handleSIGCHLD;
+   sigemptyset(&sa.sa_mask);
+   sa.sa_flags = SA_NOCLDSTOP;
+   int result = ::sigaction(SIGCHLD, &sa, NULL);
+   if (result != 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // block signals that we want to wait synchronously for
+   sigset_t wait_mask;
+   sigemptyset(&wait_mask);
+   sigaddset(&wait_mask, SIGCHLD);
+   sigaddset(&wait_mask, SIGHUP);
+   sigaddset(&wait_mask, SIGINT);
+   sigaddset(&wait_mask, SIGQUIT);
+   sigaddset(&wait_mask, SIGTERM);
+   sigaddset(&wait_mask, SIGABRT);
+   sigaddset(&wait_mask, SIGSEGV);
+   sigaddset(&wait_mask, SIGILL);
+   result = ::pthread_sigmask(SIG_BLOCK, &wait_mask, NULL);
+   if (result != 0)
+      return systemError(result, ERROR_LOCATION);
+
+   // wait for signals
+   for(;;)
+   {
+      // perform wait
+      int sig = 0;
+      int result = ::sigwait(&wait_mask, &sig);
+      if (result != 0)
+         return systemError(result, ERROR_LOCATION);
+
+      // SIGCHLD
+      if (sig == SIGCHLD)
+      {
+         sessionManager().notifySIGCHLD();
+      }
+
+      // SIGHUP
+      else if (sig == SIGHUP)
+      {
+         // do nothing
+      }
+
+      // Termination signal
+      else
+      {
+         break;
+      }
+   }
+
+   return Success();
+}
+
 } // anonymous namespace
 
 // provide global access to handlers
@@ -243,13 +316,8 @@ int main(int argc, char * const argv[])
             return core::system::exitFailure(error, ERROR_LOCATION);
       }
 
-      // automatically reap children
-      Error error = core::system::reapChildren();
-      if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
-
       // set working directory
-      error = FilePath(options.serverWorkingDir()).makeCurrentPath();
+      Error error = FilePath(options.serverWorkingDir()).makeCurrentPath();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
@@ -325,20 +393,19 @@ int main(int argc, char * const argv[])
 
          return EXIT_SUCCESS;
       }
-      else
-      {
-         // run http server
-         error = s_pHttpServer->run(options.wwwThreadPoolSize());
-         if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
 
-         // wait on termination of the server
-         // NOTE: current implementation does not ever terminate
-         s_pHttpServer->waitUntilStopped();
+      // run http server
+      error = s_pHttpServer->run(options.wwwThreadPoolSize());
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
 
-         // return success
-         return EXIT_SUCCESS;
-      }
+      // wait for signals
+      error = waitForSignals();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // return success
+      return EXIT_SUCCESS;
    }
    CATCH_UNEXPECTED_EXCEPTION
    

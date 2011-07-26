@@ -28,6 +28,7 @@ set(SERVER_SOURCE_FILES
    ServerPAMAuth.cpp
    ServerREnvironment.cpp
    ServerSessionProxy.cpp
+   ServerSessionManager.cpp
    auth/ServerAuthHandler.cpp
    auth/ServerSecureCookie.cpp
    auth/ServerSecureUriHandler.cpp

@@ -51,7 +51,7 @@
 
 #include <server/ServerOptions.hpp>
 
-#include "ServerREnvironment.hpp"
+#include "ServerSessionManager.hpp"
 
 using namespace core ;
 
@@ -60,153 +60,9 @@ namespace session_proxy {
    
 namespace {
 
-
-Error launchSession(const std::string& username,
-                    const core::system::Options& extraArgs,
-                    PidType* pPid)
-{
-   // last ditch user validation -- an invalid user should very rarely
-   // get to this point since we pre-emptively validate on client_init
-   if (!server::auth::validateUser(username))
-   {
-      Error error = systemError(boost::system::errc::permission_denied,
-                                ERROR_LOCATION);
-      error.addProperty("username", username);
-      return error;
-   }
-
-   // prepare command line arguments
-   server::Options& options = server::options();
-   core::system::Options args ;
-
-   // check for options-specified config file and add to command
-   // line if specified
-   std::string rsessionConfigFile(options.rsessionConfigFile());
-   if (!rsessionConfigFile.empty())
-      args.push_back(std::make_pair("--config-file", rsessionConfigFile));
-
-   // pass the user-identity
-   args.push_back(std::make_pair("-" kUserIdentitySessionOptionShort,
-                                 username));
-
-   // pass our uid to instruct rsession to limit rpc clients to us and itself
-   core::system::Options environment;
-   uid_t uid = core::system::user::currentUserIdentity().userId;
-   environment.push_back(std::make_pair(
-                           kRStudioLimitRpcClientUid,
-                           boost::lexical_cast<std::string>(uid)));
-
-   // pass extra params
-   std::copy(extraArgs.begin(), extraArgs.end(), std::back_inserter(args));
-
-   // append R environment variables
-   core::system::Options rEnvVars = r_environment::variables();
-   environment.insert(environment.end(), rEnvVars.begin(), rEnvVars.end());
-
-   // launch the session
-   *pPid = -1;
-   std::string runAsUser = util::system::realUserIsRoot() ? username : "";
-   util::system::ProcessConfig config;
-   config.args = args;
-   config.environment = environment;
-   config.stdStreamBehavior = util::system::StdStreamInherit;
-   config.memoryLimitBytes = static_cast<RLimitType>(
-                               options.rsessionMemoryLimitMb() * 1024L * 1024L);
-   config.stackLimitBytes = static_cast<RLimitType>(
-                               options.rsessionStackLimitMb() * 1024L * 1024L);
-   config.userProcessesLimit = static_cast<RLimitType>(
-                               options.rsessionUserProcessLimit());
-   return util::system::launchChildProcess(options.rsessionPath(),
-                                           runAsUser,
-                                           config,
-                                           pPid) ;
-}
-
-Error launchSession(const std::string& username, PidType* pPid)
-{
-   return launchSession(username, core::system::Options(), pPid);
-}
-
-
-class SessionLaunchManager
-{
-private:
-   // singleton
-   SessionLaunchManager() {}
-   friend SessionLaunchManager& sessionLaunchManager();
-
-public:
-   Error launchSession(const std::string& username)
-   {      
-      using namespace boost::posix_time;
-
-      LOCK_MUTEX(mutex_)
-      {
-         // check whether we already have a launch pending
-         LaunchMap::const_iterator pos = pendingLaunches_.find(username);
-         if (pos != pendingLaunches_.end())
-         {
-            // if the launch is less than one minute old then return success
-            if ( (pos->second + boost::posix_time::minutes(1))
-                  > microsec_clock::universal_time() )
-            {
-               return Success();
-            }
-            // otherwise erase it from pending launches and then
-            // re-launch (immediately below)
-            else
-            {
-               // very unexpected condition
-               LOG_WARNING_MESSAGE("Very long session launch delay for "
-                                   "user " + username + " (aborting wait)");
-
-               pendingLaunches_.erase(username);
-            }
-         }
-
-         // record the launch
-         pendingLaunches_[username] =  microsec_clock::universal_time();
-      }
-      END_LOCK_MUTEX
-
-      // launch the session
-      PidType pid;
-      Error error = session_proxy::launchSession(username, &pid);
-      if (error)
-      {
-         removePendingLaunch(username);
-         return error;
-      }
-      else
-      {
-         return Success();
-      }
-   }
-
-   void removePendingLaunch(const std::string& username)
-   {
-      LOCK_MUTEX(mutex_)
-      {
-         pendingLaunches_.erase(username);
-      }
-      END_LOCK_MUTEX
-   }
-
-private:
-   boost::mutex mutex_;
-   typedef std::map<std::string,boost::posix_time::ptime> LaunchMap;
-   LaunchMap pendingLaunches_;
-};
-
-SessionLaunchManager& sessionLaunchManager()
-{
-   static SessionLaunchManager instance;
-   return instance;
-}
-
 void launchSessionRecovery(const std::string& username)
 {
-   Error error = sessionLaunchManager().launchSession(username);
+   Error error = sessionManager().launchSession(username);
    if (error)
       LOG_ERROR(error);
 }
@@ -229,7 +85,7 @@ void handleProxyResponse(
       const http::Response& response)
 {
    // if there was a launch pending then remove it
-   sessionLaunchManager().removePendingLaunch(username);
+   sessionManager().removePendingLaunch(username);
 
    // write the response
    ptrConnection->writeResponse(response);
@@ -253,7 +109,7 @@ void handleContentError(
       const Error& error)
 {   
    // if there was a launch pending then remove it
-   sessionLaunchManager().removePendingLaunch(username);
+   sessionManager().removePendingLaunch(username);
 
    // log if not connection terminated
    logIfNotConnectionTerminated(error, ptrConnection->request());
@@ -279,7 +135,7 @@ void handleRpcError(
       const Error& error)
 {
    // if there was a launch pending then remove it
-   sessionLaunchManager().removePendingLaunch(username);
+   sessionManager().removePendingLaunch(username);
 
    // log if not connection terminated
    logIfNotConnectionTerminated(error, ptrConnection->request());
@@ -402,7 +258,7 @@ Error runVerifyInstallationSession()
    core::system::Options args;
    args.push_back(core::system::Option("--" kVerifyInstallationSessionOption, "1"));
    PidType sessionPid;
-   error = launchSession(user.username, args, &sessionPid);
+   error = server::launchSession(user.username, args, &sessionPid);
    if (error)
       return error;
 

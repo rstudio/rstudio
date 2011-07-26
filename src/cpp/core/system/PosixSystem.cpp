@@ -101,6 +101,9 @@ int signalForType(SignalType type)
 
       case SigPipe:
          return SIGPIPE;
+
+      case SigChld:
+         return SIGCHLD;
          
       default:
          return -1;

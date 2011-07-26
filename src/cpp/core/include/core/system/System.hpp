@@ -89,7 +89,8 @@ enum SignalType
    SigIll,
    SigUsr1,
    SigUsr2,
-   SigPipe
+   SigPipe,
+   SigChld
 };
 
 

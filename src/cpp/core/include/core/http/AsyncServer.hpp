@@ -195,9 +195,11 @@ private:
          }
          else
          {
-            // for errors, log and continue (but don't log operation cancelled
-            // since it happens in the ordinary course of shutting down the server)
-            if (ec != boost::asio::error::operation_aborted)
+            // for errors, log and continue (but don't log operation aborted
+            // or bad file descriptor since it happens in the ordinary course
+            // of shutting down the server)
+            if (ec != boost::asio::error::operation_aborted &&
+                ec != boost::system::errc::bad_file_descriptor)
             {
                // log the error
                LOG_ERROR(Error(ec, ERROR_LOCATION)) ;
