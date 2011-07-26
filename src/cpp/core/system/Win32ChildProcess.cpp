@@ -451,9 +451,19 @@ void AsyncChildProcess::poll()
       pAsyncImpl_->calledOnStarted_ = true;
    }
 
-   // call onRunning
-   if (callbacks_.onRunning)
-      callbacks_.onRunning(*this);
+
+   // call onContinue
+   if (callbacks_.onContinue)
+   {
+      if (!callbacks_.onContinue())
+      {
+         // terminate the proces
+         Error error = terminate();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+
 
    // check stdout
    std::string stdOut;
