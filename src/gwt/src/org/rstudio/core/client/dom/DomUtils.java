@@ -83,6 +83,23 @@ public class DomUtils
       return Array.prototype.splice.apply(array, args);
    }-*/;
 
+   public static Node findNodeUpwards(Node node,
+                                      Element scope,
+                                      NodePredicate predicate)
+   {
+      if (scope != null && !scope.isOrHasChild(node))
+         throw new IllegalArgumentException("Incorrect scope passed to findParentNode");
+
+      for (; node != null; node = node.getParentNode())
+      {
+         if (predicate.test(node))
+            return node;
+         if (scope == node)
+            return null;
+      }
+      return null;
+   }
+
    private static final Pattern NEWLINE = Pattern.create("\\n");
    private static int trimLines(NodeList<Node> nodes, final int linesToTrim)
    {

@@ -39,6 +39,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.diff.*;
+import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent;
+import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionHandler;
 import org.rstudio.studio.client.workbench.views.vcs.history.CommitInfo;
 
 import java.util.ArrayList;
@@ -51,7 +53,7 @@ public class ReviewPresenter implements IsWidget
       ArrayList<String> getSelectedDiscardablePaths();
 
       HasValue<Boolean> getStagedCheckBox();
-      ValueSink<ArrayList<Line>> getGutter();
+      ValueSink<ArrayList<ChunkOrLine>> getGutter();
       LineTablePresenter.Display getLineTableDisplay();
       ChangelistTable getChangelistTable();
       HasValue<Integer> getContextLines();
@@ -254,6 +256,61 @@ public class ReviewPresenter implements IsWidget
                   updateDiff();
                }
             });
+      view_.getLineTableDisplay().addDiffChunkActionHandler(new DiffChunkActionHandler()
+      {
+         @Override
+         public void onDiffChunkAction(DiffChunkActionEvent event)
+         {
+            Debug.devlog("Action: " + event.getAction().name() + ", " +
+                         UnifiedEmitter.createChunkString(event.getDiffChunk()));
+
+            boolean reverse;
+            PatchMode patchMode;
+            switch (event.getAction())
+            {
+               case Stage:
+                  reverse = false;
+                  patchMode = VCSServerOperations.PatchMode.Stage;
+                  break;
+               case Unstage:
+                  reverse = true;
+                  patchMode = VCSServerOperations.PatchMode.Stage;
+                  break;
+               case Discard:
+                  reverse = true;
+                  patchMode = VCSServerOperations.PatchMode.Working;
+                  break;
+               default:
+                  throw new IllegalArgumentException("Unhandled diff chunk action");
+            }
+
+            DiffChunk chunk = event.getDiffChunk();
+            if (reverse)
+               chunk = chunk.reverse();
+
+            UnifiedEmitter emitter = new UnifiedEmitter(
+                  view_.getChangelistTable().getSelectedPaths().get(0));
+            emitter.addContext(chunk);
+            emitter.addDiffs(chunk.diffLines);
+            String patch = emitter.createPatch();
+
+            server_.vcsApplyPatch(patch, patchMode,
+                                  new SimpleRequestCallback<Void>() {
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  updateDiff();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  super.onError(error);
+                  updateDiff();
+               }
+            });
+         }
+      });
 
       view_.getContextLines().addValueChangeHandler(new ValueChangeHandler<Integer>()
       {
@@ -319,14 +376,16 @@ public class ReviewPresenter implements IsWidget
                   UnifiedParser parser = new UnifiedParser(response);
                   parser.nextFilePair();
 
-                  ArrayList<Line> allLines = new ArrayList<Line>();
+                  ArrayList<ChunkOrLine> allLines = new ArrayList<ChunkOrLine>();
 
                   activeChunks_.clear();
                   for (DiffChunk chunk;
                        null != (chunk = parser.nextChunk()); )
                   {
                      activeChunks_.add(chunk);
-                     allLines.addAll(chunk.diffLines);
+                     allLines.add(new ChunkOrLine(chunk));
+                     for (Line line : chunk.diffLines)
+                        allLines.add(new ChunkOrLine(line));
                   }
 
                   view_.getLineTableDisplay().setData(allLines);

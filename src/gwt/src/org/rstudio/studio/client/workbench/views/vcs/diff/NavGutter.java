@@ -22,7 +22,7 @@ import org.rstudio.studio.client.workbench.views.vcs.diff.Line.Type;
 
 import java.util.ArrayList;
 
-public class NavGutter extends Composite implements ValueSink<ArrayList<Line>>
+public class NavGutter extends Composite implements ValueSink<ArrayList<ChunkOrLine>>
 {
    public NavGutter()
    {
@@ -57,12 +57,13 @@ public class NavGutter extends Composite implements ValueSink<ArrayList<Line>>
    }
 
    @Override
-   public void setValue(ArrayList<Line> value)
+   public void setValue(ArrayList<ChunkOrLine> value)
    {
       ArrayList<CssColor> colors = new ArrayList<CssColor>(value.size());
-      for (Line line : value)
+      for (ChunkOrLine item : value)
       {
-         Type type = line.getType();
+         Line line = item.getLine();
+         Type type = line == null ? Type.Same : line.getType();
          switch (type)
          {
             case Insertion:  colors.add(CssColor.make("#6F6")); break;

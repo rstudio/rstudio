@@ -74,10 +74,9 @@ public class UnifiedEmitter
 
       for (DiffChunk chunk : chunks)
       {
-         // Write chunk header: @@ -A,B +C,D @@
-         p.append("@@ -").append(chunk.oldRowStart).append(',').append(chunk.oldRowCount)
-               .append(" +").append(chunk.newRowStart).append(',').append(chunk.newRowCount)
-               .append(" @@").append(EOL);
+         p.append(createChunkString(chunk));
+
+         p.append(EOL);
 
          for (Line line : chunk.diffLines)
          {
@@ -94,6 +93,22 @@ public class UnifiedEmitter
       }
 
       return p.toString();
+   }
+
+   public static String createChunkString(DiffChunk chunk)
+   {
+      StringBuilder sb = new StringBuilder();
+      // Write chunk header: @@ -A,B +C,D @@
+      sb.append("@@ -");
+      sb.append(chunk.oldRowStart);
+      sb.append(',');
+      sb.append(chunk.oldRowCount);
+      sb.append(" +");
+      sb.append(chunk.newRowStart);
+      sb.append(',');
+      sb.append(chunk.newRowCount);
+      sb.append(" @@");
+      return sb.toString();
    }
 
    /**

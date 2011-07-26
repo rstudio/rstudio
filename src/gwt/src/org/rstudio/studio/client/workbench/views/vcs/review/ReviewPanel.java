@@ -39,10 +39,8 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTablePresenter;
-import org.rstudio.studio.client.workbench.views.vcs.diff.Line;
-import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
-import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
-import org.rstudio.studio.client.workbench.views.vcs.diff.NavGutter;
+import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarFramePanel;
+import org.rstudio.studio.client.workbench.views.vcs.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter.Display;
 
 import java.util.ArrayList;
@@ -204,6 +202,7 @@ public class ReviewPanel extends Composite implements Display
    @Inject
    public ReviewPanel(ChangelistTablePresenter changelist,
                       LineTableView diffPane,
+                      ConsoleBarFramePanel consoleBarFramePanel,
                       Commands commands)
    {
       splitPanel_ = new SplitLayoutPanel(4);
@@ -215,7 +214,10 @@ public class ReviewPanel extends Composite implements Display
       changelist_ = changelist.getView();
       lines_ = diffPane;
 
-      initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
+      Widget widget = GWT.<Binder>create(Binder.class).createAndBindUi(this);
+      consoleBarFramePanel.setWidget(widget);
+
+      initWidget(consoleBarFramePanel);
 
       fileIcon_.setResource(FileTypeRegistry.R.getDefaultIcon());
       fileIcon_.addStyleName(RES.styles().fileIcon());
@@ -401,7 +403,7 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Override
-   public ValueSink<ArrayList<Line>> getGutter()
+   public ValueSink<ArrayList<ChunkOrLine>> getGutter()
    {
       return gutter_;
    }

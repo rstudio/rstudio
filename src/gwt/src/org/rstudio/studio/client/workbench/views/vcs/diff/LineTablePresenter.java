@@ -12,15 +12,20 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.diff;
 
+import com.google.gwt.event.shared.HandlerRegistration;
+import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionHandler;
+
 import java.util.ArrayList;
 
 public class LineTablePresenter
 {
    public interface Display
    {
-      void setData(ArrayList<Line> diffData);
+      void setData(ArrayList<ChunkOrLine> diffData);
       void clear();
       ArrayList<Line> getSelectedLines();
       ArrayList<Line> getAllLines();
+
+      HandlerRegistration addDiffChunkActionHandler(DiffChunkActionHandler handler);
    }
 }
