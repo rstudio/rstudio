@@ -56,6 +56,7 @@ public class ReviewPresenter implements IsWidget
       ArrayList<String> getSelectedDiscardablePaths();
 
       HasValue<Boolean> getStagedCheckBox();
+      HasValue<Boolean> getUnstagedCheckBox();
       ValueSink<ArrayList<ChunkOrLine>> getGutter();
       LineTablePresenter.Display getLineTableDisplay();
       ChangelistTable getChangelistTable();
@@ -167,7 +168,7 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onSelectionChange(SelectionChangeEvent event)
          {
-            updateDiff();
+            updateDiff(true);
          }
       });
 
@@ -277,7 +278,7 @@ public class ReviewPresenter implements IsWidget
                @Override
                public void onValueChange(ValueChangeEvent<Boolean> event)
                {
-                  updateDiff();
+                  updateDiff(false);
                }
             });
       view_.getLineTableDisplay().addDiffChunkActionHandler(new ApplyPatchHandler());
@@ -288,7 +289,7 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onValueChange(ValueChangeEvent<Integer> event)
          {
-            updateDiff();
+            updateDiff(false);
          }
       });
 
@@ -348,25 +349,40 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onResponseReceived(Void response)
          {
-            updateDiff();
+            updateDiff(false);
          }
 
          @Override
          public void onError(ServerError error)
          {
             super.onError(error);
-            updateDiff();
+            updateDiff(false);
          }
       });
    }
 
-   private void updateDiff()
+   private void updateDiff(boolean allowModeSwitch)
    {
       view_.getLineTableDisplay().clear();
       ArrayList<String> paths = view_.getChangelistTable()
             .getSelectedPaths();
       if (paths.size() != 1)
          return;
+
+      if (allowModeSwitch)
+      {
+         StatusAndPath item = view_.getChangelistTable().getSelectedItems().get(0);
+         if ((item.getStatus().charAt(0) == ' ' || item.getStatus().charAt(0) == '?')
+             && view_.getStagedCheckBox().getValue())
+         {
+            view_.getUnstagedCheckBox().setValue(true, false);
+         }
+         else if (item.getStatus().charAt(1) == ' ' && view_.getUnstagedCheckBox().getValue())
+         {
+            view_.getStagedCheckBox().setValue(true, false);
+         }
+      }
+
 
       final Token token = diffInvalidation_.getInvalidationToken();
 

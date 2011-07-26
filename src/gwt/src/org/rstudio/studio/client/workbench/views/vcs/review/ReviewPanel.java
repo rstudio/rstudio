@@ -391,6 +391,12 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Override
+   public HasValue<Boolean> getUnstagedCheckBox()
+   {
+      return unstagedCheckBox_;
+   }
+
+   @Override
    public LineTablePresenter.Display getLineTableDisplay()
    {
       return lines_;
