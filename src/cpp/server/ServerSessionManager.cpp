@@ -157,9 +157,6 @@ void SessionManager::notifySIGCHLD()
          {
             // all done with this pid
             removeActivePid(pid);
-
-            // log
-            std::cerr << "child exited: " << pid << ", status: " << status << std::endl;
          }
          else
          {
