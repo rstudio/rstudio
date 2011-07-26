@@ -189,10 +189,17 @@ Error waitForChildExits()
    if (result != 0)
       return systemError(errno, ERROR_LOCATION);
 
-   // block SIGCHLD (so we can sigwait on it below)
+   // block SIGCHLD (so we can sigwait on it below). note that on OSX
+   // we also need to wait for termination related signals (otherwise
+   // they are never delivered)
    sigset_t wait_mask;
    sigemptyset(&wait_mask);
    sigaddset(&wait_mask, SIGCHLD);
+#ifdef __APPLE__
+   sigaddset(&wait_mask, SIGINT);
+   sigaddset(&wait_mask, SIGQUIT);
+   sigaddset(&wait_mask, SIGTERM);
+#endif
    result = ::pthread_sigmask(SIG_BLOCK, &wait_mask, NULL);
    if (result != 0)
       return systemError(result, ERROR_LOCATION);
@@ -212,6 +219,12 @@ Error waitForChildExits()
          sessionManager().notifySIGCHLD();
       }
 
+#ifdef __APPLE__
+      else if (sig == SIGINT || sig == SIGQUIT || sig == SIGTERM)
+      {
+         ::exit(sig);
+      }
+#endif
       // Unexpected signal
       else
       {
