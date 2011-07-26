@@ -1,3 +1,15 @@
+/*
+ * VCSPopup.java
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.studio.client.workbench.views.vcs.frame;
 
 import com.google.gwt.core.client.GWT;
@@ -12,6 +24,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.core.client.widget.NineUpBorder;
 import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter;
 
@@ -64,7 +77,7 @@ public class VCSPopup
       Widget w = presenter.asWidget();
       w.setSize("100%", "100%");
 
-      PopupPanel popup = new PopupPanel(false, false);
+      PopupPanel popup = new ModalPopupPanel(false, false);
       NineUpBorder border = new NineUpBorder(
             GWT.<Resources>create(Resources.class),
             32, 20, 20, 20);

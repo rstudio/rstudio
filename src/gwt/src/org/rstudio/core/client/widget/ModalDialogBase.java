@@ -24,6 +24,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.NativeWindow;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -99,15 +100,19 @@ public abstract class ModalDialogBase extends DialogBox
       
       super.onLoad();
       allActiveDialogs_.add(this);
-      ShortcutManager.INSTANCE.setEnabled(false);
+      if (shortcutDisableHandle_ != null)
+         shortcutDisableHandle_.close();
+      shortcutDisableHandle_ = ShortcutManager.INSTANCE.disable();
    }
 
    @Override
    protected void onUnload()
    {
+      if (shortcutDisableHandle_ != null)
+         shortcutDisableHandle_.close();
+      shortcutDisableHandle_ = null;
+
       boolean removed = allActiveDialogs_.remove(this);
-      if (allActiveDialogs_.size() == 0)
-         ShortcutManager.INSTANCE.setEnabled(true);
       assert removed;
       
       super.onUnload();
@@ -420,6 +425,8 @@ public abstract class ModalDialogBase extends DialogBox
       for (int i=0; i<allButtons_.size(); i++)
          allButtons_.get(i).setEnabled(enabled);
    }
+
+   private Handle shortcutDisableHandle_;
 
    private static final ArrayList<ModalDialogBase> allActiveDialogs_ =
                                                new ArrayList<ModalDialogBase>();

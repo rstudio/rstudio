@@ -122,34 +122,40 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
          {
             sb.appendEscaped(value.getLine().getText());
             if (value.getLine().getType() != Line.Type.Same)
-               renderActionButtons(sb, RES.cellTableStyle().lineActions());
+               renderActionButtons(sb,
+                                   RES.cellTableStyle().lineActions(),
+                                   " line");
          }
          else
          {
             sb.appendEscaped(UnifiedEmitter.createChunkString(value.getChunk()));
-            renderActionButtons(sb, RES.cellTableStyle().chunkActions());
+            renderActionButtons(sb, RES.cellTableStyle().chunkActions(), "");
          }
       }
 
-      private void renderActionButtons(SafeHtmlBuilder sb, String className)
+      private void renderActionButtons(SafeHtmlBuilder sb,
+                                       String className,
+                                       String labelSuffix)
       {
          sb.append(SafeHtmlUtil.createOpenTag("div",
                                               "style", "float: right",
                                               "class", className));
          sb.appendHtmlConstant("<div style=\"float: right\">");
-         renderActionButton(sb, Action.Unstage);
-         renderActionButton(sb, Action.Stage);
-         renderActionButton(sb, Action.Discard);
+         renderActionButton(sb, Action.Unstage, labelSuffix);
+         renderActionButton(sb, Action.Stage, labelSuffix);
+         renderActionButton(sb, Action.Discard, labelSuffix);
          sb.appendHtmlConstant("</div>");
       }
 
-      private void renderActionButton(SafeHtmlBuilder sb, Action action)
+      private void renderActionButton(SafeHtmlBuilder sb,
+                                      Action action,
+                                      String labelSuffix)
       {
          sb.append(SafeHtmlUtil.createOpenTag(
                "a",
                "href", "javascript:void",
                "data-action", action.name()));
-         sb.appendEscaped(action.name());
+         sb.appendEscaped(action.name() + labelSuffix);
          sb.appendHtmlConstant("</a>");
       }
    }

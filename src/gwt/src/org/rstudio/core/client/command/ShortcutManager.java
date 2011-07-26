@@ -25,6 +25,11 @@ import java.util.HashMap;
 public class ShortcutManager implements NativePreviewHandler,
                                         NativeKeyDownHandler
 {
+   public interface Handle
+   {
+      void close();
+   }
+
    public static final ShortcutManager INSTANCE = new ShortcutManager();
 
    private ShortcutManager()
@@ -34,12 +39,24 @@ public class ShortcutManager implements NativePreviewHandler,
 
    public boolean isEnabled()
    {
-      return enabled_;
+      return disableCount_ == 0;
    }
 
-   public void setEnabled(boolean enabled)
+   public Handle disable()
    {
-      enabled_ = enabled;
+      disableCount_++;
+      return new Handle()
+      {
+         private boolean closed_ = false;
+
+         @Override
+         public void close()
+         {
+            if (!closed_)
+               disableCount_--;
+            closed_ = true;
+         }
+      };
    }
 
    public void register(int modifiers, int keyCode, AppCommand command)
@@ -82,7 +99,7 @@ public class ShortcutManager implements NativePreviewHandler,
       AppCommand command = commands_.get(shortcut);
       if (command != null)
       {
-         boolean enabled = enabled_ && command.isEnabled();
+         boolean enabled = isEnabled() && command.isEnabled();
          
          // some commands want their keyboard shortcut to pass through 
          // to the browser when they are disabled (e.g. Cmd+W)
@@ -98,7 +115,7 @@ public class ShortcutManager implements NativePreviewHandler,
       return command != null;
    }
 
-   private boolean enabled_ = true;
+   private int disableCount_ = 0;
    private final HashMap<KeyboardShortcut, AppCommand> commands_
                                   = new HashMap<KeyboardShortcut, AppCommand>();
 
