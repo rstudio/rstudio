@@ -178,3 +178,14 @@
 .cellTableLoading {
   margin: 30px;
 }
+
+.lineActions {
+   display: none;
+}
+
+.cellTableWidget tr:hover .lineActions {
+   display: block;
+}
+
+.chunkActions {
+}

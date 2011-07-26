@@ -28,6 +28,7 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 import org.rstudio.studio.client.workbench.views.vcs.diff.Line.Type;
@@ -35,6 +36,8 @@ import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter.Dis
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent.Action;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionHandler;
+import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionEvent;
+import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionHandler;
 
 import java.util.ArrayList;
 
@@ -52,6 +55,9 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
       String same();
       String insertion();
       String deletion();
+
+      String lineActions();
+      String chunkActions();
    }
 
    public class LineContentCell extends AbstractCell<ChunkOrLine>
@@ -88,9 +94,12 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
                event.preventDefault();
                event.stopPropagation();
 
-               fireEvent(new DiffChunkActionEvent(
-                     Action.valueOf(el.getAttribute("data-action")),
-                     value.getChunk()));
+               Action action = Action.valueOf(el.getAttribute("data-action"));
+
+               if (value.getChunk() != null)
+                  fireEvent(new DiffChunkActionEvent(action, value.getChunk()));
+               else
+                  fireEvent(new DiffLineActionEvent(action, value.getLine()));
             }
          }
 
@@ -107,16 +116,36 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
          if (value.getLine() != null)
          {
             sb.appendEscaped(value.getLine().getText());
+            if (value.getLine().getType() != Line.Type.Same)
+               renderActionButtons(sb, RES.cellTableStyle().lineActions());
          }
          else
          {
             sb.appendEscaped(UnifiedEmitter.createChunkString(value.getChunk()));
-            sb.appendHtmlConstant("<div style=\"float: right\">");
-            sb.appendHtmlConstant(" <a href=\"javascript:void\" data-action=\"" + Action.Unstage.name() + "\">Unstage</a>");
-            sb.appendHtmlConstant(" <a href=\"javascript:void\" data-action=\"" + Action.Stage.name() + "\">Stage</a>");
-            sb.appendHtmlConstant(" <a href=\"javascript:void\" data-action=\"" + Action.Discard.name() + "\">Discard</a>");
-            sb.appendHtmlConstant("</div>");
+            renderActionButtons(sb, RES.cellTableStyle().chunkActions());
          }
+      }
+
+      private void renderActionButtons(SafeHtmlBuilder sb, String className)
+      {
+         sb.append(SafeHtmlUtil.createOpenTag("div",
+                                              "style", "float: right",
+                                              "class", className));
+         sb.appendHtmlConstant("<div style=\"float: right\">");
+         renderActionButton(sb, Action.Unstage);
+         renderActionButton(sb, Action.Stage);
+         renderActionButton(sb, Action.Discard);
+         sb.appendHtmlConstant("</div>");
+      }
+
+      private void renderActionButton(SafeHtmlBuilder sb, Action action)
+      {
+         sb.append(SafeHtmlUtil.createOpenTag(
+               "a",
+               "href", "javascript:void",
+               "data-action", action.name()));
+         sb.appendEscaped(action.name());
+         sb.appendHtmlConstant("</a>");
       }
    }
 
@@ -266,12 +295,18 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
       return addHandler(handler, DiffChunkActionEvent.TYPE);
    }
 
+   @Override
+   public HandlerRegistration addDiffLineActionHandler(DiffLineActionHandler handler)
+   {
+      return addHandler(handler, DiffLineActionEvent.TYPE);
+   }
+
    public static void ensureStylesInjected()
    {
-      LineTableResources res = GWT.create(LineTableResources.class);
-      res.cellTableStyle().ensureInjected();
+      RES.cellTableStyle().ensureInjected();
    }
 
    private ArrayList<ChunkOrLine> lines_;
    private MultiSelectionModel<ChunkOrLine> selectionModel_;
+   private static final LineTableResources RES = GWT.create(LineTableResources.class);
 }

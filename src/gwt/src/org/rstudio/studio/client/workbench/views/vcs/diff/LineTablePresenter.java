@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.vcs.diff;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionHandler;
+import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionHandler;
 
 import java.util.ArrayList;
 
@@ -27,5 +28,6 @@ public class LineTablePresenter
       ArrayList<Line> getAllLines();
 
       HandlerRegistration addDiffChunkActionHandler(DiffChunkActionHandler handler);
+      HandlerRegistration addDiffLineActionHandler(DiffLineActionHandler handler);
    }
 }

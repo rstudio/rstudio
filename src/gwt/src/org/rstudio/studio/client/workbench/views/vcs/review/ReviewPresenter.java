@@ -40,7 +40,10 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent;
+import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent.Action;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionHandler;
+import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionEvent;
+import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionHandler;
 import org.rstudio.studio.client.workbench.views.vcs.history.CommitInfo;
 
 import java.util.ArrayList;
@@ -89,46 +92,67 @@ public class ReviewPresenter implements IsWidget
       @Override
       public void onClick(ClickEvent event)
       {
-         ArrayList<DiffChunk> chunks = new ArrayList<DiffChunk>(activeChunks_);
          ArrayList<Line> selectedLines =
                selected_ ?
                view_.getLineTableDisplay().getSelectedLines() :
                view_.getLineTableDisplay().getAllLines();
 
-         if (reverse_)
-         {
-            for (int i = 0; i < chunks.size(); i++)
-               chunks.set(i, chunks.get(i).reverse());
-            selectedLines = Line.reverseLines(selectedLines);
-         }
-
-         UnifiedEmitter emitter = new UnifiedEmitter(
-               view_.getChangelistTable().getSelectedPaths().get(0));
-         for (DiffChunk chunk : chunks)
-            emitter.addContext(chunk);
-         emitter.addDiffs(selectedLines);
-         String patch = emitter.createPatch();
-
-         server_.vcsApplyPatch(patch, patchMode_,
-                               new SimpleRequestCallback<Void>() {
-            @Override
-            public void onResponseReceived(Void response)
-            {
-               updateDiff();
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               super.onError(error);
-               updateDiff();
-            }
-         });
+         applyPatch(activeChunks_, selectedLines, reverse_, patchMode_);
       }
 
       private final PatchMode patchMode_;
       private final boolean reverse_;
       private final boolean selected_;
+   }
+
+   private class ApplyPatchHandler implements DiffChunkActionHandler,
+                                              DiffLineActionHandler
+   {
+      @Override
+      public void onDiffChunkAction(DiffChunkActionEvent event)
+      {
+         ArrayList<DiffChunk> chunks = new ArrayList<DiffChunk>();
+         chunks.add(event.getDiffChunk());
+         doPatch(event.getAction(), event.getDiffChunk().diffLines, chunks);
+      }
+
+      @Override
+      public void onDiffLineAction(DiffLineActionEvent event)
+      {
+         ArrayList<Line> lines = new ArrayList<Line>();
+         lines.add(event.getLine());
+         doPatch(event.getAction(), lines, activeChunks_);
+      }
+
+      private void doPatch(Action action,
+                           ArrayList<Line> lines,
+                           ArrayList<DiffChunk> chunks)
+      {
+         Debug.devlog(chunks.size() + " chunks, " + lines.size() + " lines");
+
+         boolean reverse;
+         PatchMode patchMode;
+         switch (action)
+         {
+            case Stage:
+               reverse = false;
+               patchMode = VCSServerOperations.PatchMode.Stage;
+               break;
+            case Unstage:
+               reverse = true;
+               patchMode = VCSServerOperations.PatchMode.Stage;
+               break;
+            case Discard:
+               reverse = true;
+               patchMode = VCSServerOperations.PatchMode.Working;
+               break;
+            default:
+               throw new IllegalArgumentException("Unhandled diff chunk action");
+         }
+
+         applyPatch(chunks, lines, reverse, patchMode);
+      }
+
    }
 
    @Inject
@@ -256,61 +280,8 @@ public class ReviewPresenter implements IsWidget
                   updateDiff();
                }
             });
-      view_.getLineTableDisplay().addDiffChunkActionHandler(new DiffChunkActionHandler()
-      {
-         @Override
-         public void onDiffChunkAction(DiffChunkActionEvent event)
-         {
-            Debug.devlog("Action: " + event.getAction().name() + ", " +
-                         UnifiedEmitter.createChunkString(event.getDiffChunk()));
-
-            boolean reverse;
-            PatchMode patchMode;
-            switch (event.getAction())
-            {
-               case Stage:
-                  reverse = false;
-                  patchMode = VCSServerOperations.PatchMode.Stage;
-                  break;
-               case Unstage:
-                  reverse = true;
-                  patchMode = VCSServerOperations.PatchMode.Stage;
-                  break;
-               case Discard:
-                  reverse = true;
-                  patchMode = VCSServerOperations.PatchMode.Working;
-                  break;
-               default:
-                  throw new IllegalArgumentException("Unhandled diff chunk action");
-            }
-
-            DiffChunk chunk = event.getDiffChunk();
-            if (reverse)
-               chunk = chunk.reverse();
-
-            UnifiedEmitter emitter = new UnifiedEmitter(
-                  view_.getChangelistTable().getSelectedPaths().get(0));
-            emitter.addContext(chunk);
-            emitter.addDiffs(chunk.diffLines);
-            String patch = emitter.createPatch();
-
-            server_.vcsApplyPatch(patch, patchMode,
-                                  new SimpleRequestCallback<Void>() {
-               @Override
-               public void onResponseReceived(Void response)
-               {
-                  updateDiff();
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  super.onError(error);
-                  updateDiff();
-               }
-            });
-         }
-      });
+      view_.getLineTableDisplay().addDiffChunkActionHandler(new ApplyPatchHandler());
+      view_.getLineTableDisplay().addDiffLineActionHandler(new ApplyPatchHandler());
 
       view_.getContextLines().addValueChangeHandler(new ValueChangeHandler<Integer>()
       {
@@ -347,6 +318,44 @@ public class ReviewPresenter implements IsWidget
             for (int i = 0; i < response.length(); i++)
                items.add(response.get(i));
             view_.getChangelistTable().setItems(items);
+         }
+      });
+   }
+
+   private void applyPatch(ArrayList<DiffChunk> chunks,
+                           ArrayList<Line> lines,
+                           boolean reverse,
+                           PatchMode patchMode)
+   {
+      chunks = new ArrayList<DiffChunk>(chunks);
+
+      if (reverse)
+      {
+         for (int i = 0; i < chunks.size(); i++)
+            chunks.set(i, chunks.get(i).reverse());
+         lines = Line.reverseLines(lines);
+      }
+
+      UnifiedEmitter emitter = new UnifiedEmitter(
+            view_.getChangelistTable().getSelectedPaths().get(0));
+      for (DiffChunk chunk : chunks)
+         emitter.addContext(chunk);
+      emitter.addDiffs(lines);
+      String patch = emitter.createPatch();
+
+      server_.vcsApplyPatch(patch, patchMode, new SimpleRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void response)
+         {
+            updateDiff();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            super.onError(error);
+            updateDiff();
          }
       });
    }
