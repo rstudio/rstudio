@@ -22,7 +22,7 @@ import com.google.gwt.user.client.ui.DecoratedPopupPanel;
 
 public class ThemedPopupPanel extends DecoratedPopupPanel
 {
-   interface Resources extends ClientBundle
+   public interface Resources extends ClientBundle
    {
       @Source("ThemedPopupPanel.css")
       Styles styles();
@@ -41,7 +41,7 @@ public class ThemedPopupPanel extends DecoratedPopupPanel
       ImageResource popupBottomRight();
    }
 
-   interface Styles extends CssResource
+   public interface Styles extends CssResource
    {
       String themedPopupPanel();
    }
@@ -49,24 +49,30 @@ public class ThemedPopupPanel extends DecoratedPopupPanel
    public ThemedPopupPanel()
    {
       super();
-      commonInit();
+      commonInit(RES);
    }
 
    public ThemedPopupPanel(boolean autoHide)
    {
       super(autoHide);
-      commonInit();
+      commonInit(RES);
    }
 
    public ThemedPopupPanel(boolean autoHide, boolean modal)
    {
       super(autoHide, modal);
-      commonInit();
+      commonInit(RES);
    }
 
-   private void commonInit()
+   public ThemedPopupPanel(boolean autoHide, boolean modal, Resources res)
    {
-      addStyleName(RES.styles().themedPopupPanel());
+      super(autoHide, modal);
+      commonInit(res);
+   }
+
+   private void commonInit(Resources res)
+   {
+      addStyleName(res.styles().themedPopupPanel());
    }
 
    private static Resources RES = GWT.create(Resources.class);

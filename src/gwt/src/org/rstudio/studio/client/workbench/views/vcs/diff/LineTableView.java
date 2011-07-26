@@ -40,6 +40,8 @@ import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionHandler;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class LineTableView extends CellTable<ChunkOrLine> implements Display
 {
@@ -58,6 +60,9 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
 
       String lineActions();
       String chunkActions();
+
+      String start();
+      String end();
    }
 
    public class LineContentCell extends AbstractCell<ChunkOrLine>
@@ -203,19 +208,30 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
             Line line = chunkOrLine.getLine();
 
             if (line == null)
-               return res.cellTableStyle().header();
-
-            switch (line.getType())
             {
-               case Same:
-                  return res.cellTableStyle().same();
-               case Insertion:
-                  return res.cellTableStyle().insertion();
-               case Deletion:
-                  return res.cellTableStyle().deletion();
-               default:
-                  return "";
+               return res.cellTableStyle().header();
             }
+            else
+            {
+               String prefix = "";
+               if (startRows_.contains(rowIndex))
+                  prefix += res.cellTableStyle().start() + " ";
+               if (endRows_.contains(rowIndex))
+                  prefix += res.cellTableStyle().end() + " ";
+
+               switch (line.getType())
+               {
+                  case Same:
+                     return prefix + res.cellTableStyle().same();
+                  case Insertion:
+                     return prefix + res.cellTableStyle().insertion();
+                  case Deletion:
+                     return prefix + res.cellTableStyle().deletion();
+                  default:
+                     return "";
+               }
+            }
+
          }
       });
 
@@ -261,6 +277,31 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
       setPageSize(diffData.size());
       selectionModel_.clear();
       setRowData(diffData);
+
+      startRows_.clear();
+      endRows_.clear();
+
+      Line.Type state = Line.Type.Same;
+      for (int i = 0; i < lines_.size(); i++)
+      {
+         ChunkOrLine chunkOrLine = lines_.get(i);
+         Line line = chunkOrLine.getLine();
+         Line.Type newState = line == null ? Line.Type.Same : line.getType();
+
+         // Edge case: last line is a diff line
+         if (newState != Line.Type.Same && i == lines_.size() - 1)
+            endRows_.add(i);
+
+         if (newState == state)
+            continue;
+
+         if (state != Line.Type.Same)
+            endRows_.add(i-1);
+         if (newState != Line.Type.Same)
+            startRows_.add(i);
+
+         state = newState;
+      }
    }
 
    @Override
@@ -308,5 +349,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
 
    private ArrayList<ChunkOrLine> lines_;
    private MultiSelectionModel<ChunkOrLine> selectionModel_;
+   private HashSet<Integer> startRows_ = new HashSet<Integer>();
+   private HashSet<Integer> endRows_ = new HashSet<Integer>();
    private static final LineTableResources RES = GWT.create(LineTableResources.class);
 }

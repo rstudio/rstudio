@@ -1,0 +1,71 @@
+@sprite .topLeftClass {
+   gwt-image: 'topLeft';
+   width: value('topLeft.getWidth', 'px');
+   height: value('topLeft.getHeight', 'px');
+   position: absolute;
+   left: 0;
+   top: 0;
+}
+
+@sprite .topClass {
+   gwt-image: 'top';
+   height: value('top.getHeight', 'px');
+   position: absolute;
+   top: 0;
+   left: value('topLeft.getWidth', 'px');
+   right: value('topRight.getWidth', 'px');
+}
+
+@sprite .topRightClass {
+   gwt-image: 'topRight';
+   width: value('topRight.getWidth', 'px');
+   height: value('topRight.getHeight', 'px');
+   position: absolute;
+   right: 0;
+   top: 0;
+}
+
+@sprite .leftClass {
+   gwt-image: 'left';
+   width: value('left.getWidth', 'px');
+   position: absolute;
+   left: 0;
+   top: value('topLeft.getHeight', 'px');
+   bottom: value('bottomLeft.getHeight', 'px');
+}
+
+@sprite .rightClass {
+   gwt-image: 'right';
+   width: value('right.getWidth', 'px');
+   position: absolute;
+   right: 0;
+   top: value('topRight.getHeight', 'px');
+   bottom: value('bottomRight.getHeight', 'px');
+}
+
+@sprite .bottomLeftClass {
+   gwt-image: 'bottomLeft';
+   width: value('bottomLeft.getWidth', 'px');
+   height: value('bottomLeft.getHeight', 'px');
+   position: absolute;
+   bottom: 0;
+   left: 0;
+}
+
+@sprite .bottomClass {
+   gwt-image: 'bottom';
+   height: value('bottom.getHeight', 'px');
+   position: absolute;
+   bottom: 0;
+   left: value('bottomLeft.getWidth', 'px');
+   right: value('bottomRight.getWidth', 'px');
+}
+
+@sprite .bottomRightClass {
+   gwt-image: 'bottomRight';
+   width: value('bottomRight.getWidth', 'px');
+   height: value('bottomRight.getHeight', 'px');
+   position: absolute;
+   bottom: 0;
+   right: 0;
+}

@@ -19,7 +19,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -31,6 +30,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
 import org.rstudio.studio.client.workbench.views.vcs.history.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter;
 
@@ -85,19 +85,7 @@ public class VCS extends BasePresenter implements IsWidget
    @Handler
    void onVcsDiff()
    {
-      ModalDialogBase dialog = new ModalDialogBase()
-      {
-         @Override
-         protected Widget createMainWidget()
-         {
-            addCancelButton();
-
-            Widget widget = pReviewPresenter_.get().asWidget();
-            widget.setSize("900px", "600px");
-            return widget;
-         }
-      };
-      dialog.showModal();
+      VCSPopup.show(pReviewPresenter_.get());
    }
 
    @Handler

@@ -43,7 +43,7 @@ public class ConsoleOutputPane extends ResizeComposite implements OutputDisplay
    interface Resources extends NineUpBorder.Resources, ClientBundle
    {
       @Source("ConsoleOutputPane.css")
-      Styles styles();
+      Styles styles2();
 
       @Override
       @Source("GitCommandOutputTopLeft.png")
@@ -210,7 +210,7 @@ public class ConsoleOutputPane extends ResizeComposite implements OutputDisplay
    private Integer scrollPos_ = null;
 
    private static final Resources res_ = GWT.create(Resources.class);
-   private static final Styles styles_ = res_.styles();
+   private static final Styles styles_ = res_.styles2();
    static {
       styles_.ensureInjected();
    }

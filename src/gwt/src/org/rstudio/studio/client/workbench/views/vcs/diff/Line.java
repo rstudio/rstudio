@@ -121,5 +121,5 @@ public class Line implements Comparable<Line>
    private final Type type_;
    private final int oldLine_;
    private final int newLine_;
-   private String text_;
+   private final String text_;
 }

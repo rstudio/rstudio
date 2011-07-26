@@ -1,7 +1,7 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 
-@def selectionBorderWidth 2px;
+@def selectionBorderWidth 1px;
 .cellTableWidget {
    font-family: fixedWidthFont;
    white-space: pre;
@@ -18,13 +18,25 @@
 }
 
 .insertion {
-   background-color: #DFD;
+   background-color: #DDFEDA;
    color: #444;
+}
+.insertion.start>td {
+   border-top: #90D989 solid selectionBorderWidth;
+}
+.insertion.end>td {
+   border-bottom: #90D989 solid selectionBorderWidth;
 }
 
 .deletion {
-   background-color: #FDD;
+   background-color: #FFDEDC;
    color: #444;
+}
+.deletion.start>td {
+   border-top: #E1938F solid selectionBorderWidth;
+}
+.deletion.end>td {
+   border-bottom: #E1938F solid selectionBorderWidth;
 }
 
 /* First column */

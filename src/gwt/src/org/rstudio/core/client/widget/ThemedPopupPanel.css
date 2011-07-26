@@ -19,42 +19,42 @@
 
 @sprite .themedPopupPanel .popupTopLeft, .menuPopupTopLeft, .suggestPopupTopLeft {
    gwt-image: 'popupTopLeft';
-   width: 7px;
-   height: 7px;
+   width: value('popupTopLeft.getWidth', 'px');
+   height: value('popupTopLeft.getHeight', 'px');
 }
 @sprite .themedPopupPanel .popupTopCenter, .menuPopupTopCenter, .suggestPopupTopCenter {
    gwt-image: 'popupTopCenter';
-   height: 7px;
+   height: value('popupTopCenter.getHeight', 'px');
 }
 @sprite .themedPopupPanel .popupTopRight, .menuPopupTopRight, .suggestPopupTopRight {
    gwt-image: 'popupTopRight';
-   width: 10px;
-   height: 7px;
+   width: value('popupTopRight.getWidth', 'px');
+   height: value('popupTopRight.getHeight', 'px');
 }
 @sprite .themedPopupPanel .popupMiddleLeft, .menuPopupMiddleLeft, .suggestPopupMiddleLeft {
    gwt-image: 'popupMiddleLeft';
-   width: 7px;
+   width: value('popupMiddleLeft.getWidth', 'px');
 }
 .themedPopupPanel .popupMiddleCenter, .menuPopupMiddleCenter, .suggestPopupMiddleCenter {
    background-color: white;
 }
 @sprite .themedPopupPanel .popupMiddleRight, .menuPopupMiddleRight, .suggestPopupMiddleRight {
    gwt-image: 'popupMiddleRight';
-   width: 10px;
+   width: value('popupMiddleRight.getWidth', 'px');
 }
 @sprite .themedPopupPanel .popupBottomLeft, .menuPopupBottomLeft, .suggestPopupBottomLeft {
    gwt-image: 'popupBottomLeft';
-   width: 7px;
-   height: 10px;
+   width: value('popupBottomLeft.getWidth', 'px');
+   height: value('popupBottomLeft.getHeight', 'px');
 }
 @sprite .themedPopupPanel .popupBottomCenter, .menuPopupBottomCenter, .suggestPopupBottomCenter {
    gwt-image: 'popupBottomCenter';
-   height: 10px;
+   height: value('popupBottomCenter.getHeight', 'px');
 }
 @sprite .themedPopupPanel .popupBottomRight, .menuPopupBottomRight, .suggestPopupBottomRight {
    gwt-image: 'popupBottomRight';
-   width: 10px;
-   height: 10px;
+   width: value('popupBottomRight.getWidth', 'px');
+   height: value('popupBottomRight.getHeight', 'px');
 }
 
 .gwt-MenuBarPopup {

@@ -12,9 +12,11 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
@@ -22,7 +24,7 @@ import com.google.gwt.user.client.ui.*;
 
 public class NineUpBorder extends ResizeComposite implements AcceptsOneWidget
 {
-   public interface Resources
+   public interface Resources extends ClientBundle
    {
       ImageResource topLeft();
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
@@ -36,6 +38,21 @@ public class NineUpBorder extends ResizeComposite implements AcceptsOneWidget
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
       ImageResource bottom();
       ImageResource bottomRight();
+
+      @Source("NineUpBorder.css")
+      Styles styles();
+   }
+
+   public interface Styles extends CssResource
+   {
+      String topLeftClass();
+      String topClass();
+      String topRightClass();
+      String leftClass();
+      String rightClass();
+      String bottomLeftClass();
+      String bottomClass();
+      String bottomRightClass();
    }
 
    public NineUpBorder(Resources resources,
@@ -44,109 +61,46 @@ public class NineUpBorder extends ResizeComposite implements AcceptsOneWidget
                        int marginBottom,
                        int marginLeft)
    {
-      marginTop_ = marginTop;
-      marginRight_ = marginRight;
-      marginBottom_ = marginBottom;
-      marginLeft_ = marginLeft;
+      resources.styles().ensureInjected();
+
       panel_ = new LayoutPanel();
 
-      Image topLeft = new Image(resources.topLeft());
-      Image top = new Image(resources.top());
-      Image topRight = new Image(resources.topRight());
-      Image left = new Image(resources.left());
-      Image right = new Image(resources.right());
-      Image bottomLeft = new Image(resources.bottomLeft());
-      Image bottom = new Image(resources.bottom());
-      Image bottomRight = new Image(resources.bottomRight());
+      addBgPanel(resources.styles().topLeftClass());
+      addBgPanel(resources.styles().topClass());
+      addBgPanel(resources.styles().topRightClass());
+      addBgPanel(resources.styles().leftClass());
+      addBgPanel(resources.styles().rightClass());
+      addBgPanel(resources.styles().bottomLeftClass());
+      addBgPanel(resources.styles().bottomClass());
+      addBgPanel(resources.styles().bottomRightClass());
 
-      panel_.add(topLeft);
-      panel_.setWidgetTopHeight(topLeft, 0, Unit.PX, topLeft.getHeight(), Unit.PX);
-      panel_.setWidgetLeftWidth(topLeft, 0, Unit.PX, topLeft.getWidth(), Unit.PX);
-
-      panel_.add(top);
-      panel_.setWidgetLeftRight(top,
-                                topLeft.getWidth(),
+      inner_ = new SimplePanel();
+      panel_.add(inner_);
+      panel_.setWidgetTopBottom(inner_,
+                                marginTop,
                                 Unit.PX,
-                                topRight.getWidth(),
+                                marginBottom,
                                 Unit.PX);
-      panel_.setWidgetTopHeight(top, 0, Unit.PX, top.getHeight(), Unit.PX);
-      makeRepeating(top, "repeat-x");
-
-      panel_.add(topRight);
-      panel_.setWidgetRightWidth(topRight, 0, Unit.PX, topRight.getWidth(), Unit.PX);
-      panel_.setWidgetTopHeight(topRight, 0, Unit.PX, topRight.getHeight(), Unit.PX);
-
-      panel_.add(left);
-      panel_.setWidgetLeftWidth(left, 0, Unit.PX, left.getWidth(), Unit.PX);
-      panel_.setWidgetTopBottom(left,
-                                topLeft.getHeight(),
+      panel_.setWidgetLeftRight(inner_,
+                                marginLeft,
                                 Unit.PX,
-                                bottomLeft.getHeight(),
+                                marginRight,
                                 Unit.PX);
-      makeRepeating(left, "repeat-y");
-
-      panel_.add(right);
-      panel_.setWidgetRightWidth(right, 0, Unit.PX, right.getWidth(), Unit.PX);
-      panel_.setWidgetTopBottom(right,
-                                topRight.getHeight(),
-                                Unit.PX,
-                                bottomRight.getHeight(),
-                                Unit.PX);
-      makeRepeating(right, "repeat-y");
-
-      panel_.add(bottomLeft);
-      panel_.setWidgetBottomHeight(bottomLeft,
-                                   0,
-                                   Unit.PX,
-                                   bottomLeft.getHeight(),
-                                   Unit.PX);
-      panel_.setWidgetLeftWidth(bottomLeft, 0, Unit.PX, bottomLeft.getWidth(), Unit.PX);
-
-      panel_.add(bottom);
-      panel_.setWidgetLeftRight(bottom, bottomLeft.getWidth(), Unit.PX, bottomRight.getWidth(), Unit.PX);
-      panel_.setWidgetBottomHeight(bottom,
-                                   0,
-                                   Unit.PX,
-                                   bottom.getHeight(),
-                                   Unit.PX);
-      makeRepeating(bottom, "repeat-x");
-
-      panel_.add(bottomRight);
-      panel_.setWidgetRightWidth(bottomRight, 0, Unit.PX, bottomRight.getWidth(), Unit.PX);
-      panel_.setWidgetBottomHeight(bottomRight,
-                                   0,
-                                   Unit.PX,
-                                   bottomRight.getHeight(),
-                                   Unit.PX);
 
       initWidget(panel_);
    }
 
-   private void makeRepeating(Image image, String repeatStyle)
+   private void addBgPanel(String className)
    {
-      Element container = panel_.getWidgetContainerElement(image);
-      container.getStyle().setBackgroundImage("url(" + image.getUrl() + ")");
-      container.getStyle().setProperty("backgroundRepeat", repeatStyle);
-      image.setVisible(false);
+      DivElement div = Document.get().createDivElement();
+      div.setClassName(className);
+      panel_.getElement().appendChild(div);
    }
 
    @Override
    public void setWidget(IsWidget w)
    {
-      if (w_ != null)
-      {
-         panel_.remove(w_);
-         w_ = null;
-      }
-
-      w_ = w;
-      if (w_ != null)
-      {
-         panel_.add(w_);
-         panel_.setWidgetLeftRight(w_, marginLeft_, Unit.PX,  marginRight_, Unit.PX);
-         panel_.setWidgetTopBottom(w_, marginTop_, Unit.PX,  marginBottom_, Unit.PX);
-         updateFillColor();
-      }
+      inner_.setWidget(w);
    }
 
    public LayoutPanel getLayoutPanel()
@@ -156,24 +110,9 @@ public class NineUpBorder extends ResizeComposite implements AcceptsOneWidget
 
    public void setFillColor(String fillColor)
    {
-      fillColor_ = fillColor;
-      updateFillColor();
-   }
-
-   private void updateFillColor()
-   {
-      if (w_ != null)
-      {
-         Style s = panel_.getWidgetContainerElement(w_.asWidget()).getStyle();
-         s.setBackgroundColor(fillColor_);
-      }
+      inner_.getElement().getStyle().setBackgroundColor(fillColor);
    }
 
    private final LayoutPanel panel_;
-   private IsWidget w_;
-   private final int marginTop_;
-   private final int marginRight_;
-   private final int marginBottom_;
-   private final int marginLeft_;
-   private String fillColor_;
+   private final SimplePanel inner_;
 }
