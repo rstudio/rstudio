@@ -38,8 +38,6 @@ import com.google.gwt.user.client.Event;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.CompositeExample}
  * </p>
- *
- * TODO(rdcastro): Remove the final qualifier from IsRenderable overrides.
  */
 public abstract class Composite extends Widget implements IsRenderable {
 
@@ -50,7 +48,7 @@ public abstract class Composite extends Widget implements IsRenderable {
   private Element elementToWrap;
 
   @Override
-  public final void claimElement(Element element) {
+  public void claimElement(Element element) {
     if (renderable != null) {
       renderable.claimElement(element);
       setElement(widget.getElement());
@@ -60,7 +58,7 @@ public abstract class Composite extends Widget implements IsRenderable {
   }
 
   @Override
-  public final void initializeClaimedElement() {
+  public void initializeClaimedElement() {
     if (renderable != null) {
       renderable.initializeClaimedElement();
     } else {
@@ -86,7 +84,7 @@ public abstract class Composite extends Widget implements IsRenderable {
   }
 
   @Override
-  public final SafeHtml render(RenderableStamper stamper) {
+  public SafeHtml render(RenderableStamper stamper) {
     if (renderable != null) {
       return renderable.render(stamper);
     } else {
@@ -98,7 +96,7 @@ public abstract class Composite extends Widget implements IsRenderable {
   }
 
   @Override
-  public final void render(RenderableStamper stamper, SafeHtmlBuilder builder) {
+  public void render(RenderableStamper stamper, SafeHtmlBuilder builder) {
     if (renderable != null) {
       renderable.render(stamper, builder);
     } else {
