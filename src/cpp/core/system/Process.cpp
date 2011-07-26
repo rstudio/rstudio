@@ -1,5 +1,5 @@
 /*
- * ProcessSupervisor.cpp
+ * Process.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
