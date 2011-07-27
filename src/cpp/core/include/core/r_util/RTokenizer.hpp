@@ -21,6 +21,11 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/regex_fwd.hpp>
 
+// On Linux confirm that wchar_t is Unicode
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__STDC_ISO_10646__)
+   #error "wchar_t is not Unicode"
+#endif
+
 namespace core {
 
 class Error;
