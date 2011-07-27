@@ -24,7 +24,7 @@ import com.google.gwt.editor.client.HasEditorDelegate;
  * Extends the logic in Refresher to provide the editor instance with references
  * to framework plumbing fixes.
  */
-class Initializer extends Refresher {
+public class Initializer extends Refresher {
 
   @Override
   public <Q> boolean visit(EditorContext<Q> ctx) {

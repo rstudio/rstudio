@@ -16,7 +16,6 @@
 package com.google.web.bindery.requestfactory.gwt.client.impl;
 
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.editor.client.EditorContext;
 import com.google.gwt.editor.client.EditorVisitor;
 import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
 import com.google.gwt.editor.client.impl.BaseEditorDriver;
@@ -26,7 +25,6 @@ import com.google.gwt.editor.client.impl.SimpleViolation;
 import com.google.web.bindery.autobean.shared.AutoBean;
 import com.google.web.bindery.autobean.shared.AutoBeanUtils;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.requestfactory.gwt.client.HasRequestContext;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
@@ -43,8 +41,8 @@ import java.util.List;
  * @param <R> the type being edited
  * @param <E> the type of Editor
  */
-public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
-    extends BaseEditorDriver<R, E> implements RequestFactoryEditorDriver<R, E> {
+public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>> extends
+    BaseEditorDriver<R, E> implements RequestFactoryEditorDriver<R, E> {
 
   /**
    * Adapts a RequestFactory Violation object to the SimpleViolation interface.
@@ -89,12 +87,14 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
 
     private final Iterable<com.google.web.bindery.requestfactory.shared.Violation> violations;
 
-    public ViolationIterable(Iterable<com.google.web.bindery.requestfactory.shared.Violation> violations) {
+    public ViolationIterable(
+        Iterable<com.google.web.bindery.requestfactory.shared.Violation> violations) {
       this.violations = violations;
     }
 
     public Iterator<SimpleViolation> iterator() {
-      final Iterator<com.google.web.bindery.requestfactory.shared.Violation> source = violations.iterator();
+      final Iterator<com.google.web.bindery.requestfactory.shared.Violation> source =
+          violations.iterator();
       return new Iterator<SimpleViolation>() {
         public boolean hasNext() {
           return source.hasNext();
@@ -159,22 +159,13 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
     edit(object, null);
   }
 
-  public void edit(R object, final RequestContext saveRequest) {
+  public void edit(R object, RequestContext saveRequest) {
     this.saveRequest = saveRequest;
-    // Provide the delegate and maybe the editor with the RequestContext
-    accept(new EditorVisitor() {
-      @Override
-      public <T> void endVisit(EditorContext<T> ctx) {
-        RequestFactoryEditorDelegate<?, ?> delegate = (RequestFactoryEditorDelegate<?, ?>) ctx.getEditorDelegate();
-        if (delegate != null) {
-          delegate.setRequestContext(saveRequest);
-        }
-        Editor<T> editor = ctx.getEditor();
-        if (editor instanceof HasRequestContext<?>) {
-          ((HasRequestContext<T>) editor).setRequestContext(saveRequest);
-        }
-      }
-    });
+    /*
+     * Provide the delegate with the RequestContext so ensureMutable works as
+     * expected Editor will be provided the delegate by the Initializer visitor.
+     */
+    ((RequestFactoryEditorDelegate<R, E>) getDelegate()).setRequestContext(saveRequest);
     doEdit(object);
   }
 
@@ -192,8 +183,7 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
     doInitialize(null, null, editor);
   }
 
-  public void initialize(EventBus eventBus, RequestFactory requestFactory,
-      E editor) {
+  public void initialize(EventBus eventBus, RequestFactory requestFactory, E editor) {
     assert eventBus != null : "eventBus must not be null";
     assert requestFactory != null : "requestFactory must not be null";
     doInitialize(eventBus, requestFactory, editor);
@@ -204,7 +194,8 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
   }
 
   @SuppressWarnings("deprecation")
-  public boolean setViolations(Iterable<com.google.web.bindery.requestfactory.shared.Violation> violations) {
+  public boolean setViolations(
+      Iterable<com.google.web.bindery.requestfactory.shared.Violation> violations) {
     return doSetViolations(new ViolationIterable(violations));
   }
 
@@ -216,12 +207,16 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
 
   @Override
   protected void configureDelegate(AbstractEditorDelegate<R, E> rootDelegate) {
-    ((RequestFactoryEditorDelegate<R, E>) rootDelegate).initialize(eventBus,
-        factory, "", getEditor());
+    ((RequestFactoryEditorDelegate<R, E>) rootDelegate).initialize(eventBus, factory, "",
+        getEditor());
   }
 
-  protected void doInitialize(EventBus eventBus, RequestFactory requestFactory,
-      E editor) {
+  @Override
+  protected EditorVisitor createInitializerVisitor() {
+    return new Initializer(saveRequest);
+  }
+
+  protected void doInitialize(EventBus eventBus, RequestFactory requestFactory, E editor) {
     this.eventBus = eventBus;
     this.factory = requestFactory;
     super.doInitialize(editor);

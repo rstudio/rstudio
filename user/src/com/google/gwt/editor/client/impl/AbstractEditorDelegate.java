@@ -80,7 +80,7 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
         subDelegate.path = subPath;
       }
       subDelegate.setObject(ensureMutable(object));
-      traverse(new Initializer(), subDelegate);
+      traverse(createInitializerVisitor(), subDelegate);
     }
 
     public void detach(S subEditor) {
@@ -175,6 +175,10 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
    */
   protected AbstractEditorDelegate<?, ?> createComposedDelegate() {
     throw new IllegalStateException();
+  }
+
+  protected EditorVisitor createInitializerVisitor() {
+    return new Initializer();
   }
 
   protected <Q> Q ensureMutable(Q object) {

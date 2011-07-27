@@ -61,12 +61,18 @@ public class EditorTest extends RequestFactoryTestBase {
     }
   }
 
-  static class SimpleFooBarNameOnlyEditor implements Editor<SimpleFooProxy> {
+  static class SimpleFooBarNameOnlyEditor implements HasRequestContext<SimpleFooProxy> {
+    RequestContext ctx;
+
     /**
      * Test nested path access.
      */
     @Path("barField.userName")
     final SimpleEditor<String> barName = SimpleEditor.of();
+
+    public void setRequestContext(RequestContext ctx) {
+      this.ctx = ctx;
+    }
   }
 
   interface SimpleFooDriver extends RequestFactoryEditorDriver<SimpleFooProxy, SimpleFooEditor> {
@@ -83,14 +89,6 @@ public class EditorTest extends RequestFactoryTestBase {
      */
     @Path("barField.userName")
     final SimpleEditor<String> barName = SimpleEditor.of();
-
-    final ListEditor<SimpleFooProxy, SimpleFooBarNameOnlyEditor> selfOneToManyField = ListEditor
-        .of(new EditorSource<SimpleFooBarNameOnlyEditor>() {
-          @Override
-          public SimpleFooBarNameOnlyEditor create(int index) {
-            return new SimpleFooBarNameOnlyEditor();
-          }
-        });
 
     private final SimpleBarEditor barEditor = new SimpleBarEditor();
 
@@ -118,6 +116,23 @@ public class EditorTest extends RequestFactoryTestBase {
     }
   }
 
+  static class SimpleFooEditorWithList implements Editor<SimpleFooProxy> {
+
+    final SimpleEditor<String> userName = SimpleEditor.of();
+
+    final ListEditor<SimpleFooProxy, SimpleFooBarNameOnlyEditor> selfOneToManyField = ListEditor
+        .of(new EditorSource<SimpleFooBarNameOnlyEditor>() {
+          @Override
+          public SimpleFooBarNameOnlyEditor create(int index) {
+            return new SimpleFooBarNameOnlyEditor();
+          }
+        });
+  }
+
+  interface SimpleFooEditorWithListDriver extends
+      RequestFactoryEditorDriver<SimpleFooProxy, SimpleFooEditorWithList> {
+  }
+
   private static final int TEST_TIMEOUT = 5000;
 
   @Override
@@ -132,8 +147,7 @@ public class EditorTest extends RequestFactoryTestBase {
     final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
     driver.initialize(req, editor);
     final String[] paths = driver.getPaths();
-    assertEquals(Arrays.asList("barField", "selfOneToManyField", "selfOneToManyField.barField"),
-        Arrays.asList(paths));
+    assertEquals(Arrays.asList("barField"), Arrays.asList(paths));
 
     req.simpleFooRequest().findSimpleFooById(1L).with(paths).fire(new Receiver<SimpleFooProxy>() {
       @Override
@@ -157,8 +171,7 @@ public class EditorTest extends RequestFactoryTestBase {
         editor.userName.setValue("EditorFooTest");
         // When there are duplicate paths, last declared editor wins
         editor.barEditor().userName.setValue("EditorBarTest");
-        editor.barName.setValue("ignored 1");
-        editor.selfOneToManyField.getEditors().get(0).barName.setValue("ignored 2");
+        editor.barName.setValue("ignored");
         driver.flush().fire();
       }
     });
@@ -211,6 +224,53 @@ public class EditorTest extends RequestFactoryTestBase {
         });
   }
 
+  /**
+   * Tests issues with {@code CompositeEditor}s when subeditors are dynamically
+   * created, such as with a {@link ListEditor}.
+   * 
+   * @see http://code.google.com/p/google-web-toolkit/issues/detail?id=6081
+   */
+  public void testList() {
+    delayTestFinish(TEST_TIMEOUT);
+    final SimpleFooEditorWithList editor = new SimpleFooEditorWithList();
+
+    final SimpleFooEditorWithListDriver driver = GWT.create(SimpleFooEditorWithListDriver.class);
+    driver.initialize(req, editor);
+
+    final String[] paths = driver.getPaths();
+    assertEquals(Arrays.asList("selfOneToManyField", "selfOneToManyField.barField"), Arrays
+        .asList(paths));
+
+    req.simpleFooRequest().getSimpleFooWithSubPropertyCollection().with(paths).fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+
+            SimpleFooRequest context = req.simpleFooRequest();
+            driver.edit(response, context);
+
+            SimpleFooBarNameOnlyEditor subeditor = editor.selfOneToManyField.getEditors().get(0);
+            // test context is correctly set in CompositeEditor subeditors
+            assertSame(context, subeditor.ctx);
+
+            context.persistAndReturnSelf().using(response).with(paths).to(
+                new Receiver<SimpleFooProxy>() {
+                  @Override
+                  public void onSuccess(SimpleFooProxy response) {
+                    assertEquals("EditorBarTest", response.getSelfOneToManyField().get(0)
+                        .getBarField().getUserName());
+                    finishTestAndReset();
+                  }
+                });
+            assertEquals("FOO", subeditor.barName.getValue());
+
+            subeditor.barName.setValue("EditorBarTest");
+
+            driver.flush().fire();
+          }
+        });
+  }
+
   public void testNoSubscription() {
     final SimpleFooEditorWithDelegate editor = new SimpleFooEditorWithDelegate();
 
@@ -233,9 +293,9 @@ public class EditorTest extends RequestFactoryTestBase {
    */
   public void testReuse() {
     delayTestFinish(TEST_TIMEOUT);
-    final SimpleFooEditor editor = new SimpleFooEditor();
+    final SimpleFooEditorWithList editor = new SimpleFooEditorWithList();
 
-    final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
+    final SimpleFooEditorWithListDriver driver = GWT.create(SimpleFooEditorWithListDriver.class);
     driver.initialize(req, editor);
 
     req.simpleFooRequest().findSimpleFooById(1L).with(driver.getPaths()).fire(
@@ -272,8 +332,7 @@ public class EditorTest extends RequestFactoryTestBase {
     driver.initialize(req, editor);
 
     String[] paths = driver.getPaths();
-    assertEquals(Arrays.asList("barField", "selfOneToManyField", "selfOneToManyField.barField"),
-        Arrays.asList(paths));
+    assertEquals(Arrays.asList("barField"), Arrays.asList(paths));
 
     req.simpleFooRequest().findSimpleFooById(1L).with(paths).fire(new Receiver<SimpleFooProxy>() {
       @Override
@@ -337,9 +396,11 @@ public class EditorTest extends RequestFactoryTestBase {
 
                   @SuppressWarnings("deprecation")
                   @Override
-                  public void onViolation(Set<com.google.web.bindery.requestfactory.shared.Violation> errors) {
+                  public void onViolation(
+                      Set<com.google.web.bindery.requestfactory.shared.Violation> errors) {
                     assertEquals(1, errors.size());
-                    com.google.web.bindery.requestfactory.shared.Violation v = errors.iterator().next();
+                    com.google.web.bindery.requestfactory.shared.Violation v =
+                        errors.iterator().next();
 
                     driver.setViolations(errors);
                     assertEquals(1, editor.errors.size());

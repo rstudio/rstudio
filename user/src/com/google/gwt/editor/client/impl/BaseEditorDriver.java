@@ -63,8 +63,7 @@ public abstract class BaseEditorDriver<T, E extends Editor<T>> {
     return c.isDirty() || !leafValueMap.equals(c.getLeafValues());
   }
 
-  public boolean setConstraintViolations(
-      final Iterable<ConstraintViolation<?>> violations) {
+  public boolean setConstraintViolations(final Iterable<ConstraintViolation<?>> violations) {
     return doSetViolations(SimpleViolation.iterableFromConstrantViolations(violations));
   }
 
@@ -73,8 +72,7 @@ public abstract class BaseEditorDriver<T, E extends Editor<T>> {
     if (GWT.isProdMode()) {
       return super.toString();
     } else {
-      return editor == null ? "Uninitialized"
-          : EditorHierarchyPrinter.toString(asEditorDriver());
+      return editor == null ? "Uninitialized" : EditorHierarchyPrinter.toString(asEditorDriver());
     }
   }
 
@@ -84,12 +82,16 @@ public abstract class BaseEditorDriver<T, E extends Editor<T>> {
 
   protected abstract AbstractEditorDelegate<T, E> createDelegate();
 
+  protected EditorVisitor createInitializerVisitor() {
+    return new Initializer();
+  }
+
   protected void doEdit(T object) {
     checkEditor();
     object = delegate.ensureMutable(object);
     this.object = object;
     delegate.setObject(object);
-    accept(new Initializer());
+    accept(createInitializerVisitor());
     DirtCollector c = new DirtCollector();
     accept(c);
     leafValueMap = c.getLeafValues();
@@ -110,8 +112,7 @@ public abstract class BaseEditorDriver<T, E extends Editor<T>> {
 
   protected boolean doSetViolations(Iterable<SimpleViolation> violations) {
     checkObject();
-    SimpleViolation.pushViolations(violations, asEditorDriver(),
-        getViolationKeyMethod());
+    SimpleViolation.pushViolations(violations, asEditorDriver(), getViolationKeyMethod());
 
     // Collect the errors, which will take care of co-editor chains.
     errors = new ArrayList<EditorError>();

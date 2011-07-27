@@ -16,9 +16,9 @@
 package com.google.web.bindery.requestfactory.gwt.client.impl;
 
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorVisitor;
 import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
 import com.google.gwt.editor.client.impl.Refresher;
-// This import is not an accident, details in subscribe() implementation
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
@@ -124,6 +124,11 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
       AbstractEditorDelegate<R, S> subDelegate, String path, S subEditor) {
     RequestFactoryEditorDelegate<R, S> d = (RequestFactoryEditorDelegate<R, S>) subDelegate;
     d.initialize(eventBus, factory, path, subEditor);
+  }
+
+  @Override
+  protected EditorVisitor createInitializerVisitor() {
+    return new Initializer(request);
   }
 
   @Override
