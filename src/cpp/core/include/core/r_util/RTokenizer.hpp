@@ -85,7 +85,7 @@ private:
 
 bool operator==(const RToken& lhs, const RToken& rhs);
 
-bool operator!=(const RToken& lhs, const RToken& rhs)
+inline bool operator!=(const RToken& lhs, const RToken& rhs)
 {
     return !(lhs == rhs);
 }

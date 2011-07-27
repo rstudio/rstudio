@@ -34,6 +34,28 @@ namespace r_util {
 
 namespace {
 
+class TokenPatterns
+{
+private:
+   friend TokenPatterns& tokenPatterns();
+   TokenPatterns()
+      : NUMBER("[0-9]*(\\.[0-9]*)?([eE][+-]?[0-9]*)?[Li]?"),
+        HEX_NUMBER("0x[0-9a-fA-F]*L?")
+   {
+   }
+
+public:
+   boost::regex NUMBER;
+   boost::regex HEX_NUMBER;
+};
+
+TokenPatterns& tokenPatterns()
+{
+   static TokenPatterns instance;
+   return instance;
+}
+
+
 class RTokenizer : boost::noncopyable
 {
 public:
@@ -50,18 +72,35 @@ public:
    RToken nextToken()
    {
 
-
-
       return RToken();
 
    }
 
 
-private:
+public:
+
+   std::string matchNumber()
+   {
+      std::string num = peek(tokenPatterns().HEX_NUMBER) ;
+      if (num.empty())
+         num = peek(boost::regex(tokenPatterns().NUMBER)) ;
+      return num;
+   }
+
    std::string peek(const boost::regex& regex)
    {
-
-      return std::string();
+      boost::match_results<std::string::const_iterator> what;
+      std::string::const_iterator start = data_.begin() + pos_;
+      std::string::const_iterator end = data_.end();
+      boost::match_flag_type flg = boost::match_default | boost::match_continuous;
+      if (boost::regex_search(start, end, what, regex, flg))
+      {
+         return what[0];
+      }
+      else
+      {
+         return std::string();
+      }
    }
 
 private:
