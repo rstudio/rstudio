@@ -19,6 +19,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/regex_fwd.hpp>
 
 namespace core {
 
@@ -29,30 +30,28 @@ namespace r_util {
 class RToken
 {
 public:
-   enum Type
-   {
-      LPAREN         = '(',
-      RPAREN         = ')',
-      LBRACKET       = '[',
-      RBRACKET       = ']',
-      LBRACE         = '{',
-      RBRACE         = '}',
-      COMMA          = ',',
-      SEMI           = ';',
-      WHITESPACE     = 0x1001,
-      STRING         = 0x1002,
-      NUMBER         = 0x1003,
-      ID             = 0x1004,
-      OPER           = 0x1005,
-      UOPER          = 0x1006,
-      ERROR          = 0x1007,
-      LDBRACKET      = 0x1008, // [[
-      RDBRACKET      = 0x1009  // ]]
-   };
+
+   static const int LPAREN;
+   static const int RPAREN;
+   static const int LBRACKET;
+   static const int RBRACKET;
+   static const int LBRACE;
+   static const int RBRACE;
+   static const int COMMA;
+   static const int SEMI;
+   static const int WHITESPACE;
+   static const int STRING;
+   static const int NUMBER;
+   static const int ID;
+   static const int OPER;
+   static const int UOPER;
+   static const int ERROR;
+   static const int LDBRACKET;
+   static const int RDBRACKET;
 
 public:
    RToken();
-   RToken(Type type,
+   RToken(int type,
           const std::string& content,
           std::size_t offset,
           std::size_t length);
@@ -61,7 +60,7 @@ public:
    // COPYING: via copyable shared_ptr<Impl>
 
    // accessors
-   Type type() const;
+   int type() const;
    const std::string& content() const;
    std::size_t offset() const;
    std::size_t length() const;
@@ -93,7 +92,7 @@ inline bool operator!=(const RToken& lhs, const RToken& rhs)
 class RStringToken : public RToken
 {
 public:
-   RStringToken(Type type,
+   RStringToken(int type,
                 const std::string& content,
                 std::size_t offset,
                 std::size_t length,
@@ -115,7 +114,8 @@ private:
 class RTokenRange : boost::noncopyable
 {
 public:
-   RTokenRange(const std::string& code);
+   explicit RTokenRange(const std::string& code);
+   explicit RTokenRange(const std::vector<RToken>& tokens);
    virtual ~RTokenRange() {}
 
    // COPYING: boost::noncopyable
@@ -143,6 +143,44 @@ private:
    std::vector<RToken> tokens_;
    std::size_t pos_;
    static const std::size_t NPOS;
+};
+
+
+class RTokenizer : boost::noncopyable
+{
+public:
+   static void asTokens(const std::string& code, std::vector<RToken>* pTokens);
+
+public:
+   explicit RTokenizer(const std::string& data)
+      : data_(data), pos_(data_.begin())
+   {
+   }
+
+   virtual ~RTokenizer() {}
+
+   // COPYING: boost::noncopyable
+
+   RToken nextToken();
+
+private:
+   RToken matchWhitespace();
+   RToken matchStringLiteral();
+   RToken matchNumber();
+   RToken matchIdentifier();
+   RToken matchUserOperator();
+   RToken matchOperator();
+   bool eol();
+   char peek();
+   char peek(std::size_t lookahead);
+   char eat();
+   std::string peek(const boost::regex& regex);
+   void eatUntil(const boost::regex& regex);
+   RToken consumeToken(int tokenType, std::size_t length);
+
+private:
+   std::string data_;
+   std::string::const_iterator pos_;
 };
 
 
