@@ -61,6 +61,12 @@ public class RTokenizer
       case '"':
       case '\'':
          return matchStringLiteral() ;
+      case '`':
+         return matchQuotedIdentifier();
+      case '#':
+         return matchComment();
+      case '%':
+         return matchUserOperator();
       case ' ': case '\t': case '\r': case '\n':
       case '\u00A0': case '\u3000':
          return matchWhitespace() ;
@@ -88,10 +94,7 @@ public class RTokenizer
          // already tried to match on number.
          return matchIdentifier() ;
       }
-      
-      if (c == '%')
-         return matchUserOperator() ;
-      
+
       RToken oper = matchOperator() ;
       if (oper != null)
          return oper ;
@@ -170,6 +173,21 @@ public class RTokenizer
                         data_.substring(start, pos_), 
                         start, 
                         pos_ - start) ;
+   }
+
+   private RToken matchQuotedIdentifier()
+   {
+      String iden = peek("`[^`]*`") ;
+      if (iden == null)
+         return consumeToken(RToken.ERROR, 1);
+      else
+         return consumeToken(RToken.ID, iden.length());
+   }
+
+   private RToken matchComment()
+   {
+      String comment = peek("#.*?$");
+      return consumeToken(RToken.COMMENT, comment.length());
    }
    
    private RToken matchUserOperator()
