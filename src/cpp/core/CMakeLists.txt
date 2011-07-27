@@ -100,6 +100,7 @@ if (UNIX)
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
       ${DIRECTORY_MONITOR_CPP}
+      PosixStringUtils.cpp
       r_util/REnvironmentPosix.cpp
       SyslogLogWriter.cpp
       system/PosixParentProcessMonitor.cpp
