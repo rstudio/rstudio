@@ -28,22 +28,22 @@ class TokenPatterns
 private:
    friend TokenPatterns& tokenPatterns();
    TokenPatterns()
-      : NUMBER("[0-9]*(\\.[0-9]*)?([eE][+-]?[0-9]*)?[Li]?"),
-        HEX_NUMBER("0x[0-9a-fA-F]*L?"),
-        USER_OPERATOR("%[^%]*%"),
-        REST_OF_IDENTIFIER("[\\w.]*"),
-        UNTIL_END_QUOTE("[\\\\\'\"]"),
-        WHITESPACE("[\\s\\u00A0]+")
+      : NUMBER(L"[0-9]*(\\.[0-9]*)?([eE][+-]?[0-9]*)?[Li]?"),
+        HEX_NUMBER(L"0x[0-9a-fA-F]*L?"),
+        USER_OPERATOR(L"%[^%]*%"),
+        REST_OF_IDENTIFIER(L"[\\w.]*"),
+        UNTIL_END_QUOTE(L"[\\\\\'\"]"),
+        WHITESPACE(L"[\\s\\u00A0]+")
    {
    }
 
 public:
-   const boost::regex NUMBER;
-   const boost::regex HEX_NUMBER;
-   const boost::regex USER_OPERATOR;
-   const boost::regex REST_OF_IDENTIFIER;
-   const boost::regex UNTIL_END_QUOTE;
-   const boost::regex WHITESPACE;
+   const boost::wregex NUMBER;
+   const boost::wregex HEX_NUMBER;
+   const boost::wregex USER_OPERATOR;
+   const boost::wregex REST_OF_IDENTIFIER;
+   const boost::wregex UNTIL_END_QUOTE;
+   const boost::wregex WHITESPACE;
 };
 
 TokenPatterns& tokenPatterns()
@@ -55,35 +55,35 @@ TokenPatterns& tokenPatterns()
 } // anonymous namespace
 
 
-const int RToken::LPAREN         = '(';
-const int RToken::RPAREN         = ')';
-const int RToken::LBRACKET       = '[';
-const int RToken::RBRACKET       = ']';
-const int RToken::LBRACE         = '{';
-const int RToken::RBRACE         = '}';
-const int RToken::COMMA          = ',';
-const int RToken::SEMI           = ';';
-const int RToken::WHITESPACE     = 0x1001;
-const int RToken::STRING         = 0x1002;
-const int RToken::NUMBER         = 0x1003;
-const int RToken::ID             = 0x1004;
-const int RToken::OPER           = 0x1005;
-const int RToken::UOPER          = 0x1006;
-const int RToken::ERROR          = 0x1007;
-const int RToken::LDBRACKET      = 0x1008;
-const int RToken::RDBRACKET      = 0x1009;
+const wchar_t RToken::LPAREN         = L'(';
+const wchar_t RToken::RPAREN         = L')';
+const wchar_t RToken::LBRACKET       = L'[';
+const wchar_t RToken::RBRACKET       = L']';
+const wchar_t RToken::LBRACE         = L'{';
+const wchar_t RToken::RBRACE         = L'}';
+const wchar_t RToken::COMMA          = L',';
+const wchar_t RToken::SEMI           = L';';
+const wchar_t RToken::WHITESPACE     = 0x1001;
+const wchar_t RToken::STRING         = 0x1002;
+const wchar_t RToken::NUMBER         = 0x1003;
+const wchar_t RToken::ID             = 0x1004;
+const wchar_t RToken::OPER           = 0x1005;
+const wchar_t RToken::UOPER          = 0x1006;
+const wchar_t RToken::ERROR          = 0x1007;
+const wchar_t RToken::LDBRACKET      = 0x1008;
+const wchar_t RToken::RDBRACKET      = 0x1009;
 
 struct RToken::Impl
 {
-   Impl(int type,
-        const std::string& content,
+   Impl(wchar_t type,
+        const std::wstring& content,
         std::size_t offset,
         std::size_t length)
       : type(type), content(content), offset(offset), length(length)
    {
    }
-   int type;
-   std::string content;
+   wchar_t type;
+   std::wstring content;
    std::size_t offset;
    std::size_t length;
 };
@@ -93,8 +93,8 @@ RToken::RToken()
 {
 }
 
-RToken::RToken(int type,
-               const std::string& content,
+RToken::RToken(wchar_t type,
+               const std::wstring& content,
                std::size_t offset,
                std::size_t length)
    : pImpl_(new Impl(type, content, offset, length))
@@ -107,12 +107,12 @@ RToken::~RToken()
 
 
 
-int RToken::type() const
+wchar_t RToken::type() const
 {
    return pImpl_->type;
 }
 
-const std::string& RToken::content() const
+const std::wstring& RToken::content() const
 {
    return pImpl_->content;
 }
@@ -149,7 +149,7 @@ bool operator==(const RToken& lhs, const RToken& rhs)
 
 const std::size_t RTokenRange::NPOS = -1;
 
-RTokenRange::RTokenRange(const std::string& code)
+RTokenRange::RTokenRange(const std::wstring& code)
    : pos_(NPOS)
 {
    RTokenizer::asTokens(code, &tokens_);
@@ -219,7 +219,7 @@ void RTokenRange::ensureValidIndex()
 }
 
 
-void RTokenizer::asTokens(const std::string& code,
+void RTokenizer::asTokens(const std::wstring& code,
                           std::vector<RToken>* pTokens)
 {
    RTokenizer tokenizer(code);
@@ -234,42 +234,43 @@ RToken RTokenizer::nextToken()
   if (eol())
      return RToken() ;
 
-  char c = peek() ;
+  wchar_t c = peek() ;
 
   switch (c)
   {
-  case '(': case ')':
-  case '{': case '}':
-  case ';': case ',':
+  case L'(': case L')':
+  case L'{': case L'}':
+  case L';': case L',':
      return consumeToken(c, 1) ;
-  case '[':
-     if (peek(1) == '[')
+  case L'[':
+     if (peek(1) == L'[')
         return consumeToken(RToken::LDBRACKET, 2) ;
      else
         return consumeToken(c, 1) ;
-  case ']':
-     if (peek(1) == ']')
+  case L']':
+     if (peek(1) == L']')
         return consumeToken(RToken::RDBRACKET, 2) ;
      else
         return consumeToken(c, 1) ;
-  case '"':
-  case '\'':
+  case L'"':
+  case L'\'':
      return matchStringLiteral() ;
-  case ' ': case '\t': case '\r': case '\n':
+  case L' ': case L'\t': case L'\r': case L'\n':
+  case L'\u00A0': case L'\u3000':
      return matchWhitespace() ;
   }
 
-  char cNext = peek(1) ;
+  wchar_t cNext = peek(1) ;
 
-  if ((c >= '0' && c <= '9')
-        || (c == '.' && cNext >= '0' && cNext <= '9'))
+  if ((c >= L'0' && c <= L'9')
+        || (c == L'.' && cNext >= L'0' && cNext <= L'9'))
   {
      RToken numberToken = matchNumber() ;
      if (numberToken.length() > 0)
         return numberToken ;
   }
 
-  if (std::isalpha(c) || c == '.')
+  if (std::iswalpha(c) || c == L'.')
   {
      // From Section 10.3.2, identifiers must not start with
      // a period followed by a digit.
@@ -280,7 +281,7 @@ RToken RTokenizer::nextToken()
      return matchIdentifier() ;
   }
 
-  if (c == '%')
+  if (c == L'%')
      return matchUserOperator() ;
 
   RToken oper = matchOperator() ;
@@ -295,14 +296,14 @@ RToken RTokenizer::nextToken()
 
 RToken RTokenizer::matchWhitespace()
 {
-   std::string whitespace = peek(tokenPatterns().WHITESPACE) ;
+   std::wstring whitespace = peek(tokenPatterns().WHITESPACE) ;
    return consumeToken(RToken::WHITESPACE, whitespace.length()) ;
 }
 
 RToken RTokenizer::matchStringLiteral()
 {
-   std::string::const_iterator start = pos_ ;
-   char quot = eat() ;
+   std::wstring::const_iterator start = pos_ ;
+   wchar_t quot = eat() ;
 
    bool wellFormed = false ;
 
@@ -313,14 +314,14 @@ RToken RTokenizer::matchStringLiteral()
       if (eol())
          break ;
 
-      char c = eat() ;
+      wchar_t c = eat() ;
       if (c == quot)
       {
          wellFormed = true ;
          break ;
       }
 
-      if (c == '\\')
+      if (c == L'\\')
       {
          if (!eol())
             eat() ;
@@ -334,7 +335,7 @@ RToken RTokenizer::matchStringLiteral()
    }
 
    return RStringToken(RToken::STRING,
-                       std::string(start, pos_),
+                       std::wstring(start, pos_),
                        start - data_.begin(),
                        pos_ - start,
                        wellFormed) ;
@@ -342,28 +343,28 @@ RToken RTokenizer::matchStringLiteral()
 
 RToken RTokenizer::matchNumber()
 {
-   std::string num = peek(tokenPatterns().HEX_NUMBER) ;
+   std::wstring num = peek(tokenPatterns().HEX_NUMBER) ;
    if (num.empty())
-      num = peek(boost::regex(tokenPatterns().NUMBER)) ;
+      num = peek(tokenPatterns().NUMBER) ;
 
    return consumeToken(RToken::NUMBER, num.length());
 }
 
 RToken RTokenizer::matchIdentifier()
 {
-   std::string::const_iterator start = pos_ ;
+   std::wstring::const_iterator start = pos_ ;
    eat();
-   std::string rest = peek(tokenPatterns().REST_OF_IDENTIFIER) ;
+   std::wstring rest = peek(tokenPatterns().REST_OF_IDENTIFIER) ;
    pos_ += rest.length() ;
    return RToken(RToken::ID,
-                 std::string(start, pos_),
+                 std::wstring(start, pos_),
                  start - data_.begin(),
                  pos_ - start) ;
 }
 
 RToken RTokenizer::matchUserOperator()
 {
-   std::string oper = peek(tokenPatterns().USER_OPERATOR) ;
+   std::wstring oper = peek(tokenPatterns().USER_OPERATOR) ;
    if (oper.empty())
       return consumeToken(RToken::ERROR, 1) ;
    else
@@ -373,27 +374,27 @@ RToken RTokenizer::matchUserOperator()
 
 RToken RTokenizer::matchOperator()
 {
-   char cNext = peek(1) ;
+   wchar_t cNext = peek(1) ;
 
    switch (peek())
    {
-   case '+': case '*': case '/':
-   case '^': case '&': case '|':
-   case '~': case '$': case ':':
+   case L'+': case L'*': case L'/':
+   case L'^': case L'&': case L'|':
+   case L'~': case L'$': case L':':
       // single-character operators
       return consumeToken(RToken::OPER, 1) ;
-   case '-': // also ->
-      return consumeToken(RToken::OPER, cNext == '>' ? 2 : 1) ;
-   case '>': // also >=
-      return consumeToken(RToken::OPER, cNext == '=' ? 2 : 1) ;
-   case '<': // also <- and <=
-      return consumeToken(RToken::OPER, cNext == '=' ? 2 :
-                                       cNext == '-' ? 2 :
+   case L'-': // also ->
+      return consumeToken(RToken::OPER, cNext == L'>' ? 2 : 1) ;
+   case L'>': // also >=
+      return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1) ;
+   case L'<': // also <- and <=
+      return consumeToken(RToken::OPER, cNext == L'=' ? 2 :
+                                       cNext == L'-' ? 2 :
                                        1) ;
-   case '=': // also ==
-      return consumeToken(RToken::OPER, cNext == '=' ? 2 : 1) ;
-   case '!': // also !=
-      return consumeToken(RToken::OPER, cNext == '=' ? 2 : 1) ;
+   case L'=': // also ==
+      return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1) ;
+   case L'!': // also !=
+      return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1) ;
    default:
       return RToken() ;
    }
@@ -404,12 +405,12 @@ bool RTokenizer::eol()
    return pos_ >= data_.end();
 }
 
-char RTokenizer::peek()
+wchar_t RTokenizer::peek()
 {
    return peek(0) ;
 }
 
-char RTokenizer::peek(std::size_t lookahead)
+wchar_t RTokenizer::peek(std::size_t lookahead)
 {
    if ((pos_ + lookahead) >= data_.end())
       return 0 ;
@@ -417,17 +418,17 @@ char RTokenizer::peek(std::size_t lookahead)
       return *(pos_ + lookahead) ;
 }
 
-char RTokenizer::eat()
+wchar_t RTokenizer::eat()
 {
-   char result = *pos_;
+   wchar_t result = *pos_;
    pos_++ ;
    return result ;
 }
 
-std::string RTokenizer::peek(const boost::regex& regex)
+std::wstring RTokenizer::peek(const boost::wregex& regex)
 {
-   boost::smatch match;
-   std::string::const_iterator end = data_.end();
+   boost::wsmatch match;
+   std::wstring::const_iterator end = data_.end();
    boost::match_flag_type flg = boost::match_default | boost::match_continuous;
    if (boost::regex_search(pos_, end, match, regex, flg))
    {
@@ -435,14 +436,14 @@ std::string RTokenizer::peek(const boost::regex& regex)
    }
    else
    {
-      return std::string();
+      return std::wstring();
    }
 }
 
-void RTokenizer::eatUntil(const boost::regex& regex)
+void RTokenizer::eatUntil(const boost::wregex& regex)
 {
-   boost::smatch match;
-   std::string::const_iterator end = data_.end();
+   boost::wsmatch match;
+   std::wstring::const_iterator end = data_.end();
    if (boost::regex_search(pos_, end, match, regex))
    {
       pos_ = match[0].first;
@@ -455,7 +456,7 @@ void RTokenizer::eatUntil(const boost::regex& regex)
 }
 
 
-RToken RTokenizer::consumeToken(int tokenType, std::size_t length)
+RToken RTokenizer::consumeToken(wchar_t tokenType, std::size_t length)
 {
    if (length == 0)
    {
@@ -468,10 +469,10 @@ RToken RTokenizer::consumeToken(int tokenType, std::size_t length)
       return RToken();
    }
 
-   std::string::const_iterator start = pos_ ;
+   std::wstring::const_iterator start = pos_ ;
    pos_ += length ;
    return RToken(tokenType,
-                 std::string(start, pos_),
+                 std::wstring(start, pos_),
                  start - data_.begin(),
                  length) ;
 }

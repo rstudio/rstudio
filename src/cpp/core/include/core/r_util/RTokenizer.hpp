@@ -31,28 +31,28 @@ class RToken
 {
 public:
 
-   static const int LPAREN;
-   static const int RPAREN;
-   static const int LBRACKET;
-   static const int RBRACKET;
-   static const int LBRACE;
-   static const int RBRACE;
-   static const int COMMA;
-   static const int SEMI;
-   static const int WHITESPACE;
-   static const int STRING;
-   static const int NUMBER;
-   static const int ID;
-   static const int OPER;
-   static const int UOPER;
-   static const int ERROR;
-   static const int LDBRACKET;
-   static const int RDBRACKET;
+   static const wchar_t LPAREN;
+   static const wchar_t RPAREN;
+   static const wchar_t LBRACKET;
+   static const wchar_t RBRACKET;
+   static const wchar_t LBRACE;
+   static const wchar_t RBRACE;
+   static const wchar_t COMMA;
+   static const wchar_t SEMI;
+   static const wchar_t WHITESPACE;
+   static const wchar_t STRING;
+   static const wchar_t NUMBER;
+   static const wchar_t ID;
+   static const wchar_t OPER;
+   static const wchar_t UOPER;
+   static const wchar_t ERROR;
+   static const wchar_t LDBRACKET;
+   static const wchar_t RDBRACKET;
 
 public:
    RToken();
-   RToken(int type,
-          const std::string& content,
+   RToken(wchar_t type,
+          const std::wstring& content,
           std::size_t offset,
           std::size_t length);
    virtual ~RToken();
@@ -60,8 +60,8 @@ public:
    // COPYING: via copyable shared_ptr<Impl>
 
    // accessors
-   int type() const;
-   const std::string& content() const;
+   wchar_t type() const;
+   const std::wstring& content() const;
    std::size_t offset() const;
    std::size_t length() const;
 
@@ -93,7 +93,7 @@ class RStringToken : public RToken
 {
 public:
    RStringToken(int type,
-                const std::string& content,
+                const std::wstring& content,
                 std::size_t offset,
                 std::size_t length,
                 bool wellFormed)
@@ -114,7 +114,7 @@ private:
 class RTokenRange : boost::noncopyable
 {
 public:
-   explicit RTokenRange(const std::string& code);
+   explicit RTokenRange(const std::wstring& code);
    explicit RTokenRange(const std::vector<RToken>& tokens);
    virtual ~RTokenRange() {}
 
@@ -149,10 +149,11 @@ private:
 class RTokenizer : boost::noncopyable
 {
 public:
-   static void asTokens(const std::string& code, std::vector<RToken>* pTokens);
+   static void asTokens(const std::wstring& code,
+                        std::vector<RToken>* pTokens);
 
 public:
-   explicit RTokenizer(const std::string& data)
+   explicit RTokenizer(const std::wstring& data)
       : data_(data), pos_(data_.begin())
    {
    }
@@ -171,16 +172,16 @@ private:
    RToken matchUserOperator();
    RToken matchOperator();
    bool eol();
-   char peek();
-   char peek(std::size_t lookahead);
-   char eat();
-   std::string peek(const boost::regex& regex);
-   void eatUntil(const boost::regex& regex);
-   RToken consumeToken(int tokenType, std::size_t length);
+   wchar_t peek();
+   wchar_t peek(std::size_t lookahead);
+   wchar_t eat();
+   std::wstring peek(const boost::wregex& regex);
+   void eatUntil(const boost::wregex& regex);
+   RToken consumeToken(wchar_t tokenType, std::size_t length);
 
 private:
-   std::string data_;
-   std::string::const_iterator pos_;
+   std::wstring data_;
+   std::wstring::const_iterator pos_;
 };
 
 

@@ -26,21 +26,21 @@ namespace {
 class Verifier
 {
 public:
-   Verifier(int defaultTokenType,
-            const std::string& prefix,
-            const std::string& suffix)
+   Verifier(wchar_t defaultTokenType,
+            const std::wstring& prefix,
+            const std::wstring& suffix)
       : defaultTokenType_(defaultTokenType),
         prefix_(prefix),
         suffix_(suffix)
    {
    }
 
-   void verify(const std::string& value)
+   void verify(const std::wstring& value)
    {
       verify(defaultTokenType_, value) ;
    }
 
-   void verify(int tokenType, const std::string& value)
+   void verify(wchar_t tokenType, const std::wstring& value)
    {
 
       RTokenizer rt(prefix_ + value + suffix_) ;
@@ -49,8 +49,7 @@ public:
       {
          if (t.offset() == prefix_.length())
          {
-            std::cerr << value << std::endl;
-
+            std::wcout << value << std::endl;
             BOOST_ASSERT(tokenType == t.type());
             BOOST_ASSERT(value.length() == t.length());
             BOOST_ASSERT(value == t.content());
@@ -60,145 +59,145 @@ public:
 
    }
 
-   void verify(const std::vector<std::string>& values)
+   void verify(const std::vector<std::wstring>& values)
    {
       verify(defaultTokenType_, values);
    }
 
-   void verify(int tokenType, const std::vector<std::string>& values)
+   void verify(int tokenType, const std::vector<std::wstring>& values)
    {
-      BOOST_FOREACH(const std::string& value, values)
+      BOOST_FOREACH(const std::wstring& value, values)
          verify(tokenType, value);
    }
 
 private:
-   const int defaultTokenType_ ;
-   const std::string prefix_ ;
-   const std::string suffix_ ;
+   const wchar_t defaultTokenType_ ;
+   const std::wstring prefix_ ;
+   const std::wstring suffix_ ;
 
 };
 
 
 void testVoid()
 {
-   RTokenizer rt("") ;
+   RTokenizer rt(L"") ;
    BOOST_ASSERT(!rt.nextToken());
 }
 
 void testSimple()
 {
-   Verifier v(RToken::ERROR, " ", " ") ;
-   v.verify(RToken::LPAREN, "(") ;
-   v.verify(RToken::RPAREN, ")") ;
-   v.verify(RToken::LBRACKET, "[") ;
-   v.verify(RToken::RBRACKET, "]") ;
-   v.verify(RToken::LBRACE, "{") ;
-   v.verify(RToken::RBRACE, "}") ;
-   v.verify(RToken::COMMA, ",") ;
-   v.verify(RToken::SEMI, ";") ;
+   Verifier v(RToken::ERROR, L" ", L" ") ;
+   v.verify(RToken::LPAREN, L"(") ;
+   v.verify(RToken::RPAREN, L")") ;
+   v.verify(RToken::LBRACKET, L"[") ;
+   v.verify(RToken::RBRACKET, L"]") ;
+   v.verify(RToken::LBRACE, L"{") ;
+   v.verify(RToken::RBRACE, L"}") ;
+   v.verify(RToken::COMMA, L",") ;
+   v.verify(RToken::SEMI, L";") ;
 }
 
 void testError()
 {
-   Verifier v(RToken::ERROR, " ", " ") ;
-   v.verify("#") ;
+   Verifier v(RToken::ERROR, L" ", L" ") ;
+   v.verify(L"#") ;
 }
 
 
 void testNumbers()
 {
-   Verifier v(RToken::NUMBER, " ", " ") ;
-   v.verify("1");
-   v.verify("10");
-   v.verify("0.1");
-   v.verify(".2");
-   v.verify("1e-7");
-   v.verify("1.2e+7");
-   v.verify("2e");
-   v.verify("3e+");
-   v.verify("0x");
-   v.verify("0x0");
-   v.verify("0xDEADBEEF");
-   v.verify("0xcafebad");
-   v.verify("1L");
-   v.verify("0x10L");
-   v.verify("1000000L");
-   v.verify("1e6L");
-   v.verify("1.1L");
-   v.verify("1e-3L");
-   v.verify("2i");
-   v.verify("4.1i");
-   v.verify("1e-2i");
+   Verifier v(RToken::NUMBER, L" ", L" ") ;
+   v.verify(L"1");
+   v.verify(L"10");
+   v.verify(L"0.1");
+   v.verify(L".2");
+   v.verify(L"1e-7");
+   v.verify(L"1.2e+7");
+   v.verify(L"2e");
+   v.verify(L"3e+");
+   v.verify(L"0x");
+   v.verify(L"0x0");
+   v.verify(L"0xDEADBEEF");
+   v.verify(L"0xcafebad");
+   v.verify(L"1L");
+   v.verify(L"0x10L");
+   v.verify(L"1000000L");
+   v.verify(L"1e6L");
+   v.verify(L"1.1L");
+   v.verify(L"1e-3L");
+   v.verify(L"2i");
+   v.verify(L"4.1i");
+   v.verify(L"1e-2i");
 }
 
 
 void testOperators()
 {
-   Verifier v(RToken::OPER, " ", " ") ;
-   v.verify("+");
-   v.verify("-");
-   v.verify("*");
-   v.verify("/");
-   v.verify("^");
-   v.verify(">");
-   v.verify(">=");
-   v.verify("<");
-   v.verify("<=");
-   v.verify("==");
-   v.verify("!=");
-   v.verify("!");
-   v.verify("&");
-   v.verify("|");
-   v.verify("~");
-   v.verify("->");
-   v.verify("<-");
-   v.verify("$");
-   v.verify(":");
-   v.verify("=");
+   Verifier v(RToken::OPER, L" ", L" ") ;
+   v.verify(L"+");
+   v.verify(L"-");
+   v.verify(L"*");
+   v.verify(L"/");
+   v.verify(L"^");
+   v.verify(L">");
+   v.verify(L">=");
+   v.verify(L"<");
+   v.verify(L"<=");
+   v.verify(L"==");
+   v.verify(L"!=");
+   v.verify(L"!");
+   v.verify(L"&");
+   v.verify(L"|");
+   v.verify(L"~");
+   v.verify(L"->");
+   v.verify(L"<-");
+   v.verify(L"$");
+   v.verify(L":");
+   v.verify(L"=");
 }
 
 void testUOperators()
 {
-   Verifier v(RToken::UOPER, " ", " ") ;
-   v.verify("%%");
-   v.verify("%test test%");
+   Verifier v(RToken::UOPER, L" ", L" ") ;
+   v.verify(L"%%");
+   v.verify(L"%test test%");
 }
 
 void testStrings()
 {
-   Verifier v(RToken::STRING, " ", " ") ;
-   v.verify("\"test\"") ;
-   v.verify("\" '$\t\r\n\\\"\"") ;
-   v.verify("\"\"") ;
-   v.verify("''") ;
-   v.verify("'\"'") ;
-   v.verify("'\\\"'") ;
-   v.verify("'\n'") ;
-   //v.verify("'foo bar \\U654'") ;
+   Verifier v(RToken::STRING, L" ", L" ") ;
+   v.verify(L"\"test\"") ;
+   v.verify(L"\" '$\t\r\n\\\"\"") ;
+   v.verify(L"\"\"") ;
+   v.verify(L"''") ;
+   v.verify(L"'\"'") ;
+   v.verify(L"'\\\"'") ;
+   v.verify(L"'\n'") ;
+   v.verify(L"'foo bar \\U654'") ;
 }
 
 void testIdentifiers()
 {
-   Verifier v(RToken::ID, " ", " ") ;
-   v.verify(".");
-   v.verify("...");
-   v.verify("..1");
-   v.verify("..2");
-   v.verify("foo");
-   v.verify("FOO");
-   v.verify("f1");
-   v.verify("a_b");
-   v.verify("ab_");
-   //v.verify("\u00C1qc1");
+   Verifier v(RToken::ID, L" ", L" ") ;
+   v.verify(L".");
+   v.verify(L"...");
+   v.verify(L"..1");
+   v.verify(L"..2");
+   v.verify(L"foo");
+   v.verify(L"FOO");
+   v.verify(L"f1");
+   v.verify(L"a_b");
+   v.verify(L"ab_");
+   v.verify(L"\u00C1qc1");
 }
 
 void testWhitespace()
 {
-   Verifier v(RToken::WHITESPACE, "a", "z") ;
-   v.verify(" ");
-   v.verify("      ");
-   v.verify("\t\n");
-   //v.verify("\u00A0") ;
+   Verifier v(RToken::WHITESPACE, L"a", L"z") ;
+   v.verify(L" ");
+   v.verify(L"      ");
+   v.verify(L"\t\n");
+   v.verify(L"\u00A0") ;
 }
 
 
