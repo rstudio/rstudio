@@ -13,9 +13,12 @@
 
 #include <core/StringUtils.hpp>
 
+#include <cstdlib>
+
+#include <vector>
+
 #include <core/Log.hpp>
 #include <core/Error.hpp>
-
 
 #include <boost/program_options/detail/convert.hpp>
 #include <boost/program_options/detail/utf8_codecvt_facet.hpp>
@@ -25,14 +28,43 @@ namespace string_utils {
 
 std::string wideToUtf8(const std::wstring& value)
 {
-   boost::program_options::detail::utf8_codecvt_facet utf8_facet;
-   return boost::to_8_bit(value, utf8_facet);
+   try
+   {
+      boost::program_options::detail::utf8_codecvt_facet utf8_facet;
+      return boost::to_8_bit(value, utf8_facet);
+   }
+   catch(const std::exception& e)
+   {
+      // this should NEVER happen!
+      LOG_ERROR_MESSAGE(e.what());
+      return std::string();
+   }
 }
 
 std::wstring utf8ToWide(const std::string& value)
 {
-   boost::program_options::detail::utf8_codecvt_facet utf8_facet;
-   return boost::from_8_bit(value, utf8_facet);
+   try
+   {
+      boost::program_options::detail::utf8_codecvt_facet utf8_facet;
+      return boost::from_8_bit(value, utf8_facet);
+   }
+   catch(const std::exception&)
+   {
+      // could happen if the inbound data isn't correctly utf8 encoded,
+      // in this case just use the system default encoding
+      static const std::size_t ERR = -1;
+      std::vector<wchar_t> wide(value.length() + 1);
+      std::size_t len = ::mbstowcs(&(wide[0]), value.c_str(), wide.size());
+      if (len != ERR)
+      {
+         return std::wstring(&(wide[0]), len);
+      }
+      else
+      {
+         LOG_ERROR_MESSAGE("Invalid multibyte character");
+         return std::wstring();
+      }
+   }
 }
 
 } // namespace string_utils
