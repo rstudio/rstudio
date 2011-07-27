@@ -63,8 +63,7 @@ public class ColumnSortListTest extends TestCase {
 
     // Compare with different items that equals each other.
     ColumnSortInfo info2a = createColumnSortInfo();
-    ColumnSortInfo info2b = new ColumnSortInfo(info2a.getColumn(),
-        info2a.isAscending());
+    ColumnSortInfo info2b = new ColumnSortInfo(info2a.getColumn(), info2a.isAscending());
     list0.push(info2a);
     list1.push(info2b);
     assertTrue(list0.equals(list1));
@@ -176,6 +175,30 @@ public class ColumnSortListTest extends TestCase {
     assertTrue(list.get(1).isAscending());
     assertEquals(col1, list.get(2).getColumn());
     assertTrue(list.get(2).isAscending());
+  }
+
+  /**
+   * Test pushing a column with a default sort order of descending.
+   */
+  public void testPushColumnDescending() {
+    ColumnSortList list = new ColumnSortList();
+    assertEquals(0, list.size());
+
+    // Push a column.
+    Column<String, String> col0 = new IdentityColumn<String>(new TextCell());
+    col0.setDefaultSortAscending(false);
+    ColumnSortInfo item0 = list.push(col0);
+    assertEquals(1, list.size());
+    assertEquals(item0, list.get(0));
+    assertEquals(col0, list.get(0).getColumn());
+    assertFalse(list.get(0).isAscending());
+
+    // Push the same item. Should change sort order.
+    ColumnSortInfo item0desc = list.push(col0);
+    assertEquals(1, list.size());
+    assertEquals(item0desc, list.get(0));
+    assertEquals(col0, list.get(0).getColumn());
+    assertTrue(list.get(0).isAscending());
   }
 
   public void testPushColumnSortInfo() {

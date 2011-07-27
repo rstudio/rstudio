@@ -278,6 +278,7 @@ public class CwCellTable extends ContentWidget {
       }
     };
     addressColumn.setSortable(true);
+    addressColumn.setDefaultSortAscending(false);
     sortHandler.setComparator(addressColumn, new Comparator<ContactInfo>() {
       public int compare(ContactInfo o1, ContactInfo o2) {
         return o1.getAddress().compareTo(o2.getAddress());

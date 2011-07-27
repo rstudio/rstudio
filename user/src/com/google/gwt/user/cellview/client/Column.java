@@ -48,6 +48,7 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
    */
   private FieldUpdater<T, C> fieldUpdater;
 
+  private boolean isDefaultSortAscending = true;
   private boolean isSortable = false;
   private HorizontalAlignmentConstant hAlign = null;
   private VerticalAlignmentConstant vAlign = null;
@@ -112,6 +113,15 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
   }
 
   /**
+   * Check if the default sort order of the column is ascending or descending.
+   * 
+   * @return true if default sort is ascending, false if not
+   */
+  public boolean isDefaultSortAscending() {
+    return isDefaultSortAscending;
+  }
+
+  /**
    * Check if the column is sortable.
    * 
    * @return true if sortable, false if not
@@ -163,6 +173,16 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
    */
   public void setCellStyleNames(String styleNames) {
     this.cellStyleNames = styleNames;
+  }
+
+  /**
+   * Set whether or not the default sort order is ascending.
+   * 
+   * @param isAscending true to set the default order to ascending, false for
+   *          descending
+   */
+  public void setDefaultSortAscending(boolean isAscending) {
+    this.isDefaultSortAscending = isAscending;
   }
 
   /**

@@ -82,8 +82,7 @@ public class ColumnSortList {
 
     @Override
     public int hashCode() {
-      return 31 * (column == null ? 0 : column.hashCode())
-          + (ascending ? 1 : 0);
+      return 31 * (column == null ? 0 : column.hashCode()) + (ascending ? 1 : 0);
     }
 
     /**
@@ -220,7 +219,7 @@ public class ColumnSortList {
    */
   public ColumnSortInfo push(Column<?, ?> column) {
     // If the column matches the primary column, toggle the order.
-    boolean ascending = true;
+    boolean ascending = (column == null) ? true : column.isDefaultSortAscending();
     if (size() > 0 && get(0).getColumn() == column) {
       ascending = !get(0).isAscending();
     }
