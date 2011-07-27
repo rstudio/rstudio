@@ -34,7 +34,7 @@ private:
         REST_OF_IDENTIFIER(L"[\\w.]*"),
         QUOTED_IDENTIFIER(L"`[^`]*`"),
         UNTIL_END_QUOTE(L"[\\\\\'\"]"),
-        WHITESPACE(L"[\\s\\u00A0]+"),
+        WHITESPACE(L"[\\s\\u00A0\u3000]+"),
         COMMENT(L"#.*?$")
    {
    }
