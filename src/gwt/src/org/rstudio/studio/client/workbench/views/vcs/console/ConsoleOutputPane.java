@@ -42,6 +42,9 @@ public class ConsoleOutputPane extends ResizeComposite implements OutputDisplay
 {
    interface Resources extends NineUpBorder.Resources, ClientBundle
    {
+      @Source("../../../../../../core/client/widget/NineUpBorder.css")
+      BorderStyles styles();
+
       @Source("ConsoleOutputPane.css")
       Styles styles2();
 
@@ -84,6 +87,9 @@ public class ConsoleOutputPane extends ResizeComposite implements OutputDisplay
       @Source("GitCommandCloseIcon.png")
       ImageResource closeIcon();
    }
+
+   interface BorderStyles extends NineUpBorder.Styles
+   {}
 
    interface Styles extends CssResource
    {

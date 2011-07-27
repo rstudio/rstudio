@@ -33,6 +33,10 @@ public class VCSPopup
    interface Resources extends NineUpBorder.Resources
    {
       @Override
+      @Source("../../../../../../core/client/widget/NineUpBorder.css")
+      Styles styles();
+
+      @Override
       @Source("TopLeft.png")
       ImageResource topLeft();
 
@@ -70,6 +74,10 @@ public class VCSPopup
 
       @Source("Close.png")
       ImageResource close();
+   }
+
+   public interface Styles extends NineUpBorder.Styles
+   {
    }
 
    public static void show(ReviewPresenter presenter)
