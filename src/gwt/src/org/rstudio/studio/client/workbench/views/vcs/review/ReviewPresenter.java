@@ -16,6 +16,8 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.HasText;
@@ -26,10 +28,12 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
@@ -39,18 +43,15 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.diff.*;
-import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent;
+import org.rstudio.studio.client.workbench.views.vcs.events.*;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent.Action;
-import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionHandler;
-import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionEvent;
-import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionHandler;
 import org.rstudio.studio.client.workbench.views.vcs.history.CommitInfo;
 
 import java.util.ArrayList;
 
 public class ReviewPresenter implements IsWidget
 {
-   public interface Display extends IsWidget
+   public interface Display extends IsWidget, HasAttachHandlers
    {
       ArrayList<String> getSelectedPaths();
       ArrayList<String> getSelectedDiscardablePaths();
@@ -158,10 +159,24 @@ public class ReviewPresenter implements IsWidget
 
    @Inject
    public ReviewPresenter(VCSServerOperations server,
-                          Display view)
+                          Display view,
+                          EventBus events)
    {
       server_ = server;
       view_ = view;
+
+      events.addHandler(
+            view_,
+            VcsRefreshEvent.TYPE,
+            new VcsRefreshHandler()
+            {
+               @Override
+               public void onVcsRefresh(
+                     VcsRefreshEvent event)
+               {
+                  updateDiff(false);
+               }
+            });
 
       view_.getChangelistTable().addSelectionChangeHandler(new Handler()
       {
@@ -344,21 +359,7 @@ public class ReviewPresenter implements IsWidget
       emitter.addDiffs(lines);
       String patch = emitter.createPatch();
 
-      server_.vcsApplyPatch(patch, patchMode, new SimpleRequestCallback<Void>()
-      {
-         @Override
-         public void onResponseReceived(Void response)
-         {
-            updateDiff(false);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            super.onError(error);
-            updateDiff(false);
-         }
-      });
+      server_.vcsApplyPatch(patch, patchMode, new SimpleRequestCallback<Void>());
    }
 
    private void updateDiff(boolean allowModeSwitch)

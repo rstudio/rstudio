@@ -12,7 +12,13 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.event.logical.shared.AttachEvent.Handler;
+import com.google.gwt.event.logical.shared.HasAttachHandlers;
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -21,5 +27,27 @@ public class EventBus extends HandlerManager
    public EventBus()
    {
       super(null) ;
+   }
+
+   /**
+    * Similar to 2-arg form of addHandler, but automatically removes handler
+    * when the HasAttachHandlers object detaches.
+    *
+    * If the HasAttachHandlers object detaches and reattaches, the handler
+    * will NOT automatically resubscribe.
+    */
+   public <H extends EventHandler> void addHandler(
+         HasAttachHandlers removeWhenDetached, Type<H> type, H handler)
+   {
+      final HandlerRegistration reg = addHandler(type, handler);
+      removeWhenDetached.addAttachHandler(new Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (!event.isAttached())
+               reg.removeHandler();
+         }
+      });
    }
 }

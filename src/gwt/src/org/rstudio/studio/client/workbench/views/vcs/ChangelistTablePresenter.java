@@ -13,6 +13,9 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.event.logical.shared.AttachEvent.Handler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.js.JsObject;
@@ -70,13 +73,17 @@ public class ChangelistTablePresenter
          }
       });
 
-      events.addHandler(VcsRefreshEvent.TYPE,  new VcsRefreshHandler() {
-         @Override
-         public void onVcsRefresh(VcsRefreshEvent event)
-         {
-            refresh(false);
-         }
-      });
+      events.addHandler(
+            view_,
+            VcsRefreshEvent.TYPE,
+            new VcsRefreshHandler()
+            {
+               @Override
+               public void onVcsRefresh(VcsRefreshEvent event)
+               {
+                  refresh(false);
+               }
+            });
    }
 
    private void refresh(final boolean showError)
