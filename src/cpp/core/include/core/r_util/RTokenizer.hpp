@@ -48,6 +48,7 @@ public:
    static const wchar_t ERROR;
    static const wchar_t LDBRACKET;
    static const wchar_t RDBRACKET;
+   static const wchar_t COMMENT;
 
 public:
    RToken();
@@ -169,6 +170,8 @@ private:
    RToken matchStringLiteral();
    RToken matchNumber();
    RToken matchIdentifier();
+   RToken matchQuotedIdentifier();
+   RToken matchComment();
    RToken matchUserOperator();
    RToken matchOperator();
    bool eol();

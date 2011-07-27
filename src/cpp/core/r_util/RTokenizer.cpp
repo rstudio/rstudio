@@ -32,8 +32,10 @@ private:
         HEX_NUMBER(L"0x[0-9a-fA-F]*L?"),
         USER_OPERATOR(L"%[^%]*%"),
         REST_OF_IDENTIFIER(L"[\\w.]*"),
+        QUOTED_IDENTIFIER(L"`[^`]*`"),
         UNTIL_END_QUOTE(L"[\\\\\'\"]"),
-        WHITESPACE(L"[\\s\\u00A0]+")
+        WHITESPACE(L"[\\s\\u00A0]+"),
+        COMMENT(L"#.*?$")
    {
    }
 
@@ -42,8 +44,10 @@ public:
    const boost::wregex HEX_NUMBER;
    const boost::wregex USER_OPERATOR;
    const boost::wregex REST_OF_IDENTIFIER;
+   const boost::wregex QUOTED_IDENTIFIER;
    const boost::wregex UNTIL_END_QUOTE;
    const boost::wregex WHITESPACE;
+   const boost::wregex COMMENT;
 };
 
 TokenPatterns& tokenPatterns()
@@ -72,6 +76,7 @@ const wchar_t RToken::UOPER          = 0x1006;
 const wchar_t RToken::ERROR          = 0x1007;
 const wchar_t RToken::LDBRACKET      = 0x1008;
 const wchar_t RToken::RDBRACKET      = 0x1009;
+const wchar_t RToken::COMMENT        = 0x100A;
 
 struct RToken::Impl
 {
@@ -255,6 +260,12 @@ RToken RTokenizer::nextToken()
   case L'"':
   case L'\'':
      return matchStringLiteral() ;
+  case L'`':
+     return matchQuotedIdentifier();
+  case L'#':
+     return matchComment();
+  case L'%':
+     return matchUserOperator();
   case L' ': case L'\t': case L'\r': case L'\n':
   case L'\u00A0': case L'\u3000':
      return matchWhitespace() ;
@@ -280,9 +291,6 @@ RToken RTokenizer::nextToken()
      // already tried to match on number.
      return matchIdentifier() ;
   }
-
-  if (c == L'%')
-     return matchUserOperator() ;
 
   RToken oper = matchOperator() ;
   if (oper)
@@ -360,6 +368,21 @@ RToken RTokenizer::matchIdentifier()
                  std::wstring(start, pos_),
                  start - data_.begin(),
                  pos_ - start) ;
+}
+
+RToken RTokenizer::matchQuotedIdentifier()
+{
+   std::wstring iden = peek(tokenPatterns().QUOTED_IDENTIFIER) ;
+   if (iden.empty())
+      return consumeToken(RToken::ERROR, 1);
+   else
+      return consumeToken(RToken::ID, iden.length());
+}
+
+RToken RTokenizer::matchComment()
+{
+   std::wstring comment = peek(tokenPatterns().COMMENT);
+   return consumeToken(RToken::COMMENT, comment.length());
 }
 
 RToken RTokenizer::matchUserOperator()

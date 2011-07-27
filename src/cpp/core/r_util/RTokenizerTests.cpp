@@ -100,7 +100,17 @@ void testSimple()
 void testError()
 {
    Verifier v(RToken::ERROR, L" ", L" ") ;
-   v.verify(L"#") ;
+}
+
+void testComment()
+{
+   Verifier v(RToken::COMMENT, L" ", L"\n") ;
+   v.verify(L"#");
+   v.verify(L"# foo #");
+
+   Verifier v2(RToken::COMMENT, L" ", L"\r\n") ;
+   v2.verify(L"#");
+   v2.verify(L"# foo #");
 }
 
 
@@ -188,6 +198,9 @@ void testIdentifiers()
    v.verify(L"f1");
    v.verify(L"a_b");
    v.verify(L"ab_");
+   v.verify(L"`foo`");
+   v.verify(L"`$@!$@#$`");
+   v.verify(L"`a\n\"'b`");
    v.verify(L"\u00C1qc1");
 }
 
@@ -207,6 +220,7 @@ void testWhitespace()
 void runTokenizerTests()
 {
    testVoid();
+   testComment();
    testSimple();
    testError();
    testNumbers();

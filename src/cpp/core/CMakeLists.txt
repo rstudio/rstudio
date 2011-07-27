@@ -55,6 +55,7 @@ set (CORE_SOURCE_FILES
    http/Util.cpp
    r_util/RProjectFile.cpp
    r_util/RTokenizer.cpp
+   r_util/RTokenizerTests.cpp
    system/Process.cpp
    system/System.cpp
    text/DcfParser.cpp
