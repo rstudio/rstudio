@@ -81,14 +81,16 @@ const wchar_t RToken::COMMENT        = 0x100A;
 struct RToken::Impl
 {
    Impl(wchar_t type,
-        const std::wstring& content,
+        std::wstring::const_iterator begin,
+        std::wstring::const_iterator end,
         std::size_t offset,
         std::size_t length)
-      : type(type), content(content), offset(offset), length(length)
+      : type(type), begin(begin), end(end), offset(offset), length(length)
    {
    }
    wchar_t type;
-   std::wstring content;
+   std::wstring::const_iterator begin;
+   std::wstring::const_iterator end;
    std::size_t offset;
    std::size_t length;
 };
@@ -99,10 +101,11 @@ RToken::RToken()
 }
 
 RToken::RToken(wchar_t type,
-               const std::wstring& content,
+               std::wstring::const_iterator begin,
+               std::wstring::const_iterator end,
                std::size_t offset,
                std::size_t length)
-   : pImpl_(new Impl(type, content, offset, length))
+   : pImpl_(new Impl(type, begin, end, offset, length))
 {
 }
 
@@ -117,9 +120,9 @@ wchar_t RToken::type() const
    return pImpl_->type;
 }
 
-const std::wstring& RToken::content() const
+std::wstring RToken::content() const
 {
-   return pImpl_->content;
+   return std::wstring(pImpl_->begin, pImpl_->end);
 }
 
 std::size_t RToken::offset() const
@@ -155,14 +158,12 @@ bool operator==(const RToken& lhs, const RToken& rhs)
 const std::size_t RTokenRange::NPOS = -1;
 
 RTokenRange::RTokenRange(const std::wstring& code)
-   : pos_(NPOS)
+   : tokenizer_(code), pos_(NPOS)
 {
-   RTokenizer::asTokens(code, &tokens_);
-}
-
-RTokenRange::RTokenRange(const std::vector<RToken>& tokens)
-   : tokens_(tokens), pos_(NPOS)
-{
+   // make a copy of the tokens so we can access them randomly
+   RToken token;
+   while (token = tokenizer_.nextToken())
+      tokens_.push_back(token);
 }
 
 bool RTokenRange::isBOD() const
@@ -174,7 +175,6 @@ bool RTokenRange::isEOD() const
 {
    return pos_ > tokens_.size();
 }
-
 
 RToken RTokenRange::currentToken()
 {
@@ -221,16 +221,6 @@ void RTokenRange::moveToEOD()
 void RTokenRange::ensureValidIndex()
 {
    pos_ = std::min(std::max(NPOS, pos_), tokens_.size()) ;
-}
-
-
-void RTokenizer::asTokens(const std::wstring& code,
-                          std::vector<RToken>* pTokens)
-{
-   RTokenizer tokenizer(code);
-   RToken token;
-   while (token = tokenizer.nextToken())
-      pTokens->push_back(token);
 }
 
 
@@ -343,7 +333,8 @@ RToken RTokenizer::matchStringLiteral()
    }
 
    return RStringToken(RToken::STRING,
-                       std::wstring(start, pos_),
+                       start,
+                       pos_,
                        start - data_.begin(),
                        pos_ - start,
                        wellFormed) ;
@@ -365,7 +356,8 @@ RToken RTokenizer::matchIdentifier()
    std::wstring rest = peek(tokenPatterns().REST_OF_IDENTIFIER) ;
    pos_ += rest.length() ;
    return RToken(RToken::ID,
-                 std::wstring(start, pos_),
+                 start,
+                 pos_,
                  start - data_.begin(),
                  pos_ - start) ;
 }
@@ -495,7 +487,8 @@ RToken RTokenizer::consumeToken(wchar_t tokenType, std::size_t length)
    std::wstring::const_iterator start = pos_ ;
    pos_ += length ;
    return RToken(tokenType,
-                 std::wstring(start, pos_),
+                 start,
+                 pos_,
                  start - data_.begin(),
                  length) ;
 }

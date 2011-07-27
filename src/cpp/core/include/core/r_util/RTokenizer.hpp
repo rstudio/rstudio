@@ -58,7 +58,8 @@ public:
 public:
    RToken();
    RToken(wchar_t type,
-          const std::wstring& content,
+          std::wstring::const_iterator begin,
+          std::wstring::const_iterator end,
           std::size_t offset,
           std::size_t length);
    virtual ~RToken();
@@ -67,7 +68,7 @@ public:
 
    // accessors
    wchar_t type() const;
-   const std::wstring& content() const;
+   std::wstring content() const;
    std::size_t offset() const;
    std::size_t length() const;
 
@@ -98,12 +99,13 @@ inline bool operator!=(const RToken& lhs, const RToken& rhs)
 class RStringToken : public RToken
 {
 public:
-   RStringToken(int type,
-                const std::wstring& content,
+   RStringToken(wchar_t type,
+                std::wstring::const_iterator begin,
+                std::wstring::const_iterator end,
                 std::size_t offset,
                 std::size_t length,
                 bool wellFormed)
-      : RToken(type, content, offset, length), wellFormed_(wellFormed)
+      : RToken(type, begin, end, offset, length), wellFormed_(wellFormed)
    {
    }
 
@@ -117,47 +119,12 @@ private:
 };
 
 
-class RTokenRange : boost::noncopyable
-{
-public:
-   explicit RTokenRange(const std::wstring& code);
-   explicit RTokenRange(const std::vector<RToken>& tokens);
-   virtual ~RTokenRange() {}
-
-   // COPYING: boost::noncopyable
-
-   bool isBOD() const;
-
-   bool isEOD() const;
-
-   RToken currentToken();
-
-   RToken next();
-
-   RToken prev();
-
-   Error moveTo(std::size_t index);
-
-   void moveToBOD();
-
-   void moveToEOD();
-
-private:
-   void ensureValidIndex();
-
-private:
-   std::vector<RToken> tokens_;
-   std::size_t pos_;
-   static const std::size_t NPOS;
-};
-
-
+// Tokenize R code. Note that the RToken instances which are returned are
+// valid only during the lifetime of the RTokenizer which yielded them
+// (because they store iterators into their content rather than making a copy
+// of the content)
 class RTokenizer : boost::noncopyable
 {
-public:
-   static void asTokens(const std::wstring& code,
-                        std::vector<RToken>* pTokens);
-
 public:
    explicit RTokenizer(const std::wstring& data)
       : data_(data), pos_(data_.begin())
@@ -190,6 +157,40 @@ private:
 private:
    std::wstring data_;
    std::wstring::const_iterator pos_;
+};
+
+
+// Tokenize R code and access it as a range of RTokens. Note that the RToken
+// instances which are returned are valid only during the lifetime of
+// the RTokenRange which yielded them (because they store iterators into
+// their content rather than making a copy of the content)
+class RTokenRange : boost::noncopyable
+{
+public:
+   explicit RTokenRange(const std::wstring& code);
+   virtual ~RTokenRange() {}
+
+   // COPYING: boost::noncopyable
+
+   bool isBOD() const;
+   bool isEOD() const;
+
+   RToken currentToken();
+   RToken next();
+   RToken prev();
+
+   Error moveTo(std::size_t index);
+   void moveToBOD();
+   void moveToEOD();
+
+private:
+   void ensureValidIndex();
+
+private:
+   RTokenizer tokenizer_;
+   std::vector<RToken> tokens_;
+   std::size_t pos_;
+   static const std::size_t NPOS;
 };
 
 
