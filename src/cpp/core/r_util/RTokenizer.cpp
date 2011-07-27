@@ -11,6 +11,12 @@
  *
  */
 
+// TODO: Eliminate length field (can be calculated)
+// TODO: Eliminate shared_ptr for no allocations at all
+// TODO: Operator == shouldn't call contents()
+// TODO: Slicing of RStringToken (may need to merge w/ RToken)
+// TODO: RTokenRange is broken (NPOS=-1)
+
 #include <core/r_util/RTokenizer.hpp>
 
 #include <boost/regex.hpp>
