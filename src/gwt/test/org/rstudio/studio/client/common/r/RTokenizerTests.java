@@ -15,15 +15,17 @@ package org.rstudio.studio.client.common.r;
 import junit.framework.Assert ;
 
 import com.google.gwt.junit.client.GWTTestCase ;
+import org.rstudio.studio.client.common.r.RToken;
+import org.rstudio.studio.client.common.r.RTokenizer;
 
 public class RTokenizerTests extends GWTTestCase
 {
    @Override
    public String getModuleName()
    {
-      return "org.rstudio.core.Core" ;
+      return "org.rstudio.studio.RStudio" ;
    }
-   
+
    public void testVoid()
    {
       RTokenizer rt = new RTokenizer("") ;
@@ -46,7 +48,17 @@ public class RTokenizerTests extends GWTTestCase
    public void testError()
    {
       Verifier v = new Verifier(RToken.ERROR, " ", " ") ;
-      v.verify("#") ;
+   }
+
+   public void testComment()
+   {
+      Verifier v = new Verifier(RToken.COMMENT, " ", "\n") ;
+      v.verify("#");
+      v.verify("# foo #");
+
+      Verifier v2 = new Verifier(RToken.COMMENT, " ", "\r\n") ;
+      v2.verify("#");
+      v2.verify("# foo #");
    }
    
    public void testNumbers()
@@ -93,7 +105,7 @@ public class RTokenizerTests extends GWTTestCase
       Verifier v = new Verifier(RToken.ID, " ", " ") ;
       v.verify(new String[] {
             ".", "...", "..1", "..2", "foo", "FOO", "f1",
-            "a_b", "ab_", "\u00C1qc1"
+            "a_b", "ab_", "\u00C1qc1", "`foo`", "`$@!$@#$`", "`a\n\"'b`"
       }) ;
    }
    

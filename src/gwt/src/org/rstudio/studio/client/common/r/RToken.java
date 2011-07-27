@@ -94,6 +94,7 @@ public class RToken
    public static final int ERROR          = 0x1007 ;
    public static final int LDBRACKET      = 0x1008 ; // [[
    public static final int RDBRACKET      = 0x1009 ; // ]]
+   public static final int COMMENT        = 0x100A ;
 
    private final int tokenType_ ;
    private final String content_ ;
