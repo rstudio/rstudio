@@ -37,7 +37,27 @@ bool prepareEnvironment(Options &options)
    if (!rVersion.isValid())
       return false;
 
-   system::setenv("R_HOME", rVersion.homeDir().toStdString());
+
+   // get the short path version of the home dir
+   std::string homePath =
+         QDir::toNativeSeparators(rVersion.homeDir()).toStdString();
+   DWORD len = ::GetShortPathName(homePath.c_str(), NULL, 0);
+   std::vector<TCHAR> buffer(len, 0);
+   if (::GetShortPathName(homePath.c_str(), &(buffer[0]), len) != 0)
+   {
+      // copy path to string and assign it we got one
+      std::string shortHomePath(&(buffer[0]));
+      if (!shortHomePath.empty())
+         homePath = shortHomePath;
+   }
+   else
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+   }
+
+
+   // set R_HOME
+   system::setenv("R_HOME", homePath);
 
    std::string path =
          QDir::toNativeSeparators(rVersion.binDir()).toStdString() + ";" +
