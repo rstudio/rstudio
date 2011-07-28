@@ -27,6 +27,10 @@ import com.google.gwt.view.client.RowCountChangeEvent;
  */
 public abstract class AbstractPager extends Composite {
 
+  // Visible for testing.
+  HandlerRegistration rangeChangeHandler;
+  HandlerRegistration rowCountChangeHandler;
+
   private HasRows display;
 
   /**
@@ -38,9 +42,6 @@ public abstract class AbstractPager extends Composite {
    * The last row count.
    */
   private int lastRowCount;
-
-  private HandlerRegistration rangeChangeHandler;
-  private HandlerRegistration rowCountChangeHandler;
 
   /**
    * Get the {@link HasRows} being paged.
@@ -109,29 +110,28 @@ public abstract class AbstractPager extends Composite {
     }
     if (rowCountChangeHandler != null) {
       rowCountChangeHandler.removeHandler();
-      rangeChangeHandler = null;
+      rowCountChangeHandler = null;
     }
 
     // Set the new display.
     this.display = display;
     if (display != null) {
-      rangeChangeHandler = display.addRangeChangeHandler(
-          new RangeChangeEvent.Handler() {
-            public void onRangeChange(RangeChangeEvent event) {
-              if (AbstractPager.this.display != null) {
-                onRangeOrRowCountChanged();
-              }
-            }
-          });
-      rowCountChangeHandler = display.addRowCountChangeHandler(
-          new RowCountChangeEvent.Handler() {
-            public void onRowCountChange(RowCountChangeEvent event) {
-              if (AbstractPager.this.display != null) {
-                handleRowCountChange(
-                    event.getNewRowCount(), event.isNewRowCountExact());
-              }
-            }
-          });
+      rangeChangeHandler = display.addRangeChangeHandler(new RangeChangeEvent.Handler() {
+        @Override
+        public void onRangeChange(RangeChangeEvent event) {
+          if (AbstractPager.this.display != null) {
+            onRangeOrRowCountChanged();
+          }
+        }
+      });
+      rowCountChangeHandler = display.addRowCountChangeHandler(new RowCountChangeEvent.Handler() {
+        @Override
+        public void onRowCountChange(RowCountChangeEvent event) {
+          if (AbstractPager.this.display != null) {
+            handleRowCountChange(event.getNewRowCount(), event.isNewRowCountExact());
+          }
+        }
+      });
 
       // Initialize the pager.
       onRangeOrRowCountChanged();

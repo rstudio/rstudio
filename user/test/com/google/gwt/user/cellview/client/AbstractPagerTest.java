@@ -19,6 +19,8 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.MockHasData;
 import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.RangeChangeEvent;
+import com.google.gwt.view.client.RowCountChangeEvent;
 
 /**
  * Tests for {@link AbstractPager}.
@@ -234,6 +236,45 @@ public class AbstractPagerTest extends GWTTestCase {
     display.setRowCount(105, true);
     pager.previousPage();
     assertEquals(new Range(25, 20), display.getVisibleRange());
+  }
+
+  public void testSetDisplay() {
+    AbstractPager pager = createPager();
+    assertNull(pager.getDisplay());
+
+    // Set display to a value.
+    MockHasData<String> display0 = new MockHasData<String>();
+    pager.setDisplay(display0);
+    assertEquals(display0, pager.getDisplay());
+    assertEquals(1, display0.getHandlerCount(RangeChangeEvent.getType()));
+    assertEquals(1, display0.getHandlerCount(RowCountChangeEvent.getType()));
+    assertNotNull(pager.rangeChangeHandler);
+    assertNotNull(pager.rowCountChangeHandler);
+
+    /*
+     * Set display to null.
+     * 
+     * Verify that the handlers are removed.
+     */
+    pager.setDisplay(null);
+    assertNull(pager.getDisplay());
+    assertEquals(0, display0.getHandlerCount(RangeChangeEvent.getType()));
+    assertEquals(0, display0.getHandlerCount(RowCountChangeEvent.getType()));
+    assertNull(pager.rangeChangeHandler);
+    assertNull(pager.rowCountChangeHandler);
+
+    /*
+     * Set display again.
+     * 
+     * Verify that the handlers are re-added.
+     */
+    MockHasData<String> display1 = new MockHasData<String>();
+    pager.setDisplay(display1);
+    assertEquals(display1, pager.getDisplay());
+    assertEquals(1, display1.getHandlerCount(RangeChangeEvent.getType()));
+    assertEquals(1, display1.getHandlerCount(RowCountChangeEvent.getType()));
+    assertNotNull(pager.rangeChangeHandler);
+    assertNotNull(pager.rowCountChangeHandler);
   }
 
   public void testSetPage() {
