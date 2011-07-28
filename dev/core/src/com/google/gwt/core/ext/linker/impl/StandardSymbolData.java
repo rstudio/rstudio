@@ -32,15 +32,15 @@ import java.net.URISyntaxException;
 public class StandardSymbolData implements SymbolData {
 
   public static StandardSymbolData forClass(String className, String uriString,
-      int lineNumber, int queryId, CastableTypeMap castableTypeMap) {
+      int lineNumber, int queryId, CastableTypeMap castableTypeMap, int seedId) {
     return new StandardSymbolData(className, null, null, uriString, lineNumber,
-        queryId, castableTypeMap);
+        queryId, castableTypeMap, seedId);
   }
 
   public static StandardSymbolData forMember(String className,
       String memberName, String methodSig, String uriString, int lineNumber) {
     return new StandardSymbolData(className, memberName, methodSig, uriString,
-        lineNumber, 0, null);
+        lineNumber, 0, null, -1);
   }
 
   public static String toUriString(String fileName) {
@@ -63,11 +63,12 @@ public class StandardSymbolData implements SymbolData {
   private String sourceUri;
   private String symbolName;
   private int queryId;
+  private int seedId;
   private CastableTypeMap castableTypeMap;
 
   private StandardSymbolData(String className, String memberName,
       String methodSig, String sourceUri, int sourceLine, int queryId, 
-      CastableTypeMap castableTypeMap) {
+      CastableTypeMap castableTypeMap, int seedId) {
     assert className != null && className.length() > 0 : "className";
     assert memberName != null || methodSig == null : "methodSig without memberName";
     assert sourceLine >= -1 : "sourceLine: " + sourceLine;
@@ -79,6 +80,7 @@ public class StandardSymbolData implements SymbolData {
     this.sourceLine = sourceLine;
     this.queryId = queryId;
     this.castableTypeMap = castableTypeMap;
+    this.seedId = seedId;
   }
   
   public CastableTypeMap getCastableTypeMap() {
@@ -105,6 +107,10 @@ public class StandardSymbolData implements SymbolData {
 
   public int getQueryId() {
     return queryId;
+  }
+
+  public int getSeedId() {
+    return seedId;
   }
 
   public int getSourceLine() {
@@ -161,6 +167,7 @@ public class StandardSymbolData implements SymbolData {
     symbolName = in.readUTF();
     queryId = in.readInt();
     castableTypeMap = (CastableTypeMap) in.readObject();
+    seedId = in.readInt();
   }
 
   /**
@@ -189,5 +196,6 @@ public class StandardSymbolData implements SymbolData {
     out.writeUTF(symbolName);
     out.writeInt(queryId);
     out.writeObject(castableTypeMap);
+    out.writeInt(seedId);
   }
 }

@@ -22,6 +22,9 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -559,12 +562,22 @@ public class JsStackEmulator {
   }
 
   /**
-   * Creates a visitor to instrument each JsFunction in the program.
+   * Creates a visitor to instrument each JsFunction in the jsProgram.
    */
   private class InstrumentAllFunctions extends JsVisitor {
+
     @Override
     public void endVisit(JsFunction x, JsContext ctx) {
       if (!x.getBody().getStatements().isEmpty()) {
+        JsName fnName = x.getName();
+        JMethod method = jjsmap.nameToMethod(fnName);
+        /**
+         * Do not instrumental immortal types because they are potentially
+         * evaluated before anything else has been defined.
+         */
+        if (method != null && jprogram.immortalCodeGenTypes.contains(method.getEnclosingType())) {
+          return;
+        }
         if (recordLineNumbers) {
           (new LocationVisitor(x)).accept(x.getBody());
         } else {
@@ -802,9 +815,11 @@ public class JsStackEmulator {
     STRIP, NATIVE, EMULATED;
   }
 
-  public static void exec(JsProgram program, PropertyOracle[] propertyOracles) {
+  public static void exec(JProgram jprogram, JsProgram jsProgram,
+      PropertyOracle[] propertyOracles,
+      JavaToJavaScriptMap jjsmap) {
     if (getStackMode(propertyOracles) == StackMode.EMULATED) {
-      (new JsStackEmulator(program, propertyOracles)).execImpl();
+      (new JsStackEmulator(jprogram, jsProgram, propertyOracles, jjsmap)).execImpl();
     }
   }
 
@@ -839,14 +854,20 @@ public class JsStackEmulator {
 
   private JsFunction caughtFunction;
   private JsName lineNumbers;
-  private final JsProgram program;
+  private JProgram jprogram;
+  private final JsProgram jsProgram;
+  private JavaToJavaScriptMap jjsmap;
   private boolean recordFileNames;
   private boolean recordLineNumbers;
   private JsName stack;
   private JsName stackDepth;
 
-  private JsStackEmulator(JsProgram program, PropertyOracle[] propertyOracles) {
-    this.program = program;
+  private JsStackEmulator(JProgram jprogram, JsProgram jsProgram,
+      PropertyOracle[] propertyOracles,
+      JavaToJavaScriptMap jjsmap) {
+    this.jprogram = jprogram;
+    this.jsProgram = jsProgram;
+    this.jjsmap = jjsmap;
 
     assert propertyOracles.length > 0;
     PropertyOracle oracle = propertyOracles[0];
@@ -865,27 +886,27 @@ public class JsStackEmulator {
   }
 
   private void execImpl() {
-    caughtFunction = program.getIndexedFunction("Exceptions.caught");
+    caughtFunction = jsProgram.getIndexedFunction("Exceptions.caught");
     if (caughtFunction == null) {
       // No exceptions caught? Weird, but possible.
       return;
     }
     initNames();
     makeVars();
-    (new ReplaceUnobfuscatableNames()).accept(program);
-    (new InstrumentAllFunctions()).accept(program);
+    (new ReplaceUnobfuscatableNames()).accept(jsProgram);
+    (new InstrumentAllFunctions()).accept(jsProgram);
   }
 
   private void initNames() {
-    stack = program.getScope().declareName("$JsStackEmulator_stack", "$stack");
-    stackDepth = program.getScope().declareName("$JsStackEmulator_stackDepth",
+    stack = jsProgram.getScope().declareName("$JsStackEmulator_stack", "$stack");
+    stackDepth = jsProgram.getScope().declareName("$JsStackEmulator_stackDepth",
         "$stackDepth");
-    lineNumbers = program.getScope().declareName("$JsStackEmulator_location",
+    lineNumbers = jsProgram.getScope().declareName("$JsStackEmulator_location",
         "$location");
   }
 
   private void makeVars() {
-    SourceInfo info = program.createSourceInfoSynthetic(getClass());
+    SourceInfo info = jsProgram.createSourceInfoSynthetic(getClass());
     JsVar stackVar = new JsVar(info, stack);
     stackVar.setInitExpr(new JsArrayLiteral(info));
     JsVar stackDepthVar = new JsVar(info, stackDepth);
@@ -894,12 +915,12 @@ public class JsStackEmulator {
     lineNumbersVar.setInitExpr(new JsArrayLiteral(info));
 
     JsVars vars;
-    JsStatement first = program.getGlobalBlock().getStatements().get(0);
+    JsStatement first = jsProgram.getGlobalBlock().getStatements().get(0);
     if (first instanceof JsVars) {
       vars = (JsVars) first;
     } else {
       vars = new JsVars(info);
-      program.getGlobalBlock().getStatements().add(0, vars);
+      jsProgram.getGlobalBlock().getStatements().add(0, vars);
     }
     vars.add(stackVar);
     vars.add(stackDepthVar);

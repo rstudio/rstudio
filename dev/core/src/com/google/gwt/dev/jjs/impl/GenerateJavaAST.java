@@ -514,14 +514,17 @@ public class GenerateJavaAST {
             // Just use JavaScriptObject's implementation for all subclasses.
             currentClass.getMethods().remove(2);
           } else {
-            tryFindUpRefs(method);
-            SourceInfo info = method.getSourceInfo();
-            if (isScript(program) && currentClass == program.getIndexedType("Array")) {
-              // Special implementation: return this.arrayClass
-              implementMethod(method, new JFieldRef(info, new JThisRef(info,
-                  (JClassType) currentClass), program.getIndexedField("Array.arrayClass"),
-                  currentClass));
+            if (currentClass == program.getIndexedType("Array")) {
+              /*
+              * Don't implement, fall through to Object.getClass(). Array emulation code
+              * in com.google.gwt.lang.Array invokes Array.getClass() and expects to get the
+              * class literal for the actual runtime type of the array (e.g. Foo[].class) and
+              * not Array.class.
+              */
+              currentClass.getMethods().remove(2);
             } else {
+              tryFindUpRefs(method);
+              SourceInfo info = method.getSourceInfo();
               implementMethod(method, new JClassLiteral(info.makeChild(), currentClass));
             }
           }
