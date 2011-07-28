@@ -16,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
@@ -91,6 +92,19 @@ public:
    std::size_t offset() const { return offset_; }
    std::size_t length() const { return end_ - begin_; }
 
+   // efficient comparison operations
+   bool isIdentifier(const std::wstring& identifier) const
+   {
+      return (type_ == RToken::ID) &&
+              std::equal(begin_, end_, identifier.begin());
+   }
+
+   bool isOperator(const std::wstring& op) const
+   {
+      return (type_ == RToken::OPER) &&
+            std::equal(begin_, end_, op.begin());
+   }
+
    // allow direct use in conditional statements (nullability)
    typedef void (*unspecified_bool_type)();
    static void unspecified_bool_true() {}
@@ -159,12 +173,28 @@ private:
 class RTokens : public std::vector<RToken>, boost::noncopyable
 {
 public:
-   explicit RTokens(const std::wstring& code)
+   enum Flags
+   {
+      None = 0,
+      StripWhitespace = 1,
+      StripComments = 2
+   };
+
+public:
+   explicit RTokens(const std::wstring& code, int flags = None)
       : tokenizer_(code)
    {
       RToken token;
       while (token = tokenizer_.nextToken())
+      {
+         if ((flags & StripWhitespace) && token.type() == RToken::WHITESPACE)
+            continue;
+
+         if ((flags & StripComments) && token.type() == RToken::COMMENT)
+            continue;
+
          push_back(token);
+      }
    }
 
 private:
