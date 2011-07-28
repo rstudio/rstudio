@@ -50,6 +50,8 @@ package com.google.gwt.safehtml.shared;
  *
  * <p>
  * Implementations must not return {@code null} from {@link #asString()}.
+ * 
+ * @see UriUtils
  */
 public interface SafeUri {
 
