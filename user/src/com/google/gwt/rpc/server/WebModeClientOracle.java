@@ -52,8 +52,7 @@ public final class WebModeClientOracle extends ClientOracle implements
     private WebModeClientOracle oracle = new WebModeClientOracle();
 
     public void add(String jsIdent, String jsniIdent, String className,
-        String memberName, int queryId, CastableTypeData castableTypeData,
-        int seedId) {
+        String memberName, int queryId, CastableTypeData castableTypeData) {
       
       oracle.idents.add(jsIdent);
       ClassData data = oracle.getClassData(className);
@@ -74,9 +73,6 @@ public final class WebModeClientOracle extends ClientOracle implements
         data.typeName = className;
         data.seedName = jsIdent;
         oracle.seedNamesToClassData.put(jsIdent, data);
-        // Class.getName() with metadata disabled is "Class$S<seedId>"
-        oracle.seedIdsToClassData.put("S" + seedId, data);
-        data.seedId = seedId;
       } else {
         if (jsniIdent.contains("(")) {
           jsniIdent = jsniIdent.substring(jsniIdent.indexOf("::") + 2,
@@ -135,7 +131,6 @@ public final class WebModeClientOracle extends ClientOracle implements
     public String seedName;
     public List<String> serializableFields = Collections.emptyList();
     public String typeName;
-    public int seedId;
   }
 
   /**
@@ -144,7 +139,7 @@ public final class WebModeClientOracle extends ClientOracle implements
    * TODO: Use something other than Java serialization to store this type's
    * data.
    */
-  private static final long serialVersionUID = 2L;
+  private static final long serialVersionUID = 1L;
 
   /**
    * Recreate a WebModeClientOracle based on the contents previously emitted by
@@ -227,7 +222,6 @@ public final class WebModeClientOracle extends ClientOracle implements
   private final Set<String> idents = new HashSet<String>();
 
   private final Map<String, ClassData> seedNamesToClassData = new HashMap<String, ClassData>();
-  private final Map<String, ClassData> seedIdsToClassData = new HashMap<String, ClassData>();
 
   private transient Map<Class<?>, Field[]> operableFieldMap = new IdentityHashMap<Class<?>, Field[]>();
 
@@ -387,9 +381,6 @@ public final class WebModeClientOracle extends ClientOracle implements
       seedName = seedName.substring(6);
     }
     ClassData data = seedNamesToClassData.get(seedName);
-    if (data == null) {
-      data = seedIdsToClassData.get(seedName);
-    }
     return data == null ? null : data.typeName;
   }
 

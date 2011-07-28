@@ -518,16 +518,6 @@ public class ControlFlowAnalyzer {
       return false;
     }
 
-    private void maybeRescueClassLiteral(JReferenceType type) {
-      if (liveFieldsAndMethods.contains(getClassMethod) || liveFieldsAndMethods.contains(getClassField)) {
-        // getClass() already live so rescue class literal immediately
-        rescue(program.getClassLiteralField(type));
-      } else {
-        // getClass() not live yet, so mark for later rescue
-        classLiteralsToBeRescuedIfGetClassIsLive.add(type);
-      }
-    }
-
     /**
      * Subclasses of JavaScriptObject are never instantiated directly. They are
      * implicitly created when a JSNI method passes a reference to an existing
@@ -584,9 +574,6 @@ public class ControlFlowAnalyzer {
             maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
           }
           rescueOverridingMethods(method);
-          if (method == getClassMethod) {
-            rescueClassLiteralsIfGetClassIsLive();
-          }
           return true;
         }
       }
@@ -607,8 +594,6 @@ public class ControlFlowAnalyzer {
       boolean doVisit = false;
       if (isInstantiated && !instantiatedTypes.contains(type)) {
         instantiatedTypes.add(type);
-        maybeRescueClassLiteral(type);
-
         doVisit = true;
       }
 
@@ -638,10 +623,6 @@ public class ControlFlowAnalyzer {
       if (var != null) {
         if (liveFieldsAndMethods.add(var)) {
           membersToRescueIfTypeIsInstantiated.remove(var);
-          if (var == getClassField) {
-            rescueClassLiteralsIfGetClassIsLive();
-          }
-
           if (isStaticFieldInitializedToLiteral(var)) {
             /*
              * Rescue literal initializers when the field is rescued, not when
@@ -765,18 +746,6 @@ public class ControlFlowAnalyzer {
       }
     }
 
-    private void rescueClassLiteralsIfGetClassIsLive() {
-      if (classLiteralsToBeRescuedIfGetClassIsLive != null) {
-        // guard against re-entrant calls. This only needs to run once.
-        Set<JReferenceType> toRescue = classLiteralsToBeRescuedIfGetClassIsLive;
-        classLiteralsToBeRescuedIfGetClassIsLive = null;
-
-        for (JReferenceType classLit : toRescue) {
-          maybeRescueClassLiteral(classLit);
-        }
-      }
-    }
-
     /**
      * If the type is instantiable, rescue any of its virtual methods that a
      * previously seen method call could call.
@@ -838,13 +807,6 @@ public class ControlFlowAnalyzer {
 
   private final JMethod asyncFragmentOnLoad;
   private final JDeclaredType baseArrayType;
-
-  /**
-   * Schrodinger set of classLiterals to be rescued if type is instantiated AND getClass()
-   * is live.
-   */
-  private Set<JReferenceType> classLiteralsToBeRescuedIfGetClassIsLive = new HashSet<JReferenceType>();
-
   private DependencyRecorder dependencyRecorder;
   private Set<JField> fieldsWritten = new HashSet<JField>();
   private Set<JReferenceType> instantiatedTypes = new HashSet<JReferenceType>();
@@ -865,8 +827,6 @@ public class ControlFlowAnalyzer {
    */
   private Map<JMethod, List<JMethod>> methodsThatOverrideMe;
 
-  private final JField getClassField;
-  private final JMethod getClassMethod;
   private final JProgram program;
   private Set<JReferenceType> referencedTypes = new HashSet<JReferenceType>();
   private final RescueVisitor rescuer = new RescueVisitor();
@@ -891,8 +851,6 @@ public class ControlFlowAnalyzer {
           new HashMap<JParameter, List<JExpression>>(cfa.argsToRescueIfParameterRead);
     }
     methodsThatOverrideMe = cfa.methodsThatOverrideMe;
-    getClassField = program.getIndexedField("Object.___clazz");
-    getClassMethod = program.getIndexedMethod("Object.getClass");
   }
 
   public ControlFlowAnalyzer(JProgram program) {
@@ -900,8 +858,6 @@ public class ControlFlowAnalyzer {
     asyncFragmentOnLoad = program.getIndexedMethod("AsyncFragmentLoader.onLoad");
     runAsyncOnsuccess = program.getIndexedMethod("RunAsyncCallback.onSuccess");
     baseArrayType = program.getIndexedType("Array");
-    getClassField = program.getIndexedField("Object.___clazz");
-    getClassMethod = program.getIndexedMethod("Object.getClass");
     buildMethodsOverriding();
   }
 
@@ -1008,15 +964,6 @@ public class ControlFlowAnalyzer {
     runAsync.traverseOnSuccess(rescuer);
   }
 
-  /**
-   * Traverse the fragments for all runAsyncs.
-   */
-  public void traverseFromRunAsyncs() {
-    for (JRunAsync runAsync : program.getRunAsyncs()) {
-      traverseFromRunAsync(runAsync);
-    }
-  }
-
   private void buildMethodsOverriding() {
     methodsThatOverrideMe = new HashMap<JMethod, List<JMethod>>();
     for (JDeclaredType type : program.getDeclaredTypes()) {
@@ -1030,6 +977,15 @@ public class ControlFlowAnalyzer {
           overs.add(method);
         }
       }
+    }
+  }
+
+  /**
+   * Traverse the fragments for all runAsyncs.
+   */
+  private void traverseFromRunAsyncs() {
+    for (JRunAsync runAsync : program.getRunAsyncs()) {
+      traverseFromRunAsync(runAsync);
     }
   }
 }

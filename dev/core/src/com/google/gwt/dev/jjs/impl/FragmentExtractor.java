@@ -31,15 +31,15 @@ import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
-import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
+import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
-import com.google.gwt.dev.js.ast.JsVisitable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -238,31 +238,21 @@ public class FragmentExtractor {
      * The type whose vtables can currently be installed.
      */
     JClassType currentVtableType = null;
-    JClassType pendingVtableType = null;
-    JsExprStmt pendingDefineSeed = null;
 
-
-      // Since we haven't run yet.
+    // Since we haven't run yet.
     assert jsprogram.getFragmentCount() == 1;
-
     List<JsStatement> stats = jsprogram.getGlobalBlock().getStatements();
     for (JsStatement stat : stats) {
-
       boolean keepIt;
       JClassType vtableTypeAssigned = vtableTypeAssigned(stat);
-      if (vtableTypeAssigned != null
-          && livenessPredicate.isLive(vtableTypeAssigned)) {
-        boolean[] anyCtorsSetup = new boolean[1];
-        JsExprStmt result = maybeRemoveCtorsFromDefineSeedStmt(livenessPredicate,
-            alreadyLoadedPredicate, stat, anyCtorsSetup);
-        boolean anyWorkDone = anyCtorsSetup[0]
-            || !alreadyLoadedPredicate.isLive(vtableTypeAssigned);
-        if (anyWorkDone) {
+      if (vtableTypeAssigned != null && livenessPredicate.isLive(vtableTypeAssigned)) {
+        JsExprStmt result =
+            extractPrototypeSetup(livenessPredicate, alreadyLoadedPredicate, stat,
+                vtableTypeAssigned);
+        if (result != null) {
           stat = result;
           keepIt = true;
         } else {
-          pendingDefineSeed = result;
-          pendingVtableType = vtableTypeAssigned;
           keepIt = false;
         }
       } else if (containsRemovableVars(stat)) {
@@ -280,11 +270,8 @@ public class FragmentExtractor {
         }
         JClassType vtableType = vtableTypeNeeded(stat);
         if (vtableType != null && vtableType != currentVtableType) {
-          assert pendingVtableType == vtableType;
-          extractedStats.add(pendingDefineSeed);
-          currentVtableType = pendingVtableType;
-          pendingDefineSeed = null;
-          pendingVtableType = null;
+          extractedStats.add(vtableStatFor(vtableType));
+          currentVtableType = vtableType;
         }
         extractedStats.add(stat);
       }
@@ -336,6 +323,57 @@ public class FragmentExtractor {
     return false;
   }
 
+  /**
+   * Weird case: the seed function's liveness is associated with the type
+   * itself. However, individual constructors can have a liveness that is a
+   * subset of the type's liveness. We essentially have to break up the
+   * prototype chain according to exactly what's newly live.
+   */
+  private JsExprStmt extractPrototypeSetup(final LivenessPredicate livenessPredicate,
+      final LivenessPredicate alreadyLoadedPredicate, JsStatement stat,
+      final JClassType vtableTypeAssigned) {
+    final boolean[] anyLiveCode = new boolean[1];
+    Cloner c = new Cloner() {
+      @Override
+      public void endVisit(JsBinaryOperation x, JsContext ctx) {
+        JsExpression rhs = stack.pop();
+        JsNameRef lhs = (JsNameRef) stack.pop();
+        if (rhs instanceof JsNew || rhs instanceof JsObjectLiteral) {
+          // The super op is being assigned to the seed prototype.
+          if (alreadyLoadedPredicate.isLive(vtableTypeAssigned)) {
+            stack.push(lhs);
+            return;
+          } else {
+            anyLiveCode[0] = true;
+          }
+        } else if (lhs.getQualifier() == null) {
+          // The underscore is being assigned to.
+          assert "_".equals(lhs.getIdent());
+        } else {
+          // A constructor function is being assigned to.
+          assert "prototype".equals(lhs.getIdent());
+          JsNameRef ctorRef = (JsNameRef) lhs.getQualifier();
+          JConstructor ctor = (JConstructor) map.nameToMethod(ctorRef.getName());
+          assert ctor != null;
+          if (livenessPredicate.isLive(ctor) && !alreadyLoadedPredicate.isLive(ctor)) {
+            anyLiveCode[0] = true;
+          } else {
+            stack.push(rhs);
+            return;
+          }
+        }
+
+        JsBinaryOperation toReturn = new JsBinaryOperation(x.getSourceInfo(), x.getOperator());
+        toReturn.setArg2(rhs);
+        toReturn.setArg1(lhs);
+        stack.push(toReturn);
+      }
+    };
+    c.accept(((JsExprStmt) stat).getExpression());
+    JsExprStmt result = anyLiveCode[0] ? c.getExpression().makeStmt() : null;
+    return result;
+  }
+
   private boolean isLive(JsStatement stat, LivenessPredicate livenessPredicate) {
     JClassType type = map.typeForStatement(stat);
     if (type != null) {
@@ -379,42 +417,6 @@ public class FragmentExtractor {
 
     // It's not an intern variable at all
     return livenessPredicate.miscellaneousStatementsAreLive();
-  }
-
-  /**
-   * Weird case: the seed function's liveness is associated with the type
-   * itself. However, individual constructors can have a liveness that is a
-   * subset of the type's liveness.
-   */
-  private JsExprStmt maybeRemoveCtorsFromDefineSeedStmt(
-      final LivenessPredicate livenessPredicate,
-      final LivenessPredicate alreadyLoadedPredicate, JsStatement stat,
-      final boolean[] anyCtorsSetup) {
-    Cloner c = new Cloner();
-    c.accept(((JsExprStmt) stat).getExpression());
-    JsExprStmt result = c.getExpression().makeStmt();
-    new JsModVisitor() {
-      public void endVisit(JsNameRef x, JsContext ctx) {
-        JMethod maybeCtor = map.nameToMethod(x.getName());
-        if (maybeCtor instanceof JConstructor) {
-          JConstructor ctor = (JConstructor) maybeCtor;
-          if (!livenessPredicate.isLive(ctor)
-              || alreadyLoadedPredicate.isLive(ctor)) {
-            ctx.removeMe();
-          } else {
-            anyCtorsSetup[0] = true;
-          }
-        }
-      };
-
-      /**
-       * Overridden to allow insert/remove on the varargs portion.
-       */
-      protected <T extends JsVisitable> void doAcceptList(List<T> collection) {
-        doAcceptWithInsertRemove(collection);
-      };
-    }.accept(result);
-    return result;
   }
 
   /**
@@ -463,30 +465,40 @@ public class FragmentExtractor {
   }
 
   /**
-   * If <code>state</code> is of the form <code>_ = String.prototype</code>,
-   * then return <code>String</code>. If the form is
-   * <code>defineSeed(id, superId, cTM, ctor1, ctor2, ...)</code> return the type
-   * corresponding to that id. Otherwise return <code>null</code>.
+   * Compute a statement that can be used to set up for installing instance
+   * methods into a vtable. It will be of the form
+   * <code>_ = foo.prototype</code>, where <code>foo</code> is the constructor
+   * function for <code>vtableType</code>.
+   */
+  private JsStatement vtableStatFor(JClassType vtableType) {
+    JsNameRef prototypeField =
+        new JsNameRef(jsprogram.createSourceInfoSynthetic(FragmentExtractor.class), "prototype");
+    JsExpression constructorRef;
+    SourceInfo sourceInfoVtableSetup = jsprogram.createSourceInfoSynthetic(FragmentExtractor.class);
+    if (vtableType == jprogram.getTypeJavaLangString()) {
+      // The methods of java.lang.String are put onto JavaScript's String
+      // prototype
+      SourceInfo sourceInfoConstructorRef =
+          jsprogram.createSourceInfoSynthetic(FragmentExtractor.class);
+      constructorRef = new JsNameRef(sourceInfoConstructorRef, "String");
+    } else {
+      constructorRef = map.nameForType(vtableType).makeRef(sourceInfoVtableSetup);
+    }
+    prototypeField.setQualifier(constructorRef);
+    SourceInfo underlineSourceInfo = jsprogram.createSourceInfoSynthetic(FragmentExtractor.class);
+    return (new JsBinaryOperation(sourceInfoVtableSetup, JsBinaryOperator.ASG, jsprogram.getScope()
+        .declareName("_").makeRef(underlineSourceInfo), prototypeField)).makeStmt();
+  }
+
+  /**
+   * If <code>state</code> is of the form <code>_ = Foo.prototype = exp</code>,
+   * then return <code>Foo</code>. Otherwise return <code>null</code>.
    */
   private JClassType vtableTypeAssigned(JsStatement stat) {
     if (!(stat instanceof JsExprStmt)) {
       return null;
     }
     JsExprStmt expr = (JsExprStmt) stat;
-    if (expr.getExpression() instanceof JsInvocation) {
-      // Handle a defineSeed call.
-      JsInvocation call = (JsInvocation) expr.getExpression();
-      if (!(call.getQualifier() instanceof JsNameRef)) {
-        return null;
-      }
-      JsNameRef func = (JsNameRef) call.getQualifier();
-      if (func.getName() != jsprogram.getIndexedFunction("SeedUtil.defineSeed").getName()) {
-        return null;
-      }
-      return map.typeForStatement(stat);
-    }
-
-    // Handle String.
     if (!(expr.getExpression() instanceof JsBinaryOperation)) {
       return null;
     }
@@ -498,26 +510,30 @@ public class FragmentExtractor {
       return null;
     }
     JsNameRef lhs = (JsNameRef) binExpr.getArg1();
-    JsName underBar = jsprogram.getScope().findExistingName("_");
-    assert underBar != null;
-    if (lhs.getName() != underBar) {
+    if (lhs.getQualifier() != null) {
       return null;
     }
-    if (!(binExpr.getArg2() instanceof JsNameRef)) {
+    if (lhs.getName() == null) {
+      return null;
+    }
+    if (!lhs.getName().getShortIdent().equals("_")) {
+      return null;
+    }
+    if (!(binExpr.getArg2() instanceof JsBinaryOperation)) {
+      return null;
+    }
+    JsBinaryOperation binExprRhs = (JsBinaryOperation) binExpr.getArg2();
+    if (binExprRhs.getOperator() != JsBinaryOperator.ASG) {
+      return null;
+    }
+    if (!(binExprRhs.getArg1() instanceof JsNameRef)) {
+      return null;
+    }
+    JsNameRef middleNameRef = (JsNameRef) binExprRhs.getArg1();
+    if (!middleNameRef.getName().getShortIdent().equals("prototype")) {
       return null;
     }
 
-    JsNameRef rhsRef = (JsNameRef) binExpr.getArg2();
-    if (!(rhsRef.getQualifier() instanceof JsNameRef)) {
-      return null;
-    }
-    if (!((JsNameRef) rhsRef.getQualifier()).getShortIdent().equals("String")) {
-      return null;
-    }
-
-    if (!rhsRef.getName().getShortIdent().equals("prototype")) {
-      return null;
-    }
     return map.typeForStatement(stat);
   }
 

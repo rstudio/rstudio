@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JField.Disposition;
@@ -33,10 +34,10 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNameOf;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JSeedIdOf;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -57,20 +58,15 @@ import java.util.Map;
  * Ordinarily, accessing one of these fields would trigger a clinit to run, but
  * we've special-cased class literal fields to evaluate as top-level code before
  * the application starts running to avoid the clinit.
- *
- * Class literal factory methods are responsible for installing references
- * to themselves on the Object.clazz field of their JS runtime prototype
- * since getClass() is no longer an overridden method.  Prototypes can be
- * looked up via 'seedId' from the global seedTable object, and so each
- * class literal factory method is passed the seedId of its type.
  * <p>
+ * TODO(cromwellian): consider lazy-initialization to improve startup time.
  */
 public class ImplementClassLiteralsAsFields {
 
   private class NormalizeVisitor extends JModVisitor {
     @Override
     public void endVisit(JClassLiteral x, Context ctx) {
-      JField field = resolveClassLiteralField(x.getRefType());
+      JField field = resolveClassLiteralField(x);
       x.setField(field);
     }
   }
@@ -124,8 +120,8 @@ public class ImplementClassLiteralsAsFields {
    * Class:
    * 
    * <pre>
-   * Class.createForClass("java.lang.", "Object", /JSeedIdOf/"java.lang.Object", null)
-   * Class.createForClass("java.lang.", "Exception", /JSeedIdOf/"java.lang.Exception", Throwable.class)
+   * Class.createForClass("java.lang.", "Object", /JNameOf/"java.lang.Object", null)
+   * Class.createForClass("java.lang.", "Exception", /JNameOf/"java.lang.Exception", Throwable.class)
    * </pre>
    * 
    * Interface:
@@ -143,21 +139,21 @@ public class ImplementClassLiteralsAsFields {
    * Array:
    * 
    * <pre>
-   * Class.createForArray("", "[I", /JSeedIdOf/"com.google.gwt.lang.Array", int.class)
-   * Class.createForArray("[Lcom.example.", "Foo;", /JSeedIdOf/"com.google.gwt.lang.Array", Foo.class)
+   * Class.createForArray("", "[I", /JNameOf/"com.google.gwt.lang.Array", int.class)
+   * Class.createForArray("[Lcom.example.", "Foo;", /JNameOf/"com.google.gwt.lang.Array", Foo.class)
    * </pre>
    * 
    * Enum:
    * 
    * <pre>
-   * Class.createForEnum("com.example.", "MyEnum", /JSeedIdOf/"com.example.MyEnum", Enum.class,
+   * Class.createForEnum("com.example.", "MyEnum", /JNameOf/"com.example.MyEnum", Enum.class,
    *     public static MyEnum[] values(), public static MyEnum valueOf(String name))
    * </pre>
    * 
    * Enum subclass:
    * 
    * <pre>
-   * Class.createForEnum("com.example.", "MyEnum$1", /JSeedIdOf/"com.example.MyEnum$1", MyEnum.class,
+   * Class.createForEnum("com.example.", "MyEnum$1", /JNameOf/"com.example.MyEnum$1", MyEnum.class,
    *     null, null))
    * </pre>
    */
@@ -186,9 +182,15 @@ public class ImplementClassLiteralsAsFields {
     JStringLiteral className = program.getLiteralString(info, getClassName(typeName));
     call.addArgs(packageName, className);
 
-    if (type instanceof JArrayType || type instanceof JClassType) {
+    if (type instanceof JArrayType) {
+      // There's only one seed function for all arrays
+      JDeclaredType arrayType = program.getIndexedType("Array");
+      call.addArg(new JNameOf(info, program.getTypeJavaLangString(), arrayType));
+
+    } else if (type instanceof JClassType) {
       // Add the name of the seed function for concrete types
-      call.addArg(new JSeedIdOf(info, program.getTypeJavaLangString(), type));
+      call.addArg(new JNameOf(info, program.getTypeJavaLangString(), type));
+
     } else if (type instanceof JPrimitiveType) {
       // And give primitive types an illegal, though meaningful, value
       call.addArg(program.getLiteralString(info, " " + type.getJavahSignatureName()));
@@ -254,7 +256,7 @@ public class ImplementClassLiteralsAsFields {
 
   private JClassLiteral createDependentClassLiteral(SourceInfo info, JType type) {
     JClassLiteral classLiteral = new JClassLiteral(info.makeChild(), type);
-    JField field = resolveClassLiteralField(classLiteral.getRefType());
+    JField field = resolveClassLiteralField(classLiteral);
     classLiteral.setField(field);
     return classLiteral;
   }
@@ -262,7 +264,6 @@ public class ImplementClassLiteralsAsFields {
   private void execImpl() {
     NormalizeVisitor visitor = new NormalizeVisitor();
     visitor.accept(program);
-    program.recordClassLiteralFields(classLiteralFields);
   }
 
   private String getTypeName(JType type) {
@@ -308,7 +309,8 @@ public class ImplementClassLiteralsAsFields {
    * }
    * </pre>
    */
-  private JField resolveClassLiteralField(JType type) {
+  private JField resolveClassLiteralField(JClassLiteral classLiteral) {
+    JType type = classLiteral.getRefType();
     type = normalizeJsoType(type);
     JField field = classLiteralFields.get(type);
     if (field == null) {

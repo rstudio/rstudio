@@ -26,7 +26,6 @@ import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsProgramFragment;
-import com.google.gwt.dev.js.ast.JsSeedIdOf;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
@@ -80,12 +79,6 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
   public boolean visit(JsProgramFragment x, JsContext ctx) {
     // Descend naturally.
     return true;
-  }
-
-  @Override
-  public boolean visit(JsSeedIdOf x, JsContext ctx) {
-    out.print(String.valueOf(x.getSeedId()));
-    return false;
   }
 
   @Override

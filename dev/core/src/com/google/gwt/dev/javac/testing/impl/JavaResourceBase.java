@@ -302,12 +302,11 @@ public class JavaResourceBase {
       StringBuilder code = new StringBuilder();
       code.append("package java.lang;\n");
       code.append("public class Object {\n");
-      code.append("  private Class<?> ___clazz;");
       code.append("  public boolean equals(Object that){return this == that;}");
       code.append("  public int hashCode() { return 0; }\n");
       code.append("  public String toString() { return \"Object\"; }\n");
       code.append("  public Object clone() { return this; } ");
-      code.append("  public Class<?> getClass() { return ___clazz; } ");
+      code.append("  public Class<?> getClass() { return Object.class; } ");
       code.append("}\n");
       return code;
     }

@@ -42,7 +42,6 @@ import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.jjs.ast.JSeedIdOf;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
@@ -202,13 +201,6 @@ public class Pruner {
       if (methodToOriginalParamsMap.containsKey(x.getTarget())) {
         JMethodCall newCall = new JNewInstance(x);
         replaceForPrunedParameters(x, newCall, ctx);
-      }
-    }
-
-    @Override
-    public void endVisit(JSeedIdOf x, Context ctx) {
-      if (x.getNode() instanceof JClassType) {
-        endVisit((JNameOf) x, ctx);  
       }
     }
 
@@ -607,17 +599,13 @@ public class Pruner {
 
     ControlFlowAnalyzer livenessAnalyzer = new ControlFlowAnalyzer(program);
     livenessAnalyzer.setForPruning();
-
-    // SPECIAL: Immortal codegen types are never pruned
-    traverseTypes(livenessAnalyzer, program.immortalCodeGenTypes);
-
     if (saveCodeGenTypes) {
       /*
        * SPECIAL: Some classes contain methods used by code generation later.
        * Unless those transforms have already been performed, we must rescue all
        * contained methods for later user.
        */
-      traverseTypes(livenessAnalyzer, program.codeGenTypes);
+      traverseFromCodeGenTypes(livenessAnalyzer);
     }
     livenessAnalyzer.traverseEverything();
 
@@ -639,11 +627,11 @@ public class Pruner {
   }
 
   /**
-   * Traverse from all methods starting from a set of types.
+   * Traverse from all methods in the program's code-gen types. See
+   * {@link JProgram#CODEGEN_TYPES_SET}.
    */
-  private void traverseTypes(ControlFlowAnalyzer livenessAnalyzer,
-      List<JClassType> types) {
-    for (JClassType type : types) {
+  private void traverseFromCodeGenTypes(ControlFlowAnalyzer livenessAnalyzer) {
+    for (JClassType type : program.codeGenTypes) {
       livenessAnalyzer.traverseFromReferenceTo(type);
       for (JMethod method : type.getMethods()) {
         if (method instanceof JConstructor) {
