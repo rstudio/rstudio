@@ -47,14 +47,8 @@ public class VCS extends BasePresenter implements IsWidget
       ArrayList<String> getSelectedPaths();
    }
 
-   public interface CommitDisplay
-   {
-      void showModal();
-   }
-
    @Inject
    public VCS(Display view,
-              Provider<CommitDisplay> pCommitView,
               Provider<ReviewPresenter> pReviewPresenter,
               Provider<HistoryPresenter> pHistoryPresenter,
               VCSServerOperations server,
@@ -65,7 +59,6 @@ public class VCS extends BasePresenter implements IsWidget
    {
       super(view);
       view_ = view;
-      pCommitView_ = pCommitView;
       pReviewPresenter_ = pReviewPresenter;
       pHistoryPresenter_ = pHistoryPresenter;
       server_ = server;
@@ -84,6 +77,11 @@ public class VCS extends BasePresenter implements IsWidget
 
    @Handler
    void onVcsDiff()
+   {
+      showReviewPane();
+   }
+
+   private void showReviewPane()
    {
       VCSPopup.show(pReviewPresenter_.get());
    }
@@ -143,7 +141,7 @@ public class VCS extends BasePresenter implements IsWidget
    @Handler
    void onVcsCommit()
    {
-      pCommitView_.get().showModal();
+      showReviewPane();
    }
 
    @Handler
@@ -184,7 +182,6 @@ public class VCS extends BasePresenter implements IsWidget
    }
 
    private final Display view_;
-   private final Provider<CommitDisplay> pCommitView_;
    private final Provider<ReviewPresenter> pReviewPresenter_;
    private final Provider<HistoryPresenter> pHistoryPresenter_;
    private final VCSServerOperations server_;
