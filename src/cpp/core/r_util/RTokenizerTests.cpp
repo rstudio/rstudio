@@ -212,8 +212,9 @@ void testWhitespace()
    v.verify(L" ");
    v.verify(L"      ");
    v.verify(L"\t\n");
-
    v.verify(L"\x00A0") ;
+   v.verify(L"  \x3000  ") ;
+   v.verify(L" \x00A0\t\x3000\r  ") ;
 }
 
 
