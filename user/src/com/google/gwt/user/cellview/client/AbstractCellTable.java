@@ -2370,20 +2370,29 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       return;
     }
 
-    // Create a FieldUpdater.
-    final FieldUpdater<T, C> fieldUpdater = column.getFieldUpdater();
-    final int index = context.getIndex();
-    ValueUpdater<C> valueUpdater = (fieldUpdater == null) ? null : new ValueUpdater<C>() {
-      @Override
-      public void update(C value) {
-        fieldUpdater.update(index, rowValue, value);
-      }
-    };
-
-    // Fire the event to the cell.
     C cellValue = column.getValue(rowValue);
     boolean cellWasEditing = cell.isEditing(context, parentElem, cellValue);
-    cell.onBrowserEvent(context, parentElem, column.getValue(rowValue), event, valueUpdater);
+    if (column instanceof Column) {
+      /*
+       * If the HasCell is a Column, let it handle the event itself. This is
+       * here for legacy support.
+       */
+      Column<T, C> col = (Column<T, C>) column;
+      col.onBrowserEvent(context, parentElem, rowValue, event);
+    } else {
+      // Create a FieldUpdater.
+      final FieldUpdater<T, C> fieldUpdater = column.getFieldUpdater();
+      final int index = context.getIndex();
+      ValueUpdater<C> valueUpdater = (fieldUpdater == null) ? null : new ValueUpdater<C>() {
+        @Override
+        public void update(C value) {
+          fieldUpdater.update(index, rowValue, value);
+        }
+      };
+
+      // Fire the event to the cell.
+      cell.onBrowserEvent(context, parentElem, column.getValue(rowValue), event, valueUpdater);
+    }
 
     // Reset focus if needed.
     cellIsEditing = cell.isEditing(context, parentElem, cellValue);
