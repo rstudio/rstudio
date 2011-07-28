@@ -45,7 +45,7 @@
                <g:FlowPanel styleName="{res.styles.toolbarWrapper}">
                   <g:FlowPanel styleName="{res.styles.fileInfoWrapper}">
                      <g:Image ui:field="fileIcon_" styleName="{res.styles.fileIcon}"/>
-                     <g:Label ui:field="filenameLabel_" text="Ragamuffin.R" styleName="{res.styles.filenameLabel}"/>
+                     <g:Label ui:field="filenameLabel_" styleName="{res.styles.filenameLabel}"/>
                   </g:FlowPanel>
                   <rs_widget:Toolbar ui:field="diffToolbar_"/>
                   <g:FlowPanel styleName="{res.styles.diffViewOptions}">

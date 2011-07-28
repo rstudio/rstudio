@@ -80,6 +80,8 @@ public class ReviewPresenter implements IsWidget
       void setStageButtonLabel(String label);
       void setDiscardButtonLabel(String label);
       void setUnstageButtonLabel(String label);
+
+      void setFilename(String filename);
    }
 
    private class ApplyPatchClickHandler implements ClickHandler
@@ -381,6 +383,7 @@ public class ReviewPresenter implements IsWidget
    private void updateDiff(boolean allowModeSwitch)
    {
       view_.getLineTableDisplay().clear();
+      view_.setFilename("");
       ArrayList<String> paths = view_.getChangelistTable().getSelectedPaths();
       if (paths.size() != 1)
          return;
@@ -399,6 +402,7 @@ public class ReviewPresenter implements IsWidget
          }
       }
 
+      view_.setFilename(paths.get(0));
 
       final Token token = diffInvalidation_.getInvalidationToken();
 

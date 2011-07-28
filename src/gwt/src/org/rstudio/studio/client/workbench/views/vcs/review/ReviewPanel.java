@@ -30,7 +30,9 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.ValueSink;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -81,6 +83,9 @@ public class ReviewPanel extends Composite implements Display
       @Source("images/splitterTileH.png")
       @ImageOptions(repeatStyle = RepeatStyle.Vertical)
       ImageResource splitterTileH();
+
+      @Source("images/blankFileIcon.png")
+      ImageResource blankFileIcon();
    }
 
    interface Styles extends CssResource
@@ -203,8 +208,10 @@ public class ReviewPanel extends Composite implements Display
    public ReviewPanel(ChangelistTablePresenter changelist,
                       LineTableView diffPane,
                       ConsoleBarFramePanel consoleBarFramePanel,
-                      Commands commands)
+                      Commands commands,
+                      FileTypeRegistry fileTypeRegistry)
    {
+      fileTypeRegistry_ = fileTypeRegistry;
       splitPanel_ = new SplitLayoutPanel(4);
       splitPanelCommit_ = new SplitLayoutPanel(4);
 
@@ -219,7 +226,7 @@ public class ReviewPanel extends Composite implements Display
 
       initWidget(consoleBarFramePanel);
 
-      fileIcon_.setResource(FileTypeRegistry.R.getDefaultIcon());
+      fileIcon_.setResource(RES.blankFileIcon());
       fileIcon_.addStyleName(RES.styles().fileIcon());
 
       topToolbar_.addStyleName(RES.styles().toolbar());
@@ -373,6 +380,23 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Override
+   public void setFilename(String filename)
+   {
+      if (StringUtil.isNullOrEmpty(filename))
+      {
+         filenameLabel_.setText("");
+         fileIcon_.setResource(RES.blankFileIcon());
+      }
+      else
+      {
+         filenameLabel_.setText(filename);
+         ImageResource icon = fileTypeRegistry_.getIconForFile(
+               FileSystemItem.createFile(filename));
+         fileIcon_.setResource(icon);
+      }
+   }
+
+   @Override
    public HasText getCommitMessage()
    {
       return commitMessage_;
@@ -481,6 +505,7 @@ public class ReviewPanel extends Composite implements Display
    private ToolbarButton unstageAllButton_;
    private ClickCommand discardSelectedFiles_;
    private ClickCommand discardAllFiles_;
+   private final FileTypeRegistry fileTypeRegistry_;
 
    private static final Resources RES = GWT.create(Resources.class);
    static {
