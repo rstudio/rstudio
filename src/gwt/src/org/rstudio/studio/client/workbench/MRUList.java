@@ -16,6 +16,7 @@ import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -150,7 +151,8 @@ public class MRUList
          else
          {
             mruCmds_[i].setVisible(true);
-            mruCmds_[i].setMenuLabel(labels.get(i));
+            mruCmds_[i].setMenuLabel(
+                  AppMenuItem.escapeMnemonics(labels.get(i)));
             mruCmds_[i].setDesc(mruEntries_.get(i));
          }
       }

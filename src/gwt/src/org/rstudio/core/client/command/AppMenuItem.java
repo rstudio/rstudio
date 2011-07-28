@@ -52,6 +52,11 @@ public class AppMenuItem extends MenuItem
       setTitle(cmd_.getDesc());
    }
 
+   public static String escapeMnemonics(String label)
+   {
+      return label.replace("_", "__");
+   }
+
    public static String replaceMnemonics(String label, final String replacement)
    {
       return Pattern.create("_(_?)").replaceAll(label, new ReplaceOperation()
