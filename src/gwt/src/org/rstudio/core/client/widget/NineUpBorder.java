@@ -16,6 +16,7 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ClientBundle.Source;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
@@ -24,7 +25,9 @@ import com.google.gwt.user.client.ui.*;
 
 public class NineUpBorder extends ResizeComposite implements AcceptsOneWidget
 {
-   public interface Resources extends ClientBundle
+   // This needs to NOT extend ClientBundle, because doing so causes spurious
+   // errors in Eclipse
+   public interface Resources
    {
       ImageResource topLeft();
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)

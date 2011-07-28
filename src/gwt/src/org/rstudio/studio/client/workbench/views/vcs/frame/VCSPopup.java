@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
@@ -31,7 +32,7 @@ import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter;
 
 public class VCSPopup
 {
-   interface Resources extends NineUpBorder.Resources
+   interface Resources extends NineUpBorder.Resources, ClientBundle
    {
       @Override
       @Source("../../../../../../core/client/widget/NineUpBorder.css")
