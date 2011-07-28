@@ -304,6 +304,11 @@ public class ToolbarButton extends FocusWidget
       leftImageWidget_.setResource(imageResource);
    }
 
+   public void setText(String label)
+   {
+      label_.setInnerText(label);
+   }
+
    private boolean down_;
    
    interface Binder extends UiBinder<Element, ToolbarButton> { }

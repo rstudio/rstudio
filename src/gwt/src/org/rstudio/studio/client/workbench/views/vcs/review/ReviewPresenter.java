@@ -16,7 +16,6 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -28,7 +27,6 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.ValueSink;
@@ -78,33 +76,33 @@ public class ReviewPresenter implements IsWidget
       HasClickHandlers getCommitButton();
 
       HasValue<Boolean> getCommitIsAmend();
+
+      void setStageButtonLabel(String label);
+      void setDiscardButtonLabel(String label);
+      void setUnstageButtonLabel(String label);
    }
 
    private class ApplyPatchClickHandler implements ClickHandler
    {
       public ApplyPatchClickHandler(PatchMode patchMode,
-                                    boolean reverse,
-                                    boolean selected)
+                                    boolean reverse)
       {
          patchMode_ = patchMode;
          reverse_ = reverse;
-         selected_ = selected;
       }
 
       @Override
       public void onClick(ClickEvent event)
       {
-         ArrayList<Line> selectedLines =
-               selected_ ?
-               view_.getLineTableDisplay().getSelectedLines() :
-               view_.getLineTableDisplay().getAllLines();
+         ArrayList<Line> selectedLines = view_.getLineTableDisplay().getSelectedLines();
+         if (selectedLines.size() == 0)
+            selectedLines = view_.getLineTableDisplay().getAllLines();
 
          applyPatch(activeChunks_, selectedLines, reverse_, patchMode_);
       }
 
       private final PatchMode patchMode_;
       private final boolean reverse_;
-      private final boolean selected_;
    }
 
    private class ApplyPatchHandler implements DiffChunkActionHandler,
@@ -282,11 +280,11 @@ public class ReviewPresenter implements IsWidget
       });
 
       view_.getStageAllButton().addClickHandler(
-            new ApplyPatchClickHandler(PatchMode.Stage, false, false));
+            new ApplyPatchClickHandler(PatchMode.Stage, false));
       view_.getDiscardAllButton().addClickHandler(
-            new ApplyPatchClickHandler(PatchMode.Working, true, false));
+            new ApplyPatchClickHandler(PatchMode.Working, true));
       view_.getUnstageAllButton().addClickHandler(
-            new ApplyPatchClickHandler(PatchMode.Stage, true, false));
+            new ApplyPatchClickHandler(PatchMode.Stage, true));
       view_.getStagedCheckBox().addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
             {
@@ -298,6 +296,26 @@ public class ReviewPresenter implements IsWidget
             });
       view_.getLineTableDisplay().addDiffChunkActionHandler(new ApplyPatchHandler());
       view_.getLineTableDisplay().addDiffLineActionHandler(new ApplyPatchHandler());
+
+      view_.getLineTableDisplay().addSelectionChangeHandler(new SelectionChangeEvent.Handler()
+      {
+         @Override
+         public void onSelectionChange(SelectionChangeEvent event)
+         {
+            if (view_.getLineTableDisplay().getSelectedLines().size() > 0)
+            {
+               view_.setUnstageButtonLabel("Unstage Selection");
+               view_.setStageButtonLabel("Stage Selection");
+               view_.setDiscardButtonLabel("Discard Selection");
+            }
+            else
+            {
+               view_.setUnstageButtonLabel("Unstage All");
+               view_.setStageButtonLabel("Stage All");
+               view_.setDiscardButtonLabel("Discard All");
+            }
+         }
+      });
 
       view_.getContextLines().addValueChangeHandler(new ValueChangeHandler<Integer>()
       {

@@ -355,6 +355,24 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Override
+   public void setStageButtonLabel(String label)
+   {
+      stageAllButton_.setText(label);
+   }
+
+   @Override
+   public void setDiscardButtonLabel(String label)
+   {
+      discardAllButton_.setText(label);
+   }
+
+   @Override
+   public void setUnstageButtonLabel(String label)
+   {
+      unstageAllButton_.setText(label);
+   }
+
+   @Override
    public HasText getCommitMessage()
    {
       return commitMessage_;

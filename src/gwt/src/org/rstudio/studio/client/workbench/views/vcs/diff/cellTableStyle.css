@@ -1,3 +1,4 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 
@@ -22,10 +23,10 @@
    color: #444;
 }
 .insertion.start>td {
-   border-top: #90D989 solid selectionBorderWidth;
+   border-top: #90D989 solid selectionBorderWidth !important;
 }
 .insertion.end>td {
-   border-bottom: #90D989 solid selectionBorderWidth;
+   border-bottom: #90D989 solid selectionBorderWidth !important;
 }
 
 .deletion {
@@ -33,10 +34,10 @@
    color: #444;
 }
 .deletion.start>td {
-   border-top: #E1938F solid selectionBorderWidth;
+   border-top: #E1938F solid selectionBorderWidth !important;
 }
 .deletion.end>td {
-   border-bottom: #E1938F solid selectionBorderWidth;
+   border-bottom: #E1938F solid selectionBorderWidth !important;
 }
 
 /* First column */
@@ -160,8 +161,11 @@
 }
 */
 
+.cellTableWidget > tbody > tr > td {
+  border: selectionBorderWidth solid transparent;
+}
 .cellTableWidget > tbody > tr.cellTableKeyboardSelectedRow > td:first-child + td + td {
-  background: #ffc;
+  border: selectionBorderWidth dotted #888;
 }
 
 
@@ -200,4 +204,13 @@
 }
 
 .chunkActions {
+}
+
+.actions {
+   font-family: proportionalFont;
+   font-size: 10px;
+}
+
+.actions a {
+   margin-left: 8px;
 }

@@ -27,6 +27,7 @@ import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -41,7 +42,6 @@ import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionHandle
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Set;
 
 public class LineTableView extends CellTable<ChunkOrLine> implements Display
 {
@@ -58,6 +58,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
       String insertion();
       String deletion();
 
+      String actions();
       String lineActions();
       String chunkActions();
 
@@ -79,7 +80,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
                                  NativeEvent event,
                                  ValueUpdater<ChunkOrLine> chunkOrLineValueUpdater)
       {
-         if ("click".equals(event.getType()))
+         if ("click".equals(event.getType()) && parent.isOrHasChild(event.getEventTarget().<Node>cast()))
          {
             Element el = (Element) DomUtils.findNodeUpwards(
                   event.getEventTarget().<Node>cast(),
@@ -129,7 +130,9 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
          else
          {
             sb.appendEscaped(UnifiedEmitter.createChunkString(value.getChunk()));
-            renderActionButtons(sb, RES.cellTableStyle().chunkActions(), "");
+            renderActionButtons(sb,
+                                RES.cellTableStyle().chunkActions(),
+                                " chunk");
          }
       }
 
@@ -137,10 +140,10 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
                                        String className,
                                        String labelSuffix)
       {
-         sb.append(SafeHtmlUtil.createOpenTag("div",
-                                              "style", "float: right",
-                                              "class", className));
-         sb.appendHtmlConstant("<div style=\"float: right\">");
+         sb.append(SafeHtmlUtil.createOpenTag(
+               "div",
+               "style", "float: right",
+               "class", RES.cellTableStyle().actions() + " " + className));
          renderActionButton(sb, Action.Unstage, labelSuffix);
          renderActionButton(sb, Action.Stage, labelSuffix);
          renderActionButton(sb, Action.Discard, labelSuffix);
@@ -260,7 +263,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
          @Override
          public void setSelected(ChunkOrLine object, boolean selected)
          {
-            if (object.getLine() != null)
+            if (object.getLine() != null && object.getLine().getType() != Line.Type.Same)
                super.setSelected(object, selected);
          }
       };
@@ -346,6 +349,12 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
    public HandlerRegistration addDiffLineActionHandler(DiffLineActionHandler handler)
    {
       return addHandler(handler, DiffLineActionEvent.TYPE);
+   }
+
+   @Override
+   public HandlerRegistration addSelectionChangeHandler(SelectionChangeEvent.Handler handler)
+   {
+      return selectionModel_.addSelectionChangeHandler(handler);
    }
 
    public static void ensureStylesInjected()

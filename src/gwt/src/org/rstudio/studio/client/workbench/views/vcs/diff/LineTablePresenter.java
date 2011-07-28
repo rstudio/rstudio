@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.vcs.diff;
 
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionHandler;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionHandler;
 
@@ -29,5 +30,7 @@ public class LineTablePresenter
 
       HandlerRegistration addDiffChunkActionHandler(DiffChunkActionHandler handler);
       HandlerRegistration addDiffLineActionHandler(DiffLineActionHandler handler);
+
+      HandlerRegistration addSelectionChangeHandler(SelectionChangeEvent.Handler handler);
    }
 }
