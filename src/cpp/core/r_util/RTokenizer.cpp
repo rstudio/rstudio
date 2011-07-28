@@ -11,8 +11,6 @@
  *
  */
 
-// TODO: Eliminate shared_ptr for no allocations at all
-
 #include <core/r_util/RTokenizer.hpp>
 
 #include <boost/regex.hpp>
