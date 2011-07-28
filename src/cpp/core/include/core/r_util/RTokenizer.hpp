@@ -70,36 +70,46 @@ public:
    static const wchar_t COMMENT;
 
 public:
-   RToken();
+   RToken()
+      : offset_(-1)
+   {
+   }
+
    RToken(wchar_t type,
           std::wstring::const_iterator begin,
           std::wstring::const_iterator end,
-          std::size_t offset);
-   virtual ~RToken();
+          std::size_t offset)
+      : type_(type), begin_(begin), end_(end), offset_(offset)
+   {
+   }
 
-   // COPYING: via copyable shared_ptr<Impl>
+   // COPYING: via compiler (copyable members)
 
    // accessors
-   wchar_t type() const;
-   std::wstring content() const;
-   std::size_t offset() const;
-   std::size_t length() const;
+   wchar_t type() const { return type_; }
+   std::wstring content() const { return std::wstring(begin_, end_); }
+   std::size_t offset() const { return offset_; }
+   std::size_t length() const { return end_ - begin_; }
 
    // allow direct use in conditional statements (nullability)
    typedef void (*unspecified_bool_type)();
    static void unspecified_bool_true() {}
    operator unspecified_bool_type() const
    {
-      return pImpl_.get() == NULL ? 0 : unspecified_bool_true;
+      return offset_ == static_cast<std::size_t>(-1) ?
+                                             0 :
+                                             unspecified_bool_true;
    }
    bool operator!() const
    {
-      return pImpl_.get() == NULL;
+      return offset_ == static_cast<std::size_t>(-1);
    }
 
 private:
-   struct Impl;
-   boost::shared_ptr<Impl> pImpl_;
+   wchar_t type_;
+   std::wstring::const_iterator begin_;
+   std::wstring::const_iterator end_;
+   std::size_t offset_;
 };
 
 // Tokenize R code. Note that the RToken instances which are returned are

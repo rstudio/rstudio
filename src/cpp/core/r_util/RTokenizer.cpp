@@ -83,60 +83,6 @@ const wchar_t RToken::LDBRACKET      = 0x1008;
 const wchar_t RToken::RDBRACKET      = 0x1009;
 const wchar_t RToken::COMMENT        = 0x100A;
 
-struct RToken::Impl
-{
-   Impl(wchar_t type,
-        std::wstring::const_iterator begin,
-        std::wstring::const_iterator end,
-        std::size_t offset)
-      : type(type), begin(begin), end(end), offset(offset)
-   {
-   }
-   wchar_t type;
-   std::wstring::const_iterator begin;
-   std::wstring::const_iterator end;
-   std::size_t offset;
-};
-
-RToken::RToken()
-   : pImpl_()
-{
-}
-
-RToken::RToken(wchar_t type,
-               std::wstring::const_iterator begin,
-               std::wstring::const_iterator end,
-               std::size_t offset)
-   : pImpl_(new Impl(type, begin, end, offset))
-{
-}
-
-RToken::~RToken()
-{
-}
-
-
-
-wchar_t RToken::type() const
-{
-   return pImpl_->type;
-}
-
-std::wstring RToken::content() const
-{
-   return std::wstring(pImpl_->begin, pImpl_->end);
-}
-
-std::size_t RToken::offset() const
-{
-   return pImpl_->offset;
-}
-
-std::size_t RToken::length() const
-{
-   return pImpl_->end - pImpl_->begin;
-}
-
 
 RToken RTokenizer::nextToken()
 {
