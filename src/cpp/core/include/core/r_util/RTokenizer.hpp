@@ -64,7 +64,7 @@ public:
    static const wchar_t ID;
    static const wchar_t OPER;
    static const wchar_t UOPER;
-   static const wchar_t ERROR;
+   static const wchar_t ERR;
    static const wchar_t LDBRACKET;
    static const wchar_t RDBRACKET;
    static const wchar_t COMMENT;

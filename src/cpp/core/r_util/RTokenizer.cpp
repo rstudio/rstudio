@@ -78,7 +78,7 @@ const wchar_t RToken::NUMBER         = 0x1003;
 const wchar_t RToken::ID             = 0x1004;
 const wchar_t RToken::OPER           = 0x1005;
 const wchar_t RToken::UOPER          = 0x1006;
-const wchar_t RToken::ERROR          = 0x1007;
+const wchar_t RToken::ERR            = 0x1007;
 const wchar_t RToken::LDBRACKET      = 0x1008;
 const wchar_t RToken::RDBRACKET      = 0x1009;
 const wchar_t RToken::COMMENT        = 0x100A;
@@ -148,7 +148,7 @@ RToken RTokenizer::nextToken()
      return oper ;
 
   // Error!!
-  return consumeToken(RToken::ERROR, 1) ;
+  return consumeToken(RToken::ERR, 1) ;
 }
 
 
@@ -229,7 +229,7 @@ RToken RTokenizer::matchQuotedIdentifier()
 {
    std::wstring iden = peek(tokenPatterns().QUOTED_IDENTIFIER) ;
    if (iden.empty())
-      return consumeToken(RToken::ERROR, 1);
+      return consumeToken(RToken::ERR, 1);
    else
       return consumeToken(RToken::ID, iden.length());
 }
@@ -244,7 +244,7 @@ RToken RTokenizer::matchUserOperator()
 {
    std::wstring oper = peek(tokenPatterns().USER_OPERATOR) ;
    if (oper.empty())
-      return consumeToken(RToken::ERROR, 1) ;
+      return consumeToken(RToken::ERR, 1) ;
    else
       return consumeToken(RToken::UOPER, oper.length()) ;
 }

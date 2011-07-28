@@ -86,7 +86,7 @@ void testVoid()
 
 void testSimple()
 {
-   Verifier v(RToken::ERROR, L" ", L" ") ;
+   Verifier v(RToken::ERR, L" ", L" ") ;
    v.verify(RToken::LPAREN, L"(") ;
    v.verify(RToken::RPAREN, L")") ;
    v.verify(RToken::LBRACKET, L"[") ;
@@ -99,7 +99,7 @@ void testSimple()
 
 void testError()
 {
-   Verifier v(RToken::ERROR, L" ", L" ") ;
+   Verifier v(RToken::ERR, L" ", L" ") ;
 }
 
 void testComment()
