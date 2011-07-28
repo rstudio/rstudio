@@ -67,5 +67,13 @@ else
    rm $GWT_SDK_ZIP
 fi
 
+JUNIT_JAR=junit-4.9b3.jar
+if [ -f "$LIB_DIR/$JUNIT_JAR" ]
+then
+    echo "$JUNIT_JAR already installed"
+else
+    download "$JUNIT_JAR"
+    mv "$JUNIT_JAR" "$LIB_DIR/$JUNIT_JAR"
+fi
 # back to install dir
 cd $INSTALL_DIR

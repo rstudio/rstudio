@@ -12,6 +12,7 @@ set BOOST_FILE=boost-1.44-win.zip
 set MINGW_FILE=mingw64-2010-10-03.zip
 set GIN_FILE=gin-1.5.zip
 set GWT_FILE=gwt-2.3.0.zip
+set JUNIT_FILE=junit-4.9b3.jar
 
 if not exist boost-win (
   wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
@@ -45,4 +46,8 @@ if not exist gwt\2.3.0 (
   mkdir gwt
   move gwt-2.3.0 gwt\2.3.0
   del "%GWT_FILE%"
+)
+
+if not exist %JUNIT_FILE% (
+  wget %WGET_ARGS% "%BASEURL%%JUNIT_FILE%"
 )
