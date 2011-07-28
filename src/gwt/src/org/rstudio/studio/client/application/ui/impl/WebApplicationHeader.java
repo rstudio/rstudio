@@ -161,7 +161,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
             }
             
             // add project tools
-            toolbar_.addProjectTools(sessionInfo.getActiveProjectFile());
+            toolbar_.addProjectTools(sessionInfo);
          }
       });
       

@@ -90,6 +90,38 @@ Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
 }  // anonymous namespace
 
 
+void ProjectContext::indexProjectFile(const FilePath& filePath)
+{
+   if (filePath.extensionLowerCase() == ".r")
+   {
+      // read the file (assumes utf8)
+      std::string code;
+      Error error = core::readStringFromFile(filePath,
+                                             &code,
+                                             string_utils::LineEndingPosix);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      // compute project relative directory (used for context)
+      std::string context = filePath.relativePath(directory_);
+
+      // index the source
+      sourceIndexes_.push_back(boost::shared_ptr<r_util::RSourceIndex>(
+                                 new r_util::RSourceIndex(context, code)));
+   }
+}
+
+void ProjectContext::indexProjectFiles()
+{
+    Error error = directory_.childrenRecursive(
+                    boost::bind(&ProjectContext::indexProjectFile, this, _2));
+    if (error)
+       LOG_ERROR(error);
+}
+
 Error ProjectContext::initialize(const FilePath& projectFile,
                                  std::string* pUserErrMsg)
 {
@@ -123,13 +155,21 @@ Error ProjectContext::initialize(const FilePath& projectFile,
    if (error)
       return error;
 
-   // initialize members and return success
+   // initialize members
    file_ = projectFile;
    directory_ = file_.parent();
    scratchPath_ = scratchPath;
    config_ = config;
+
+   // initialize source index
+   if (userSettings().indexingEnabled())
+      indexProjectFiles();
+
+   // return success
    return Success();
+
 }
+
 
 } // namespace projects
 } // namesapce session

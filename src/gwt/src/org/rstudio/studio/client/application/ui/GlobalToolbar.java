@@ -23,10 +23,13 @@ import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.views.help.search.SearchWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.SuggestOracle;
 
 
 public class GlobalToolbar extends Toolbar
@@ -87,8 +90,24 @@ public class GlobalToolbar extends Toolbar
       addLeftWidget(commands.printSourceDoc().createToolbarButton());
    }
    
-   public void addProjectTools(String activeProjectFile)
+   public void addProjectTools(SessionInfo sessionInfo)
    {
+      if (sessionInfo.isIndexingEnabled())
+      {
+         searchWidget_ = new SearchWidget(new SuggestOracle() {
+            @Override
+            public void requestSuggestions(Request request, Callback callback)
+            {
+               
+               
+            }
+         });
+         
+         addLeftSeparator();
+         addLeftWidget(searchWidget_);
+      }
+      
+      
       ToolbarPopupMenu projectMenu = new ToolbarPopupMenu();
       
       projectMenu.addItem(commands_.newProject().createMenuItem(false));
@@ -109,6 +128,7 @@ public class GlobalToolbar extends Toolbar
       projectMenu.addSeparator();
       projectMenu.addItem(commands_.projectOptions().createMenuItem(false));
       
+      String activeProjectFile = sessionInfo.getActiveProjectFile();
       String menuText = activeProjectFile != null ?
         FileSystemItem.createFile(activeProjectFile).getParentPath().getStem() :
         "Project: (None)";
@@ -135,6 +155,8 @@ public class GlobalToolbar extends Toolbar
    }
      
    private final Commands commands_;
+   
+   private SearchWidget searchWidget_;
    
    interface Resources extends ClientBundle
    {

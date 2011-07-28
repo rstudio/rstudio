@@ -43,6 +43,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.remote.RemoteServerEventListener.ClientEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
+import org.rstudio.studio.client.workbench.model.CodeSearchResult;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
@@ -244,6 +245,13 @@ public class RemoteServer implements Server
                                   ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, USER_PROMPT_COMPLETED, response, requestCallback);
+   }
+   
+   public void searchCode(
+         String term, 
+         ServerRequestCallback<JsArray<CodeSearchResult>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, SEARCH_CODE, term, requestCallback);
    }
 
    public void consoleInput(String consoleInput,
@@ -1617,6 +1625,7 @@ public class RemoteServer implements Server
    private static final String GET_R_PREFS = "get_r_prefs";
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";
+   private static final String SEARCH_CODE = "search_code";
    
    private static final String CONSOLE_INPUT = "console_input";
    private static final String RESET_CONSOLE_ACTIONS = "reset_console_actions";

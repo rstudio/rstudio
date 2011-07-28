@@ -97,7 +97,7 @@ public:
    template <typename OutputIterator>
    OutputIterator findFunction(const std::string& term,
                                bool prefixOnly,
-                               OutputIterator out)
+                               OutputIterator out) const
    {
       // define the predicate
       boost::function<bool(const RFunctionInfo&)> predicate;

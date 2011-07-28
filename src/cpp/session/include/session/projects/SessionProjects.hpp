@@ -16,10 +16,14 @@
 
 
 #include <boost/utility.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/foreach.hpp>
 
 #include <core/FilePath.hpp>
 
 #include <core/r_util/RProjectFile.hpp>
+
+#include <core/r_util/RSourceIndex.hpp>
  
 namespace session {
 namespace projects {
@@ -40,6 +44,20 @@ public:
    const core::FilePath& directory() const { return directory_; }
    const core::FilePath& scratchPath() const { return scratchPath_; }
 
+   template <typename OutputIterator>
+   OutputIterator findFunctions(const std::string& term,
+                                bool prefixOnly,
+                                OutputIterator out) const
+   {
+      BOOST_FOREACH(boost::shared_ptr<core::r_util::RSourceIndex> index,
+                    sourceIndexes_)
+      {
+         index->findFunction(term, prefixOnly, out);
+      }
+
+      return out;
+   }
+
    const core::r_util::RProjectConfig& config() const { return config_; }
    void setConfig(const core::r_util::RProjectConfig& config)
    {
@@ -47,11 +65,15 @@ public:
    }
 
 private:
+   void indexProjectFiles();
+   void indexProjectFile(const core::FilePath& filePath);
+
+private:
    core::FilePath file_;
    core::FilePath directory_;
    core::FilePath scratchPath_;
    core::r_util::RProjectConfig config_;
-
+   std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > sourceIndexes_;
 };
 
 const ProjectContext& projectContext();

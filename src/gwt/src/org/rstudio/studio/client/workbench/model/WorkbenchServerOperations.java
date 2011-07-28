@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
@@ -64,4 +65,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
     
    void userPromptCompleted(int response, 
                             ServerRequestCallback<Void> requestCallback);
+   
+   void searchCode(
+         String term, 
+         ServerRequestCallback<JsArray<CodeSearchResult>> requestCallback);
 }

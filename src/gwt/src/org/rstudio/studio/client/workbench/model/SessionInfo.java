@@ -127,7 +127,7 @@ public class SessionInfo extends JavaScriptObject
    {
       return !StringUtil.isNullOrEmpty(getVcsName());
    }
-
+   
    public final native String getVcsName() /*-{
       return this.vcs;
    }-*/;
@@ -144,4 +144,9 @@ public class SessionInfo extends JavaScriptObject
    public final native String getActiveProjectFile() /*-{
       return this.active_project_file;
    }-*/;
+   
+   public final native boolean isIndexingEnabled()/*-{
+      return this.indexing_enabled;
+   }-*/;
+   
 }
