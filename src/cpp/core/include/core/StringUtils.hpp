@@ -138,6 +138,9 @@ Error utf8Advance(InputIterator begin,
 std::string bash_escape(const std::string& arg);
 std::string bash_escape(const FilePath& filePath);
 
+bool isalpha(wchar_t c);
+bool isalnum(wchar_t c);
+
 inline bool stringNotEmpty(const std::string& str)
 {
    return !str.empty();

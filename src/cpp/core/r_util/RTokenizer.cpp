@@ -21,8 +21,11 @@
 
 #include <boost/regex.hpp>
 
+#include <iostream>
+
 #include <core/Error.hpp>
 #include <core/Log.hpp>
+#include <core/StringUtils.hpp>
 
 namespace core {
 namespace r_util {
@@ -263,7 +266,7 @@ RToken RTokenizer::nextToken()
   case L'%':
      return matchUserOperator();
   case L' ': case L'\t': case L'\r': case L'\n':
-  case L'\u00A0': case L'\u3000':
+  case L'\x00A0': case L'\x3000':
      return matchWhitespace() ;
   }
 
@@ -277,14 +280,15 @@ RToken RTokenizer::nextToken()
         return numberToken ;
   }
 
-  if (std::iswalpha(c) || c == L'.')
+  if (string_utils::isalnum(c) || c == L'.')
   {
      // From Section 10.3.2, identifiers must not start with
-     // a period followed by a digit.
+     // a digit, nor may they start with a period followed by
+     // a digit.
      //
-     // Since we're not checking that the second character is
-     // not a digit, we must match on identifiers AFTER we have
-     // already tried to match on number.
+     // Since we're not checking for either condition, we must
+     // match on identifiers AFTER we have already tried to
+     // match on number.
      return matchIdentifier() ;
   }
 
@@ -359,8 +363,8 @@ RToken RTokenizer::matchIdentifier()
 {
    std::wstring::const_iterator start = pos_ ;
    eat();
-   std::wstring rest = peek(tokenPatterns().REST_OF_IDENTIFIER) ;
-   pos_ += rest.length() ;
+   while (string_utils::isalnum(peek()) || peek() == L'.' || peek() == L'_')
+      eat();
    return RToken(RToken::ID,
                  start,
                  pos_,
