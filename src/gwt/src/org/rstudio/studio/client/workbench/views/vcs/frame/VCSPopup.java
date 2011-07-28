@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.vcs.frame;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -86,16 +87,30 @@ public class VCSPopup
       w.setSize("100%", "100%");
 
       PopupPanel popup = new ModalPopupPanel(false, false);
+      Resources res = GWT.<Resources>create(Resources.class);
       NineUpBorder border = new NineUpBorder(
-            GWT.<Resources>create(Resources.class),
+            res,
             32, 20, 20, 20);
       addCloseButton(popup, border);
-      border.setSize("1300px", "900px");
+      border.setSize("100%", "100%");
       border.setFillColor("white");
       border.setWidget(w);
       popup.setWidget(border);
       popup.setGlassEnabled(true);
-      popup.getElement().getStyle().setZIndex(1001);
+
+      Style popupStyle = popup.getElement().getStyle();
+      popupStyle.setZIndex(1001);
+      popupStyle.setPosition(Style.Position.ABSOLUTE);
+      popupStyle.setTop(0, Unit.PX);
+      popupStyle.setBottom(0, Unit.PX);
+      popupStyle.setLeft(0, Unit.PX);
+      popupStyle.setRight(0, Unit.PX);
+
+      Style contentStyle =
+            ((Element) popup.getElement().getFirstChild()).getStyle();
+      contentStyle.setWidth(100, Unit.PCT);
+      contentStyle.setHeight(100, Unit.PCT);
+
       popup.center();
    }
 
