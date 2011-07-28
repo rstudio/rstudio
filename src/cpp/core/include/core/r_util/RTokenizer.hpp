@@ -32,7 +32,21 @@ class Error;
 
 namespace r_util {
 
-class RToken
+// Make RToken non-subclassable (since it has copy/byval semantics any
+// subclass would be sliced
+class RToken_lock
+{
+   friend class RToken ;
+private:
+   RToken_lock() {}
+   RToken_lock(const RToken_lock&) {}
+};
+
+// RToken. Note that RToken instances are only valid as long as the class
+// which yielded them (RTokenizer or RTokens) is alive. This is because
+// they contain iterators into the original source data rather than their
+// own copy of their contents.
+class RToken : public virtual RToken_lock
 {
 public:
 
@@ -60,8 +74,7 @@ public:
    RToken(wchar_t type,
           std::wstring::const_iterator begin,
           std::wstring::const_iterator end,
-          std::size_t offset,
-          std::size_t length);
+          std::size_t offset);
    virtual ~RToken();
 
    // COPYING: via copyable shared_ptr<Impl>
@@ -88,36 +101,6 @@ private:
    struct Impl;
    boost::shared_ptr<Impl> pImpl_;
 };
-
-bool operator==(const RToken& lhs, const RToken& rhs);
-
-inline bool operator!=(const RToken& lhs, const RToken& rhs)
-{
-    return !(lhs == rhs);
-}
-
-class RStringToken : public RToken
-{
-public:
-   RStringToken(wchar_t type,
-                std::wstring::const_iterator begin,
-                std::wstring::const_iterator end,
-                std::size_t offset,
-                std::size_t length,
-                bool wellFormed)
-      : RToken(type, begin, end, offset, length), wellFormed_(wellFormed)
-   {
-   }
-
-   // COPYING: via compiler
-
-public:
-   bool wellFormed() const { return wellFormed_; }
-
-private:
-   bool wellFormed_;
-};
-
 
 // Tokenize R code. Note that the RToken instances which are returned are
 // valid only during the lifetime of the RTokenizer which yielded them
@@ -160,37 +143,22 @@ private:
 };
 
 
-// Tokenize R code and access it as a range of RTokens. Note that the RToken
-// instances which are returned are valid only during the lifetime of
-// the RTokenRange which yielded them (because they store iterators into
-// their content rather than making a copy of the content)
-class RTokenRange : boost::noncopyable
+// Vector of RTokens. Note that the RTokens returned from the vector
+// are conceptually iterators so are only valid for the lifetime of
+// the RTokens object which yielded them.
+class RTokens : public std::vector<RToken>, boost::noncopyable
 {
 public:
-   explicit RTokenRange(const std::wstring& code);
-   virtual ~RTokenRange() {}
-
-   // COPYING: boost::noncopyable
-
-   bool isBOD() const;
-   bool isEOD() const;
-
-   RToken currentToken();
-   RToken next();
-   RToken prev();
-
-   Error moveTo(std::size_t index);
-   void moveToBOD();
-   void moveToEOD();
+   explicit RTokens(const std::wstring& code)
+      : tokenizer_(code)
+   {
+      RToken token;
+      while (token = tokenizer_.nextToken())
+         push_back(token);
+   }
 
 private:
-   void ensureValidIndex();
-
-private:
-   RTokenizer tokenizer_;
-   std::vector<RToken> tokens_;
-   std::size_t pos_;
-   static const std::size_t NPOS;
+    RTokenizer tokenizer_;
 };
 
 

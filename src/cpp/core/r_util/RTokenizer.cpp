@@ -11,11 +11,7 @@
  *
  */
 
-// TODO: Eliminate length field (can be calculated)
 // TODO: Eliminate shared_ptr for no allocations at all
-// TODO: Operator == shouldn't call contents()
-// TODO: Slicing of RStringToken (may need to merge w/ RToken)
-// TODO: RTokenRange is broken (NPOS=-1)
 
 #include <core/r_util/RTokenizer.hpp>
 
@@ -92,16 +88,14 @@ struct RToken::Impl
    Impl(wchar_t type,
         std::wstring::const_iterator begin,
         std::wstring::const_iterator end,
-        std::size_t offset,
-        std::size_t length)
-      : type(type), begin(begin), end(end), offset(offset), length(length)
+        std::size_t offset)
+      : type(type), begin(begin), end(end), offset(offset)
    {
    }
    wchar_t type;
    std::wstring::const_iterator begin;
    std::wstring::const_iterator end;
    std::size_t offset;
-   std::size_t length;
 };
 
 RToken::RToken()
@@ -112,9 +106,8 @@ RToken::RToken()
 RToken::RToken(wchar_t type,
                std::wstring::const_iterator begin,
                std::wstring::const_iterator end,
-               std::size_t offset,
-               std::size_t length)
-   : pImpl_(new Impl(type, begin, end, offset, length))
+               std::size_t offset)
+   : pImpl_(new Impl(type, begin, end, offset))
 {
 }
 
@@ -141,95 +134,7 @@ std::size_t RToken::offset() const
 
 std::size_t RToken::length() const
 {
-   return pImpl_->length;
-}
-
-
-bool operator==(const RToken& lhs, const RToken& rhs)
-{
-   if (!lhs && !rhs)
-   {
-      return true;
-   }
-   else if (!lhs || !rhs)
-   {
-      return false;
-   }
-   else
-   {
-      return lhs.type() == rhs.type() &&
-             lhs.content() == rhs.content() &&
-             lhs.offset() == rhs.offset() &&
-             lhs.length() == rhs.length();
-   }
-}
-
-const std::size_t RTokenRange::NPOS = -1;
-
-RTokenRange::RTokenRange(const std::wstring& code)
-   : tokenizer_(code), pos_(NPOS)
-{
-   // make a copy of the tokens so we can access them randomly
-   RToken token;
-   while (token = tokenizer_.nextToken())
-      tokens_.push_back(token);
-}
-
-bool RTokenRange::isBOD() const
-{
-   return pos_ == NPOS;
-}
-
-bool RTokenRange::isEOD() const
-{
-   return pos_ > tokens_.size();
-}
-
-RToken RTokenRange::currentToken()
-{
-   if (pos_ != NPOS && (tokens_.size() > pos_))
-      return tokens_.at(pos_) ;
-   else
-      return RToken();
-}
-
-RToken RTokenRange::next()
-{
-   pos_++ ;
-   ensureValidIndex() ;
-   return currentToken() ;
-}
-
-RToken RTokenRange::prev()
-{
-   pos_-- ;
-   ensureValidIndex() ;
-   return currentToken() ;
-}
-
-Error RTokenRange::moveTo(std::size_t index)
-{
-   if (index > tokens_.size())
-      return systemError(boost::system::errc::invalid_seek, ERROR_LOCATION);
-
-   pos_ = index ;
-
-   return Success();
-}
-
-void RTokenRange::moveToBOD()
-{
-   pos_ = NPOS;
-}
-
-void RTokenRange::moveToEOD()
-{
-   pos_ = tokens_.size();
-}
-
-void RTokenRange::ensureValidIndex()
-{
-   pos_ = std::min(std::max(NPOS, pos_), tokens_.size()) ;
+   return pImpl_->end - pImpl_->begin;
 }
 
 
@@ -342,12 +247,15 @@ RToken RTokenizer::matchStringLiteral()
       }
    }
 
-   return RStringToken(RToken::STRING,
-                       start,
-                       pos_,
-                       start - data_.begin(),
-                       pos_ - start,
-                       wellFormed) ;
+   // NOTE: the Java version of the tokenizer returns a special RStringToken
+   // subclass which includes the wellFormed flag as an attribute. Our
+   // implementation of RToken is stack based so doesn't support subclasses
+   // (because they will be sliced when copied). If we need the well
+   // formed flag we can just add it onto RToken.
+   return RToken(RToken::STRING,
+                 start,
+                 pos_,
+                 start - data_.begin());
 }
 
 RToken RTokenizer::matchNumber()
@@ -368,8 +276,7 @@ RToken RTokenizer::matchIdentifier()
    return RToken(RToken::ID,
                  start,
                  pos_,
-                 start - data_.begin(),
-                 pos_ - start) ;
+                 start - data_.begin()) ;
 }
 
 RToken RTokenizer::matchQuotedIdentifier()
@@ -488,7 +395,7 @@ RToken RTokenizer::consumeToken(wchar_t tokenType, std::size_t length)
       LOG_WARNING_MESSAGE("Can't create zero-length token");
       return RToken();
    }
-   else if (pos_ + length > data_.end())
+   else if ((pos_ + length) > data_.end())
    {
       LOG_WARNING_MESSAGE("Premature EOF");
       return RToken();
@@ -499,8 +406,7 @@ RToken RTokenizer::consumeToken(wchar_t tokenType, std::size_t length)
    return RToken(tokenType,
                  start,
                  pos_,
-                 start - data_.begin(),
-                 length) ;
+                 start - data_.begin()) ;
 }
 
 
