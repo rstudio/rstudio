@@ -102,6 +102,9 @@ public class UnifiedParser
                                   newRow++,
                                   diffLine.substring(1)));
                break;
+            case '\\':
+               // e.g. "\\ No newline at end of file"
+               break;
             default:
                throw new DiffFormatException("Unexpected leading character");
          }

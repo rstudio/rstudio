@@ -199,6 +199,15 @@
    display: none;
 }
 
+.stageMode .actions a[data-action='Stage'],
+.stageMode .actions a[data-action='Discard'] {
+   display: none;
+}
+
+.workingMode .actions a[data-action='Unstage'] {
+   display: none;
+}
+
 .cellTableWidget tr:hover .lineActions {
    display: block;
 }

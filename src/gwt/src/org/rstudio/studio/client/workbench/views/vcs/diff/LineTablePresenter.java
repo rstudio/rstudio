@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.vcs.diff;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.view.client.SelectionChangeEvent;
+import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionHandler;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionHandler;
 
@@ -23,7 +24,7 @@ public class LineTablePresenter
 {
    public interface Display
    {
-      void setData(ArrayList<ChunkOrLine> diffData);
+      void setData(ArrayList<ChunkOrLine> diffData, PatchMode patchMode);
       void clear();
       ArrayList<Line> getSelectedLines();
       ArrayList<Line> getAllLines();

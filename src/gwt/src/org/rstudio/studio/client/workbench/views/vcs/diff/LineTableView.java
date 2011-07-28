@@ -32,6 +32,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
+import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.views.vcs.diff.Line.Type;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent;
@@ -64,6 +65,9 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
 
       String start();
       String end();
+
+      String stageMode();
+      String workingMode();
    }
 
    public class LineContentCell extends AbstractCell<ChunkOrLine>
@@ -269,7 +273,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
       };
       setSelectionModel(selectionModel_);
 
-      setData(new ArrayList<ChunkOrLine>());
+      setData(new ArrayList<ChunkOrLine>(), PatchMode.Working);
    }
 
    private String intToString(Integer value)
@@ -280,8 +284,20 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
    }
 
    @Override
-   public void setData(ArrayList<ChunkOrLine> diffData)
+   public void setData(ArrayList<ChunkOrLine> diffData, PatchMode patchMode)
    {
+      removeStyleName(RES.cellTableStyle().stageMode());
+      removeStyleName(RES.cellTableStyle().workingMode());
+      switch (patchMode)
+      {
+         case Stage:
+            addStyleName(RES.cellTableStyle().stageMode());
+            break;
+         case Working:
+            addStyleName(RES.cellTableStyle().workingMode());
+            break;
+      }
+
       lines_ = diffData;
       setPageSize(diffData.size());
       selectionModel_.clear();
@@ -316,7 +332,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
    @Override
    public void clear()
    {
-      setData(new ArrayList<ChunkOrLine>());
+      setData(new ArrayList<ChunkOrLine>(), PatchMode.Working);
    }
 
    @Override

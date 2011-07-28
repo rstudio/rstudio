@@ -128,8 +128,6 @@ public class ReviewPresenter implements IsWidget
                            ArrayList<Line> lines,
                            ArrayList<DiffChunk> chunks)
       {
-         Debug.devlog(chunks.size() + " chunks, " + lines.size() + " lines");
-
          boolean reverse;
          PatchMode patchMode;
          switch (action)
@@ -383,8 +381,7 @@ public class ReviewPresenter implements IsWidget
    private void updateDiff(boolean allowModeSwitch)
    {
       view_.getLineTableDisplay().clear();
-      ArrayList<String> paths = view_.getChangelistTable()
-            .getSelectedPaths();
+      ArrayList<String> paths = view_.getChangelistTable().getSelectedPaths();
       if (paths.size() != 1)
          return;
 
@@ -405,9 +402,12 @@ public class ReviewPresenter implements IsWidget
 
       final Token token = diffInvalidation_.getInvalidationToken();
 
+      final PatchMode patchMode = view_.getStagedCheckBox().getValue()
+                                  ? PatchMode.Stage
+                                  : PatchMode.Working;
       server_.vcsDiffFile(
             paths.get(0),
-            view_.getStagedCheckBox().getValue() ? PatchMode.Stage : PatchMode.Working,
+            patchMode,
             view_.getContextLines().getValue(),
             new SimpleRequestCallback<String>("Diff Error")
             {
@@ -432,7 +432,7 @@ public class ReviewPresenter implements IsWidget
                         allLines.add(new ChunkOrLine(line));
                   }
 
-                  view_.getLineTableDisplay().setData(allLines);
+                  view_.getLineTableDisplay().setData(allLines, patchMode);
                   view_.getGutter().setValue(allLines);
                }
             });
