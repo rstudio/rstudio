@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.FontStyle;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.ListStyleType;
+import com.google.gwt.dom.client.Style.OutlineStyle;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TableLayout;
@@ -265,6 +266,18 @@ class DomStylesBuilder implements StylesBuilder {
   }
 
   @Override
+  public StylesBuilder outlineStyle(OutlineStyle value) {
+    delegate.assertCanAddStyleProperty().setOutlineStyle(value);
+    return this;
+  }
+
+  @Override
+  public StylesBuilder outlineWidth(double value, Unit unit) {
+    delegate.assertCanAddStyleProperty().setOutlineWidth(value, unit);
+    return this;
+  }
+
+  @Override
   public StylesBuilder overflow(Overflow value) {
     delegate.assertCanAddStyleProperty().setOverflow(value);
     return this;
@@ -363,6 +376,12 @@ class DomStylesBuilder implements StylesBuilder {
   @Override
   public StylesBuilder trustedColor(String value) {
     delegate.assertCanAddStyleProperty().setColor(value);
+    return this;
+  }
+
+  @Override
+  public StylesBuilder trustedOutlineColor(String value) {
+    delegate.assertCanAddStyleProperty().setOutlineColor(value);
     return this;
   }
 

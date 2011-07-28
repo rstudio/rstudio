@@ -17,18 +17,23 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.Cell.Context;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.cellview.client.AbstractHasData.DefaultKeyboardSelectionHandler;
+import com.google.gwt.user.cellview.client.HasKeyboardPagingPolicy.KeyboardPagingPolicy;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.view.client.Range;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,6 +100,121 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     assertEquals(1, loadingStates.size());
   }
 
+  /**
+   * Test that an error is thrown if the builder ends the table body element
+   * instead of the table row element.
+   */
+  public void testBuildTooManyEnds() {
+    final List<Integer> builtRows = new ArrayList<Integer>();
+    T table = createAbstractHasData(new TextCell());
+    CellTableBuilder<String> builder =
+        new AbstractCellTable.DefaultCellTableBuilder<String>(table) {
+          @Override
+          public void buildRow(String rowValue, int absRowIndex,
+              CellTableBuilder.Utility<String> utility) {
+            builtRows.add(absRowIndex);
+            TableRowBuilder tr = utility.startRow();
+            tr.endTR(); // End the tr.
+            tr.end(); // Accidentally end the table section.
+
+            // Try to start another row.
+            try {
+              utility.startRow();
+              fail("Expected IllegalStateException: tbody is already ended");
+            } catch (IllegalStateException e) {
+              // Expected.
+            }
+          }
+        };
+    table.setTableBuilder(builder);
+    table.setVisibleRange(0, 1);
+    populateData(table);
+    table.getPresenter().flush();
+
+    assertEquals(1, builtRows.size());
+    assertEquals(0, builtRows.get(0).intValue());
+  }
+
+  /**
+   * Test that the table works if a row value is rendered into multiple rows.
+   */
+  public void testBuildMultipleRows() {
+    T table = createAbstractHasData(new TextCell());
+    CellTableBuilder<String> builder =
+        new AbstractCellTable.DefaultCellTableBuilder<String>(table) {
+          @Override
+          public void buildRow(String rowValue, int absRowIndex,
+              CellTableBuilder.Utility<String> utility) {
+            super.buildRow(rowValue, absRowIndex, utility);
+
+            // Add child rows to row five.
+            if (absRowIndex == 5) {
+              for (int i = 0; i < 4; i++) {
+                TableRowBuilder tr = utility.startRow();
+                tr.startTD().colSpan(2).text("child " + i).endTD();
+                tr.endTR();
+              }
+            }
+          }
+        };
+    table.setTableBuilder(builder);
+    table.setVisibleRange(0, 10);
+    populateData(table);
+    table.getPresenter().flush();
+
+    // Verify the structure.
+    TableSectionElement tbody = table.getTableBodyElement();
+    assertEquals(14, tbody.getChildCount());
+    assertEquals("child 0", getBodyElement(table, 6, 0).getInnerText());
+    assertEquals("child 1", getBodyElement(table, 7, 0).getInnerText());
+    assertEquals("child 2", getBodyElement(table, 8, 0).getInnerText());
+    assertEquals("child 3", getBodyElement(table, 9, 0).getInnerText());
+
+    // Verify the row values are accessible.
+    assertEquals("test 5", table.getVisibleItem(5));
+    assertEquals("test 9", table.getVisibleItem(9));
+
+    // Verify the child elements map correctly.
+    assertEquals(4, table.getChildElement(4).getSectionRowIndex());
+    assertEquals(5, table.getChildElement(5).getSectionRowIndex());
+    assertEquals(10, table.getChildElement(6).getSectionRowIndex());
+  }
+
+  /**
+   * Test that the table works if a row value is rendered into zero rows.
+   */
+  public void testBuildZeroRows() {
+    T table = createAbstractHasData(new TextCell());
+    CellTableBuilder<String> builder =
+        new AbstractCellTable.DefaultCellTableBuilder<String>(table) {
+          @Override
+          public void buildRow(String rowValue, int absRowIndex,
+              CellTableBuilder.Utility<String> utility) {
+            // Skip row index 5.
+            if (absRowIndex != 5) {
+              super.buildRow(rowValue, absRowIndex, utility);
+            }
+          }
+        };
+    table.setTableBuilder(builder);
+    table.setVisibleRange(0, 10);
+    populateData(table);
+    table.getPresenter().flush();
+
+    // Verify the structure.
+    TableSectionElement tbody = table.getTableBodyElement();
+    assertEquals(9, tbody.getChildCount());
+
+    // Verify the row values are accessible.
+    assertEquals("test 5", table.getVisibleItem(5));
+    assertEquals("test 9", table.getVisibleItem(9));
+
+    // Verify the child elements map correctly.
+    assertEquals(4, table.getChildElement(4).getSectionRowIndex());
+    assertNull(table.getChildElement(5));
+    assertEquals(5, table.getChildElement(6).getSectionRowIndex());
+  }
+
   public void testCellAlignment() {
     T table = createAbstractHasData(new TextCell());
     Column<String, String> column = new Column<String, String>(new TextCell()) {
@@ -151,14 +271,14 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
 
   public void testCellEvent() {
     IndexCell<String> cell = new IndexCell<String>("click");
-    AbstractCellTable<String> table = createAbstractHasData(cell);
+    T table = createAbstractHasData(cell);
     RootPanel.get().add(table);
     table.setRowData(createData(0, 10));
     table.getPresenter().flush();
 
     // Trigger an event at index 5.
     NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
-    table.getRowElement(5).getCells().getItem(0).dispatchEvent(event);
+    getBodyElement(table, 5, 0).getFirstChildElement().dispatchEvent(event);
     cell.assertLastBrowserEventIndex(5);
     cell.assertLastEditingIndex(5);
 
@@ -200,6 +320,274 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     assertFalse(getBodyElement(table, 1, 0).getClassName().contains(" test_1"));
     assertFalse(getBodyElement(table, 1, 1).getClassName().contains(" col0"));
     assertTrue(getBodyElement(table, 1, 1).getClassName().contains(" test_1"));
+  }
+
+  public void testDefaultKeyboardSelectionHandlerChangePage() {
+    T table = createAbstractHasData();
+    DefaultKeyboardSelectionHandler<String> keyHandler =
+        new DefaultKeyboardSelectionHandler<String>(table);
+    table.setKeyboardSelectionHandler(keyHandler);
+    HasDataPresenter<String> presenter = table.getPresenter();
+
+    table.setRowCount(100, true);
+    table.setVisibleRange(new Range(50, 10));
+    populateData(table);
+    presenter.flush();
+    table.setKeyboardPagingPolicy(KeyboardPagingPolicy.CHANGE_PAGE);
+
+    // keyboardPrev in middle.
+    table.setKeyboardSelectedRow(1);
+    presenter.flush();
+    assertEquals(1, table.getKeyboardSelectedRow());
+    keyHandler.prevRow();
+    presenter.flush();
+    assertEquals(0, table.getKeyboardSelectedRow());
+
+    // keyboardPrev at beginning goes to previous page.
+    keyHandler.prevRow();
+    populateData(table);
+    presenter.flush();
+    assertEquals(9, table.getKeyboardSelectedRow());
+    assertEquals(new Range(40, 10), table.getVisibleRange());
+
+    // keyboardNext in middle.
+    table.setKeyboardSelectedRow(8);
+    presenter.flush();
+    assertEquals(8, table.getKeyboardSelectedRow());
+    keyHandler.nextRow();
+    presenter.flush();
+    assertEquals(9, table.getKeyboardSelectedRow());
+
+    // keyboardNext at end.
+    keyHandler.nextRow();
+    populateData(table);
+    presenter.flush();
+    assertEquals(0, table.getKeyboardSelectedRow());
+    assertEquals(new Range(50, 10), table.getVisibleRange());
+
+    // keyboardPrevPage.
+    table.setKeyboardSelectedRow(5);
+    presenter.flush();
+    assertEquals(5, table.getKeyboardSelectedRow());
+    keyHandler.prevPage();
+    populateData(table);
+    presenter.flush();
+    assertEquals(0, table.getKeyboardSelectedRow());
+    assertEquals(new Range(40, 10), table.getVisibleRange());
+
+    // keyboardNextPage.
+    table.setKeyboardSelectedRow(5);
+    presenter.flush();
+    assertEquals(5, table.getKeyboardSelectedRow());
+    keyHandler.nextPage();
+    populateData(table);
+    presenter.flush();
+    assertEquals(0, table.getKeyboardSelectedRow());
+    assertEquals(new Range(50, 10), table.getVisibleRange());
+
+    // keyboardHome.
+    keyHandler.home();
+    populateData(table);
+    presenter.flush();
+    assertEquals(0, table.getKeyboardSelectedRow());
+    assertEquals(new Range(0, 10), table.getVisibleRange());
+
+    // keyboardPrev at first row.
+    keyHandler.prevRow();
+    presenter.flush();
+    assertEquals(0, table.getKeyboardSelectedRow());
+
+    // keyboardEnd.
+    keyHandler.end();
+    populateData(table);
+    presenter.flush();
+    assertEquals(9, table.getKeyboardSelectedRow());
+    assertEquals(new Range(90, 10), table.getVisibleRange());
+
+    // keyboardNext at last row.
+    keyHandler.nextRow();
+    presenter.flush();
+  }
+
+  public void testDefaultKeyboardSelectionHandlerCurrentPage() {
+    T table = createAbstractHasData();
+    DefaultKeyboardSelectionHandler<String> keyHandler =
+        new DefaultKeyboardSelectionHandler<String>(table);
+    table.setKeyboardSelectionHandler(keyHandler);
+    HasDataPresenter<String> presenter = table.getPresenter();
+
+    table.setRowCount(100, true);
+    table.setVisibleRange(new Range(50, 10));
+    populateData(table);
+    presenter.flush();
+    table.setKeyboardPagingPolicy(KeyboardPagingPolicy.CURRENT_PAGE);
+
+    // keyboardPrev in middle.
+    table.setKeyboardSelectedRow(1);
+    presenter.flush();
+    assertEquals(1, table.getKeyboardSelectedRow());
+    keyHandler.prevRow();
+    presenter.flush();
+    assertEquals(0, table.getKeyboardSelectedRow());
+
+    // keyboardPrev at beginning.
+    keyHandler.prevRow();
+    presenter.flush();
+    assertEquals(0, table.getKeyboardSelectedRow());
+    assertEquals(new Range(50, 10), table.getVisibleRange());
+
+    // keyboardNext in middle.
+    table.setKeyboardSelectedRow(8);
+    presenter.flush();
+    assertEquals(8, table.getKeyboardSelectedRow());
+    keyHandler.nextRow();
+    presenter.flush();
+    assertEquals(9, table.getKeyboardSelectedRow());
+
+    // keyboardNext at end.
+    keyHandler.nextRow();
+    presenter.flush();
+    assertEquals(9, table.getKeyboardSelectedRow());
+    assertEquals(new Range(50, 10), table.getVisibleRange());
+
+    // keyboardPrevPage.
+    keyHandler.prevPage(); // ignored.
+    presenter.flush();
+    assertEquals(9, table.getKeyboardSelectedRow());
+    assertEquals(new Range(50, 10), table.getVisibleRange());
+
+    // keyboardNextPage.
+    keyHandler.nextPage(); // ignored.
+    presenter.flush();
+    assertEquals(9, table.getKeyboardSelectedRow());
+    assertEquals(new Range(50, 10), table.getVisibleRange());
+
+    // keyboardHome.
+    keyHandler.home();
+    presenter.flush();
+    assertEquals(0, table.getKeyboardSelectedRow());
+    assertEquals(new Range(50, 10), table.getVisibleRange());
+
+    // keyboardEnd.
+    keyHandler.end();
+    presenter.flush();
+    assertEquals(9, table.getKeyboardSelectedRow());
+    assertEquals(new Range(50, 10), table.getVisibleRange());
+  }
+
+  public void testDefaultKeyboardSelectionHandlerIncreaseRange() {
+    int pageStart = 150;
+    int pageSize = 10;
+    int increment = HasDataPresenter.PAGE_INCREMENT;
+
+    T table = createAbstractHasData();
+    DefaultKeyboardSelectionHandler<String> keyHandler =
+        new DefaultKeyboardSelectionHandler<String>(table);
+    table.setKeyboardSelectionHandler(keyHandler);
+    HasDataPresenter<String> presenter = table.getPresenter();
+
+    table.setRowCount(300, true);
+    table.setVisibleRange(new Range(pageStart, pageSize));
+    populateData(table);
+    presenter.flush();
+    table.setKeyboardPagingPolicy(KeyboardPagingPolicy.INCREASE_RANGE);
+
+    // keyboardPrev in middle.
+    table.setKeyboardSelectedRow(1);
+    presenter.flush();
+    assertEquals(1, table.getKeyboardSelectedRow());
+    keyHandler.prevRow();
+    presenter.flush();
+    assertEquals(0, table.getKeyboardSelectedRow());
+
+    // keyboardPrev at beginning.
+    keyHandler.prevRow();
+    populateData(table);
+    presenter.flush();
+    pageStart -= increment;
+    pageSize += increment;
+    assertEquals(increment - 1, table.getKeyboardSelectedRow());
+    assertEquals(new Range(pageStart, pageSize), table.getVisibleRange());
+
+    // keyboardNext in middle.
+    table.setKeyboardSelectedRow(pageSize - 2);
+    presenter.flush();
+    assertEquals(pageSize - 2, table.getKeyboardSelectedRow());
+    keyHandler.nextRow();
+    presenter.flush();
+    assertEquals(pageSize - 1, table.getKeyboardSelectedRow());
+
+    // keyboardNext at end.
+    keyHandler.nextRow();
+    populateData(table);
+    presenter.flush();
+    pageSize += increment;
+    assertEquals(pageSize - increment, table.getKeyboardSelectedRow());
+    assertEquals(new Range(pageStart, pageSize), table.getVisibleRange());
+
+    // keyboardPrevPage within range.
+    table.setKeyboardSelectedRow(increment);
+    presenter.flush();
+    assertEquals(increment, table.getKeyboardSelectedRow());
+    keyHandler.prevPage();
+    presenter.flush();
+    assertEquals(0, table.getKeyboardSelectedRow());
+    assertEquals(new Range(pageStart, pageSize), table.getVisibleRange());
+
+    // keyboardPrevPage outside range.
+    keyHandler.prevPage();
+    populateData(table);
+    presenter.flush();
+    assertEquals(0, table.getKeyboardSelectedRow());
+    pageStart -= increment;
+    pageSize += increment;
+    assertEquals(new Range(pageStart, pageSize), table.getVisibleRange());
+
+    // keyboardNextPage inside range.
+    keyHandler.nextPage();
+    presenter.flush();
+    assertEquals(increment, table.getKeyboardSelectedRow());
+    assertEquals(new Range(pageStart, pageSize), table.getVisibleRange());
+
+    // keyboardNextPage outside range.
+    table.setKeyboardSelectedRow(pageSize - 1);
+    presenter.flush();
+    assertEquals(pageSize - 1, table.getKeyboardSelectedRow());
+    keyHandler.nextPage();
+    populateData(table);
+    presenter.flush();
+    pageSize += increment;
+    assertEquals(pageSize - 1, table.getKeyboardSelectedRow());
+    assertEquals(new Range(pageStart, pageSize), table.getVisibleRange());
+
+    // keyboardHome.
+    keyHandler.home();
+    populateData(table);
+    presenter.flush();
+    pageSize += pageStart;
+    pageStart = 0;
+    assertEquals(0, table.getKeyboardSelectedRow());
+    assertEquals(new Range(pageStart, pageSize), table.getVisibleRange());
+
+    // keyboardPrev at first row.
+    keyHandler.prevRow();
+    presenter.flush();
+    assertEquals(0, table.getKeyboardSelectedRow());
+    assertEquals(new Range(pageStart, pageSize), table.getVisibleRange());
+
+    // keyboardEnd.
+    keyHandler.end();
+    pageSize = 300;
+    populateData(table);
+    presenter.flush();
+    assertEquals(pageSize - 1, table.getKeyboardSelectedRow());
+    assertEquals(new Range(0, pageSize), table.getVisibleRange());
+
+    // keyboardNext at last row.
+    keyHandler.nextRow();
+    presenter.flush();
+    assertEquals(pageSize - 1, table.getKeyboardSelectedRow());
+    assertEquals(new Range(pageStart, pageSize), table.getVisibleRange());
   }
 
   public void testGetColumnIndex() {
@@ -260,6 +648,54 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
 
     // Ensure that calling getRowElement() flushes all pending changes.
     assertNotNull(table.getRowElement(9));
+  }
+
+  public void testGetSubRowElement() {
+    T table = createAbstractHasData(new TextCell());
+    CellTableBuilder<String> builder =
+        new AbstractCellTable.DefaultCellTableBuilder<String>(table) {
+          @Override
+          public void buildRow(String rowValue, int absRowIndex,
+              CellTableBuilder.Utility<String> utility) {
+            super.buildRow(rowValue, absRowIndex, utility);
+
+            // Add some children.
+            for (int i = 0; i < 4; i++) {
+              TableRowBuilder tr = utility.startRow();
+              tr.startTD().colSpan(2).text("child " + absRowIndex + ":" + i).endTD();
+              tr.endTR();
+            }
+          }
+        };
+    table.setTableBuilder(builder);
+    table.setVisibleRange(0, 5);
+    populateData(table);
+    table.getPresenter().flush();
+
+    // Verify the structure.
+    TableSectionElement tbody = table.getTableBodyElement();
+    assertEquals(25, tbody.getChildCount());
+
+    // Test sub rows within range.
+    assertEquals(0, table.getSubRowElement(0, 0).getSectionRowIndex());
+    assertEquals(1, table.getSubRowElement(0, 1).getSectionRowIndex());
+    assertEquals(4, table.getSubRowElement(0, 4).getSectionRowIndex());
+    assertEquals(5, table.getSubRowElement(1, 0).getSectionRowIndex());
+    assertEquals(8, table.getSubRowElement(1, 3).getSectionRowIndex());
+    assertEquals(20, table.getSubRowElement(4, 0).getSectionRowIndex());
+    assertEquals(24, table.getSubRowElement(4, 4).getSectionRowIndex());
+
+    // Sub row does not exist within the row.
+    assertNull(table.getSubRowElement(0, 5));
+    assertNull(table.getSubRowElement(4, 5));
+
+    // Row index out of bounds.
+    try {
+      assertNull(table.getSubRowElement(5, 0));
+      fail("Expected IndexOutOfBoundsException: row index is out of bounds");
+    } catch (IndexOutOfBoundsException e) {
+      // Expected.
+    }
   }
 
   public void testInsertColumn() {
@@ -344,6 +780,31 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     // Null widget.
     table.setEmptyTableWidget(null);
     assertNull(table.getEmptyTableWidget());
+  }
+
+  public void testSetKeyboardSelectedRow() {
+    AbstractCellTable<String> table = createAbstractHasData(new TextCell());
+    table.setVisibleRange(0, 10);
+
+    // Without a subrow.
+    table.setKeyboardSelectedRow(5);
+    assertEquals(5, table.getKeyboardSelectedRow());
+    assertEquals(0, table.getKeyboardSelectedSubRow());
+
+    // Specify a subrow.
+    table.setKeyboardSelectedRow(6, 2, false);
+    assertEquals(6, table.getKeyboardSelectedRow());
+    assertEquals(2, table.getKeyboardSelectedSubRow());
+
+    // Change the subrow.
+    table.setKeyboardSelectedRow(6, 5, false);
+    assertEquals(6, table.getKeyboardSelectedRow());
+    assertEquals(5, table.getKeyboardSelectedSubRow());
+
+    // Change the row.
+    table.setKeyboardSelectedRow(7);
+    assertEquals(7, table.getKeyboardSelectedRow());
+    assertEquals(0, table.getKeyboardSelectedSubRow());
   }
 
   public void testSetLoadingIndicator() {

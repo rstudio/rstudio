@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.FontStyle;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.ListStyleType;
+import com.google.gwt.dom.client.Style.OutlineStyle;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TableLayout;
@@ -293,6 +294,16 @@ class HtmlStylesBuilder implements StylesBuilder {
   }
 
   @Override
+  public StylesBuilder outlineStyle(OutlineStyle value) {
+    return delegate.styleProperty(SafeStylesUtils.forOutlineStyle(value));
+  }
+
+  @Override
+  public StylesBuilder outlineWidth(double value, Unit unit) {
+    return delegate.styleProperty(SafeStylesUtils.forOutlineWidth(value, unit));
+  }
+
+  @Override
   public StylesBuilder overflow(Overflow value) {
     return delegate.styleProperty(SafeStylesUtils.forOverflow(value));
   }
@@ -375,6 +386,11 @@ class HtmlStylesBuilder implements StylesBuilder {
   @Override
   public StylesBuilder trustedColor(String value) {
     return delegate.styleProperty(SafeStylesUtils.forTrustedColor(value));
+  }
+
+  @Override
+  public StylesBuilder trustedOutlineColor(String value) {
+    return delegate.styleProperty(SafeStylesUtils.forTrustedOutlineColor(value));
   }
 
   @Override

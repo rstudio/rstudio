@@ -551,6 +551,11 @@ public interface ElementBuilderBase<T extends ElementBuilderBase<?>> {
   Element finish();
 
   /**
+   * Get the element depth of the current builder.
+   */
+  int getDepth();
+
+  /**
    * Append html within the node.
    * 
    * <p>

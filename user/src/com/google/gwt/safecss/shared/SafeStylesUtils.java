@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.FontStyle;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.ListStyleType;
+import com.google.gwt.dom.client.Style.OutlineStyle;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TableLayout;
@@ -218,6 +219,20 @@ public final class SafeStylesUtils {
   }
 
   /**
+   * Sets the outline-style CSS property.
+   */
+  public static SafeStyles forOutlineStyle(OutlineStyle value) {
+    return fromTrustedNameAndValue("outline-style", value.getCssName());
+  }
+
+  /**
+   * Set the outline-width css property.
+   */
+  public static SafeStyles forOutlineWidth(double value, Unit unit) {
+    return fromTrustedNameAndValue("outline-width", value, unit);
+  }
+
+  /**
    * Sets the overflow CSS property.
    */
   public static SafeStyles forOverflow(Overflow value) {
@@ -407,6 +422,31 @@ public final class SafeStylesUtils {
    */
   public static SafeStyles forTrustedColor(String value) {
     return fromTrustedNameAndValue("color", value);
+  }
+
+  /**
+   * <p>
+   * Returns a {@link SafeStyles} constructed from a trusted outline color,
+   * i.e., without escaping the value. No checks are performed. The calling code
+   * should be carefully reviewed to ensure the argument will satisfy the
+   * {@link SafeStyles} contract when they are composed into the form:
+   * "&lt;name&gt;:&lt;value&gt;;".
+   * 
+   * <p>
+   * {@link SafeStyles} may never contain literal angle brackets. Otherwise, it
+   * could be unsafe to place a {@link SafeStyles} into a &lt;style&gt; tag
+   * (where it can't be HTML escaped). For example, if the {@link SafeStyles}
+   * containing "
+   * <code>font: 'foo &lt;style&gt;&lt;script&gt;evil&lt;/script&gt;</code>'" is
+   * used in a style sheet in a &lt;style&gt; tag, this could then break out of
+   * the style context into HTML.
+   * </p>
+   * 
+   * @param value the property value
+   * @return a {@link SafeStyles} instance
+   */
+  public static SafeStyles forTrustedOutlineColor(String value) {
+    return fromTrustedNameAndValue("outline-color", value);
   }
 
   /**

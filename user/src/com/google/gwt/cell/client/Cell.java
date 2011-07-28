@@ -41,6 +41,7 @@ public interface Cell<C> {
     private final int column;
     private final int index;
     private final Object key;
+    private final int subindex;
 
     /**
      * Create a new {@link Context}.
@@ -50,9 +51,22 @@ public interface Cell<C> {
      * @param key the unique key that represents the row value
      */
     public Context(int index, int column, Object key) {
+      this(index, column, key, 0);
+    }
+
+    /**
+     * Create a new {@link Context}.
+     * 
+     * @param index the absolute index of the value
+     * @param column the column index of the cell, or 0
+     * @param key the unique key that represents the row value
+     * @param subindex the child index
+     */
+    public Context(int index, int column, Object key, int subindex) {
       this.index = index;
       this.column = column;
       this.key = key;
+      this.subindex = subindex;
     }
 
     /**
@@ -81,6 +95,15 @@ public interface Cell<C> {
      */
     public Object getKey() {
       return key;
+    }
+
+    /**
+     * Get the sub index of the rendered row value. If the row value renders to
+     * a single row element, the sub index is 0. If the row value renders to
+     * more than one row element, the sub index may be greater than zero.
+     */
+    public int getSubIndex() {
+      return subindex;
     }
   }
 
@@ -137,8 +160,8 @@ public interface Cell<C> {
    * @param event the native browser event
    * @param valueUpdater a {@link ValueUpdater}, or null if not specified
    */
-  void onBrowserEvent(Context context, Element parent, C value,
-      NativeEvent event, ValueUpdater<C> valueUpdater);
+  void onBrowserEvent(Context context, Element parent, C value, NativeEvent event,
+      ValueUpdater<C> valueUpdater);
 
   /**
    * Render a cell as HTML into a {@link SafeHtmlBuilder}, suitable for passing

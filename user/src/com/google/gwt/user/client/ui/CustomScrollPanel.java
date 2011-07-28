@@ -410,6 +410,11 @@ public class CustomScrollPanel extends ScrollPanel {
 
   @Override
   public void setWidget(Widget w) {
+    // Early exit if the widget is unchanged. Avoids updating the scrollbars.
+    if (w == getWidget()) {
+      return;
+    }
+
     super.setWidget(w);
     maybeUpdateScrollbars();
   }

@@ -50,18 +50,6 @@ public abstract class GwtElementBuilderImplTestBase extends GWTTestCase {
     assertEquals("myTitle", div.getTitle());
   }
 
-  public void testFinishTwice() {
-    DivBuilder builder = factory.createDivBuilder();
-    assertNotNull(builder.finish());
-
-    try {
-      builder.finish();
-      fail("Expected IllegalStateException: cannot call finish() twice");
-    } catch (IllegalStateException e) {
-      // Expected.
-    }
-  }
-
   public void testBuildTable() {
     // Build a table.
     TableBuilder tableBuilder = factory.createTableBuilder().id("mytable");
@@ -87,6 +75,42 @@ public abstract class GwtElementBuilderImplTestBase extends GWTTestCase {
         assertEquals(r + ":" + c, td.getInnerText());
       }
     }
+  }
+
+  public void testFinishTwice() {
+    DivBuilder builder = factory.createDivBuilder();
+    assertNotNull(builder.finish());
+
+    try {
+      builder.finish();
+      fail("Expected IllegalStateException: cannot call finish() twice");
+    } catch (IllegalStateException e) {
+      // Expected.
+    }
+  }
+
+  public void testGetDepth() {
+    DivBuilder parent = factory.createDivBuilder();
+    assertEquals(1, parent.getDepth());
+
+    DivBuilder child = parent.startDiv();
+    assertEquals(2, child.getDepth());
+
+    DivBuilder grandchild0 = child.startDiv();
+    assertEquals(3, grandchild0.getDepth());
+    grandchild0.endDiv();
+    assertEquals(2, child.getDepth());
+
+    DivBuilder grandchild1 = child.startDiv();
+    assertEquals(3, grandchild1.getDepth());
+    grandchild1.endDiv();
+    assertEquals(2, child.getDepth());
+
+    child.endDiv();
+    assertEquals(1, parent.getDepth());
+
+    parent.endDiv();
+    assertEquals(0, parent.getDepth());
   }
 
   /**

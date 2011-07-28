@@ -15,14 +15,14 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.HasDataPresenter.View;
 import com.google.gwt.user.cellview.client.HasKeyboardPagingPolicy.KeyboardPagingPolicy;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
@@ -42,7 +42,6 @@ import com.google.gwt.view.client.SingleSelectionModel;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeSet;
 
 /**
  * Tests for {@link HasDataPresenter}.
@@ -52,8 +51,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   /**
    * A mock {@link SelectionChangeEvent.Handler} used for testing.
    */
-  private static class MockSelectionChangeHandler implements
-      SelectionChangeEvent.Handler {
+  private static class MockSelectionChangeHandler implements SelectionChangeEvent.Handler {
 
     private boolean eventFired;
 
@@ -100,18 +98,29 @@ public class HasDataPresenterTest extends GWTTestCase {
    */
   private static class MockView<T> implements View<T> {
 
+    /**
+     * A call to replacement.
+     */
+    private static class Replacement {
+      private final boolean isReplaceAll;
+      private final int size;
+      private final int start;
+
+      public Replacement(boolean isReplaceAll, int start, int size) {
+        this.isReplaceAll = isReplaceAll;
+        this.start = start;
+        this.size = size;
+      }
+    }
+
     private int childCount;
     private List<Integer> keyboardSelectedRow = new ArrayList<Integer>();
     private List<Boolean> keyboardSelectedRowState = new ArrayList<Boolean>();
-    private final List<SafeHtml> lastHtml = new ArrayList<SafeHtml>();
+    private List<Replacement> lastReplacement = new ArrayList<Replacement>();
     private LoadingState loadingState;
-    private boolean replaceAllChildrenCalled;
-    private boolean replaceAllChildrenCalledWithSameContent;
-    private boolean replaceChildrenCalled;
 
     @Override
-    public <H extends EventHandler> HandlerRegistration addHandler(H handler,
-        Type<H> type) {
+    public <H extends EventHandler> HandlerRegistration addHandler(H handler, Type<H> type) {
       throw new UnsupportedOperationException();
     }
 
@@ -135,32 +144,27 @@ public class HasDataPresenterTest extends GWTTestCase {
       assertEquals(0, keyboardSelectedRow.size());
     }
 
-    public void assertLastHtml(String html) {
-      if (html == null) {
-        assertTrue(lastHtml.isEmpty());
-      } else {
-        assertEquals(html, lastHtml.remove(0).asString());
-      }
-    }
-
     public void assertLoadingState(LoadingState expected) {
       assertEquals(expected, loadingState);
     }
 
-    public void assertReplaceAllChildrenCalled(boolean expected) {
-      assertEquals(expected, replaceAllChildrenCalled);
-      replaceAllChildrenCalled = false;
+    public void assertReplaceAllChildrenCalled(int size) {
+      assertFalse("replaceAllChildren was not called", lastReplacement.isEmpty());
+      Replacement call = lastReplacement.remove(0);
+      assertTrue("replaceChildren called instead of replaceAllChidren", call.isReplaceAll);
+      assertEquals(size, call.size);
     }
 
-    public void assertReplaceAllChildrenCalled(boolean expected, boolean sameContent) {
-      assertReplaceAllChildrenCalled(expected);
-      assertEquals(sameContent, replaceAllChildrenCalledWithSameContent);
-      replaceAllChildrenCalledWithSameContent = false;
+    public void assertReplaceChildrenCalled(int start, int size) {
+      assertFalse("replaceChildren was not called", lastReplacement.isEmpty());
+      Replacement call = lastReplacement.remove(0);
+      assertFalse("replaceAllChildren called instead of replaceChidren", call.isReplaceAll);
+      assertEquals(start, call.start);
+      assertEquals(size, call.size);
     }
 
-    public void assertReplaceChildrenCalled(boolean expected) {
-      assertEquals(expected, replaceChildrenCalled);
-      replaceChildrenCalled = false;
+    public void assertReplaceChildrenNotCalled() {
+      assertTrue(lastReplacement.isEmpty());
     }
 
     public int getChildCount() {
@@ -168,27 +172,17 @@ public class HasDataPresenterTest extends GWTTestCase {
     }
 
     @Override
-    public void render(SafeHtmlBuilder sb, List<T> values, int start,
-        SelectionModel<? super T> selectionModel) {
-      sb.appendHtmlConstant("start=").append(start);
-      sb.appendHtmlConstant(",size=").append(values.size());
-    }
-
-    @Override
-    public void replaceAllChildren(List<T> values, SafeHtml html,
-        boolean stealFocus, boolean contentChanged) {
-      replaceAllChildrenCalledWithSameContent = !contentChanged;
-      childCount = values.size();
-      replaceAllChildrenCalled = true;
-      lastHtml.add(html);
-    }
-
-    @Override
-    public void replaceChildren(List<T> values, int start, SafeHtml html,
+    public void replaceAllChildren(List<T> values, SelectionModel<? super T> selectionModel,
         boolean stealFocus) {
+      childCount = values.size();
+      lastReplacement.add(new Replacement(true, -1, values.size()));
+    }
+
+    @Override
+    public void replaceChildren(List<T> values, int start,
+        SelectionModel<? super T> selectionModel, boolean stealFocus) {
       childCount = Math.max(childCount, start + values.size());
-      replaceChildrenCalled = true;
-      lastHtml.add(html);
+      lastReplacement.add(new Replacement(false, start, values.size()));
     }
 
     @Override
@@ -196,8 +190,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     }
 
     @Override
-    public void setKeyboardSelected(int index, boolean selected,
-        boolean stealFocus) {
+    public void setKeyboardSelected(int index, boolean selected, boolean stealFocus) {
       keyboardSelectedRow.add(index);
       keyboardSelectedRowState.add(selected);
     }
@@ -216,8 +209,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testAddRowCountChangeHandler() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     MockRowCountChangeHandler handler = new MockRowCountChangeHandler();
 
     // Adding a handler should not invoke the handler.
@@ -258,8 +250,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testAddRangeChangeHandler() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     MockRangeChangeHandler handler = new MockRangeChangeHandler();
 
     // Adding a handler should not invoke the handler.
@@ -324,30 +315,9 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Use the bad view in a presenter.
     MockView<String> view = new MockView<String>();
     HasData<String> listView = new MockHasData<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     presenter.setSelectionModel(badModel);
     presenter.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
-    testPresenterWithBadUserCode(presenter);
-  }
-
-  /**
-   * Test that the presenter can gracefully handle a view that throws exceptions
-   * when rendering the content.
-   */
-  public void testBadViewRender() {
-    MockView<String> badView = new MockView<String>() {
-      @Override
-      public void render(SafeHtmlBuilder sb, List<String> values, int start,
-          SelectionModel<? super String> selectionModel) {
-        throw new NullPointerException();
-      }
-    };
-
-    // Use the bad view in a presenter.
-    HasData<String> listView = new MockHasData<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        badView, 10, null);
     testPresenterWithBadUserCode(presenter);
   }
 
@@ -358,100 +328,88 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testBadViewReplaceChildren() {
     MockView<String> badView = new MockView<String>() {
       @Override
-      public void replaceAllChildren(List<String> values, SafeHtml html,
-          boolean stealFocus, boolean contentChanged) {
+      public void replaceAllChildren(List<String> values,
+          SelectionModel<? super String> selectionModel, boolean stealFocus) {
         throw new NullPointerException();
       }
 
       @Override
       public void replaceChildren(List<String> values, int start,
-          SafeHtml html, boolean stealFocus) {
+          SelectionModel<? super String> selectionModel, boolean stealFocus) {
         throw new NullPointerException();
       }
     };
 
     // Use the bad view in a presenter.
     HasData<String> listView = new MockHasData<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        badView, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, badView, 10, null);
     testPresenterWithBadUserCode(presenter);
   }
 
   public void testCalculateModifiedRanges() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
-    TreeSet<Integer> rows = new TreeSet<Integer>();
+    JsArrayInteger rows = JavaScriptObject.createArray().cast();
 
     // Empty set of rows.
     assertListContains(presenter.calculateModifiedRanges(rows, 0, 10));
 
     // One row in range.
-    rows.add(5);
-    assertListContains(presenter.calculateModifiedRanges(rows, 0, 10),
-        new Range(5, 1));
+    rows.push(5);
+    assertListContains(presenter.calculateModifiedRanges(rows, 0, 10), new Range(5, 1));
 
     // One row not in range.
     assertListContains(presenter.calculateModifiedRanges(rows, 6, 10));
 
     // Consecutive rows (should return only one range).
-    rows.add(6);
-    rows.add(7);
-    rows.add(8);
-    assertListContains(presenter.calculateModifiedRanges(rows, 0, 10),
-        new Range(5, 4));
+    rows.push(6);
+    rows.push(7);
+    rows.push(8);
+    assertListContains(presenter.calculateModifiedRanges(rows, 0, 10), new Range(5, 4));
 
     // Disjoint rows. Should return two ranges.
-    rows.add(10);
-    rows.add(11);
-    assertListContains(presenter.calculateModifiedRanges(rows, 0, 20),
-        new Range(5, 4), new Range(10, 2));
+    rows.push(10);
+    rows.push(11);
+    assertListContains(presenter.calculateModifiedRanges(rows, 0, 20), new Range(5, 4), new Range(
+        10, 2));
 
     // Multiple gaps. The largest gap should be between the two ranges.
-    rows.add(15);
-    rows.add(17);
-    assertListContains(presenter.calculateModifiedRanges(rows, 0, 20),
-        new Range(5, 7), new Range(15, 3));
+    rows.push(15);
+    rows.push(17);
+    assertListContains(presenter.calculateModifiedRanges(rows, 0, 20), new Range(5, 7), new Range(
+        15, 3));
   }
 
   public void testClearSelectionModel() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     assertNull(presenter.getSelectionModel());
 
     // Initialize some data.
     populatePresenter(presenter);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
+    view.assertReplaceAllChildrenCalled(10);
 
     // Set the selection model.
     SelectionModel<String> model = new MockSelectionModel<String>(null);
     model.setSelected("test 0", true);
     presenter.setSelectionModel(model);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(true);
-    view.assertLastHtml("start=0,size=1");
+    view.assertReplaceChildrenCalled(0, 1);
 
     // Clear the selection model without updating the view.
     presenter.clearSelectionModel();
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml(null);
+    view.assertReplaceChildrenNotCalled();
   }
 
   public void testDefaults() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     assertEquals(0, presenter.getRowCount());
     assertFalse(presenter.isRowCountExact());
@@ -465,8 +423,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testFindIndexOfBestMatch() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     populatePresenter(presenter);
 
     // Select the second element.
@@ -491,23 +448,21 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testFlush() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Data should not be pushed to the view until flushed.
     populatePresenter(presenter);
-    view.assertReplaceAllChildrenCalled(false);
+    view.assertReplaceChildrenNotCalled();
 
     // Now the data is pushed.
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceAllChildrenCalled(10);
   }
 
   public void testGetCurrentPageSize() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     presenter.setRowCount(35, true);
 
     // First page.
@@ -521,8 +476,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testIsEmpty() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Non-zero row count.
     presenter.setRowCount(1, true);
@@ -542,328 +496,6 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.flush();
     assertFalse(presenter.isEmpty());
   }
-  
-  public void testKeyboardNavigationChangePage() {
-    HasData<String> listView = new MockHasData<String>();
-    MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
-    presenter.setRowCount(100, true);
-    presenter.setVisibleRange(new Range(50, 10));
-    populatePresenter(presenter);
-    presenter.flush();
-    presenter.setKeyboardPagingPolicy(KeyboardPagingPolicy.CHANGE_PAGE);
-
-    // keyboardPrev in middle.
-    presenter.setKeyboardSelectedRow(1, false, false);
-    presenter.flush();
-    view.assertKeyboardSelectedRow(0, false);
-    view.assertKeyboardSelectedRow(1, true);
-    assertTrue(presenter.hasKeyboardPrev());
-    presenter.keyboardPrev();
-    presenter.flush();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(1, false);
-    view.assertKeyboardSelectedRow(0, true);
-
-    // keyboardPrev at beginning goes to previous page.
-    assertTrue(presenter.hasKeyboardPrev());
-    presenter.keyboardPrev();
-    populatePresenter(presenter);
-    presenter.flush();
-    assertEquals(9, presenter.getKeyboardSelectedRow());
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertKeyboardSelectedRowEmpty();
-    assertEquals(new Range(40, 10), presenter.getVisibleRange());
-
-    // keyboardNext in middle.
-    presenter.setKeyboardSelectedRow(8, false, false);
-    presenter.flush();
-    view.assertKeyboardSelectedRow(9, false);
-    view.assertKeyboardSelectedRow(8, true);
-    assertTrue(presenter.hasKeyboardNext());
-    presenter.keyboardNext();
-    presenter.flush();
-    assertEquals(9, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(8, false);
-    view.assertKeyboardSelectedRow(9, true);
-
-    // keyboardNext at end.
-    assertTrue(presenter.hasKeyboardNext());
-    presenter.keyboardNext();
-    populatePresenter(presenter);
-    presenter.flush();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertKeyboardSelectedRowEmpty();
-    assertEquals(new Range(50, 10), presenter.getVisibleRange());
-
-    // keyboardPrevPage.
-    presenter.setKeyboardSelectedRow(5, false, false);
-    presenter.flush();
-    view.assertKeyboardSelectedRow(0, false);
-    view.assertKeyboardSelectedRow(5, true);
-    presenter.keyboardPrevPage();
-    populatePresenter(presenter);
-    presenter.flush();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertKeyboardSelectedRowEmpty();
-    assertEquals(new Range(40, 10), presenter.getVisibleRange());
-
-    // keyboardNextPage.
-    presenter.setKeyboardSelectedRow(5, false, false);
-    presenter.flush();
-    view.assertKeyboardSelectedRow(0, false);
-    view.assertKeyboardSelectedRow(5, true);
-    presenter.keyboardNextPage();
-    populatePresenter(presenter);
-    presenter.flush();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertKeyboardSelectedRowEmpty();
-    assertEquals(new Range(50, 10), presenter.getVisibleRange());
-
-    // keyboardHome.
-    presenter.keyboardHome();
-    populatePresenter(presenter);
-    presenter.flush();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertKeyboardSelectedRowEmpty();
-    assertEquals(new Range(0, 10), presenter.getVisibleRange());
-
-    // keyboardPrev at first row.
-    assertFalse(presenter.hasKeyboardPrev());
-    presenter.keyboardPrev();
-    presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertKeyboardSelectedRowEmpty();
-
-    // keyboardEnd.
-    presenter.keyboardEnd();
-    populatePresenter(presenter);
-    presenter.flush();
-    assertEquals(9, presenter.getKeyboardSelectedRow());
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertKeyboardSelectedRowEmpty();
-    assertEquals(new Range(90, 10), presenter.getVisibleRange());
-
-    // keyboardNext at last row.
-    assertFalse(presenter.hasKeyboardNext());
-    presenter.keyboardNext();
-    presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertKeyboardSelectedRowEmpty();
-  }
-
-  public void testKeyboardNavigationCurrentPage() {
-    HasData<String> listView = new MockHasData<String>();
-    MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
-    presenter.setVisibleRange(new Range(50, 10));
-    populatePresenter(presenter);
-    presenter.flush();
-    presenter.setKeyboardPagingPolicy(KeyboardPagingPolicy.CURRENT_PAGE);
-
-    // keyboardPrev in middle.
-    presenter.setKeyboardSelectedRow(1, false, false);
-    presenter.flush();
-    view.assertKeyboardSelectedRow(0, false);
-    view.assertKeyboardSelectedRow(1, true);
-    assertTrue(presenter.hasKeyboardPrev());
-    presenter.keyboardPrev();
-    presenter.flush();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(1, false);
-    view.assertKeyboardSelectedRow(0, true);
-
-    // keyboardPrev at beginning.
-    assertFalse(presenter.hasKeyboardPrev());
-    presenter.keyboardPrev();
-    presenter.flush();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRowEmpty();
-
-    // keyboardNext in middle.
-    presenter.setKeyboardSelectedRow(8, false, false);
-    presenter.flush();
-    view.assertKeyboardSelectedRow(0, false);
-    view.assertKeyboardSelectedRow(8, true);
-    assertTrue(presenter.hasKeyboardNext());
-    presenter.keyboardNext();
-    presenter.flush();
-    assertEquals(9, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(8, false);
-    view.assertKeyboardSelectedRow(9, true);
-
-    // keyboardNext at end.
-    assertFalse(presenter.hasKeyboardNext());
-    presenter.keyboardNext();
-    presenter.flush();
-    assertEquals(9, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRowEmpty();
-
-    // keyboardPrevPage.
-    presenter.keyboardPrevPage();
-    presenter.flush();
-    view.assertKeyboardSelectedRowEmpty();
-
-    // keyboardNextPage.
-    presenter.keyboardNextPage();
-    presenter.flush();
-    view.assertKeyboardSelectedRowEmpty();
-
-    // keyboardHome.
-    presenter.keyboardHome();
-    presenter.flush();
-    view.assertKeyboardSelectedRowEmpty();
-
-    // keyboardEnd.
-    presenter.keyboardEnd();
-    presenter.flush();
-    view.assertKeyboardSelectedRowEmpty();
-  }
-
-  public void testKeyboardNavigationIncreaseRange() {
-    int pageStart = 150;
-    int pageSize = 10;
-    int increment = HasDataPresenter.PAGE_INCREMENT;
-    HasData<String> listView = new MockHasData<String>();
-    MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
-    presenter.setRowCount(300, true);
-    presenter.setVisibleRange(new Range(pageStart, pageSize));
-    populatePresenter(presenter);
-    presenter.flush();
-    presenter.setKeyboardPagingPolicy(KeyboardPagingPolicy.INCREASE_RANGE);
-
-    // keyboardPrev in middle.
-    presenter.setKeyboardSelectedRow(1, false, false);
-    presenter.flush();
-    view.assertKeyboardSelectedRow(0, false);
-    view.assertKeyboardSelectedRow(1, true);
-    assertTrue(presenter.hasKeyboardPrev());
-    presenter.keyboardPrev();
-    presenter.flush();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(1, false);
-    view.assertKeyboardSelectedRow(0, true);
-
-    // keyboardPrev at beginning.
-    assertTrue(presenter.hasKeyboardPrev());
-    presenter.keyboardPrev();
-    populatePresenter(presenter);
-    presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertKeyboardSelectedRowEmpty();
-    pageStart -= increment;
-    pageSize += increment;
-    assertEquals(increment - 1, presenter.getKeyboardSelectedRow());
-    assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
-
-    // keyboardNext in middle.
-    presenter.setKeyboardSelectedRow(pageSize - 2, false, false);
-    presenter.flush();
-    view.assertKeyboardSelectedRow(increment - 1, false);
-    view.assertKeyboardSelectedRow(pageSize - 2, true);
-    assertTrue(presenter.hasKeyboardNext());
-    presenter.keyboardNext();
-    presenter.flush();
-    assertEquals(pageSize - 1, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(pageSize - 2, false);
-    view.assertKeyboardSelectedRow(pageSize - 1, true);
-
-    // keyboardNext at end.
-    assertTrue(presenter.hasKeyboardNext());
-    presenter.keyboardNext();
-    populatePresenter(presenter);
-    presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertKeyboardSelectedRowEmpty();
-    pageSize += increment;
-    assertEquals(pageSize - increment, presenter.getKeyboardSelectedRow());
-    assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
-
-    // keyboardPrevPage within range.
-    presenter.setKeyboardSelectedRow(increment, false, false);
-    presenter.flush();
-    view.assertKeyboardSelectedRow(pageSize - increment, false);
-    view.assertKeyboardSelectedRow(increment, true);
-    presenter.keyboardPrevPage();
-    presenter.flush();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(increment, false);
-    view.assertKeyboardSelectedRow(0, true);
-    assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
-
-    // keyboardPrevPage outside range.
-    presenter.keyboardPrevPage();
-    populatePresenter(presenter);
-    presenter.flush();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertKeyboardSelectedRowEmpty();
-    pageStart -= increment;
-    pageSize += increment;
-    assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
-
-    // keyboardNextPage inside range.
-    presenter.keyboardNextPage();
-    presenter.flush();
-    assertEquals(increment, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(0, false);
-    view.assertKeyboardSelectedRow(increment, true);
-    assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
-
-    // keyboardNextPage outside range.
-    presenter.setKeyboardSelectedRow(pageSize - 1, false, false);
-    presenter.flush();
-    view.assertKeyboardSelectedRow(increment, false);
-    view.assertKeyboardSelectedRow(pageSize - 1, true);
-    presenter.keyboardNextPage();
-    populatePresenter(presenter);
-    presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertKeyboardSelectedRowEmpty();
-    pageSize += increment;
-    assertEquals(pageSize - 1, presenter.getKeyboardSelectedRow());
-    assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
-
-    // keyboardHome.
-    presenter.keyboardHome();
-    populatePresenter(presenter);
-    presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertKeyboardSelectedRowEmpty();
-    pageSize += pageStart;
-    pageStart = 0;
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
-
-    // keyboardPrev at first row.
-    assertFalse(presenter.hasKeyboardPrev());
-    presenter.keyboardPrev();
-    presenter.flush();
-    view.assertKeyboardSelectedRowEmpty();
-
-    // keyboardEnd.
-    presenter.keyboardEnd();
-    populatePresenter(presenter);
-    presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertKeyboardSelectedRowEmpty();
-    assertEquals(299, presenter.getKeyboardSelectedRow());
-    assertEquals(new Range(0, 300), presenter.getVisibleRange());
-
-    // keyboardNext at last row.
-    assertFalse(presenter.hasKeyboardNext());
-    presenter.keyboardNext();
-    presenter.flush();
-    view.assertKeyboardSelectedRowEmpty();
-  }
 
   /**
    * Test that we can detect an infinite loop caused by user code updating the
@@ -872,8 +504,8 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testLoopDetection() {
     HasData<String> listView = new MockHasData<String>();
     final MockView<String> view = new MockView<String>();
-    final HasDataPresenter<String> presenter = new HasDataPresenter<String>(
-        listView, view, 10, null);
+    final HasDataPresenter<String> presenter =
+        new HasDataPresenter<String>(listView, view, 10, null);
     presenter.setSelectionModel(new SingleSelectionModel<String>() {
       @Override
       public boolean isSelected(String object) {
@@ -899,13 +531,13 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testPendingCommand() {
     HasData<String> listView = new MockHasData<String>();
     final MockView<String> view = new MockView<String>();
-    final HasDataPresenter<String> presenter = new HasDataPresenter<String>(
-        listView, view, 10, null);
+    final HasDataPresenter<String> presenter =
+        new HasDataPresenter<String>(listView, view, 10, null);
 
     // Data should not be pushed to the view until the pending command executes.
     populatePresenter(presenter);
     assertTrue(presenter.hasPendingState());
-    view.assertReplaceAllChildrenCalled(false);
+    view.assertReplaceChildrenNotCalled();
 
     // The pending command is scheduled. Wait for it to execute.
     delayTestFinish(5000);
@@ -913,7 +545,7 @@ public class HasDataPresenterTest extends GWTTestCase {
       @Override
       public void execute() {
         assertFalse(presenter.hasPendingState());
-        view.assertReplaceAllChildrenCalled(true);
+        view.assertReplaceAllChildrenCalled(10);
         finishTest();
       }
     });
@@ -922,8 +554,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testRedraw() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Initialize some data.
     presenter.setRowCount(10, true);
@@ -931,33 +562,27 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.flush();
     assertEquals(10, presenter.getVisibleItemCount());
     assertEquals("test 0", presenter.getVisibleItem(0));
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     view.assertLoadingState(LoadingState.LOADED);
 
     // Redraw.
     presenter.redraw();
-    view.assertReplaceAllChildrenCalled(false);
+    view.assertReplaceChildrenNotCalled();
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     view.assertLoadingState(LoadingState.LOADED);
   }
 
   public void testSetKeyboardSelectedRowBound() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     presenter.setVisibleRange(new Range(0, 10));
     populatePresenter(presenter);
     presenter.flush();
 
     // The default is ENABLED.
-    assertEquals(KeyboardSelectionPolicy.ENABLED,
-        presenter.getKeyboardSelectionPolicy());
+    assertEquals(KeyboardSelectionPolicy.ENABLED, presenter.getKeyboardSelectionPolicy());
 
     // Change to bound with paging.
     presenter.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
@@ -1010,8 +635,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetKeyboardSelectedRowFiresOneSelectionEvent() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     presenter.setVisibleRange(new Range(0, 10));
     populatePresenter(presenter);
     presenter.flush();
@@ -1021,8 +645,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setKeyboardPagingPolicy(KeyboardPagingPolicy.CHANGE_PAGE);
 
     // Add a selection model.
-    MockSingleSelectionModel<String> model = new MockSingleSelectionModel<String>(
-        null);
+    MockSingleSelectionModel<String> model = new MockSingleSelectionModel<String>(null);
     presenter.setSelectionModel(model);
     presenter.flush();
     assertNull(model.getSelectedObject());
@@ -1063,15 +686,13 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetKeyboardSelectedRowChangePage() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     presenter.setVisibleRange(new Range(10, 10));
     populatePresenter(presenter);
     presenter.flush();
 
     // Default policy is CHANGE_PAGE.
-    assertEquals(KeyboardPagingPolicy.CHANGE_PAGE,
-        presenter.getKeyboardPagingPolicy());
+    assertEquals(KeyboardPagingPolicy.CHANGE_PAGE, presenter.getKeyboardPagingPolicy());
 
     // Default to row 0.
     assertEquals(0, presenter.getKeyboardSelectedRow());
@@ -1113,7 +734,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.flush();
     assertEquals(0, presenter.getKeyboardSelectedRow());
     assertEquals("test 20", presenter.getKeyboardSelectedRowValue());
-    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceAllChildrenCalled(10);
     view.assertKeyboardSelectedRowEmpty();
     assertEquals(20, presenter.getVisibleRange().getStart());
     assertEquals(10, presenter.getVisibleRange().getLength());
@@ -1125,7 +746,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
     assertEquals("test 19", presenter.getKeyboardSelectedRowValue());
-    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceAllChildrenCalled(10);
     view.assertKeyboardSelectedRowEmpty();
     assertEquals(10, presenter.getVisibleRange().getStart());
     assertEquals(10, presenter.getVisibleRange().getLength());
@@ -1134,8 +755,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetKeyboardSelectedRowCurrentPage() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     presenter.setVisibleRange(new Range(10, 10));
     populatePresenter(presenter);
     presenter.flush();
@@ -1177,8 +797,6 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setKeyboardSelectedRow(10, false, false);
     presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(9, false);
-    view.assertKeyboardSelectedRow(9, true);
     view.assertKeyboardSelectedRowEmpty();
     assertEquals(10, presenter.getVisibleRange().getStart());
     assertEquals(10, presenter.getVisibleRange().getLength());
@@ -1187,8 +805,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetKeyboardSelectedRowDisabled() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     presenter.setVisibleRange(new Range(10, 10));
     populatePresenter(presenter);
     presenter.flush();
@@ -1208,8 +825,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetKeyboardSelectedRowIncreaseRange() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     presenter.setVisibleRange(new Range(10, 10));
     populatePresenter(presenter);
     presenter.flush();
@@ -1248,7 +864,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     populatePresenter(presenter);
     presenter.flush();
     assertEquals(10, presenter.getKeyboardSelectedRow());
-    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceAllChildrenCalled(pageSize);
     view.assertKeyboardSelectedRowEmpty();
     assertEquals(10, presenter.getVisibleRange().getStart());
     pageSize += HasDataPresenter.PAGE_INCREMENT;
@@ -1259,7 +875,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     populatePresenter(presenter);
     presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
-    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceAllChildrenCalled(pageSize);
     view.assertKeyboardSelectedRowEmpty();
     assertEquals(0, presenter.getVisibleRange().getStart());
     pageSize += 10;
@@ -1269,8 +885,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetRowCount() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     view.assertLoadingState(null);
 
     // Set size to 100.
@@ -1299,8 +914,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetRowCountNoBoolean() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     try {
       presenter.setRowCount(100);
@@ -1313,8 +927,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetRowCountTrimsCurrentPage() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     view.assertLoadingState(null);
 
     // Initialize some data.
@@ -1326,9 +939,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(10, presenter.getVisibleItemCount());
     assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     view.assertLoadingState(LoadingState.LOADED);
 
     // Trim the size.
@@ -1338,20 +949,17 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
     assertEquals(8, presenter.getVisibleItemCount());
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=8");
+    view.assertReplaceAllChildrenCalled(8);
     view.assertLoadingState(LoadingState.LOADED);
   }
 
   public void testSetRowData() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     presenter.setVisibleRange(new Range(5, 10));
     presenter.flush();
-    view.assertLastHtml("start=5,size=0");
+    view.assertReplaceAllChildrenCalled(0);
     view.assertLoadingState(LoadingState.LOADING);
 
     // Page range same as data range.
@@ -1359,9 +967,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setRowData(5, createData(5, 10));
     assertPresenterRowData(expectedData, presenter);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=5,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     assertEquals(10, view.getChildCount());
     view.assertLoadingState(LoadingState.LOADED);
 
@@ -1371,9 +977,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setRowData(7, createData(100, 2));
     assertPresenterRowData(expectedData, presenter);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(true);
-    view.assertLastHtml("start=7,size=2");
+    view.assertReplaceChildrenCalled(2, 2);
     assertEquals(10, view.getChildCount());
     view.assertLoadingState(LoadingState.LOADED);
 
@@ -1383,9 +987,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setRowData(3, createData(200, 4));
     assertPresenterRowData(expectedData, presenter);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(true);
-    view.assertLastHtml("start=5,size=2");
+    view.assertReplaceChildrenCalled(0, 2);
     assertEquals(10, view.getChildCount());
     view.assertLoadingState(LoadingState.LOADED);
 
@@ -1395,9 +997,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setRowData(13, createData(300, 4));
     assertPresenterRowData(expectedData, presenter);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(true);
-    view.assertLastHtml("start=13,size=2");
+    view.assertReplaceChildrenCalled(8, 2);
     assertEquals(10, view.getChildCount());
     view.assertLoadingState(LoadingState.LOADED);
 
@@ -1406,9 +1006,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setRowData(3, createData(400, 20));
     assertPresenterRowData(expectedData, presenter);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=5,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     assertEquals(10, view.getChildCount());
     view.assertLoadingState(LoadingState.LOADED);
   }
@@ -1419,8 +1017,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetRowValuesChangesDataSize() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Set the initial data size.
     presenter.setRowCount(10, true);
@@ -1446,8 +1043,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetRowValuesEmptySet() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Set the initial data size.
     presenter.setRowCount(10, true);
@@ -1458,18 +1054,16 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setRowData(0, createData(0, 0));
     presenter.flush();
     view.assertLoadingState(LoadingState.LOADING);
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
+    view.assertReplaceAllChildrenCalled(0);
   }
 
   public void testSetRowValuesOutsideRange() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     presenter.setVisibleRange(new Range(5, 10));
     presenter.flush();
-    view.assertLastHtml("start=5,size=0");
+    view.assertReplaceAllChildrenCalled(0);
     view.assertLoadingState(LoadingState.LOADING);
 
     // Page range same as data range.
@@ -1477,27 +1071,21 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setRowData(5, createData(5, 10));
     assertPresenterRowData(expectedData, presenter);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=5,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     view.assertLoadingState(LoadingState.LOADED);
 
     // Data range past page end.
     presenter.setRowData(15, createData(15, 5));
     assertPresenterRowData(expectedData, presenter);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml(null);
+    view.assertReplaceChildrenNotCalled();
     view.assertLoadingState(LoadingState.LOADED);
 
     // Data range before page start.
     presenter.setRowData(0, createData(0, 5));
     assertPresenterRowData(expectedData, presenter);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml(null);
+    view.assertReplaceChildrenNotCalled();
     view.assertLoadingState(LoadingState.LOADED);
   }
 
@@ -1507,26 +1095,22 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetRowValuesRequiresRedraw() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 100, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 100, null);
 
     // Initialize 100% of the rows.
     populatePresenter(presenter);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
+    view.assertReplaceAllChildrenCalled(100);
 
     // Modify 30% of the rows.
     presenter.setRowData(0, createData(0, 30));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(true);
+    view.assertReplaceChildrenCalled(0, 30);
 
     // Modify 31% of the rows.
     presenter.setRowData(0, createData(0, 31));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
+    view.assertReplaceAllChildrenCalled(100);
 
     /*
      * Modify 4 rows in a 5 row table. This should NOT require a redraw because
@@ -1534,12 +1118,10 @@ public class HasDataPresenterTest extends GWTTestCase {
      */
     presenter.setRowCount(5, true);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
+    view.assertReplaceAllChildrenCalled(5);
     presenter.setRowData(0, createData(0, 4));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(true);
+    view.assertReplaceChildrenCalled(0, 4);
   }
 
   /**
@@ -1550,25 +1132,20 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetRowValuesSameContents() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     view.assertLoadingState(null);
 
     // Initialize some data.
     presenter.setVisibleRange(new Range(0, 10));
     presenter.setRowData(0, createData(0, 10));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true, false);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     view.assertLoadingState(LoadingState.LOADED);
 
     // Set the same data over the entire range.
     presenter.setRowData(0, createData(0, 10));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true, true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     view.assertLoadingState(LoadingState.LOADED);
   }
 
@@ -1578,8 +1155,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetRowValuesSparse() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     view.assertLoadingState(null);
 
     List<String> expectedData = createData(5, 3);
@@ -1592,67 +1168,53 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setRowData(5, createData(5, 3));
     assertPresenterRowData(expectedData, presenter);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=8");
+    view.assertReplaceAllChildrenCalled(8);
     view.assertLoadingState(LoadingState.PARTIALLY_LOADED);
   }
 
   public void testSetSelectionModel() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
     assertNull(presenter.getSelectionModel());
 
     // Initialize some data.
     presenter.setVisibleRange(new Range(0, 10));
     populatePresenter(presenter);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
+    view.assertReplaceAllChildrenCalled(10);
 
     // Set the selection model.
     SelectionModel<String> model = new MockSelectionModel<String>(null);
     model.setSelected("test 0", true);
     presenter.setSelectionModel(model);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(true);
-    view.assertLastHtml("start=0,size=1");
+    view.assertReplaceChildrenCalled(0, 1);
 
     // Select something.
     model.setSelected("test 2", true);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(true);
-    view.assertLastHtml("start=2,size=1");
+    view.assertReplaceChildrenCalled(2, 1);
 
     // Set selection model to null.
     presenter.setSelectionModel(null);
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(true);
-    view.assertLastHtml("start=0,size=1");
-    view.assertLastHtml("start=2,size=1");
-    view.assertLastHtml(null);
+    view.assertReplaceChildrenCalled(0, 1);
+    view.assertReplaceChildrenCalled(2, 1);
+    view.assertReplaceChildrenNotCalled();
   }
 
   public void testSetVisibleRange() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Set the range the first time.
     presenter.setVisibleRange(new Range(0, 100));
     assertEquals(new Range(0, 100), presenter.getVisibleRange());
     assertEquals(0, presenter.getVisibleItemCount());
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml(null);
+    view.assertReplaceChildrenNotCalled();
     view.assertLoadingState(LoadingState.LOADING);
 
     // Set the range to the same value.
@@ -1660,9 +1222,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(0, 100), presenter.getVisibleRange());
     assertEquals(0, presenter.getVisibleItemCount());
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml(null);
+    view.assertReplaceChildrenNotCalled();
     view.assertLoadingState(LoadingState.LOADING);
 
     // Set the start to a negative value.
@@ -1685,8 +1245,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetVisibleRangeAndClearDataDifferentRange() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Add a range change handler.
     final List<Range> events = new ArrayList<Range>();
@@ -1703,9 +1262,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(5, 10), presenter.getVisibleRange());
     assertEquals(10, presenter.getVisibleItemCount());
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=5,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     view.assertLoadingState(LoadingState.LOADED);
     assertEquals(1, events.size());
 
@@ -1714,9 +1271,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
     assertEquals(0, presenter.getVisibleItemCount());
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=0");
+    view.assertReplaceAllChildrenCalled(0);
     view.assertLoadingState(LoadingState.LOADING);
     assertEquals(2, events.size());
   }
@@ -1724,8 +1279,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetVisibleRangeAndClearDataSameRange() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Add a range change handler.
     final List<Range> events = new ArrayList<Range>();
@@ -1741,9 +1295,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
     assertEquals(10, presenter.getVisibleItemCount());
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     view.assertLoadingState(LoadingState.LOADED);
     assertEquals(0, events.size());
 
@@ -1752,9 +1304,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
     assertEquals(0, presenter.getVisibleItemCount());
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=0");
+    view.assertReplaceAllChildrenCalled(0);
     view.assertLoadingState(LoadingState.LOADING);
     assertEquals(0, events.size());
   }
@@ -1762,8 +1312,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetVisibleRangeAndClearDataSameRangeForceEvent() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Add a range change handler.
     final List<Range> events = new ArrayList<Range>();
@@ -1779,9 +1328,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
     assertEquals(10, presenter.getVisibleItemCount());
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     view.assertLoadingState(LoadingState.LOADED);
     assertEquals(0, events.size());
 
@@ -1790,9 +1337,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
     assertEquals(0, presenter.getVisibleItemCount());
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=0");
+    view.assertReplaceAllChildrenCalled(0);
     view.assertLoadingState(LoadingState.LOADING);
     assertEquals(1, events.size());
   }
@@ -1800,8 +1345,7 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetVisibleRangeDecreasePageSize() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Initialize some data.
     presenter.setVisibleRange(new Range(0, 10));
@@ -1810,9 +1354,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(10, presenter.getVisibleItemCount());
     assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     view.assertLoadingState(LoadingState.LOADED);
 
     // Decrease the page size.
@@ -1821,17 +1363,14 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(8, presenter.getVisibleItemCount());
     assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=8");
+    view.assertReplaceAllChildrenCalled(8);
     view.assertLoadingState(LoadingState.LOADED);
   }
 
   public void testSetVisibleRangeDecreasePageStart() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Initialize some data.
     presenter.setVisibleRange(new Range(10, 30));
@@ -1840,9 +1379,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(10, presenter.getVisibleItemCount());
     assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=10,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     view.assertLoadingState(LoadingState.PARTIALLY_LOADED);
 
     // Decrease the start index.
@@ -1853,17 +1390,14 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(null, presenter.getVisibleItem(1));
     assertEquals("test 0", presenter.getVisibleItem(2));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=8,size=12");
+    view.assertReplaceAllChildrenCalled(12);
     view.assertLoadingState(LoadingState.PARTIALLY_LOADED);
   }
 
   public void testSetVisibleRangeIncreasePageSize() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Initialize some data.
     presenter.setVisibleRange(new Range(0, 10));
@@ -1872,9 +1406,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(10, presenter.getVisibleItemCount());
     assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     view.assertLoadingState(LoadingState.LOADED);
 
     // Increase the page size.
@@ -1883,17 +1415,14 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(10, presenter.getVisibleItemCount());
     assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml(null);
+    view.assertReplaceChildrenNotCalled();
     view.assertLoadingState(LoadingState.PARTIALLY_LOADED);
   }
 
   public void testSetVisibleRangeIncreasePageStart() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Initialize some data.
     presenter.setVisibleRange(new Range(0, 20));
@@ -1902,9 +1431,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(10, presenter.getVisibleItemCount());
     assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
+    view.assertReplaceAllChildrenCalled(10);
     view.assertLoadingState(LoadingState.PARTIALLY_LOADED);
 
     // Increase the start index.
@@ -1913,17 +1440,14 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(8, presenter.getVisibleItemCount());
     assertEquals("test 2", presenter.getVisibleItem(0));
     presenter.flush();
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=2,size=8");
+    view.assertReplaceAllChildrenCalled(8);
     view.assertLoadingState(LoadingState.PARTIALLY_LOADED);
   }
 
   public void testSetVisibleRangeInts() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     try {
       presenter.setVisibleRange(0, 100);
@@ -1940,23 +1464,18 @@ public class HasDataPresenterTest extends GWTTestCase {
   public void testSetVisibleRangeResetPageStart() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
 
     // Initialize the view.
     populatePresenter(presenter);
     presenter.flush();
-    view.assertLastHtml("start=0,size=10");
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
+    view.assertReplaceAllChildrenCalled(10);
 
     // Move pageStart to 2, then back to 0.
     presenter.setVisibleRange(new Range(2, 8));
     presenter.setVisibleRange(new Range(0, 10));
     presenter.flush();
-    view.assertLastHtml("start=0,size=2");
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(true);
+    view.assertReplaceChildrenCalled(0, 2);
   }
 
   /**
@@ -1967,8 +1486,7 @@ public class HasDataPresenterTest extends GWTTestCase {
    * @param expected the expected values
    * @param presenter the presenter
    */
-  private <T> void assertPresenterRowData(List<T> expected,
-      HasDataPresenter<T> presenter) {
+  private <T> void assertPresenterRowData(List<T> expected, HasDataPresenter<T> presenter) {
     assertEquals(expected.size(), presenter.getVisibleItemCount());
     for (int i = 0; i < expected.size(); i++) {
       assertEquals(expected.get(i), presenter.getVisibleItem(i));

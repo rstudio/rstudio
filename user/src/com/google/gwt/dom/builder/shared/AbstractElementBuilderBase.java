@@ -396,6 +396,11 @@ public abstract class AbstractElementBuilderBase<R extends ElementBuilderBase<?>
   }
 
   @Override
+  public int getDepth() {
+    return delegate.getDepth();
+  }
+
+  @Override
   public R html(SafeHtml html) {
     delegate.html(html);
     return getReturnBuilder();

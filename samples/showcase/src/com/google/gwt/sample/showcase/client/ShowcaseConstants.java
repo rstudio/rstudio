@@ -22,6 +22,7 @@ import com.google.gwt.sample.showcase.client.content.cell.CwCellSampler;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellTable;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellTree;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellValidation;
+import com.google.gwt.sample.showcase.client.content.cell.CwCustomDataGrid;
 import com.google.gwt.sample.showcase.client.content.cell.CwDataGrid;
 import com.google.gwt.sample.showcase.client.content.i18n.CwBidiFormatting;
 import com.google.gwt.sample.showcase.client.content.i18n.CwBidiInput;
@@ -83,7 +84,7 @@ public interface ShowcaseConstants extends MenuConstants, CwCheckBox.CwConstants
     CwPluralFormsExample.CwConstants, CwCellList.CwConstants, CwCellTable.CwConstants,
     CwDataGrid.CwConstants, CwCellTree.CwConstants, CwCellBrowser.CwConstants,
     CwCellValidation.CwConstants, CwCellSampler.CwConstants, CwSplitLayoutPanel.CwConstants,
-    CwStackLayoutPanel.CwConstants {
+    CwStackLayoutPanel.CwConstants, CwCustomDataGrid.CwConstants  {
 
   /**
    * The path to source code for examples, raw files, and style definitions.

@@ -17,14 +17,25 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;
+import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.cell.client.HasCell;
 import com.google.gwt.cell.client.IconCellDecorator;
 import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.builder.shared.DivBuilder;
+import com.google.gwt.dom.builder.shared.ElementBuilderBase;
+import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
+import com.google.gwt.dom.builder.shared.HtmlTableSectionBuilder;
+import com.google.gwt.dom.builder.shared.TableCellBuilder;
+import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.OutlineStyle;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
@@ -77,6 +88,278 @@ import java.util.Set;
  * @param <T> the data type of each row
  */
 public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
+
+  /**
+   * Default implementation of a keyboard navigation handler for tables that
+   * supports navigation between cells.
+   * 
+   * @param <T> the data type of each row
+   */
+  public static class CellTableKeyboardSelectionHandler<T> extends
+      DefaultKeyboardSelectionHandler<T> {
+
+    private final AbstractCellTable<T> table;
+
+    /**
+     * Construct a new keyboard selection handler for the specified table.
+     * 
+     * @param table the display being handled
+     */
+    public CellTableKeyboardSelectionHandler(AbstractCellTable<T> table) {
+      super(table);
+      this.table = table;
+    }
+
+    @Override
+    public AbstractCellTable<T> getDisplay() {
+      return table;
+    }
+
+    @Override
+    public void onCellPreview(CellPreviewEvent<T> event) {
+      NativeEvent nativeEvent = event.getNativeEvent();
+      String eventType = event.getNativeEvent().getType();
+      if ("keydown".equals(eventType) && !event.isCellEditing()) {
+        /*
+         * Handle keyboard navigation, unless the cell is being edited. If the
+         * cell is being edited, we do not want to change rows.
+         * 
+         * Prevent default on navigation events to prevent default scrollbar
+         * behavior.
+         */
+        int oldRow = table.getKeyboardSelectedRow();
+        int oldColumn = table.getKeyboardSelectedColumn();
+        boolean isRtl = LocaleInfo.getCurrentLocale().isRTL();
+        int keyCodeLineEnd = isRtl ? KeyCodes.KEY_LEFT : KeyCodes.KEY_RIGHT;
+        int keyCodeLineStart = isRtl ? KeyCodes.KEY_RIGHT : KeyCodes.KEY_LEFT;
+        int keyCode = nativeEvent.getKeyCode();
+        if (keyCode == keyCodeLineEnd) {
+          int nextColumn = findInteractiveColumn(oldColumn, false);
+          if (nextColumn <= oldColumn) {
+            // Wrap to the next row.
+            table.setKeyboardSelectedRow(oldRow + 1);
+            if (table.getKeyboardSelectedRow() != oldRow) {
+              // If the row didn't change, we are at the end of the table.
+              table.setKeyboardSelectedColumn(nextColumn);
+              handledEvent(event);
+              return;
+            }
+          } else {
+            table.setKeyboardSelectedColumn(nextColumn);
+            handledEvent(event);
+            return;
+          }
+        } else if (keyCode == keyCodeLineStart) {
+          int prevColumn = findInteractiveColumn(oldColumn, true);
+          if (prevColumn >= oldColumn) {
+            // Wrap to the previous row.
+            table.setKeyboardSelectedRow(oldRow - 1);
+            if (table.getKeyboardSelectedRow() != oldRow) {
+              // If the row didn't change, we are at the start of the table.
+              table.setKeyboardSelectedColumn(prevColumn);
+              handledEvent(event);
+              return;
+            }
+          } else {
+            table.setKeyboardSelectedColumn(prevColumn);
+            handledEvent(event);
+            return;
+          }
+        }
+      } else if ("click".equals(eventType) || "focus".equals(eventType)) {
+        /*
+         * Move keyboard focus to the clicked column, even if the cell is being
+         * edited. Unlike key events, we aren't moving the currently selected
+         * row, just updating it based on where the user clicked.
+         * 
+         * Since the user clicked, allow focus to go to a non-interactive
+         * column.
+         */
+        int col = event.getColumn();
+        int relRow = event.getIndex() - table.getPageStart();
+        int subrow = event.getContext().getSubIndex();
+        if ((table.getKeyboardSelectedColumn() != col)
+            || (table.getKeyboardSelectedRow() != relRow)
+            || (table.getKeyboardSelectedSubRow() != subrow)) {
+          boolean stealFocus = false;
+          if ("click".equals(eventType)) {
+            // If a natively focusable element was just clicked, then do not
+            // steal focus.
+            Element target = Element.as(event.getNativeEvent().getEventTarget());
+            stealFocus = !CellBasedWidgetImpl.get().isFocusable(target);
+          }
+
+          // Update the row and subrow.
+          table.setKeyboardSelectedRow(relRow, subrow, stealFocus);
+
+          // Update the column index.
+          table.setKeyboardSelectedColumn(col, stealFocus);
+        }
+
+        // Do not cancel the event as the click may have occurred on a Cell.
+        return;
+      }
+
+      // Let the parent class handle the event.
+      super.onCellPreview(event);
+    }
+
+    /**
+     * Find and return the index of the next interactive column. If no column is
+     * interactive, 0 is returned. If the start index is the only interactive
+     * column, it is returned.
+     * 
+     * @param start the start index, exclusive unless it is the only option
+     * @param reverse true to do a reverse search
+     * @return the interactive column index, or 0 if not interactive
+     */
+    private int findInteractiveColumn(int start, boolean reverse) {
+      if (!table.isInteractive) {
+        return 0;
+      } else if (reverse) {
+        for (int i = start - 1; i >= 0; i--) {
+          if (isColumnInteractive(table.getColumn(i))) {
+            return i;
+          }
+        }
+        // Wrap to the end.
+        for (int i = table.getColumnCount() - 1; i >= start; i--) {
+          if (isColumnInteractive(table.getColumn(i))) {
+            return i;
+          }
+        }
+      } else {
+        for (int i = start + 1; i < table.getColumnCount(); i++) {
+          if (isColumnInteractive(table.getColumn(i))) {
+            return i;
+          }
+        }
+        // Wrap to the start.
+        for (int i = 0; i <= start; i++) {
+          if (isColumnInteractive(table.getColumn(i))) {
+            return i;
+          }
+        }
+      }
+      return 0;
+    }
+  }
+
+  /**
+   * Default cell table builder that renders row values into a grid of columns.
+   * 
+   * @param <T> the data type of the rows.
+   */
+  public static class DefaultCellTableBuilder<T> implements CellTableBuilder<T> {
+
+    private AbstractCellTable<T> cellTable;
+
+    private final String evenRowStyle;
+    private final String oddRowStyle;
+    private final String selectedRowStyle;
+    private final String cellStyle;
+    private final String evenCellStyle;
+    private final String oddCellStyle;
+    private final String firstColumnStyle;
+    private final String lastColumnStyle;
+    private final String selectedCellStyle;
+
+    public DefaultCellTableBuilder(AbstractCellTable<T> cellTable) {
+      this.cellTable = cellTable;
+
+      // Cache styles for faster access.
+      Style style = cellTable.getResources().style();
+      evenRowStyle = style.evenRow();
+      oddRowStyle = style.oddRow();
+      selectedRowStyle = " " + style.selectedRow();
+      cellStyle = style.cell();
+      evenCellStyle = " " + style.evenRowCell();
+      oddCellStyle = " " + style.oddRowCell();
+      firstColumnStyle = " " + style.firstColumn();
+      lastColumnStyle = " " + style.lastColumn();
+      selectedCellStyle = " " + style.selectedRowCell();
+    }
+
+    @Override
+    public void buildRow(T rowValue, int absRowIndex, CellTableBuilder.Utility<T> utility) {
+
+      // Calculate the row styles.
+      SelectionModel<? super T> selectionModel = cellTable.getSelectionModel();
+      boolean isSelected =
+          (selectionModel == null || rowValue == null) ? false : selectionModel
+              .isSelected(rowValue);
+      boolean isEven = absRowIndex % 2 == 0;
+      StringBuilder trClasses = new StringBuilder(isEven ? evenRowStyle : oddRowStyle);
+      if (isSelected) {
+        trClasses.append(selectedRowStyle);
+      }
+
+      // Add custom row styles.
+      RowStyles<T> rowStyles = cellTable.getRowStyles();
+      if (rowStyles != null) {
+        String extraRowStyles = rowStyles.getStyleNames(rowValue, absRowIndex);
+        if (extraRowStyles != null) {
+          trClasses.append(" ").append(extraRowStyles);
+        }
+      }
+
+      // Build the row.
+      TableRowBuilder tr = utility.startRow();
+      tr.className(trClasses.toString());
+
+      // Build the columns.
+      int columnCount = cellTable.getColumnCount();
+      for (int curColumn = 0; curColumn < columnCount; curColumn++) {
+        Column<T, ?> column = cellTable.getColumn(curColumn);
+        // Create the cell styles.
+        StringBuilder tdClasses = new StringBuilder(cellStyle);
+        tdClasses.append(isEven ? evenCellStyle : oddCellStyle);
+        if (curColumn == 0) {
+          tdClasses.append(firstColumnStyle);
+        }
+        if (isSelected) {
+          tdClasses.append(selectedCellStyle);
+        }
+        // The first and last column could be the same column.
+        if (curColumn == columnCount - 1) {
+          tdClasses.append(lastColumnStyle);
+        }
+
+        // Add class names specific to the cell.
+        Context context = new Context(absRowIndex, curColumn, cellTable.getValueKey(rowValue));
+        String cellStyles = column.getCellStyleNames(context, rowValue);
+        if (cellStyles != null) {
+          tdClasses.append(" " + cellStyles);
+        }
+
+        // Builder the cell.
+        HorizontalAlignmentConstant hAlign = column.getHorizontalAlignment();
+        VerticalAlignmentConstant vAlign = column.getVerticalAlignment();
+        TableCellBuilder td = tr.startTD();
+        td.className(tdClasses.toString());
+        if (hAlign != null) {
+          td.align(hAlign.getTextAlignString());
+        }
+        if (vAlign != null) {
+          td.vAlign(vAlign.getVerticalAlignString());
+        }
+
+        // Add the inner div.
+        DivBuilder div = td.startDiv();
+        div.style().outlineStyle(OutlineStyle.NONE).endStyle();
+
+        // Render the cell into the div.
+        utility.renderCell(div, context, column, rowValue);
+
+        // End the cell.
+        div.endDiv();
+        td.endTD();
+      }
+
+      // End the row.
+      tr.endTR();
+    }
+  }
 
   /**
    * A ClientBundle that provides images for this widget.
@@ -227,12 +510,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     @SafeHtmlTemplates.Template("<div style=\"outline:none;\">{0}</div>")
     SafeHtml div(SafeHtml contents);
 
-    @SafeHtmlTemplates.Template("<div style=\"outline:none;\" tabindex=\"{0}\">{1}</div>")
-    SafeHtml divFocusable(int tabIndex, SafeHtml contents);
-
-    @SafeHtmlTemplates.Template("<div style=\"outline:none;\" tabindex=\"{0}\" accessKey=\"{1}\">{2}</div>")
-    SafeHtml divFocusableWithKey(int tabIndex, char accessKey, SafeHtml contents);
-
     @SafeHtmlTemplates.Template("<div class=\"{0}\"></div>")
     SafeHtml loading(String loading);
 
@@ -280,7 +557,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * @param rowHtml the Html for the rows
      * @return the section element
      */
-    protected TableSectionElement convertToSectionElement(AbstractCellTable<?> table,
+    public TableSectionElement convertToSectionElement(AbstractCellTable<?> table,
         String sectionTag, SafeHtml rowHtml) {
       // Attach an event listener so we can catch synchronous load events from
       // cached images.
@@ -321,6 +598,109 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
 
     /**
+     * Render a table section in the table.
+     * 
+     * @param table the {@link AbstractCellTable}
+     * @param section the {@link TableSectionElement} to replace
+     * @param html the html of a table section element containing the rows
+     */
+    public final void replaceAllRows(AbstractCellTable<?> table, TableSectionElement section,
+        SafeHtml html) {
+      // If the widget is not attached, attach an event listener so we can catch
+      // synchronous load events from cached images.
+      if (!table.isAttached()) {
+        DOM.setEventListener(table.getElement(), table);
+      }
+
+      // Remove the section from the tbody.
+      Element parent = section.getParentElement();
+      Element nextSection = section.getNextSiblingElement();
+      detachSectionElement(section);
+
+      // Render the html.
+      replaceAllRowsImpl(table, section, html);
+
+      /*
+       * Reattach the section. If next section is null, the section will be
+       * appended instead.
+       */
+      reattachSectionElement(parent, section, nextSection);
+
+      // Detach the event listener.
+      if (!table.isAttached()) {
+        DOM.setEventListener(table.getElement(), null);
+      }
+    }
+
+    /**
+     * Replace a set of row values with newly rendered values.
+     * 
+     * This method does not necessarily perform a one to one replacement. Some
+     * row values may be rendered as multiple row elements, while others are
+     * rendered as only one row element.
+     * 
+     * @param table the {@link AbstractCellTable}
+     * @param section the {@link TableSectionElement} to replace
+     * @param html the html of a table section element containing the rows
+     * @param startIndex the start index to replace
+     * @param childCount the number of row values to replace
+     */
+    public final void replaceChildren(AbstractCellTable<?> table, TableSectionElement section,
+        SafeHtml html, int startIndex, int childCount) {
+      // If the widget is not attached, attach an event listener so we can catch
+      // synchronous load events from cached images.
+      if (!table.isAttached()) {
+        DOM.setEventListener(table.getElement(), table);
+      }
+
+      // Remove the section from the tbody.
+      Element parent = section.getParentElement();
+      Element nextSection = section.getNextSiblingElement();
+      detachSectionElement(section);
+
+      // Remove all children in the range.
+      final int absEndIndex = table.getPageStart() + startIndex + childCount;
+      boolean done = false;
+      Element insertBefore = table.getChildElement(startIndex);
+      if (table.legacyRenderRowValues) {
+        int count = 0;
+        while (insertBefore != null && count < childCount) {
+          Element next = insertBefore.getNextSiblingElement();
+          section.removeChild(insertBefore);
+          insertBefore = next;
+          count++;
+        }
+      } else {
+        while (insertBefore != null
+            && table.getRowValueIndex(insertBefore.<TableRowElement> cast()) < absEndIndex) {
+          Element next = insertBefore.getNextSiblingElement();
+          section.removeChild(insertBefore);
+          insertBefore = next;
+        }
+      }
+
+      // Add new child elements.
+      TableSectionElement newSection = convertToSectionElement(table, section.getTagName(), html);
+      Element newChild = newSection.getFirstChildElement();
+      while (newChild != null) {
+        Element next = newChild.getNextSiblingElement();
+        section.insertBefore(newChild, insertBefore);
+        newChild = next;
+      }
+
+      /*
+       * Reattach the section. If next section is null, the section will be
+       * appended instead.
+       */
+      reattachSectionElement(parent, section, nextSection);
+
+      // Detach the event listener.
+      if (!table.isAttached()) {
+        DOM.setEventListener(table.getElement(), null);
+      }
+    }
+
+    /**
      * Detach a table section element from its parent.
      * 
      * @param section the element to detach
@@ -346,34 +726,11 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * 
      * @param table the {@link AbstractCellTable}
      * @param section the {@link TableSectionElement} to replace
-     * @param html the html to render
+     * @param html the html of a table section element containing the rows
      */
-    protected void replaceAllRows(AbstractCellTable<?> table, TableSectionElement section,
+    protected void replaceAllRowsImpl(AbstractCellTable<?> table, TableSectionElement section,
         SafeHtml html) {
-      // If the widget is not attached, attach an event listener so we can catch
-      // synchronous load events from cached images.
-      if (!table.isAttached()) {
-        DOM.setEventListener(table.getElement(), table);
-      }
-
-      // Remove the section from the tbody.
-      Element parent = section.getParentElement();
-      Element nextSection = section.getNextSiblingElement();
-      detachSectionElement(section);
-
-      // Render the html.
       section.setInnerHTML(html.asString());
-
-      /*
-       * Reattach the section. If next section is null, the section will be
-       * appended instead.
-       */
-      reattachSectionElement(parent, section, nextSection);
-
-      // Detach the event listener.
-      if (!table.isAttached()) {
-        DOM.setEventListener(table.getElement(), null);
-      }
     }
   }
 
@@ -418,12 +775,26 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   private static class ImplTrident extends Impl {
 
     /**
+     * Detaching a tbody in IE throws an error.
+     */
+    @Override
+    protected void detachSectionElement(TableSectionElement section) {
+      return;
+    }
+
+    @Override
+    protected void reattachSectionElement(Element parent, TableSectionElement section,
+        Element nextSection) {
+      return;
+    }
+
+    /**
      * IE doesn't support innerHTML on tbody, nor does it support removing or
      * replacing a tbody. The only solution is to remove and replace the rows
      * themselves.
      */
     @Override
-    protected void replaceAllRows(AbstractCellTable<?> table, TableSectionElement section,
+    protected void replaceAllRowsImpl(AbstractCellTable<?> table, TableSectionElement section,
         SafeHtml html) {
       // Remove all children.
       Element child = section.getFirstChildElement();
@@ -445,15 +816,134 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Implementation for {@link CellTableBuilder.Utility}.
+   */
+  private class UtilityImpl extends CellTableBuilder.Utility<T> {
+
+    private int rowIndex;
+    private int subrowIndex;
+    private Object rowValueKey;
+    private final HtmlTableSectionBuilder tbody;
+
+    private UtilityImpl() {
+      /*
+       * TODO(jlabanca): Test with DomBuilder.
+       * 
+       * DOM manipulation is sometimes faster than String concatenation and
+       * innerHTML, but not when mixing the two. Cells render as HTML strings,
+       * so its faster to render the entire table as a string.
+       */
+      tbody = HtmlBuilderFactory.get().createTBodyBuilder();
+    }
+
+    @Override
+    public Context createContext(int column) {
+      return new Context(rowIndex, column, rowValueKey);
+    }
+
+    @Override
+    public <C> void renderCell(ElementBuilderBase<?> builder, Context context,
+        HasCell<T, C> column, T rowValue) {
+      // Generate a unique ID for the cell.
+      String cellId = cellToIdMap.get(column);
+      if (cellId == null) {
+        cellId = "cell-" + Document.get().createUniqueId();
+        idToCellMap.put(cellId, column);
+        cellToIdMap.put(column, cellId);
+      }
+      builder.attribute(CELL_ATTRIBUTE, cellId);
+
+      // Render the cell into the builder.
+      SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
+      column.getCell().render(context, column.getValue(rowValue), cellBuilder);
+      builder.html(cellBuilder.toSafeHtml());
+    }
+
+    @Override
+    public TableRowBuilder startRow() {
+      // End any dangling rows.
+      while (tbody.getDepth() > 1) {
+        tbody.end();
+      }
+
+      // Verify the depth.
+      if (tbody.getDepth() < 1) {
+        throw new IllegalStateException(
+            "Cannot start a row.  Did you call TableRowBuilder.end() too many times?");
+      }
+
+      // Start the next row.
+      TableRowBuilder row = tbody.startTR();
+      row.attribute(ROW_ATTRIBUTE, rowIndex);
+      row.attribute(SUBROW_ATTRIBUTE, subrowIndex);
+      subrowIndex++;
+      return row;
+    }
+
+    /**
+     * Get the {@link TableSectionElement} containing the children.
+     */
+    private SafeHtml asSafeHtml() {
+      // End dangling elements.
+      while (tbody.getDepth() > 0) {
+        tbody.endTBody();
+      }
+
+      // Strip the table section tags off of the tbody.
+      String rawHtml = tbody.asSafeHtml().asString();
+      assert rawHtml.startsWith("<tbody>") : "Malformed html";
+      assert rawHtml.endsWith("</tbody>") : "Malformed html";
+      rawHtml = rawHtml.substring(7, rawHtml.length() - 8);
+      return SafeHtmlUtils.fromTrustedString(rawHtml);
+    }
+
+    private void setRowInfo(int rowIndex, T rowValue) {
+      this.rowIndex = rowIndex;
+      this.rowValueKey = getValueKey(rowValue);
+      this.subrowIndex = 0; // Reset the subrow.
+    }
+  }
+
+  /**
+   * The attribute used to indicate that an element contains a cell.
+   */
+  private static final String CELL_ATTRIBUTE = "__gwt_cell";
+
+  /**
+   * The attribute used to specify the logical row index.
+   */
+  private static final String ROW_ATTRIBUTE = "__gwt_row";
+
+  /**
+   * The attribute used to specify the subrow within a logical row value.
+   */
+  private static final String SUBROW_ATTRIBUTE = "__gwt_subrow";
+
+  /**
    * The table specific {@link Impl}.
    */
   private static Impl TABLE_IMPL;
 
-  static Template template;
+  private static Template template;
+
+  /**
+   * Check if a column consumes events.
+   */
+  private static boolean isColumnInteractive(HasCell<?, ?> column) {
+    Set<String> consumedEvents = column.getCell().getConsumedEvents();
+    return consumedEvents != null && consumedEvents.size() > 0;
+  }
+
+  /**
+   * A mapping of unique cell IDs to the cell.
+   */
+  private final Map<String, HasCell<T, ?>> idToCellMap = new HashMap<String, HasCell<T, ?>>();
+  private final Map<HasCell<T, ?>, String> cellToIdMap = new HashMap<HasCell<T, ?>, String>();
 
   private boolean cellIsEditing;
   private final List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
   private final Map<Column<T, ?>, String> columnWidths = new HashMap<Column<T, ?>, String>();
+  private final Map<Integer, String> columnWidthsByIndex = new HashMap<Integer, String>();
 
   /**
    * Indicates that at least one column depends on selection.
@@ -478,7 +968,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   private boolean isInteractive;
 
   private int keyboardSelectedColumn = 0;
+  private int keyboardSelectedSubrow = 0;
+  private int lastKeyboardSelectedSubrow = 0;
   private Widget loadingIndicator;
+  private boolean legacyRenderRowValues = true;
   private final Resources resources;
   private RowStyles<T> rowStyles;
   private IconCellDecorator<SafeHtml> sortAscDecorator;
@@ -492,6 +985,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
   });
   private final Style style;
+  private CellTableBuilder<T> tableBuilder;
   private boolean updatingSortList;
 
   /**
@@ -635,6 +1129,16 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Clear the width of the specified {@link Column}.
+   * 
+   * @param column the column index
+   */
+  public void clearColumnWidth(Integer column) {
+    columnWidthsByIndex.remove(column);
+    refreshColumnWidths();
+  }
+
+  /**
    * Flush all pending changes to the table and render immediately.
    * 
    * <p>
@@ -710,12 +1214,40 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Get the index of the column that is currently selected via the keyboard.
+   * 
+   * @return the currently selected column, or -1 if none selected
+   */
+  public int getKeyboardSelectedColumn() {
+    return KeyboardSelectionPolicy.DISABLED == getKeyboardSelectionPolicy() ? -1
+        : keyboardSelectedColumn;
+  }
+
+  /**
+   * Get the index of the sub row that is currently selected via the keyboard.
+   * If the row value maps to one rendered row element, the subrow is 0.
+   * 
+   * @return the currently selected subrow, or -1 if none selected
+   */
+  public int getKeyboardSelectedSubRow() {
+    return KeyboardSelectionPolicy.DISABLED == getKeyboardSelectionPolicy() ? -1
+        : keyboardSelectedSubrow;
+  }
+
+  /**
    * Get the widget displayed when the data is loading.
    * 
    * @return the loading indicator
    */
   public Widget getLoadingIndicator() {
     return loadingIndicator;
+  }
+
+  /**
+   * Get the resources used by this table.
+   */
+  public Resources getResources() {
+    return resources;
   }
 
   /**
@@ -729,9 +1261,16 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   public TableRowElement getRowElement(int row) {
     flush();
-    checkRowBounds(row);
-    NodeList<TableRowElement> rows = getTableBodyElement().getRows();
-    return rows.getLength() > row ? rows.getItem(row) : null;
+    return getChildElement(row);
+  }
+
+  /**
+   * Gets the object used to determine how a row is styled.
+   * 
+   * @return the {@link RowStyles} object if set, null if not
+   */
+  public RowStyles<T> getRowStyles() {
+    return this.rowStyles;
   }
 
   /**
@@ -775,12 +1314,17 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     headers.add(beforeIndex, header);
     footers.add(beforeIndex, footer);
     columns.add(beforeIndex, col);
-    boolean wasinteractive = isInteractive;
-    coalesceCellProperties();
+
+    // Increment the keyboard selected column.
+    if (beforeIndex <= keyboardSelectedColumn) {
+      keyboardSelectedColumn = Math.min(keyboardSelectedColumn + 1, columns.size() - 1);
+    }
 
     // Move the keyboard selected column if the current column is not
     // interactive.
-    if (!wasinteractive && isInteractive) {
+    if (isColumnInteractive(col)
+        && ((keyboardSelectedColumn >= columns.size()) || !isColumnInteractive(columns
+            .get(keyboardSelectedColumn)))) {
       keyboardSelectedColumn = beforeIndex;
     }
 
@@ -906,19 +1450,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     columns.remove(index);
     headers.remove(index);
     footers.remove(index);
-    coalesceCellProperties();
 
-    // Find an interactive column. Stick with 0 if no column is interactive.
-    if (index <= keyboardSelectedColumn) {
-      keyboardSelectedColumn = 0;
-      if (isInteractive) {
-        for (int i = 0; i < columns.size(); i++) {
-          if (isColumnInteractive(columns.get(i))) {
-            keyboardSelectedColumn = i;
-            break;
-          }
-        }
-      }
+    // Decrement the keyboard selected column.
+    if (index <= keyboardSelectedColumn && keyboardSelectedColumn > 0) {
+      keyboardSelectedColumn--;
     }
 
     // Redraw the table asynchronously.
@@ -937,7 +1472,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   public abstract void removeColumnStyleName(int index, String styleName);
 
   /**
-   * Set the width of a {@link Column}.
+   * Set the width of a {@link Column}. The width will persist with the column
+   * and takes precedence of any width set via
+   * {@link #setColumnWidth(int, String)}.
    * 
    * @param column the column
    * @param width the width of the column
@@ -948,7 +1485,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Set the width of a {@link Column}.
+   * Set the width of a {@link Column}. The width will persist with the column
+   * and takes precedence of any width set via
+   * {@link #setColumnWidth(int, double, Unit)}.
    * 
    * @param column the column
    * @param width the width of the column
@@ -959,12 +1498,91 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Set the width of a {@link Column}.
+   * 
+   * @param column the column
+   * @param width the width of the column
+   * @param unit the {@link Unit} of measurement
+   */
+  public void setColumnWidth(int column, double width, Unit unit) {
+    setColumnWidth(column, width + unit.getType());
+  }
+
+  /**
+   * Set the width of a {@link Column}.
+   * 
+   * @param column the column
+   * @param width the width of the column
+   */
+  public void setColumnWidth(int column, String width) {
+    columnWidthsByIndex.put(column, width);
+    refreshColumnWidths();
+  }
+
+  /**
    * Set the widget to display when the table has no rows.
    * 
    * @param widget the empty table widget, or null to disable
    */
   public void setEmptyTableWidget(Widget widget) {
     this.emptyTableWidget = widget;
+  }
+
+  /**
+   * Set the keyboard selected column index.
+   * 
+   * <p>
+   * If keyboard selection is disabled, this method does nothing.
+   * </p>
+   * 
+   * <p>
+   * If the keyboard selected column is greater than the number of columns in
+   * the keyboard selected row, the last column in the row is selected, but the
+   * column index is remembered.
+   * </p>
+   * 
+   * @param column the column index, greater than or equal to zero
+   */
+  public final void setKeyboardSelectedColumn(int column) {
+    setKeyboardSelectedColumn(column, true);
+  }
+
+  /**
+   * Set the keyboard selected column index and optionally focus on the new
+   * cell.
+   * 
+   * @param column the column index, greater than or equal to zero
+   * @param stealFocus true to focus on the new column
+   * @see #setKeyboardSelectedColumn(int)
+   */
+  public void setKeyboardSelectedColumn(int column, boolean stealFocus) {
+    assert column >= 0 : "Column must be zero or greater";
+    if (KeyboardSelectionPolicy.DISABLED == getKeyboardSelectionPolicy()) {
+      return;
+    }
+
+    this.keyboardSelectedColumn = column;
+
+    // Reselect the row to move the selected column.
+    setKeyboardSelectedRow(getKeyboardSelectedRow(), keyboardSelectedSubrow, stealFocus);
+  }
+
+  @Override
+  public void setKeyboardSelectedRow(int row, boolean stealFocus) {
+    setKeyboardSelectedRow(row, 0, stealFocus);
+  }
+
+  /**
+   * Set the keyboard selected row and subrow, optionally focus on the new row.
+   * 
+   * @param row the row index relative to the page start
+   * @param subrow the row index of the child row
+   * @param stealFocus true to focus on the new row
+   * @see #setKeyboardSelectedRow(int)
+   */
+  public void setKeyboardSelectedRow(int row, int subrow, boolean stealFocus) {
+    this.keyboardSelectedSubrow = subrow;
+    super.setKeyboardSelectedRow(row, stealFocus);
   }
 
   /**
@@ -986,6 +1604,16 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     this.rowStyles = rowStyles;
   }
 
+  /**
+   * Specify the {@link CellTableBuilder} that will be used to render the row
+   * values into the table.
+   */
+  public void setTableBuilder(CellTableBuilder<T> tableBuilder) {
+    assert tableBuilder != null : "tableBuilder cannot be null";
+    this.tableBuilder = tableBuilder;
+    redraw();
+  }
+
   @Override
   protected Element convertToElements(SafeHtml html) {
     return TABLE_IMPL.convertToSectionElement(AbstractCellTable.this, "tbody", html);
@@ -994,21 +1622,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   @Override
   protected boolean dependsOnSelection() {
     return dependsOnSelection;
-  }
-
-  /**
-   * Called when a user action triggers selection.
-   * 
-   * @param event the event that triggered selection
-   * @param value the value that was selected
-   * @param row the row index of the value on the page
-   * @param column the column index where the event occurred
-   * @deprecated use
-   *             {@link #addCellPreviewHandler(com.google.gwt.view.client.CellPreviewEvent.Handler)}
-   *             instead
-   */
-  @Deprecated
-  protected void doSelection(Event event, T value, int row, int column) {
   }
 
   /**
@@ -1032,17 +1645,27 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     return getTableBodyElement();
   }
 
+  /**
+   * {@inheritDoc}
+   * 
+   * <p>
+   * The row element may not be the same as the TR element at the specified
+   * index if some row values are rendered with additional rows.
+   * </p>
+   * 
+   * @param row the row index, relative to the page start
+   * @return the row element, or null if it doesn't exists
+   * @throws IndexOutOfBoundsException if the row index is outside of the
+   *           current page
+   */
+  @Override
+  protected TableRowElement getChildElement(int row) {
+    return getSubRowElement(row + getPageStart(), 0);
+  }
+
   @Override
   protected Element getKeyboardSelectedElement() {
-    // Do not use getRowElement() because that will flush the presenter.
-    int rowIndex = getKeyboardSelectedRow();
-    NodeList<TableRowElement> rows = getTableBodyElement().getRows();
-    if (rowIndex >= 0 && rowIndex < rows.getLength() && columns.size() > 0) {
-      TableRowElement tr = rows.getItem(rowIndex);
-      TableCellElement td = tr.getCells().getItem(keyboardSelectedColumn);
-      return getCellParent(td);
-    }
-    return null;
+    return getKeyboardSelectedElement(getKeyboardSelectedTableCellElement());
   }
 
   /**
@@ -1067,9 +1690,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
 
   @Override
   protected void onBlur() {
-    Element elem = getKeyboardSelectedElement();
-    if (elem != null) {
-      TableCellElement td = elem.getParentElement().cast();
+    TableCellElement td = getKeyboardSelectedTableCellElement();
+    if (td != null) {
       TableRowElement tr = td.getParentElement().cast();
       td.removeClassName(style.keyboardSelectedCell());
       setRowStyleName(tr, style.keyboardSelectedRow(), style.keyboardSelectedRowCell(), false);
@@ -1086,117 +1708,151 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
     final Element target = event.getEventTarget().cast();
 
-    // Ignore keydown events unless the cell is in edit mode
-    String eventType = event.getType();
-    if ("keydown".equals(eventType) && !isKeyboardNavigationSuppressed()
-        && KeyboardSelectionPolicy.DISABLED != getKeyboardSelectionPolicy()) {
-      if (handleKey(event)) {
-        return;
+    // Find the cell where the event occurred.
+    TableSectionElement tbody = getTableBodyElement();
+    TableSectionElement tfoot = getTableFootElement();
+    TableSectionElement thead = getTableHeadElement();
+    TableSectionElement targetTableSection = null;
+    TableCellElement targetTableCell = null;
+    Element cellParent = null;
+    String cellId = null;
+    {
+      Element maybeTableCell = null;
+      Element cur = target;
+      while (cur != null && targetTableSection == null) {
+        /*
+         * Found the table section. Return the most recent cell element that we
+         * discovered.
+         */
+        if (cur == tbody || cur == tfoot || cur == thead) {
+          targetTableSection = cur.cast(); // We found the table section.
+          if (maybeTableCell != null) {
+            targetTableCell = maybeTableCell.cast();
+            break;
+          }
+        }
+
+        // Look for a table cell.
+        String tagName = cur.getTagName();
+        if (TableCellElement.TAG_TD.equalsIgnoreCase(tagName)
+            || TableCellElement.TAG_TH.equalsIgnoreCase(tagName)) {
+          /*
+           * Found a table cell, but we can't return yet because it may be part
+           * of a sub table within the a CellTable cell.
+           */
+          maybeTableCell = cur;
+        }
+
+        // Look for the most immediate cell parent if not already found.
+        String curCellId = isCellParent(cur);
+        if (cellParent == null && curCellId != null) {
+          cellId = curCellId;
+          cellParent = cur;
+        }
+
+        // Iterate.
+        cur = cur.getParentElement();
       }
     }
-
-    // Find the cell where the event occurred.
-    TableCellElement tableCell = findNearestParentCell(target);
-    if (tableCell == null) {
+    if (targetTableCell == null) {
       return;
     }
 
-    // Determine if we are in the header, footer, or body. Its possible that
-    // the table has been refreshed before the current event fired (ex. change
-    // event refreshes before mouseup fires), so we need to check each parent
-    // element.
-    Element trElem = tableCell.getParentElement();
-    if (trElem == null) {
-      return;
+    // Support the legacy mode where the div inside of the TD is the cell
+    // parent.
+    if (legacyRenderRowValues) {
+      cellParent = targetTableCell.getFirstChildElement();
     }
-    TableRowElement tr = TableRowElement.as(trElem);
-    Element sectionElem = tr.getParentElement();
-    if (sectionElem == null) {
-      return;
-    }
-    TableSectionElement section = TableSectionElement.as(sectionElem);
 
-    // Forward the event to the associated header, footer, or column.
+    /*
+     * Forward the event to the associated header, footer, or column.
+     */
+    TableRowElement targetTableRow = targetTableCell.getParentElement().cast();
+    String eventType = event.getType();
     boolean isClick = "click".equals(eventType);
-    int col = tableCell.getCellIndex();
-    if (section == getTableHeadElement()) {
+    int col = targetTableCell.getCellIndex();
+    if (targetTableSection == thead) {
       Header<?> header = headers.get(col);
       if (header != null) {
         // Fire the event to the header.
         if (cellConsumesEventType(header.getCell(), eventType)) {
           Context context = new Context(0, col, header.getKey());
-          header.onBrowserEvent(context, tableCell, event);
+          header.onBrowserEvent(context, targetTableCell, event);
         }
 
         // Sort the header.
-        Column<T, ?> column = columns.get(col);
-        if (isClick && column.isSortable()) {
-          updatingSortList = true;
-          sortList.push(column);
-          updatingSortList = false;
-          ColumnSortEvent.fire(this, sortList);
+        if (isClick) {
+          // TODO(jlabanca): Get visible col when custom headers are supported.
+          Column<T, ?> column = col < columns.size() ? columns.get(col) : null;
+          if (column != null && column.isSortable()) {
+            updatingSortList = true;
+            sortList.push(column);
+            updatingSortList = false;
+            ColumnSortEvent.fire(this, sortList);
+          }
         }
       }
-    } else if (section == getTableFootElement()) {
+    } else if (targetTableSection == tfoot) {
       Header<?> footer = footers.get(col);
       if (footer != null && cellConsumesEventType(footer.getCell(), eventType)) {
         Context context = new Context(0, col, footer.getKey());
-        footer.onBrowserEvent(context, tableCell, event);
+        footer.onBrowserEvent(context, targetTableCell, event);
       }
-    } else if (section == getTableBodyElement()) {
-      // Update the hover state.
-      int row = tr.getSectionRowIndex();
+    } else if (targetTableSection == tbody) {
+      /*
+       * Get the row index of the data value. This may not correspond to the DOM
+       * row index if the user specifies multiple table rows per row object.
+       */
+      int absRow = getRowValueIndex(targetTableRow);
+      int relRow = absRow - getPageStart();
+      int subrow = getSubrowValueIndex(targetTableRow);
       if ("mouseover".equals(eventType)) {
         // Unstyle the old row if it is still part of the table.
         if (hoveringRow != null && getTableBodyElement().isOrHasChild(hoveringRow)) {
           setRowStyleName(hoveringRow, style.hoveredRow(), style.hoveredRowCell(), false);
         }
-        hoveringRow = tr;
+        hoveringRow = targetTableRow;
         setRowStyleName(hoveringRow, style.hoveredRow(), style.hoveredRowCell(), true);
       } else if ("mouseout".equals(eventType) && hoveringRow != null) {
         setRowStyleName(hoveringRow, style.hoveredRow(), style.hoveredRowCell(), false);
         hoveringRow = null;
-      } else if (isClick
-          && ((getPresenter().getKeyboardSelectedRowInView() != row) || (keyboardSelectedColumn != col))) {
-        // Move keyboard focus. Since the user clicked, allow focus to go to a
-        // non-interactive column.
-        boolean isFocusable = CellBasedWidgetImpl.get().isFocusable(target);
-        isFocused = isFocused || isFocusable;
-        keyboardSelectedColumn = col;
-        getPresenter().setKeyboardSelectedRow(row, !isFocusable, true);
       }
 
-      // Update selection. Selection occurs before firing the event to the cell
-      // in case the cell operates on the currently selected item.
-      if (!isRowWithinBounds(row)) {
-        // If the event causes us to page, then the physical index will be out
-        // of bounds of the underlying data.
+      // If the event causes us to page, then the physical index will be out
+      // of bounds of the underlying data.
+      if (!isRowWithinBounds(relRow)) {
         return;
       }
+
+      /*
+       * Fire a preview event. The preview event is fired even if the TD does
+       * not contain a cell so the selection handler and keyboard handler have a
+       * chance to act.
+       */
       boolean isSelectionHandled =
           handlesSelection
               || KeyboardSelectionPolicy.BOUND_TO_SELECTION == getKeyboardSelectionPolicy();
-      T value = getVisibleItem(row);
-      Context context = new Context(row + getPageStart(), col, getValueKey(value));
+      T value = getVisibleItem(relRow);
+      Context context = new Context(absRow, col, getValueKey(value), subrow);
       CellPreviewEvent<T> previewEvent =
           CellPreviewEvent.fire(this, event, this, context, value, cellIsEditing,
               isSelectionHandled);
-      if (isClick && !cellIsEditing && !isSelectionHandled) {
-        doSelection(event, value, row, col);
-      }
 
       // Pass the event to the cell.
-      if (!previewEvent.isCanceled()) {
-        fireEventToCell(event, eventType, tableCell, value, context, columns.get(col));
+      if (cellParent != null && !previewEvent.isCanceled()) {
+        HasCell<T, ?> column = idToCellMap.get(cellId);
+        if (legacyRenderRowValues) {
+          column = columns.get(col);
+        }
+        fireEventToCell(event, eventType, cellParent, value, context, column);
       }
     }
   }
 
   @Override
   protected void onFocus() {
-    Element elem = getKeyboardSelectedElement();
-    if (elem != null) {
-      TableCellElement td = elem.getParentElement().cast();
+    TableCellElement td = getKeyboardSelectedTableCellElement();
+    if (td != null) {
       TableRowElement tr = td.getParentElement().cast();
       td.addClassName(style.keyboardSelectedCell());
       setRowStyleName(tr, style.keyboardSelectedRow(), style.keyboardSelectedRowCell(), true);
@@ -1204,19 +1860,52 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   protected void refreshColumnWidths() {
+    // TODO(jlabanca): Set size without looking at column count when custom
+    // headers added?
     int columnCount = getColumnCount();
     for (int i = 0; i < columnCount; i++) {
       Column<T, ?> column = columns.get(i);
       String width = columnWidths.get(column);
+      if (width == null) {
+        width = columnWidthsByIndex.get(i);
+      }
       doSetColumnWidth(i, width);
     }
   }
 
+  /**
+   * Throws an {@link UnsupportedOperationException}.
+   * 
+   * @deprecated as of GWT 2.5, use a {@link TableCellBuilder} to customize the
+   *             table structure instead
+   * @see #renderRowValuesLegacy(SafeHtmlBuilder, List, int, SelectionModel)
+   */
   @Override
+  @Deprecated
   protected void renderRowValues(SafeHtmlBuilder sb, List<T> values, int start,
       SelectionModel<? super T> selectionModel) {
-    createHeadersAndFooters();
+    legacyRenderRowValues = false;
+    throw new UnsupportedOperationException();
+  }
 
+  /**
+   * Render all row values into the specified {@link SafeHtmlBuilder}.
+   * 
+   * <p>
+   * This method is here for legacy reasons, to support subclasses that call
+   * {@link #renderRowValues(SafeHtmlBuilder, List, int, SelectionModel)}.
+   * </p>
+   * 
+   * @param sb the {@link SafeHtmlBuilder} to render into
+   * @param values the row values
+   * @param start the absolute start index of the values
+   * @param selectionModel the {@link SelectionModel}
+   * @deprecated as of GWT 2.5, use a {@link TableCellBuilder} to customize the
+   *             table structure instead
+   */
+  @Deprecated
+  protected final void renderRowValuesLegacy(SafeHtmlBuilder sb, List<T> values, int start,
+      SelectionModel<? super T> selectionModel) {
     int keyboardSelectedRow = getKeyboardSelectedRow() + getPageStart();
     String evenRowStyle = style.evenRow();
     String oddRowStyle = style.oddRow();
@@ -1227,9 +1916,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     String lastColumnStyle = " " + style.lastColumn();
     String selectedRowStyle = " " + style.selectedRow();
     String selectedCellStyle = " " + style.selectedRowCell();
-    String keyboardRowStyle = " " + style.keyboardSelectedRow();
-    String keyboardRowCellStyle = " " + style.keyboardSelectedRowCell();
-    String keyboardCellStyle = " " + style.keyboardSelectedCell();
     int columnCount = columns.size();
     int length = values.size();
     int end = start + length;
@@ -1238,13 +1924,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       boolean isSelected =
           (selectionModel == null || value == null) ? false : selectionModel.isSelected(value);
       boolean isEven = i % 2 == 0;
-      boolean isKeyboardSelected = i == keyboardSelectedRow && isFocused;
       String trClasses = isEven ? evenRowStyle : oddRowStyle;
       if (isSelected) {
         trClasses += selectedRowStyle;
-      }
-      if (isKeyboardSelected) {
-        trClasses += keyboardRowStyle;
       }
 
       if (rowStyles != null) {
@@ -1266,9 +1948,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
         if (isSelected) {
           tdClasses += selectedCellStyle;
         }
-        if (isKeyboardSelected) {
-          tdClasses += keyboardRowCellStyle;
-        }
         // The first and last column could be the same column.
         if (curColumn == columnCount - 1) {
           tdClasses += lastColumnStyle;
@@ -1288,21 +1967,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
 
         // Build the contents.
         SafeHtml contents = SafeHtmlUtils.EMPTY_SAFE_HTML;
-        if (i == keyboardSelectedRow && curColumn == keyboardSelectedColumn) {
-          // This is the focused cell.
-          if (isFocused) {
-            tdClasses += keyboardCellStyle;
-          }
-          char accessKey = getAccessKey();
-          if (accessKey != 0) {
-            contents =
-                template.divFocusableWithKey(getTabIndex(), accessKey, cellBuilder.toSafeHtml());
-          } else {
-            contents = template.divFocusable(getTabIndex(), cellBuilder.toSafeHtml());
-          }
-        } else {
-          contents = template.div(cellBuilder.toSafeHtml());
-        }
+        contents = template.div(cellBuilder.toSafeHtml());
 
         // Build the cell.
         HorizontalAlignmentConstant hAlign = column.getHorizontalAlignment();
@@ -1329,66 +1994,201 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
 
   @Override
   protected void replaceAllChildren(List<T> values, SafeHtml html) {
-    TABLE_IMPL.replaceAllRows(AbstractCellTable.this, getTableBodyElement(), CellBasedWidgetImpl
-        .get().processHtml(html));
+    // Render the headers and footers.
+    createHeadersAndFooters();
+
+    /*
+     * If html is not null, then the user overrode renderRowValues() and
+     * rendered directly into a SafeHtmlBuilder. The legacy method is deprecated
+     * but still supported.
+     */
+    if (html == null) {
+      cellToIdMap.clear();
+      idToCellMap.clear();
+      html = buildRowValues(values, getPageStart());
+    }
+
+    TABLE_IMPL.replaceAllRows(this, getTableBodyElement(), CellBasedWidgetImpl.get().processHtml(
+        html));
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  protected void replaceChildren(List<T> values, int start, SafeHtml html) {
+    createHeadersAndFooters();
+
+    /*
+     * If html is not null, then the user override renderRowValues() and
+     * rendered directly into a SafeHtmlBuilder. The legacy method is deprecated
+     * but still supported.
+     */
+    if (html == null) {
+      html = buildRowValues(values, getPageStart() + start);
+    }
+
+    TABLE_IMPL.replaceChildren(this, getTableBodyElement(), CellBasedWidgetImpl.get().processHtml(
+        html), start, values.size());
   }
 
   @Override
   protected boolean resetFocusOnCell() {
-    int row = getKeyboardSelectedRow();
-    if (isRowWithinBounds(row) && columns.size() > 0) {
-      Column<T, ?> column = columns.get(keyboardSelectedColumn);
-      return resetFocusOnCellImpl(row, keyboardSelectedColumn, column);
+    Element elem = getKeyboardSelectedElement();
+    if (elem == null) {
+      // There is no selected element.
+      return false;
     }
+
+    String cellId = isCellParent(elem);
+    if (cellId == null) {
+      // The selected element does not contain a Cell.
+      return false;
+    }
+
+    HasCell<T, ?> column = idToCellMap.get(cellId);
+    if (column != null) {
+      resetFocusOnCellImpl(getKeyboardSelectedRow(), getKeyboardSelectedColumn(), column, elem);
+    }
+
     return false;
   }
 
   @Override
   protected void setKeyboardSelected(int index, boolean selected, boolean stealFocus) {
     if (KeyboardSelectionPolicy.DISABLED == getKeyboardSelectionPolicy()
-        || !isRowWithinBounds(index) || columns.size() == 0) {
+        || !isRowWithinBounds(index)) {
       return;
     }
 
-    TableRowElement tr = getRowElement(index);
+    // If deselecting, we deselect the previous subrow.
+    int subrow = lastKeyboardSelectedSubrow;
+    if (selected) {
+      subrow = keyboardSelectedSubrow;
+      lastKeyboardSelectedSubrow = keyboardSelectedSubrow;
+    }
+
+    // Deselect the row.
+    TableRowElement tr = getSubRowElement(index + getPageStart(), subrow);
+    if (tr == null) {
+      // The row does not exist.
+      return;
+    }
     String cellStyle = style.keyboardSelectedCell();
     boolean updatedSelection = !selected || isFocused || stealFocus;
     setRowStyleName(tr, style.keyboardSelectedRow(), style.keyboardSelectedRowCell(), selected);
     NodeList<TableCellElement> cells = tr.getCells();
+    int keyboardColumn = Math.min(getKeyboardSelectedColumn(), cells.getLength() - 1);
     for (int i = 0; i < cells.getLength(); i++) {
       TableCellElement td = cells.getItem(i);
+      boolean isKeyboardSelected = (i == keyboardColumn);
 
       // Update the selected style.
-      setStyleName(td, cellStyle, updatedSelection && selected && i == keyboardSelectedColumn);
+      setStyleName(td, cellStyle, updatedSelection && selected && isKeyboardSelected);
 
       // Mark as focusable.
-      final com.google.gwt.user.client.Element cellParent = getCellParent(td).cast();
-      setFocusable(cellParent, selected && i == keyboardSelectedColumn);
-    }
+      final Element focusable = getKeyboardSelectedElement(td);
+      setFocusable(focusable, selected && isKeyboardSelected);
 
-    // Move focus to the cell.
-    if (selected && stealFocus && !cellIsEditing) {
-      TableCellElement td = tr.getCells().getItem(keyboardSelectedColumn);
-      final com.google.gwt.user.client.Element cellParent = getCellParent(td).cast();
-      CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
-        @Override
-        public void execute() {
-          cellParent.focus();
-        }
-      });
+      // Move focus to the cell.
+      if (selected && stealFocus && !cellIsEditing && isKeyboardSelected) {
+        CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
+          @Override
+          public void execute() {
+            focusable.focus();
+          }
+        });
+      }
     }
   }
 
   /**
-   * @deprecated this method is never called by AbstractHasData, render the
-   *             selected styles in
-   *             {@link #renderRowValues(SafeHtmlBuilder, List, int, SelectionModel)}
+   * Get a subrow element given the index of the row value and the sub row
+   * index.
+   * 
+   * @param absRow the absolute row value index
+   * @param subrow the index of the subrow beneath the row.
+   * @return the row element, or null if not found
    */
-  @Override
-  @Deprecated
-  protected void setSelected(Element elem, boolean selected) {
-    TableRowElement tr = elem.cast();
-    setRowStyleName(tr, style.selectedRow(), style.selectedRowCell(), selected);
+  // Visible for testing.
+  TableRowElement getSubRowElement(int absRow, int subrow) {
+    int relRow = absRow - getPageStart();
+    checkRowBounds(relRow);
+
+    /*
+     * In most tables, the row element that represents the row object at the
+     * specified index will be at the same index in the DOM. However, if the
+     * user provides a TableBuilder that renders multiple rows per row value,
+     * that will not be the case.
+     * 
+     * We use a binary search to find the row, but we start at the index as that
+     * is the most likely location.
+     */
+    NodeList<TableRowElement> rows = getTableBodyElement().getRows();
+    int rowCount = rows.getLength();
+    if (rowCount == 0) {
+      return null;
+    }
+
+    int frameStart = 0;
+    int frameEnd = rowCount - 1;
+    int domIndex = Math.min(relRow, frameEnd);
+    while (domIndex >= frameStart && domIndex <= frameEnd) {
+      TableRowElement curRow = rows.getItem(domIndex);
+      int rowValueIndex = getRowValueIndex(curRow);
+      if (rowValueIndex == absRow) {
+        // Found a subrow in the row index.
+        int subrowValueIndex = getSubrowValueIndex(curRow);
+        if (subrow != subrowValueIndex) {
+          // Shift to the correct subrow.
+          int offset = subrow - subrowValueIndex;
+          int subrowIndex = domIndex + offset;
+          if (subrowIndex >= rows.getLength()) {
+            // The subrow is out of range of the table.
+            return null;
+          }
+          curRow = rows.getItem(subrowIndex);
+          if (getRowValueIndex(curRow) != absRow) {
+            // The "subrow" is actually part of the next row.
+            return null;
+          }
+        }
+        return curRow;
+      } else if (rowValueIndex > absRow) {
+        // Shift the frame to lower indexes.
+        frameEnd = domIndex - 1;
+      } else {
+        // Shift the frame to higher indexes.
+        frameStart = domIndex + 1;
+      }
+
+      // Move the dom index.
+      domIndex = (frameStart + frameEnd) / 2;
+    }
+
+    // The element wasn't found.
+    return null;
+  }
+
+  /**
+   * Build a list of row values.
+   * 
+   * @param values the row values to render
+   * @param start the absolute start index
+   * @return a {@link SafeHtml} string containing the row values
+   */
+  private SafeHtml buildRowValues(List<T> values, int start) {
+    UtilityImpl utility = new UtilityImpl();
+    int length = values.size();
+    int end = start + length;
+    for (int i = start; i < end; i++) {
+      T value = values.get(i - start);
+      utility.setRowInfo(i, value);
+      tableBuilder.buildRow(value, i, utility);
+    }
+
+    // Update the properties of the table.
+    coalesceCellProperties();
+
+    return utility.asSafeHtml();
   }
 
   /**
@@ -1411,7 +2211,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     dependsOnSelection = false;
     handlesSelection = false;
     isInteractive = false;
-    for (Column<T, ?> column : columns) {
+    for (HasCell<T, ?> column : idToCellMap.values()) {
       Cell<?> cell = column.getCell();
       if (cell.dependsOnSelection()) {
         dependsOnSelection = true;
@@ -1560,97 +2360,118 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Find and return the index of the next interactive column. If no column is
-   * interactive, 0 is returned. If the start index is the only interactive
-   * column, it is returned.
-   * 
-   * @param start the start index, exclusive unless it is the only option
-   * @param reverse true to do a reverse search
-   * @return the interactive column index, or 0 if not interactive
+   * Fire an event to the Cell within the specified {@link TableCellElement}.
    */
-  private int findInteractiveColumn(int start, boolean reverse) {
-    if (!isInteractive) {
-      return 0;
-    } else if (reverse) {
-      for (int i = start - 1; i >= 0; i--) {
-        if (isColumnInteractive(columns.get(i))) {
-          return i;
-        }
-      }
-      // Wrap to the end.
-      for (int i = columns.size() - 1; i >= start; i--) {
-        if (isColumnInteractive(columns.get(i))) {
-          return i;
-        }
-      }
-    } else {
-      for (int i = start + 1; i < columns.size(); i++) {
-        if (isColumnInteractive(columns.get(i))) {
-          return i;
-        }
-      }
-      // Wrap to the start.
-      for (int i = 0; i <= start; i++) {
-        if (isColumnInteractive(columns.get(i))) {
-          return i;
-        }
-      }
+  private <C> void fireEventToCell(Event event, String eventType, Element parentElem,
+      final T rowValue, Context context, HasCell<T, C> column) {
+    // Check if the cell consumes the event.
+    Cell<C> cell = column.getCell();
+    if (!cellConsumesEventType(cell, eventType)) {
+      return;
     }
-    return 0;
+
+    // Create a FieldUpdater.
+    final FieldUpdater<T, C> fieldUpdater = column.getFieldUpdater();
+    final int index = context.getIndex();
+    ValueUpdater<C> valueUpdater = (fieldUpdater == null) ? null : new ValueUpdater<C>() {
+      @Override
+      public void update(C value) {
+        fieldUpdater.update(index, rowValue, value);
+      }
+    };
+
+    // Fire the event to the cell.
+    C cellValue = column.getValue(rowValue);
+    boolean cellWasEditing = cell.isEditing(context, parentElem, cellValue);
+    cell.onBrowserEvent(context, parentElem, column.getValue(rowValue), event, valueUpdater);
+
+    // Reset focus if needed.
+    cellIsEditing = cell.isEditing(context, parentElem, cellValue);
+    if (cellWasEditing && !cellIsEditing) {
+      CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
+        @Override
+        public void execute() {
+          setFocus(true);
+        }
+      });
+    }
   }
 
   /**
-   * Find the cell that contains the element. Note that the TD element is not
-   * the parent. The parent is the div inside the TD cell.
+   * Get the keyboard selected element from the selected table cell.
    * 
-   * @param elem the element
-   * @return the parent cell
+   * @return the keyboard selected element, or null if there is none
    */
-  private TableCellElement findNearestParentCell(Element elem) {
-    while ((elem != null) && (elem != getElement())) {
-      // TODO: We need is() implementations in all Element subclasses.
-      // This would allow us to use TableCellElement.is() -- much cleaner.
-      String tagName = elem.getTagName();
-      if ("td".equalsIgnoreCase(tagName) || "th".equalsIgnoreCase(tagName)) {
-        return elem.cast();
+  private Element getKeyboardSelectedElement(TableCellElement td) {
+    if (td == null) {
+      return null;
+    }
+
+    /*
+     * The TD itself is a cell parent, which means its internal structure
+     * (including the tabIndex that we set) could be modified by its Cell. We
+     * return the TD to be safe.
+     */
+    if (isCellParent(td) != null) {
+      return td;
+    }
+
+    /*
+     * The default table builder adds a focusable div to the table cell because
+     * TDs aren't focusable in all browsers. If the user defines a custom table
+     * builder with a different structure, we must assume the keyboard selected
+     * element is the TD itself.
+     */
+    Element firstChild = td.getFirstChildElement();
+    if (firstChild != null && td.getChildCount() == 1
+        && "div".equalsIgnoreCase(firstChild.getTagName())) {
+      return firstChild;
+    }
+
+    return td;
+  }
+
+  /**
+   * Get the {@link TableCellElement} that is currently keyboard selected.
+   * 
+   * @return the table cell element, or null if not selected
+   */
+  private TableCellElement getKeyboardSelectedTableCellElement() {
+    int colIndex = getKeyboardSelectedColumn();
+    if (colIndex < 0) {
+      return null;
+    }
+
+    // Do not use getRowElement() because that will flush the presenter.
+    int rowIndex = getKeyboardSelectedRow();
+    if (rowIndex < 0 || rowIndex >= getTableBodyElement().getRows().getLength()) {
+      return null;
+    }
+    TableRowElement tr = getSubRowElement(rowIndex + getPageStart(), keyboardSelectedSubrow);
+    if (tr != null) {
+      int cellCount = tr.getCells().getLength();
+      if (cellCount > 0) {
+        int column = Math.min(colIndex, cellCount - 1);
+        return tr.getCells().getItem(column);
       }
-      elem = elem.getParentElement();
     }
     return null;
   }
 
   /**
-   * Fire an event to the Cell within the specified {@link TableCellElement}.
-   */
-  private <C> void fireEventToCell(Event event, String eventType, TableCellElement tableCell,
-      T value, Context context, Column<T, C> column) {
-    Cell<C> cell = column.getCell();
-    if (cellConsumesEventType(cell, eventType)) {
-      C cellValue = column.getValue(value);
-      Element parentElem = getCellParent(tableCell);
-      boolean cellWasEditing = cell.isEditing(context, parentElem, cellValue);
-      column.onBrowserEvent(context, parentElem, value, event);
-      cellIsEditing = cell.isEditing(context, parentElem, cellValue);
-      if (cellWasEditing && !cellIsEditing) {
-        CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
-          @Override
-          public void execute() {
-            setFocus(true);
-          }
-        });
-      }
-    }
-  }
-
-  /**
-   * Get the parent element that is passed to the {@link Cell} from the table
-   * cell element.
+   * Get the index of the row value from the associated {@link TableRowElement}.
    * 
-   * @param td the table cell
-   * @return the parent of the {@link Cell}
+   * @param row the row element
+   * @return the row value index
    */
-  private Element getCellParent(TableCellElement td) {
-    return td.getFirstChildElement();
+  private int getRowValueIndex(TableRowElement row) {
+    try {
+      return Integer.parseInt(row.getAttribute(ROW_ATTRIBUTE));
+    } catch (NumberFormatException e) {
+      // The attribute doesn't exist. Maybe the user is overriding
+      // renderRowValues().
+      return row.getSectionRowIndex() + getPageStart();
+    }
   }
 
   /**
@@ -1675,50 +2496,22 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
   }
 
-  private boolean handleKey(Event event) {
-    HasDataPresenter<T> presenter = getPresenter();
-    int oldRow = getKeyboardSelectedRow();
-    boolean isRtl = LocaleInfo.getCurrentLocale().isRTL();
-    int keyCodeLineEnd = isRtl ? KeyCodes.KEY_LEFT : KeyCodes.KEY_RIGHT;
-    int keyCodeLineStart = isRtl ? KeyCodes.KEY_RIGHT : KeyCodes.KEY_LEFT;
-    int keyCode = event.getKeyCode();
-    if (keyCode == keyCodeLineEnd) {
-      int nextColumn = findInteractiveColumn(keyboardSelectedColumn, false);
-      if (nextColumn <= keyboardSelectedColumn) {
-        // Wrap to the next row.
-        if (presenter.hasKeyboardNext()) {
-          keyboardSelectedColumn = nextColumn;
-          presenter.keyboardNext();
-          event.preventDefault();
-          return true;
-        }
-      } else {
-        // Reselect the row to move the selected column.
-        keyboardSelectedColumn = nextColumn;
-        getPresenter().setKeyboardSelectedRow(oldRow, true, true);
-        event.preventDefault();
-        return true;
-      }
-    } else if (keyCode == keyCodeLineStart) {
-      int prevColumn = findInteractiveColumn(keyboardSelectedColumn, true);
-      if (prevColumn >= keyboardSelectedColumn) {
-        // Wrap to the previous row.
-        if (presenter.hasKeyboardPrev()) {
-          keyboardSelectedColumn = prevColumn;
-          presenter.keyboardPrev();
-          event.preventDefault();
-          return true;
-        }
-      } else {
-        // Reselect the row to move the selected column.
-        keyboardSelectedColumn = prevColumn;
-        getPresenter().setKeyboardSelectedRow(oldRow, true, true);
-        event.preventDefault();
-        return true;
-      }
+  /**
+   * Get the index of the subrow value from the associated
+   * {@link TableRowElement}. The sub row value starts at 0 for the first row
+   * that represents a row value.
+   * 
+   * @param row the row element
+   * @return the subrow value index, or 0 if not found
+   */
+  private int getSubrowValueIndex(TableRowElement row) {
+    try {
+      return Integer.parseInt(row.getAttribute(SUBROW_ATTRIBUTE));
+    } catch (NumberFormatException e) {
+      // The attribute doesn't exist. Maybe the user is overriding
+      // renderRowValues().
+      return 0;
     }
-
-    return false;
   }
 
   /**
@@ -1737,24 +2530,36 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     eventTypes.add("mouseover");
     eventTypes.add("mouseout");
     CellBasedWidgetImpl.get().sinkEvents(this, eventTypes);
+
+    // Set the table builder.
+    tableBuilder = new DefaultCellTableBuilder<T>(this);
+
+    // Set the keyboard handler.
+    setKeyboardSelectionHandler(new CellTableKeyboardSelectionHandler<T>(this));
   }
 
   /**
-   * Check if a column consumes events.
+   * Check if an element is the parent of a rendered cell.
+   * 
+   * @param elem the element to check
+   * @return the cellId if a cell parent, null if not
    */
-  private boolean isColumnInteractive(Column<T, ?> column) {
-    Set<String> consumedEvents = column.getCell().getConsumedEvents();
-    return consumedEvents != null && consumedEvents.size() > 0;
+  private String isCellParent(Element elem) {
+    if (elem == null) {
+      return null;
+    }
+    String cellId = elem.getAttribute(CELL_ATTRIBUTE);
+    return (cellId == null) || (cellId.length() == 0) ? null : cellId;
   }
 
-  private <C> boolean resetFocusOnCellImpl(int row, int col, Column<T, C> column) {
-    Element parent = getKeyboardSelectedElement();
+  private <C> boolean resetFocusOnCellImpl(int row, int col, HasCell<T, C> column,
+      Element cellParent) {
     T value = getVisibleItem(row);
     Object key = getValueKey(value);
     C cellValue = column.getValue(value);
     Cell<C> cell = column.getCell();
     Context context = new Context(row + getPageStart(), col, key);
-    return cell.resetFocus(context, parent, cellValue);
+    return cell.resetFocus(context, cellParent, cellValue);
   }
 
   /**

@@ -129,6 +129,7 @@ public class Style extends JavaScriptObject {
         return BORDER_STYLE_SOLID;
       }
     };
+    @Override
     public abstract String getCssName();
   }
 
@@ -244,6 +245,7 @@ public class Style extends JavaScriptObject {
         return CURSOR_ROW_RESIZE;
       }
     };
+    @Override
     public abstract String getCssName();
   }
 
@@ -275,6 +277,7 @@ public class Style extends JavaScriptObject {
         return DISPLAY_INLINE_BLOCK;
       }
     };
+    @Override
     public abstract String getCssName();
   }
 
@@ -300,6 +303,7 @@ public class Style extends JavaScriptObject {
         return FLOAT_NONE;
       }
     };
+    @Override
     public abstract String getCssName();
   }
 
@@ -325,6 +329,7 @@ public class Style extends JavaScriptObject {
         return FONT_STYLE_OBLIQUE;
       }
     };
+    @Override
     public abstract String getCssName();
   }
 
@@ -356,6 +361,7 @@ public class Style extends JavaScriptObject {
         return FONT_WEIGHT_LIGHTER;
       }
     };
+    @Override
     public abstract String getCssName();
   }
 
@@ -417,6 +423,69 @@ public class Style extends JavaScriptObject {
         return LIST_STYLE_TYPE_UPPER_ROMAN;
       }
     };
+    @Override
+    public abstract String getCssName();
+  }
+
+  /**
+   * Enum for the outline-style property.
+   */
+  public enum OutlineStyle implements HasCssName {
+    NONE {
+      @Override
+      public String getCssName() {
+        return OUTLINE_STYLE_NONE;
+      }
+    },
+    DASHED {
+      @Override
+      public String getCssName() {
+        return OUTLINE_STYLE_DASHED;
+      }
+    },
+    DOTTED {
+      @Override
+      public String getCssName() {
+        return OUTLINE_STYLE_DOTTED;
+      }
+    },
+    DOUBLE {
+      @Override
+      public String getCssName() {
+        return OUTLINE_STYLE_DOUBLE;
+      }
+    },
+    GROOVE {
+      @Override
+      public String getCssName() {
+        return OUTLINE_STYLE_GROOVE;
+      }
+    },
+    INSET {
+      @Override
+      public String getCssName() {
+        return OUTLINE_STYLE_INSET;
+      }
+    },
+    OUTSET {
+      @Override
+      public String getCssName() {
+        return OUTLINE_STYLE_OUTSET;
+      }
+    },
+    RIDGE {
+      @Override
+      public String getCssName() {
+        return OUTLINE_STYLE_RIDGE;
+      }
+    },
+    SOLID {
+      @Override
+      public String getCssName() {
+        return OUTLINE_STYLE_SOLID;
+      }
+    };
+    @Override
     public abstract String getCssName();
   }
 
@@ -448,6 +517,7 @@ public class Style extends JavaScriptObject {
         return OVERFLOW_AUTO;
       }
     };
+    @Override
     public abstract String getCssName();
   }
 
@@ -479,6 +549,7 @@ public class Style extends JavaScriptObject {
         return POSITION_FIXED;
       }
     };
+    @Override
     public abstract String getCssName();
   }
 
@@ -498,6 +569,7 @@ public class Style extends JavaScriptObject {
         return TABLE_LAYOUT_FIXED;
       }
     };
+    @Override
     public abstract String getCssName();
   }
 
@@ -529,6 +601,7 @@ public class Style extends JavaScriptObject {
         return TEXT_DECORATION_LINE_THROUGH;
       }
     };
+    @Override
     public abstract String getCssName();
   }
 
@@ -584,6 +657,7 @@ public class Style extends JavaScriptObject {
         return VERTICAL_ALIGN_TEXT_BOTTOM;
       }
     };
+    @Override
     public abstract String getCssName();
   }
 
@@ -603,6 +677,7 @@ public class Style extends JavaScriptObject {
         return VISIBILITY_HIDDEN;
       }
     };
+    @Override
     public abstract String getCssName();
   }
 
@@ -659,6 +734,16 @@ public class Style extends JavaScriptObject {
   private static final String LIST_STYLE_TYPE_DISC = "disc";
   private static final String LIST_STYLE_TYPE_NONE = "none";
 
+  private static final String OUTLINE_STYLE_DASHED = "dashed";
+  private static final String OUTLINE_STYLE_DOTTED = "dotted";
+  private static final String OUTLINE_STYLE_DOUBLE = "double";
+  private static final String OUTLINE_STYLE_GROOVE = "groove";
+  private static final String OUTLINE_STYLE_INSET = "inset";
+  private static final String OUTLINE_STYLE_NONE = "none";
+  private static final String OUTLINE_STYLE_OUTSET = "outset";
+  private static final String OUTLINE_STYLE_RIDGE = "ridge";
+  private static final String OUTLINE_STYLE_SOLID = "solid";
+
   private static final String OVERFLOW_AUTO = "auto";
   private static final String OVERFLOW_SCROLL = "scroll";
   private static final String OVERFLOW_HIDDEN = "hidden";
@@ -707,6 +792,9 @@ public class Style extends JavaScriptObject {
   private static final String STYLE_BACKGROUND_COLOR = "backgroundColor";
   private static final String STYLE_VERTICAL_ALIGN = "verticalAlign";
   private static final String STYLE_TABLE_LAYOUT = "tableLayout";
+  private static final String STYLE_OUTLINE_WIDTH = "outlineWidth";
+  private static final String STYLE_OUTLINE_STYLE = "outlineStyle";
+  private static final String STYLE_OUTLINE_COLOR = "outlineColor";
 
   private static final String TABLE_LAYOUT_AUTO = "auto";
   private static final String TABLE_LAYOUT_FIXED = "fixed";
@@ -774,7 +862,7 @@ public class Style extends JavaScriptObject {
    */
   public final void clearBorderWidth() {
      clearProperty(STYLE_BORDER_WIDTH);
-   }
+  }
 
   /**
    * Clear the bottom css property.
@@ -893,6 +981,27 @@ public class Style extends JavaScriptObject {
    */
   public final void clearOpacity() {
     DOMImpl.impl.cssClearOpacity(this);
+  }
+
+  /**
+   * Clear the outline-color css property.
+   */
+  public final void clearOutlineColor() {
+     clearProperty(STYLE_OUTLINE_COLOR);
+   }
+
+  /**
+   * Clears the outline-style CSS property.
+   */
+  public final void clearOutlineStyle() {
+    clearProperty(STYLE_OUTLINE_STYLE);
+  }
+
+  /**
+   * Clear the outline-width css property.
+   */
+  public final void clearOutlineWidth() {
+     clearProperty(STYLE_OUTLINE_WIDTH);
   }
 
   /**
@@ -1440,6 +1549,27 @@ public class Style extends JavaScriptObject {
    */
   public final void setOpacity(double value) {
     DOMImpl.impl.cssSetOpacity(this, value);
+  }
+
+  /**
+   * Set the outline-color css property.
+   */
+  public final void setOutlineColor(String value) {
+    setProperty(STYLE_OUTLINE_COLOR, value);
+  }
+
+  /**
+   * Sets the outline-style CSS property.
+   */
+  public final void setOutlineStyle(OutlineStyle value) {
+    setProperty(STYLE_OUTLINE_STYLE, value.getCssName());
+  }
+
+  /**
+   * Set the outline-width css property.
+   */
+  public final void setOutlineWidth(double value, Unit unit) {
+    setProperty(STYLE_OUTLINE_WIDTH, value, unit);
   }
 
   /**

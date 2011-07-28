@@ -267,4 +267,14 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
     }
     return toRet;
   }
+
+  /**
+   * Populate the entire range of a view.
+   */
+  protected void populateData(AbstractHasData<String> view) {
+    Range range = view.getVisibleRange();
+    int start = range.getStart();
+    int length = range.getLength();
+    view.setRowData(start, createData(start, length));
+  }
 }

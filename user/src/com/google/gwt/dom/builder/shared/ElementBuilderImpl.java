@@ -70,6 +70,7 @@ public abstract class ElementBuilderImpl {
      * The top item in the stack.
      */
     private StackNode top;
+    private int size = 0;
 
     public boolean isEmpty() {
       return (top == null);
@@ -93,6 +94,7 @@ public abstract class ElementBuilderImpl {
       assertNotEmpty();
       StackNode toRet = top;
       top = top.next;
+      size--;
       return toRet;
     }
 
@@ -100,6 +102,11 @@ public abstract class ElementBuilderImpl {
       StackNode node = new StackNode(tagName, builder);
       node.next = top;
       top = node;
+      size++;
+    }
+
+    public int size() {
+      return size;
     }
 
     /**
@@ -201,6 +208,10 @@ public abstract class ElementBuilderImpl {
     endAllTags();
 
     return doFinishImpl();
+  }
+
+  public int getDepth() {
+    return stack.size();
   }
 
   public void html(SafeHtml html) {

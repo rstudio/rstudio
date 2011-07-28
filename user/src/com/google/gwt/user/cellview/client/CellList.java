@@ -130,14 +130,6 @@ public class CellList<T> extends AbstractHasData<T> {
   interface Template extends SafeHtmlTemplates {
     @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\" style=\"outline:none;\" >{2}</div>")
     SafeHtml div(int idx, String classes, SafeHtml cellContents);
-
-    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\" style=\"outline:none;\" tabindex=\"{2}\">{3}</div>")
-    SafeHtml divFocusable(int idx, String classes, int tabIndex,
-        SafeHtml cellContents);
-
-    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\" style=\"outline:none;\" tabindex=\"{2}\" accesskey=\"{3}\">{4}</div>")
-    SafeHtml divFocusableWithKey(int idx, String classes, int tabIndex,
-        char accessKey, SafeHtml cellContents);
   }
 
   /**
@@ -212,8 +204,7 @@ public class CellList<T> extends AbstractHasData<T> {
    * @param keyProvider an instance of ProvidesKey<T>, or null if the record
    *          object should act as its own key
    */
-  public CellList(final Cell<T> cell, Resources resources,
-      ProvidesKey<T> keyProvider) {
+  public CellList(final Cell<T> cell, Resources resources, ProvidesKey<T> keyProvider) {
     super(Document.get().createDivElement(), DEFAULT_PAGE_SIZE, keyProvider);
     this.cell = cell;
     this.style = resources.cellListStyle();
@@ -354,20 +345,6 @@ public class CellList<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Called when a user action triggers selection.
-   * 
-   * @param event the event that triggered selection
-   * @param value the value that was selected
-   * @param indexOnPage the index of the value on the page
-   * @deprecated use
-   *             {@link #addCellPreviewHandler(com.google.gwt.view.client.CellPreviewEvent.Handler)}
-   *             instead
-   */
-  @Deprecated
-  protected void doSelection(Event event, T value, int indexOnPage) {
-  }
-
-  /**
    * Fire an event to the cell.
    * 
    * @param context the {@link Context} of the cell
@@ -375,8 +352,7 @@ public class CellList<T> extends AbstractHasData<T> {
    * @param parent the parent of the cell
    * @param value the value of the cell
    */
-  protected void fireEventToCell(Context context, Event event, Element parent,
-      T value) {
+  protected void fireEventToCell(Context context, Event event, Element parent, T value) {
     Set<String> consumedEvents = cell.getConsumedEvents();
     if (consumedEvents != null && consumedEvents.contains(event.getType())) {
       boolean cellWasEditing = cell.isEditing(context, parent, value);
@@ -384,6 +360,7 @@ public class CellList<T> extends AbstractHasData<T> {
       cellIsEditing = cell.isEditing(context, parent, value);
       if (cellWasEditing && !cellIsEditing) {
         CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
+          @Override
           public void execute() {
             setFocus(true);
           }
@@ -452,8 +429,7 @@ public class CellList<T> extends AbstractHasData<T> {
     // Forward the event to the cell.
     String idxString = "";
     Element cellTarget = target;
-    while ((cellTarget != null)
-        && ((idxString = cellTarget.getAttribute("__idx")).length() == 0)) {
+    while ((cellTarget != null) && ((idxString = cellTarget.getAttribute("__idx")).length() == 0)) {
       cellTarget = cellTarget.getParentElement();
     }
     if (idxString.length() > 0) {
@@ -470,27 +446,15 @@ public class CellList<T> extends AbstractHasData<T> {
       }
 
       // Get the cell parent before doing selection in case the list is redrawn.
-      boolean isSelectionHandled = cell.handlesSelection()
-          || KeyboardSelectionPolicy.BOUND_TO_SELECTION == getKeyboardSelectionPolicy();
+      boolean isSelectionHandled =
+          cell.handlesSelection()
+              || KeyboardSelectionPolicy.BOUND_TO_SELECTION == getKeyboardSelectionPolicy();
       Element cellParent = getCellParent(cellTarget);
       T value = getVisibleItem(indexOnPage);
       Context context = new Context(idx, 0, getValueKey(value));
-      CellPreviewEvent<T> previewEvent = CellPreviewEvent.fire(this, event,
-          this, context, value, cellIsEditing, isSelectionHandled);
-      if (isClick && !cellIsEditing && !isSelectionHandled) {
-        doSelection(event, value, indexOnPage);
-      }
-
-      // Focus on the cell.
-      if (isClick) {
-        /*
-         * If the selected element is natively focusable, then we do not want to
-         * steal focus away from it.
-         */
-        boolean isFocusable = CellBasedWidgetImpl.get().isFocusable(target);
-        isFocused = isFocused || isFocusable;
-        getPresenter().setKeyboardSelectedRow(indexOnPage, !isFocusable, false);
-      }
+      CellPreviewEvent<T> previewEvent =
+          CellPreviewEvent.fire(this, event, this, context, value, cellIsEditing,
+              isSelectionHandled);
 
       // Fire the event to the cell if the list has not been refreshed.
       if (!previewEvent.isCanceled()) {
@@ -549,8 +513,7 @@ public class CellList<T> extends AbstractHasData<T> {
     int end = start + length;
     for (int i = start; i < end; i++) {
       T value = values.get(i - start);
-      boolean isSelected = selectionModel == null ? false
-          : selectionModel.isSelected(value);
+      boolean isSelected = selectionModel == null ? false : selectionModel.isSelected(value);
 
       StringBuilder classesBuilder = new StringBuilder();
       classesBuilder.append(i % 2 == 0 ? evenItem : oddItem);
@@ -561,24 +524,7 @@ public class CellList<T> extends AbstractHasData<T> {
       SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
       Context context = new Context(i, 0, getValueKey(value));
       cell.render(context, value, cellBuilder);
-
-      if (i == keyboardSelectedRow) {
-        // This is the focused item.
-        if (isFocused) {
-          classesBuilder.append(keyboardSelectedItem);
-        }
-        char accessKey = getAccessKey();
-        if (accessKey != 0) {
-          sb.append(TEMPLATE.divFocusableWithKey(i, classesBuilder.toString(),
-              getTabIndex(), accessKey, cellBuilder.toSafeHtml()));
-        } else {
-          sb.append(TEMPLATE.divFocusable(i, classesBuilder.toString(),
-              getTabIndex(), cellBuilder.toSafeHtml()));
-        }
-      } else {
-        sb.append(TEMPLATE.div(i, classesBuilder.toString(),
-            cellBuilder.toSafeHtml()));
-      }
+      sb.append(TEMPLATE.div(i, classesBuilder.toString(), cellBuilder.toSafeHtml()));
     }
   }
 
@@ -596,8 +542,7 @@ public class CellList<T> extends AbstractHasData<T> {
   }
 
   @Override
-  protected void setKeyboardSelected(int index, boolean selected,
-      boolean stealFocus) {
+  protected void setKeyboardSelected(int index, boolean selected, boolean stealFocus) {
     if (!isRowWithinBounds(index)) {
       return;
     }

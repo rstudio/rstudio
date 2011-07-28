@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.FontStyle;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.ListStyleType;
+import com.google.gwt.dom.client.Style.OutlineStyle;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TableLayout;
@@ -147,6 +148,16 @@ public interface StylesBuilder {
    * Set the opacity css property.
    */
   StylesBuilder opacity(double value);
+
+  /**
+   * Sets the outline-style CSS property.
+   */
+  StylesBuilder outlineStyle(OutlineStyle value);
+
+  /**
+   * Set the outline-width css property.
+   */
+  StylesBuilder outlineWidth(double value, Unit unit);
 
   /**
    * Sets the overflow CSS property.
@@ -280,6 +291,23 @@ public interface StylesBuilder {
    * @return this {@link StylesBuilder}
    */
   StylesBuilder trustedColor(String value);
+
+  /**
+   * <p>
+   * Sets the "outline-color" style property to the specified color string. Does
+   * not check or escape the color string. The calling code should be carefully
+   * reviewed to ensure that the provided color string won't cause a security
+   * issue if included in a style attribute.
+   * </p>
+   * 
+   * <p>
+   * For details and constraints, see
+   * {@link com.google.gwt.safecss.shared.SafeStyles}.
+   * </p>
+   * 
+   * @return this {@link StylesBuilder}
+   */
+  StylesBuilder trustedOutlineColor(String value);
 
   /**
    * <p>
