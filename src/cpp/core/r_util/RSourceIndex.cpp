@@ -43,6 +43,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
    std::wstring function(L"function");
    std::wstring eqOp(L"=");
    std::wstring assignOp(L"<-");
+   std::wstring parentAssignOp(L"<<-");
    for (std::size_t i=0; i<rTokens.size(); i++)
    {
       // is this a function?
@@ -57,7 +58,9 @@ RSourceIndex::RSourceIndex(const std::string& context,
          const RToken& opToken = rTokens.at(i-1);
          if ( opToken.type() != RToken::OPER)
             continue;
-         if (!opToken.isOperator(eqOp) && !opToken.isOperator(assignOp))
+         if (!opToken.isOperator(eqOp) &&
+             !opToken.isOperator(assignOp) &&
+             !opToken.isOperator(parentAssignOp))
             continue;
 
          // check for an identifier
