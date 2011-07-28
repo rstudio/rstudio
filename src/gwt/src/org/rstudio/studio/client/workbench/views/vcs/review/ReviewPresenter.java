@@ -158,7 +158,7 @@ public class ReviewPresenter implements IsWidget
    @Inject
    public ReviewPresenter(VCSServerOperations server,
                           Display view,
-                          EventBus events)
+                          final EventBus events)
    {
       server_ = server;
       view_ = view;
@@ -190,7 +190,8 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onClick(ClickEvent event)
          {
-            server_.vcsFullStatus(new SimpleRequestCallback<JsArray<StatusAndPath>>() {
+            server_.vcsFullStatus(new SimpleRequestCallback<JsArray<StatusAndPath>>()
+            {
                @Override
                public void onResponseReceived(JsArray<StatusAndPath> response)
                {
@@ -241,6 +242,15 @@ public class ReviewPresenter implements IsWidget
                      server_.vcsDiscard(paths, new SimpleRequestCallback<Void>());
                }
             });
+         }
+      });
+
+      view_.getRefreshButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            events.fireEvent(new VcsRefreshEvent());
          }
       });
 
