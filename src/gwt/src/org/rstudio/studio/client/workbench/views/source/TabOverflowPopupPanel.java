@@ -28,8 +28,8 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import org.rstudio.core.client.command.BaseMenuBar;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
-import org.rstudio.studio.client.workbench.views.help.search.SearchWidget;
 
 import java.util.ArrayList;
 

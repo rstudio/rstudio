@@ -18,6 +18,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
+import org.rstudio.core.client.widget.SearchDisplay;
+import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -64,9 +66,7 @@ import org.rstudio.studio.client.workbench.views.help.Help;
 import org.rstudio.studio.client.workbench.views.help.HelpPane;
 import org.rstudio.studio.client.workbench.views.help.HelpTab;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
-import org.rstudio.studio.client.workbench.views.help.search.Search;
 import org.rstudio.studio.client.workbench.views.help.search.SearchOracle;
-import org.rstudio.studio.client.workbench.views.help.search.SearchWidget;
 import org.rstudio.studio.client.workbench.views.history.History;
 import org.rstudio.studio.client.workbench.views.history.HistoryTab;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
@@ -147,7 +147,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("VCS", VCSTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
-      bind(Search.Display.class).to(SearchWidget.class) ;
+      bind(SearchDisplay.class).to(SearchWidget.class) ;
       bind(SuggestOracle.class)
             .annotatedWith(Names.named("Search"))
             .to(SearchOracle.class) ;

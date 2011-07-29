@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.help.search;
+package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -29,11 +29,9 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.CanFocus;
-import org.rstudio.studio.client.workbench.views.help.search.Search.Display;
 
 public class SearchWidget extends Composite
-                          implements Display,
+                          implements SearchDisplay,
                                      HasSelectionCommitHandlers<String>,
                                      HasKeyDownHandlers,
                                      HasFocusHandlers,

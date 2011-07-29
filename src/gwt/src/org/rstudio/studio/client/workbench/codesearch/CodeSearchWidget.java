@@ -2,7 +2,7 @@ package org.rstudio.studio.client.workbench.codesearch;
 
 import java.util.ArrayList;
 
-import org.rstudio.studio.client.workbench.views.help.search.SearchWidget;
+import org.rstudio.core.client.widget.SearchWidget;
 
 import com.google.gwt.user.client.ui.SuggestOracle;
 

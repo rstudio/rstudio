@@ -1,6 +1,6 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:f='urn:import:org.rstudio.studio.client.workbench.views.help.search'>
+             xmlns:f='urn:import:org.rstudio.core.client.widget'>
 
    <ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources'/>
 

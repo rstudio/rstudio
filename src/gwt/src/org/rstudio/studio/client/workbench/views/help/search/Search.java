@@ -13,12 +13,10 @@
 package org.rstudio.studio.client.workbench.views.help.search;
 
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
-import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
-import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
@@ -26,14 +24,8 @@ import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations
 
 public class Search
 {
-   public interface Display extends HasValueChangeHandlers<String>,
-                                    HasSelectionCommitHandlers<String>,
-                                    HasText
-   {
-   }
-   
    @Inject
-   public Search(Display display,
+   public Search(SearchDisplay display,
                  HelpServerOperations server,
                  EventBus eventBus)
    {
@@ -56,12 +48,12 @@ public class Search
       }) ;
    }
 
-   public Display getDisplay()
+   public SearchDisplay getDisplay()
    {
       return view_ ;
    }
    
    private final HelpServerOperations server_ ;
    private final EventBus eventBus_ ;
-   private final Display view_ ;
+   private final SearchDisplay view_ ;
 }

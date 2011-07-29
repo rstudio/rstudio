@@ -14,9 +14,10 @@ package org.rstudio.studio.client.application.ui;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.SearchDisplay;
+import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -29,16 +30,10 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearchWidget;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
-import org.rstudio.studio.client.workbench.views.help.search.SearchWidget;
-import org.rstudio.studio.client.workbench.views.help.search.Search.Display;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.SuggestOracle;
 
 
 public class GlobalToolbar extends Toolbar
@@ -114,7 +109,7 @@ public class GlobalToolbar extends Toolbar
                new CodeSearch.Display()
                {       
                   @Override
-                  public Display getSearchBox()
+                  public SearchDisplay getSearchBox()
                   {
                      return searchWidget_;
                   }
