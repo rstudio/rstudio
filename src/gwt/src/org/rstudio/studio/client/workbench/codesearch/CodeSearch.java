@@ -1,30 +1,52 @@
 package org.rstudio.studio.client.workbench.codesearch;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
+
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
+import com.google.inject.Inject;
 
 public class CodeSearch
 {
    public interface Display 
    {
-      SearchDisplay getSearchBox();
+      SearchDisplay getSearchDisplay();
+      
+      CodeSearchOracle getSearchOracle();
+      
    }
    
-   public CodeSearch(Display display, 
-                     WorkbenchServerOperations server,
-                     EventBus eventBus)
+   @Inject
+   public CodeSearch(Display display, EventBus eventBus)
    {
       display_ = display;
-      server_ = server;
-      eventBus_ = eventBus;
+      
+      display_.getSearchDisplay().addSelectionHandler(
+                                    new SelectionHandler<Suggestion>() {
+
+         @Override
+         public void onSelection(SelectionEvent<Suggestion> event)
+         {
+            CodeSearchResult result = 
+               display_.getSearchOracle().resultFromSuggestion(
+                                                event.getSelectedItem());
+            
+            Debug.log(result.getFunctionName() + " " + result.getContext());
+            
+         }
+         
+      });
+   }
+   
+   public Display getDisplay()
+   {
+      return display_;
    }
    
    
-   @SuppressWarnings("unused")
-   private Display display_;
-   @SuppressWarnings("unused")
-   private WorkbenchServerOperations server_;
-   @SuppressWarnings("unused")
-   private EventBus eventBus_;
+   private final Display display_;
 }

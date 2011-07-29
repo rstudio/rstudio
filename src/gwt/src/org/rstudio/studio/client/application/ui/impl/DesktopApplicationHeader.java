@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
@@ -58,7 +59,8 @@ public class DesktopApplicationHeader implements ApplicationHeader
                           EventBus events,
                           final Session session,
                           WorkbenchServerOperations server,
-                          Provider<DesktopHooks> pDesktopHooks)
+                          Provider<DesktopHooks> pDesktopHooks,
+                          Provider<CodeSearch> pCodeSearch)
    {
       session_ = session;
       binder_.bind(commands, this);
@@ -107,7 +109,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          }
       });
       
-      toolbar_ = new GlobalToolbar(commands, fileTypeCommands, events, server);
+      toolbar_ = new GlobalToolbar(commands, fileTypeCommands, pCodeSearch);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles(); 
       toolbar_.addStyleName(styles.desktopGlobalToolbar());
    }

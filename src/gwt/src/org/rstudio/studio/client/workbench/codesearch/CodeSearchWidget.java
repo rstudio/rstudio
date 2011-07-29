@@ -1,13 +1,33 @@
 package org.rstudio.studio.client.workbench.codesearch;
 
+
+import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.core.client.widget.SearchWidget;
-import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
+
+import com.google.inject.Inject;
 
 
-public class CodeSearchWidget extends SearchWidget
+public class CodeSearchWidget extends SearchWidget 
+                              implements CodeSearch.Display
 {
-   public CodeSearchWidget(CodeSearchServerOperations server)
+   @Inject
+   public CodeSearchWidget(CodeSearchOracle oracle)
    {
-      super(new CodeSearchOracle(server));
+      super(oracle);
+      oracle_ = oracle;      
    }
+
+   @Override
+   public SearchDisplay getSearchDisplay()
+   {
+      return this;
+   }
+   
+   @Override
+   public CodeSearchOracle getSearchOracle()
+   {
+      return oracle_;
+   }
+   
+   private final CodeSearchOracle oracle_;
 }

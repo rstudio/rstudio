@@ -16,37 +16,32 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.widget.SearchDisplay;
-import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
-import org.rstudio.studio.client.workbench.codesearch.CodeSearchWidget;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Provider;
 
 
 public class GlobalToolbar extends Toolbar
 {
    public GlobalToolbar(Commands commands, 
                         FileTypeCommands fileTypeCommands,
-                        EventBus eventBus,
-                        WorkbenchServerOperations server)
+                        Provider<CodeSearch> pCodeSearch)
    {
       super();
       commands_ = commands;
-      server_ = server;
-      eventBus_ = eventBus;
+      pCodeSearch_ = pCodeSearch;
       ThemeResources res = ThemeResources.INSTANCE;
       addStyleName(res.themeStyles().globalToolbar());
       
@@ -103,22 +98,11 @@ public class GlobalToolbar extends Toolbar
    {
       if (sessionInfo.isIndexingEnabled())
       {
-         searchWidget_ = new CodeSearchWidget(server_);
-         
-         new CodeSearch(
-               new CodeSearch.Display()
-               {       
-                  @Override
-                  public SearchDisplay getSearchBox()
-                  {
-                     return searchWidget_;
-                  }
-               },
-               server_, 
-               eventBus_);
-         
          addLeftSeparator();
-         addLeftWidget(searchWidget_);
+         
+         CodeSearch codeSearch = pCodeSearch_.get();
+         Widget widget = (Widget) codeSearch.getDisplay(); 
+         addLeftWidget(widget);
       }
       
       
@@ -169,10 +153,9 @@ public class GlobalToolbar extends Toolbar
    }
      
    private final Commands commands_;
-   private final EventBus eventBus_;
-   private final WorkbenchServerOperations server_;
    
-   private SearchWidget searchWidget_;
+   
+   private final Provider<CodeSearch> pCodeSearch_;
    
    interface Resources extends ClientBundle
    {

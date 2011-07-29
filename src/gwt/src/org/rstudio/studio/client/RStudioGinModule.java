@@ -13,13 +13,10 @@
 package org.rstudio.studio.client;
 
 import com.google.gwt.inject.client.AbstractGinModule;
-import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
-import org.rstudio.core.client.widget.SearchDisplay;
-import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -40,6 +37,9 @@ import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchWidget;
+import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
@@ -66,7 +66,8 @@ import org.rstudio.studio.client.workbench.views.help.Help;
 import org.rstudio.studio.client.workbench.views.help.HelpPane;
 import org.rstudio.studio.client.workbench.views.help.HelpTab;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
-import org.rstudio.studio.client.workbench.views.help.search.SearchOracle;
+import org.rstudio.studio.client.workbench.views.help.search.HelpSearch;
+import org.rstudio.studio.client.workbench.views.help.search.HelpSearchWidget;
 import org.rstudio.studio.client.workbench.views.history.History;
 import org.rstudio.studio.client.workbench.views.history.HistoryTab;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
@@ -147,10 +148,9 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("VCS", VCSTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
-      bind(SearchDisplay.class).to(SearchWidget.class) ;
-      bind(SuggestOracle.class)
-            .annotatedWith(Names.named("Search"))
-            .to(SearchOracle.class) ;
+      
+      bind(HelpSearch.Display.class).to(HelpSearchWidget.class) ;
+      bind(CodeSearch.Display.class).to(CodeSearchWidget.class);
 
       bind(ReviewPresenter.Display.class).to(ReviewPanel.class);
       bind(LineTablePresenter.Display.class).to(LineTableView.class);
@@ -179,6 +179,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(VCSServerOperations.class).to(RemoteServer.class);
       bind(PrefsServerOperations.class).to(RemoteServer.class);
       bind(ProjectsServerOperations.class).to(RemoteServer.class);
+      bind(CodeSearchServerOperations.class).to(RemoteServer.class);
 
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;

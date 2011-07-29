@@ -25,6 +25,8 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
+
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.*;
 import org.rstudio.core.client.command.impl.WebMenuCallback;
@@ -42,12 +44,12 @@ import org.rstudio.studio.client.application.ui.impl.header.MenubarPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 
 public class WebApplicationHeader extends Composite implements ApplicationHeader
 {
@@ -62,9 +64,9 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
                   FileTypeCommands fileTypeCommands,
                   EventBus eventBus,
                   GlobalDisplay globalDisplay,
-                  WorkbenchServerOperations server,
                   ThemeResources themeResources,
-                  final Session session)
+                  final Session session,
+                  Provider<CodeSearch> pCodeSearch)
    {
       eventBus_ = eventBus;
       globalDisplay_ = globalDisplay; 
@@ -168,7 +170,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       });
       
       // create toolbar
-      toolbar_ = new GlobalToolbar(commands, fileTypeCommands, eventBus, server);
+      toolbar_ = new GlobalToolbar(commands, fileTypeCommands, pCodeSearch);
       toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());
      
       // initialize widget

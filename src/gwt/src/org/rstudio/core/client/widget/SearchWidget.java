@@ -16,14 +16,13 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -60,8 +59,7 @@ public class SearchWidget extends Composite
       }
    }
 
-   @Inject
-   public SearchWidget(@Named(value = "Search") SuggestOracle oracle)
+   public SearchWidget(SuggestOracle oracle)
    {
       suggestBox_ = new FocusSuggestBox(oracle);
       initWidget(uiBinder.createAndBindUi(this));
@@ -165,6 +163,12 @@ public class SearchWidget extends Composite
       });
    }
 
+   public HandlerRegistration addSelectionHandler(
+                           SelectionHandler<SuggestOracle.Suggestion> handler)
+   {
+      return suggestBox_.addSelectionHandler(handler);
+   }
+   
    public String getText()
    {
       return suggestBox_.getText() ;

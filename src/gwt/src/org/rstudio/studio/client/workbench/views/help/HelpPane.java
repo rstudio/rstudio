@@ -52,13 +52,13 @@ import org.rstudio.studio.client.workbench.views.help.Help.LinkMenu;
 import org.rstudio.studio.client.workbench.views.help.events.HelpNavigateEvent;
 import org.rstudio.studio.client.workbench.views.help.events.HelpNavigateHandler;
 import org.rstudio.studio.client.workbench.views.help.model.VirtualHistory;
-import org.rstudio.studio.client.workbench.views.help.search.Search;
+import org.rstudio.studio.client.workbench.views.help.search.HelpSearch;
 
 public class HelpPane extends WorkbenchPane 
                       implements Help.Display
 {
    @Inject
-   public HelpPane(Provider<Search> searchProvider,
+   public HelpPane(Provider<HelpSearch> searchProvider,
                    GlobalDisplay globalDisplay,
                    Commands commands)
    {
@@ -435,7 +435,7 @@ public class HelpPane extends WorkbenchPane
 
    private Label title_ ;
    private Frame frame_ ;
-   private final Provider<Search> searchProvider_ ;
+   private final Provider<HelpSearch> searchProvider_ ;
    private GlobalDisplay globalDisplay_;
    private final Commands commands_;
    private Widget searchWidget_;

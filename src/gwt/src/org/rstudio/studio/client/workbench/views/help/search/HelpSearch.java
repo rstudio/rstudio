@@ -22,18 +22,24 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 
-public class Search
+public class HelpSearch
 {
-   @Inject
-   public Search(SearchDisplay display,
-                 HelpServerOperations server,
-                 EventBus eventBus)
+   public interface Display 
    {
-      view_ = display ;
+      SearchDisplay getSearchDisplay();  
+   }
+   
+   @Inject
+   public HelpSearch(Display display,
+                     HelpServerOperations server,
+                     EventBus eventBus)
+   {
+      display_ = display ;
       eventBus_ = eventBus ;
       server_ = server ;
       
-      view_.addSelectionCommitHandler(new SelectionCommitHandler<String>() {
+      display_.getSearchDisplay().addSelectionCommitHandler(
+                                 new SelectionCommitHandler<String>() {
          public void onSelectionCommit(SelectionCommitEvent<String> event)
          {
             server_.search(event.getSelectedItem(), 
@@ -50,10 +56,10 @@ public class Search
 
    public SearchDisplay getDisplay()
    {
-      return view_ ;
+      return display_.getSearchDisplay();
    }
    
    private final HelpServerOperations server_ ;
    private final EventBus eventBus_ ;
-   private final SearchDisplay view_ ;
+   private final Display display_ ;
 }

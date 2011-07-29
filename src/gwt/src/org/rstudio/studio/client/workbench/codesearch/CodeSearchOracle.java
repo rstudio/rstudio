@@ -28,6 +28,7 @@ public class CodeSearchOracle extends SuggestOracle
    public CodeSearchOracle(CodeSearchServerOperations server)
    {
       server_ = server ;
+      lastSuggestions_ = new ArrayList<SearchSuggestion>() ;
    }
 
    @Override
@@ -47,27 +48,34 @@ public class CodeSearchOracle extends SuggestOracle
          {
             int maxCount = Math.min(results.length(), request.getLimit());
 
-            ArrayList<SearchSuggestion> suggestions =
-                              new ArrayList<SearchSuggestion>() ;
+            lastSuggestions_.clear();
             for (int i = 0; i< maxCount; i++)
-               suggestions.add(new SearchSuggestion(
-                               results.get(i).getFunctionName())) ;
+               lastSuggestions_.add(new SearchSuggestion(results.get(i))) ;
             
-            callback.onSuggestionsReady(request, new Response(suggestions)) ;
+            callback.onSuggestionsReady(request, new Response(lastSuggestions_)) ;
          }
       }); ;
    }
    
+   public CodeSearchResult resultFromSuggestion(Suggestion suggestion)
+   {
+      int index = lastSuggestions_.indexOf(suggestion);
+      if (index != -1)
+         return lastSuggestions_.get(index).getResult();
+      else
+         return null;
+   }
+   
    private class SearchSuggestion implements Suggestion
    {
-      public SearchSuggestion(String value)
+      public SearchSuggestion(CodeSearchResult result)
       {
-         value_ = value ;
+         result_ = result;
       }
 
       public String getDisplayString()
       {
-         return value_ ;
+         return result_.getFunctionName();
       }
 
       public String getReplacementString()
@@ -75,10 +83,16 @@ public class CodeSearchOracle extends SuggestOracle
          return lastQuery_ ;
       }
       
-      private final String value_ ;
+      public CodeSearchResult getResult()
+      {
+         return result_;
+      }
+      
+      private final CodeSearchResult result_ ;
    }
 
    private final CodeSearchServerOperations server_ ;
    
    private String lastQuery_;
+   private final ArrayList<SearchSuggestion> lastSuggestions_;
 }

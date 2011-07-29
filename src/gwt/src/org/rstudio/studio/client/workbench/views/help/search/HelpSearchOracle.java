@@ -1,5 +1,5 @@
 /*
- * SearchOracle.java
+ * HelpSearchOracle.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -21,10 +21,10 @@ import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations
 
 import java.util.ArrayList;
 
-public class SearchOracle extends SuggestOracle
+public class HelpSearchOracle extends SuggestOracle
 {
    @Inject
-   public SearchOracle(HelpServerOperations server)
+   public HelpSearchOracle(HelpServerOperations server)
    {
       server_ = server ;
    }
