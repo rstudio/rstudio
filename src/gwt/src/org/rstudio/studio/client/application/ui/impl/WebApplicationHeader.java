@@ -47,6 +47,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 
 public class WebApplicationHeader extends Composite implements ApplicationHeader
 {
@@ -61,6 +62,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
                   FileTypeCommands fileTypeCommands,
                   EventBus eventBus,
                   GlobalDisplay globalDisplay,
+                  WorkbenchServerOperations server,
                   ThemeResources themeResources,
                   final Session session)
    {
@@ -166,7 +168,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       });
       
       // create toolbar
-      toolbar_ = new GlobalToolbar(commands, fileTypeCommands);
+      toolbar_ = new GlobalToolbar(commands, fileTypeCommands, eventBus, server);
       toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());
      
       // initialize widget

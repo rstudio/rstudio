@@ -14,19 +14,28 @@ package org.rstudio.studio.client.application.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchWidget;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.help.search.SearchWidget;
+import org.rstudio.studio.client.workbench.views.help.search.Search.Display;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -34,10 +43,15 @@ import com.google.gwt.user.client.ui.SuggestOracle;
 
 public class GlobalToolbar extends Toolbar
 {
-   public GlobalToolbar(Commands commands, FileTypeCommands fileTypeCommands)
+   public GlobalToolbar(Commands commands, 
+                        FileTypeCommands fileTypeCommands,
+                        EventBus eventBus,
+                        WorkbenchServerOperations server)
    {
       super();
       commands_ = commands;
+      server_ = server;
+      eventBus_ = eventBus;
       ThemeResources res = ThemeResources.INSTANCE;
       addStyleName(res.themeStyles().globalToolbar());
       
@@ -94,14 +108,19 @@ public class GlobalToolbar extends Toolbar
    {
       if (sessionInfo.isIndexingEnabled())
       {
-         searchWidget_ = new SearchWidget(new SuggestOracle() {
-            @Override
-            public void requestSuggestions(Request request, Callback callback)
-            {
-               
-               
-            }
-         });
+         searchWidget_ = new CodeSearchWidget();
+         
+         new CodeSearch(
+               new CodeSearch.Display()
+               {       
+                  @Override
+                  public Display getSearchBox()
+                  {
+                     return searchWidget_;
+                  }
+               },
+               server_, 
+               eventBus_);
          
          addLeftSeparator();
          addLeftWidget(searchWidget_);
@@ -155,6 +174,8 @@ public class GlobalToolbar extends Toolbar
    }
      
    private final Commands commands_;
+   private final EventBus eventBus_;
+   private final WorkbenchServerOperations server_;
    
    private SearchWidget searchWidget_;
    

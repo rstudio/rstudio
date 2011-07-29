@@ -21,6 +21,11 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
+// TODO: open with project-level encoding & convert to UTF-8 / wide
+// TODO: other function types (setMethod, etc. -- see rtags.R)
+// TODO: limit indexing for cases of thousands (or hundreds) of files
+// TODO: profile tokenizer
+
 namespace core {
 namespace r_util {
 

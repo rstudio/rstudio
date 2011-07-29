@@ -35,6 +35,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderHandler;
 
@@ -56,6 +57,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
                           FileTypeCommands fileTypeCommands,
                           EventBus events,
                           final Session session,
+                          WorkbenchServerOperations server,
                           Provider<DesktopHooks> pDesktopHooks)
    {
       session_ = session;
@@ -105,7 +107,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          }
       });
       
-      toolbar_ = new GlobalToolbar(commands, fileTypeCommands);
+      toolbar_ = new GlobalToolbar(commands, fileTypeCommands, events, server);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles(); 
       toolbar_.addStyleName(styles.desktopGlobalToolbar());
    }
