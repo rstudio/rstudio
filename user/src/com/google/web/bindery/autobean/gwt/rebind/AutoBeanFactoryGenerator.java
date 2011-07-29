@@ -231,8 +231,9 @@ public class AutoBeanFactoryGenerator extends Generator {
           String castType;
           if (returnType.isPrimitive() != null) {
             castType = returnType.isPrimitive().getQualifiedBoxedSourceName();
-            // Boolean toReturn = getOrReify("foo");
-            sw.println("%s toReturn = getOrReify(\"%s\");", castType, method.getPropertyName());
+            // Boolean toReturn = Other.this.getOrReify("foo");
+            sw.println("%s toReturn = %s.this.getOrReify(\"%s\");", castType, type
+                .getSimpleSourceName(), method.getPropertyName());
             // return toReturn == null ? false : toReturn;
             sw.println("return toReturn == null ? %s : toReturn;", returnType.isPrimitive()
                 .getUninitializedFieldExpression());
@@ -241,17 +242,19 @@ public class AutoBeanFactoryGenerator extends Generator {
             sw.println("return data.isNull(\"%1$s\") ? null : data.get(\"%1$s\");", method
                 .getPropertyName());
           } else {
-            // return (ReturnType) values.getOrReify(\"foo\");
+            // return (ReturnType) Outer.this.getOrReify(\"foo\");
             castType = ModelUtils.getQualifiedBaseSourceName(returnType);
-            sw.println("return (%s) getOrReify(\"%s\");", castType, method.getPropertyName());
+            sw.println("return (%s) %s.this.getOrReify(\"%s\");", castType, type
+                .getSimpleSourceName(), method.getPropertyName());
           }
         }
           break;
         case SET:
         case SET_BUILDER: {
           JParameter param = jmethod.getParameters()[0];
-          // setProperty("foo", parameter);
-          sw.println("setProperty(\"%s\", %s);", method.getPropertyName(), param.getName());
+          // Other.this.setProperty("foo", parameter);
+          sw.println("%s.this.setProperty(\"%s\", %s);", type.getSimpleSourceName(), method
+              .getPropertyName(), param.getName());
           if (JBeanMethod.SET_BUILDER.equals(method.getAction())) {
             sw.println("return this;");
           }

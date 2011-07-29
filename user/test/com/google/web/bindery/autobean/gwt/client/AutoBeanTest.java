@@ -15,14 +15,14 @@
  */
 package com.google.web.bindery.autobean.gwt.client;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.junit.client.GWTTestCase;
 import com.google.web.bindery.autobean.shared.AutoBean;
 import com.google.web.bindery.autobean.shared.AutoBeanFactory;
 import com.google.web.bindery.autobean.shared.AutoBeanFactory.Category;
 import com.google.web.bindery.autobean.shared.AutoBeanUtils;
 import com.google.web.bindery.autobean.shared.AutoBeanVisitor;
 import com.google.web.bindery.autobean.shared.AutoBeanVisitor.ParameterizationVisitor;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,6 +42,7 @@ public class AutoBeanTest extends GWTTestCase {
     public static Object seen;
 
     public static <T> T __intercept(AutoBean<HasCall> bean, T value) {
+      assertNotNull(bean);
       seen = value;
       return value;
     }
@@ -129,9 +130,14 @@ public class AutoBeanTest extends GWTTestCase {
   interface Intf {
     int getInt();
 
+    String getProperty();
+
     String getString();
 
     void setInt(int number);
+
+    // Avoid name conflicts in AbstractAutoBean
+    void setProperty(String value);
 
     void setString(String value);
   }
@@ -150,6 +156,7 @@ public class AutoBeanTest extends GWTTestCase {
 
   static class RealIntf implements Intf {
     int i;
+    String property;
     String string;
 
     @Override
@@ -159,6 +166,11 @@ public class AutoBeanTest extends GWTTestCase {
 
     public int getInt() {
       return i;
+    }
+
+    @Override
+    public String getProperty() {
+      return property;
     }
 
     public String getString() {
@@ -172,6 +184,11 @@ public class AutoBeanTest extends GWTTestCase {
 
     public void setInt(int number) {
       this.i = number;
+    }
+
+    @Override
+    public void setProperty(String value) {
+      this.property = value;
     }
 
     public void setString(String value) {
@@ -473,7 +490,7 @@ public class AutoBeanTest extends GWTTestCase {
         if ("int".equals(propertyName)) {
           assertEquals(42, value);
           assertEquals(int.class, ctx.getType());
-        } else if ("string".equals(propertyName)) {
+        } else if ("string".equals(propertyName) || "property".equals(propertyName)) {
           assertNull(value);
           assertEquals(String.class, ctx.getType());
         } else if ("get".equals(propertyName) || "has".equals(propertyName)
