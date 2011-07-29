@@ -222,8 +222,7 @@ public class HelpPane extends WorkbenchPane
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.refreshHelp().createToolbarButton());
       
-      searchWidget_ = (Widget) searchProvider_.get().getDisplay();
-      toolbar.addRightWidget(searchWidget_);
+      toolbar.addRightWidget(searchProvider_.get().getSearchWidget());
 
       return toolbar;
    }
@@ -438,7 +437,6 @@ public class HelpPane extends WorkbenchPane
    private final Provider<HelpSearch> searchProvider_ ;
    private GlobalDisplay globalDisplay_;
    private final Commands commands_;
-   private Widget searchWidget_;
    private boolean navigated_;
    private boolean initialized_;
 }

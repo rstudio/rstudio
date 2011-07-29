@@ -29,7 +29,6 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 
 
@@ -101,8 +100,8 @@ public class GlobalToolbar extends Toolbar
          addLeftSeparator();
          
          CodeSearch codeSearch = pCodeSearch_.get();
-         Widget widget = (Widget) codeSearch.getDisplay(); 
-         addLeftWidget(widget);
+         
+         addLeftWidget(codeSearch.getSearchWidget());
       }
       
       

@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.help.search;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -54,9 +55,9 @@ public class HelpSearch
       }) ;
    }
 
-   public SearchDisplay getDisplay()
+   public Widget getSearchWidget()
    {
-      return display_.getSearchDisplay();
+      return (Widget) display_.getSearchDisplay();
    }
    
    private final HelpServerOperations server_ ;

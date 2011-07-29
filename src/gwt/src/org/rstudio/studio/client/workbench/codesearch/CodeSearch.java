@@ -8,6 +8,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class CodeSearch
@@ -21,7 +22,8 @@ public class CodeSearch
    }
    
    @Inject
-   public CodeSearch(Display display, EventBus eventBus)
+   public CodeSearch(Display display, 
+                     EventBus eventBus)
    {
       display_ = display;
       
@@ -42,9 +44,9 @@ public class CodeSearch
       });
    }
    
-   public Display getDisplay()
+   public Widget getSearchWidget()
    {
-      return display_;
+      return (Widget) display_.getSearchDisplay();
    }
    
    
