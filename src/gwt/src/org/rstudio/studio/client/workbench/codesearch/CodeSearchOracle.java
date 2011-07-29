@@ -19,8 +19,6 @@ import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.SafeHtmlUtil;
-import org.rstudio.core.client.Size;
-import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
@@ -33,41 +31,76 @@ public class CodeSearchOracle extends SuggestOracle
    public CodeSearchOracle(CodeSearchServerOperations server)
    {
       server_ = server ;
-      lastSuggestions_ = new ArrayList<SearchSuggestion>() ;
    }
 
    @Override
    public void requestSuggestions(final Request request, 
                                   final Callback callback)
-   {
-      final CodeSearchResources.Styles styles = 
-         CodeSearchResources.INSTANCE.styles();
+   {    
+      // TODO: see if we can defer the query until 2 characters (unless
+      // the user has only one character for more than some time period)
       
-      String query = request.getQuery() ;
-      
-      lastQuery_ = query;
-      
-      server_.searchCode(
-            query,
-            new SimpleRequestCallback<JsArray<CodeSearchResult>>() {
-         
-         @Override
-         public void onResponseReceived(JsArray<CodeSearchResult> results)
+      // if this query is a further refinement of a previous query then
+      // filter those results manually
+      if (lastQuery_ != null && request.getQuery().startsWith(lastQuery_))
+      { 
+         ArrayList<SearchSuggestion> suggestions = 
+                                          new ArrayList<SearchSuggestion>();
+         for (int i=0; i<lastSuggestions_.size(); i++)
          {
-            int maxCount = Math.min(results.length(), request.getLimit());
-
-          
-            lastSuggestions_.clear();
-            for (int i = 0; i< maxCount; i++)
-            {    
-               lastSuggestions_.add(new SearchSuggestion(results.get(i)));     
-            }
+            SearchSuggestion sugg = lastSuggestions_.get(i);
+            String functionName = sugg.getResult().getFunctionName();
             
-            
-            
-            callback.onSuggestionsReady(request, new Response(lastSuggestions_)) ;
+            if (functionName.startsWith(request.getQuery()))
+               suggestions.add(sugg);
          }
-      }); ;
+         
+         // yield the suggestions
+         callback.onSuggestionsReady(request, new Response(suggestions));
+      }
+      else
+      {  
+         server_.searchCode(
+               request.getQuery(),
+               new SimpleRequestCallback<JsArray<CodeSearchResult>>() {
+            
+            @Override
+            public void onResponseReceived(JsArray<CodeSearchResult> results)
+            {
+               // TODO: do this on the server (in doing so returning max+1
+               // indicates more values so can't cache)
+               int maxCount = Math.min(results.length(), request.getLimit());
+   
+               // read the response
+               ArrayList<SearchSuggestion> suggestions = 
+                                          new ArrayList<SearchSuggestion>();
+               for (int i = 0; i< maxCount; i++) 
+                  suggestions.add(new SearchSuggestion(results.get(i)));     
+               
+               // if we got less than the max results then we can safely
+               // cache this for further filtering
+               if (results.length() < request.getLimit())
+               {
+                  // save the query
+                  lastQuery_ = request.getQuery();
+                  
+                  // save the suggestions
+                  lastSuggestions_ = suggestions;
+               }
+               else
+               {
+                  lastQuery_ = null;
+                  lastSuggestions_ = null;
+               }
+               
+            
+               
+               // yield suggestions
+               callback.onSuggestionsReady(request, 
+                                           new Response(suggestions)) ;
+            }
+         });
+      }
    }
    
    @Override
@@ -133,6 +166,6 @@ public class CodeSearchOracle extends SuggestOracle
 
    private final CodeSearchServerOperations server_ ;
    
-   private String lastQuery_;
-   private final ArrayList<SearchSuggestion> lastSuggestions_;
+   private String lastQuery_ = null;
+   private ArrayList<SearchSuggestion> lastSuggestions_ = null;
 }

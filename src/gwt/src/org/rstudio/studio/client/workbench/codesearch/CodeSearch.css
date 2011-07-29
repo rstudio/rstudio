@@ -1,5 +1,13 @@
 
+@external search;
+
+.codeSearchWidget .search {
+   width: 140px;
+}
+
 .functionImage {
+	position: relative;
+	top: 1px;
 	margin-right: 5px;
 }
 

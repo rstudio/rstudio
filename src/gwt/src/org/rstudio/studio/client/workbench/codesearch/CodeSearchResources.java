@@ -11,6 +11,7 @@ public interface CodeSearchResources extends ClientBundle
 {
    public static interface Styles extends CssResource
    {
+      String codeSearchWidget();
       String functionImage();
       String functionName();
       String functionContext();
@@ -21,6 +22,7 @@ public interface CodeSearchResources extends ClientBundle
    Styles styles();
    
    ImageResource function();
+   ImageResource gotoFunction();
    
    public static CodeSearchResources INSTANCE = 
       (CodeSearchResources)GWT.create(CodeSearchResources.class) ;

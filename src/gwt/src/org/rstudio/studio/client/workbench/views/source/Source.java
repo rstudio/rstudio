@@ -757,7 +757,10 @@ public class Source implements InsertSourceHandler,
          {
             FilePosition position = event.getPosition();
             if (position != null)
+            {
                target.jumpToPosition(position);
+               target.focus();
+            }
          }
          
       });

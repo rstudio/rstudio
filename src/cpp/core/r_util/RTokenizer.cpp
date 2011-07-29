@@ -21,17 +21,32 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-// TODO: TextBoxWithCue
+// TODO: keyboard shortcut to initiate search
 
-// TODO: drive focus to source
+// TODO: only run the query once and only after ~200ms (or num chars)
+// (but if we were truncated then need to re-run)
+
+// TODO: evaluate case sensitivity
+
+// TODO: if focus is already out of the box and you click the X then
+// the cue text doesn't re-appear
+
+// TODO: pass the limit to the back-end
+
+// TODO: reset search term after successful search
+
+// TODO: keyboard shortcut to activate search
+
+// TODO: alternate UI for when toolbar is hidden
+
 // TODO: esc drive focus to source
-// TODO: use non-column layout then add icon
+
 // TODO: arrow keys move cursor
 
 // TODO: use * for pattern matching
 // TODO: indexing queue
 // TODO: sync source documents
-// TODO: only run the query once and only after ~200ms (or num chars)
+
 // TODO: include files in the query
 // TODO: open with project-level encoding & convert to UTF-8 / wide
 // TODO: other function types (setMethod, etc. -- see rtags.R)

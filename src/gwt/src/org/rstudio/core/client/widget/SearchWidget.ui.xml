@@ -8,7 +8,8 @@
       <div class="{res.themeStyles.search}">
          <div class="{res.themeStyles.left}"></div>
          <div class="{res.themeStyles.center}">
-            <g:Image resource='{res.smallMagGlassIcon}'
+            <g:Image ui:field='icon_'
+                     resource='{res.smallMagGlassIcon}'
                      styleName='{res.themeStyles.searchMagGlass}' />
             <div class="{res.themeStyles.searchBoxContainer}">
                <f:SearchWidget.FocusSuggestBox ui:field='suggestBox_'

@@ -20,6 +20,7 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
@@ -49,11 +50,20 @@ public class SearchWidget extends Composite
       {
          super(oracle);
       }
-      
-      FocusSuggestBox(SuggestOracle oracle, SuggestionDisplay suggestDisplay)
+    
+      FocusSuggestBox(SuggestOracle oracle, TextBoxBase textBox)
       {
-         super(oracle, new TextBox(), suggestDisplay);
+         super(oracle, textBox);
       }
+      
+      FocusSuggestBox(SuggestOracle oracle, 
+                      TextBoxBase textBox, 
+                      SuggestionDisplay suggestDisplay)
+      {
+         super(oracle, textBox, suggestDisplay);
+      }
+      
+    
 
       public HandlerRegistration addBlurHandler(BlurHandler handler)
       {
@@ -72,12 +82,20 @@ public class SearchWidget extends Composite
       this(oracle, null);
    }
    
-   public SearchWidget(SuggestOracle oracle, SuggestionDisplay suggestDisplay)
+   public SearchWidget(SuggestOracle oracle, 
+                       SuggestionDisplay suggestDisplay)
+   {
+      this(oracle, new TextBox(), suggestDisplay);
+   }
+   
+   public SearchWidget(SuggestOracle oracle, 
+                       TextBoxBase textBox, 
+                       SuggestionDisplay suggestDisplay)
    {
       if (suggestDisplay != null)
-         suggestBox_ = new FocusSuggestBox(oracle, suggestDisplay);
+         suggestBox_ = new FocusSuggestBox(oracle, textBox, suggestDisplay);
       else 
-         suggestBox_ = new FocusSuggestBox(oracle);
+         suggestBox_ = new FocusSuggestBox(oracle, textBox);
       
       initWidget(uiBinder.createAndBindUi(this));
       close_.setVisible(false);
@@ -208,6 +226,11 @@ public class SearchWidget extends Composite
       suggestBox_.setValue(text, fireEvents);
    }
    
+   public void setIcon(ImageResource image)
+   {
+      icon_.setResource(image);
+   }
+   
    public void focus()
    {
       suggestBox_.setFocus(true);      
@@ -223,6 +246,8 @@ public class SearchWidget extends Composite
    FocusSuggestBox suggestBox_;
    @UiField
    Image close_;
+   @UiField
+   Image icon_;
 
    private String lastValueSent_ = null;
 
