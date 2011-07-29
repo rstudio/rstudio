@@ -21,6 +21,10 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
+// TODO: indexing queue
+// TODO: sync source documents
+// TODO: only run the query once and only after ~200ms (or num chars)
+// TODO: include files in the query
 // TODO: open with project-level encoding & convert to UTF-8 / wide
 // TODO: other function types (setMethod, etc. -- see rtags.R)
 // TODO: limit indexing for cases of thousands (or hundreds) of files

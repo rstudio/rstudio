@@ -1,0 +1,13 @@
+
+.functionName {
+   display: -moz-inline-box;
+   display: inline-block;
+   width: 175px;
+}
+
+.functionContext {
+   display: -moz-inline-box;
+   display: inline-block;
+   color: #888;
+}
+

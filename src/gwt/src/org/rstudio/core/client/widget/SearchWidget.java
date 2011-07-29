@@ -23,6 +23,8 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
+
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -47,6 +49,11 @@ public class SearchWidget extends Composite
       {
          super(oracle);
       }
+      
+      FocusSuggestBox(SuggestOracle oracle, SuggestionDisplay suggestDisplay)
+      {
+         super(oracle, new TextBox(), suggestDisplay);
+      }
 
       public HandlerRegistration addBlurHandler(BlurHandler handler)
       {
@@ -58,10 +65,20 @@ public class SearchWidget extends Composite
          return addDomHandler(handler, FocusEvent.getType());
       }
    }
+  
 
    public SearchWidget(SuggestOracle oracle)
    {
-      suggestBox_ = new FocusSuggestBox(oracle);
+      this(oracle, null);
+   }
+   
+   public SearchWidget(SuggestOracle oracle, SuggestionDisplay suggestDisplay)
+   {
+      if (suggestDisplay != null)
+         suggestBox_ = new FocusSuggestBox(oracle, suggestDisplay);
+      else 
+         suggestBox_ = new FocusSuggestBox(oracle);
+      
       initWidget(uiBinder.createAndBindUi(this));
       close_.setVisible(false);
 
@@ -169,6 +186,13 @@ public class SearchWidget extends Composite
       return suggestBox_.addSelectionHandler(handler);
    }
    
+   @Override
+   public void setAutoSelectEnabled(boolean selectsFirstItem)
+   {
+      suggestBox_.setAutoSelectEnabled(selectsFirstItem);
+      
+   }
+   
    public String getText()
    {
       return suggestBox_.getText() ;
@@ -201,5 +225,6 @@ public class SearchWidget extends Composite
    Image close_;
 
    private String lastValueSent_ = null;
+
   
 }

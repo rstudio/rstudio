@@ -13,4 +13,5 @@ public interface SearchDisplay extends
                               HasSelectionHandlers<SuggestOracle.Suggestion>,
                               HasText
 {
+   void setAutoSelectEnabled(boolean selectsFirstItem);
 }

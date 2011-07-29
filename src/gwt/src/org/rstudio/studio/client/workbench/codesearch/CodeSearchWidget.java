@@ -13,7 +13,7 @@ public class CodeSearchWidget extends SearchWidget
    @Inject
    public CodeSearchWidget(CodeSearchOracle oracle)
    {
-      super(oracle);
+      super(oracle, new CodeSearchSuggestionDisplay());
       oracle_ = oracle;      
    }
 

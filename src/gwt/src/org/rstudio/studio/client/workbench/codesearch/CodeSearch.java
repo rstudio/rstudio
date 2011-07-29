@@ -33,8 +33,10 @@ public class CodeSearch
    {
       display_ = display;
       
-      display_.getSearchDisplay().addSelectionHandler(
-                                    new SelectionHandler<Suggestion>() {
+      SearchDisplay searchDisplay = display_.getSearchDisplay();
+      searchDisplay.setAutoSelectEnabled(true);
+      
+      searchDisplay.addSelectionHandler(new SelectionHandler<Suggestion>() {
 
          @Override
          public void onSelection(SelectionEvent<Suggestion> event)

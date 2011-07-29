@@ -13,9 +13,13 @@
 package org.rstudio.studio.client.workbench.codesearch;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.Size;
+import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
@@ -35,6 +39,9 @@ public class CodeSearchOracle extends SuggestOracle
    public void requestSuggestions(final Request request, 
                                   final Callback callback)
    {
+      final CodeSearchResources.Styles styles = 
+         CodeSearchResources.INSTANCE.styles();
+      
       String query = request.getQuery() ;
       
       lastQuery_ = query;
@@ -48,22 +55,44 @@ public class CodeSearchOracle extends SuggestOracle
          {
             int maxCount = Math.min(results.length(), request.getLimit());
 
+            int maxNameChars = 0;
+            maxNameWidth_ = 0;
+            
             lastSuggestions_.clear();
             for (int i = 0; i< maxCount; i++)
+            {   
+               String name = results.get(i).getFunctionName();
+               if (name.length() > maxNameChars)
+               {
+                  Size size = DomMetrics.measureHTML(name, styles.functionName());
+                  if (size.width > maxNameWidth_)
+                  {
+                     maxNameWidth_ = size.width;
+                     maxNameChars = name.length();
+                  }
+               }
+               
+               
                lastSuggestions_.add(new SearchSuggestion(results.get(i))) ;
+               
+            }
+            
+            
             
             callback.onSuggestionsReady(request, new Response(lastSuggestions_)) ;
          }
       }); ;
    }
    
+   @Override
+   public boolean isDisplayStringHTML()
+   {
+      return true;
+   }
+   
    public CodeSearchResult resultFromSuggestion(Suggestion suggestion)
    {
-      int index = lastSuggestions_.indexOf(suggestion);
-      if (index != -1)
-         return lastSuggestions_.get(index).getResult();
-      else
-         return null;
+      return ((SearchSuggestion)suggestion).getResult();
    }
    
    private class SearchSuggestion implements Suggestion
@@ -75,7 +104,12 @@ public class CodeSearchOracle extends SuggestOracle
 
       public String getDisplayString()
       {
-         return result_.getFunctionName();
+         CodeSearchResources.Styles styles = CodeSearchResources.INSTANCE.styles();
+         
+         SafeHtmlBuilder sb = new SafeHtmlBuilder();
+         appendSpan(sb, result_.getFunctionName(), styles.functionName());                   
+         appendSpan(sb, result_.getContext(), styles.functionContext());
+         return sb.toSafeHtml().asString();
       }
 
       public String getReplacementString()
@@ -90,9 +124,21 @@ public class CodeSearchOracle extends SuggestOracle
       
       private final CodeSearchResult result_ ;
    }
+   
+   private void appendSpan(SafeHtmlBuilder sb, 
+                           String content,
+                           String style)
+   {
+      sb.append(SafeHtmlUtil.createOpenTag("span","class", style));
+      sb.appendEscaped(content);
+      sb.appendHtmlConstant("</span>");   
+   }
+
+   
 
    private final CodeSearchServerOperations server_ ;
    
    private String lastQuery_;
    private final ArrayList<SearchSuggestion> lastSuggestions_;
+   private int maxNameWidth_;
 }
