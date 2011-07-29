@@ -21,12 +21,21 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
+// TODO: TextBoxWithCue
+
+// TODO: drive focus to source
+// TODO: esc drive focus to source
+// TODO: use non-column layout then add icon
+// TODO: arrow keys move cursor
+
+// TODO: use * for pattern matching
 // TODO: indexing queue
 // TODO: sync source documents
 // TODO: only run the query once and only after ~200ms (or num chars)
 // TODO: include files in the query
 // TODO: open with project-level encoding & convert to UTF-8 / wide
 // TODO: other function types (setMethod, etc. -- see rtags.R)
+// TODO: other file types (Rw, Rnw)
 // TODO: limit indexing for cases of thousands (or hundreds) of files
 // TODO: profile tokenizer
 
@@ -43,7 +52,6 @@ private:
       : NUMBER(L"[0-9]*(\\.[0-9]*)?([eE][+-]?[0-9]*)?[Li]?"),
         HEX_NUMBER(L"0x[0-9a-fA-F]*L?"),
         USER_OPERATOR(L"%[^%]*%"),
-        REST_OF_IDENTIFIER(L"[\\w.]*"),
         QUOTED_IDENTIFIER(L"`[^`]*`"),
         UNTIL_END_QUOTE(L"[\\\\\'\"]"),
         WHITESPACE(L"[\\s\x00A0\x3000]+"),
@@ -55,7 +63,6 @@ public:
    const boost::wregex NUMBER;
    const boost::wregex HEX_NUMBER;
    const boost::wregex USER_OPERATOR;
-   const boost::wregex REST_OF_IDENTIFIER;
    const boost::wregex QUOTED_IDENTIFIER;
    const boost::wregex UNTIL_END_QUOTE;
    const boost::wregex WHITESPACE;

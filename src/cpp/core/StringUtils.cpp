@@ -253,7 +253,7 @@ std::vector<bool> initLookupTable(wchar_t ranges[][2], size_t rangeCount)
    std::vector<bool> results(0xFFFF, false);
    for (size_t i = 0; i < rangeCount; i++)
    {
-      for (wchar_t j = ranges[i][0]; j < ranges[i][1]; j++)
+      for (wchar_t j = ranges[i][0]; j <= ranges[i][1]; j++)
          results[j] = true;
    }
    return results;
