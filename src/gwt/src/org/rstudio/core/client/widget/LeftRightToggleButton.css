@@ -1,0 +1,53 @@
+.container {
+   display: inline-block;
+   height: 20px;
+   margin-right: 12px;
+}
+
+.container td {
+   cursor: pointer;
+}
+
+@sprite .leftLeft {
+   gwt-image: 'leftToggleLeftOff';
+   width: auto;
+   padding-left: 7px;
+   padding-right: 4px;
+}
+
+@sprite .leftOn .leftLeft {
+   gwt-image: 'leftToggleLeftOn';
+   width: auto;
+}
+
+@sprite .leftRight {
+   gwt-image: 'leftToggleRightOff';
+   width: value('leftToggleRightOff.getWidth', 'px');
+}
+
+@sprite .leftOn .leftRight {
+   gwt-image: 'leftToggleRightOn';
+}
+
+@sprite .rightLeft {
+   gwt-image: 'rightToggleLeftOff';
+   width: value('rightToggleLeftOff.getWidth', 'px');
+}
+
+@sprite .rightOn .rightLeft {
+   gwt-image: 'rightToggleLeftOn';
+}
+
+@sprite .rightRight {
+   gwt-image: 'rightToggleRightOff';
+   background-position: top right;
+   width: auto;
+   padding-left: 5px;
+   padding-right: 9px;
+}
+
+@sprite .rightOn .rightRight {
+   gwt-image: 'rightToggleRightOn';
+   width: auto;
+}
+

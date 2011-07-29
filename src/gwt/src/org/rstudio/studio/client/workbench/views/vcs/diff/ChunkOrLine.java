@@ -12,8 +12,19 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.diff;
 
+import java.util.ArrayList;
+
 public class ChunkOrLine
 {
+   public static ArrayList<ChunkOrLine> fromChunk(DiffChunk chunk)
+   {
+      ArrayList<ChunkOrLine> list = new ArrayList<ChunkOrLine>();
+      list.add(new ChunkOrLine(chunk));
+      for (Line line : chunk.diffLines)
+         list.add(new ChunkOrLine(line));
+      return list;
+   }
+
    public ChunkOrLine(DiffChunk chunk)
    {
       chunk_ = chunk;

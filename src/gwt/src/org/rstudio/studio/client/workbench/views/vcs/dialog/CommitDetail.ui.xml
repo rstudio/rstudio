@@ -1,0 +1,43 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+   <ui:style>
+      .summary td:first-child {
+         font-weight: bold;
+         padding-right: 16px;
+      }
+      .subject {
+         font-weight: bold;
+      }
+      .summary td div {
+         white-space: pre-wrap;
+      }
+   </ui:style>
+
+   <g:HTMLPanel visible="false">
+      <table class="{style.summary}">
+         <tr>
+            <td>SHA</td>
+            <td><g:Label ui:field="labelId_" /></td>
+         </tr>
+         <tr>
+            <td>Author</td>
+            <td><g:Label ui:field="labelAuthor_" /></td>
+         </tr>
+         <tr>
+            <td>Date</td>
+            <td><g:Label ui:field="labelDate_" /></td>
+         </tr>
+         <tr>
+            <td>Subject</td>
+            <td class="{style.subject}"><g:Label ui:field="labelSubject_" /></td>
+         </tr>
+         <tr>
+            <td>Parent</td>
+            <td><g:Label ui:field="labelParent_" /></td>
+         </tr>
+      </table>
+      <g:FlowPanel ui:field="detailPanel_" />
+   </g:HTMLPanel>
+
+</ui:UiBinder>

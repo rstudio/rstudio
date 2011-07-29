@@ -1,12 +1,9 @@
 @external gwt-SplitLayoutPanel-VDragger, gwt-SplitLayoutPanel-HDragger;
 
+/** BEGIN SHARED BETWEEN HISTORY AND REVIEW PANELS **/
+
 .splitPanel {
    background-color: #f3f4f4;
-   /*margin: -12px -40px 0 -11px;*/
-}
-.splitPanelCommit {
-   background-color: #f3f4f4;
-   font-size: 11px;
 }
 @sprite .splitPanel .gwt-SplitLayoutPanel-VDragger {
    gwt-image: 'splitterTileV';
@@ -27,6 +24,14 @@
    position: relative;
    gwt-image: 'toolbarTile';
    padding-top: 2px;
+   font-size: 11px;
+}
+
+/** END SHARED BETWEEN HISTORY AND REVIEW PANELS **/
+
+
+.splitPanelCommit {
+   background-color: #f3f4f4;
    font-size: 11px;
 }
 

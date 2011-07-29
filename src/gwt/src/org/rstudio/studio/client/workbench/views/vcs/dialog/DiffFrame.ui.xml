@@ -1,0 +1,14 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+   <ui:style>
+      .container {
+         margin-top: 30px;
+      }
+   </ui:style>
+
+   <g:FlowPanel ui:field="container_" styleName="{style.container}">
+      <g:Label ui:field="headerLabel_"/>
+   </g:FlowPanel>
+
+</ui:UiBinder>

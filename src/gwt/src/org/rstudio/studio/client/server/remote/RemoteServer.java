@@ -61,7 +61,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListRe
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.PublishPdfResult;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
-import org.rstudio.studio.client.workbench.views.vcs.history.CommitInfo;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 import org.rstudio.studio.client.workbench.views.workspace.model.*;
 
 import java.util.ArrayList;
@@ -1251,6 +1251,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, VCS_EXECUTE_COMMAND, command, requestCallback);
    }
 
+   @Override
+   public void vcsShow(String rev,
+                       ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, VCS_SHOW, rev, requestCallback);
+   }
+
    // package-visible methods for peer classes RemoteServerAuth and
    // RemoveServerEventListener
 
@@ -1730,6 +1737,7 @@ public class RemoteServer implements Server
    private static final String VCS_APPLY_PATCH = "vcs_apply_patch";
    private static final String VCS_HISTORY = "vcs_history";
    private static final String VCS_EXECUTE_COMMAND = "vcs_execute_command";
+   private static final String VCS_SHOW = "vcs_show";
 
    private static final String LOG = "log";
 

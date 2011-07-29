@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.vcs.review;
+package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -19,6 +19,7 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -43,7 +44,6 @@ import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.events.*;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent.Action;
-import org.rstudio.studio.client.workbench.views.vcs.history.CommitInfo;
 
 import java.util.ArrayList;
 
@@ -61,6 +61,7 @@ public class ReviewPresenter implements IsWidget
       ChangelistTable getChangelistTable();
       HasValue<Integer> getContextLines();
 
+      HasClickHandlers getSwitchViewButton();
       HasClickHandlers getStageAllFilesButton();
       HasClickHandlers getDiscardSelectedFiles();
       HasClickHandlers getDiscardAllFiles();
@@ -456,6 +457,19 @@ public class ReviewPresenter implements IsWidget
    public Widget asWidget()
    {
       return view_.asWidget();
+   }
+
+   public HandlerRegistration addSwitchViewHandler(
+         final SwitchViewEvent.Handler h)
+   {
+      return view_.getSwitchViewButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            h.onSwitchView(new SwitchViewEvent());
+         }
+      });
    }
 
    private final Invalidation diffInvalidation_ = new Invalidation();

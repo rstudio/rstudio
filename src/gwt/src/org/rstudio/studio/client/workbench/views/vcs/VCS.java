@@ -31,8 +31,8 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
-import org.rstudio.studio.client.workbench.views.vcs.history.HistoryPresenter;
-import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 
 import java.util.ArrayList;
 
@@ -83,7 +83,8 @@ public class VCS extends BasePresenter implements IsWidget
 
    private void showReviewPane()
    {
-      VCSPopup.show(pReviewPresenter_.get());
+      VCSPopup.show(pReviewPresenter_.get(),
+                    pHistoryPresenter_.get());
    }
 
    @Handler
@@ -142,12 +143,6 @@ public class VCS extends BasePresenter implements IsWidget
    void onVcsCommit()
    {
       showReviewPane();
-   }
-
-   @Handler
-   void onVcsShowHistory()
-   {
-      pHistoryPresenter_.get().showModal();
    }
 
    @Handler

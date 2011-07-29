@@ -55,6 +55,9 @@ public class UnifiedParser
       if (line == null)
          return null;
 
+      if (line.startsWith("--- "))
+         return null;
+
       Match match = range_.match(line, 0);
       if (match == null)
          throw new DiffFormatException("Malformed chunk header");

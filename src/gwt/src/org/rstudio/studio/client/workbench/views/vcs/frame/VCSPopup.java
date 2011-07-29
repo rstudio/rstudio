@@ -22,13 +22,12 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.core.client.widget.NineUpBorder;
-import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.events.SwitchViewEvent;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 
 public class VCSPopup
 {
@@ -82,10 +81,41 @@ public class VCSPopup
    {
    }
 
-   public static void show(ReviewPresenter presenter)
+   public static void show(ReviewPresenter rpres,
+                           HistoryPresenter hpres)
    {
-      Widget w = presenter.asWidget();
-      w.setSize("100%", "100%");
+      final Widget review = rpres.asWidget();
+      review.setSize("100%", "100%");
+
+      final Widget history = hpres.asWidget();
+      history.setSize("100%", "100%");
+
+      final LayoutPanel swapContainer = new LayoutPanel();
+      swapContainer.setSize("100%", "100%");
+      swapContainer.add(review);
+      swapContainer.setWidgetLeftRight(review, 0, Unit.PX, 0, Unit.PX);
+      swapContainer.setWidgetTopBottom(review, 0, Unit.PX, 0, Unit.PX);
+      swapContainer.add(history);
+      swapContainer.setWidgetLeftRight(history, 0, Unit.PX, 0, Unit.PX);
+      swapContainer.setWidgetTopBottom(history, 0, Unit.PX, 0, Unit.PX);
+      swapContainer.setWidgetVisible(history, false);
+
+      rpres.addSwitchViewHandler(new SwitchViewEvent.Handler() {
+         @Override
+         public void onSwitchView(SwitchViewEvent event)
+         {
+            swapContainer.setWidgetVisible(history, true);
+            swapContainer.setWidgetVisible(review, false);
+         }
+      });
+      hpres.addSwitchViewHandler(new SwitchViewEvent.Handler() {
+         @Override
+         public void onSwitchView(SwitchViewEvent event)
+         {
+            swapContainer.setWidgetVisible(review, true);
+            swapContainer.setWidgetVisible(history, false);
+         }
+      });
 
       PopupPanel popup = new ModalPopupPanel(false, false);
       Resources res = GWT.<Resources>create(Resources.class);
@@ -95,7 +125,7 @@ public class VCSPopup
       addCloseButton(popup, border);
       border.setSize("100%", "100%");
       border.setFillColor("white");
-      border.setWidget(w);
+      border.setWidget(swapContainer);
       popup.setWidget(border);
       popup.setGlassEnabled(true);
 

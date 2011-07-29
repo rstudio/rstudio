@@ -167,6 +167,11 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
       }
    }
 
+   public LineTableView()
+   {
+      this(GWT.<LineTableResources>create(LineTableResources.class));
+   }
+
    @Inject
    public LineTableView(final LineTableResources res)
    {
@@ -376,6 +381,11 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
    public static void ensureStylesInjected()
    {
       RES.cellTableStyle().ensureInjected();
+   }
+
+   public void setShowActions(boolean showActions)
+   {
+      // TODO
    }
 
    private ArrayList<ChunkOrLine> lines_;

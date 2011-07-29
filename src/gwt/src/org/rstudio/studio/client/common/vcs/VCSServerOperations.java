@@ -16,7 +16,7 @@ import com.google.gwt.core.client.JsArray;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.views.vcs.history.CommitInfo;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 
 import java.util.ArrayList;
 
@@ -80,4 +80,7 @@ public interface VCSServerOperations
    void vcsExecuteCommand(
          String command,
          ServerRequestCallback<ExecuteCommandResult> requestCallback);
+
+   void vcsShow(String rev,
+                ServerRequestCallback<String> requestCallback);
 }

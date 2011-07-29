@@ -181,6 +181,12 @@ public:
       return Success();
    }
 
+   virtual core::Error show(const std::string& rev,
+                            std::string* pOutput)
+   {
+      return Success();
+   }
+
 protected:
    FilePath root_;
 };
@@ -523,6 +529,18 @@ public:
          pOutput->push_back(currentCommit);
 
       return Success();
+   }
+
+   virtual core::Error show(const std::string& rev,
+                            std::string* pOutput)
+   {
+      std::vector<std::string> args;
+
+      args.push_back("show");
+      args.push_back("--pretty=oneline");
+      args.push_back(rev);
+
+      return runCommand("git", args, pOutput);
    }
 };
 
@@ -917,6 +935,21 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsShow(const json::JsonRpcRequest& request,
+              json::JsonRpcResponse* pResponse)
+{
+   std::string rev;
+   Error error = json::readParams(request.params, &rev);
+   if (error)
+      return error;
+
+   std::string output;
+   s_pVcsImpl_->show(rev, &output);
+   pResponse->setResult(output);
+
+   return Success();
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -950,7 +983,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_diff_file", vcsDiffFile))
       (bind(registerRpcMethod, "vcs_apply_patch", vcsApplyPatch))
       (bind(registerRpcMethod, "vcs_history", vcsHistory))
-      (bind(registerRpcMethod, "vcs_execute_command", vcsExecuteCommand));
+      (bind(registerRpcMethod, "vcs_execute_command", vcsExecuteCommand))
+      (bind(registerRpcMethod, "vcs_show", vcsShow));
    Error error = initBlock.execute();
    if (error)
       return error;

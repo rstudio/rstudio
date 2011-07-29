@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.vcs.review;
+package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -33,17 +33,17 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarFramePanel;
-import org.rstudio.studio.client.workbench.views.vcs.diff.*;
-import org.rstudio.studio.client.workbench.views.vcs.review.ReviewPresenter.Display;
+import org.rstudio.studio.client.workbench.views.vcs.diff.ChunkOrLine;
+import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
+import org.rstudio.studio.client.workbench.views.vcs.diff.NavGutter;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter.Display;
 
 import java.util.ArrayList;
 
@@ -88,13 +88,8 @@ public class ReviewPanel extends Composite implements Display
       ImageResource blankFileIcon();
    }
 
-   interface Styles extends CssResource
+   interface Styles extends SharedStyles
    {
-      String splitPanel();
-      String whitebg();
-
-      String toolbar();
-      String toolbarWrapper();
       String diffToolbar();
 
       String stagedLabel();
@@ -231,6 +226,9 @@ public class ReviewPanel extends Composite implements Display
 
       topToolbar_.addStyleName(RES.styles().toolbar());
 
+      switchViewButton_ = new LeftRightToggleButton("Changes", "History", true);
+      topToolbar_.addLeftWidget(switchViewButton_);
+
       stageAllFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Stage All Files", RES.stageAllFiles(), (ClickHandler) null));
 
@@ -299,6 +297,12 @@ public class ReviewPanel extends Composite implements Display
       });
 
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
+   }
+
+   @Override
+   public HasClickHandlers getSwitchViewButton()
+   {
+      return switchViewButton_;
    }
 
    @Override
@@ -506,6 +510,7 @@ public class ReviewPanel extends Composite implements Display
    private ClickCommand discardSelectedFiles_;
    private ClickCommand discardAllFiles_;
    private final FileTypeRegistry fileTypeRegistry_;
+   private LeftRightToggleButton switchViewButton_;
 
    private static final Resources RES = GWT.create(Resources.class);
    static {

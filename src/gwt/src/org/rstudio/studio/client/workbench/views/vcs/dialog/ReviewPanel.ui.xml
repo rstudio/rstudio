@@ -4,7 +4,7 @@
              xmlns:vcs_diff='urn:import:org.rstudio.studio.client.workbench.views.vcs.diff'
              xmlns:rs_widget='urn:import:org.rstudio.core.client.widget'>
 
-   <ui:with field="res" type="org.rstudio.studio.client.workbench.views.vcs.review.ReviewPanel.Resources"/>
+   <ui:with field="res" type="org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPanel.Resources"/>
 
    <g:SplitLayoutPanel ui:field="splitPanel_" styleName="{res.styles.splitPanel}">
       <g:north size="230">
