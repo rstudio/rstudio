@@ -1,13 +1,13 @@
 
+.functionImage {
+	margin-right: 5px;
+}
+
 .functionName {
-   display: -moz-inline-box;
-   display: inline-block;
-   width: 175px;
+   margin-right: 7px;
 }
 
 .functionContext {
-   display: -moz-inline-box;
-   display: inline-block;
    color: #888;
 }
 

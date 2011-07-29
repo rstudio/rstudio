@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.codesearch;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.inject.Inject;
@@ -55,26 +56,11 @@ public class CodeSearchOracle extends SuggestOracle
          {
             int maxCount = Math.min(results.length(), request.getLimit());
 
-            int maxNameChars = 0;
-            maxNameWidth_ = 0;
-            
+          
             lastSuggestions_.clear();
             for (int i = 0; i< maxCount; i++)
-            {   
-               String name = results.get(i).getFunctionName();
-               if (name.length() > maxNameChars)
-               {
-                  Size size = DomMetrics.measureHTML(name, styles.functionName());
-                  if (size.width > maxNameWidth_)
-                  {
-                     maxNameWidth_ = size.width;
-                     maxNameChars = name.length();
-                  }
-               }
-               
-               
-               lastSuggestions_.add(new SearchSuggestion(results.get(i))) ;
-               
+            {    
+               lastSuggestions_.add(new SearchSuggestion(results.get(i)));     
             }
             
             
@@ -104,11 +90,13 @@ public class CodeSearchOracle extends SuggestOracle
 
       public String getDisplayString()
       {
-         CodeSearchResources.Styles styles = CodeSearchResources.INSTANCE.styles();
+         CodeSearchResources res = CodeSearchResources.INSTANCE;
+         CodeSearchResources.Styles styles = res.styles();
          
          SafeHtmlBuilder sb = new SafeHtmlBuilder();
+         appendImage(sb, res.function(), styles.functionImage());
          appendSpan(sb, result_.getFunctionName(), styles.functionName());                   
-         appendSpan(sb, result_.getContext(), styles.functionContext());
+         appendSpan(sb, "(" + result_.getContext() + ")", styles.functionContext());
          return sb.toSafeHtml().asString();
       }
 
@@ -133,6 +121,13 @@ public class CodeSearchOracle extends SuggestOracle
       sb.appendEscaped(content);
       sb.appendHtmlConstant("</span>");   
    }
+   
+   private void appendImage(SafeHtmlBuilder sb, ImageResource image, String style)
+   {
+      sb.append(SafeHtmlUtil.createOpenTag("img","class", style,
+                                                 "src", image.getURL()));
+      sb.appendHtmlConstant("</img>");   
+   }
 
    
 
@@ -140,5 +135,4 @@ public class CodeSearchOracle extends SuggestOracle
    
    private String lastQuery_;
    private final ArrayList<SearchSuggestion> lastSuggestions_;
-   private int maxNameWidth_;
 }
