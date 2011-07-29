@@ -1,9 +1,13 @@
 package org.rstudio.studio.client.workbench.codesearch;
 
-import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Position;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -23,7 +27,9 @@ public class CodeSearch
    
    @Inject
    public CodeSearch(Display display, 
-                     EventBus eventBus)
+                     final Session session, 
+                     final FileTypeRegistry fileTypeRegistry,
+                     final EventBus eventBus)
    {
       display_ = display;
       
@@ -33,12 +39,23 @@ public class CodeSearch
          @Override
          public void onSelection(SelectionEvent<Suggestion> event)
          {
+            // map back to a code search result
             CodeSearchResult result = 
                display_.getSearchOracle().resultFromSuggestion(
                                                 event.getSelectedItem());
             
-            Debug.log(result.getFunctionName() + " " + result.getContext());
+            // get the active project directory
+            SessionInfo sessionInfo = session.getSessionInfo();
+            FileSystemItem projDir = sessionInfo.getActiveProjectDir(); 
             
+            // calculate full file path and position
+            String srcFile = projDir.completePath(result.getContext());
+            FileSystemItem srcFileItem = FileSystemItem.createFile(srcFile);
+            Position pos = Position.create(result.getLine(), 
+                                           result.getColumn());
+            
+            // fire editing event
+            fileTypeRegistry.editFile(srcFileItem, pos);
          }
          
       });

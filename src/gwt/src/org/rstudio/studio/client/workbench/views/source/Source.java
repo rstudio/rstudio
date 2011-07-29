@@ -748,7 +748,7 @@ public class Source implements InsertSourceHandler,
    
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
-      openFile(event.getFile(), event.getFileType());
+      openFile(event.getFile(), event.getPosition(), event.getFileType());
    }
    
    // top-level wrapper for opening files. takes care of:
@@ -759,6 +759,7 @@ public class Source implements InsertSourceHandler,
    //  - finally, actually opening the file from the server
    //    via the call to the lower level openFile method
    private void openFile(final FileSystemItem file,
+                         final Position position,
                          final TextFileType fileType)
    {
       ensureVisible(true);

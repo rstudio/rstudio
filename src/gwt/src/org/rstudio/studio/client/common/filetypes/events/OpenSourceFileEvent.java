@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.common.filetypes.events;
 
 import com.google.gwt.event.shared.GwtEvent;
+
+import org.rstudio.core.client.Position;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 
@@ -21,10 +23,19 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
    public static final GwtEvent.Type<OpenSourceFileHandler> TYPE =
       new GwtEvent.Type<OpenSourceFileHandler>();
 
+   
    public OpenSourceFileEvent(FileSystemItem file, TextFileType fileType)
    {
+      this(file, null, fileType);
+   }
+   
+   public OpenSourceFileEvent(FileSystemItem file, 
+                              Position position, 
+                              TextFileType fileType)
+   {
       file_ = file;
-      fileType_ = fileType;
+      position_ = position;
+      fileType_ = fileType;  
    }
    
    public FileSystemItem getFile()
@@ -35,6 +46,11 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
    public TextFileType getFileType()
    {
       return fileType_;
+   }
+   
+   public Position getPosition()
+   {
+      return position_;
    }
 
    @Override
@@ -50,5 +66,6 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
    }
    
    private final FileSystemItem file_;
+   private final Position position_;
    private final TextFileType fileType_;
 }

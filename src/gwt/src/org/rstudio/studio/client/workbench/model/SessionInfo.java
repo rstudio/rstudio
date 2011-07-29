@@ -16,6 +16,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -145,8 +146,22 @@ public class SessionInfo extends JavaScriptObject
       return this.active_project_file;
    }-*/;
    
+   public final FileSystemItem getActiveProjectDir()
+   {
+      String projFile = getActiveProjectFile();
+      if (projFile != null)
+      {
+         return FileSystemItem.createFile(projFile).getParentPath();
+      }
+      else
+      {
+         return null;
+      }
+   }
+   
    public final native boolean isIndexingEnabled()/*-{
       return this.indexing_enabled;
    }-*/;
    
 }
+

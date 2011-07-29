@@ -15,6 +15,8 @@ package org.rstudio.studio.client.common.filetypes;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import org.rstudio.core.client.Position;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -143,12 +145,17 @@ public class FileTypeRegistry
 
    public void editFile(FileSystemItem file)
    {
+      editFile(file, null);
+   }
+   
+   public void editFile(FileSystemItem file, Position position)
+   {
       FileType fileType = getTypeForFile(file);
       if (!(fileType instanceof TextFileType))
          fileType = TEXT;
 
       if (fileType != null)
-         fileType.openFile(file, eventBus_);
+         fileType.openFile(file, position, eventBus_);
    }
 
    public FileType getTypeByTypeName(String name)

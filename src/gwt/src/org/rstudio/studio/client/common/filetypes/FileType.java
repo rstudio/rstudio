@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
+import org.rstudio.core.client.Position;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 
@@ -32,7 +33,14 @@ public abstract class FileType
       return id_;
    }
 
-   public abstract void openFile(FileSystemItem file, EventBus eventBus);
+   public void openFile(FileSystemItem file, 
+                        Position position, 
+                        EventBus eventBus)
+   {
+      openFile(file, null, eventBus);
+   }
+   
+   protected abstract void openFile(FileSystemItem file, EventBus eventBus);
    
    private final String id_;
 }
