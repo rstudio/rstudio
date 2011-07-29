@@ -1,5 +1,5 @@
 /*
- * Position.java
+ * FilePosition.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -14,39 +14,31 @@ package org.rstudio.core.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class Position extends JavaScriptObject
+public class FilePosition extends JavaScriptObject
 {
-   protected Position() {}
+   protected FilePosition() {}
 
-   public static native Position create(int row, int column) /*-{
-      return {row: row, column: column};
+   public static native FilePosition create(int line, int column) /*-{
+      return {line: line, column: column};
    }-*/;
 
-   public native final int getRow() /*-{
-      return this.row;
+   public native final int getLine() /*-{
+      return this.line;
    }-*/;
 
    public native final int getColumn() /*-{
       return this.column;
    }-*/;
 
-   public final int compareTo(Position other)
+   public final int compareTo(FilePosition other)
    {
       if (other == null)
          return 1;
 
-      int result = getRow() - other.getRow();
+      int result = getLine() - other.getLine();
       if (result != 0)
          return result;
 
       return getColumn() - other.getColumn();
    }
-
-   public native final void setRow(int row) /*-{
-      this.row = row;
-   }-*/;
-
-   public native final void setColumn(int column) /*-{
-      this.column = column;
-   }-*/;
 }

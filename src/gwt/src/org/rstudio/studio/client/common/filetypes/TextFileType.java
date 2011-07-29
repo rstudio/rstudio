@@ -14,7 +14,7 @@ package org.rstudio.studio.client.common.filetypes;
 
 import com.google.gwt.resources.client.ImageResource;
 
-import org.rstudio.core.client.Position;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -51,7 +51,7 @@ public class TextFileType extends EditableFileType
 
    @Override
    public void openFile(FileSystemItem file,
-                        Position position,
+                        FilePosition position,
                         EventBus eventBus)
    {
       eventBus.fireEvent(new OpenSourceFileEvent(file, position, this));

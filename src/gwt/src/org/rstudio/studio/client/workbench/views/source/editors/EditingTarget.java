@@ -18,6 +18,8 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Provider;
+
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -52,6 +54,8 @@ public interface EditingTarget extends IsWidget,
 
    void onInitiallyLoaded();
 
+   void jumpToPosition(FilePosition position);
+   
    /**
     * @return True if dismissal is allowed, false to cancel.
     */

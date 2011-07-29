@@ -299,6 +299,17 @@ public class TextEditingTarget implements EditingTarget
          }
       });
    }
+   
+   @Override
+   public void jumpToPosition(FilePosition position)
+   {
+      // set cursor (adjust by 1 to account for 0-based ace positions)
+      docDisplay_.setCursorPosition(Position.create(position.getLine() - 1, 
+                                                    position.getColumn() - 1));
+      
+      // scroll into view at top
+      docDisplay_.moveCursorNearTop();
+   }
 
    private void jumpToPreviousFunction()
    {

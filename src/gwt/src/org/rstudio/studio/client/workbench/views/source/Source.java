@@ -748,7 +748,19 @@ public class Source implements InsertSourceHandler,
    
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
-      openFile(event.getFile(), event.getPosition(), event.getFileType());
+      openFile(event.getFile(), 
+               event.getFileType(), 
+               new CommandWithArg<EditingTarget>() {
+
+         @Override
+         public void execute(EditingTarget target)
+         {
+            FilePosition position = event.getPosition();
+            if (position != null)
+               target.jumpToPosition(position);
+         }
+         
+      });
    }
    
    // top-level wrapper for opening files. takes care of:
@@ -759,8 +771,8 @@ public class Source implements InsertSourceHandler,
    //  - finally, actually opening the file from the server
    //    via the call to the lower level openFile method
    private void openFile(final FileSystemItem file,
-                         final Position position,
-                         final TextFileType fileType)
+                         final TextFileType fileType,
+                         final CommandWithArg<EditingTarget> executeOnSuccess)
    {
       ensureVisible(true);
 
@@ -780,6 +792,7 @@ public class Source implements InsertSourceHandler,
          {
             view_.selectTab(i);
             mruList_.add(thisPath);
+            executeOnSuccess.execute(target);
             return;
          }
       }
@@ -795,13 +808,13 @@ public class Source implements InsertSourceHandler,
          confirmOpenLargeFile(file,  new Operation() {
             public void execute()
             {
-               openFileFromServer(file, fileType);
+               openFileFromServer(file, fileType, executeOnSuccess);
             }
          });
       }
       else
       {
-         openFileFromServer(file, fileType);
+         openFileFromServer(file, fileType, executeOnSuccess);
       }
    }
 
@@ -835,8 +848,10 @@ public class Source implements InsertSourceHandler,
                                       false);   // 'No' is default
    }
 
-   private void openFileFromServer(final FileSystemItem file,
-                                   final TextFileType fileType)
+   private void openFileFromServer(
+         final FileSystemItem file,
+         final TextFileType fileType,
+         final CommandWithArg<EditingTarget> executeOnSuccess)
    {
       final Command dismissProgress = globalDisplay_.showProgress(
                                                          "Opening file...");
@@ -862,7 +877,8 @@ public class Source implements InsertSourceHandler,
                {
                   dismissProgress.execute();
                   mruList_.add(document.getPath());
-                  addTab(document);
+                  EditingTarget target = addTab(document);
+                  executeOnSuccess.execute(target);
                }
             });
    }

@@ -1,6 +1,6 @@
 package org.rstudio.studio.client.workbench.codesearch;
 
-import org.rstudio.core.client.Position;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -51,8 +51,8 @@ public class CodeSearch
             // calculate full file path and position
             String srcFile = projDir.completePath(result.getContext());
             FileSystemItem srcFileItem = FileSystemItem.createFile(srcFile);
-            Position pos = Position.create(result.getLine(), 
-                                           result.getColumn());
+            FilePosition pos = FilePosition.create(result.getLine(), 
+                                                   result.getColumn());
             
             // fire editing event
             fileTypeRegistry.editFile(srcFileItem, pos);

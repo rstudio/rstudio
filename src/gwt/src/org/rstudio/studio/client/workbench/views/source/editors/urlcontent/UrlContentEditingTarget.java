@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -140,7 +141,12 @@ public class UrlContentEditingTarget implements EditingTarget
    public void onInitiallyLoaded()
    {
    }
-
+   
+   @Override
+   public void jumpToPosition(FilePosition position)
+   {   
+   }
+   
    public boolean onBeforeDismiss()
    {
       return true;
@@ -255,4 +261,6 @@ public class UrlContentEditingTarget implements EditingTarget
    private HandlerRegistration commandReg_;
 
    private static final MyBinder binder_ = GWT.create(MyBinder.class);
+
+  
 }
