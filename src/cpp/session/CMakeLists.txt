@@ -34,6 +34,7 @@ set (SESSION_SOURCE_FILES
    http/SessionHttpConnectionQueue.cpp
    http/SessionHttpLog.cpp
    modules/SessionAgreement.cpp
+   modules/SessionCodeSearch.cpp
    modules/SessionConsole.cpp
    modules/SessionContentUrls.cpp
    modules/SessionData.cpp

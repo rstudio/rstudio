@@ -13,13 +13,13 @@
 package org.rstudio.studio.client.workbench.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
@@ -48,7 +48,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    MirrorsServerOperations,
                                                    VCSServerOperations,
                                                    PrefsServerOperations,
-                                                   ProjectsServerOperations
+                                                   ProjectsServerOperations,
+                                                   CodeSearchServerOperations
 {   
    void onWorkbenchReady();
    
@@ -65,8 +66,4 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
     
    void userPromptCompleted(int response, 
                             ServerRequestCallback<Void> requestCallback);
-   
-   void searchCode(
-         String term, 
-         ServerRequestCallback<JsArray<CodeSearchResult>> requestCallback);
 }

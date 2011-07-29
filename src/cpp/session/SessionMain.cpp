@@ -79,6 +79,7 @@
 #include "SessionClientEventService.hpp"
 
 #include "modules/SessionAgreement.hpp"
+#include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionDiff.hpp"
 #include "modules/SessionFiles.hpp"
@@ -1188,6 +1189,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::source_control::initialize)
       (modules::tex::initialize)
       (modules::history::initialize)
+      (modules::code_search::initialize)
 
       // workers
       (workers::web_request::initialize)

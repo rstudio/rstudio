@@ -103,7 +103,7 @@ public class GlobalToolbar extends Toolbar
    {
       if (sessionInfo.isIndexingEnabled())
       {
-         searchWidget_ = new CodeSearchWidget();
+         searchWidget_ = new CodeSearchWidget(server_);
          
          new CodeSearch(
                new CodeSearch.Display()
