@@ -126,7 +126,6 @@ public class SimpleRequestProcessor {
     try {
       process(req, responseBean.as());
     } catch (ReportableException e) {
-      e.printStackTrace();
       // Create a new response envelope, since the state is unknown
       responseBean = FACTORY.response();
       responseBean.as().setGeneralFailure(createFailureMessage(e).as());
@@ -200,7 +199,12 @@ public class SimpleRequestProcessor {
     final RequestState source = new RequestState(service);
 
     // Make sure the RequestFactory is valid
-    service.resolveRequestFactory(req.getRequestFactory());
+    String requestFactoryToken = req.getRequestFactory();
+    if (requestFactoryToken == null) {
+      // Tell old clients to go away
+      throw new ReportableException("The client payload version is out of sync with the server");
+    }
+    service.resolveRequestFactory(requestFactoryToken);
 
     // Apply operations
     processOperationMessages(source, req);

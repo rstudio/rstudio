@@ -15,6 +15,7 @@
  */
 package com.google.web.bindery.requestfactory.gwt.client;
 
+import com.google.web.bindery.autobean.shared.AutoBeanCodex;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
@@ -23,6 +24,8 @@ import com.google.web.bindery.requestfactory.shared.OnlyUsedInListProxy;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
+import com.google.web.bindery.requestfactory.shared.RequestTransport;
+import com.google.web.bindery.requestfactory.shared.RequestTransport.TransportReceiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 import com.google.web.bindery.requestfactory.shared.SimpleBarProxy;
 import com.google.web.bindery.requestfactory.shared.SimpleBarRequest;
@@ -31,7 +34,10 @@ import com.google.web.bindery.requestfactory.shared.SimpleFooProxy;
 import com.google.web.bindery.requestfactory.shared.SimpleFooRequest;
 import com.google.web.bindery.requestfactory.shared.SimpleValueContext;
 import com.google.web.bindery.requestfactory.shared.SimpleValueProxy;
+import com.google.web.bindery.requestfactory.shared.impl.MessageFactoryHolder;
 import com.google.web.bindery.requestfactory.shared.impl.SimpleEntityProxyId;
+import com.google.web.bindery.requestfactory.shared.messages.ResponseMessage;
+import com.google.web.bindery.requestfactory.shared.messages.ServerFailureMessage;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -560,6 +566,49 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         // The response shouldn't be associated with a RequestContext
         contextB.edit(response);
         finishTestAndReset();
+      }
+    });
+  }
+
+  /**
+   * Tests the server behavior when an empty JSON object is sent.
+   */
+  public void testEmptyRequestBlankObject() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    RequestTransport transport = req.getRequestTransport();
+    transport.send("{}", new TransportReceiver() {
+      @Override
+      public void onTransportFailure(ServerFailure failure) {
+        fail();
+      }
+
+      @Override
+      public void onTransportSuccess(String payload) {
+        ResponseMessage resp =
+            AutoBeanCodex.decode(MessageFactoryHolder.FACTORY, ResponseMessage.class, payload).as();
+        ServerFailureMessage failure = resp.getGeneralFailure();
+        assertNotNull(failure);
+        finishTestAndReset();
+      }
+    });
+  }
+
+  /**
+   * Tests the server behavior when a zero-length payload is sent.
+   */
+  public void testEmptyRequestZeroLength() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    RequestTransport transport = req.getRequestTransport();
+    transport.send("", new TransportReceiver() {
+      @Override
+      public void onTransportFailure(ServerFailure failure) {
+        // Expect a 500 since the payload is malformed
+        finishTestAndReset();
+      }
+
+      @Override
+      public void onTransportSuccess(String payload) {
+        fail("Should not have succeeded");
       }
     });
   }
