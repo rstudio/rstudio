@@ -24,7 +24,8 @@
       </g:north>
       <g:center>
          <g:ScrollPanel>
-            <vcs_dialog:CommitDetail ui:field="commitDetail_" />
+            <vcs_dialog:CommitDetail styleName="{res.styles.commitDetail}"
+                                     ui:field="commitDetail_" />
          </g:ScrollPanel>
       </g:center>
    </g:SplitLayoutPanel>

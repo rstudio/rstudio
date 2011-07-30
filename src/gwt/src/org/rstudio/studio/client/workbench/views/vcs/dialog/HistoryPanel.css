@@ -2,3 +2,7 @@
 .toolbarWrapper {}
 .whitebg {}
 .toolbar {}
+
+.commitDetail {
+   border: 12px solid transparent;
+}

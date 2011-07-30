@@ -84,6 +84,7 @@ public class HistoryPresenter
             view_.getCommitDetail().setSelectedCommit(commitInfo);
             view_.getCommitDetail().clearDetails();
 
+            invalidation_.invalidate();
             final Token token = invalidation_.getInvalidationToken();
 
             server_.vcsShow(commitInfo.getId(), new SimpleRequestCallback<String>()

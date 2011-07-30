@@ -28,6 +28,10 @@ public class CommitInfo extends JavaScriptObject
       return this.author;
    }-*/;
 
+   public native final String getParent() /*-{
+      return this.parent;
+   }-*/;
+
    public native final String getSubject() /*-{
       return this.subject;
    }-*/;

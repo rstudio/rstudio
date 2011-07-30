@@ -415,6 +415,7 @@ public class ReviewPresenter implements IsWidget
 
       view_.setFilename(paths.get(0));
 
+      diffInvalidation_.invalidate();
       final Token token = diffInvalidation_.getInvalidationToken();
 
       final PatchMode patchMode = view_.getStagedCheckBox().getValue()

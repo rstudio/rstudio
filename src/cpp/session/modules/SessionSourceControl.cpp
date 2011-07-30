@@ -52,6 +52,7 @@ struct CommitInfo
    std::string author;
    std::string subject;
    std::string description;
+   std::string parent;
    boost::int64_t date; // millis since epoch, UTC
 };
 
@@ -506,6 +507,12 @@ public:
                      currentCommit.date = convertGitRawDate(time, tz);
                }
             }
+            else if (key == "parent")
+            {
+               if (!currentCommit.parent.empty())
+                  currentCommit.parent.push_back(' ');
+               currentCommit.parent.append(value, 0, 8);
+            }
          }
          else if (boost::starts_with(*it, "    "))
          {
@@ -879,6 +886,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
 
    json::Array ids;
    json::Array authors;
+   json::Array parents;
    json::Array subjects;
    json::Array dates;
    json::Array descriptions;
@@ -889,6 +897,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    {
       ids.push_back(it->id);
       authors.push_back(it->author);
+      parents.push_back(it->parent);
       subjects.push_back(it->subject);
       descriptions.push_back(it->description);
       dates.push_back(static_cast<double>(it->date));
@@ -897,6 +906,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    json::Object result;
    result["id"] = ids;
    result["author"] = authors;
+   result["parent"] = parents;
    result["subject"] = subjects;
    result["description"] = descriptions;
    result["date"] = dates;

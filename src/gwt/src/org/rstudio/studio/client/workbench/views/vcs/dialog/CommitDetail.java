@@ -1,6 +1,8 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.resources.client.ClientBundle;
@@ -10,6 +12,8 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.Pair;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
@@ -50,31 +54,46 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    @Override
    public void clearDetails()
    {
+      invalidation_.invalidate();
       detailPanel_.clear();
    }
 
    @Override
-   public void setDetails(UnifiedParser unifiedParser)
+   public void setDetails(final UnifiedParser unifiedParser)
    {
-      Pair<String, String> filePair;
-      while (null != (filePair = unifiedParser.nextFilePair()))
-      {
-         detailPanel_.add(new Label(filePair.first + ", " + filePair.second));
-         LineTableView view = new LineTableView();
-         view.setShowActions(false);
-         ArrayList<ChunkOrLine> lines = new ArrayList<ChunkOrLine>();
-         DiffChunk chunk;
-         while (null != (chunk = unifiedParser.nextChunk()))
-         {
-            lines.addAll(ChunkOrLine.fromChunk(chunk));
-         }
-         view.setData(lines, PatchMode.Stage);
-         view.setWidth("100%");
+      invalidation_.invalidate();
+      final Token token = invalidation_.getInvalidationToken();
 
-         DiffFrame diffFrame = new DiffFrame(null, filePair.first, null, view);
-         diffFrame.setWidth("100%");
-         detailPanel_.add(diffFrame);
-      }
+      Scheduler.get().scheduleIncremental(new RepeatingCommand() {
+         @Override
+         public boolean execute()
+         {
+            if (token.isInvalid())
+               return false;
+
+            Pair<String, String> filePair = unifiedParser.nextFilePair();
+            if (filePair == null)
+               return false;
+
+            detailPanel_.add(new Label(filePair.first + ", " + filePair.second));
+            LineTableView view = new LineTableView();
+            view.setShowActions(false);
+            ArrayList<ChunkOrLine> lines = new ArrayList<ChunkOrLine>();
+            DiffChunk chunk;
+            while (null != (chunk = unifiedParser.nextChunk()))
+            {
+               lines.addAll(ChunkOrLine.fromChunk(chunk));
+            }
+            view.setData(lines, PatchMode.Stage);
+            view.setWidth("100%");
+
+            DiffFrame diffFrame = new DiffFrame(null, filePair.first, null, view);
+            diffFrame.setWidth("100%");
+            detailPanel_.add(diffFrame);
+
+            return true;
+         }
+      });
    }
 
    private void updateInfo()
@@ -84,9 +103,10 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
       labelDate_.setText(DateTimeFormat.getFormat(
             PredefinedFormat.DATE_SHORT).format(commit_.getDate()));
       labelSubject_.setText(commit_.getSubject());
-      //labelParent_.setText(commit_.getParentId());
+      labelParent_.setText(commit_.getParent());
    }
 
+   private final Invalidation invalidation_ = new Invalidation();
    private CommitInfo commit_;
    @UiField
    Label labelId_;
@@ -99,5 +119,5 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    @UiField
    Label labelParent_;
    @UiField
-   FlowPanel detailPanel_;
+   VerticalPanel detailPanel_;
 }

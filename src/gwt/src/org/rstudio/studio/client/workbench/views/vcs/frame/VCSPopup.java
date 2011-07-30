@@ -121,7 +121,7 @@ public class VCSPopup
       Resources res = GWT.<Resources>create(Resources.class);
       NineUpBorder border = new NineUpBorder(
             res,
-            32, 20, 20, 20);
+            32, 20, 17, 20);
       addCloseButton(popup, border);
       border.setSize("100%", "100%");
       border.setFillColor("white");

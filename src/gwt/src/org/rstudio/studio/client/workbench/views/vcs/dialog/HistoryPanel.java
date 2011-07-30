@@ -44,6 +44,7 @@ public class HistoryPanel extends Composite implements Display
 
    public interface Styles extends SharedStyles
    {
+      String commitDetail();
    }
 
    interface Binder extends UiBinder<Widget, HistoryPanel>
@@ -51,6 +52,7 @@ public class HistoryPanel extends Composite implements Display
 
    public HistoryPanel()
    {
+      splitPanel_ = new SplitLayoutPanel(4);
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
       Styles styles = GWT.<Resources>create(Resources.class).styles();
 
@@ -84,7 +86,7 @@ public class HistoryPanel extends Composite implements Display
       return commitDetail_;
    }
 
-   @UiField
+   @UiField(provided = true)
    SplitLayoutPanel splitPanel_;
    @UiField
    Toolbar topToolbar_;
@@ -93,6 +95,10 @@ public class HistoryPanel extends Composite implements Display
    @UiField
    CommitDetail commitDetail_;
 
-
    private LeftRightToggleButton switchViewButton_;
+
+   static
+   {
+      GWT.<Resources>create(Resources.class).styles().ensureInjected();
+   }
 }

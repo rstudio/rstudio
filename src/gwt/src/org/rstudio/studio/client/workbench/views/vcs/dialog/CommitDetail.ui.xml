@@ -2,20 +2,32 @@
              xmlns:g='urn:import:com.google.gwt.user.client.ui'>
 
    <ui:style>
+      .outer {
+      }
+
       .summary td:first-child {
          font-weight: bold;
          padding-right: 16px;
       }
+
       .subject {
          font-weight: bold;
       }
+
       .summary td div {
          white-space: pre-wrap;
       }
+
+      .summary td {
+         padding-bottom: 6px;
+      }
+
+      .details {
+      }
    </ui:style>
 
-   <g:HTMLPanel visible="false">
-      <table class="{style.summary}">
+   <g:HTMLPanel visible="false" styleName="{style.outer}">
+      <table class="{style.summary}" cellspacing="0" cellpadding="0">
          <tr>
             <td>SHA</td>
             <td><g:Label ui:field="labelId_" /></td>
@@ -37,7 +49,7 @@
             <td><g:Label ui:field="labelParent_" /></td>
          </tr>
       </table>
-      <g:FlowPanel ui:field="detailPanel_" />
+      <g:VerticalPanel ui:field="detailPanel_" styleName="{style.details}" />
    </g:HTMLPanel>
 
 </ui:UiBinder>
