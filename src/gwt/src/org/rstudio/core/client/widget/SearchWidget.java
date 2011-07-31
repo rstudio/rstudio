@@ -36,8 +36,6 @@ public class SearchWidget extends Composite
                           implements SearchDisplay,
                                      HasSelectionCommitHandlers<String>,
                                      HasKeyDownHandlers,
-                                     HasFocusHandlers,
-                                     HasBlurHandlers,
                                      CanFocus
 {
    interface MyUiBinder extends UiBinder<Widget, SearchWidget> {}

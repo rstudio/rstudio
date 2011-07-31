@@ -31,6 +31,13 @@
 // TODO: only run the query once and only after ~200ms (or num chars)
 // (but if we were truncated then need to re-run)
 
+// TODO: don't use num results in query caching (assume is constant accross sesson)
+
+// TODO: oracle automatically clears itself more aggressively (to guard
+// against stale caches)
+
+// TODO: look for more optimiazations in client cache
+
 // TODO: alternate UI for when toolbar is hidden
 
 // TODO: esc drive focus to source

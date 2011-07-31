@@ -9,6 +9,8 @@ import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
@@ -58,11 +60,23 @@ public class CodeSearch
             
             // fire editing event
             fileTypeRegistry.editFile(srcFileItem, pos);
-            
-            // fully clear the search display 
-            display_.getSearchDisplay().clear();
          }
       });
+      
+     searchDisplay.addBlurHandler(new BlurHandler() {
+
+      @Override
+      public void onBlur(BlurEvent event)
+      { 
+         // fully clear the search display 
+         display_.getSearchDisplay().clear();
+       
+         // notify the oracle to reset its state
+         display_.getSearchOracle().clear();
+         
+      }
+        
+     });
    }
    
    public Widget getSearchWidget()

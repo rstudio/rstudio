@@ -42,15 +42,20 @@ public class CodeSearchOracle extends SuggestOracle
       
    }
    
-   @Override
-   public boolean isDisplayStringHTML()
+   public void clear()
    {
-      return true;
+      suggestions_.clear();
    }
    
    public CodeSearchResult resultFromSuggestion(Suggestion suggestion)
    {
       return suggestions_.resultFromSuggestion(suggestion);
+   }
+   
+   @Override
+   public boolean isDisplayStringHTML()
+   {
+      return true;
    }
    
    private CodeSearchSuggestions suggestions_;
