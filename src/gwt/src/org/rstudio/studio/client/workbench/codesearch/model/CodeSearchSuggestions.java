@@ -21,90 +21,72 @@ public class CodeSearchSuggestions
    }
    
    public void request(final Request request, final Callback callback)
-   { 
-      // will be used later
-      boolean isPatternMatch = false;
+   {    
+     
       
-      // first see if we have a cached version of this request's results
-      for (Pair<Request,ArrayList<CodeSearchSuggestion>> result : resultCache_)
+      // first see if we can serve the request from the cache
+      for (int i=resultCache_.size() - 1; i >= 0; i--)
       {
-         if (request.getQuery().equals(result.first.getQuery()) &&
-             request.getLimit() == result.first.getLimit())
+         // get the previous result
+         Pair<String,ArrayList<CodeSearchSuggestion>> res = resultCache_.get(i);
+         
+         // exact match of previous query
+         if (request.getQuery().equals(res.first))
          {
-            callback.onSuggestionsReady(request, new Response(result.second));
+            callback.onSuggestionsReady(request, new Response(res.second));
             return;
          }
-      }
-      
-      // if this query is a further refinement of a previous query then
-      // satisfy the request by simply filtering the previous results (note
-      // that there won't be a lastQuery_ if the results overflowed)
-      if (lastQuery_ != null && request.getQuery().startsWith(lastQuery_))
-      { 
-         ArrayList<CodeSearchSuggestion> suggestions = 
-                                          new ArrayList<CodeSearchSuggestion>();
-         for (int i=0; i<lastSuggestions_.size(); i++)
-         {
-            CodeSearchSuggestion sugg = lastSuggestions_.get(i);
-            String functionName = sugg.getResult().getFunctionName();
-            
-            if (functionName.toLowerCase().startsWith(request.getQuery()))
-               suggestions.add(sugg);
-         }
          
-         // yield the suggestions
-         yieldSuggestions(request, suggestions, callback);
-      }
-      
-      // if this isn't a pattern matching query, the previous results were
-      // an overlfow, and all of the displayed results are fully prefaced by
-      // this query then this query does not further disambiguate the results
-      else if (!isPatternMatch &&
-              (lastSuggestions_ != null) &&
-              (lastSuggestions_.size() >= request.getLimit()) && 
-              allPrevSuggestionsPrefacedBy(request.getQuery()))
-      {
-         yieldSuggestions(request, lastSuggestions_, callback);
-      }
-      
-      else
-      {  
-         server_.searchCode(
-               request.getQuery(),
-               request.getLimit(),
-               new SimpleRequestCallback<JsArray<CodeSearchResult>>() {
+         // if this query is a further refinement of a non-overflowed 
+         // previous query then satisfy it by filtering the previous results
+         if (res.second.size() <= request.getLimit() &&
+             request.getQuery().startsWith(res.first))
+         {
+           
+            // TODO: once we introduce pattern matching then we need to
+            // reflect this in this codepath
             
-            @Override
-            public void onResponseReceived(JsArray<CodeSearchResult> results)
-            { 
-               // read the response
-               ArrayList<CodeSearchSuggestion> suggestions = 
+            String queryLower = request.getQuery().toLowerCase();
+           
+            ArrayList<CodeSearchSuggestion> suggestions =
                                        new ArrayList<CodeSearchSuggestion>();
-               for (int i = 0; i<results.length(); i++) 
-                  suggestions.add(new CodeSearchSuggestion(results.get(i)));     
+            for (int s=0; s<res.second.size(); s++)
+            {
                
-               // if we got less than or equal to the max results then we can 
-               // safely cache this for further filtering
-               if (results.length() <= request.getLimit())
-               {
-                  // save the query
-                  lastQuery_ = request.getQuery();
-               }
-               else
-               {
-                  // overwrite any previous saved query
-                  lastQuery_ = null;
-               }
+               CodeSearchSuggestion sugg = res.second.get(s);
                
-               // always save the suggestions 
-               lastSuggestions_ = suggestions;
-               
-               // yield suggestions
-               yieldSuggestions(request, suggestions, callback); 
-                                         
+               String functionName = sugg.getResult().getFunctionName();
+              
+               if (functionName.toLowerCase().startsWith(queryLower))
+                  suggestions.add(sugg);
             }
-         });
+
+            // return the suggestions
+            cacheAndReturnSuggestions(request, suggestions, callback);
+            return;
+         } 
       }
+      
+      // failed to short-circuit via the cache, hit the server
+      server_.searchCode(
+            request.getQuery(),
+            request.getLimit(),
+            new SimpleRequestCallback<JsArray<CodeSearchResult>>() {
+         
+         @Override
+         public void onResponseReceived(JsArray<CodeSearchResult> results)
+         { 
+            // read the response
+            ArrayList<CodeSearchSuggestion> suggestions = 
+                                    new ArrayList<CodeSearchSuggestion>();
+            for (int i = 0; i<results.length(); i++) 
+               suggestions.add(new CodeSearchSuggestion(results.get(i)));     
+            
+            // return suggestions
+            cacheAndReturnSuggestions(request, suggestions, callback);                            
+         }
+      });
+      
    }
      
    public CodeSearchResult resultFromSuggestion(Suggestion suggestion)
@@ -114,48 +96,32 @@ public class CodeSearchSuggestions
    
    public void clear()
    {
-      lastQuery_ = null;
-      lastSuggestions_ = null;
       resultCache_.clear();
    }
    
-   private boolean allPrevSuggestionsPrefacedBy(String query)
-   { 
-      for (int i=0; i<lastSuggestions_.size(); i++)
-      {
-         CodeSearchSuggestion sugg = lastSuggestions_.get(i);
-         String functionName = sugg.getResult().getFunctionName();
-
-         if (!functionName.toLowerCase().startsWith(query))
-            return false;
-      }
-      
-      return true;
-   }
-   
-   // wrapper for yielding suggestions (so we always update the cache)
-   private void yieldSuggestions(Request request, 
-                                 ArrayList<CodeSearchSuggestion> suggestions,
-                                 Callback callback)
+   private void cacheAndReturnSuggestions(
+                           final Request request, 
+                           final ArrayList<CodeSearchSuggestion> suggestions,
+                           final Callback callback)
    {
-      // always cache the suggestions (up to 25 active result sets cached)
-      // NOTE: the cache is cleared at the end of the search sequence (when
-      // the search box loses focus)
-      if (resultCache_.size() > 25)
+      // cache the suggestions (up to 15 active result sets cached)
+      // NOTE: the cache is cleared at the end of the search sequence 
+      // (when the search box loses focus)
+      if (resultCache_.size() > 15)
          resultCache_.remove(0);
       resultCache_.add(
-        new Pair<Request, ArrayList<CodeSearchSuggestion>>(request, 
-                                                           suggestions));
+        new Pair<String, ArrayList<CodeSearchSuggestion>>(
+                                                     request.getQuery(), 
+                                                     suggestions));
       
-      // callback
+      // provide the suggestions to the caller
       callback.onSuggestionsReady(request, 
                                   new Response(suggestions)) ;
    }
    
+   
    private final CodeSearchServerOperations server_ ;
    
-   private String lastQuery_ = null;
-   private ArrayList<CodeSearchSuggestion> lastSuggestions_ = null;
-   private ArrayList<Pair<Request,ArrayList<CodeSearchSuggestion>>> 
-      resultCache_ = new ArrayList<Pair<Request,ArrayList<CodeSearchSuggestion>>>();
+   private ArrayList<Pair<String, ArrayList<CodeSearchSuggestion>>> 
+      resultCache_ = new ArrayList<Pair<String,ArrayList<CodeSearchSuggestion>>>();
 }

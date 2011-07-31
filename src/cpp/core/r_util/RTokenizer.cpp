@@ -26,18 +26,11 @@
 
 // TODO: keyboard shortcut to initiate search
 
-// TODO: consider caching query results until search is "reset" (box loses focus)
-
 // TODO: only run the query once and only after ~200ms (or num chars)
 // (but if we were truncated then need to re-run)
 
-// TODO: don't use num results in query caching (assume is constant accross sesson)
-
 // TODO: oracle automatically clears itself more aggressively (to guard
 // against stale caches)
-
-// TODO: look for more optimiazations in client cache
-// TODO: look into perf of caching code
 
 // TODO: alternate UI for when toolbar is hidden
 
@@ -45,7 +38,8 @@
 
 // TODO: arrow keys move cursor
 
-// TODO: use * for pattern matching
+// TODO: use * for pattern matching (update query cache probing as well)
+
 // TODO: indexing queue
 // TODO: sync source documents
 
