@@ -37,6 +37,7 @@
 // against stale caches)
 
 // TODO: look for more optimiazations in client cache
+// TODO: look into perf of caching code
 
 // TODO: alternate UI for when toolbar is hidden
 
