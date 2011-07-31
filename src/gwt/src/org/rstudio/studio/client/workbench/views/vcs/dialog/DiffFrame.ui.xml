@@ -1,14 +1,21 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'>
 
+   <ui:with field="res"
+            type="org.rstudio.studio.client.workbench.views.vcs.dialog.DiffFrame.Resources"/>
+
    <ui:style>
       .container {
-         margin-top: 30px;
+         margin-top: 8px;
+         border: 1px solid #c1c3c5;
       }
    </ui:style>
 
    <g:FlowPanel ui:field="container_" styleName="{style.container}">
-      <g:Label ui:field="headerLabel_"/>
+      <g:FlowPanel styleName="{res.styles.header}">
+         <g:Image styleName="{res.styles.fileIcon}" ui:field="fileIcon_"/>
+         <g:Label styleName="{res.styles.headerLabel}" ui:field="headerLabel_"/>
+      </g:FlowPanel>
    </g:FlowPanel>
 
 </ui:UiBinder>

@@ -2,9 +2,6 @@
              xmlns:g='urn:import:com.google.gwt.user.client.ui'>
 
    <ui:style>
-      .outer {
-      }
-
       .summary td:first-child {
          font-weight: bold;
          padding-right: 16px;
@@ -22,11 +19,12 @@
          padding-bottom: 6px;
       }
 
-      .details {
+      .toc {
+
       }
    </ui:style>
 
-   <g:HTMLPanel visible="false" styleName="{style.outer}">
+   <g:HTMLPanel visible="false">
       <table class="{style.summary}" cellspacing="0" cellpadding="0">
          <tr>
             <td>SHA</td>
@@ -49,7 +47,8 @@
             <td><g:Label ui:field="labelParent_" /></td>
          </tr>
       </table>
-      <g:VerticalPanel ui:field="detailPanel_" styleName="{style.details}" />
+      <g:VerticalPanel ui:field="tocPanel_" styleName="{style.toc}" />
+      <g:VerticalPanel ui:field="detailPanel_" />
    </g:HTMLPanel>
 
 </ui:UiBinder>

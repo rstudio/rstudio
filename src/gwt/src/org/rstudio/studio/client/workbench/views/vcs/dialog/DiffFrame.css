@@ -1,0 +1,20 @@
+@sprite .header {
+   gwt-image: 'diffHeaderTile';
+   position: relative;
+}
+
+.header img, .fileIcon {
+   display: block;
+   position: absolute;
+   top: 5px;
+   left: 6px;
+}
+
+.headerLabel {
+   display: inline-block;
+   font-weight: bold;
+   font-size: 12px;
+   position: absolute;
+   top: 6px;
+   left: 28px;
+}
