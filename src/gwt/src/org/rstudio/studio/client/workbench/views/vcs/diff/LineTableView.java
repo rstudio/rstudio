@@ -20,6 +20,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
@@ -52,6 +53,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
       TableStyle cellTableStyle();
    }
 
+   @ImportedWithPrefix("linetable")
    public interface TableStyle extends CellTable.Style
    {
       String header();
@@ -126,7 +128,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
          if (value.getLine() != null)
          {
             sb.appendEscaped(value.getLine().getText());
-            if (value.getLine().getType() != Line.Type.Same)
+            if (showActions_ && value.getLine().getType() != Line.Type.Same)
                renderActionButtons(sb,
                                    RES.cellTableStyle().lineActions(),
                                    " line");
@@ -134,9 +136,12 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
          else
          {
             sb.appendEscaped(UnifiedEmitter.createChunkString(value.getChunk()));
-            renderActionButtons(sb,
-                                RES.cellTableStyle().chunkActions(),
-                                " chunk");
+            if (showActions_)
+            {
+               renderActionButtons(sb,
+                                   RES.cellTableStyle().chunkActions(),
+                                   " chunk");
+            }
          }
       }
 
@@ -288,6 +293,16 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
       return value.toString();
    }
 
+   public boolean isShowActions()
+   {
+      return showActions_;
+   }
+
+   public void setShowActions(boolean showActions)
+   {
+      showActions_ = showActions;
+   }
+
    @Override
    public void setData(ArrayList<ChunkOrLine> diffData, PatchMode patchMode)
    {
@@ -383,11 +398,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
       RES.cellTableStyle().ensureInjected();
    }
 
-   public void setShowActions(boolean showActions)
-   {
-      // TODO
-   }
-
+   private boolean showActions_ = true;
    private ArrayList<ChunkOrLine> lines_;
    private MultiSelectionModel<ChunkOrLine> selectionModel_;
    private HashSet<Integer> startRows_ = new HashSet<Integer>();

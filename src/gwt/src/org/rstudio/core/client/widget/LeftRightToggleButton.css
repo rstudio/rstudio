@@ -48,6 +48,7 @@
 
 @sprite .rightOn .rightRight {
    gwt-image: 'rightToggleRightOn';
+   background-position: top right;
    width: auto;
 }
 

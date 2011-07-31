@@ -5,7 +5,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
@@ -23,14 +22,6 @@ import java.util.ArrayList;
 
 public class CommitDetail extends Composite implements CommitDetailDisplay
 {
-   interface Resources 
-   {
-      Styles styles();
-   }
-
-   interface Styles extends CssResource
-   {}
-
    interface Binder extends UiBinder<Widget, CommitDetail>
    {}
 
@@ -72,7 +63,6 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
             if (filePair == null)
                return false;
 
-            detailPanel_.add(new Label(filePair.first + ", " + filePair.second));
             LineTableView view = new LineTableView();
             view.setShowActions(false);
             ArrayList<ChunkOrLine> lines = new ArrayList<ChunkOrLine>();
@@ -81,6 +71,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
             {
                lines.addAll(ChunkOrLine.fromChunk(chunk));
             }
+            view.setShowActions(false);
             view.setData(lines, PatchMode.Stage);
             view.setWidth("100%");
 
