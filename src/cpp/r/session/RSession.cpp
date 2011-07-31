@@ -196,6 +196,16 @@ void restoreWorkingState()
 }
 
 
+void completeDeferredSessionInit()
+{
+   // restore client metrics and plots
+   restoreWorkingState();
+
+   // call external hook
+   if (s_callbacks.deferredInit)
+      s_callbacks.deferredInit();
+}
+
 void saveWorkingState(ClientStateCommitType commitType)
 {
    using namespace r::session;
@@ -251,8 +261,8 @@ void deferredRestoreSuspendedSession(
    if (error)
       reportDeferredDeserializationError(error);
 
-   // plots
-   restoreWorkingState();
+   // complete deferred init
+   completeDeferredSessionInit();
 
 }
 
@@ -320,8 +330,8 @@ void deferredRestoreNewSession()
    // of workspace restoration)
    setImageDirty(false);
 
-   // restore plots
-   restoreWorkingState();
+   // complete deferred init
+   completeDeferredSessionInit();
 }
 
 void reportHistoryAccessError(const std::string& context,

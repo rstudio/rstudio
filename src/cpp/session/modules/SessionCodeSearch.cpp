@@ -13,13 +13,18 @@
 
 #include "SessionCodeSearch.hpp"
 
+#include <iostream>
 #include <vector>
 
 #include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/r_util/RSourceIndex.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -35,7 +40,56 @@ namespace code_search {
 
 namespace {
    
-// TODO: rpc array result type (wire efficiency)
+std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > s_sourceIndexes;
+
+void indexProjectFile(const FilePath& rootDir, const FilePath& filePath)
+{
+   if (filePath.extensionLowerCase() == ".r")
+   {
+      // read the file (assumes utf8)
+      std::string code;
+      Error error = core::readStringFromFile(filePath,
+                                             &code,
+                                             string_utils::LineEndingPosix);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      // compute project relative directory (used for context)
+      std::string context = filePath.relativePath(rootDir);
+
+      // index the source
+      s_sourceIndexes.push_back(boost::shared_ptr<r_util::RSourceIndex>(
+                                    new r_util::RSourceIndex(context, code)));
+   }
+}
+
+void indexProjectFiles()
+{
+   Error error = projects::projectContext().directory().childrenRecursive(
+                     boost::bind(&indexProjectFile,
+                        projects::projectContext().directory(),_2));
+    if (error)
+       LOG_ERROR(error);
+}
+
+
+template <typename OutputIterator>
+OutputIterator findFunctions(const std::string& term,
+                             bool prefixOnly,
+                             OutputIterator out)
+{
+   BOOST_FOREACH(boost::shared_ptr<core::r_util::RSourceIndex> index,
+                 s_sourceIndexes)
+   {
+      index->findFunction(term, prefixOnly, out);
+   }
+
+   return out;
+}
+
 
 json::Object codeSearchResult(const r_util::RFunctionInfo& functionInfo)
 {
@@ -65,9 +119,7 @@ Error searchCode(const json::JsonRpcRequest& request,
       return error;
 
    std::vector<r_util::RFunctionInfo> functions;
-   projects::projectContext().findFunctions(term,
-                                            true,
-                                            std::back_inserter(functions));
+   findFunctions(term, true, std::back_inserter(functions));
 
    json::Array results;
    std::transform(functions.begin(),
@@ -81,6 +133,13 @@ Error searchCode(const json::JsonRpcRequest& request,
 }
 
 
+void onDeferredInit()
+{
+   // initialize source index
+   if (userSettings().indexingEnabled())
+      indexProjectFiles();
+}
+
    
 } // anonymous namespace
 
@@ -88,6 +147,10 @@ Error searchCode(const json::JsonRpcRequest& request,
    
 Error initialize()
 {
+   // sign up for deferred init
+   module_context::events().onDeferredInit.connect(onDeferredInit);
+
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

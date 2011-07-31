@@ -1265,6 +1265,11 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    // success!
    return Success();
 }
+
+void rDeferredInit()
+{
+   module_context::events().onDeferredInit();
+}
    
 void consolePrompt(const std::string& prompt, bool addToHistory)
 {
@@ -2239,6 +2244,7 @@ int main (int argc, char * const argv[])
       rCallbacks.consoleWrite = rConsoleWrite;
       rCallbacks.consoleHistoryReset = rConsoleHistoryReset;
       rCallbacks.locator = rLocator;
+      rCallbacks.deferredInit = rDeferredInit;
       rCallbacks.suspended = rSuspended;
       rCallbacks.resumed = rResumed;
       rCallbacks.quit = rQuit;

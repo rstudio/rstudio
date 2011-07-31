@@ -121,6 +121,7 @@ struct RCallbacks
    boost::function<int(const std::string&)> editFile;
    boost::function<void(const std::string&)> showMessage ;
    boost::function<void(bool)> busy;
+   boost::function<void()> deferredInit;
    boost::function<void()> suspended;
    boost::function<void()> resumed;
    boost::function<void()> quit;

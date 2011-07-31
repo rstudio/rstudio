@@ -21,6 +21,9 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
+// TODO: rpc array result type (wire efficiency)
+// TODO: boost::numeric_cast business
+
 // TODO: keyboard shortcut to initiate search
 
 // TODO: only run the query once and only after ~200ms (or num chars)
