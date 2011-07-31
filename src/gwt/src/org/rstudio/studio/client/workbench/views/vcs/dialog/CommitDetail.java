@@ -26,7 +26,7 @@ import java.util.ArrayList;
 
 public class CommitDetail extends Composite implements CommitDetailDisplay
 {
-   interface Resources extends ClientBundle
+   interface Resources 
    {
       Styles styles();
    }
