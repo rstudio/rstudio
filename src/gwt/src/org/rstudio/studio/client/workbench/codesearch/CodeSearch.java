@@ -58,8 +58,10 @@ public class CodeSearch
             
             // fire editing event
             fileTypeRegistry.editFile(srcFileItem, pos);
+            
+            // fully clear the search display 
+            display_.getSearchDisplay().clear();
          }
-         
       });
    }
    

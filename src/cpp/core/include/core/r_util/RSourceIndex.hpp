@@ -58,14 +58,22 @@ public:
 
    // support for RSourceIndex::findFunction
 
-   bool nameStartsWith(const std::string& term) const
+   bool nameStartsWith(const std::string& term,
+                       bool caseSensitive) const
    {
-      return boost::algorithm::starts_with(name_, term);
+      if (caseSensitive)
+         return boost::algorithm::starts_with(name_, term);
+      else
+         return boost::algorithm::istarts_with(name_, term);
    }
 
-   bool nameContains(const std::string& term) const
+   bool nameContains(const std::string& term,
+                     bool caseSensitive) const
    {
-      return boost::algorithm::contains(name_, term);
+      if (caseSensitive)
+         return boost::algorithm::contains(name_, term);
+      else
+         return boost::algorithm::icontains(name_, term);
    }
 
    RFunctionInfo withContext(const std::string& context) const
@@ -78,6 +86,11 @@ private:
    std::string name_;
    std::size_t line_;
    std::size_t column_;
+
+// convenience friendship for doing vector operations e.g. resize()
+private:
+   friend class std::vector<RFunctionInfo>;
+   RFunctionInfo() : line_(0), column_(0) {}
 };
 
 
@@ -97,14 +110,17 @@ public:
    template <typename OutputIterator>
    OutputIterator findFunction(const std::string& term,
                                bool prefixOnly,
+                               bool caseSensitive,
                                OutputIterator out) const
    {
       // define the predicate
       boost::function<bool(const RFunctionInfo&)> predicate;
       if (prefixOnly)
-         predicate = boost::bind(&RFunctionInfo::nameStartsWith, _1, term);
+         predicate = boost::bind(&RFunctionInfo::nameStartsWith,
+                                    _1, term, caseSensitive);
       else
-         predicate = boost::bind(&RFunctionInfo::nameContains, _1, term);
+         predicate = boost::bind(&RFunctionInfo::nameContains,
+                                    _1, term, caseSensitive);
 
       // perform the copy and transform to include context
       core::algorithm::copy_transformed_if(

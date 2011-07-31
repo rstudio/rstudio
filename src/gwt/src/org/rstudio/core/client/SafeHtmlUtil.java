@@ -12,6 +12,7 @@
  */
 package org.rstudio.core.client;
 
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -36,6 +37,36 @@ public class SafeHtmlUtil
                               "class", style));
       sb.append(htmlContent);
       sb.appendHtmlConstant("</div>");
+   }
+   
+   public static void appendSpan(SafeHtmlBuilder sb, 
+                                 String style,
+                                 String textContent)
+   {
+      sb.append(SafeHtmlUtil.createOpenTag("span", 
+                                           "class", style));
+      sb.appendEscaped(textContent);
+      sb.appendHtmlConstant("</span>");   
+   }
+   
+   public static void appendSpan(SafeHtmlBuilder sb, 
+                                 String style,
+                                 SafeHtml htmlContent)
+   {
+      sb.append(SafeHtmlUtil.createOpenTag("span", 
+                                           "class", style));
+      sb.append(htmlContent);
+      sb.appendHtmlConstant("</span>");   
+   }
+
+   public static void appendImage(SafeHtmlBuilder sb,
+                                  String style,
+                                  ImageResource image)
+   {
+      sb.append(SafeHtmlUtil.createOpenTag("img",
+                                           "class", style,
+                                           "src", image.getURL()));
+      sb.appendHtmlConstant("</img>");   
    }
 
    public static SafeHtml createOpenTag(String tagName,

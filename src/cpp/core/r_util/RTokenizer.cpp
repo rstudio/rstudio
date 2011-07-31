@@ -26,19 +26,10 @@
 
 // TODO: keyboard shortcut to initiate search
 
+// TODO: consider caching query results until search is "reset" (box loses focus)
+
 // TODO: only run the query once and only after ~200ms (or num chars)
 // (but if we were truncated then need to re-run)
-
-// TODO: evaluate case sensitivity
-
-// TODO: if focus is already out of the box and you click the X then
-// the cue text doesn't re-appear
-
-// TODO: pass the limit to the back-end
-
-// TODO: reset search term after successful search
-
-// TODO: keyboard shortcut to activate search
 
 // TODO: alternate UI for when toolbar is hidden
 

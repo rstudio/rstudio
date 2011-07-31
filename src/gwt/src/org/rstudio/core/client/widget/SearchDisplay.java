@@ -14,4 +14,5 @@ public interface SearchDisplay extends
                               HasText
 {
    void setAutoSelectEnabled(boolean selectsFirstItem);
+   void clear();
 }

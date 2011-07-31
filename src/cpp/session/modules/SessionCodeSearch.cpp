@@ -76,18 +76,27 @@ void indexProjectFiles()
 }
 
 
-template <typename OutputIterator>
-OutputIterator findFunctions(const std::string& term,
-                             bool prefixOnly,
-                             OutputIterator out)
+void findFunctions(const std::string& term,
+                   int maxResults,
+                   bool prefixOnly,
+                   std::vector<r_util::RFunctionInfo>* pFunctions)
 {
    BOOST_FOREACH(boost::shared_ptr<core::r_util::RSourceIndex> index,
                  s_sourceIndexes)
    {
-      index->findFunction(term, prefixOnly, out);
-   }
+      // scan the next index
+      index->findFunction(term,
+                          prefixOnly,
+                          false,
+                          std::back_inserter(*pFunctions));
 
-   return out;
+      // return if we are past maxResults
+      if (pFunctions->size() >= boost::numeric_cast<std::size_t>(maxResults))
+      {
+         pFunctions->resize(maxResults);
+         return;
+      }
+   }
 }
 
 
@@ -114,12 +123,13 @@ Error searchCode(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    std::string term;
-   Error error = json::readParam(request.params, 0, &term);
+   int maxResults;
+   Error error = json::readParams(request.params, &term, &maxResults);
    if (error)
       return error;
 
    std::vector<r_util::RFunctionInfo> functions;
-   findFunctions(term, true, std::back_inserter(functions));
+   findFunctions(term, maxResults + 1, true, &functions);
 
    json::Array results;
    std::transform(functions.begin(),

@@ -22,5 +22,6 @@ public interface CodeSearchServerOperations
 {   
    void searchCode(
          String term, 
+         int maxResults,
          ServerRequestCallback<JsArray<CodeSearchResult>> requestCallback);
 }

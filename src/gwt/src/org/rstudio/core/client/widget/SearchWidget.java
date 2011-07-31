@@ -236,6 +236,11 @@ public class SearchWidget extends Composite
       suggestBox_.setFocus(true);      
    }
    
+   public void clear()
+   {
+      setText("", true);
+   }
+   
    private void updateLastValue(String value)
    {
       lastValueSent_ = value;
