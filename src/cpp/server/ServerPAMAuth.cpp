@@ -13,6 +13,7 @@
 #include "ServerPAMAuth.hpp"
 
 #include <sys/wait.h>
+#include <security/pam_appl.h>
 
 #include <core/Error.hpp>
 #include <core/system/System.hpp>
@@ -40,6 +41,8 @@ namespace pam_auth {
 
 namespace {
 
+std::map<std::string, pam_handle_t *> pam_handles;
+
 // Handles error logging and EINTR retrying. Only for use with
 // functions that return -1 on error and set errno.
 int posixcall(boost::function<ssize_t()> func, const ErrorLocation& location)
@@ -58,140 +61,40 @@ int posixcall(boost::function<ssize_t()> func, const ErrorLocation& location)
    }
 }
 
+int pam_conversation(int num_msg,
+                     const struct pam_message **msg,
+                     struct pam_response **resp,
+                     void *appdata_ptr)
+{
+  assert(num_msg == 1);
+  char *response = strdup((char *)appdata_ptr);
+  struct pam_response *pam_resp = (struct pam_response *)malloc(sizeof(struct pam_response));
+  pam_resp->resp = response;
+  pam_resp->resp_retcode = 0;
+  *resp = pam_resp;
+  return PAM_SUCCESS;
+}
+
+const char *service_name = "rstudio";
 
 bool pamLogin(const std::string& username, const std::string& password)
 {
-   // get path to pam helper
-   FilePath pamHelperPath(server::options().authPamHelperPath());
-   if (!pamHelperPath.exists())
-   {
-      LOG_ERROR_MESSAGE("PAM helper binary does not exist at " +
-                        pamHelperPath.absolutePath());
-      return false;
-   }
-
-   // create pipes
-   const int READ = 0;
-   const int WRITE = 1;
-   int fdInput[2];
-   if (posixcall(boost::bind(::pipe, fdInput), ERROR_LOCATION) == -1)
-      return false;
-   int fdOutput[2];
-   if (posixcall(boost::bind(::pipe, fdOutput), ERROR_LOCATION) == -1)
-      return false;
-
-   // fork
-   pid_t pid = posixcall(::fork, ERROR_LOCATION);
-   if (pid == -1)
-      return false;
-
-   // child
-   else if (pid == 0)
-   {
-      // NOTE: within the child we want to make sure in all cases that
-      // we call ::execv to execute the pam helper. as a result if any
-      // errors occur while we are setting up for the ::execv we log
-      // and continue rather than calling ::exit (we do this to avoid
-      // strange error conditions related to global c++ objects being
-      // torn down in a non-standard sequence).
-      if (server::options().authPamRequiresPriv())
-      {
-         // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
-         // running with geteuid != getuid (as is the case when we temporarily
-         // drop privileges). So restore privilliges in the child
-         if (util::system::realUserIsRoot())
-         {
-            Error error = util::system::restorePriv();
-            if (error)
-            {
-               LOG_ERROR(error);
-               // intentionally fail forward (see note above)
-            }
-         }
-      }
-
-      // close unused pipes
-      posixcall(boost::bind(::close, fdInput[WRITE]), ERROR_LOCATION);
-      posixcall(boost::bind(::close, fdOutput[READ]), ERROR_LOCATION);
-
-      // clear the child signal mask
-      Error error = core::system::clearSignalMask();
-      if (error)
-      {
-         LOG_ERROR(error);
-         // intentionally fail forward (see note above)
-      }
-
-      // wire standard streams
-      posixcall(boost::bind(::dup2, fdInput[READ], STDIN_FILENO),
-                ERROR_LOCATION);
-      posixcall(boost::bind(::dup2, fdOutput[WRITE], STDOUT_FILENO),
-                ERROR_LOCATION);
-
-      // close all open file descriptors other than std streams
-      error = core::system::closeNonStdFileDescriptors();
-      if (error)
-      {
-         LOG_ERROR(error);
-         // intentionally fail forward (see note above)
-      }
-
-      // build username args (on heap so they stay around after exec)
-      // and execute pam helper
-      using core::system::ProcessArgs;
-      std::vector<std::string> args;
-      args.push_back(pamHelperPath.absolutePath());
-      args.push_back(username);
-      ProcessArgs* pProcessArgs = new ProcessArgs(args);
-      ::execv(pamHelperPath.absolutePath().c_str(), pProcessArgs->args()) ;
-
-      // in the normal case control should never return from execv (it starts
-      // anew at main of the process pointed to by path). therefore, if we get
-      // here then there was an error
-      LOG_ERROR(systemError(errno, ERROR_LOCATION)) ;
-      ::exit(EXIT_FAILURE) ;
-   }
-
-   // parent
-   else
-   {
-      // close unused pipes
-      posixcall(boost::bind(::close, fdInput[READ]), ERROR_LOCATION);
-      posixcall(boost::bind(::close, fdOutput[WRITE]), ERROR_LOCATION);
-
-      // write the password to standard input then close the pipe
-      std::string input = password ;
-      std::size_t written = posixcall(boost::bind(::write,
-                                                   fdInput[WRITE],
-                                                   input.c_str(),
-                                                   input.length()),
-                                      ERROR_LOCATION);
-      posixcall(boost::bind(::close, fdInput[WRITE]), ERROR_LOCATION);
-
-      // check for correct bytes written
-      if (written != static_cast<std::size_t>(input.length()))
-      {
-         // first close stdout pipe
-         posixcall(boost::bind(::close, fdOutput[READ]), ERROR_LOCATION);
-
-         // log error and return false
-         LOG_ERROR_MESSAGE("Error writing to pam helper stdin");
-         return false;
-      }
-
-      // read the response from standard output
-      char buf;
-      size_t bytesRead = posixcall(boost::bind(::read, fdOutput[READ], &buf, 1),
-                                   ERROR_LOCATION);
-      posixcall(boost::bind(::close, fdOutput[READ]), ERROR_LOCATION);
-
-      // return true if bytes were read
-      return bytesRead > 0;
-   }
-
-   return false;
+  struct pam_conv *conversation = (struct pam_conv*)malloc(sizeof(struct pam_conv));;
+  conversation->conv = pam_conversation;
+  conversation->appdata_ptr = (void *)password.c_str();
+  pam_handle_t *pamh = NULL;
+  int start_code = pam_start(service_name,
+                           username.c_str(),
+                           conversation,
+                           &pamh);
+  bool granted = start_code == PAM_SUCCESS &&
+                 pam_authenticate(pamh, 0) == PAM_SUCCESS &&
+                 pam_setcred(pamh, PAM_ESTABLISH_CRED) == PAM_SUCCESS &&
+                 pam_open_session(pamh, 0) == PAM_SUCCESS;
+  if(granted)
+    pam_handles[username] = pamh;
+  return granted;
 }
-
 
 
 const char * const kUserId = "user-id";
@@ -398,6 +301,15 @@ void signOut(const std::string&,
              const http::Request& request,
              http::Response* pResponse)
 {
+   std::string username = auth::secure_cookie::readSecureCookie(request, kUserId);
+   if(!username.empty()) {
+      pam_handle_t *pamh = pam_handles[username];
+      if(pamh) {
+         pam_close_session(pam_handles[username], 0);
+         pam_end(pam_handles[username], PAM_SUCCESS);
+         pam_handles.erase(username);
+      }
+   }
    auth::secure_cookie::remove(request, kUserId, "", pResponse);
    pResponse->setMovedTemporarily(request, auth::handler::kSignIn);
 }
