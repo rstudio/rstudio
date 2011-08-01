@@ -25,7 +25,6 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
-import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 import com.google.gwt.uibinder.test.UiJavaResources;
 
 import junit.framework.TestCase;
@@ -125,7 +124,6 @@ public class UiBinderParserUiWithTest extends TestCase {
   }
 
   UiBinderParser parser;
-  private BundleAttributeParsers attributeParsers;
   private Document doc;
   private XMLElementProvider elemProvider;
 
@@ -156,7 +154,6 @@ public class UiBinderParserUiWithTest extends TestCase {
     CompilationState state = CompilationStateBuilder.buildFrom(createCompileLogger(), resources);
     types = state.getTypeOracle();
     logger = new MockMortalLogger();
-    attributeParsers = new BundleAttributeParsers(types, logger, null, "templatePath", null);
     fieldManager = new FieldManager(types, logger, true);
   }
 
@@ -271,8 +268,8 @@ public class UiBinderParserUiWithTest extends TestCase {
       UnableToCompleteException {
     DesignTimeUtils designTime = DesignTimeUtilsStub.EMPTY;
     elemProvider =
-        new XMLElementProviderImpl(new AttributeParsers(types, null, logger), attributeParsers,
-            types, logger, designTime);
+        new XMLElementProviderImpl(new AttributeParsers(types, null, logger), types,
+            logger, designTime);
     doc = docHelper.documentFor(domString, null);
     item = (Element) doc.getDocumentElement().getElementsByTagName("with").item(0);
     elm = elemProvider.get(item);

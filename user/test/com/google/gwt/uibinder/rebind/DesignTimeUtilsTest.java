@@ -23,6 +23,7 @@ import junit.framework.TestCase;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXParseException;
 
 import java.beans.Beans;
 import java.io.PrintWriter;
@@ -42,7 +43,7 @@ public class DesignTimeUtilsTest extends TestCase {
   /**
    * Test for {@link DesignTimeUtilsImpl#isDesignTime(String)}.
    */
-  public void test_isDesignTime_evaluate() throws Exception {
+  public void test_isDesignTime_evaluate() {
     // not design time
     {
       Beans.setDesignTime(false);
@@ -71,7 +72,7 @@ public class DesignTimeUtilsTest extends TestCase {
   /**
    * Test for {@link DesignTimeUtils#addDeclarations(IndentedWriter)}.
    */
-  public void test_addDeclarations_default() throws Exception {
+  public void test_addDeclarations_default() {
     String result = call_addDeclarations(stub);
     assertEquals("", result);
   }
@@ -79,7 +80,7 @@ public class DesignTimeUtilsTest extends TestCase {
   /**
    * Test for {@link DesignTimeUtils#addDeclarations(IndentedWriter)}.
    */
-  public void test_addDeclarations_designTime() throws Exception {
+  public void test_addDeclarations_designTime() {
     String result = call_addDeclarations(impl);
     assertContains(result, "public static interface DTObjectHandler");
     assertContains(result, "void handle(String path, Object object)");
@@ -104,7 +105,7 @@ public class DesignTimeUtilsTest extends TestCase {
   /**
    * Test for {@link DesignTimeUtils#getImplName(String)}.
    */
-  public void test_getImplName_default() throws Exception {
+  public void test_getImplName_default() {
     String basicName = "MyBinderImpl";
     String result = stub.getImplName(basicName);
     assertEquals(basicName, result);
@@ -113,7 +114,7 @@ public class DesignTimeUtilsTest extends TestCase {
   /**
    * Test for {@link DesignTimeUtils#getImplName(String)}.
    */
-  public void test_getImplName_designTime() throws Exception {
+  public void test_getImplName_designTime() {
     String basicName = "MyBinderImpl";
     String result = impl.getImplName(basicName);
     // has "_designTime" substring
@@ -128,7 +129,7 @@ public class DesignTimeUtilsTest extends TestCase {
   /**
    * Test for {@link DesignTimeUtils#getPath(Element)} and related methods.
    */
-  public void test_path_default() throws Exception {
+  public void test_path_default() throws SAXParseException {
     Document doc = docHelper.documentFor("<root><first/><second/></root>", null);
     stub.rememberPathForElements(doc);
     Element first = getChildElement(doc.getDocumentElement(), "first");
@@ -140,7 +141,7 @@ public class DesignTimeUtilsTest extends TestCase {
   /**
    * Test for {@link DesignTimeUtils#getPath(Element)} and related methods.
    */
-  public void test_path_designTime() throws Exception {
+  public void test_path_designTime() throws SAXParseException {
     Document doc = docHelper.documentFor(
         "<root><first/><second><subSecond/></second></root>", null);
     impl.rememberPathForElements(doc);
@@ -155,7 +156,7 @@ public class DesignTimeUtilsTest extends TestCase {
   /**
    * Test for {@link DesignTimeUtils#getProvidedField(String, String)}.
    */
-  public void test_getProvidedField_default() throws Exception {
+  public void test_getProvidedField_default() {
     String source = stub.getProvidedField("java.lang.String", "fieldName");
     assertEquals(null, source);
   }
@@ -163,7 +164,7 @@ public class DesignTimeUtilsTest extends TestCase {
   /**
    * Test for {@link DesignTimeUtils#getProvidedField(String, String)}.
    */
-  public void test_getProvidedField_designTime() throws Exception {
+  public void test_getProvidedField_designTime() {
     String source = impl.getProvidedField("java.lang.String", "fieldName");
     assertEquals("(java.lang.String) dtObjectHandler.provideField("
         + "java.lang.String.class, \"fieldName\")", source);
@@ -173,7 +174,7 @@ public class DesignTimeUtilsTest extends TestCase {
    * Test for {@link DesignTimeUtils#getProvidedFactory(String, String, String)}
    * .
    */
-  public void test_getProvidedFactory_default() throws Exception {
+  public void test_getProvidedFactory_default() {
     String source = stub.getProvidedFactory("java.lang.String", "methodName",
         "false, 1");
     assertEquals(null, source);
@@ -183,7 +184,7 @@ public class DesignTimeUtilsTest extends TestCase {
    * Test for {@link DesignTimeUtils#getProvidedFactory(String, String, String)}
    * .
    */
-  public void test_getProvidedFactory_designTime() throws Exception {
+  public void test_getProvidedFactory_designTime() {
     String source = impl.getProvidedFactory("java.lang.String", "methodName",
         "false, 1");
     assertEquals("(java.lang.String) dtObjectHandler.provideFactory("
@@ -194,7 +195,7 @@ public class DesignTimeUtilsTest extends TestCase {
   /**
    * Test for {@link DesignTimeUtils#getTemplateContent(String)}.
    */
-  public void test_getTemplateContent_default() throws Exception {
+  public void test_getTemplateContent_default() {
     String path = "the/path";
     assertEquals(null, stub.getTemplateContent(path));
   }
@@ -202,7 +203,7 @@ public class DesignTimeUtilsTest extends TestCase {
   /**
    * Test for {@link DesignTimeUtils#getTemplateContent(String)}.
    */
-  public void test_getTemplateContent_designTime() throws Exception {
+  public void test_getTemplateContent_designTime() {
     String path = "the/path";
     String key = "gwt.UiBinder.designTime " + path;
     try {
@@ -219,7 +220,7 @@ public class DesignTimeUtilsTest extends TestCase {
    * {@link DesignTimeUtils#handleUIObject(IUiBinderWriterStatements, XMLElement, String)}
    * .
    */
-  public void test_handleUIObject_default() throws Exception {
+  public void test_handleUIObject_default() {
     WriterStatements writer = new WriterStatements();
     stub.handleUIObject(writer, null, "myField");
     assertEquals(0, writer.statements.size());
@@ -230,7 +231,7 @@ public class DesignTimeUtilsTest extends TestCase {
    * {@link DesignTimeUtils#handleUIObject(IUiBinderWriterStatements, XMLElement, String)}
    * .
    */
-  public void test_handleUIObject_designTime() throws Exception {
+  public void test_handleUIObject_designTime() throws SAXParseException {
     // prepare XMLElement
     XMLElement element;
     {
@@ -256,14 +257,14 @@ public class DesignTimeUtilsTest extends TestCase {
   /**
    * Test for {@link DesignTimeUtils#isDesignTime()}.
    */
-  public void test_isDesignTime_default() throws Exception {
+  public void test_isDesignTime_default() {
     assertEquals(false, stub.isDesignTime());
   }
 
   /**
    * Test for {@link DesignTimeUtils#isDesignTime()}.
    */
-  public void test_getOwnerCheck_designTime() throws Exception {
+  public void test_getOwnerCheck_designTime() {
     assertEquals(true, impl.isDesignTime());
   }
 
@@ -271,7 +272,7 @@ public class DesignTimeUtilsTest extends TestCase {
    * Test for {@link DesignTimeUtils#putAttribute(XMLElement, String, String)}
    * and {@link DesignTimeUtils#writeAttributes(Statements)}.
    */
-  public void test_putAttribute_default() throws Exception {
+  public void test_putAttribute_default() throws SAXParseException {
     List<String> statements = call_putAttribute(stub);
     // validate
     assertEquals(0, statements.size());
@@ -281,15 +282,15 @@ public class DesignTimeUtilsTest extends TestCase {
    * Test for {@link DesignTimeUtils#putAttribute(XMLElement, String, String)}
    * and {@link DesignTimeUtils#writeAttributes(Statements)}.
    */
-  public void test_putAttribute_designTime() throws Exception {
+  public void test_putAttribute_designTime() throws SAXParseException {
     List<String> statements = call_putAttribute(impl);
     // validate
     assertEquals(1, statements.size());
     assertEquals("dtPutAttribute(\"0/0 attr\", val);", statements.get(0));
   }
 
-  private static List<String> call_putAttribute(DesignTimeUtils designTime)
-      throws Exception {
+  private static List<String> call_putAttribute(DesignTimeUtils designTime) throws SAXParseException
+      {
     // prepare XMLElement
     XMLElement element;
     {
@@ -314,7 +315,7 @@ public class DesignTimeUtilsTest extends TestCase {
    * Test for {@link DesignTimeUtils#putAttribute(XMLElement, String, String[])}
    * .
    */
-  public void test_putAttributeStrings_default() throws Exception {
+  public void test_putAttributeStrings_default() throws SAXParseException {
     List<String> statements = call_putAttributeStrings(new String[]{"a", "b"},
         stub);
     // validate
@@ -325,7 +326,7 @@ public class DesignTimeUtilsTest extends TestCase {
    * Test for {@link DesignTimeUtils#putAttribute(XMLElement, String, String[])}
    * .
    */
-  public void test_putAttributeStrings_designTime_empty() throws Exception {
+  public void test_putAttributeStrings_designTime_empty() throws SAXParseException {
     List<String> statements = call_putAttributeStrings(new String[]{}, impl);
     // validate
     assertEquals(0, statements.size());
@@ -335,7 +336,7 @@ public class DesignTimeUtilsTest extends TestCase {
    * Test for {@link DesignTimeUtils#putAttribute(XMLElement, String, String[])}
    * .
    */
-  public void test_putAttributeStrings_designTime() throws Exception {
+  public void test_putAttributeStrings_designTime() throws SAXParseException {
     List<String> statements = call_putAttributeStrings(new String[]{"a", "b"},
         impl);
     // validate
@@ -345,7 +346,7 @@ public class DesignTimeUtilsTest extends TestCase {
   }
 
   private static List<String> call_putAttributeStrings(String[] strings,
-      DesignTimeUtils designTime) throws Exception {
+      DesignTimeUtils designTime) throws SAXParseException {
     // prepare XMLElement
     XMLElement element;
     {
@@ -379,7 +380,7 @@ public class DesignTimeUtilsTest extends TestCase {
    */
   private static XMLElement createXMLElement(Element elem,
       DesignTimeUtils designTime) {
-    return new XMLElement(elem, null, null, null, null, designTime, null);
+    return new XMLElement(elem, null, null, null, designTime, null);
   }
 
   /**

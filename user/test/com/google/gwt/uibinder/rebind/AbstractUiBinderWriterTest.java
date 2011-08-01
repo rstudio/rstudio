@@ -26,9 +26,7 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
-import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
-import com.google.gwt.uibinder.rebind.model.OwnerClass;
 import com.google.gwt.uibinder.test.UiJavaResources;
 
 import junit.framework.TestCase;
@@ -122,7 +120,6 @@ public abstract class AbstractUiBinderWriterTest extends TestCase {
   protected PrintWriter printWriter;
   protected UiBinderWriter writer;
   protected UiBinderParser parser;
-  protected BundleAttributeParsers attributeParsers;
   protected XMLElementProvider elemProvider;
   protected XMLElement elm;
   protected FieldManager fieldManager;
@@ -142,7 +139,6 @@ public abstract class AbstractUiBinderWriterTest extends TestCase {
     super(name);
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -161,17 +157,13 @@ public abstract class AbstractUiBinderWriterTest extends TestCase {
     CompilationState state = CompilationStateBuilder.buildFrom(createCompileLogger(), resources);
     types = state.getTypeOracle();
     logger = new MockMortalLogger();
-    JClassType ownerType = types.findType(RENDERER_OWNER_CLASS_NAME);
     UiBinderContext uiBinderCtx = new UiBinderContext();
-    attributeParsers =
-        new BundleAttributeParsers(types, logger, new OwnerClass(ownerType, logger, uiBinderCtx),
-            "templatePath", ownerType);
     fieldManager = new FieldManager(types, logger, true);
     String baseClass = RENDERER_BASE_CLASS_NAME;
     DesignTimeUtils designTime = DesignTimeUtilsStub.EMPTY;
     elemProvider =
         new XMLElementProviderImpl(new AttributeParsers(types, fieldManager, logger),
-            attributeParsers, types, logger, designTime);
+            types, logger, designTime);
     doc = docHelper.documentFor(domString, rendererClass.getPath());
     item = (Element) doc.getDocumentElement().getChildNodes().item(0);
     elm = elemProvider.get(item);

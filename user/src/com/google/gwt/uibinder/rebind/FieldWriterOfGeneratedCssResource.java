@@ -73,7 +73,7 @@ class FieldWriterOfGeneratedCssResource extends AbstractFieldWriter {
 
   @Override
   public void writeFieldBuilder(IndentedWriter w,
-      int getterCount, OwnerField ownerField) throws UnableToCompleteException {
+      int getterCount, OwnerField ownerField) {
     w.write("%s;  // generated css resource must be always created. Type: %s. Precedence: %s",
         FieldManager.getFieldBuilder(getName()), getFieldType(), getBuildPrecedence());
   }

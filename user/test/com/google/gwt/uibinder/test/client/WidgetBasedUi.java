@@ -25,12 +25,12 @@ import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.CssResource.Shared;
 import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.resources.client.CssResource.Shared;
 import com.google.gwt.text.client.DoubleRenderer;
 import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -41,6 +41,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DateLabel;
 import com.google.gwt.user.client.ui.DisclosurePanel;
+import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -122,8 +123,7 @@ public class WidgetBasedUi extends Composite {
   @UiField TreeItem myTreeItemCA;
   @UiField Widget myTreeWidgetCB;
   @UiField Element nonStandardElement;
-  @SuppressWarnings("deprecation")
-  @UiField com.google.gwt.user.client.ui.DockPanel root;
+  @UiField DockPanel root;
   @UiField Widget sideBarWidget;
   @UiField DivElement sideBar;
   @UiField SpanElement spanInMsg;
@@ -173,12 +173,6 @@ public class WidgetBasedUi extends Composite {
   @UiField FooLabel objectBooleanIntoPrimitive;
   @UiField FooLabel allObjectBoolean;
   @UiField FooLabel allPrimitiveBoolean;
-  @UiField(provided = true) @SuppressWarnings("uibinder")
-  FakeBundle2 legacyValuesForBeans = new FakeBundle2();
-  @UiField(provided = true) @SuppressWarnings("uibinder")
-  FakeBundle3 legacyValuesForHtml = new FakeBundle3();
-  @UiField Label bundledLabelLegacy;
-  @UiField DivElement bundledDivLegacy;
   @UiField ToggleButton toggle;
   @UiField HTML styleLess;
   @UiField FooDialog fooDialog;

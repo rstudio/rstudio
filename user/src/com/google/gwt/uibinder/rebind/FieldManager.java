@@ -335,10 +335,8 @@ public class FieldManager {
    * Writes all stored gwt fields.
    *
    * @param writer the writer to output
-   * @param ownerTypeName the name of the class being processed
    */
-  public void writeGwtFieldsDeclaration(IndentedWriter writer,
-      String ownerTypeName) throws UnableToCompleteException {
+  public void writeGwtFieldsDeclaration(IndentedWriter writer) throws UnableToCompleteException {
     Collection<FieldWriter> fields = fieldsMap.values();
     for (FieldWriter field : fields) {
       field.write(writer);

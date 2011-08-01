@@ -90,7 +90,6 @@ class ElementParserTester {
 
   final ElementParser parser;
 
-  @SuppressWarnings("deprecation")
   ElementParserTester(String parsedTypeName, ElementParser parser,
       Resource... moreJava) throws UnableToCompleteException {
     this.parser = parser;
@@ -102,11 +101,8 @@ class ElementParserTester {
         uiResources);
     types = state.getTypeOracle();
 
-    // Fully qualified to avoid deprecation warning on the import line
-    com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers bundleParsers = new com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers(
-        types, logger, null, templatePath, null);
     elemProvider = new XMLElementProviderImpl(new AttributeParsers(types, null,
-        logger), bundleParsers, types, logger, DesignTimeUtilsStub.EMPTY);
+        logger), types, logger, DesignTimeUtilsStub.EMPTY);
 
     fieldManager = new FieldManager(types, logger, false);
     JClassType baseType = types.findType("my.Ui.BaseClass");

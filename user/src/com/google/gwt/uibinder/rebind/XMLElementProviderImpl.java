@@ -17,35 +17,31 @@ package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
-import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 
 import org.w3c.dom.Element;
 
 /**
  * The default implemenatation of {@link XMLElementProvider}.
  */
-@SuppressWarnings("deprecation")
 public class XMLElementProviderImpl implements XMLElementProvider {
   private final AttributeParsers attributeParsers;
   // bundleParsers for legacy templates
-  private final BundleAttributeParsers bundleParsers;
   private final TypeOracle oracle;
   private final MortalLogger logger;
   private final DesignTimeUtils designTime;
 
   // bundleParsers for legacy templates
   public XMLElementProviderImpl(AttributeParsers attributeParsers,
-      BundleAttributeParsers bundleParsers, TypeOracle oracle,
-      MortalLogger logger, DesignTimeUtils designTime) {
+      TypeOracle oracle, MortalLogger logger,
+      DesignTimeUtils designTime) {
     this.attributeParsers = attributeParsers;
-    this.bundleParsers = bundleParsers;
     this.oracle = oracle;
     this.logger = logger;
     this.designTime = designTime;
   }
 
   public XMLElement get(Element e) {
-    return new XMLElement(e, attributeParsers, bundleParsers, oracle, logger,
-        designTime, this);
+    return new XMLElement(e, attributeParsers, oracle, logger, designTime,
+        this);
   }
 }

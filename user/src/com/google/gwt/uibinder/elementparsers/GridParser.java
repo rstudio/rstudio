@@ -68,10 +68,6 @@ public class GridParser implements ElementParser {
       return styleName;
     }
 
-    public void setColumns(List<CellContent> columns) {
-      this.columns = columns;
-    }
-
     public void setStyleName(String styleName) {
       this.styleName = styleName;
     }

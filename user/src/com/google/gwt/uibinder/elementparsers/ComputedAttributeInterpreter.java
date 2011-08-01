@@ -16,7 +16,6 @@
 package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.uibinder.attributeparsers.AttributeParser;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLAttribute;
 import com.google.gwt.uibinder.rebind.XMLElement;
@@ -25,8 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Assigns computed values to element attributes, e.g. nasty old
- * resources:styleName="style.pretty" and nice new
+ * Assigns computed values to element attributes, e.g.
  * styleName={resources.style.pretty}, which will become something like
  * myWidget.setStyleName(resources.style().pretty()) in the generated code.
  */
@@ -57,24 +55,12 @@ class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
     this.writer = writer;
   }
 
-  @SuppressWarnings("deprecation")
   public String interpretElement(XMLElement elem)
       throws UnableToCompleteException {
     Map<String, String> attNameToToken = new HashMap<String, String>();
 
     for (int i = elem.getAttributeCount() - 1; i >= 0; i--) {
       XMLAttribute att = elem.getAttribute(i);
-      AttributeParser parser = writer.getBundleAttributeParser(att);
-
-      if (parser != null) {
-        // Legacy res:style='style.pretty'
-        String parsedValue = parser.parse(att.consumeRawValue());
-        String attToken = writer.tokenForStringExpression(parsedValue);
-
-        // Use localName so <div res:style='...'> becomes <div style='...'>
-        attNameToToken.put(att.getLocalName(), attToken);
-        continue;
-      }
 
       if (att.hasComputedValue()) {
         String attToken = delegate.getAttributeToken(att);

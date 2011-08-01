@@ -129,9 +129,6 @@ public class XMLElement {
 
   private final Element elem;
   private final AttributeParsers attributeParsers;
-  // for legacy templates
-  @SuppressWarnings("deprecation")
-  private final com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers bundleParsers;
   private final TypeOracle oracle;
 
   private final MortalLogger logger;
@@ -166,17 +163,13 @@ public class XMLElement {
     NO_END_TAG.add("wbr");
   }
 
-  // bundleParsers for legacy templates
-  @SuppressWarnings("deprecation")
   XMLElement(
       Element elem,
       AttributeParsers attributeParsers,
-      com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers bundleParsers,
-      TypeOracle oracle, MortalLogger logger, DesignTimeUtils designTime,
-      XMLElementProvider provider) {
+      TypeOracle oracle,
+      MortalLogger logger, DesignTimeUtils designTime, XMLElementProvider provider) {
     this.elem = elem;
     this.attributeParsers = attributeParsers;
-    this.bundleParsers = bundleParsers;
     this.oracle = oracle;
     this.logger = logger;
     this.designTime = designTime;
@@ -273,11 +266,6 @@ public class XMLElement {
    */
   public String consumeAttributeWithDefault(String name, String defaultValue,
       JType[] types) throws UnableToCompleteException {
-    /*
-     * TODO(rjrjr) The only reason we need the attribute here is for getParser,
-     * and getParser only needs it for horrible old BundleAttributeParsers. When
-     * that dies, this gets much simpler.
-     */
     XMLAttribute attribute = getAttribute(name);
     if (attribute == null) {
       if (defaultValue != null) {
@@ -286,7 +274,7 @@ public class XMLElement {
       return defaultValue;
     }
     String rawValue = attribute.consumeRawValue();
-    AttributeParser parser = getParser(attribute, types);
+    AttributeParser parser = getParser(types);
     if (parser == null) {
       logger.die(this, "No such attribute %s", name);
     }
@@ -586,16 +574,11 @@ public class XMLElement {
    */
   public String consumeRequiredAttribute(String name, JType... types)
       throws UnableToCompleteException {
-    /*
-     * TODO(rjrjr) We have to get the attribute to get the parser, and we must
-     * get the attribute before we consume the value. This nasty subtlety is all
-     * down to BundleParsers, which we'll hopefully kill off soon.
-     */
     XMLAttribute attribute = getAttribute(name);
     if (attribute == null) {
       failRequired(name);
     }
-    AttributeParser parser = getParser(attribute, types);
+    AttributeParser parser = getParser(types);
     String rawValue = consumeRequiredRawAttribute(name);
 
     try {
@@ -937,15 +920,8 @@ public class XMLElement {
     return b.toString();
   }
 
-  @SuppressWarnings("deprecation")
-  private AttributeParser getParser(XMLAttribute xmlAttribute, JType... types)
-      throws UnableToCompleteException {
-    AttributeParser rtn = bundleParsers.get(xmlAttribute);
-    if (rtn == null) {
-      rtn = attributeParsers.get(types);
-    }
-
-    return rtn;
+  private AttributeParser getParser(JType... types) {
+    return attributeParsers.get(types);
   }
 
   private JType getSafeHtmlType() {

@@ -23,7 +23,6 @@ import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
-import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 import com.google.gwt.uibinder.elementparsers.NullInterpreter;
 import com.google.gwt.uibinder.test.UiJavaResources;
 
@@ -58,14 +57,12 @@ public class XMLElementTest extends TestCase {
 
   private TypeOracle types;
   private MockMortalLogger logger;
-  private BundleAttributeParsers attributeParsers;
 
   private Document doc;
   private XMLElementProvider elemProvider;
   private XMLElement elm;
   private Element item;
 
-  @SuppressWarnings("deprecation")
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -73,8 +70,6 @@ public class XMLElementTest extends TestCase {
         createCompileLogger(), UiJavaResources.getUiResources());
     types = state.getTypeOracle();
     logger = new MockMortalLogger();
-    attributeParsers = new BundleAttributeParsers(types, logger, null,
-        "templatePath", null);
     init(DesignTimeUtilsStub.EMPTY,
         "<doc><elm attr1=\"attr1Value\" attr2=\"attr2Value\"/></doc>");
   }
@@ -490,7 +485,7 @@ public class XMLElementTest extends TestCase {
   private void init(DesignTimeUtils designTime, String domString)
       throws SAXParseException {
     elemProvider = new XMLElementProviderImpl(new AttributeParsers(types, null,
-        logger), attributeParsers, types, logger, designTime);
+        logger), types, logger, designTime);
     init(domString);
     designTime.rememberPathForElements(doc);
   }

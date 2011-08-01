@@ -97,6 +97,7 @@ public abstract class PlaceholderInterpreter implements
    * Performs escaping on the consumed text to make it safe for use as a
    * Messages {@literal @}Default value
    */
+  @SuppressWarnings("unused")
   public String postProcess(String consumed) throws UnableToCompleteException {
     return tokenator.detokenate(MessageWriter.escapeMessageFormat(consumed));
   }

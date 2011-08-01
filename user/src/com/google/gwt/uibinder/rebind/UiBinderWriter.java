@@ -27,10 +27,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dom.client.TagName;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.uibinder.attributeparsers.AttributeParser;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
-import com.google.gwt.uibinder.attributeparsers.BundleAttributeParser;
-import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 import com.google.gwt.uibinder.client.AbstractUiRenderer;
 import com.google.gwt.uibinder.client.LazyDomElement;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -67,13 +64,7 @@ import java.util.Map;
 
 /**
  * Writer for UiBinder generated classes.
- *
- * TODO(rdamazio): Refactor this, extract model classes, improve ordering
- * guarantees, etc.
- *
- * TODO(rjrjr): Line numbers in error messages.
  */
-@SuppressWarnings("deprecation")
 public class UiBinderWriter implements Statements {
   private static final String PACKAGE_URI_SCHEME = "urn:import:";
 
@@ -309,8 +300,6 @@ public class UiBinderWriter implements Statements {
   private final LinkedList<List<String>> detachStatementsStack = new LinkedList<List<String>>();
   private final AttributeParsers attributeParsers;
 
-  private final BundleAttributeParsers bundleParsers;
-
   private final UiBinderContext uiBinderCtx;
 
   private final String binderUri;
@@ -399,8 +388,6 @@ public class UiBinderWriter implements Statements {
         ownerClass, logger, oracle, useLazyWidgetBuilders);
 
     attributeParsers = new AttributeParsers(oracle, fieldManager, logger);
-    bundleParsers = new BundleAttributeParsers(oracle, logger, getOwnerClass(),
-        templatePath, uiOwnerType);
   }
 
   /**
@@ -771,20 +758,6 @@ public class UiBinderWriter implements Statements {
     return baseClass;
   }
 
-  /**
-   * Finds an attribute {@link BundleAttributeParser} for the given xml
-   * attribute, if any, based on its namespace uri.
-   *
-   * @return the parser or null
-   * @deprecated exists only to support {@link BundleAttributeParser}, which
-   *             will be leaving us soon.
-   */
-  @Deprecated
-  public AttributeParser getBundleAttributeParser(XMLAttribute attribute)
-      throws UnableToCompleteException {
-    return bundleParsers.get(attribute);
-  }
-
   public ImplicitClientBundle getBundleClass() {
     return bundleClass;
   }
@@ -1083,7 +1056,7 @@ public class UiBinderWriter implements Statements {
     gwtPrefix = documentElement.lookupPrefix(binderUri);
 
     XMLElement elem = new XMLElementProviderImpl(attributeParsers,
-        bundleParsers, oracle, logger, designTime).get(documentElement);
+        oracle, logger, designTime).get(documentElement);
     this.rendered = tokenator.detokenate(parseDocumentElement(elem));
     printWriter.print(rendered);
   }
@@ -1097,24 +1070,6 @@ public class UiBinderWriter implements Statements {
     String parser = "com.google.gwt.uibinder.elementparsers." + className
         + "Parser";
     addElementParser(gwtClass, parser);
-  }
-
-  /**
-   * Outputs a bundle resource for a given bundle attribute parser.
-   */
-  private String declareStaticField(BundleAttributeParser parser) {
-    if (!parser.isBundleStatic()) {
-      return null;
-    }
-
-    String fullBundleClassName = parser.fullBundleClassName();
-
-    StringBuilder b = new StringBuilder();
-    b.append("static ").append(fullBundleClassName).append(" ").append(
-        parser.bundleInstance()).append(" = GWT.create(").append(
-        fullBundleClassName).append(".class);");
-
-    return b.toString();
   }
 
   /**
@@ -1665,7 +1620,7 @@ public class UiBinderWriter implements Statements {
       }
     }
 
-    fieldManager.writeGwtFieldsDeclaration(niceWriter, uiOwnerType.getName());
+    fieldManager.writeGwtFieldsDeclaration(niceWriter);
   }
 
   private void writeHandlers(IndentedWriter w) throws UnableToCompleteException {
@@ -1719,14 +1674,7 @@ public class UiBinderWriter implements Statements {
       String fieldName = ownerField.getName();
       FieldWriter fieldWriter = fieldManager.lookup(fieldName);
 
-      BundleAttributeParser bundleParser = bundleParsers.get(ownerField.getType());
-
-      if (bundleParser != null) {
-        // ownerField is a bundle resource.
-        maybeWriteFieldSetter(niceWriter, ownerField,
-            bundleParser.bundleClass(), bundleParser.bundleInstance());
-
-      } else if (fieldWriter != null) {
+      if (fieldWriter != null) {
         // ownerField is a widget.
         JClassType type = fieldWriter.getInstantiableType();
         if (type != null) {
@@ -1818,8 +1766,7 @@ public class UiBinderWriter implements Statements {
     w.write("}");
   }
 
-  private void writeRendererGetters(IndentedWriter w, JClassType owner, String rootFieldName)
-      throws UnableToCompleteException {
+  private void writeRendererGetters(IndentedWriter w, JClassType owner, String rootFieldName) {
     List<JMethod> getters = findGetterNames(owner);
 
     // For every requested getter
@@ -1882,25 +1829,6 @@ public class UiBinderWriter implements Statements {
     }
   }
 
-  /**
-   * Generates instances of any bundle classes that have been referenced by a
-   * namespace entry in the top level element. This must be called *after* all
-   * parsing is through, as the bundle list is generated lazily as dom elements
-   * are parsed.
-   */
-  private void writeStaticBundleInstances(IndentedWriter niceWriter) {
-    // TODO(rjrjr) It seems bad that this method has special
-    // knowledge of BundleAttributeParser, but that'll die soon so...
-
-    Map<String, BundleAttributeParser> bpMap = bundleParsers.getMap();
-    for (String key : bpMap.keySet()) {
-      String declaration = declareStaticField(bpMap.get(key));
-      if (declaration != null) {
-        niceWriter.write(declaration);
-      }
-    }
-  }
-
   private void writeStaticMessagesInstance(IndentedWriter niceWriter) {
     if (messages.hasMessages()) {
       niceWriter.write(messages.getDeclaration());
@@ -1909,7 +1837,6 @@ public class UiBinderWriter implements Statements {
 
   private void writeStatics(IndentedWriter w) {
     writeStaticMessagesInstance(w);
-    writeStaticBundleInstances(w);
     designTime.addDeclarations(w);
   }
 }
