@@ -5,14 +5,20 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchOracle;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -22,6 +28,8 @@ public class CodeSearch
    public interface Display 
    {
       SearchDisplay getSearchDisplay();
+      
+      SuggestBox.DefaultSuggestionDisplay getSuggestionDisplay();
       
       CodeSearchOracle getSearchOracle();
       
@@ -64,19 +72,37 @@ public class CodeSearch
       });
       
      searchDisplay.addBlurHandler(new BlurHandler() {
-
-      @Override
-      public void onBlur(BlurEvent event)
-      { 
-         // fully clear the search display 
-         display_.getSearchDisplay().clear();
-       
-         // notify the oracle to reset its state
-         display_.getSearchOracle().clear();
-         
-      }
-        
+         @Override
+         public void onBlur(BlurEvent event)
+         { 
+            clearDisplay(); 
+         }
      });
+     
+     searchDisplay.addFocusHandler(new FocusHandler() {
+        @Override
+        public void onFocus(FocusEvent event)
+        { 
+           clearDisplay(); 
+        }
+     });
+     
+     searchDisplay.addValueChangeHandler(new ValueChangeHandler<String>() {
+        @Override
+        public void onValueChange(ValueChangeEvent<String> event)
+        {
+           if (event.getValue().length() == 0)
+           {
+              // cancel outstanding time buffered code searches
+              display_.getSearchOracle().clear();
+              
+              // make sure the suggest box display is hidden
+              display_.getSuggestionDisplay().hideSuggestions();
+           }
+        }     
+     });
+     
+     
    }
    
    public Widget getSearchWidget()
@@ -84,6 +110,12 @@ public class CodeSearch
       return (Widget) display_.getSearchDisplay();
    }
    
+   
+   private void clearDisplay()
+   {
+      display_.getSearchDisplay().clear();
+      display_.getSearchOracle().clear();
+   }
    
    private final Display display_;
 }

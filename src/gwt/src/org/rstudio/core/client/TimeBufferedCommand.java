@@ -97,6 +97,11 @@ public abstract class TimeBufferedCommand
                                          "they stay stopped.");
       stopped_ = false;
    }
+   
+   public final boolean isStopped()
+   {
+      return stopped_;
+   }
 
    private final void scheduleExecution(final boolean passive, final int millis)
    {

@@ -3,27 +3,25 @@ package org.rstudio.studio.client.workbench.codesearch.model;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.user.client.ui.SuggestOracle.Callback;
-import com.google.gwt.user.client.ui.SuggestOracle.Request;
-import com.google.gwt.user.client.ui.SuggestOracle.Response;
-import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
+import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.inject.Inject;
 
-public class CodeSearchSuggestions
+public class CodeSearchOracle extends SuggestOracle
 {
    @Inject
-   public CodeSearchSuggestions(CodeSearchServerOperations server)
+   public CodeSearchOracle(CodeSearchServerOperations server)
    {
       server_ = server;
    }
    
-   public void request(final Request request, final Callback callback)
+   @Override
+   public void requestSuggestions(final Request request, 
+                                  final Callback callback)
    {    
-     
-      
       // first see if we can serve the request from the cache
       for (int i=resultCache_.size() - 1; i >= 0; i--)
       {
@@ -68,25 +66,7 @@ public class CodeSearchSuggestions
       }
       
       // failed to short-circuit via the cache, hit the server
-      server_.searchCode(
-            request.getQuery(),
-            request.getLimit(),
-            new SimpleRequestCallback<JsArray<CodeSearchResult>>() {
-         
-         @Override
-         public void onResponseReceived(JsArray<CodeSearchResult> results)
-         { 
-            // read the response
-            ArrayList<CodeSearchSuggestion> suggestions = 
-                                    new ArrayList<CodeSearchSuggestion>();
-            for (int i = 0; i<results.length(); i++) 
-               suggestions.add(new CodeSearchSuggestion(results.get(i)));     
-            
-            // return suggestions
-            cacheAndReturnSuggestions(request, suggestions, callback);                            
-         }
-      });
-      
+      codeSearch_.enqueRequest(request, callback); 
    }
      
    public CodeSearchResult resultFromSuggestion(Suggestion suggestion)
@@ -97,7 +77,61 @@ public class CodeSearchSuggestions
    public void clear()
    {
       resultCache_.clear();
+      codeSearch_.suspend();
    }
+   
+   @Override
+   public boolean isDisplayStringHTML()
+   {
+      return true;
+   }
+   
+   private class CodeSearchCommand extends TimeBufferedCommand  
+   {
+      public CodeSearchCommand()
+      {
+         super(300);
+      }
+      
+      public void enqueRequest(Request request, Callback callback)
+      {
+         request_ = request;
+         callback_ = callback;
+         resume();
+         nudge();
+      }
+
+      @Override
+      protected void performAction(boolean shouldSchedulePassive)
+      {
+         // failed to short-circuit via the cache, hit the server
+         server_.searchCode(
+               request_.getQuery(),
+               request_.getLimit(),
+               new SimpleRequestCallback<JsArray<CodeSearchResult>>() {
+            
+            @Override
+            public void onResponseReceived(JsArray<CodeSearchResult> results)
+            { 
+               // read the response
+               ArrayList<CodeSearchSuggestion> suggestions = 
+                                       new ArrayList<CodeSearchSuggestion>();
+               for (int i = 0; i<results.length(); i++) 
+                  suggestions.add(new CodeSearchSuggestion(results.get(i)));     
+               
+               // return suggestions (as long as we aren't stopped)
+               if (!isStopped())
+                  cacheAndReturnSuggestions(request_, suggestions, callback_);                            
+            }
+         });
+         
+      }
+      
+      private Request request_;
+      private Callback callback_;
+   };
+   
+   
    
    private void cacheAndReturnSuggestions(
                            final Request request, 
@@ -119,8 +153,10 @@ public class CodeSearchSuggestions
                                   new Response(suggestions)) ;
    }
    
-   
+  
    private final CodeSearchServerOperations server_ ;
+   
+   private CodeSearchCommand codeSearch_ = new CodeSearchCommand();
    
    private ArrayList<Pair<String, ArrayList<CodeSearchSuggestion>>> 
       resultCache_ = new ArrayList<Pair<String,ArrayList<CodeSearchSuggestion>>>();

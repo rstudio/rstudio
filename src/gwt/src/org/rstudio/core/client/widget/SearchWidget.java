@@ -24,6 +24,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
 
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -238,6 +239,13 @@ public class SearchWidget extends Composite
    {
       setText("", true);
    }
+   
+   // NOTE: only works if you are using the default display!
+   public DefaultSuggestionDisplay getSuggestionDisplay()
+   {
+      return (DefaultSuggestionDisplay) suggestBox_.getSuggestionDisplay();
+   }
+   
    
    private void updateLastValue(String value)
    {
