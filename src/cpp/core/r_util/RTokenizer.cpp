@@ -26,9 +26,6 @@
 
 // TODO: keyboard shortcut to initiate search
 
-// TODO: only run the query once and only after ~200ms (or num chars)
-// (but if we were truncated then need to re-run)
-
 // TODO: oracle automatically clears itself more aggressively (to guard
 // against stale caches)
 

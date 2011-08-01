@@ -2,6 +2,7 @@ package org.rstudio.studio.client.workbench.codesearch.model;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -22,6 +23,9 @@ public class CodeSearchOracle extends SuggestOracle
    public void requestSuggestions(final Request request, 
                                   final Callback callback)
    {    
+      // invalidate
+      invalidation_.invalidate();
+      
       // first see if we can serve the request from the cache
       for (int i=resultCache_.size() - 1; i >= 0; i--)
       {
@@ -59,8 +63,14 @@ public class CodeSearchOracle extends SuggestOracle
                   suggestions.add(sugg);
             }
 
-            // return the suggestions
-            cacheAndReturnSuggestions(request, suggestions, callback);
+            // cache suggestions. note that this adds an item to the end
+            // of the resultCache_ (which we are currently iterating over)
+            // not a big deal because we are about to return out of the loop
+            cacheSuggestions(request, suggestions);
+            
+            // return suggestions
+            callback.onSuggestionsReady(request, new Response(suggestions));
+            
             return;
          } 
       }
@@ -77,7 +87,7 @@ public class CodeSearchOracle extends SuggestOracle
    public void clear()
    {
       resultCache_.clear();
-      codeSearch_.suspend();
+      invalidation_.invalidate();
    }
    
    @Override
@@ -97,7 +107,7 @@ public class CodeSearchOracle extends SuggestOracle
       {
          request_ = request;
          callback_ = callback;
-         resume();
+         token_ = invalidation_.getInvalidationToken();
          nudge();
       }
 
@@ -119,44 +129,47 @@ public class CodeSearchOracle extends SuggestOracle
                for (int i = 0; i<results.length(); i++) 
                   suggestions.add(new CodeSearchSuggestion(results.get(i)));     
                
-               // return suggestions (as long as we aren't stopped)
-               if (!isStopped())
-                  cacheAndReturnSuggestions(request_, suggestions, callback_);                            
+               // cache suggestions
+               cacheSuggestions(request_, suggestions);
+               
+               // return suggestions
+               if (!token_.isInvalid())
+               {
+                  callback_.onSuggestionsReady(request_, 
+                                               new Response(suggestions));
+               }
             }
          });
          
       }
       
+      private Invalidation.Token token_;
       private Request request_;
       private Callback callback_;
    };
    
    
-   
-   private void cacheAndReturnSuggestions(
-                           final Request request, 
-                           final ArrayList<CodeSearchSuggestion> suggestions,
-                           final Callback callback)
+   private void cacheSuggestions(
+                     final Request request, 
+                     final ArrayList<CodeSearchSuggestion> suggestions)
    {
       // cache the suggestions (up to 15 active result sets cached)
       // NOTE: the cache is cleared at the end of the search sequence 
       // (when the search box loses focus)
       if (resultCache_.size() > 15)
          resultCache_.remove(0);
-      resultCache_.add(
-        new Pair<String, ArrayList<CodeSearchSuggestion>>(
-                                                     request.getQuery(), 
-                                                     suggestions));
       
-      // provide the suggestions to the caller
-      callback.onSuggestionsReady(request, 
-                                  new Response(suggestions)) ;
+      resultCache_.add(new Pair<String, ArrayList<CodeSearchSuggestion>>(
+                                         request.getQuery(), 
+                                         suggestions));
    }
    
   
    private final CodeSearchServerOperations server_ ;
    
    private CodeSearchCommand codeSearch_ = new CodeSearchCommand();
+   
+   private Invalidation invalidation_ = new Invalidation();
    
    private ArrayList<Pair<String, ArrayList<CodeSearchSuggestion>>> 
       resultCache_ = new ArrayList<Pair<String,ArrayList<CodeSearchSuggestion>>>();
