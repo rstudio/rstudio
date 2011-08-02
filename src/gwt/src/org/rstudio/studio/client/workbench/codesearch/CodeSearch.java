@@ -14,6 +14,9 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -101,6 +104,25 @@ public class CodeSearch
            if (!hasSearch)
               display_.getSuggestionDisplay().hideSuggestions();
         }     
+     });
+     
+     searchDisplay.addKeyDownHandler(new KeyDownHandler() {
+
+      @Override
+      public void onKeyDown(KeyDownEvent event)
+      {
+         // eat key-up if the suggestions are showing (since the 
+         // suggestions menu is taking these and if we take it
+         // the cursor will go to the beginning of the selection)
+         if (display_.getSuggestionDisplay().isSuggestionListShowing() &&
+             (event.getNativeKeyCode() == KeyCodes.KEY_UP))
+         {
+            event.preventDefault();
+            event.stopPropagation();
+         }
+         
+      }
+        
      });
    }
    

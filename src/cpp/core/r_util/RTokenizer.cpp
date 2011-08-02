@@ -26,8 +26,6 @@
 
 // TODO: alternate UI for when toolbar is hidden
 
-// TODO: arrow keys move cursor
-
 // TODO: use * for pattern matching (update query cache probing as well)
 
 // TODO: indexing queue
