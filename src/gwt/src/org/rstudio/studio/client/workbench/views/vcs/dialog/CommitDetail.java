@@ -3,6 +3,8 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -11,6 +13,8 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.Point;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.diff.ChunkOrLine;
@@ -28,6 +32,11 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    public CommitDetail()
    {
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
+   }
+
+   public void setScrollPanel(ScrollPanel container)
+   {
+    container_ = container;
    }
 
    @Override
@@ -75,9 +84,23 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
             view.setData(lines, PatchMode.Stage);
             view.setWidth("100%");
 
-            DiffFrame diffFrame = new DiffFrame(null, filePair.first, null, view);
+            final DiffFrame diffFrame = new DiffFrame(null, filePair.first, null, view);
             diffFrame.setWidth("100%");
             detailPanel_.add(diffFrame);
+
+            Anchor tocAnchor = new Anchor(filePair.first);
+            tocAnchor.addClickHandler(new ClickHandler()
+            {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  Point relativePosition = DomUtils.getRelativePosition(
+                        container_.getElement(),
+                        diffFrame.getElement());
+                  container_.setVerticalScrollPosition(relativePosition.getY());
+               }
+            });
+            tocPanel_.add(tocAnchor);
 
             return true;
          }
@@ -108,4 +131,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    Label labelParent_;
    @UiField
    VerticalPanel detailPanel_;
+   @UiField
+   VerticalPanel tocPanel_;
+   private ScrollPanel container_;
 }

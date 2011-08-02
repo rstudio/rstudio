@@ -23,7 +23,7 @@
          </g:DockLayoutPanel>
       </g:north>
       <g:center>
-         <g:ScrollPanel>
+         <g:ScrollPanel ui:field="detailScrollPanel_">
             <vcs_dialog:CommitDetail styleName="{res.styles.commitDetail}"
                                      ui:field="commitDetail_" />
          </g:ScrollPanel>

@@ -18,6 +18,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.LeftRightToggleButton;
@@ -49,6 +50,8 @@ public class HistoryPanel extends Composite implements Display
       splitPanel_ = new SplitLayoutPanel(4);
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
       Styles styles = GWT.<Resources>create(Resources.class).styles();
+
+      commitDetail_.setScrollPanel(detailScrollPanel_);
 
       topToolbar_.addStyleName(styles.toolbar());
 
@@ -88,6 +91,8 @@ public class HistoryPanel extends Composite implements Display
    CommitListTable commitTable_;
    @UiField
    CommitDetail commitDetail_;
+   @UiField
+   ScrollPanel detailScrollPanel_;
 
    private LeftRightToggleButton switchViewButton_;
 
