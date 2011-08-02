@@ -14,6 +14,7 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.ui.Label;
+import org.rstudio.core.client.HandlerRegistrations;
 
 public class HyperlinkLabel extends Label 
 {
@@ -63,10 +64,10 @@ public class HyperlinkLabel extends Label
    @Override 
    protected void onLoad()
    {
-      addMouseOverHandler(mouseHandlers_);
-      addMouseOutHandler(mouseHandlers_);
+      releaseOnUnload_.add(addMouseOverHandler(mouseHandlers_));
+      releaseOnUnload_.add(addMouseOutHandler(mouseHandlers_));
       if (clickHandler_ != null)
-         addClickHandler(new ClickHandler() {
+         releaseOnUnload_.add(addClickHandler(new ClickHandler() {
 
             public void onClick(ClickEvent event)
             {
@@ -75,12 +76,13 @@ public class HyperlinkLabel extends Label
                clickHandler_.onClick(event);        
             }
             
-         });
+         }));
    }
   
   
    private MouseHandlers mouseHandlers_ = new MouseHandlers();
    private ClickHandler clickHandler_ ;
+   private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
   
    
    private boolean alwaysUnderline_ = false;

@@ -183,6 +183,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    @Override
    protected void onLoad()
    {
+      super.onLoad();
       deferredSaveWidthPercent();
    }
 

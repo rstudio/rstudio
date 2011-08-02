@@ -231,6 +231,7 @@ public class WorkbenchScreen extends Composite
    @Override
    protected void onLoad()
    {
+      super.onLoad();
       eventBus_.fireEvent(new WorkbenchLoadedEvent());
    }
    
