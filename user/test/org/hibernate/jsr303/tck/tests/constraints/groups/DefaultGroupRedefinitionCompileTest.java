@@ -15,13 +15,8 @@
  */
 package org.hibernate.jsr303.tck.tests.constraints.groups;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.util.UnitTestTreeLogger;
-
-import static org.hibernate.jsr303.tck.util.TckGeneratorTestUtils.assertModuleFails;
-import static org.hibernate.jsr303.tck.util.TckGeneratorTestUtils.getFullyQaulifiedModuleName;
-
+import org.hibernate.jsr303.tck.tests.constraints.groups.GroupSequenceContainingDefaultValidatorFactory.GroupSequenceContainingDefaultValidator;
+import org.hibernate.jsr303.tck.tests.constraints.groups.GroupSequenceWithNoImplicitDefaultGroupValidatorFactory.TestValidator;
 import org.hibernate.jsr303.tck.util.TckCompileTestCase;
 
 import javax.validation.GroupDefinitionException;
@@ -32,44 +27,22 @@ import javax.validation.GroupDefinitionException;
  */
 public class DefaultGroupRedefinitionCompileTest extends TckCompileTestCase {
 
-  public void testGroupSequenceContainingDefault()
-      throws UnableToCompleteException {
-
-    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
-    builder.expect(TreeLogger.ERROR, //
-        "Unable to create a validator for "
+  public void testGroupSequenceContainingDefault() {
+    assertValidatorFailsToCompile(
+        GroupSequenceContainingDefaultValidator.class,
+        GroupDefinitionException.class, "Unable to create a validator for "
             + "org.hibernate.jsr303.tck.tests.constraints.groups."
             + "DefaultGroupRedefinitionTest.AddressWithDefaultInGroupSequence "
             + "because 'Default.class' cannot appear in default group "
-            + "sequence list.", //
-        GroupDefinitionException.class);
-    builder.setLowestLogLevel(TreeLogger.INFO);
-    UnitTestTreeLogger testLogger = builder.createLogger();
-    assertModuleFails(
-        testLogger,
-        getFullyQaulifiedModuleName(getClass(),
-            "GroupSequenceContainingDefaultTest"),
-        GroupSequenceContainingDefaultValidatorFactory.GroupSequenceContainingDefaultValidator.class);
+            + "sequence list.");
   }
 
-  public void testGroupSequenceWithNoImplicitDefaultGroup()
-      throws UnableToCompleteException {
-
-    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
-    builder.expect(TreeLogger.ERROR, //
-        "Unable to create a validator for "
+  public void testGroupSequenceWithNoImplicitDefaultGroup() {
+    assertValidatorFailsToCompile(TestValidator.class,
+        GroupDefinitionException.class, "Unable to create a validator for "
             + "org.hibernate.jsr303.tck.tests.constraints.groups."
             + "DefaultGroupRedefinitionTest.AddressWithDefaultInGroupSequence "
             + "because 'Default.class' cannot appear in default group "
-            + "sequence list.", //
-        GroupDefinitionException.class);
-    builder.setLowestLogLevel(TreeLogger.INFO);
-    UnitTestTreeLogger testLogger = builder.createLogger();
-    assertModuleFails(
-        testLogger,
-        getFullyQaulifiedModuleName(getClass(),
-            "GroupSequenceContainingDefaultTest"),
-        GroupSequenceWithNoImplicitDefaultGroupValidatorFactory.TestValidator.class);
+            + "sequence list.");
   }
-
 }

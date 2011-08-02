@@ -27,7 +27,7 @@ public class ConstraintDefinitionsGwtTest extends GWTTestCase {
 
   // TODO(nchalko) Generating Person validator fails.
   // see http://code.google.com/p/google-web-toolkit/issues/detail?id=6284
-  // private ConstraintDefinitionsTest deleagete = new
+  // private ConstraintDefinitionsTest delegate = new
   // ConstraintDefinitionsTest();
 
   @Override
@@ -38,13 +38,13 @@ public class ConstraintDefinitionsGwtTest extends GWTTestCase {
   @Failing(issue = 6284)
   public void testConstraintWithCustomAttributes() {
     fail();
-    // deleagete.testConstraintWithCustomAttributes();
+    // delegate.testConstraintWithCustomAttributes();
   }
 
   @Failing(issue = 6284)
   public void testDefaultGroupAssumedWhenNoGroupsSpecified() {
     fail();
-    // deleagete.testDefaultGroupAssumedWhenNoGroupsSpecified();
+    // delegate.testDefaultGroupAssumedWhenNoGroupsSpecified();
   }
 
   @NonTckTest

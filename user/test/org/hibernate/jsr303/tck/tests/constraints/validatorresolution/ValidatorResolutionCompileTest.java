@@ -15,12 +15,7 @@
  */
 package org.hibernate.jsr303.tck.tests.constraints.validatorresolution;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.util.UnitTestTreeLogger;
-
-import static org.hibernate.jsr303.tck.util.TckGeneratorTestUtils.assertModuleFails;
-import static org.hibernate.jsr303.tck.util.TckGeneratorTestUtils.getFullyQaulifiedModuleName;
 
 import org.hibernate.jsr303.tck.tests.constraints.validatorresolution.AmbiguousValidatorFactory.AmbiguousValidator;
 import org.hibernate.jsr303.tck.tests.constraints.validatorresolution.UnexpectedTypeValidatorFactory.UnexpectedTypeValidator;
@@ -38,41 +33,31 @@ public class ValidatorResolutionCompileTest extends TckCompileTestCase {
    */
   public void testAmbiguousValidatorResolution()
       throws UnableToCompleteException {
-    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
-    builder.expect(
-        TreeLogger.ERROR,
+    assertBeanValidatorFailsToCompile(
+        AmbiguousValidator.class,
+        Foo.class,
+        ValidationException.class,
         "More than one maximally specific "
-            + "@org.hibernate.jsr303.tck.tests.constraints.validatorresolution.Ambiguous"
-            + "(message=foobar, payload=[], groups=[]) "
+            + "@org.hibernate.jsr303.tck.tests.constraints.validatorresolution"
+            + ".Ambiguous(message=foobar, payload=[], groups=[]) "
             + "ConstraintValidator for type "
-            + "class org.hibernate.jsr303.tck.tests.constraints.validatorresolution.Bar, "
-            + "found [class org.hibernate.jsr303.tck.tests.constraints.validatorresolution.Ambiguous$AmbiguousValidatorForDummy,"
-            + " class org.hibernate.jsr303.tck.tests.constraints.validatorresolution.Ambiguous$AmbiguousValidatorForSerializable]",
-        ValidationException.class);
-    builder.setLowestLogLevel(TreeLogger.INFO);
-    UnitTestTreeLogger testLogger = builder.createLogger();
-    assertModuleFails(
-        testLogger,
-        getFullyQaulifiedModuleName(getClass(),
-            AmbiguousValidatorFactory.class.getSimpleName()),
-        AmbiguousValidator.class, Foo.class);
+            + "class org.hibernate.jsr303.tck.tests.constraints"
+            + ".validatorresolution.Bar, found "
+            + "[class org.hibernate.jsr303.tck.tests.constraints"
+            + ".validatorresolution.Ambiguous$AmbiguousValidatorForDummy,"
+            + " class org.hibernate.jsr303.tck.tests.constraints"
+            + ".validatorresolution.Ambiguous$"
+            + "AmbiguousValidatorForSerializable]");
+
   }
 
   public void testUnexpectedTypeInValidatorResolution()
       throws UnableToCompleteException {
-    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
-    builder.expect(
-        TreeLogger.ERROR,
-        "No @javax.validation.constraints.Size(message={javax.validation.constraints.Size.message},"
+    assertBeanValidatorFailsToCompile(UnexpectedTypeValidator.class, Bar.class,
+        ValidationException.class,
+        "No @javax.validation.constraints.Size(message="
+            + "{javax.validation.constraints.Size.message},"
             + " min=0, max=2147483647, payload=[], groups=[]) "
-            + "ConstraintValidator for type class java.lang.Integer",
-        ValidationException.class);
-    builder.setLowestLogLevel(TreeLogger.INFO);
-    UnitTestTreeLogger testLogger = builder.createLogger();
-    assertModuleFails(
-        testLogger,
-        getFullyQaulifiedModuleName(getClass(),
-            UnexpectedTypeValidatorFactory.class.getSimpleName()),
-        UnexpectedTypeValidator.class, Bar.class);
+            + "ConstraintValidator for type class java.lang.Integer");
   }
 }

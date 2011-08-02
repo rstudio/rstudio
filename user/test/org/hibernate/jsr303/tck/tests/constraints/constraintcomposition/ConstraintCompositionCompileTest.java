@@ -15,13 +15,9 @@
  */
 package org.hibernate.jsr303.tck.tests.constraints.constraintcomposition;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.util.UnitTestTreeLogger;
 
-import static org.hibernate.jsr303.tck.util.TckGeneratorTestUtils.assertModuleFails;
-import static org.hibernate.jsr303.tck.util.TckGeneratorTestUtils.getFullyQaulifiedModuleName;
-
+import org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.OverriddenAttributesMustMatchInTypeValidatorFactory.OverriddenAttributesMustMatchInTypeValidator;
 import org.hibernate.jsr303.tck.util.TckCompileTestCase;
 
 import javax.validation.ConstraintDefinitionException;
@@ -41,18 +37,13 @@ public class ConstraintCompositionCompileTest extends TckCompileTestCase {
    */
   public void testAllComposingConstraintsMustBeApplicableToAnnotatedType()
       throws UnableToCompleteException {
-    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
-    builder.expect(
-        TreeLogger.ERROR,
-        "No @org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.NotEmpty("
-            + "message={constraint.notEmpty}, payload=[], groups=[]) "
-            + "ConstraintValidator for type int", UnexpectedTypeException.class);
-    builder.setLowestLogLevel(TreeLogger.INFO);
-    UnitTestTreeLogger testLogger = builder.createLogger();
-    assertModuleFails(testLogger,
-        getFullyQaulifiedModuleName(getClass(), "MustBeApplicableTest"),
+    assertBeanValidatorFailsToCompile(
         MustBeApplicableValidatorFactory.MustBeApplicableValidator.class,
-        Shoe.class);
+        Shoe.class,
+        UnexpectedTypeException.class,
+        "No @org.hibernate.jsr303.tck.tests.constraints.constraintcomposition"
+            + ".NotEmpty(message={constraint.notEmpty}, payload=[], groups=[]) "
+            + "ConstraintValidator for type int");
   }
 
   /**
@@ -63,20 +54,14 @@ public class ConstraintCompositionCompileTest extends TckCompileTestCase {
    */
   public void testOverriddenAttributesMustMatchInType()
       throws UnableToCompleteException {
-    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
-    builder.expect(TreeLogger.ERROR, "Unable to create a validator for "
-        + "org.hibernate.jsr303.tck.tests.constraints.constraintcomposition."
-        + "ConstraintCompositionTest.DummyEntityWithZipCode "
-        + "because The overriding type of a composite constraint must be "
-        + "identical to the overridden one. "
-        + "Expected int found class java.lang.String",
-        ConstraintDefinitionException.class);
-    builder.setLowestLogLevel(TreeLogger.INFO);
-    UnitTestTreeLogger testLogger = builder.createLogger();
-    assertModuleFails(
-        testLogger,
-        getFullyQaulifiedModuleName(getClass(),
-            "OverriddenAttributesMustMatchInTypeTest"),
-        OverriddenAttributesMustMatchInTypeValidatorFactory.OverriddenAttributesMustMatchInTypeValidator.class);
+    assertValidatorFailsToCompile(
+        OverriddenAttributesMustMatchInTypeValidator.class,
+        ConstraintDefinitionException.class,
+        "Unable to create a validator for "
+            + "org.hibernate.jsr303.tck.tests.constraints.constraintcomposition."
+            + "ConstraintCompositionTest.DummyEntityWithZipCode "
+            + "because The overriding type of a composite constraint must be "
+            + "identical to the overridden one. "
+            + "Expected int found class java.lang.String");
   }
 }
