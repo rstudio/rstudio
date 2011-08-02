@@ -24,6 +24,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/SafeConvert.hpp>
 
 namespace core {
 namespace r_util {
@@ -53,8 +54,8 @@ public:
    // accessors
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
-   std::size_t line() const { return line_; }
-   std::size_t column() const { return column_; }
+   int line() const { return core::safe_convert::numberTo<int>(line_,0); }
+   int column() const { return core::safe_convert::numberTo<int>(column_,0); }
 
    // support for RSourceIndex::findFunction
 

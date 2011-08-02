@@ -21,8 +21,6 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-// TODO: rpc array result type (wire efficiency)
-// TODO: boost::numeric_cast business
 
 // TODO: keyboard shortcut to initiate search
 

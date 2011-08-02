@@ -12,9 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.codesearch.model;
 
-
-import com.google.gwt.core.client.JsArray;
-
+import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
 
@@ -23,5 +21,5 @@ public interface CodeSearchServerOperations
    void searchCode(
          String term, 
          int maxResults,
-         ServerRequestCallback<JsArray<CodeSearchResult>> requestCallback);
+         ServerRequestCallback<RpcObjectList<CodeSearchResult>> requestCallback);
 }

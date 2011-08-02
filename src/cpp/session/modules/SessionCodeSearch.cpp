@@ -99,45 +99,43 @@ void findFunctions(const std::string& term,
    }
 }
 
-
-json::Object codeSearchResult(const r_util::RFunctionInfo& functionInfo)
+template <typename TValue, typename TFunc>
+json::Array toJsonArray(
+      const std::vector<r_util::RFunctionInfo> &functions,
+      TFunc memberFunc)
 {
-   json::Object result;
-   result["name"] = functionInfo.name();
-   result["context"] = functionInfo.context();
-   try
-   {
-      result["line"] = boost::numeric_cast<int>(functionInfo.line());
-      result["column"] = boost::numeric_cast<int>(functionInfo.column());
-   }
-   catch (const boost::bad_numeric_cast& e)
-   {
-      result["line"] = 1;
-      result["column"] = 1;
-   }
-
-   return result;
+   json::Array col;
+   std::transform(functions.begin(),
+                  functions.end(),
+                  std::back_inserter(col),
+                  boost::bind(json::toJsonValue<TValue>,
+                                 boost::bind(memberFunc, _1)));
+   return col;
 }
 
 Error searchCode(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
+   // get params
    std::string term;
    int maxResults;
    Error error = json::readParams(request.params, &term, &maxResults);
    if (error)
       return error;
 
+   // find functions
    std::vector<r_util::RFunctionInfo> functions;
    findFunctions(term, maxResults + 1, true, &functions);
 
-   json::Array results;
-   std::transform(functions.begin(),
-                  functions.end(),
-                  std::back_inserter(results),
-                  codeSearchResult);
+   // return rpc array list (wire efficiency)
+   json::Object res;
+   res["name"] = toJsonArray<std::string>(functions, &r_util::RFunctionInfo::name);
+   res["context"] = toJsonArray<std::string>(functions,
+                                             &r_util::RFunctionInfo::context);
+   res["line"] = toJsonArray<int>(functions, &r_util::RFunctionInfo::line);
+   res["column"] = toJsonArray<int>(functions, &r_util::RFunctionInfo::column);
 
-   pResponse->setResult(results);
+   pResponse->setResult(res);
 
    return Success();
 }

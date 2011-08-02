@@ -4,9 +4,9 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.TimeBufferedCommand;
+import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.inject.Inject;
 
@@ -120,15 +120,19 @@ public class CodeSearchOracle extends SuggestOracle
          server_.searchCode(
                request_.getQuery(),
                request_.getLimit(),
-               new SimpleRequestCallback<JsArray<CodeSearchResult>>() {
+               new SimpleRequestCallback<RpcObjectList<CodeSearchResult>>() {
             
             @Override
-            public void onResponseReceived(JsArray<CodeSearchResult> results)
+            public void onResponseReceived(
+                                    RpcObjectList<CodeSearchResult> response)
             { 
+               // to array
+               ArrayList<CodeSearchResult> results = response.toArrayList();
+               
                // read the response
                ArrayList<CodeSearchSuggestion> suggestions = 
                                        new ArrayList<CodeSearchSuggestion>();
-               for (int i = 0; i<results.length(); i++) 
+               for (int i = 0; i<results.size(); i++) 
                   suggestions.add(new CodeSearchSuggestion(results.get(i)));     
                
                // cache suggestions

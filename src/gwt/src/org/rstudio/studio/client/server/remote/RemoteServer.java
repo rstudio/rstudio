@@ -250,7 +250,7 @@ public class RemoteServer implements Server
    public void searchCode(
          String term, 
          int maxResults,
-         ServerRequestCallback<JsArray<CodeSearchResult>> requestCallback)
+         ServerRequestCallback<RpcObjectList<CodeSearchResult>> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(term));

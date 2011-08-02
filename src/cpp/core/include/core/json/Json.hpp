@@ -60,6 +60,12 @@ bool isType(const Value& value)
       return false;
 }
 
+template<typename T>
+json::Value toJsonValue(const T& val)
+{
+   return json::Value(val);
+}
+
 bool parse(const std::string& input, Value* pValue);
 
 void write(const Value& value, std::ostream& os);

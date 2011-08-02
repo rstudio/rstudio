@@ -19,6 +19,8 @@
 #include <iostream>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/numeric/conversion/cast.hpp>
+
 
 namespace core {
 namespace safe_convert {
@@ -46,6 +48,19 @@ T stringTo(const std::string& str,
    if ((iss >> f >> result).fail())
       return defaultValue;
    return result;
+}
+
+template <typename TInput, typename TOutput>
+TOutput numberTo(TInput input, TOutput defaultValue)
+{
+   try
+   {
+      return boost::numeric_cast<TOutput>(input);
+   }
+   catch(...)
+   {
+      return defaultValue;
+   }
 }
 
 } // namespace safe_convert
