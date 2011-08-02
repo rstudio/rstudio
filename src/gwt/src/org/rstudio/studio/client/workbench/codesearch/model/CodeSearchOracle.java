@@ -2,7 +2,6 @@ package org.rstudio.studio.client.workbench.codesearch.model;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -19,13 +18,17 @@ public class CodeSearchOracle extends SuggestOracle
       server_ = server;
    }
    
+   // if the user cancels a search we need to make sure that results which
+   // come back in over the network afterwards are not returned
+   public void setReturnSuggestions(boolean returnSuggestions)
+   {
+      returnSuggestions_ = returnSuggestions;
+   }
+   
    @Override
    public void requestSuggestions(final Request request, 
                                   final Callback callback)
    {    
-      // invalidate
-      invalidation_.invalidate();
-      
       // first see if we can serve the request from the cache
       for (int i=resultCache_.size() - 1; i >= 0; i--)
       {
@@ -69,7 +72,8 @@ public class CodeSearchOracle extends SuggestOracle
             cacheSuggestions(request, suggestions);
             
             // return suggestions
-            callback.onSuggestionsReady(request, new Response(suggestions));
+            if (returnSuggestions_)
+               callback.onSuggestionsReady(request, new Response(suggestions));
             
             return;
          } 
@@ -87,7 +91,6 @@ public class CodeSearchOracle extends SuggestOracle
    public void clear()
    {
       resultCache_.clear();
-      invalidation_.invalidate();
    }
    
    @Override
@@ -107,7 +110,6 @@ public class CodeSearchOracle extends SuggestOracle
       {
          request_ = request;
          callback_ = callback;
-         token_ = invalidation_.getInvalidationToken();
          nudge();
       }
 
@@ -133,7 +135,7 @@ public class CodeSearchOracle extends SuggestOracle
                cacheSuggestions(request_, suggestions);
                
                // return suggestions
-               if (!token_.isInvalid())
+               if (returnSuggestions_)
                {
                   callback_.onSuggestionsReady(request_, 
                                                new Response(suggestions));
@@ -143,7 +145,6 @@ public class CodeSearchOracle extends SuggestOracle
          
       }
       
-      private Invalidation.Token token_;
       private Request request_;
       private Callback callback_;
    };
@@ -169,7 +170,7 @@ public class CodeSearchOracle extends SuggestOracle
    
    private CodeSearchCommand codeSearch_ = new CodeSearchCommand();
    
-   private Invalidation invalidation_ = new Invalidation();
+   private boolean returnSuggestions_ = true;
    
    private ArrayList<Pair<String, ArrayList<CodeSearchSuggestion>>> 
       resultCache_ = new ArrayList<Pair<String,ArrayList<CodeSearchSuggestion>>>();

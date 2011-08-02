@@ -75,7 +75,8 @@ public class CodeSearch
          @Override
          public void onBlur(BlurEvent event)
          { 
-            clearDisplay(); 
+            display_.getSearchDisplay().clear();
+            display_.getSearchOracle().clear();
          }
      });
      
@@ -83,7 +84,7 @@ public class CodeSearch
         @Override
         public void onFocus(FocusEvent event)
         { 
-           clearDisplay(); 
+           display_.getSearchOracle().clear();
         }
      });
      
@@ -91,31 +92,22 @@ public class CodeSearch
         @Override
         public void onValueChange(ValueChangeEvent<String> event)
         {
-           if (event.getValue().length() == 0)
-           {
-              // cancel outstanding time buffered code searches
-              display_.getSearchOracle().clear();
-              
-              // make sure the suggest box display is hidden
+           boolean hasSearch = event.getValue().length() != 0;
+           
+           // set oracle to return suggestions as approproate
+           display_.getSearchOracle().setReturnSuggestions(hasSearch);
+           
+           // hide suggestion display if we don't have a search
+           if (!hasSearch)
               display_.getSuggestionDisplay().hideSuggestions();
-           }
         }     
      });
-     
-     
    }
    
    public Widget getSearchWidget()
    {
       return (Widget) display_.getSearchDisplay();
    }
-   
-   
-   private void clearDisplay()
-   {
-      display_.getSearchDisplay().clear();
-      display_.getSearchOracle().clear();
-   }
-   
+    
    private final Display display_;
 }
