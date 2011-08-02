@@ -19,6 +19,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
@@ -47,7 +48,8 @@ class WorkbenchTabPanel
    {
       super.onLoad();
 
-      tabPanel_.addBeforeSelectionHandler(new BeforeSelectionHandler<Integer>(){
+      releaseOnUnload_.add(tabPanel_.addBeforeSelectionHandler(new BeforeSelectionHandler<Integer>()
+      {
          public void onBeforeSelection(BeforeSelectionEvent<Integer> event)
          {
             if (clearing_)
@@ -56,8 +58,9 @@ class WorkbenchTabPanel
             WorkbenchTab tab = tabs_.get(event.getItem().intValue());
             tab.onBeforeSelected();
          }
-      });
-      tabPanel_.addSelectionHandler(new SelectionHandler<Integer>() {
+      }));
+      releaseOnUnload_.add(tabPanel_.addSelectionHandler(new SelectionHandler<Integer>()
+      {
          public void onSelection(SelectionEvent<Integer> event)
          {
             if (clearing_)
@@ -66,7 +69,7 @@ class WorkbenchTabPanel
             WorkbenchTab pane = tabs_.get(event.getSelectedItem().intValue());
             pane.onSelected();
          }
-      });
+      }));
 
       int selectedIndex = tabPanel_.getSelectedIndex();
       if (selectedIndex >= 0)
@@ -75,6 +78,14 @@ class WorkbenchTabPanel
          tab.onBeforeSelected();
          tab.onSelected();
       }
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      releaseOnUnload_.removeHandler();
+
+      super.onUnload();
    }
 
    public void setTabs(ArrayList<WorkbenchTab> tabs)
@@ -169,5 +180,6 @@ class WorkbenchTabPanel
 
    private ModuleTabLayoutPanel tabPanel_;
    private ArrayList<WorkbenchTab> tabs_ = new ArrayList<WorkbenchTab>();
+   private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
    private boolean clearing_ = false;
 }
