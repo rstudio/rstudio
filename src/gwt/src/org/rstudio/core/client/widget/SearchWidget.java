@@ -27,17 +27,13 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
 
-import org.rstudio.core.client.events.HasSelectionCommitHandlers;
+
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
-public class SearchWidget extends Composite
-                          implements SearchDisplay,
-                                     HasSelectionCommitHandlers<String>,
-                                     HasKeyDownHandlers,
-                                     CanFocus
+public class SearchWidget extends Composite implements SearchDisplay                                   
 {
    interface MyUiBinder extends UiBinder<Widget, SearchWidget> {}
    private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
@@ -118,7 +114,19 @@ public class SearchWidget extends Composite
                }) ;
                break ;
             case KeyCodes.KEY_ESCAPE:
-               suggestBox_.setText("") ;
+               
+               event.preventDefault();
+               
+               Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+                  @Override
+                  public void execute()
+                  {
+                     getSuggestionDisplay().hideSuggestions();
+                     setText("", true);
+                  }   
+               });
+                   
                break ;
             }
          }

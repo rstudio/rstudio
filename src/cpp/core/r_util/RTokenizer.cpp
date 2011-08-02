@@ -26,12 +26,7 @@
 
 // TODO: keyboard shortcut to initiate search
 
-// TODO: oracle automatically clears itself more aggressively (to guard
-// against stale caches)
-
 // TODO: alternate UI for when toolbar is hidden
-
-// TODO: esc drive focus to source
 
 // TODO: arrow keys move cursor
 
