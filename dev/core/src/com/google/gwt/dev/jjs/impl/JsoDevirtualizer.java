@@ -243,8 +243,10 @@ public class JsoDevirtualizer {
     jsoMethodInstances.put(polyMethod.getSignature(), methodCount);
     String devirtualName = prefix + "__devirtual$";
     JMethod newMethod =
-        program.createMethod(sourceInfo, devirtualName, jsoType, polyMethod.getType(), false, true,
-            true, AccessModifier.PUBLIC, false);
+        new JMethod(sourceInfo, devirtualName, jsoType, polyMethod.getType(), false, true, true,
+            AccessModifier.PUBLIC);
+    newMethod.setBody(new JMethodBody(sourceInfo));
+    jsoType.addMethod(newMethod);
     newMethod.setSynthetic();
 
     // Setup parameters.

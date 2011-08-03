@@ -117,11 +117,9 @@ public class CompilationStateBuilder {
               new Dependencies(packageName, unresolvedQualified, unresolvedSimple, apiRefs);
 
           List<JDeclaredType> types = Collections.emptyList();
-          if (GwtAstBuilder.ENABLED) {
-            if (!cud.compilationResult().hasErrors()) {
-              // Make a GWT AST.
-              types = astBuilder.process(cud, artificialRescues, jsniMethods, jsniRefs);
-            }
+          if (!cud.compilationResult().hasErrors()) {
+            // Make a GWT AST.
+            types = astBuilder.process(cud, artificialRescues, jsniMethods, jsniRefs);
           }
 
           for (CompiledClass cc : compiledClasses) {

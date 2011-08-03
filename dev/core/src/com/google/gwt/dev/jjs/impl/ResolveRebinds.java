@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.AccessModifier;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JCaseStatement;
@@ -53,7 +54,8 @@ public class ResolveRebinds {
 
       if (isSoftRebind(x.getSourceType())) {
         JMethod method =
-            rebindMethod(x.getSourceType(), x.getResultTypes(), x.getInstantiationExpressions());
+            rebindMethod(x.getSourceInfo(), x.getSourceType(), x.getResultTypes(), x
+                .getInstantiationExpressions());
         JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method);
         ctx.replaceMe(call);
         return;
@@ -76,7 +78,9 @@ public class ResolveRebinds {
     public void endVisit(JReboundEntryPoint x, Context ctx) {
 
       if (isSoftRebind(x.getSourceType())) {
-        JMethod method = rebindMethod(x.getSourceType(), x.getResultTypes(), x.getEntryCalls());
+        JMethod method =
+            rebindMethod(x.getSourceInfo(), x.getSourceType(), x.getResultTypes(), x
+                .getEntryCalls());
         JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method);
         ctx.replaceMe(call.makeStatement());
         return;
@@ -158,7 +162,7 @@ public class ResolveRebinds {
     return !hardRebindAnswers.containsKey(requestType);
   }
 
-  private JMethod rebindMethod(String requestType, List<String> resultTypes,
+  private JMethod rebindMethod(SourceInfo info, String requestType, List<String> resultTypes,
       List<JExpression> instantiationExpressions) {
     assert resultTypes.size() == instantiationExpressions.size();
 
@@ -196,12 +200,13 @@ public class ResolveRebinds {
     }
     assert mostUsed != null;
 
+    info = info.makeChild(SourceOrigin.UNKNOWN);
     // c_g_g_d_c_i_DOMImpl
-    SourceInfo info = program.createSourceInfoSynthetic(getClass());
     toReturn =
-        program.createMethod(info, requestType.replace("_", "_1").replace('.', '_'), holderType,
-            program.getTypeJavaLangObject().getNonNull(), false, true, true,
-            AccessModifier.PUBLIC, false);
+        new JMethod(info, requestType.replace("_", "_1").replace('.', '_'), holderType, program
+            .getTypeJavaLangObject().getNonNull(), false, true, true, AccessModifier.PUBLIC);
+    toReturn.setBody(new JMethodBody(info));
+    holderType.addMethod(toReturn);
     toReturn.freezeParamTypes();
     info.addCorrelation(info.getCorrelator().by(toReturn));
     rebindMethods.put(requestType, toReturn);

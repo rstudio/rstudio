@@ -215,30 +215,31 @@ public class JjsTypeTest extends TestCase {
     createSampleProgram();
   }
 
-  private JClassType createClass(String className, JClassType superClass,
-      boolean isAbstract, boolean isFinal) {
-    JClassType clazz = program.createClass(synthSource, className, isAbstract,
-        isFinal);
-    clazz.setSuperClass(superClass);
-    return clazz;
+  private JClassType createClass(String className, JClassType superClass, boolean isAbstract,
+      boolean isFinal) {
+    JClassType x = new JClassType(synthSource, className, isAbstract, isFinal);
+    program.addType(x);
+    x.setSuperClass(superClass);
+    return x;
   }
 
   private JInterfaceType createInterface(String className) {
-    JInterfaceType intf = program.createInterface(synthSource, className);
-    return intf;
+    JInterfaceType x = new JInterfaceType(synthSource, className);
+    program.addType(x);
+    return x;
   }
 
   private void createSampleProgram() {
     // Make the program itself
     program = new JProgram();
     typeOracle = program.typeOracle;
-    synthSource = program.createSourceInfoSynthetic(JjsTypeTest.class);
+    synthSource = SourceOrigin.UNKNOWN;
 
     classObject = createClass("java.lang.Object", null, false, false);
     classString = createClass("java.lang.String", classObject, false, true);
     createClass("com.google.gwt.lang.Array", classObject, false, true);
-    classJso = createClass("com.google.gwt.core.client.JavaScriptObject",
-        classObject, false, false);
+    classJso =
+        createClass("com.google.gwt.core.client.JavaScriptObject", classObject, false, false);
 
     intfSerializable = createInterface("java.io.Serializable");
     intfCloneable = createInterface("java.lang.Cloneable");
@@ -267,7 +268,7 @@ public class JjsTypeTest extends TestCase {
     classJso1.addImplements(intfJ);
     classJso2 = createClass("Jso2", classJso, false, false);
     classJso2.addImplements(intfK);
-    
+
     program.typeOracle.computeBeforeAST();
 
     // Save off some miscellaneous types to test against
@@ -287,8 +288,7 @@ public class JjsTypeTest extends TestCase {
     arrayOfArrayOfB = program.getTypeArray(classB, 2);
   }
 
-  private JReferenceType generalizeTypes(JReferenceType type1,
-      JReferenceType type2) {
+  private JReferenceType generalizeTypes(JReferenceType type1, JReferenceType type2) {
     List<JReferenceType> types = new ArrayList<JReferenceType>(2);
     types.add(type1);
     types.add(type2);

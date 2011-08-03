@@ -41,12 +41,8 @@ import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
-import com.google.gwt.dev.javac.CompilationProblemReporter.SourceFetcher;
 import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
-import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
-import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
-import com.google.gwt.dev.jjs.CorrelationFactory.RealCorrelationFactory;
 import com.google.gwt.dev.jjs.UnifiedAst.AST;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -68,7 +64,6 @@ import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.AstDumper;
-import com.google.gwt.dev.jjs.impl.BuildTypeMap;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
@@ -79,9 +74,7 @@ import com.google.gwt.dev.jjs.impl.EnumOrdinalizer;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
-import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
-import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.jjs.impl.HandleCrossFragmentReferences;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
@@ -100,13 +93,10 @@ import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RecordRebinds;
 import com.google.gwt.dev.jjs.impl.RemoveEmptySuperCalls;
 import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
-import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
 import com.google.gwt.dev.jjs.impl.SourceInfoCorrelator;
-import com.google.gwt.dev.jjs.impl.TypeLinker;
-import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.jjs.impl.UnifyAst;
 import com.google.gwt.dev.jjs.impl.gflow.DataflowOptimizer;
@@ -145,9 +135,6 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.soyc.SoycDashboard;
 import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
 
-import org.eclipse.jdt.internal.compiler.CompilationResult;
-import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.xml.sax.SAXException;
 
 import java.io.ByteArrayOutputStream;
@@ -533,93 +520,35 @@ public class JavaToJavaScriptCompiler {
 
     Memory.maybeDumpMemory("CompStateBuilt");
 
-    CorrelationFactory correlator =
-        options.isSoycExtra() ? RealCorrelationFactory.INSTANCE : DummyCorrelationFactory.INSTANCE;
-    JProgram jprogram = new JProgram(correlator);
-    JsProgram jsProgram = new JsProgram(correlator);
+    JProgram jprogram = new JProgram();
+    JsProgram jsProgram = new JsProgram();
 
     try {
-      if (GwtAstBuilder.ENABLED) {
-        UnifyAst unifyAst = new UnifyAst(jprogram, jsProgram, options, rpo);
-        unifyAst.addRootTypes(allRootTypes);
-        // TODO: errors.
-        // TODO: move this into UnifyAst.
-        findEntryPoints(logger, rpo, declEntryPts, jprogram);
-        unifyAst.exec(logger);
-        // TODO: errors.
+      // (2) Assemble the Java AST.
+      UnifyAst unifyAst = new UnifyAst(jprogram, jsProgram, options, rpo);
+      unifyAst.addRootTypes(allRootTypes);
+      // TODO: move this into UnifyAst?
+      findEntryPoints(logger, rpo, declEntryPts, jprogram);
+      unifyAst.exec(logger);
 
-        List<String> finalTypeOracleTypes = Lists.create();
-        if (precompilationMetrics != null) {
-          for (com.google.gwt.core.ext.typeinfo.JClassType type : typeOracle.getTypes()) {
-            finalTypeOracleTypes =
-                Lists.add(finalTypeOracleTypes, type.getPackage().getName() + "." + type.getName());
-          }
-          precompilationMetrics.setFinalTypeOracleTypes(finalTypeOracleTypes);
+      List<String> finalTypeOracleTypes = Lists.create();
+      if (precompilationMetrics != null) {
+        for (com.google.gwt.core.ext.typeinfo.JClassType type : typeOracle.getTypes()) {
+          finalTypeOracleTypes =
+              Lists.add(finalTypeOracleTypes, type.getPackage().getName() + "." + type.getName());
         }
-
-        // Free up memory.
-        rpo.clear();
-
-        if (options.isSoycEnabled()) {
-          SourceInfoCorrelator.exec(jprogram);
-        }
-
-        // Compute all super type/sub type info
-        jprogram.typeOracle.computeBeforeAST();
-      } else {
-
-        // Compile the source and get the compiler so we can get the parse tree
-        CompilationUnitDeclaration[] goldenCuds =
-            WebModeCompilerFrontEnd.getCompilationUnitDeclarations(logger, allRootTypes
-                .toArray(new String[allRootTypes.size()]), rpo, TypeLinker.NULL_TYPE_LINKER).compiledUnits;
-
-        List<String> finalTypeOracleTypes = Lists.create();
-        if (precompilationMetrics != null) {
-          for (com.google.gwt.core.ext.typeinfo.JClassType type : typeOracle.getTypes()) {
-            finalTypeOracleTypes =
-                Lists.add(finalTypeOracleTypes, type.getPackage().getName() + "." + type.getName());
-          }
-          precompilationMetrics.setFinalTypeOracleTypes(finalTypeOracleTypes);
-        }
-
-        // Free up memory.
-        rpo.clear();
-        Memory.maybeDumpMemory("GoldenCudsBuilt");
-
-        /*
-         * Check for compilation problems. We don't log here because any
-         * problems found here will have already been logged by
-         * AbstractCompiler.
-         */
-        checkForErrors(logger, goldenCuds, false);
-
-        /*
-         * (1) Build a flattened map of TypeDeclarations => JType. The resulting
-         * map contains entries for all reference types. BuildTypeMap also
-         * parses all JSNI.
-         */
-        TypeMap typeMap = new TypeMap(jprogram);
-        TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap, goldenCuds, jsProgram);
-
-        // BuildTypeMap can uncover syntactic JSNI errors; report & abort
-        checkForErrors(logger, goldenCuds, true);
-
-        // Compute all super type/sub type info
-        jprogram.typeOracle.computeBeforeAST();
-
-        // (2) Create our own Java AST from the JDT AST.
-        GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, options);
-
-        // GenerateJavaAST can uncover semantic JSNI errors; report & abort
-        checkForErrors(logger, goldenCuds, true);
-
-        Memory.maybeDumpMemory("AstBuilt");
-
-        // Allow GC
-        goldenCuds = null;
-        typeMap = null;
-        allTypeDeclarations = null;
+        precompilationMetrics.setFinalTypeOracleTypes(finalTypeOracleTypes);
       }
+
+      // Free up memory.
+      rpo.clear();
+
+      if (options.isSoycEnabled()) {
+        SourceInfoCorrelator.exec(jprogram);
+      }
+
+      // Compute all super type/sub type info
+      jprogram.typeOracle.computeBeforeAST();
 
       Memory.maybeDumpMemory("AstOnly");
       AstDumper.maybeDumpAST(jprogram);
@@ -649,20 +578,10 @@ public class JavaToJavaScriptCompiler {
         AssertionRemover.exec(jprogram);
       }
 
-      if (!GwtAstBuilder.ENABLED) {
-        // Replace GWT.create calls with JGwtCreate nodes.
-        ReplaceRebinds.exec(logger, jprogram, rpo);
-      }
-
       // Fix up GWT.runAsync()
       if (module != null && options.isRunAsyncEnabled()) {
         ReplaceRunAsyncs.exec(logger, jprogram);
         CodeSplitter.pickInitialLoadSequence(logger, jprogram, module.getProperties());
-      }
-
-      if (!GwtAstBuilder.ENABLED) {
-        // Resolve entry points, rebinding non-static entry points.
-        findEntryPoints(logger, rpo, declEntryPts, jprogram);
       }
 
       ImplementClassLiteralsAsFields.exec(jprogram);
@@ -873,48 +792,6 @@ public class JavaToJavaScriptCompiler {
 
     optimizeEvent.end();
     return stats;
-  }
-
-  /**
-   * Look through the list of compiled units for errors and log them to the
-   * console.
-   * 
-   * @param logger logger to use for compilation errors
-   * @param cuds compiled units to analyze for errors.
-   * @param itemizeErrors log each error or simply log one message if the build
-   *          failed.
-   * @throws UnableToCompleteException if a compilation error is found in the
-   *           cuds argument.
-   */
-  static void checkForErrors(TreeLogger logger, CompilationUnitDeclaration[] cuds,
-      boolean itemizeErrors) throws UnableToCompleteException {
-    Event checkForErrorsEvent = SpeedTracerLogger.start(CompilerEventType.CHECK_FOR_ERRORS);
-    boolean compilationFailed = false;
-    if (cuds.length == 0) {
-      compilationFailed = true;
-    }
-    for (CompilationUnitDeclaration cud : cuds) {
-      final CompilationResult result = cud.compilationResult();
-      if (result.hasErrors()) {
-        compilationFailed = true;
-        // Early out if we don't need to itemize.
-        if (!itemizeErrors) {
-          break;
-        }
-        String typeName = new String(cud.getMainTypeName());
-        CompilationProblemReporter.reportErrors(logger, result.getErrors(), new String(cud
-            .getFileName()), true, new SourceFetcher() {
-          public String getSource() {
-            return new String(result.getCompilationUnit().getContents());
-          }
-        }, typeName, false);
-      }
-    }
-    checkForErrorsEvent.end();
-    if (compilationFailed) {
-      logger.log(TreeLogger.ERROR, "Cannot proceed due to previous errors", null);
-      throw new UnableToCompleteException();
-    }
   }
 
   private static MultipleDependencyGraphRecorder chooseDependencyRecorder(boolean soycEnabled,

@@ -20,12 +20,10 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
-import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
-import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.UnifyAst;
@@ -66,9 +64,8 @@ public class AstConstructor {
       }
     };
 
-    JProgram jprogram = new JProgram(DummyCorrelationFactory.INSTANCE);
-    JsProgram jsProgram = new JsProgram(DummyCorrelationFactory.INSTANCE);
-    assert GwtAstBuilder.ENABLED;
+    JProgram jprogram = new JProgram();
+    JsProgram jsProgram = new JsProgram();
     UnifyAst unifyAst = new UnifyAst(jprogram, jsProgram, options, rpo);
     unifyAst.buildEverything(logger);
 

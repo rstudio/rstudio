@@ -1880,7 +1880,6 @@ public class GwtAstBuilder {
        * It's okay to defer creation of synthetic fields, they can't be
        * referenced until we analyze the code.
        */
-      int index = 0;
       SourceTypeBinding binding = x.binding;
       if (isNested(binding)) {
         // add synthetic fields for outer this and locals
@@ -1889,7 +1888,7 @@ public class GwtAstBuilder {
         if (nestedBinding.enclosingInstances != null) {
           for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
             SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
-            createSyntheticField(arg, type, index++, Disposition.THIS_REF);
+            createSyntheticField(arg, type, Disposition.THIS_REF);
           }
         }
 
@@ -1908,7 +1907,7 @@ public class GwtAstBuilder {
                 }
               }
             }
-            createSyntheticField(arg, type, index++, isReallyThisRef ? Disposition.THIS_REF
+            createSyntheticField(arg, type, isReallyThisRef ? Disposition.THIS_REF
                 : Disposition.FINAL);
           }
         }
@@ -2084,13 +2083,11 @@ public class GwtAstBuilder {
     }
 
     private JField createSyntheticField(SyntheticArgumentBinding arg, JDeclaredType enclosingType,
-        int index, Disposition disposition) {
+        Disposition disposition) {
       JType type = typeMap.get(arg.type);
       SourceInfo info = enclosingType.getSourceInfo();
       JField field = new JField(info, intern(arg.name), enclosingType, type, false, disposition);
-      // TODO: remove me, source identical for now!
-      enclosingType.addField(index, field);
-      // enclosingType.addField(field);
+      enclosingType.addField(field);
       curClass.syntheticFields.put(arg, field);
       if (arg.matchingField != null) {
         typeMap.setField(arg.matchingField, field);
@@ -2758,8 +2755,6 @@ public class GwtAstBuilder {
     }
   }
 
-  public static boolean ENABLED = true;
-
   /**
    * Manually tracked version count.
    * 
@@ -2803,7 +2798,7 @@ public class GwtAstBuilder {
    */
   public static long getSerializationVersion() {
     // TODO(zundel): something much awesomer.
-    return ENABLED ? AST_VERSION : 0L;
+    return AST_VERSION;
   }
 
   static String dotify(char[][] name) {

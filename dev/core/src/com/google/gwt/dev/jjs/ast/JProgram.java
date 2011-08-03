@@ -16,14 +16,10 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.Correlation.Literal;
-import com.google.gwt.dev.jjs.CorrelationFactory;
-import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
-import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JsCastMap;
-import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
 import com.google.gwt.dev.util.collect.Lists;
 
@@ -333,11 +329,6 @@ public class JProgram extends JNode {
 
   private Map<JType, JField> classLiteralFields;
 
-  /**
-   * A factory to create correlations.
-   */
-  private final CorrelationFactory correlator;
-
   private final List<JMethod> entryMethods = new ArrayList<JMethod>();
 
   private final Map<String, JField> indexedFields = new HashMap<String, JField>();
@@ -379,10 +370,6 @@ public class JProgram extends JNode {
 
   private JClassType typeString;
 
-  public JProgram() {
-    this(DummyCorrelationFactory.INSTANCE);
-  }
-
   /**
    * Constructor.
    * 
@@ -391,10 +378,8 @@ public class JProgram extends JNode {
    *          will collect extra data during the compilation cycle, but at a
    *          cost of memory and object allocations.
    */
-  public JProgram(CorrelationFactory correlator) {
-    super(correlator.makeSourceInfo(SourceOrigin.create(0, JProgram.class.getName())));
-
-    this.correlator = correlator;
+  public JProgram() {
+    super(SourceOrigin.UNKNOWN);
   }
 
   public void addEntryMethod(JMethod entryPoint) {
@@ -443,115 +428,6 @@ public class JProgram extends JNode {
         typeJavaIoSerializable = (JInterfaceType) type;
       }
     }
-  }
-
-  public JClassType createClass(SourceInfo info, String name, boolean isAbstract, boolean isFinal) {
-    JClassType x = new JClassType(info, name, isAbstract, isFinal);
-    addType(x);
-    return x;
-  }
-
-  public JConstructor createConstructor(SourceInfo info, JClassType enclosingType) {
-    JConstructor x = new JConstructor(info, enclosingType);
-    x.setBody(new JMethodBody(info));
-    if (indexedTypes.containsValue(enclosingType)) {
-      indexedMethods.put(enclosingType.getShortName() + '.' + enclosingType.getShortName(), x);
-    }
-
-    enclosingType.addMethod(x);
-    return x;
-  }
-
-  public JEnumType createEnum(SourceInfo info, String name, boolean isAbstract) {
-    JEnumType x = new JEnumType(info, name, isAbstract);
-    x.setSuperClass(getTypeJavaLangEnum());
-
-    allTypes.add(x);
-    putIntoTypeMap(name, x);
-
-    return x;
-  }
-
-  public JField createEnumField(SourceInfo info, String name, JEnumType enclosingType,
-      JClassType type, int ordinal) {
-    assert (name != null);
-    assert (type != null);
-    assert (ordinal >= 0);
-
-    JEnumField x = new JEnumField(info, name, ordinal, enclosingType, type);
-    enclosingType.addField(x);
-    return x;
-  }
-
-  public JField createField(SourceInfo info, String name, JDeclaredType enclosingType, JType type,
-      boolean isStatic, Disposition disposition) {
-    assert (name != null);
-    assert (enclosingType != null);
-    assert (type != null);
-
-    JField x = new JField(info, name, enclosingType, type, isStatic, disposition);
-
-    if (indexedTypes.containsValue(enclosingType)) {
-      indexedFields.put(enclosingType.getShortName() + '.' + name, x);
-    }
-
-    enclosingType.addField(x);
-    return x;
-  }
-
-  public JInterfaceType createInterface(SourceInfo info, String name) {
-    JInterfaceType x = new JInterfaceType(info, name);
-    addType(x);
-    return x;
-  }
-
-  public JMethod createMethod(SourceInfo info, String name, JDeclaredType enclosingType,
-      JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal,
-      AccessModifier access, boolean isNative) {
-    assert (name != null);
-    assert (enclosingType != null);
-    assert (returnType != null);
-    assert (!isAbstract || !isNative);
-    JMethod x =
-        new JMethod(info, name, enclosingType, returnType, isAbstract, isStatic, isFinal, access);
-    if (isNative) {
-      x.setBody(new JsniMethodBody(info));
-    } else if (!isAbstract) {
-      x.setBody(new JMethodBody(info));
-    }
-
-    if (access != AccessModifier.PRIVATE && indexedTypes.containsValue(enclosingType)) {
-      indexedMethods.put(enclosingType.getShortName() + '.' + name, x);
-    }
-
-    enclosingType.addMethod(x);
-    return x;
-  }
-
-  /**
-   * Create a SourceInfo object when the source is derived from a physical
-   * location.
-   */
-  public SourceInfo createSourceInfo(int startPos, int endPos, int startLine, String fileName) {
-    return correlator.makeSourceInfo(SourceOrigin.create(startPos, endPos, startLine, fileName));
-  }
-
-  /**
-   * Create a SourceInfo object when the source is derived from a physical
-   * location.
-   */
-  public SourceInfo createSourceInfo(int startLine, String fileName) {
-    return correlator.makeSourceInfo(SourceOrigin.create(startLine, fileName));
-  }
-
-  /**
-   * Create a SourceInfo object when the source is created by the compiler
-   * itself.
-   */
-  public SourceInfo createSourceInfoSynthetic(Class<?> caller) {
-    // TODO: consider using Java stack frames to discover the caller's file
-    // and line number.
-    return createSourceInfo(0, caller.getName());
   }
 
   /**

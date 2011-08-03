@@ -1746,7 +1746,7 @@ public class GenerateJavaScriptAST {
        * }
        * </pre>
        */
-      SourceInfo sourceInfo = program.createSourceInfoSynthetic(GenerateJavaScriptAST.class);
+      SourceInfo sourceInfo = SourceOrigin.UNKNOWN;
 
       JsName entryName = topScope.declareName("$entry");
       JsVar entryVar = new JsVar(sourceInfo, entryName);

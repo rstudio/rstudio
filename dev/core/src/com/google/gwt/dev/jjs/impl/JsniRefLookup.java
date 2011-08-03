@@ -35,7 +35,10 @@ import java.util.TreeSet;
 
 /**
  * A utility class that can look up a {@link JsniRef} in a {@link JProgram}.
+ * 
+ * @deprecated find alternatives, only a couple of corner cases use this now.
  */
+@Deprecated
 public class JsniRefLookup {
   /**
    * A callback used to indicate the reason for a failed JSNI lookup.

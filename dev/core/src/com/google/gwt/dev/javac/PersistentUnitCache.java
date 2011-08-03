@@ -494,10 +494,8 @@ class PersistentUnitCache extends MemoryUnitCache {
               if (unit == null) {
                 break;
               }
-              if (GwtAstBuilder.ENABLED) {
-                if (unit.getTypesSerializedVersion() != GwtAstBuilder.getSerializationVersion()) {
-                  continue;
-                }
+              if (unit.getTypesSerializedVersion() != GwtAstBuilder.getSerializationVersion()) {
+                continue;
               }
               UnitCacheEntry entry = new UnitCacheEntry(unit, UnitOrigin.PERSISTENT);
               UnitCacheEntry existingEntry = unitMap.get(unit.getResourcePath());
