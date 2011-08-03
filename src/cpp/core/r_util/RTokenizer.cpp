@@ -21,11 +21,9 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-// TODO: tweaks to keyboard shortcuts and ui (joe feedback)
 
 // TODO: sync source documents
 // TODO: include files in the query
-
 
 // TODO: indexing queue
 
