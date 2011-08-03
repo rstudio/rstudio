@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -59,7 +59,8 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
     return getQualifiedName();
   }
 
-  protected void addImports(ClassSourceFileComposerFactory composerFactory, Class<?>... imports) {
+  protected void addImports(ClassSourceFileComposerFactory composerFactory,
+      Class<?>... imports) {
     for (Class<?> imp : imports) {
       composerFactory.addImport(imp.getCanonicalName());
     }
@@ -83,36 +84,38 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
     return packageName;
   }
 
+  protected String getSimpleName() {
+      final int length = getPackage().length();
+      final String rawName = validatorType.getQualifiedSourceName().substring(
+          length == 0 ? 0 : length + 1);
+      return rawName.replace('.', '_') + "Impl";
+    }
+
   protected abstract void writeClassBody(SourceWriter sourceWriter)
       throws UnableToCompleteException;
 
   protected void writeValidatorInstance(SourceWriter sw, BeanHelper bean) {
-    BeanHelper.writeInterface(context, logger, bean);
-    // private final MyBeanValidator myBeanValidator =
-    sw.print("private final " + bean.getFullyQualifiedValidatorName() + " ");
-    sw.print(bean.getValidatorInstanceName());
-    sw.println(" = ");
-    sw.indent();
-    sw.indent();
+  BeanHelper.writeInterface(context, logger, bean);
+  // private final MyBeanValidator myBeanValidator =
+  sw.print("private final " + bean.getFullyQualifiedValidatorName() + " ");
+  sw.print(bean.getValidatorInstanceName());
+  sw.println(" = ");
+  sw.indent();
+  sw.indent();
 
-    // MyBeanValidator.INSTANCE;
-    sw.print(bean.getFullyQualifiedValidatorName());
-    sw.println(".INSTANCE;");
-    sw.outdent();
-    sw.outdent();
-  }
+  // MyBeanValidator.INSTANCE;
+  sw.print(bean.getFullyQualifiedValidatorName());
+  sw.println(".INSTANCE;");
+  sw.outdent();
+  sw.outdent();
+}
 
   private String getQualifiedName() {
     String packageName = getPackage();
     return (packageName == "" ? "" : packageName + ".") + getSimpleName();
   }
 
-  private String getSimpleName() {
-    return validatorType.getSimpleSourceName() + "Impl";
-  }
-
-  private SourceWriter getSourceWriter(TreeLogger logger,
-      GeneratorContext ctx) {
+  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx) {
     String packageName = getPackage();
     String simpleName = getSimpleName();
     PrintWriter printWriter = ctx.tryCreate(logger, packageName, simpleName);

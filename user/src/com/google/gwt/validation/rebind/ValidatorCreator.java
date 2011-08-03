@@ -94,10 +94,6 @@ public class ValidatorCreator extends AbstractCreator {
     writeGwtValidate(sourceWriter);
   }
 
-  private String getSimpleName() {
-    return validatorType.getSimpleSourceName() + "Impl";
-  }
-
   private void writeConstructor(SourceWriter sw) {
     // public MyValidator() {
     sw.println("public " + getSimpleName() + "() {");
