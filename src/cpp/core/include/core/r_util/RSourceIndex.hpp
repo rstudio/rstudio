@@ -20,11 +20,13 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/utility.hpp>
+#include <boost/regex.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/StringUtils.hpp>
 
 namespace core {
 namespace r_util {
@@ -59,8 +61,7 @@ public:
 
    // support for RSourceIndex::findFunction
 
-   bool nameStartsWith(const std::string& term,
-                       bool caseSensitive) const
+   bool nameStartsWith(const std::string& term, bool caseSensitive) const
    {
       if (caseSensitive)
          return boost::algorithm::starts_with(name_, term);
@@ -68,13 +69,26 @@ public:
          return boost::algorithm::istarts_with(name_, term);
    }
 
-   bool nameContains(const std::string& term,
-                     bool caseSensitive) const
+   bool nameContains(const std::string& term, bool caseSensitive) const
    {
       if (caseSensitive)
          return boost::algorithm::contains(name_, term);
       else
          return boost::algorithm::icontains(name_, term);
+   }
+
+   bool nameMatches(const boost::regex& regex,
+                    bool prefixOnly,
+                    bool caseSensitive) const
+   {
+      boost::smatch match;
+      boost::match_flag_type flags = boost::match_default;
+      if (prefixOnly)
+         flags |= boost::match_continuous;
+      return regex_search(caseSensitive ? name_ : string_utils::toLower(name_),
+                          match,
+                          regex,
+                          flags);
    }
 
    RFunctionInfo withContext(const std::string& context) const
@@ -116,12 +130,28 @@ public:
    {
       // define the predicate
       boost::function<bool(const RFunctionInfo&)> predicate;
-      if (prefixOnly)
-         predicate = boost::bind(&RFunctionInfo::nameStartsWith,
-                                    _1, term, caseSensitive);
+
+      // check for wildcard character
+      if (term.find('*') != std::string::npos)
+      {
+         boost::regex patternRegex = patternToRegex(caseSensitive ?
+                                                      term :
+                                                      string_utils::toLower(term));
+         predicate = boost::bind(&RFunctionInfo::nameMatches,
+                                    _1,
+                                    patternRegex,
+                                    prefixOnly,
+                                    caseSensitive);
+      }
       else
-         predicate = boost::bind(&RFunctionInfo::nameContains,
-                                    _1, term, caseSensitive);
+      {
+         if (prefixOnly)
+            predicate = boost::bind(&RFunctionInfo::nameStartsWith,
+                                       _1, term, caseSensitive);
+         else
+            predicate = boost::bind(&RFunctionInfo::nameContains,
+                                       _1, term, caseSensitive);
+      }
 
       // perform the copy and transform to include context
       core::algorithm::copy_transformed_if(
@@ -134,6 +164,9 @@ public:
       // return the output iterator
       return out;
    }
+
+private:
+   static boost::regex patternToRegex(const std::string& pattern);
 
 private:
    std::string context_;

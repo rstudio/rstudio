@@ -13,6 +13,8 @@
 
 #include <core/r_util/RSourceIndex.hpp>
 
+#include <boost/algorithm/string.hpp>
+
 #include <core/StringUtils.hpp>
 
 #include <core/r_util/RTokenizer.hpp>
@@ -103,6 +105,26 @@ RSourceIndex::RSourceIndex(const std::string& context,
    }
 }
 
+
+boost::regex RSourceIndex::patternToRegex(const std::string& pattern)
+{
+   // split into componenents
+   using namespace boost::algorithm;
+   std::vector<std::string> components;
+   split(components, pattern, is_any_of("*"), token_compress_on);
+
+   // build and return regex
+   std::string regex;
+   for (std::size_t i=0; i<components.size(); i++)
+   {
+      if (i > 0)
+         regex.append(".*");
+      regex.append("\\Q");
+      regex.append(components.at(i));
+      regex.append("\\E");
+   }
+   return boost::regex(regex);
+}
 
 
 } // namespace r_util

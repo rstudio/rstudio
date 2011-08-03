@@ -26,12 +26,12 @@
 
 // TODO: alternate UI for when toolbar is hidden
 
-// TODO: use * for pattern matching (update query cache probing as well)
+// TODO: sync source documents
+// TODO: include files in the query
+
 
 // TODO: indexing queue
-// TODO: sync source documents
 
-// TODO: include files in the query
 // TODO: open with project-level encoding & convert to UTF-8 / wide
 // TODO: other function types (setMethod, etc. -- see rtags.R)
 // TODO: other file types (Rw, Rnw)

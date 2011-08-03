@@ -2,9 +2,12 @@ package org.rstudio.studio.client.workbench.codesearch.model;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -47,23 +50,29 @@ public class CodeSearchOracle extends SuggestOracle
          if (res.second.size() <= request.getLimit() &&
              request.getQuery().startsWith(res.first))
          {
-           
-            // TODO: once we introduce pattern matching then we need to
-            // reflect this in this codepath
-            
+            Pattern pattern = null;
             String queryLower = request.getQuery().toLowerCase();
-           
+            if (queryLower.indexOf('*') != -1)
+               pattern = patternForTerm(queryLower);
+            
             ArrayList<CodeSearchSuggestion> suggestions =
                                        new ArrayList<CodeSearchSuggestion>();
             for (int s=0; s<res.second.size(); s++)
             {
-               
                CodeSearchSuggestion sugg = res.second.get(s);
                
-               String functionName = sugg.getResult().getFunctionName();
-              
-               if (functionName.toLowerCase().startsWith(queryLower))
-                  suggestions.add(sugg);
+               String name = sugg.getResult().getFunctionName().toLowerCase();
+               if (pattern != null)
+               {
+                  Match match = pattern.match(name, 0);
+                  if (match != null && match.getIndex() == 0)
+                     suggestions.add(sugg);
+               }
+               else
+               {
+                  if (name.startsWith(queryLower))
+                     suggestions.add(sugg);
+               }
             }
 
             // cache suggestions. note that this adds an item to the end
@@ -97,6 +106,20 @@ public class CodeSearchOracle extends SuggestOracle
    public boolean isDisplayStringHTML()
    {
       return true;
+   }
+   
+   private Pattern patternForTerm(String term)
+   {
+      // split the term on *
+      StringBuilder regex = new StringBuilder();
+      String[] components = term.split("\\*", -1);
+      for (int i=0; i<components.length; i++)
+      {
+         if (i > 0)
+            regex.append(".*");
+         regex.append(Pattern.escape(components[i]));
+      }    
+      return Pattern.create(regex.toString());
    }
    
    private class CodeSearchCommand extends TimeBufferedCommand  
@@ -159,8 +182,8 @@ public class CodeSearchOracle extends SuggestOracle
                      final ArrayList<CodeSearchSuggestion> suggestions)
    {
       // cache the suggestions (up to 15 active result sets cached)
-      // NOTE: the cache is cleared at the end of the search sequence 
-      // (when the search box loses focus)
+      // NOTE: the cache is cleared on gain focus, lost focus, and 
+      // the search term reverting back to empty)
       if (resultCache_.size() > 15)
          resultCache_.remove(0);
       
