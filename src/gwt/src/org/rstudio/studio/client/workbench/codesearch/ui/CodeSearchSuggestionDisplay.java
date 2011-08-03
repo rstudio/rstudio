@@ -1,4 +1,4 @@
-package org.rstudio.studio.client.workbench.codesearch;
+package org.rstudio.studio.client.workbench.codesearch.ui;
 
 import com.google.gwt.user.client.ui.SuggestBox;
 

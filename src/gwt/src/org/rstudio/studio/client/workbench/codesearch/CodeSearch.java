@@ -5,7 +5,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchOracle;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;

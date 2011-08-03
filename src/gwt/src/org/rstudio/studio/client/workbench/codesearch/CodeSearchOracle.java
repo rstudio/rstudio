@@ -1,14 +1,15 @@
-package org.rstudio.studio.client.workbench.codesearch.model;
+package org.rstudio.studio.client.workbench.codesearch;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
+import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.inject.Inject;

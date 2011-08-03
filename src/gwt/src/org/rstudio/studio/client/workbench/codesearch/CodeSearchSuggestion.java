@@ -1,7 +1,8 @@
-package org.rstudio.studio.client.workbench.codesearch.model;
+package org.rstudio.studio.client.workbench.codesearch;
 
 import org.rstudio.core.client.SafeHtmlUtil;
-import org.rstudio.studio.client.workbench.codesearch.CodeSearchResources;
+import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
+import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;

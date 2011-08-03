@@ -42,7 +42,7 @@ import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.projects.ui.NewProjectDialog;
 import org.rstudio.studio.client.projects.ui.ProjectOptionsDialog;
-import org.rstudio.studio.client.workbench.codesearch.CodeSearchResources;
+import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
