@@ -246,6 +246,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    public void clear()
    {
       setText("", true);
+      close_.setVisible(false);
    }
    
    // NOTE: only works if you are using the default display!
