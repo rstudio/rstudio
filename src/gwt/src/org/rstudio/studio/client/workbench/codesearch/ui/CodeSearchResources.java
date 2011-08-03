@@ -15,6 +15,7 @@ public interface CodeSearchResources extends ClientBundle
       String functionImage();
       String functionName();
       String functionContext();
+      String codeSearchDialogMainWidget();
    }
 
   

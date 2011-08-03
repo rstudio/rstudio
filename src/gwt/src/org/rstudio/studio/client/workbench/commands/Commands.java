@@ -109,6 +109,7 @@ public abstract class
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();
    public abstract AppCommand jumpToFunction();
+   public abstract AppCommand goToFunctionFile();
    public abstract AppCommand switchToTab();
    public abstract AppCommand previousTab();
    public abstract AppCommand nextTab();

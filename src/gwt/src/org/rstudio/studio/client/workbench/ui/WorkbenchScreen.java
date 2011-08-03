@@ -42,6 +42,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
+import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -71,12 +73,14 @@ public class WorkbenchScreen extends Composite
                           final Edit.Shim edit,
                           Commands commands,
                           final Provider<FileMRUList> mruList,
+                          Provider<CodeSearch> pCodeSearch,
                           FontSizeManager fontSizeManager,
                           OptionsLoader.Shim optionsLoader)
    {
       eventBus_ = eventBus;
       session_ = session;
       edit_ = edit;
+      pCodeSearch_ = pCodeSearch;
       optionsLoader_ = optionsLoader;
 
       eventBus_.addHandler(ShowEditorEvent.TYPE, edit);
@@ -295,6 +299,18 @@ public class WorkbenchScreen extends Composite
       optionsLoader_.showOptions();
    }
 
+   @Handler
+   public void onGoToFunctionFile()
+   {
+      CodeSearchDialog codeSearchPanel =  
+                                    new CodeSearchDialog(pCodeSearch_);
+      
+    
+      
+      codeSearchPanel.showModal();
+      
+   }
+   
    public Widget asWidget()
    {
       return this;
@@ -307,8 +323,10 @@ public class WorkbenchScreen extends Composite
    private final EventBus eventBus_;
    private final Session session_;
    private final Shim edit_;
+   private final Provider<CodeSearch> pCodeSearch_;
    private final org.rstudio.studio.client.workbench.ui.OptionsLoader.Shim optionsLoader_;
 
    private final MainSplitPanel tabsPanel_ ;
    private PaneManager paneManager_;
+
 }

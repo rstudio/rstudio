@@ -397,28 +397,33 @@ public abstract class ModalDialogBase extends DialogBox
             case KeyCodes.KEY_ESCAPE:
                if (escapeDisabled_)
                   break;
-               if (cancelButton_ == null)
-               {
-                  if ((okButton_ != null) && okButton_.isEnabled())
-                  {
-                     nativeEvent.preventDefault();
-                     nativeEvent.stopPropagation();
-                     event.cancel();
-                     okButton_.click();
-                  }
-               }
-               else if (cancelButton_.isEnabled())
-               {
-                  nativeEvent.preventDefault();
-                  nativeEvent.stopPropagation();
-                  event.cancel();
-                  cancelButton_.click();
-               }
+               onEscapeKeyDown(event);
                break;
          } 
       }
    }
    
+   protected void onEscapeKeyDown(Event.NativePreviewEvent event)
+   {
+      NativeEvent nativeEvent = event.getNativeEvent();
+      if (cancelButton_ == null)
+      {
+         if ((okButton_ != null) && okButton_.isEnabled())
+         {
+            nativeEvent.preventDefault();
+            nativeEvent.stopPropagation();
+            event.cancel();
+            okButton_.click();
+         }
+      }
+      else if (cancelButton_.isEnabled())
+      {
+         nativeEvent.preventDefault();
+         nativeEvent.stopPropagation();
+         event.cancel();
+         cancelButton_.click();
+      }
+   }
   
    private void enableButtons(boolean enabled)
    {

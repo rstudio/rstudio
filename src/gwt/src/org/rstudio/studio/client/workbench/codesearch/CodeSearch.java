@@ -29,6 +29,12 @@ import com.google.inject.Inject;
 
 public class CodeSearch
 {
+   public interface Observer
+   {
+      void onCompleted();
+   }
+   
+   
    public interface Display 
    {
       SearchDisplay getSearchDisplay();
@@ -76,6 +82,9 @@ public class CodeSearch
                @Override
                public void execute()
                {
+                  if (observer_ != null)
+                     observer_.onCompleted();
+                  
                   fileTypeRegistry.editFile(srcItem, pos);
                }
             });
@@ -137,6 +146,12 @@ public class CodeSearch
    {
       return (Widget) display_.getSearchDisplay();
    }
+   
+   public void setObserver(Observer observer)
+   {
+      observer_ = observer;
+   }
     
    private final Display display_;
+   private Observer observer_ = null;
 }

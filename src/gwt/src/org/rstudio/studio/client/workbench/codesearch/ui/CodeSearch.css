@@ -19,3 +19,10 @@
    color: #888;
 }
 
+.codeSearchDialogMainWidget {
+	width: 250px;
+}
+
+.codeSearchDialogMainWidget .codeSearchWidget .search {
+   width: 100%;	
+}

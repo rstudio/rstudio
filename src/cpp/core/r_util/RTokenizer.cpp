@@ -21,10 +21,7 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-
-// TODO: keyboard shortcut to initiate search
-
-// TODO: alternate UI for when toolbar is hidden
+// TODO: tweaks to keyboard shortcuts and ui (joe feedback)
 
 // TODO: sync source documents
 // TODO: include files in the query

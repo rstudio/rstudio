@@ -89,6 +89,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="sourceActiveDocumentWithEcho"/>
          <cmd refid="sourceFile"/>
          <separator/>
+         <cmd refid="jumpToFunction"/>
+         <separator/>
          <cmd refid="extractFunction"/>
          <cmd refid="commentUncomment"/>
          <separator/>
@@ -101,10 +103,9 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
          <separator/>
-         <cmd refid="jumpToFunction"/>
+         <cmd refid="goToFunctionFile"/>
          <separator/>
          <cmd refid="switchToTab"/>
-         <separator/>
          <cmd refid="nextTab"/>
          <cmd refid="previousTab"/>
          <cmd refid="firstTab"/>
@@ -253,6 +254,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
       <shortcut refid="commentUncomment" value="Cmd+/"/>
       <shortcut refid="consoleClear" value="Ctrl+L"/>
+      <shortcut refid="goToFunctionFile" value="Cmd+Shift+V"/>
       <shortcut refid="activateSource" value="Ctrl+1"/>
       <shortcut refid="activateConsole" value="Ctrl+2"/>
       <shortcut refid="activateWorkspace" value="Ctrl+3"/>
@@ -398,7 +400,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show Toolbar"/>
    <cmd id="hideToolbar"
         menuLabel="Hide Toolbar"/>
-        
+   <cmd id="goToFunctionFile"
+        menuLabel="Go to Function/File..."/>   
    <cmd id="activateSource"
         menuLabel="Move Cursor to _Source"/>
    <cmd id="activateConsole"
