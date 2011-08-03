@@ -9,6 +9,8 @@ import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
@@ -64,12 +66,19 @@ public class CodeSearch
             
             // calculate full file path and position
             String srcFile = projDir.completePath(result.getContext());
-            FileSystemItem srcFileItem = FileSystemItem.createFile(srcFile);
-            FilePosition pos = FilePosition.create(result.getLine(), 
-                                                   result.getColumn());
+            final FileSystemItem srcItem = FileSystemItem.createFile(srcFile);
+            final FilePosition pos = FilePosition.create(result.getLine(), 
+                                                         result.getColumn());
             
-            // fire editing event
-            fileTypeRegistry.editFile(srcFileItem, pos);
+            // fire editing event (delayed so the Enter keystroke 
+            // doesn't get routed into the source editor)
+            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+               @Override
+               public void execute()
+               {
+                  fileTypeRegistry.editFile(srcItem, pos);
+               }
+            });
          }
       });
       
