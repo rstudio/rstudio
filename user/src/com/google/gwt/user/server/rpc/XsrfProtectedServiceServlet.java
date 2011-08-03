@@ -19,7 +19,8 @@ import com.google.gwt.user.client.rpc.RpcToken;
 import com.google.gwt.user.client.rpc.RpcTokenException;
 import com.google.gwt.user.client.rpc.XsrfToken;
 import com.google.gwt.user.server.Util;
-import com.google.gwt.util.tools.Utility;
+import com.google.gwt.util.tools.shared.Md5Utils;
+import com.google.gwt.util.tools.shared.StringUtils;
 
 import java.lang.reflect.Method;
 
@@ -111,8 +112,8 @@ public class XsrfProtectedServiceServlet
           "Unable to verify XSRF cookie");
     }
 
-    String expectedToken = Utility.toHexString(
-        Utility.getMd5Digest(sessionCookie.getValue().getBytes()));
+    String expectedToken = StringUtils.toHexString(
+        Md5Utils.getMd5Digest(sessionCookie.getValue().getBytes()));
     XsrfToken xsrfToken = (XsrfToken) token;
 
     if (!expectedToken.equals(xsrfToken.getToken())) {

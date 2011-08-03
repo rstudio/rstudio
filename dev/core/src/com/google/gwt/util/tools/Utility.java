@@ -32,8 +32,6 @@ import java.io.Writer;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -44,24 +42,6 @@ import java.util.Map.Entry;
  */
 public final class Utility {
 
-  /**
-   * Per thread MD5 instance.
-   */
-  private static final ThreadLocal<MessageDigest> perThreadMd5  =
-    new ThreadLocal<MessageDigest>() {
-      @Override
-      protected MessageDigest initialValue() {
-        try {
-          return MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-          return null;
-        }
-      };
-  };
-
-  public static char[] HEX_CHARS = new char[] {
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
-    'E', 'F'};
 
   private static String sInstallPath = null;
 
@@ -255,29 +235,6 @@ public final class Utility {
   }
 
   /**
-   * Generate MD5 digest.
-   *
-   * @param input input data to be hashed.
-   * @return MD5 digest.
-   */
-  public static byte[] getMd5Digest(byte[] input) {
-    MessageDigest md5 = perThreadMd5.get();
-    md5.reset();
-    md5.update(input);
-    return md5.digest();
-  }
-
-  /**
-   * A 4-digit hex result.
-   */
-  public static void hex4(char c, StringBuffer sb) {
-    sb.append(HEX_CHARS[(c & 0xF000) >> 12]);
-    sb.append(HEX_CHARS[(c & 0x0F00) >> 8]);
-    sb.append(HEX_CHARS[(c & 0x00F0) >> 4]);
-    sb.append(HEX_CHARS[c & 0x000F]);
-  }
-
-  /**
    * Creates a randomly-named temporary directory.
    *
    * @param baseDir base directory to contain the new directory. May be
@@ -340,25 +297,6 @@ public final class Utility {
         return;
       }
     }
-  }
-
-  /**
-   * Returns a string representation of the byte array as a series of
-   * hexadecimal characters.
-   *
-   * @param bytes byte array to convert
-   * @return a string representation of the byte array as a series of
-   *         hexadecimal characters
-   */
-  public static String toHexString(byte[] bytes) {
-    char[] hexString = new char[2 * bytes.length];
-    int j = 0;
-    for (int i = 0; i < bytes.length; i++) {
-      hexString[j++] = HEX_CHARS[(bytes[i] & 0xF0) >> 4];
-      hexString[j++] = HEX_CHARS[bytes[i] & 0x0F];
-    }
-
-    return new String(hexString);
   }
 
   public static void writeTemplateBinaryFile(File file, byte[] contents) throws IOException {

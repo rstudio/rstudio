@@ -21,7 +21,7 @@ import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.util.tools.Utility;
+import com.google.gwt.util.tools.shared.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
@@ -254,7 +254,7 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
 
     byte[] cookieBytes = new byte[16];
     random.nextBytes(cookieBytes);
-    String cookie = Utility.toHexString(cookieBytes);
+    String cookie = StringUtils.toHexString(cookieBytes);
 
     // Cook up the classpath, main class, and extra args
     args.addAll(Arrays.asList("-classpath",

@@ -19,7 +19,8 @@ import com.google.gwt.user.client.rpc.RpcTokenException;
 import com.google.gwt.user.client.rpc.XsrfToken;
 import com.google.gwt.user.client.rpc.XsrfTokenService;
 import com.google.gwt.user.server.Util;
-import com.google.gwt.util.tools.Utility;
+import com.google.gwt.util.tools.shared.Md5Utils;
+import com.google.gwt.util.tools.shared.StringUtils;
 
 import javax.servlet.http.Cookie;
 
@@ -195,7 +196,7 @@ public class XsrfTokenServiceServlet extends RemoteServiceServlet
           "Unable to generate XSRF cookie");
     }
     byte[] cookieBytes =  sessionCookie.getValue().getBytes();
-    return Utility.toHexString(Utility.getMd5Digest(cookieBytes));
+    return StringUtils.toHexString(Md5Utils.getMd5Digest(cookieBytes));
   }
 
   /**

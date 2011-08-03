@@ -17,7 +17,7 @@ package com.google.gwt.i18n.server.keygen;
 
 import com.google.gwt.i18n.server.KeyGenerator;
 import com.google.gwt.i18n.server.Message;
-import com.google.gwt.util.tools.Utility;
+import com.google.gwt.util.tools.shared.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -55,6 +55,6 @@ public class MD5KeyGenerator implements KeyGenerator {
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException("UTF-8 unsupported", e);
     }
-    return Utility.toHexString(md5.digest());
+    return StringUtils.toHexString(md5.digest());
   }
 }

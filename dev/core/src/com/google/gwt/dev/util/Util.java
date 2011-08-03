@@ -22,6 +22,7 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.util.tools.Utility;
+import com.google.gwt.util.tools.shared.StringUtils;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.DOMException;
@@ -177,7 +178,7 @@ public final class Util {
     for (int i = 0; i < contents.length; i++) {
       md5.update(contents[i]);
     }
-    return Utility.toHexString(md5.digest());
+    return StringUtils.toHexString(md5.digest());
   }
   
   public static void copy(InputStream is, OutputStream os) throws IOException {
@@ -485,11 +486,11 @@ public final class Util {
   /**
    * A 4-digit hex result.
    * 
-   * @deprecated use {@link Utility#hex4(char, StringBuffer)} instead.
+   * @deprecated use {@link StringUtils#hex4(char, StringBuffer)} instead.
    */
   @Deprecated
   public static void hex4(char c, StringBuffer sb) {
-    Utility.hex4(c, sb);
+    StringUtils.hex4(c, sb);
   }
 
   /**
@@ -965,11 +966,11 @@ public final class Util {
    * @param bytes byte array to convert
    * @return a string representation of the byte array as a series of
    *         hexadecimal characters
-   * @deprecated use {@link Utility#toHexString(byte[])} instead. 
+   * @deprecated use {@link StringUtils#toHexString(byte[])} instead. 
    */
   @Deprecated
   public static String toHexString(byte[] bytes) {
-    return Utility.toHexString(bytes);
+    return StringUtils.toHexString(bytes);
   }
 
   /**
