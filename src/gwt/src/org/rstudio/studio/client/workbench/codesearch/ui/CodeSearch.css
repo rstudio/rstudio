@@ -5,17 +5,17 @@
    width: 140px;
 }
 
-.functionImage {
+.itemImage {
 	position: relative;
 	top: 1px;
 	margin-right: 5px;
 }
 
-.functionName {
+.itemName {
    margin-right: 7px;
 }
 
-.functionContext {
+.itemContext {
    color: #888;
 }
 

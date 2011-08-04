@@ -21,9 +21,11 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-// TODO: client side support for methods and classes
+// TODO: alphabetize results (see: ha)
 
-// TODO: change nomenclature to "source object" or "source item"
+// TODO: look into race condition of results from first letter being
+//       displayed after results from second letter are displayed (more
+//       common in low latency situations)
 
 // TODO: sync source documents
 // TODO: include files in the query

@@ -8,7 +8,7 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
+import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -62,7 +62,7 @@ public class CodeSearchOracle extends SuggestOracle
             {
                CodeSearchSuggestion sugg = res.second.get(s);
                
-               String name = sugg.getResult().getFunctionName().toLowerCase();
+               String name = sugg.getSourceItem().getFunctionName().toLowerCase();
                if (pattern != null)
                {
                   Match match = pattern.match(name, 0);
@@ -93,9 +93,9 @@ public class CodeSearchOracle extends SuggestOracle
       codeSearch_.enqueRequest(request, callback); 
    }
      
-   public CodeSearchResult resultFromSuggestion(Suggestion suggestion)
+   public RSourceItem sourceItemFromSuggestion(Suggestion suggestion)
    {
-      return ((CodeSearchSuggestion)suggestion).getResult();
+      return ((CodeSearchSuggestion)suggestion).getSourceItem();
    }
    
    public void clear()
@@ -144,14 +144,14 @@ public class CodeSearchOracle extends SuggestOracle
          server_.searchCode(
                request_.getQuery(),
                request_.getLimit(),
-               new SimpleRequestCallback<RpcObjectList<CodeSearchResult>>() {
+               new SimpleRequestCallback<RpcObjectList<RSourceItem>>() {
             
             @Override
             public void onResponseReceived(
-                                    RpcObjectList<CodeSearchResult> response)
+                                    RpcObjectList<RSourceItem> response)
             { 
                // to array
-               ArrayList<CodeSearchResult> results = response.toArrayList();
+               ArrayList<RSourceItem> results = response.toArrayList();
                
                // read the response
                ArrayList<CodeSearchSuggestion> suggestions = 

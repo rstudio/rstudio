@@ -12,9 +12,9 @@ public interface CodeSearchResources extends ClientBundle
    public static interface Styles extends CssResource
    {
       String codeSearchWidget();
-      String functionImage();
-      String functionName();
-      String functionContext();
+      String itemImage();
+      String itemName();
+      String itemContext();
       String codeSearchDialogMainWidget();
    }
 
@@ -23,6 +23,8 @@ public interface CodeSearchResources extends ClientBundle
    Styles styles();
    
    ImageResource function();
+   ImageResource method();
+   ImageResource cls();
    ImageResource gotoFunction();
    
    public static CodeSearchResources INSTANCE = 

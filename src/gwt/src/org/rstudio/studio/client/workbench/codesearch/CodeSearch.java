@@ -5,7 +5,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
+import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
@@ -65,8 +65,8 @@ public class CodeSearch
          public void onSelection(SelectionEvent<Suggestion> event)
          {
             // map back to a code search result
-            CodeSearchResult result = 
-               display_.getSearchOracle().resultFromSuggestion(
+            RSourceItem result = 
+               display_.getSearchOracle().sourceItemFromSuggestion(
                                                 event.getSelectedItem());
             
             // get the active project directory

@@ -76,24 +76,24 @@ void indexProjectFiles()
 }
 
 
-void findFunctions(const std::string& term,
-                   int maxResults,
-                   bool prefixOnly,
-                   std::vector<r_util::RFunctionInfo>* pFunctions)
+void search(const std::string& term,
+            int maxResults,
+            bool prefixOnly,
+            std::vector<r_util::RSourceItem>* pItems)
 {
    BOOST_FOREACH(boost::shared_ptr<core::r_util::RSourceIndex> index,
                  s_sourceIndexes)
    {
       // scan the next index
-      index->findFunction(term,
-                          prefixOnly,
-                          false,
-                          std::back_inserter(*pFunctions));
+      index->search(term,
+                    prefixOnly,
+                    false,
+                    std::back_inserter(*pItems));
 
       // return if we are past maxResults
-      if (pFunctions->size() >= boost::numeric_cast<std::size_t>(maxResults))
+      if (pItems->size() >= boost::numeric_cast<std::size_t>(maxResults))
       {
-         pFunctions->resize(maxResults);
+         pItems->resize(maxResults);
          return;
       }
    }
@@ -101,12 +101,12 @@ void findFunctions(const std::string& term,
 
 template <typename TValue, typename TFunc>
 json::Array toJsonArray(
-      const std::vector<r_util::RFunctionInfo> &functions,
+      const std::vector<r_util::RSourceItem> &items,
       TFunc memberFunc)
 {
    json::Array col;
-   std::transform(functions.begin(),
-                  functions.end(),
+   std::transform(items.begin(),
+                  items.end(),
                   std::back_inserter(col),
                   boost::bind(json::toJsonValue<TValue>,
                                  boost::bind(memberFunc, _1)));
@@ -124,22 +124,21 @@ Error searchCode(const json::JsonRpcRequest& request,
       return error;
 
    // find functions
-   std::vector<r_util::RFunctionInfo> functions;
-   findFunctions(term, maxResults + 1, true, &functions);
+   std::vector<r_util::RSourceItem> items;
+   search(term, maxResults + 1, true, &items);
 
    // return rpc array list (wire efficiency)
    json::Object res;
-   res["name"] = toJsonArray<std::string>(functions, &r_util::RFunctionInfo::name);
-   res["context"] = toJsonArray<std::string>(functions,
-                                             &r_util::RFunctionInfo::context);
-   res["line"] = toJsonArray<int>(functions, &r_util::RFunctionInfo::line);
-   res["column"] = toJsonArray<int>(functions, &r_util::RFunctionInfo::column);
+   res["type"] = toJsonArray<int>(items, &r_util::RSourceItem::type);
+   res["name"] = toJsonArray<std::string>(items, &r_util::RSourceItem::name);
+   res["context"] = toJsonArray<std::string>(items, &r_util::RSourceItem::context);
+   res["line"] = toJsonArray<int>(items, &r_util::RSourceItem::line);
+   res["column"] = toJsonArray<int>(items, &r_util::RSourceItem::column);
 
    pResponse->setResult(res);
 
    return Success();
 }
-
 
 void onDeferredInit()
 {
@@ -147,7 +146,6 @@ void onDeferredInit()
    if (code_search::enabled())
       indexProjectFiles();
 }
-
    
 } // anonymous namespace
 

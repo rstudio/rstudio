@@ -42,7 +42,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.remote.RemoteServerEventListener.ClientEvent;
-import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
+import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -250,7 +250,7 @@ public class RemoteServer implements Server
    public void searchCode(
          String term, 
          int maxResults,
-         ServerRequestCallback<RpcObjectList<CodeSearchResult>> requestCallback)
+         ServerRequestCallback<RpcObjectList<RSourceItem>> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(term));

@@ -31,7 +31,7 @@
 namespace core {
 namespace r_util {
 
-class RFunctionInfo
+class RSourceItem
 {
 public:
    enum Type
@@ -43,35 +43,35 @@ public:
    };
 
 public:
-   RFunctionInfo(Type type,
-                 const std::string& name,
-                 std::size_t line,
-                 std::size_t column)
+   RSourceItem(int type,
+               const std::string& name,
+               std::size_t line,
+               std::size_t column)
       : type_(type), name_(name), line_(line), column_(column)
    {
    }
 
-   RFunctionInfo(const std::string& context,
-                 Type type,
-                 const std::string& name,
-                 std::size_t line,
-                 std::size_t column)
+   RSourceItem(const std::string& context,
+               int type,
+               const std::string& name,
+               std::size_t line,
+               std::size_t column)
       : context_(context), type_(type), name_(name), line_(line), column_(column)
    {
    }
 
-   virtual ~RFunctionInfo() {}
+   virtual ~RSourceItem() {}
 
    // COPYING: via compiler (copyable members)
 
    // accessors
-   Type type() const { return type_; }
+   int type() const { return type_; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
    int line() const { return core::safe_convert::numberTo<int>(line_,0); }
    int column() const { return core::safe_convert::numberTo<int>(column_,0); }
 
-   // support for RSourceIndex::findFunction
+   // support for RSourceIndex::search
 
    bool nameStartsWith(const std::string& term, bool caseSensitive) const
    {
@@ -103,22 +103,22 @@ public:
                           flags);
    }
 
-   RFunctionInfo withContext(const std::string& context) const
+   RSourceItem withContext(const std::string& context) const
    {
-      return RFunctionInfo(context, type_, name_, line_, column_);
+      return RSourceItem(context, type_, name_, line_, column_);
    }
 
 private:
    std::string context_;
-   Type type_;
+   int type_;
    std::string name_;
    std::size_t line_;
    std::size_t column_;
 
 // convenience friendship for doing vector operations e.g. resize()
 private:
-   friend class std::vector<RFunctionInfo>;
-   RFunctionInfo() : line_(0), column_(0) {}
+   friend class std::vector<RSourceItem>;
+   RSourceItem() : line_(0), column_(0) {}
 };
 
 
@@ -136,13 +136,13 @@ public:
                 const std::string& code);
 
    template <typename OutputIterator>
-   OutputIterator findFunction(const std::string& term,
-                               bool prefixOnly,
-                               bool caseSensitive,
-                               OutputIterator out) const
+   OutputIterator search(const std::string& term,
+                         bool prefixOnly,
+                         bool caseSensitive,
+                         OutputIterator out) const
    {
       // define the predicate
-      boost::function<bool(const RFunctionInfo&)> predicate;
+      boost::function<bool(const RSourceItem&)> predicate;
 
       // check for wildcard character
       if (term.find('*') != std::string::npos)
@@ -150,7 +150,7 @@ public:
          boost::regex patternRegex = patternToRegex(caseSensitive ?
                                                       term :
                                                       string_utils::toLower(term));
-         predicate = boost::bind(&RFunctionInfo::nameMatches,
+         predicate = boost::bind(&RSourceItem::nameMatches,
                                     _1,
                                     patternRegex,
                                     prefixOnly,
@@ -159,20 +159,20 @@ public:
       else
       {
          if (prefixOnly)
-            predicate = boost::bind(&RFunctionInfo::nameStartsWith,
+            predicate = boost::bind(&RSourceItem::nameStartsWith,
                                        _1, term, caseSensitive);
          else
-            predicate = boost::bind(&RFunctionInfo::nameContains,
+            predicate = boost::bind(&RSourceItem::nameContains,
                                        _1, term, caseSensitive);
       }
 
       // perform the copy and transform to include context
       core::algorithm::copy_transformed_if(
-                functions_.begin(),
-                functions_.end(),
+                items_.begin(),
+                items_.end(),
                 out,
                 predicate,
-                boost::bind(&RFunctionInfo::withContext, _1, context_));
+                boost::bind(&RSourceItem::withContext, _1, context_));
 
       // return the output iterator
       return out;
@@ -183,7 +183,7 @@ private:
 
 private:
    std::string context_;
-   std::vector<RFunctionInfo> functions_;
+   std::vector<RSourceItem> items_;
 };
 
 

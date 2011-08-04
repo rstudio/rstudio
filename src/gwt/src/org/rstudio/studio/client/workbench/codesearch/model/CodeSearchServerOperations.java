@@ -14,12 +14,12 @@ package org.rstudio.studio.client.workbench.codesearch.model;
 
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResult;
+import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;
 
 public interface CodeSearchServerOperations 
 {   
    void searchCode(
          String term, 
          int maxResults,
-         ServerRequestCallback<RpcObjectList<CodeSearchResult>> requestCallback);
+         ServerRequestCallback<RpcObjectList<RSourceItem>> requestCallback);
 }

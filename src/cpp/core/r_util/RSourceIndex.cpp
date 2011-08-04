@@ -69,7 +69,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
    for (std::size_t i=0; i<rTokens.size(); i++)
    {
       // initial name and type are nil
-      RFunctionInfo::Type type = RFunctionInfo::None;
+      RSourceItem::Type type = RSourceItem::None;
       std::wstring name;
       std::size_t tokenOffset = -1;
 
@@ -83,18 +83,18 @@ RSourceIndex::RSourceIndex(const std::string& context,
       // is this a potential method or class definition?
       if (token.contentStartsWith(set))
       {
-         RFunctionInfo::Type setType = RFunctionInfo::None;
+         RSourceItem::Type setType = RSourceItem::None;
 
          if (token.contentEquals(setMethod) ||
              token.contentEquals(setGeneric) ||
              token.contentEquals(setGroupGeneric))
          {
-            setType = RFunctionInfo::Method;
+            setType = RSourceItem::Method;
          }
          else if (token.contentEquals(setClass) ||
                   token.contentEquals(setClassUnion))
          {
-            setType = RFunctionInfo::Class;
+            setType = RSourceItem::Class;
          }
          else
          {
@@ -149,7 +149,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
          }
 
          // if we got this far then this is a function definition
-         type = RFunctionInfo::Function;
+         type = RSourceItem::Function;
          name = idToken.content();
          tokenOffset = idToken.offset();
       }
@@ -174,10 +174,10 @@ RSourceIndex::RSourceIndex(const std::string& context,
          column = tokenOffset;
 
       // add to index
-      functions_.push_back(RFunctionInfo(type,
-                                         string_utils::wideToUtf8(name),
-                                         line,
-                                         column));
+      items_.push_back(RSourceItem(type,
+                                   string_utils::wideToUtf8(name),
+                                   line,
+                                   column));
    }
 }
 

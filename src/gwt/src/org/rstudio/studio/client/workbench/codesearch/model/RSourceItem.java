@@ -1,5 +1,5 @@
 /*
- * BrowseUrlInfo.java
+ * RSourceItem.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -15,12 +15,21 @@ package org.rstudio.studio.client.workbench.codesearch.model;
 import com.google.gwt.core.client.JavaScriptObject;
 
 
-public class CodeSearchResult extends JavaScriptObject
+public class RSourceItem extends JavaScriptObject
 {
-   protected CodeSearchResult()
+   protected RSourceItem()
    {
    }
+   
+   public static final int NONE = 0;
+   public static final int FUNCTION = 1;
+   public static final int METHOD = 2;
+   public static final int CLASS = 3;
 
+   public final native int getType() /*-{
+      return this.type;
+   }-*/;
+   
    public final native String getFunctionName() /*-{
       return this.name;
    }-*/;
