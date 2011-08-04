@@ -16,10 +16,10 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.Generator;
+import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
-import com.google.gwt.dev.javac.rebind.RebindResult;
 
 /**
  * A rule to replace the type being rebound with a class whose name is

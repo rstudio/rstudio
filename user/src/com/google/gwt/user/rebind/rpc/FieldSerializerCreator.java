@@ -18,7 +18,6 @@ package com.google.gwt.user.rebind.rpc;
 import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.core.client.impl.WeakMapping;
 import com.google.gwt.core.ext.GeneratorContext;
-import com.google.gwt.core.ext.GeneratorContextExt;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -63,7 +62,7 @@ public class FieldSerializerCreator {
 
   private static final String WEAK_MAPPING_CLASS_NAME = WeakMapping.class.getName();
 
-  private final GeneratorContextExt context;
+  private final GeneratorContext context;
 
   private final JClassType customFieldSerializer;
 
@@ -94,7 +93,7 @@ public class FieldSerializerCreator {
   /**
    * Constructs a field serializer for the class.
    */
-  public FieldSerializerCreator(GeneratorContextExt context,
+  public FieldSerializerCreator(GeneratorContext context,
       SerializableTypeOracle typesSentFromBrowser, SerializableTypeOracle typesSentToBrowser,
       JClassType requestedClass, JClassType customFieldSerializer) {
     this.context = context;

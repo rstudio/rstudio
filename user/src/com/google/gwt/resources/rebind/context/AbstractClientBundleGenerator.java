@@ -17,10 +17,13 @@ package com.google.gwt.resources.rebind.context;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.CachedPropertyInformation;
+import com.google.gwt.core.ext.CachedGeneratorResult;
 import com.google.gwt.core.ext.GeneratorContext;
-import com.google.gwt.core.ext.GeneratorContextExt;
-import com.google.gwt.core.ext.GeneratorExt;
+import com.google.gwt.core.ext.IncrementalGenerator;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.RebindMode;
+import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -32,11 +35,6 @@ import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.generator.NameFactory;
-import com.google.gwt.dev.javac.rebind.CachedClientDataMap;
-import com.google.gwt.dev.javac.rebind.CachedPropertyInformation;
-import com.google.gwt.dev.javac.rebind.CachedRebindResult;
-import com.google.gwt.dev.javac.rebind.RebindResult;
-import com.google.gwt.dev.javac.rebind.RebindStatus;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ClientBundleWithLookup;
@@ -53,6 +51,7 @@ import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -114,11 +113,20 @@ import java.util.Set;
  * of an instance of the ClientBundle type so that resources can refer to one
  * another by simply emitting a call to <code>resource()</code>.
  */
-public abstract class AbstractClientBundleGenerator extends GeneratorExt {
+public abstract class AbstractClientBundleGenerator extends IncrementalGenerator {
   private static final String CACHED_PROPERTY_INFORMATION = "cached-property-info";
   private static final String CACHED_RESOURCE_INFORMATION = "cached-resource-info";
   private static final String CACHED_TYPE_INFORMATION = "cached-type-info";
   private static final String INSTANCE_NAME = "_instance0";
+
+  /*
+   * A version id. Increment this as needed, when structural changes are made to
+   * the generated output, specifically with respect to it's effect on the
+   * caching and reuse of previous generator results. Previously cached
+   * generator results will be invalidated automatically if they were generated
+   * by a version of this generator with a different version id.
+   */
+  private static final long GENERATOR_VERSION_ID = 1L;
 
   /**
    * An implementation of ClientBundleFields.
@@ -324,18 +332,17 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
   }
 
   @Override
-  public RebindResult generateIncrementally(TreeLogger logger,
-      GeneratorContextExt generatorContext, String typeName)
-      throws UnableToCompleteException {
+  public RebindResult generateIncrementally(TreeLogger logger, GeneratorContext generatorContext, 
+        String typeName) throws UnableToCompleteException {
 
     /*
      * Do a series of checks to see if we can use a previously cached result,
      * and if so, we can skip further execution and return immediately.
      */
     boolean useCache = false;
-    if (checkPropertyCacheability(logger, generatorContext)
-        && checkSourceTypeCacheability(logger, generatorContext)
-        && checkDependentResourceCacheability(logger, generatorContext)) {
+    if (checkCachedPropertyInformation(logger, generatorContext)
+        && checkCachedSourceTypes(logger, generatorContext)
+        && checkCachedDependentResources(logger, generatorContext)) {
       useCache = true;
     }
     
@@ -352,7 +359,7 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
     }
       
     if (useCache) {
-      return new RebindResult(RebindStatus.USE_ALL_CACHED, typeName);
+      return new RebindResult(RebindMode.USE_ALL_CACHED, typeName);
     }
       
     // The TypeOracle knows about all types in the type system
@@ -488,19 +495,25 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
       // remember the required resources
       Map<String, URL> cri = requirements.getResolvedResources();
 
-      // create data map to be returned the next time the generator is run
-      CachedClientDataMap data = new CachedClientDataMap();
-      data.put(CACHED_PROPERTY_INFORMATION, cpi);
-      data.put(CACHED_RESOURCE_INFORMATION, cri);
-      data.put(CACHED_TYPE_INFORMATION, cti);
+      // create a new cacheable result
+      RebindResult result = new RebindResult(RebindMode.USE_ALL_NEW, createdClassName);
 
-      // Return a new cacheable result
-      return new RebindResult(RebindStatus.USE_ALL_NEW, createdClassName, data);
+      // add data to be returned the next time the generator is run
+      result.putClientData(CACHED_PROPERTY_INFORMATION, cpi);
+      result.putClientData(CACHED_RESOURCE_INFORMATION, (Serializable) cri);
+      result.putClientData(CACHED_TYPE_INFORMATION, (Serializable) cti);
+
+      return result;
     } else {
       // If we can't be cacheable, don't return a cacheable result
-      return new RebindResult(RebindStatus.USE_ALL_NEW_WITH_NO_CACHING,
+      return new RebindResult(RebindMode.USE_ALL_NEW_WITH_NO_CACHING,
           createdClassName);
     }
+  }
+
+  @Override
+  public long getVersionId() {
+    return GENERATOR_VERSION_ID;
   }
 
   /**
@@ -555,40 +568,12 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
   }
 
   /**
-   * Check that the cached last modified times match those from the current
-   * typeOracle.
+   * Check cached dependent resources.
    */
-  private boolean checkCachedTypeLastModifiedTimes(TreeLogger logger,
-      GeneratorContextExt generatorContext, Map<String, Long> typeLastModifiedTimes) {
-    
-    TypeOracle oracle = generatorContext.getTypeOracle();
-    
-    for (String sourceTypeName : typeLastModifiedTimes.keySet()) {
-      JClassType sourceType = oracle.findType(sourceTypeName);
-      if (sourceType == null) {
-        logger.log(TreeLogger.TRACE, 
-            "Found previously dependent type that's no longer present: " + sourceTypeName);
-        return false;
-      }
-      assert sourceType instanceof JRealClassType;
-      JRealClassType sourceRealType = (JRealClassType) sourceType;
-      
-      if (sourceRealType.getLastModifiedTime() != typeLastModifiedTimes.get(sourceTypeName)) {
-        logger.log(TreeLogger.TRACE, "Found dependent type that has changed: " + sourceTypeName);
-        return false;
-      }
-    }
-    
-    return true;
-  }
+  private boolean checkCachedDependentResources(TreeLogger logger,
+      GeneratorContext genContext) {
 
-  /**
-   * Check dependent resources for cacheability.
-   */
-  private boolean checkDependentResourceCacheability(TreeLogger logger,
-      GeneratorContextExt genContext) {
-
-    CachedRebindResult lastRebindResult = genContext.getCachedGeneratorResult();
+    CachedGeneratorResult lastRebindResult = genContext.getCachedGeneratorResult();
 
     if (lastRebindResult == null 
         || !genContext.isGeneratorResultCachingEnabled()) {
@@ -636,13 +621,12 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
     return true;
   }
 
-  /*
-   * Check properties for cacheability
+  /**
+   * Check cached properties.
    */
-  private boolean checkPropertyCacheability(TreeLogger logger,
-      GeneratorContextExt genContext) {
+  private boolean checkCachedPropertyInformation(TreeLogger logger, GeneratorContext genContext) {
 
-    CachedRebindResult lastRebindResult = genContext.getCachedGeneratorResult();
+    CachedGeneratorResult lastRebindResult = genContext.getCachedGeneratorResult();
 
     if (lastRebindResult == null 
         || !genContext.isGeneratorResultCachingEnabled()) {
@@ -659,36 +643,13 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
     return cpi != null && cpi.checkPropertiesWithPropertyOracle(logger, 
         genContext.getPropertyOracle());
   }
-  
+
   /**
-   * Check cacheability for resource generators in taskList.
+   * Check cached source types.
    */
-  private boolean checkResourceGeneratorCacheability(
-      GeneratorContextExt genContext,
-      Map<Class<? extends ResourceGenerator>, List<JMethod>> taskList) {
-    
-    if (!genContext.isGeneratorResultCachingEnabled()) {
-      return false;
-    }
+  private boolean checkCachedSourceTypes(TreeLogger logger, GeneratorContext genContext) {
 
-    /*
-     * Loop through each of our ResouceGenerator classes, and check those that
-     * implement the SupportsGeneratorResultCaching interface.
-     */
-    for (Class<? extends ResourceGenerator> rgClass : taskList.keySet()) {
-      if (!SupportsGeneratorResultCaching.class.isAssignableFrom(rgClass)) {
-        return false;
-      }
-    } 
-    return true;
-  }
-
-  /*
-   * Check source types for cacheability
-   */
-  private boolean checkSourceTypeCacheability(TreeLogger logger, GeneratorContextExt genContext) {
-
-    CachedRebindResult lastRebindResult = genContext.getCachedGeneratorResult();
+    CachedGeneratorResult lastRebindResult = genContext.getCachedGeneratorResult();
 
     if (lastRebindResult == null 
         || !genContext.isGeneratorResultCachingEnabled()) {
@@ -706,6 +667,56 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
 
     return cachedTypeLastModifiedTimes != null 
       && checkCachedTypeLastModifiedTimes(logger, genContext, cachedTypeLastModifiedTimes);
+  }
+
+  /**
+   * Check that the cached last modified times match those from the current
+   * typeOracle.
+   */
+  private boolean checkCachedTypeLastModifiedTimes(TreeLogger logger,
+      GeneratorContext generatorContext, Map<String, Long> typeLastModifiedTimes) {
+    
+    TypeOracle oracle = generatorContext.getTypeOracle();
+    
+    for (String sourceTypeName : typeLastModifiedTimes.keySet()) {
+      JClassType sourceType = oracle.findType(sourceTypeName);
+      if (sourceType == null) {
+        logger.log(TreeLogger.TRACE, 
+            "Found previously dependent type that's no longer present: " + sourceTypeName);
+        return false;
+      }
+      assert sourceType instanceof JRealClassType;
+      JRealClassType sourceRealType = (JRealClassType) sourceType;
+      
+      if (sourceRealType.getLastModifiedTime() != typeLastModifiedTimes.get(sourceTypeName)) {
+        logger.log(TreeLogger.TRACE, "Found dependent type that has changed: " + sourceTypeName);
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  /**
+   * Check cacheability for resource generators in taskList.
+   */
+  private boolean checkResourceGeneratorCacheability(GeneratorContext genContext,
+      Map<Class<? extends ResourceGenerator>, List<JMethod>> taskList) {
+    
+    if (!genContext.isGeneratorResultCachingEnabled()) {
+      return false;
+    }
+
+    /*
+     * Loop through each of our ResouceGenerator classes, and check those that
+     * implement the SupportsGeneratorResultCaching interface.
+     */
+    for (Class<? extends ResourceGenerator> rgClass : taskList.keySet()) {
+      if (!SupportsGeneratorResultCaching.class.isAssignableFrom(rgClass)) {
+        return false;
+      }
+    } 
+    return true;
   }
 
   /**

@@ -15,10 +15,10 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
-import com.google.gwt.dev.javac.rebind.RebindResult;
 
 /**
  * Abstract base class for various kinds of deferred binding rules.

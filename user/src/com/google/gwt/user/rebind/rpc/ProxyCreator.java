@@ -18,9 +18,13 @@ package com.google.gwt.user.rebind.rpc;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.impl.Impl;
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.CachedPropertyInformation;
+import com.google.gwt.core.ext.CachedGeneratorResult;
 import com.google.gwt.core.ext.ConfigurationProperty;
-import com.google.gwt.core.ext.GeneratorContextExt;
+import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.RebindMode;
+import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
@@ -36,11 +40,6 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.generator.NameFactory;
-import com.google.gwt.dev.javac.rebind.CachedClientDataMap;
-import com.google.gwt.dev.javac.rebind.CachedPropertyInformation;
-import com.google.gwt.dev.javac.rebind.CachedRebindResult;
-import com.google.gwt.dev.javac.rebind.RebindResult;
-import com.google.gwt.dev.javac.rebind.RebindStatus;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -101,7 +100,7 @@ public class ProxyCreator {
   public static final String MANIFEST_ARTIFACT_DIR = "rpcPolicyManifest/manifests";
 
   /**
-   * Properties which need to be checked to determine cacheability.
+   * Properties which need to be checked to determine cache reusability.
    */
   private static final Collection<String> configPropsToCheck = Arrays.asList(
       TypeSerializerCreator.GWT_ELIDE_TYPE_NAMES_FROM_RPC, Shared.RPC_ENHANCED_CLASSES);
@@ -254,7 +253,7 @@ public class ProxyCreator {
    * 
    * @throws UnableToCompleteException
    */
-  public RebindResult create(TreeLogger logger, GeneratorContextExt context)
+  public RebindResult create(TreeLogger logger, GeneratorContext context)
       throws UnableToCompleteException {
     TypeOracle typeOracle = context.getTypeOracle();
 
@@ -268,7 +267,7 @@ public class ProxyCreator {
     }
 
     if (checkAlreadyGenerated(typeOracle, serviceIntf)) {
-      return new RebindResult(RebindStatus.USE_EXISTING, getProxyQualifiedName());
+      return new RebindResult(RebindMode.USE_EXISTING, getProxyQualifiedName());
     }
 
     // Make sure that the async and synchronous versions of the RemoteService
@@ -328,7 +327,7 @@ public class ProxyCreator {
     // Check previous cached result, to see if we can return now
     if (checkCachedGeneratorResultValid(logger, context, typesSentFromBrowser, typesSentToBrowser)) {
       logger.log(TreeLogger.TRACE, "Reusing all cached artifacts for " + getProxyQualifiedName());
-      return new RebindResult(RebindStatus.USE_ALL_CACHED, getProxyQualifiedName());
+      return new RebindResult(RebindMode.USE_ALL_CACHED, getProxyQualifiedName());
     }
 
     try {
@@ -347,7 +346,7 @@ public class ProxyCreator {
     if (srcWriter == null) {
       // don't expect this to occur, but could happen if an instance was
       // recently generated but not yet committed
-      return new RebindResult(RebindStatus.USE_EXISTING, getProxyQualifiedName());
+      return new RebindResult(RebindMode.USE_EXISTING, getProxyQualifiedName());
     }
 
     generateTypeHandlers(logger, context, typesSentFromBrowser, typesSentToBrowser);
@@ -379,25 +378,28 @@ public class ProxyCreator {
     }
 
     if (checkGeneratorResultCacheability(context)) {
-      // Remember the type info that we care about for cacheability testing.
-      CachedClientDataMap clientData = new CachedClientDataMap();
+      /*
+       * Create a new cacheable result. The mode is set to
+       * RebindMode.USE_PARTIAL_CACHED, since we are allowing reuse of cached
+       * results for field serializers, when available, but all other types have
+       * been newly generated.
+       */
+      RebindResult result =
+          new RebindResult(RebindMode.USE_PARTIAL_CACHED, getProxyQualifiedName());
+
+      // Remember the type info that we care about for cache reuse testing.
       CachedRpcTypeInformation cti =
           new CachedRpcTypeInformation(typesSentFromBrowser, typesSentToBrowser,
               customSerializersUsed, typesNotUsingCustomSerializers);
-      clientData.put(CACHED_TYPE_INFO_KEY, cti);
       CachedPropertyInformation cpi =
           new CachedPropertyInformation(logger, context.getPropertyOracle(), selectionPropsToCheck,
               configPropsToCheck);
-      clientData.put(CACHED_PROPERTY_INFO_KEY, cpi);
+      result.putClientData(CACHED_TYPE_INFO_KEY, cti);
+      result.putClientData(CACHED_PROPERTY_INFO_KEY, cpi);
 
-      /*
-       * Return with RebindStatus.USE_PARTIAL_CACHED, since we are allowing
-       * reuse of cached results for field serializers, when available, but
-       * all other types have been newly generated.
-       */
-      return new RebindResult(RebindStatus.USE_PARTIAL_CACHED, getProxyQualifiedName(), clientData);
+      return result;
     } else {
-      return new RebindResult(RebindStatus.USE_ALL_NEW_WITH_NO_CACHING, getProxyQualifiedName());
+      return new RebindResult(RebindMode.USE_ALL_NEW_WITH_NO_CACHING, getProxyQualifiedName());
     }
   }
 
@@ -689,7 +691,7 @@ public class ProxyCreator {
     srcWriter.println("}");
   }
 
-  protected void generateTypeHandlers(TreeLogger logger, GeneratorContextExt context,
+  protected void generateTypeHandlers(TreeLogger logger, GeneratorContext context,
       SerializableTypeOracle typesSentFromBrowser, SerializableTypeOracle typesSentToBrowser)
       throws UnableToCompleteException {
     Event event = SpeedTracerLogger.start(CompilerEventType.GENERATOR_RPC_TYPE_SERIALIZER);
@@ -730,7 +732,7 @@ public class ProxyCreator {
     return ClientSerializationStreamWriter.class;
   }
 
-  protected String writeSerializationPolicyFile(TreeLogger logger, GeneratorContextExt ctx,
+  protected String writeSerializationPolicyFile(TreeLogger logger, GeneratorContext ctx,
       SerializableTypeOracle serializationSto, SerializableTypeOracle deserializationSto)
       throws UnableToCompleteException {
     try {
@@ -832,10 +834,10 @@ public class ProxyCreator {
     return typeOracle.findType(packageName, getProxySimpleName()) != null;
   }
 
-  private boolean checkCachedGeneratorResultValid(TreeLogger logger, GeneratorContextExt ctx,
+  private boolean checkCachedGeneratorResultValid(TreeLogger logger, GeneratorContext ctx,
       SerializableTypeOracle typesSentFromBrowser, SerializableTypeOracle typesSentToBrowser) {
 
-    CachedRebindResult lastResult = ctx.getCachedGeneratorResult();
+    CachedGeneratorResult lastResult = ctx.getCachedGeneratorResult();
     if (lastResult == null || !ctx.isGeneratorResultCachingEnabled()) {
       return false;
     }
@@ -864,7 +866,7 @@ public class ProxyCreator {
     return true;
   }
 
-  private boolean checkGeneratorResultCacheability(GeneratorContextExt context) {
+  private boolean checkGeneratorResultCacheability(GeneratorContext context) {
     /*
      * Currently not supporting caching for implementations which sub-class this
      * class, such as {@link RpcProxyCreator}, which implements deRPC.
@@ -876,7 +878,7 @@ public class ProxyCreator {
     return context.isGeneratorResultCachingEnabled();
   }
 
-  private void emitPolicyFileArtifact(TreeLogger logger, GeneratorContextExt context,
+  private void emitPolicyFileArtifact(TreeLogger logger, GeneratorContext context,
       String partialPath) throws UnableToCompleteException {
     try {
       String qualifiedSourceName = serviceIntf.getQualifiedSourceName();
@@ -924,7 +926,7 @@ public class ProxyCreator {
     return ResponseReader.OBJECT;
   }
 
-  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContextExt ctx,
+  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx,
       JClassType serviceAsync) {
     JPackage serviceIntfPkg = serviceAsync.getPackage();
     String packageName = serviceIntfPkg == null ? "" : serviceIntfPkg.getName();

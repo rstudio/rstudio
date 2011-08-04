@@ -15,11 +15,11 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.RebindMode;
+import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
-import com.google.gwt.dev.javac.rebind.RebindResult;
-import com.google.gwt.dev.javac.rebind.RebindStatus;
 
 /**
  * A rule to replace the type being rebound with an explicitly named class.
@@ -41,7 +41,7 @@ public class RuleReplaceWith extends Rule {
       StandardGeneratorContext context, String typeName)
       throws UnableToCompleteException {
     return new RebindResult(
-        RebindStatus.USE_EXISTING, replacementTypeName);
+        RebindMode.USE_EXISTING, replacementTypeName);
   }
 
   @Override

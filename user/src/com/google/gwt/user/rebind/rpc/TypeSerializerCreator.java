@@ -20,8 +20,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GwtScriptOnly;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.CachedGeneratorResult;
 import com.google.gwt.core.ext.ConfigurationProperty;
-import com.google.gwt.core.ext.GeneratorContextExt;
+import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -29,7 +30,6 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.javac.rebind.CachedRebindResult;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -99,7 +99,7 @@ public class TypeSerializerCreator {
     }
   }
 
-  private final GeneratorContextExt context;
+  private final GeneratorContext context;
 
   private final SerializableTypeOracle deserializationOracle;
 
@@ -124,7 +124,7 @@ public class TypeSerializerCreator {
   private final Set<JType> customFieldSerializersUsed;
 
   public TypeSerializerCreator(TreeLogger logger, SerializableTypeOracle serializationOracle,
-      SerializableTypeOracle deserializationOracle, GeneratorContextExt context,
+      SerializableTypeOracle deserializationOracle, GeneratorContext context,
       String typeSerializerClassName, String typeSerializerSimpleName)
       throws UnableToCompleteException {
     this.context = context;
@@ -223,7 +223,7 @@ public class TypeSerializerCreator {
    * Create a field serializer for a type if it does not have a custom
    * serializer.
    */
-  private void createFieldSerializer(TreeLogger logger, GeneratorContextExt ctx, JType type) {
+  private void createFieldSerializer(TreeLogger logger, GeneratorContext ctx, JType type) {
     Event event = SpeedTracerLogger.start(CompilerEventType.GENERATOR_RPC_FIELD_SERIALIZER);
     try {
       assert (type != null);
@@ -249,7 +249,7 @@ public class TypeSerializerCreator {
           SerializableTypeOracleBuilder.findCustomFieldSerializer(typeOracle, type);
 
       if (ctx.isGeneratorResultCachingEnabled()) {
-        // update cacheable info for next iteration
+        // update cached info for next iteration
         if (customFieldSerializer != null) {
           customFieldSerializersUsed.add(customFieldSerializer);
         } else {
@@ -257,7 +257,7 @@ public class TypeSerializerCreator {
         }
 
         // check the cache for a valid field serializer for the current type
-        if (findCacheableFieldSerializerAndMarkForReuseIfAvailable(logger, ctx, type,
+        if (findReusableCachedFieldSerializerIfAvailable(logger, ctx, type,
             customFieldSerializer)) {
           // we can skip re-generation of the field serializer for the current
           // type
@@ -278,7 +278,7 @@ public class TypeSerializerCreator {
   /*
    * Create all of the necessary field serializers.
    */
-  private void createFieldSerializers(TreeLogger logger, GeneratorContextExt ctx) {
+  private void createFieldSerializers(TreeLogger logger, GeneratorContext ctx) {
     JType[] types = getSerializableTypes();
     int typeCount = types.length;
     for (int typeIndex = 0; typeIndex < typeCount; ++typeIndex) {
@@ -294,10 +294,10 @@ public class TypeSerializerCreator {
    * FieldSerializer. If so, mark it for reuse, and return true. Otherwise
    * return false.
    */
-  private boolean findCacheableFieldSerializerAndMarkForReuseIfAvailable(TreeLogger logger,
-      GeneratorContextExt ctx, JType type, JType customFieldSerializer) {
+  private boolean findReusableCachedFieldSerializerIfAvailable(TreeLogger logger,
+      GeneratorContext ctx, JType type, JType customFieldSerializer) {
 
-    CachedRebindResult lastResult = ctx.getCachedGeneratorResult();
+    CachedGeneratorResult lastResult = ctx.getCachedGeneratorResult();
     if (lastResult == null || !ctx.isGeneratorResultCachingEnabled()) {
       return false;
     }
@@ -330,7 +330,7 @@ public class TypeSerializerCreator {
             .checkLastModifiedTime(customFieldSerializer)) || (customFieldSerializer == null && cachedTypeInfo
             .checkTypeNotUsingCustomSerializer(type)))) {
       // use cached version, if available
-      foundMatch = ctx.reuseTypeFromCacheIfAvailable(fieldSerializerName);
+      foundMatch = ctx.tryReuseTypeFromCache(fieldSerializerName);
     }
 
     if (logger.isLoggable(TreeLogger.TRACE)) {
@@ -361,7 +361,7 @@ public class TypeSerializerCreator {
     return serializableTypes;
   }
 
-  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContextExt ctx) {
+  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx) {
     String name[] = getPackageAndClassName(typeSerializerClassName);
     String packageName = name[0];
     String className = name[1];

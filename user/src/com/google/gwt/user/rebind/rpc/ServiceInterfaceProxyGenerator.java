@@ -15,22 +15,31 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
-import com.google.gwt.core.ext.GeneratorContextExt;
-import com.google.gwt.core.ext.GeneratorExt;
+import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.IncrementalGenerator;
+import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.javac.rebind.RebindResult;
 
 /**
  * Generator for producing the asynchronous version of a
  * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService} interface.
  */
-public class ServiceInterfaceProxyGenerator extends GeneratorExt {
+public class ServiceInterfaceProxyGenerator extends IncrementalGenerator {
+
+  /*
+   * A version id. Increment this as needed, when structural changes are made to
+   * the generated output, specifically with respect to it's effect on the
+   * caching and reuse of previous generator results. Previously cached
+   * generator results will be invalidated automatically if they were generated
+   * by a version of this generator with a different version id.
+   */
+  private static final long GENERATOR_VERSION_ID = 1L;
 
   @Override
-  public RebindResult generateIncrementally(TreeLogger logger, GeneratorContextExt ctx,
+  public RebindResult generateIncrementally(TreeLogger logger, GeneratorContext ctx,
       String requestedClass) throws UnableToCompleteException {
 
     TypeOracle typeOracle = ctx.getTypeOracle();
@@ -56,6 +65,11 @@ public class ServiceInterfaceProxyGenerator extends GeneratorExt {
             + remoteService.getQualifiedSourceName() + "'", null);
 
     return proxyCreator.create(proxyLogger, ctx);
+  }
+
+  @Override
+  public long getVersionId() {
+    return GENERATOR_VERSION_ID;
   }
 
   protected ProxyCreator createProxyCreator(JClassType remoteService) {

@@ -1,0 +1,129 @@
+/*
+ * Copyright 2011 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.google.gwt.core.ext;
+
+/**
+ * An extension to the {@link Generator} class which supports incremental
+ * generation. It adds a {@link #generateIncrementally} method.
+ */
+public abstract class IncrementalGenerator extends Generator {
+
+  /**
+   * A static helper method to wrap a non-incremental generator's result. It
+   * calls the generator's {@link Generator#generate} method, and synthesizes a
+   * {@link RebindResult} instance to be returned.
+   * 
+   * @param logger A TreeLogger
+   * @param generator A non-incremental generator
+   * @param context The generator context
+   * @param typeName The type for which a subclass will be generated
+   * @return a RebindResult
+   * @throws UnableToCompleteException
+   */
+  public static RebindResult generateNonIncrementally(TreeLogger logger, Generator generator,
+      GeneratorContext context, String typeName) throws UnableToCompleteException {
+
+    RebindMode mode;
+    String resultTypeName = generator.generate(logger, context, typeName);
+    if (resultTypeName == null) {
+      mode = RebindMode.USE_EXISTING;
+      resultTypeName = typeName;
+    } else {
+      mode = RebindMode.USE_ALL_NEW_WITH_NO_CACHING;
+    }
+
+    return new RebindResult(mode, resultTypeName);
+  }
+
+  /**
+   * This method overrides {@link Generator#generate}, and is included only for
+   * backwards compatibility. It wraps a call to {@link #generateIncrementally}.
+   * This method won't normally be called by the gwt rebind process, and it is
+   * declared final and can't be overridden. It is provided in support of
+   * existing applications and other generators which call this method directly,
+   * outside of the gwt framework.
+   * <p>
+   * The passed in context is wrapped with an instance of
+   * {@link NonIncrementalGeneratorContext}, to ensure that no generator result
+   * caching is attempted, since the cached result will be ignored by callers of
+   * this method anyway.
+   * 
+   * @see Generator#generate
+   * 
+   * @param logger A TreeLogger
+   * @param context The generator context
+   * @param typeName The type for which a subclass will be generated
+   * @return the name of a subclass to substitute for the requested class, or
+   *         return <code>null</code> to cause the requested type itself to be
+   *         used
+   * @throws UnableToCompleteException
+   */
+  @Override
+  public final String generate(TreeLogger logger, GeneratorContext context, String typeName)
+      throws UnableToCompleteException {
+    /*
+     * Since no generator result caching should happen if this method is called,
+     * we wrap the context, to ensure that the check for {@link
+     * GeneratorContext.isGeneratorResultCachingEnabled()} will return false.
+     */
+    GeneratorContext wrappedContext = NonIncrementalGeneratorContext.newInstance(context);
+    RebindResult result = generateIncrementally(logger, wrappedContext, typeName);
+    return result.getResultTypeName();
+  }
+
+  /**
+   * Incrementally generate a default constructible subclass of the requested
+   * type. The generator can use information from the context to make decisions
+   * on whether to incrementally reuse cached output from previous invocations.
+   * <p>
+   * It returns a {@link RebindResult}, which contains a {@link RebindMode}
+   * field, which indicates whether to use previously cached output, newly
+   * generated output, or a partial mixture of both cached and newly generated
+   * output.
+   * <p>
+   * The result also includes a field for the name of the subclass to substitute
+   * for the requested class. It may also contain extra client data added by
+   * specific generator implementations.
+   * <p>
+   * This method throws an <code>UnableToCompleteException</code> if for any
+   * reason it cannot complete successfully.
+   * 
+   * @see RebindResult
+   * @see RebindMode
+   * 
+   * @param logger A TreeLogger
+   * @param context The generator context
+   * @param typeName The type for which a subclass will be generated
+   * @return a RebindResult
+   * @throws UnableToCompleteException
+   */
+  public abstract RebindResult generateIncrementally(TreeLogger logger, GeneratorContext context,
+      String typeName) throws UnableToCompleteException;
+
+  /**
+   * Returns a version id for an IncrementalGenerator. It is used by the system
+   * to invalidate {@link CachedGeneratorResult}'s that were generated by a
+   * different version of this generator. This is useful when new versions of a
+   * generator are developed, which might alter the structure of generated
+   * output, or alter semantics for cache reusability checking.
+   * <p>
+   * It is the responsibility of the developer to maintain this version id
+   * consistently.
+   * 
+   * @return a version id
+   */
+  public abstract long getVersionId();
+}

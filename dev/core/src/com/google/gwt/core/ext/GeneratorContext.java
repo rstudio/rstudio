@@ -53,9 +53,8 @@ public interface GeneratorContext {
    * {@link com.google.gwt.core.ext.linker.ArtifactSet#replace(Artifact)} if an
    * equivalent Artifact had previously been committed.
    * 
-   * @param logger a logger; normally the logger passed into
-   *          {@link Generator#generate(TreeLogger, GeneratorContext, String)}
-   *          or a branch thereof
+   * @param logger a logger; normally the logger passed into the currently
+   *          invoked generator or a branch thereof
    * @param artifact the Artifact to provide to the Linker chain.
    */
   void commitArtifact(TreeLogger logger, Artifact<?> artifact) throws UnableToCompleteException;
@@ -72,6 +71,17 @@ public interface GeneratorContext {
    */
   GeneratedResource commitResource(TreeLogger logger, OutputStream os)
       throws UnableToCompleteException;
+
+  /**
+   * Get the cached rebind result that has been provided to the context, if
+   * available. The provided result will be the most recent previously generated
+   * result for the currently active rebind rule and requested type name.
+   * 
+   * @return A {@link CachedGeneratorResult} object, if one has been provided to
+   *         the context. Null is returned if there is no previous result
+   *         available.
+   */
+  CachedGeneratorResult getCachedGeneratorResult();
 
   /**
    * Gets the property oracle for the current generator context. Generators can
@@ -100,15 +110,26 @@ public interface GeneratorContext {
   TypeOracle getTypeOracle();
 
   /**
+   * Check whether generator result caching is currently enabled.
+   */
+  boolean isGeneratorResultCachingEnabled();
+
+  /**
+   * Returns true if generators are being run to produce code for a production
+   * compile. Returns false for dev mode. Generators can use this information to
+   * produce code optimized for the target.
+   */
+  boolean isProdMode();
+
+  /**
    * Attempts to get a <code>PrintWriter</code> so that the caller can generate
    * the source code for the named type. If the named types already exists,
    * <code>null</code> is returned to indicate that no work needs to be done.
    * The file is not committed until {@link #commit(TreeLogger, PrintWriter)} is
    * called.
    * 
-   * @param logger a logger; normally the logger passed into
-   *          {@link Generator#generate(TreeLogger, GeneratorContext, String)}
-   *          or a branch thereof
+   * @param logger a logger; normally the logger passed into the currently
+   *          invoked generator, or a branch thereof
    * @param packageName the name of the package to which the create type belongs
    * @param simpleName the unqualified source name of the type being generated
    * @return <code>null</code> if the package and class already exists,
@@ -122,9 +143,8 @@ public interface GeneratorContext {
    * directory. The file is not committed until
    * {@link #commitResource(TreeLogger, OutputStream)} is called.
    * 
-   * @param logger a logger; normally the logger passed into
-   *          {@link Generator#generate(TreeLogger, GeneratorContext, String)}
-   *          or a branch thereof
+   * @param logger a logger; normally the logger passed into the currently
+   *          invoked generator, or a branch thereof
    * @param partialPath the name of the file whose contents are to be written;
    *          the name can include subdirectories separated by forward slashes
    *          ('/')
@@ -136,4 +156,18 @@ public interface GeneratorContext {
    */
   OutputStream tryCreateResource(TreeLogger logger, String partialPath)
       throws UnableToCompleteException;
+
+  /**
+   * Mark a type to be reused from the generator result cache, if available.
+   * Calling this method with a successful response indicates that the calling
+   * generator will not re-generate this type. A cached version of this type
+   * will be added to the context once the calling generator returns from
+   * {@link IncrementalGenerator#generateIncrementally}, with a result
+   * containing {@link RebindMode#USE_PARTIAL_CACHED}.
+   * 
+   * @param typeName the fully qualified source name of a type.
+   * @return true if the requested type is available from the generator result
+   *         cache, false otherwise.
+   */
+  boolean tryReuseTypeFromCache(String typeName);
 }

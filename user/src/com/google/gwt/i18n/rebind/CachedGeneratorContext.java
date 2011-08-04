@@ -15,14 +15,10 @@
  */
 package com.google.gwt.i18n.rebind;
 
+import com.google.gwt.core.ext.DelegatingGeneratorContext;
 import com.google.gwt.core.ext.GeneratorContext;
-import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.linker.Artifact;
-import com.google.gwt.core.ext.linker.GeneratedResource;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.resource.ResourceOracle;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -35,43 +31,14 @@ import java.util.Set;
  * run. This is needed when one generator calls other generators multiple times
  * (such as for runtime locale support).
  */
-class CachedGeneratorContext implements GeneratorContext {
+class CachedGeneratorContext extends DelegatingGeneratorContext {
   private final GeneratorContext context;
   private Set<String> generatedResources = new HashSet<String>();
   private Set<String> generatedTypes = new HashSet<String>();
 
   CachedGeneratorContext(GeneratorContext context) {
+    super(context);
     this.context = context;
-  }
-
-  public boolean checkRebindRuleAvailable(String sourceTypeName) {
-    return context.checkRebindRuleAvailable(sourceTypeName);
-  }
-
-  public void commit(TreeLogger logger, PrintWriter pw) {
-    context.commit(logger, pw);
-  }
-
-  public void commitArtifact(TreeLogger logger, Artifact<?> artifact)
-      throws UnableToCompleteException {
-    context.commitArtifact(logger, artifact);
-  }
-
-  public GeneratedResource commitResource(TreeLogger logger, OutputStream os)
-      throws UnableToCompleteException {
-    return context.commitResource(logger, os);
-  }
-
-  public PropertyOracle getPropertyOracle() {
-    return context.getPropertyOracle();
-  }
-
-  public ResourceOracle getResourcesOracle() {
-    return context.getResourcesOracle();
-  }
-
-  public TypeOracle getTypeOracle() {
-    return context.getTypeOracle();
   }
 
   /**
@@ -83,6 +50,7 @@ class CachedGeneratorContext implements GeneratorContext {
     return context;
   }
 
+  @Override
   public PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleName) {
     String typeName = packageName + '.' + simpleName;
     if (generatedTypes.contains(typeName)) {
@@ -92,6 +60,7 @@ class CachedGeneratorContext implements GeneratorContext {
     return context.tryCreate(logger, packageName, simpleName);
   }
 
+  @Override
   public OutputStream tryCreateResource(TreeLogger logger, String partialPath)
       throws UnableToCompleteException {
     if (generatedResources.contains(partialPath)) {

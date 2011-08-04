@@ -15,12 +15,9 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
-import com.google.gwt.core.ext.GeneratorContextExt;
-import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.StubGeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.linker.Artifact;
-import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JGenericType;
@@ -38,12 +35,10 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
-import com.google.gwt.dev.javac.rebind.CachedRebindResult;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.testing.impl.StaticJavaResource;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.user.rebind.rpc.testcases.client.AbstractSerializableTypes;
 import com.google.gwt.user.rebind.rpc.testcases.client.ClassWithTypeParameterThatErasesToObject;
@@ -53,7 +48,7 @@ import com.google.gwt.user.rebind.rpc.testcases.client.NotAllSubtypesAreSerializ
 
 import junit.framework.TestCase;
 
-import java.io.OutputStream;
+// import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -69,67 +64,24 @@ import java.util.TreeSet;
  */
 public class SerializableTypeOracleBuilderTest extends TestCase {
   /**
-   * Just enough of a {@code GeneratorContextExt} to satisfy
+   * Just enough of a {@code GeneratorContext} to satisfy
    * {@code SerializableTypeOracleBuilder}.
    */
-  static class MockContext implements GeneratorContextExt {
+  static class MockContext extends StubGeneratorContext {
     private TypeOracle typeOracle;
 
     MockContext(TypeOracle typeOracle) {
       this.typeOracle = typeOracle;
     }
 
-    public boolean checkRebindRuleAvailable(String sourceTypeName) {
-      return true;
-    }
-
-    public void commit(TreeLogger logger, PrintWriter pw) {
-    }
-
-    public void commitArtifact(TreeLogger logger, Artifact<?> artifact)
-        throws UnableToCompleteException {
-    }
-
-    public GeneratedResource commitResource(TreeLogger logger, OutputStream os)
-        throws UnableToCompleteException {
-      return null;
-    }
-
-    public CachedRebindResult getCachedGeneratorResult() {
-      return null;
-    }
-
-    public PropertyOracle getPropertyOracle() {
-      return null;
-    }
-
-    public ResourceOracle getResourcesOracle() {
-      return null;
-    }
-
+    @Override
     public TypeOracle getTypeOracle() {
       return typeOracle;
     }
 
-    public boolean isGeneratorResultCachingEnabled() {
-      return false;
-    }
-
+    @Override
     public boolean isProdMode() {
       return true;
-    }
-
-    public boolean reuseTypeFromCacheIfAvailable(String typeName) {
-      return false;
-    }
-
-    public PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleName) {
-      return null;
-    }
-
-    public OutputStream tryCreateResource(TreeLogger logger, String partialPath)
-        throws UnableToCompleteException {
-      return null;
     }
   }
 
@@ -282,6 +234,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   private static void sort(TypeInfo[] typeInfos) {
     Arrays.sort(typeInfos, new Comparator<TypeInfo>() {
+      @Override
       public int compare(TypeInfo ti1, TypeInfo ti2) {
         if (ti1 == ti2) {
           return 0;
@@ -2172,7 +2125,6 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   /**
    * Miscellaneous direct tests of {@link TypeConstrainer}.
    * 
-   * @throws UnableToCompleteException
    * @throws NotFoundException
    */
   public void testTypeConstrainer() throws NotFoundException {

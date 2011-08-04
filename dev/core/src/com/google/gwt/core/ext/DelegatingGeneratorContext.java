@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,90 +18,92 @@ package com.google.gwt.core.ext;
 import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.javac.rebind.CachedRebindResult;
 import com.google.gwt.dev.resource.ResourceOracle;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;
 
 /**
- * EXPERIMENTAL and subject to change. Do not use this in production code.
- * <p>
- * A wrapper to access a base {@link GeneratorContext} instance as a
- * {@link GeneratorContextExt} instance. Methods from the
- * {@link GeneratorContext} interface are passed through to the baseContext,
- * while methods from the {@link GeneratorContextExt} interface are given
- * default stub implementations.
+ * An abstract generator context class which delegates all methods to a provided
+ * baseContext. Implementing classes can selectively override individual
+ * methods.
  */
-public class GeneratorContextExtWrapper implements GeneratorContextExt {
+public abstract class DelegatingGeneratorContext implements GeneratorContext {
+
+  private final GeneratorContext baseContext;
 
   /**
    * Get a new instance wrapped from a base {@link GeneratorContext}
    * implementation.
    */
-  public static GeneratorContextExt newInstance(GeneratorContext baseContext) {
-    return new GeneratorContextExtWrapper(baseContext);
-  }
-
-  private final GeneratorContext baseContext;
-
-  private GeneratorContextExtWrapper(GeneratorContext baseContext) {
+  public DelegatingGeneratorContext(GeneratorContext baseContext) {
     this.baseContext = baseContext;
   }
 
+  @Override
   public boolean checkRebindRuleAvailable(String sourceTypeName) {
     return baseContext.checkRebindRuleAvailable(sourceTypeName);
   }
 
+  @Override
   public void commit(TreeLogger logger, PrintWriter pw) {
     baseContext.commit(logger, pw);
   }
 
+  @Override
   public void commitArtifact(TreeLogger logger, Artifact<?> artifact)
       throws UnableToCompleteException {
     baseContext.commitArtifact(logger, artifact);
   }
 
+  @Override
   public GeneratedResource commitResource(TreeLogger logger, OutputStream os)
       throws UnableToCompleteException {
     return baseContext.commitResource(logger, os);
   }
 
-  public CachedRebindResult getCachedGeneratorResult() {
-    return null;
+  @Override
+  public CachedGeneratorResult getCachedGeneratorResult() {
+    return baseContext.getCachedGeneratorResult();
   }
 
+  @Override
   public PropertyOracle getPropertyOracle() {
     return baseContext.getPropertyOracle();
   }
 
+  @Override
   public ResourceOracle getResourcesOracle() {
     return baseContext.getResourcesOracle();
   }
 
+  @Override
   public TypeOracle getTypeOracle() {
     return baseContext.getTypeOracle();
   }
 
+  @Override
   public boolean isGeneratorResultCachingEnabled() {
-    return false;
+    return baseContext.isGeneratorResultCachingEnabled();
   }
 
+  @Override
   public boolean isProdMode() {
-    throw new UnsupportedOperationException(
-        "isProdMode is only available from GeneratorContextExt.");
+    return baseContext.isProdMode();
   }
-
-  public boolean reuseTypeFromCacheIfAvailable(String typeName) {
-    return false;
-  }
-
+  @Override
   public PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleName) {
     return baseContext.tryCreate(logger, packageName, simpleName);
   }
 
+  @Override
   public OutputStream tryCreateResource(TreeLogger logger, String partialPath)
       throws UnableToCompleteException {
     return baseContext.tryCreateResource(logger, partialPath);
+  }
+
+  @Override
+  public boolean tryReuseTypeFromCache(String typeName) {
+    return baseContext.tryReuseTypeFromCache(typeName);
   }
 }

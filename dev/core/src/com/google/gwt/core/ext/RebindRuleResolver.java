@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.javac.rebind;
+package com.google.gwt.core.ext;
 
 /**
  * An interface for encapsulating rebind rule resolution.

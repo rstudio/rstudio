@@ -151,7 +151,7 @@ public class CachedRpcTypeInformation implements Serializable {
   }
 
   /*
-   * Finds a last modified time for a type, for testing cacheability.
+   * Finds a last modified time for a type, for testing cache reusability.
    */
   private long getLastModifiedTime(JType type) {
     if (type instanceof JArrayType) {

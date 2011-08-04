@@ -19,10 +19,7 @@ package com.google.gwt.core.ext.typeinfo;
  * Type representing a Java class or interface type that a user would declare.
  */
 public interface JRealClassType extends JClassType {
-  
   /**
-   * EXPERIMENTAL and subject to change. Do not use this in production code.
-   * 
    * Retrieve last modified time for this type.
    */
   long getLastModifiedTime();

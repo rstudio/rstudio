@@ -15,18 +15,19 @@
  */
 package com.google.gwt.dev.shell;
 
+import com.google.gwt.core.ext.CachedGeneratorResult;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.RebindMode;
+import com.google.gwt.core.ext.RebindResult;
+import com.google.gwt.core.ext.RebindRuleResolver;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.dev.RebindCache;
 import com.google.gwt.dev.cfg.Rule;
 import com.google.gwt.dev.cfg.Rules;
+import com.google.gwt.dev.javac.CachedGeneratorResultImpl;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
-import com.google.gwt.dev.javac.rebind.CachedRebindResult;
-import com.google.gwt.dev.javac.rebind.RebindCache;
-import com.google.gwt.dev.javac.rebind.RebindResult;
-import com.google.gwt.dev.javac.rebind.RebindRuleResolver;
-import com.google.gwt.dev.javac.rebind.RebindStatus;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -69,7 +70,7 @@ public class StandardRebindOracle implements RebindOracle {
           return typeName;
         }
 
-        CachedRebindResult cachedResult = rebindCacheGet(rule, typeName);
+        CachedGeneratorResult cachedResult = rebindCacheGet(rule, typeName);
         if (cachedResult != null) {
           genCtx.setCachedGeneratorResult(cachedResult);
         }
@@ -164,16 +165,16 @@ public class StandardRebindOracle implements RebindOracle {
      * to cache the new result for the future.
      */
     private String processCacheableResult(TreeLogger logger, Rule rule, String typeName,
-        CachedRebindResult cachedResult, RebindResult newResult) {
+        CachedGeneratorResult cachedResult, RebindResult newResult) {
 
-      String resultTypeName = newResult.getReturnedTypeName();
+      String resultTypeName = newResult.getResultTypeName();
 
       if (!genCtx.isGeneratorResultCachingEnabled()) {
         return resultTypeName;
       }
 
-      RebindStatus status = newResult.getResultStatus();
-      switch (status) {
+      RebindMode mode = newResult.getRebindMode();
+      switch (mode) {
 
         case USE_EXISTING:
           // in this case, no newly generated or cached types are needed
@@ -190,8 +191,9 @@ public class StandardRebindOracle implements RebindOracle {
         case USE_ALL_NEW:
           // use all new results, add a new cache entry
           cachedResult =
-              new CachedRebindResult(newResult.getReturnedTypeName(), genCtx.getArtifacts(), genCtx
-                  .getGeneratedUnitMap(), System.currentTimeMillis(), newResult.getClientDataMap());
+              new CachedGeneratorResultImpl(newResult.getResultTypeName(), genCtx.getArtifacts(),
+                  genCtx.getGeneratedUnitMap(), System.currentTimeMillis(), newResult
+                      .getClientDataMap());
           rebindCachePut(rule, typeName, cachedResult);
           break;
 
@@ -203,7 +205,7 @@ public class StandardRebindOracle implements RebindOracle {
           genCtx.addGeneratedUnitsFromCache();
 
           // use cached type name
-          resultTypeName = cachedResult.getReturnedTypeName();
+          resultTypeName = cachedResult.getResultTypeName();
           break;
 
         case USE_PARTIAL_CACHED:
@@ -219,11 +221,16 @@ public class StandardRebindOracle implements RebindOracle {
            * cached results currently in genCtx.
            */
           cachedResult =
-              new CachedRebindResult(newResult.getReturnedTypeName(), genCtx.getArtifacts(), genCtx
-                  .getGeneratedUnitMap(), System.currentTimeMillis(), newResult.getClientDataMap());
+              new CachedGeneratorResultImpl(newResult.getResultTypeName(), genCtx.getArtifacts(),
+                  genCtx.getGeneratedUnitMap(), System.currentTimeMillis(), newResult
+                      .getClientDataMap());
           rebindCachePut(rule, typeName, cachedResult);
           break;
       }
+
+      // clear the current cached result
+      genCtx.setCachedGeneratorResult(null);
+
       return resultTypeName;
     }
   }
@@ -253,6 +260,7 @@ public class StandardRebindOracle implements RebindOracle {
     typeNameBindingMap.remove(sourceTypeName);
   }
 
+  @Override
   public String rebind(TreeLogger logger, String typeName) throws UnableToCompleteException {
     return rebind(logger, typeName, null);
   }
@@ -277,14 +285,14 @@ public class StandardRebindOracle implements RebindOracle {
     this.rebindCache = cache;
   }
 
-  private CachedRebindResult rebindCacheGet(Rule rule, String typeName) {
+  private CachedGeneratorResult rebindCacheGet(Rule rule, String typeName) {
     if (rebindCache != null) {
       return rebindCache.get(rule, typeName);
     }
     return null;
   }
 
-  private void rebindCachePut(Rule rule, String typeName, CachedRebindResult result) {
+  private void rebindCachePut(Rule rule, String typeName, CachedGeneratorResult result) {
     if (rebindCache != null) {
       rebindCache.put(rule, typeName, result);
     }
