@@ -24,7 +24,7 @@
 
 // TODO: optimization for search of active source file (use local index)
 
-// TODO: do we truncate maxResults on the client?
+// TODO: consider getting Invalidation working again in CodeSearchOracle
 
 // TODO: include files in the query
 
