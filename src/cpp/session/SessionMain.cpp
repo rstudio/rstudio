@@ -411,7 +411,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["vcs"] = modules::source_control::activeVCSName();
 
-   sessionInfo["indexing_enabled"] = userSettings().indexingEnabled();
+   sessionInfo["indexing_enabled"] = modules::code_search::enabled();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

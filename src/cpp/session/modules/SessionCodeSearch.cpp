@@ -144,7 +144,7 @@ Error searchCode(const json::JsonRpcRequest& request,
 void onDeferredInit()
 {
    // initialize source index
-   if (userSettings().indexingEnabled())
+   if (code_search::enabled())
       indexProjectFiles();
 }
 
@@ -152,6 +152,11 @@ void onDeferredInit()
 } // anonymous namespace
 
 
+bool enabled()
+{
+   return projects::projectContext().hasProject() &&
+          userSettings().indexingEnabled();
+}
    
 Error initialize()
 {
