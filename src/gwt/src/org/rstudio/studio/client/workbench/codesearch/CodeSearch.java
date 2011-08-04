@@ -114,15 +114,13 @@ public class CodeSearch
      searchDisplay.addValueChangeHandler(new ValueChangeHandler<String>() {
         @Override
         public void onValueChange(ValueChangeEvent<String> event)
-        {
-           boolean hasSearch = event.getValue().length() != 0;
-           
-           // set oracle to return suggestions as approproate
-           display_.getSearchOracle().setReturnSuggestions(hasSearch);
-           
-           // hide suggestion display if we don't have a search
-           if (!hasSearch)
+        {  
+           // clear and hide suggestion display if we don't have a search
+           if (event.getValue().length() == 0)
+           {
+              display_.getSearchOracle().clear();
               display_.getSuggestionDisplay().hideSuggestions();
+           }
         }     
      });
      

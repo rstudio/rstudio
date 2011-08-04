@@ -21,18 +21,14 @@ public class CodeSearchOracle extends SuggestOracle
    {
       server_ = server;
    }
-   
-   // if the user cancels a search we need to make sure that results which
-   // come back in over the network afterwards are not returned
-   public void setReturnSuggestions(boolean returnSuggestions)
-   {
-      returnSuggestions_ = returnSuggestions;
-   }
-   
+    
    @Override
    public void requestSuggestions(final Request request, 
                                   final Callback callback)
    {    
+      // record the last request
+      lastRequest_ = request;
+      
       // first see if we can serve the request from the cache
       for (int i=resultCache_.size() - 1; i >= 0; i--)
       {
@@ -82,8 +78,7 @@ public class CodeSearchOracle extends SuggestOracle
             cacheSuggestions(request, suggestions);
             
             // return suggestions
-            if (returnSuggestions_)
-               callback.onSuggestionsReady(request, new Response(suggestions));
+            callback.onSuggestionsReady(request, new Response(suggestions));
             
             return;
          } 
@@ -101,6 +96,7 @@ public class CodeSearchOracle extends SuggestOracle
    public void clear()
    {
       resultCache_.clear();
+      lastRequest_ = null;
    }
    
    @Override
@@ -162,8 +158,8 @@ public class CodeSearchOracle extends SuggestOracle
                // cache suggestions
                cacheSuggestions(request_, suggestions);
                
-               // return suggestions
-               if (returnSuggestions_)
+               // return suggestions if this request is still active
+               if (request_ == lastRequest_)
                {
                   callback_.onSuggestionsReady(request_, 
                                                new Response(suggestions));
@@ -198,8 +194,8 @@ public class CodeSearchOracle extends SuggestOracle
    
    private CodeSearchCommand codeSearch_ = new CodeSearchCommand();
    
-   private boolean returnSuggestions_ = true;
-   
+   private Request lastRequest_ = null;
+     
    private ArrayList<Pair<String, ArrayList<CodeSearchSuggestion>>> 
       resultCache_ = new ArrayList<Pair<String,ArrayList<CodeSearchSuggestion>>>();
 }

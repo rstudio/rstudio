@@ -21,10 +21,6 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-// TODO: look into race condition of results from first letter being
-//       displayed after results from second letter are displayed (more
-//       common in low latency situations)
-
 // TODO: sync source documents
 // TODO: include files in the query
 
