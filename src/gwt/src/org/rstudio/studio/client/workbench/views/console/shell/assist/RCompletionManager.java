@@ -224,7 +224,14 @@ public class RCompletionManager implements CompletionManager
                || c == '.' || c == '_'
                || c == ':')
          {
-             beginSuggest(false) ;
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  beginSuggest(false) ;
+               }
+            });
          }
       }
       return false ;
