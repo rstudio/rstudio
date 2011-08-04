@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  * There are a few small incompatibilities between the two implementations.
  * Java-specific constructs in the regular expression syntax (e.g. [a-z&&[^bc]],
  * (?<=foo), \A, \Q) work only in the pure Java implementation, not the GWT
- * implementation, and are not rejected by either. Also, the Javscript-specific
+ * implementation, and are not rejected by either. Also, the Javascript-specific
  * constructs $` and $' in the replacement expression work only in the GWT
  * implementation, not the pure Java implementation, which rejects them.
  */
