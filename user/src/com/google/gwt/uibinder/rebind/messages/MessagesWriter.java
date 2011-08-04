@@ -185,13 +185,6 @@ public class MessagesWriter {
     if (prefix != null) {
       messagesPrefix = prefix;
       String baseInterfaceAttr = consumeMessageAttribute("baseMessagesInterface", elem, null);
-      if (baseInterfaceAttr == null) {
-        // TODO(jat): temporary compatibility, remove next week 
-        baseInterfaceAttr = consumeMessageAttribute("baseInterface", elem, null);
-        if (baseInterfaceAttr != null) {
-          logger.warn(elem, "baseInterface is deprecated, use baseMessagesInterface instead");
-        }
-      }
       if (baseInterfaceAttr != null) {
         JClassType baseInterfaceType = oracle.findType(baseInterfaceAttr);
         if (baseInterfaceType == null) {
