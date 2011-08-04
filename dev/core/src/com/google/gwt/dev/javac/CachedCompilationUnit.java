@@ -41,7 +41,6 @@ public class CachedCompilationUnit extends CompilationUnit {
   private final CategorizedProblem[] problems;
   private final String resourceLocation;
   private final String resourcePath;
-  private final DiskCacheToken sourceToken;
   private final String typeName;
 
   /**
@@ -67,7 +66,6 @@ public class CachedCompilationUnit extends CompilationUnit {
     this.problems = unit.problems;
     this.astToken = unit.astToken;
     this.astVersion = unit.astVersion;
-    this.sourceToken = unit.sourceToken;
 
     // Override these fields
     this.lastModified = lastModified;
@@ -85,7 +83,7 @@ public class CachedCompilationUnit extends CompilationUnit {
    *          serialized AST types.
    */
   @SuppressWarnings("deprecation")
-  CachedCompilationUnit(CompilationUnit unit, long sourceToken, long astToken) {
+  CachedCompilationUnit(CompilationUnit unit, long astToken) {
     assert unit != null;
     this.compiledClasses = unit.getCompiledClasses();
     this.contentId = unit.getContentId();
@@ -110,7 +108,6 @@ public class CachedCompilationUnit extends CompilationUnit {
     }
     this.astToken = new DiskCacheToken(astToken);
     this.astVersion = GwtAstBuilder.getSerializationVersion();
-    this.sourceToken = new DiskCacheToken(sourceToken);
   }
 
   @Override
@@ -146,12 +143,6 @@ public class CachedCompilationUnit extends CompilationUnit {
   @Override
   public String getResourcePath() {
     return resourcePath;
-  }
-
-  @Override
-  @Deprecated
-  public String getSource() {
-    return sourceToken.readString();
   }
 
   @Override

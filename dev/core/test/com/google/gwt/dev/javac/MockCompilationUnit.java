@@ -33,7 +33,6 @@ public class MockCompilationUnit extends CompilationUnit {
   private final ContentId contentId;
   private final long lastModified;
   private final String resourceLocation;
-  private final String source;
   private final String typeName;
 
   public MockCompilationUnit(String typeName, String source) {
@@ -42,7 +41,6 @@ public class MockCompilationUnit extends CompilationUnit {
 
   public MockCompilationUnit(String typeName, String source, String resourceLocation) {
     this.typeName = typeName;
-    this.source = source;
     this.resourceLocation = resourceLocation;
     contentId = new ContentId(typeName, source);
     lastModified = nextTimestamp.getAndIncrement();
@@ -51,9 +49,8 @@ public class MockCompilationUnit extends CompilationUnit {
   @Override
   public CachedCompilationUnit asCachedCompilationUnit() {
     DiskCache diskCache = DiskCache.INSTANCE;
-    long sourceToken = diskCache.writeByteArray(Util.getBytes(source));
     long astToken = diskCache.writeByteArray(Util.getBytes("Dummy AST data"));
-    return new CachedCompilationUnit(this, sourceToken, astToken);
+    return new CachedCompilationUnit(this, astToken);
   }
 
   @Override
@@ -84,11 +81,6 @@ public class MockCompilationUnit extends CompilationUnit {
   @Override
   public String getResourcePath() {
     return Shared.toPath(typeName);
-  }
-
-  @Override
-  public String getSource() {
-    return source;
   }
 
   @Override

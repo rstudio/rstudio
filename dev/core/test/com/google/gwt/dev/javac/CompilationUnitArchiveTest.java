@@ -93,7 +93,6 @@ public class CompilationUnitArchiveTest extends TestCase {
     CompilationUnit found = archive.findUnit(unit.getResourcePath());
     assertEquals(found.getTypeName(), lookupType);
     assertEquals(found.getResourceLocation(), unit.getResourceLocation());
-    assertEquals(found.getSource(), unit.getSource());
   }
 
   private void scrambleArray(Object[] array) {

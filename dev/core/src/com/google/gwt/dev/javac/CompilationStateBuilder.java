@@ -473,9 +473,12 @@ public class CompilationStateBuilder {
       // Look for units previously compiled
       CompilationUnit cachedUnit = unitCache.find(builder.getContentId());
       if (cachedUnit != null) {
-        cachedUnits.put(builder, cachedUnit);
-        compileMoreLater.addValidUnit(cachedUnit);
-        continue;
+        // Recompile generated units with errors so source can be dumped.
+        if (!cachedUnit.isError()) {
+          cachedUnits.put(builder, cachedUnit);
+          compileMoreLater.addValidUnit(cachedUnit);
+          continue;
+        }
       }
       builders.add(builder);
     }

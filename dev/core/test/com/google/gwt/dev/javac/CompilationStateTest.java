@@ -480,7 +480,6 @@ public class CompilationStateTest extends CompilationStateTestBase {
       CompilationUnit unit) throws Exception {
     assertNotNull(unit);
     assertEquals(resource.getLastModified(), unit.getLastModified());
-    assertEquals(resource.getString(), unit.getSource());
 
     // dependencies
     Dependencies deps = unit.getDependencies();
@@ -563,9 +562,6 @@ public class CompilationStateTest extends CompilationStateTestBase {
         assertEquals(origRef.getSignatureHash(), newRef.getSignatureHash());
       }
     }
-
-    // Compare the source
-    assertEquals(originalUnit.getSource(), newUnit.getSource());
 
     // Compare JSNI Methods
     List<JsniMethod> origJsniMethods = originalUnit.getJsniMethods();

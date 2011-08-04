@@ -308,12 +308,6 @@ public abstract class CompilationUnit implements Serializable {
   public abstract String getResourcePath();
 
   /**
-   * Returns the source code for this unit.
-   */
-  @Deprecated
-  public abstract String getSource();
-
-  /**
    * Returns the fully-qualified name of the top level public type.
    */
   public abstract String getTypeName();

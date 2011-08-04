@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.javac.CompilationUnitBuilder.GeneratedCompilationUnit;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -29,7 +30,6 @@ import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -43,13 +43,6 @@ import java.util.Set;
  * console.
  */
 public class CompilationProblemReporter {
-
-  /**
-   * Used to lazily retrieve source if needed for reporting an error.
-   */
-  public interface SourceFetcher {
-    String getSource();
-  }
 
   /**
    * Used as a convenience to catch all exceptions thrown by the compiler. For
@@ -144,40 +137,24 @@ public class CompilationProblemReporter {
   }
 
   /**
-   * Walk the compilation state and report errors if they exist.
+   * Logs errors to the console.
    * 
    * @param logger logger for reporting errors to the console
-   * @param compilationState contains units that might contain errors
-   * @param suppressErrors See {@link #reportErrors(TreeLogger, CompilationUnit, boolean)}
+   * @param unit Compilation unit that may have errors
+   * @param suppressErrors Controls he log level for logging errors. If
+   *          <code>false</code> is passed, compilation errors are logged at
+   *          TreeLogger.ERROR and warnings logged at TreeLogger.WARN. If
+   *          <code>true</code> is passed, compilation errors are logged at
+   *          TreeLogger.TRACE and TreeLogger.DEBUG.
+   * @return <code>true</code> if an error was logged.
    */
-  public static void reportAllErrors(TreeLogger logger, CompilationState compilationState,
-      boolean suppressErrors) {
-    for (CompilationUnit unit : compilationState.getCompilationUnits()) {
-      if (unit.isError()) {
-        reportErrors(logger, unit, suppressErrors);
-      }
-    }
-  }
-
-  /**
-   * Report an error in a compilation unit to the console.
-   * 
-   * @param logger logger for reporting errors to the console
-   * @param problems problems to report on the console.
-   * @param fileName Name of the source file for the unit where the problem
-   *          originated.
-   * @param isError <code>true</code> if this is considered a fatal compilation
-   *          error.
-   * @param suppressErrors Controls the log level for logging errors. See
-   *          {@link #reportErrors(TreeLogger, CompilationUnit, boolean)}.
-   * @return a branch of the logger parameter for logging further problems.
-   */
-  public static TreeLogger reportErrors(TreeLogger logger, CategorizedProblem[] problems,
-      String fileName, boolean isError, SourceFetcher fetcher, String typeName,
-      boolean suppressErrors) {
+  public static boolean reportErrors(TreeLogger logger, CompilationUnit unit, boolean suppressErrors) {
+    CategorizedProblem[] problems = unit.getProblems();
     if (problems == null || problems.length == 0) {
-      return null;
+      return false;
     }
+    String fileName = unit.getResourceLocation();
+    boolean isError = unit.isError();
     TreeLogger.Type warnLogLevel;
     TreeLogger.Type errorLogLevel;
     if (suppressErrors) {
@@ -225,42 +202,13 @@ public class CompilationProblemReporter {
       branch.log(logLevel, msgBuf.toString(), null, helpInfo);
     }
 
-    if (branch != null && fetcher != null) {
-      CompilationProblemReporter.maybeDumpSource(branch, fileName, fetcher, typeName);
+    if (branch != null && branch.isLoggable(TreeLogger.INFO)) {
+      if (unit instanceof GeneratedCompilationUnit) {
+        GeneratedCompilationUnit generatedUnit = (GeneratedCompilationUnit) unit;
+        CompilationProblemReporter.maybeDumpSource(branch, generatedUnit.getSource(), unit
+            .getTypeName());
+      }
     }
-
-    return branch;
-  }
-
-  /**
-   * Logs errors to the console.
-   * 
-   * @param logger logger for reporting errors to the console
-   * @param unit Compilation unit that may have errors
-   * @param suppressErrors Controls he log level for logging errors. If
-   *          <code>false</code> is passed, compilation errors are logged at
-   *          TreeLogger.ERROR and warnings logged at TreeLogger.WARN. If
-   *          <code>true</code> is passed, compilation errors are logged at
-   *          TreeLogger.TRACE and TreeLogger.DEBUG.
-   * @return <code>true</code> if an error was logged.
-   */
-  @SuppressWarnings("deprecation")
-  public static boolean reportErrors(TreeLogger logger, final CompilationUnit unit,
-      boolean suppressErrors) {
-    CategorizedProblem[] problems = unit.getProblems();
-    if (problems == null || problems.length == 0) {
-      return false;
-    }
-    TreeLogger branch =
-        CompilationProblemReporter.reportErrors(logger, unit.getProblems(), unit
-            .getResourceLocation(), unit.isError(), new SourceFetcher() {
-
-          @Override
-          public String getSource() {
-            return unit.getSource();
-          }
-
-        }, unit.getTypeName(), suppressErrors);
     return branch != null;
   }
 
@@ -274,23 +222,6 @@ public class CompilationProblemReporter {
         visited.add(unit);
       }
     }
-  }
-
-  private static boolean isCompilationUnitOnDisk(String loc) {
-    try {
-      if (new File(loc).exists()) {
-        return true;
-      }
-
-      URL url = new URL(loc);
-      String s = url.toExternalForm();
-      if (s.startsWith("file:") || s.startsWith("jar:file:") || s.startsWith("zip:file:")) {
-        return true;
-      }
-    } catch (MalformedURLException e) {
-      // Probably not really on disk.
-    }
-    return false;
   }
 
   private static void logDependentErrors(TreeLogger logger, String missingType,
@@ -321,24 +252,7 @@ public class CompilationProblemReporter {
   /**
    * Give the developer a chance to see the in-memory source that failed.
    */
-  private static void maybeDumpSource(TreeLogger logger, String location, SourceFetcher fetcher,
-      String typeName) {
-
-    if (location.startsWith("/mock/")) {
-      // Unit test mocks, don't dump to disk.
-      return;
-    }
-
-    if (CompilationProblemReporter.isCompilationUnitOnDisk(location)) {
-      // Don't write another copy.
-      return;
-    }
-
-    if (!logger.isLoggable(TreeLogger.INFO)) {
-      // Don't bother dumping source if they can't see the related message.
-      return;
-    }
-
+  private static void maybeDumpSource(TreeLogger logger, String source, String typeName) {
     File tmpSrc;
     Throwable caught = null;
     try {
@@ -347,7 +261,7 @@ public class CompilationProblemReporter {
         typeName = "_" + typeName;
       }
       tmpSrc = File.createTempFile(typeName, ".java");
-      Util.writeStringAsFile(tmpSrc, fetcher.getSource());
+      Util.writeStringAsFile(tmpSrc, source);
       String dumpPath = tmpSrc.getAbsolutePath();
       if (logger.isLoggable(TreeLogger.INFO)) {
         logger.log(TreeLogger.INFO, "See snapshot: " + dumpPath, null);

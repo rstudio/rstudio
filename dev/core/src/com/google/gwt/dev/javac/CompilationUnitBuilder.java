@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -151,7 +151,7 @@ public abstract class CompilationUnitBuilder {
     }
   }
 
-  private static final class GeneratedCompilationUnit extends CompilationUnitImpl {
+  static final class GeneratedCompilationUnit extends CompilationUnitImpl {
     private final GeneratedUnit generatedUnit;
 
     public GeneratedCompilationUnit(GeneratedUnit generatedUnit,
@@ -164,9 +164,7 @@ public abstract class CompilationUnitBuilder {
 
     @Override
     public CachedCompilationUnit asCachedCompilationUnit() {
-      long sourceToken = generatedUnit.getSourceToken();
-      assert sourceToken >= 0;
-      return new CachedCompilationUnit(this, sourceToken, astToken);
+      return new CachedCompilationUnit(this, astToken);
     }
 
     @Override
@@ -182,12 +180,6 @@ public abstract class CompilationUnitBuilder {
     @Override
     public String getResourcePath() {
       return Shared.toPath(generatedUnit.getTypeName());
-    }
-
-    @Deprecated
-    @Override
-    public String getSource() {
-      return generatedUnit.getSource();
     }
 
     @Override
@@ -210,6 +202,10 @@ public abstract class CompilationUnitBuilder {
     @Override
     ContentId getContentId() {
       return new ContentId(getTypeName(), generatedUnit.getStrongHash());
+    }
+
+    String getSource() {
+      return generatedUnit.getSource();
     }
   }
 
