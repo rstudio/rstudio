@@ -22,10 +22,6 @@
 #include <core/StringUtils.hpp>
 
 
-// TODO: optimization for search of active source file (use local index)
-
-// TODO: consider getting Invalidation working again in CodeSearchOracle
-
 // TODO: include files in the query
 
 // TODO: open with project-level encoding & convert to UTF-8 / wide
