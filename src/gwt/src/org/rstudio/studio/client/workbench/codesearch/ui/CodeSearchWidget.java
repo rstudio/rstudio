@@ -9,6 +9,7 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.inject.Inject;
 
 
@@ -21,7 +22,7 @@ public class CodeSearchWidget extends SearchWidget
    {
       super(oracle, 
             new TextBoxWithCue("Go to function/file"), 
-            new CodeSearchSuggestionDisplay());
+            new SuggestBox.DefaultSuggestionDisplay());
       
       oracle_ = oracle;   
       
