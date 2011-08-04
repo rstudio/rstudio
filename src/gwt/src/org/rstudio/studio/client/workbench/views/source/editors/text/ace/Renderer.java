@@ -77,6 +77,10 @@ public class Renderer extends JavaScriptObject
       return this.lineHeight;
    }-*/;
 
+   public native final int getCharacterWidth() /*-{
+      return this.characterWidth;
+   }-*/;
+
    public native final Element getCursorElement() /*-{
       return this.$cursorLayer.cursor;
    }-*/;

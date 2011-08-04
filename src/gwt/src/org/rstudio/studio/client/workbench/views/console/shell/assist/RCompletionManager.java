@@ -19,6 +19,7 @@ import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -96,12 +97,7 @@ public class RCompletionManager implements CompletionManager
    {
       popup_.hide();
    }
-   
-   private boolean checkInvalidateCount(int requiredInvalidateCount)
-   {
-      return requiredInvalidateCount == invalidateCount_ ;
-   }
-   
+
    public boolean previewKeyDown(NativeEvent event)
    {
       /**
@@ -228,12 +224,14 @@ public class RCompletionManager implements CompletionManager
                || c == '.' || c == '_'
                || c == ':')
          {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
                public void execute()
                {
                   beginSuggest(false) ;
                }
-            }) ;
+            });
          }
       }
       return false ;
@@ -276,8 +274,7 @@ public class RCompletionManager implements CompletionManager
 
    private void invalidatePendingRequests(boolean flushCache)
    {
-      invalidateCount_++ ;
-      invalidateCount_ %= 1000000 ;
+      invalidation_.invalidate();
       if (popup_.isShowing())
          popup_.hide() ;
       if (flushCache)
@@ -305,7 +302,7 @@ public class RCompletionManager implements CompletionManager
          return false;
 
       boolean canAutoAccept = flushCache;
-      context_ = new CompletionRequestContext(invalidateCount_,
+      context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
                                               selection,
                                               canAutoAccept) ;
       requester_.getCompletions(line,
@@ -322,11 +319,11 @@ public class RCompletionManager implements CompletionManager
    private final class CompletionRequestContext extends
          ServerRequestCallback<CompletionResult>
    {
-      public CompletionRequestContext(int invalidateCount, 
+      public CompletionRequestContext(Invalidation.Token token,
                                       InputEditorSelection selection,
                                       boolean canAutoAccept)
       {
-         requiredInvalidateCount_ = invalidateCount ;
+         invalidationToken_ = token ;
          selection_ = selection ;
          canAutoAccept_ = canAutoAccept;
       }
@@ -344,7 +341,7 @@ public class RCompletionManager implements CompletionManager
       @Override
       public void onError(ServerError error)
       {
-         if (!checkInvalidateCount(requiredInvalidateCount_))
+         if (invalidationToken_.isInvalid())
             return ;
          
          RCompletionManager.this.popup_.showErrorMessage(
@@ -355,7 +352,7 @@ public class RCompletionManager implements CompletionManager
       @Override
       public void onResponseReceived(CompletionResult completions)
       {
-         if (!checkInvalidateCount(requiredInvalidateCount_))
+         if (invalidationToken_.isInvalid())
             return ;
          
          final QualifiedName[] results
@@ -374,12 +371,8 @@ public class RCompletionManager implements CompletionManager
          // Move range to beginning of token; we want to place the popup there.
          final String token = completions.token ;
 
-         input_.setSelection(new InputEditorSelection(
-               selection_.getStart().movePosition(-token.length(), true),
-               selection_.getEnd()));
-
-         Rectangle rect = input_.getCursorBounds() ;
-         input_.setSelection(selection_) ;
+         Rectangle rect = input_.getPositionBounds(
+               selection_.getStart().movePosition(-token.length(), true));
 
          token_ = token ;
 
@@ -428,7 +421,7 @@ public class RCompletionManager implements CompletionManager
       {
          final String value = qname.name ;
          
-         if (!checkInvalidateCount(requiredInvalidateCount_))
+         if (invalidationToken_.isInvalid())
             return ;
          
          popup_.hide() ;
@@ -449,13 +442,10 @@ public class RCompletionManager implements CompletionManager
          input_.setFocus(true) ;
          input_.setSelection(new InputEditorSelection(
                selection_.getStart().movePosition(-token_.length(), true),
-               selection_.getEnd()));
+               input_.getSelection().getEnd()));
 
          // Replace the token with the full completion
-         input_.replaceSelection(value, false) ;
-         final int delta = value.length() - token_.length();
-         input_.setSelection(new InputEditorSelection(
-               selection_.getStart().movePosition(delta, true)));
+         input_.replaceSelection(value, true) ;
 
          /* In some cases, applyValue can be called more than once
           * as part of the same completion instance--specifically,
@@ -468,7 +458,7 @@ public class RCompletionManager implements CompletionManager
          selection_ = input_.getSelection();
       }
 
-      private final int requiredInvalidateCount_ ;
+      private final Invalidation.Token invalidationToken_ ;
       private InputEditorSelection selection_ ;
       private final boolean canAutoAccept_;
       private HelpStrategy helpStrategy_ ;
@@ -484,6 +474,6 @@ public class RCompletionManager implements CompletionManager
    private boolean ignoreNextInputBlur_ = false;
    private String token_ ;
    
-   private int invalidateCount_ ;
+   private final Invalidation invalidation_ = new Invalidation();
    private CompletionRequestContext context_ ;
 }
