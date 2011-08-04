@@ -64,7 +64,6 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
 
 .cellTableSortableHeader {
   cursor: pointer;
-  cursor: hand;
 }
 
 .cellTableSortableHeader:hover {

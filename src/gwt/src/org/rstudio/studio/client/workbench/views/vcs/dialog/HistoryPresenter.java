@@ -82,8 +82,11 @@ public class HistoryPresenter
             CommitInfo commitInfo = view_.getCommitList().getSelectedCommit();
             view_.getCommitDetail().setSelectedCommit(commitInfo);
             view_.getCommitDetail().clearDetails();
-
             invalidation_.invalidate();
+
+            if (commitInfo == null)
+               return;
+
             final Token token = invalidation_.getInvalidationToken();
 
             server_.vcsShow(commitInfo.getId(), new SimpleRequestCallback<String>()

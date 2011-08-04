@@ -40,7 +40,7 @@ import java.util.Comparator;
 
 public class ChangelistTable extends Composite
 {
-   protected interface CellTableResources extends CellTable.Resources
+   public interface CellTableResources extends CellTable.Resources
    {
       ImageResource statusAdded();
       ImageResource statusDeleted();
