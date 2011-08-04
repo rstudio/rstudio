@@ -103,6 +103,10 @@ public class GlobalToolbar extends Toolbar
          
          addLeftWidget(codeSearch.getSearchWidget());
       }
+      else
+      {
+         commands_.goToFunctionFile().setVisible(false);
+      }
       
       
       ToolbarPopupMenu projectMenu = new ToolbarPopupMenu();

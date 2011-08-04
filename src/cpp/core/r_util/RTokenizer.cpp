@@ -21,7 +21,6 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-// TODO: disable Go to file/function in UI if indexing disabled
 
 // TODO: optimization for search of active source file (use local index)
 
