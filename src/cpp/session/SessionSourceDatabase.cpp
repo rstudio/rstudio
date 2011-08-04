@@ -181,12 +181,23 @@ std::string SourceDocument::getProperty(const std::string& name)
       return "";
    }
 }
-      
+
+const r_util::RSourceIndex& SourceDocument::sourceIndex() const
+{
+   if (sourceIndex_.empty())
+      sourceIndex_.update(path(), contents());
+
+   return sourceIndex_;
+}
+
 // set contents from string
 void SourceDocument::setContents(const std::string& contents)
 {
    contents_ = contents;
    hash_ = hash::crc32Hash(contents_);
+
+   // invalidate the source index (it will be regenerated on demand)
+   sourceIndex_.clear();;
 }
 
 namespace {
@@ -542,7 +553,7 @@ Error getSourceDocumentsJson(core::json::Array* pJsonDocs)
    
    return Success();
 }
-      
+
 Error initialize()
 {
    // make sure the source database exists

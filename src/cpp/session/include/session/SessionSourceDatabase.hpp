@@ -53,6 +53,8 @@ public:
    const core::json::Object& properties() const { return properties_; }
    std::string getProperty(const std::string& name);
 
+   // get the source index (generates on demand)
+   const core::r_util::RSourceIndex& sourceIndex() const;
 
    // set contents from string
    void setContents(const std::string& contents);
@@ -114,6 +116,7 @@ private:
    double created_;
    bool sourceOnSave_;
    core::json::Object properties_;
+   mutable core::r_util::RSourceIndex sourceIndex_;
 };
 
 bool sortByCreated(const boost::shared_ptr<SourceDocument>& pDoc1,

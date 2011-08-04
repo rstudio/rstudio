@@ -21,8 +21,12 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
+// TODO: disable Go to file/function in UI if indexing disabled
 
-// TODO: sync source documents
+// TODO: optimization for search of active source file (use local index)
+
+// TODO: do we truncate maxResults on the client?
+
 // TODO: include files in the query
 
 // TODO: open with project-level encoding & convert to UTF-8 / wide

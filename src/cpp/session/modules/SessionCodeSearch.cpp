@@ -19,11 +19,11 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
-#include <boost/numeric/conversion/cast.hpp>
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/SafeConvert.hpp>
 #include <core/r_util/RSourceIndex.hpp>
 
 #include <session/SessionUserSettings.hpp>
@@ -42,9 +42,14 @@ namespace {
    
 std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > s_sourceIndexes;
 
+bool isRSourceFile(const FilePath& filePath)
+{
+   return filePath.extensionLowerCase() == ".r";
+}
+
 void indexProjectFile(const FilePath& rootDir, const FilePath& filePath)
 {
-   if (filePath.extensionLowerCase() == ".r")
+   if (isRSourceFile(filePath))
    {
       // read the file (assumes utf8)
       std::string code;
@@ -75,26 +80,124 @@ void indexProjectFiles()
        LOG_ERROR(error);
 }
 
-
-void search(const std::string& term,
-            int maxResults,
-            bool prefixOnly,
-            std::vector<r_util::RSourceItem>* pItems)
+void searchSourceDatabase(const std::string& term,
+                          std::size_t maxResults,
+                          bool prefixOnly,
+                          std::vector<r_util::RSourceItem>* pItems,
+                          std::vector<std::string>* pContextsSearched)
 {
-   BOOST_FOREACH(boost::shared_ptr<core::r_util::RSourceIndex> index,
-                 s_sourceIndexes)
+   using namespace source_database;
+
+   // get the docs
+   std::vector<boost::shared_ptr<SourceDocument> > docs ;
+   Error error = source_database::list(&docs);
+   if (error)
    {
-      // scan the next index
-      index->search(term,
-                    prefixOnly,
-                    false,
-                    std::back_inserter(*pItems));
+      LOG_ERROR(error);
+      return;
+   }
+
+   BOOST_FOREACH(boost::shared_ptr<SourceDocument>& pDoc, docs)
+   {
+      // bail if it doesn't have a path associated with it
+      if (pDoc->path().empty())
+         continue;
+
+      // get file path
+      FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
+
+      // bail if this is not an R source file
+      if (!isRSourceFile(docPath))
+         continue;
+
+      // bail if the file isn't in the project
+      std::string projRelativePath =
+            docPath.relativePath(projects::projectContext().directory());
+      if (projRelativePath.empty())
+         continue;
+
+      // record that we searched this path
+      pContextsSearched->push_back(projRelativePath);
+
+      // scan the source index
+      pDoc->sourceIndex().search(term,
+                                 projRelativePath,
+                                 prefixOnly,
+                                 false,
+                                 std::back_inserter(*pItems));
 
       // return if we are past maxResults
-      if (pItems->size() >= boost::numeric_cast<std::size_t>(maxResults))
+      if (pItems->size() >= maxResults)
       {
          pItems->resize(maxResults);
          return;
+      }
+   }
+}
+
+void searchProject(const std::string& term,
+                   std::size_t maxResults,
+                   bool prefixOnly,
+                   const std::vector<std::string>& excludeContexts,
+                   std::vector<r_util::RSourceItem>* pItems)
+{
+   BOOST_FOREACH(const boost::shared_ptr<core::r_util::RSourceIndex>& pIndex,
+                 s_sourceIndexes)
+   {
+      // bail if this is an exluded context
+      if (std::find(excludeContexts.begin(),
+                    excludeContexts.end(),
+                    pIndex->context()) != excludeContexts.end())
+      {
+         continue;
+      }
+
+      // scan the next index
+      pIndex->search(term,
+                     prefixOnly,
+                     false,
+                     std::back_inserter(*pItems));
+
+      // return if we are past maxResults
+      if (pItems->size() >= maxResults)
+      {
+         pItems->resize(maxResults);
+         return;
+      }
+   }
+}
+
+void search(const std::string& term,
+            std::size_t maxResults,
+            bool prefixOnly,
+            std::vector<r_util::RSourceItem>* pItems)
+{
+   // first search the source database
+   std::vector<std::string> sourceDBContexts;
+   searchSourceDatabase(term, maxResults, prefixOnly, pItems, &sourceDBContexts);
+
+   // we are done if we had >= maxResults
+   if (pItems->size() >= maxResults)
+   {
+      pItems->resize(maxResults);
+      return;
+   }
+
+   // now search the project (excluding contexts already searched in the source db)
+   std::vector<r_util::RSourceItem> projItems;
+   searchProject(term, maxResults, prefixOnly, sourceDBContexts, &projItems);
+
+   // add project items to the list
+   BOOST_FOREACH(const r_util::RSourceItem& sourceItem, projItems)
+   {
+      // add the item
+      pItems->push_back(sourceItem);
+
+      // bail if we've hit the max
+      if (pItems->size() >= maxResults)
+      {
+         pItems->resize(maxResults);
+         break;
       }
    }
 }
