@@ -31,6 +31,7 @@ public class CodeSearch
 {
    public interface Observer
    {
+      String getCueText();
       void onCompleted();
    }
    
@@ -38,6 +39,8 @@ public class CodeSearch
    public interface Display 
    {
       SearchDisplay getSearchDisplay();
+      
+      void setCueText(String text);
       
       SuggestBox.DefaultSuggestionDisplay getSuggestionDisplay();
       
@@ -150,8 +153,15 @@ public class CodeSearch
    public void setObserver(Observer observer)
    {
       observer_ = observer;
+      
+      if (observer_ != null)
+      {
+         String cueText = observer_.getCueText();
+         if (cueText != null)
+            display_.setCueText(cueText);
+      }
    }
-    
+     
    private final Display display_;
    private Observer observer_ = null;
 }

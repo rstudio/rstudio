@@ -40,6 +40,11 @@ public class TextBoxWithCue extends TextBox
    {
       return cueText_;
    }
+   
+   public void setCueText(String cueText)
+   {
+      cueText_ = cueText;
+   }
 
    @Override
    public String getText()
@@ -118,7 +123,7 @@ public class TextBoxWithCue extends TextBox
       }
    }
 
-   private final String cueText_;
+   private String cueText_;
    private final String CUE_STYLE = "cueText";
    private HandlerRegistration[] registrations_;
 }

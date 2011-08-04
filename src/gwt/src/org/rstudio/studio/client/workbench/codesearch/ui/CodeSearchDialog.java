@@ -70,8 +70,15 @@ public class CodeSearchDialog extends ModalDialogBase
    {
       closeDialog();  
    }
+   
+   @Override
+   public String getCueText()
+   {
+      return "";
+   }
   
    Provider<CodeSearch> pCodeSearch_;
    CodeSearch codeSearch_;
+   
    
 }

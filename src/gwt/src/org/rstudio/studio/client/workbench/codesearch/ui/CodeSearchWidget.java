@@ -39,10 +39,18 @@ public class CodeSearchWidget extends SearchWidget
    }
    
    @Override
+   public void setCueText(String text)
+   {
+      ((TextBoxWithCue)getTextBox()).setCueText(text);
+   }
+   
+   @Override
    public CodeSearchOracle getSearchOracle()
    {
       return oracle_;
    }
    
    private final CodeSearchOracle oracle_;
+
+  
 }
