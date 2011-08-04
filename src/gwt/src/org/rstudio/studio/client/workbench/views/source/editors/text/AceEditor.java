@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.NullCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
@@ -438,7 +439,22 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return new Rectangle(start.getPageX(),
                            start.getPageY(),
                            end.getPageX() - start.getPageX(),
-                           9);
+                           renderer.getLineHeight());
+   }
+
+   public Rectangle getPositionBounds(InputEditorPosition position)
+   {
+      Renderer renderer = widget_.getEditor().getRenderer();
+
+      Position pos = ((AceInputEditorPosition) position).getValue();
+
+      ScreenCoordinates start = renderer.textToScreenCoordinates(
+            pos.getRow(),
+            pos.getColumn());
+
+      return new Rectangle(start.getPageX(), start.getPageY(),
+                           renderer.getCharacterWidth(),
+                           (int) (renderer.getLineHeight() * 0.8));
    }
 
    public Rectangle getBounds()
