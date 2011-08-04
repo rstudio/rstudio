@@ -111,9 +111,6 @@ using namespace session;
 using namespace session::client_events;
 
 namespace {
-   
-// background processing signal
-boost::signal<void()> s_onBackgroundProcessing;
 
 // uri handlers
 http::UriHandlers s_uriHandlers;
@@ -690,7 +687,7 @@ void setupForkHandlers()
 #endif
 
 
-void performBackgroundProcessing()
+void performBackgroundProcessing(bool isIdle)
 {
    // static lastPerformed value used for throttling
    using namespace boost::posix_time;
@@ -702,8 +699,8 @@ void performBackgroundProcessing()
    static time_duration s_intervalMs = milliseconds(25);
    if (microsec_clock::universal_time() > (s_lastPerformed + s_intervalMs))
    {
-      // fire signal
-      s_onBackgroundProcessing();
+      // notify module context
+      module_context::onBackgroundProcessing(isIdle);
 
       // set last performed
       s_lastPerformed = microsec_clock::universal_time();
@@ -725,8 +722,8 @@ void polledEventHandler()
       return;
    }
 
-   // perform background processing
-   performBackgroundProcessing();
+   // perform background processing (false for NOT idle)
+   performBackgroundProcessing(false);
 
    // check for a pending connections only while R is processing
    // (otherwise we'll handle them directly in waitForMethod)
@@ -919,8 +916,8 @@ bool waitForMethod(const std::string& method,
                                             connectionQueueTimeout);
 
 
-      // perform background processing
-      performBackgroundProcessing();
+      // perform background processing (true for isIdle)
+      performBackgroundProcessing(true);
 
       // process pending events in desktop mode
       processDesktopGuiEvents();
@@ -1248,11 +1245,6 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    // propagate console history options
    r::session::consoleHistory().setRemoveDuplicates(
                                  userSettings().removeHistoryDuplicates());
-
-   // connect ProcessSupervisor::poll to background processing
-   s_onBackgroundProcessing.connect(boost::bind(
-                              &core::system::ProcessSupervisor::poll,
-                              &module_context::processSupervisor()));
 
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally

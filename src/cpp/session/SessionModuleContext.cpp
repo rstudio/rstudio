@@ -367,6 +367,15 @@ void onResumed(const Settings& persistentState)
    s_suspendHandlers.resume(persistentState);
 }
 
+void onBackgroundProcessing(bool isIdle)
+{
+   // allow process supervisor to poll for events
+   processSupervisor().poll();
+
+   // fire event
+   events().onBackgroundProcessing(isIdle);
+}
+
 FilePath userHomePath()
 {
    return session::options().userHomePath();

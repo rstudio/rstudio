@@ -154,6 +154,7 @@ struct Events : boost::noncopyable
    boost::signal<void ()>              onBeforeExecute;
    boost::signal<void (ChangeSource)>  onDetectChanges;
    boost::signal<void()>               onDeferredInit;
+   boost::signal<void(bool)>           onBackgroundProcessing;
    boost::signal<void(bool)>           onShutdown;
    boost::signal<void ()>              onSysSleep;
 };
