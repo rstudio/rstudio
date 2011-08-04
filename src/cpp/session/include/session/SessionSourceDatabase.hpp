@@ -17,9 +17,13 @@
 #include <string>
 #include <vector>
 
+#include <boost/utility.hpp>
+#include <boost/shared_ptr.hpp>
+
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
+#include <core/r_util/RSourceIndex.hpp>
 
 namespace core {
    class Error;
@@ -29,7 +33,7 @@ namespace core {
 namespace session {
 namespace source_database {
    
-class SourceDocument
+class SourceDocument : boost::noncopyable
 {
 public:
    SourceDocument(const std::string& type = std::string());
@@ -112,15 +116,15 @@ private:
    core::json::Object properties_;
 };
 
-bool sortByCreated(const SourceDocument& doc1, const SourceDocument& doc2);
-
+bool sortByCreated(const boost::shared_ptr<SourceDocument>& pDoc1,
+                   const boost::shared_ptr<SourceDocument>& pDoc2);
 
 core::FilePath path();
-core::Error get(const std::string& id, SourceDocument* pDoc);
+core::Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc);
 core::Error getDurableProperties(const std::string& path,
                                  core::json::Object* pProperties);
-core::Error list(std::vector<SourceDocument>* pDocs);
-core::Error put(const SourceDocument& doc);
+core::Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs);
+core::Error put(boost::shared_ptr<SourceDocument> pDoc);
 core::Error remove(const std::string& id);
 core::Error removeAll();
 

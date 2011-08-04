@@ -381,9 +381,10 @@ void SourceDocument::editProperty(const json::Object::value_type& property)
    }
 }
 
-bool sortByCreated(const SourceDocument& doc1, const SourceDocument& doc2)
+bool sortByCreated(const boost::shared_ptr<SourceDocument>& pDoc1,
+                   const boost::shared_ptr<SourceDocument>& pDoc2)
 {
-   return doc1.created() < doc2.created();
+   return pDoc1->created() < pDoc2->created();
 }
 
 FilePath path()
@@ -391,7 +392,7 @@ FilePath path()
    return module_context::scopedScratchPath().complete("source_database");
 }
    
-Error get(const std::string& id, SourceDocument* pDoc)
+Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc)
 {
    FilePath filePath = source_database::path().complete(id);
    if (filePath.exists())
@@ -437,7 +438,7 @@ bool isSourceDocument(const FilePath& filePath)
       return true;
 }
 
-Error list(std::vector<SourceDocument>* pDocs)
+Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
 {
    std::vector<FilePath> files ;
    Error error = source_database::path().children(&files);
@@ -449,10 +450,10 @@ Error list(std::vector<SourceDocument>* pDocs)
       if (isSourceDocument(filePath))
       {
          // get the source doc
-         SourceDocument doc ;
-         Error error = source_database::get(filePath.filename(), &doc);
+         boost::shared_ptr<SourceDocument> pDoc(new SourceDocument()) ;
+         Error error = source_database::get(filePath.filename(), pDoc);
          if (!error)
-            pDocs->push_back(doc);
+            pDocs->push_back(pDoc);
          else
             LOG_ERROR(error);
       }
@@ -461,22 +462,22 @@ Error list(std::vector<SourceDocument>* pDocs)
    return Success();
 }
    
-Error put(const SourceDocument& doc)
+Error put(boost::shared_ptr<SourceDocument> pDoc)
 {
    // get json representation
    json::Object jsonDoc ;
-   doc.writeToJson(&jsonDoc);
+   pDoc->writeToJson(&jsonDoc);
    std::ostringstream ostr ;
    json::writeFormatted(jsonDoc, ostr);
    
    // write to file
-   FilePath filePath = source_database::path().complete(doc.id());
+   FilePath filePath = source_database::path().complete(pDoc->id());
    Error error = writeStringToFile(filePath, ostr.str());
    if (error)
       return error ;
 
    // write properties to durable storage
-   error = putProperties(doc.path(), doc.properties());
+   error = putProperties(pDoc->path(), pDoc->properties());
    if (error)
       LOG_ERROR(error);
 
@@ -509,7 +510,7 @@ Error removeAll()
 Error getSourceDocumentsJson(core::json::Array* pJsonDocs)
 {
    // get the docs and sort them by created
-   std::vector<SourceDocument> docs ;
+   std::vector<boost::shared_ptr<SourceDocument> > docs ;
    Error error = source_database::list(&docs);
    if (error)
       return error ;
@@ -517,7 +518,7 @@ Error getSourceDocumentsJson(core::json::Array* pJsonDocs)
    
    // populate the array
    pJsonDocs->clear();
-   BOOST_FOREACH( SourceDocument& doc, docs )
+   BOOST_FOREACH( boost::shared_ptr<SourceDocument>& pDoc, docs )
    {
       // Force dirty state to be checked.
       // Client and server dirty state can get out of sync because
@@ -530,12 +531,12 @@ Error getSourceDocumentsJson(core::json::Array* pJsonDocs)
       // it does mean that reloading the client may cause a dirty
       // document to become clean (if the contents are identical
       // to what's on disk).
-      error = doc.updateDirty();
+      error = pDoc->updateDirty();
       if (error)
          LOG_ERROR(error);
 
       json::Object jsonDoc ;
-      doc.writeToJson(&jsonDoc);
+      pDoc->writeToJson(&jsonDoc);
       pJsonDocs->push_back(jsonDoc);
    }
    
