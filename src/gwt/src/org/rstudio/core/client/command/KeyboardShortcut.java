@@ -93,6 +93,8 @@ public class KeyboardShortcut
          return "/";
       else if (keycode_ == 192)
          return "`";
+      else if (keycode_ == 190)
+         return ".";
 
       return Character.toUpperCase((char)keycode_) + "";
    }

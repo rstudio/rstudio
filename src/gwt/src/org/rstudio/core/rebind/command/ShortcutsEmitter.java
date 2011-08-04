@@ -163,6 +163,8 @@ public class ShortcutsEmitter
          return "com.google.gwt.event.dom.client.KeyCodes.KEY_PAGEDOWN";
       if (val.equals("`"))
          return "192";
+      if (val.equals("."))
+         return "190";
       return null;
    }
 
