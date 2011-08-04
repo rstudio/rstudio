@@ -22,6 +22,20 @@
 namespace core {
 namespace r_util {
 
+namespace {
+
+std::wstring removeQuoteDelims(const std::wstring& input)
+{
+   // since we know this was parsed as a quoted string we can just remove
+   // the first and last characters
+   if (input.size() >= 2)
+      return std::wstring(input, 1, input.size() - 2);
+   else
+      return std::wstring();
+}
+
+}  // anonymous namespace
+
 RSourceIndex::RSourceIndex(const std::string& context,
                            const std::string& code)
   : context_(context)
@@ -41,15 +55,69 @@ RSourceIndex::RSourceIndex(const std::string& context,
    // tokenize
    RTokens rTokens(wCode, RTokens::StripWhitespace | RTokens::StripComments);
 
-   // scan for functions
+   // scan for function, method, and class definitions
    std::wstring function(L"function");
+   std::wstring set(L"set");
+   std::wstring setGeneric(L"setGeneric");
+   std::wstring setGroupGeneric(L"setGroupGeneric");
+   std::wstring setMethod(L"setMethod");
+   std::wstring setClass(L"setClass");
+   std::wstring setClassUnion(L"setClassUnion");
    std::wstring eqOp(L"=");
    std::wstring assignOp(L"<-");
    std::wstring parentAssignOp(L"<<-");
    for (std::size_t i=0; i<rTokens.size(); i++)
    {
+      // initial name and type are nil
+      RFunctionInfo::Type type = RFunctionInfo::None;
+      std::wstring name;
+      std::size_t tokenOffset = -1;
+
+      // alias the token
+      const RToken& token = rTokens.at(i);
+
+      // bail if this isn't an identifier
+      if (token.type() != RToken::ID)
+         continue;
+
+      // is this a potential method or class definition?
+      if (token.contentStartsWith(set))
+      {
+         RFunctionInfo::Type setType = RFunctionInfo::None;
+
+         if (token.contentEquals(setMethod) ||
+             token.contentEquals(setGeneric) ||
+             token.contentEquals(setGroupGeneric))
+         {
+            setType = RFunctionInfo::Method;
+         }
+         else if (token.contentEquals(setClass) ||
+                  token.contentEquals(setClassUnion))
+         {
+            setType = RFunctionInfo::Class;
+         }
+         else
+         {
+            continue;
+         }
+
+         // make sure there are at least two more tokens
+         if ( (i + 2) >= rTokens.size())
+            continue;
+
+         // there needs to be two more tokens, one an lparen and one a string
+         if ( (rTokens.at(i+1).type() != RToken::LPAREN) ||
+              (rTokens.at(i+2).type() != RToken::STRING))
+            continue;
+
+         // found a class or method definition (will find location below)
+         type = setType;
+         name = removeQuoteDelims(rTokens.at(i+2).content());
+         tokenOffset = token.offset();
+      }
+
       // is this a function?
-      if (rTokens.at(i).isIdentifier(function))
+      else if (token.contentEquals(function))
       {
          // if there is no room for an operator and identifier prior
          // to the function then bail
@@ -81,27 +149,35 @@ RSourceIndex::RSourceIndex(const std::string& context,
          }
 
          // if we got this far then this is a function definition
-         // (next step is likely json so convert to utf8 here)
-         std::string name = string_utils::wideToUtf8(idToken.content());
-
-         // compute the line by starting at the current line index and
-         // finding the first newline which is after the idToken offset
-         newlineIter = std::upper_bound(newlineIter,
-                                        endNewlines,
-                                        idToken.offset());
-         std::size_t line = newlineIter - newlineLocs.begin() + 1;
-
-         // compute column by comparing the offset to the PREVIOUS newline
-         // (guard against no previous newline)
-         std::size_t column;
-         if (line > 1)
-            column = idToken.offset() - *(newlineIter - 1);
-         else
-            column = idToken.offset();
-
-         // add to our list of indexed functions
-         functions_.push_back(RFunctionInfo(name, line, column));
+         type = RFunctionInfo::Function;
+         name = idToken.content();
+         tokenOffset = idToken.offset();
       }
+      else
+      {
+         continue;
+      }
+
+      // compute the line by starting at the current line index and
+      // finding the first newline which is after the idToken offset
+      newlineIter = std::upper_bound(newlineIter,
+                                     endNewlines,
+                                     tokenOffset);
+      std::size_t line = newlineIter - newlineLocs.begin() + 1;
+
+      // compute column by comparing the offset to the PREVIOUS newline
+      // (guard against no previous newline)
+      std::size_t column;
+      if (line > 1)
+         column = tokenOffset - *(newlineIter - 1);
+      else
+         column = tokenOffset;
+
+      // add to index
+      functions_.push_back(RFunctionInfo(type,
+                                         string_utils::wideToUtf8(name),
+                                         line,
+                                         column));
    }
 }
 

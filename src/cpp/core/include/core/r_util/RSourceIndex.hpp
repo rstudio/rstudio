@@ -34,18 +34,29 @@ namespace r_util {
 class RFunctionInfo
 {
 public:
-   RFunctionInfo(const std::string& name,
+   enum Type
+   {
+      None = 0,
+      Function = 1,
+      Method = 2,
+      Class = 3
+   };
+
+public:
+   RFunctionInfo(Type type,
+                 const std::string& name,
                  std::size_t line,
                  std::size_t column)
-      : name_(name), line_(line), column_(column)
+      : type_(type), name_(name), line_(line), column_(column)
    {
    }
 
    RFunctionInfo(const std::string& context,
+                 Type type,
                  const std::string& name,
                  std::size_t line,
                  std::size_t column)
-      : context_(context), name_(name), line_(line), column_(column)
+      : context_(context), type_(type), name_(name), line_(line), column_(column)
    {
    }
 
@@ -54,6 +65,7 @@ public:
    // COPYING: via compiler (copyable members)
 
    // accessors
+   Type type() const { return type_; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
    int line() const { return core::safe_convert::numberTo<int>(line_,0); }
@@ -93,11 +105,12 @@ public:
 
    RFunctionInfo withContext(const std::string& context) const
    {
-      return RFunctionInfo(context, name_, line_, column_);
+      return RFunctionInfo(context, type_, name_, line_, column_);
    }
 
 private:
    std::string context_;
+   Type type_;
    std::string name_;
    std::size_t line_;
    std::size_t column_;

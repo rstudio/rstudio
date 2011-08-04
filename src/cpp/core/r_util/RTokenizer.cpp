@@ -21,15 +21,16 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
+// TODO: client side support for methods and classes
+
+// TODO: change nomenclature to "source object" or "source item"
 
 // TODO: sync source documents
 // TODO: include files in the query
 
-// TODO: indexing queue
-
 // TODO: open with project-level encoding & convert to UTF-8 / wide
-// TODO: other function types (setMethod, etc. -- see rtags.R)
-// TODO: other file types (Rw, Rnw)
+
+// TODO: indexing queue
 // TODO: limit indexing for cases of thousands (or hundreds) of files
 
 namespace core {

@@ -93,16 +93,20 @@ public:
    std::size_t length() const { return end_ - begin_; }
 
    // efficient comparison operations
-   bool isIdentifier(const std::wstring& identifier) const
+   bool contentEquals(const std::wstring& text) const
    {
-      return (type_ == RToken::ID) &&
-              std::equal(begin_, end_, identifier.begin());
+      return std::equal(begin_, end_, text.begin());
+   }
+
+   bool contentStartsWith(const std::wstring& text) const
+   {
+      return std::search(begin_, end_, text.begin(), text.end()) == begin_;
    }
 
    bool isOperator(const std::wstring& op) const
    {
       return (type_ == RToken::OPER) &&
-            std::equal(begin_, end_, op.begin());
+              std::equal(begin_, end_, op.begin());
    }
 
    // allow direct use in conditional statements (nullability)
