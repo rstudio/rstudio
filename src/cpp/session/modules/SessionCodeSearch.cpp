@@ -113,6 +113,11 @@ json::Array toJsonArray(
    return col;
 }
 
+bool compareItems(const r_util::RSourceItem& i1, const r_util::RSourceItem& i2)
+{
+   return i1.name() < i2.name();
+}
+
 Error searchCode(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
@@ -126,6 +131,9 @@ Error searchCode(const json::JsonRpcRequest& request,
    // find functions
    std::vector<r_util::RSourceItem> items;
    search(term, maxResults + 1, true, &items);
+
+   // sort by name
+   std::sort(items.begin(), items.end(), compareItems);
 
    // return rpc array list (wire efficiency)
    json::Object res;

@@ -21,8 +21,6 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-// TODO: alphabetize results (see: ha)
-
 // TODO: look into race condition of results from first letter being
 //       displayed after results from second letter are displayed (more
 //       common in low latency situations)
