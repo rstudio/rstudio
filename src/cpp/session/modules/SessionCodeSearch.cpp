@@ -24,6 +24,8 @@
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/IncrementalCommand.hpp>
+
 #include <core/r_util/RSourceIndex.hpp>
 
 #include <session/SessionUserSettings.hpp>
