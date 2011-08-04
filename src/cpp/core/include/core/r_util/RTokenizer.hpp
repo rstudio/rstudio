@@ -15,7 +15,7 @@
 #define CORE_R_UTIL_R_TOKENIZER_HPP
 
 #include <string>
-#include <vector>
+#include <deque>
 #include <algorithm>
 
 #include <boost/utility.hpp>
@@ -167,10 +167,10 @@ private:
 };
 
 
-// Vector of RTokens. Note that the RTokens returned from the vector
+// Set of RTokens. Note that the RTokens returned from the set
 // are conceptually iterators so are only valid for the lifetime of
 // the RTokens object which yielded them.
-class RTokens : public std::vector<RToken>, boost::noncopyable
+class RTokens : public std::deque<RToken>, boost::noncopyable
 {
 public:
    enum Flags

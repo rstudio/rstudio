@@ -31,7 +31,6 @@
 // TODO: other function types (setMethod, etc. -- see rtags.R)
 // TODO: other file types (Rw, Rnw)
 // TODO: limit indexing for cases of thousands (or hundreds) of files
-// TODO: profile tokenizer
 
 namespace core {
 namespace r_util {

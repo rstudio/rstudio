@@ -59,12 +59,12 @@ public:
 
    }
 
-   void verify(const std::vector<std::wstring>& values)
+   void verify(const std::deque<std::wstring>& values)
    {
       verify(defaultTokenType_, values);
    }
 
-   void verify(int tokenType, const std::vector<std::wstring>& values)
+   void verify(int tokenType, const std::deque<std::wstring>& values)
    {
       BOOST_FOREACH(const std::wstring& value, values)
          verify(tokenType, value);
