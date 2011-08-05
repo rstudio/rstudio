@@ -192,7 +192,7 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
                
                enableCancelButton(true);
                selectAllButton_.setEnabled(true);
-               selectNoneButton_.setEnabled(false);
+               selectNoneButton_.setEnabled(true);
             }
             else
             {
