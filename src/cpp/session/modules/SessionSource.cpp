@@ -14,8 +14,13 @@
 #include "SessionSource.hpp"
 
 #include <string>
+#include <map>
 
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+#include <boost/utility.hpp>
+
+#include <core/r_util/RSourceIndex.hpp>
 
 #include <R_ext/rlocale.h>
 
@@ -49,9 +54,87 @@ namespace session {
 namespace modules { 
 namespace source {
 
+using namespace session::source_database;
+
 namespace {
 
-using namespace session::source_database;
+// maintain an in-memory list of R source document indexes (for fast
+// code searching)
+class RSourceIndexes : boost::noncopyable
+{
+private:
+   friend RSourceIndexes& rSourceIndexes();
+   RSourceIndexes() {}
+
+public:
+   virtual ~RSourceIndexes() {}
+
+   // COPYING: boost::noncopyable
+
+   void update(boost::shared_ptr<SourceDocument> pDoc)
+   {
+      // is this indexable? if not then bail
+      if ( pDoc->path().empty() ||
+           (FilePath(pDoc->path()).extensionLowerCase() != ".r") )
+      {
+         return;
+      }
+
+      // index the source
+      boost::shared_ptr<r_util::RSourceIndex> pIndex(
+                 new r_util::RSourceIndex(pDoc->path(), pDoc->contents()));
+
+      // insert it
+      indexes_[pDoc->id()] = pIndex;
+   }
+
+   void remove(const std::string& id)
+   {
+      indexes_.erase(id);
+   }
+
+   void removeAll()
+   {
+      indexes_.clear();
+   }
+
+   std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes()
+   {
+      std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes;
+      BOOST_FOREACH(const IndexMap::value_type& index, indexes_)
+      {
+         indexes.push_back(index.second);
+      }
+      return indexes;
+   }
+
+private:
+   typedef std::map<std::string, boost::shared_ptr<r_util::RSourceIndex> >
+                                                                    IndexMap;
+   IndexMap indexes_;
+};
+
+RSourceIndexes& rSourceIndexes()
+{
+   static RSourceIndexes instance;
+   return instance;
+}
+
+// wrap source_database::put for situations where there are new contents
+// (so we can index the contents)
+Error sourceDatabasePutWithUpdatedContents(
+                              boost::shared_ptr<SourceDocument> pDoc)
+{
+   // write the file to the database
+   Error error = source_database::put(pDoc);
+   if (error)
+      return error ;
+
+   // update index
+   rSourceIndexes().update(pDoc);
+
+   return Success();
+}
    
 Error newDocument(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
@@ -73,7 +156,7 @@ Error newDocument(const json::JsonRpcRequest& request,
    error = source_database::put(pDoc);
    if (error)
       return error;
-   
+
    // return the doc
    json::Object jsonDoc;
    pDoc->writeToJson(&jsonDoc);
@@ -135,31 +218,17 @@ Error openDocument(const json::JsonRpcRequest& request,
    else
       LOG_ERROR(error);
    
-   // write the file to the database
-   error = source_database::put(pDoc);
+   // write to the source_database
+   error = sourceDatabasePutWithUpdatedContents(pDoc);
    if (error)
-      return error ;
-   
+      return error;
+
    // return the doc
    json::Object jsonDoc;
    pDoc->writeToJson(&jsonDoc);
    pResponse->setResult(jsonDoc);
    return Success();
 } 
-   
-Error listDocuments(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
-{
-   // get the docs
-   json::Array jsonDocs ;
-   Error error = getSourceDocumentsJson(&jsonDocs);
-   if (error)
-      return error;
-   
-   // return them
-   pResponse->setResult(jsonDocs);
-   return Success();
-}
 
 Error saveDocumentCore(const std::string& contents,
                        const json::Value& jsonPath,
@@ -278,11 +347,11 @@ Error saveDocument(const json::JsonRpcRequest& request,
    if (error)
       return error;
    
-   // write the source doc
-   error = source_database::put(pDoc);
+   // write to the source_database
+   error = sourceDatabasePutWithUpdatedContents(pDoc);
    if (error)
-      return error ;
-   
+      return error;
+
    // return the hash
    pResponse->setResult(pDoc->hash());
    return Success();
@@ -356,10 +425,11 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
       if (error)
          return error;
       
-      error = source_database::put(pDoc);
+      // write to the source_database
+      error = sourceDatabasePutWithUpdatedContents(pDoc);
       if (error)
          return error;
-      
+
       pResponse->setResult(pDoc->hash());
    }
    
@@ -448,9 +518,10 @@ Error reopen(std::string id, std::string fileType, std::string encoding,
    }
    pDoc->setDirty(false);
 
-   error = source_database::put(pDoc);
+   // write to the source_database
+   error = sourceDatabasePutWithUpdatedContents(pDoc);
    if (error)
-      return error ;
+      return error;
 
    json::Object resultObj;
    pDoc->writeToJson(&resultObj);
@@ -557,13 +628,25 @@ Error closeDocument(const json::JsonRpcRequest& request,
    if (error)
       return error ;
    
-   return source_database::remove(id);
+   error = source_database::remove(id);
+   if (error)
+      return error;
+
+   rSourceIndexes().remove(id);
+
+   return Success();
 }
    
 Error closeAllDocuments(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   return source_database::removeAll();
+   Error error = source_database::removeAll();
+   if (error)
+      return error;
+
+   rSourceIndexes().removeAll();
+
+   return Success();
 }
 
 void enqueFileEditEvent(const std::string& file)
@@ -635,6 +718,53 @@ void onShutdown(bool terminatedNormally)
 
 } // anonymous namespace
 
+Error clientInitDocuments(core::json::Array* pJsonDocs)
+{
+   // remove all items from the source index database
+   rSourceIndexes().removeAll();
+
+   // get the docs and sort them by created
+   std::vector<boost::shared_ptr<SourceDocument> > docs ;
+   Error error = source_database::list(&docs);
+   if (error)
+      return error ;
+   std::sort(docs.begin(), docs.end(), sortByCreated);
+
+   // populate the array
+   pJsonDocs->clear();
+   BOOST_FOREACH( boost::shared_ptr<SourceDocument>& pDoc, docs )
+   {
+      // Force dirty state to be checked.
+      // Client and server dirty state can get out of sync because
+      // undo/redo on the client side can make dirty documents
+      // become clean again. I tried pushing the client dirty state
+      // back to the server but couldn't convince myself that I
+      // got all the edge cases. This approach is simpler--just
+      // compare the contents in the doc database to the contents
+      // on disk, and only do it when listing documents. However
+      // it does mean that reloading the client may cause a dirty
+      // document to become clean (if the contents are identical
+      // to what's on disk).
+      error = pDoc->updateDirty();
+      if (error)
+         LOG_ERROR(error);
+
+      json::Object jsonDoc ;
+      pDoc->writeToJson(&jsonDoc);
+      pJsonDocs->push_back(jsonDoc);
+
+      // update the source index
+      rSourceIndexes().update(pDoc);
+   }
+
+   return Success();
+}
+
+std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > rIndexes()
+{
+   return rSourceIndexes().indexes();
+}
+
 Error initialize()
 {   
    // connect to shutdown event
@@ -649,7 +779,6 @@ Error initialize()
       (bind(registerReplaceHook, "file.edit", fileEditHook, (CCODE*)NULL))
       (bind(registerRpcMethod, "new_document", newDocument))
       (bind(registerRpcMethod, "open_document", openDocument))
-      (bind(registerRpcMethod, "list_documents", listDocuments))
       (bind(registerRpcMethod, "save_document", saveDocument))
       (bind(registerRpcMethod, "save_document_diff", saveDocumentDiff))
       (bind(registerRpcMethod, "check_for_external_edit", checkForExternalEdit))

@@ -125,11 +125,6 @@ private:
 class RSourceIndex : boost::noncopyable
 {
 public:
-   // Create empty source index (searches will always return no results)
-   RSourceIndex()
-   {
-   }
-
    // Index the provided R source code so that we can efficiently search
    // for functions within it
    //
@@ -138,24 +133,9 @@ public:
    //   - Must use \n only for linebreaks
    //
    RSourceIndex(const std::string& context,
-                const std::string& code)
-   {
-      update(context, code);
-   }
+                const std::string& code);
 
    const std::string& context() const { return context_; }
-
-   // update the source index
-   void update(const std::string& context, const std::string& code);
-
-   // query for whether the source index is empty
-   bool empty() const { return context_.empty(); }
-
-   void clear()
-   {
-      context_.clear();
-      items_.clear();
-   }
 
    template <typename OutputIterator>
    OutputIterator search(const std::string& term,

@@ -351,7 +351,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // source documents
    json::Array jsonDocs;
-   Error error = source_database::getSourceDocumentsJson(&jsonDocs);
+   Error error = modules::source::clientInitDocuments(&jsonDocs);
    if (error)
       LOG_ERROR(error);
    sessionInfo["source_documents"] = jsonDocs;

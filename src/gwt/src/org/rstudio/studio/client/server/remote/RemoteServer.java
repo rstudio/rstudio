@@ -873,12 +873,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, OPEN_DOCUMENT, params, requestCallback);
    }
 
-   public void listDocuments(
-         ServerRequestCallback<JsArray<SourceDocument>> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, LIST_DOCUMENTS, requestCallback);
-   }
-
    public void saveDocument(String id,
                             String path,
                             String fileType,
@@ -1702,7 +1696,6 @@ public class RemoteServer implements Server
    
    private static final String NEW_DOCUMENT = "new_document";
    private static final String OPEN_DOCUMENT = "open_document";
-   private static final String LIST_DOCUMENTS = "list_documents";
    private static final String SAVE_DOCUMENT = "save_document";
    private static final String SAVE_DOCUMENT_DIFF = "save_document_diff";
    private static final String CHECK_FOR_EXTERNAL_EDIT = "check_for_external_edit";

@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -48,13 +47,6 @@ public interface SourceServerOperations
                      String fileType,
                      String encoding,
                      ServerRequestCallback<SourceDocument> requestCallback);
-
-   /**
-    * Retrieves the current working list. This will be called once, when the
-    * source module is loaded.
-    */
-   void listDocuments(
-                ServerRequestCallback<JsArray<SourceDocument>> requestCallback);
 
    /**
     * Saves the given contents for the given ID, and optionally saves it to

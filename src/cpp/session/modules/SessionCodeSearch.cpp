@@ -32,8 +32,9 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include <session/SessionSourceDatabase.hpp>
 #include <session/projects/SessionProjects.hpp>
+
+#include "SessionSource.hpp"
 
 using namespace core ;
 
@@ -89,29 +90,16 @@ void searchSourceDatabase(const std::string& term,
                           std::vector<r_util::RSourceItem>* pItems,
                           std::set<std::string>* pContextsSearched)
 {
-   using namespace source_database;
 
-   // get the docs
-   std::vector<boost::shared_ptr<SourceDocument> > docs ;
-   Error error = source_database::list(&docs);
-   if (error)
+
+   // get all of the source indexes
+   std::vector<boost::shared_ptr<r_util::RSourceIndex> > rIndexes =
+                                             modules::source::rIndexes();
+
+   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, rIndexes)
    {
-      LOG_ERROR(error);
-      return;
-   }
-
-   BOOST_FOREACH(boost::shared_ptr<SourceDocument>& pDoc, docs)
-   {
-      // bail if it doesn't have a path associated with it
-      if (pDoc->path().empty())
-         continue;
-
       // get file path
-      FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
-
-      // bail if this is not an R source file
-      if (!isRSourceFile(docPath))
-         continue;
+      FilePath docPath = module_context::resolveAliasedPath(pIndex->context());
 
       // bail if the file isn't in the project
       std::string projRelativePath =
@@ -123,11 +111,11 @@ void searchSourceDatabase(const std::string& term,
       pContextsSearched->insert(projRelativePath);
 
       // scan the source index
-      pDoc->sourceIndex().search(term,
-                                 projRelativePath,
-                                 prefixOnly,
-                                 false,
-                                 std::back_inserter(*pItems));
+      pIndex->search(term,
+                     projRelativePath,
+                     prefixOnly,
+                     false,
+                     std::back_inserter(*pItems));
 
       // return if we are past maxResults
       if (pItems->size() >= maxResults)

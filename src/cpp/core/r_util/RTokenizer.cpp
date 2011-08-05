@@ -21,16 +21,20 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-
-// TODO: efficiency of src database search (does it re-read/index
-//       every time?
-
 // TODO: include files in the query
 
 // TODO: open with project-level encoding & convert to UTF-8 / wide
 
 // TODO: indexing queue
 // TODO: limit indexing for cases of thousands (or hundreds) of files
+
+// TODO: implement file monitoring
+
+// TODO: once we have file monitoring the source database will only
+//       need to track indexes for dirty files
+
+// TODO: consider further optimization of only generating source
+//       indexes on-demand for the src db
 
 namespace core {
 namespace r_util {

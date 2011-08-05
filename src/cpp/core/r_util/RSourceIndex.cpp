@@ -36,11 +36,10 @@ std::wstring removeQuoteDelims(const std::wstring& input)
 
 }  // anonymous namespace
 
-void RSourceIndex::update(const std::string& context, const std::string& code)
+RSourceIndex::RSourceIndex(const std::string& context,
+                           const std::string& code)
+   : context_(context)
 {
-   // set context
-   context_ = context;
-
    // convert code to wide
    std::wstring wCode = string_utils::utf8ToWide(code);
 

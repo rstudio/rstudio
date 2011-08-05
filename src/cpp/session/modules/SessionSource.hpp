@@ -14,14 +14,27 @@
 #ifndef SESSION_SOURCE_HPP
 #define SESSION_SOURCE_HPP
 
+#include <vector>
+
+#include <boost/shared_ptr.hpp>
+
+#include <core/json/Json.hpp>
+
 namespace core {
    class Error;
+   namespace r_util {
+      class RSourceIndex;
+   }
 }
  
 namespace session {
 namespace modules { 
 namespace source {
    
+core::Error clientInitDocuments(core::json::Array* pJsonDocs) ;
+
+std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > rIndexes();
+
 core::Error initialize();
                        
 } // namespace source

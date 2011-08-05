@@ -23,8 +23,6 @@
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
-#include <core/r_util/RSourceIndex.hpp>
-
 namespace core {
    class Error;
    class FilePath;
@@ -52,9 +50,6 @@ public:
    bool sourceOnSave() const { return sourceOnSave_; }
    const core::json::Object& properties() const { return properties_; }
    std::string getProperty(const std::string& name);
-
-   // get the source index (generates on demand)
-   const core::r_util::RSourceIndex& sourceIndex() const;
 
    // set contents from string
    void setContents(const std::string& contents);
@@ -116,7 +111,6 @@ private:
    double created_;
    bool sourceOnSave_;
    core::json::Object properties_;
-   mutable core::r_util::RSourceIndex sourceIndex_;
 };
 
 bool sortByCreated(const boost::shared_ptr<SourceDocument>& pDoc1,
@@ -130,8 +124,6 @@ core::Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs);
 core::Error put(boost::shared_ptr<SourceDocument> pDoc);
 core::Error remove(const std::string& id);
 core::Error removeAll();
-
-core::Error getSourceDocumentsJson(core::json::Array* pJsonDocs);
 
 core::Error initialize();
 

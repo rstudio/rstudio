@@ -182,22 +182,11 @@ std::string SourceDocument::getProperty(const std::string& name)
    }
 }
 
-const r_util::RSourceIndex& SourceDocument::sourceIndex() const
-{
-   if (sourceIndex_.empty())
-      sourceIndex_.update(path(), contents());
-
-   return sourceIndex_;
-}
-
 // set contents from string
 void SourceDocument::setContents(const std::string& contents)
 {
    contents_ = contents;
    hash_ = hash::crc32Hash(contents_);
-
-   // invalidate the source index (it will be regenerated on demand)
-   sourceIndex_.clear();;
 }
 
 namespace {
@@ -512,43 +501,6 @@ Error removeAll()
       Error error = filePath.remove();
       if (error)
          return error ;
-   }
-   
-   return Success();
-}
-
-
-Error getSourceDocumentsJson(core::json::Array* pJsonDocs)
-{
-   // get the docs and sort them by created
-   std::vector<boost::shared_ptr<SourceDocument> > docs ;
-   Error error = source_database::list(&docs);
-   if (error)
-      return error ;
-   std::sort(docs.begin(), docs.end(), sortByCreated);
-   
-   // populate the array
-   pJsonDocs->clear();
-   BOOST_FOREACH( boost::shared_ptr<SourceDocument>& pDoc, docs )
-   {
-      // Force dirty state to be checked.
-      // Client and server dirty state can get out of sync because
-      // undo/redo on the client side can make dirty documents
-      // become clean again. I tried pushing the client dirty state
-      // back to the server but couldn't convince myself that I
-      // got all the edge cases. This approach is simpler--just
-      // compare the contents in the doc database to the contents
-      // on disk, and only do it when listing documents. However
-      // it does mean that reloading the client may cause a dirty
-      // document to become clean (if the contents are identical
-      // to what's on disk).
-      error = pDoc->updateDirty();
-      if (error)
-         LOG_ERROR(error);
-
-      json::Object jsonDoc ;
-      pDoc->writeToJson(&jsonDoc);
-      pJsonDocs->push_back(jsonDoc);
    }
    
    return Success();
