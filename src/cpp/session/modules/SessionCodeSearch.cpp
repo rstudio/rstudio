@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <vector>
+#include <set>
 
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
@@ -86,7 +87,7 @@ void searchSourceDatabase(const std::string& term,
                           std::size_t maxResults,
                           bool prefixOnly,
                           std::vector<r_util::RSourceItem>* pItems,
-                          std::vector<std::string>* pContextsSearched)
+                          std::set<std::string>* pContextsSearched)
 {
    using namespace source_database;
 
@@ -119,7 +120,7 @@ void searchSourceDatabase(const std::string& term,
          continue;
 
       // record that we searched this path
-      pContextsSearched->push_back(projRelativePath);
+      pContextsSearched->insert(projRelativePath);
 
       // scan the source index
       pDoc->sourceIndex().search(term,
@@ -140,19 +141,15 @@ void searchSourceDatabase(const std::string& term,
 void searchProject(const std::string& term,
                    std::size_t maxResults,
                    bool prefixOnly,
-                   const std::vector<std::string>& excludeContexts,
+                   const std::set<std::string>& excludeContexts,
                    std::vector<r_util::RSourceItem>* pItems)
 {
    BOOST_FOREACH(const boost::shared_ptr<core::r_util::RSourceIndex>& pIndex,
                  s_sourceIndexes)
    {
       // bail if this is an exluded context
-      if (std::find(excludeContexts.begin(),
-                    excludeContexts.end(),
-                    pIndex->context()) != excludeContexts.end())
-      {
+      if (excludeContexts.find(pIndex->context()) != excludeContexts.end())
          continue;
-      }
 
       // scan the next index
       pIndex->search(term,
@@ -175,8 +172,8 @@ void search(const std::string& term,
             std::vector<r_util::RSourceItem>* pItems)
 {
    // first search the source database
-   std::vector<std::string> sourceDBContexts;
-   searchSourceDatabase(term, maxResults, prefixOnly, pItems, &sourceDBContexts);
+   std::set<std::string> srcDBContexts;
+   searchSourceDatabase(term, maxResults, prefixOnly, pItems, &srcDBContexts);
 
    // we are done if we had >= maxResults
    if (pItems->size() >= maxResults)
@@ -187,7 +184,7 @@ void search(const std::string& term,
 
    // now search the project (excluding contexts already searched in the source db)
    std::vector<r_util::RSourceItem> projItems;
-   searchProject(term, maxResults, prefixOnly, sourceDBContexts, &projItems);
+   searchProject(term, maxResults, prefixOnly, srcDBContexts, &projItems);
 
    // add project items to the list
    BOOST_FOREACH(const r_util::RSourceItem& sourceItem, projItems)

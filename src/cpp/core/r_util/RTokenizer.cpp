@@ -22,6 +22,9 @@
 #include <core/StringUtils.hpp>
 
 
+// TODO: efficiency of src database search (does it re-read/index
+//       every time?
+
 // TODO: include files in the query
 
 // TODO: open with project-level encoding & convert to UTF-8 / wide
