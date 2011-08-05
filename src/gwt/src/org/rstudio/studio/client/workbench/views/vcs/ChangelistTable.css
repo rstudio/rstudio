@@ -96,7 +96,6 @@ span.status img:first-child {
 
 .cellTableSortableHeader {
   cursor: pointer;
-  cursor: hand;
 }
 
 .cellTableSortableHeader:hover {

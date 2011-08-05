@@ -545,6 +545,7 @@ public:
 
       args.push_back("show");
       args.push_back("--pretty=oneline");
+      args.push_back("-M"); // detect renames
       args.push_back(rev);
 
       return runCommand("git", args, pOutput);

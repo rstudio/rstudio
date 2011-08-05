@@ -130,7 +130,6 @@
 
 .cellTableSortableHeader {
   cursor: pointer;
-  cursor: hand;
 }
 
 .cellTableSortableHeader:hover {

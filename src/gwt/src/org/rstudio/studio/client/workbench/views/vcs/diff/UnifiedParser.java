@@ -21,17 +21,25 @@ import java.util.ArrayList;
 
 public class UnifiedParser
 {
-
    public UnifiedParser(String data)
    {
       data_ = data;
    }
 
-   public Pair<String, String> nextFilePair()
+   public DiffFileHeader nextFilePair()
    {
+      ArrayList<String> headerLines = new ArrayList<String>();
+
+      boolean inDiff = false;
+
       String line;
       while (null != (line = nextLine()) && !line.startsWith("--- "))
       {
+         if (line.startsWith("diff "))
+            inDiff = true;
+
+         if (inDiff)
+            headerLines.add(line);
       }
 
       if (line == null)
@@ -42,7 +50,7 @@ public class UnifiedParser
       if (line == null || !line.startsWith("+++ "))
          throw new DiffFormatException("Incomplete file header");
       String fileB = line.substring(4);
-      return new Pair<String, String>(fileA, fileB);
+      return new DiffFileHeader(headerLines, fileA, fileB);
    }
 
    public DiffChunk nextChunk()
