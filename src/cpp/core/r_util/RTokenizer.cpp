@@ -21,6 +21,8 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
+// TODO: test recursive directory iterator
+
 // TODO: include files in the query
 
 // TODO: open with project-level encoding & convert to UTF-8 / wide
