@@ -25,6 +25,7 @@ public class DiffFileHeader
       return oldFile_ + " => " + newFile_;
    }
 
+   @SuppressWarnings("unused")
    private final ArrayList<String> headerLines_;
    private final String oldFile_;
    private final String newFile_;
