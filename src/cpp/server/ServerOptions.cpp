@@ -133,12 +133,8 @@ ProgramStatus Options::read(int argc, char * const argv[])
          value<int>(&rsessionUserProcessLimit_)->default_value(0),
          "rsession user process limit");
    
-   // auth - auth options
-#ifdef HAVE_PAM_REQUIRES_RESTORE_PRIV
-   bool pamRequiresPrivDefault = true;
-#else
-   bool pamRequiresPrivDefault = false;
-#endif
+   // still read depracated options (so we don't break config files)
+   bool deprecatedAuthPamRequiresPriv;
    options_description auth("auth");
    auth.add_options()
       ("auth-validate-users",
@@ -151,9 +147,8 @@ ProgramStatus Options::read(int argc, char * const argv[])
         value<std::string>(&authPamHelperPath_)->default_value("bin/rserver-pam"),
        "path to PAM helper binary")
       ("auth-pam-requires-priv",
-        value<bool>(&authPamRequiresPriv_)->default_value(
-                                                      pamRequiresPrivDefault),
-       "elevate priv for calling PAM helper");
+        value<bool>(&deprecatedAuthPamRequiresPriv)->default_value(true),
+        "deprecated: will always be true");
 
    // define program options
    FilePath defaultConfigPath("/etc/rstudio/rserver.conf");

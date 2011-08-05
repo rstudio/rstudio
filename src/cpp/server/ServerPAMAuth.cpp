@@ -94,19 +94,18 @@ bool pamLogin(const std::string& username, const std::string& password)
       // and continue rather than calling ::exit (we do this to avoid
       // strange error conditions related to global c++ objects being
       // torn down in a non-standard sequence).
-      if (server::options().authPamRequiresPriv())
+
+      // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
+      // running with geteuid != getuid (as is the case when we temporarily
+      // drop privileges). We've also seen kerberos on Ubuntu require
+      // priv to work correctly -- so, restore privilliges in the child
+      if (util::system::realUserIsRoot())
       {
-         // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
-         // running with geteuid != getuid (as is the case when we temporarily
-         // drop privileges). So restore privilliges in the child
-         if (util::system::realUserIsRoot())
+         Error error = util::system::restorePriv();
+         if (error)
          {
-            Error error = util::system::restorePriv();
-            if (error)
-            {
-               LOG_ERROR(error);
-               // intentionally fail forward (see note above)
-            }
+            LOG_ERROR(error);
+            // intentionally fail forward (see note above)
          }
       }
 
