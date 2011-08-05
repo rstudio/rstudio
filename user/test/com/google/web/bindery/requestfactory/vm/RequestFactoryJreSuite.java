@@ -20,6 +20,7 @@ import com.google.web.bindery.requestfactory.server.ComplexKeysJreTest;
 import com.google.web.bindery.requestfactory.server.FanoutReceiverJreTest;
 import com.google.web.bindery.requestfactory.server.FindServiceJreTest;
 import com.google.web.bindery.requestfactory.server.LocatorJreTest;
+import com.google.web.bindery.requestfactory.server.RequestFactoryChainedContextJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryExceptionPropagationJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidatorTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryJreTest;
@@ -46,6 +47,7 @@ public class RequestFactoryJreSuite {
     suite.addTestSuite(FanoutReceiverJreTest.class);
     suite.addTestSuite(FindServiceJreTest.class);
     suite.addTestSuite(LocatorJreTest.class);
+    suite.addTestSuite(RequestFactoryChainedContextJreTest.class);
     suite.addTestSuite(RequestFactoryExceptionPropagationJreTest.class);
     suite.addTestSuite(RequestFactoryInterfaceValidatorTest.class);
     suite.addTestSuite(RequestFactoryJreTest.class);

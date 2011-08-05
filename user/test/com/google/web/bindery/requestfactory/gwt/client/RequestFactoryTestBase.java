@@ -27,6 +27,7 @@ import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
 import com.google.web.bindery.requestfactory.shared.ProxySerializer;
 import com.google.web.bindery.requestfactory.shared.Receiver;
+import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.SimpleFooRequest;
 import com.google.web.bindery.requestfactory.shared.SimpleRequestFactory;
 import com.google.web.bindery.requestfactory.shared.impl.BaseProxyCategory;
@@ -84,6 +85,29 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
     assertEquals(a.hashCode(), b.hashCode());
     assertEquals(a, b);
     assertEquals(b, a);
+  }
+
+  /**
+   * Check that some proxy type can be created by the given context and that
+   * some other proxy type can't.
+   */
+  protected void checkReachableTypes(RequestContext ctx, Class<? extends BaseProxy> shouldWork,
+      Class<? extends BaseProxy> shouldFail) {
+    assertNotNull(ctx.create(shouldWork));
+    try {
+      // Metadata computation has only RequestFactory resolution
+      // http://code.google.com/p/google-web-toolkit/issues/detail?id=6658
+      if (GWT.isClient()) {
+        ctx.create(shouldFail);
+        fail();
+      } else {
+        assertNotNull(ctx.create(shouldFail));
+      }
+    } catch (IllegalArgumentException expected) {
+      if (!GWT.isClient()) {
+        fail("Expect the create call to always work in RFSource implementation");
+      }
+    }
   }
 
   /**

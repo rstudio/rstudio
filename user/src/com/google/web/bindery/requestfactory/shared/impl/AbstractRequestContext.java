@@ -61,6 +61,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -98,6 +99,12 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    * Encapsulates all state contained by the AbstractRequestContext.
    */
   protected static class State {
+    /**
+     * Supports the case where chained contexts are used and a response comes
+     * back from the server with a proxy type not reachable from the canonical
+     * context.
+     */
+    public Set<AbstractRequestContext> appendedContexts;
     public final AbstractRequestContext canonical;
     public final DialectImpl dialect;
     public FanoutReceiver<Void> fanout;
@@ -137,8 +144,19 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     public State(AbstractRequestFactory requestFactory, DialectImpl dialect,
         AbstractRequestContext canonical) {
       this.requestFactory = requestFactory;
-      this.dialect = dialect;
       this.canonical = canonical;
+      this.dialect = dialect;
+    }
+
+    public void addContext(AbstractRequestContext ctx) {
+      if (appendedContexts == null) {
+        appendedContexts = Collections.singleton(ctx);
+      } else {
+        if (appendedContexts.size() == 1) {
+          appendedContexts = new LinkedHashSet<AbstractRequestContext>(appendedContexts);
+        }
+        appendedContexts.add(ctx);
+      }
     }
 
     public AbstractRequestContext getCanonicalContext() {
@@ -231,7 +249,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
           (Class<BaseProxy>) state.invocations.get(0).getRequestData().getReturnType();
 
       SimpleProxyId<BaseProxy> id = getRequestFactory().allocateId(target);
-      AutoBean<BaseProxy> bean = createProxy(target, id);
+      AutoBean<BaseProxy> bean = createProxy(target, id, true);
       // XXX expose this as a proper API
       ((AbstractAutoBean<?>) bean).setData(result);
       // AutoBeanCodex.decodeInto(result, bean);
@@ -453,7 +471,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   private State state;
 
   protected AbstractRequestContext(AbstractRequestFactory factory, Dialect dialect) {
-    this.state = new State(factory, dialect.create(this), this);
+    setState(new State(factory, dialect.create(this), this));
   }
 
   public <T extends RequestContext> T append(T other) {
@@ -465,7 +483,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     if (!child.state.isClean()) {
       throw new IllegalStateException("The provided RequestContext has been changed");
     }
-    child.state = state;
+    child.setState(state);
     return other;
   }
 
@@ -476,20 +494,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     checkLocked();
 
     SimpleProxyId<T> id = state.requestFactory.allocateId(clazz);
-    AutoBean<T> created = createProxy(clazz, id);
+    AutoBean<T> created = createProxy(clazz, id, false);
     return takeOwnership(created);
-  }
-
-  /**
-   * Creates a new proxy with an assigned ID.
-   */
-  public <T extends BaseProxy> AutoBean<T> createProxy(Class<T> clazz, SimpleProxyId<T> id) {
-    AutoBean<T> created = getAutoBeanFactory().create(clazz);
-    if (created == null) {
-      throw new IllegalArgumentException("Unknown proxy type " + clazz.getName());
-    }
-    created.setTag(STABLE_ID, id);
-    return created;
   }
 
   public <T extends BaseProxy> T edit(T object) {
@@ -532,8 +538,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
       @Override
       protected RequestData makeRequestData() {
         // This method is normally generated, hence the ugly constructor
-        return new RequestData(Constants.FIND_METHOD_OPERATION,
-            new Object[] {proxyId}, propertyRefs, proxyId.getProxyClass(), null);
+        return new RequestData(Constants.FIND_METHOD_OPERATION, new Object[] {proxyId},
+            propertyRefs, proxyId.getProxyClass(), null);
       }
     };
   }
@@ -642,7 +648,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    */
   public boolean isValueType(Class<?> clazz) {
     return state.requestFactory.isValueType(clazz);
-  };
+  }
 
   public void setFireDisabled(boolean disabled) {
     state.fireDisabled = disabled;
@@ -653,6 +659,39 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    */
   protected void addInvocation(AbstractRequest<?> request) {
     state.dialect.addInvocation(request);
+  };
+
+  /**
+   * Creates a new proxy with an assigned ID.
+   * 
+   * @param clazz The proxy type
+   * @param id The id to be assigned to the new proxy
+   * @param useAppendedContexts if {@code true} use the AutoBeanFactory types
+   *          associated with any contexts that have been passed into
+   *          {@link #append(RequestContext)}. If {@code false}, this method
+   *          will only create proxy types reachable from the implemented
+   *          RequestContext interface.
+   * @throws IllegalArgumentException if the requested proxy type cannot be
+   *           created
+   */
+  protected <T extends BaseProxy> AutoBean<T> createProxy(Class<T> clazz, SimpleProxyId<T> id,
+      boolean useAppendedContexts) {
+    AutoBean<T> created = null;
+    if (useAppendedContexts) {
+      for (AbstractRequestContext ctx : state.appendedContexts) {
+        created = ctx.getAutoBeanFactory().create(clazz);
+        if (created != null) {
+          break;
+        }
+      }
+    } else {
+      created = getAutoBeanFactory().create(clazz);
+    }
+    if (created != null) {
+      created.setTag(STABLE_ID, id);
+      return created;
+    }
+    throw new IllegalArgumentException("Unknown proxy type " + clazz.getName());
   }
 
   /**
@@ -747,7 +786,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     AutoBean<Q> bean = (AutoBean<Q>) state.returnedProxies.get(id);
     if (bean == null) {
       Class<Q> proxyClass = id.getProxyClass();
-      bean = createProxy(proxyClass, id);
+      bean = createProxy(proxyClass, id, true);
       state.returnedProxies.put(id, bean);
     }
 
@@ -770,7 +809,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     AutoBean<?> parent;
     if (stableId.isEphemeral()) {
       // Newly-created object, use a blank object to compare against
-      parent = createProxy(stableId.getProxyClass(), stableId);
+      parent = createProxy(stableId.getProxyClass(), stableId, true);
 
       // Newly-created objects go into the persist operation bucket
       operation.setOperation(WriteOperation.PERSIST);
@@ -779,7 +818,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
       operation.setStrength(Strength.EPHEMERAL);
     } else if (stableId.isSynthetic()) {
       // Newly-created object, use a blank object to compare against
-      parent = createProxy(stableId.getProxyClass(), stableId);
+      parent = createProxy(stableId.getProxyClass(), stableId, true);
 
       // Newly-created objects go into the persist operation bucket
       operation.setOperation(WriteOperation.PERSIST);
@@ -1198,6 +1237,11 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   private void reuse() {
     freezeEntities(false);
     state.locked = false;
+  }
+
+  private void setState(State state) {
+    this.state = state;
+    state.addContext(this);
   }
 
   /**

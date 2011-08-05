@@ -203,9 +203,10 @@ class InProcessRequestContext extends AbstractRequestContext {
   }
 
   @Override
-  public <T extends BaseProxy> AutoBean<T> createProxy(Class<T> clazz, SimpleProxyId<T> id) {
+  protected <T extends BaseProxy> AutoBean<T> createProxy(Class<T> clazz, SimpleProxyId<T> id,
+      boolean useAppendedContexts) {
     if (tokenResolver.isReferencedType(clazz.getName())) {
-      return super.createProxy(clazz, id);
+      return super.createProxy(clazz, id, useAppendedContexts);
     }
     throw new IllegalArgumentException("Unknown proxy type " + clazz.getName());
   }
