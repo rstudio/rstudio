@@ -19,12 +19,14 @@
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
 #include <boost/signals.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <core/system/System.hpp>
 #include <core/system/FileChangeEvent.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/Thread.hpp>
+#include <core/IncrementalCommand.hpp>
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionClientEvent.hpp>
@@ -169,6 +171,33 @@ core::Error executeInterruptableChild(const std::string& path,
 
 // ProcessSupervisor
 core::system::ProcessSupervisor& processSupervisor();
+
+// schedule incremental work. execute will be called back periodically
+// (up to every 25ms if the process is completely idle). if execute
+// returns true then it will be called back again, if it returns false
+// then it won't ever be called again. in a given period of work the
+// execute method will be called multiple times (consecutively) for up
+// to the specified incrementalDuration. if you want to implement a
+// stateful worker simply create a shared_ptr to your worker object
+// and then bind one of its members as the execute parameter. passing
+// true as the idleOnly parameter (the default) means that the execute
+// function will only be called back during idle time (when the session
+// is waiting for user input)
+void scheduleIncrementalWork(
+         const boost::posix_time::time_duration& incrementalDuration,
+         const boost::function<bool()>& execute,
+         bool idleOnly = true);
+
+// variation of scheduleIncrementalWork which performs a configurable
+// amount of work immediately. this work occurs synchronously with the
+// call and will consist of execute being called back repeatedly for
+// up to the specified initialDuration
+void scheduleIncrementalWork(
+         const boost::posix_time::time_duration& initialDuration,
+         const boost::posix_time::time_duration& incrementalDuration,
+         const boost::function<bool()>& execute,
+         bool idleOnly = true);
+
 
 // source R files
 core::Error sourceModuleRFile(const std::string& rSourceFile);   

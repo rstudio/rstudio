@@ -13,6 +13,8 @@
 
 #include "SessionModuleContextInternal.hpp"
 
+#include <vector>
+
 #include <boost/utility.hpp>
 #include <boost/signal.hpp>
 #include <boost/numeric/conversion/cast.hpp>
@@ -367,6 +369,79 @@ void onResumed(const Settings& persistentState)
    s_suspendHandlers.resume(persistentState);
 }
 
+// idle work
+
+namespace {
+
+typedef std::vector<boost::shared_ptr<IncrementalCommand> >
+                                                      IncrementalCommands;
+IncrementalCommands s_incrementalCommands;
+IncrementalCommands s_idleIncrementalCommands;
+
+void addIncrementalCommand(boost::shared_ptr<IncrementalCommand> pCommand,
+                           bool idleOnly)
+{
+   if (idleOnly)
+      s_idleIncrementalCommands.push_back(pCommand);
+   else
+      s_incrementalCommands.push_back(pCommand);
+}
+
+void executeIncrementalCommands(IncrementalCommands* pCommands)
+{
+   // execute all commands
+   std::for_each(pCommands->begin(),
+                 pCommands->end(),
+                 boost::bind(&IncrementalCommand::execute, _1));
+
+   // remove any commands which are finished
+   pCommands->erase(
+                 std::remove_if(
+                    pCommands->begin(),
+                    pCommands->end(),
+                    boost::bind(&IncrementalCommand::finished, _1)),
+                 pCommands->end());
+}
+
+
+} // anonymous namespace
+
+void scheduleIncrementalWork(
+         const boost::posix_time::time_duration& incrementalDuration,
+         const boost::function<bool()>& execute,
+         bool idleOnly)
+{
+   addIncrementalCommand(boost::shared_ptr<IncrementalCommand>(
+                           new IncrementalCommand(incrementalDuration,
+                                                  execute)),
+                         idleOnly);
+}
+
+void scheduleIncrementalWork(
+         const boost::posix_time::time_duration& initialDuration,
+         const boost::posix_time::time_duration& incrementalDuration,
+         const boost::function<bool()>& execute,
+         bool idleOnly)
+{
+   addIncrementalCommand(boost::shared_ptr<IncrementalCommand>(
+                           new IncrementalCommand(initialDuration,
+                                                  incrementalDuration,
+                                                  execute)),
+                         idleOnly);
+}
+
+
+void scheduleIncrementalCommand(
+                  boost::shared_ptr<core::IncrementalCommand> pCommand,
+                  bool idleOnly)
+{
+   if (idleOnly)
+      s_idleIncrementalCommands.push_back(pCommand);
+   else
+      s_incrementalCommands.push_back(pCommand);
+}
+
+
 void onBackgroundProcessing(bool isIdle)
 {
    // allow process supervisor to poll for events
@@ -374,6 +449,11 @@ void onBackgroundProcessing(bool isIdle)
 
    // fire event
    events().onBackgroundProcessing(isIdle);
+
+   // execute incremental commands
+   executeIncrementalCommands(&s_incrementalCommands);
+   if (isIdle)
+      executeIncrementalCommands(&s_idleIncrementalCommands);
 }
 
 FilePath userHomePath()

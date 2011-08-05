@@ -22,18 +22,30 @@
 
 namespace core {
 
+// NOTE: execute function should return true if it has more work to do
+// or false to indicate all work is completed
+
 class IncrementalCommand : boost::noncopyable
 {
 public:
-   IncrementalCommand(const boost::posix_time::time_duration& initialTime,
-                      const boost::posix_time::time_duration& incrementalTime,
-                      const boost::function<bool()>& execute)
-      : initialTime_(initialTime),
-        incrementalTime_(incrementalTime),
+   IncrementalCommand(
+         const boost::posix_time::time_duration& incrementalDuration,
+         const boost::function<bool()>& execute)
+      : incrementalDuration_(incrementalDuration),
         execute_(execute),
         finished_(false)
    {
+   }
 
+   IncrementalCommand(
+         const boost::posix_time::time_duration& initialDuration,
+         const boost::posix_time::time_duration& incrementalDuration,
+         const boost::function<bool()>& execute)
+      : incrementalDuration_(incrementalDuration),
+        execute_(execute),
+        finished_(false)
+   {
+      executeUntil(now() + initialDuration);
    }
 
    virtual ~IncrementalCommand() {}
@@ -41,22 +53,28 @@ public:
    // COPYING: boost::noncopyable
 
 public:
-   bool execute()
+   void execute()
    {
-      if (!finished_)
-      {
-         finished_ = execute_();
-
-      }
-      return finished_;
+      executeUntil(now() + incrementalDuration_);
    }
 
    bool finished() const { return finished_; }
 
 private:
-   boost::posix_time::time_duration initialTime_;
-   boost::posix_time::time_duration incrementalTime_;
-   boost::function<bool()> execute_;
+   void executeUntil(const boost::posix_time::ptime& time)
+   {
+      while (!finished_ && (now() < time))
+         finished_ = !execute_();
+   }
+
+   static boost::posix_time::ptime now()
+   {
+      return boost::posix_time::microsec_clock::universal_time();
+   }
+
+private:
+   const boost::posix_time::time_duration incrementalDuration_;
+   const boost::function<bool()> execute_;
    bool finished_;
 };
 
