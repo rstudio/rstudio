@@ -940,6 +940,57 @@ bool compareAbsolutePathNoCase(const FilePath& file1, const FilePath& file2)
    return file1Lower < file2Lower;
 }
 
+struct RecursiveDirectoryIterator::Impl
+{
+   explicit Impl(path_t path)
+      : itr_(path), end_()
+   {
+   }
+   recursive_dir_iterator itr_;
+   recursive_dir_iterator end_;
+};
+
+
+RecursiveDirectoryIterator::RecursiveDirectoryIterator(
+                                                   const FilePath& filePath)
+    : pImpl_(new Impl(filePath.pImpl_->path))
+{
+}
+
+RecursiveDirectoryIterator::~RecursiveDirectoryIterator()
+{
+}
+
+Error RecursiveDirectoryIterator::next(FilePath* pFilePath)
+{
+   try
+   {
+      // calling next() when we are already finished is illegal
+      if (finished())
+      {
+         return systemError(boost::system::errc::operation_not_permitted,
+                            ERROR_LOCATION);
+      }
+
+      // get the next file path then increment the iterator
+      *pFilePath = FilePath(BOOST_FS_PATH2STR(pImpl_->itr_->path()));
+      ++(pImpl_->itr_);
+
+      // success
+      return Success();
+   }
+   catch(const boost::filesystem::filesystem_error& e)
+   {
+      return Error(e.code(), ERROR_LOCATION) ;
+   }
+}
+
+bool RecursiveDirectoryIterator::finished() const
+{
+   return pImpl_->itr_ == pImpl_->end_;
+}
+
+
 namespace { 
 void logError(path_t path,
               const boost::filesystem::filesystem_error& e,
