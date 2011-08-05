@@ -133,12 +133,6 @@ ProgramStatus Options::read(int argc, char * const argv[])
          value<int>(&rsessionUserProcessLimit_)->default_value(0),
          "rsession user process limit");
    
-   // auth - auth options
-#ifdef HAVE_PAM_REQUIRES_RESTORE_PRIV
-   bool pamRequiresPrivDefault = true;
-#else
-   bool pamRequiresPrivDefault = false;
-#endif
    options_description auth("auth");
    auth.add_options()
       ("auth-validate-users",
@@ -149,11 +143,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
         "limit to users belonging to the specified group")
       ("auth-pam-helper-path",
         value<std::string>(&authPamHelperPath_)->default_value("bin/rserver-pam"),
-       "path to PAM helper binary")
-      ("auth-pam-requires-priv",
-        value<bool>(&authPamRequiresPriv_)->default_value(
-                                                      pamRequiresPrivDefault),
-       "elevate priv for calling PAM helper");
+       "path to PAM helper binary");
 
    // define program options
    FilePath defaultConfigPath("/etc/rstudio/rserver.conf");

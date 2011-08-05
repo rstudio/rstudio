@@ -84,15 +84,6 @@ foreach(SERVER_ADDIN_TEMPLATE_FILE ${SERVER_ADDIN_TEMPLATE_FILES})
                   COPYONLY)
 endforeach()
 
-# set flag for platforms that are known to be able to call PAM routines
-# without requring restorePriv (to avoid geteuid != getuid)
-if("${RSTUDIO_LSB_RELEASE}" STREQUAL "ubuntu" OR
-   "${RSTUDIO_LSB_RELEASE}" STREQUAL "debian")
-   set(HAVE_PAM_REQUIRES_RESTORE_PRIV FALSE)
-else()
-   set(HAVE_PAM_REQUIRES_RESTORE_PRIV TRUE)
-endif()
-
 # look for setresuid
 check_function_exists(setresuid HAVE_SETRESUID)
 

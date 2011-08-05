@@ -12,6 +12,5 @@
  */
 
 #cmakedefine HAVE_SETRESUID
-#cmakedefine HAVE_PAM_REQUIRES_RESTORE_PRIV
 
 
