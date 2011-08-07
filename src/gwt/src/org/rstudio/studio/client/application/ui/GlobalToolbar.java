@@ -105,7 +105,7 @@ public class GlobalToolbar extends Toolbar
       }
       else
       {
-         commands_.goToFunctionFile().setVisible(false);
+         commands_.goToFileFunction().setVisible(false);
       }
       
       

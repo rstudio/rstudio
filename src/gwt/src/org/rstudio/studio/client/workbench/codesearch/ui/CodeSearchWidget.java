@@ -21,7 +21,7 @@ public class CodeSearchWidget extends SearchWidget
                            final Commands commands)
    {
       super(oracle, 
-            new TextBoxWithCue("Go to function/file"), 
+            new TextBoxWithCue("Go to file/function"), 
             new SuggestBox.DefaultSuggestionDisplay());
       
       oracle_ = oracle;   

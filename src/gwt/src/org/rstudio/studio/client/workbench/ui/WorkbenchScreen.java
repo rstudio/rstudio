@@ -300,7 +300,7 @@ public class WorkbenchScreen extends Composite
    }
 
    @Handler
-   public void onGoToFunctionFile()
+   public void onGoToFileFunction()
    {
       CodeSearchDialog codeSearchPanel =  
                                     new CodeSearchDialog(pCodeSearch_);

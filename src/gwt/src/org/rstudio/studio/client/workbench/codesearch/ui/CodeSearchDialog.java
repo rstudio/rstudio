@@ -21,7 +21,7 @@ public class CodeSearchDialog extends ModalDialogBase
       setGlassEnabled(false);
       setAutoHideEnabled(true);
       
-      setText("Go to Function/File");
+      setText("Go to File/Function");
       
       pCodeSearch_ = pCodeSearch;
    }
