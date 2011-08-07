@@ -21,10 +21,6 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-// TODO: throttle polled event handler (it's getting more expensive)
-
-// TODO: don't submit * as query
-
 // TODO: include files in the query
 
 // TODO: open with project-level encoding & convert to UTF-8 / wide
