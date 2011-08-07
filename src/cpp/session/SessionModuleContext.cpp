@@ -27,6 +27,7 @@
 #include <core/Settings.hpp>
 #include <core/DateTime.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/IncrementalCommand.hpp>
 
 #include <core/http/Util.hpp>
 

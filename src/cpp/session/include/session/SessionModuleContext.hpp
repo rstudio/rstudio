@@ -26,7 +26,6 @@
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/Thread.hpp>
-#include <core/IncrementalCommand.hpp>
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionClientEvent.hpp>

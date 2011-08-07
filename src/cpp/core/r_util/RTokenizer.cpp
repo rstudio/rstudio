@@ -21,16 +21,18 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-// TODO: test recursive directory iterator
+// TODO: throttle polled event handler (it's getting more expensive)
+
+// TODO: don't submit * as query
 
 // TODO: include files in the query
 
 // TODO: open with project-level encoding & convert to UTF-8 / wide
 
-// TODO: indexing queue
-// TODO: limit indexing for cases of thousands (or hundreds) of files
-
 // TODO: implement file monitoring
+
+// TODO: some type of cap on number of files or directories? (or just
+// have searches be really slow for that case?)
 
 // TODO: once we have file monitoring the source database will only
 //       need to track indexes for dirty files

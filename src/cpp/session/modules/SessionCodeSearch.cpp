@@ -23,9 +23,9 @@
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/SafeConvert.hpp>
-#include <core/IncrementalCommand.hpp>
 
 #include <core/r_util/RSourceIndex.hpp>
 
@@ -43,46 +43,93 @@ namespace modules {
 namespace code_search {
 
 namespace {
-   
+
 std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > s_sourceIndexes;
 
-bool isRSourceFile(const FilePath& filePath)
+class SourceFileIndexer : boost::noncopyable
 {
-   return filePath.extensionLowerCase() == ".r";
-}
-
-void indexProjectFile(const FilePath& rootDir, const FilePath& filePath)
-{
-   if (isRSourceFile(filePath))
+public:
+   SourceFileIndexer()
+      : projectRootDir_(projects::projectContext().directory()),
+        dirIter_(projectRootDir_)
    {
-      // read the file (assumes utf8)
-      std::string code;
-      Error error = core::readStringFromFile(filePath,
-                                             &code,
-                                             string_utils::LineEndingPosix);
+   }
+
+   virtual ~SourceFileIndexer()
+   {
+   }
+
+public:
+   bool indexNextFile()
+   {
+      // see if we are finished
+      if (dirIter_.finished())
+         return false;
+
+      // get next file
+      FilePath filePath;
+      Error error = dirIter_.next(&filePath);
       if (error)
       {
          LOG_ERROR(error);
-         return;
+         return true;
       }
 
-      // compute project relative directory (used for context)
-      std::string context = filePath.relativePath(rootDir);
+      // index
+      indexProjectFile(filePath);
 
-      // index the source
-      s_sourceIndexes.push_back(boost::shared_ptr<r_util::RSourceIndex>(
-                                    new r_util::RSourceIndex(context, code)));
+      // return status
+      return !dirIter_.finished();
    }
-}
+
+private:
+
+   void indexProjectFile(const FilePath& filePath)
+   {
+      if (isRSourceFile(filePath))
+      {
+         // read the file (assumes utf8)
+         std::string code;
+         Error error = core::readStringFromFile(filePath,
+                                                &code,
+                                                string_utils::LineEndingPosix);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
+
+         // compute project relative directory (used for context)
+         std::string context = filePath.relativePath(projectRootDir_);
+
+         // index the source
+         s_sourceIndexes.push_back(boost::shared_ptr<r_util::RSourceIndex>(
+                                       new r_util::RSourceIndex(context, code)));
+      }
+   }
+
+   static bool isRSourceFile(const FilePath& filePath)
+   {
+      return !filePath.isDirectory() && (filePath.extensionLowerCase() == ".r");
+   }
+
+private:
+   FilePath projectRootDir_;
+   RecursiveDirectoryIterator dirIter_;
+};
 
 void indexProjectFiles()
 {
-   Error error = projects::projectContext().directory().childrenRecursive(
-                     boost::bind(&indexProjectFile,
-                        projects::projectContext().directory(),_2));
-    if (error)
-       LOG_ERROR(error);
+   // create indexer
+   boost::shared_ptr<SourceFileIndexer> pIndexer(new SourceFileIndexer());
+
+   // schedule indexing to occur up front + at idle time
+   module_context::scheduleIncrementalWork(
+         boost::posix_time::milliseconds(200),
+         boost::posix_time::milliseconds(20),
+         boost::bind(&SourceFileIndexer::indexNextFile, pIndexer));
 }
+
 
 void searchSourceDatabase(const std::string& term,
                           std::size_t maxResults,
