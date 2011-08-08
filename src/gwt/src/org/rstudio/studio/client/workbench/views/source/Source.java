@@ -748,22 +748,57 @@ public class Source implements InsertSourceHandler,
    
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
-      openFile(event.getFile(), 
-               event.getFileType(), 
-               new CommandWithArg<EditingTarget>() {
-
+      final CommandWithArg<FileSystemItem> action = new CommandWithArg<FileSystemItem>()
+      {
          @Override
-         public void execute(EditingTarget target)
+         public void execute(FileSystemItem file)
          {
-            FilePosition position = event.getPosition();
-            if (position != null)
-            {
-               target.jumpToPosition(position);
-               target.focus();
-            }
+            openFile(file,
+                     event.getFileType(),
+                     new CommandWithArg<EditingTarget>() {
+
+               @Override
+               public void execute(EditingTarget target)
+               {
+                  FilePosition position = event.getPosition();
+                  if (position != null)
+                  {
+                     target.jumpToPosition(position);
+                     target.focus();
+                  }
+               }
+
+            });
          }
-         
-      });
+      };
+
+      if (event.getFile().getLength() < 0)
+      {
+         // If the file has no size info, stat the file from the server. This
+         // is to prevent us from opening large files accidentally.
+
+         server_.stat(event.getFile().getPath(), new ServerRequestCallback<FileSystemItem>()
+         {
+            @Override
+            public void onResponseReceived(FileSystemItem response)
+            {
+               action.execute(response);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               // Couldn't stat the file? Proceed anyway. If the file doesn't
+               // exist, we'll let the downstream code be the one to show the
+               // error.
+               action.execute(event.getFile());
+            }
+         });
+      }
+      else
+      {
+         action.execute(event.getFile());
+      }
    }
    
    // top-level wrapper for opening files. takes care of:

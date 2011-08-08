@@ -33,12 +33,12 @@ public class FileSystemItem extends JavaScriptObject
    
    public static FileSystemItem createDir(String path)
    {
-      return create(path, true, 0, 0);
+      return create(path, true, -1, 0);
    }
    
    public static FileSystemItem createFile(String path)
    {
-      return create(path, false, 0, 0);
+      return create(path, false, -1, 0);
    }
       
    private static final native FileSystemItem create(String path, 

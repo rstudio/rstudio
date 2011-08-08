@@ -16,11 +16,14 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 @Singleton
 public class FileMRUList extends MRUList
@@ -28,7 +31,8 @@ public class FileMRUList extends MRUList
    @Inject 
    public FileMRUList(Commands commands,
                       final FileTypeRegistry fileTypeRegistry,
-                      Session session)
+                      Session session,
+                      final FilesServerOperations server)
    {
       super(commands, 
             session, 
@@ -50,9 +54,22 @@ public class FileMRUList extends MRUList
             new OperationWithInput<String>() 
             {
                @Override
-               public void execute(String file)
+               public void execute(final String file)
                {
-                  fileTypeRegistry.editFile(FileSystemItem.createFile(file));   
+                  server.stat(file, new ServerRequestCallback<FileSystemItem>()
+                  {
+                     @Override
+                     public void onResponseReceived(FileSystemItem response)
+                     {
+                        fileTypeRegistry.editFile(response);
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        fileTypeRegistry.editFile(FileSystemItem.createFile(file));
+                     }
+                  });
                }
             });
    }
