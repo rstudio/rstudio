@@ -22,9 +22,11 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.view.client.ProvidesKey;
+import com.google.gwt.view.client.SingleSelectionModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,6 +83,7 @@ public class CellListTest extends AbstractHasDataTestBase {
 
     // Create a model with only one level, and three values at that level.
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
+      @Override
       public Object getKey(String item) {
         return Integer.parseInt(item.substring(5));
       }
@@ -89,6 +92,37 @@ public class CellListTest extends AbstractHasDataTestBase {
     cellList.setRowData(createData(0, 10));
     cellList.getPresenter().flush();
     assertEquals(10, rendered.size());
+  }
+
+  /**
+   * Test that clicking on the first item selects the item.
+   */
+  public void testSelectFirstItem() {
+    IndexCell<String> cell = new IndexCell<String>();
+    AbstractHasData<String> display = createAbstractHasData(cell);
+    populateData(display);
+
+    // Bind to selection.
+    SingleSelectionModel<String> selectionModel = new SingleSelectionModel<String>();
+    display.setSelectionModel(selectionModel);
+    display.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
+    display.getPresenter().flush();
+    assertNull(selectionModel.getSelectedObject());
+    assertEquals(0, display.getKeyboardSelectedRow());
+
+    // Fire a click event on the first item.
+    RootPanel.get().add(display);
+    NativeEvent clickEvent =
+        Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
+    display.getChildElement(0).dispatchEvent(clickEvent);
+    display.getPresenter().flush();
+
+    // Verify that the first item is now selected.
+    assertEquals("test 0", selectionModel.getSelectedObject());
+    assertEquals(0, display.getKeyboardSelectedRow());
+
+    // Cleanup.
+    RootPanel.get().remove(display);
   }
 
   @SuppressWarnings("deprecation")

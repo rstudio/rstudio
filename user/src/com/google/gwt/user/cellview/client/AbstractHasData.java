@@ -138,16 +138,15 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
          * row, just updating it based on where the user clicked.
          */
         int relRow = event.getIndex() - display.getPageStart();
-        if (display.getKeyboardSelectedRow() != relRow) {
-          // If a natively focusable element was just clicked, then do not steal
-          // focus.
-          boolean isFocusable = false;
-          Element target = Element.as(event.getNativeEvent().getEventTarget());
-          isFocusable = CellBasedWidgetImpl.get().isFocusable(target);
-          display.setKeyboardSelectedRow(relRow, !isFocusable);
 
-          // Do not cancel the event as the click may have occurred on a Cell.
-        }
+        // If a natively focusable element was just clicked, then do not steal
+        // focus.
+        boolean isFocusable = false;
+        Element target = Element.as(event.getNativeEvent().getEventTarget());
+        isFocusable = CellBasedWidgetImpl.get().isFocusable(target);
+        display.setKeyboardSelectedRow(relRow, !isFocusable);
+
+        // Do not cancel the event as the click may have occurred on a Cell.
       } else if ("focus".equals(eventType)) {
         // Move keyboard focus to match the currently focused element.
         int relRow = event.getIndex() - display.getPageStart();
