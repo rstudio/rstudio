@@ -35,6 +35,7 @@ public class RSourceItem extends JavaScriptObject
    }-*/;
 
 
+   // project-relative filename
    public final native String getContext() /*-{
       return this.context;
    }-*/;

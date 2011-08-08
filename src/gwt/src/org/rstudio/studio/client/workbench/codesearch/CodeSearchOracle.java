@@ -2,12 +2,13 @@ package org.rstudio.studio.client.workbench.codesearch;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.codesearch.model.CodeNavigationTarget;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
+import org.rstudio.studio.client.workbench.codesearch.model.RFileItem;
 import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 
@@ -37,19 +38,20 @@ public class CodeSearchOracle extends SuggestOracle
       for (int i=resultCache_.size() - 1; i >= 0; i--)
       {
          // get the previous result
-         Pair<String,ArrayList<CodeSearchSuggestion>> res = resultCache_.get(i);
+         SearchResult res = resultCache_.get(i);
          
          // exact match of previous query
-         if (request.getQuery().equals(res.first))
+         if (request.getQuery().equals(res.getQuery()))
          {
-            callback.onSuggestionsReady(request, new Response(res.second));
+            callback.onSuggestionsReady(request, 
+                                        new Response(res.getSuggestions()));
             return;
          }
          
          // if this query is a further refinement of a non-overflowed 
          // previous query then satisfy it by filtering the previous results
-         if (res.second.size() <= request.getLimit() &&
-             request.getQuery().startsWith(res.first))
+         if (!res.getMoreAvailable() && 
+             request.getQuery().startsWith(res.getQuery()))
          {
             Pattern pattern = null;
             String queryLower = request.getQuery().toLowerCase();
@@ -58,11 +60,11 @@ public class CodeSearchOracle extends SuggestOracle
             
             ArrayList<CodeSearchSuggestion> suggestions =
                                        new ArrayList<CodeSearchSuggestion>();
-            for (int s=0; s<res.second.size(); s++)
+            for (int s=0; s<res.getSuggestions().size(); s++)
             {
-               CodeSearchSuggestion sugg = res.second.get(s);
+               CodeSearchSuggestion sugg = res.getSuggestions().get(s);
                
-               String name = sugg.getSourceItem().getFunctionName().toLowerCase();
+               String name = sugg.getMatchedString().toLowerCase();
                if (pattern != null)
                {
                   Match match = pattern.match(name, 0);
@@ -79,7 +81,7 @@ public class CodeSearchOracle extends SuggestOracle
             // cache suggestions. note that this adds an item to the end
             // of the resultCache_ (which we are currently iterating over)
             // not a big deal because we are about to return out of the loop
-            cacheSuggestions(request, suggestions);
+            cacheSuggestions(request, suggestions, false);
             
             // return suggestions
             if (returnSuggestions_)
@@ -93,9 +95,9 @@ public class CodeSearchOracle extends SuggestOracle
       codeSearch_.enqueRequest(request, callback); 
    }
      
-   public RSourceItem sourceItemFromSuggestion(Suggestion suggestion)
+   public CodeNavigationTarget navigationTargetFromSuggestion(Suggestion sugg)
    {
-      return ((CodeSearchSuggestion)suggestion).getSourceItem();
+      return ((CodeSearchSuggestion)sugg).getNavigationTarget();
    }
    
    public void clear()
@@ -148,19 +150,27 @@ public class CodeSearchOracle extends SuggestOracle
             
             @Override
             public void onResponseReceived(CodeSearchResults response)
-            { 
-               // to array
-               ArrayList<RSourceItem> results = 
-                                 response.getRSourceItems().toArrayList();
-               
-               // read the response
+            {  
                ArrayList<CodeSearchSuggestion> suggestions = 
                                        new ArrayList<CodeSearchSuggestion>();
-               for (int i = 0; i<results.size(); i++) 
-                  suggestions.add(new CodeSearchSuggestion(results.get(i)));     
+               
+               // file results
+               ArrayList<RFileItem> fileResults = 
+                                    response.getRFileItems().toArrayList();
+               for (int i = 0; i<fileResults.size(); i++) 
+                  suggestions.add(new CodeSearchSuggestion(fileResults.get(i)));  
+               
+               
+               // src results
+               ArrayList<RSourceItem> srcResults = 
+                                    response.getRSourceItems().toArrayList();
+               for (int i = 0; i<srcResults.size(); i++) 
+                  suggestions.add(new CodeSearchSuggestion(srcResults.get(i)));     
                
                // cache suggestions
-               cacheSuggestions(request_, suggestions);
+               cacheSuggestions(request_, 
+                                suggestions,
+                                response.getMoreAvailable());
                
                // return suggestions
                if (returnSuggestions_)
@@ -178,9 +188,9 @@ public class CodeSearchOracle extends SuggestOracle
    };
    
    
-   private void cacheSuggestions(
-                     final Request request, 
-                     final ArrayList<CodeSearchSuggestion> suggestions)
+   private void cacheSuggestions(Request request, 
+                                 ArrayList<CodeSearchSuggestion> suggestions,
+                                 boolean moreAvailable)
    {
       // cache the suggestions (up to 15 active result sets cached)
       // NOTE: the cache is cleared on gain focus, lost focus, and 
@@ -188,9 +198,9 @@ public class CodeSearchOracle extends SuggestOracle
       if (resultCache_.size() > 15)
          resultCache_.remove(0);
       
-      resultCache_.add(new Pair<String, ArrayList<CodeSearchSuggestion>>(
-                                         request.getQuery(), 
-                                         suggestions));
+      resultCache_.add(new SearchResult(request.getQuery(), 
+                                        suggestions, 
+                                        moreAvailable));
    }
    
   
@@ -200,6 +210,37 @@ public class CodeSearchOracle extends SuggestOracle
    
    private boolean returnSuggestions_ = true;
    
-   private ArrayList<Pair<String, ArrayList<CodeSearchSuggestion>>> 
-      resultCache_ = new ArrayList<Pair<String,ArrayList<CodeSearchSuggestion>>>();
+   private ArrayList<SearchResult> resultCache_ = new ArrayList<SearchResult>();
+   
+   private class SearchResult
+   {
+      public SearchResult(String query, 
+                          ArrayList<CodeSearchSuggestion> suggestions,
+                          boolean moreAvailable)
+      {
+         query_ = query;
+         suggestions_ = suggestions;
+         moveAvailable_ = moreAvailable;
+      }
+      
+      public String getQuery()
+      {
+         return query_;
+      }
+      
+      public ArrayList<CodeSearchSuggestion> getSuggestions()
+      {
+         return suggestions_;
+      }
+      
+      public boolean getMoreAvailable()
+      {
+         return moveAvailable_;
+      }
+      
+      private final String query_;
+      private final ArrayList<CodeSearchSuggestion> suggestions_;
+      private final boolean moveAvailable_;
+   }
+   
 }

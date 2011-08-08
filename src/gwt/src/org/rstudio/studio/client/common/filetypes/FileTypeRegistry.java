@@ -208,7 +208,7 @@ public class FileTypeRegistry
       else
          return TEXT;
    }
-
+   
    public ImageResource getIconForFile(FileSystemItem file)
    {
       if (file.isDirectory())
@@ -219,10 +219,16 @@ public class FileTypeRegistry
             return ICONS.iconFolder();
       }
 
-      ImageResource icon = iconsByFilename_.get(file.getName().toLowerCase());
+      return getIconForFilename(file.getName());
+   }
+   
+   public ImageResource getIconForFilename(String filename)
+   {
+      ImageResource icon = iconsByFilename_.get(filename.toLowerCase());
       if (icon != null)
          return icon;
-      icon = iconsByFileExtension_.get(file.getExtension().toLowerCase());
+      String ext = FileSystemItem.getExtensionFromPath(filename);
+      icon = iconsByFileExtension_.get(ext.toLowerCase());
       if (icon != null)
          return icon;
 

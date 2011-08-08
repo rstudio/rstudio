@@ -5,7 +5,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;
+import org.rstudio.studio.client.workbench.codesearch.model.CodeNavigationTarget;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
@@ -65,8 +65,8 @@ public class CodeSearch
          public void onSelection(SelectionEvent<Suggestion> event)
          {
             // map back to a code search result
-            RSourceItem result = 
-               display_.getSearchOracle().sourceItemFromSuggestion(
+            CodeNavigationTarget target = 
+               display_.getSearchOracle().navigationTargetFromSuggestion(
                                                 event.getSelectedItem());
             
             // get the active project directory
@@ -74,10 +74,9 @@ public class CodeSearch
             FileSystemItem projDir = sessionInfo.getActiveProjectDir(); 
             
             // calculate full file path and position
-            String srcFile = projDir.completePath(result.getContext());
+            String srcFile = projDir.completePath(target.getProjectFile());
             final FileSystemItem srcItem = FileSystemItem.createFile(srcFile);
-            final FilePosition pos = FilePosition.create(result.getLine(), 
-                                                         result.getColumn());
+            final FilePosition pos = target.getPosition();  
             
             // fire editing event (delayed so the Enter keystroke 
             // doesn't get routed into the source editor)

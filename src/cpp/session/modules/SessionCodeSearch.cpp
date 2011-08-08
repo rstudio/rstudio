@@ -205,15 +205,20 @@ void searchProject(const std::string& term,
 void searchSource(const std::string& term,
                   std::size_t maxResults,
                   bool prefixOnly,
-                  std::vector<r_util::RSourceItem>* pItems)
+                  std::vector<r_util::RSourceItem>* pItems,
+                  bool* pMoreAvailable)
 {
+   // default to no more available
+   *pMoreAvailable = false;
+
    // first search the source database
    std::set<std::string> srcDBContexts;
    searchSourceDatabase(term, maxResults, prefixOnly, pItems, &srcDBContexts);
 
    // we are done if we had >= maxResults
-   if (pItems->size() >= maxResults)
+   if (pItems->size() > maxResults)
    {
+      *pMoreAvailable = true;
       pItems->resize(maxResults);
       return;
    }
@@ -229,8 +234,9 @@ void searchSource(const std::string& term,
       pItems->push_back(sourceItem);
 
       // bail if we've hit the max
-      if (pItems->size() >= maxResults)
+      if (pItems->size() > maxResults)
       {
+         *pMoreAvailable = true;
          pItems->resize(maxResults);
          break;
       }
@@ -241,8 +247,13 @@ void searchSource(const std::string& term,
 void searchFiles(const std::string& term,
                  std::size_t maxResults,
                  bool prefixOnly,
-                 json::Array* pFiles)
+                 json::Array* pNames,
+                 json::Array* pDirectories,
+                 bool* pMoreAvailable)
 {
+   // default to no more available
+   *pMoreAvailable = false;
+
    // search from project root
    FilePath rootDir = projects::projectContext().directory();
 
@@ -265,42 +276,52 @@ void searchFiles(const std::string& term,
          return;
       }
 
+      // filter directories
+      if (filePath.isDirectory())
+         continue;
+
       // filter file extensions
       std::string ext = filePath.extensionLowerCase();
-      if (ext == ".r" || ext == ".rd" || ext == ".rnw" || ext == ".tex")
+      if (ext != ".r")
+         continue;
+
+      // get name for comparison
+      std::string name = filePath.filename();
+
+      // compare for match (wildcard or standard)
+      bool matches = false;
+      if (hasWildcard)
       {
-         // get name for comparison
-         std::string name = filePath.filename();
-
-         // compare for match (wildcard or standard)
-         bool matches = false;
-         if (hasWildcard)
-         {
-            matches = regex_utils::textMatches(name,
-                                               pattern,
-                                               prefixOnly,
-                                               false);
-         }
+         matches = regex_utils::textMatches(name,
+                                            pattern,
+                                            prefixOnly,
+                                            false);
+      }
+      else
+      {
+         if (prefixOnly)
+            matches = boost::algorithm::istarts_with(name, term);
          else
-         {
-            if (prefixOnly)
-               matches = boost::algorithm::istarts_with(name, term);
-            else
-               matches = boost::algorithm::icontains(name, term);
-         }
+            matches = boost::algorithm::icontains(name, term);
+      }
 
-         // add the file if we found a match
-         if (matches)
-         {
-            // project relative
-            pFiles->push_back(json::toJsonValue(
-                                    filePath.relativePath(rootDir)));
+      // add the file if we found a match
+      if (matches)
+      {
+         // name and project relative directory
+         pNames->push_back(filePath.filename());
+         pDirectories->push_back(filePath.parent().relativePath(rootDir));
 
-            // return if we are past max results
-            if (pFiles->size() >= maxResults)
-               return;
+         // return if we are past max results
+         if (pNames->size() > maxResults)
+         {
+            *pMoreAvailable = true;
+            pNames->resize(maxResults);
+            pDirectories->resize(maxResults);
+            return;
          }
       }
+
    }
 }
 
@@ -329,23 +350,46 @@ Error searchCode(const json::JsonRpcRequest& request,
 {
    // get params
    std::string term;
-   int maxResults;
-   Error error = json::readParams(request.params, &term, &maxResults);
+   int maxResultsInt;
+   Error error = json::readParams(request.params, &term, &maxResultsInt);
    if (error)
       return error;
+   std::size_t maxResults = safe_convert::numberTo<std::size_t>(maxResultsInt,
+                                                                20);
 
    // object to return
-   json::Object res;
+   json::Object result;
 
    // search files
-   json::Array files;
-   searchFiles(term, maxResults + 1, true, &files);
-   res["files"] = files;
+   json::Array names;
+   json::Array directories;
+   bool moreFilesAvailable = false;
+   searchFiles(term,
+               maxResults,
+               true,
+               &names,
+               &directories,
+               &moreFilesAvailable);
+   json::Object files;
+   files["filename"] = names;
+   files["directory"] = directories;
+   result["file_items"] = files;
 
    // search source (sort results by name)
    std::vector<r_util::RSourceItem> items;
-   searchSource(term, maxResults + 1, true, &items);
+   bool moreSourceItemsAvailable = false;
+   searchSource(term, maxResults, true, &items, &moreSourceItemsAvailable);
    std::sort(items.begin(), items.end(), compareItems);
+
+   // see if we need to do src truncation
+   bool truncated = false;
+   if ( (names.size() + items.size()) > maxResults )
+   {
+      // truncate source items
+      std::size_t srcItems = maxResults - names.size();
+      items.resize(srcItems);
+      truncated = true;
+   }
 
    // return rpc array list (wire efficiency)
    json::Object src;
@@ -354,9 +398,13 @@ Error searchCode(const json::JsonRpcRequest& request,
    src["context"] = toJsonArray<std::string>(items, &r_util::RSourceItem::context);
    src["line"] = toJsonArray<int>(items, &r_util::RSourceItem::line);
    src["column"] = toJsonArray<int>(items, &r_util::RSourceItem::column);
-   res["source_items"] = src;
+   result["source_items"] = src;
 
-   pResponse->setResult(res);
+   // set more available bit
+   result["more_available"] =
+         moreFilesAvailable || moreSourceItemsAvailable || truncated;
+
+   pResponse->setResult(result);
 
    return Success();
 }
