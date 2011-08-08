@@ -23,6 +23,8 @@
 
 // TODO: include files in the query
 
+// TODO: provide extension filter to server for searches
+
 // TODO: open with project-level encoding & convert to UTF-8 / wide
 
 // TODO: implement file monitoring
@@ -35,6 +37,8 @@
 
 // TODO: consider further optimization of only generating source
 //       indexes on-demand for the src db
+
+// TODO: move projects to main web menu when hidden
 
 namespace core {
 namespace r_util {

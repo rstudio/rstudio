@@ -27,6 +27,7 @@
 #include <core/Algorithm.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
+#include <core/RegexUtils.hpp>
 
 namespace core {
 namespace r_util {
@@ -93,14 +94,7 @@ public:
                     bool prefixOnly,
                     bool caseSensitive) const
    {
-      boost::smatch match;
-      boost::match_flag_type flags = boost::match_default;
-      if (prefixOnly)
-         flags |= boost::match_continuous;
-      return regex_search(caseSensitive ? name_ : string_utils::toLower(name_),
-                          match,
-                          regex,
-                          flags);
+      return regex_utils::textMatches(name_, regex, prefixOnly, caseSensitive);
    }
 
    RSourceItem withContext(const std::string& context) const
@@ -150,9 +144,10 @@ public:
       // check for wildcard character
       if (term.find('*') != std::string::npos)
       {
-         boost::regex patternRegex = patternToRegex(caseSensitive ?
-                                                      term :
-                                                      string_utils::toLower(term));
+         boost::regex patternRegex = regex_utils::wildcardPatternToRegex(
+                                                caseSensitive ?
+                                                    term :
+                                                    string_utils::toLower(term));
          predicate = boost::bind(&RSourceItem::nameMatches,
                                     _1,
                                     patternRegex,
@@ -189,9 +184,6 @@ public:
    {
       return search(term, context_, prefixOnly, caseSensitive, out);
    }
-
-private:
-   static boost::regex patternToRegex(const std::string& pattern);
 
 private:
    std::string context_;

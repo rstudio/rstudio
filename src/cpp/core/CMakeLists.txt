@@ -28,11 +28,12 @@ set (CORE_SOURCE_FILES
    FilePath.cpp
    FileSerializer.cpp
    Hash.cpp
+   Log.cpp
    PerformanceTimer.cpp
    ProgramOptions.cpp
+   RegexUtils.cpp
    SafeConvert.cpp
    Settings.cpp
-   Log.cpp
    StringUtils.cpp
    Thread.cpp
    WaitUtils.cpp

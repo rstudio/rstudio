@@ -20,6 +20,7 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
@@ -201,10 +202,10 @@ void searchProject(const std::string& term,
    }
 }
 
-void search(const std::string& term,
-            std::size_t maxResults,
-            bool prefixOnly,
-            std::vector<r_util::RSourceItem>* pItems)
+void searchSource(const std::string& term,
+                  std::size_t maxResults,
+                  bool prefixOnly,
+                  std::vector<r_util::RSourceItem>* pItems)
 {
    // first search the source database
    std::set<std::string> srcDBContexts;
@@ -236,6 +237,70 @@ void search(const std::string& term,
    }
 }
 
+
+void searchFiles(const std::string& term,
+                 std::size_t maxResults,
+                 bool prefixOnly,
+                 std::vector<std::string>* pFiles)
+{
+   // search from project root
+   FilePath rootDir = projects::projectContext().directory();
+
+    // create wildcard pattern if the search has a '*'
+   bool hasWildcard = term.find('*') != std::string::npos;
+   boost::regex pattern;
+   if (hasWildcard)
+      pattern = regex_utils::wildcardPatternToRegex(term);
+
+   // iterate over project files
+   FilePath filePath;
+   RecursiveDirectoryIterator dirIter(rootDir);
+   while (!dirIter.finished())
+   {
+      // get the next file
+      Error error = dirIter.next(&filePath);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      // filter file extensions
+      std::string ext = filePath.extensionLowerCase();
+      if (ext == ".r" || ext == ".rd" || ext == "rnw")
+      {
+         // get name for comparison
+         std::string name = filePath.filename();
+
+         // compare for match (wildcard or standard)
+         bool matches = false;
+         if (hasWildcard)
+         {
+            matches = regex_utils::textMatches(name, pattern, prefixOnly, false);
+         }
+         else
+         {
+            if (prefixOnly)
+               matches = boost::algorithm::istarts_with(name, term);
+            else
+               matches = boost::algorithm::icontains(name, term);
+         }
+
+         // add the file if we found a match
+         if (matches)
+         {
+            // project relative
+            pFiles->push_back(filePath.relativePath(rootDir));
+
+            // return if we are past max results
+            if (pFiles->size() >= maxResults)
+               return;
+         }
+      }
+   }
+}
+
+
 template <typename TValue, typename TFunc>
 json::Array toJsonArray(
       const std::vector<r_util::RSourceItem> &items,
@@ -265,11 +330,14 @@ Error searchCode(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // find functions
-   std::vector<r_util::RSourceItem> items;
-   search(term, maxResults + 1, true, &items);
+   // search files (sort results by name)
+   std::vector<std::string> files;
+   searchFiles(term, maxResults + 1, true, &files);
+   std::sort(files.begin(), files.end());
 
-   // sort by name
+   // search source (sort results by name)
+   std::vector<r_util::RSourceItem> items;
+   searchSource(term, maxResults + 1, true, &items);
    std::sort(items.begin(), items.end(), compareItems);
 
    // return rpc array list (wire efficiency)
