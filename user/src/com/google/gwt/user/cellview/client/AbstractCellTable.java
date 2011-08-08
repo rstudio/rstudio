@@ -2391,7 +2391,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       };
 
       // Fire the event to the cell.
-      cell.onBrowserEvent(context, parentElem, column.getValue(rowValue), event, valueUpdater);
+      cell.onBrowserEvent(context, parentElem, cellValue, event, valueUpdater);
     }
 
     // Reset focus if needed.
