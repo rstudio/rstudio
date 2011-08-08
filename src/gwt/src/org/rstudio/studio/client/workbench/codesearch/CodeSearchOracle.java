@@ -4,10 +4,10 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.TimeBufferedCommand;
-import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 
@@ -144,14 +144,14 @@ public class CodeSearchOracle extends SuggestOracle
          server_.searchCode(
                request_.getQuery(),
                request_.getLimit(),
-               new SimpleRequestCallback<RpcObjectList<RSourceItem>>() {
+               new SimpleRequestCallback<CodeSearchResults>() {
             
             @Override
-            public void onResponseReceived(
-                                    RpcObjectList<RSourceItem> response)
+            public void onResponseReceived(CodeSearchResults response)
             { 
                // to array
-               ArrayList<RSourceItem> results = response.toArrayList();
+               ArrayList<RSourceItem> results = 
+                                 response.getRSourceItems().toArrayList();
                
                // read the response
                ArrayList<CodeSearchSuggestion> suggestions = 

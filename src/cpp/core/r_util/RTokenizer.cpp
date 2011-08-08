@@ -23,8 +23,6 @@
 
 // TODO: include files in the query
 
-// TODO: provide extension filter to server for searches
-
 // TODO: open with project-level encoding & convert to UTF-8 / wide
 
 // TODO: implement file monitoring

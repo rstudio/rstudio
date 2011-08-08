@@ -241,7 +241,7 @@ void searchSource(const std::string& term,
 void searchFiles(const std::string& term,
                  std::size_t maxResults,
                  bool prefixOnly,
-                 std::vector<std::string>* pFiles)
+                 json::Array* pFiles)
 {
    // search from project root
    FilePath rootDir = projects::projectContext().directory();
@@ -267,7 +267,7 @@ void searchFiles(const std::string& term,
 
       // filter file extensions
       std::string ext = filePath.extensionLowerCase();
-      if (ext == ".r" || ext == ".rd" || ext == "rnw")
+      if (ext == ".r" || ext == ".rd" || ext == ".rnw" || ext == ".tex")
       {
          // get name for comparison
          std::string name = filePath.filename();
@@ -276,7 +276,10 @@ void searchFiles(const std::string& term,
          bool matches = false;
          if (hasWildcard)
          {
-            matches = regex_utils::textMatches(name, pattern, prefixOnly, false);
+            matches = regex_utils::textMatches(name,
+                                               pattern,
+                                               prefixOnly,
+                                               false);
          }
          else
          {
@@ -290,7 +293,8 @@ void searchFiles(const std::string& term,
          if (matches)
          {
             // project relative
-            pFiles->push_back(filePath.relativePath(rootDir));
+            pFiles->push_back(json::toJsonValue(
+                                    filePath.relativePath(rootDir)));
 
             // return if we are past max results
             if (pFiles->size() >= maxResults)
@@ -330,10 +334,13 @@ Error searchCode(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // search files (sort results by name)
-   std::vector<std::string> files;
+   // object to return
+   json::Object res;
+
+   // search files
+   json::Array files;
    searchFiles(term, maxResults + 1, true, &files);
-   std::sort(files.begin(), files.end());
+   res["files"] = files;
 
    // search source (sort results by name)
    std::vector<r_util::RSourceItem> items;
@@ -341,12 +348,13 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::sort(items.begin(), items.end(), compareItems);
 
    // return rpc array list (wire efficiency)
-   json::Object res;
-   res["type"] = toJsonArray<int>(items, &r_util::RSourceItem::type);
-   res["name"] = toJsonArray<std::string>(items, &r_util::RSourceItem::name);
-   res["context"] = toJsonArray<std::string>(items, &r_util::RSourceItem::context);
-   res["line"] = toJsonArray<int>(items, &r_util::RSourceItem::line);
-   res["column"] = toJsonArray<int>(items, &r_util::RSourceItem::column);
+   json::Object src;
+   src["type"] = toJsonArray<int>(items, &r_util::RSourceItem::type);
+   src["name"] = toJsonArray<std::string>(items, &r_util::RSourceItem::name);
+   src["context"] = toJsonArray<std::string>(items, &r_util::RSourceItem::context);
+   src["line"] = toJsonArray<int>(items, &r_util::RSourceItem::line);
+   src["column"] = toJsonArray<int>(items, &r_util::RSourceItem::column);
+   res["source_items"] = src;
 
    pResponse->setResult(res);
 
