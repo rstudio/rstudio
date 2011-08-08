@@ -250,12 +250,6 @@ bool UserSettings::vcsEnabled() const
    return settings_.getBool("vcsEnabled", false);
 }
 
-bool UserSettings::indexingEnabled() const
-{
-   return settings_.getBool("indexingEnabled", false);
-}
-
-
 bool UserSettings::alwaysSaveHistory() const
 {
    return settings_.getBool(kAlwaysSaveHistory, true);

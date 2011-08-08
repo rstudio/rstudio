@@ -421,8 +421,7 @@ void onDeferredInit()
 
 bool enabled()
 {
-   return projects::projectContext().hasProject() &&
-          userSettings().indexingEnabled();
+   return projects::projectContext().hasProject();
 }
    
 Error initialize()

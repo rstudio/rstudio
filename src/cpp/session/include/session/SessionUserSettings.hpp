@@ -103,8 +103,6 @@ public:
 
    bool vcsEnabled() const;
 
-   bool indexingEnabled() const;
-
 private:
    core::FilePath getWorkingDirectoryValue(const std::string& key) const;
    void setWorkingDirectoryValue(const std::string& key,

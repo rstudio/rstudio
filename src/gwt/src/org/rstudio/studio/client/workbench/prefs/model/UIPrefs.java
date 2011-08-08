@@ -105,7 +105,7 @@ public class UIPrefs extends Prefs
    
    public PrefValue<Boolean> toolbarVisible()
    {
-      return bool("toolbar_show", true);
+      return bool("toolbar_visible", true);
    }
    
    public PrefValue<Boolean> sourceWithEcho()
