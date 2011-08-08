@@ -26,10 +26,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.HasAlignment;
 
 /**
- * A representation of a column in a table. The column may maintain view data
- * for each cell on demand. New view data, if needed, is created by the cell's
- * onBrowserEvent method, stored in the Column, and passed to future calls to
- * Cell's {@link Cell#onBrowserEvent} and {@link Cell#render} methods.
+ * A representation of a column in a table.
  * 
  * @param <T> the row type
  * @param <C> the column type
