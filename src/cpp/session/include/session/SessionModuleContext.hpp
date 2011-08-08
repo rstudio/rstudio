@@ -198,6 +198,12 @@ void scheduleIncrementalWork(
          bool idleOnly = true);
 
 
+core::Error readAndDecodeFile(const core::FilePath& filePath,
+                              const std::string& encoding,
+                              bool allowSubstChars,
+                              std::string* pContents);
+
+
 // source R files
 core::Error sourceModuleRFile(const std::string& rSourceFile);   
    

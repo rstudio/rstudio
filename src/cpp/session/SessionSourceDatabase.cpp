@@ -189,36 +189,6 @@ void SourceDocument::setContents(const std::string& contents)
    hash_ = hash::crc32Hash(contents_);
 }
 
-namespace {
-
-Error readAndDecode(const FilePath& docPath,
-                    const std::string& encoding,
-                    bool allowSubstChars,
-                    std::string* pContents)
-{
-   // read contents
-   std::string encodedContents;
-   Error error = readStringFromFile(docPath, &encodedContents,
-                                    options().sourceLineEnding());
-
-   if (error)
-      return error ;
-
-   error = r::util::iconvstr(encodedContents, encoding, "UTF-8",
-                             allowSubstChars, pContents);
-   if (error)
-      return error;
-
-   stripBOM(pContents);
-   // Detect invalid UTF-8 sequences and recover
-   error = string_utils::utf8Clean(pContents->begin(),
-                                   pContents->end(),
-                                   '?');
-   return error ;
-}
-
-} // anonymous namespace
-
 // set contents from file
 Error SourceDocument::setPathAndContents(const std::string& path,
                                          bool allowSubstChars)
@@ -227,8 +197,10 @@ Error SourceDocument::setPathAndContents(const std::string& path,
    FilePath docPath = module_context::resolveAliasedPath(path);
 
    std::string contents;
-   Error error = readAndDecode(docPath, encoding(), allowSubstChars,
-                               &contents);
+   Error error = module_context::readAndDecodeFile(docPath,
+                                                   encoding(),
+                                                   allowSubstChars,
+                                                   &contents);
    if (error)
       return error ;
 
@@ -264,7 +236,10 @@ Error SourceDocument::updateDirty()
       if (docPath.exists() && docPath.size() <= (1024*1024))
       {
          std::string contents;
-         Error error = readAndDecode(docPath, encoding(), true, &contents);
+         Error error = module_context::readAndDecodeFile(docPath,
+                                                         encoding(),
+                                                         true,
+                                                         &contents);
          if (error)
             return error;
 

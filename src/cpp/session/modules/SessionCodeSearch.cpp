@@ -30,6 +30,8 @@
 
 #include <core/r_util/RSourceIndex.hpp>
 
+#include <R_ext/rlocale.h>
+
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -50,8 +52,9 @@ std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > s_sourceIndexes;
 class SourceFileIndexer : boost::noncopyable
 {
 public:
-   SourceFileIndexer()
-      : projectRootDir_(projects::projectContext().directory()),
+   SourceFileIndexer(const std::string& encoding)
+      : encoding_(encoding),
+        projectRootDir_(projects::projectContext().directory()),
         dirIter_(projectRootDir_)
    {
    }
@@ -89,13 +92,15 @@ private:
    {
       if (isRSourceFile(filePath))
       {
-         // read the file (assumes utf8)
+         // read the file
          std::string code;
-         Error error = core::readStringFromFile(filePath,
-                                                &code,
-                                                string_utils::LineEndingPosix);
+         Error error = module_context::readAndDecodeFile(filePath,
+                                                         encoding_,
+                                                         true,
+                                                         &code);
          if (error)
          {
+            error.addProperty("src-file", filePath.absolutePath());
             LOG_ERROR(error);
             return;
          }
@@ -115,14 +120,21 @@ private:
    }
 
 private:
+   std::string encoding_;
    FilePath projectRootDir_;
    RecursiveDirectoryIterator dirIter_;
 };
 
 void indexProjectFiles()
 {
+   // determine encoding
+   std::string encoding = userSettings().defaultEncoding();
+   if (encoding.empty())
+      encoding = ::locale2charset(NULL);
+
    // create indexer
-   boost::shared_ptr<SourceFileIndexer> pIndexer(new SourceFileIndexer());
+   boost::shared_ptr<SourceFileIndexer> pIndexer(
+                                       new SourceFileIndexer(encoding));
 
    // schedule indexing to occur up front + at idle time
    module_context::scheduleIncrementalWork(

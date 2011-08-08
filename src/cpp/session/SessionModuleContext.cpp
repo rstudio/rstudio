@@ -457,6 +457,33 @@ void onBackgroundProcessing(bool isIdle)
       executeIncrementalCommands(&s_idleIncrementalCommands);
 }
 
+Error readAndDecodeFile(const FilePath& filePath,
+                        const std::string& encoding,
+                        bool allowSubstChars,
+                        std::string* pContents)
+{
+   // read contents
+   std::string encodedContents;
+   Error error = readStringFromFile(filePath, &encodedContents,
+                                    options().sourceLineEnding());
+
+   if (error)
+      return error ;
+
+   error = r::util::iconvstr(encodedContents, encoding, "UTF-8",
+                             allowSubstChars, pContents);
+   if (error)
+      return error;
+
+   stripBOM(pContents);
+
+   // Detect invalid UTF-8 sequences and recover
+   error = string_utils::utf8Clean(pContents->begin(),
+                                   pContents->end(),
+                                   '?');
+   return error ;
+}
+
 FilePath userHomePath()
 {
    return session::options().userHomePath();
