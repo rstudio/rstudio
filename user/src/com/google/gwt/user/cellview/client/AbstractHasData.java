@@ -642,6 +642,19 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     return tabIndex;
   }
 
+  /**
+   * Get the key for the specified value. If a keyProvider is not specified or the value is null,
+   * the value is returned. If the key provider is specified, it is used to get the key from
+   * the value.
+   * 
+   * @param value the value
+   * @return the key
+   */
+  public Object getValueKey(T value) {
+    ProvidesKey<T> keyProvider = getKeyProvider();
+    return (keyProvider == null || value == null) ? value : keyProvider.getKey(value);
+  }
+  
   @Override
   public T getVisibleItem(int indexOnPage) {
     checkRowBounds(indexOnPage);
@@ -935,7 +948,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     this.tabIndex = index;
     setKeyboardSelected(getKeyboardSelectedRow(), true, false);
   }
-
+  
   @Override
   public final void setVisibleRange(int start, int length) {
     setVisibleRange(new Range(start, length));
@@ -1018,17 +1031,6 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
    * @return the keyboard selected element
    */
   protected abstract Element getKeyboardSelectedElement();
-
-  /**
-   * Get the key for the specified value.
-   * 
-   * @param value the value
-   * @return the key
-   */
-  protected Object getValueKey(T value) {
-    ProvidesKey<T> keyProvider = getKeyProvider();
-    return (keyProvider == null || value == null) ? value : keyProvider.getKey(value);
-  }
 
   /**
    * Check if keyboard navigation is being suppressed, such as when the user is
