@@ -203,6 +203,19 @@ Error extractFilePaths(const json::Array& files,
    return Success() ;
 }
 
+core::Error stat(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
+{
+   std::string path;
+   Error error = json::readParams(request.params, &path);
+   if (error)
+      return error;
+
+   FilePath targetPath = module_context::resolveAliasedPath(path);
+
+   pResponse->setResult(module_context::createFileSystemItem(targetPath));
+   return Success();
+}
    
 // IN: String path
 // OUT: Array<FileEntry> files
@@ -930,6 +943,7 @@ Error initialize()
    using boost::bind;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "stat", stat))
       (bind(registerRpcMethod, "list_files", listFiles))
       (bind(registerRpcMethod, "create_folder", createFolder))
       (bind(registerRpcMethod, "delete_files", deleteFiles))

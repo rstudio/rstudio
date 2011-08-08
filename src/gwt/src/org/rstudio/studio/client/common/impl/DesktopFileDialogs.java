@@ -14,6 +14,7 @@ package org.rstudio.studio.client.common.impl;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -22,6 +23,10 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 public class DesktopFileDialogs implements FileDialogs
 {
@@ -46,6 +51,11 @@ public class DesktopFileDialogs implements FileDialogs
    {
       abstract String operation(String caption, String dir);
 
+      protected boolean shouldUpdateDetails()
+      {
+         return false;
+      }
+
       public void execute(
             final String caption,
             FileSystemContext fsContext,
@@ -67,10 +77,45 @@ public class DesktopFileDialogs implements FileDialogs
                      ? null
                      : FileSystemItem.createFile(file);
 
-               operation.execute(item, new NullProgress());
+               if (item != null && shouldUpdateDetails())
+               {
+                  server_.stat(item.getPath(), new ServerRequestCallback<FileSystemItem>()
+                  {
+                     @Override
+                     public void onResponseReceived(FileSystemItem response)
+                     {
+                        operation.execute(response, new NullProgress());
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        globalDisplay_.showErrorMessage("Error",
+                                                        error.getUserMessage());
+                        operation.execute(null, new NullProgress());
+                     }
+                  });
+               }
+               else
+               {
+                  operation.execute(item, new NullProgress());
+               }
             }
          });
       }
+   }
+
+   public DesktopFileDialogs()
+   {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+
+   @Inject
+   public void initialize(FilesServerOperations server,
+                          GlobalDisplay globalDisplay)
+   {
+      server_ = server;
+      globalDisplay_ = globalDisplay;
    }
 
    public void openFile(final String caption,
@@ -80,6 +125,12 @@ public class DesktopFileDialogs implements FileDialogs
    {
       new FileDialogOperation()
       {
+         @Override
+         protected boolean shouldUpdateDetails()
+         {
+            return true;
+         }
+
          @Override
          String operation(String caption, String dir)
          {
@@ -147,4 +198,7 @@ public class DesktopFileDialogs implements FileDialogs
             fsContext.cd(parentPath);
       }
    }
+
+   private FilesServerOperations server_;
+   private GlobalDisplay globalDisplay_;
 }

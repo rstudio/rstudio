@@ -526,6 +526,13 @@ public class RemoteServer implements Server
                   null) ;
    }
 
+   @Override
+   public void stat(String path,
+                    ServerRequestCallback<FileSystemItem> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, STAT, path, requestCallback);
+   }
+
    public void listFiles(
                   FileSystemItem directory,
                   boolean monitor,
@@ -1493,6 +1500,7 @@ public class RemoteServer implements Server
    private static final String GET_HELP_LINKS = "get_help_links" ;
    private static final String SET_HELP_LINKS = "set_help_links" ;
 
+   private static final String STAT = "stat";
    private static final String LIST_FILES = "list_files";
    private static final String LIST_ALL_FILES = "list_all_files";
    private static final String CREATE_FOLDER = "create_folder";
