@@ -21,7 +21,6 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-// TODO: mouse selection in typeahead search
 
 // TODO: implement file monitoring
 
