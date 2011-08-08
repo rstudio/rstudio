@@ -1,5 +1,6 @@
 package org.rstudio.studio.client.workbench.codesearch;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
@@ -84,6 +85,9 @@ public class CodeSearch
                @Override
                public void execute()
                {
+                  display_.getSearchDisplay().clear();
+                  display_.getSearchOracle().clear();
+
                   if (observer_ != null)
                      observer_.onCompleted();
                   
@@ -92,15 +96,15 @@ public class CodeSearch
             });
          }
       });
-      
+     
      searchDisplay.addBlurHandler(new BlurHandler() {
          @Override
          public void onBlur(BlurEvent event)
          { 
-            display_.getSearchDisplay().clear();
             display_.getSearchOracle().clear();
          }
      });
+
      
      searchDisplay.addFocusHandler(new FocusHandler() {
         @Override
