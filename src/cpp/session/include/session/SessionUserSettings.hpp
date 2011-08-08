@@ -17,6 +17,7 @@
 #include <string>
 
 #include <boost/utility.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <core/Settings.hpp>
 #include <core/FilePath.hpp>
@@ -74,6 +75,9 @@ public:
    core::json::Object uiPrefs() const;
    void setUiPrefs(const core::json::Object& prefsObject);
 
+   // readers for ui prefs
+   std::string defaultEncoding() const;
+
    bool alwaysRestoreLastProject() const;
    void setAlwaysRestoreLastProject(bool alwaysRestore);
 
@@ -108,8 +112,14 @@ private:
    void setWorkingDirectoryValue(const std::string& key,
                                  const core::FilePath& filePath) ;
 
+   void updatePrefsCache() const;
+   void updatePrefsCache(const core::json::Object& uiPrefs) const;
+
 private:
    core::Settings settings_;
+
+   // cached prefs values
+   mutable boost::scoped_ptr<std::string> pDefaultEncoding_;
 };
    
 } // namespace session

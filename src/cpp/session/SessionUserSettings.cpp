@@ -145,6 +145,30 @@ void UserSettings::setUiPrefs(const core::json::Object& prefsObject)
    std::ostringstream output;
    json::writeFormatted(prefsObject, output);
    settings_.set(kUiPrefs, output.str());
+
+   updatePrefsCache(prefsObject);
+}
+
+void UserSettings::updatePrefsCache(const json::Object& prefs) const
+{
+   // read fields
+   std::string defaultEncoding;
+   Error error = json::readObject(prefs,"default_encoding", &defaultEncoding);
+   if (error)
+      LOG_ERROR(error);
+
+   // set pref
+   pDefaultEncoding_.reset(new std::string(defaultEncoding));
+}
+
+
+// readers for ui prefs
+std::string UserSettings::defaultEncoding() const
+{
+   if (!pDefaultEncoding_)
+      updatePrefsCache(uiPrefs());
+
+   return *pDefaultEncoding_;
 }
 
 bool UserSettings::alwaysRestoreLastProject() const
