@@ -750,6 +750,18 @@ public class HasDataPresenterTest extends GWTTestCase {
     view.assertKeyboardSelectedRowEmpty();
     assertEquals(10, presenter.getVisibleRange().getStart());
     assertEquals(10, presenter.getVisibleRange().getLength());
+
+    // Negative index out of range.
+    presenter.setVisibleRange(new Range(3, 10));
+    presenter.setKeyboardSelectedRow(3, false, false);
+    populatePresenter(presenter);
+    presenter.flush();
+    presenter.setKeyboardSelectedRow(-4, false, false);
+    populatePresenter(presenter);
+    presenter.flush();
+    assertEquals(0, presenter.getKeyboardSelectedRow());
+    assertEquals(0, presenter.getVisibleRange().getStart());
+    assertEquals(10, presenter.getVisibleRange().getLength());
   }
 
   public void testSetKeyboardSelectedRowCurrentPage() {
@@ -880,6 +892,18 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(0, presenter.getVisibleRange().getStart());
     pageSize += 10;
     assertEquals(pageSize, presenter.getVisibleRange().getLength());
+
+    // Negative index out of range.
+    presenter.setVisibleRange(new Range(3, 10));
+    presenter.setKeyboardSelectedRow(3, false, false);
+    populatePresenter(presenter);
+    presenter.flush();
+    presenter.setKeyboardSelectedRow(-4, false, false);
+    populatePresenter(presenter);
+    presenter.flush();
+    assertEquals(0, presenter.getKeyboardSelectedRow());
+    assertEquals(0, presenter.getVisibleRange().getStart());
+    assertEquals(13, presenter.getVisibleRange().getLength());
   }
 
   public void testSetRowCount() {

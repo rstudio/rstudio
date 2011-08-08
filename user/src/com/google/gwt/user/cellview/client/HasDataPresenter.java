@@ -719,8 +719,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
     } else if (KeyboardPagingPolicy.CHANGE_PAGE == keyboardPagingPolicy) {
       // Go to previous page.
       while (index < 0) {
-        newPageStart -= pageSize;
-        index += pageSize;
+        int shift = Math.min(pageSize, newPageStart);
+        newPageStart -= shift;
+        index += shift;
       }
 
       // Go to next page.
@@ -731,9 +732,10 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
     } else if (KeyboardPagingPolicy.INCREASE_RANGE == keyboardPagingPolicy) {
       // Increase range at the beginning.
       while (index < 0) {
-        newPageSize += PAGE_INCREMENT;
-        newPageStart -= PAGE_INCREMENT;
-        index += PAGE_INCREMENT;
+        int shift = Math.min(PAGE_INCREMENT, newPageStart);
+        newPageSize += shift;
+        newPageStart -= shift;
+        index += shift;
       }
       if (newPageStart < 0) {
         index += newPageStart;
