@@ -2,6 +2,7 @@ package org.rstudio.studio.client.workbench.codesearch;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -23,17 +24,14 @@ public class CodeSearchOracle extends SuggestOracle
       server_ = server;
    }
    
-   // if the user cancels a search we need to make sure that results which
-   // come back in over the network afterwards are not returned
-   public void setReturnSuggestions(boolean returnSuggestions)
-   {
-      returnSuggestions_ = returnSuggestions;
-   }
    
    @Override
    public void requestSuggestions(final Request request, 
                                   final Callback callback)
    {    
+      // invalidate any outstanding search
+      searchInvalidation_.invalidate();
+      
       // first see if we can serve the request from the cache
       for (int i=resultCache_.size() - 1; i >= 0; i--)
       {
@@ -84,8 +82,7 @@ public class CodeSearchOracle extends SuggestOracle
             cacheSuggestions(request, suggestions, false);
             
             // return suggestions
-            if (returnSuggestions_)
-               callback.onSuggestionsReady(request, new Response(suggestions));
+            callback.onSuggestionsReady(request, new Response(suggestions));
             
             return;
          } 
@@ -98,6 +95,11 @@ public class CodeSearchOracle extends SuggestOracle
    public CodeNavigationTarget navigationTargetFromSuggestion(Suggestion sugg)
    {
       return ((CodeSearchSuggestion)sugg).getNavigationTarget();
+   }
+   
+   public void invalidateSearches()
+   {
+      searchInvalidation_.invalidate();
    }
    
    public void clear()
@@ -136,12 +138,13 @@ public class CodeSearchOracle extends SuggestOracle
       {
          request_ = request;
          callback_ = callback;
+         invalidationToken_ = searchInvalidation_.getInvalidationToken();
          nudge();
       }
 
       @Override
       protected void performAction(boolean shouldSchedulePassive)
-      {
+      {  
          // failed to short-circuit via the cache, hit the server
          server_.searchCode(
                request_.getQuery(),
@@ -173,7 +176,7 @@ public class CodeSearchOracle extends SuggestOracle
                                 response.getMoreAvailable());
                
                // return suggestions
-               if (returnSuggestions_)
+               if (!invalidationToken_.isInvalid())
                {
                   callback_.onSuggestionsReady(request_, 
                                                new Response(suggestions));
@@ -185,6 +188,7 @@ public class CodeSearchOracle extends SuggestOracle
       
       private Request request_;
       private Callback callback_;
+      private Invalidation.Token invalidationToken_;
    };
    
    
@@ -203,14 +207,13 @@ public class CodeSearchOracle extends SuggestOracle
                                         moreAvailable));
    }
    
-  
+   private final Invalidation searchInvalidation_ = new Invalidation();
+   
    private final CodeSearchServerOperations server_ ;
+   private final CodeSearchCommand codeSearch_ = new CodeSearchCommand();
    
-   private CodeSearchCommand codeSearch_ = new CodeSearchCommand();
-   
-   private boolean returnSuggestions_ = true;
-   
-   private ArrayList<SearchResult> resultCache_ = new ArrayList<SearchResult>();
+   private final ArrayList<SearchResult> resultCache_ = 
+                                             new ArrayList<SearchResult>();
    
    private class SearchResult
    {

@@ -115,13 +115,11 @@ public class CodeSearch
         public void onValueChange(ValueChangeEvent<String> event)
         {
            boolean hasSearch = event.getValue().length() != 0;
-           
-           // set oracle to return suggestions as approproate
-           display_.getSearchOracle().setReturnSuggestions(hasSearch);
-           
-           // hide suggestion display if we don't have a search
            if (!hasSearch)
+           {
+              display_.getSearchOracle().invalidateSearches();
               display_.getSuggestionDisplay().hideSuggestions();
+           }
         }     
      });
      

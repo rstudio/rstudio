@@ -23,8 +23,6 @@
 
 // TODO: enable indexing by default
 
-// TODO: use invalidation (try "breaks" query in ggplot)
-
 // TODO: open with project-level encoding & convert to UTF-8 / wide
 
 // TODO: implement file monitoring
@@ -39,7 +37,7 @@
 //       indexes on-demand for the src db
 
 // TODO: move projects to main web menu when hidden
-// TODO: Open Project can fail to list dir if prev proj root is gone
+// TODO: open project can fail to list dir if prev proj root is gone
 
 
 namespace core {
