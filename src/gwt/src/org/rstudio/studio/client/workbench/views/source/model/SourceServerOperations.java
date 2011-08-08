@@ -16,6 +16,7 @@ import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 
 import java.util.HashMap;
@@ -26,7 +27,7 @@ import java.util.HashMap;
  * the tab (within a tolerance of a few seconds of latency) regardless of
  * whether the user has actually hit save. 
  */
-public interface SourceServerOperations
+public interface SourceServerOperations extends FilesServerOperations
 {
    /**
     * Create a new, empty document, without a path but with a unique ID, and
