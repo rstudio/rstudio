@@ -248,7 +248,7 @@ void searchFiles(const std::string& term,
                  std::size_t maxResults,
                  bool prefixOnly,
                  json::Array* pNames,
-                 json::Array* pDirectories,
+                 json::Array* pPaths,
                  bool* pMoreAvailable)
 {
    // default to no more available
@@ -310,14 +310,14 @@ void searchFiles(const std::string& term,
       {
          // name and project relative directory
          pNames->push_back(filePath.filename());
-         pDirectories->push_back(filePath.parent().relativePath(rootDir));
+         pPaths->push_back(filePath.relativePath(rootDir));
 
          // return if we are past max results
          if (pNames->size() > maxResults)
          {
             *pMoreAvailable = true;
             pNames->resize(maxResults);
-            pDirectories->resize(maxResults);
+            pPaths->resize(maxResults);
             return;
          }
       }
@@ -362,17 +362,17 @@ Error searchCode(const json::JsonRpcRequest& request,
 
    // search files
    json::Array names;
-   json::Array directories;
+   json::Array paths;
    bool moreFilesAvailable = false;
    searchFiles(term,
                maxResults,
                true,
                &names,
-               &directories,
+               &paths,
                &moreFilesAvailable);
    json::Object files;
    files["filename"] = names;
-   files["directory"] = directories;
+   files["path"] = paths;
    result["file_items"] = files;
 
    // search source (sort results by name)

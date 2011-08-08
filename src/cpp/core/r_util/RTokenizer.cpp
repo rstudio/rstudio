@@ -21,7 +21,7 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
-// TODO: enable indexing by default
+// TODO: mouse selection in typeahead search
 
 // TODO: open with project-level encoding & convert to UTF-8 / wide
 
@@ -35,6 +35,9 @@
 
 // TODO: consider further optimization of only generating source
 //       indexes on-demand for the src db
+
+// TODO: implement "project-level" default encoding setting
+
 
 // TODO: move projects to main web menu when hidden
 // TODO: open project can fail to list dir if prev proj root is gone

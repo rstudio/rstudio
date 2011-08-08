@@ -12,8 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.codesearch.model;
 
-import org.rstudio.core.client.files.FileSystemItem;
-
 import com.google.gwt.core.client.JavaScriptObject;
 
 
@@ -28,15 +26,9 @@ public class RFileItem extends JavaScriptObject
       return this.filename;
    }-*/;
    
-   public final String getExtensionLower() 
-   {
-      return FileSystemItem.getExtensionFromPath(
-                                       getFilename()).toLowerCase();
-   }
-
    // project-relative directory
-   public final native String getDirectory() /*-{
-      return this.directory;
+   public final native String getProjectRelativePath() /*-{
+      return this.path;
    }-*/;
    
 }

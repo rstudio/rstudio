@@ -17,7 +17,7 @@ class CodeSearchSuggestion implements Suggestion
    public CodeSearchSuggestion(RFileItem fileItem)
    {
       navigationTarget_ = new CodeNavigationTarget(
-                     fileItem.getDirectory() + "/" + fileItem.getFilename());
+                                    fileItem.getProjectRelativePath());
       matchedString_ = fileItem.getFilename();
             
       // compute display string
