@@ -1,0 +1,34 @@
+#!/bin/bash
+
+#
+# coredev-profile
+#
+# Copyright (C) 2009-11 by RStudio, Inc.
+#
+# This program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+# setup profiling target/output
+env CPUPROFILE=${CMAKE_CURRENT_BINARY_DIR}/coredev.prof ${CMAKE_CURRENT_BINARY_DIR}/coredev
+
+# if the profile frequency isn't defined then default it to 1000 samples/sec
+# (default is 100 samples/sec which doesn't have enough granularity for
+# most of our measurement cases)
+if test -z "$CPUPROFILE_FREQUENCY"
+then
+   env CPUPROFILE_FREQUENCY=1000
+fi
+
+# run the executable
+${CMAKE_CURRENT_BINARY_DIR}/coredev
+
+# output the profiling data
+pprof --text "$@" ${CMAKE_CURRENT_BINARY_DIR}/coredev ${CMAKE_CURRENT_BINARY_DIR}/coredev.prof
+
+
+
