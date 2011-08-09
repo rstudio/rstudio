@@ -687,7 +687,7 @@ public class RemoteServer implements Server
    
    public String getFileExportUrl(String name, FileSystemItem file)
    {
-      return getApplicationURL(EXPORT_SCOPE) + "?" +
+      return getApplicationURL(EXPORT_SCOPE) + "/" + URL.encodePathSegment(name) + "?" +
          "name=" + URL.encodeQueryString(name) + "&" +
          "file=" + URL.encodeQueryString(file.getPath());
    }
@@ -707,7 +707,7 @@ public class RemoteServer implements Server
       }
          
       // return url
-      return getApplicationURL(EXPORT_SCOPE) + "?" +
+      return getApplicationURL(EXPORT_SCOPE) + "/" + URL.encodePathSegment(name) + "?" +
         "name=" + URL.encodeQueryString(name) + "&" +
         "parent=" + URL.encodeQueryString(parentDirectory.getPath()) + "&" +
          files.toString();

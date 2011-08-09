@@ -766,9 +766,14 @@ void setAttachmentResponse(const http::Request& request,
       pResponse->setHeader("Expires", "Fri, 01 Jan 1990 00:00:00 GMT");
       pResponse->setHeader("Cache-Control", "private");
    }
+   // Can't rely on "filename*" in Content-Disposition header because not all
+   // browsers support non-ASCII characters here (e.g. Safari 5.0.5). If
+   // possible, make the requesting URL contain the UTF-8 byte escaped filename
+   // as the last path element.
    pResponse->setHeader("Content-Disposition",
-                        "attachment; filename=" + 
-                        http::util::urlEncode(filename, false));
+                        "attachment; filename*=UTF-8''"
+                        + http::util::urlEncode(filename, false));
+   pResponse->setHeader("Content-Type", "application/octet-stream");
    pResponse->setBody(attachmentPath);
 }
    
