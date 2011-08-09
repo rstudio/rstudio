@@ -35,7 +35,6 @@
 
 // TODO: implement "project-level" default encoding setting
 
-// TODO: move projects to main web menu when hidden
 // TODO: open project can fail to list dir if prev proj root is gone
 
 

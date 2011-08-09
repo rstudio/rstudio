@@ -33,12 +33,14 @@ import org.rstudio.core.client.command.impl.WebMenuCallback;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialogLabel;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
+import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
 import org.rstudio.studio.client.application.ui.impl.header.HeaderPanel;
 import org.rstudio.studio.client.application.ui.impl.header.MenubarPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -164,8 +166,17 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
                commands.importDatasetFromGoogleSpreadsheet().remove();
             }
             
-            // add project tools
+            // add project tools to toolbar
             toolbar_.addProjectTools(sessionInfo);
+            
+            // add project tools to main menu
+            projectMenuSeparator_ = createCommandSeparator();
+            projectMenuButton_ = 
+               new ProjectPopupMenu(sessionInfo, commands).getToolbarButton();
+            projectMenuButton_.getElement().getStyle().setMarginTop(1, Unit.PX);
+            headerBarPanel_.add(projectMenuSeparator_);
+            headerBarPanel_.add(projectMenuButton_);
+            showProjectMenu(!toolbar_.isVisible());     
          }
       });
       
@@ -188,6 +199,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
          outerPanel_.add(logoLarge_);
          mainMenu_.getElement().getStyle().setMarginLeft(18, Unit.PX);
          preferredHeight_ = 65;
+         showProjectMenu(false);
       }
       else
       {
@@ -196,8 +208,17 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
          outerPanel_.add(logoSmall_);
          mainMenu_.getElement().getStyle().setMarginLeft(0, Unit.PX);
          preferredHeight_ = 45;
+         showProjectMenu(true);
       }
    }
+   
+   private void showProjectMenu(boolean show)
+   {
+      projectMenuSeparator_.setVisible(show);
+      projectMenuButton_.setVisible(show);
+   }
+   
+   
 
    private native final void suppressBrowserForwardBack() /*-{
       var outerWindow = $wnd.parent;
@@ -369,8 +390,12 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    private Image logoSmall_;
    private HorizontalPanel headerBarPanel_;
    private HorizontalPanel headerBarCommandsPanel_;
+   private Widget projectMenuSeparator_;
+   private ToolbarButton projectMenuButton_;
    private AppMenuBar mainMenu_;
    private GlobalToolbar toolbar_;
    private EventBus eventBus_;
    private GlobalDisplay globalDisplay_;
+   
+   
 }

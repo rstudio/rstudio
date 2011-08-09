@@ -724,11 +724,11 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    margin-right: 2px;
 }
 
-.globalToolbar .emptyProjectMenu .toolbarButtonRightImage {
+.emptyProjectMenu .toolbarButtonRightImage {
 	margin-left: 4px;
 }
 
-.globalToolbar .emptyProjectMenu .toolbarButtonLabel {
+.emptyProjectMenu .toolbarButtonLabel {
 	color: #494949;
 }
 
