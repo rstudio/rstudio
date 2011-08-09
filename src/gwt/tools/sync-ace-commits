@@ -26,6 +26,7 @@ git merge \
     origin/bugfix/search-regexp \
     origin/bugfix/selected-word-colors \
     origin/bugfix/hardtab \
+    origin/patch/scroll-granularity \
 
 
 git cherry-pick eb02e51

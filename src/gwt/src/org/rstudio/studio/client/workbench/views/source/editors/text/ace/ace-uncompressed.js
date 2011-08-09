@@ -14512,8 +14512,14 @@ var RenderLoop = function(onRender) {
          window.msRequestAnimationFrame;
 
     if (this.setTimeoutZero) {
-
         this.setTimeoutZero = this.setTimeoutZero.bind(window)
+    } else if (window.navigator.userAgent.indexOf("Qt/")) {
+        // When running in QtWebKit on Mac OS X Lion, the postMessage
+        // and zero-timeout are too fast and cause the event queue to
+        // get backed up
+        this.setTimeoutZero = function(callback) {
+            setTimeout(callback, 20);
+        }
     } else if (window.postMessage) {
 
         this.messageName = "zero-timeout-message";
