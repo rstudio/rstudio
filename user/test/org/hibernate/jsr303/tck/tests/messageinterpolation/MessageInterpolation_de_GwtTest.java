@@ -15,19 +15,22 @@
  */
 package org.hibernate.jsr303.tck.tests.messageinterpolation;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.i18n.client.ConstantsWithLookup;
-import com.google.gwt.validation.client.AbstractValidationMessageResolver;
-import com.google.gwt.validation.client.UserValidationMessagesResolver;
+import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Custom messages from {@link ValidationMessages}.
+ * Wraps the German only part of {@link MessageInterpolationTest}.
  */
-public class TckUserValidationMessageProvider extends
-    AbstractValidationMessageResolver implements
-    UserValidationMessagesResolver {
+public class MessageInterpolation_de_GwtTest extends GWTTestCase {
+  private final MessageInterpolationTest delegate = new MessageInterpolationTest();
 
-  public TckUserValidationMessageProvider() {
-    super((ConstantsWithLookup) GWT.create(ValidationMessages.class));
+  @Override
+  public String getModuleName() {
+    return "org.hibernate.jsr303.tck.tests.messageinterpolation.TckTest_de";
+  }
+
+  public void testMessageInterpolationWithLocale() {
+    // Note this test doesn't actually pass in the de local, instead it sets the
+    // default local as de.
+    delegate.testMessageInterpolationWithLocale();
   }
 }

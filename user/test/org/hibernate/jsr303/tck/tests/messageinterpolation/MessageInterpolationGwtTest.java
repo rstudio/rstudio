@@ -17,8 +17,6 @@ package org.hibernate.jsr303.tck.tests.messageinterpolation;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 /**
  * Wraps {@link MessageInterpolationTest}.
  */
@@ -46,11 +44,6 @@ public class MessageInterpolationGwtTest extends GWTTestCase {
     delegate.testLiteralCurlyBraces();
   }
 
-  @Failing(issue = 5763)
-  public void testMessageInterpolationWithLocale() {
-    delegate.testMessageInterpolationWithLocale();
-  }
-
   public void testMessagesCanBeOverriddenAtConstraintLevel() {
     delegate.testMessagesCanBeOverriddenAtConstraintLevel();
   }
@@ -74,5 +67,4 @@ public class MessageInterpolationGwtTest extends GWTTestCase {
   public void testUnSuccessfulInterpolation() {
     delegate.testUnSuccessfulInterpolation();
   }
-
 }

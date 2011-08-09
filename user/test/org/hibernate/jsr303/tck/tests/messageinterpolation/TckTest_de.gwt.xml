@@ -26,4 +26,6 @@
   <replace-with class="org.hibernate.jsr303.tck.tests.messageinterpolation.TckTestValidatorFactory">
     <when-type-is class="javax.validation.ValidatorFactory"/>
   </replace-with>
+  	<extend-property name="locale" values="de"/>
+	<set-property name = "locale" value = "de"/>
 </module>

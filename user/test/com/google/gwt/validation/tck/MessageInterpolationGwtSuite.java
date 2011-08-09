@@ -18,6 +18,7 @@ package com.google.gwt.validation.tck;
 import junit.framework.Test;
 
 import org.hibernate.jsr303.tck.tests.messageinterpolation.MessageInterpolationGwtTest;
+import org.hibernate.jsr303.tck.tests.messageinterpolation.MessageInterpolation_de_GwtTest;
 import org.hibernate.jsr303.tck.util.TckTestSuiteWrapper;
 
 /**
@@ -28,6 +29,7 @@ public class MessageInterpolationGwtSuite {
     TckTestSuiteWrapper suite = new TckTestSuiteWrapper(
         "TCK for GWT Validation, messageinterpolation package");
     suite.addTestSuite(MessageInterpolationGwtTest.class);
+    suite.addTestSuite(MessageInterpolation_de_GwtTest.class);
     return suite;
   }
 }
