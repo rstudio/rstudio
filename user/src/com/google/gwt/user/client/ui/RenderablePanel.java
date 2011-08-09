@@ -123,9 +123,21 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
    * Overloaded version for IsWidget.
    *
    * @see #addAndReplaceElement(Widget,Element)
+   *
+   * @deprecated use {@link #addAndReplaceElement(IsWidget, Element)}
    */
+  @Deprecated
   public void addAndReplaceElement(IsWidget widget,
       com.google.gwt.user.client.Element toReplace) {
+    this.addAndReplaceElement(widget.asWidget(), toReplace);
+  }
+
+  /**
+   * Overloaded version for IsWidget.
+   *
+   * @see #addAndReplaceElement(Widget,Element)
+   */
+  public void addAndReplaceElement(IsWidget widget, Element toReplace) {
     this.addAndReplaceElement(widget.asWidget(), toReplace);
   }
 
