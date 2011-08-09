@@ -22,6 +22,8 @@
 #include <core/StringUtils.hpp>
 
 
+// TODO: implement "project-level" default encoding setting
+
 // TODO: implement file monitoring
 
 // TODO: some type of cap on number of files or directories? (or just
@@ -32,10 +34,6 @@
 
 // TODO: consider further optimization of only generating source
 //       indexes on-demand for the src db
-
-// TODO: implement "project-level" default encoding setting
-
-// TODO: open project can fail to list dir if prev proj root is gone
 
 
 namespace core {
