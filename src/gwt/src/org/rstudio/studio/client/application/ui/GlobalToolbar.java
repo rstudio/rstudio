@@ -14,7 +14,6 @@ package org.rstudio.studio.client.application.ui;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -26,9 +25,6 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Provider;
 
 
@@ -108,45 +104,10 @@ public class GlobalToolbar extends Toolbar
          commands_.goToFileFunction().setVisible(false);
       }
       
-      
-      ToolbarPopupMenu projectMenu = new ToolbarPopupMenu();
-      
-      projectMenu.addItem(commands_.newProject().createMenuItem(false));
-      projectMenu.addItem(commands_.openProject().createMenuItem(false));
-      projectMenu.addSeparator();
-      projectMenu.addItem(commands_.projectMru0().createMenuItem(false));
-      projectMenu.addItem(commands_.projectMru1().createMenuItem(false));
-      projectMenu.addItem(commands_.projectMru2().createMenuItem(false));
-      projectMenu.addItem(commands_.projectMru3().createMenuItem(false));
-      projectMenu.addItem(commands_.projectMru4().createMenuItem(false));
-      projectMenu.addItem(commands_.projectMru5().createMenuItem(false));
-      projectMenu.addItem(commands_.projectMru6().createMenuItem(false));
-      projectMenu.addItem(commands_.projectMru7().createMenuItem(false));
-      projectMenu.addItem(commands_.projectMru8().createMenuItem(false));
-      projectMenu.addItem(commands_.projectMru9().createMenuItem(false));
-      projectMenu.addSeparator();
-      projectMenu.addItem(commands_.closeProject().createMenuItem(false));
-      projectMenu.addSeparator();
-      projectMenu.addItem(commands_.projectOptions().createMenuItem(false));
-      
-      String activeProjectFile = sessionInfo.getActiveProjectFile();
-      String menuText = activeProjectFile != null ?
-        FileSystemItem.createFile(activeProjectFile).getParentPath().getStem() :
-        "Project: (None)";
-               
-      ToolbarButton projectButton = new ToolbarButton(
-            menuText, 
-            RESOURCES.projectMenu(),
-            projectMenu, 
-            true);
-      
-      if (activeProjectFile == null)
-      {
-         projectButton.addStyleName(
-               ThemeResources.INSTANCE.themeStyles().emptyProjectMenu());
-      }
-    
-      addRightWidget(projectButton);
+      // project popup menu
+      ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
+                                                          commands_);
+      addRightWidget(projectMenu.getToolbarButton());
    }
 
    @Override
@@ -160,11 +121,5 @@ public class GlobalToolbar extends Toolbar
    
    private final Provider<CodeSearch> pCodeSearch_;
    
-   interface Resources extends ClientBundle
-   {
-      ImageResource projectMenu();
-   }
-   
-   private static final Resources RESOURCES =  
-                              (Resources) GWT.create(Resources.class);
+  
 }
