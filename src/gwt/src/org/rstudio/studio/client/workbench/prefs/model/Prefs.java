@@ -56,10 +56,10 @@ public abstract class Prefs
       {
          if (!root_.hasKey(name_))
             return defaultValue_;
-         return doGetValue();
+         return doGetValue(root_);
       }
 
-      public abstract T doGetValue();
+      public abstract T doGetValue(JsObject root);
 
       public void setValue(T value)
       {
@@ -68,19 +68,19 @@ public abstract class Prefs
 
       public void setValue(T value, boolean fireEvents)
       {
-         T val = doGetValue();
+         T val = doGetValue(root_);
 
          if (value == null && val == null)
             return;
          if (value != null && val != null && value.equals(val))
             return;
 
-         doSetValue(name_, value);
+         doSetValue(root_, name_, value);
          if (fireEvents)
             ValueChangeEvent.fire(this, value);
       }
 
-      protected abstract void doSetValue(String name, T value);
+      protected abstract void doSetValue(JsObject root, String name, T value);
 
       public HandlerRegistration addValueChangeHandler(
             ValueChangeHandler<T> handler)
@@ -106,15 +106,15 @@ public abstract class Prefs
       }
 
       @Override
-      public Boolean doGetValue()
+      public Boolean doGetValue(JsObject root)
       {
-         return root_.getBoolean(name_);
+         return root.getBoolean(name_);
       }
 
       @Override
-      protected void doSetValue(String name, Boolean value)
+      protected void doSetValue(JsObject root, String name, Boolean value)
       {
-         root_.setBoolean(name, value);
+         root.setBoolean(name, value);
       }
    }
 
@@ -126,15 +126,15 @@ public abstract class Prefs
       }
 
       @Override
-      public Integer doGetValue()
+      public Integer doGetValue(JsObject root)
       {
-         return root_.getInteger(name_);
+         return root.getInteger(name_);
       }
 
       @Override
-      protected void doSetValue(String name, Integer value)
+      protected void doSetValue(JsObject root, String name, Integer value)
       {
-         root_.setInteger(name, value);
+         root.setInteger(name, value);
       }
    }
 
@@ -146,15 +146,15 @@ public abstract class Prefs
       }
 
       @Override
-      public Double doGetValue()
+      public Double doGetValue(JsObject root)
       {
-         return root_.getDouble(name_);
+         return root.getDouble(name_);
       }
 
       @Override
-      protected void doSetValue(String name, Double value)
+      protected void doSetValue(JsObject root, String name, Double value)
       {
-         root_.setDouble(name, value);
+         root.setDouble(name, value);
       }
    }
 
@@ -166,15 +166,15 @@ public abstract class Prefs
       }
 
       @Override
-      public String doGetValue()
+      public String doGetValue(JsObject root)
       {
-         return root_.getString(name_);
+         return root.getString(name_);
       }
 
       @Override
-      protected void doSetValue(String name, String value)
+      protected void doSetValue(JsObject root, String name, String value)
       {
-         root_.setString(name, value);
+         root.setString(name, value);
       }
    }
 
@@ -186,15 +186,15 @@ public abstract class Prefs
       }
 
       @Override
-      public T doGetValue()
+      public T doGetValue(JsObject root)
       {
-         return root_.<T>getObject(name_);
+         return root.<T>getObject(name_);
       }
 
       @Override
-      protected void doSetValue(String name, T value)
+      protected void doSetValue(JsObject root, String name, T value)
       {
-         root_.setObject(name, value);
+         root.setObject(name, value);
       }
    }
 
