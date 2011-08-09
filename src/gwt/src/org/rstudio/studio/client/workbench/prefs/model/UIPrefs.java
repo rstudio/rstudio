@@ -48,11 +48,13 @@ public class UIPrefs extends Prefs
       return object("pane_config");
    }
 
+   // NOTE: UserSettings.cpp depends on the name of this value
    public PrefValue<Boolean> useSpacesForTab()
    {
       return bool("use_spaces_for_tab", true);
    }
 
+   // NOTE: UserSettings.cpp depends on the name of this value
    public PrefValue<Integer> numSpacesForTab()
    {
       return integer("num_spaces_for_tab", 2);
@@ -93,6 +95,7 @@ public class UIPrefs extends Prefs
       return string("theme", null);
    }
 
+   // NOTE: UserSettings.cpp depends on the name of this value
    public PrefValue<String> defaultEncoding()
    {
       return string("default_encoding", "");

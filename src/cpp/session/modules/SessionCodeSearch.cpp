@@ -52,8 +52,8 @@ std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > s_sourceIndexes;
 class SourceFileIndexer : boost::noncopyable
 {
 public:
-   SourceFileIndexer(const std::string& encoding)
-      : encoding_(encoding),
+   SourceFileIndexer()
+      : encoding_(projects::projectContext().config().encoding),
         projectRootDir_(projects::projectContext().directory()),
         dirIter_(projectRootDir_)
    {
@@ -127,14 +127,8 @@ private:
 
 void indexProjectFiles()
 {
-   // determine encoding
-   std::string encoding = userSettings().defaultEncoding();
-   if (encoding.empty())
-      encoding = ::locale2charset(NULL);
-
    // create indexer
-   boost::shared_ptr<SourceFileIndexer> pIndexer(
-                                       new SourceFileIndexer(encoding));
+   boost::shared_ptr<SourceFileIndexer> pIndexer(new SourceFileIndexer());
 
    // schedule indexing to occur up front + at idle time
    module_context::scheduleIncrementalWork(

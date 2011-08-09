@@ -117,11 +117,35 @@ Error ProjectContext::initialize(const FilePath& projectFile,
       return error;
    }
 
+   // setup defaults for project file
+   r_util::RProjectConfig defaultConfig;
+   defaultConfig.useSpacesForTab = userSettings().useSpacesForTab();
+   defaultConfig.numSpacesForTab = userSettings().numSpacesForTab();
+   if (!userSettings().defaultEncoding().empty())
+      defaultConfig.encoding = userSettings().defaultEncoding();
+   else
+      defaultConfig.encoding = "UTF-8";
+
+
    // read project file config
+   bool providedDefaults;
    r_util::RProjectConfig config;
-   error = r_util::readProjectFile(projectFile, &config, pUserErrMsg);
+   error = r_util::readProjectFile(projectFile,
+                                   defaultConfig,
+                                   &config,
+                                   &providedDefaults,
+                                   pUserErrMsg);
    if (error)
       return error;
+
+   // if we provided defaults then re-write the project file
+   // with the defaults
+   if (providedDefaults)
+   {
+      error = r_util::writeProjectFile(projectFile, config);
+      if (error)
+         LOG_ERROR(error);
+   }
 
    // initialize members
    file_ = projectFile;

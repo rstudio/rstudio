@@ -40,7 +40,10 @@ struct RProjectConfig
       : version(1.0),
         saveWorkspace(DefaultValue),
         restoreWorkspace(DefaultValue),
-        alwaysSaveHistory(DefaultValue)
+        alwaysSaveHistory(DefaultValue),
+        useSpacesForTab(true),
+        numSpacesForTab(2),
+        encoding()
    {
    }
 
@@ -48,11 +51,16 @@ struct RProjectConfig
    int saveWorkspace;
    int restoreWorkspace;
    int alwaysSaveHistory;
+   bool useSpacesForTab;
+   int numSpacesForTab;
+   std::string encoding;
 };
 
 
 Error readProjectFile(const FilePath& projectFilePath,
+                      const RProjectConfig& defaultConfig,
                       RProjectConfig* pConfig,
+                      bool* pProvidedDefaults,
                       std::string* pUserErrMsg);
 
 Error writeProjectFile(const FilePath& projectFilePath,

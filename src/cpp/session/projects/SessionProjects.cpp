@@ -73,6 +73,9 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["restore_workspace"] = config.restoreWorkspace;
    configJson["save_workspace"] = config.saveWorkspace;
    configJson["always_save_history"] = config.alwaysSaveHistory;
+   configJson["use_spaces_for_tab"] = config.useSpacesForTab;
+   configJson["num_spaces_for_tab"] = config.numSpacesForTab;
+   configJson["encoding"] = config.encoding;
    return configJson;
 }
 
@@ -93,7 +96,10 @@ Error writeProjectConfig(const json::JsonRpcRequest& request,
                     "version", &(config.version),
                     "restore_workspace", &(config.restoreWorkspace),
                     "save_workspace", &(config.saveWorkspace),
-                    "always_save_history", &(config.alwaysSaveHistory));
+                    "always_save_history", &(config.alwaysSaveHistory),
+                    "use_spaces_for_tab", &(config.useSpacesForTab),
+                    "num_spaces_for_tab", &(config.numSpacesForTab),
+                    "encoding", &(config.encoding));
    if (error)
       return error;
 

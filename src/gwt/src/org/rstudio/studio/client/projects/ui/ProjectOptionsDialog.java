@@ -41,7 +41,10 @@ public class ProjectOptionsDialog extends ModalDialog<RProjectConfig>
    {
       return RProjectConfig.create(restoreWorkspace_.getSelectedValue(), 
                                    saveWorkspace_.getSelectedValue(), 
-                                   alwaysSaveHistory_.getSelectedValue());
+                                   alwaysSaveHistory_.getSelectedValue(),
+                                   initialSettings_.getUseSpacesForTab(),
+                                   initialSettings_.getNumSpacesForTab(),
+                                   initialSettings_.getEncoding());
    }
 
    @Override

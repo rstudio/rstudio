@@ -149,26 +149,58 @@ void UserSettings::setUiPrefs(const core::json::Object& prefsObject)
    updatePrefsCache(prefsObject);
 }
 
-void UserSettings::updatePrefsCache(const json::Object& prefs) const
-{
-   // read fields
-   std::string defaultEncoding;
-   Error error = json::readObject(prefs,"default_encoding", &defaultEncoding);
-   if (error)
-      LOG_ERROR(error);
+namespace {
 
-   // set pref
-   pDefaultEncoding_.reset(new std::string(defaultEncoding));
+template <typename T>
+T readPref(const json::Object& prefs,
+           const std::string& name,
+           const T& defaultValue)
+{
+   T value;
+   Error error = json::readObject(prefs,
+                                  name,
+                                  defaultValue,
+                                  &value);
+   if (error)
+   {
+      value = defaultValue;
+      error.addProperty("pref", name);
+      LOG_ERROR(error);
+   }
+
+   return value;
+}
+
+} // anonymous namespace
+
+void UserSettings::updatePrefsCache(const json::Object& prefs) const
+{ 
+   bool useSpacesForTab = readPref<bool>(prefs, "use_spaces_for_tab", true);
+   pUseSpacesForTab_.reset(new bool(useSpacesForTab));
+
+   int numSpacesForTab = readPref<int>(prefs, "num_spaces_for_tab", 2);
+   pNumSpacesForTab_.reset(new int(numSpacesForTab));
+
+   std::string enc = readPref<std::string>(prefs, "default_encoding", "");
+   pDefaultEncoding_.reset(new std::string(enc));
 }
 
 
 // readers for ui prefs
+
+bool UserSettings::useSpacesForTab() const
+{
+   return readUiPref<bool>(pUseSpacesForTab_);
+}
+
+int UserSettings::numSpacesForTab() const
+{
+   return readUiPref<int>(pNumSpacesForTab_);
+}
+
 std::string UserSettings::defaultEncoding() const
 {
-   if (!pDefaultEncoding_)
-      updatePrefsCache(uiPrefs());
-
-   return *pDefaultEncoding_;
+   return readUiPref<std::string>(pDefaultEncoding_);
 }
 
 bool UserSettings::alwaysRestoreLastProject() const

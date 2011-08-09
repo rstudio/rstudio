@@ -76,6 +76,48 @@ bool interpretYesNoAskValue(const std::string& value,
    }
 }
 
+std::string boolValueToString(bool value)
+{
+   if (value)
+      return "Yes";
+   else
+      return "No";
+}
+
+bool interpretBoolValue(const std::string& value, bool* pValue)
+{
+   std::string valueLower = string_utils::toLower(value);
+   boost::algorithm::trim(valueLower);
+   if (valueLower == "yes")
+   {
+      *pValue = true;
+      return true;
+   }
+   else if (valueLower == "no")
+   {
+      *pValue = false;
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+
+bool interpretIntValue(const std::string& value, int* pValue)
+{
+   try
+   {
+      *pValue = boost::lexical_cast<int>(value);
+      return true;
+   }
+   catch(const boost::bad_lexical_cast& e)
+   {
+      return false;
+   }
+}
+
 } // anonymous namespace
 
 std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
@@ -102,9 +144,14 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
 
 
 Error readProjectFile(const FilePath& projectFilePath,
+                      const RProjectConfig& defaultConfig,
                       RProjectConfig* pConfig,
+                      bool* pProvidedDefaults,
                       std::string* pUserErrMsg)
 {
+   // default to not providing defaults
+   *pProvidedDefaults = false;
+
    // first read the project DCF file
    typedef std::map<std::string,std::string> Fields;
    Fields dcfFields;
@@ -144,7 +191,7 @@ Error readProjectFile(const FilePath& projectFilePath,
                           ERROR_LOCATION);
    }
 
-   // extract restore workspace (optional)
+   // extract restore workspace
    it = dcfFields.find("RestoreWorkspace");
    if (it != dcfFields.end())
    {
@@ -153,10 +200,11 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
    else
    {
-      pConfig->restoreWorkspace = DefaultValue;
+      pConfig->restoreWorkspace = defaultConfig.restoreWorkspace;
+      *pProvidedDefaults = true;
    }
 
-   // extract save workspace (optional)
+   // extract save workspace
    it = dcfFields.find("SaveWorkspace");
    if (it != dcfFields.end())
    {
@@ -165,10 +213,11 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
    else
    {
-      pConfig->saveWorkspace = DefaultValue;
+      pConfig->saveWorkspace = defaultConfig.saveWorkspace;
+      *pProvidedDefaults = true;
    }
 
-   // extract always save history (optional)
+   // extract always save history
    it = dcfFields.find("AlwaysSaveHistory");
    if (it != dcfFields.end())
    {
@@ -177,7 +226,46 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
    else
    {
-      pConfig->alwaysSaveHistory = DefaultValue;
+      pConfig->alwaysSaveHistory = defaultConfig.alwaysSaveHistory;
+      *pProvidedDefaults = true;
+   }
+
+   // extract spaces for tab
+   it = dcfFields.find("UseSpacesForTab");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->useSpacesForTab)))
+         return requiredFieldError("UseSpacesForTab", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->useSpacesForTab = defaultConfig.useSpacesForTab;
+      *pProvidedDefaults = true;
+   }
+
+   // extract num spaces for tab
+   it = dcfFields.find("NumSpacesForTab");
+   if (it != dcfFields.end())
+   {
+      if (!interpretIntValue(it->second, &(pConfig->numSpacesForTab)))
+         return requiredFieldError("NumSpacesForTab", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->numSpacesForTab = defaultConfig.numSpacesForTab;
+      *pProvidedDefaults = true;
+   }
+
+   // extract encoding
+   it = dcfFields.find("Encoding");
+   if (it != dcfFields.end())
+   {
+      pConfig->encoding = it->second;
+   }
+   else
+   {
+      pConfig->encoding = defaultConfig.encoding;
+      *pProvidedDefaults = true;
    }
 
    return Success();
@@ -193,13 +281,21 @@ Error writeProjectFile(const FilePath& projectFilePath,
       "\n"
       "RestoreWorkspace: %2%\n"
       "SaveWorkspace: %3%\n"
-      "AlwaysSaveHistory: %4%\n");
+      "AlwaysSaveHistory: %4%\n"
+      "\n"
+      "UseSpacesForTab: %5%\n"
+      "NumSpacesForTab: %6%\n"
+      "\n"
+      "Encoding: %7%\n");
 
    std::string contents = boost::str(fmt %
         boost::io::group(std::fixed, std::setprecision(1), config.version) %
         yesNoAskValueToString(config.restoreWorkspace) %
         yesNoAskValueToString(config.saveWorkspace) %
-        yesNoAskValueToString(config.alwaysSaveHistory));
+        yesNoAskValueToString(config.alwaysSaveHistory) %
+        boolValueToString(config.useSpacesForTab) %
+        config.numSpacesForTab %
+        config.encoding);
 
    // write it
    return writeStringToFile(projectFilePath,
