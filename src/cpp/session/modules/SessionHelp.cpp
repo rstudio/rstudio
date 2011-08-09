@@ -20,6 +20,7 @@
 #include <boost/function.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/iostreams/filter/aggregate.hpp>
 
 #include <core/Error.hpp>
@@ -573,7 +574,7 @@ void handleHttpdRequest(const std::string& location,
    std::string path = http::util::urlDecode(uri);
 
    // server custom css file if necessary
-   if (path == "/library/R.css" || path == "/doc/html/R.css")
+   if (boost::algorithm::ends_with(path, "/R.css"))
    {
       core::FilePath cssFile = options().rHelpCssFilePath();
       if (cssFile.exists())
