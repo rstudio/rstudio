@@ -15,17 +15,42 @@
  */
 package com.google.gwt.validation.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.shared.GwtLocale;
 
 import javax.validation.MessageInterpolator.Context;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Simple GWT {@link javax.validation.MessageInterpolator}.
  */
 public class GwtMessageInterpolator extends BaseMessageInterpolator {
   // This class only has the parts the need to overridden for GWT
 
-  public String interpolate(String messageTemplate, Context context,
+  /**
+   * Creates a {@link javax.validation.MessageInterpolator MessageInterpolator}
+   * MessageInterpolator that uses the default
+   * {@link UserValidationMessagesResolver}.
+   */
+  public GwtMessageInterpolator() {
+    this((UserValidationMessagesResolver) GWT
+        .create(UserValidationMessagesResolver.class));
+  }
+
+  /**
+   * Creates a {@link javax.validation.MessageInterpolator MessageInterpolator}
+   * using the supplie{@link UserValidationMessagesResolver}.
+   *
+   * @param userValidationMessagesResolver
+   */
+  public GwtMessageInterpolator(
+      UserValidationMessagesResolver userValidationMessagesResolver) {
+    super(userValidationMessagesResolver);
+  }
+
+  public final String interpolate(String messageTemplate, Context context,
       GwtLocale locale) {
     return gwtInterpolate(messageTemplate,context,locale);
   }

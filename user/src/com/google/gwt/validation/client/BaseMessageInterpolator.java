@@ -36,7 +36,7 @@ public abstract class BaseMessageInterpolator implements MessageInterpolator {
   /**
    * Implementation of {@link Context}.
    */
-  public static class ContextImpl implements Context {
+  public static final class ContextImpl implements Context {
 
     private final ConstraintDescriptor<?> constraintDescriptor;
     private final Object value;
@@ -55,7 +55,7 @@ public abstract class BaseMessageInterpolator implements MessageInterpolator {
     }
   }
 
-  // local version because guava is included.
+  // local version because guava is not included.
   private static interface Function<F, T> {
     T apply(F from);
   }
@@ -98,15 +98,18 @@ public abstract class BaseMessageInterpolator implements MessageInterpolator {
   /**
    * Replaces keys using the Validation User custom properties.
    */
-  private final Function<String, String> userReplacer =
-      createReplacer((ValidationMessageResolver)
-          GWT.create(UserValidationMessagesResolver.class));
+  private final Function<String, String> userReplacer;
 
-  public String interpolate(String messageTemplate, Context context) {
+  protected BaseMessageInterpolator(
+      UserValidationMessagesResolver userValidationMessagesResolver) {
+    userReplacer = createReplacer(userValidationMessagesResolver);
+  }
+
+  public final String interpolate(String messageTemplate, Context context) {
     return gwtInterpolate(messageTemplate, context, null);
   }
 
-  protected String gwtInterpolate(String message, Context context,
+  protected final String gwtInterpolate(String message, Context context,
       GwtLocale locale) {
     // see Section 4.3.1.1
     String resolvedMessage = message;
@@ -140,7 +143,7 @@ public abstract class BaseMessageInterpolator implements MessageInterpolator {
     return resolvedMessage;
   }
 
-  protected String replaceParameters(String message,
+  protected final String replaceParameters(String message,
       Function<String, String> replacer) {
     StringBuffer sb = new StringBuffer();
     int index = 0;
@@ -159,7 +162,7 @@ public abstract class BaseMessageInterpolator implements MessageInterpolator {
     return sb.toString();
   }
 
-  private String removeCurlyBrace(String parameter) {
+  private final String removeCurlyBrace(String parameter) {
     return parameter.substring(1, parameter.length() - 1);
   }
 }
