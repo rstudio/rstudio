@@ -737,11 +737,6 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
         newPageStart -= shift;
         index += shift;
       }
-      if (newPageStart < 0) {
-        index += newPageStart;
-        newPageSize += newPageStart;
-        newPageStart = 0;
-      }
 
       // Increase range at the end.
       while (index >= newPageSize) {
