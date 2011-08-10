@@ -17,12 +17,12 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
 import java.util.ArrayList;
@@ -66,15 +66,15 @@ public abstract class PreferencesPane extends VerticalPanel
    }
    
    protected CheckBox checkboxPref(String label,
-                                   final HasValue<Boolean> prefValue)
+                                   final PrefValue<Boolean> prefValue)
    {
       final CheckBox checkBox = new CheckBox(label, false);
-      checkBox.setValue(prefValue.getValue());
+      checkBox.setValue(prefValue.getGlobalValue());
       onApplyCommands_.add(new Command()
       {
          public void execute()
          {
-            prefValue.setValue(checkBox.getValue());
+            prefValue.setGlobalValue(checkBox.getValue());
          }
       });
       return checkBox;
@@ -99,18 +99,18 @@ public abstract class PreferencesPane extends VerticalPanel
    }
 
    protected NumericValueWidget numericPref(String label,
-                                            final HasValue<Integer> prefValue)
+                                            final PrefValue<Integer> prefValue)
    {
       final NumericValueWidget widget = new NumericValueWidget(label);
       registerEnsureVisibleHandler(widget);
-      widget.setValue(prefValue.getValue() + "");
+      widget.setValue(prefValue.getGlobalValue() + "");
       onApplyCommands_.add(new Command()
       {
          public void execute()
          {
             try
             {
-               prefValue.setValue(Integer.parseInt(widget.getValue()));
+               prefValue.setGlobalValue(Integer.parseInt(widget.getValue()));
             }
             catch (Exception e)
             {

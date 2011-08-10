@@ -45,7 +45,7 @@ public class AppearancePreferencesPane extends PreferencesPane
                                    labels,
                                    values,
                                    false);
-      if (!fontSize_.setValue(uiPrefs.fontSize().getValue() + ""))
+      if (!fontSize_.setValue(uiPrefs.fontSize().getGlobalValue() + ""))
          fontSize_.getListBox().setSelectedIndex(3);
       fontSize_.getListBox().addChangeHandler(new ChangeHandler()
       {
@@ -72,14 +72,14 @@ public class AppearancePreferencesPane extends PreferencesPane
             themes.getThemeNames().length);
       theme_.addStyleName(res.styles().themeChooser());
       leftPanel.add(theme_);
-      theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getValue()));
+      theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getGlobalValue()));
 
       FlowPanel previewPanel = new FlowPanel();
       previewPanel.setSize("100%", "100%");
       preview_ = new AceEditorPreview(CODE_SAMPLE);
       preview_.setHeight("375px");
       preview_.setWidth("288px");
-      preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getValue()));
+      preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getGlobalValue()));
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
       previewPanel.add(preview_);
 
@@ -103,8 +103,8 @@ public class AppearancePreferencesPane extends PreferencesPane
    {
       super.onApply(rPrefs);
       double fontSize = Double.parseDouble(fontSize_.getValue());
-      uiPrefs_.fontSize().setValue(fontSize);
-      uiPrefs_.theme().setValue(theme_.getValue());
+      uiPrefs_.fontSize().setGlobalValue(fontSize);
+      uiPrefs_.theme().setGlobalValue(theme_.getValue());
    }
 
    @Override

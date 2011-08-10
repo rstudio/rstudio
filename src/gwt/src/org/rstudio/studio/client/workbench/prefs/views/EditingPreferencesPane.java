@@ -49,7 +49,7 @@ public class EditingPreferencesPane extends PreferencesPane
       add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
       add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
 
-      encodingValue_ = prefs_.defaultEncoding().getValue();
+      encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
       add(encoding_ = new TextBoxWithButton(
             "Default text encoding:",
             "Change...",
@@ -85,7 +85,7 @@ public class EditingPreferencesPane extends PreferencesPane
             }));
       encoding_.setWidth("250px");
       encoding_.addStyleName(res_.styles().encodingChooser());
-      setEncoding(prefs.defaultEncoding().getValue());
+      setEncoding(prefs.defaultEncoding().getGlobalValue());
    }
 
    private void setEncoding(String encoding)
@@ -121,7 +121,7 @@ public class EditingPreferencesPane extends PreferencesPane
    public void onApply(RPrefs rPrefs)
    {
       super.onApply(rPrefs);
-      prefs_.defaultEncoding().setValue(encodingValue_);
+      prefs_.defaultEncoding().setGlobalValue(encodingValue_);
    }
 
    private final SourceServerOperations server_;

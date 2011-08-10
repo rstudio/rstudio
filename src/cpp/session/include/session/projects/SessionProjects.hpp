@@ -20,6 +20,7 @@
 #include <boost/foreach.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/json/Json.hpp>
 
 #include <core/r_util/RProjectFile.hpp>
 
@@ -49,6 +50,8 @@ public:
    {
       config_ = config;
    }
+
+   core::json::Object uiPrefs() const;
 
 public:
    static core::r_util::RProjectConfig defaultConfig();

@@ -161,7 +161,7 @@ public class Projects implements OpenProjectFileHandler,
                   {
                      indicator.onProgress("Saving default project location...");
                      
-                     pUIPrefs_.get().defaultProjectLocation().setValue(
+                     pUIPrefs_.get().defaultProjectLocation().setGlobalValue(
                                     newProject.getNewDefaultProjectLocation());
                      
                      // call the server -- in all cases continue on with

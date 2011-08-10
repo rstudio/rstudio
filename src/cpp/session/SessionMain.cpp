@@ -398,10 +398,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
    {
       sessionInfo["active_project_file"] = module_context::createAliasedPath(
                               projects::projectContext().file());
+      sessionInfo["project_ui_prefs"] = projects::projectContext().uiPrefs();
    }
    else
    {
       sessionInfo["active_project_file"] = json::Value();
+      sessionInfo["project_ui_prefs"] = json::Value();
    }
 
    sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));

@@ -158,10 +158,18 @@ public class SessionInfo extends JavaScriptObject
          return null;
       }
    }
+  
+   public final native JsObject getProjectUIPrefs() /*-{
+      if (!this.project_ui_prefs)
+         this.project_ui_prefs = {};
+      return this.project_ui_prefs;
+   }-*/;
    
    public final native boolean isIndexingEnabled()/*-{
       return this.indexing_enabled;
    }-*/;
+
+  
    
 }
 

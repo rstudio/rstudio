@@ -571,7 +571,7 @@ public class Application implements ApplicationEventHandlers,
       // update prefs
       if (updatePref)
       {
-         uiPrefs_.get().toolbarVisible().setValue(showToolbar);
+         uiPrefs_.get().toolbarVisible().setGlobalValue(showToolbar);
          server_.setUiPrefs(
                   session_.getSessionInfo().getUiPrefs(), 
                   new SimpleRequestCallback<Void>("Error Saving Preference"));

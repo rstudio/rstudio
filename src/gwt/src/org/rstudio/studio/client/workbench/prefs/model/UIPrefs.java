@@ -25,7 +25,8 @@ public class UIPrefs extends Prefs
    @Inject
    public UIPrefs(Session session)
    {
-      super(session.getSessionInfo().getUiPrefs());
+      super(session.getSessionInfo().getUiPrefs(),
+            session.getSessionInfo().getProjectUIPrefs());
    }
 
    public PrefValue<Boolean> showLineNumbers()

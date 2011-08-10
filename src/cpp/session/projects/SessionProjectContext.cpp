@@ -149,6 +149,15 @@ Error ProjectContext::initialize(const FilePath& projectFile,
 
 }
 
+ json::Object ProjectContext::uiPrefs() const
+ {
+    json::Object uiPrefs;
+    uiPrefs["use_spaces_for_tab"] = config_.useSpacesForTab;
+    uiPrefs["num_spaces_for_tab"] = config_.numSpacesForTab;
+    uiPrefs["default_encoding"] = config_.encoding;
+    return uiPrefs;
+ }
+
 
 r_util::RProjectConfig ProjectContext::defaultConfig()
 {

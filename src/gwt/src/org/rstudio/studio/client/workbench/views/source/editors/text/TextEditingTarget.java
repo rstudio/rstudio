@@ -937,7 +937,7 @@ public class TextEditingTarget implements EditingTarget
 
                         if (d.getValue().isSaveAsDefault())
                         {
-                           prefs_.defaultEncoding().setValue(newEncoding);
+                           prefs_.defaultEncoding().setGlobalValue(newEncoding);
                            updateUIPrefs();
                         }
 
@@ -1443,7 +1443,7 @@ public class TextEditingTarget implements EditingTarget
       // update pref if necessary
       if (prefs_.sourceWithEcho().getValue() != echo)
       {
-         prefs_.sourceWithEcho().setValue(echo, true);
+         prefs_.sourceWithEcho().setGlobalValue(echo, true);
          updateUIPrefs();
       }
    }

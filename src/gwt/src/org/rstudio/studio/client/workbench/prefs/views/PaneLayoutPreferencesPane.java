@@ -171,11 +171,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             lb.addItem(value);
       }
 
-      PaneConfig value = uiPrefs.paneConfig().getValue();
+      PaneConfig value = uiPrefs.paneConfig().getGlobalValue();
       if (value == null || !value.validateAndAutoCorrect())
-         uiPrefs.paneConfig().setValue(PaneConfig.createDefault(), false);
+         uiPrefs.paneConfig().setGlobalValue(PaneConfig.createDefault(), false);
 
-      JsArrayString origPanes = uiPrefs.paneConfig().getValue().getPanes();
+      JsArrayString origPanes = uiPrefs.paneConfig().getGlobalValue().getPanes();
       for (int i = 0; i < 4; i++)
       {
          boolean success = selectByValue(allPanes_[i], origPanes.get(i));
@@ -219,9 +219,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                                             rightTopPanel_, rightBottomPanel_};
 
       tabSet1ModuleList_ = new ModuleList();
-      tabSet1ModuleList_.setValue(toArrayList(uiPrefs.paneConfig().getValue().getTabSet1()));
+      tabSet1ModuleList_.setValue(toArrayList(uiPrefs.paneConfig().getGlobalValue().getTabSet1()));
       tabSet2ModuleList_ = new ModuleList();
-      tabSet2ModuleList_.setValue(toArrayList(uiPrefs.paneConfig().getValue().getTabSet2()));
+      tabSet2ModuleList_.setValue(toArrayList(uiPrefs.paneConfig().getGlobalValue().getTabSet2()));
 
       ValueChangeHandler<ArrayList<Boolean>> vch = new ValueChangeHandler<ArrayList<Boolean>>()
       {
@@ -314,7 +314,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          for (String tab : tabSet2ModuleList_.getValue())
             tabSet2.push(tab);
 
-         uiPrefs_.paneConfig().setValue(PaneConfig.create(panes, tabSet1, tabSet2));
+         uiPrefs_.paneConfig().setGlobalValue(PaneConfig.create(panes, tabSet1, tabSet2));
 
          dirty_ = false;
       }

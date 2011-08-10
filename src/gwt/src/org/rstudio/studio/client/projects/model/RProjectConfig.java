@@ -67,6 +67,6 @@ public class RProjectConfig extends JavaScriptObject
    }-*/;  
    
    public native final String getEncoding() /*-{
-      return this.encoding;
+      return this.default_encoding;
    }-*/;
 }
