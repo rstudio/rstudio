@@ -15,8 +15,10 @@ package org.rstudio.studio.client.projects.model;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
-public interface ProjectsServerOperations extends PrefsServerOperations
+public interface ProjectsServerOperations extends PrefsServerOperations,
+                                                  SourceServerOperations
 {  
    void createProject(String projectDirectory, 
                       ServerRequestCallback<Void> callback);

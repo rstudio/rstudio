@@ -13,12 +13,22 @@
 package org.rstudio.studio.client.projects.ui;
 
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.NumericValueWidget;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
@@ -29,10 +39,12 @@ public class ProjectOptionsDialog extends ModalDialog<RProjectConfig>
 {
    public ProjectOptionsDialog(
          RProjectConfig initialSettings,
+         SourceServerOperations server,
          ProgressOperationWithInput<RProjectConfig> operation)
    {
       super("Project Options", operation);
       initialSettings_ = initialSettings;
+      server_ = server;
    }
    
 
@@ -42,15 +54,15 @@ public class ProjectOptionsDialog extends ModalDialog<RProjectConfig>
       return RProjectConfig.create(restoreWorkspace_.getSelectedValue(), 
                                    saveWorkspace_.getSelectedValue(), 
                                    alwaysSaveHistory_.getSelectedValue(),
-                                   initialSettings_.getUseSpacesForTab(),
-                                   initialSettings_.getNumSpacesForTab(),
-                                   initialSettings_.getEncoding());
+                                   chkSpacesForTab_.getValue(),
+                                   getTabWidth(),
+                                   encodingValue_);
    }
 
    @Override
    protected boolean validate(RProjectConfig input)
    {
-      return true;
+      return numSpacesForTab_.validate("Tab width");
    }
 
    @Override
@@ -87,7 +99,82 @@ public class ProjectOptionsDialog extends ModalDialog<RProjectConfig>
       
       mainPanel.add(grid);
       
+      // source editing options
+      Label sourceEditingLabel = new Label("Source Editing");
+      sourceEditingLabel.addStyleName(RESOURCES.styles().headerLabel());
+      sourceEditingLabel.addStyleName(RESOURCES.styles().sourceEditingHeader());
+      mainPanel.add(sourceEditingLabel);
+      
+      chkSpacesForTab_ = new CheckBox("Insert spaces for tab", false);
+      chkSpacesForTab_.setValue(initialSettings_.getUseSpacesForTab());
+      chkSpacesForTab_.addStyleName(RESOURCES.styles().useSpacesForTab());
+      mainPanel.add(chkSpacesForTab_);
+      
+      numSpacesForTab_ = new NumericValueWidget("Tab width");
+      numSpacesForTab_.setValue(initialSettings_.getNumSpacesForTab() + "");
+      numSpacesForTab_.addStyleName(RESOURCES.styles().numberOfTabs());
+      mainPanel.add(numSpacesForTab_);
+      
+      encoding_ = new TextBoxWithButton(
+            "Text encoding:",
+            "Change...",
+            new ClickHandler()
+            {
+               public void onClick(ClickEvent event)
+               {
+                  server_.iconvlist(new SimpleRequestCallback<IconvListResult>()
+                  {
+                     @Override
+                     public void onResponseReceived(IconvListResult response)
+                     {
+                        new ChooseEncodingDialog(
+                              response.getCommon(),
+                              response.getAll(),
+                              encodingValue_,
+                              false,
+                              false,
+                              new OperationWithInput<String>()
+                              {
+                                 public void execute(String encoding)
+                                 {
+                                    if (encoding == null)
+                                       return;
+
+                                    setEncoding(encoding);
+                                 }
+                              }).showModal();
+                     }
+                  });
+
+               }
+            });
+      encoding_.setWidth("250px");
+      encoding_.addStyleName(RESOURCES.styles().encodingChooser());
+      setEncoding(initialSettings_.getEncoding());
+      mainPanel.add(encoding_);
+      
+      
       return mainPanel;
+   }
+   
+   private void setEncoding(String encoding)
+   {
+      encodingValue_ = encoding;
+      encoding_.setText(encoding);
+   }
+   
+   private int getTabWidth()
+   {
+      try
+      {
+        return Integer.parseInt(numSpacesForTab_.getValue());
+      }
+      catch (Exception e)
+      {
+         // should never happen since validate would have been called
+         // prior to exiting the dialog. revert to original setting
+         return initialSettings_.getNumSpacesForTab();
+      }
    }
    
    private class YesNoAskDefault extends ListBox
@@ -122,6 +209,10 @@ public class ProjectOptionsDialog extends ModalDialog<RProjectConfig>
       String headerLabel();
       String infoLabel();
       String workspaceGrid();
+      String sourceEditingHeader();
+      String useSpacesForTab();
+      String numberOfTabs();
+      String encodingChooser();
    }
   
    static interface Resources extends ClientBundle
@@ -145,5 +236,11 @@ public class ProjectOptionsDialog extends ModalDialog<RProjectConfig>
    private YesNoAskDefault restoreWorkspace_;
    private YesNoAskDefault saveWorkspace_;
    private YesNoAskDefault alwaysSaveHistory_;
+   private CheckBox chkSpacesForTab_;
+   private NumericValueWidget numSpacesForTab_;
+   private TextBoxWithButton encoding_;
+   private String encodingValue_;
    private final RProjectConfig initialSettings_;
+   
+   private final SourceServerOperations server_;
 }

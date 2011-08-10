@@ -259,11 +259,12 @@ public class Projects implements OpenProjectFileHandler,
       server_.readProjectConfig(new SimpleRequestCallback<RProjectConfig>() {
 
          @Override
-         public void onResponseReceived(RProjectConfig config)
+         public void onResponseReceived(final RProjectConfig config)
          {
             indicator.onCompleted();
             ProjectOptionsDialog dlg = new ProjectOptionsDialog(
                config,
+               server_,
                new ProgressOperationWithInput<RProjectConfig>() {
                   @Override
                   public void execute(RProjectConfig input,
@@ -272,7 +273,21 @@ public class Projects implements OpenProjectFileHandler,
                       indicator.onProgress("Saving options...");
                       server_.writeProjectConfig(
                             input, 
-                            new VoidServerRequestCallback(indicator));
+                            new VoidServerRequestCallback(indicator) {
+                               @Override
+                               public void onSuccess()
+                               {
+                                  // update prefs
+                                  UIPrefs prefs = pUIPrefs_.get();
+                                  prefs.useSpacesForTab().setProjectValue(
+                                                 config.getUseSpacesForTab());
+                                  prefs.numSpacesForTab().setProjectValue(
+                                                 config.getNumSpacesForTab());
+                                  prefs.defaultEncoding().setProjectValue(
+                                                 config.getEncoding());
+                                  
+                               }
+                            });
                   }
                });
             dlg.showModal();

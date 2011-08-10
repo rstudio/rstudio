@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
@@ -102,6 +103,7 @@ public abstract class PreferencesPane extends VerticalPanel
                                             final PrefValue<Integer> prefValue)
    {
       final NumericValueWidget widget = new NumericValueWidget(label);
+      widget.addStyleName(res_.styles().numericValueWidget());
       registerEnsureVisibleHandler(widget);
       widget.setValue(prefValue.getGlobalValue() + "");
       onApplyCommands_.add(new Command()

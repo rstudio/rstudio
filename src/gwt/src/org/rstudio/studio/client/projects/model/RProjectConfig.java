@@ -38,7 +38,7 @@ public class RProjectConfig extends JavaScriptObject
       config.always_save_history = alwaysSaveHistory;
       config.use_spaces_for_tab = useSpacesForTab;
       config.num_spaces_for_tab = numSpacesForTab;
-      config.encoding = encoding;
+      config.default_encoding = encoding;
       return config;
    }-*/;
 

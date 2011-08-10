@@ -13,3 +13,24 @@
 .workspaceGrid {
    margin-bottom: 10px;	
 }
+
+.sourceEditingHeader {
+   margin-bottom: 10px;	
+}
+
+.useSpacesForTab {
+	margin-left: 5px;
+}
+
+.numberOfTabs {
+	margin-top: 5px;
+	margin-left: 25px;
+}
+
+
+
+.encodingChooser {
+   margin-top: 13px; 
+   margin-left: 10px;
+   margin-bottom: 15px;
+}

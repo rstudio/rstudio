@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.prefs.views;
+package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.ui.Label;
