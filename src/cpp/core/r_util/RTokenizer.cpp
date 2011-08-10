@@ -22,8 +22,6 @@
 #include <core/StringUtils.hpp>
 
 
-// TODO: investigate why tab settings aren't syncing right away
-
 // TODO: deal with project encoding not found on target system
 
 // TODO: implement file monitoring

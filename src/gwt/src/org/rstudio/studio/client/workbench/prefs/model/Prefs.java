@@ -133,7 +133,7 @@ public abstract class Prefs
 
          doSetValue(root, name_, value);
          if (fireEvents)
-            ValueChangeEvent.fire(this, value);
+            ValueChangeEvent.fire(this, getValue());
          
       }
 
