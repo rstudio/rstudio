@@ -285,7 +285,6 @@ Error writeProjectFile(const FilePath& projectFilePath,
       "\n"
       "UseSpacesForTab: %5%\n"
       "NumSpacesForTab: %6%\n"
-      "\n"
       "Encoding: %7%\n");
 
    std::string contents = boost::str(fmt %

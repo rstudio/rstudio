@@ -18,6 +18,7 @@
 #include <boost/format.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/r_util/RProjectFile.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -117,21 +118,11 @@ Error ProjectContext::initialize(const FilePath& projectFile,
       return error;
    }
 
-   // setup defaults for project file
-   r_util::RProjectConfig defaultConfig;
-   defaultConfig.useSpacesForTab = userSettings().useSpacesForTab();
-   defaultConfig.numSpacesForTab = userSettings().numSpacesForTab();
-   if (!userSettings().defaultEncoding().empty())
-      defaultConfig.encoding = userSettings().defaultEncoding();
-   else
-      defaultConfig.encoding = "UTF-8";
-
-
    // read project file config
    bool providedDefaults;
    r_util::RProjectConfig config;
    error = r_util::readProjectFile(projectFile,
-                                   defaultConfig,
+                                   defaultConfig(),
                                    &config,
                                    &providedDefaults,
                                    pUserErrMsg);
@@ -158,6 +149,19 @@ Error ProjectContext::initialize(const FilePath& projectFile,
 
 }
 
+
+r_util::RProjectConfig ProjectContext::defaultConfig()
+{
+   // setup defaults for project file
+   r_util::RProjectConfig defaultConfig;
+   defaultConfig.useSpacesForTab = userSettings().useSpacesForTab();
+   defaultConfig.numSpacesForTab = userSettings().numSpacesForTab();
+   if (!userSettings().defaultEncoding().empty())
+      defaultConfig.encoding = userSettings().defaultEncoding();
+   else
+      defaultConfig.encoding = "UTF-8";
+   return defaultConfig;
+}
 
 } // namespace projects
 } // namesapce session

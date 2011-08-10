@@ -50,6 +50,9 @@ public:
       config_ = config;
    }
 
+public:
+   static core::r_util::RProjectConfig defaultConfig();
+
 private:
    core::FilePath file_;
    core::FilePath directory_;
