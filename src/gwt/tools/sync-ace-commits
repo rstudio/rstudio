@@ -25,6 +25,7 @@ git merge \
     origin/patch-normalizeinput2 \
     origin/bugfix/search-regexp \
     origin/bugfix/selected-word-colors \
+    origin/patch/scroll-granularity \
 
 
 make clean
