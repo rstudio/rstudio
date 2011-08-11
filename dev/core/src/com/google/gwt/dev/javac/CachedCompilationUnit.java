@@ -53,7 +53,7 @@ public class CachedCompilationUnit extends CompilationUnit {
   public CachedCompilationUnit(CachedCompilationUnit unit, long lastModified,
       String resourceLocation) {
     assert unit != null;
-    this.compiledClasses = unit.getCompiledClasses();
+    this.compiledClasses = CompiledClass.copyForUnit(unit.getCompiledClasses(), this);
     this.contentId = unit.getContentId();
     this.dependencies = unit.getDependencies();
     this.resourcePath = unit.getResourcePath();
@@ -85,7 +85,7 @@ public class CachedCompilationUnit extends CompilationUnit {
   @SuppressWarnings("deprecation")
   CachedCompilationUnit(CompilationUnit unit, long astToken) {
     assert unit != null;
-    this.compiledClasses = unit.getCompiledClasses();
+    this.compiledClasses = CompiledClass.copyForUnit(unit.getCompiledClasses(), this);
     this.contentId = unit.getContentId();
     this.dependencies = unit.getDependencies();
     this.resourceLocation = unit.getResourceLocation();
@@ -109,7 +109,7 @@ public class CachedCompilationUnit extends CompilationUnit {
     this.astToken = new DiskCacheToken(astToken);
     this.astVersion = GwtAstBuilder.getSerializationVersion();
   }
-
+  
   @Override
   public CachedCompilationUnit asCachedCompilationUnit() {
     return this;

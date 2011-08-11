@@ -16,16 +16,23 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.javac.TypeOracleMediator.TypeData;
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.DiskCacheToken;
-import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.Name.InternalName;
+import com.google.gwt.dev.util.StringInterner;
 
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Encapsulates the state of a single compiled class file.
@@ -34,20 +41,52 @@ public final class CompiledClass implements Serializable {
 
   private static final DiskCache diskCache = DiskCache.INSTANCE;
 
-  private final CompiledClass enclosingClass;
-  private final String internalName;
-  private final String sourceName;
-  private final boolean isLocal;
-  private transient TypeData typeData;
-  private CompilationUnit unit;
-  private String signatureHash;
+  static Collection<CompiledClass> copyForUnit(Collection<CompiledClass> in, CompilationUnit newUnit) {
+    if (in == null) {
+      return null;
+    }
+    CompiledClass[] orig = new CompiledClass[in.size()];
+    List<CompiledClass> copy = new ArrayList<CompiledClass>();
+
+    Map<CompiledClass, CompiledClass> enclosingClassMap = new HashMap<CompiledClass, CompiledClass>();
+    for (CompiledClass cc : in) {
+      CompiledClass copyCc = new CompiledClass(cc, newUnit);
+      copy.add(copyCc);
+      enclosingClassMap.put(cc, copyCc);
+    }
+
+    // Update the enclosing class references.   With enough effort, we could determine the
+    // hierarchical relationship of compiled classes and initialize the copies with the
+    // copied enclosing class, but this is less effort.
+    for (CompiledClass copyCc : copy) {
+      if (copyCc.enclosingClass == null) {
+        continue;
+      }
+      CompiledClass newRef = enclosingClassMap.get(copyCc.enclosingClass);
+      if (null == newRef) {
+        throw new InternalCompilerException("Enclosing type not found for " + copyCc.sourceName);
+      }
+      copyCc.enclosingClass = newRef;
+    }
+
+    return Collections.unmodifiableCollection(copy);
+  }
 
   /**
    * A token to retrieve this object's bytes from the disk cache. byte code is
    * placed in the cache when the object is deserialized.
    */
   private final DiskCacheToken classBytesToken;
+  private CompiledClass enclosingClass;
+  private final String internalName;
+  private final boolean isLocal;
   private transient NameEnvironmentAnswer nameEnvironmentAnswer;
+  private String signatureHash;
+
+  private final String sourceName;
+  private transient TypeData typeData;
+
+  private CompilationUnit unit;
 
   /**
    * Create a compiled class from raw class bytes.
@@ -67,6 +106,20 @@ public final class CompiledClass implements Serializable {
     this.sourceName = StringInterner.get().intern(InternalName.toSourceName(internalName));
     this.classBytesToken = new DiskCacheToken(diskCache.writeByteArray(classBytes));
     this.isLocal = isLocal;
+  }
+
+  /**
+   * Used for cloning all compiled classes in one compilation unit.
+   */
+  private CompiledClass(CompiledClass orig, CompilationUnit newUnit) {
+    this.enclosingClass = orig.enclosingClass;
+    this.internalName = orig.internalName;
+    this.sourceName = orig.sourceName;
+    this.classBytesToken = orig.classBytesToken;
+    this.isLocal = orig.isLocal;
+    this.typeData = orig.typeData;
+    this.unit = newUnit;
+    this.signatureHash = orig.signatureHash;
   }
 
   /**
@@ -111,7 +164,7 @@ public final class CompiledClass implements Serializable {
   public String getSourceName() {
     return sourceName;
   }
-  
+
   public TypeData getTypeData() {
     if (typeData == null) {
       typeData =
@@ -150,5 +203,4 @@ public final class CompiledClass implements Serializable {
   void initUnit(CompilationUnit unit) {
     this.unit = unit;
   }
-
 }
