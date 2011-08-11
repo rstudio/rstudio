@@ -67,6 +67,7 @@ public:
 
 private:
    bool manipulatorIsActive() const;
+   bool trackingMouseClicks(SEXP manipulatorSEXP) const;
    void replayManipulator(SEXP manipulatorSEXP);
 
 private:   

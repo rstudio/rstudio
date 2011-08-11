@@ -98,6 +98,11 @@ buttonNames <- function(manipulator)
     character()
 }
 
+trackingMouseClicks <- function(manipulator)
+{
+  exists(".mouseClick", envir = manipulator)
+}
+
 setMouseClick <- function(manipulator, x, y)
 {
   mouseClick <- list(x = x, y = y)

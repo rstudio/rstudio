@@ -11,8 +11,6 @@
  *
  */
 
-// TODO: only redraw plot if user is asking for mouse clicks
-
 // TODO: appropriate coordinate system mapping
 
 
@@ -238,6 +236,17 @@ SEXP PlotManipulatorManager::activeManipulator() const
    }
 }
 
+bool PlotManipulatorManager::trackingMouseClicks(SEXP manipulatorSEXP) const
+{
+   r::exec::RFunction trackingMouseClicks("manipulate:::trackingMouseClicks");
+   trackingMouseClicks.addParam(manipulatorSEXP);
+   bool tracking = false;
+   Error error = trackingMouseClicks.call(&tracking);
+   if (error)
+      logAndReportError(error, ERROR_LOCATION);
+   return tracking;
+}
+
 bool PlotManipulatorManager::manipulatorIsActive() const
 {
    return plotManager().hasPlot() &&
@@ -283,31 +292,36 @@ void PlotManipulatorManager::manipulatorPlotClicked(int x, int y)
       // get the manipulator
       SEXP manipulatorSEXP = plotManager().activePlot().manipulatorSEXP();
 
-
-      // transform the coordinates
-
-
-      // set the mouse click state
-      r::exec::RFunction setMouseClick("manipulate:::setMouseClick");
-      setMouseClick.addParam(manipulatorSEXP);
-      setMouseClick.addParam(x);
-      setMouseClick.addParam(y);
-      Error error = setMouseClick.call();
-      if (error)
+      // check if we are tracking mouse clicks
+      if (trackingMouseClicks(manipulatorSEXP))
       {
-         logAndReportError(error, ERROR_LOCATION);
-         return;
+
+         // transform the coordinates
+
+
+
+         // set the mouse click state
+         r::exec::RFunction setMouseClick("manipulate:::setMouseClick");
+         setMouseClick.addParam(manipulatorSEXP);
+         setMouseClick.addParam(x);
+         setMouseClick.addParam(y);
+         Error error = setMouseClick.call();
+         if (error)
+         {
+            logAndReportError(error, ERROR_LOCATION);
+            return;
+         }
+
+         // replay the manipulator
+         replayManipulator(manipulatorSEXP);
+
+         // unset the mouse click state
+         r::exec::RFunction clearMouseClick("manipulate:::clearMouseClick");
+         clearMouseClick.addParam(manipulatorSEXP);
+         error = clearMouseClick.call();
+         if (error)
+            logAndReportError(error, ERROR_LOCATION);
       }
-
-      // replay the manipulator
-      replayManipulator(manipulatorSEXP);
-
-      // unset the mouse click state
-      r::exec::RFunction clearMouseClick("manipulate:::clearMouseClick");
-      clearMouseClick.addParam(manipulatorSEXP);
-      error = clearMouseClick.call();
-      if (error)
-         logAndReportError(error, ERROR_LOCATION);
    }
    else
    {
