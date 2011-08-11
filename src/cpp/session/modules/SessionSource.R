@@ -39,7 +39,7 @@
    return()
 })
 
-.rs.addJsonRpcHandler("iconvlist", function()
+.rs.addFunction("iconvcommon", function()
 {
    # NOTE: we originally included MacRoman and HZ-GB-2312 in our list of
    # common encodings however MacRoman isn't available on Windows or Linux
@@ -83,7 +83,30 @@
       #'Windows-1257'
    )
 
-   list(common=sort(intersect(toupper(common), toupper(iconvlist()))),
+   toupper(common)
+})
+
+.rs.addFunction("normalizeEncoding", function(encoding)
+{
+   iconvList <- toupper(iconvlist())
+   encodingUpper <- toupper(encoding)
+   if (encodingUpper %in% iconvList)
+   {
+      return (encodingUpper)
+   }
+   else
+   {
+      encodingUpper <- gsub("[_]", "-", encodingUpper)
+      if (encodingUpper %in% iconvList)
+         return (encodingUpper)
+      else
+         return ()
+   }
+})
+
+.rs.addJsonRpcHandler("iconvlist", function()
+{
+   list(common=sort(intersect(.rs.iconvcommon(), toupper(iconvlist()))),
         all=sort(iconvlist()))
 })
 
