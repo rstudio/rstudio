@@ -90,6 +90,14 @@ userVisibleValues <- function(manipulator, variables)
   mget(variables, envir = get(".userVisibleValues", envir = manipulator))
 }
 
+buttonNames <- function(manipulator)
+{
+  if (exists(".buttonNames", envir = manipulator))
+    get(".buttonNames", envir = manipulator)
+  else
+    character()
+}
+
 resolveVariableArguments <- function(args)
 {
   # if the first argument is an unnamed list then just use this list

@@ -88,6 +88,10 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
                                           manipulator.getBooleanValue(variable),
                                           checkBox);
                   break;
+               case Manipulator.Control.BUTTON:
+                  Manipulator.Button button = control.cast();
+                  addedControl = addButtonControl(variable, button); 
+                  break;
                }
                
                // save reference to first control (for setting focus)
@@ -141,6 +145,17 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
       mainPanel_.add(checkBoxControl);
       return checkBoxControl;
    }
+   
+   private ManipulatorControl addButtonControl(String variable, 
+                                               Manipulator.Button button)
+{
+      ManipulatorControlButton buttonControl =
+         new ManipulatorControlButton(variable, button, changedHandler_);
+      mainPanel_.add(buttonControl);
+      return buttonControl;
+}
+   
+   
    
    @Override
    public void onPreviewNativeEvent(Event.NativePreviewEvent event)

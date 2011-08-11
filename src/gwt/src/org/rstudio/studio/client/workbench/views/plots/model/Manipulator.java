@@ -26,6 +26,7 @@ public class Manipulator extends JavaScriptObject
       public final static int SLIDER = 0;
       public final static int PICKER = 1;
       public final static int CHECKBOX = 2;
+      public final static int BUTTON = 3;
       
       protected Control()
       {
@@ -97,6 +98,14 @@ public class Manipulator extends JavaScriptObject
          return this.initialValue[0];
       }-*/;
    }
+   
+   public static class Button extends Control
+   {
+      protected Button()
+      {
+      }  
+   }
+   
    
    public final native String getID() /*-{
       return this.id[0];

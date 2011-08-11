@@ -50,6 +50,13 @@ void setManipulatorJsonValue(SEXP manipulatorSEXP,
       LOG_ERROR(error);
 }
 
+void setManipulatorValueToFalse(SEXP manipulatorSEXP, const std::string& name)
+{
+   setManipulatorJsonValue(manipulatorSEXP,
+                           std::make_pair(name, json::toJsonValue(false)));
+}
+
+
 void safeExecuteManipulator(SEXP manipulatorSEXP)
 {
    try
@@ -68,6 +75,26 @@ void safeExecuteManipulator(SEXP manipulatorSEXP)
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
+}
+
+void setManipulatorButtonsToFalse(SEXP manipulatorSEXP)
+{
+   // get the list of buttons
+   std::vector<std::string> buttonNames;
+   Error error = r::exec::RFunction("manipulate:::buttonNames",
+                                    manipulatorSEXP).call(&buttonNames);
+   if (error)
+   {
+      logAndReportError(error, ERROR_LOCATION);
+      return;
+   }
+
+   // set the values
+   std::for_each(buttonNames.begin(),
+                 buttonNames.end(),
+                 boost::bind(setManipulatorValueToFalse,
+                             manipulatorSEXP,
+                             _1));
 }
 
 SEXP rs_executeAndAttachManipulator(SEXP manipulatorSEXP)
@@ -223,6 +250,9 @@ void PlotManipulatorManager::setPlotManipulatorValues(const json::Object& values
       replayingManipulator_ = true;
       safeExecuteManipulator(manipulatorSEXP);
       replayingManipulator_ = false;
+
+      // set all of the buttons to false
+      setManipulatorButtonsToFalse(manipulatorSEXP);
    }
    else
    {

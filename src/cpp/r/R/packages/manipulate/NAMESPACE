@@ -2,6 +2,7 @@
 export(slider,
        picker,
        checkbox,
+       button,
        manipulatorSetState,
        manipulatorGetState,
        manipulate)

@@ -36,7 +36,7 @@ slider(min, max, initial = min,
 }
 
 \seealso{
-\code{\link{manipulate}}, \code{\link{picker}}, \code{\link{checkbox}}
+\code{\link{manipulate}}, \code{\link{picker}}, \code{\link{checkbox}}, \code{\link{button}}
 }
 
 \examples{

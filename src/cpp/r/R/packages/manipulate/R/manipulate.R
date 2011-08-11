@@ -117,6 +117,20 @@ checkbox <- function(initial = FALSE, label = NULL)
   return (checkbox)
 }
 
+button <- function(label)
+{
+  # validate inputs
+  if ( !is.null(label) && !is.character(label) )
+    stop("label is not a character value")
+  
+  # create button and return it
+  button <- list(type = 3, 
+                 initialValue = FALSE,
+                 label = label)
+  class(button) <- "manipulator.button"
+  return (button)
+}
+
 manipulatorGetState <- function(name)
 {
   if ( hasActiveManipulator() )
@@ -181,6 +195,7 @@ manipulate <- function(`_expr`, ...)
   manipulator$.userVisibleValues <- new.env(parent = globalenv())
 
   # iterate over the names and controls, adding the default values to the env
+  manipulator$.buttonNames <- character()
   for (name in names(controls))
   {
     # check the name
@@ -191,11 +206,17 @@ manipulate <- function(`_expr`, ...)
     control <- controls[[name]]
     if ( ! (class(control) %in% c("manipulator.slider",
                                   "manipulator.picker",
-                                  "manipulator.checkbox")) )
+                                  "manipulator.checkbox",
+                                  "manipulator.button")) )
     {
       stop(paste("argument", name, "is not a control"))
     }
       
+    # keep a special side list of button controls (so we can 
+    # always set them to FALSE after execution)
+     if (inherits(control, "manipulator.button"))
+       manipulator$.buttonNames <- append(manipulator$.buttonNames, name)
+                                    
     # assign the control's default into the list
     setManipulatorValue(manipulator, name, control$initialValue)
   }

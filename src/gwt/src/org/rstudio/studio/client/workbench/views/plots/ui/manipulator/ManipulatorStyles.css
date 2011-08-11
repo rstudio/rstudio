@@ -82,6 +82,12 @@
 	margin-left: -5px;	
 }
 
+.button {
+	position: relative;
+	left: -12px;
+	
+}
+
 .manipulateButton {
    margin-left: 4px;
    margin-top: 3px;

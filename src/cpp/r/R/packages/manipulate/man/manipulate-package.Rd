@@ -13,7 +13,7 @@ License: \tab AGPL-3\cr
 LazyLoad: \tab yes\cr
 }
 
-The \code{\link{manipulate}} function accepts a plotting expression and a set of controls (e.g. \code{\link{slider}}, \code{\link{picker}}, or \code{\link{checkbox}}) which are used to dynamically change values within the expression. When a value is changed using its corresponding control the expression is automatically re-executed and the plot is redrawn.
+The \code{\link{manipulate}} function accepts a plotting expression and a set of controls (e.g. \code{\link{slider}}, \code{\link{picker}}, \code{\link{checkbox}}, or \code{\link{button}}) which are used to dynamically change values within the expression. When a value is changed using its corresponding control the expression is automatically re-executed and the plot is redrawn.
 
 For example, to create a plot that enables manipulation of a parameter using a slider control you could use syntax like this: 
 

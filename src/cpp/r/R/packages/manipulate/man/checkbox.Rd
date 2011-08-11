@@ -24,7 +24,7 @@ checkbox(initial = FALSE, label = NULL)
 
 
 \seealso{
-  \code{\link{manipulate}}, \code{\link{slider}}, \code{\link{picker}}
+  \code{\link{manipulate}}, \code{\link{slider}}, \code{\link{picker}}, \code{\link{button}}
 }
 
 \examples{

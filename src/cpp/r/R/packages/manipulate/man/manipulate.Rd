@@ -2,7 +2,7 @@
 \alias{manipulate}
 \title{Create an interactive plot}
 \description{
-The \code{\link{manipulate}} function accepts a plotting expression and a set of controls (e.g. \code{\link{slider}}, \code{\link{picker}}, or \code{\link{checkbox}}) which are used to dynamically change values within the expression. When a value is changed using its corresponding control the expression is automatically re-executed and the plot is redrawn.
+The \code{\link{manipulate}} function accepts a plotting expression and a set of controls (e.g. \code{\link{slider}}, \code{\link{picker}},  \code{\link{checkbox}}, or \code{\link{button}}) which are used to dynamically change values within the expression. When a value is changed using its corresponding control the expression is automatically re-executed and the plot is redrawn.
 }
 \usage{
 manipulate(`_expr`, ...)
@@ -14,7 +14,7 @@ manipulate(`_expr`, ...)
     Expression to evalulate. The expression should result in the creation of a plot (e.g. \code{plot} or \code{qplot}). Note that the expression need not be a top-level plotting function, it could also be a custom function that creates a plot as part of its implementation. This expression will be re-evaluated with appropriate parameter substitution each time one of the manipulator control values is changed. 
 }
   \item{\dots}{
-    One or more named control arguments (i.e. \code{\link{slider}}, \code{\link{picker}}, or \code{\link{checkbox}}), or a list containing named controls. 
+    One or more named control arguments (i.e. \code{\link{slider}}, \code{\link{picker}}, \code{\link{checkbox}}, or \code{\link{button}}), or a list containing named controls. 
 }
 }
 

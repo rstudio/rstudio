@@ -27,7 +27,7 @@ picker(..., initial = NULL, label = NULL)
 }
 
 \seealso{
-\code{\link{manipulate}}, \code{\link{slider}}, \code{\link{checkbox}}
+\code{\link{manipulate}}, \code{\link{slider}}, \code{\link{checkbox}}, \code{\link{button}}
 }
 
 

@@ -30,6 +30,8 @@ public interface ManipulatorStyles extends CssResource
    
    String checkBox();
    
+   String button();
+   
    String manipulateButton();
    
    String manipulateProgress();
