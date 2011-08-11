@@ -41,10 +41,18 @@
 
 .rs.addJsonRpcHandler("iconvlist", function()
 {
+   # NOTE: we originally included MacRoman and HZ-GB-2312 in our list of
+   # common encodings however MacRoman isn't available on Windows or Linux
+   # and HZ-GB-2312 isn't available on Linux so we removed them from the
+   # common list (in the interest of providing a list of portable encodings
+   # so that projects could reliably use common encodings and not run
+   # into issues moving from system to system
+   #
+
    common <- c(
       'ASCII', 'UTF-8',
       # Western
-      'ISO-8859-1', 'MacRoman', 'Windows-1252',
+      'ISO-8859-1', 'Windows-1252', # 'MacRoman',
       # Japanese
       'Shift-JIS', 'ISO-2022-JP', #'EUC-JP', 'Shift-JISX0213',
       # Trad Chinese
@@ -62,7 +70,7 @@
       # Ukranian
       #'KOI8-U',
       # Simplified Chinese
-      'GB2312', 'HZ-GB-2312',
+      'GB2312', #'HZ-GB-2312',
       # Chinese
       'GB18030',
       # Central European
