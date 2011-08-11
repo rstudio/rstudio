@@ -192,9 +192,11 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
 
     // Remove column 1.
     table.removeColumn(column1);
+    table.getPresenter().flush();
     assertEquals("0px", col1.getStyle().getWidth());
   }
 
+  @Override
   public void testSetColumnWidth() {
     CellTable<String> table = createAbstractHasData(new TextCell());
     Column<String, ?> column0 = table.getColumn(0);

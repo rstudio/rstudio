@@ -952,6 +952,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   private boolean cellIsEditing;
   private final List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
   private final Map<Column<T, ?>, String> columnWidths = new HashMap<Column<T, ?>, String>();
+  private boolean columnWidthsDirty;
   private final Map<Integer, String> columnWidthsByIndex = new HashMap<Integer, String>();
 
   /**
@@ -1134,7 +1135,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   public void clearColumnWidth(Column<T, ?> column) {
     columnWidths.remove(column);
-    refreshColumnWidths();
+    updateColumnWidthImpl(column, null);
   }
 
   /**
@@ -1144,7 +1145,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   public void clearColumnWidth(Integer column) {
     columnWidthsByIndex.remove(column);
-    refreshColumnWidths();
+    // TODO(jlabanca): Compare to realColumnCount when headerBuilder lands.
+    if (column < getColumnCount()) {
+      doSetColumnWidth(column, null);
+    }
   }
 
   /**
@@ -1359,7 +1363,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
     CellBasedWidgetImpl.get().sinkEvents(this, consumedEvents);
 
-    redraw();
+    refreshColumnsAndRedraw();
   }
 
   /**
@@ -1414,12 +1418,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     insertColumn(beforeIndex, col, new SafeHtmlHeader(headerHtml), new SafeHtmlHeader(footerHtml));
   }
 
-  @Override
-  public void redraw() {
-    refreshColumnWidths();
-    super.redraw();
-  }
-
   /**
    * Redraw the table's footers.
    */
@@ -1466,7 +1464,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
 
     // Redraw the table asynchronously.
-    redraw();
+    refreshColumnsAndRedraw();
 
     // We don't unsink events because other handlers or user code may have sunk
     // them intentionally.
@@ -1490,7 +1488,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   public void setColumnWidth(Column<T, ?> column, String width) {
     columnWidths.put(column, width);
-    refreshColumnWidths();
+    updateColumnWidthImpl(column, width);
   }
 
   /**
@@ -1525,7 +1523,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   public void setColumnWidth(int column, String width) {
     columnWidthsByIndex.put(column, width);
-    refreshColumnWidths();
+    // TODO(jlabanca): Compare to realColumnCount when headerBuilder lands.
+    if (column < getColumnCount()) {
+      doSetColumnWidth(column, width);
+    }
   }
 
   /**
@@ -2003,8 +2004,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
 
   @Override
   protected void replaceAllChildren(List<T> values, SafeHtml html) {
-    // Render the headers and footers.
-    createHeadersAndFooters();
+    refreshHeadersAndColumnsImpl();
 
     /*
      * If html is not null, then the user overrode renderRowValues() and
@@ -2024,7 +2024,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   @SuppressWarnings("deprecation")
   @Override
   protected void replaceChildren(List<T> values, int start, SafeHtml html) {
-    createHeadersAndFooters();
+    refreshHeadersAndColumnsImpl();
 
     /*
      * If html is not null, then the user override renderRowValues() and
@@ -2570,6 +2570,28 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     return (cellId == null) || (cellId.length() == 0) ? null : cellId;
   }
 
+  /**
+   * Mark the column widths as dirty and redraw the table.
+   */
+  private void refreshColumnsAndRedraw() {
+    columnWidthsDirty = true;
+    redraw();
+  }
+
+  /**
+   * Refresh the headers and column widths.
+   */
+  private void refreshHeadersAndColumnsImpl() {
+    // Refresh the column widths if needed.
+    if (columnWidthsDirty) {
+      columnWidthsDirty = false;
+      refreshColumnWidths();
+    }
+
+    // Render the headers and footers.
+    createHeadersAndFooters();
+  }
+
   private <C> boolean resetFocusOnCellImpl(int row, int col, HasCell<T, C> column,
       Element cellParent) {
     T value = getVisibleItem(row);
@@ -2593,6 +2615,23 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     NodeList<TableCellElement> cells = tr.getCells();
     for (int i = 0; i < cells.getLength(); i++) {
       setStyleName(cells.getItem(i), cellStyle, add);
+    }
+  }
+
+  /**
+   * Update the width of all instances of the specified column. A column
+   * instance may appear multiple times in the table.
+   * 
+   * @param column the column to update
+   * @param width the width of the column, or null to clear the width
+   */
+  private void updateColumnWidthImpl(Column<T, ?> column, String width) {
+    // TODO(jlabanca): Use realColumnCount when headerBuilder lands.
+    int columnCount = getColumnCount();
+    for (int i = 0; i < columnCount; i++) {
+      if (columns.get(i) == column) {
+        doSetColumnWidth(i, width);
+      }
     }
   }
 }
