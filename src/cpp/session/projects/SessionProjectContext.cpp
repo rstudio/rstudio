@@ -20,6 +20,8 @@
 #include <core/FileSerializer.hpp>
 #include <core/r_util/RProjectFile.hpp>
 
+#include <r/RExec.hpp>
+
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -91,8 +93,14 @@ Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
 }  // anonymous namespace
 
 
-Error ProjectContext::initialize(const FilePath& projectFile,
-                                 std::string* pUserErrMsg)
+// NOTE: this function is called very early in the process lifetime (from
+// session::projects::startup) so can only have limited dependencies.
+// specifically, it can rely on userSettings() and persistentState() being
+// available, but cannot definitely NOT rely on calling into R. For
+// initialization related tasks that need to run after R is available use
+// the implementation of the initialize method (below)
+Error ProjectContext::startup(const FilePath& projectFile,
+                              std::string* pUserErrMsg)
 {
    // test for project file existence
    if (!projectFile.exists())
@@ -149,14 +157,50 @@ Error ProjectContext::initialize(const FilePath& projectFile,
 
 }
 
- json::Object ProjectContext::uiPrefs() const
- {
-    json::Object uiPrefs;
-    uiPrefs["use_spaces_for_tab"] = config_.useSpacesForTab;
-    uiPrefs["num_spaces_for_tab"] = config_.numSpacesForTab;
-    uiPrefs["default_encoding"] = config_.encoding;
-    return uiPrefs;
- }
+Error ProjectContext::initialize()
+{
+   // compute the default encoding
+   Error error = r::exec::RFunction(
+                     ".rs.validateAndNormalizeEncoding",
+                     config().encoding).call(&defaultEncoding_);
+   if (error)
+      return error;
+
+   // if the default encoding is empty then change to UTF-8 and
+   // and enque a warning
+   if (defaultEncoding_.empty())
+   {
+      // fallback
+      defaultEncoding_ = "UTF-8";
+
+      // enque a warning
+      json::Object msgJson;
+      msgJson["severe"] = false;
+      boost::format fmt(
+         "Project text encoding '%1%' not available (using UTF-8). "
+         "You can specify an alternate text encoding via Project Options.");
+      msgJson["message"] = boost::str(fmt % config().encoding);
+      ClientEvent event(client_events::kShowWarningBar, msgJson);
+      module_context::enqueClientEvent(event);
+   }
+
+   return Success();
+}
+
+
+std::string ProjectContext::defaultEncoding() const
+{
+   return defaultEncoding_;
+}
+
+json::Object ProjectContext::uiPrefs() const
+{
+   json::Object uiPrefs;
+   uiPrefs["use_spaces_for_tab"] = config_.useSpacesForTab;
+   uiPrefs["num_spaces_for_tab"] = config_.numSpacesForTab;
+   uiPrefs["default_encoding"] = defaultEncoding();
+   return uiPrefs;
+}
 
 
 r_util::RProjectConfig ProjectContext::defaultConfig()

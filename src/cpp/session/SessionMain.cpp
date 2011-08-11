@@ -1159,7 +1159,8 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       // main module context
       (module_context::initialize)
 
-      // projects
+      // projects (early project init required -- module inits below
+      // can then depend on e.g. computed defaultEncoding)
       (projects::initialize)
 
       // source database

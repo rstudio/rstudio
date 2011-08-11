@@ -53,7 +53,7 @@ class SourceFileIndexer : boost::noncopyable
 {
 public:
    SourceFileIndexer()
-      : encoding_(projects::projectContext().config().encoding),
+      : encoding_(projects::projectContext().defaultEncoding()),
         projectRootDir_(projects::projectContext().directory()),
         dirIter_(projectRootDir_)
    {

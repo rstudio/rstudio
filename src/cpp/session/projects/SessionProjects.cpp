@@ -198,7 +198,7 @@ void startup()
    if (!projectFilePath.empty())
    {
       std::string userErrMsg;
-      Error error = s_projectContext.initialize(projectFilePath, &userErrMsg);
+      Error error = s_projectContext.startup(projectFilePath, &userErrMsg);
       if (error)
       {
          // log the error
@@ -222,6 +222,11 @@ void startup()
 
 Error initialize()
 {
+   // call project-context initialize
+   Error error = s_projectContext.initialize();
+   if (error)
+      return error;
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

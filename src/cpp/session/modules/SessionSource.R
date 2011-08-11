@@ -86,24 +86,6 @@
    toupper(common)
 })
 
-.rs.addFunction("normalizeEncoding", function(encoding)
-{
-   iconvList <- toupper(iconvlist())
-   encodingUpper <- toupper(encoding)
-   if (encodingUpper %in% iconvList)
-   {
-      return (encodingUpper)
-   }
-   else
-   {
-      encodingUpper <- gsub("[_]", "-", encodingUpper)
-      if (encodingUpper %in% iconvList)
-         return (encodingUpper)
-      else
-         return ()
-   }
-})
-
 .rs.addJsonRpcHandler("iconvlist", function()
 {
    list(common=sort(intersect(.rs.iconvcommon(), toupper(iconvlist()))),

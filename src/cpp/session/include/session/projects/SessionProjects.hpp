@@ -35,8 +35,10 @@ public:
    ProjectContext() {}
    virtual ~ProjectContext() {}
 
-   core::Error initialize(const core::FilePath& projectFile,
-                          std::string* pUserErrMsg);
+   core::Error startup(const core::FilePath& projectFile,
+                       std::string* pUserErrMsg);
+
+   core::Error initialize();
 
 public:
    bool hasProject() const { return !file_.empty(); }
@@ -51,6 +53,14 @@ public:
       config_ = config;
    }
 
+   // code which needs to rely on the encoding should call this method
+   // rather than getting the encoding off of the config (because the
+   // config could have been created on another system with an encoding
+   // not available here -- defaultEncoding reflects (if possible) a
+   // local mapping of an unknown encoding and a fallback to UTF-8
+   // if necessary
+   std::string defaultEncoding() const;
+
    core::json::Object uiPrefs() const;
 
 public:
@@ -61,6 +71,7 @@ private:
    core::FilePath directory_;
    core::FilePath scratchPath_;
    core::r_util::RProjectConfig config_;
+   std::string defaultEncoding_;
 };
 
 const ProjectContext& projectContext();

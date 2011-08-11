@@ -22,8 +22,6 @@
 #include <core/StringUtils.hpp>
 
 
-// TODO: deal with project encoding not found on target system
-
 // TODO: implement file monitoring
 
 // TODO: some type of cap on number of files or directories? (or just

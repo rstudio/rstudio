@@ -62,3 +62,21 @@
    class(obj) <- 'rs.scalar'
    return(obj)
 })
+
+.rs.addFunction("validateAndNormalizeEncoding", function(encoding)
+{
+   iconvList <- toupper(iconvlist())
+   encodingUpper <- toupper(encoding)
+   if (encodingUpper %in% iconvList)
+   {
+      return (encodingUpper)
+   }
+   else
+   {
+      encodingUpper <- gsub("[_]", "-", encodingUpper)
+      if (encodingUpper %in% iconvList)
+         return (encodingUpper)
+      else
+         return ("")
+   }
+})
