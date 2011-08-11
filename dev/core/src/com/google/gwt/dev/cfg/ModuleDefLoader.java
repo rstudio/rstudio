@@ -32,9 +32,7 @@ import java.io.Reader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The top-level API for loading module XML.
@@ -180,8 +178,6 @@ public final class ModuleDefLoader {
     return moduleDef;
   }
 
-  private final Set<String> alreadyLoadedModules = new HashSet<String>();
-
   private final ClassLoader classLoader;
 
   private final LoadStrategy strategy;
@@ -230,20 +226,20 @@ public final class ModuleDefLoader {
   void nestedLoad(TreeLogger parentLogger, String moduleName, ModuleDef moduleDef)
       throws UnableToCompleteException {
 
-    if (alreadyLoadedModules.contains(moduleName)) {
+    if (moduleDef.isInherited(moduleName)) {
       // No need to parse module again.
       return;
     }
 
     TreeLogger logger = parentLogger.branch(TreeLogger.DEBUG, "Loading inherited module '" 
         + moduleName + "'", null);
-    alreadyLoadedModules.add(moduleName);
 
     if (!ModuleDef.isValidModuleName(moduleName)) {
       logger.log(TreeLogger.ERROR, "Invalid module name: '" + moduleName + "'",
           null);
       throw new UnableToCompleteException();
     }
+    moduleDef.addInteritedModule(moduleName);
 
     // Find the specified module using the classpath.
     //

@@ -34,6 +34,7 @@ import com.google.gwt.dev.util.arg.OptionOutDir;
 import com.google.gwt.dev.util.arg.OptionStrict;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.File;
 import java.io.IOException;
@@ -191,7 +192,12 @@ public class CompileModule {
     // same archive twice. Key is archive URL string. Maps to the set of unit resource paths
     // for the archive.
     Map<String, Set<String>> unitsInArchives = new HashMap<String, Set<String>>();
-
+    // Modules archived by this invocation of CompileModule.  Once a compiled module is
+    // written out as an archive file, it may or may not appear on the classpath 
+    // and come back with module.getAllCompilationUnitArchiveURLs().  Thus, use a second check
+    // so that the tool doesn't redundantly write the same compilation units into
+    // multiple archives.
+    Map<String, Set<String>> newlyCompiledModules = new HashMap<String, Set<String>>();
     File outputDir = options.getOutDir();
     if (!outputDir.isDirectory() && !outputDir.mkdirs()) {
       logger.log(Type.ERROR, "Error creating directories for ouptut: "
@@ -225,6 +231,14 @@ public class CompileModule {
           }
         }
 
+        // Don't re-archive previously compiled units from this invocation of CompileModule.
+        for (String compiledModuleName : newlyCompiledModules.keySet()) {
+          if (module.isInherited(compiledModuleName)) {
+            currentModuleArchivedUnits.addAll(newlyCompiledModules.get(compiledModuleName));
+          }
+        }
+
+        // Load up previously archived modules
         for (URL archiveURL : archiveURLs) {
           String archiveURLString = archiveURL.toString();
           Set<String> unitPaths = unitsInArchives.get(archiveURLString);
@@ -277,12 +291,15 @@ public class CompileModule {
         return false;
       }
 
+      Set<String> compiledUnits = Sets.newHashSet();
       CompilationUnitArchive outputArchive = new CompilationUnitArchive(moduleToCompile);
       for (CompilationUnit unit : compilationState.getCompilationUnits()) {
         if (!currentModuleArchivedUnits.contains(unit.getResourcePath())) {
           outputArchive.addUnit(unit);
+          compiledUnits.add(unit.getResourcePath());
         }
       }
+      newlyCompiledModules.put(moduleToCompile, compiledUnits);
 
       String slashedModuleName =
           module.getName().replace('.', '/') + ModuleDefLoader.COMPILATION_UNIT_ARCHIVE_SUFFIX;
