@@ -772,7 +772,8 @@ public class Source implements InsertSourceHandler,
          }
       };
 
-      if (event.getFile().getLength() < 0)
+      // Warning: event.getFile() can be null (e.g. new Sweave document)
+      if (event.getFile() != null && event.getFile().getLength() < 0)
       {
          // If the file has no size info, stat the file from the server. This
          // is to prevent us from opening large files accidentally.
