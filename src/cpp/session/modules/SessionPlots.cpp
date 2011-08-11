@@ -609,15 +609,21 @@ void enquePlotsChanged(const r::session::graphics::DisplayState& displayState,
   
 }
    
-void onClientInit()
+void renderGraphicsOutput(bool activatePlots, bool showManipulator)
 {
-   // if we have output make sure the client knows about it
    using namespace r::session;
    if (graphics::display().hasOutput())
    {
-      graphics::display().render(boost::bind(enquePlotsChanged, _1, false, false));
+      graphics::display().render(
+         boost::bind(enquePlotsChanged, _1, activatePlots, showManipulator));
    }
-   
+}
+
+
+void onClientInit()
+{
+   // if we have output make sure the client knows about it
+   renderGraphicsOutput(false, false);
 }
 
 void detectChanges(bool activatePlots)
@@ -649,13 +655,10 @@ void onBeforeExecute()
    r::session::graphics::display().onBeforeExecute();
 }
 
-
 void onShowManipulator()
 {
    // render changes and show manipulator
-   using namespace r::session;
-   if (graphics::display().hasOutput())
-      graphics::display().render(boost::bind(enquePlotsChanged, _1, true, true));
+   renderGraphicsOutput(true, true);
 }
 
 Error setManipulatorValues(const json::JsonRpcRequest& request,
@@ -672,11 +675,31 @@ Error setManipulatorValues(const json::JsonRpcRequest& request,
    graphics::display().setPlotManipulatorValues(jsObject);
 
    // render
-   if (graphics::display().hasOutput())
-      graphics::display().render(boost::bind(enquePlotsChanged, _1, true, false));
+   renderGraphicsOutput(true, false);
 
    return Success();
 }
+
+Error manipulatorPlotClicked(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
+{
+   // read the params
+   int x, y;
+   Error error = json::readParams(request.params, &x, &y);
+   if (error)
+      return error;
+
+   // notify the device
+   using namespace r::session;
+   graphics::display().manipulatorPlotClicked(x, y);
+
+   // render
+   renderGraphicsOutput(true, false);
+
+   return Success();
+}
+
+
 
 } // anonymous namespace  
    
@@ -706,6 +729,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_unique_save_plot_stem", getUniqueSavePlotStem))
       (bind(registerRpcMethod, "get_save_plot_context", getSavePlotContext))
       (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))
+      (bind(registerRpcMethod, "manipulator_plot_clicked", manipulatorPlotClicked))
       (bind(registerUriHandler, kGraphics "/plot_zoom_png", handleZoomPngRequest))
       (bind(registerUriHandler, kGraphics "/plot_zoom", handleZoomRequest))
       (bind(registerUriHandler, kGraphics "/plot.png", handlePngRequest))

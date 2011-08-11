@@ -100,6 +100,7 @@ public:
 
    virtual boost::signal<void ()>& onShowManipulator() ;
    virtual void setPlotManipulatorValues(const core::json::Object& values);
+   virtual void manipulatorPlotClicked(int x, int y);
 
    virtual void onBeforeExecute();
 

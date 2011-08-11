@@ -839,6 +839,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SET_MANIPULATOR_VALUES, params, requestCallback);
    }
    
+   public void manipulatorPlotClicked(
+                                 int x, 
+                                 int y, 
+                                 ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(x));
+      params.set(1, new JSONNumber(y));
+      sendRequest(RPC_SCOPE, MANIPULATOR_PLOT_CLICKED, params, requestCallback);
+   }
+   
    public void createProject(
          String projectDirectory,
          ServerRequestCallback<Void> requestCallback)
@@ -1697,6 +1708,7 @@ public class RemoteServer implements Server
    private static final String GET_SAVE_PLOT_CONTEXT = "get_save_plot_context";
    private static final String LOCATOR_COMPLETED = "locator_completed";
    private static final String SET_MANIPULATOR_VALUES = "set_manipulator_values";
+   private static final String MANIPULATOR_PLOT_CLICKED = "manipulator_plot_clicked";
 
    private static final String CREATE_PROJECT = "create_project";
    private static final String READ_PROJECT_CONFIG = "read_project_config";

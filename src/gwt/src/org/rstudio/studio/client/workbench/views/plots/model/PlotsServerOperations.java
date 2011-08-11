@@ -42,6 +42,10 @@ public interface PlotsServerOperations
    void setManipulatorValues(JSONObject values,
                              ServerRequestCallback<Void> requestCallback);
    
+   void manipulatorPlotClicked(int x, 
+                               int y, 
+                               ServerRequestCallback<Void> requestCallback);
+   
    void locatorCompleted(Point point, 
                         ServerRequestCallback<Void> requestCallback);
 

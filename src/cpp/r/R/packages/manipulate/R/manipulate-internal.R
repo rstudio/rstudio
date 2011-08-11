@@ -98,6 +98,17 @@ buttonNames <- function(manipulator)
     character()
 }
 
+setMouseClick <- function(manipulator, x, y)
+{
+  mouseClick <- list(x = x, y = y)
+  assign(".mouseClick", mouseClick, envir = manipulator)
+}
+
+clearMouseClick <- function(manipulator)
+{
+  assign(".mouseClick", NULL, envir = manipulator)
+}
+
 resolveVariableArguments <- function(args)
 {
   # if the first argument is an unnamed list then just use this list

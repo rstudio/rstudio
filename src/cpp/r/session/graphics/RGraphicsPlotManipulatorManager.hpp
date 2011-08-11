@@ -48,6 +48,7 @@ public:
 
    boost::signal<void ()>& onShowManipulator() ;
    void setPlotManipulatorValues(const core::json::Object& values);
+   void manipulatorPlotClicked(int x, int y);
    
    void executeAndAttachManipulator(SEXP manipulatorSEXP);
    bool hasActiveManipulator() const;
@@ -63,6 +64,10 @@ public:
    }
 
    void ensureManipulatorSaved();
+
+private:
+   bool manipulatorIsActive() const;
+   void replayManipulator(SEXP manipulatorSEXP);
 
 private:   
    // pending manipulator

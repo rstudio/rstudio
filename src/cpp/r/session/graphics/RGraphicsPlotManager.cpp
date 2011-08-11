@@ -513,6 +513,12 @@ void PlotManager::setPlotManipulatorValues(const json::Object& values)
    return plotManipulatorManager().setPlotManipulatorValues(values);
 }
 
+void PlotManager::manipulatorPlotClicked(int x, int y)
+{
+   plotManipulatorManager().manipulatorPlotClicked(x, y);
+}
+
+
 void PlotManager::onBeforeExecute()
 {
    graphicsDevice_.onBeforeExecute();

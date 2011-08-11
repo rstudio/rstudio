@@ -5,6 +5,7 @@ export(slider,
        button,
        manipulatorSetState,
        manipulatorGetState,
+       manipulatorMouseClick,
        manipulate)
 
 

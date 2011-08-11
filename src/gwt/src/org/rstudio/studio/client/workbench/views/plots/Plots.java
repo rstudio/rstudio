@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.plots;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.HasResizeHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -21,6 +23,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -80,8 +83,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       Parent getPlotsParent();
       Size getPlotFrameSize();
    }
-   
-  
+      
 
    @Inject
    public Plots(final Display view,
@@ -117,35 +119,29 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       manipulatorManager_ = new ManipulatorManager(
          view_.getPlotsSurface(),
          commands,
+        
          new ManipulatorChangedHandler()
          { 
             @Override
             public void onManipulatorChanged(JSONObject values)
-            {
-               // show progress
-               manipulatorManager_.setProgress(true);
-               
-               // set values
+            { 
                server_.setManipulatorValues(values, 
-                                            new ServerRequestCallback<Void>() {
-                  @Override
-                  public void onResponseReceived(Void response)
-                  {
-                     // we don't clear the progress until the GraphicsOutput
-                     // event is received (enables us to wait for rendering
-                     // to complete before clearing progress)
-                  }
-                  
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     manipulatorManager_.setProgress(false);
-                     globalDisplay_.showErrorMessage("Server Error", 
-                                                     error.getUserMessage());
-                  }
-               });
-            }
-         });
+                                            new ManipulatorRequestCallback()); 
+            }           
+         },
+         
+         new ClickHandler() 
+         {
+            @Override
+            public void onClick(ClickEvent event)
+            {
+              server_.manipulatorPlotClicked(event.getX(), 
+                                             event.getY(), 
+                                             new ManipulatorRequestCallback());
+               
+            }   
+         }
+         );
             
       // export plot options
       new JSObjectStateValue("plotspane", "exportPlotOptions", ClientState.PERSISTENT,
@@ -554,6 +550,32 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
          return plotSize_ ;
       else                   // then fallback to frame size
          return view_.getPlotFrameSize();
+   }
+   
+   private class ManipulatorRequestCallback extends ServerRequestCallback<Void>
+   {
+      public ManipulatorRequestCallback()
+      {
+         manipulatorManager_.setProgress(true);
+      }
+      
+      @Override
+      public void onResponseReceived(Void response)
+      {
+         // we don't clear the progress until the GraphicsOutput
+         // event is received (enables us to wait for rendering
+         // to complete before clearing progress)
+      }
+
+      @Override
+      public void onError(ServerError error)
+      {
+         manipulatorManager_.setProgress(false);
+         globalDisplay_.showErrorMessage("Server Error", 
+                                         error.getUserMessage());
+         
+      }
+      
    }
 
    private final Display view_;
