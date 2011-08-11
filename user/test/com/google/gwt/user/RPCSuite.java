@@ -43,6 +43,7 @@ import com.google.gwt.user.client.rpc.ObjectGraphTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.RecursiveClassTest;
 import com.google.gwt.user.client.rpc.RpcTokenTest;
 import com.google.gwt.user.client.rpc.RunTimeSerializationErrorsTest;
+import com.google.gwt.user.client.rpc.TypeCheckedObjectsTest;
 import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
 import com.google.gwt.user.client.rpc.UnicodeEscapingTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.ValueTypesTest;
@@ -112,6 +113,7 @@ public class RPCSuite {
     suite.addTestSuite(UnicodeEscapingTest.class);
     suite.addTestSuite(RunTimeSerializationErrorsTest.class);
     suite.addTestSuite(RecursiveClassTest.class);
+    suite.addTestSuite(TypeCheckedObjectsTest.class);
     suite.addTestSuite(XsrfProtectionTest.class);
 
     // This test turns on the type-elision feature of RPC
@@ -121,7 +123,8 @@ public class RPCSuite {
     suite.addTestSuite(CollectionsTestWithTypeObfuscation.class);
     suite.addTestSuite(CustomFieldSerializerTestWithTypeObfuscation.class);
     suite.addTestSuite(ObjectGraphTestWithTypeObfuscation.class);
-    suite.addTestSuite(com.google.gwt.user.client.rpc.RemoteServiceServletTestWithTypeObfuscation.class);
+    suite.addTestSuite(
+        com.google.gwt.user.client.rpc.RemoteServiceServletTestWithTypeObfuscation.class);
     suite.addTestSuite(UnicodeEscapingTestWithTypeObfuscation.class);
 
     // Client-side test cases for deRPC system

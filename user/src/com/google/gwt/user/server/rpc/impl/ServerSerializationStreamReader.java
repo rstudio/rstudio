@@ -18,11 +18,13 @@ package com.google.gwt.user.server.rpc.impl;
 import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
+import com.google.gwt.user.client.rpc.SerializedTypeViolationException;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStreamReader;
 import com.google.gwt.user.server.Base64Utils;
 import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.google.gwt.user.server.rpc.SerializationPolicyProvider;
+import com.google.gwt.user.server.rpc.ServerCustomFieldSerializer;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -30,9 +32,11 @@ import java.io.ObjectInputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -44,8 +48,7 @@ import java.util.Set;
  * For internal use only. Used for server call serialization. This class is
  * carefully matched with the client-side version.
  */
-public final class ServerSerializationStreamReader extends
-    AbstractSerializationStreamReader {
+public final class ServerSerializationStreamReader extends AbstractSerializationStreamReader {
 
   /**
    * Used to accumulate elements while deserializing array types. The generic
@@ -84,77 +87,78 @@ public final class ServerSerializationStreamReader extends
   private enum ValueReader {
     BOOLEAN {
       @Override
-      Object readValue(ServerSerializationStreamReader stream)
-          throws SerializationException {
+      Object readValue(ServerSerializationStreamReader stream) throws SerializationException {
         return stream.readBoolean();
       }
     },
     BYTE {
       @Override
-      Object readValue(ServerSerializationStreamReader stream)
-          throws SerializationException {
+      Object readValue(ServerSerializationStreamReader stream) throws SerializationException {
         return stream.readByte();
       }
     },
     CHAR {
       @Override
-      Object readValue(ServerSerializationStreamReader stream)
-          throws SerializationException {
+      Object readValue(ServerSerializationStreamReader stream) throws SerializationException {
         return stream.readChar();
       }
     },
     DOUBLE {
       @Override
-      Object readValue(ServerSerializationStreamReader stream)
-          throws SerializationException {
+      Object readValue(ServerSerializationStreamReader stream) throws SerializationException {
         return stream.readDouble();
       }
     },
     FLOAT {
       @Override
-      Object readValue(ServerSerializationStreamReader stream)
-          throws SerializationException {
+      Object readValue(ServerSerializationStreamReader stream) throws SerializationException {
         return stream.readFloat();
       }
     },
     INT {
       @Override
-      Object readValue(ServerSerializationStreamReader stream)
-          throws SerializationException {
+      Object readValue(ServerSerializationStreamReader stream) throws SerializationException {
         return stream.readInt();
       }
     },
     LONG {
       @Override
-      Object readValue(ServerSerializationStreamReader stream)
-          throws SerializationException {
+      Object readValue(ServerSerializationStreamReader stream) throws SerializationException {
         return stream.readLong();
       }
     },
     OBJECT {
       @Override
-      Object readValue(ServerSerializationStreamReader stream)
-          throws SerializationException {
+      Object readValue(ServerSerializationStreamReader stream) throws SerializationException {
         return stream.readObject();
+      }
+
+      @Override
+      Object readValue(ServerSerializationStreamReader stream, Type expectedType,
+          DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+        return stream.readObject(expectedType, resolvedTypes);
       }
     },
     SHORT {
       @Override
-      Object readValue(ServerSerializationStreamReader stream)
-          throws SerializationException {
+      Object readValue(ServerSerializationStreamReader stream) throws SerializationException {
         return stream.readShort();
       }
     },
     STRING {
       @Override
-      Object readValue(ServerSerializationStreamReader stream)
-          throws SerializationException {
+      Object readValue(ServerSerializationStreamReader stream) throws SerializationException {
         return stream.readString();
       }
     };
 
-    abstract Object readValue(ServerSerializationStreamReader stream)
-        throws SerializationException;
+    abstract Object readValue(ServerSerializationStreamReader stream) throws SerializationException;
+
+    @SuppressWarnings("unused")
+    Object readValue(ServerSerializationStreamReader stream, Type expectedType,
+        DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+      return readValue(stream);
+    }
   }
 
   /**
@@ -253,6 +257,12 @@ public final class ServerSerializationStreamReader extends
       }
 
       @Override
+      protected Object readSingleValue(ServerSerializationStreamReader stream, Type expectedType,
+          DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+        return stream.readObject(expectedType, resolvedTypes);
+      }
+
+      @Override
       protected void setSingleValue(Object array, int index, Object value) {
         Array.set(array, index, value);
       }
@@ -282,8 +292,14 @@ public final class ServerSerializationStreamReader extends
       }
     };
 
-    protected abstract Object readSingleValue(
-        ServerSerializationStreamReader stream) throws SerializationException;
+    protected abstract Object readSingleValue(ServerSerializationStreamReader stream)
+        throws SerializationException;
+
+    @SuppressWarnings("unused")
+    protected Object readSingleValue(ServerSerializationStreamReader stream, Type expectedType,
+        DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+      return readSingleValue(stream);
+    }
 
     protected abstract void setSingleValue(Object array, int index, Object value);
 
@@ -294,9 +310,8 @@ public final class ServerSerializationStreamReader extends
     protected Object toArray(Class<?> componentType, BoundedList<Object> buffer)
         throws SerializationException {
       if (buffer.getExpectedSize() != buffer.size()) {
-        throw new SerializationException(
-            "Inconsistent number of elements received. Received "
-                + buffer.size() + " but expecting " + buffer.getExpectedSize());
+        throw new SerializationException("Inconsistent number of elements received. Received "
+            + buffer.size() + " but expecting " + buffer.getExpectedSize());
       }
 
       Object arr = Array.newInstance(componentType, buffer.size());
@@ -308,10 +323,19 @@ public final class ServerSerializationStreamReader extends
       return arr;
     }
 
-    Object read(ServerSerializationStreamReader stream,
-        BoundedList<Object> instance) throws SerializationException {
+    Object read(ServerSerializationStreamReader stream, BoundedList<Object> instance)
+        throws SerializationException {
       for (int i = 0, n = instance.getExpectedSize(); i < n; ++i) {
         instance.add(readSingleValue(stream));
+      }
+
+      return toArray(instance.getComponentType(), instance);
+    }
+
+    Object read(ServerSerializationStreamReader stream, BoundedList<Object> instance,
+        Type expectedType, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+      for (int i = 0, n = instance.getExpectedSize(); i < n; ++i) {
+        instance.add(readSingleValue(stream, expectedType, resolvedTypes));
       }
 
       return toArray(instance.getComponentType(), instance);
@@ -321,12 +345,14 @@ public final class ServerSerializationStreamReader extends
   /**
    * Map of {@link Class} objects to {@link ValueReader}s.
    */
-  private static final Map<Class<?>, ValueReader> CLASS_TO_VALUE_READER = new IdentityHashMap<Class<?>, ValueReader>();
+  private static final Map<Class<?>, ValueReader> CLASS_TO_VALUE_READER =
+      new IdentityHashMap<Class<?>, ValueReader>();
 
   /**
    * Map of {@link Class} objects to {@link VectorReader}s.
    */
-  private static final Map<Class<?>, VectorReader> CLASS_TO_VECTOR_READER = new IdentityHashMap<Class<?>, VectorReader>();
+  private static final Map<Class<?>, VectorReader> CLASS_TO_VECTOR_READER =
+      new IdentityHashMap<Class<?>, VectorReader>();
 
   private final ClassLoader classLoader;
 
@@ -335,10 +361,11 @@ public final class ServerSerializationStreamReader extends
   private final SerializationPolicyProvider serializationPolicyProvider;
 
   /**
-   * Used to look up setter methods of the form 'void Class.setXXX(T value)' given a
-   * Class type and a field name XXX corresponding to a field of type T.
+   * Used to look up setter methods of the form 'void Class.setXXX(T value)'
+   * given a Class type and a field name XXX corresponding to a field of type T.
    */
-  private final Map<Class<?>, Map<String, Method>> settersByClass = new HashMap<Class<?>, Map<String, Method>>();
+  private final Map<Class<?>, Map<String, Method>> settersByClass =
+      new HashMap<Class<?>, Map<String, Method>>();
 
   private String[] stringTable;
 
@@ -376,13 +403,24 @@ public final class ServerSerializationStreamReader extends
     this.serializationPolicyProvider = serializationPolicyProvider;
   }
 
-  public Object deserializeValue(Class<?> type) throws SerializationException {
-    ValueReader valueReader = CLASS_TO_VALUE_READER.get(type);
+  public Object deserializeValue(Class<?> rpcType) throws SerializationException {
+    ValueReader valueReader = CLASS_TO_VALUE_READER.get(rpcType);
     if (valueReader != null) {
       return valueReader.readValue(this);
     } else {
       // Arrays of primitive or reference types need to go through readObject.
       return ValueReader.OBJECT.readValue(this);
+    }
+  }
+
+  public Object deserializeValue(Class<?> rpcType, Type methodType,
+      DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+    ValueReader valueReader = CLASS_TO_VALUE_READER.get(rpcType);
+    if (valueReader != null) {
+      return valueReader.readValue(this, methodType, resolvedTypes);
+    } else {
+      // Arrays of primitive or reference types need to go through readObject.
+      return ValueReader.OBJECT.readValue(this, methodType, resolvedTypes);
     }
   }
 
@@ -410,21 +448,18 @@ public final class ServerSerializationStreamReader extends
       // Didn't find any separator, assume an older version with different
       // separators and get the version as the sequence of digits at the
       // beginning of the encoded string.
-      while (idx < encodedTokens.length()
-          && Character.isDigit(encodedTokens.charAt(idx))) {
+      while (idx < encodedTokens.length() && Character.isDigit(encodedTokens.charAt(idx))) {
         ++idx;
       }
       if (idx == 0) {
         throw new IncompatibleRemoteServiceException(
             "Malformed or old RPC message received - expecting version between "
-                + SERIALIZATION_STREAM_MIN_VERSION + " and "
-                + SERIALIZATION_STREAM_VERSION);
+                + SERIALIZATION_STREAM_MIN_VERSION + " and " + SERIALIZATION_STREAM_VERSION);
       } else {
         int version = Integer.valueOf(encodedTokens.substring(0, idx));
         throw new IncompatibleRemoteServiceException("Expecting version between "
-            + SERIALIZATION_STREAM_MIN_VERSION + " and "
-            + SERIALIZATION_STREAM_VERSION + " from client, got " + version
-            + ".");
+            + SERIALIZATION_STREAM_MIN_VERSION + " and " + SERIALIZATION_STREAM_VERSION
+            + " from client, got " + version + ".");
       }
     }
 
@@ -434,15 +469,14 @@ public final class ServerSerializationStreamReader extends
     if (getVersion() < SERIALIZATION_STREAM_MIN_VERSION
         || getVersion() > SERIALIZATION_STREAM_VERSION) {
       throw new IncompatibleRemoteServiceException("Expecting version between "
-          + SERIALIZATION_STREAM_MIN_VERSION + " and "
-          + SERIALIZATION_STREAM_VERSION + " from client, got " + getVersion()
-          + ".");
+          + SERIALIZATION_STREAM_MIN_VERSION + " and " + SERIALIZATION_STREAM_VERSION
+          + " from client, got " + getVersion() + ".");
     }
-    
+
     // Check the flags
     if (!areFlagsValid()) {
-      throw new IncompatibleRemoteServiceException("Got an unknown flag from "
-          + "client: " + getFlags());
+      throw new IncompatibleRemoteServiceException("Got an unknown flag from " + "client: "
+          + getFlags());
     }
 
     // Read the type name table
@@ -452,12 +486,11 @@ public final class ServerSerializationStreamReader extends
     String moduleBaseURL = readString();
     String strongName = readString();
     if (serializationPolicyProvider != null) {
-      serializationPolicy = serializationPolicyProvider.getSerializationPolicy(
-          moduleBaseURL, strongName);
+      serializationPolicy =
+          serializationPolicyProvider.getSerializationPolicy(moduleBaseURL, strongName);
 
       if (serializationPolicy == null) {
-        throw new NullPointerException(
-            "serializationPolicyProvider.getSerializationPolicy()");
+        throw new NullPointerException("serializationPolicyProvider.getSerializationPolicy()");
       }
     }
   }
@@ -471,8 +504,7 @@ public final class ServerSerializationStreamReader extends
     try {
       return Byte.parseByte(value);
     } catch (NumberFormatException e) {
-      throw getNumberFormatException(value, "byte",
-          Byte.MIN_VALUE, Byte.MAX_VALUE);
+      throw getNumberFormatException(value, "byte", Byte.MIN_VALUE, Byte.MAX_VALUE);
     }
   }
 
@@ -494,8 +526,7 @@ public final class ServerSerializationStreamReader extends
     try {
       return Integer.parseInt(value);
     } catch (NumberFormatException e) {
-      throw getNumberFormatException(value, "int",
-          Integer.MIN_VALUE, Integer.MAX_VALUE);
+      throw getNumberFormatException(value, "int", Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
   }
 
@@ -507,13 +538,32 @@ public final class ServerSerializationStreamReader extends
     }
   }
 
+  public Object readObject(Type expectedType, DequeMap<Type, Type> resolvedTypes)
+      throws SerializationException {
+    int token = readInt();
+
+    if (token < 0) {
+      // Negative means a previous object
+      // Transform negative 1-based to 0-based.
+      return getDecodedObject(-token);
+    }
+
+    // Positive means a new object
+    String typeSignature = getString(token);
+    if (typeSignature == null) {
+      // a null string means a null instance
+      return null;
+    }
+
+    return deserialize(typeSignature, expectedType, resolvedTypes);
+  }
+
   public short readShort() throws SerializationException {
     String value = extract();
     try {
       return Short.parseShort(value);
     } catch (NumberFormatException e) {
-      throw getNumberFormatException(value, "short",
-          Short.MIN_VALUE, Short.MAX_VALUE);
+      throw getNumberFormatException(value, "short", Short.MIN_VALUE, Short.MAX_VALUE);
     }
   }
 
@@ -522,8 +572,12 @@ public final class ServerSerializationStreamReader extends
   }
 
   @Override
-  protected Object deserialize(String typeSignature)
-      throws SerializationException {
+  protected Object deserialize(String typeSignature) throws SerializationException {
+    return deserialize(typeSignature, null, null);
+  }
+
+  protected Object deserialize(String typeSignature, Type expectedType,
+      DequeMap<Type, Type> resolvedTypes) throws SerializationException {
     Object instance = null;
     try {
       Class<?> instanceClass;
@@ -535,30 +589,53 @@ public final class ServerSerializationStreamReader extends
         } else {
           throw new SerializationException(
               "The GWT module was compiled with RPC type name elision enabled, but "
-                  + getSerializationPolicy().getClass().getName()
-                  + " does not implement " + TypeNameObfuscator.class.getName());
+                  + getSerializationPolicy().getClass().getName() + " does not implement "
+                  + TypeNameObfuscator.class.getName());
         }
       } else {
-        SerializedInstanceReference serializedInstRef = SerializabilityUtil.decodeSerializedInstanceReference(typeSignature);
-        instanceClass = Class.forName(serializedInstRef.getName(), false,
-            classLoader);
+        SerializedInstanceReference serializedInstRef =
+            SerializabilityUtil.decodeSerializedInstanceReference(typeSignature);
+        instanceClass = Class.forName(serializedInstRef.getName(), false, classLoader);
         validateTypeVersions(instanceClass, serializedInstRef);
+      }
+
+      if (resolvedTypes == null) {
+        // We can find ourselves with a null resolvedTypes map if a class
+        // has a non-type-checking serializer that tries to deserialize a field.
+        // In such cases there is field type information from the class, but no
+        // resolvedTypes because we did not pass it through the non-type
+        // checking serializer. Create a map, so that from this point forward
+        // we have some way of type checking.
+        resolvedTypes = new DequeMap<Type, Type>();
+      }
+      
+      if (expectedType != null) {
+        SerializabilityUtil.resolveTypes(expectedType, resolvedTypes);
+        if (!SerializabilityUtil.isInstanceAssignableToType(instanceClass, expectedType,
+            resolvedTypes)) {
+          throw new SerializedTypeViolationException("Attempt to deserialize an object of type "
+              + instanceClass.toString() + " when an object of type "
+              + SerializabilityUtil.findActualType(expectedType, resolvedTypes).toString()
+              + " is expected");
+        }
       }
 
       assert (serializationPolicy != null);
 
       serializationPolicy.validateDeserialize(instanceClass);
 
-      Class<?> customSerializer = SerializabilityUtil.hasCustomFieldSerializer(instanceClass);
+      Class<?> customSerializer = SerializabilityUtil.hasServerCustomFieldSerializer(instanceClass);
 
       int index = reserveDecodedObjectIndex();
 
-      instance = instantiate(customSerializer, instanceClass);
+      instance = instantiate(customSerializer, instanceClass, expectedType, resolvedTypes);
 
       rememberDecodedObject(index, instance);
 
-      Object replacement = deserializeImpl(customSerializer, instanceClass,
-          instance);
+      Object replacement =
+          deserializeImpl(customSerializer, instanceClass, instance, expectedType, resolvedTypes);
+
+      SerializabilityUtil.releaseTypes(expectedType, resolvedTypes);
 
       // It's possible that deserializing an object requires the original proxy
       // object to be replaced.
@@ -599,8 +676,8 @@ public final class ServerSerializationStreamReader extends
    * Deserialize an instance that is an array. Will default to deserializing as
    * an Object vector if the instance is not a primitive vector.
    * 
-   * @param instanceClass
-   * @param instance
+   * @param instanceClass the class we are deserializing
+   * @param instance the object to deserialize into
    * @throws SerializationException
    */
   @SuppressWarnings("unchecked")
@@ -617,8 +694,33 @@ public final class ServerSerializationStreamReader extends
     }
   }
 
-  private void deserializeClass(Class<?> instanceClass, Object instance)
-      throws SerializationException, IllegalAccessException,
+  /**
+   * Deserialize an instance that is an array, with type checking.
+   * 
+   * Will default to deserializing as an Object vector if the instance is not a
+   * primitive vector.
+   * 
+   * @param instanceClass the class we are deserializing
+   * @param instance the object to deserialize into
+   * @param expectedType the parameterized type the system is expected to find
+   * @throws SerializationException
+   */
+  @SuppressWarnings("unchecked")
+  private Object deserializeArray(Class<?> instanceClass, Object instance, Type expectedType,
+      DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+    assert (instanceClass.isArray());
+
+    BoundedList<Object> buffer = (BoundedList<Object>) instance;
+    VectorReader instanceReader = CLASS_TO_VECTOR_READER.get(instanceClass);
+    if (instanceReader != null) {
+      return instanceReader.read(this, buffer, expectedType, resolvedTypes);
+    } else {
+      return VectorReader.OBJECT_VECTOR.read(this, buffer, expectedType, resolvedTypes);
+    }
+  }
+
+  private void deserializeClass(Class<?> instanceClass, Object instance, Type expectedType,
+      DequeMap<Type, Type> resolvedTypes) throws SerializationException, IllegalAccessException,
       NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
     /**
      * A map from field names to corresponding setter methods. The reference
@@ -628,10 +730,11 @@ public final class ServerSerializationStreamReader extends
     Map<String, Method> setters = null;
 
     /**
-     * A list of fields of this class known to the client. If null, assume the class is not
-     * enhanced and don't attempt to deal with server-only fields.
+     * A list of fields of this class known to the client. If null, assume the
+     * class is not enhanced and don't attempt to deal with server-only fields.
      */
-    Set<String> clientFieldNames = serializationPolicy.getClientFieldNamesForEnhancedClass(instanceClass);
+    Set<String> clientFieldNames =
+        serializationPolicy.getClientFieldNamesForEnhancedClass(instanceClass);
     if (clientFieldNames != null) {
       // Read and set server-only instance fields encoded in the RPC data
       try {
@@ -662,12 +765,12 @@ public final class ServerSerializationStreamReader extends
     Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(instanceClass);
     for (Field declField : serializableFields) {
       assert (declField != null);
-      if ((clientFieldNames != null)
-          && !clientFieldNames.contains(declField.getName())) {
+      if ((clientFieldNames != null) && !clientFieldNames.contains(declField.getName())) {
         continue;
       }
 
-      Object value = deserializeValue(declField.getType());
+      Type declGenericType = declField.getGenericType();
+      Object value = deserializeValue(declField.getType(), declGenericType, resolvedTypes);
 
       String fieldName = declField.getName();
       Method setter;
@@ -682,8 +785,7 @@ public final class ServerSerializationStreamReader extends
         setter.invoke(instance, value);
       } else {
         boolean isAccessible = declField.isAccessible();
-        boolean needsAccessOverride = !isAccessible
-            && !Modifier.isPublic(declField.getModifiers());
+        boolean needsAccessOverride = !isAccessible && !Modifier.isPublic(declField.getModifiers());
         if (needsAccessOverride) {
           // Override access restrictions
           declField.setAccessible(true);
@@ -695,33 +797,47 @@ public final class ServerSerializationStreamReader extends
 
     Class<?> superClass = instanceClass.getSuperclass();
     if (serializationPolicy.shouldDeserializeFields(superClass)) {
-      deserializeImpl(SerializabilityUtil.hasCustomFieldSerializer(superClass),
-          superClass, instance);
+      deserializeImpl(SerializabilityUtil.hasServerCustomFieldSerializer(superClass), superClass,
+          instance, expectedType, resolvedTypes);
     }
   }
 
-  private Object deserializeImpl(Class<?> customSerializer,
-      Class<?> instanceClass, Object instance) throws NoSuchMethodException,
-      IllegalArgumentException, IllegalAccessException,
+  private Object deserializeImpl(Class<?> customSerializer, Class<?> instanceClass,
+      Object instance, Type expectedType, DequeMap<Type, Type> resolvedTypes)
+      throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException,
       InvocationTargetException, SerializationException, ClassNotFoundException {
 
     if (customSerializer != null) {
       @SuppressWarnings("unchecked")
       CustomFieldSerializer<Object> customFieldSerializer =
-          (CustomFieldSerializer<Object>)
-              SerializabilityUtil.loadCustomFieldSerializer(customSerializer);
+          (CustomFieldSerializer<Object>) SerializabilityUtil
+              .loadCustomFieldSerializer(customSerializer);
       if (customFieldSerializer == null) {
-        deserializeWithCustomFieldDeserializer(customSerializer, instanceClass,
-            instance);
+        deserializeWithCustomFieldDeserializer(customSerializer, instanceClass, instance,
+            resolvedTypes);
+      } else if (customFieldSerializer instanceof ServerCustomFieldSerializer) {
+        ServerCustomFieldSerializer<Object> serverCFS =
+            (ServerCustomFieldSerializer<Object>) customFieldSerializer;
+        serverCFS.deserializeInstance(this, instance, instanceClass, resolvedTypes);
       } else {
         customFieldSerializer.deserializeInstance(this, instance);
       }
     } else if (instanceClass.isArray()) {
-      instance = deserializeArray(instanceClass, instance);
+      if (expectedType == null) {
+        return deserializeArray(instanceClass, instance);
+      }
+      Type actualExpectedType = SerializabilityUtil.findActualType(expectedType, resolvedTypes);
+      if (actualExpectedType instanceof GenericArrayType) {
+        Type arrayType = ((GenericArrayType) actualExpectedType).getGenericComponentType();
+        return deserializeArray(instanceClass, instance, arrayType, resolvedTypes);
+      } else if (((Class<?>) actualExpectedType).getComponentType() != null) {
+        Class<?> arrayType = ((Class<?>) actualExpectedType).getComponentType();
+        return deserializeArray(instanceClass, instance, arrayType, resolvedTypes);
+      }
     } else if (instanceClass.isEnum()) {
       // Enums are deserialized when they are instantiated
     } else {
-      deserializeClass(instanceClass, instance);
+      deserializeClass(instanceClass, instance, expectedType, resolvedTypes);
     }
 
     return instance;
@@ -729,8 +845,7 @@ public final class ServerSerializationStreamReader extends
 
   private void deserializeStringTable() throws SerializationException {
     int typeNameCount = readInt();
-    BoundedList<String> buffer = new BoundedList<String>(String.class,
-        typeNameCount);
+    BoundedList<String> buffer = new BoundedList<String>(String.class, typeNameCount);
     for (int typeNameIndex = 0; typeNameIndex < typeNameCount; ++typeNameIndex) {
       String str = extract();
       // Change quoted characters back.
@@ -741,8 +856,7 @@ public final class ServerSerializationStreamReader extends
         while (idx >= 0) {
           buf.append(str.substring(pos, idx));
           if (++idx == str.length()) {
-            throw new SerializationException("Unmatched backslash: \"" + str
-                + "\"");
+            throw new SerializationException("Unmatched backslash: \"" + str + "\"");
           }
           char ch = str.charAt(idx);
           pos = idx + 1;
@@ -758,18 +872,17 @@ public final class ServerSerializationStreamReader extends
               break;
             case 'u':
               try {
-                ch = (char) Integer.parseInt(str.substring(idx + 1, idx + 5),
-                    16);
+                ch = (char) Integer.parseInt(str.substring(idx + 1, idx + 5), 16);
               } catch (NumberFormatException e) {
-                throw new SerializationException(
-                    "Invalid Unicode escape sequence in \"" + str + "\"");
+                throw new SerializationException("Invalid Unicode escape sequence in \"" + str
+                    + "\"");
               }
               buf.append(ch);
               pos += 4;
               break;
             default:
-              throw new SerializationException("Unexpected escape character "
-                  + ch + " after backslash: \"" + str + "\"");
+              throw new SerializationException("Unexpected escape character " + ch
+                  + " after backslash: \"" + str + "\"");
           }
           idx = str.indexOf('\\', pos);
         }
@@ -787,12 +900,17 @@ public final class ServerSerializationStreamReader extends
     stringTable = buffer.toArray(new String[buffer.getExpectedSize()]);
   }
 
-  private void deserializeWithCustomFieldDeserializer(
-      Class<?> customSerializer, Class<?> instanceClass, Object instance)
-      throws NoSuchMethodException, IllegalAccessException,
-      InvocationTargetException {
+  private void deserializeWithCustomFieldDeserializer(Class<?> customSerializer,
+      Class<?> instanceClass, Object instance, DequeMap<Type, Type> resolvedTypes)
+      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     assert (!instanceClass.isArray());
 
+    for (Method method : customSerializer.getMethods()) {
+      if ("deserializeChecked".equals(method.getName())) {
+        method.invoke(null, this, instance, instanceClass, resolvedTypes);
+        return;
+      }
+    }
     for (Method method : customSerializer.getMethods()) {
       if ("deserialize".equals(method.getName())) {
         method.invoke(null, this, instance);
@@ -809,20 +927,19 @@ public final class ServerSerializationStreamReader extends
       throw new SerializationException("Too few tokens in RPC request", e);
     }
   }
-  
+
   /**
-   * Returns a suitable NumberFormatException with an explanatory message
-   * when a numerical value cannot be parsed according to its expected
-   * type.
-   *  
+   * Returns a suitable NumberFormatException with an explanatory message when a
+   * numerical value cannot be parsed according to its expected type.
+   * 
    * @param value the value as read from the RPC stream
    * @param type the name of the expected type
    * @param minValue the smallest valid value for the expected type
    * @param maxValue the largest valid value for the expected type
    * @return a NumberFormatException with an explanatory message
    */
-  private NumberFormatException getNumberFormatException(String value,
-      String type, double minValue, double maxValue) {
+  private NumberFormatException getNumberFormatException(String value, String type,
+      double minValue, double maxValue) {
     String message = "a non-numerical value";
     try {
       // Check the field contents in order to produce a more comprehensible
@@ -834,10 +951,11 @@ public final class ServerSerializationStreamReader extends
         message = "a fractional value";
       }
     } catch (NumberFormatException e2) {
+      // Fall through with the default message.
     }
 
-    return new NumberFormatException("Expected type '" + type + "' but received " +
-        message + ": " + value);
+    return new NumberFormatException("Expected type '" + type + "' but received " + message + ": "
+        + value);
   }
 
   /**
@@ -847,7 +965,8 @@ public final class ServerSerializationStreamReader extends
    * @param instanceClass the class to query
    * @return a Map from Strings to Methods such that the name <code>XXX</code>
    *         (corresponding to the field <code>T XXX</code>) maps to the method
-   *         <code>void setXXX(T value)</code>, or null if no such method exists.
+   *         <code>void setXXX(T value)</code>, or null if no such method
+   *         exists.
    */
   private Map<String, Method> getSetters(Class<?> instanceClass) {
     synchronized (settersByClass) {
@@ -858,12 +977,12 @@ public final class ServerSerializationStreamReader extends
         // Iterate over each field and locate a suitable setter method
         Field[] fields = instanceClass.getDeclaredFields();
         for (Field field : fields) {
-          // Consider non-final, non-static, non-transient (or @GwtTransient) fields only
+          // Consider non-final, non-static, non-transient (or @GwtTransient)
+          // fields only
           if (SerializabilityUtil.isNotStaticTransientOrFinal(field)) {
             String fieldName = field.getName();
-            String setterName = "set"
-              + Character.toUpperCase(fieldName.charAt(0))
-              + fieldName.substring(1);
+            String setterName =
+                "set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
             try {
               Method setter = instanceClass.getMethod(setterName, field.getType());
               setters.put(fieldName, setter);
@@ -880,22 +999,28 @@ public final class ServerSerializationStreamReader extends
     }
   }
 
-  private Object instantiate(Class<?> customSerializer, Class<?> instanceClass)
-      throws InstantiationException, IllegalAccessException,
-      IllegalArgumentException, InvocationTargetException,
-      NoSuchMethodException, SerializationException {
+  private Object instantiate(Class<?> customSerializer, Class<?> instanceClass, Type expectedType,
+      DequeMap<Type, Type> resolvedTypes) throws InstantiationException, IllegalAccessException,
+      IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
+      SerializationException {
     if (customSerializer != null) {
       CustomFieldSerializer<?> customFieldSerializer =
           SerializabilityUtil.loadCustomFieldSerializer(customSerializer);
       if (customFieldSerializer == null) {
-        for (Method method : customSerializer.getMethods()) {
-          if ("instantiate".equals(method.getName())) {
-            return method.invoke(null, this);
-          }
+        Object result = instantiateWithCustomFieldInstantiator(customSerializer, instanceClass, resolvedTypes);
+        if (result != null) {
+          return result;
         }
-        // Ok to not have one.
+        // Ok to not have a custom instantiate.
       } else if (customFieldSerializer.hasCustomInstantiateInstance()) {
-        return customFieldSerializer.instantiateInstance(this);
+        if (expectedType != null &&
+            (customFieldSerializer instanceof ServerCustomFieldSerializer)) {
+          ServerCustomFieldSerializer<?> serverCFS =
+              (ServerCustomFieldSerializer<?>) customFieldSerializer;
+          return serverCFS.instantiateInstance(this, instanceClass, resolvedTypes);
+        } else {
+          return customFieldSerializer.instantiateInstance(this);
+        }
       }
     }
 
@@ -915,21 +1040,35 @@ public final class ServerSerializationStreamReader extends
     }
   }
 
-  private void validateTypeVersions(Class<?> instanceClass,
-      SerializedInstanceReference serializedInstRef)
-      throws SerializationException {
-    String clientTypeSignature = serializedInstRef.getSignature();
-    if (clientTypeSignature.length() == 0) {
-      throw new SerializationException("Missing type signature for "
-          + instanceClass.getName());
+  private Object instantiateWithCustomFieldInstantiator(Class<?> customSerializer,
+      Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes)
+      throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+    for (Method method : customSerializer.getMethods()) {
+      if ("instantiateChecked".equals(method.getName())) {
+        return method.invoke(null, this, instanceClass, resolvedTypes);
+      }
     }
 
-    String serverTypeSignature = SerializabilityUtil.getSerializationSignature(
-        instanceClass, serializationPolicy);
+    for (Method method : customSerializer.getMethods()) {
+      if ("instantiate".equals(method.getName())) {
+        return method.invoke(null, this);
+      }
+    }
+    return null;
+  }
+
+  private void validateTypeVersions(Class<?> instanceClass,
+      SerializedInstanceReference serializedInstRef) throws SerializationException {
+    String clientTypeSignature = serializedInstRef.getSignature();
+    if (clientTypeSignature.length() == 0) {
+      throw new SerializationException("Missing type signature for " + instanceClass.getName());
+    }
+
+    String serverTypeSignature =
+        SerializabilityUtil.getSerializationSignature(instanceClass, serializationPolicy);
 
     if (!clientTypeSignature.equals(serverTypeSignature)) {
-      throw new SerializationException("Invalid type signature for "
-          + instanceClass.getName());
+      throw new SerializationException("Invalid type signature for " + instanceClass.getName());
     }
   }
 }

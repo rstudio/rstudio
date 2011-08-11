@@ -57,8 +57,7 @@ public class TestSetFactory {
     public boolean equals(Object obj) {
       if (obj instanceof MarkerBase && obj.getClass() == this.getClass()) {
         MarkerBase other = (MarkerBase) obj;
-        return value == other.value
-            || (value != null && value.equals(other.value));
+        return value == other.value || (value != null && value.equals(other.value));
       }
       return false;
     }
@@ -352,7 +351,7 @@ public class TestSetFactory {
   }
 
   /**
-   * TODO: document me.
+   * Class to test serialization of cycles in the object graph.
    */
   public static class SerializableDoublyLinkedNode implements IsSerializable {
     protected String data;
@@ -432,7 +431,7 @@ public class TestSetFactory {
   }
 
   /**
-   * TODO: document me.
+   * Serializable class used to test arrays that are referenced more than once.
    */
   public static class SerializableWithTwoArrays implements IsSerializable {
     String[] one;
@@ -440,16 +439,21 @@ public class TestSetFactory {
   }
 
   /**
-   * TODO: document me.
+   * A non-serializable class for testing.
    */
   public static class UnserializableNode {
   }
 
-  static class ReverseSorter<T extends Comparable<T>> implements Comparator<T>,
-      Serializable {
+  /**
+   * A custom sorter for testing: it sorts in reverse order.
+   * 
+   * @param <T> The type to be sorted.
+   */
+  public static class ReverseSorter<T extends Comparable<T>> implements Comparator<T>,
+      IsSerializable {
 
     // for gwt-serialization
-    ReverseSorter() {
+    public ReverseSorter() {
     }
 
     public int compare(T a, T b) {
@@ -492,25 +496,25 @@ public class TestSetFactory {
   }
 
   public static List<MarkerTypeArraysAsList> createArraysAsList() {
-    return Arrays.asList(new MarkerTypeArraysAsList("foo"),
-        new MarkerTypeArraysAsList("bar"), new MarkerTypeArraysAsList("baz"),
-        new MarkerTypeArraysAsList("bal"), new MarkerTypeArraysAsList("w00t"));
+    return Arrays.asList(new MarkerTypeArraysAsList("foo"), new MarkerTypeArraysAsList("bar"),
+        new MarkerTypeArraysAsList("baz"), new MarkerTypeArraysAsList("bal"),
+        new MarkerTypeArraysAsList("w00t"));
   }
 
   public static Boolean[] createBooleanArray() {
-    return new Boolean[] {
+    return new Boolean[]{
         Boolean.valueOf(true), Boolean.valueOf(false), Boolean.valueOf(true),
         Boolean.valueOf(false)};
   }
 
   public static Byte[] createByteArray() {
-    return new Byte[] {
-        new Byte(Byte.MAX_VALUE), new Byte(Byte.MIN_VALUE),
-        new Byte(Byte.MAX_VALUE), new Byte(Byte.MIN_VALUE)};
+    return new Byte[]{
+        new Byte(Byte.MAX_VALUE), new Byte(Byte.MIN_VALUE), new Byte(Byte.MAX_VALUE),
+        new Byte(Byte.MIN_VALUE)};
   }
 
   public static Character[] createCharArray() {
-    return new Character[] {
+    return new Character[]{
         new Character(Character.MAX_VALUE), new Character(Character.MIN_VALUE),
         new Character(Character.MAX_VALUE), new Character(Character.MIN_VALUE)};
   }
@@ -521,14 +525,13 @@ public class TestSetFactory {
 
   @SuppressWarnings("deprecation")
   public static Date[] createDateArray() {
-    return new Date[] {
-        new Date(1992 - 1900, 9, 18), new Date(1997 - 1900, 6, 6)};
+    return new Date[]{new Date(1992 - 1900, 9, 18), new Date(1997 - 1900, 6, 6)};
   }
 
   public static Double[] createDoubleArray() {
-    return new Double[] {
-        new Double(Double.MAX_VALUE), new Double(Double.MIN_VALUE),
-        new Double(Double.MAX_VALUE), new Double(Double.MIN_VALUE)};
+    return new Double[]{
+        new Double(Double.MAX_VALUE), new Double(Double.MIN_VALUE), new Double(Double.MAX_VALUE),
+        new Double(Double.MIN_VALUE)};
   }
 
   public static List<MarkerTypeEmptyList> createEmptyList() {
@@ -544,14 +547,13 @@ public class TestSetFactory {
   }
 
   public static Enum<?>[] createEnumArray() {
-    return new Enum<?>[] {
-        MarkerTypeEnum.A, MarkerTypeEnum.B, MarkerTypeEnum.C, MarkerTypeEnum.A,};
+    return new Enum<?>[]{MarkerTypeEnum.A, MarkerTypeEnum.B, MarkerTypeEnum.C, MarkerTypeEnum.A};
   }
 
   public static Float[] createFloatArray() {
-    return new Float[] {
-        new Float(Float.MAX_VALUE), new Float(Float.MIN_VALUE),
-        new Float(Float.MAX_VALUE), new Float(Float.MIN_VALUE)};
+    return new Float[]{
+        new Float(Float.MAX_VALUE), new Float(Float.MIN_VALUE), new Float(Float.MAX_VALUE),
+        new Float(Float.MIN_VALUE)};
   }
 
   public static HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> createHashMap() {
@@ -575,7 +577,8 @@ public class TestSetFactory {
     return set;
   }
 
-  public static IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> createIdentityHashMapEnumKey() {
+  public static IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue>
+  createIdentityHashMapEnumKey() {
     IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> map =
         new IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue>();
     /*
@@ -588,7 +591,9 @@ public class TestSetFactory {
     return map;
   }
 
-  public static IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> createIdentityHashMap() {
+  public static
+  IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue>
+  createIdentityHashMap() {
     IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> map =
         new IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue>();
     /*
@@ -606,12 +611,13 @@ public class TestSetFactory {
   }
 
   public static Integer[] createIntegerArray() {
-    return new Integer[] {
+    return new Integer[]{
         new Integer(Integer.MAX_VALUE), new Integer(Integer.MIN_VALUE),
         new Integer(Integer.MAX_VALUE), new Integer(Integer.MIN_VALUE)};
   }
 
-  public static LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> createLinkedHashMap() {
+  public static
+  LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue>createLinkedHashMap() {
     LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> map =
         new LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue>();
     map.put(new MarkerTypeLinkedHashMapKey("foo"), new MarkerTypeLinkedHashMapValue("foo"));
@@ -646,21 +652,21 @@ public class TestSetFactory {
     long a = 16123432898849345L;
     long b = 78234569989880099L;
     long c = -64289238928934943L;
-    
+
     // Create values that are not compile-time constants
     for (int i = 0; i < 10; i++) {
       a ^= b;
       b ^= c;
       c ^= a;
     }
-    
-    return new Long[] {
-        new Long(Long.MAX_VALUE), new Long(Long.MIN_VALUE),
-        new Long(Long.MAX_VALUE), new Long(Long.MIN_VALUE),
-        new Long(a), new Long(b), new Long(c)};
+
+    return new Long[]{
+        new Long(Long.MAX_VALUE), new Long(Long.MIN_VALUE), new Long(Long.MAX_VALUE),
+        new Long(Long.MIN_VALUE), new Long(a), new Long(b), new Long(c)};
   }
 
-  public static LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> createLRULinkedHashMap() {
+  public static LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue>
+  createLRULinkedHashMap() {
     LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> map =
         new LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue>(100, 1.0f, true);
     map.put(new MarkerTypeLinkedHashMapKey("foo"), new MarkerTypeLinkedHashMapValue("foo"));
@@ -672,56 +678,47 @@ public class TestSetFactory {
   }
 
   public static boolean[] createPrimitiveBooleanArray() {
-    return new boolean[] {true, true, false, false, true, false};
+    return new boolean[]{true, true, false, false, true, false};
   }
 
   public static byte[] createPrimitiveByteArray() {
-    return new byte[] {
-        Byte.MAX_VALUE, Byte.MIN_VALUE, Byte.MAX_VALUE, Byte.MIN_VALUE};
+    return new byte[]{Byte.MAX_VALUE, Byte.MIN_VALUE, Byte.MAX_VALUE, Byte.MIN_VALUE};
   }
 
   public static char[] createPrimitiveCharArray() {
-    return new char[] {
-        Character.MAX_VALUE, Character.MIN_VALUE, Character.MAX_VALUE,
-        Character.MIN_VALUE};
+    return new char[]{
+        Character.MAX_VALUE, Character.MIN_VALUE, Character.MAX_VALUE, Character.MIN_VALUE};
   }
 
   public static double[] createPrimitiveDoubleArray() {
-    return new double[] {
-        Double.MAX_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MIN_VALUE};
+    return new double[]{Double.MAX_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MIN_VALUE};
   }
 
   public static float[] createPrimitiveFloatArray() {
-    return new float[] {
-        Float.MAX_VALUE, Float.MIN_VALUE, Float.MAX_VALUE, Float.MIN_VALUE};
+    return new float[]{Float.MAX_VALUE, Float.MIN_VALUE, Float.MAX_VALUE, Float.MIN_VALUE};
   }
 
   public static int[] createPrimitiveIntegerArray() {
-    return new int[] {
-        Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE,
-        Integer.MIN_VALUE};
+    return new int[]{Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE};
   }
 
   public static long[] createPrimitiveLongArray() {
     long a = 16123432898849345L;
     long b = 78234569989880099L;
     long c = -64289238928934943L;
-    
+
     // Create values that are not compile-time constants
     for (int i = 0; i < 10; i++) {
       a ^= b;
       b ^= c;
       c ^= a;
     }
-    
-    return new long[] {
-        Long.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE, Long.MIN_VALUE,
-        a, b, c};
+
+    return new long[]{Long.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE, Long.MIN_VALUE, a, b, c};
   }
 
   public static short[] createPrimitiveShortArray() {
-    return new short[] {
-        Short.MAX_VALUE, Short.MIN_VALUE, Short.MAX_VALUE, Short.MIN_VALUE};
+    return new short[]{Short.MAX_VALUE, Short.MIN_VALUE, Short.MAX_VALUE, Short.MIN_VALUE};
   }
 
   public static SerializablePrivateNoArg createPrivateNoArg() {
@@ -729,9 +726,9 @@ public class TestSetFactory {
   }
 
   public static Short[] createShortArray() {
-    return new Short[] {
-        new Short(Short.MAX_VALUE), new Short(Short.MIN_VALUE),
-        new Short(Short.MAX_VALUE), new Short(Short.MIN_VALUE)};
+    return new Short[]{
+        new Short(Short.MAX_VALUE), new Short(Short.MIN_VALUE), new Short(Short.MAX_VALUE),
+        new Short(Short.MIN_VALUE)};
   }
 
   public static List<MarkerTypeSingleton> createSingletonList() {
@@ -739,16 +736,15 @@ public class TestSetFactory {
   }
 
   public static java.sql.Date[] createSqlDateArray() {
-    return new java.sql.Date[] {
-        new java.sql.Date(500L), new java.sql.Date(500000000L)};
+    return new java.sql.Date[]{new java.sql.Date(500L), new java.sql.Date(500000000L)};
   }
 
   public static Time[] createSqlTimeArray() {
-    return new Time[] {new Time(500L), new Time(5000000L)};
+    return new Time[]{new Time(500L), new Time(5000000L)};
   }
 
   public static Timestamp[] createSqlTimestampArray() {
-    return new Timestamp[] {new Timestamp(500L), new Timestamp(5000000L)};
+    return new Timestamp[]{new Timestamp(500L), new Timestamp(5000000L)};
   }
 
   /*
@@ -756,13 +752,12 @@ public class TestSetFactory {
    * to make sure they are handled properly.
    */
   public static String[] createStringArray() {
-    return new String[] {
-        null, "", "one", "two", "toString", "watch", "prototype", "eval",
-        "valueOf", "constructor", "__proto__"};
+    return new String[]{
+        null, "", "one", "two", "toString", "watch", "prototype", "eval", "valueOf", "constructor",
+        "__proto__"};
   }
 
-  public static TreeMap<String, MarkerTypeTreeMap> createTreeMap(
-      boolean defaultComparator) {
+  public static TreeMap<String, MarkerTypeTreeMap> createTreeMap(boolean defaultComparator) {
     TreeMap<String, MarkerTypeTreeMap> map;
     if (defaultComparator) {
       map = new TreeMap<String, MarkerTypeTreeMap>();
@@ -777,14 +772,12 @@ public class TestSetFactory {
     return map;
   }
 
-  public static TreeSet<MarkerTypeTreeSet> createTreeSet(
-      boolean defaultComparator) {
+  public static TreeSet<MarkerTypeTreeSet> createTreeSet(boolean defaultComparator) {
     TreeSet<MarkerTypeTreeSet> set;
     if (defaultComparator) {
       set = new TreeSet<MarkerTypeTreeSet>();
     } else {
-      set = new TreeSet<MarkerTypeTreeSet>(
-          new ReverseSorter<MarkerTypeTreeSet>());
+      set = new TreeSet<MarkerTypeTreeSet>(new ReverseSorter<MarkerTypeTreeSet>());
     }
     set.add(new MarkerTypeTreeSet("foo"));
     set.add(new MarkerTypeTreeSet("bar"));

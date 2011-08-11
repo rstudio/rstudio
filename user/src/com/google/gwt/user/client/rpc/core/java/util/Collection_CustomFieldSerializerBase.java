@@ -22,7 +22,7 @@ import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import java.util.Collection;
 
 /**
- * Custom field serializer for {@link java.util.ArrayList}.
+ * Custom field serializer for {@link java.util.Collection}, used by implementing classes.
  */
 @SuppressWarnings("unchecked")
 public final class Collection_CustomFieldSerializerBase {

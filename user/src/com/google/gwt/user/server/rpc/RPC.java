@@ -20,13 +20,17 @@ import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RpcToken;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStream;
+import com.google.gwt.user.server.rpc.impl.DequeMap;
 import com.google.gwt.user.server.rpc.impl.LegacySerializationPolicy;
+import com.google.gwt.user.server.rpc.impl.SerializabilityUtil;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamWriter;
 import com.google.gwt.user.server.rpc.impl.TypeNameObfuscator;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,20 +47,20 @@ import java.util.Set;
  * <h3>Canonical Example</h3> The following example demonstrates the canonical
  * way to use this class.
  * 
- * {@example
- * com.google.gwt.examples.rpc.server.CanonicalExample#processCall(String)}
+ * {@example com.google.gwt.examples.rpc.server.CanonicalExample#processCall(String)}
  * 
  * <h3>Advanced Example</h3> The following example shows a more advanced way of
  * using this class to create an adapter between GWT RPC entities and POJOs.
  * 
- * {@example com.google.gwt.examples.rpc.server.AdvancedExample#doPost(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}
+ * {@example com.google.gwt.examples.rpc.server.AdvancedExample#doPost}
  */
 public final class RPC {
 
   /**
    * Maps primitive wrapper classes to their corresponding primitive class.
    */
-  private static final Map<Class<?>, Class<?>> PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS = new HashMap<Class<?>, Class<?>>();
+  private static final Map<Class<?>, Class<?>> PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS =
+      new HashMap<Class<?>, Class<?>>();
 
   /**
    * Static map of classes to sets of interfaces (e.g. classes). Optimizes
@@ -69,8 +73,7 @@ public final class RPC {
   static {
     PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.put(Boolean.class, Boolean.TYPE);
     PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.put(Byte.class, Byte.TYPE);
-    PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.put(Character.class,
-        Character.TYPE);
+    PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.put(Character.class, Character.TYPE);
     PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.put(Double.class, Double.TYPE);
     PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.put(Float.class, Float.TYPE);
     PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.put(Integer.class, Integer.TYPE);
@@ -232,8 +235,8 @@ public final class RPC {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
     try {
-      ServerSerializationStreamReader streamReader = new ServerSerializationStreamReader(
-          classLoader, serializationPolicyProvider);
+      ServerSerializationStreamReader streamReader =
+          new ServerSerializationStreamReader(classLoader, serializationPolicyProvider);
       streamReader.prepareToRead(encodedRequest);
 
       RpcToken rpcToken = null;
@@ -241,18 +244,16 @@ public final class RPC {
         // Read the RPC token
         rpcToken = (RpcToken) streamReader.deserializeValue(RpcToken.class);
       }
-            
+
       // Read the name of the RemoteService interface
-      String serviceIntfName = maybeDeobfuscate(streamReader,
-          streamReader.readString());
+      String serviceIntfName = maybeDeobfuscate(streamReader, streamReader.readString());
 
       if (type != null) {
         if (!implementsInterface(type, serviceIntfName)) {
           // The service does not implement the requested interface
-          throw new IncompatibleRemoteServiceException(
-              "Blocked attempt to access interface '" + serviceIntfName
-                  + "', which is not implemented by '" + printTypeName(type)
-                  + "'; this is either misconfiguration or a hack attempt");
+          throw new IncompatibleRemoteServiceException("Blocked attempt to access interface '"
+              + serviceIntfName + "', which is not implemented by '" + printTypeName(type)
+              + "'; this is either misconfiguration or a hack attempt");
         }
       }
 
@@ -265,30 +266,27 @@ public final class RPC {
           throw new IncompatibleRemoteServiceException(
               "Blocked attempt to access interface '"
                   + printTypeName(serviceIntf)
-                  + "', which doesn't extend RemoteService; this is either misconfiguration or a hack attempt");
+                  + "', which doesn't extend RemoteService; this is either "
+                  + "misconfiguration or a hack attempt");
         }
       } catch (ClassNotFoundException e) {
-        throw new IncompatibleRemoteServiceException(
-            "Could not locate requested interface '" + serviceIntfName
-                + "' in default classloader", e);
+        throw new IncompatibleRemoteServiceException("Could not locate requested interface '"
+            + serviceIntfName + "' in default classloader", e);
       }
 
       String serviceMethodName = streamReader.readString();
 
       int paramCount = streamReader.readInt();
       if (paramCount > streamReader.getNumberOfTokens()) {
-        throw new IncompatibleRemoteServiceException(
-            "Invalid number of parameters");
+        throw new IncompatibleRemoteServiceException("Invalid number of parameters");
       }
       Class<?>[] parameterTypes = new Class[paramCount];
 
       for (int i = 0; i < parameterTypes.length; i++) {
-        String paramClassName = maybeDeobfuscate(streamReader,
-            streamReader.readString());
+        String paramClassName = maybeDeobfuscate(streamReader, streamReader.readString());
 
         try {
-          parameterTypes[i] = getClassFromSerializedName(paramClassName,
-              classLoader);
+          parameterTypes[i] = getClassFromSerializedName(paramClassName, classLoader);
         } catch (ClassNotFoundException e) {
           throw new IncompatibleRemoteServiceException("Parameter " + i
               + " of is of an unknown type '" + paramClassName + "'", e);
@@ -298,18 +296,29 @@ public final class RPC {
       try {
         Method method = serviceIntf.getMethod(serviceMethodName, parameterTypes);
 
-        Object[] parameterValues = new Object[parameterTypes.length];
-        for (int i = 0; i < parameterValues.length; i++) {
-          parameterValues[i] = streamReader.deserializeValue(parameterTypes[i]);
+        // The parameter types we have are the non-parameterized versions in the
+        // RPC stream. For stronger message verification, get the parameterized
+        // types from the method declaration.
+        Type[] methodParameterTypes = method.getGenericParameterTypes();
+        DequeMap<Type, Type> resolvedTypes = new DequeMap<Type, Type>();
+
+        TypeVariable<Method>[] methodTypes = method.getTypeParameters();
+        for (TypeVariable<Method> methodType : methodTypes) {
+          SerializabilityUtil.resolveTypes(methodType, resolvedTypes);
         }
 
-        return new RPCRequest(method, parameterValues, rpcToken,
-            serializationPolicy, streamReader.getFlags());
+        Object[] parameterValues = new Object[parameterTypes.length];
+        for (int i = 0; i < parameterValues.length; i++) {
+          parameterValues[i] =
+              streamReader.deserializeValue(parameterTypes[i], methodParameterTypes[i],
+                  resolvedTypes);
+        }
 
+        return new RPCRequest(method, parameterValues, rpcToken, serializationPolicy, streamReader
+            .getFlags());
       } catch (NoSuchMethodException e) {
-        throw new IncompatibleRemoteServiceException(
-            formatMethodNotFoundErrorMessage(serviceIntf, serviceMethodName,
-                parameterTypes));
+        throw new IncompatibleRemoteServiceException(formatMethodNotFoundErrorMessage(serviceIntf,
+            serviceMethodName, parameterTypes));
       }
     } catch (SerializationException ex) {
       throw new IncompatibleRemoteServiceException(ex.getMessage(), ex);
@@ -331,10 +340,9 @@ public final class RPC {
    * @throws UnexpectedException if the result was an unexpected exception (a
    *           checked exception not declared in the serviceMethod's signature)
    */
-  public static String encodeResponseForFailure(Method serviceMethod,
-      Throwable cause) throws SerializationException {
-    return encodeResponseForFailure(serviceMethod, cause,
-        getDefaultSerializationPolicy());
+  public static String encodeResponseForFailure(Method serviceMethod, Throwable cause)
+      throws SerializationException {
+    return encodeResponseForFailure(serviceMethod, cause, getDefaultSerializationPolicy());
   }
 
   /**
@@ -362,16 +370,14 @@ public final class RPC {
    * @throws UnexpectedException if the result was an unexpected exception (a
    *           checked exception not declared in the serviceMethod's signature)
    */
-  public static String encodeResponseForFailure(Method serviceMethod,
-      Throwable cause, SerializationPolicy serializationPolicy)
-      throws SerializationException {
+  public static String encodeResponseForFailure(Method serviceMethod, Throwable cause,
+      SerializationPolicy serializationPolicy) throws SerializationException {
     return encodeResponseForFailure(serviceMethod, cause, serializationPolicy,
         AbstractSerializationStream.DEFAULT_FLAGS);
   }
 
-  public static String encodeResponseForFailure(Method serviceMethod,
-      Throwable cause, SerializationPolicy serializationPolicy, int flags)
-      throws SerializationException {
+  public static String encodeResponseForFailure(Method serviceMethod, Throwable cause,
+      SerializationPolicy serializationPolicy, int flags) throws SerializationException {
     if (cause == null) {
       throw new NullPointerException("cause cannot be null");
     }
@@ -380,15 +386,12 @@ public final class RPC {
       throw new NullPointerException("serializationPolicy");
     }
 
-    if (serviceMethod != null
-        && !RPCServletUtils.isExpectedException(serviceMethod, cause)) {
-      throw new UnexpectedException("Service method '"
-          + getSourceRepresentation(serviceMethod)
+    if (serviceMethod != null && !RPCServletUtils.isExpectedException(serviceMethod, cause)) {
+      throw new UnexpectedException("Service method '" + getSourceRepresentation(serviceMethod)
           + "' threw an unexpected exception: " + cause.toString(), cause);
     }
 
-    return encodeResponse(cause.getClass(), cause, true, flags,
-        serializationPolicy);
+    return encodeResponse(cause.getClass(), cause, true, flags, serializationPolicy);
   }
 
   /**
@@ -405,10 +408,9 @@ public final class RPC {
    * @throws NullPointerException if the service method is <code>null</code>
    * @throws SerializationException if the result cannot be serialized
    */
-  public static String encodeResponseForSuccess(Method serviceMethod,
-      Object object) throws SerializationException {
-    return encodeResponseForSuccess(serviceMethod, object,
-        getDefaultSerializationPolicy());
+  public static String encodeResponseForSuccess(Method serviceMethod, Object object)
+      throws SerializationException {
+    return encodeResponseForSuccess(serviceMethod, object, getDefaultSerializationPolicy());
   }
 
   /**
@@ -435,16 +437,14 @@ public final class RPC {
    *           serializationPolicy are <code>null</code>
    * @throws SerializationException if the result cannot be serialized
    */
-  public static String encodeResponseForSuccess(Method serviceMethod,
-      Object object, SerializationPolicy serializationPolicy)
-      throws SerializationException {
+  public static String encodeResponseForSuccess(Method serviceMethod, Object object,
+      SerializationPolicy serializationPolicy) throws SerializationException {
     return encodeResponseForSuccess(serviceMethod, object, serializationPolicy,
         AbstractSerializationStream.DEFAULT_FLAGS);
   }
 
-  public static String encodeResponseForSuccess(Method serviceMethod,
-      Object object, SerializationPolicy serializationPolicy, int flags)
-      throws SerializationException {
+  public static String encodeResponseForSuccess(Method serviceMethod, Object object,
+      SerializationPolicy serializationPolicy, int flags) throws SerializationException {
     if (serviceMethod == null) {
       throw new NullPointerException("serviceMethod cannot be null");
     }
@@ -462,17 +462,14 @@ public final class RPC {
         actualReturnType = object.getClass();
       }
 
-      if (actualReturnType == null
-          || !methodReturnType.isAssignableFrom(actualReturnType)) {
-        throw new IllegalArgumentException("Type '"
-            + printTypeName(object.getClass())
+      if (actualReturnType == null || !methodReturnType.isAssignableFrom(actualReturnType)) {
+        throw new IllegalArgumentException("Type '" + printTypeName(object.getClass())
             + "' does not match the return type in the method's signature: '"
             + getSourceRepresentation(serviceMethod) + "'");
       }
     }
 
-    return encodeResponse(methodReturnType, object, false, flags,
-        serializationPolicy);
+    return encodeResponse(methodReturnType, object, false, flags, serializationPolicy);
   }
 
   /**
@@ -506,10 +503,9 @@ public final class RPC {
    * @throws UnexpectedException if the serviceMethod throws a checked exception
    *           that is not declared in its signature
    */
-  public static String invokeAndEncodeResponse(Object target,
-      Method serviceMethod, Object[] args) throws SerializationException {
-    return invokeAndEncodeResponse(target, serviceMethod, args,
-        getDefaultSerializationPolicy());
+  public static String invokeAndEncodeResponse(Object target, Method serviceMethod, Object[] args)
+      throws SerializationException {
+    return invokeAndEncodeResponse(target, serviceMethod, args, getDefaultSerializationPolicy());
   }
 
   /**
@@ -545,17 +541,14 @@ public final class RPC {
    * @throws UnexpectedException if the serviceMethod throws a checked exception
    *           that is not declared in its signature
    */
-  public static String invokeAndEncodeResponse(Object target,
-      Method serviceMethod, Object[] args,
+  public static String invokeAndEncodeResponse(Object target, Method serviceMethod, Object[] args,
       SerializationPolicy serializationPolicy) throws SerializationException {
-    return invokeAndEncodeResponse(target, serviceMethod, args,
-        serializationPolicy, AbstractSerializationStream.DEFAULT_FLAGS);
+    return invokeAndEncodeResponse(target, serviceMethod, args, serializationPolicy,
+        AbstractSerializationStream.DEFAULT_FLAGS);
   }
 
-  public static String invokeAndEncodeResponse(Object target,
-      Method serviceMethod, Object[] args,
-      SerializationPolicy serializationPolicy, int flags)
-      throws SerializationException {
+  public static String invokeAndEncodeResponse(Object target, Method serviceMethod, Object[] args,
+      SerializationPolicy serializationPolicy, int flags) throws SerializationException {
     if (serviceMethod == null) {
       throw new NullPointerException("serviceMethod");
     }
@@ -568,16 +561,15 @@ public final class RPC {
     try {
       Object result = serviceMethod.invoke(target, args);
 
-      responsePayload = encodeResponseForSuccess(serviceMethod, result,
-          serializationPolicy, flags);
+      responsePayload = encodeResponseForSuccess(serviceMethod, result, serializationPolicy, flags);
     } catch (IllegalAccessException e) {
-      SecurityException securityException = new SecurityException(
-          formatIllegalAccessErrorMessage(target, serviceMethod));
+      SecurityException securityException =
+          new SecurityException(formatIllegalAccessErrorMessage(target, serviceMethod));
       securityException.initCause(e);
       throw securityException;
     } catch (IllegalArgumentException e) {
-      SecurityException securityException = new SecurityException(
-          formatIllegalArgumentErrorMessage(target, serviceMethod, args));
+      SecurityException securityException =
+          new SecurityException(formatIllegalArgumentErrorMessage(target, serviceMethod, args));
       securityException.initCause(e);
       throw securityException;
     } catch (InvocationTargetException e) {
@@ -585,8 +577,7 @@ public final class RPC {
       //
       Throwable cause = e.getCause();
 
-      responsePayload = encodeResponseForFailure(serviceMethod, cause,
-          serializationPolicy, flags);
+      responsePayload = encodeResponseForFailure(serviceMethod, cause, serializationPolicy, flags);
     }
 
     return responsePayload;
@@ -603,12 +594,11 @@ public final class RPC {
    * @return a string that encodes the response from a service method
    * @throws SerializationException if the object cannot be serialized
    */
-  private static String encodeResponse(Class<?> responseClass, Object object,
-      boolean wasThrown, int flags, SerializationPolicy serializationPolicy)
-      throws SerializationException {
+  private static String encodeResponse(Class<?> responseClass, Object object, boolean wasThrown,
+      int flags, SerializationPolicy serializationPolicy) throws SerializationException {
 
-    ServerSerializationStreamWriter stream = new ServerSerializationStreamWriter(
-        serializationPolicy);
+    ServerSerializationStreamWriter stream =
+        new ServerSerializationStreamWriter(serializationPolicy);
     stream.setFlags(flags);
 
     stream.prepareToWrite();
@@ -620,8 +610,7 @@ public final class RPC {
     return bufferStr;
   }
 
-  private static String formatIllegalAccessErrorMessage(Object target,
-      Method serviceMethod) {
+  private static String formatIllegalAccessErrorMessage(Object target, Method serviceMethod) {
     StringBuffer sb = new StringBuffer();
     sb.append("Blocked attempt to access inaccessible method '");
     sb.append(getSourceRepresentation(serviceMethod));
@@ -638,8 +627,8 @@ public final class RPC {
     return sb.toString();
   }
 
-  private static String formatIllegalArgumentErrorMessage(Object target,
-      Method serviceMethod, Object[] args) {
+  private static String formatIllegalArgumentErrorMessage(Object target, Method serviceMethod,
+      Object[] args) {
     StringBuffer sb = new StringBuffer();
     sb.append("Blocked attempt to invoke method '");
     sb.append(getSourceRepresentation(serviceMethod));
@@ -690,8 +679,8 @@ public final class RPC {
    * @return Class instance for the given type name
    * @throws ClassNotFoundException if the named type was not found
    */
-  private static Class<?> getClassFromSerializedName(String serializedName,
-      ClassLoader classLoader) throws ClassNotFoundException {
+  private static Class<?> getClassFromSerializedName(String serializedName, ClassLoader classLoader)
+      throws ClassNotFoundException {
     Class<?> value = TYPE_NAMES.get(serializedName);
     if (value != null) {
       return value;
@@ -768,8 +757,7 @@ public final class RPC {
   /**
    * Only called from implementsInterface().
    */
-  private static boolean implementsInterfaceRecursive(Class<?> clazz,
-      String intfName) {
+  private static boolean implementsInterfaceRecursive(Class<?> clazz, String intfName) {
     assert (clazz.isInterface());
 
     if (clazz.getName().equals(intfName)) {
@@ -792,8 +780,7 @@ public final class RPC {
    * the original identifier if deobfuscation is unnecessary or no mapping is
    * known.
    */
-  private static String maybeDeobfuscate(
-      ServerSerializationStreamReader streamReader, String name)
+  private static String maybeDeobfuscate(ServerSerializationStreamReader streamReader, String name)
       throws SerializationException {
     int index;
     if (streamReader.hasFlags(AbstractSerializationStream.FLAG_ELIDE_TYPE_NAMES)) {

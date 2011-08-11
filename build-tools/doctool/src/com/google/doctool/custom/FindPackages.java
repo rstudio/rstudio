@@ -43,7 +43,8 @@ public class FindPackages {
       "^com.google.gwt.resources.rg(.|$)",
       "^com.google.gwt.rpc.client.ast(.|$)", "^com.google.gwt.soyc(.|$)",
       "^com.google.gwt.validation(.|$)",
-      "^com.google.gwt.user.client.rpc.core.", "^javax.", "^junit.", "^org.",
+      "^com.google.gwt.user.\\w+.rpc.core.",
+      "^javax.", "^junit.", "^org.",
       ".impl(.|$)", ".rebind(.|$)"
   };
 

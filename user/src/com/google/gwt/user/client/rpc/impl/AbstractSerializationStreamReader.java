@@ -130,6 +130,18 @@ public abstract class AbstractSerializationStreamReader extends
       throws SerializationException;
 
   /**
+   * Get the previously seen object at the given index which must be 1-based.
+   * 
+   * @param index a 1-based index into the seen objects
+   * 
+   * @return the object stored in the seen array at index - 1
+   */
+  protected final Object getDecodedObject(int index) {
+    // index is 1-based
+    return seenArray.get(index - 1);
+  }
+
+  /**
    * Gets a string out of the string table.
    * 
    * @param index the index of the string to get
@@ -137,12 +149,23 @@ public abstract class AbstractSerializationStreamReader extends
    */
   protected abstract String getString(int index);
 
-  protected final void rememberDecodedObject(int index, Object o) {
+  /**
+   * Set an object in the seen list.
+   * 
+   * @param index a 1-based index into the seen objects
+   * @param o the object to remember
+   */
 
+  protected final void rememberDecodedObject(int index, Object o) {
     // index is 1-based
     seenArray.set(index - 1, o);
   }
 
+  /**
+   * Reserve an entry for an object in the seen list.
+   * 
+   * @return the index to be used in future for the object
+   */
   protected final int reserveDecodedObjectIndex() {
     seenArray.add(null);
 
