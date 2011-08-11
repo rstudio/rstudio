@@ -80,10 +80,20 @@ public class ColumnSortEvent extends GwtEvent<ColumnSortEvent.Handler> {
    */
   public static class ListHandler<T> implements Handler {
     private final Map<Column<?, ?>, Comparator<T>> comparators = new HashMap<Column<?, ?>, Comparator<T>>();
-    private final List<T> list;
+    private List<T> list;
 
     public ListHandler(List<T> list) {
       this.list = list;
+    }
+
+    /**
+     * Returns the comparator that has been set for the specified column, or 
+     * null if no comparator has been set.
+     * 
+     * @param column the {@link Column}
+     */
+    public Comparator<T> getComparator(Column<T, ?> column) {
+      return comparators.get(column);
     }
 
     public List<T> getList() {
@@ -123,6 +133,11 @@ public class ColumnSortEvent extends GwtEvent<ColumnSortEvent.Handler> {
      */
     public void setComparator(Column<T, ?> column, Comparator<T> comparator) {
       comparators.put(column, comparator);
+    }
+
+    public void setList(List<T> list) {
+      assert list != null : "list cannot be null"; 
+      this.list = list;
     }
   }
 

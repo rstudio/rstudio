@@ -74,11 +74,12 @@ public class ColumnSortEventTest extends TestCase {
     // Create a handler for the list of values.
     ListHandler<String> handler = new ListHandler<String>(values);
     IdentityColumn<String> col0 = new IdentityColumn<String>(new TextCell());
-    handler.setComparator(col0, new Comparator<String>() {
+    Comparator<String> col0Comparator = new Comparator<String>() {
       public int compare(String o1, String o2) {
         return o1.compareTo(o2);
       }
-    });
+    };
+    handler.setComparator(col0, col0Comparator);
     IdentityColumn<String> col1 = new IdentityColumn<String>(new TextCell());
     handler.setComparator(col1, null);
 
@@ -99,6 +100,35 @@ public class ColumnSortEventTest extends TestCase {
 
     // Null comparator.
     sortList.push(col1);
+    assertEquals("c", values.get(0));
+    assertEquals("b", values.get(1));
+    assertEquals("a", values.get(2));
+    
+    // Retrieve the comparators.
+    assertEquals(col0Comparator, handler.getComparator(col0));
+    assertNull(handler.getComparator(col1));
+    assertNull(handler.getComparator(new IdentityColumn<String>(
+        new TextCell())));
+    
+    // Create some new unsorted values.
+    List<String> newValues = new ArrayList<String>();
+    newValues.add("e");
+    newValues.add("d");
+    newValues.add("f");
+    
+    // Update the handler to be for the new list of values.
+    handler.setList(newValues);
+    
+    // Sort the new list in ascending order.
+    sortList.push(col0);
+    handler.onColumnSort(new ColumnSortEvent(sortList));
+
+    // The new values, sorted in ascending order.
+    assertEquals("d", newValues.get(0));
+    assertEquals("e", newValues.get(1));
+    assertEquals("f", newValues.get(2));
+
+    // The old values, still sorted in descending order.
     assertEquals("c", values.get(0));
     assertEquals("b", values.get(1));
     assertEquals("a", values.get(2));
