@@ -27,6 +27,17 @@ button(label)
 \examples{
 \dontrun{
 
+## use a button to reset a random seed
+manipulate(
+  {
+    if(resetSeed)
+      set.seed(sample(1:1000))
+
+    hist(rnorm(n=100, mean=0, sd=3), breaks=bins)
+  },
+  bins = slider(1, 20, step=1, initial =5, label="Bins"),
+  resetSeed = button("Reset Seed")
+)
 
 }
 }
