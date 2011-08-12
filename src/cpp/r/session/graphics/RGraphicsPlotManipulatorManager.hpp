@@ -21,6 +21,8 @@
 
 #include <r/RSexp.hpp>
 
+#include "RGraphicsTypes.hpp"
+
 namespace core {
    class Error;
 }
@@ -44,7 +46,7 @@ public:
    virtual ~PlotManipulatorManager() {}
 
 public:
-   core::Error initialize();
+   core::Error initialize(const DeviceToNdcFunction& deviceToNdc);
 
    boost::signal<void ()>& onShowManipulator() ;
    void setPlotManipulatorValues(const core::json::Object& values);
@@ -79,6 +81,9 @@ private:
 
    // manipulator event hook
    boost::signal<void ()> onShowManipulator_;
+
+   // unit conversion function
+   DeviceToNdcFunction deviceToNdc_;
 
 };
    

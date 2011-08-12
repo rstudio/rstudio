@@ -146,8 +146,11 @@ PlotManipulatorManager::PlotManipulatorManager()
 }
       
 
-Error PlotManipulatorManager::initialize()
+Error PlotManipulatorManager::initialize(const DeviceToNdcFunction& deviceToNdc)
 {
+   // save reference to device conversion function
+   deviceToNdc_ = deviceToNdc;
+
    // register R entry points for this class
    R_CallMethodDef execManipulatorMethodDef ;
    execManipulatorMethodDef.name = "rs_executeAndAttachManipulator" ;
@@ -295,16 +298,16 @@ void PlotManipulatorManager::manipulatorPlotClicked(int x, int y)
       // check if we are tracking mouse clicks
       if (trackingMouseClicks(manipulatorSEXP))
       {
-
-         // transform the coordinates
-
-
+         // transform the coordinates to ndc
+         double ndcX = x;
+         double ndcY = y;
+         deviceToNdc_(&ndcX, &ndcY);
 
          // set the mouse click state
          r::exec::RFunction setMouseClick("manipulate:::setMouseClick");
          setMouseClick.addParam(manipulatorSEXP);
-         setMouseClick.addParam(x);
-         setMouseClick.addParam(y);
+         setMouseClick.addParam(ndcX);
+         setMouseClick.addParam(ndcY);
          Error error = setMouseClick.call();
          if (error)
          {

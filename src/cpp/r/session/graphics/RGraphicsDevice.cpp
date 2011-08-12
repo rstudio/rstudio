@@ -44,6 +44,7 @@
 #define TRACE_GD_CALL
 #endif
 
+
 using namespace core ;
 
 namespace r {
@@ -531,6 +532,19 @@ DisplaySize displaySize()
    return DisplaySize(s_width, s_height);
 }
 
+void deviceToNdc(double* x, double* y)
+{
+   if (s_pGEDevDesc != NULL)
+   {
+      *x = ::GEfromDeviceX(*x, GE_NDC, s_pGEDevDesc);
+      *y = ::GEfromDeviceY(*y, GE_NDC, s_pGEDevDesc);
+   }
+   else
+   {
+      LOG_WARNING_MESSAGE("deviceToNdc called with no active graphics device");
+   }
+}
+
 Error saveSnapshot(const core::FilePath& snapshotFile,
                    const core::FilePath& imageFile)
 {
@@ -606,6 +620,7 @@ Error initialize(
    // create plot manager (provide functions & events)
    GraphicsDeviceFunctions graphicsDevice;
    graphicsDevice.displaySize = displaySize;
+   graphicsDevice.deviceToNdc = deviceToNdc;
    graphicsDevice.saveSnapshot = saveSnapshot;
    graphicsDevice.restoreSnapshot = restoreSnapshot;
    graphicsDevice.copyToActiveDevice = copyToActiveDevice;
