@@ -8,7 +8,7 @@ cd ace
 git checkout master
 
 # Point this to the upstream commit that we've tested
-git reset --hard 829b0cd24135c46911d841ea4ef24a7ad067ce19
+git reset --hard 5c904aca9c41ec84974db8507ea3abfa6b977787
 
 git submodule update --init --recursive
 
@@ -20,13 +20,12 @@ git merge \
     origin/bugfix-active-line-back \
     origin/bugfix-eclipse-print-margin \
     origin/patch-advanced-indent3 \
-    origin/patch-invisible-colors \
+    origin/patch/invisible-colors2 \
     origin/patch-build-matchingbraceoutdent \
     origin/patch-normalizeinput2 \
     origin/bugfix/search-regexp \
-    origin/bugfix/selected-word-colors \
+    origin/bugfix/selected-word-colors2 \
     origin/patch/scroll-granularity \
-    origin/bugfix/wrap-mode-rendering \
 
 
 make clean
