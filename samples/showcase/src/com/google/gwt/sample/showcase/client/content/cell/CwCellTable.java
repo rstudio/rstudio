@@ -130,6 +130,10 @@ public class CwCellTable extends ContentWidget {
         ContactDatabase.ContactInfo.KEY_PROVIDER);
     cellTable.setWidth("100%", true);
 
+    // Do not refresh the headers and footers every time the data is updated.
+    cellTable.setAutoHeaderRefreshDisabled(true);
+    cellTable.setAutoFooterRefreshDisabled(true);
+
     // Attach a column sort handler to the ListDataProvider to sort the list.
     ListHandler<ContactInfo> sortHandler = new ListHandler<ContactInfo>(
         ContactDatabase.get().getDataProvider().getList());
@@ -163,10 +167,12 @@ public class CwCellTable extends ContentWidget {
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
     GWT.runAsync(CwCellTable.class, new RunAsyncCallback() {
 
+      @Override
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
       }
 
+      @Override
       public void onSuccess() {
         callback.onSuccess(onInitialize());
       }
@@ -204,12 +210,14 @@ public class CwCellTable extends ContentWidget {
     };
     firstNameColumn.setSortable(true);
     sortHandler.setComparator(firstNameColumn, new Comparator<ContactInfo>() {
+      @Override
       public int compare(ContactInfo o1, ContactInfo o2) {
         return o1.getFirstName().compareTo(o2.getFirstName());
       }
     });
     cellTable.addColumn(firstNameColumn, constants.cwCellTableColumnFirstName());
     firstNameColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
+      @Override
       public void update(int index, ContactInfo object, String value) {
         // Called when the user changes the value.
         object.setFirstName(value);
@@ -228,12 +236,14 @@ public class CwCellTable extends ContentWidget {
     };
     lastNameColumn.setSortable(true);
     sortHandler.setComparator(lastNameColumn, new Comparator<ContactInfo>() {
+      @Override
       public int compare(ContactInfo o1, ContactInfo o2) {
         return o1.getLastName().compareTo(o2.getLastName());
       }
     });
     cellTable.addColumn(lastNameColumn, constants.cwCellTableColumnLastName());
     lastNameColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
+      @Override
       public void update(int index, ContactInfo object, String value) {
         // Called when the user changes the value.
         object.setLastName(value);
@@ -258,6 +268,7 @@ public class CwCellTable extends ContentWidget {
     };
     cellTable.addColumn(categoryColumn, constants.cwCellTableColumnCategory());
     categoryColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
+      @Override
       public void update(int index, ContactInfo object, String value) {
         for (Category category : categories) {
           if (category.getDisplayName().equals(value)) {
@@ -280,6 +291,7 @@ public class CwCellTable extends ContentWidget {
     addressColumn.setSortable(true);
     addressColumn.setDefaultSortAscending(false);
     sortHandler.setComparator(addressColumn, new Comparator<ContactInfo>() {
+      @Override
       public int compare(ContactInfo o1, ContactInfo o2) {
         return o1.getAddress().compareTo(o2.getAddress());
       }

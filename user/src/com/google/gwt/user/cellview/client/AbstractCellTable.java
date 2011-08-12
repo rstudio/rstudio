@@ -961,6 +961,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   private boolean dependsOnSelection;
 
   private Widget emptyTableWidget;
+  private boolean footerRefreshDisabled;
   private final List<Header<?>> footers = new ArrayList<Header<?>>();
 
   /**
@@ -968,7 +969,14 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   private boolean handlesSelection;
 
+  private boolean headerRefreshDisabled;
   private final List<Header<?>> headers = new ArrayList<Header<?>>();
+
+  /**
+   * Indicates that either the headers or footers are dirty, and both should be
+   * refreshed the next time the table is redrawn.
+   */
+  private boolean headersDirty;
 
   private TableRowElement hoveringRow;
 
@@ -1200,6 +1208,11 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    * Modifications to the {@link ColumnSortList} will be reflected in the table
    * header.
    * 
+   * <p>
+   * Note that the implementation may redraw the headers on every modification
+   * to the {@link ColumnSortList}.
+   * </p>
+   * 
    * @return the {@link ColumnSortList}
    */
   public ColumnSortList getColumnSortList() {
@@ -1363,6 +1376,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
     CellBasedWidgetImpl.get().sinkEvents(this, consumedEvents);
 
+    headersDirty = true;
     refreshColumnsAndRedraw();
   }
 
@@ -1419,14 +1433,34 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Redraw the table's footers.
+   * Check if auto footer refresh is enabled or disabled
+   * 
+   * @return true if disabled, false if enabled
+   * @see #setAutoFooterRefreshDisabled(boolean)
+   */
+  public boolean isAutoFooterRefreshDisabled() {
+    return footerRefreshDisabled;
+  }
+
+  /**
+   * Check if auto header refresh is enabled or disabled
+   * 
+   * @return true if disabled, false if enabled
+   * @see #setAutoHeaderRefreshDisabled(boolean)
+   */
+  public boolean isAutoHeaderRefreshDisabled() {
+    return headerRefreshDisabled;
+  }
+
+  /**
+   * Redraw the table's footers. The footers will be re-rendered synchronously.
    */
   public void redrawFooters() {
     createHeaders(true);
   }
 
   /**
-   * Redraw the table's headers.
+   * Redraw the table's headers. The headers will be re-rendered synchronously.
    */
   public void redrawHeaders() {
     createHeaders(false);
@@ -1464,6 +1498,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
 
     // Redraw the table asynchronously.
+    headersDirty = true;
     refreshColumnsAndRedraw();
 
     // We don't unsink events because other handlers or user code may have sunk
@@ -1477,6 +1512,36 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    * @param styleName the style name to remove
    */
   public abstract void removeColumnStyleName(int index, String styleName);
+
+  /**
+   * Enable or disable auto footer refresh when row data is changed. By default,
+   * footers are refreshed every time the row data changes in case the headers
+   * depend on the current row data. If the headers do not depend on the current
+   * row data, you can disable this feature to improve performance.
+   * 
+   * <p>
+   * Note that headers will still refresh when columns are added or removed,
+   * regardless of whether or not this feature is enabled.
+   * </p>
+   */
+  public void setAutoFooterRefreshDisabled(boolean disabled) {
+    this.footerRefreshDisabled = disabled;
+  }
+
+  /**
+   * Enable or disable auto header refresh when row data is changed. By default,
+   * headers are refreshed every time the row data changes in case the footers
+   * depend on the current row data. If the footers do not depend on the current
+   * row data, you can disable this feature to improve performance.
+   * 
+   * <p>
+   * Note that footers will still refresh when columns are added or removed,
+   * regardless of whether or not this feature is enabled.
+   * </p>
+   */
+  public void setAutoHeaderRefreshDisabled(boolean disabled) {
+    this.headerRefreshDisabled = disabled;
+  }
 
   /**
    * Set the width of a {@link Column}. The width will persist with the column
@@ -1795,6 +1860,11 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
           // TODO(jlabanca): Get visible col when custom headers are supported.
           Column<T, ?> column = col < columns.size() ? columns.get(col) : null;
           if (column != null && column.isSortable()) {
+            /*
+             * Force the headers to refresh the next time data is pushed so we
+             * update the sort icon in the header.
+             */
+            headersDirty = true;
             updatingSortList = true;
             sortList.push(column);
             updatingSortList = false;
@@ -2363,11 +2433,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     doSetHeaderVisible(isFooter, hasHeader);
   }
 
-  private void createHeadersAndFooters() {
-    createHeaders(false);
-    createHeaders(true);
-  }
-
   /**
    * Fire an event to the Cell within the specified {@link TableCellElement}.
    */
@@ -2589,7 +2654,14 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
 
     // Render the headers and footers.
-    createHeadersAndFooters();
+    boolean wereHeadersDirty = headersDirty;
+    headersDirty = false;
+    if (wereHeadersDirty || !headerRefreshDisabled) {
+      createHeaders(false);
+    }
+    if (wereHeadersDirty || !footerRefreshDisabled) {
+      createHeaders(true);
+    }
   }
 
   private <C> boolean resetFocusOnCellImpl(int row, int col, HasCell<T, C> column,

@@ -549,11 +549,20 @@ public class CwCustomDataGrid extends ContentWidget {
 
     // Create a DataGrid.
 
-    // Set a key provider that provides a unique key for each contact. If key is
-    // used to identify contacts when fields (such as the name and address)
-    // change.
+    /*
+     * Set a key provider that provides a unique key for each contact. If key is
+     * used to identify contacts when fields (such as the name and address)
+     * change.
+     */
     dataGrid = new DataGrid<ContactInfo>(ContactDatabase.ContactInfo.KEY_PROVIDER);
     dataGrid.setWidth("100%");
+
+    /*
+     * Do not refresh the headers every time the data is updated. The footer
+     * depends on the current data, so we do not disable auto refresh on the
+     * footer.
+     */
+    dataGrid.setAutoHeaderRefreshDisabled(true);
 
     // Set the message to display when the table is empty.
     dataGrid.setEmptyTableWidget(new Label(constants.cwCustomDataGridEmpty()));

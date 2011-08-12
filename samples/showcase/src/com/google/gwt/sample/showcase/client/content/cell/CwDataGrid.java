@@ -136,11 +136,20 @@ public class CwDataGrid extends ContentWidget {
   public Widget onInitialize() {
     // Create a DataGrid.
 
-    // Set a key provider that provides a unique key for each contact. If key is
-    // used to identify contacts when fields (such as the name and address)
-    // change.
+    /*
+     * Set a key provider that provides a unique key for each contact. If key is
+     * used to identify contacts when fields (such as the name and address)
+     * change.
+     */
     dataGrid = new DataGrid<ContactInfo>(ContactDatabase.ContactInfo.KEY_PROVIDER);
     dataGrid.setWidth("100%");
+
+    /*
+     * Do not refresh the headers every time the data is updated. The footer
+     * depends on the current data, so we do not disable auto refresh on the
+     * footer.
+     */
+    dataGrid.setAutoHeaderRefreshDisabled(true);
 
     // Set the message to display when the table is empty.
     dataGrid.setEmptyTableWidget(new Label(constants.cwDataGridEmpty()));
@@ -176,10 +185,12 @@ public class CwDataGrid extends ContentWidget {
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
     GWT.runAsync(CwDataGrid.class, new RunAsyncCallback() {
 
+      @Override
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
       }
 
+      @Override
       public void onSuccess() {
         callback.onSuccess(onInitialize());
       }
@@ -216,12 +227,14 @@ public class CwDataGrid extends ContentWidget {
         };
     firstNameColumn.setSortable(true);
     sortHandler.setComparator(firstNameColumn, new Comparator<ContactInfo>() {
+      @Override
       public int compare(ContactInfo o1, ContactInfo o2) {
         return o1.getFirstName().compareTo(o2.getFirstName());
       }
     });
     dataGrid.addColumn(firstNameColumn, constants.cwDataGridColumnFirstName());
     firstNameColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
+      @Override
       public void update(int index, ContactInfo object, String value) {
         // Called when the user changes the value.
         object.setFirstName(value);
@@ -240,12 +253,14 @@ public class CwDataGrid extends ContentWidget {
         };
     lastNameColumn.setSortable(true);
     sortHandler.setComparator(lastNameColumn, new Comparator<ContactInfo>() {
+      @Override
       public int compare(ContactInfo o1, ContactInfo o2) {
         return o1.getLastName().compareTo(o2.getLastName());
       }
     });
     dataGrid.addColumn(lastNameColumn, constants.cwDataGridColumnLastName());
     lastNameColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
+      @Override
       public void update(int index, ContactInfo object, String value) {
         // Called when the user changes the value.
         object.setLastName(value);
@@ -263,6 +278,7 @@ public class CwDataGrid extends ContentWidget {
     };
     lastNameColumn.setSortable(true);
     sortHandler.setComparator(ageColumn, new Comparator<ContactInfo>() {
+      @Override
       public int compare(ContactInfo o1, ContactInfo o2) {
         return o1.getBirthday().compareTo(o2.getBirthday());
       }
@@ -301,6 +317,7 @@ public class CwDataGrid extends ContentWidget {
     };
     dataGrid.addColumn(categoryColumn, constants.cwDataGridColumnCategory());
     categoryColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
+      @Override
       public void update(int index, ContactInfo object, String value) {
         for (Category category : categories) {
           if (category.getDisplayName().equals(value)) {
@@ -321,6 +338,7 @@ public class CwDataGrid extends ContentWidget {
     };
     addressColumn.setSortable(true);
     sortHandler.setComparator(addressColumn, new Comparator<ContactInfo>() {
+      @Override
       public int compare(ContactInfo o1, ContactInfo o2) {
         return o1.getAddress().compareTo(o2.getAddress());
       }

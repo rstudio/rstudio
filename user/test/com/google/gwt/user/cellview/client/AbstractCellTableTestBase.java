@@ -747,6 +747,194 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     }
   }
 
+  public void testSetAutoFooterRefreshDisabled() {
+    AbstractCellTable<String> table = createAbstractHasData();
+    assertFalse(table.isAutoHeaderRefreshDisabled());
+    assertFalse(table.isAutoFooterRefreshDisabled());
+
+    table.setAutoFooterRefreshDisabled(true);
+    assertFalse(table.isAutoHeaderRefreshDisabled());
+    assertTrue(table.isAutoFooterRefreshDisabled());
+
+    /*
+     * Inserting a column should render the headers and footers, even if auto
+     * refresh is disabled.
+     */
+    final List<String> log = new ArrayList<String>();
+    Column<String, ?> col0 = new MockColumn<String, String>();
+    TextHeader header0 = new TextHeader("header0") {
+      @Override
+      public void render(Context context, SafeHtmlBuilder sb) {
+        super.render(context, sb);
+        log.add("header0 rendered");
+      }
+    };
+    TextHeader footer0 = new TextHeader("footer0") {
+      @Override
+      public void render(Context context, SafeHtmlBuilder sb) {
+        super.render(context, sb);
+        log.add("footer0 rendered");
+      }
+    };
+    table.addColumn(col0, header0, footer0);
+    assertEquals(0, log.size()); // Headers are rendered asynchronously.
+    table.getPresenter().flush(); // Force headers to render.
+    assertEquals("header0 rendered", log.remove(0));
+    assertEquals("footer0 rendered", log.remove(0));
+    assertEquals(0, log.size());
+
+    /*
+     * Inserting another column should render the headers and footers, even if
+     * auto refresh is disabled.
+     */
+    Column<String, ?> col1 = new MockColumn<String, String>();
+    TextHeader header1 = new TextHeader("header1") {
+      @Override
+      public void render(Context context, SafeHtmlBuilder sb) {
+        super.render(context, sb);
+        log.add("header1 rendered");
+      }
+    };
+    TextHeader footer1 = new TextHeader("footer1") {
+      @Override
+      public void render(Context context, SafeHtmlBuilder sb) {
+        super.render(context, sb);
+        log.add("footer1 rendered");
+      }
+    };
+    table.addColumn(col1, header1, footer1);
+    assertEquals(0, log.size()); // Headers are rendered asynchronously.
+    table.getPresenter().flush(); // Force headers to render.
+    assertEquals("header0 rendered", log.remove(0));
+    assertEquals("header1 rendered", log.remove(0));
+    assertEquals("footer0 rendered", log.remove(0));
+    assertEquals("footer1 rendered", log.remove(0));
+    assertEquals(0, log.size());
+
+    /*
+     * Removing a column should render the headers and footers, even if auto
+     * refresh is disabled.
+     */
+    table.removeColumn(col0);
+    assertEquals(0, log.size()); // Headers are rendered asynchronously.
+    table.getPresenter().flush(); // Force headers to render.
+    assertEquals("header1 rendered", log.remove(0));
+    assertEquals("footer1 rendered", log.remove(0));
+    assertEquals(0, log.size());
+
+    /*
+     * Setting data only causes footers to render if auto refresh is enabled,
+     * which it is not. Header refresh is still enabled.
+     */
+    populateData(table);
+    assertEquals(0, log.size()); // Headers are rendered asynchronously.
+    table.getPresenter().flush(); // Force headers to render.
+    assertEquals("header1 rendered", log.remove(0));
+    assertEquals(0, log.size());
+
+    /*
+     * Sorting a column forces the headers only to refresh. The footers are not
+     * refreshed.
+     */
+    table.getColumnSortList().push(col1);
+    assertEquals("header1 rendered", log.remove(0));
+    assertEquals(0, log.size());
+  }
+
+  public void testSetAutoHeaderRefreshDisabled() {
+    AbstractCellTable<String> table = createAbstractHasData();
+    assertFalse(table.isAutoHeaderRefreshDisabled());
+    assertFalse(table.isAutoFooterRefreshDisabled());
+
+    table.setAutoHeaderRefreshDisabled(true);
+    assertTrue(table.isAutoHeaderRefreshDisabled());
+    assertFalse(table.isAutoFooterRefreshDisabled());
+
+    /*
+     * Inserting a column should render the headers and footers, even if auto
+     * refresh is disabled.
+     */
+    final List<String> log = new ArrayList<String>();
+    Column<String, ?> col0 = new MockColumn<String, String>();
+    TextHeader header0 = new TextHeader("header0") {
+      @Override
+      public void render(Context context, SafeHtmlBuilder sb) {
+        super.render(context, sb);
+        log.add("header0 rendered");
+      }
+    };
+    TextHeader footer0 = new TextHeader("footer0") {
+      @Override
+      public void render(Context context, SafeHtmlBuilder sb) {
+        super.render(context, sb);
+        log.add("footer0 rendered");
+      }
+    };
+    table.addColumn(col0, header0, footer0);
+    assertEquals(0, log.size()); // Headers are rendered asynchronously.
+    table.getPresenter().flush(); // Force headers to render.
+    assertEquals("header0 rendered", log.remove(0));
+    assertEquals("footer0 rendered", log.remove(0));
+    assertEquals(0, log.size());
+
+    /*
+     * Inserting another column should render the headers and footers, even if
+     * auto refresh is disabled.
+     */
+    Column<String, ?> col1 = new MockColumn<String, String>();
+    TextHeader header1 = new TextHeader("header1") {
+      @Override
+      public void render(Context context, SafeHtmlBuilder sb) {
+        super.render(context, sb);
+        log.add("header1 rendered");
+      }
+    };
+    TextHeader footer1 = new TextHeader("footer1") {
+      @Override
+      public void render(Context context, SafeHtmlBuilder sb) {
+        super.render(context, sb);
+        log.add("footer1 rendered");
+      }
+    };
+    table.addColumn(col1, header1, footer1);
+    assertEquals(0, log.size()); // Headers are rendered asynchronously.
+    table.getPresenter().flush(); // Force headers to render.
+    assertEquals("header0 rendered", log.remove(0));
+    assertEquals("header1 rendered", log.remove(0));
+    assertEquals("footer0 rendered", log.remove(0));
+    assertEquals("footer1 rendered", log.remove(0));
+    assertEquals(0, log.size());
+
+    /*
+     * Removing a column should render the headers and footers, even if auto
+     * refresh is disabled.
+     */
+    table.removeColumn(col0);
+    assertEquals(0, log.size()); // Headers are rendered asynchronously.
+    table.getPresenter().flush(); // Force headers to render.
+    assertEquals("header1 rendered", log.remove(0));
+    assertEquals("footer1 rendered", log.remove(0));
+    assertEquals(0, log.size());
+
+    /*
+     * Setting data only causes headers to render if auto refresh is enabled,
+     * which it is not. Footer refresh is still enabled.
+     */
+    populateData(table);
+    assertEquals(0, log.size()); // Headers are rendered asynchronously.
+    table.getPresenter().flush(); // Force headers to render.
+    assertEquals("footer1 rendered", log.remove(0));
+    assertEquals(0, log.size());
+
+    /*
+     * Sorting a column forces the headers only to refresh. The footers are not
+     * refreshed.
+     */
+    table.getColumnSortList().push(col1);
+    assertEquals("header1 rendered", log.remove(0));
+    assertEquals(0, log.size());
+  }
+
   public void testSetColumnWidth() {
     AbstractCellTable<String> table = createAbstractHasData(new TextCell());
     Column<String, ?> col0 = new MockColumn<String, String>();
