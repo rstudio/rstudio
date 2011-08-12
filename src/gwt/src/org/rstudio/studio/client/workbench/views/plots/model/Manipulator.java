@@ -137,6 +137,7 @@ public class Manipulator extends JavaScriptObject
    
    public final boolean hasControls()
    {
-      return getVariables().length() > 0;
+      return getVariables() != null &&
+             getVariables().length() > 0;
    }
 }
