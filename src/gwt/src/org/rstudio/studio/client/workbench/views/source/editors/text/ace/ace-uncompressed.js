@@ -5849,20 +5849,23 @@ var Editor =function(renderer, session) {
     };
 
     this.getCopyText = function() {
-        if (!this.selection.isEmpty()) {
-            return this.session.getTextRange(this.getSelectionRange());
-        }
-        else {
-            return "";
-        }
+        var text = "";
+        if (!this.selection.isEmpty())
+            text = this.session.getTextRange(this.getSelectionRange());
+        
+        this._emit("copy", text);
+        return text;
     };
 
     this.onCut = function() {
         if (this.$readOnly)
             return;
 
+        var range = this.getSelectionRange();
+        this._emit("cut", range);
+
         if (!this.selection.isEmpty()) {
-            this.session.remove(this.getSelectionRange())
+            this.session.remove(range)
             this.clearSelection();
         }
     };
@@ -5965,6 +5968,9 @@ var Editor =function(renderer, session) {
     };
 
     this.onTextInput = function(text, notPasted) {
+        if (!notPasted)
+            this._emit("paste", text);
+            
         // In case the text was not pasted and we got only one character, then
         // handel it as a command key stroke.
         if (notPasted && text.length == 1) {
@@ -6270,7 +6276,7 @@ var Editor =function(renderer, session) {
             var range = new Range(rows.first, 0, rows.last+1, 0)
         else
             var range = new Range(
-                rows.first-1, this.session.getLine(rows.first).length,
+                rows.first-1, this.session.getLine(rows.first-1).length,
                 rows.last, this.session.getLine(rows.last).length
             );
         this.session.remove(range);
@@ -15359,6 +15365,10 @@ define('ace/theme/textmate', ['require', 'exports', 'module' , 'pilot/dom'], fun
   border: 1px solid rgb(200, 200, 250);\
 }\
 \
+.ace-tm .ace_meta.ace_tag {\
+  color:rgb(28, 2, 255);\
+}\
+\
 .ace-tm .ace_string.ace_regex {\
   color: rgb(255, 0, 0)\
 }";
@@ -16765,6 +16775,23 @@ define("text/tool/Theme.tmpl.css", [], ".%cssClass% .ace_editor {" +
   ".%cssClass% .ace_xml_pe {" +
   "  %xml_pe%" +
   "}" +
+  "" +
+  ".%cssClass% .ace_meta {" +
+  "  %meta%" +
+  "}" +
+  "" +
+  ".%cssClass% .ace_meta.ace_tag {" +
+  "  %meta.tag%" +
+  "}" +
+  "" +
+  ".%cssClass% .ace_meta.ace_tag.ace_input {" +
+  "  %ace.meta.tag.input%" +
+  "}" +
+  "" +
+  ".%cssClass% .ace_entity.ace_other.ace_attribute-name {" +
+  "  %entity.other.attribute-name%" +
+  "}" +
+  "" +
   "" +
   ".%cssClass% .ace_collab.ace_user1 {" +
   "  %collab.user1%   " +
