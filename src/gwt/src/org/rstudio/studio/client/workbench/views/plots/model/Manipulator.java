@@ -134,4 +134,9 @@ public class Manipulator extends JavaScriptObject
       var control = this.controls[name];
       return control;
    }-*/;
+   
+   public final boolean hasControls()
+   {
+      return getVariables().length() > 0;
+   }
 }

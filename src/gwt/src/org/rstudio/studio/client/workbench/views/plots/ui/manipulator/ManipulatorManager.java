@@ -92,8 +92,8 @@ public class ManipulatorManager
          // if we have a manipulator then show if requested, otherwise hide
          if (manipulator_ != null)
          {
-            // show if requested
-            if (show)
+            // show if requested and there are controls
+            if (show && manipulator_.hasControls())
                showManipulatorPopup();  
          }
          else

@@ -196,29 +196,38 @@ core::json::Object PlotManipulator::getControlsAsJson() const
    {
       rProtect.add(controlsSEXP);
 
-      // control names
-      std::vector<std::string> controlNames ;
-      Error error = sexp::getNames(controlsSEXP, &controlNames);
-      if (error)
+      // are there any controls contained in the list?
+      if (r::sexp::length(controlsSEXP) > 0)
       {
-         LOG_ERROR(error);
+
+         // control names
+         std::vector<std::string> controlNames ;
+         Error error = sexp::getNames(controlsSEXP, &controlNames);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return core::json::Object();
+         }
+
+         // json object to return
+         core::json::Object controls;
+
+         int length = r::sexp::length(controlsSEXP);
+         for (int i=0; i<length; i++)
+         {
+            // get name and control
+            std::string name = controlNames[i];
+            SEXP controlSEXP = VECTOR_ELT(controlsSEXP, i);
+            controls[name] = getControlAsJson(controlSEXP);
+         }
+
+         // return controls
+         return controls;
+      }
+      else
+      {
          return core::json::Object();
       }
-
-      // json object to return
-      core::json::Object controls;
-
-      int length = r::sexp::length(controlsSEXP);
-      for (int i=0; i<length; i++)
-      {
-         // get name and control
-         std::string name = controlNames[i];
-         SEXP controlSEXP = VECTOR_ELT(controlsSEXP, i);
-         controls[name] = getControlAsJson(controlSEXP);
-      }
-
-      // return controls
-      return controls;
    }
    else
    {
