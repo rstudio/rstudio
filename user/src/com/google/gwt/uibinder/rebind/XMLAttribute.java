@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,8 +21,8 @@ import com.google.gwt.uibinder.attributeparsers.FieldReferenceConverter;
 import org.w3c.dom.Attr;
 
 /**
- * Like {@link XMLElement}, a wrapper around {@link Attr} to keep
- * parser writers out of trouble.
+ * Like {@link XMLElement}, a wrapper around {@link Attr} to keep parser writers
+ * out of trouble.
  */
 public class XMLAttribute {
   private XMLElement xmlElem;
@@ -36,11 +36,11 @@ public class XMLAttribute {
   public String consumeRawValue() {
     return xmlElem.consumeRawAttribute(w3cAttr.getName());
   }
-  
+
   public String consumeSafeHtmlValue() throws UnableToCompleteException {
     return xmlElem.consumeSafeHtmlAttribute(w3cAttr.getName());
   }
-  
+
   public String consumeStringValue() throws UnableToCompleteException {
     return xmlElem.consumeStringAttribute(w3cAttr.getName());
   }
@@ -75,7 +75,7 @@ public class XMLAttribute {
 
   @Override
   public String toString() {
-    return String.format("<%s:%s ... %s=%s ...>", xmlElem.getPrefix(),
-        xmlElem.getLocalName(), w3cAttr.getName(), w3cAttr.getValue());
+    return String.format("<%s:%s ... %s=%s ...>", xmlElem.getPrefix(), xmlElem.getLocalName(),
+        w3cAttr.getName(), w3cAttr.getValue());
   }
 }
