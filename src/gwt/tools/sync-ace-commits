@@ -26,6 +26,7 @@ git merge \
     origin/bugfix/search-regexp \
     origin/bugfix/selected-word-colors \
     origin/patch/scroll-granularity \
+    origin/bugfix/wrap-mode-rendering \
 
 
 make clean
