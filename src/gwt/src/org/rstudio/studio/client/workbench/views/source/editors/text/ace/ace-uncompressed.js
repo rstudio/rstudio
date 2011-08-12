@@ -14482,7 +14482,7 @@ var Text = function(parentEl) {
 
             var html = [];
             var tokens = this.session.getTokens(i, i);
-            this.$renderLine(html, i, tokens[0].tokens, true);
+            this.$renderLine(html, i, tokens[0].tokens, !this.$useLineGroups());
             lineElement = dom.setInnerHtml(lineElement, html.join(""));
 
             i = this.session.getRowFoldEnd(i);
@@ -14551,9 +14551,14 @@ var Text = function(parentEl) {
 
             // don't use setInnerHtml since we are working with an empty DIV
             container.innerHTML = html.join("");
-            var lines = container.childNodes
-            while(lines.length)
-                fragment.appendChild(lines[0]);
+            if (this.$useLineGroups()) {
+                container.className = 'ace_line_group';
+                fragment.appendChild(container);
+            } else {
+                var lines = container.childNodes
+                while(lines.length)
+                    fragment.appendChild(lines[0]);
+            }
 
             row++;
         }
@@ -14580,6 +14585,9 @@ var Text = function(parentEl) {
             if(row > lastRow)
                 break;
 
+            if (this.$useLineGroups())
+                html.push("<div class='ace_line_group'>")
+
             // Get the tokens per line as there might be some lines in between
             // beeing folded.
             // OPTIMIZE: If there is a long block of unfolded lines, just make
@@ -14587,6 +14595,9 @@ var Text = function(parentEl) {
             var tokens = this.session.getTokens(row, row);
             if (tokens.length == 1)
                 this.$renderLine(html, row, tokens[0].tokens, false);
+
+            if (this.$useLineGroups())
+                html.push("</div>"); // end the line group
 
             row++;
         }
@@ -14616,6 +14627,14 @@ var Text = function(parentEl) {
                     return "&amp;";
             } else if (c == "<") {
                 return "&lt;";
+            } else if (c == "\u3000") {
+                // U+3000 is both invisible AND full-width, so must be handled uniquely
+                var classToUse = self.showInvisibles ? "ace_cjk ace_invisible" : "ace_cjk";
+                var space = self.showInvisibles ? self.SPACE_CHAR : "";
+                screenColumn += 1;
+                return "<span class='" + classToUse + "' style='width:" +
+                    (self.config.characterWidth * 2) +
+                    "px'>" + space + "</span>";
             } else if (c.match(/[\v\f \u00a0\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u2028\u2029\u3000]/)) {
                 if (self.showInvisibles) {
                     var space = new Array(c.length+1).join(self.SPACE_CHAR);
@@ -14709,7 +14728,8 @@ var Text = function(parentEl) {
             else
                 stringBuilder.push("<span class='ace_invisible'>" + this.EOF_CHAR + "</span>");
         }
-        stringBuilder.push("</div>");
+        if (!onlyContents)
+            stringBuilder.push("</div>");
     };
 
     this.$renderLine = function(stringBuilder, row, tokens, onlyContents) {
@@ -14787,6 +14807,15 @@ var Text = function(parentEl) {
         // TODO: Build a fake splits array!
         var splits = this.session.$useWrapMode?this.session.$wrapData[row]:null;
         this.$renderLineCore(stringBuilder, row, renderTokens, splits, onlyContents);
+    };
+    
+    this.$useLineGroups = function() {
+        // For the updateLines function to work correctly, it's important that the
+        // child nodes of this.element correspond on a 1-to-1 basis to rows in the 
+        // document (as distinct from lines on the screen). For sessions that are
+        // wrapped, this means we need to add a layer to the node hierarchy (tagged
+        // with the class name ace_line_group).
+        return this.session.getUseWrapMode();
     };
 
     this.destroy = function() {
