@@ -44,6 +44,8 @@
 #define TRACE_GD_CALL
 #endif
 
+extern "C" double Rf_xDevtoUsr(double, pGEDevDesc);
+extern "C" double Rf_yDevtoUsr(double, pGEDevDesc);
 
 using namespace core ;
 
@@ -532,12 +534,12 @@ DisplaySize displaySize()
    return DisplaySize(s_width, s_height);
 }
 
-void deviceToNdc(double* x, double* y)
+void deviceToUser(double* x, double* y)
 {
    if (s_pGEDevDesc != NULL)
    {
-      *x = ::GEfromDeviceX(*x, GE_NDC, s_pGEDevDesc);
-      *y = ::GEfromDeviceY(*y, GE_NDC, s_pGEDevDesc);
+      *x = Rf_xDevtoUsr(*x, s_pGEDevDesc);
+      *y = Rf_yDevtoUsr(*y, s_pGEDevDesc);
    }
    else
    {
@@ -620,7 +622,7 @@ Error initialize(
    // create plot manager (provide functions & events)
    GraphicsDeviceFunctions graphicsDevice;
    graphicsDevice.displaySize = displaySize;
-   graphicsDevice.deviceToNdc = deviceToNdc;
+   graphicsDevice.deviceToUser = deviceToUser;
    graphicsDevice.saveSnapshot = saveSnapshot;
    graphicsDevice.restoreSnapshot = restoreSnapshot;
    graphicsDevice.copyToActiveDevice = copyToActiveDevice;

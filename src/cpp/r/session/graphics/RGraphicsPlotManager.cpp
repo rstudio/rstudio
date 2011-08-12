@@ -83,7 +83,8 @@ Error PlotManager::initialize(const FilePath& plotsStateFile,
                               GraphicsDeviceEvents* pEvents)
 {
    // initialize plot manipulator manager
-   Error error = plotManipulatorManager().initialize(graphicsDevice.deviceToNdc);
+   Error error = plotManipulatorManager().initialize(
+                                                graphicsDevice.deviceToUser);
    if (error)
       return error;
 

@@ -48,12 +48,12 @@ struct DisplaySize
    }
 };
 
-typedef boost::function<void(double*, double*)> DeviceToNdcFunction;
+typedef boost::function<void(double*,double*)> DeviceToUserFunction;
 
 struct GraphicsDeviceFunctions
 {
    boost::function<DisplaySize()> displaySize;
-   DeviceToNdcFunction deviceToNdc;
+   DeviceToUserFunction deviceToUser;
    boost::function<core::Error(const core::FilePath&,
                                const core::FilePath&)> saveSnapshot;
    boost::function<core::Error(const core::FilePath&)> restoreSnapshot;
