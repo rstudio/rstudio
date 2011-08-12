@@ -11,9 +11,6 @@
  *
  */
 
-// TODO: appropriate coordinate system mapping
-
-
 #include "RGraphicsPlotManipulatorManager.hpp"
 
 #include <string>
