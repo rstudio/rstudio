@@ -159,29 +159,32 @@ Error ProjectContext::startup(const FilePath& projectFile,
 
 Error ProjectContext::initialize()
 {
-   // compute the default encoding
-   Error error = r::exec::RFunction(
-                     ".rs.validateAndNormalizeEncoding",
-                     config().encoding).call(&defaultEncoding_);
-   if (error)
-      return error;
-
-   // if the default encoding is empty then change to UTF-8 and
-   // and enque a warning
-   if (defaultEncoding_.empty())
+   if (hasProject())
    {
-      // fallback
-      defaultEncoding_ = "UTF-8";
+      // compute the default encoding
+      Error error = r::exec::RFunction(
+                        ".rs.validateAndNormalizeEncoding",
+                        config().encoding).call(&defaultEncoding_);
+      if (error)
+         return error;
 
-      // enque a warning
-      json::Object msgJson;
-      msgJson["severe"] = false;
-      boost::format fmt(
-         "Project text encoding '%1%' not available (using UTF-8). "
-         "You can specify an alternate text encoding via Project Options.");
-      msgJson["message"] = boost::str(fmt % config().encoding);
-      ClientEvent event(client_events::kShowWarningBar, msgJson);
-      module_context::enqueClientEvent(event);
+      // if the default encoding is empty then change to UTF-8 and
+      // and enque a warning
+      if (defaultEncoding_.empty())
+      {
+         // fallback
+         defaultEncoding_ = "UTF-8";
+
+         // enque a warning
+         json::Object msgJson;
+         msgJson["severe"] = false;
+         boost::format fmt(
+           "Project text encoding '%1%' not available (using UTF-8). "
+           "You can specify an alternate text encoding via Project Options.");
+         msgJson["message"] = boost::str(fmt % config().encoding);
+         ClientEvent event(client_events::kShowWarningBar, msgJson);
+         module_context::enqueClientEvent(event);
+      }
    }
 
    return Success();
