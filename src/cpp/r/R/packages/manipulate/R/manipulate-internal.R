@@ -103,12 +103,20 @@ trackingMouseClicks <- function(manipulator)
   exists(".mouseClick", envir = manipulator)
 }
 
-setMouseClick <- function(manipulator, deviceX, deviceY, userX, userY)
+setMouseClick <- function(manipulator,
+                          deviceX,
+                          deviceY,
+                          userX,
+                          userY,
+                          ndcX,
+                          ndcY)
 {
   mouseClick <- list(deviceX = deviceX,
                      deviceY = deviceY,
                      userX = userX,
-                     userY = userY)
+                     userY = userY,
+                     ndcX = ndcX,
+                     ndcY = ndcY)
   assign(".mouseClick", mouseClick, envir = manipulator)
 }
 

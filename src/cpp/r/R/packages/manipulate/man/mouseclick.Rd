@@ -13,7 +13,9 @@ manipulatorMouseClick()
    
    If a mouse click did not cause the current invocation of the manipulate expression (e.g. if it was caused by the user changing the value of a control) then the function returns NULL.
    
-   The mouse click coordinates are provided in both device and user coordinates. To convert these coordinates into other coordinate systems (e.g. ndc or npc) you can use the   \code{\link{grconvertX}} and \code{\link{grconvertY}} functions.   
+   The mouse click coordinates are provided in device, user, and ndc coordinates. To convert these coordinates into other coordinate systems (e.g. cm or npc) you can use the   \code{\link{grconvertX}} and \code{\link{grconvertY}} functions.  
+   
+   Note that the userX and userY coordinates are only applicable for base graphics plots (they are not applicable for grid, lattice, ggplot, etc). Therefore, for non-base graphics the userX and userY values will not contain valid coordinates.
 }
 
 \value{
@@ -21,8 +23,10 @@ Returns a list containing the coordinates that user clicked (or NULL if a mouse 
 \tabular{ll}{
    \code{deviceX} \tab Device X coordinate (expressed in pixels)\cr
    \code{deviceY} \tab Device Y coordinate (expressed in pixels)\cr
-   \code{userX} \tab User X coordinate (expressed in plot x units)\cr
-   \code{userY} \tab User Y coordinate (expressed in plot y units\cr
+   \code{userX} \tab User X coordinate (expressed in plot x units). Note that this value is only valid for base graphics.\cr
+   \code{userY} \tab User Y coordinate (expressed in plot y units). Note that this value is only valid for base graphics.\cr
+   \code{ndcX} \tab NDC X coordinate (0 to 1 from left to right)\cr
+   \code{ndcY} \tab NDC Y coordinate (0 to 1 from bottom to top)\cr
 }
 }
 

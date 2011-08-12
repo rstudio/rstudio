@@ -144,10 +144,10 @@ PlotManipulatorManager::PlotManipulatorManager()
       
 
 Error PlotManipulatorManager::initialize(
-                           const DeviceToUserFunction& deviceToUser)
+                           const UnitConversionFunctions& convert)
 {
    // save reference to device conversion function
-   deviceToUser_ = deviceToUser;
+   convert_ = convert;
 
    // register R entry points for this class
    R_CallMethodDef execManipulatorMethodDef ;
@@ -300,8 +300,11 @@ void PlotManipulatorManager::manipulatorPlotClicked(int x, int y)
          double deviceX = x;
          double deviceY = y;
          double userX = x;
-         double userY = y;
-         deviceToUser_(&userX, &userY);
+         double userY = y; 
+         convert_.deviceToUser(&userX, &userY);
+         double ndcX = x;
+         double ndcY = y;
+         convert_.deviceToNDC(&ndcX,&ndcY);
 
          // set the mouse click state
          r::exec::RFunction setMouseClick("manipulate:::setMouseClick");
@@ -310,6 +313,8 @@ void PlotManipulatorManager::manipulatorPlotClicked(int x, int y)
          setMouseClick.addParam(deviceY);
          setMouseClick.addParam(userX);
          setMouseClick.addParam(userY);
+         setMouseClick.addParam(ndcX);
+         setMouseClick.addParam(ndcY);
          Error error = setMouseClick.call();
          if (error)
          {

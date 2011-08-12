@@ -46,6 +46,8 @@
 
 extern "C" double Rf_xDevtoUsr(double, pGEDevDesc);
 extern "C" double Rf_yDevtoUsr(double, pGEDevDesc);
+extern "C" double Rf_xDevtoNDC(double, pGEDevDesc);
+extern "C" double Rf_yDevtoNDC(double, pGEDevDesc);
 
 using namespace core ;
 
@@ -534,16 +536,20 @@ DisplaySize displaySize()
    return DisplaySize(s_width, s_height);
 }
 
-void deviceToUser(double* x, double* y)
+void deviceConvert(double* x,
+                   double* y,
+                   const boost::function<double(double,pGEDevDesc)>& xConv,
+                   const boost::function<double(double,pGEDevDesc)>& yConv)
 {
    if (s_pGEDevDesc != NULL)
    {
-      *x = Rf_xDevtoUsr(*x, s_pGEDevDesc);
-      *y = Rf_yDevtoUsr(*y, s_pGEDevDesc);
+      *x = xConv(*x, s_pGEDevDesc);
+      *y = yConv(*y, s_pGEDevDesc);
    }
    else
    {
-      LOG_WARNING_MESSAGE("deviceToNdc called with no active graphics device");
+      LOG_WARNING_MESSAGE(
+            "deviceConvert called with no active graphics device");
    }
 }
 
@@ -619,10 +625,17 @@ Error initialize(
    // save reference to locator function
    s_locatorFunction = locatorFunction;
    
+   // device conversion functions
+   UnitConversionFunctions convert;
+   convert.deviceToUser = boost::bind(deviceConvert,
+                                    _1, _2, Rf_xDevtoUsr, Rf_yDevtoUsr);
+   convert.deviceToNDC = boost::bind(deviceConvert,
+                                    _1, _2, Rf_xDevtoNDC, Rf_yDevtoNDC);
+
    // create plot manager (provide functions & events)
    GraphicsDeviceFunctions graphicsDevice;
    graphicsDevice.displaySize = displaySize;
-   graphicsDevice.deviceToUser = deviceToUser;
+   graphicsDevice.convert = convert;
    graphicsDevice.saveSnapshot = saveSnapshot;
    graphicsDevice.restoreSnapshot = restoreSnapshot;
    graphicsDevice.copyToActiveDevice = copyToActiveDevice;

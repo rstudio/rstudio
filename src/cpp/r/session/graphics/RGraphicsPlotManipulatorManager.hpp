@@ -46,7 +46,7 @@ public:
    virtual ~PlotManipulatorManager() {}
 
 public:
-   core::Error initialize(const DeviceToUserFunction& deviceToUser);
+   core::Error initialize(const UnitConversionFunctions& convert);
 
    boost::signal<void ()>& onShowManipulator() ;
    void setPlotManipulatorValues(const core::json::Object& values);
@@ -83,7 +83,7 @@ private:
    boost::signal<void ()> onShowManipulator_;
 
    // unit conversion function
-   DeviceToUserFunction deviceToUser_;
+   UnitConversionFunctions convert_;
 
 };
    
