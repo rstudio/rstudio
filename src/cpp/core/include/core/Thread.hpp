@@ -14,6 +14,8 @@
 #ifndef CORE_THREAD_HPP
 #define CORE_THREAD_HPP
 
+#include <queue>
+
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
 
@@ -43,6 +45,7 @@ class ThreadsafeValue : boost::noncopyable
 {
 public:
    ThreadsafeValue(const T& value) : value_(value) {}
+   virtual ~ThreadsafeValue() {}
    
    T get()
    {
@@ -68,6 +71,118 @@ public:
 private:
    boost::mutex mutex_;
    T value_;
+};
+
+template <typename T>
+class ThreadsafeQueue : boost::noncopyable
+{
+public:
+   explicit ThreadsafeQueue(bool freeSyncObjects = false)
+      :  pMutex_(new boost::mutex()),
+         pWaitCondition_(new boost::condition()),
+         freeSyncObjects_(freeSyncObjects)
+   {
+   }
+
+   virtual ~ThreadsafeQueue()
+   {
+      try
+      {
+         if (freeSyncObjects_)
+         {
+            delete pMutex_;
+            delete pWaitCondition_;
+         }
+      }
+      catch(...)
+      {
+      }
+   }
+
+   // COPYING: boost::noncopyable
+
+public:
+
+   void enque(const T& val)
+   {
+      LOCK_MUTEX(*pMutex_)
+      {
+         // enque
+         queue_.push(val);
+      }
+      END_LOCK_MUTEX
+
+      pWaitCondition_->notify_all();
+   }
+
+   bool deque(T* pVal)
+   {
+      LOCK_MUTEX(*pMutex_)
+      {
+         if (!queue_.empty())
+         {
+            // remove it
+            *pVal = queue_.front();
+            queue_.pop();
+
+            // return true
+            return true;
+         }
+         else
+         {
+            return false;
+         }
+      }
+      END_LOCK_MUTEX
+
+      // keep compiler happy
+      return false;
+   }
+
+   bool deque(T* pVal, const boost::posix_time::time_duration& waitDuration)
+   {
+      // first see if we already have one
+      if (deque(pVal))
+         return true;
+
+      // now wait the specified interval for one to materialize
+      if (wait(waitDuration))
+         return deque(pVal);
+      else
+         return false;
+   }
+
+private:
+
+   bool wait(const boost::posix_time::time_duration& waitDuration)
+   {
+      using namespace boost;
+      try
+      {
+         unique_lock<mutex> lock(*pMutex_);
+         system_time timeoutTime = get_system_time() + waitDuration;
+         return pWaitCondition_->timed_wait(lock, timeoutTime);
+      }
+      catch(const thread_resource_error& e)
+      {
+         Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION) ;
+         LOG_ERROR(waitError);
+         return false ;
+      }
+   }
+
+
+private:
+   // synchronization objects. heap based so that we can control whether
+   // they are destroyed or not (boost has been known to crash if a mutex
+   // is being destroyed while it is being waited on so sometimes it is
+   // better to simply never delete these objects
+   boost::mutex* pMutex_ ;
+   boost::condition* pWaitCondition_ ;
+
+   // instance data
+   const bool freeSyncObjects_;
+   std::queue<T> queue_;
 };
 
 void safeLaunchThread(boost::function<void()> threadMain);

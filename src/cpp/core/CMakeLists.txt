@@ -60,6 +60,7 @@ set (CORE_SOURCE_FILES
    r_util/RTokenizerTests.cpp
    system/Process.cpp
    system/System.cpp
+   system/file_monitor/FileMonitor.cpp
    text/DcfParser.cpp
    text/TemplateFilter.cpp
 )
@@ -85,11 +86,17 @@ if (UNIX)
    endif()
    find_package(ZLIB REQUIRED QUIET)
 
+   # find apple frameworks we depend on
+   if(APPLE)
+      find_library(CORE_SERVICES_LIBRARY NAMES CoreServices)
+   endif()
+
    # include directories and libraries
    set (CORE_SYSTEM_LIBRARIES
       ${PTHREAD_LIBRARIES}
       ${UUID_LIBRARIES}
       ${ZLIB_LIBRARIES}
+      ${CORE_SERVICES_LIBRARY}
    )
 
    # make directory monitor conditional
@@ -111,6 +118,12 @@ if (UNIX)
       system/PosixUser.cpp
       system/PosixChildProcess.cpp
    )
+
+   if(APPLE)
+      set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
+         system/file_monitor/MacFileMonitor.cpp
+      )
+   endif()
 
 # Win32 specific
 else()
