@@ -13,6 +13,9 @@
 
 // TODO: reduce thread priority for main thread
 
+// TODO: can we just allow the file monitor to die with the process or is
+//       there some residual? (almost certainly not but should investigate)
+
 #include <core/system/file_monitor/FileMonitor.hpp>
 
 #include <boost/bind/protect.hpp>
@@ -37,7 +40,7 @@ void run(const boost::function<void()>& checkForInput);
 void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks);
 
 // unregister a file monitor
-void unregisterMonitor(boost::shared_ptr<RegistrationHandle> pHandle);
+void unregisterMonitor(Handle handle);
 
 }
 
@@ -60,9 +63,8 @@ public:
    {
    }
 
-   explicit RegistrationCommand(
-         boost::shared_ptr<RegistrationHandle> pRegistrationHandle)
-      : type_(Unregister), pRegistrationHandle_(pRegistrationHandle)
+   explicit RegistrationCommand(Handle handle)
+      : type_(Unregister), handle_(handle)
    {
    }
 
@@ -71,9 +73,9 @@ public:
    const core::FilePath& filePath() const { return filePath_; }
    const Callbacks& callbacks() const { return callbacks_; }
 
-   boost::shared_ptr<RegistrationHandle> registrationHandle() const
+   Handle handle() const
    {
-      return pRegistrationHandle_;
+      return handle_;
    }
 
 private:
@@ -85,7 +87,7 @@ private:
    Callbacks callbacks_;
 
    // unregister command data
-   boost::shared_ptr<RegistrationHandle> pRegistrationHandle_;
+   Handle handle_;
 };
 
 typedef core::thread::ThreadsafeQueue<RegistrationCommand>
@@ -114,7 +116,7 @@ void checkForInput()
          detail::registerMonitor(command.filePath(), command.callbacks());
          break;
       case RegistrationCommand::Unregister:
-         detail::unregisterMonitor(command.registrationHandle());
+         detail::unregisterMonitor(command.handle());
          break;
       case RegistrationCommand::None:
          break;
@@ -132,11 +134,11 @@ void fileMonitorThreadMain()
 }
 
 void enqueOnRegistered(const Callbacks& callbacks,
-                       boost::shared_ptr<RegistrationHandle> pRegistrationHandle,
+                       Handle handle,
                        const FileListing& fileListing)
 {
    callbackQueue().enque(boost::bind(callbacks.onRegistered,
-                                     pRegistrationHandle,
+                                     handle,
                                      fileListing));
 }
 
@@ -173,9 +175,9 @@ void registerMonitor(const FilePath& filePath, const Callbacks& callbacks)
    registrationCommandQueue().enque(RegistrationCommand(filePath, qCallbacks));
 }
 
-void unregisterMonitor(boost::shared_ptr<RegistrationHandle> pHandle)
+void unregisterMonitor(Handle handle)
 {
-   registrationCommandQueue().enque(RegistrationCommand(pHandle));
+   registrationCommandQueue().enque(RegistrationCommand(handle));
 }
 
 void checkForChanges()

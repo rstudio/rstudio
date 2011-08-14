@@ -34,17 +34,6 @@ namespace file_monitor {
 // which performs the monitoring)
 void initialize();
 
-// opaque handle to a registration
-class RegistrationHandle : boost::noncopyable
-{
-public:
-   RegistrationHandle();
-   virtual ~RegistrationHandle();
-
-   struct Impl;
-   boost::shared_ptr<Impl> pImpl_;
-};
-
 // file attributes
 class FileAttribs
 {
@@ -178,9 +167,15 @@ private:
 class FileListing
 {
 public:
-   explicit FileListing(const FilePath& directory)
-      : directory_(directory), root_("")
+   explicit FileListing()
+      : directory_(), root_("")
    {
+   }
+
+   core::Error initialize(const FilePath& directory)
+   {
+      directory_ = directory;
+      return Success();
    }
 
    const FilePath& directory() const { return directory_; }
@@ -193,12 +188,14 @@ private:
 };
 
 
+// opaque handle to a registration (used to unregister)
+typedef void* Handle;
+
 struct Callbacks
 {
    // callback which occurs after a successful registration (includes an initial
    // listing of all of the files in the directory)
-   boost::function<void(boost::shared_ptr<RegistrationHandle>,
-                        const FileListing&)> onRegistered;
+   boost::function<void(Handle, const FileListing&)> onRegistered;
 
    // callback which occurs if a registration error occurs
    boost::function<void(const core::Error&)> onRegistrationError;
@@ -212,7 +209,7 @@ struct Callbacks
 void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks);
 
 // unregister a file monitor
-void unregisterMonitor(boost::shared_ptr<RegistrationHandle> pHandle);
+void unregisterMonitor(Handle handle);
 
 // check for changes (will cause onRegistered and/or onFilesChanged calls on
 // the same thread that called checkForChanges)

@@ -25,23 +25,17 @@ namespace core {
 namespace system {
 namespace file_monitor {
 
-struct RegistrationHandle::Impl
+namespace {
+
+class FileEventContext : boost::noncopyable
 {
+public:
+   FileEventContext() : streamRef(NULL) {}
+   virtual ~FileEventContext() {}
    FSEventStreamRef streamRef;
+   FileListing fileListing;
    Callbacks::FilesChanged onFilesChanged;
 };
-
-RegistrationHandle::RegistrationHandle()
-   : pImpl_(new Impl())
-{
-}
-
-RegistrationHandle::~RegistrationHandle()
-{
-}
-
-
-namespace {
 
 void fileEventCallback(ConstFSEventStreamRef streamRef,
                        void *pCallbackInfo,
@@ -50,17 +44,25 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
                        const FSEventStreamEventFlags eventFlags[],
                        const FSEventStreamEventId eventIds[])
 {
+   // get context
+   FileEventContext* pContext = (FileEventContext*)pCallbackInfo;
+
+   // bail if we don't have onFilesChanged (we wouldn't if a callback snuck
+   // through to us even after we failed to fully initialize the file monitor
+   // (e.g. if there was an error during file listing)
+   if (!pContext->onFilesChanged)
+      return;
+
    // build path of file changes
    std::vector<FileChange> fileChanges;
    char **paths = (char**)eventPaths;
    for (std::size_t i=0; i<numEvents; i++)
    {
-      fileChanges.push_back(FileChange(FileChange::Modified,
-                                       FileEntry(paths[i])));
+      fileChanges.push_back(FileChange(FileChange::Modified, FileEntry(paths[i])));
    }
 
-   // fire callback
-   ((RegistrationHandle*)pCallbackInfo)->pImpl_->onFilesChanged(fileChanges);
+   // notify listener
+   pContext->onFilesChanged(fileChanges);
 }
 
 class CFRefScope : boost::noncopyable
@@ -83,6 +85,18 @@ public:
 private:
    CFTypeRef ref_;
 };
+
+void invalidateAndReleaseEventStream(FSEventStreamRef streamRef)
+{
+   ::FSEventStreamInvalidate(streamRef);
+   ::FSEventStreamRelease(streamRef);
+}
+
+void stopInvalidateAndReleaseEventStream(FSEventStreamRef streamRef)
+{
+   ::FSEventStreamStop(streamRef);
+   invalidateAndReleaseEventStream(streamRef);
+}
 
 } // anonymous namespace
 
@@ -119,20 +133,19 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
    CFRefScope pathsArrayRefScope(pathsArrayRef);
 
 
-   // create a new RegistrationHandle
-   boost::shared_ptr<RegistrationHandle> pRegHandle(new RegistrationHandle());
-   pRegHandle->pImpl_->onFilesChanged = callbacks.onFilesChanged;
-
-   // FSEventStreamContext
+   // create and allocate FileEventContext (create auto-ptr in case we
+   // return early, we'll call release later before returning)
+   FileEventContext* pContext = new FileEventContext();
+   std::auto_ptr<FileEventContext> autoPtrContext(pContext);
    FSEventStreamContext context;
    context.version = 0;
-   context.info = (void*) pRegHandle.get();
+   context.info = (void*) pContext;
    context.retain = NULL;
    context.release = NULL;
    context.copyDescription = NULL;
 
    // create the stream and save a reference to it
-   FSEventStreamRef streamRef = ::FSEventStreamCreate(
+   pContext->streamRef = ::FSEventStreamCreate(
                   kCFAllocatorDefault,
                   &fileEventCallback,
                   &context,
@@ -140,7 +153,7 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
                   kFSEventStreamEventIdSinceNow,
                   1,
                   kFSEventStreamCreateFlagNone);
-   if (streamRef == NULL)
+   if (pContext->streamRef == NULL)
    {
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::no_stream_resources,
@@ -149,15 +162,14 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
    }
 
    // schedule with the run loop
-   ::FSEventStreamScheduleWithRunLoop(streamRef,
+   ::FSEventStreamScheduleWithRunLoop(pContext->streamRef,
                                       ::CFRunLoopGetCurrent(),
                                       kCFRunLoopDefaultMode);
 
    // start the event stream (check for errors and release if necessary
-   if (!::FSEventStreamStart(streamRef))
+   if (!::FSEventStreamStart(pContext->streamRef))
    {
-      ::FSEventStreamInvalidate(streamRef);
-      ::FSEventStreamRelease(streamRef);
+      invalidateAndReleaseEventStream(pContext->streamRef);
 
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::no_stream_resources,
@@ -167,25 +179,47 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
    }
 
    // perform file listing
-   FileListing fileListing(filePath);
+   Error error = pContext->fileListing.initialize(filePath);
+   if (error)
+   {
+       // stop, invalidate, release
+       stopInvalidateAndReleaseEventStream(pContext->streamRef);
 
-   // set the stream on the RegistrationHandle and notify the caller
-   // that we are now registered
-   pRegHandle->pImpl_->streamRef = streamRef;
-   callbacks.onRegistered(pRegHandle, fileListing);
+       // return error
+       callbacks.onRegistrationError(error);
+       return;
+   }
+
+   // now that we have finished the file listing we know we have a valid
+   // file-monitor so set the onFilesChanged callback so that the
+   // client can receive events
+   pContext->onFilesChanged = callbacks.onFilesChanged;
+
+   // we are going to pass the context pointer to the client (as the Handle)
+   // so we release it here to relinquish ownership
+   autoPtrContext.release();
+
+   // notify the caller that we have successfully registered
+   callbacks.onRegistered((Handle)pContext, pContext->fileListing);
 }
 
 // unregister a file monitor
-void unregisterMonitor(boost::shared_ptr<RegistrationHandle> pHandle)
+void unregisterMonitor(Handle handle)
 {
-   ::FSEventStreamStop(pHandle->pImpl_->streamRef);
-   ::FSEventStreamInvalidate(pHandle->pImpl_->streamRef);
-   ::FSEventStreamRelease(pHandle->pImpl_->streamRef);
+   // cast to context
+   FileEventContext* pContext = (FileEventContext*)handle;
+
+   // stop, invalidate, release
+   stopInvalidateAndReleaseEventStream(pContext->streamRef);
+
+   // delete context
+   delete pContext;
 }
 
 void run(const boost::function<void()>& checkForInput)
 {
-   // ensure we have a run loop for this thread
+   // ensure we have a run loop for this thread (not sure if this is
+   // strictly necessary but it is not harmful)
    ::CFRunLoopGetCurrent();
 
    while (true)
