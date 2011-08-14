@@ -11,6 +11,10 @@
  *
  */
 
+// TODO: implement FileListing applyChange
+
+// TODO: reduce thread priority for main thread
+
 #include <core/system/file_monitor/FileMonitor.hpp>
 
 #include <core/Log.hpp>
@@ -60,6 +64,11 @@ core::thread::ThreadsafeQueue<boost::function<void()> >& callbackQueue()
 
 } // namespace impl
 
+
+void FileListing::applyChange(const FileChange& fileChange)
+{
+   // seek to the collection containing this change
+}
 
 void registerMonitor(const FilePath& filePath, const Callbacks& callbacks)
 {

@@ -29,6 +29,68 @@ namespace file_monitor {
 
 namespace {
 
+void myCallback(ConstFSEventStreamRef streamRef,
+                void *clientCallBackInfo,
+                size_t numEvents,
+                void *eventPaths,
+                const FSEventStreamEventFlags eventFlags[],
+                const FSEventStreamEventId eventIds[])
+{
+   char **paths = (char**)eventPaths;
+
+   std::cerr << "Callback called" << std::endl;
+   for (std::size_t i=0; i<numEvents; i++)
+   {
+      printf("Change %llu in %s, flags %u\n",
+             eventIds[i],
+             paths[i],
+             eventFlags[i]);
+   }
+
+}
+
+void listenerThread()
+{
+   try
+   {
+      CFStringRef myPath CFSTR("/Users/jjallaire/Projects");
+      CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&myPath, 1,
+                                              NULL);
+      FSEventStreamContext* callbackInfo = NULL;
+      FSEventStreamRef stream;
+      CFAbsoluteTime latency = 1;
+
+      stream = ::FSEventStreamCreate(NULL,
+                                     &myCallback,
+                                     callbackInfo,
+                                     pathsToWatch,
+                                     kFSEventStreamEventIdSinceNow,
+                                     latency,
+                                     kFSEventStreamCreateFlagNone);
+
+
+      ::FSEventStreamScheduleWithRunLoop(stream,
+                                         ::CFRunLoopGetCurrent(),
+                                         kCFRunLoopDefaultMode);
+
+      ::FSEventStreamStart(stream);
+
+      while (true)
+      {
+         SInt32 reason = ::CFRunLoopRunInMode(kCFRunLoopDefaultMode, 10, false);
+
+         std::cerr << "Ran run loop: " << reason << std::endl;
+      }
+
+
+
+
+
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+}
+
+
 
 } // anonymous namespace
 
