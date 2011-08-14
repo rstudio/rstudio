@@ -49,7 +49,7 @@ public class CommitListTable extends CellTable<CommitInfo>
             return object.getAuthor();
          }
       };
-      addColumn(authorCol, "Column");
+      addColumn(authorCol, "Author");
 
       TextColumn<CommitInfo> dateCol = new TextColumn<CommitInfo>()
       {
@@ -61,6 +61,7 @@ public class CommitListTable extends CellTable<CommitInfo>
          }
       };
       addColumn(dateCol, "Date");
+      setColumnWidth(dateCol, "120px");
 
       selectionModel_ = new SingleSelectionModel<CommitInfo>();
       setSelectionModel(selectionModel_);
