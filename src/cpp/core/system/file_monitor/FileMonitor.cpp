@@ -11,85 +11,178 @@
  *
  */
 
-// TODO: implement FileListing applyChange
-
 // TODO: reduce thread priority for main thread
 
 #include <core/system/file_monitor/FileMonitor.hpp>
+
+#include <boost/bind/protect.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 
 #include <core/Thread.hpp>
 
-#include "FileMonitorImpl.hpp"
-
 namespace core {
 namespace system {
 namespace file_monitor {
 
+// these are implemented per-platform
+namespace detail {
+
+// run the monitor, calling back checkForInput periodically to see if there are
+// new registrations or unregistrations
+void run(const boost::function<void()>& checkForInput);
+
+// register a new file monitor
+void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks);
+
+// unregister a file monitor
+void unregisterMonitor(const RegistrationHandle& handle);
+
+}
+
+
 namespace {
 
-void fileMonitorThreadMain()
+class RegistrationCommand
 {
-   try
+public:
+   enum Type { None, Register, Unregister };
+
+public:
+   RegistrationCommand()
+      : type_(None)
    {
-      file_monitor::impl::run();
    }
-   CATCH_UNEXPECTED_EXCEPTION
-}
 
-} // anonymous namespace
+   RegistrationCommand(const core::FilePath& filePath, const Callbacks& callbacks)
+      : type_(Register), filePath_(filePath), callbacks_(callbacks)
+   {
+   }
 
+   explicit RegistrationCommand(const RegistrationHandle& registrationHandle)
+      : type_(Unregister), registrationHandle_(registrationHandle)
+   {
+   }
 
-Error initialize()
-{
-   core::thread::safeLaunchThread(fileMonitorThreadMain);
-   return Success();
-}
+   Type type() const { return type_; }
 
-namespace impl {
+   const core::FilePath& filePath() const { return filePath_; }
+   const Callbacks& callbacks() const { return callbacks_; }
 
-core::thread::ThreadsafeQueue<RegistrationCommand>& registrationCommandQueue()
+   const RegistrationHandle& registrationHandle() const
+   {
+      return registrationHandle_;
+   }
+
+private:
+   // command type
+   Type type_;
+
+   // register command data
+   core::FilePath filePath_;
+   Callbacks callbacks_;
+
+   // unregister command data
+   RegistrationHandle registrationHandle_;
+};
+
+typedef core::thread::ThreadsafeQueue<RegistrationCommand>
+                                                      RegistrationCommandQueue;
+RegistrationCommandQueue& registrationCommandQueue()
 {
    static core::thread::ThreadsafeQueue<RegistrationCommand> instance;
    return instance;
 }
 
-core::thread::ThreadsafeQueue<boost::function<void()> >& callbackQueue()
+typedef core::thread::ThreadsafeQueue<boost::function<void()> > CallbackQueue;
+CallbackQueue& callbackQueue()
 {
    static core::thread::ThreadsafeQueue<boost::function<void()> > instance;
    return instance;
 }
 
-} // namespace impl
-
-
-void FileListing::applyChange(const FileChange& fileChange)
+void checkForInput()
 {
-   // seek to the collection containing this change
+   RegistrationCommand command;
+   while (registrationCommandQueue().deque(&command))
+   {
+      switch(command.type())
+      {
+      case RegistrationCommand::Register:
+         detail::registerMonitor(command.filePath(), command.callbacks());
+         break;
+      case RegistrationCommand::Unregister:
+         detail::unregisterMonitor(command.registrationHandle());
+         break;
+      case RegistrationCommand::None:
+         break;
+      }
+   }
+}
+
+void fileMonitorThreadMain()
+{
+   try
+   {
+      file_monitor::detail::run(boost::bind(checkForInput));
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+}
+
+void enqueOnRegistered(const Callbacks& callbacks,
+                       const RegistrationHandle& registrationHandle,
+                       const FileListing& fileListing)
+{
+   callbackQueue().enque(boost::bind(callbacks.onRegistered,
+                                     registrationHandle,
+                                     fileListing));
+}
+
+void enqueOnRegistrationError(const Callbacks& callbacks, const Error& error)
+{
+   callbackQueue().enque(boost::bind(callbacks.onRegistrationError, error));
+}
+
+void enqueOnFilesChanged(const Callbacks& callbacks,
+                         const std::vector<FileChange>& fileChanges)
+{
+   callbackQueue().enque(boost::bind(callbacks.onFilesChanged, fileChanges));
+}
+
+} // anonymous namespace
+
+
+void initialize()
+{
+   core::thread::safeLaunchThread(fileMonitorThreadMain);
 }
 
 void registerMonitor(const FilePath& filePath, const Callbacks& callbacks)
 {
-   impl::registrationCommandQueue().enque(
-                           impl::RegistrationCommand(filePath, callbacks));
+   // bind a new version of the callbacks that puts them on the callback queue
+   Callbacks qCallbacks;
+   qCallbacks.onRegistered = boost::bind(enqueOnRegistered, callbacks, _1, _2);
+   qCallbacks.onRegistrationError = boost::bind(enqueOnRegistrationError,
+                                                callbacks,
+                                                _1);
+   qCallbacks.onFilesChanged = boost::bind(enqueOnFilesChanged, callbacks, _1);
+
+   // enque the registration
+   registrationCommandQueue().enque(RegistrationCommand(filePath, qCallbacks));
 }
 
 void unregisterMonitor(const RegistrationHandle& handle)
 {
-   impl::registrationCommandQueue().enque(impl::RegistrationCommand(handle));
+   registrationCommandQueue().enque(RegistrationCommand(handle));
 }
 
 void checkForChanges()
 {
    boost::function<void()> callback;
-   while (impl::callbackQueue().deque(&callback))
+   while (callbackQueue().deque(&callback))
       callback();
 }
-
-
-
 
 } // namespace file_monitor
 } // namespace system

@@ -21,8 +21,6 @@
 #include <core/system/System.hpp>
 #include <core/Thread.hpp>
 
-#include "FileMonitorImpl.hpp"
-
 namespace core {
 namespace system {
 namespace file_monitor {
@@ -107,9 +105,22 @@ RegistrationHandle::~RegistrationHandle()
 {
 }
 
-namespace impl {
+namespace detail {
 
-void run()
+
+// register a new file monitor
+void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
+{
+
+}
+
+// unregister a file monitor
+void unregisterMonitor(const RegistrationHandle& handle)
+{
+
+}
+
+void run(const boost::function<void()>& checkForInput)
 {
    // ensure we have a run loop for this thread
    ::CFRunLoopGetCurrent();
@@ -127,17 +138,13 @@ void run()
       if (reason == kCFRunLoopRunFinished)
          boost::this_thread::sleep(boost::posix_time::milliseconds(250));
 
-      // check our command queue for new registrations or de-registrations
-      RegistrationCommand command;
-      while (registrationCommandQueue().deque(&command))
-      {
-
-      }
+      // check for input
+      checkForInput();
    }
+
 }
 
-} // namespace impl
-
+} // namespace detail
 } // namespace file_monitor
 } // namespace system
 } // namespace core 

@@ -31,7 +31,7 @@ namespace file_monitor {
 
 // initialize the file monitoring service (creates a background thread
 // which performs the monitoring)
-Error initialize();
+void initialize();
 
 // opaque handle to a registration
 class RegistrationHandle
@@ -186,13 +186,6 @@ public:
    const FilePath& directory() const { return directory_; }
 
    FileEntry& root() { return root_; }
-
-   void applyChange(const FileChange& fileChange);
-
-   FilePath pathForEntry(const FileEntry& entry) const
-   {
-      return directory().childPath(entry.path());
-   }
 
 private:
    FilePath directory_;
