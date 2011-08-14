@@ -82,7 +82,8 @@ public class VCSPopup
    }
 
    public static void show(ReviewPresenter rpres,
-                           HistoryPresenter hpres)
+                           HistoryPresenter hpres,
+                           boolean showHistory)
    {
       final Widget review = rpres.asWidget();
       review.setSize("100%", "100%");
@@ -98,7 +99,11 @@ public class VCSPopup
       swapContainer.add(history);
       swapContainer.setWidgetLeftRight(history, 0, Unit.PX, 0, Unit.PX);
       swapContainer.setWidgetTopBottom(history, 0, Unit.PX, 0, Unit.PX);
-      swapContainer.setWidgetVisible(history, false);
+
+      if (showHistory)
+         swapContainer.setWidgetVisible(review, false);
+      else
+         swapContainer.setWidgetVisible(history, false);
 
       rpres.addSwitchViewHandler(new SwitchViewEvent.Handler() {
          @Override

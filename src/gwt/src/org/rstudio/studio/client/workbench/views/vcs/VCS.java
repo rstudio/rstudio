@@ -78,13 +78,14 @@ public class VCS extends BasePresenter implements IsWidget
    @Handler
    void onVcsDiff()
    {
-      showReviewPane();
+      showReviewPane(false);
    }
 
-   private void showReviewPane()
+   private void showReviewPane(boolean showHistory)
    {
       VCSPopup.show(pReviewPresenter_.get(),
-                    pHistoryPresenter_.get());
+                    pHistoryPresenter_.get(),
+                    showHistory);
    }
 
    @Handler
@@ -142,13 +143,19 @@ public class VCS extends BasePresenter implements IsWidget
    @Handler
    void onVcsCommit()
    {
-      showReviewPane();
+      showReviewPane(false);
    }
 
    @Handler
    void onVcsRefresh()
    {
       refresh(true);
+   }
+
+   @Handler
+   void onVcsShowHistory()
+   {
+      showReviewPane(true);
    }
 
    private void refresh(final boolean showError)
