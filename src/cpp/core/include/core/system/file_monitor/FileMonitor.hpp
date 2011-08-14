@@ -18,6 +18,7 @@
 #include <set>
 #include <vector>
 
+#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 
@@ -34,13 +35,12 @@ namespace file_monitor {
 void initialize();
 
 // opaque handle to a registration
-class RegistrationHandle
+class RegistrationHandle : boost::noncopyable
 {
 public:
    RegistrationHandle();
    virtual ~RegistrationHandle();
 
-private:
    struct Impl;
    boost::shared_ptr<Impl> pImpl_;
 };
@@ -197,21 +197,22 @@ struct Callbacks
 {
    // callback which occurs after a successful registration (includes an initial
    // listing of all of the files in the directory)
-   boost::function<void(const RegistrationHandle&, const FileListing&)>
-                                                                  onRegistered;
+   boost::function<void(boost::shared_ptr<RegistrationHandle>,
+                        const FileListing&)> onRegistered;
 
    // callback which occurs if a registration error occurs
-   boost::function<void(core::Error&)> onRegistrationError;
+   boost::function<void(const core::Error&)> onRegistrationError;
 
    // callback which occurs when files change
-   boost::function<void(const std::vector<FileChange>&)> onFilesChanged;
+   typedef boost::function<void(const std::vector<FileChange>&)> FilesChanged;
+   FilesChanged onFilesChanged;
 };
 
 // register a new file monitor
 void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks);
 
 // unregister a file monitor
-void unregisterMonitor(const RegistrationHandle& handle);
+void unregisterMonitor(boost::shared_ptr<RegistrationHandle> pHandle);
 
 // check for changes (will cause onRegistered and/or onFilesChanged calls on
 // the same thread that called checkForChanges)

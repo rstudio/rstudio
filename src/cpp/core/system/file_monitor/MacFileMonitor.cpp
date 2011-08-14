@@ -25,75 +25,10 @@ namespace core {
 namespace system {
 namespace file_monitor {
 
-namespace {
-
-void myCallback(ConstFSEventStreamRef streamRef,
-                void *clientCallBackInfo,
-                size_t numEvents,
-                void *eventPaths,
-                const FSEventStreamEventFlags eventFlags[],
-                const FSEventStreamEventId eventIds[])
-{
-   char **paths = (char**)eventPaths;
-
-   std::cerr << "Callback called" << std::endl;
-   for (std::size_t i=0; i<numEvents; i++)
-   {
-      printf("Change %llu in %s, flags %u\n",
-             eventIds[i],
-             paths[i],
-             eventFlags[i]);
-   }
-
-}
-
-void listenerThread()
-{
-   try
-   {
-      CFStringRef myPath CFSTR("/Users/jjallaire/Projects");
-      CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&myPath, 1,
-                                              NULL);
-      FSEventStreamContext* callbackInfo = NULL;
-      FSEventStreamRef stream;
-      CFAbsoluteTime latency = 1;
-
-      stream = ::FSEventStreamCreate(NULL,
-                                     &myCallback,
-                                     callbackInfo,
-                                     pathsToWatch,
-                                     kFSEventStreamEventIdSinceNow,
-                                     latency,
-                                     kFSEventStreamCreateFlagNone);
-
-
-      ::FSEventStreamScheduleWithRunLoop(stream,
-                                         ::CFRunLoopGetCurrent(),
-                                         kCFRunLoopDefaultMode);
-
-      ::FSEventStreamStart(stream);
-
-      while (true)
-      {
-         SInt32 reason = ::CFRunLoopRunInMode(kCFRunLoopDefaultMode, 10, false);
-
-         std::cerr << "Ran run loop: " << reason << std::endl;
-      }
-
-
-
-
-
-   }
-   CATCH_UNEXPECTED_EXCEPTION
-}
-
-
-
-} // anonymous namespace
-
 struct RegistrationHandle::Impl
 {
+   FSEventStreamRef streamRef;
+   Callbacks::FilesChanged onFilesChanged;
 };
 
 RegistrationHandle::RegistrationHandle()
@@ -105,19 +40,147 @@ RegistrationHandle::~RegistrationHandle()
 {
 }
 
-namespace detail {
 
+namespace {
+
+void fileEventCallback(ConstFSEventStreamRef streamRef,
+                       void *pCallbackInfo,
+                       size_t numEvents,
+                       void *eventPaths,
+                       const FSEventStreamEventFlags eventFlags[],
+                       const FSEventStreamEventId eventIds[])
+{
+   // build path of file changes
+   std::vector<FileChange> fileChanges;
+   char **paths = (char**)eventPaths;
+   for (std::size_t i=0; i<numEvents; i++)
+   {
+      fileChanges.push_back(FileChange(FileChange::Modified,
+                                       FileEntry(paths[i])));
+   }
+
+   // fire callback
+   ((RegistrationHandle*)pCallbackInfo)->pImpl_->onFilesChanged(fileChanges);
+}
+
+class CFRefScope : boost::noncopyable
+{
+public:
+   explicit CFRefScope(CFTypeRef ref)
+      : ref_(ref)
+   {
+   }
+   virtual ~CFRefScope()
+   {
+      try
+      {
+         ::CFRelease(ref_);
+      }
+      catch(...)
+      {
+      }
+   }
+private:
+   CFTypeRef ref_;
+};
+
+} // anonymous namespace
+
+namespace detail {
 
 // register a new file monitor
 void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
 {
+   // allocate file path
+   CFStringRef filePathRef = ::CFStringCreateWithFileSystemRepresentation(
+                                       kCFAllocatorDefault,
+                                       filePath.absolutePath().c_str());
+   if (filePathRef == NULL)
+   {
+      callbacks.onRegistrationError(systemError(
+                                       boost::system::errc::not_enough_memory,
+                                       ERROR_LOCATION));
+      return;
+   }
+   CFRefScope filePathRefScope(filePathRef);
 
+   // allocate paths array
+   CFArrayRef pathsArrayRef = ::CFArrayCreate(kCFAllocatorDefault,
+                                              (const void **)&filePathRef,
+                                              1,
+                                              NULL);
+   if (pathsArrayRef == NULL)
+   {
+      callbacks.onRegistrationError(systemError(
+                                       boost::system::errc::not_enough_memory,
+                                       ERROR_LOCATION));
+      return;
+   }
+   CFRefScope pathsArrayRefScope(pathsArrayRef);
+
+
+   // create a new RegistrationHandle
+   boost::shared_ptr<RegistrationHandle> pRegHandle(new RegistrationHandle());
+   pRegHandle->pImpl_->onFilesChanged = callbacks.onFilesChanged;
+
+   // FSEventStreamContext
+   FSEventStreamContext context;
+   context.version = 0;
+   context.info = (void*) pRegHandle.get();
+   context.retain = NULL;
+   context.release = NULL;
+   context.copyDescription = NULL;
+
+   // create the stream and save a reference to it
+   FSEventStreamRef streamRef = ::FSEventStreamCreate(
+                  kCFAllocatorDefault,
+                  &fileEventCallback,
+                  &context,
+                  pathsArrayRef,
+                  kFSEventStreamEventIdSinceNow,
+                  1,
+                  kFSEventStreamCreateFlagNone);
+   if (streamRef == NULL)
+   {
+      callbacks.onRegistrationError(systemError(
+                                       boost::system::errc::no_stream_resources,
+                                       ERROR_LOCATION));
+      return;
+   }
+
+   // schedule with the run loop
+   ::FSEventStreamScheduleWithRunLoop(streamRef,
+                                      ::CFRunLoopGetCurrent(),
+                                      kCFRunLoopDefaultMode);
+
+   // start the event stream (check for errors and release if necessary
+   if (!::FSEventStreamStart(streamRef))
+   {
+      ::FSEventStreamInvalidate(streamRef);
+      ::FSEventStreamRelease(streamRef);
+
+      callbacks.onRegistrationError(systemError(
+                                       boost::system::errc::no_stream_resources,
+                                       ERROR_LOCATION));
+      return;
+
+   }
+
+   // perform file listing
+   FileListing fileListing(filePath);
+
+   // set the stream on the RegistrationHandle and notify the caller
+   // that we are now registered
+   pRegHandle->pImpl_->streamRef = streamRef;
+   callbacks.onRegistered(pRegHandle, fileListing);
 }
 
 // unregister a file monitor
-void unregisterMonitor(const RegistrationHandle& handle)
+void unregisterMonitor(boost::shared_ptr<RegistrationHandle> pHandle)
 {
-
+   ::FSEventStreamStop(pHandle->pImpl_->streamRef);
+   ::FSEventStreamInvalidate(pHandle->pImpl_->streamRef);
+   ::FSEventStreamRelease(pHandle->pImpl_->streamRef);
 }
 
 void run(const boost::function<void()>& checkForInput)

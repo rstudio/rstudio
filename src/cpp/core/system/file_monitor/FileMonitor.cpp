@@ -37,7 +37,7 @@ void run(const boost::function<void()>& checkForInput);
 void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks);
 
 // unregister a file monitor
-void unregisterMonitor(const RegistrationHandle& handle);
+void unregisterMonitor(boost::shared_ptr<RegistrationHandle> pHandle);
 
 }
 
@@ -60,8 +60,9 @@ public:
    {
    }
 
-   explicit RegistrationCommand(const RegistrationHandle& registrationHandle)
-      : type_(Unregister), registrationHandle_(registrationHandle)
+   explicit RegistrationCommand(
+         boost::shared_ptr<RegistrationHandle> pRegistrationHandle)
+      : type_(Unregister), pRegistrationHandle_(pRegistrationHandle)
    {
    }
 
@@ -70,9 +71,9 @@ public:
    const core::FilePath& filePath() const { return filePath_; }
    const Callbacks& callbacks() const { return callbacks_; }
 
-   const RegistrationHandle& registrationHandle() const
+   boost::shared_ptr<RegistrationHandle> registrationHandle() const
    {
-      return registrationHandle_;
+      return pRegistrationHandle_;
    }
 
 private:
@@ -84,7 +85,7 @@ private:
    Callbacks callbacks_;
 
    // unregister command data
-   RegistrationHandle registrationHandle_;
+   boost::shared_ptr<RegistrationHandle> pRegistrationHandle_;
 };
 
 typedef core::thread::ThreadsafeQueue<RegistrationCommand>
@@ -131,11 +132,11 @@ void fileMonitorThreadMain()
 }
 
 void enqueOnRegistered(const Callbacks& callbacks,
-                       const RegistrationHandle& registrationHandle,
+                       boost::shared_ptr<RegistrationHandle> pRegistrationHandle,
                        const FileListing& fileListing)
 {
    callbackQueue().enque(boost::bind(callbacks.onRegistered,
-                                     registrationHandle,
+                                     pRegistrationHandle,
                                      fileListing));
 }
 
@@ -172,9 +173,9 @@ void registerMonitor(const FilePath& filePath, const Callbacks& callbacks)
    registrationCommandQueue().enque(RegistrationCommand(filePath, qCallbacks));
 }
 
-void unregisterMonitor(const RegistrationHandle& handle)
+void unregisterMonitor(boost::shared_ptr<RegistrationHandle> pHandle)
 {
-   registrationCommandQueue().enque(RegistrationCommand(handle));
+   registrationCommandQueue().enque(RegistrationCommand(pHandle));
 }
 
 void checkForChanges()
