@@ -16,7 +16,7 @@
 // TODO: can we just allow the file monitor to die with the process or is
 //       there some residual? (almost certainly not but should investigate)
 
-#include <core/system/file_monitor/FileMonitor.hpp>
+#include <core/system/FileMonitor.hpp>
 
 #include <boost/bind/protect.hpp>
 

@@ -11,7 +11,7 @@
  *
  */
 
-#include <core/system/file_monitor/FileMonitor.hpp>
+#include <core/system/FileMonitor.hpp>
 
 #include <dirent.h>
 #include <sys/stat.h>
