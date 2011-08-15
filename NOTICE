@@ -17,6 +17,7 @@ used by these components are included below):
 - RSA-JS 
 - FindPAM.cmake
 - CPackRPM.cmake 
+- tree.hh
 - Solarized for TextMate
 
 
