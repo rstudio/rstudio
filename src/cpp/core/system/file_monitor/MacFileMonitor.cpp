@@ -19,6 +19,8 @@
 #include <CoreServices/CoreServices.h>
 
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
@@ -72,9 +74,35 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
    char **paths = (char**)eventPaths;
    for (std::size_t i=0; i<numEvents; i++)
    {
-      FileChangeEvent changeEvent(FileChangeEvent::FileModified,
-                                  FileInfo(paths[i], true));
-      fileChanges.push_back(changeEvent);
+      // make a copy of the path and strip off trailing / if necessary
+      std::string path(paths[i]);
+      boost::algorithm::trim_right_if(path, boost::algorithm::is_any_of("/"));
+
+      // get FileInfo for this directory
+      FileInfo fileInfo(path, true);
+
+      // check for need to do recursive scan
+      bool recursive = eventFlags[i] & kFSEventStreamEventFlagMustScanSubDirs;
+
+      // find this path in our fileTree
+      tree<FileInfo>::iterator it = std::find(pContext->fileTree.begin(),
+                                              pContext->fileTree.end(),
+                                              fileInfo);
+      if (it != pContext->fileTree.end())
+      {
+         // TODO: compare cached to current and generate events
+         if (recursive)
+            std::cerr << "RECURSIVE SCAN REQUESTED" << std::endl;
+
+
+         FileChangeEvent changeEvent(FileChangeEvent::FileModified, *it);
+         fileChanges.push_back(changeEvent);
+      }
+      else
+      {
+         LOG_WARNING_MESSAGE("Unable to find treeItem for " +
+                             fileInfo.absolutePath());
+      }
    }
 
    // notify listener
@@ -241,7 +269,7 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
                   pathsArrayRef,
                   kFSEventStreamEventIdSinceNow,
                   1,
-                  kFSEventStreamCreateFlagNone);
+                  kFSEventStreamCreateFlagNoDefer);
    if (pContext->streamRef == NULL)
    {
       callbacks.onRegistrationError(systemError(
