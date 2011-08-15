@@ -30,6 +30,11 @@ namespace core {
 namespace system {
 namespace file_monitor {
 
+class FileEntry;
+namespace detail {
+core::Error scanChildren(FileEntry*,bool);
+}
+
 // initialize the file monitoring service (creates a background thread
 // which performs the monitoring)
 void initialize();
@@ -92,11 +97,8 @@ public:
    bool isDirectory() const { return isDirectory_; }
 
    const FileAttribs& attribs() const { return attribs_; }
-   void setAttribs(const FileAttribs& attribs) { attribs_ = attribs; }
 
    const std::set<FileEntry>& children() const { return children_; }
-
-   std::set<FileEntry>& children() { return children_; }
 
    bool operator < (const FileEntry& other) const
    {
@@ -114,6 +116,10 @@ public:
    }
 
 private:
+   // allow platform specific file scanner access to internals
+   friend core::Error core::system::file_monitor::detail::scanChildren(
+                                                               FileEntry*,bool);
+
    // relative path to file
    std::string path_;
 
@@ -164,29 +170,6 @@ private:
    FileEntry fileEntry_;
 };
 
-class FileListing
-{
-public:
-   explicit FileListing()
-      : directory_(), root_("")
-   {
-   }
-
-   core::Error initialize(const FilePath& directory)
-   {
-      directory_ = directory;
-      return Success();
-   }
-
-   const FilePath& directory() const { return directory_; }
-
-   FileEntry& root() { return root_; }
-
-private:
-   FilePath directory_;
-   FileEntry root_;
-};
-
 
 // opaque handle to a registration (used to unregister)
 typedef void* Handle;
@@ -195,7 +178,7 @@ struct Callbacks
 {
    // callback which occurs after a successful registration (includes an initial
    // listing of all of the files in the directory)
-   boost::function<void(Handle, const FileListing&)> onRegistered;
+   boost::function<void(Handle, const FileEntry&)> onRegistered;
 
    // callback which occurs if a registration error occurs
    boost::function<void(const core::Error&)> onRegistrationError;

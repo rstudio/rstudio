@@ -135,11 +135,11 @@ void fileMonitorThreadMain()
 
 void enqueOnRegistered(const Callbacks& callbacks,
                        Handle handle,
-                       const FileListing& fileListing)
+                       const FileEntry& fileEntry)
 {
    callbackQueue().enque(boost::bind(callbacks.onRegistered,
                                      handle,
-                                     fileListing));
+                                     fileEntry));
 }
 
 void enqueOnRegistrationError(const Callbacks& callbacks, const Error& error)
