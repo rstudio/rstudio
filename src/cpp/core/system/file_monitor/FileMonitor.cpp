@@ -135,11 +135,11 @@ void fileMonitorThreadMain()
 
 void enqueOnRegistered(const Callbacks& callbacks,
                        Handle handle,
-                       const FileEntry& fileEntry)
+                       const tree<FileInfo>& fileTree)
 {
    callbackQueue().enque(boost::bind(callbacks.onRegistered,
                                      handle,
-                                     fileEntry));
+                                     fileTree));
 }
 
 void enqueOnRegistrationError(const Callbacks& callbacks, const Error& error)
@@ -148,7 +148,7 @@ void enqueOnRegistrationError(const Callbacks& callbacks, const Error& error)
 }
 
 void enqueOnFilesChanged(const Callbacks& callbacks,
-                         const std::vector<FileChange>& fileChanges)
+                         const std::vector<FileChangeEvent>& fileChanges)
 {
    callbackQueue().enque(boost::bind(callbacks.onFilesChanged, fileChanges));
 }

@@ -22,9 +22,10 @@
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
+#include <core/FileInfo.hpp>
+#include <core/Thread.hpp>
 
 #include <core/system/System.hpp>
-#include <core/Thread.hpp>
 
 namespace core {
 namespace system {
@@ -40,14 +41,13 @@ int entryFilter(struct dirent *entry)
       return 1;
 }
 
-
 class FileEventContext : boost::noncopyable
 {
 public:
    FileEventContext() : streamRef(NULL) {}
    virtual ~FileEventContext() {}
    FSEventStreamRef streamRef;
-   FileEntry rootEntry;
+   tree<FileInfo> fileTree;
    Callbacks::FilesChanged onFilesChanged;
 };
 
@@ -68,11 +68,13 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       return;
 
    // build path of file changes
-   std::vector<FileChange> fileChanges;
+   std::vector<FileChangeEvent> fileChanges;
    char **paths = (char**)eventPaths;
    for (std::size_t i=0; i<numEvents; i++)
    {
-      fileChanges.push_back(FileChange(FileChange::Modified, FileEntry(paths[i])));
+      FileChangeEvent changeEvent(FileChangeEvent::FileModified,
+                                  FileInfo(paths[i], true));
+      fileChanges.push_back(changeEvent);
    }
 
    // notify listener
@@ -112,21 +114,19 @@ void stopInvalidateAndReleaseEventStream(FSEventStreamRef streamRef)
    invalidateAndReleaseEventStream(streamRef);
 }
 
-} // anonymous namespace
-
-namespace detail {
-
-Error scanChildren(FileEntry* pFileEntry, bool recursive)
+Error scan(tree<FileInfo>* pTree,
+           const tree<FileInfo>::iterator_base& node,
+           bool recursive)
 {
    // clear existing
-   pFileEntry->children_.clear();
+   pTree->erase_children(node);
 
    // create FilePath for root
-   FilePath rootPath(pFileEntry->path());
+   FilePath rootPath(node->absolutePath());
 
    // read directory contents
    struct dirent **namelist;
-   int entries = ::scandir(pFileEntry->path().c_str(),
+   int entries = ::scandir(node->absolutePath().c_str(),
                            &namelist,
                            entryFilter,
                            ::alphasort);
@@ -134,7 +134,7 @@ Error scanChildren(FileEntry* pFileEntry, bool recursive)
    {
       Error error = systemError(boost::system::errc::no_such_file_or_directory,
                                 ERROR_LOCATION);
-      error.addProperty("path", pFileEntry->path());
+      error.addProperty("path", node->absolutePath());
       return error;
    }
 
@@ -159,23 +159,24 @@ Error scanChildren(FileEntry* pFileEntry, bool recursive)
       // add the correct type of FileEntry
       if ( S_ISDIR(st.st_mode))
       {
-         FileEntry fileEntry(path);
+         tree<FileInfo>::iterator_base child =
+                              pTree->append_child(node, FileInfo(path, true));
          if (recursive)
          {
-            Error error = detail::scanChildren(&fileEntry, true);
+            Error error = scan(pTree, child, true);
             if (error)
             {
                LOG_ERROR(error);
                continue;
             }
          }
-         pFileEntry->children_.insert(fileEntry);
       }
       else
       {
-         FileEntry fileEntry(path, FileAttribs(st.st_size,
-                                               st.st_mtimespec.tv_sec));
-         pFileEntry->children_.insert(fileEntry);
+         pTree->append_child(node, FileInfo(path,
+                                            false,
+                                            st.st_size,
+                                            st.st_mtimespec.tv_sec));
       }
    }
 
@@ -186,7 +187,9 @@ Error scanChildren(FileEntry* pFileEntry, bool recursive)
    return Success();
 }
 
+} // anonymous namespace
 
+namespace detail {
 
 // register a new file monitor
 void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
@@ -264,9 +267,10 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
 
    }
 
-   // set root entry and perform file listing
-   pContext->rootEntry = FileEntry(filePath.absolutePath());
-   Error error = detail::scanChildren(&pContext->rootEntry, true);
+   // scan the files
+   Error error = scan(&pContext->fileTree,
+                      pContext->fileTree.set_head(FileInfo(filePath)),
+                      true);
    if (error)
    {
        // stop, invalidate, release
@@ -287,7 +291,7 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
    autoPtrContext.release();
 
    // notify the caller that we have successfully registered
-   callbacks.onRegistered((Handle)pContext, pContext->rootEntry);
+   callbacks.onRegistered((Handle)pContext, pContext->fileTree);
 }
 
 // unregister a file monitor
