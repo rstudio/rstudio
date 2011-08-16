@@ -21,7 +21,10 @@ import com.google.gwt.dom.client.NativeEvent;
 /**
  * Marker interface for classes whose implementation is to be provided via UiBinder code
  * generation for SafeHtml rendering.
- * 
+ * <p>
+ * <span style='color: red'>This is experimental code in active
+ * developement. It is unsupported, and its api is subject to
+ * change.</span>
  * @param <T> the type to render
  */
 public interface UiRenderer<T> {
