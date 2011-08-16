@@ -21,8 +21,8 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
-import com.google.gwt.uibinder.rebind.model.OwnerField;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
+import com.google.gwt.uibinder.rebind.model.OwnerField;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * This class handles all {@link FieldWriter} instances created for the current
@@ -53,6 +54,9 @@ public class FieldManager {
     }
   };
 
+  private static final Pattern JAVA_IDENTIFIER =
+      Pattern.compile("[\\p{L}_$][\\p{L}\\p{N}_$]*");
+
   public static String getFieldBuilder(String fieldName) {
     return String.format("build_%s()", fieldName);
   }
@@ -60,8 +64,8 @@ public class FieldManager {
   public static String getFieldGetter(String fieldName) {
     return String.format("get_%s()", fieldName);
   }
-
   private final TypeOracle types;
+
   private final MortalLogger logger;
 
   /**
@@ -343,6 +347,12 @@ public class FieldManager {
     }
   }
 
+  private void ensureValidity(String fieldName) throws UnableToCompleteException {
+    if (!JAVA_IDENTIFIER.matcher(fieldName).matches()) {
+      logger.die("Illegal field name \"%s\"", fieldName);
+    }
+  }
+
   /**
    * Gets the number of times a getter for the given field is called.
    */
@@ -357,6 +367,7 @@ public class FieldManager {
 
   private FieldWriter registerField(String fieldName, FieldWriter field)
       throws UnableToCompleteException {
+    ensureValidity(fieldName);
     requireUnique(fieldName);
     fieldsMap.put(fieldName, field);
 
@@ -368,7 +379,7 @@ public class FieldManager {
 
     return field;
   }
-
+  
   private void requireUnique(String fieldName) throws UnableToCompleteException {
     if (fieldsMap.containsKey(fieldName)) {
       logger.die(DUPLICATE_FIELD_ERROR, fieldName);
