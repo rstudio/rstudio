@@ -15,22 +15,27 @@
  */
 package com.google.gwt.sample.mobilewebapp.server.domain;
 
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
+import com.googlecode.objectify.ObjectifyService;
+import com.googlecode.objectify.util.DAOBase;
 
 /**
  * Factory for creating EntityManager.
  */
-public final class EMF {
+public final class EMF extends DAOBase {
 
-  private static final EntityManagerFactory emfInstance =
-    Persistence.createEntityManagerFactory("transactions-optional");
+  private static EMF singleton;
 
-  public static EntityManagerFactory get() {
-    return emfInstance;
+  static {
+    ObjectifyService.register(Task.class);
   }
 
-  private EMF() {
-    // nothing
+  public static EMF get() {
+    if (singleton == null) {
+      singleton = new EMF();
+    }
+    return singleton;
+  }
+
+  protected EMF() {
   }
 }

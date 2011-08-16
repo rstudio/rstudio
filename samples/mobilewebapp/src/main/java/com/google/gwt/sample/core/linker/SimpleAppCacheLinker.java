@@ -131,7 +131,8 @@ public class SimpleAppCacheLinker extends AbstractLinker {
               || pathName.endsWith("rpc.log")
               || pathName.endsWith("gwt.rpc")
               || pathName.endsWith("manifest.txt")
-              || pathName.startsWith("rpcPolicyManifest")) {
+              || pathName.startsWith("rpcPolicyManifest")
+              || pathName.startsWith("soycReport")) {
             // skip these resources
           } else {
             publicSourcesSb.append(pathName + "\n");

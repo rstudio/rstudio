@@ -16,7 +16,6 @@
   <set-property name="gwt.logging.popupHandler" value="DISABLED" />
   
   <inherits name='com.google.gwt.sample.gaerequest.GaeRequest'/>
-  <inherits name='com.google.gwt.sample.core.Core'/>
   <inherits name='com.google.gwt.sample.ui.UI'/>
 
   <inherits name="com.google.gwt.logging.Logging"/>

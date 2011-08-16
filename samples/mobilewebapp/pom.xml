@@ -2,14 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-  <!-- POM file generated with GWT webAppCreator -->
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.google.gwt.sample.mobilewebapp</groupId>
   <artifactId>MobileWebApp</artifactId>
   <packaging>war</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>com.google.gwt.sample.mobilewebapp.MobileWebApp</name>
-  
+
   <properties>
     <!-- Convenience property to set the GWT version -->
     <gwtVersion>2.4.0</gwtVersion>
@@ -23,36 +22,14 @@
     <gae.home>${user.home}/.m2/repository/com/google/appengine/appengine-java-sdk/${gae.version}/appengine-java-sdk-${gae.version}</gae.home>
     <gae.application.version>1</gae.application.version>
 
-    <!-- TODO: DataNucleus trash -->
-    <datanucleus.version>1.1.5</datanucleus.version>
   </properties>
 
   <repositories>
-   <!--  <repository>
+    <repository>
       <id>objectify-appengine</id>
       <url>http://objectify-appengine.googlecode.com/svn/maven</url>
-    </repository> -->
-
-    <!-- TODO: DataNucleus trash -->
-    <repository>
-      <id>DataNucleus_2</id>
-      <url>http://www.datanucleus.org/downloads/maven2/</url>
-      <name>DataNucleus</name>
-    </repository>
-    <repository>
-      <id>JBoss Repo</id>
-      <url>https://repository.jboss.org/nexus/content/repositories/releases</url>
-      <name>JBoss Repo</name>
     </repository>
   </repositories>
-
-  <!-- TODO: DataNucleus trash -->
-  <pluginRepositories>
-    <pluginRepository>
-      <id>DataNucleus_2</id>
-      <url>http://www.datanucleus.org/downloads/maven2/</url>
-    </pluginRepository>
-  </pluginRepositories>
 
   <dependencies>
     <dependency>
@@ -82,10 +59,21 @@
       <version>${gwtVersion}</version>
       <scope>provided</scope>
     </dependency>
+
+    <!-- GWT projects do not usually need a dependency on gwt-dev, but MobileWebApp
+         contains a GWTC Linker (AppCacheLinker) which in turn depends on internals
+         of the GWT compiler.
+
+         This dependency has a scope of "provided" so that it only gets used as a
+         compiler dependecy. The Maven GWT Plugin does not seem to honor this scoping,
+         though. For that reason we explicitly remove gwt-dev-*.jar from the produced
+         artifacts later on.
+    -->
     <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-dev</artifactId>
       <version>${gwtVersion}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- GWT RequestFactory will use JSR 303 javax.validation if you let it -->
@@ -151,23 +139,13 @@
       <version>${gae.version}</version> <scope>system</scope> <systemPath>${gae.home}/lib/appengine-tools-api.jar</systemPath> 
       </dependency> -->
 
-    <!-- Who is this for? What is it? -->
-
-    <dependency>
-      <groupId>net.sf.jsr107cache</groupId>
-      <artifactId>jsr107cache</artifactId>
-      <version>1.1</version>
-      <type>jar</type>
-      <scope>compile</scope>
-    </dependency>
-
     <!-- Objectify for persistence. It uses the stock javax.persistence annotations -->
 
-    <!-- <dependency>
+    <dependency>
       <groupId>com.googlecode.objectify</groupId>
       <artifactId>objectify</artifactId>
       <version>3.0</version>
-    </dependency> -->
+    </dependency>
     <dependency>
       <groupId>javax.persistence</groupId>
       <artifactId>persistence-api</artifactId>
@@ -187,16 +165,10 @@
       <version>1.0</version>
     </dependency>
 
-    <!-- TODO: Who is using this? Is it just cruft from listwidget? -->
-
-    <dependency>
-      <groupId>aopalliance</groupId>
-      <artifactId>aopalliance</artifactId>
-      <version>1.0</version>
-    </dependency>
-
-    <!-- TODO: Who is using this? Just GAE? Is anyone, really? -->
-
+    <!-- GAE does not seem to have these as dependencies, but
+         running locally (i.e. 'mvn gae:run') seems to
+         require them.
+     -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
@@ -207,64 +179,6 @@
       <artifactId>slf4j-api</artifactId>
       <version>1.6.1</version>
     </dependency>
-    
-    <!-- The stuff needed by data nucleus until we can rip it out -->
-
-    <dependency>
-      <groupId>org.datanucleus</groupId>
-      <artifactId>datanucleus-core</artifactId>
-      <version>${datanucleus.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>javax.transaction</groupId>
-          <artifactId>transaction-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.datanucleus</groupId>
-      <artifactId>datanucleus-jpa</artifactId>
-      <version>1.1.5</version>
-    </dependency>
-    <dependency>
-      <groupId>org.datanucleus</groupId>
-      <artifactId>datanucleus-rdbms</artifactId>
-      <version>${datanucleus.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.datanucleus</groupId>
-      <artifactId>datanucleus-enhancer</artifactId>
-      <version>1.1.4</version>
-    </dependency>
-    <dependency>
-      <groupId>javax.jdo</groupId>
-      <artifactId>jdo2-api</artifactId>
-      <version>2.3-eb</version>
-      <exclusions>
-        <exclusion>
-          <groupId>javax.transaction</groupId>
-          <artifactId>transaction-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.google.appengine.orm</groupId>
-      <artifactId>datanucleus-appengine</artifactId>
-      <version>1.0.8</version>
-    </dependency>
-    <!-- must be in main dependencies as well as plugin dependencies below -->
-    <!-- <dependency>
-      <groupId>org.datanucleus</groupId>
-      <artifactId>datanucleus-core</artifactId>
-      <version>${datanucleus.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>javax.transaction</groupId>
-          <artifactId>transaction-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency> -->
-
   </dependencies>
   
   <build>
@@ -387,7 +301,7 @@
 
       <plugin>
 	<artifactId>maven-eclipse-plugin</artifactId>
-	<version>2.7</version>  <!--  Note 2.8 does not work with AspectJ aspect path -->
+	<version>2.8</version>
 	<configuration>
           <downloadSources>true</downloadSources>
           <downloadJavadocs>false</downloadJavadocs>
@@ -404,6 +318,42 @@
 	</configuration>
       </plugin>
 
+      <plugin>
+        <!-- Don't deploy gwt-user nor gwt-dev jars to GAE.
+             These jars are needed to compile the
+             project and for DevMode, but not in AppEngine.
+        -->
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>2.3</version>
+        <executions>
+          <execution>
+            <id>default-clean</id>
+            <phase>clean</phase>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>remove-gwt-dev-jar</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+            <configuration>
+              <excludeDefaultDirectories>true</excludeDefaultDirectories>
+              <filesets>
+                <fileset>
+                  <directory>${project.build.directory}/${project.build.finalName}/WEB-INF/lib</directory>
+                  <includes>
+                    <include>gwt-dev*jar</include>
+                    <include>gwt-user*jar</include>
+                  </includes>
+                </fileset>
+              </filesets>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>

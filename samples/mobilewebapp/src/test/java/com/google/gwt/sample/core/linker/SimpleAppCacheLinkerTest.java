@@ -144,6 +144,7 @@ public class SimpleAppCacheLinkerTest extends TestCase {
     SimpleAppCacheLinker linker = new SimpleAppCacheLinker();
 
     // Some non-cacheable artifacts
+    artifacts.add(new SyntheticArtifact(SimpleAppCacheLinker.class, "soycReport.baz", new byte[0]));
     artifacts.add(new SyntheticArtifact(SimpleAppCacheLinker.class, "foo.symbolMap", new byte[0]));
     artifacts.add(new SyntheticArtifact(SimpleAppCacheLinker.class, "foo.xml.gz", new byte[0]));
     artifacts.add(new SyntheticArtifact(SimpleAppCacheLinker.class, "foo.rpc.log", new byte[0]));
@@ -152,8 +153,9 @@ public class SimpleAppCacheLinkerTest extends TestCase {
 
     ArtifactSet result = linker.link(TreeLogger.NULL, new MockLinkerContext(), artifacts, false);
 
-    assertEquals(7, result.size());
+    assertEquals(8, result.size());
     assertHasOneManifest(result);
+    assertFalse(getManifestContents(result).contains("soycReport"));
     assertFalse(getManifestContents(result).contains("symbolMap"));
     assertFalse(getManifestContents(result).contains("xml.gz"));
     assertFalse(getManifestContents(result).contains("rpc.log"));

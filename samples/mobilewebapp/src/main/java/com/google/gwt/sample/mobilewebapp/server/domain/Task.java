@@ -15,22 +15,26 @@
  */
 package com.google.gwt.sample.mobilewebapp.server.domain;
 
+import com.googlecode.objectify.Query;
+import com.googlecode.objectify.annotation.Entity;
+
 import java.util.Date;
 import java.util.List;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EntityManager;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Query;
-import javax.persistence.Version;
+import javax.persistence.PrePersist;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
- * A task used in the task list.
+ * A task used in the task list. This is a monolothic implementation of a data object
+ * for use with {@code RequestFactory}. Better patterns make use of Locators and
+ * ServiceLocators to simplify the boilerplate required to expose a data object.
+ * <p>
+ * See <a
+ * href='http://turbomanage.wordpress.com/2011/03/25/using-gwt-requestfactory-with-objectify/'
+ * >this fine blog post</a>,
+ * for an example.
  */
 @Entity
 public class Task {
@@ -40,31 +44,23 @@ public class Task {
    */
   @SuppressWarnings("unchecked")
   public static List<Task> findAllTasks() {
-    EntityManager em = entityManager();
-    try {
-      Query query = em.createQuery("select o from Task o where o.userId=:userId");
-      query.setParameter("userId", UserServiceWrapper.get().getCurrentUserId());
-      List<Task> list = query.getResultList();
+    // TODO: move this method to a service object and get rid of EMF (e.g. use a ServiceLocator)
+    EMF emf = EMF.get();
 
-      /*
-       * If this is the first time running the app, populate the datastore with
-       * some default tasks and re-query the datastore for them.
-       */
-      if (list.size() == 0) {
-        populateDatastore();
-        list = query.getResultList();
+    Query<Task> q = emf.ofy().query(Task.class).filter("userId", currentUserId());
 
-        /*
-         * Workaround for this issue:
-         * http://code.google.com/p/datanucleus-appengine/issues/detail?id=24
-         */
-        list.size();
-      }
-
-      return list;
-    } finally {
-      em.close();
+    List<Task> list = q.list();
+    /*
+     * If this is the first time running the app, populate the datastore with
+     * some default tasks and re-query the datastore for them.
+     */
+    if (list.size() == 0) {
+      populateDatastore();
+      q = emf.ofy().query(Task.class).filter("userId", currentUserId());
+      list = q.list();
     }
+
+    return list;
   }
 
   /**
@@ -74,29 +70,22 @@ public class Task {
    * @return the associated {@link Task}, or null if not found
    */
   public static Task findTask(Long id) {
+    // TODO: move this method to a service object and get rid of EMF (e.g. use a ServiceLocator)
     if (id == null) {
       return null;
     }
 
-    EntityManager em = entityManager();
-    try {
-      Task task = em.find(Task.class, id);
-      if (task != null && UserServiceWrapper.get().getCurrentUserId().equals(task.userId)) {
-        return task;
-      }
+    EMF emf = EMF.get();
+    Task task = emf.ofy().find(Task.class, id);
+    if (task != null && task.userId.equals(currentUserId())) {
+      return task;
+    } else {
       return null;
-    } finally {
-      em.close();
     }
   }
 
-  /**
-   * Create an entity manager to interact with the database.
-   * 
-   * @return an {@link EntityManager} instance
-   */
-  private static EntityManager entityManager() {
-    return EMF.get().createEntityManager();
+  private static String currentUserId() {
+    return UserServiceWrapper.get().getCurrentUserId();
   }
 
   /**
@@ -105,56 +94,61 @@ public class Task {
    */
   @SuppressWarnings("deprecation")
   private static void populateDatastore() {
+    // TODO: move this method to a service object (e.g. use a ServiceLocator)
+    EMF emf = EMF.get();
+
     {
       // Task 0.
       Task task0 = new Task();
       task0.setName("Beat Angry Birds");
       task0.setNotes("This game is impossible!");
       task0.setDueDate(new Date(100, 4, 20));
-      task0.persist();
+      task0.userId = currentUserId();
+      emf.ofy().put(task0);
     }
     {
       // Task 1.
       Task task1 = new Task();
       task1.setName("Make a million dollars");
       task1.setNotes("Then spend it all on Android apps");
-      task1.persist();
+      task1.userId = currentUserId();
+      emf.ofy().put(task1);
     }
     {
       // Task 2.
       Task task2 = new Task();
       task2.setName("Buy a dozen eggs");
       task2.setNotes("of the chicken variety");
-      task2.persist();
+      task2.userId = currentUserId();
+      emf.ofy().put(task2);
     }
     {
       // Task 3.
       Task task3 = new Task();
       task3.setName("Complete all tasks");
-      task3.persist();
+      task3.userId = currentUserId();
+      emf.ofy().put(task3);
     }
   }
 
   @Id
-  @Column(name = "id")
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-
-  /**
-   * The unique ID of the user who owns this task.
-   */
-  private String userId;
-
-  @Version
-  @Column(name = "version")
-  private Integer version;
+  Long id;
 
   private Date dueDate;
 
   @NotNull(message = "You must specify a name")
   @Size(min = 3, message = "Name must be at least 3 characters long")
   private String name;
+
   private String notes;
+
+  /**
+   * The unique ID of the user who owns this task.
+   */
+  private String userId;
+
+  // TODO: Move this field to a superclass that implements a persistence layer
+  private Integer version = 0;
 
   /**
    * Get the due date of the Task.
@@ -188,6 +182,7 @@ public class Task {
    * Get the version of this datastore object.
    */
   public Integer getVersion() {
+    // TODO: Move this method to a superclass that implements a persistence layer
     return version;
   }
 
@@ -195,20 +190,20 @@ public class Task {
    * Persist this object in the data store.
    */
   public void persist() {
-    EntityManager em = entityManager();
-    try {
-      // Set the user id if this is a new task.
-      String curUserId = UserServiceWrapper.get().getCurrentUserId();
-      if (userId == null) {
-        userId = curUserId;
-      }
+    // TODO: Move this method to a superclass that implements a persistence layer
+    EMF emf = EMF.get();
 
-      // Verify the current user owns the task before updating it.
-      if (curUserId.equals(userId)) {
-        em.persist(this);
-      }
-    } finally {
-      em.close();
+    ++version;
+
+    // Set the user id if this is a new task.
+    String curUserId = currentUserId();
+    if (userId == null) {
+      userId = curUserId;
+    }
+
+    // Verify the current user owns the task before updating it.
+    if (curUserId.equals(userId)) {
+      emf.ofy().put(this);
     }
   }
 
@@ -216,16 +211,13 @@ public class Task {
    * Remove this object from the data store.
    */
   public void remove() {
-    EntityManager em = entityManager();
-    try {
-      Task task = em.find(Task.class, this.id);
+    // TODO: Move this method to a superclass that implements a persistence layer
+    EMF emf = EMF.get();
 
-      // Verify the current user owns the task before removing it.
-      if (UserServiceWrapper.get().getCurrentUserId().equals(task.userId)) {
-        em.remove(task);
-      }
-    } finally {
-      em.close();
+    Task task = emf.ofy().find(Task.class, this.id);
+
+    if (currentUserId().equals(task.userId)) {
+      emf.ofy().delete(task);
     }
   }
 
@@ -260,7 +252,9 @@ public class Task {
     this.notes = notes;
   }
 
-  public void setVersion(Integer version) {
-    this.version = version;
+  @PrePersist
+  void onPersist() {
+    // TODO: Move this method to a superclass that implements a persistence layer
+    ++this.version;
   }
 }
