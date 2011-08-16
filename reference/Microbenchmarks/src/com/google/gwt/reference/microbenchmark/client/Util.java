@@ -1,10 +1,12 @@
 package com.google.gwt.reference.microbenchmark.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.i18n.client.NumberFormat;
 
 class Util {
@@ -44,13 +46,25 @@ class Util {
   +   "Div anon end</div>"
   + "Div root end";
 
+  private static int uniqueId = 0;
+  private static UtilImpl impl = GWT.create(UtilImpl.class);
+
   static void addText(Element elm, String text) {
     elm.appendChild(Document.get().createTextNode(text));
   }
 
   static String createTableHtml() {
     StringBuilder sb = new StringBuilder();
-    sb.append("<table>");
+    sb.append("<table><tbody>");
+    sb.append(createTableRowsHtml());
+    sb.append("</tbody></table>");
+    return sb.toString();
+  }
+
+  static String createTableRowsHtml() {
+    // Assign a unique ID to ensure that we actually change the content.
+    uniqueId++;
+    StringBuilder sb = new StringBuilder();
     for (int row = 0; row < Util.TABLE_ROW_COUNT; row++) {
       if (row % 2 == 0) {
         sb.append("<tr class=\"evenRow\">");
@@ -59,12 +73,11 @@ class Util {
       }
       for (int column = 0; column < Util.TABLE_COLUMN_COUNT; column++) {
         sb.append("<td align=\"center\" valign=\"middle\"><div>");
-        sb.append("Cell " + row + ":" + column);
+        sb.append(uniqueId + " - Cell " + row + ":" + column);
         sb.append("</div></td>");
       }
       sb.append("</tr>");
     }
-    sb.append("</table>");
     return sb.toString();
   }
 
@@ -89,6 +102,16 @@ class Util {
   static native JsArray<Element> querySelectorAll(Node root, String selector) /*-{
     return root.querySelectorAll(selector);
   }-*/;
+
+  /**
+   * Replace all of the rows in the specified tbody.
+   * 
+   * @param tbody the tbody element
+   * @param rowHtml the HTML that represents the rows
+   */
+  static void replaceTableBodyRows(TableSectionElement tbody, String rowHtml) {
+    impl.replaceTableBodyRows(tbody, rowHtml);
+  }
 
   static long roundToTens(double median) {
     return Math.round(median/10)*10;

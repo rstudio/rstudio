@@ -7,13 +7,15 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Run by {@link WidgetCreation}, see {@link Maker#name} for details.
+ * Run by {@link MicrobenchmarkSurvey}, see name for details.
  */
 public class TestManualHTMLPanel extends Composite {
-  public static class Maker extends WidgetCreation.Maker {
+  public static class Maker extends MicrobenchmarkSurvey.WidgetMaker {
     Maker() {
       super("Text heavy UI via typical manual HTMLPanel usage");
     }
+
+    @Override
     public Widget make() {
       return new TestManualHTMLPanel();
     }

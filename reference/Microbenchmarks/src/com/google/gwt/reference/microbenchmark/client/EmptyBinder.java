@@ -25,10 +25,12 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class EmptyBinder extends Composite {
 
-  public static class Maker extends WidgetCreation.Maker {
+  public static class Maker extends MicrobenchmarkSurvey.WidgetMaker {
     Maker() {
       super("HTMLPanel UiBinder");
     }
+
+    @Override
     public Widget make() {
       return new EmptyBinder();
     }

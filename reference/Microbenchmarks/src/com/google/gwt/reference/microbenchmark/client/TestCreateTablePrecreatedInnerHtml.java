@@ -15,20 +15,21 @@
  */
 package com.google.gwt.reference.microbenchmark.client;
 
+import com.google.gwt.dom.client.TableElement;
+import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Run by {@link WidgetCreation}, see
- * {@link TestCreateTablePrecreatedInnerHtml.Maker#name} for details.
+ * Run by {@link MicrobenchmarkSurvey}, see name for details.
  */
 public class TestCreateTablePrecreatedInnerHtml extends Widget {
-  public static class Maker extends WidgetCreation.Maker {
-    
+  public static class Maker extends MicrobenchmarkSurvey.WidgetMaker {
+
     private final String tableHtml = Util.createTableHtml();
 
     Maker() {
-      super(Util.TABLE_ROW_COUNT + "x" + Util.TABLE_COLUMN_COUNT
-          + " table via precreated innerHTML String, no widgets");
+      super("Create " + Util.TABLE_ROW_COUNT + "x" + Util.TABLE_COLUMN_COUNT
+          + " tbody via precreated innerHTML String, no widgets");
     }
 
     @Override
@@ -37,7 +38,37 @@ public class TestCreateTablePrecreatedInnerHtml extends Widget {
     }
   }
 
+  public static class Updater extends
+      MicrobenchmarkSurvey.WidgetUpdater<TestCreateTablePrecreatedInnerHtml> {
+
+    private final String tableRowsHtml = Util.createTableRowsHtml();
+
+    Updater() {
+      super("Update " + Util.TABLE_ROW_COUNT + "x" + Util.TABLE_COLUMN_COUNT
+          + " table via precreated innerHTML String, no widgets");
+    }
+
+    @Override
+    protected TestCreateTablePrecreatedInnerHtml make() {
+      return new TestCreateTablePrecreatedInnerHtml(Util.createTableHtml());
+    }
+
+    @Override
+    protected void updateWidget(TestCreateTablePrecreatedInnerHtml w) {
+      w.replaceAllRows(tableRowsHtml);
+    }
+  }
+
+  private final TableElement table;
+  private final TableSectionElement tableBody;
+
   private TestCreateTablePrecreatedInnerHtml(String tableHtml) {
-    setElement(Util.fromHtml(tableHtml));
+    table = Util.fromHtml(tableHtml).cast();
+    setElement(table);
+    tableBody = table.getTBodies().getItem(0).cast();
+  }
+
+  private void replaceAllRows(String tableRowsHtml) {
+    Util.replaceTableBodyRows(tableBody, tableRowsHtml);
   }
 }

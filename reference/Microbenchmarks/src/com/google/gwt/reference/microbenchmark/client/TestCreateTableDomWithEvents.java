@@ -20,19 +20,30 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Run by {@link WidgetCreation}, see
- * {@link TestCreateTableDomWithEvents.Maker#name} for details.
+ * Run by {@link MicrobenchmarkSurvey}, see name for details.
  */
 public class TestCreateTableDomWithEvents extends TestCreateTableDom {
-  public static class Maker extends WidgetCreation.Maker {
+  public static class Maker extends MicrobenchmarkSurvey.WidgetMaker {
 
     Maker() {
-      super(Util.TABLE_ROW_COUNT + "x" + Util.TABLE_COLUMN_COUNT
+      super("Create " + Util.TABLE_ROW_COUNT + "x" + Util.TABLE_COLUMN_COUNT
           + " table via DOM api calls, no widgets, sink events on each cell");
     }
 
     @Override
     public Widget make() {
+      return new TestCreateTableDomWithEvents();
+    }
+  }
+
+  public static class Updater extends TestCreateTableDom.Updater {
+    Updater() {
+      super("Replace rows in " + Util.TABLE_ROW_COUNT + "x" + Util.TABLE_COLUMN_COUNT
+          + " table via DOM api calls, no widgets, sink events on each cell");
+    }
+
+    @Override
+    protected TestCreateTableDom make() {
       return new TestCreateTableDomWithEvents();
     }
   }

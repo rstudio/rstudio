@@ -15,16 +15,17 @@
  */
 package com.google.gwt.reference.microbenchmark.client;
 
+import com.google.gwt.dom.client.TableElement;
+import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Run by {@link WidgetCreation}, see
- * {@link TestCreateTableInnerHtml.Maker#name} for details.
+ * Run by {@link MicrobenchmarkSurvey}, see name for details.
  */
 public class TestCreateTableInnerHtml extends Widget {
-  public static class Maker extends WidgetCreation.Maker {
+  public static class Maker extends MicrobenchmarkSurvey.WidgetMaker {
     Maker() {
-      super(Util.TABLE_ROW_COUNT + "x" + Util.TABLE_COLUMN_COUNT
+      super("Create " + Util.TABLE_ROW_COUNT + "x" + Util.TABLE_COLUMN_COUNT
           + " table via innerHTML built with StringBuilder, no widgets");
     }
 
@@ -34,7 +35,33 @@ public class TestCreateTableInnerHtml extends Widget {
     }
   }
 
+  public static class Updater extends MicrobenchmarkSurvey.WidgetUpdater<TestCreateTableInnerHtml> {
+    Updater() {
+      super("Update " + Util.TABLE_ROW_COUNT + "x" + Util.TABLE_COLUMN_COUNT
+          + " tbody via innerHTML built with StringBuilder, no widgets");
+    }
+
+    @Override
+    protected TestCreateTableInnerHtml make() {
+      return new TestCreateTableInnerHtml();
+    }
+
+    @Override
+    protected void updateWidget(TestCreateTableInnerHtml w) {
+      w.replaceAllRows();
+    }
+  }
+
+  private final TableElement table;
+  private final TableSectionElement  tableBody;
+
   private TestCreateTableInnerHtml() {
-    setElement(Util.fromHtml(Util.createTableHtml()));
+    table = Util.fromHtml(Util.createTableHtml()).cast();
+    setElement(table);
+    tableBody = table.getTBodies().getItem(0).cast();
+  }
+
+  private void replaceAllRows() {
+    Util.replaceTableBodyRows(tableBody, Util.createTableRowsHtml());
   }
 }

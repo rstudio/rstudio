@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module rename-to='microbenchmarks'>
-  <!-- Inherit the core Web Toolkit stuff.                        -->
   <inherits name='com.google.gwt.user.User'/>
-
-  <!-- Inherit the default GWT style sheet.  You can change       -->
-  <!-- the theme of your GWT application by uncommenting          -->
-  <!-- any one of the following lines.                            -->
   <inherits name='com.google.gwt.user.theme.standard.Standard'/>
-  <!-- <inherits name='com.google.gwt.user.theme.chrome.Chrome'/> -->
-  <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
-
-  <!-- Other module inherits                                      -->
 
   <!-- Specify the app entry point class.                         -->
   <entry-point class='com.google.gwt.reference.microbenchmark.client.Microbenchmarks'/>
 
   <!-- Specify the paths for translatable code                    -->
   <source path='client'/>
+
+  <!-- Deferred binding for Util. -->
+  <replace-with class="com.google.gwt.reference.microbenchmark.client.UtilImplTrident">
+    <when-type-is class="com.google.gwt.reference.microbenchmark.client.UtilImpl" />
+    <any>
+      <when-property-is name="user.agent" value="ie6" />
+      <when-property-is name="user.agent" value="ie8" />
+      <when-property-is name="user.agent" value="ie9" />
+    </any>
+  </replace-with>
 
 </module>

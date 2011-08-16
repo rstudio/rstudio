@@ -22,13 +22,15 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Run by {@link WidgetCreation}, see {@link Maker#name} for details.
+ * Run by {@link MicrobenchmarkSurvey}, see name for details.
  */
 public class TestEmptyDom extends Widget {
-  public static class Maker extends WidgetCreation.Maker {
+  public static class Maker extends MicrobenchmarkSurvey.WidgetMaker {
     Maker() {
       super("Empty UI via innerHTML, no widgets, get children by id");
     }
+
+    @Override
     public Widget make() {
       return new TestEmptyDom();
     }

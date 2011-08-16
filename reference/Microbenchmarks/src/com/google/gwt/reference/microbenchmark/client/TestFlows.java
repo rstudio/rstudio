@@ -6,13 +6,15 @@ import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Run by {@link WidgetCreation}, see {@link Maker#name} for details.
+ * Run by {@link MicrobenchmarkSurvey}, see name for details.
  */
 public class TestFlows extends Composite {
-  public static class Maker extends WidgetCreation.Maker {
+  public static class Maker extends MicrobenchmarkSurvey.WidgetMaker {
     Maker() {
       super("Text heavy UI via FlowPanels (DIVs) and InlineLabels (SPANs)");
     }
+
+    @Override
     public Widget make() {
       return new TestFlows();
     }

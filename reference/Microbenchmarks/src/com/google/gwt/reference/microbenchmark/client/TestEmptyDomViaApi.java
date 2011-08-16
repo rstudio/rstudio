@@ -21,14 +21,15 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Run by {@link WidgetCreation}, see {@link Maker#name} for details.
+ * Run by {@link MicrobenchmarkSurvey}, see name for details.
  */
 public class TestEmptyDomViaApi extends Widget {
-  public static class Maker extends WidgetCreation.Maker {
+  public static class Maker extends MicrobenchmarkSurvey.WidgetMaker {
     Maker() {
       super("Empty UI via DOM api calls, no widgets");
     }
 
+    @Override
     public Widget make() {
       return new TestEmptyDomViaApi();
     }

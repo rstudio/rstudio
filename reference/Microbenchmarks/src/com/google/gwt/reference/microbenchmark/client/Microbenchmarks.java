@@ -18,15 +18,16 @@ package com.google.gwt.reference.microbenchmark.client;
 import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.reference.microbenchmark.client.WidgetCreation.Maker;
+import com.google.gwt.reference.microbenchmark.client.MicrobenchmarkSurvey.NanoTest;
+import com.google.gwt.reference.microbenchmark.client.MicrobenchmarkSurvey.WidgetMaker;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -60,20 +61,20 @@ public class Microbenchmarks implements EntryPoint {
 
   public Microbenchmarks() {
     // Add entries for new widget benchmarks here.
-    List<Maker> widgetMakers = new ArrayList<Maker>();
-    widgetMakers.add(new Maker("SimplePanel") {
+    List<NanoTest> widgetMakers = new ArrayList<NanoTest>();
+    widgetMakers.add(new WidgetMaker("SimplePanel") {
       @Override
       public Widget make() {
         return new SimplePanel();
       }
     });
-    widgetMakers.add(new Maker("FlowPanel") {
+    widgetMakers.add(new WidgetMaker("FlowPanel") {
       @Override
       public Widget make() {
         return new FlowPanel();
       }
     });
-    widgetMakers.add(new Maker("HTMLPanel") {
+    widgetMakers.add(new WidgetMaker("HTMLPanel") {
       @Override
       public Widget make() {
         return new HTMLPanel("");
@@ -96,16 +97,30 @@ public class Microbenchmarks implements EntryPoint {
     widgetMakers.add(new TestManualHTMLPanel.Maker());
     widgetMakers.add(new TestWidgetBinder.Maker());
 
-    // Add entries for new table benchmarks here.
-    List<Maker> tableMakers = new ArrayList<Maker>();
+    // Add entries for table creation benchmarks here.
+    List<NanoTest> tableMakers = new ArrayList<NanoTest>();
     tableMakers.add(new TestCreateTableInnerHtml.Maker());
     tableMakers.add(new TestCreateTablePrecreatedInnerHtml.Maker());
     tableMakers.add(new TestCreateTableDom.Maker());
     tableMakers.add(new TestCreateTableDomWithEvents.Maker());
 
-    benchmarks = new Microbenchmark[2];
-    benchmarks[0] = new WidgetCreation("Widget Creation Survey", widgetMakers);
-    benchmarks[1] = new WidgetCreation("Table Creation Survey", tableMakers);
+    // Add entries for table update benchmarks here.
+    List<NanoTest> tableUpdaters = new ArrayList<NanoTest>();
+    tableUpdaters.add(new TestCreateTableInnerHtml.Updater());
+    tableUpdaters.add(new TestCreateTablePrecreatedInnerHtml.Updater());
+    tableUpdaters.add(new TestCreateTableDom.Updater());
+    tableUpdaters.add(new TestCreateTableDomWithEvents.Updater());
+
+    // Combine all table tests.
+    List<NanoTest> allTableTests = new ArrayList<MicrobenchmarkSurvey.NanoTest>();
+    allTableTests.addAll(tableMakers);
+    allTableTests.addAll(tableUpdaters);
+
+    benchmarks = new Microbenchmark[4];
+    benchmarks[0] = new MicrobenchmarkSurvey("Widget Creation Survey", widgetMakers);
+    benchmarks[1] = new MicrobenchmarkSurvey("Table Creation and Update Survey", allTableTests);
+    benchmarks[2] = new MicrobenchmarkSurvey("Table Creation Survey", tableMakers);
+    benchmarks[3] = new MicrobenchmarkSurvey("Table Update Survey", tableUpdaters);
   }
 
   @UiHandler("listBox")
@@ -119,7 +134,7 @@ public class Microbenchmarks implements EntryPoint {
     final int index = listBox.getSelectedIndex();
     UIObject.setVisible(running, true);
     button.setEnabled(false);
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
       public void execute() {
         double start = Duration.currentTimeMillis();
         benchmarks[index].run();

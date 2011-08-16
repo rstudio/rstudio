@@ -25,13 +25,12 @@ import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Run by {@link WidgetCreation}, see {@link TestCreateTableDom.Maker#name} for
- * details.
+ * Run by {@link MicrobenchmarkSurvey}, see name for details.
  */
 public class TestCreateTableDom extends Widget {
-  public static class Maker extends WidgetCreation.Maker {
+  public static class Maker extends MicrobenchmarkSurvey.WidgetMaker {
     Maker() {
-      super(Util.TABLE_ROW_COUNT + "x" + Util.TABLE_COLUMN_COUNT
+      super("Create " + Util.TABLE_ROW_COUNT + "x" + Util.TABLE_COLUMN_COUNT
           + " table via DOM api calls, no widgets");
     }
 
@@ -41,26 +40,43 @@ public class TestCreateTableDom extends Widget {
     }
   }
 
+  public static class Updater extends MicrobenchmarkSurvey.WidgetUpdater<TestCreateTableDom> {
+    Updater() {
+      this("Replace rows in " + Util.TABLE_ROW_COUNT + "x" + Util.TABLE_COLUMN_COUNT
+          + " table via DOM api calls, no widgets");
+    }
+
+    Updater(String name) {
+      super(name);
+    }
+
+    @Override
+    protected TestCreateTableDom make() {
+      return new TestCreateTableDom();
+    }
+
+    @Override
+    protected void updateWidget(TestCreateTableDom w) {
+      // Remove the old rows.
+      int rowCount = w.tableBody.getRows().getLength();
+      for (int i = 0; i < rowCount; i++) {
+        w.tableBody.deleteRow(0);
+      }
+
+      // Add new rows.
+      w.fillTableBodyRows();
+    }
+  }
+
+  private final TableElement table;
+  private final TableSectionElement tableBody;
+
   TestCreateTableDom() {
     // This table should match the structure defined in Util#createTableHtml().
-    TableElement table = Document.get().createTableElement();
-    TableSectionElement tbody = Document.get().createTBodyElement();
-    table.appendChild(tbody);
-    for (int row = 0; row < Util.TABLE_ROW_COUNT; row++) {
-      TableRowElement tr = Document.get().createTRElement();
-      tbody.appendChild(tr);
-      if (row % 2 == 0) {
-        tr.addClassName("evenRow");
-      } else {
-        tr.addClassName("oddRow");
-      }
-      for (int column = 0; column < Util.TABLE_COLUMN_COUNT; column++) {
-        TableCellElement td = Document.get().createTDElement();
-        td.setAlign("center");
-        td.setVAlign("middle");
-        td.appendChild(createCellContents(row, column));
-      }
-    }
+    table = Document.get().createTableElement();
+    tableBody = Document.get().createTBodyElement();
+    table.appendChild(tableBody);
+    fillTableBodyRows();
     setElement(table);
   }
 
@@ -75,5 +91,27 @@ public class TestCreateTableDom extends Widget {
     DivElement div = Document.get().createDivElement();
     div.setInnerHTML("Cell " + row + ":" + column);
     return div;
+  }
+
+  /**
+   * Fill the table body element with rows.
+   */
+  private void fillTableBodyRows() {
+    for (int row = 0; row < Util.TABLE_ROW_COUNT; row++) {
+      TableRowElement tr = Document.get().createTRElement();
+      tableBody.appendChild(tr);
+      if (row % 2 == 0) {
+        tr.addClassName("evenRow");
+      } else {
+        tr.addClassName("oddRow");
+      }
+      for (int column = 0; column < Util.TABLE_COLUMN_COUNT; column++) {
+        TableCellElement td = Document.get().createTDElement();
+        td.setAlign("center");
+        td.setVAlign("middle");
+        td.appendChild(createCellContents(row, column));
+        tr.appendChild(td);
+      }
+    }
   }
 }

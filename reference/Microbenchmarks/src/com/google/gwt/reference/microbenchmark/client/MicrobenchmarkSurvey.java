@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Cookies;
@@ -30,7 +32,9 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.InlineLabel;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -39,24 +43,177 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Compares various widget creation strategies.
+ * An implementation of {@link Microbenchmark} that surveys multiple timed
+ * tests.
  */
-public class WidgetCreation implements Microbenchmark {
-  static abstract class Maker {
-    final String name;
+public class MicrobenchmarkSurvey implements Microbenchmark {
 
-    Maker(String name) {
+  /**
+   * A single runnable test that makes up the survey.
+   */
+  static abstract class NanoTest {
+
+    private final String name;
+
+    /**
+     * Construct a new {@link NanoTest}.
+     * 
+     * @param name the display name
+     */
+    public NanoTest(String name) {
       this.name = name;
     }
 
-    abstract Widget make();
+    public String getName() {
+      return name;
+    }
+
+    /**
+     * Get the widget to display in a popup when the user clicks on the test
+     * name.
+     * 
+     * @return the popup widget, or null not to show one
+     */
+    public Widget getPopup() {
+      return null;
+    }
+
+    /**
+     * Run the test.
+     */
+    public abstract void runTest();
+
+    /**
+     * Setup the test before starting the timer. Override this method to prepare
+     * the test before it starts running.
+     */
+    public void setup() {
+      // No-op by default.
+    }
+
+    /**
+     * Tear down the test after stopping the timer. Override this method to
+     * cleanup the test after it completes.
+     */
+    public void teardown() {
+      // No-op by default.
+    }
   }
 
-  interface Binder extends UiBinder<Widget, WidgetCreation> {}
+  /**
+   * A nano test that makes a widget and attaches it to the {@link RootPanel}.
+   */
+  static abstract class WidgetMaker extends NanoTest {
+
+    private final RootPanel root = RootPanel.get();
+    private Widget popupWidget;
+    private Widget w;
+
+    public WidgetMaker(String name) {
+      super(name);
+    }
+
+    @Override
+    public Widget getPopup() {
+      if (popupWidget == null) {
+        popupWidget = make();
+      }
+      return popupWidget;
+    }
+
+    @Override
+    public void runTest() {
+      w = make();
+      root.add(w);
+
+      /*
+       * Force a layout by finding the body's offsetTop and height. We avoid
+       * doing setTimeout(0), which would allow paint to happen, to keep the
+       * test synchronous and because different browsers round that zero to
+       * different minimums. Layout should be the bulk of the time.
+       */
+      Document.get().getBody().getOffsetTop();
+      Document.get().getBody().getOffsetHeight();
+      w.getOffsetHeight();
+    }
+
+    @Override
+    public void teardown() {
+      // Clean up to keep the dom. Attached widgets will affect later tests.
+      root.remove(w);
+    }
+
+    /**
+     * Make the widget to test.
+     * 
+     * @return the widget
+     */
+    protected abstract Widget make();
+  }
+
+  /**
+   * A nano test that updates an existing widget that is already attached to the
+   * {@link RootPanel}.
+   * 
+   * @param <W> the widget type
+   */
+  static abstract class WidgetUpdater<W extends Widget> extends MicrobenchmarkSurvey.NanoTest {
+
+    private final RootPanel root = RootPanel.get();
+    private W w;
+
+    public WidgetUpdater(String name) {
+      super(name);
+    }
+
+    @Override
+    public Widget getPopup() {
+      return ensureWidget();
+    }
+
+    @Override
+    public void setup() {
+      root.add(ensureWidget());
+    }
+
+    @Override
+    public void runTest() {
+      updateWidget(w);
+    }
+
+    @Override
+    public void teardown() {
+      root.remove(w);
+    }
+
+    /**
+     * Make the widget to test.
+     * 
+     * @return the widget
+     */
+    protected abstract W make();
+
+    /**
+     * Update the widget.
+     * 
+     * @param w the widget to update
+     */
+    protected abstract void updateWidget(W w);
+
+    private W ensureWidget() {
+      if (w == null) {
+        w = make();
+      }
+      return w;
+    }
+  }
+
+  interface Binder extends UiBinder<Widget, MicrobenchmarkSurvey> {
+  }
 
   private static final Binder BINDER = GWT.create(Binder.class);
 
-  private static final String COOKIE = "gwt_microb_widgetCreation";
+  private static final String COOKIE = "gwt_microb_survey";
 
   private static final int DEFAULT_INSTANCES = 100;
 
@@ -64,28 +221,32 @@ public class WidgetCreation implements Microbenchmark {
     var logger = $wnd.console;
     if (logger) {
       logger.log(msg);
-      if(logger.markTimeline) {
-        logger.markTimeline(msg); 
+      if (logger.markTimeline) {
+        logger.markTimeline(msg);
       }
     }
   }-*/;
 
-  @UiField(provided = true) Grid grid;
-  @UiField CheckBox includeLargeWidget;
-  @UiField TextBox number;
-  @UiField Widget root;
+  @UiField(provided = true)
+  Grid grid;
+  @UiField
+  CheckBox includeLargeWidget;
+  @UiField
+  TextBox number;
+  @UiField
+  Widget root;
   final String name;
-  final List<Maker> makers;
+  private final List<NanoTest> nanos;
 
   /**
-   * Construct a new {@link WidgetCreation} micro benchmark.
+   * Construct a new {@link MicrobenchmarkSurvey} micro benchmark.
    * 
    * @param name the name of the benchmark
-   * @param makers the makers for the widget strategies
+   * @param nanos the {@link NanoTest}s that make up the survey
    */
-  public WidgetCreation(String name, List<Maker> makers) {
+  public MicrobenchmarkSurvey(String name, List<NanoTest> nanos) {
     this.name = name;
-    this.makers = Collections.unmodifiableList(makers);
+    this.nanos = Collections.unmodifiableList(nanos);
 
     int instances = DEFAULT_INSTANCES;
     try {
@@ -94,21 +255,33 @@ public class WidgetCreation implements Microbenchmark {
     }
 
     // Initialize the grid.
-    grid = new Grid(makers.size() + 2, 3);
+    grid = new Grid(nanos.size() + 2, 3);
     grid.setText(0, 0, "median");
     grid.setText(0, 1, "mean");
 
     int row = 1;
-    for (Maker m : makers) {
+    for (final NanoTest nano : nanos) {
       grid.setText(row, 0, "0");
       grid.setText(row, 1, "0");
       InlineLabel a = new InlineLabel();
-      a.setText(m.name);
-      a.setTitle(Util.outerHtml(m.make().getElement()));
+      a.setText(nano.getName());
+      a.addClickHandler(new ClickHandler() {
+        public void onClick(ClickEvent event) {
+          Widget toDisplay = nano.getPopup();
+          if (toDisplay != null) {
+            PopupPanel popup = new PopupPanel(true, true);
+            ScrollPanel container = new ScrollPanel(toDisplay);
+            container.setPixelSize(500, 500);
+            popup.setWidget(container);
+            popup.center();
+          }
+        }
+      });
+      // TODO: popup.
       grid.setWidget(row, 2, a);
       row++;
     }
-    
+
     // Create the widget.
     root = BINDER.createAndBindUi(this);
     number.setVisibleLength(7);
@@ -148,8 +321,8 @@ public class WidgetCreation implements Microbenchmark {
       root.add(largeWidget);
     }
 
-    int makersCount = makers.size();
-    double[] times = new double[makersCount];
+    int nanosCount = nanos.size();
+    double[] times = new double[nanosCount];
 
     int column = grid.getColumnCount();
     grid.resizeColumns(column + 1);
@@ -159,39 +332,32 @@ public class WidgetCreation implements Microbenchmark {
     boolean forward = false;
     for (int i = 0; i < instances; ++i) {
       forward = !forward;
-      for (int m = 0; m < makersCount; m++) {
+      for (int m = 0; m < nanosCount; m++) {
         /*
          * Alternate the order that we invoke the makers to cancel out the
          * performance impact of adding elements to the DOM, which would cause
          * later tests to run more slowly than earlier tests.
          */
-        Maker maker = makers.get(forward ? m : (makersCount - 1 - m));
-        log(i + ": " + maker.name);
+        NanoTest nano = nanos.get(forward ? m : (nanosCount - 1 - m));
+        nano.setup();
+
+        // Execute the test.
+        log(i + ": " + nano.name);
         double start = Duration.currentTimeMillis();
-        Widget w = maker.make();
-        root.add(w);
+        nano.runTest();
 
-        /*
-         * Force a layout by finding the body's offsetTop and height. We avoid
-         * doing setTimeout(0), which would allow paint to happen, to keep the
-         * test synchronous and because different browsers round that zero to
-         * different minimums. Layout should be the bulk of the time.
-         */
-        Document.get().getBody().getOffsetTop();
-        Document.get().getBody().getOffsetHeight();
-        w.getOffsetHeight();
-
+        // Record the end time.
         double thisTime = Duration.currentTimeMillis() - start;
         times[m] += thisTime;
 
-        // Clean up to keep the dom. Attached widgets will affect later tests.
-        root.remove(w);
+        // Cleanup after the test.
+        nano.teardown();
       }
     }
 
     // Record the times.
     double allTimes = 0;
-    for (int m = 0; m < makersCount; ++m) {
+    for (int m = 0; m < nanosCount; ++m) {
       record(m + 1, times[m]);
       allTimes += times[m];
     }
