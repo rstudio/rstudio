@@ -46,6 +46,50 @@ import java.util.Map.Entry;
  * work.
  */
 public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
+  private static final class SimpleEntry<K, V> implements Entry<K, V> {
+    private static boolean equal(Object a, Object b) {
+      return (a == null) ? (b == null) : a.equals(b);
+    }
+
+    private final K key;
+    private final V value;
+
+    private SimpleEntry(K key, V value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+      if (object instanceof Entry) {
+        Entry<?, ?> other = (Entry<?, ?>) object;
+        return equal(key, other.getKey()) && equal(value, other.getValue());
+      }
+      return false;
+    }
+
+    @Override
+    public K getKey() {
+      return key;
+    }
+
+    @Override
+    public V getValue() {
+      return value;
+    }
+
+    @Override
+    public int hashCode() {
+      return ((key == null) ? 0 : key.hashCode())
+          ^ ((value == null) ? 0 : value.hashCode());
+    }
+
+    @Override
+    public final V setValue(V value) {
+      throw new UnsupportedOperationException();
+    }
+  }
+
   /**
    * Verify a Collection is explicitly and implicitly empty.
    * 
@@ -515,6 +559,10 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
     assertEquals(entry.getKey(), getKeys()[0]);
     assertEquals(entry.getValue(), getValues()[0]);
+    // Don't use assertEquals; we want to be clear about which object's equals()
+    // method to test.
+    assertTrue(
+        entry.equals(new SimpleEntry<K, V>(getKeys()[0], getValues()[0])));
   }
 
   /**

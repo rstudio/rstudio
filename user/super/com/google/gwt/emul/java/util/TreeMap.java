@@ -199,16 +199,14 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
       this.isRed = isRed;
     }
 
-    @SuppressWarnings("unchecked")
-    // generic cast
     @Override
     public boolean equals(Object o) {
-      if (!(o instanceof Node)) {
+      if (!(o instanceof Map.Entry)) {
         return false;
       }
-      Node<K, V> other = (Node<K, V>) o; // suppress unchecked
-      return Utility.equalsWithNullCheck(key, other.key)
-          && Utility.equalsWithNullCheck(value, other.value);
+      Map.Entry<?, ?> other = (Map.Entry<?, ?>) o;
+      return Utility.equalsWithNullCheck(key, other.getKey())
+          && Utility.equalsWithNullCheck(value, other.getValue());
     }
 
     public K getKey() {
