@@ -120,6 +120,7 @@ public class TextEditingTarget implements EditingTarget
       String getCurrentLine();
       void replaceSelection(String code);
       boolean moveSelectionToNextLine(boolean skipBlankLines);
+      void reindent();
       ChangeTracker getChangeTracker();
 
       String getCode(Position start, Position end);
@@ -1228,6 +1229,13 @@ public class TextEditingTarget implements EditingTarget
       }
 
       docDisplay_.replaceSelection(selection);
+   }
+
+   @Handler
+   void onReindent()
+   {
+      docDisplay_.reindent();
+      docDisplay_.focus();
    }
 
    @Handler

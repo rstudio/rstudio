@@ -583,6 +583,12 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return false;
    }
 
+   @Override
+   public void reindent()
+   {
+      getSession().reindent();
+   }
+
    public ChangeTracker getChangeTracker()
    {
       return new EventBasedChangeTracker<Void>(this);

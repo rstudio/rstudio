@@ -94,4 +94,8 @@ public class EditSession extends JavaScriptObject
   public native final void setNewLineMode(String type) /*-{
      this.setNewLineMode(type);
   }-*/;
+
+   public native final void reindent() /*-{
+      this.reindent();
+   }-*/;
 }

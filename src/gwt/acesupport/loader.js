@@ -26,7 +26,7 @@ var EventEmitter = require("pilot/event_emitter").EventEmitter;
 var Editor = require("ace/editor").Editor;
 var EditSession = require("ace/edit_session").EditSession;
 var UndoManager = require("ace/undomanager").UndoManager;
-
+var Range = require("ace/range").Range;
 
 var RStudioEditor = function(renderer, session) {
    Editor.call(this, renderer, session);
@@ -68,6 +68,46 @@ oop.inherits(RStudioEditSession, EditSession);
       else {
          return EditSession.prototype.insert.call(this, position, text);
       }
+   };
+   this.reindent = function() {
+      var mode = this.getMode();
+      if (!mode.getNextLineIndent)
+         return;
+      var range = this.getSelection().getRange();
+      var start = range.start.row;
+      var end = range.end.row;
+      for (var i = start; i <= end; i++) {
+         // First line is always unindented
+         if (i == 0) {
+            this.applyIndent(i, "");
+         }
+         else {
+            var state = this.getState(i-1);
+            if (state == 'qstring' || state == 'qqstring')
+               continue;
+            var line = this.getLine(i-1);
+            var newline = this.getLine(i);
+
+            var shouldOutdent = mode.checkOutdent(state, " ", newline);
+
+            var newIndent = mode.getNextLineIndent(state,
+                                                   line,
+                                                   this.getTabString(),
+                                                   this.getTabSize(),
+                                                   i-1);
+
+            this.applyIndent(i, newIndent);
+
+            if (shouldOutdent) {
+               mode.autoOutdent(state, this, i);
+            }
+         }
+      }
+   };
+   this.applyIndent = function(lineNum, indent) {
+      var line = this.getLine(lineNum);
+      var matchLen = line.match(/^\s*/g)[0].length;
+      this.replace(new Range(lineNum, 0, lineNum, matchLen), indent);
    };
 }).call(RStudioEditSession.prototype);
 

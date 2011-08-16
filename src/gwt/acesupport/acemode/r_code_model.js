@@ -321,6 +321,9 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
 
    this.getNextLineIndent = function(lastRow, line, endState, tab, tabSize)
    {
+      if (endState == "qstring" || endState == "qqstring")
+         return "";
+
       // This lineOverrides nonsense is necessary because the line has not 
       // changed in the real document yet. We need to simulate it by replacing
       // the real line with the `line` param, and when we finish with this
