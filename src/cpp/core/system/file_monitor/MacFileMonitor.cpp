@@ -406,6 +406,13 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
    char **paths = (char**)eventPaths;
    for (std::size_t i=0; i<numEvents; i++)
    {
+      // check for root changed (unregister)
+      if (eventFlags[i] & kFSEventStreamEventFlagRootChanged)
+      {
+         unregisterMonitor((Handle)pContext);
+         return;
+      }
+
       // make a copy of the path and strip off trailing / if necessary
       std::string path(paths[i]);
       boost::algorithm::trim_right_if(path, boost::algorithm::is_any_of("/"));
@@ -514,7 +521,8 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
                   pathsArrayRef,
                   kFSEventStreamEventIdSinceNow,
                   1,
-                  kFSEventStreamCreateFlagNoDefer);
+                  kFSEventStreamCreateFlagNoDefer |
+                  kFSEventStreamCreateFlagWatchRoot);
    if (pContext->streamRef == NULL)
    {
       callbacks.onRegistrationError(systemError(
