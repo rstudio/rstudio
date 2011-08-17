@@ -11,6 +11,18 @@
  *
  */
 
+
+// TODO: benchmark and inspect for correctness
+
+// TODO: verify correct string encoding with joe
+
+// TODO: verify that we are handling callback strings correct (CF vs. std)
+// given params that we have passed into registration
+
+// TODO: test existing DirectoryMonitor to make sure we got that right
+
+// TODO: handle deleted and/or "head changed" event on osx (stop monitoring)
+
 // TODO: reduce thread priority for main thread
 
 // TODO: can we just allow the file monitor to die with the process or is

@@ -44,26 +44,14 @@ public:
             uintmax_t size,
             std::time_t lastWriteTime);
    
-   FileInfo(const FileInfo& rhs)
-   {
-      assign(rhs);
-   }
-   
    virtual ~FileInfo()
    {
    }
 
+   // COPYING: via compliler (copyable members)
+
 public:
    bool empty() const { return absolutePath_.empty(); }
-   
-   FileInfo& operator=(const FileInfo& rhs)
-   {
-      if (&rhs != this)
-      {
-         assign(rhs);
-      }
-      return *this;
-   }
    
    bool operator==(const FileInfo& other) const
    {
@@ -78,34 +66,11 @@ public:
       return !(*this == other); 
    }
    
-   bool operator < (const FileInfo& other) const
-   {
-      if (absolutePath_ < other.absolutePath_)
-         return true;
-      else if (isDirectory_ < other.isDirectory_)
-         return true;
-      else if (size_ < other.size_)
-         return true;
-      else if (lastWriteTime_ < other.lastWriteTime_)
-         return true;
-      else
-         return false;
-   }
-   
 public:
    std::string absolutePath() const { return absolutePath_.c_str(); }
    bool isDirectory() const { return isDirectory_; }
    uintmax_t size() const { return size_; }
    std::time_t lastWriteTime() const { return lastWriteTime_; }
- 
-private:
-   void assign(const FileInfo& rhs)
-   {
-      absolutePath_ = rhs.absolutePath_.c_str(); // force copy
-      isDirectory_ = rhs.isDirectory_;
-      size_ = rhs.size_ ;
-      lastWriteTime_ = rhs.lastWriteTime_;
-   }
    
 private:
    std::string absolutePath_;
@@ -118,6 +83,11 @@ inline bool compareFileInfoPaths(const FileInfo& fileInfo1,
                                  const FileInfo& fileInfo2)
 {
    return fileInfo1.absolutePath() < fileInfo2.absolutePath();
+}
+
+inline bool fileInfoHasPath(const FileInfo& fileInfo, const std::string& path)
+{
+   return fileInfo.absolutePath() == path;
 }
    
 std::ostream& operator << (std::ostream& stream, const FileInfo& fileInfo) ;

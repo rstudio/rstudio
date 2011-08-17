@@ -149,44 +149,54 @@ Error DirectoryMonitor::checkForEvents(std::vector<FileChangeEvent>* pEvents)
          pEvents->push_back(FileChangeEvent(FileChangeEvent::FileRemoved, *it));
    }
    
-   // find updated files (could be added or modified)
-   std::vector<FileInfo> updatedFiles;
+   // find added files
+   std::vector<FileInfo> addedFiles;
    std::set_difference(currentListing.begin(),
                        currentListing.end(),
                        pImpl_->previousListing.begin(),
                        pImpl_->previousListing.end(),
-                       std::back_inserter(updatedFiles));
+                       std::back_inserter(addedFiles),
+                       compareFileInfoPaths);
    
-   // determine whether each update is an add or a modify
-   for (std::vector<FileInfo>::const_iterator it = updatedFiles.begin();
-        it != updatedFiles.end();
+   // enque add events
+   for (std::vector<FileInfo>::const_iterator it = addedFiles.begin();
+        it != addedFiles.end();
         ++it)
    {
       if (shouldFireEventForFile(*it))
+         pEvents->push_back(FileChangeEvent(FileChangeEvent::FileAdded, *it));
+   }
+
+   // get the subset of files in both lists and then compare for modification
+   std::vector<FileInfo> commonCurrentFiles, commonPrevFiles;
+   std::set_intersection(currentListing.begin(),
+                         currentListing.end(),
+                         pImpl_->previousListing.begin(),
+                         pImpl_->previousListing.end(),
+                         std::back_inserter(commonCurrentFiles),
+                         compareFileInfoPaths);
+   std::set_intersection(pImpl_->previousListing.begin(),
+                         pImpl_->previousListing.end(),
+                         currentListing.begin(),
+                         currentListing.end(),
+                         std::back_inserter(commonPrevFiles),
+                         compareFileInfoPaths);
+   // enque modified events
+   for (std::size_t i=0; i<commonCurrentFiles.size(); i++)
+   {
+      if (commonCurrentFiles[i].lastWriteTime() !=
+          commonPrevFiles[i].lastWriteTime())
       {
-         FileChangeEvent::Type eventType ;
-         if (std::binary_search(pImpl_->previousListing.begin(),
-                                pImpl_->previousListing.end(),
-                                *it,
-                                compareFileInfoPaths))
+         if (shouldFireEventForFile(commonCurrentFiles[i]))
          {
-            // was in the previous listing -- modified
-            eventType = FileChangeEvent::FileModified;
+            pEvents->push_back(FileChangeEvent(FileChangeEvent::FileModified,
+                                               commonCurrentFiles[i]));
          }
-         else
-         {
-            // was not in the previous listing -- added
-            eventType = FileChangeEvent::FileAdded;
-         }
-         
-         // add the event
-         pEvents->push_back(FileChangeEvent(eventType, *it));
       }
    }
-   
+
    // update previous listing
-   pImpl_->previousListing = currentListing;
-   
+   pImpl_->previousListing = currentListing; 
    
    return Success();
 }
