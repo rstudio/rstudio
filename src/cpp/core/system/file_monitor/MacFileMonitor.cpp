@@ -598,28 +598,17 @@ void run(const boost::function<void()>& checkForInput)
    // strictly necessary but it is not harmful)
    ::CFRunLoopGetCurrent();
 
-   try
+   while (true)
    {
-      while (true)
-      {
-         // process the run loop for 1 second
-         SInt32 reason = ::CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
+      // process the run loop for 1 second
+      SInt32 reason = ::CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
 
-         // if we were stopped then break
-         if (reason == kCFRunLoopRunStopped)
-            break;
+      // if we were stopped then break
+      if (reason == kCFRunLoopRunStopped)
+         break;
 
-         // sleep for 100ms (so we don't spin and so we yield to a boost
-         // thread-interruption point)
-         boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-
-         // check for input
-         checkForInput();
-      }
-   }
-   catch(const boost::thread_interrupted& e)
-   {
-
+      // check for input
+      checkForInput();
    }
 }
 

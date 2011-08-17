@@ -106,6 +106,11 @@ CallbackQueue& callbackQueue()
 
 void checkForInput()
 {
+   // this function is called from the platform specific thread run-loop
+   // so we take as a chance to sleep for 100ms (so we don't spin and so
+   // we have a boost thread-interruption point)
+   boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+
    RegistrationCommand command;
    while (registrationCommandQueue().deque(&command))
    {
@@ -127,7 +132,11 @@ void fileMonitorThreadMain()
 {
    try
    {
-      file_monitor::detail::run(boost::bind(checkForInput));
+      file_monitor::detail::run(boost::bind(checkForInput));   
+   }
+   catch(const boost::thread_interrupted& e)
+   {
+
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
