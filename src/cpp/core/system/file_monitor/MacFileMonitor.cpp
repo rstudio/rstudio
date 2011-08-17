@@ -466,9 +466,11 @@ namespace detail {
 void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
 {
    // allocate file path
-   CFStringRef filePathRef = ::CFStringCreateWithFileSystemRepresentation(
+   std::string path = filePath.absolutePath();
+   CFStringRef filePathRef = ::CFStringCreateWithCString(
                                        kCFAllocatorDefault,
-                                       filePath.absolutePath().c_str());
+                                       filePath.absolutePath().c_str(),
+                                       kCFStringEncodingUTF8);
    if (filePathRef == NULL)
    {
       callbacks.onRegistrationError(systemError(
