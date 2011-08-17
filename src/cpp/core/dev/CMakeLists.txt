@@ -13,9 +13,6 @@
 
 project (CORE_DEV)
 
-# look for perftools profiler (optional)
-find_library(PERFTOOLS_PROFILER_LIBRARIES profiler)
-
 # include files
 file(GLOB_RECURSE CORE_DEV_HEADER_FILES "*.h*")
 
@@ -36,7 +33,6 @@ add_executable(coredev ${CORE_DEV_SOURCE_FILES} ${CORE_DEV_HEADER_FILES})
 # set link dependencies
 target_link_libraries(coredev
    rstudio-core
-   ${PERFTOOLS_PROFILER_LIBRARIES}
 )
 
 # copy profiler script
