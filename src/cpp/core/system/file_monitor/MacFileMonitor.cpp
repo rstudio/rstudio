@@ -128,71 +128,60 @@ public:
    Callbacks::FilesChanged onFilesChanged;
 };
 
+inline int fileInfoCompare(const FileInfo& a, const FileInfo& b)
+{
+   int result = a.absolutePath().compare(b.absolutePath());
+   if (result != 0)
+      return result;
+
+   if (a.isDirectory() == b.isDirectory())
+      return 0;
+
+   return a.isDirectory() ? -1 : 1;
+}
+
 template<typename PreviousIterator, typename CurrentIterator>
 void collectFileChangeEvents(PreviousIterator prevBegin,
                              PreviousIterator prevEnd,
-                             CurrentIterator currentBegin,
-                             CurrentIterator currentEnd,
+                             CurrentIterator currBegin,
+                             CurrentIterator currEnd,
                              std::vector<FileChangeEvent>* pEvents)
 {
-   // sort both regions so we can use std::set_difference & std::set_intersection
-   std::vector<FileInfo> sortedPrev;
-   std::copy(prevBegin, prevEnd, std::back_inserter(sortedPrev));
-   std::sort(sortedPrev.begin(), sortedPrev.end(), compareFileInfoPaths);
-   std::vector<FileInfo> sortedCurrent;
-   std::copy(currentBegin, currentEnd, std::back_inserter(sortedCurrent));
-   std::sort(sortedCurrent.begin(), sortedCurrent.end(), compareFileInfoPaths);
-
-   // find removed files
-   std::vector<FileInfo> removedFiles ;
-   std::set_difference(sortedPrev.begin(),
-                       sortedPrev.end(),
-                       sortedCurrent.begin(),
-                       sortedCurrent.end(),
-                       std::back_inserter(removedFiles),
-                       compareFileInfoPaths);
-   // enque removed events
-   BOOST_FOREACH(const FileInfo& fileInfo, removedFiles)
+   FileInfo noFile;
+   while (prevBegin != prevEnd || currBegin != currEnd)
    {
-       pEvents->push_back(FileChangeEvent(FileChangeEvent::FileRemoved, fileInfo));
-   }
+      const FileInfo& prevFile = prevBegin != prevEnd ? *prevBegin : noFile;
+      const FileInfo& currFile = currBegin != currEnd ? *currBegin : noFile;
 
-   // find added files
-   std::vector<FileInfo> addedFiles;
-   std::set_difference(sortedCurrent.begin(),
-                       sortedCurrent.end(),
-                       sortedPrev.begin(),
-                       sortedPrev.end(),
-                       std::back_inserter(addedFiles),
-                       compareFileInfoPaths);
-   // enque added events
-   BOOST_FOREACH(const FileInfo& fileInfo, addedFiles)
-   {
-      pEvents->push_back(FileChangeEvent(FileChangeEvent::FileAdded, fileInfo));
-   }
+      int comp;
+      if (prevFile.empty())
+         comp = 1;
+      else if (currFile.empty())
+         comp = -1;
+      else
+         comp = fileInfoCompare(prevFile, currFile);
 
-   // get the subset of files in both lists and then compare for modification
-   std::vector<FileInfo> commonCurrentFiles, commonPrevFiles;
-   std::set_intersection(sortedCurrent.begin(),
-                         sortedCurrent.end(),
-                         sortedPrev.begin(),
-                         sortedPrev.end(),
-                         std::back_inserter(commonCurrentFiles),
-                         compareFileInfoPaths);
-   std::set_intersection(sortedPrev.begin(),
-                         sortedPrev.end(),
-                         sortedCurrent.begin(),
-                         sortedCurrent.end(),
-                         std::back_inserter(commonPrevFiles),
-                         compareFileInfoPaths);
-   // enque modified events
-   for (std::size_t i=0; i<commonCurrentFiles.size(); i++)
-   {
-      if (commonCurrentFiles[i].lastWriteTime() !=
-          commonPrevFiles[i].lastWriteTime())
+      if (comp == 0)
       {
-          pEvents->push_back(FileChangeEvent(FileChangeEvent::FileModified,
-                                             commonCurrentFiles[i]));
+         if (currFile.lastWriteTime() != prevFile.lastWriteTime())
+         {
+            pEvents->push_back(FileChangeEvent(FileChangeEvent::FileModified,
+                                               currFile));
+         }
+         prevBegin++;
+         currBegin++;
+      }
+      else if (comp < 0)
+      {
+         pEvents->push_back(FileChangeEvent(FileChangeEvent::FileRemoved,
+                                            prevFile));
+         prevBegin++;
+      }
+      else // comp > 1
+      {
+         pEvents->push_back(FileChangeEvent(FileChangeEvent::FileAdded,
+                                            currFile));
+         currBegin++;
       }
    }
 }
@@ -239,6 +228,14 @@ Error processAdded(tree<FileInfo>::iterator parentIt,
        pContext->fileTree.append_child(parentIt, fileChange.fileInfo());
        pFileChanges->push_back(fileChange);
    }
+
+   // sort the container after insert (so future calls to collectFileChangeEvents
+   // can rely on this order)
+   pContext->fileTree.sort(pContext->fileTree.begin(parentIt),
+                           pContext->fileTree.end(parentIt),
+                           compareFileInfoPaths,
+                           false);
+
 
    return Success();
 }
