@@ -374,7 +374,7 @@ public class UiBinderParser {
 
     fieldWriter = fieldManager.registerField(
         FieldWriterType.IMPORTED, matchingResourceType.getErasedType(), resourceName);
-    fieldWriter.setInitializer("this." + resourceName);
+    fieldWriter.setInitializer(UiBinderWriter.RENDER_PARAM_HOLDER_PREFIX + resourceName);
   }
 
   private void createSingleImport(XMLElement elem, JClassType enclosingType,

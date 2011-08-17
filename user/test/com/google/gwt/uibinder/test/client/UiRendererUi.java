@@ -72,7 +72,7 @@ public class UiRendererUi {
     Element getTmElement(Element owner);
     TableRowElement getTr(Element owner);
 
-    void render(SafeHtmlBuilder sb, Foo aValue);
+    void render(SafeHtmlBuilder sb, Foo aValue, Foo aValueTwice);
   }
 
   private static final HtmlRenderer renderer = GWT.create(HtmlRenderer.class);
@@ -84,9 +84,9 @@ public class UiRendererUi {
   public UiRendererUi() {
   }
 
-  public SafeHtml render(String value) {
+  public SafeHtml render(String value, String valueTwice) {
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
-    getRenderer().render(sb, new Foo(value));
+    getRenderer().render(sb, new Foo(value), new Foo(valueTwice));
     return sb.toSafeHtml();
   }
 }

@@ -66,6 +66,9 @@ import java.util.Map;
  * Writer for UiBinder generated classes.
  */
 public class UiBinderWriter implements Statements {
+
+  static final String RENDER_PARAM_HOLDER_PREFIX = "_renderer_param_holder_";
+
   private static final String PACKAGE_URI_SCHEME = "urn:import:";
 
   // TODO(rjrjr) Another place that we need a general anonymous field
@@ -1749,7 +1752,8 @@ public class UiBinderWriter implements Statements {
   private void writeRenderParameterDefinitions(IndentedWriter w, JParameter[] renderParameters) {
     for (int i = 0; i < renderParameters.length; i++) {
       JParameter parameter = renderParameters[i];
-      w.write("private %s %s;", parameter.getType().getQualifiedSourceName(), parameter.getName());
+      w.write("private %s %s%s;", parameter.getType().getQualifiedSourceName(),
+          RENDER_PARAM_HOLDER_PREFIX, parameter.getName());
       w.newline();
     }
   }
@@ -1757,7 +1761,7 @@ public class UiBinderWriter implements Statements {
   private void writeRenderParameterInitializers(IndentedWriter w, JParameter[] renderParameters) {
     for (int i = 0; i < renderParameters.length; i++) {
       JParameter parameter = renderParameters[i];
-      w.write("this.%s = %s;", parameter.getName(), parameter.getName());
+      w.write("%s%s = %s;", RENDER_PARAM_HOLDER_PREFIX, parameter.getName(), parameter.getName());
       w.newline();
     }
   }

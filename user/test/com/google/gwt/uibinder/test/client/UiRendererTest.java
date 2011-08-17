@@ -30,6 +30,7 @@ import com.google.gwt.uibinder.test.client.UiRendererUi.HtmlRenderer;
 public class UiRendererTest extends GWTTestCase {
 
   private static final String RENDERED_VALUE = "bar";
+  private static final String RENDERED_VALUE_TWICE = "quux";
 
   private DivElement docDiv;
   private SafeHtml renderedHtml;
@@ -46,7 +47,7 @@ public class UiRendererTest extends GWTTestCase {
     super.gwtSetUp();
     UiRendererTestApp app = UiRendererTestApp.getInstance();
     safeHtmlUi = app.getSafeHtmlUi();
-    renderedHtml = safeHtmlUi.render(RENDERED_VALUE);
+    renderedHtml = safeHtmlUi.render(RENDERED_VALUE, RENDERED_VALUE_TWICE);
     renderer = safeHtmlUi.getRenderer();
 
     docDiv = Document.get().createDivElement();
@@ -66,7 +67,7 @@ public class UiRendererTest extends GWTTestCase {
 
     // Get nameSpan
     SpanElement nameSpan = renderer.getNameSpan(docDiv);
-    assertSpanContainsRenderedValueText(nameSpan.getFirstChild());
+    assertSpanContainsRenderedValueText(RENDERED_VALUE, nameSpan.getFirstChild());
 
     // Getters also work from the root element
     DivElement root2 = renderer.getRoot(root);
@@ -74,7 +75,7 @@ public class UiRendererTest extends GWTTestCase {
     assertNotNull(root2);
     assertSpanContainsRenderedValue(root2);
     nameSpan = renderer.getNameSpan(root);
-    assertSpanContainsRenderedValueText(nameSpan.getFirstChild());
+    assertSpanContainsRenderedValueText(RENDERED_VALUE, nameSpan.getFirstChild());
   }
 
   public void testFieldGettersDetachedRoot() {
@@ -197,7 +198,7 @@ public class UiRendererTest extends GWTTestCase {
       // In prod mode we avoid checking for being the only child
       assertTrue(renderer.isParentOrRenderer(docDiv));
       SpanElement nameSpan = renderer.getNameSpan(docDiv);
-      assertSpanContainsRenderedValueText(nameSpan.getFirstChild());
+      assertSpanContainsRenderedValueText(RENDERED_VALUE, nameSpan.getFirstChild());
     } else {
       // in dev mode an explicit check is made
       assertFalse(renderer.isParentOrRenderer(docDiv));
@@ -237,6 +238,14 @@ public class UiRendererTest extends GWTTestCase {
     assertEquals(Node.ELEMENT_NODE, spanNode.getNodeType());
     assertEquals("span", spanNode.getNodeName().toLowerCase());
     assertFalse(spanNode.hasChildNodes());
+
+    // Field passed to render() and used twice was rendered correctly too
+    Node spanNode2 = innerDiv.getChild(5);
+    assertEquals(Node.ELEMENT_NODE, spanNode2.getNodeType());
+    assertEquals("span", spanNode2.getNodeName().toLowerCase());
+    assertTrue(spanNode2.hasChildNodes());
+    assertSpanContainsRenderedValueText(RENDERED_VALUE_TWICE + RENDERED_VALUE_TWICE,
+        spanNode2.getFirstChild());
   }
 
   @Override
@@ -251,11 +260,11 @@ public class UiRendererTest extends GWTTestCase {
     assertEquals("span", firstFieldNode.getNodeName().toLowerCase());
     assertTrue(firstFieldNode.hasChildNodes());
     Node renderedValue = firstFieldNode.getFirstChild();
-    assertSpanContainsRenderedValueText(renderedValue);
+    assertSpanContainsRenderedValueText(RENDERED_VALUE, renderedValue);
   }
 
-  private void assertSpanContainsRenderedValueText(Node renderedValue) {
+  private void assertSpanContainsRenderedValueText(String expectedValue, Node renderedValue) {
     assertEquals(Node.TEXT_NODE, renderedValue.getNodeType());
-    assertEquals(RENDERED_VALUE, renderedValue.getNodeValue());
+    assertEquals(expectedValue, renderedValue.getNodeValue());
   }
 }
