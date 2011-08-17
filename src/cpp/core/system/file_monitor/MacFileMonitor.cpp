@@ -18,6 +18,7 @@
 
 #include <CoreServices/CoreServices.h>
 
+#include <list>
 #include <algorithm>
 
 #include <boost/foreach.hpp>
@@ -467,6 +468,8 @@ void stopInvalidateAndReleaseEventStream(FSEventStreamRef streamRef)
    invalidateAndReleaseEventStream(streamRef);
 }
 
+// track active handles so we can implement unregisterAll
+std::list<Handle> s_activeHandles;
 
 
 } // anonymous namespace
@@ -575,6 +578,9 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
    // so we release it here to relinquish ownership
    autoPtrContext.release();
 
+   // track the handle
+   s_activeHandles.push_back((Handle*)pContext);
+
    // notify the caller that we have successfully registered
    callbacks.onRegistered((Handle)pContext, pContext->fileTree);
 }
@@ -588,8 +594,24 @@ void unregisterMonitor(Handle handle)
    // stop, invalidate, release
    stopInvalidateAndReleaseEventStream(pContext->streamRef);
 
+   // untrack the handle
+   s_activeHandles.remove(handle);
+
    // delete context
    delete pContext;
+}
+
+void unregisterAll()
+{
+   // make a copy of all active handles so we can unregister them
+   // (unregistering mutates the list so that's why we need a copy)
+   std::vector<Handle> activeHandles;
+   std::copy(s_activeHandles.begin(),
+             s_activeHandles.end(),
+             std::back_inserter(activeHandles));
+
+   // unregister all
+   std::for_each(activeHandles.begin(), activeHandles.end(), unregisterMonitor);
 }
 
 void run(const boost::function<void()>& checkForInput)
@@ -605,7 +627,10 @@ void run(const boost::function<void()>& checkForInput)
 
       // if we were stopped then break
       if (reason == kCFRunLoopRunStopped)
+      {
+         unregisterAll();
          break;
+      }
 
       // check for input
       checkForInput();

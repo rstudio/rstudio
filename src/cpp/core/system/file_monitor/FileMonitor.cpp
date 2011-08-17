@@ -11,10 +11,6 @@
  *
  */
 
-
-// TODO: can we just allow the file monitor to die with the process or is
-//       there some residual? (almost certainly not but should investigate)
-
 #include <core/system/FileMonitor.hpp>
 
 #include <boost/bind/protect.hpp>
@@ -40,6 +36,9 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
 
 // unregister a file monitor
 void unregisterMonitor(Handle handle);
+
+// unregister all monitors
+void unregisterAll();
 
 }
 
@@ -136,7 +135,7 @@ void fileMonitorThreadMain()
    }
    catch(const boost::thread_interrupted& e)
    {
-
+      file_monitor::detail::unregisterAll();
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
