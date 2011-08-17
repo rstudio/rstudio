@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.uibinder.test.client.IsRenderableIntegrationTest;
 import com.google.gwt.uibinder.test.client.SafeHtmlAsComponentsTest;
 import com.google.gwt.uibinder.test.client.UiRendererTest;
 
@@ -29,6 +30,7 @@ public class LazyWidgetBuilderSuite {
     GWTTestSuite suite = new GWTTestSuite(
         "Tests that rely on the useLazyWidgetBuilders switch");
 
+    suite.addTestSuite(IsRenderableIntegrationTest.class);
     suite.addTestSuite(SafeHtmlAsComponentsTest.class);
     suite.addTestSuite(UiRendererTest.class);
 

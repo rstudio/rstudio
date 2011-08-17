@@ -31,7 +31,8 @@ public interface IsRenderable {
 
   /**
    * Replace the previous contents of the receiver with the given element,
-   * presumed to have been created via a previous call to {@link #render}.
+   * presumed to have been created and stamped via a previous call to
+   * {@link #render}.
    */
   void claimElement(Element element);
 

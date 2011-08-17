@@ -89,8 +89,4 @@ public class RenderableStamper {
     elementBuilder.id(token);
     return elementBuilder;
   }
-
-  private String getToken() {
-    return token;
-  }
 }

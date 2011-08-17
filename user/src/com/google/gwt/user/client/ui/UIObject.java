@@ -851,7 +851,7 @@ public abstract class UIObject implements HasVisibility {
    * <p>
    * Note that this method is normally called only on the top element
    * of an IsRenderable tree. Children instead will receive {@link
-   * IsRenderable#render} and {@link IsRenderable#wrap}.
+   * IsRenderable#render} and {@link IsRenderable#claimElement(Element)}.
    *
    * @see PotentialElement
    * @see IsRenderable
