@@ -327,11 +327,13 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
       endRows_.clear();
 
       Line.Type state = Line.Type.Same;
+      boolean suppressNextStart = true; // Suppress at start to avoid 2px border
       for (int i = 0; i < lines_.size(); i++)
       {
          ChunkOrLine chunkOrLine = lines_.get(i);
          Line line = chunkOrLine.getLine();
-         Line.Type newState = line == null ? Line.Type.Same : line.getType();
+         boolean isChunk = line == null;
+         Line.Type newState = isChunk ? Line.Type.Same : line.getType();
 
          // Edge case: last line is a diff line
          if (newState != Line.Type.Same && i == lines_.size() - 1)
@@ -340,12 +342,16 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
          if (newState == state)
             continue;
 
-         if (state != Line.Type.Same)
+         // Note: endRows_ doesn't include the borders between insertions and
+         // deletions, or vice versa. This is to avoid 2px borders between
+         // these regions when just about everything else is 1px.
+         if (state != Line.Type.Same && newState == Line.Type.Same)
             endRows_.add(i-1);
-         if (newState != Line.Type.Same)
+         if (!suppressNextStart && newState != Line.Type.Same)
             startRows_.add(i);
 
          state = newState;
+         suppressNextStart = isChunk;
       }
    }
 

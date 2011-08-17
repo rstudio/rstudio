@@ -583,6 +583,15 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return false;
    }
 
+   @Override
+   public void reindent()
+   {
+      boolean emptySelection = getSelection().isEmpty();
+      getSession().reindent();
+      if (emptySelection)
+         moveSelectionToNextLine(false);
+   }
+
    public ChangeTracker getChangeTracker()
    {
       return new EventBasedChangeTracker<Void>(this);

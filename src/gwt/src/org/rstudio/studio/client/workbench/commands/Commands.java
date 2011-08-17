@@ -51,6 +51,7 @@ public abstract class
    public abstract AppCommand findReplace();
    public abstract AppCommand extractFunction();
    public abstract AppCommand commentUncomment();
+   public abstract AppCommand reindent();
    public abstract AppCommand setWorkingDirToActiveDoc();
    
    // Projects
