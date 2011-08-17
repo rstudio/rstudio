@@ -35,6 +35,9 @@ namespace file_monitor {
 // which performs the monitoring)
 void initialize();
 
+// stop the file monitoring service
+void stop();
+
 // opaque handle to a registration (used to unregister)
 typedef void* Handle;
 

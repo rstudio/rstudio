@@ -18,7 +18,8 @@
 namespace core {
 namespace thread {
 
-void safeLaunchThread(boost::function<void()> threadMain)
+void safeLaunchThread(boost::function<void()> threadMain,
+                      boost::thread* pThread)
 {
    try
    {
@@ -30,6 +31,9 @@ void safeLaunchThread(boost::function<void()> threadMain)
          LOG_ERROR(error);
 
       boost::thread t(threadMain);
+
+      if (pThread)
+         *pThread = t.move();
    }
    catch(const boost::thread_resource_error& e)
    {

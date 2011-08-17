@@ -12,19 +12,6 @@
  */
 
 
-// TODO: benchmark and inspect for correctness
-
-// TODO: verify correct string encoding with joe
-
-// TODO: verify that we are handling callback strings correct (CF vs. std)
-// given params that we have passed into registration
-
-// TODO: test existing DirectoryMonitor to make sure we got that right
-
-// TODO: handle deleted and/or "head changed" event on osx (stop monitoring)
-
-// TODO: reduce thread priority for main thread
-
 // TODO: can we just allow the file monitor to die with the process or is
 //       there some residual? (almost certainly not but should investigate)
 
@@ -165,12 +152,30 @@ void enqueOnFilesChanged(const Callbacks& callbacks,
    callbackQueue().enque(boost::bind(callbacks.onFilesChanged, fileChanges));
 }
 
+boost::thread s_fileMonitorThread;
+
 } // anonymous namespace
 
 
 void initialize()
 {
-   core::thread::safeLaunchThread(fileMonitorThreadMain);
+   core::thread::safeLaunchThread(fileMonitorThreadMain, &s_fileMonitorThread);
+}
+
+void stop()
+{
+   if (s_fileMonitorThread.joinable())
+   {
+      s_fileMonitorThread.interrupt();
+
+      // wait for for the thread to stop
+      if (!s_fileMonitorThread.timed_join(boost::posix_time::seconds(3)))
+      {
+         LOG_WARNING_MESSAGE("file monitor thread didn't stop on its own");
+      }
+
+      s_fileMonitorThread.detach();
+   }
 }
 
 void registerMonitor(const FilePath& filePath, const Callbacks& callbacks)
