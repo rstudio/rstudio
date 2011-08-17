@@ -130,7 +130,10 @@ public:
 
 inline int fileInfoCompare(const FileInfo& a, const FileInfo& b)
 {
-   int result = a.absolutePath().compare(b.absolutePath());
+   // use stcoll because that is what alphasort (comp function passed to
+   // scandir) uses for its sorting)
+   int result = ::strcoll(a.absolutePath().c_str(), b.absolutePath().c_str());
+
    if (result != 0)
       return result;
 
@@ -138,6 +141,11 @@ inline int fileInfoCompare(const FileInfo& a, const FileInfo& b)
       return 0;
 
    return a.isDirectory() ? -1 : 1;
+}
+
+inline bool fileInfoComparePaths(const FileInfo& a, const FileInfo& b)
+{
+   return fileInfoCompare(a, b) < 0;
 }
 
 template<typename PreviousIterator, typename CurrentIterator>
@@ -233,9 +241,8 @@ Error processAdded(tree<FileInfo>::iterator parentIt,
    // can rely on this order)
    pContext->fileTree.sort(pContext->fileTree.begin(parentIt),
                            pContext->fileTree.end(parentIt),
-                           compareFileInfoPaths,
+                           fileInfoComparePaths,
                            false);
-
 
    return Success();
 }
