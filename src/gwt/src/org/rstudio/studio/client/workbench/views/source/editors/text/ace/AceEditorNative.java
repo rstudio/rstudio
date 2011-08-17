@@ -17,6 +17,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
+import org.rstudio.core.client.CommandWithArg;
 
 import java.util.LinkedList;
 
@@ -139,6 +140,37 @@ public class AceEditorNative extends JavaScriptObject {
          Command command) /*-{
       var callback = $entry(function() {
          command.@com.google.gwt.user.client.Command::execute()();
+      });
+
+      target.addEventListener(eventName, callback);
+      return function() {
+         target.removeEventListener(eventName, callback);
+      };
+   }-*/;
+
+   public static HandlerRegistration addStringEventListener(
+         JavaScriptObject target,
+         String event,
+         CommandWithArg<String> command)
+   {
+      final JavaScriptObject functor = addStringEventListenerInternal(target,
+                                                                      event,
+                                                                      command);
+      return new HandlerRegistration()
+      {
+         public void removeHandler()
+         {
+            invokeFunctor(functor);
+         }
+      };
+   }
+
+   private static native JavaScriptObject addStringEventListenerInternal(
+         JavaScriptObject target,
+         String eventName,
+         CommandWithArg<String> command) /*-{
+      var callback = $entry(function(arg) {
+         command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(arg);
       });
 
       target.addEventListener(eventName, callback);

@@ -94,6 +94,16 @@ public class AceEditorWidget extends Composite
                         fireEvent(new UndoRedoEvent(true));
                      }
                   });
+      AceEditorNative.addStringEventListener(
+                  editor_,
+                  "paste",
+                  new CommandWithArg<String>()
+                  {
+                     public void execute(String text)
+                     {
+                        fireEvent(new PasteEvent(text));
+                     }
+                  });
    }
 
    public HandlerRegistration addCursorChangedHandler(
@@ -217,6 +227,11 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler)
    {
       return addHandler(handler, UndoRedoEvent.TYPE);
+   }
+
+   public HandlerRegistration addPasteHandler(PasteEvent.Handler handler)
+   {
+      return addHandler(handler, PasteEvent.TYPE);
    }
 
    public void forceResize()

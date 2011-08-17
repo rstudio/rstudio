@@ -95,7 +95,7 @@ public class EditSession extends JavaScriptObject
      this.setNewLineMode(type);
   }-*/;
 
-   public native final void reindent() /*-{
-      this.reindent();
+   public native final void reindent(Range range) /*-{
+      this.reindent(range);
    }-*/;
 }
