@@ -46,19 +46,20 @@ int entryFilter(struct dirent *entry)
       return 1;
 }
 
-Error scan(tree<FileInfo>* pTree,
-           const tree<FileInfo>::iterator_base& node,
-           bool recursive)
+
+Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
+                bool recursive,
+                tree<FileInfo>* pTree)
 {
    // clear all existing
-   pTree->erase_children(node);
+   pTree->erase_children(fromNode);
 
    // create FilePath for root
-   FilePath rootPath(node->absolutePath());
+   FilePath rootPath(fromNode->absolutePath());
 
    // read directory contents
    struct dirent **namelist;
-   int entries = ::scandir(node->absolutePath().c_str(),
+   int entries = ::scandir(fromNode->absolutePath().c_str(),
                            &namelist,
                            entryFilter,
                            ::alphasort);
@@ -66,7 +67,7 @@ Error scan(tree<FileInfo>* pTree,
    {
       Error error = systemError(boost::system::errc::no_such_file_or_directory,
                                 ERROR_LOCATION);
-      error.addProperty("path", node->absolutePath());
+      error.addProperty("path", fromNode->absolutePath());
       return error;
    }
 
@@ -92,10 +93,10 @@ Error scan(tree<FileInfo>* pTree,
       if ( S_ISDIR(st.st_mode))
       {
          tree<FileInfo>::iterator_base child =
-                              pTree->append_child(node, FileInfo(path, true));
+                              pTree->append_child(fromNode, FileInfo(path, true));
          if (recursive)
          {
-            Error error = scan(pTree, child, true);
+            Error error = scanFiles(child, true, pTree);
             if (error)
             {
                LOG_ERROR(error);
@@ -105,7 +106,7 @@ Error scan(tree<FileInfo>* pTree,
       }
       else
       {
-         pTree->append_child(node, FileInfo(path,
+         pTree->append_child(fromNode, FileInfo(path,
                                             false,
                                             st.st_size,
                                             st.st_mtimespec.tv_sec));
@@ -117,6 +118,13 @@ Error scan(tree<FileInfo>* pTree,
 
    // return success
    return Success();
+}
+
+Error scanFiles(const FileInfo& fromRoot,
+                bool recursive,
+                tree<FileInfo>* pTree)
+{
+   return scanFiles(pTree->set_head(fromRoot), recursive, pTree);
 }
 
 class FileEventContext : boost::noncopyable
@@ -146,9 +154,9 @@ Error processAdded(tree<FileInfo>::iterator parentIt,
    if (fileChange.fileInfo().isDirectory())
    {
       tree<FileInfo> subTree;
-      Error error = scan(&subTree,
-                         subTree.set_head(fileChange.fileInfo()),
-                         true);
+      Error error = scanFiles(fileChange.fileInfo(),
+                              true,
+                              &subTree);
       if (error)
          return error;
 
@@ -246,7 +254,7 @@ Error processFileChanges(const FileInfo& fileInfo,
 {
    // scan this directory into a new tree which we can compare to the old tree
    tree<FileInfo> subdirTree;
-   Error error = scan(&subdirTree, subdirTree.set_head(fileInfo), recursive);
+   Error error = scanFiles(fileInfo, recursive, &subdirTree);
    if (error)
       return error;
 
@@ -491,9 +499,9 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
    }
 
    // scan the files
-   Error error = scan(&pContext->fileTree,
-                      pContext->fileTree.set_head(FileInfo(filePath)),
-                      true);
+   Error error = scanFiles(FileInfo(filePath),
+                           true,
+                           &pContext->fileTree);
    if (error)
    {
        // stop, invalidate, release
