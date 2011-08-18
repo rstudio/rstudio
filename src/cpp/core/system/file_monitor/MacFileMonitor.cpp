@@ -129,7 +129,7 @@ public:
    Callbacks::FilesChanged onFilesChanged;
 };
 
-inline int fileInfoCompare(const FileInfo& a, const FileInfo& b)
+inline int fileInfoPathCompare(const FileInfo& a, const FileInfo& b)
 {
    // use stcoll because that is what alphasort (comp function passed to
    // scandir) uses for its sorting)
@@ -144,9 +144,9 @@ inline int fileInfoCompare(const FileInfo& a, const FileInfo& b)
    return a.isDirectory() ? -1 : 1;
 }
 
-inline bool fileInfoComparePaths(const FileInfo& a, const FileInfo& b)
+inline bool fileInfoPathLessThan(const FileInfo& a, const FileInfo& b)
 {
-   return fileInfoCompare(a, b) < 0;
+   return fileInfoPathCompare(a, b) < 0;
 }
 
 template<typename PreviousIterator, typename CurrentIterator>
@@ -159,10 +159,10 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
    // sort the ranges
    std::vector<FileInfo> prev;
    std::copy(prevBegin, prevEnd, std::back_inserter(prev));
-   std::sort(prev.begin(), prev.end(), fileInfoComparePaths);
+   std::sort(prev.begin(), prev.end(), fileInfoPathLessThan);
    std::vector<FileInfo> curr;
    std::copy(currBegin, currEnd, std::back_inserter(curr));
-   std::sort(curr.begin(), curr.end(), fileInfoComparePaths);
+   std::sort(curr.begin(), curr.end(), fileInfoPathLessThan);
 
    // initalize the iterators
    std::vector<FileInfo>::iterator prevIt = prev.begin();
@@ -180,7 +180,7 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
       else if (currFile.empty())
          comp = -1;
       else
-         comp = fileInfoCompare(prevFile, currFile);
+         comp = fileInfoPathCompare(prevFile, currFile);
 
       if (comp == 0)
       {
@@ -254,7 +254,7 @@ Error processAdded(tree<FileInfo>::iterator parentIt,
    // can rely on this order)
    pContext->fileTree.sort(pContext->fileTree.begin(parentIt),
                            pContext->fileTree.end(parentIt),
-                           fileInfoComparePaths,
+                           fileInfoPathLessThan,
                            false);
 
    return Success();
