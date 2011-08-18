@@ -65,9 +65,7 @@
          of the GWT compiler.
 
          This dependency has a scope of "provided" so that it only gets used as a
-         compiler dependecy. The Maven GWT Plugin does not seem to honor this scoping,
-         though. For that reason we explicitly remove gwt-dev-*.jar from the produced
-         artifacts later on.
+         compiler dependecy.
     -->
     <dependency>
       <groupId>com.google.gwt</groupId>
@@ -190,8 +188,8 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-	<version>2.2.0</version>
-	<dependencies>
+        <version>2.3.0-1</version>
+        <dependencies>
           <dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-user</artifactId>
@@ -207,7 +205,7 @@
             <artifactId>gwt-servlet</artifactId>
             <version>${gwtVersion}</version>
           </dependency>
-	</dependencies>
+        </dependencies>
         <!-- JS is only needed in the package phase, this speeds up testing --> 
         <executions>
           <execution>
@@ -226,7 +224,7 @@
           <hostedWebapp>target/www</hostedWebapp>
           <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
           <compileReport>true</compileReport>
-	  <module>com.google.gwt.sample.mobilewebapp.MobileWebApp</module>
+          <module>com.google.gwt.sample.mobilewebapp.MobileWebApp</module>
 
           <appEngineVersion>${gae.version}</appEngineVersion>
           <appEngineHome>${gae.home}</appEngineHome>
@@ -258,7 +256,7 @@
       <!-- Add source folders to test classpath in order to run gwt-tests as normal junit-tests -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-	<version>2.5</version>
+        <version>2.5</version>
         <configuration>
           <additionalClasspathElements>
             <additionalClasspathElement>${project.build.sourceDirectory}</additionalClasspathElement>
@@ -326,9 +324,9 @@
       </plugin>
 
       <plugin>
-	<artifactId>maven-eclipse-plugin</artifactId>
-	<version>2.8</version>
-	<configuration>
+        <artifactId>maven-eclipse-plugin</artifactId>
+        <version>2.8</version>
+        <configuration>
           <downloadSources>true</downloadSources>
           <downloadJavadocs>false</downloadJavadocs>
           <wtpversion>2.0</wtpversion>
@@ -341,44 +339,7 @@
             <projectnature>com.google.gwt.eclipse.core.gwtNature</projectnature>
             <projectnature>com.google.appengine.eclipse.core.gaeNature</projectnature>
           </additionalProjectnatures>
-	</configuration>
-      </plugin>
-
-      <plugin>
-        <!-- Don't deploy gwt-user nor gwt-dev jars to GAE.
-             These jars are needed to compile the
-             project and for DevMode, but not in AppEngine.
-        -->
-        <artifactId>maven-clean-plugin</artifactId>
-        <version>2.3</version>
-        <executions>
-          <execution>
-            <id>default-clean</id>
-            <phase>clean</phase>
-            <goals>
-              <goal>clean</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>remove-gwt-dev-jar</id>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>clean</goal>
-            </goals>
-            <configuration>
-              <excludeDefaultDirectories>true</excludeDefaultDirectories>
-              <filesets>
-                <fileset>
-                  <directory>${project.build.directory}/${project.build.finalName}/WEB-INF/lib</directory>
-                  <includes>
-                    <include>gwt-dev*jar</include>
-                    <include>gwt-user*jar</include>
-                  </includes>
-                </fileset>
-              </filesets>
-            </configuration>
-          </execution>
-        </executions>
+        </configuration>
       </plugin>
     </plugins>
   </build>
