@@ -58,6 +58,7 @@ set (CORE_SOURCE_FILES
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
    r_util/RTokenizerTests.cpp
+   system/FileScanner.cpp
    system/Process.cpp
    system/System.cpp
    system/file_monitor/FileMonitor.cpp
@@ -112,6 +113,7 @@ if (UNIX)
       PosixStringUtils.cpp
       r_util/REnvironmentPosix.cpp
       SyslogLogWriter.cpp
+      system/PosixFileScanner.cpp
       system/PosixParentProcessMonitor.cpp
       system/PosixOutputCapture.cpp
       system/PosixSystem.cpp
@@ -136,6 +138,7 @@ else()
       Win32StringUtils.cpp
       system/DirectoryMonitor.cpp
       system/RegistryKey.cpp
+      system/Win32FileScanner.cpp
       system/Win32ParentProcessMonitor.cpp
       system/Win32OutputCapture.cpp
       system/Win32System.cpp
