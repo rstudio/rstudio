@@ -21,6 +21,7 @@ import com.google.gwt.uibinder.attributeparsers.HorizontalAlignmentConstantParse
 import com.google.gwt.uibinder.attributeparsers.IntAttributeParserTest;
 import com.google.gwt.uibinder.attributeparsers.IntPairAttributeParserTest;
 import com.google.gwt.uibinder.attributeparsers.LengthAttributeParserTest;
+import com.google.gwt.uibinder.attributeparsers.SafeUriAttributeParserTest;
 import com.google.gwt.uibinder.attributeparsers.StrictAttributeParserTest;
 import com.google.gwt.uibinder.attributeparsers.StringAttributeParserTest;
 import com.google.gwt.uibinder.attributeparsers.TextAlignConstantParserTest;
@@ -56,6 +57,7 @@ import com.google.gwt.uibinder.rebind.TypeOracleUtilsTest;
 import com.google.gwt.uibinder.rebind.UiBinderParserUiWithTest;
 import com.google.gwt.uibinder.rebind.UiRendererValidationTest;
 import com.google.gwt.uibinder.rebind.XMLElementTest;
+import com.google.gwt.uibinder.rebind.model.HtmlTemplatesTest;
 import com.google.gwt.uibinder.rebind.model.OwnerClassTest;
 import com.google.gwt.uibinder.rebind.model.OwnerFieldClassTest;
 import com.google.gwt.uibinder.rebind.model.OwnerFieldTest;
@@ -82,6 +84,7 @@ public class UiBinderJreSuite {
     suite.addTestSuite(TypeOracleUtilsTest.class);
     suite.addTestSuite(UiBinderParserUiWithTest.class);
     suite.addTestSuite(UiRendererValidationTest.class);
+    suite.addTestSuite(HtmlTemplatesTest.class);
 
     // model
     suite.addTestSuite(OwnerClassTest.class);
@@ -90,15 +93,16 @@ public class UiBinderJreSuite {
 
     // attributeparsers
     suite.addTestSuite(CssNameConverterTest.class);
+    suite.addTestSuite(FieldReferenceConverterTest.class);
     suite.addTestSuite(IntAttributeParserTest.class);
     suite.addTestSuite(IntPairAttributeParserTest.class);
-    suite.addTestSuite(FieldReferenceConverterTest.class);
+    suite.addTestSuite(HorizontalAlignmentConstantParserTest.class);
+    suite.addTestSuite(LengthAttributeParserTest.class);
+    suite.addTestSuite(SafeUriAttributeParserTest.class);
     suite.addTestSuite(StrictAttributeParserTest.class);
     suite.addTestSuite(StringAttributeParserTest.class);
-    suite.addTestSuite(LengthAttributeParserTest.class);
-    suite.addTestSuite(HorizontalAlignmentConstantParserTest.class);
-    suite.addTestSuite(VerticalAlignmentConstantParserTest.class);
     suite.addTestSuite(TextAlignConstantParserTest.class);
+    suite.addTestSuite(VerticalAlignmentConstantParserTest.class);
 
     // elementparsers
     suite.addTestSuite(AbsolutePanelParserTest.class);

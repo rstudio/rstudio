@@ -15,6 +15,7 @@
   xmlns:ui='urn:ui:com.google.gwt.uibinder'
   >
   <ui:with field='res' type='com.google.gwt.uibinder.test.client.DomBasedUi.Resources' />
+
   <div ui:field='root' class="{res.style.bodyColor} {res.style.bodyFont}" 
       title="The title of this div is localizable">
     <ui:attribute name='title'/>

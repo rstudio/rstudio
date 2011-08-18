@@ -38,7 +38,8 @@ import com.google.gwt.uibinder.elementparsers.ElementParser;
 import com.google.gwt.uibinder.elementparsers.IsEmptyParser;
 import com.google.gwt.uibinder.elementparsers.UiChildParser;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
-import com.google.gwt.uibinder.rebind.model.HtmlTemplates;
+import com.google.gwt.uibinder.rebind.model.HtmlTemplateMethodWriter;
+import com.google.gwt.uibinder.rebind.model.HtmlTemplatesWriter;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
@@ -241,7 +242,6 @@ public class UiBinderWriter implements Statements {
 
   private final List<String> initStatements = new ArrayList<String>();
   private final List<String> statements = new ArrayList<String>();
-  private final HtmlTemplates htmlTemplates = new HtmlTemplates();
   private final HandlerEvaluator handlerEvaluator;
   private final MessagesWriter messages;
   private final DesignTimeUtils designTime;
@@ -270,6 +270,8 @@ public class UiBinderWriter implements Statements {
   private final OwnerClass ownerClass;
 
   private final FieldManager fieldManager;
+
+  private final HtmlTemplatesWriter htmlTemplates;
 
   private final ImplicitClientBundle bundleClass;
 
@@ -325,6 +327,8 @@ public class UiBinderWriter implements Statements {
     this.useSafeHtmlTemplates = useSafeHtmlTemplates;
     this.useLazyWidgetBuilders = useLazyWidgetBuilders;
     this.binderUri = binderUri;
+
+    this.htmlTemplates = new HtmlTemplatesWriter(fieldManager, logger);
 
     // Check for possible misuse 'GWT.create(UiBinder.class)'
     JClassType uibinderItself = oracle.findType(UiBinder.class.getCanonicalName());
@@ -461,7 +465,7 @@ public class UiBinderWriter implements Statements {
    * @param fieldName The name of the field being declared
    * @param ancestorField The name of fieldName parent
    */
-  public String declareDomField(String fieldName, String ancestorField)
+  public String declareDomField(XMLElement source, String fieldName, String ancestorField)
       throws UnableToCompleteException {
     ensureAttached();
     String name = declareDomIdHolder(fieldName);
@@ -494,7 +498,7 @@ public class UiBinderWriter implements Statements {
       addInitStatement("%s.removeAttribute(\"id\");", fieldName);
     }
 
-    return tokenForStringExpression(fieldManager.convertFieldToGetter(name));
+    return tokenForStringExpression(source, fieldManager.convertFieldToGetter(name));
   }
 
   /**
@@ -519,30 +523,6 @@ public class UiBinderWriter implements Statements {
     }
 
     return domHolderName;
-  }
-
-  /**
-   * Declares a field of the given type name, returning the name of the declared
-   * field. If the element has a field or id attribute, use its value.
-   * Otherwise, create and return a new, private field name for it.
-   */
-  public String declareField(String typeName, XMLElement elem) throws UnableToCompleteException {
-    JClassType type = oracle.findType(typeName);
-    if (type == null) {
-      die(elem, "Unknown type %s", typeName);
-    }
-
-    String fieldName = getFieldName(elem);
-    if (fieldName == null) {
-      // TODO(rjrjr) could collide with user declared name, as is
-      // also a worry in HandlerEvaluator. Need a general scheme for
-      // anonymous fields. See the note in HandlerEvaluator and do
-      // something like that, but in FieldManager.
-      fieldName = "f_" + elem.getLocalName() + ++fieldIndex;
-    }
-    fieldName = normalizeFieldName(fieldName);
-    fieldManager.registerField(type, fieldName);
-    return fieldName;
   }
 
   /**
@@ -600,7 +580,12 @@ public class UiBinderWriter implements Statements {
       return '"' + html + '"';
     }
     FieldWriter w = fieldManager.lookup(fieldName);
-    w.setHtml(htmlTemplates.addSafeHtmlTemplate(html, tokenator));
+    HtmlTemplateMethodWriter templateMethod = htmlTemplates.addSafeHtmlTemplate(html, tokenator);
+    if (useLazyWidgetBuilders) {
+      w.setHtml(templateMethod.getIndirectTemplateCall());
+    } else {
+      w.setHtml(templateMethod.getDirectTemplateCall());
+    }
     return w.getHtml();
   }
 
@@ -907,18 +892,20 @@ public class UiBinderWriter implements Statements {
     JClassType type = findFieldType(elem);
 
     // Declare its field.
-    String fieldName = declareField(type.getQualifiedSourceName(), elem);
+    FieldWriter field = declareField(elem, type.getQualifiedSourceName());
 
-    FieldWriter field = fieldManager.lookup(fieldName);
-
-    // Push the field that will hold this widget on top of the parsedFieldStack
-    // to ensure that fields registered by its parsers will be noted as
-    // dependencies of the new widget. See registerField.
-    fieldManager.push(field);
+    /*
+     * Push the field that will hold this widget on top of the parsedFieldStack
+     * to ensure that fields registered by its parsers will be noted as
+     * dependencies of the new widget. (See registerField.) Also push the
+     * element being parsed, so that the fieldManager can hold that info for
+     * later error reporting when field reference left hand sides are validated.
+     */
+    fieldManager.push(elem, field);
 
     // Give all the parsers a chance to generate their code.
     for (ElementParser parser : getParsersForClass(type)) {
-      parser.parse(elem, fieldName, type, this);
+      parser.parse(elem, field.getName(), type, this);
     }
     fieldManager.pop();
 
@@ -957,14 +944,14 @@ public class UiBinderWriter implements Statements {
    * 
    * @param expression must resolve to trusted HTML string
    */
-  public String tokenForSafeConstant(String expression) {
+  public String tokenForSafeConstant(XMLElement source, String expression) {
     if (!useSafeHtmlTemplates) {
-      return tokenForStringExpression(expression);
+      return tokenForStringExpression(source, expression);
     }
 
     expression = "SafeHtmlUtils.fromSafeConstant(" + expression + ")";
     htmlTemplates.noteSafeConstant(expression);
-    return tokenator.nextToken(expression);
+    return nextToken(source, expression);
   }
 
   /**
@@ -973,13 +960,28 @@ public class UiBinderWriter implements Statements {
    * 
    * @param expression must resolve to SafeHtml object
    */
-  public String tokenForSafeHtmlExpression(String expression) {
+  public String tokenForSafeHtmlExpression(XMLElement source, String expression) {
     if (!useSafeHtmlTemplates) {
-      return tokenForStringExpression(expression + ".asString()");
+      return tokenForStringExpression(source, expression + ".asString()");
     }
 
     htmlTemplates.noteSafeConstant(expression);
-    return tokenator.nextToken(expression);
+    return nextToken(source, expression);
+  }
+
+  /**
+   * Like {@link #tokenForStringExpression}, but used for runtime
+   * {@link com.google.gwt.safehtml.shared.SafeUri SafeUri} instances.
+   * 
+   * @param expression must resolve to SafeUri object
+   */
+  public String tokenForSafeUriExpression(XMLElement source, String expression) {
+    if (!useSafeHtmlTemplates) {
+      return tokenForStringExpression(source, expression + ".asString()");
+    }
+
+    htmlTemplates.noteUri(expression);
+    return nextToken(source, expression);
   }
 
   /**
@@ -992,8 +994,8 @@ public class UiBinderWriter implements Statements {
    * 
    * @param expression must resolve to String
    */
-  public String tokenForStringExpression(String expression) {
-    return tokenator.nextToken(("\" + " + expression + " + \""));
+  public String tokenForStringExpression(XMLElement source, String expression) {
+    return nextToken(source, "\" + " + expression + " + \"");
   }
 
   public boolean useLazyWidgetBuilders() {
@@ -1053,6 +1055,30 @@ public class UiBinderWriter implements Statements {
     String gwtClass = "com.google.gwt.user.client.ui." + className;
     String parser = "com.google.gwt.uibinder.elementparsers." + className + "Parser";
     addElementParser(gwtClass, parser);
+  }
+
+  /**
+   * Declares a field of the given type name, returning the name of the declared
+   * field. If the element has a field or id attribute, use its value.
+   * Otherwise, create and return a new, private field name for it.
+   */
+  private FieldWriter declareField(XMLElement source, String typeName)
+      throws UnableToCompleteException {
+    JClassType type = oracle.findType(typeName);
+    if (type == null) {
+      die(source, "Unknown type %s", typeName);
+    }
+
+    String fieldName = getFieldName(source);
+    if (fieldName == null) {
+      // TODO(rjrjr) could collide with user declared name, as is
+      // also a worry in HandlerEvaluator. Need a general scheme for
+      // anonymous fields. See the note in HandlerEvaluator and do
+      // something like that, but in FieldManager.
+      fieldName = "f_" + source.getLocalName() + ++fieldIndex;
+    }
+    fieldName = normalizeFieldName(fieldName);
+    return fieldManager.registerField(type, fieldName);
   }
 
   /**
@@ -1233,6 +1259,11 @@ public class UiBinderWriter implements Statements {
             fieldType.getQualifiedSourceName(), templateClass.getQualifiedSourceName());
       }
     }
+  }
+
+  private String nextToken(XMLElement source, String expression) {
+    String nextToken = tokenator.nextToken(source, expression);
+    return nextToken;
   }
 
   private String normalizeFieldName(String fieldName) {
@@ -1426,7 +1457,8 @@ public class UiBinderWriter implements Statements {
     w.newline();
 
     // Create SafeHtml Template
-    writeSafeHtmlTemplates(w);
+    writeTemplatesInterface(w);
+    w.newline();
 
     // createAndBindUi method
     w.write("public %s createAndBindUi(final %s owner) {",
@@ -1475,8 +1507,7 @@ public class UiBinderWriter implements Statements {
     writeStatics(w);
     w.newline();
 
-    // Create SafeHtml Template
-    writeSafeHtmlTemplates(w);
+    writeTemplatesInterface(w);
 
     w.newline();
 
@@ -1515,6 +1546,9 @@ public class UiBinderWriter implements Statements {
     fieldManager.initializeWidgetsInnerClass(w, getOwnerClass());
     w.outdent();
     w.write("}");
+    w.newline();
+
+    htmlTemplates.writeTemplateCallers(w);
 
     evaluateUiFields();
 
@@ -1597,6 +1631,8 @@ public class UiBinderWriter implements Statements {
       w.write("import com.google.gwt.safehtml.shared.SafeHtml;");
       w.write("import com.google.gwt.safehtml.shared.SafeHtmlUtils;");
       w.write("import com.google.gwt.safehtml.shared.SafeHtmlBuilder;");
+      w.write("import com.google.gwt.safehtml.shared.SafeUri;");
+      w.write("import com.google.gwt.safehtml.shared.UriUtils;");
       w.write("import com.google.gwt.uibinder.client.UiBinderUtil;");
     }
 
@@ -1678,7 +1714,9 @@ public class UiBinderWriter implements Statements {
     w.newline();
 
     // Create SafeHtml Template
-    writeSafeHtmlTemplates(w);
+    writeTemplatesInterface(w);
+    w.newline();
+    htmlTemplates.writeTemplateCallers(w);
 
     w.newline();
 
@@ -1766,27 +1804,6 @@ public class UiBinderWriter implements Statements {
     }
   }
 
-  /**
-   * Write statements created by {@link HtmlTemplates#addSafeHtmlTemplate}. This
-   * code must be placed after all instantiation code.
-   */
-  private void writeSafeHtmlTemplates(IndentedWriter w) {
-    if (!(htmlTemplates.isEmpty())) {
-      assert useSafeHtmlTemplates : "SafeHtml is off, but templates were made.";
-
-      w.write("interface Template extends SafeHtmlTemplates {");
-      w.indent();
-
-      htmlTemplates.writeTemplates(w);
-
-      w.outdent();
-      w.write("}");
-      w.newline();
-      w.write("Template template = GWT.create(Template.class);");
-      w.newline();
-    }
-  }
-
   private void writeStaticMessagesInstance(IndentedWriter niceWriter) {
     if (messages.hasMessages()) {
       niceWriter.write(messages.getDeclaration());
@@ -1796,5 +1813,17 @@ public class UiBinderWriter implements Statements {
   private void writeStatics(IndentedWriter w) {
     writeStaticMessagesInstance(w);
     designTime.addDeclarations(w);
+  }
+
+  /**
+   * Write statements created by {@link HtmlTemplatesWriter#addSafeHtmlTemplate}
+   * . This code must be placed after all instantiation code.
+   */
+  private void writeTemplatesInterface(IndentedWriter w) {
+    if (!(htmlTemplates.isEmpty())) {
+      assert useSafeHtmlTemplates : "SafeHtml is off, but templates were made.";
+      htmlTemplates.writeInterface(w);
+      w.newline();
+    }
   }
 }

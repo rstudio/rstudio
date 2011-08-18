@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
  */
 public final class MockMortalLogger extends MortalLogger {
   public String died;
+  public String warned;
 
   public MockMortalLogger() {
     super(TreeLogger.NULL);
@@ -35,5 +36,12 @@ public final class MockMortalLogger extends MortalLogger {
     String formatted = String.format(message, params) + locationOf(context);
     died = died == null ? formatted : (died + "\n" + formatted);
     super.die(context, message, params);
+  }
+
+  @Override
+  public void warn(XMLElement context, String message, Object... params) {
+    String formatted = String.format(message, params) + locationOf(context);
+    warned = warned == null ? formatted : (warned + "\n" + formatted);
+    super.warn(context, message, params);
   }
 }

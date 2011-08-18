@@ -18,6 +18,7 @@ package com.google.gwt.uibinder.attributeparsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.XMLElement;
 
 /**
  * Parses a single boolean attribute.
@@ -26,15 +27,15 @@ class BooleanAttributeParser extends StrictAttributeParser {
 
   BooleanAttributeParser(FieldReferenceConverter converter,
       JType booleanType, MortalLogger logger) {
-    super(converter, booleanType, logger);
+    super(converter, logger, booleanType);
   }
 
   @Override
-  public String parse(String value) throws UnableToCompleteException {
+  public String parse(XMLElement source, String value) throws UnableToCompleteException {
     if (value.equals("true") || value.equals("false")) {
       return value;
     }
 
-    return super.parse(value);
+    return super.parse(source, value);
   }
 }

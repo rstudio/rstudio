@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.attributeparsers;
 
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
+import com.google.gwt.uibinder.rebind.XMLElement;
 
 /**
  * Parses a string attribute.
@@ -25,14 +26,14 @@ class StringAttributeParser implements AttributeParser {
   /* package private for testing */
   static class FieldReferenceDelegate implements
       FieldReferenceConverter.Delegate {
-    private final JType type;
+    private final JType[] types;
 
     FieldReferenceDelegate(JType type) {
-      this.type = type;
+      this.types = new JType[] { type };
     }
 
-    public JType getType() {
-      return type;
+    public JType[] getTypes() {
+      return types;
     }
 
     public String handleFragment(String literal) {
@@ -46,15 +47,15 @@ class StringAttributeParser implements AttributeParser {
   }
 
   private final FieldReferenceConverter converter;
-  private final JType type;
+  private final JType stringType;
 
   StringAttributeParser(FieldReferenceConverter converter,
       JType stringType) {
     this.converter = converter;
-    this.type = stringType;
+    this.stringType = stringType;
   }
 
-  public String parse(String value) {
-    return converter.convert(value, new FieldReferenceDelegate(type));
+  public String parse(XMLElement source, String value) {
+    return converter.convert(source, value, new FieldReferenceDelegate(stringType));
   }
 }

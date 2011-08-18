@@ -31,9 +31,8 @@ public class UiTextInterpreter implements XMLElement.Interpreter<String> {
    * Used in {@link #interpretElement} to invoke the {@link ComputedAttributeInterpreter}.
    */
   protected class Delegate implements ComputedAttributeInterpreter.Delegate {
-    public String getAttributeToken(XMLAttribute attribute)
-      throws UnableToCompleteException {
-        return writer.tokenForStringExpression(attribute.consumeStringValue());
+    public String getAttributeToken(XMLAttribute attribute) throws UnableToCompleteException {
+      return writer.tokenForStringExpression(attribute.getElement(), attribute.consumeStringValue());
     }
   }
   

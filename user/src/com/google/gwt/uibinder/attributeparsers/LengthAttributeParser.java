@@ -18,6 +18,7 @@ package com.google.gwt.uibinder.attributeparsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.XMLElement;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,14 +47,14 @@ public class LengthAttributeParser implements AttributeParser {
     this.logger = logger;
   }
 
-  public String parse(String lengthStr) throws UnableToCompleteException {
+  public String parse(XMLElement source, String lengthStr) throws UnableToCompleteException {
     Matcher matcher = pattern.matcher(lengthStr);
     if (!matcher.matches()) {
-      logger.die("Unable to parse %s as length", lengthStr);
+      logger.die(source, "Unable to parse %s as length", lengthStr);
     }
 
     String valueStr = matcher.group(1);
-    String value = doubleParser.parse(valueStr);
+    String value = doubleParser.parse(source, valueStr);
 
     String unit = null;
     String unitStr = matcher.group(2);
@@ -67,7 +68,7 @@ public class LengthAttributeParser implements AttributeParser {
       }
 
       // Now let the default enum parser handle it.
-      unit = enumParser.parse(unitStr);
+      unit = enumParser.parse(source, unitStr);
     } else {
       // Use PX by default.
       unit = UNIT + ".PX";

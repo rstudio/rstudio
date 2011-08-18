@@ -481,7 +481,7 @@ public class UiJavaResources {
       return code;
     }
   };
-  public static final MockJavaResource SAFEHTML = new MockJavaResource(
+  public static final MockJavaResource SAFE_HTML = new MockJavaResource(
   "com.google.gwt.safehtml.shared.SafeHtml") {
     @Override
     public CharSequence getContent() {
@@ -492,7 +492,7 @@ public class UiJavaResources {
       return code;
     }
   };
-  public static final MockJavaResource SAFEHTML_BUILDER = new MockJavaResource(
+  public static final MockJavaResource SAFE_HTML_BUILDER = new MockJavaResource(
       "com.google.gwt.safehtml.shared.SafeHtmlBuilder") {
     @Override
     public CharSequence getContent() {
@@ -500,6 +500,17 @@ public class UiJavaResources {
       code.append("package com.google.gwt.safehtml.shared;\n");
       code.append("public class SafeHtmlBuilder {");
       code.append("}");
+      return code;
+    }
+  };
+  public static final MockJavaResource SAFE_URI = new MockJavaResource(
+  "com.google.gwt.safehtml.shared.SafeUri") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.safehtml.shared;\n");
+      code.append("public interface SafeUri{\n");
+      code.append("}\n");
       return code;
     }
   };
@@ -761,8 +772,9 @@ public class UiJavaResources {
     rtn.add(NUMBER_LABEL);
     rtn.add(NUMBER_FORMAT);
     rtn.add(RENDERER);
-    rtn.add(SAFEHTML);
-    rtn.add(SAFEHTML_BUILDER);
+    rtn.add(SAFE_HTML);
+    rtn.add(SAFE_HTML_BUILDER);
+    rtn.add(SAFE_URI);
     rtn.add(SPLIT_LAYOUT_PANEL);
     rtn.add(STACK_LAYOUT_PANEL);
     rtn.add(STACK_PANEL);

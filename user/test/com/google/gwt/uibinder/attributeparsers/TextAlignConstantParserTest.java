@@ -23,7 +23,6 @@ import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.test.UiJavaResources;
 import com.google.gwt.user.client.ui.TextBoxBase;
-import com.google.gwt.user.client.ui.TextBoxBase.TextAlignConstant;
 
 import junit.framework.TestCase;
 
@@ -32,7 +31,9 @@ import junit.framework.TestCase;
  */
 public class TextAlignConstantParserTest extends TestCase {
   private static final String TBB = TextBoxBase.class.getCanonicalName();
-  private static final String TAC = TextAlignConstant.class.getCanonicalName();
+  @SuppressWarnings("deprecation")
+  private static final String TAC =
+      com.google.gwt.user.client.ui.TextBoxBase.TextAlignConstant.class.getCanonicalName();
   private TextAlignConstantParser parser;
 
   @Override
@@ -46,27 +47,27 @@ public class TextAlignConstantParserTest extends TestCase {
   }
 
   public void testFriendlyNames() throws UnableToCompleteException {
-    assertEquals(TBB + ".ALIGN_LEFT", parser.parse("left"));
-    assertEquals(TBB + ".ALIGN_CENTER", parser.parse("center"));
-    assertEquals(TBB + ".ALIGN_RIGHT", parser.parse("right"));
-    assertEquals(TBB + ".ALIGN_JUSTIFY", parser.parse("justify"));
+    assertEquals(TBB + ".ALIGN_LEFT", parser.parse(null, "left"));
+    assertEquals(TBB + ".ALIGN_CENTER", parser.parse(null, "center"));
+    assertEquals(TBB + ".ALIGN_RIGHT", parser.parse(null, "right"));
+    assertEquals(TBB + ".ALIGN_JUSTIFY", parser.parse(null, "justify"));
     // capitalized
-    assertEquals(TBB + ".ALIGN_LEFT", parser.parse("Left"));
-    assertEquals(TBB + ".ALIGN_CENTER", parser.parse("Center"));
-    assertEquals(TBB + ".ALIGN_RIGHT", parser.parse("Right"));
-    assertEquals(TBB + ".ALIGN_JUSTIFY", parser.parse("Justify"));
+    assertEquals(TBB + ".ALIGN_LEFT", parser.parse(null, "Left"));
+    assertEquals(TBB + ".ALIGN_CENTER", parser.parse(null, "Center"));
+    assertEquals(TBB + ".ALIGN_RIGHT", parser.parse(null, "Right"));
+    assertEquals(TBB + ".ALIGN_JUSTIFY", parser.parse(null, "Justify"));
   }
 
   public void testUglyNames() throws UnableToCompleteException {
-    assertEquals(TBB + ".ALIGN_LEFT", parser.parse("ALIGN_LEFT"));
-    assertEquals(TBB + ".ALIGN_CENTER", parser.parse("ALIGN_CENTER"));
-    assertEquals(TBB + ".ALIGN_RIGHT", parser.parse("ALIGN_RIGHT"));
-    assertEquals(TBB + ".ALIGN_JUSTIFY", parser.parse("ALIGN_JUSTIFY"));
+    assertEquals(TBB + ".ALIGN_LEFT", parser.parse(null, "ALIGN_LEFT"));
+    assertEquals(TBB + ".ALIGN_CENTER", parser.parse(null, "ALIGN_CENTER"));
+    assertEquals(TBB + ".ALIGN_RIGHT", parser.parse(null, "ALIGN_RIGHT"));
+    assertEquals(TBB + ".ALIGN_JUSTIFY", parser.parse(null, "ALIGN_JUSTIFY"));
   }
 
   public void testBad() {
     try {
-      parser.parse("fnord");
+      parser.parse(null, "fnord");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
@@ -74,6 +75,6 @@ public class TextAlignConstantParserTest extends TestCase {
   }
 
   public void testFieldRef() throws UnableToCompleteException {
-    assertEquals("foo.bar().baz()", parser.parse("{foo.bar.baz}"));
+    assertEquals("foo.bar().baz()", parser.parse(null, "{foo.bar.baz}"));
   }
 }

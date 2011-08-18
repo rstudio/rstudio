@@ -48,7 +48,7 @@ public class UiRendererTest extends GWTTestCase {
     UiRendererTestApp app = UiRendererTestApp.getInstance();
     safeHtmlUi = app.getSafeHtmlUi();
     renderedHtml = safeHtmlUi.render(RENDERED_VALUE, RENDERED_VALUE_TWICE);
-    renderer = safeHtmlUi.getRenderer();
+    renderer = UiRendererUi.getRenderer();
 
     docDiv = Document.get().createDivElement();
     docDiv.setInnerHTML(renderedHtml.asString());
@@ -249,7 +249,7 @@ public class UiRendererTest extends GWTTestCase {
   }
 
   @Override
-  protected void gwtTearDown() throws Exception {
+  protected void gwtTearDown() {
     docDiv.removeFromParent();
     docDiv = null;
   }

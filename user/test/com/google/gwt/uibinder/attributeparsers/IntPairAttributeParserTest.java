@@ -48,37 +48,37 @@ public class IntPairAttributeParserTest extends TestCase {
   }
 
   public void testGood() throws UnableToCompleteException {
-    assertEquals("1, 1", parser.parse("1, 1"));
-    assertEquals("123, 456", parser.parse("123, 456"));
+    assertEquals("1, 1", parser.parse(null, "1, 1"));
+    assertEquals("123, 456", parser.parse(null, "123, 456"));
     assertEquals("(int)able.baker(), (int)charlie.delta()",
-        parser.parse("{able.baker}, {charlie.delta}"));
-    assertEquals("0001, 0002", parser.parse("0001, 0002"));
+        parser.parse(null, "{able.baker}, {charlie.delta}"));
+    assertEquals("0001, 0002", parser.parse(null, "0001, 0002"));
   }
 
   public void testBad() {
     try {
-      parser.parse("fnord");
+      parser.parse(null, "fnord");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
     }
 
     try {
-      parser.parse("1, 2, 3");
+      parser.parse(null, "1, 2, 3");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
     }
 
     try {
-      parser.parse("1");
+      parser.parse(null, "1");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
     }
 
     try {
-      parser.parse("1.2, 3.4");
+      parser.parse(null, "1.2, 3.4");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */

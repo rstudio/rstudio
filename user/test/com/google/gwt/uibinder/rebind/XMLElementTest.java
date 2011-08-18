@@ -392,8 +392,6 @@ public class XMLElementTest extends TestCase {
       fail("Should throw UnableToCompleteException on misparse");
     } catch (UnableToCompleteException c) {
       assertNotNull(logger.died);
-      assertTrue("Expect attribute",
-          logger.died.contains("Cannot parse attribute \"fnord\""));
       assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
 
@@ -403,8 +401,6 @@ public class XMLElementTest extends TestCase {
       fail("Should throw UnableToCompleteException on no such attribute");
     } catch (UnableToCompleteException c) {
       assertNotNull(logger.died);
-      assertTrue("Expect attribute",
-          logger.died.contains("Missing required attribute \"empty\""));
       assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
   }

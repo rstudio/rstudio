@@ -46,24 +46,24 @@ public class VerticalAlignmentConstantParserTest extends TestCase {
   }
 
   public void testFriendlyNames() throws UnableToCompleteException {
-    assertEquals(HVA + ".ALIGN_TOP", parser.parse("top"));
-    assertEquals(HVA + ".ALIGN_MIDDLE", parser.parse("middle"));
-    assertEquals(HVA + ".ALIGN_BOTTOM", parser.parse("bottom"));
+    assertEquals(HVA + ".ALIGN_TOP", parser.parse(null, "top"));
+    assertEquals(HVA + ".ALIGN_MIDDLE", parser.parse(null, "middle"));
+    assertEquals(HVA + ".ALIGN_BOTTOM", parser.parse(null, "bottom"));
     // capitalized
-    assertEquals(HVA + ".ALIGN_TOP", parser.parse("Top"));
-    assertEquals(HVA + ".ALIGN_MIDDLE", parser.parse("Middle"));
-    assertEquals(HVA + ".ALIGN_BOTTOM", parser.parse("Bottom"));
+    assertEquals(HVA + ".ALIGN_TOP", parser.parse(null, "Top"));
+    assertEquals(HVA + ".ALIGN_MIDDLE", parser.parse(null, "Middle"));
+    assertEquals(HVA + ".ALIGN_BOTTOM", parser.parse(null, "Bottom"));
   }
 
   public void testUglyNames() throws UnableToCompleteException {
-    assertEquals(HVA + ".ALIGN_TOP", parser.parse("ALIGN_TOP"));
-    assertEquals(HVA + ".ALIGN_MIDDLE", parser.parse("ALIGN_MIDDLE"));
-    assertEquals(HVA + ".ALIGN_BOTTOM", parser.parse("ALIGN_BOTTOM"));
+    assertEquals(HVA + ".ALIGN_TOP", parser.parse(null, "ALIGN_TOP"));
+    assertEquals(HVA + ".ALIGN_MIDDLE", parser.parse(null, "ALIGN_MIDDLE"));
+    assertEquals(HVA + ".ALIGN_BOTTOM", parser.parse(null, "ALIGN_BOTTOM"));
   }
 
   public void testBad() {
     try {
-      parser.parse("fnord");
+      parser.parse(null, "fnord");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
@@ -71,6 +71,6 @@ public class VerticalAlignmentConstantParserTest extends TestCase {
   }
 
   public void testFieldRef() throws UnableToCompleteException {
-    assertEquals("foo.bar().baz()", parser.parse("{foo.bar.baz}"));
+    assertEquals("foo.bar().baz()", parser.parse(null, "{foo.bar.baz}"));
   }
 }

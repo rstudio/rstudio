@@ -142,8 +142,8 @@ public class XMLElement {
   private JType imageResourceType;
   private JType doubleType;
   private JType intType;
-  private JType stringType;
   private JType safeHtmlType;
+  private JType stringType;
 
   {
     // from com/google/gxp/compiler/schema/html.xml
@@ -258,29 +258,18 @@ public class XMLElement {
    * Like {@link #consumeAttributeWithDefault(String, String, JType)}, but
    * accommodates more complex type signatures.
    */
-  public String consumeAttributeWithDefault(String name, String defaultValue, JType[] types)
+  public String consumeAttributeWithDefault(String name, String defaultValue, JType... types)
       throws UnableToCompleteException {
-    XMLAttribute attribute = getAttribute(name);
-    if (attribute == null) {
+
+    if (!hasAttribute(name)) {
       if (defaultValue != null) {
         designTime.putAttribute(this, name + ".default", defaultValue);
       }
       return defaultValue;
     }
-    String rawValue = attribute.consumeRawValue();
-    AttributeParser parser = getParser(types);
-    if (parser == null) {
-      logger.die(this, "No such attribute %s", name);
-    }
 
-    try {
-      String value = parser.parse(rawValue);
-      designTime.putAttribute(this, name, value);
-      return value;
-    } catch (UnableToCompleteException e) {
-      logger.die(this, "Cannot parse attribute %s", name);
-      throw e;
-    }
+    AttributeParser parser = attributeParsers.getParser(types);
+    return consumeAttributeWithParser(name, parser);
   }
 
   /**
@@ -558,21 +547,15 @@ public class XMLElement {
    */
   public String consumeRequiredAttribute(String name, JType... types)
       throws UnableToCompleteException {
-    XMLAttribute attribute = getAttribute(name);
-    if (attribute == null) {
+    if (!hasAttribute(name)) {
       failRequired(name);
     }
-    AttributeParser parser = getParser(types);
-    String rawValue = consumeRequiredRawAttribute(name);
 
-    try {
-      String value = parser.parse(rawValue);
-      designTime.putAttribute(this, name, value);
-      return value;
-    } catch (UnableToCompleteException e) {
-      logger.die(this, "Cannot parse attribute \"%s\"", name);
-      throw e;
-    }
+    AttributeParser parser = attributeParsers.getParser(types);
+
+    String value = parser.parse(this, consumeRequiredRawAttribute(name));
+    designTime.putAttribute(this, name, value);
+    return value;
   }
 
   /**
@@ -629,6 +612,18 @@ public class XMLElement {
   }
 
   /**
+   * Consumes an attribute as either a SafeUri or a String. Used in HTML
+   * contexts.
+   * 
+   * @return an expression that will evaluate to a SafeUri value in the
+   *         generated code, or null if there is no such attribute
+   * @throws UnableToCompleteException on unparseable value
+   */
+  public String consumeSafeUriOrStringAttribute(String name) throws UnableToCompleteException {
+    return consumeAttributeWithParser(name, attributeParsers.getSafeUriInHtmlParser());
+  }
+
+  /**
    * Consumes a single child element, ignoring any text nodes and throwing an
    * exception if no child is found, or more than one child element is found.
    * 
@@ -661,16 +656,11 @@ public class XMLElement {
    * @throws UnableToCompleteException on unparseable value
    */
   public String[] consumeStringArrayAttribute(String name) throws UnableToCompleteException {
-    AttributeParser parser = attributeParsers.get(getStringType());
+    AttributeParser parser = attributeParsers.getParser(getStringType());
 
     String[] strings = consumeRawArrayAttribute(name);
     for (int i = 0; i < strings.length; i++) {
-      try {
-        strings[i] = parser.parse(strings[i]);
-      } catch (UnableToCompleteException e) {
-        logger.die(this, "Cannot parse attribute " + name);
-        throw e;
-      }
+      strings[i] = parser.parse(this, strings[i]);
     }
     designTime.putAttribute(this, name, strings);
     return strings;
@@ -829,6 +819,13 @@ public class XMLElement {
     return debugString;
   }
 
+  private String consumeAttributeWithParser(String name, AttributeParser parser)
+      throws UnableToCompleteException {
+    String value = parser.parse(this, consumeRawAttribute(name));
+    designTime.putAttribute(this, name, value);
+    return value;
+  }
+
   private Iterable<XMLElement> consumeChildElementsNoEmptyCheck() {
     try {
       Iterable<XMLElement> rtn = consumeChildElements(new NoBrainInterpeter<Boolean>(true));
@@ -893,10 +890,6 @@ public class XMLElement {
     }
     b.append(">");
     return b.toString();
-  }
-
-  private AttributeParser getParser(JType... types) {
-    return attributeParsers.get(types);
   }
 
   private JType getSafeHtmlType() {

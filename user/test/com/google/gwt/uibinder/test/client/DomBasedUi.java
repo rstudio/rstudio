@@ -63,7 +63,7 @@ public class DomBasedUi {
   @UiField TableCellElement th2;
   @UiField TableSectionElement tbody;
   @UiField TableCellElement th4;
-
+  
   public DomBasedUi(String yourNameHere) {
     res.style().ensureInjected();
     binder.createAndBindUi(this);

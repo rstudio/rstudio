@@ -62,7 +62,7 @@ public class FieldWriterOfGeneratedCssResourceTest extends TestCase {
         stringType, css, MortalLogger.NULL);
 
     assertEquals(stringType, f.getReturnType(new String[] {
-        "fieldName", "ableBaker"}, new MonitoredLogger(TreeLogger.NULL)));
+        "fieldName", "ableBaker"}, new MonitoredLogger(MortalLogger.NULL)));
     assertEquals(FieldWriterType.GENERATED_CSS, f.getFieldType());
   }
 
@@ -78,7 +78,7 @@ public class FieldWriterOfGeneratedCssResourceTest extends TestCase {
         stringType, css, MortalLogger.NULL);
 
     assertEquals(stringType, f.getReturnType(new String[] {
-        "fieldName", "able-baker"}, new MonitoredLogger(TreeLogger.NULL)));
+        "fieldName", "able-baker"}, new MonitoredLogger(MortalLogger.NULL)));
 
     assertEquals(FieldWriterType.GENERATED_CSS, f.getFieldType());
   }

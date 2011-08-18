@@ -55,7 +55,7 @@ import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
         message += ".replaceAll(\"&\", \"&amp;\").replaceAll(\"'\", \"&#39;\")";
       }
       elem.setAttribute(am.getAttribute(),
-        writer.tokenForStringExpression(message));
+        writer.tokenForStringExpression(elem, message));
     }
 
     /*

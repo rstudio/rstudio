@@ -108,7 +108,7 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
       return handleHasTextPlaceholder(elem, name, idHolder);
    }
 
-    return handleOpaqueWidgetPlaceholder(name, idHolder);
+    return handleOpaqueWidgetPlaceholder(elem, name, idHolder);
   }
 
   /**
@@ -162,10 +162,10 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
     return closePlaceholder;
   }
 
-  private String genOpenTag(String name, String idHolder) {
+  private String genOpenTag(XMLElement source, String name, String idHolder) {
     idHolder = fieldManager.convertFieldToGetter(idHolder);
     if (uiWriter.useSafeHtmlTemplates()) {
-      idHolder = uiWriter.tokenForStringExpression(idHolder);
+      idHolder = uiWriter.tokenForStringExpression(source, idHolder);
     } else {
       idHolder = "\" + " + idHolder + " + \"";
     }
@@ -207,7 +207,7 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   private String handleHasHTMLPlaceholder(XMLElement elem, String name,
       String idHolder) throws UnableToCompleteException {
     idIsHasHTML.add(idHolder);
-    String openPlaceholder = genOpenTag(name, idHolder);
+    String openPlaceholder = genOpenTag(elem, name, idHolder);
 
     String body =
         elem.consumeInnerHtml(new HtmlPlaceholderInterpreter(uiWriter,
@@ -221,7 +221,7 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   private String handleHasTextPlaceholder(XMLElement elem, String name,
       String idHolder) throws UnableToCompleteException {
     idIsHasText.add(idHolder);
-    String openPlaceholder = genOpenTag(name, idHolder);
+    String openPlaceholder = genOpenTag(elem, name, idHolder);
 
     String body =
         elem.consumeInnerText(new TextPlaceholderInterpreter(uiWriter,
@@ -232,10 +232,10 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
     return openPlaceholder + bodyToken + closePlaceholder;
   }
 
-  private String handleOpaqueWidgetPlaceholder(String name, String idHolder) {
+  private String handleOpaqueWidgetPlaceholder(XMLElement source, String name, String idHolder) {
     idHolder = fieldManager.convertFieldToGetter(idHolder);
     if (uiWriter.useSafeHtmlTemplates()) {
-      idHolder = uiWriter.tokenForStringExpression(idHolder);
+      idHolder = uiWriter.tokenForStringExpression(source, idHolder);
     } else {
       idHolder = "\" + " + idHolder + " + \"";
     }

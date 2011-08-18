@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JEnumConstant;
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.XMLElement;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +32,7 @@ class EnumAttributeParser extends StrictAttributeParser {
 
   EnumAttributeParser(FieldReferenceConverter converter, JEnumType enumType,
       MortalLogger logger) {
-    super(converter, enumType, logger);
+    super(converter, logger, enumType);
     JEnumConstant[] constants = enumType.getEnumConstants();
     for (JEnumConstant c : constants) {
       values.put(c.getName(), c);
@@ -39,12 +40,12 @@ class EnumAttributeParser extends StrictAttributeParser {
   }
 
   @Override
-  public String parse(String value) throws UnableToCompleteException {
+  public String parse(XMLElement source, String value) throws UnableToCompleteException {
     JEnumConstant c = values.get(value);
     if (c != null) {
       return String.format("%s.%s",
           c.getEnclosingType().getQualifiedSourceName(), value);
     }
-    return super.parse(value);
+    return super.parse(source, value);
   }
 }

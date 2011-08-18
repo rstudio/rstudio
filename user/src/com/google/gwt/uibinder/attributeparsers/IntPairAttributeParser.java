@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.attributeparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.XMLElement;
 
 /**
  * Parses a pair of integer values.
@@ -31,18 +32,14 @@ class IntPairAttributeParser implements AttributeParser {
     this.logger = logger;
   }
   
-  public String parse(String value) throws UnableToCompleteException {
+  public String parse(XMLElement source, String value) throws UnableToCompleteException {
     String[] values = value.split(",");
     if (values.length != 2) {
-      die(value);
+      logger.die(source, "Unable to parse \"%s\" as a pair of integers", value);
     }
     
-    String left = intParser.parse(values[0].trim());
-    String right = intParser.parse(values[1].trim());
+    String left = intParser.parse(source, values[0].trim());
+    String right = intParser.parse(source, values[1].trim());
     return String.format("%s, %s", left, right);
-  }
-
-  private void die(String value) throws UnableToCompleteException {
-    logger.die("Unable to parse \"%s\" as a pair of integers", value);
   }
 }

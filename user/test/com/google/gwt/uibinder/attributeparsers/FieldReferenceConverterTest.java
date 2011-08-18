@@ -33,7 +33,7 @@ public class FieldReferenceConverterTest extends TestCase {
       return String.format(" & %s & ", reference);
     }
     
-    public JType getType() {
+    public JType[] getTypes() {
       return null;
     }
   };

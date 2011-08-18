@@ -57,49 +57,49 @@ public class LengthAttributeParserTest extends TestCase {
   }
 
   public void testGood() throws UnableToCompleteException {
-    assertEquals(lengthString("0", "PX"), parser.parse("0"));
-    assertEquals(lengthString("0", "PT"), parser.parse("0pt"));
+    assertEquals(lengthString("0", "PX"), parser.parse(null, "0"));
+    assertEquals(lengthString("0", "PT"), parser.parse(null, "0pt"));
 
-    assertEquals(lengthString("1", "PX"), parser.parse("1"));
+    assertEquals(lengthString("1", "PX"), parser.parse(null, "1"));
 
-    assertEquals(lengthString("1", "PX"), parser.parse("1px"));
-    assertEquals(lengthString("1", "PCT"), parser.parse("1%"));
-    assertEquals(lengthString("1", "CM"), parser.parse("1cm"));
-    assertEquals(lengthString("1", "MM"), parser.parse("1mm"));
-    assertEquals(lengthString("1", "IN"), parser.parse("1in"));
-    assertEquals(lengthString("1", "PC"), parser.parse("1pc"));
-    assertEquals(lengthString("1", "PT"), parser.parse("1pt"));
-    assertEquals(lengthString("1", "EM"), parser.parse("1em"));
-    assertEquals(lengthString("1", "EX"), parser.parse("1ex"));
+    assertEquals(lengthString("1", "PX"), parser.parse(null, "1px"));
+    assertEquals(lengthString("1", "PCT"), parser.parse(null, "1%"));
+    assertEquals(lengthString("1", "CM"), parser.parse(null, "1cm"));
+    assertEquals(lengthString("1", "MM"), parser.parse(null, "1mm"));
+    assertEquals(lengthString("1", "IN"), parser.parse(null, "1in"));
+    assertEquals(lengthString("1", "PC"), parser.parse(null, "1pc"));
+    assertEquals(lengthString("1", "PT"), parser.parse(null, "1pt"));
+    assertEquals(lengthString("1", "EM"), parser.parse(null, "1em"));
+    assertEquals(lengthString("1", "EX"), parser.parse(null, "1ex"));
 
-    assertEquals(lengthString("1", "PX"), parser.parse("1PX"));
-    assertEquals(lengthString("1", "PCT"), parser.parse("1PCT"));
-    assertEquals(lengthString("1", "CM"), parser.parse("1CM"));
-    assertEquals(lengthString("1", "MM"), parser.parse("1MM"));
-    assertEquals(lengthString("1", "IN"), parser.parse("1IN"));
-    assertEquals(lengthString("1", "PC"), parser.parse("1PC"));
-    assertEquals(lengthString("1", "PT"), parser.parse("1PT"));
-    assertEquals(lengthString("1", "EM"), parser.parse("1EM"));
-    assertEquals(lengthString("1", "EX"), parser.parse("1EX"));
+    assertEquals(lengthString("1", "PX"), parser.parse(null, "1PX"));
+    assertEquals(lengthString("1", "PCT"), parser.parse(null, "1PCT"));
+    assertEquals(lengthString("1", "CM"), parser.parse(null, "1CM"));
+    assertEquals(lengthString("1", "MM"), parser.parse(null, "1MM"));
+    assertEquals(lengthString("1", "IN"), parser.parse(null, "1IN"));
+    assertEquals(lengthString("1", "PC"), parser.parse(null, "1PC"));
+    assertEquals(lengthString("1", "PT"), parser.parse(null, "1PT"));
+    assertEquals(lengthString("1", "EM"), parser.parse(null, "1EM"));
+    assertEquals(lengthString("1", "EX"), parser.parse(null, "1EX"));
 
-    assertEquals(lengthString("2.5", "EM"), parser.parse("2.5em"));
-    assertEquals(lengthString("+1", "EM"), parser.parse("+1em"));
-    assertEquals(lengthString("-1", "EM"), parser.parse("-1em"));
+    assertEquals(lengthString("2.5", "EM"), parser.parse(null, "2.5em"));
+    assertEquals(lengthString("+1", "EM"), parser.parse(null, "+1em"));
+    assertEquals(lengthString("-1", "EM"), parser.parse(null, "-1em"));
 
-    assertEquals(lengthString("1", "EM"), parser.parse("1 em"));
+    assertEquals(lengthString("1", "EM"), parser.parse(null, "1 em"));
 
     assertEquals("(double)foo.value(), " + UNIT + ".PX",
-        parser.parse("{foo.value}px"));
+        parser.parse(null, "{foo.value}px"));
     assertEquals("1, foo.unit()",
-        parser.parse("1{foo.unit}"));
+        parser.parse(null, "1{foo.unit}"));
     assertEquals("(double)foo.value(), foo.unit()",
-        parser.parse("{foo.value}{foo.unit}"));
+        parser.parse(null, "{foo.value}{foo.unit}"));
   }
 
   public void testBad() {
     // Garbage.
     try {
-      parser.parse("fnord");
+      parser.parse(null, "fnord");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
@@ -107,7 +107,7 @@ public class LengthAttributeParserTest extends TestCase {
 
     // Non-decimal value.
     try {
-      parser.parse("xpx");
+      parser.parse(null, "xpx");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
@@ -115,7 +115,7 @@ public class LengthAttributeParserTest extends TestCase {
 
     // Raw unit, no value.
     try {
-      parser.parse("px");
+      parser.parse(null, "px");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
@@ -123,7 +123,7 @@ public class LengthAttributeParserTest extends TestCase {
 
     // 0, but with invalid unit.
     try {
-      parser.parse("0foo");
+      parser.parse(null, "0foo");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
@@ -131,14 +131,14 @@ public class LengthAttributeParserTest extends TestCase {
 
     // Too many braces cases.
     try {
-      parser.parse("{{foo.value}px");
+      parser.parse(null, "{{foo.value}px");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
     }
 
     try {
-      parser.parse("1{{foo.unit}");
+      parser.parse(null, "1{{foo.unit}");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */

@@ -15,10 +15,21 @@
  */
 package com.google.gwt.uibinder.test.client;
 
+import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.UriUtils;
+
 /**
  * Faux bundle used by test.
  */
 public class FakeBundle {
+  public boolean aBoolean() {
+    return true;
+  }
+
+  public Boolean aBooleanObject() {
+    return false;
+  }
+
   public double aDouble() {
     return 42;
   }
@@ -26,7 +37,11 @@ public class FakeBundle {
   public Double aDoubleObject() {
     return 21.0;
   }
-
+  
+  public String aGifPath() {
+    return "www.google.com/images/logo_sm.gif";
+  }
+  
   public int anInt() {
     return 42;
   }
@@ -34,24 +49,28 @@ public class FakeBundle {
   public Integer anIntegerObject() {
     return 21;
   }
-  
-  public boolean aBoolean() {
-    return true;
-  }
-  
-  public Boolean aBooleanObject() {
-    return false;
+
+  public String anUnsafeUri() {
+    return "javascript:void(0)";
   }
 
+  public SafeUri aSafeUri() {
+    return UriUtils.fromSafeConstant(anUnsafeUri());
+  }
+  
+  public String aSelector() {
+    return "http://";
+  }
+
+  public String aUrl() {
+    return aSelector() + aGifPath();
+  }
+  
   public String helloText() {
     return "hello";
   }
-
+  
   public ArbitraryPojo pojo() {
     return new ArbitraryPojo();
-  }
-  
-  public String aUrl() {
-    return "http://www.google.com/images/logo_sm.gif";
   }
 }

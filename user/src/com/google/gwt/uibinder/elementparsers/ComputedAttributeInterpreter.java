@@ -37,8 +37,8 @@ class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
   
   class DefaultDelegate implements Delegate {
     public String getAttributeToken(XMLAttribute attribute)
-    throws UnableToCompleteException {
-      return writer.tokenForStringExpression(attribute.consumeStringValue());
+ throws UnableToCompleteException {
+      return writer.tokenForStringExpression(attribute.getElement(), attribute.consumeStringValue());
     }
   }
 

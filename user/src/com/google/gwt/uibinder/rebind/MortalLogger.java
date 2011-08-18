@@ -45,7 +45,7 @@ public class MortalLogger {
         // We see this in the test cases that don't use actual source files
         displayFileName = "Unknown";
       } else {
-        // Parse the system id as a URI, which is almost always is
+        // Parse the system id as a URI, which it almost always is
         try {
           URI uri = new URI(location.getSystemId());
           String path = uri.getPath();
@@ -57,7 +57,7 @@ public class MortalLogger {
         }
       }
       // Log in a way that usually triggers IDE hyperlinks
-      return " Element " + context.toString() + " (" + displayFileName + ":"
+      return ": " + context.toString() + " (" + displayFileName + ":"
           + location.getLineNumber() + ")";
     } else {
       /*
@@ -73,7 +73,7 @@ public class MortalLogger {
   public MortalLogger(TreeLogger logger) {
     this.logger = logger;
   }
-
+  
   /**
    * Post an error message and halt processing. This method always throws an
    * {@link UnableToCompleteException}.
@@ -97,6 +97,12 @@ public class MortalLogger {
     return logger;
   }
 
+  public void logLocation(TreeLogger.Type type, XMLElement context,
+      String message) {
+    message += locationOf(context);
+    logger.log(type, message);
+  }
+
   /**
    * Post a warning message.
    */
@@ -109,11 +115,5 @@ public class MortalLogger {
    */
   public void warn(XMLElement context, String message, Object... params) {
     logLocation(TreeLogger.WARN, context, String.format(message, params));
-  }
-
-  private void logLocation(TreeLogger.Type type, XMLElement context,
-      String message) {
-    message += locationOf(context);
-    logger.log(type, message);
   }
 }

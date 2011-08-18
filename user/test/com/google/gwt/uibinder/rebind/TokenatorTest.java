@@ -15,6 +15,8 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.uibinder.rebind.Tokenator.ValueAndInfo;
+
 import junit.framework.TestCase;
 
 /**
@@ -34,7 +36,7 @@ public class TokenatorTest extends TestCase {
   private String betokened;
 
   @Override
-  public void setUp() throws Exception {
+  public void setUp() {
     tokenator = new Tokenator();
     betokened =
       BEGIN.replace("This", betoken("This")).replace("bunch",
@@ -51,19 +53,27 @@ public class TokenatorTest extends TestCase {
   public void testSimple() {
     assertEquals(EXPECTED, tokenator.detokenate(betokened));
   }
+  
+  public void testInfo() {
+    int i = 0;
+    for (ValueAndInfo valueAndInfo : tokenator.getOrderedValues(betokened)) {
+      assertEquals(++i, valueAndInfo.info);
+    }
+  }
 
   public void testStatic() {
     assertEquals("0 is a 1 of 2", Tokenator.detokenate(betokened,
         new Tokenator.Resolver() {
-          int serial = 0;
+          int i = 0;
 
           public String resolveToken(String token) {
-            return String.format("%d", serial++);
+            return String.format("%d", i++);
           }
         }));
   }
 
   private String betoken(String in) {
-    return tokenator.nextToken(String.format(FORMAT, ++serial, in));
+    int id = ++serial;
+    return tokenator.nextToken(id, String.format(FORMAT, id, in));
   }
 }

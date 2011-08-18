@@ -225,7 +225,7 @@
         Here is a similarly clickable
         <demo:ClickyLink text="hyperlink based on a custom widget"
           ui:field="customLinkWidget" popupText="That tickles! "/>. And an
-          <gwt:Anchor><i>Anchor to nowhere</i></gwt:Anchor>.
+          <gwt:Anchor ><i>Anchor to nowhere</i></gwt:Anchor>.
       </p>
 
       <p>I bet you like babies in your Image widgets.</p>
@@ -248,7 +248,7 @@
           {cursorifficStyle.cursor}'>
         Well how do you like  <br/>
         tiled sprited images...of babies!! <br/>
-        Well of course you do. Who wouldn't?
+        Of course you do! Who wouldn't?
       </p>
 
       <p>

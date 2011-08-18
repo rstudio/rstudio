@@ -124,7 +124,7 @@ class WidgetInterpreter implements XMLElement.Interpreter<String> {
     String tag = getLegalPlaceholderTag(elem);
     idHolder = fieldManager.convertFieldToGetter(idHolder);
     if (uiWriter.useSafeHtmlTemplates()) {
-      idHolder = uiWriter.tokenForStringExpression(idHolder);
+      idHolder = uiWriter.tokenForStringExpression(elem, idHolder);
     } else {
       idHolder = "\" + " + idHolder + " + \"";
     }

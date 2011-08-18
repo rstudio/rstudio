@@ -18,6 +18,7 @@ package com.google.gwt.uibinder.attributeparsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.user.client.ui.TextBoxBase;
 
 import java.util.HashMap;
@@ -44,15 +45,15 @@ class TextAlignConstantParser extends StrictAttributeParser {
 
   TextAlignConstantParser(FieldReferenceConverter converter, JType type,
       MortalLogger logger) {
-    super(converter, type, logger);
+    super(converter, logger, type);
   }
 
   @Override
-  public String parse(String value) throws UnableToCompleteException {
+  public String parse(XMLElement source, String value) throws UnableToCompleteException {
     String translated = values.get(value.toUpperCase());
     if (translated != null) {
       return translated;
     }
-    return super.parse(value);
+    return super.parse(source, value);
   }
 }

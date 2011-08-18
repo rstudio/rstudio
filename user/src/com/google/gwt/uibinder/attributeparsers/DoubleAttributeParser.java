@@ -18,6 +18,7 @@ package com.google.gwt.uibinder.attributeparsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.XMLElement;
 
 /**
  * Parses a single double attribute.
@@ -26,11 +27,11 @@ class DoubleAttributeParser extends StrictAttributeParser {
 
   DoubleAttributeParser(FieldReferenceConverter converter,
       JType doubleType, MortalLogger logger) {
-    super(converter, doubleType, logger);
+    super(converter, logger, doubleType);
   }
 
   @Override
-  public String parse(String value) throws UnableToCompleteException {
+  public String parse(XMLElement source, String value) throws UnableToCompleteException {
     try {
       Double.parseDouble(value);
       // Happy double
@@ -38,7 +39,7 @@ class DoubleAttributeParser extends StrictAttributeParser {
     } catch (NumberFormatException e) {
       // Not a double, maybe super sees a field ref
     }
-    String fieldMaybe = super.parse(value);
+    String fieldMaybe = super.parse(source, value);
     if ("".equals(fieldMaybe)) {
       return "";
     }

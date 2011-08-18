@@ -153,10 +153,6 @@ abstract class AbstractFieldWriter implements FieldWriter {
     }
 
     for (FieldWriter f : needs) {
-      // TODO(rdamazio, rjrjr) This is simplistic, and will fail when
-      // we support more interesting contexts (e.g. the same need being used
-      // inside two different
-      // LazyPanels)
       f.write(w);
     }
 

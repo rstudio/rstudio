@@ -20,11 +20,11 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
-import com.google.gwt.user.client.ui.TextBoxBase.TextAlignConstant;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,21 +35,24 @@ import java.util.Map;
 public class AttributeParsers {
   private static final String HORIZ_CONSTANT = HorizontalAlignmentConstant.class.getCanonicalName();
   private static final String VERT_CONSTANT = VerticalAlignmentConstant.class.getCanonicalName();
-  private static final String TEXT_ALIGN_CONSTANT = TextAlignConstant.class.getCanonicalName();
+  @SuppressWarnings("deprecation")
+  private static final String TEXT_ALIGN_CONSTANT = 
+    com.google.gwt.user.client.ui.TextBoxBase.TextAlignConstant.class.getCanonicalName();
   private static final String INT = "int";
   private static final String STRING = String.class.getCanonicalName();
   private static final String DOUBLE = "double";
   private static final String BOOLEAN = "boolean";
   private static final String UNIT = Unit.class.getCanonicalName();
+  private static final String SAFE_URI = SafeUri.class.getCanonicalName();
 
   private final MortalLogger logger;
   private final FieldReferenceConverter converter;
-
+  
   /**
-   * Class names of parsers for values of attributes with no namespace prefix,
-   * keyed by method parameter signatures.
+   * Class names of parsers keyed by method parameter signatures.
    */
   private final Map<String, AttributeParser> parsers = new HashMap<String, AttributeParser>();
+  private final SafeUriAttributeParser safeUriInHtmlParser;
 
   public AttributeParsers(TypeOracle types, FieldManager fieldManager,
       MortalLogger logger) {
@@ -82,19 +85,30 @@ public class AttributeParsers {
       addAttributeParser(TEXT_ALIGN_CONSTANT, new TextAlignConstantParser(
           converter, types.parse(TEXT_ALIGN_CONSTANT), logger));
 
-      addAttributeParser(STRING,
-          new StringAttributeParser(converter, types.parse(STRING)));
+      StringAttributeParser stringParser = new StringAttributeParser(converter, types.parse(STRING));
+      addAttributeParser(STRING, stringParser);
 
       EnumAttributeParser unitParser = new EnumAttributeParser(converter,
           (JEnumType) types.parse(UNIT), logger);
       addAttributeParser(DOUBLE + "," + UNIT, new LengthAttributeParser(
           doubleParser, unitParser, logger));
+
+      SafeUriAttributeParser uriParser = new SafeUriAttributeParser(stringParser,
+          converter, types.parse(SAFE_URI), logger);
+      addAttributeParser(SAFE_URI, uriParser);
+      
+      safeUriInHtmlParser = new SafeUriAttributeParser(stringParser,
+          converter, types.parse(SAFE_URI), types.parse(STRING), logger);
     } catch (TypeOracleException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public AttributeParser get(JType... types) {
+  /**
+   * Returns a parser for the given type(s). Accepts multiple types args to
+   * allow requesting parsers for things like for pairs of ints.
+   */
+  public AttributeParser getParser(JType... types) {
     if (types.length == 0) {
       throw new RuntimeException("Asked for attribute parser of no type");
     }
@@ -114,9 +128,17 @@ public class AttributeParsers {
      * Dunno what it is, so let a StrictAttributeParser look for a
      * {field.reference}
      */
-    return new StrictAttributeParser(converter, types[0], logger);
+    return new StrictAttributeParser(converter, logger, types[0]);
   }
-
+  
+  /**
+   * Returns a parser specialized for handling URI references
+   * in html contexts, like &lt;a href="{foo.bar}">.
+   */
+  public AttributeParser getSafeUriInHtmlParser() {
+    return safeUriInHtmlParser;
+  }
+  
   private void addAttributeParser(String signature,
       AttributeParser attributeParser) {
     parsers.put(signature, attributeParser);

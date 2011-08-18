@@ -41,6 +41,14 @@ public class XMLAttribute {
     return xmlElem.consumeSafeHtmlAttribute(w3cAttr.getName());
   }
 
+  /**
+   * Consumes this attribute as either a SafeUri or a String. Used in HTML
+   * contexts.
+   */
+  public String consumeSafeUriOrStringAttribute() throws UnableToCompleteException {
+    return xmlElem.consumeSafeUriOrStringAttribute(w3cAttr.getName());
+  }
+
   public String consumeStringValue() throws UnableToCompleteException {
     return xmlElem.consumeStringAttribute(w3cAttr.getName());
   }

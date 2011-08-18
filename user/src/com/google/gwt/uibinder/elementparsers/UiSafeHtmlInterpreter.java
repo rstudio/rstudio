@@ -28,9 +28,9 @@ public class UiSafeHtmlInterpreter extends UiTextInterpreter {
    * Used in {@link #interpretElement} to invoke the {@link ComputedAttributeInterpreter}.
    */
   private class Delegate extends UiTextInterpreter.Delegate {
-    public String getAttributeToken(XMLAttribute attribute)
-      throws UnableToCompleteException {
-        return writer.tokenForSafeHtmlExpression(attribute.consumeSafeHtmlValue());
+    public String getAttributeToken(XMLAttribute attribute) throws UnableToCompleteException {
+      return writer.tokenForSafeHtmlExpression(attribute.getElement(),
+          attribute.consumeSafeHtmlValue());
     }
   }
 

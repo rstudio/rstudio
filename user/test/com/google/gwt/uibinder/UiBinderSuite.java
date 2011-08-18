@@ -19,6 +19,7 @@ import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.uibinder.client.UiBinderUtilTest;
 import com.google.gwt.uibinder.test.client.InnerWidgetTest;
 import com.google.gwt.uibinder.test.client.ParameterizedWidgetsTest;
+import com.google.gwt.uibinder.test.client.SafeUriIntegrationTest;
 import com.google.gwt.uibinder.test.client.UiBinderTest;
 import com.google.gwt.uibinder.test.client.UiChildTest;
 
@@ -33,11 +34,12 @@ public class UiBinderSuite {
         "Integration tests for UiBinder");
 
     suite.addTestSuite(InnerWidgetTest.class);
+    suite.addTestSuite(ParameterizedWidgetsTest.class);
+    suite.addTestSuite(SafeUriIntegrationTest.class);
     suite.addTestSuite(UiBinderTest.class);
     suite.addTestSuite(UiBinderUtilTest.class);
     suite.addTestSuite(UiChildTest.class);
-    suite.addTestSuite(ParameterizedWidgetsTest.class);
-
+    
     return suite;
   }
 

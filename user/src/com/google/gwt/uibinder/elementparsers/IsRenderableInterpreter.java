@@ -68,6 +68,6 @@ class IsRenderableInterpreter implements XMLElement.Interpreter<String> {
     // TODO(rdcastro): use the render() call that receives the SafeHtmlBuilder
     String elementHtml = fieldManager.convertFieldToGetter(childFieldWriter.getName()) + ".render("
         + fieldManager.convertFieldToGetter(stamper) + ")";
-    return uiWriter.tokenForSafeHtmlExpression(elementHtml);
+    return uiWriter.tokenForSafeHtmlExpression(elem, elementHtml);
   }
 }

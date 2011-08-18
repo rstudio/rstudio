@@ -44,14 +44,14 @@ public class HorizontalAlignmentConstantParser_Test extends TestCase {
   }
 
   public void testGood() throws UnableToCompleteException {
-    assertEquals(HHA + ".ALIGN_LEFT", parser.parse("ALIGN_LEFT"));
-    assertEquals(HHA + ".ALIGN_CENTER", parser.parse("ALIGN_CENTER"));
-    assertEquals(HHA + ".ALIGN_RIGHT", parser.parse("ALIGN_RIGHT"));
+    assertEquals(HHA + ".ALIGN_LEFT", parser.parse(null, "ALIGN_LEFT"));
+    assertEquals(HHA + ".ALIGN_CENTER", parser.parse(null, "ALIGN_CENTER"));
+    assertEquals(HHA + ".ALIGN_RIGHT", parser.parse(null, "ALIGN_RIGHT"));
   }
 
   public void testBad() {
     try {
-      parser.parse("fnord");
+      parser.parse(null, "fnord");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
@@ -59,6 +59,6 @@ public class HorizontalAlignmentConstantParser_Test extends TestCase {
   }
 
   public void testFieldRef() throws UnableToCompleteException {
-    assertEquals("foo.bar().baz()", parser.parse("{foo.bar.baz}"));
+    assertEquals("foo.bar().baz()", parser.parse(null, "{foo.bar.baz}"));
   }
 }

@@ -18,6 +18,7 @@ package com.google.gwt.uibinder.attributeparsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.XMLElement;
 
 /**
  * Parses an integer value.
@@ -26,11 +27,11 @@ class IntAttributeParser extends StrictAttributeParser {
 
   IntAttributeParser(FieldReferenceConverter converter, JType intType,
       MortalLogger logger) {
-    super(converter, intType, logger);
+    super(converter, logger, intType);
   }
 
   @Override
-  public String parse(String value) throws UnableToCompleteException {
+  public String parse(XMLElement source, String value) throws UnableToCompleteException {
     try {
       Integer.parseInt(value);
       // Yup, it's an int, use it as such.
@@ -38,7 +39,7 @@ class IntAttributeParser extends StrictAttributeParser {
     } catch (NumberFormatException e) {
       // Not an int, let super see if it's a field ref
     }
-    String fieldMaybe = super.parse(value);
+    String fieldMaybe = super.parse(source, value);
     if ("".equals(fieldMaybe)) {
       return "";
     }

@@ -23,10 +23,10 @@ import com.google.gwt.core.ext.TreeLogger;
  */
 public class MonitoredLogger {
   private boolean hasErrors = false;
-  private final TreeLogger logger;
+  private final MortalLogger logger;
 
-  public MonitoredLogger(TreeLogger logger) {
-    this.logger = logger;
+  public MonitoredLogger(MortalLogger mortalLogger) {
+    this.logger = mortalLogger;
   }
 
   /**
@@ -34,7 +34,12 @@ public class MonitoredLogger {
    */
   public void error(String message, Object... params) {
     hasErrors = true;
-    logger.log(TreeLogger.ERROR, String.format(message, params));
+    logger.getTreeLogger().log(TreeLogger.ERROR, String.format(message, params));
+  }
+  
+  public void error(XMLElement context, String message, Object... params) {
+    hasErrors = true;
+    logger.logLocation(TreeLogger.ERROR, context, String.format(message, params));
   }
 
   /**

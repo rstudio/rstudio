@@ -74,7 +74,7 @@ public class HtmlMessageInterpreter implements XMLElement.Interpreter<String> {
 
       MessageWriter message = messages.newMessage(elem);
       message.setDefaultMessage(elem.consumeInnerHtml(phiProvider.get(message)));
-      return uiWriter.tokenForSafeConstant(messages.declareMessage(message));
+      return uiWriter.tokenForSafeConstant(elem, messages.declareMessage(message));
     }
 
     return null;

@@ -46,27 +46,27 @@ public class HorizontalAlignmentConstantParserTest extends TestCase {
   }
 
   public void testFriendlyNames() throws UnableToCompleteException {
-    assertEquals(HHA + ".ALIGN_LEFT", parser.parse("left"));
-    assertEquals(HHA + ".ALIGN_CENTER", parser.parse("center"));
-    assertEquals(HHA + ".ALIGN_RIGHT", parser.parse("right"));
-    assertEquals(HHA + ".ALIGN_JUSTIFY", parser.parse("justify"));
+    assertEquals(HHA + ".ALIGN_LEFT", parser.parse(null, "left"));
+    assertEquals(HHA + ".ALIGN_CENTER", parser.parse(null, "center"));
+    assertEquals(HHA + ".ALIGN_RIGHT", parser.parse(null, "right"));
+    assertEquals(HHA + ".ALIGN_JUSTIFY", parser.parse(null, "justify"));
     // capitalized
-    assertEquals(HHA + ".ALIGN_LEFT", parser.parse("Left"));
-    assertEquals(HHA + ".ALIGN_CENTER", parser.parse("Center"));
-    assertEquals(HHA + ".ALIGN_RIGHT", parser.parse("Right"));
-    assertEquals(HHA + ".ALIGN_JUSTIFY", parser.parse("Justify"));
+    assertEquals(HHA + ".ALIGN_LEFT", parser.parse(null, "Left"));
+    assertEquals(HHA + ".ALIGN_CENTER", parser.parse(null, "Center"));
+    assertEquals(HHA + ".ALIGN_RIGHT", parser.parse(null, "Right"));
+    assertEquals(HHA + ".ALIGN_JUSTIFY", parser.parse(null, "Justify"));
   }
 
   public void testUglyNames() throws UnableToCompleteException {
-    assertEquals(HHA + ".ALIGN_LEFT", parser.parse("ALIGN_LEFT"));
-    assertEquals(HHA + ".ALIGN_CENTER", parser.parse("ALIGN_CENTER"));
-    assertEquals(HHA + ".ALIGN_RIGHT", parser.parse("ALIGN_RIGHT"));
-    assertEquals(HHA + ".ALIGN_JUSTIFY", parser.parse("ALIGN_JUSTIFY"));
+    assertEquals(HHA + ".ALIGN_LEFT", parser.parse(null, "ALIGN_LEFT"));
+    assertEquals(HHA + ".ALIGN_CENTER", parser.parse(null, "ALIGN_CENTER"));
+    assertEquals(HHA + ".ALIGN_RIGHT", parser.parse(null, "ALIGN_RIGHT"));
+    assertEquals(HHA + ".ALIGN_JUSTIFY", parser.parse(null, "ALIGN_JUSTIFY"));
   }
 
   public void testBad() {
     try {
-      parser.parse("fnord");
+      parser.parse(null, "fnord");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
@@ -74,6 +74,6 @@ public class HorizontalAlignmentConstantParserTest extends TestCase {
   }
 
   public void testFieldRef() throws UnableToCompleteException {
-    assertEquals("foo.bar().baz()", parser.parse("{foo.bar.baz}"));
+    assertEquals("foo.bar().baz()", parser.parse(null, "{foo.bar.baz}"));
   }
 }

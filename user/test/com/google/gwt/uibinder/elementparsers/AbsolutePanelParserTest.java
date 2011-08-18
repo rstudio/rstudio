@@ -45,7 +45,7 @@ public class AbsolutePanelParserTest extends TestCase {
   }
 
   public void testBadPosition_left() throws Exception {
-    checkBadPosition("left='bad' top='0'", "Cannot parse attribute \"left\"");
+    checkBadPosition("left='bad' top='0'", "Cannot parse");
   }
 
   public void testBadPosition_topNo() throws Exception {
@@ -53,7 +53,7 @@ public class AbsolutePanelParserTest extends TestCase {
   }
 
   public void testBadPosition_top() throws Exception {
-    checkBadPosition("left='0' top='bad'", "Cannot parse attribute \"top\"");
+    checkBadPosition("left='0' top='bad'", "Cannot parse");
   }
 
   public void testBad_noWidget() throws Exception {
