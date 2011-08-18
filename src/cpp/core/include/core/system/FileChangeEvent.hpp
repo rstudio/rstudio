@@ -124,7 +124,7 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
       {
          if (currFile.lastWriteTime() != prevFile.lastWriteTime())
          {
-            if (filter && filter(currFile))
+            if (!filter || filter(currFile))
             {
                pEvents->push_back(FileChangeEvent(FileChangeEvent::FileModified,
                                                   currFile));
@@ -135,7 +135,7 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
       }
       else if (comp < 0)
       {
-         if (filter && filter(prevFile))
+         if (!filter || filter(prevFile))
          {
             pEvents->push_back(FileChangeEvent(FileChangeEvent::FileRemoved,
                                                prevFile));
@@ -144,7 +144,7 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
       }
       else // comp > 1
       {
-         if (filter && filter(currFile))
+         if (!filter || filter(currFile))
          {
             pEvents->push_back(FileChangeEvent(FileChangeEvent::FileAdded,
                                                currFile));
