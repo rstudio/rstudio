@@ -13,6 +13,8 @@
 
 // TODO: see if there are filesystems/scenarios where filemon won't work
 
+// TODO: think more deeply about failure cases during scanning
+
 #include <core/system/FileMonitor.hpp>
 
 #include <list>

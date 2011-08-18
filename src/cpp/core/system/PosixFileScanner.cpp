@@ -35,6 +35,13 @@ int entryFilter(struct dirent *entry)
 
 } // anonymous namespace
 
+Error scanFiles(const FileInfo& fromRoot,
+                bool recursive,
+                tree<FileInfo>* pTree)
+{
+   return scanFiles(pTree->set_head(fromRoot), recursive, pTree);
+}
+
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 bool recursive,
                 tree<FileInfo>* pTree)
