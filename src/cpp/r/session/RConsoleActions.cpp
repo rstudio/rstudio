@@ -39,7 +39,7 @@ ConsoleActions& consoleActions()
    
 ConsoleActions::ConsoleActions()
 {
-	setCapacity(2000);
+   setCapacity(1000);
 }
    
 int ConsoleActions::capacity() const
