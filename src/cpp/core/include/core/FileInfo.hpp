@@ -79,11 +79,26 @@ private:
    std::time_t lastWriteTime_;
 };
    
-inline bool compareFileInfoPaths(const FileInfo& fileInfo1, 
-                                 const FileInfo& fileInfo2)
+inline int fileInfoPathCompare(const FileInfo& a, const FileInfo& b)
 {
-   return fileInfo1.absolutePath() < fileInfo2.absolutePath();
+   // use stcoll because that is what alphasort (comp function passed to
+   // scandir) uses for its sorting)
+   int result = ::strcoll(a.absolutePath().c_str(), b.absolutePath().c_str());
+
+   if (result != 0)
+      return result;
+
+   if (a.isDirectory() == b.isDirectory())
+      return 0;
+
+   return a.isDirectory() ? -1 : 1;
 }
+
+inline bool fileInfoPathLessThan(const FileInfo& a, const FileInfo& b)
+{
+   return fileInfoPathCompare(a, b) < 0;
+}
+
 
 inline bool fileInfoHasPath(const FileInfo& fileInfo, const std::string& path)
 {

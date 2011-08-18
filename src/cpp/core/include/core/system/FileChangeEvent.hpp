@@ -16,6 +16,9 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
+
+#include <boost/function.hpp>
 
 #include <core/FileInfo.hpp>
 
@@ -81,6 +84,89 @@ inline std::ostream& operator << (std::ostream& ostr,
       ostr << " (directory)";
       
    return ostr;
+}
+
+template<typename PreviousIterator, typename CurrentIterator>
+void collectFileChangeEvents(PreviousIterator prevBegin,
+                             PreviousIterator prevEnd,
+                             CurrentIterator currBegin,
+                             CurrentIterator currEnd,
+                             const boost::function<bool(const FileInfo&)>& filter,
+                             std::vector<FileChangeEvent>* pEvents)
+{
+   // sort the ranges
+   std::vector<FileInfo> prev;
+   std::copy(prevBegin, prevEnd, std::back_inserter(prev));
+   std::sort(prev.begin(), prev.end(), fileInfoPathLessThan);
+   std::vector<FileInfo> curr;
+   std::copy(currBegin, currEnd, std::back_inserter(curr));
+   std::sort(curr.begin(), curr.end(), fileInfoPathLessThan);
+
+   // initalize the iterators
+   std::vector<FileInfo>::iterator prevIt = prev.begin();
+   std::vector<FileInfo>::iterator currIt = curr.begin();
+
+   FileInfo noFile;
+   while (prevIt != prev.end() || currIt != curr.end())
+   {
+      const FileInfo& prevFile = prevIt != prev.end() ? *prevIt : noFile;
+      const FileInfo& currFile = currIt != curr.end() ? *currIt : noFile;
+
+      int comp;
+      if (prevFile.empty())
+         comp = 1;
+      else if (currFile.empty())
+         comp = -1;
+      else
+         comp = fileInfoPathCompare(prevFile, currFile);
+
+      if (comp == 0)
+      {
+         if (currFile.lastWriteTime() != prevFile.lastWriteTime())
+         {
+            if (filter && filter(currFile))
+            {
+               pEvents->push_back(FileChangeEvent(FileChangeEvent::FileModified,
+                                                  currFile));
+            }
+         }
+         prevIt++;
+         currIt++;
+      }
+      else if (comp < 0)
+      {
+         if (filter && filter(prevFile))
+         {
+            pEvents->push_back(FileChangeEvent(FileChangeEvent::FileRemoved,
+                                               prevFile));
+         }
+         prevIt++;
+      }
+      else // comp > 1
+      {
+         if (filter && filter(currFile))
+         {
+            pEvents->push_back(FileChangeEvent(FileChangeEvent::FileAdded,
+                                               currFile));
+         }
+         currIt++;
+      }
+   }
+}
+
+template<typename PreviousIterator, typename CurrentIterator>
+void collectFileChangeEvents(PreviousIterator prevBegin,
+                             PreviousIterator prevEnd,
+                             CurrentIterator currBegin,
+                             CurrentIterator currEnd,
+                             std::vector<FileChangeEvent>* pEvents)
+{
+   collectFileChangeEvents(prevBegin,
+                           prevEnd,
+                           currBegin,
+                           currEnd,
+                           boost::function<bool(const FileInfo&)>(),
+                           pEvents);
 }
   
 } // namespace system
