@@ -16,11 +16,10 @@
 package com.google.web.bindery.requestfactory.server;
 
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryPolymorphicTest;
-import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.ClassLoaderLoader;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
+import com.google.web.bindery.requestfactory.vm.impl.Deobfuscator;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * A JRE version of {@link RequestFactoryPolymorphicTest} that includes
@@ -120,11 +119,7 @@ public class RequestFactoryPolymorphicJreTest extends RequestFactoryPolymorphicT
   @Override
   protected void gwtSetUp() throws Exception {
     super.gwtSetUp();
-    Logger logger = Logger.getLogger(getClass().getName());
-    ClassLoaderLoader loader = new ClassLoaderLoader(getClass().getClassLoader());
-    RequestFactoryInterfaceValidator v = new RequestFactoryInterfaceValidator(logger, loader);
-    v.validateRequestFactory(Factory.class.getName());
-    deobfuscator = v.getDeobfuscator();
+    deobfuscator = Deobfuscator.Builder.load(Factory.class, getClass().getClassLoader()).build();
   }
 
   private void check(Class<?> domainType, Class<? extends BaseProxy> declaredReturnType,

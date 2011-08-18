@@ -24,6 +24,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
@@ -44,6 +45,15 @@ class ScannerBase<R> extends ElementScanner6<R, State> {
       if (a != null) {
         state.poison(x, Messages.redundantAnnotation(a.annotationType().getSimpleName()));
       }
+    }
+  }
+
+  protected static ExecutableType viewIn(TypeElement lookIn, ExecutableElement methodElement, State state) {
+    try {
+      return (ExecutableType) state.types.asMemberOf(state.types.getDeclaredType(lookIn),
+          methodElement);
+    } catch (IllegalArgumentException e) {
+      return (ExecutableType) methodElement.asType();
     }
   }
 

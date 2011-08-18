@@ -79,10 +79,6 @@ class RequestContextScanner extends ScannerBase<Void> {
     Service service = x.getAnnotation(Service.class);
     ServiceName serviceName = x.getAnnotation(ServiceName.class);
     JsonRpcService jsonRpcService = x.getAnnotation(JsonRpcService.class);
-    if (service == null && serviceName == null && jsonRpcService == null) {
-      state.poison(x, Messages.contextMustBeAnnotated(state.requestContextType.asElement()
-          .getSimpleName()));
-    }
     if (service != null) {
       poisonIfAnnotationPresent(state, x, serviceName, jsonRpcService);
 
@@ -101,9 +97,8 @@ class RequestContextScanner extends ScannerBase<Void> {
           state.elements.getTypeElement(BinaryName.toSourceName(serviceName.value()));
       if (domain == null) {
         state.warn(x, Messages.contextMissingDomainType(serviceName.value()));
-      } else {
-        state.addMapping(x, domain);
       }
+      state.addMapping(x, domain);
     }
 
     scanAllInheritedMethods(x, state);

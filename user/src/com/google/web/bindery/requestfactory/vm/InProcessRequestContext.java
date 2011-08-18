@@ -30,8 +30,8 @@ import com.google.web.bindery.requestfactory.shared.impl.AbstractRequest;
 import com.google.web.bindery.requestfactory.shared.impl.AbstractRequestContext;
 import com.google.web.bindery.requestfactory.shared.impl.RequestData;
 import com.google.web.bindery.requestfactory.shared.impl.SimpleProxyId;
+import com.google.web.bindery.requestfactory.vm.impl.Deobfuscator;
 import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
-import com.google.web.bindery.requestfactory.vm.impl.TypeTokenResolver;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
@@ -184,14 +184,14 @@ class InProcessRequestContext extends AbstractRequestContext {
 
   static final Object[] NO_ARGS = new Object[0];
   private final Class<? extends RequestContext> context;
+  private final Deobfuscator deobfuscator;
   private final Dialect dialect;
-  private final TypeTokenResolver tokenResolver;
 
   protected InProcessRequestContext(InProcessRequestFactory factory, Dialect dialect,
       Class<? extends RequestContext> context) {
     super(factory, dialect);
     this.context = context;
-    this.tokenResolver = factory.getTypeTokenResolver();
+    this.deobfuscator = factory.getDeobfuscator();
     this.dialect = dialect;
   }
 
@@ -205,7 +205,7 @@ class InProcessRequestContext extends AbstractRequestContext {
   @Override
   protected <T extends BaseProxy> AutoBean<T> createProxy(Class<T> clazz, SimpleProxyId<T> id,
       boolean useAppendedContexts) {
-    if (tokenResolver.isReferencedType(clazz.getName())) {
+    if (deobfuscator.isReferencedType(clazz.getName())) {
       return super.createProxy(clazz, id, useAppendedContexts);
     }
     throw new IllegalArgumentException("Unknown proxy type " + clazz.getName());

@@ -22,10 +22,14 @@ import com.google.web.bindery.requestfactory.shared.ProxyFor;
 import com.google.web.bindery.requestfactory.shared.ProxyForName;
 import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
+import com.google.web.bindery.requestfactory.shared.ValueProxy;
 
-@Expect(method = "contextMustBeAnnotated", args = "RequestContext")
+/*
+ * No error about a missing mapping expected because this type isn't referenced
+ * from a RequestFactory.
+ */
 interface MyRequestContext extends RequestContext {
-  @Expect(method = "proxyMustBeAnnotated")
+  @Expect(method = "proxyMustBeAnnotated", args = "ProxyMissingAnnotation")
   interface ProxyMissingAnnotation extends EntityProxy {
   }
 
@@ -36,7 +40,7 @@ interface MyRequestContext extends RequestContext {
   @ProxyFor(ProxyWithRedundantAnnotations.Domain.class)
   @ProxyForName("bad")
   @JsonRpcProxy
-  interface ProxyWithRedundantAnnotations extends EntityProxy {
+  interface ProxyWithRedundantAnnotations extends ValueProxy {
     static class Domain {
     }
   }

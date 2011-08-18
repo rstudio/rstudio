@@ -29,13 +29,12 @@ import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.util.Name;
+import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.dev.util.Util;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.google.web.bindery.requestfactory.apt.RfApt;
 import com.google.web.bindery.requestfactory.apt.RfValidator;
-import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.ClassLoaderLoader;
-import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.ErrorContext;
-import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.Loader;
+import com.google.web.bindery.requestfactory.apt.ValidationTool;
+import com.google.web.bindery.requestfactory.gwt.client.RequestBatcher;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.DefaultProxyStore;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
@@ -65,11 +64,9 @@ import com.google.web.bindery.requestfactory.shared.ServiceName;
 import com.google.web.bindery.requestfactory.shared.ValueProxy;
 import com.google.web.bindery.requestfactory.shared.WriteOperation;
 import com.google.web.bindery.requestfactory.vm.RequestFactorySource;
-import com.google.web.bindery.requestfactory.vm.impl.TypeTokenResolver;
 import com.google.web.bindery.requestfactory.vm.testing.UrlRequestTransport;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -94,6 +91,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 
@@ -109,6 +107,26 @@ public class RequestFactoryJarExtractor {
    * bytecode with the rebased type names that are returned from the
    * processFoo() methods.
    */
+
+  /**
+   * An implementation of {@link Loader} that uses a {@link ClassLoader} to
+   * retrieve the class files.
+   */
+  public static class ClassLoaderLoader implements Loader {
+    private final ClassLoader loader;
+
+    public ClassLoaderLoader(ClassLoader loader) {
+      this.loader = loader;
+    }
+
+    public boolean exists(String resource) {
+      return loader.getResource(resource) != null;
+    }
+
+    public InputStream getResourceAsStream(String resource) {
+      return loader.getResourceAsStream(resource);
+    }
+  }
 
   /**
    * Describes a way to emit the contents of a classpath, typically into a JAR
@@ -154,6 +172,28 @@ public class RequestFactoryJarExtractor {
       }
       out.closeEntry();
     }
+  }
+
+  /**
+   * Abstracts the mechanism by which class files are loaded.
+   * 
+   * @see ClassLoaderLoader
+   */
+  public interface Loader {
+    /**
+     * Returns true if the specified resource can be loaded.
+     * 
+     * @param resource a resource name (e.g. <code>com/example/Foo.class</code>)
+     */
+    boolean exists(String resource);
+
+    /**
+     * Returns an InputStream to access the specified resource, or
+     * <code>null</code> if no such resource exists.
+     * 
+     * @param resource a resource name (e.g. <code>com/example/Foo.class</code>)
+     */
+    InputStream getResourceAsStream(String resource);
   }
 
   /**
@@ -206,6 +246,104 @@ public class RequestFactoryJarExtractor {
     }
 
     protected abstract boolean matches(String target);
+  }
+
+  /**
+   * Improves error messages by providing context for the user.
+   * <p>
+   * Visible for testing.
+   */
+  static class ErrorContext {
+    private static String print(Method method) {
+      StringBuilder sb = new StringBuilder();
+      sb.append(print(method.getReturnType())).append(" ").append(method.getName()).append("(");
+      for (Type t : method.getArgumentTypes()) {
+        sb.append(print(t)).append(" ");
+      }
+      sb.append(")");
+      return sb.toString();
+    }
+
+    private static String print(Type type) {
+      return SourceOrBinaryName.toSourceName(type.getClassName());
+    }
+
+    private final Logger logger;
+    private final ErrorContext parent;
+
+    private Type currentType;
+
+    private Method currentMethod;
+
+    public ErrorContext(Logger logger) {
+      this.logger = logger;
+      this.parent = null;
+    }
+
+    protected ErrorContext(ErrorContext parent) {
+      this.logger = parent.logger;
+      this.parent = parent;
+    }
+
+    public void poison(String msg, Object... args) {
+      poison();
+      logger.logp(Level.SEVERE, currentType(), currentMethod(), String.format(msg, args));
+    }
+
+    public void poison(String msg, Throwable t) {
+      poison();
+      logger.logp(Level.SEVERE, currentType(), currentMethod(), msg, t);
+    }
+
+    public ErrorContext setMethod(Method method) {
+      ErrorContext toReturn = fork();
+      toReturn.currentMethod = method;
+      return toReturn;
+    }
+
+    public ErrorContext setType(Type type) {
+      ErrorContext toReturn = fork();
+      toReturn.currentType = type;
+      return toReturn;
+    }
+
+    public void spam(String msg, Object... args) {
+      logger.logp(Level.FINEST, currentType(), currentMethod(), String.format(msg, args));
+    }
+
+    protected ErrorContext fork() {
+      return new ErrorContext(this);
+    }
+
+    private String currentMethod() {
+      if (currentMethod != null) {
+        return print(currentMethod);
+      }
+      if (parent != null) {
+        return parent.currentMethod();
+      }
+      return null;
+    }
+
+    private String currentType() {
+      if (currentType != null) {
+        return print(currentType);
+      }
+      if (parent != null) {
+        return parent.currentType();
+      }
+      return null;
+    }
+
+    /**
+     * Populate {@link RequestFactoryInterfaceValidator#badTypes} with the
+     * current context.
+     */
+    private void poison() {
+      if (parent != null) {
+        parent.poison();
+      }
+    }
   }
 
   private class AnnotationProcessor implements AnnotationVisitor {
@@ -636,10 +774,11 @@ public class RequestFactoryJarExtractor {
       EntityProxyId.class, ExtraTypes.class, InstanceRequest.class, JsonRpcContent.class,
       JsonRpcProxy.class, JsonRpcService.class, JsonRpcWireName.class, Locator.class,
       ProxyFor.class, ProxyForName.class, ProxySerializer.class, ProxyStore.class, Receiver.class,
-      Request.class, RequestContext.class, RequestFactory.class, RequestTransport.class,
-      ServerFailure.class, Service.class, ServiceLocator.class, ServiceName.class,
-      ValueProxy.class, com.google.web.bindery.requestfactory.shared.Violation.class,
-      WriteOperation.class, RequestFactorySource.class, SimpleEventBus.class};
+      Request.class, RequestBatcher.class, RequestContext.class, RequestFactory.class,
+      RequestTransport.class, ServerFailure.class, Service.class, ServiceLocator.class,
+      ServiceName.class, ValueProxy.class,
+      com.google.web.bindery.requestfactory.shared.Violation.class, WriteOperation.class,
+      RequestFactorySource.class, SimpleEventBus.class};
 
   /**
    * Maximum number of threads to use to run the Extractor.
@@ -648,12 +787,12 @@ public class RequestFactoryJarExtractor {
 
   static {
     List<Class<?>> aptClasses =
-        Collections.unmodifiableList(Arrays.<Class<?>> asList(RfApt.class, RfValidator.class));
+        Collections.unmodifiableList(Arrays.<Class<?>> asList(RfValidator.class,
+            ValidationTool.class));
     List<Class<?>> sharedClasses = Arrays.<Class<?>> asList(SHARED_CLASSES);
 
     List<Class<?>> clientClasses = new ArrayList<Class<?>>();
     clientClasses.addAll(sharedClasses);
-    clientClasses.addAll(aptClasses);
     clientClasses.add(UrlRequestTransport.class);
 
     List<Class<?>> serverClasses = new ArrayList<Class<?>>();
@@ -680,9 +819,12 @@ public class RequestFactoryJarExtractor {
      * lookup, since the gwt-user code is compiled separately from its tests.
      */
     try {
-      SEEDS.put("test" + CODE_AND_SOURCE, Collections.unmodifiableList(Arrays.<Class<?>> asList(
-          Class.forName("com.google.web.bindery.requestfactory.vm.RequestFactoryJreSuite"), Class
-              .forName("com.google.web.bindery.requestfactory.server.SimpleBar"))));
+      List<Class<?>> testClasses =
+          Collections.unmodifiableList(Arrays.<Class<?>> asList(Class
+              .forName("com.google.web.bindery.requestfactory.vm.RequestFactoryJreSuite"), Class
+              .forName("com.google.web.bindery.requestfactory.server.SimpleBar")));
+      SEEDS.put("test", testClasses);
+      SEEDS.put("test" + SOURCE_ONLY, testClasses);
     } catch (ClassNotFoundException ignored) {
     }
   }
@@ -703,11 +845,12 @@ public class RequestFactoryJarExtractor {
       System.err.println("Unknown target: " + target);
       System.exit(1);
     }
-    Map<String, byte[]> resources = createResources(target, seeds);
+    Map<String, byte[]> resources = createResources(seeds);
     Mode mode = Mode.match(target);
     Logger errorContext = Logger.getLogger(RequestFactoryJarExtractor.class.getName());
-    ClassLoaderLoader classLoader =
-        new ClassLoaderLoader(Thread.currentThread().getContextClassLoader());
+    RequestFactoryJarExtractor.ClassLoaderLoader classLoader =
+        new RequestFactoryJarExtractor.ClassLoaderLoader(Thread.currentThread()
+            .getContextClassLoader());
     JarEmitter jarEmitter = new JarEmitter(new File(args[1]));
     RequestFactoryJarExtractor extractor =
         new RequestFactoryJarExtractor(errorContext, classLoader, jarEmitter, seeds, resources,
@@ -716,21 +859,14 @@ public class RequestFactoryJarExtractor {
     System.exit(extractor.isExecutionFailed() ? 1 : 0);
   }
 
-  private static Map<String, byte[]> createResources(String target, List<Class<?>> seeds)
+  private static Map<String, byte[]> createResources(List<Class<?>> seeds)
       throws UnsupportedEncodingException, IOException {
     Map<String, byte[]> resources;
-    if (seeds.contains(RfApt.class)) {
+    if (seeds.contains(RfValidator.class)) {
       // Add the annotation processor manifest
       resources =
           Collections.singletonMap("META-INF/services/" + Processor.class.getCanonicalName(),
-              (RfApt.class.getCanonicalName() + "\n" + RfValidator.class.getCanonicalName())
-                  .getBytes("UTF-8"));
-    } else if (("test" + CODE_AND_SOURCE).equals(target)) {
-      // Combine all type token maps to run tests
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      TypeTokenResolver resolver = TypeTokenResolver.loadFromClasspath();
-      resolver.store(out);
-      resources = Collections.singletonMap(TypeTokenResolver.TOKEN_MANIFEST, out.toByteArray());
+              RfValidator.class.getCanonicalName().getBytes("UTF-8"));
     } else {
       resources = Collections.emptyMap();
     }
@@ -751,8 +887,8 @@ public class RequestFactoryJarExtractor {
    * 
    * @return <code>true</code> if the visitor was successfully visited
    */
-  private static boolean visit(ErrorContext logger, Loader loader, String internalName,
-      ClassVisitor visitor) {
+  private static boolean visit(RequestFactoryJarExtractor.ErrorContext logger,
+      RequestFactoryJarExtractor.Loader loader, String internalName, ClassVisitor visitor) {
     assert Name.isInternalName(internalName) : "internalName";
     logger.spam("Visiting " + internalName);
     InputStream inputStream = null;
@@ -783,8 +919,8 @@ public class RequestFactoryJarExtractor {
   private final Emitter emitter;
   private final ExecutorService ex;
   private final BlockingQueue<Future<?>> inProcess = new LinkedBlockingQueue<Future<?>>();
-  private final ErrorContext logger;
-  private final Loader loader;
+  private final RequestFactoryJarExtractor.ErrorContext logger;
+  private final RequestFactoryJarExtractor.Loader loader;
   private final Mode mode;
   private final Map<String, byte[]> resources;
   private final List<Class<?>> seeds;
@@ -792,9 +928,9 @@ public class RequestFactoryJarExtractor {
   private final Set<String> sources = new ConcurrentSkipListSet<String>();
   private final ExecutorService writerService;
 
-  public RequestFactoryJarExtractor(Logger logger, Loader loader, Emitter emitter,
-      List<Class<?>> seeds, Map<String, byte[]> resources, Mode mode) {
-    this.logger = new ErrorContext(logger);
+  public RequestFactoryJarExtractor(Logger logger, RequestFactoryJarExtractor.Loader loader,
+      Emitter emitter, List<Class<?>> seeds, Map<String, byte[]> resources, Mode mode) {
+    this.logger = new RequestFactoryJarExtractor.ErrorContext(logger);
     this.loader = loader;
     this.emitter = emitter;
     this.resources = resources;

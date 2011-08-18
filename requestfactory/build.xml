@@ -12,13 +12,15 @@
     <delete file="${gwt.build.lib}/requestfactory-server.jar" />
     <delete file="${gwt.build.lib}/requestfactory-server-src.jar" />
     <delete file="${gwt.build.lib}/requestfactory-server+src.jar" />
-    <delete file="${gwt.build.lib}/requestfactory-test+src.jar" />
+    <delete file="${gwt.build.lib}/requestfactory-test.jar" />
+    <delete file="${gwt.build.lib}/requestfactory-test-src.jar" />
+    <delete file="${gwt.build.lib}/requestfactory-test-validated.jar" />
   </target>
 
   <!-- Build a jar file containing a subset of requestfactory -->
   <macrodef name="requestfactory-jar">
     <!--
-         "target" should be one of {client,server,all}[(+|-)src] or test+src.
+         "target" should be one of {client,server,all}[(+|-)src] or test[-src].
          -src includes .java files only, +src includes .java and .class files
     -->
     <attribute name="target" default="client"/>
@@ -43,6 +45,11 @@
   <!-- Targets for individual jars -->
   <target name="requestfactory-apt" description="Build RequestFactory apt jar">
     <requestfactory-jar target="apt"/>
+  </target>
+
+  <!-- Useful for Android testing -->
+  <target name="requestfactory-all" description="Build RequestFactory all jar">
+    <requestfactory-jar target="all"/>
   </target>
 
   <target name="requestfactory-client" description="Build RequestFactory client jar">
@@ -70,8 +77,9 @@
   </target>
 
   <!-- This target requires classes from ../build/{dev,user}/bin-test -->
-  <target name="requestfactory-test+src" description="Build RequestFactory test source/class jar">
-    <requestfactory-jar target="test+src" />
+  <target name="requestfactory-test" description="Build RequestFactory test source/class jar">
+    <requestfactory-jar target="test" />
+    <requestfactory-jar target="test-src" />
   </target>
 
   <!-- Build all client jars -->
@@ -88,7 +96,28 @@
   <!-- Run RequestFactoryJreSuite from the requestfactory-test+src jar.
        Assumes test classes have been built in the trunk directory
   -->
-  <target name="test" depends="requestfactory-test+src" description="Run RequestFactoryJreSuite">
+  <target name="test" depends="requestfactory-test" description="Run RequestFactoryJreSuite">
+    <!-- There's no direct dependency on the Deobfuscator builders, so this gives us an opportunity
+         to test the post-compilation ValidationTool to generate the metadata from the precompiled
+         class files. If a new RequestFactory types is added without the argument list below being
+         updated, a runtime error will occur giving the name of the RequestFactory that needs to
+         be validated.
+    -->
+    <java failonerror="true" fork="true"
+      classname="com.google.web.bindery.requestfactory.apt.ValidationTool" >
+      <classpath>
+        <fileset dir="${gwt.build.lib}" includes="requestfactory-apt.jar" />
+        <fileset dir="${gwt.build.lib}" includes="requestfactory-client.jar" />
+        <fileset dir="${gwt.build.lib}" includes="requestfactory-test.jar" />
+      </classpath>
+      <arg path="${gwt.build.lib}/requestfactory-test-validated.jar" />
+      <arg value="com.google.web.bindery.requestfactory.gwt.client.RequestFactoryPolymorphicTest.Factory" />
+      <arg value="com.google.web.bindery.requestfactory.shared.BoxesAndPrimitivesTest.Factory" />
+      <arg value="com.google.web.bindery.requestfactory.shared.ComplexKeysTest.Factory" />
+      <arg value="com.google.web.bindery.requestfactory.shared.LocatorTest.Factory" />
+      <arg value="com.google.web.bindery.requestfactory.shared.ServiceInheritanceTest$Factory" />
+      <arg value="com.google.web.bindery.requestfactory.shared.SimpleRequestFactory" />
+    </java>
     <java failonerror="true" fork="true"
       classname="com.google.web.bindery.requestfactory.vm.RequestFactoryJreSuite">
       <jvmarg value="-Xss8m" />
@@ -100,9 +129,9 @@
         <fileset dir="${gwt.tools.lib}" includes="hibernate/validator/hibernate-validator-4.1.0.Final.jar" />
         <fileset dir="${gwt.tools.lib}" includes="javax/validation/validation-api-1.0.0.GA.jar" />
         <fileset dir="${gwt.tools.lib}" includes="javax/xml/bind/jaxb-api-2.1.jar" />
-        <fileset dir="${gwt.build.lib}" includes="requestfactory-apt.jar" />
-        <fileset dir="${gwt.build.lib}" includes="requestfactory-test+src.jar" />
-
+        <fileset dir="${gwt.build.lib}" includes="requestfactory-test.jar" />
+        <fileset dir="${gwt.build.lib}" includes="requestfactory-test-src.jar" />
+        <fileset dir="${gwt.build.lib}" includes="requestfactory-test-validated.jar" />
       </classpath>
     </java>
   </target>

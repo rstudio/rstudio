@@ -119,16 +119,6 @@ class DomainChecker extends ScannerBase<Void> {
     }
   }
 
-  private static ExecutableType viewIn(TypeElement lookIn, ExecutableElement methodElement,
-      State state) {
-    try {
-      return (ExecutableType) state.types.asMemberOf(state.types.getDeclaredType(lookIn),
-          methodElement);
-    } catch (IllegalArgumentException e) {
-      return (ExecutableType) methodElement.asType();
-    }
-  }
-
   /**
    * This is used as the target for errors since generic methods show up as
    * synthetic elements that don't correspond to any source.
@@ -203,8 +193,8 @@ class DomainChecker extends ScannerBase<Void> {
       state.poison(clientMethodElement, Messages.domainMissingMethod(sb));
       return null;
     }
-
-    /*
+    
+     /*
      * Check the domain method for any requirements for it to be static.
      * InstanceRequests assume instance methods on the domain type.
      */
@@ -221,8 +211,9 @@ class DomainChecker extends ScannerBase<Void> {
       state.poison(checkedElement, Messages.domainMethodWrongModifier(true, domainMethod
           .getSimpleName()));
     }
-    state.debug(clientMethodElement, "Found domain method %s", domainMethod.toString());
 
+    // Record the mapping
+    state.addMapping(clientMethodElement, domainMethod);
     return null;
   }
 
@@ -232,7 +223,7 @@ class DomainChecker extends ScannerBase<Void> {
     checkedElement = clientTypeElement;
     boolean isEntityProxy = state.types.isSubtype(clientType, state.entityProxyType);
     currentTypeIsProxy = isEntityProxy || state.types.isSubtype(clientType, state.valueProxyType);
-    domainElement = state.getClientToDomainMap().get(clientTypeElement);
+    domainElement = (TypeElement) state.getClientToDomainMap().get(clientTypeElement);
     if (domainElement == null) {
       // A proxy with an unresolved domain type (e.g. ProxyForName(""))
       return null;

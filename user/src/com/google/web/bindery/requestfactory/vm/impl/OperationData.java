@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.web.bindery.requestfactory.server;
+package com.google.web.bindery.requestfactory.vm.impl;
 
 import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.commons.Method;
@@ -21,7 +21,7 @@ import com.google.gwt.dev.asm.commons.Method;
 /**
  * Describes operations that the client may ask the server to perform.
  */
-class OperationData {
+public class OperationData {
   /**
    * Creates {@link OperationData} instances.
    */
@@ -49,22 +49,22 @@ class OperationData {
       return toReturn;
     }
 
-    public Builder setClientMethodDescriptor(String clientMethodDescriptor) {
+    public Builder withClientMethodDescriptor(String clientMethodDescriptor) {
       d.clientMethodDescriptor = clientMethodDescriptor;
       return this;
     }
 
-    public Builder setDomainMethodDescriptor(String domainMethodDescriptor) {
+    public Builder withDomainMethodDescriptor(String domainMethodDescriptor) {
       d.domainMethodDescriptor = domainMethodDescriptor;
       return this;
     }
 
-    public Builder setMethodName(String methodName) {
+    public Builder withMethodName(String methodName) {
       d.methodName = methodName;
       return this;
     }
 
-    public Builder setRequestContext(String requestContext) {
+    public Builder withRequestContext(String requestContext) {
       d.requestContextBinaryName = requestContext;
       return this;
     }

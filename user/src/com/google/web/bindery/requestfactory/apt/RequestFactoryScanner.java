@@ -41,7 +41,9 @@ class RequestFactoryScanner extends ScannerBase<Void> {
       if (!returnTypeElement.getKind().equals(ElementKind.INTERFACE)) {
         state.poison(x, Messages.factoryMustReturnInterface(returnTypeElement.getSimpleName()));
       } else {
-        state.maybeScanContext((TypeElement) returnTypeElement);
+        TypeElement contextElement = (TypeElement) returnTypeElement;
+        state.maybeScanContext(contextElement);
+        state.requireMapping(contextElement);
       }
     } else {
       state.poison(x, Messages.factoryMustBeAssignable(state.requestContextType.asElement()

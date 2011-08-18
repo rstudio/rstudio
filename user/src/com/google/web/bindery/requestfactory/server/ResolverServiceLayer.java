@@ -24,12 +24,12 @@ import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;
 import com.google.web.bindery.requestfactory.shared.Service;
 import com.google.web.bindery.requestfactory.shared.ServiceName;
+import com.google.web.bindery.requestfactory.vm.impl.Deobfuscator;
 import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
 
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 /**
  * Implements all of the resolution methods in ServiceLayer.
@@ -37,24 +37,14 @@ import java.util.logging.Logger;
 final class ResolverServiceLayer extends ServiceLayerDecorator {
 
   private static Deobfuscator deobfuscator;
-  private static final Logger log = Logger.getLogger(ServiceLayer.class.getName());
 
-  private static synchronized boolean updateDeobfuscator(ClassLoader classLoader, String binaryName) {
-    RequestFactoryInterfaceValidator validator =
-        new RequestFactoryInterfaceValidator(log,
-            new RequestFactoryInterfaceValidator.ClassLoaderLoader(classLoader));
-    validator.antidote();
-    validator.validateRequestFactory(binaryName);
-    if (validator.isPoisoned()) {
-      return false;
+  private static synchronized void updateDeobfuscator(Class<? extends RequestFactory> clazz,
+      ClassLoader resolveClassesWith) {
+    Deobfuscator.Builder builder = Deobfuscator.Builder.load(clazz, resolveClassesWith);
+    if (deobfuscator != null) {
+      builder.merge(deobfuscator);
     }
-    if (deobfuscator == null) {
-      deobfuscator = validator.getDeobfuscator();
-    } else {
-      deobfuscator =
-          new Deobfuscator.Builder().merge(deobfuscator).merge(validator.getDeobfuscator()).build();
-    }
-    return true;
+    deobfuscator = builder.build();
   }
 
   @Override
@@ -182,10 +172,9 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
 
   @Override
   public Class<? extends RequestFactory> resolveRequestFactory(String binaryName) {
-    if (!updateDeobfuscator(getTop().getDomainClassLoader(), binaryName)) {
-      die(null, "The RequestFactory %s did not pass validation", binaryName);
-    }
-    return forName(binaryName).asSubclass(RequestFactory.class);
+    Class<? extends RequestFactory> toReturn = forName(binaryName).asSubclass(RequestFactory.class);
+    updateDeobfuscator(toReturn, getTop().getDomainClassLoader());
+    return toReturn;
   }
 
   @Override

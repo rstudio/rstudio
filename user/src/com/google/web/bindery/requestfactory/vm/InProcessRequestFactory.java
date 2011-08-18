@@ -31,10 +31,9 @@ import com.google.web.bindery.requestfactory.shared.impl.BaseProxyCategory;
 import com.google.web.bindery.requestfactory.shared.impl.EntityProxyCategory;
 import com.google.web.bindery.requestfactory.shared.impl.ValueProxyCategory;
 import com.google.web.bindery.requestfactory.vm.InProcessRequestContext.RequestContextHandler;
+import com.google.web.bindery.requestfactory.vm.impl.Deobfuscator;
 import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
-import com.google.web.bindery.requestfactory.vm.impl.TypeTokenResolver;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -74,15 +73,17 @@ class InProcessRequestFactory extends AbstractRequestFactory {
   }
 
   private final Class<? extends RequestFactory> requestFactoryInterface;
-  private final TypeTokenResolver deobfuscator;
+  private final Deobfuscator deobfuscator;
 
   public InProcessRequestFactory(Class<? extends RequestFactory> requestFactoryInterface) {
     this.requestFactoryInterface = requestFactoryInterface;
-    try {
-      deobfuscator = TypeTokenResolver.loadFromClasspath();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    deobfuscator =
+        Deobfuscator.Builder.load(requestFactoryInterface,
+            Thread.currentThread().getContextClassLoader()).build();
+  }
+
+  public Deobfuscator getDeobfuscator() {
+    return deobfuscator;
   }
 
   @Override
@@ -130,9 +131,5 @@ class InProcessRequestFactory extends AbstractRequestFactory {
   @Override
   protected String getTypeToken(Class<? extends BaseProxy> clazz) {
     return isEntityType(clazz) || isValueType(clazz) ? OperationKey.hash(clazz.getName()) : null;
-  }
-
-  TypeTokenResolver getTypeTokenResolver() {
-    return deobfuscator;
   }
 }

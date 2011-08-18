@@ -15,12 +15,36 @@
  */
 package com.google.web.bindery.requestfactory.apt;
 
+import com.google.web.bindery.requestfactory.shared.JsonRpcService;
+import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;
+import com.google.web.bindery.requestfactory.shared.Service;
+import com.google.web.bindery.requestfactory.shared.ServiceName;
 import com.google.web.bindery.requestfactory.shared.impl.AbstractRequestContext;
 
 interface MyRequestFactory extends RequestFactory {
+
+  @Expect(method = "contextMustBeAnnotated", args = "ReferencedContextWithoutMapping")
+  interface ReferencedContextWithoutMapping extends RequestContext {
+  }
+
+  // No error expected
+  interface UnreferencedContextWithoutMapping extends RequestContext {
+  }
+
+  @Expected({
+      @Expect(method = "redundantAnnotation", args = "ServiceName"),
+      @Expect(method = "redundantAnnotation", args = "JsonRpcService")})
+  @Service(Object.class)
+  @ServiceName("java.lang.Object")
+  @JsonRpcService
+  interface UnreferencedContextWithRedundantMapping extends RequestContext {
+  }
+
   @Expect(method = "factoryMustReturnInterface", args = "AbstractRequestContext")
   AbstractRequestContext concreteContext();
+
+  ReferencedContextWithoutMapping shouldError();
 
   @Expected({
       @Expect(method = "factoryNoMethodParameters"),

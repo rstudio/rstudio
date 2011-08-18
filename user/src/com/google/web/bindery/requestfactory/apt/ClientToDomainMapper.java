@@ -68,7 +68,8 @@ class ClientToDomainMapper extends TypeVisitorBase<TypeMirror> {
        * would also need to be annotated with an @ProxyFor mapping. This can be
        * done once RFIV is removed, since it only allows homogenous collections.
        */
-      TypeElement domainType = state.getClientToDomainMap().get(state.types.asElement(x));
+      TypeElement domainType =
+          (TypeElement) state.getClientToDomainMap().get(state.types.asElement(x));
       if (domainType == null) {
         return defaultAction(x, state);
       }

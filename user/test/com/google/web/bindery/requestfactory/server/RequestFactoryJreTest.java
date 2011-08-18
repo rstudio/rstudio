@@ -19,17 +19,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryTest;
 import com.google.web.bindery.requestfactory.server.testing.InProcessRequestTransport;
-import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;
-import com.google.web.bindery.requestfactory.shared.SimpleBarProxy;
-import com.google.web.bindery.requestfactory.shared.SimpleFooProxy;
 import com.google.web.bindery.requestfactory.shared.SimpleRequestFactory;
 import com.google.web.bindery.requestfactory.vm.RequestFactorySource;
-import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
-import com.google.web.bindery.requestfactory.vm.impl.TypeTokenResolver;
 import com.google.web.bindery.requestfactory.vm.testing.UrlRequestTransport;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -37,8 +31,7 @@ import java.net.URL;
  * Runs the RequestFactory tests in-process.
  */
 public class RequestFactoryJreTest extends RequestFactoryTest {
-  private static final String TEST_SERVER_ADDRESS = System
-      .getProperty("RequestFactory.testUrl");
+  private static final String TEST_SERVER_ADDRESS = System.getProperty("RequestFactory.testUrl");
 
   public static <T extends RequestFactory> T createInProcess(Class<T> clazz) {
     EventBus eventBus = new SimpleEventBus();
@@ -63,20 +56,8 @@ public class RequestFactoryJreTest extends RequestFactoryTest {
     return null;
   }
 
-  public void testTypeTokenResolver() throws IOException {
-    TypeTokenResolver resolver = TypeTokenResolver.loadFromClasspath();
-    testResolver(resolver, SimpleBarProxy.class);
-    testResolver(resolver, SimpleFooProxy.class);
-  }
-
   @Override
   protected SimpleRequestFactory createFactory() {
     return createInProcess(SimpleRequestFactory.class);
-  }
-
-  private void testResolver(TypeTokenResolver resolver, Class<? extends BaseProxy> type) {
-    String token = OperationKey.hash(type.getName());
-    String typeName = resolver.getTypeFromToken(token);
-    assertEquals(type.getName(), typeName);
   }
 }

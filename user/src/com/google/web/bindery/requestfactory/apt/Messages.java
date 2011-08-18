@@ -36,18 +36,30 @@ class Messages {
    */
 
   public static String contextMissingDomainType(Object domainTypeName) {
-    return String.format("Cannot fully validate context since domain type %s is not available",
-        domainTypeName);
+    return String.format("Cannot fully validate context since domain type %s is not available.\n"
+        + "You must run the ValidationTool as part of your server build process.", domainTypeName);
   }
 
   public static String contextMustBeAnnotated(Object requestContextName) {
-    return String.format("A %s must be annotated with %s, %s, or %s", requestContextName,
+    return String.format("The type %s must be annotated with %s, %s, or %s", requestContextName,
         Service.class.getSimpleName(), ServiceName.class.getSimpleName(), JsonRpcService.class
             .getSimpleName());
   }
 
   public static String contextRequiredReturnTypes(Object requestName, Object instanceRequestName) {
     return String.format("The return type must be a %s or %s", requestName, instanceRequestName);
+  }
+
+  public static String deobfuscatorMissingContext(Object contextName) {
+    return String.format("Could not load domain mapping for context %s.\n"
+        + "Check that both the shared interfaces and server domain types are on the classpath.",
+        contextName);
+  }
+
+  public static String deobfuscatorMissingProxy(Object proxyName) {
+    return String.format("Could not load domain mapping for proxy %s.\n"
+        + "Check that both the shared interfaces and server domain types are on the classpath.",
+        proxyName);
   }
 
   public static String domainFindNotStatic(Object domainTypeName) {
@@ -111,14 +123,19 @@ class Messages {
         : "the return", proxyTypeName);
   }
 
+  public static String noSuchType(String binaryTypeName) {
+    return String.format("Could not find root type %s", binaryTypeName);
+  }
+
   public static String proxyMissingDomainType(Object missingDomainName) {
     return String.format("Cannot fully validate proxy since type %s is not available",
         missingDomainName);
   }
 
-  public static String proxyMustBeAnnotated() {
-    return String.format("A proxy must be annotated with %s, %s, or %s", ProxyFor.class
-        .getSimpleName(), ProxyForName.class.getSimpleName(), JsonRpcProxy.class.getSimpleName());
+  public static String proxyMustBeAnnotated(Object typeName) {
+    return String.format("The proxy type %s must be annotated with %s, %s, or %s", typeName,
+        ProxyFor.class.getSimpleName(), ProxyForName.class.getSimpleName(), JsonRpcProxy.class
+            .getSimpleName());
   }
 
   public static String proxyOnlyGettersSetters() {

@@ -276,7 +276,33 @@
           </systemProperties>
         </configuration>
       </plugin>
-      
+
+      <!-- Run the RequestFactory ValidationTool -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.2</version>
+        <executions>
+          <execution>
+            <phase>process-classes</phase>
+            <configuration>
+              <id>VerifyRequestFactoryInterfaces</id>
+              <executable>java</executable>
+              <arguments>
+                <argument>-cp</argument>
+                <classpath />
+                <argument>com.google.web.bindery.requestfactory.apt.ValidationTool</argument>
+                <argument>${project.build.outputDirectory}</argument>
+                <argument>com.google.gwt.sample.mobilewebapp.shared.MobileWebAppRequestFactory</argument>
+              </arguments>
+            </configuration>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
       <!-- Copy static web files before executing gwt:run -->
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
