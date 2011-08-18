@@ -37,7 +37,7 @@ public class LogRecord_ServerCustomFieldSerializer extends ServerCustomFieldSeri
       Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
     String loggerName = streamReader.readString();
     Long millis = streamReader.readLong();
-    Object throwable = streamReader.readObject(Throwable.class, resolvedTypes);
+    Object throwable = streamReader.readObject(SerializableThrowable.class, resolvedTypes);
 
     instance.setLoggerName(loggerName);
     instance.setMillis(millis);
@@ -64,8 +64,8 @@ public class LogRecord_ServerCustomFieldSerializer extends ServerCustomFieldSeri
   }
 
   @Override
-  public LogRecord instantiateInstance(ServerSerializationStreamReader reader)
-      throws SerializationException {
+  public LogRecord instantiateInstance(ServerSerializationStreamReader reader, Class<?> instanceClass,
+      DequeMap<Type, Type> resolvedTypes) throws SerializationException {
     return LogRecord_CustomFieldSerializer.instantiate(reader);
   }
 

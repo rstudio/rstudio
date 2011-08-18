@@ -98,6 +98,7 @@ public class LoggingRPCTest extends GWTTestCase {
     service.echoLogRecord(expectedLogRecord, new AsyncCallback<LogRecord>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
+        fail(caught.getMessage());
       }
 
       public void onSuccess(LogRecord result) {
@@ -106,7 +107,6 @@ public class LoggingRPCTest extends GWTTestCase {
         finishTest();
       }
     });
-    finishTest();
   }
 
   private LoggingRPCTestServiceAsync getServiceAsync() {
