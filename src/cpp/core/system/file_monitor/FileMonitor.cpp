@@ -15,6 +15,7 @@
 
 #include <core/system/FileMonitor.hpp>
 
+#include <list>
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -245,13 +246,11 @@ namespace detail {
 void run(const boost::function<void()>& checkForInput);
 
 // register a new file monitor
-void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks);
+Handle registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks);
 
 // unregister a file monitor
 void unregisterMonitor(Handle handle);
 
-// unregister all monitors
-void unregisterAll();
 
 } // namespace impl
 
@@ -316,6 +315,10 @@ CallbackQueue& callbackQueue()
    return instance;
 }
 
+
+// track active handles so we can implement unregisterAll
+std::list<Handle> s_activeHandles;
+
 void checkForInput()
 {
    // this function is called from the platform specific thread run-loop
@@ -329,15 +332,40 @@ void checkForInput()
       switch(command.type())
       {
       case RegistrationCommand::Register:
-         detail::registerMonitor(command.filePath(), command.callbacks());
+      {
+         Handle handle = detail::registerMonitor(command.filePath(),
+                                                 command.callbacks());
+         if (handle != NULL)
+            s_activeHandles.push_back(handle);
          break;
+      }
+
       case RegistrationCommand::Unregister:
+      {
          detail::unregisterMonitor(command.handle());
+         s_activeHandles.remove(command.handle());
          break;
+      }
+
       case RegistrationCommand::None:
          break;
       }
    }
+}
+
+void unregisterAll()
+{
+   // make a copy of all active handles so we can unregister them
+   // (unregistering mutates the list so that's why we need a copy)
+   std::vector<Handle> activeHandles;
+   std::copy(s_activeHandles.begin(),
+             s_activeHandles.end(),
+             std::back_inserter(activeHandles));
+
+   // unregister all
+   std::for_each(activeHandles.begin(),
+                 activeHandles.end(),
+                 detail::unregisterMonitor);
 }
 
 void fileMonitorThreadMain()
@@ -348,7 +376,7 @@ void fileMonitorThreadMain()
    }
    catch(const boost::thread_interrupted& e)
    {
-      file_monitor::detail::unregisterAll();
+      unregisterAll();
    }
    CATCH_UNEXPECTED_EXCEPTION
 }

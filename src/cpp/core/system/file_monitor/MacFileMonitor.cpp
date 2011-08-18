@@ -15,8 +15,6 @@
 
 #include <CoreServices/CoreServices.h>
 
-#include <list>
-
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -126,16 +124,12 @@ void stopInvalidateAndReleaseEventStream(FSEventStreamRef streamRef)
    invalidateAndReleaseEventStream(streamRef);
 }
 
-// track active handles so we can implement unregisterAll
-std::list<Handle> s_activeHandles;
-
-
 } // anonymous namespace
 
 namespace detail {
 
 // register a new file monitor
-void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
+Handle registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
 {
    // allocate file path
    std::string path = filePath.absolutePath();
@@ -148,7 +142,7 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::not_enough_memory,
                                        ERROR_LOCATION));
-      return;
+      return NULL;
    }
    CFRefScope filePathRefScope(filePathRef);
 
@@ -162,7 +156,7 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::not_enough_memory,
                                        ERROR_LOCATION));
-      return;
+      return NULL;
    }
    CFRefScope pathsArrayRefScope(pathsArrayRef);
 
@@ -193,7 +187,7 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::no_stream_resources,
                                        ERROR_LOCATION));
-      return;
+      return NULL;
    }
 
    // schedule with the run loop
@@ -209,7 +203,7 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::no_stream_resources,
                                        ERROR_LOCATION));
-      return;
+      return NULL;
 
    }
 
@@ -222,7 +216,7 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
 
        // return error
        callbacks.onRegistrationError(error);
-       return;
+       return NULL;
    }
 
    // now that we have finished the file listing we know we have a valid
@@ -234,11 +228,11 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
    // so we release it here to relinquish ownership
    autoPtrContext.release();
 
-   // track the handle
-   s_activeHandles.push_back((Handle*)pContext);
-
    // notify the caller that we have successfully registered
    callbacks.onRegistered((Handle)pContext, pContext->fileTree);
+
+   // return the handle
+   return (Handle)pContext;
 }
 
 // unregister a file monitor
@@ -250,24 +244,8 @@ void unregisterMonitor(Handle handle)
    // stop, invalidate, release
    stopInvalidateAndReleaseEventStream(pContext->streamRef);
 
-   // untrack the handle
-   s_activeHandles.remove(handle);
-
    // delete context
    delete pContext;
-}
-
-void unregisterAll()
-{
-   // make a copy of all active handles so we can unregister them
-   // (unregistering mutates the list so that's why we need a copy)
-   std::vector<Handle> activeHandles;
-   std::copy(s_activeHandles.begin(),
-             s_activeHandles.end(),
-             std::back_inserter(activeHandles));
-
-   // unregister all
-   std::for_each(activeHandles.begin(), activeHandles.end(), unregisterMonitor);
 }
 
 void run(const boost::function<void()>& checkForInput)
@@ -281,10 +259,9 @@ void run(const boost::function<void()>& checkForInput)
       // process the run loop for 1 second
       SInt32 reason = ::CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
 
-      // if we were stopped then break
       if (reason == kCFRunLoopRunStopped)
       {
-         unregisterAll();
+         LOG_WARNING_MESSAGE("Unexpected stop of file monitor run loop");
          break;
       }
 
