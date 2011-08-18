@@ -17,8 +17,11 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.HasCell;
-import com.google.gwt.dom.builder.shared.ElementBuilderBase;
-import com.google.gwt.dom.builder.shared.TableRowBuilder;
+import com.google.gwt.dom.builder.shared.TableSectionBuilder;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.TableRowElement;
+
+import java.util.Collection;
 
 /**
  * Builder used to construct a CellTable.
@@ -28,63 +31,66 @@ import com.google.gwt.dom.builder.shared.TableRowBuilder;
 public interface CellTableBuilder<T> {
 
   /**
-   * Utility to help build a table.
-   * 
-   * @param <T> the row data type
-   */
-  abstract static class Utility<T> {
-
-    /**
-     * Only instantiable by CellTable implementation.
-     */
-    Utility() {
-    }
-
-    /**
-     * Create a {@link Context} object for the specific column index that can be
-     * passed to a Cell.
-     * 
-     * @param column the column index of the context
-     * @return a {@link Context} object
-     */
-    public abstract Context createContext(int column);
-
-    /**
-     * Render a Cell into the specified {@link ElementBuilderBase}. Use this
-     * method to ensure that the Cell Widget properly handles events originating
-     * in the Cell.
-     * 
-     * <p>
-     * The {@link ElementBuilderBase} must be in a state where attributes and
-     * html can be appended. If the builder already contains a child element,
-     * this method will fail.
-     * </p>
-     * 
-     * @param <C> the data type of the cell
-     * @param builder the {@link ElementBuilderBase} to render into
-     * @param context the {@link Context} of the cell
-     * @param column the column or {@link HasCell} to render
-     * @param rowValue the row value to render
-     * @see #createContext(int)
-     */
-    public abstract <C> void renderCell(ElementBuilderBase<?> builder, Context context,
-        HasCell<T, C> column, T rowValue);
-
-    /**
-     * Add a row to the table.
-     * 
-     * @return the row to add
-     */
-    public abstract TableRowBuilder startRow();
-  }
-
-  /**
-   * Build zero or more table rows for the specified row value using the
-   * {@link Utility}.
-   * 
+   * Build zero or more table rows for the specified row value.
+   *
    * @param rowValue the value for the row to render
    * @param absRowIndex the absolute row index
-   * @param utility the utility used to build the table
    */
-  void buildRow(T rowValue, int absRowIndex, Utility<T> utility);
+  void buildRow(T rowValue, int absRowIndex);
+  
+  /**
+   * Finish the building of rows and return the table section builder. Currently only
+   * {@link HtmlTableSectionBuilder} and its subclasses are supported.
+   */
+  TableSectionBuilder finish();
+  
+  /**
+   * Return the column containing an element.
+   *
+   * @param context the context for the element
+   * @param rowValue the value for the row corresponding to the element
+   * @param elm the elm that the column contains
+   * @return the immediate column containing the element
+   */
+  HasCell<T, ?> getColumn(Context context, T rowValue, Element elem);
+
+  /**
+   * Return all the columns that this table builder has renderred.
+   */
+  Collection<HasCell<T, ?>> getColumns();
+  
+  /**
+   * Get the index of the primary row from the associated {@link TableRowElement} (an TR element).
+   * 
+   * @param row the row element
+   * @return the row value index
+   */
+  int getRowValueIndex(TableRowElement row);
+  
+  /**
+   * Get the index of the subrow value from the associated
+   * {@link TableRowElement} (an TR element). The sub row value starts at 0 for the first row
+   * that represents a row value.
+   * 
+   * @param row the row element
+   * @return the subrow value index, or 0 if not found
+   */
+  int getSubrowValueIndex(TableRowElement row);
+  
+  /**
+   * Return if an element contains a cell. This may be faster to execute than {@link getColumn}.
+   *
+   * @param elem the element of interest
+   */
+  boolean isColumn(Element elem);
+  
+  /**
+   * Start building rows. User may want to reset the internal state of the table builder (e.g., 
+   * reset the internal table section builder). A flag isRebuildingAllRows is used to mark whether
+   * the builder is going to rebuild all rows. User may want to have different reset logic given
+   * this flag.
+   *
+   * @param isRebuildingAllRows is this start intended for rebuilding all rows
+   */
+  void start(boolean isRebuildingAllRows);
 }

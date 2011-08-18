@@ -25,11 +25,10 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.builder.shared.DivBuilder;
-import com.google.gwt.dom.builder.shared.ElementBuilderBase;
-import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
 import com.google.gwt.dom.builder.shared.HtmlTableSectionBuilder;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
+import com.google.gwt.dom.builder.shared.TableSectionBuilder;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
@@ -250,9 +249,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    * 
    * @param <T> the data type of the rows.
    */
-  public static class DefaultCellTableBuilder<T> implements CellTableBuilder<T> {
-
-    private AbstractCellTable<T> cellTable;
+  public static class DefaultCellTableBuilder<T> extends AbstractCellTableBuilder<T> {
 
     private final String evenRowStyle;
     private final String oddRowStyle;
@@ -265,8 +262,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     private final String selectedCellStyle;
 
     public DefaultCellTableBuilder(AbstractCellTable<T> cellTable) {
-      this.cellTable = cellTable;
-
+      super(cellTable);
       // Cache styles for faster access.
       Style style = cellTable.getResources().style();
       evenRowStyle = style.evenRow();
@@ -279,9 +275,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       lastColumnStyle = " " + style.lastColumn();
       selectedCellStyle = " " + style.selectedRowCell();
     }
-
+    
     @Override
-    public void buildRow(T rowValue, int absRowIndex, CellTableBuilder.Utility<T> utility) {
+    public void buildRowImpl(T rowValue, int absRowIndex) {
 
       // Calculate the row styles.
       SelectionModel<? super T> selectionModel = cellTable.getSelectionModel();
@@ -304,7 +300,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       }
 
       // Build the row.
-      TableRowBuilder tr = utility.startRow();
+      TableRowBuilder tr = startRow();
       tr.className(trClasses.toString());
 
       // Build the columns.
@@ -349,7 +345,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
         div.style().outlineStyle(OutlineStyle.NONE).endStyle();
 
         // Render the cell into the div.
-        utility.renderCell(div, context, column, rowValue);
+        renderCell(div, context, column, rowValue);
 
         // End the cell.
         div.endDiv();
@@ -671,8 +667,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
           count++;
         }
       } else {
-        while (insertBefore != null
-            && table.getRowValueIndex(insertBefore.<TableRowElement> cast()) < absEndIndex) {
+        while (insertBefore != null && table.tableBuilder.getRowValueIndex(
+            insertBefore.<TableRowElement> cast()) < absEndIndex) {
           Element next = insertBefore.getNextSiblingElement();
           section.removeChild(insertBefore);
           insertBefore = next;
@@ -816,119 +812,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Implementation for {@link CellTableBuilder.Utility}.
-   */
-  private class UtilityImpl extends CellTableBuilder.Utility<T> {
 
-    private int rowIndex;
-    private int subrowIndex;
-    private Object rowValueKey;
-    private final HtmlTableSectionBuilder tbody;
-
-    private UtilityImpl() {
-      /*
-       * TODO(jlabanca): Test with DomBuilder.
-       * 
-       * DOM manipulation is sometimes faster than String concatenation and
-       * innerHTML, but not when mixing the two. Cells render as HTML strings,
-       * so its faster to render the entire table as a string.
-       */
-      tbody = HtmlBuilderFactory.get().createTBodyBuilder();
-    }
-
-    @Override
-    public Context createContext(int column) {
-      return new Context(rowIndex, column, rowValueKey);
-    }
-
-    @Override
-    public <C> void renderCell(ElementBuilderBase<?> builder, Context context,
-        HasCell<T, C> column, T rowValue) {
-      // Generate a unique ID for the cell.
-      String cellId = cellToIdMap.get(column);
-      if (cellId == null) {
-        cellId = "cell-" + Document.get().createUniqueId();
-        idToCellMap.put(cellId, column);
-        cellToIdMap.put(column, cellId);
-      }
-      builder.attribute(CELL_ATTRIBUTE, cellId);
-
-      // Render the cell into the builder.
-      SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
-      if (column instanceof Column) {
-        /*
-         * If the HasCell is a Column, let it render the Cell itself. This is
-         * here for legacy support.
-         */
-        Column<T, C> theColumn = (Column<T, C>) column;
-        theColumn.render(context, rowValue, cellBuilder);
-      } else {
-        column.getCell().render(context, column.getValue(rowValue), cellBuilder);
-      }
-      builder.html(cellBuilder.toSafeHtml());
-    }
-
-    @Override
-    public TableRowBuilder startRow() {
-      // End any dangling rows.
-      while (tbody.getDepth() > 1) {
-        tbody.end();
-      }
-
-      // Verify the depth.
-      if (tbody.getDepth() < 1) {
-        throw new IllegalStateException(
-            "Cannot start a row.  Did you call TableRowBuilder.end() too many times?");
-      }
-
-      // Start the next row.
-      TableRowBuilder row = tbody.startTR();
-      row.attribute(ROW_ATTRIBUTE, rowIndex);
-      row.attribute(SUBROW_ATTRIBUTE, subrowIndex);
-      subrowIndex++;
-      return row;
-    }
-
-    /**
-     * Get the {@link TableSectionElement} containing the children.
-     */
-    private SafeHtml asSafeHtml() {
-      // End dangling elements.
-      while (tbody.getDepth() > 0) {
-        tbody.endTBody();
-      }
-
-      // Strip the table section tags off of the tbody.
-      String rawHtml = tbody.asSafeHtml().asString();
-      assert rawHtml.startsWith("<tbody>") : "Malformed html";
-      assert rawHtml.endsWith("</tbody>") : "Malformed html";
-      rawHtml = rawHtml.substring(7, rawHtml.length() - 8);
-      return SafeHtmlUtils.fromTrustedString(rawHtml);
-    }
-
-    private void setRowInfo(int rowIndex, T rowValue) {
-      this.rowIndex = rowIndex;
-      this.rowValueKey = getValueKey(rowValue);
-      this.subrowIndex = 0; // Reset the subrow.
-    }
-  }
-
-  /**
-   * The attribute used to indicate that an element contains a cell.
-   */
-  private static final String CELL_ATTRIBUTE = "__gwt_cell";
-
-  /**
-   * The attribute used to specify the logical row index.
-   */
-  private static final String ROW_ATTRIBUTE = "__gwt_row";
-
-  /**
-   * The attribute used to specify the subrow within a logical row value.
-   */
-  private static final String SUBROW_ATTRIBUTE = "__gwt_subrow";
-
-  /**
    * The table specific {@link Impl}.
    */
   private static Impl TABLE_IMPL;
@@ -942,12 +826,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     Set<String> consumedEvents = column.getCell().getConsumedEvents();
     return consumedEvents != null && consumedEvents.size() > 0;
   }
-
-  /**
-   * A mapping of unique cell IDs to the cell.
-   */
-  private final Map<String, HasCell<T, ?>> idToCellMap = new HashMap<String, HasCell<T, ?>>();
-  private final Map<HasCell<T, ?>, String> cellToIdMap = new HashMap<HasCell<T, ?>, String>();
 
   private boolean cellIsEditing;
   private final List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
@@ -1172,7 +1050,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   public void flush() {
     getPresenter().flush();
   }
-
+  
   /**
    * Get the column at the specified index.
    * 
@@ -1790,7 +1668,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     TableSectionElement targetTableSection = null;
     TableCellElement targetTableCell = null;
     Element cellParent = null;
-    String cellId = null;
     {
       Element maybeTableCell = null;
       Element cur = target;
@@ -1819,9 +1696,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
         }
 
         // Look for the most immediate cell parent if not already found.
-        String curCellId = isCellParent(cur);
-        if (cellParent == null && curCellId != null) {
-          cellId = curCellId;
+        boolean isColumn = tableBuilder.isColumn(cur);
+        if (cellParent == null && isColumn) {
           cellParent = cur;
         }
 
@@ -1883,9 +1759,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
        * Get the row index of the data value. This may not correspond to the DOM
        * row index if the user specifies multiple table rows per row object.
        */
-      int absRow = getRowValueIndex(targetTableRow);
+      int absRow = tableBuilder.getRowValueIndex(targetTableRow);
       int relRow = absRow - getPageStart();
-      int subrow = getSubrowValueIndex(targetTableRow);
+      int subrow = tableBuilder.getSubrowValueIndex(targetTableRow);
       if ("mouseover".equals(eventType)) {
         // Unstyle the old row if it is still part of the table.
         if (hoveringRow != null && getTableBodyElement().isOrHasChild(hoveringRow)) {
@@ -1920,11 +1796,15 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
 
       // Pass the event to the cell.
       if (cellParent != null && !previewEvent.isCanceled()) {
-        HasCell<T, ?> column = idToCellMap.get(cellId);
+        HasCell<T, ?> column;
         if (legacyRenderRowValues) {
           column = columns.get(col);
+        } else {
+          column = tableBuilder.getColumn(context, value, cellParent);
         }
-        fireEventToCell(event, eventType, cellParent, value, context, column);
+        if (column != null) {
+          fireEventToCell(event, eventType, cellParent, value, context, column);
+        }
       }
     }
   }
@@ -2082,9 +1962,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * but still supported.
      */
     if (html == null) {
-      cellToIdMap.clear();
-      idToCellMap.clear();
-      html = buildRowValues(values, getPageStart());
+      html = buildRowValues(values, getPageStart(), true);
     }
 
     TABLE_IMPL.replaceAllRows(this, getTableBodyElement(), CellBasedWidgetImpl.get().processHtml(
@@ -2102,7 +1980,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * but still supported.
      */
     if (html == null) {
-      html = buildRowValues(values, getPageStart() + start);
+      html = buildRowValues(values, getPageStart() + start, false);
     }
 
     TABLE_IMPL.replaceChildren(this, getTableBodyElement(), CellBasedWidgetImpl.get().processHtml(
@@ -2117,17 +1995,19 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       return false;
     }
 
-    String cellId = isCellParent(elem);
-    if (cellId == null) {
+    int row = getKeyboardSelectedRow();
+    int col = getKeyboardSelectedColumn();
+    T value = getVisibleItem(row);
+    Object key = getValueKey(value);
+    // TODO(pengzhuang): this doesn't support sub row selection?
+    Context context = new Context(row + getPageStart(), col, key);
+    HasCell<T, ?> column = tableBuilder.getColumn(context, value, elem);
+    if (column == null) {
       // The selected element does not contain a Cell.
       return false;
     }
 
-    HasCell<T, ?> column = idToCellMap.get(cellId);
-    if (column != null) {
-      resetFocusOnCellImpl(getKeyboardSelectedRow(), getKeyboardSelectedColumn(), column, elem);
-    }
-
+    resetFocusOnCellImpl(context, value, column, elem);
     return false;
   }
 
@@ -2212,10 +2092,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     int domIndex = Math.min(relRow, frameEnd);
     while (domIndex >= frameStart && domIndex <= frameEnd) {
       TableRowElement curRow = rows.getItem(domIndex);
-      int rowValueIndex = getRowValueIndex(curRow);
+      int rowValueIndex = tableBuilder.getRowValueIndex(curRow);
       if (rowValueIndex == absRow) {
         // Found a subrow in the row index.
-        int subrowValueIndex = getSubrowValueIndex(curRow);
+        int subrowValueIndex = tableBuilder.getSubrowValueIndex(curRow);
         if (subrow != subrowValueIndex) {
           // Shift to the correct subrow.
           int offset = subrow - subrowValueIndex;
@@ -2225,7 +2105,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
             return null;
           }
           curRow = rows.getItem(subrowIndex);
-          if (getRowValueIndex(curRow) != absRow) {
+          if (tableBuilder.getRowValueIndex(curRow) != absRow) {
             // The "subrow" is actually part of the next row.
             return null;
           }
@@ -2252,22 +2132,31 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    * 
    * @param values the row values to render
    * @param start the absolute start index
+   * @param isRebuildingAllRows is this going to rebuild all rows
    * @return a {@link SafeHtml} string containing the row values
    */
-  private SafeHtml buildRowValues(List<T> values, int start) {
-    UtilityImpl utility = new UtilityImpl();
+  private SafeHtml buildRowValues(List<T> values, int start, boolean isRebuildingAllRows) {
     int length = values.size();
     int end = start + length;
+    tableBuilder.start(isRebuildingAllRows);
     for (int i = start; i < end; i++) {
       T value = values.get(i - start);
-      utility.setRowInfo(i, value);
-      tableBuilder.buildRow(value, i, utility);
+      tableBuilder.buildRow(value, i);
     }
 
     // Update the properties of the table.
     coalesceCellProperties();
-
-    return utility.asSafeHtml();
+    TableSectionBuilder tableSectionBuilder = tableBuilder.finish();
+    if (tableSectionBuilder instanceof HtmlTableSectionBuilder) {
+      // Strip the table section tags off of the tbody.
+      String rawHtml = ((HtmlTableSectionBuilder) tableSectionBuilder).asSafeHtml().asString();
+      assert rawHtml.startsWith("<tbody>") : "Malformed html";
+      assert rawHtml.endsWith("</tbody>") : "Malformed html";
+      rawHtml = rawHtml.substring(7, rawHtml.length() - 8);
+      return SafeHtmlUtils.fromTrustedString(rawHtml);
+    } else {
+      throw new IllegalStateException("Only HTML table section builder is supported at this time");
+    }
   }
 
   /**
@@ -2290,7 +2179,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     dependsOnSelection = false;
     handlesSelection = false;
     isInteractive = false;
-    for (HasCell<T, ?> column : idToCellMap.values()) {
+    for (HasCell<T, ?> column : tableBuilder.getColumns()) {
       Cell<?> cell = column.getCell();
       if (cell.dependsOnSelection()) {
         dependsOnSelection = true;
@@ -2495,7 +2384,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * (including the tabIndex that we set) could be modified by its Cell. We
      * return the TD to be safe.
      */
-    if (isCellParent(td) != null) {
+    if (tableBuilder.isColumn(td)) {
       return td;
     }
 
@@ -2540,23 +2429,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
     return null;
   }
-
-  /**
-   * Get the index of the row value from the associated {@link TableRowElement}.
-   * 
-   * @param row the row element
-   * @return the row value index
-   */
-  private int getRowValueIndex(TableRowElement row) {
-    try {
-      return Integer.parseInt(row.getAttribute(ROW_ATTRIBUTE));
-    } catch (NumberFormatException e) {
-      // The attribute doesn't exist. Maybe the user is overriding
-      // renderRowValues().
-      return row.getSectionRowIndex() + getPageStart();
-    }
-  }
-
+  
   /**
    * Get the {@link IconCellDecorator} used to decorate sorted column headers.
    * 
@@ -2576,24 +2449,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
             new IconCellDecorator<SafeHtml>(resources.sortDescending(), new SafeHtmlCell());
       }
       return sortDescDecorator;
-    }
-  }
-
-  /**
-   * Get the index of the subrow value from the associated
-   * {@link TableRowElement}. The sub row value starts at 0 for the first row
-   * that represents a row value.
-   * 
-   * @param row the row element
-   * @return the subrow value index, or 0 if not found
-   */
-  private int getSubrowValueIndex(TableRowElement row) {
-    try {
-      return Integer.parseInt(row.getAttribute(SUBROW_ATTRIBUTE));
-    } catch (NumberFormatException e) {
-      // The attribute doesn't exist. Maybe the user is overriding
-      // renderRowValues().
-      return 0;
     }
   }
 
@@ -2619,20 +2474,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
 
     // Set the keyboard handler.
     setKeyboardSelectionHandler(new CellTableKeyboardSelectionHandler<T>(this));
-  }
-
-  /**
-   * Check if an element is the parent of a rendered cell.
-   * 
-   * @param elem the element to check
-   * @return the cellId if a cell parent, null if not
-   */
-  private String isCellParent(Element elem) {
-    if (elem == null) {
-      return null;
-    }
-    String cellId = elem.getAttribute(CELL_ATTRIBUTE);
-    return (cellId == null) || (cellId.length() == 0) ? null : cellId;
   }
 
   /**
@@ -2664,13 +2505,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
   }
 
-  private <C> boolean resetFocusOnCellImpl(int row, int col, HasCell<T, C> column,
+  private <C> boolean resetFocusOnCellImpl(Context context, T value, HasCell<T, C> column,
       Element cellParent) {
-    T value = getVisibleItem(row);
-    Object key = getValueKey(value);
     C cellValue = column.getValue(value);
     Cell<C> cell = column.getCell();
-    Context context = new Context(row + getPageStart(), col, key);
     return cell.resetFocus(context, cellParent, cellValue);
   }
 
@@ -2707,3 +2545,4 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
   }
 }
+

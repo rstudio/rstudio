@@ -110,16 +110,15 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     CellTableBuilder<String> builder =
         new AbstractCellTable.DefaultCellTableBuilder<String>(table) {
           @Override
-          public void buildRow(String rowValue, int absRowIndex,
-              CellTableBuilder.Utility<String> utility) {
+          public void buildRowImpl(String rowValue, int absRowIndex) {
             builtRows.add(absRowIndex);
-            TableRowBuilder tr = utility.startRow();
+            TableRowBuilder tr = startRow();
             tr.endTR(); // End the tr.
             tr.end(); // Accidentally end the table section.
 
             // Try to start another row.
             try {
-              utility.startRow();
+              startRow();
               fail("Expected IllegalStateException: tbody is already ended");
             } catch (IllegalStateException e) {
               // Expected.
@@ -143,14 +142,13 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     CellTableBuilder<String> builder =
         new AbstractCellTable.DefaultCellTableBuilder<String>(table) {
           @Override
-          public void buildRow(String rowValue, int absRowIndex,
-              CellTableBuilder.Utility<String> utility) {
-            super.buildRow(rowValue, absRowIndex, utility);
+          public void buildRowImpl(String rowValue, int absRowIndex) {
+            super.buildRowImpl(rowValue, absRowIndex);
 
             // Add child rows to row five.
             if (absRowIndex == 5) {
               for (int i = 0; i < 4; i++) {
-                TableRowBuilder tr = utility.startRow();
+                TableRowBuilder tr = startRow();
                 tr.startTD().colSpan(2).text("child " + i).endTD();
                 tr.endTR();
               }
@@ -188,11 +186,10 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     CellTableBuilder<String> builder =
         new AbstractCellTable.DefaultCellTableBuilder<String>(table) {
           @Override
-          public void buildRow(String rowValue, int absRowIndex,
-              CellTableBuilder.Utility<String> utility) {
+          public void buildRowImpl(String rowValue, int absRowIndex) {
             // Skip row index 5.
             if (absRowIndex != 5) {
-              super.buildRow(rowValue, absRowIndex, utility);
+              super.buildRowImpl(rowValue, absRowIndex);
             }
           }
         };
@@ -655,13 +652,12 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     CellTableBuilder<String> builder =
         new AbstractCellTable.DefaultCellTableBuilder<String>(table) {
           @Override
-          public void buildRow(String rowValue, int absRowIndex,
-              CellTableBuilder.Utility<String> utility) {
-            super.buildRow(rowValue, absRowIndex, utility);
+          public void buildRowImpl(String rowValue, int absRowIndex) {
+            super.buildRowImpl(rowValue, absRowIndex);
 
             // Add some children.
             for (int i = 0; i < 4; i++) {
-              TableRowBuilder tr = utility.startRow();
+              TableRowBuilder tr = startRow();
               tr.startTD().colSpan(2).text("child " + absRowIndex + ":" + i).endTD();
               tr.endTR();
             }

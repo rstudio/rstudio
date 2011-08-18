@@ -47,7 +47,7 @@ import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.AbstractCellTable.Style;
-import com.google.gwt.user.cellview.client.CellTableBuilder;
+import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent.ListHandler;
 import com.google.gwt.user.cellview.client.DataGrid;
@@ -132,7 +132,7 @@ public class CwCustomDataGrid extends ContentWidget {
    * A custom version of {@link CellTableBuilder}.
    */
   @ShowcaseSource
-  private class CustomTableBuilder implements CellTableBuilder<ContactInfo> {
+  private class CustomTableBuilder extends AbstractCellTableBuilder<ContactInfo> {
 
     private final int todayMonth;
     private final Set<Integer> showingFriends = new HashSet<Integer>();
@@ -145,6 +145,7 @@ public class CwCustomDataGrid extends ContentWidget {
 
     @SuppressWarnings("deprecation")
     public CustomTableBuilder(ListHandler<ContactInfo> sortHandler) {
+      super(dataGrid);
       // Cache styles for faster access.
       Style style = dataGrid.getResources().style();
       rowStyle = style.evenRow();
@@ -343,14 +344,13 @@ public class CwCustomDataGrid extends ContentWidget {
 
     @SuppressWarnings("deprecation")
     @Override
-    public void buildRow(ContactInfo rowValue, int absRowIndex,
-        CellTableBuilder.Utility<ContactInfo> utility) {
-      buildContactRow(rowValue, absRowIndex, utility, false);
+    public void buildRowImpl(ContactInfo rowValue, int absRowIndex) {
+      buildContactRow(rowValue, absRowIndex, false);
 
       // Display information about the user in another row that spans the entire
       // table.
       if (rowValue.getAge() > 65) {
-        TableRowBuilder row = utility.startRow();
+        TableRowBuilder row = startRow();
         TableCellBuilder td = row.startTD().colSpan(7).className(cellStyle);
         td.style().trustedBackgroundColor("#ffa").outlineStyle(OutlineStyle.NONE).endStyle();
         td.text(rowValue.getFirstName() + " is elegible for retirement benefits").endTD();
@@ -361,7 +361,7 @@ public class CwCustomDataGrid extends ContentWidget {
       // table.
       Date dob = rowValue.getBirthday();
       if (dob.getMonth() == todayMonth) {
-        TableRowBuilder row = utility.startRow();
+        TableRowBuilder row = startRow();
         TableCellBuilder td = row.startTD().colSpan(7).className(cellStyle);
         td.style().trustedBackgroundColor("#ccf").endStyle();
         td.text(rowValue.getFirstName() + "'s birthday is this month!").endTD();
@@ -372,7 +372,7 @@ public class CwCustomDataGrid extends ContentWidget {
       if (showingFriends.contains(rowValue.getId())) {
         Set<ContactInfo> friends = ContactDatabase.get().queryFriends(rowValue);
         for (ContactInfo friend : friends) {
-          buildContactRow(friend, absRowIndex, utility, true);
+          buildContactRow(friend, absRowIndex, true);
         }
       }
     }
@@ -382,12 +382,10 @@ public class CwCustomDataGrid extends ContentWidget {
      * 
      * @param rowValue the contact info
      * @param absRowIndex the absolute row index
-     * @param utility the utility used to add rows and Cells
      * @param isFriend true if this is a subrow, false if a top level row
      */
     @SuppressWarnings("deprecation")
-    private void buildContactRow(ContactInfo rowValue, int absRowIndex,
-        CellTableBuilder.Utility<ContactInfo> utility, boolean isFriend) {
+    private void buildContactRow(ContactInfo rowValue, int absRowIndex, boolean isFriend) {
       // Calculate the row styles.
       SelectionModel<? super ContactInfo> selectionModel = dataGrid.getSelectionModel();
       boolean isSelected =
@@ -408,7 +406,7 @@ public class CwCustomDataGrid extends ContentWidget {
         cellStyles += childCell;
       }
 
-      TableRowBuilder row = utility.startRow();
+      TableRowBuilder row = startRow();
       row.className(trClasses.toString());
 
       /*
@@ -422,7 +420,7 @@ public class CwCustomDataGrid extends ContentWidget {
       td.className(cellStyles);
       td.style().outlineStyle(OutlineStyle.NONE).endStyle();
       if (!isFriend) {
-        utility.renderCell(td, utility.createContext(0), dataGrid.getColumn(0), rowValue);
+        renderCell(td, createContext(0), dataGrid.getColumn(0), rowValue);
       }
       td.endTD();
 
@@ -436,7 +434,7 @@ public class CwCustomDataGrid extends ContentWidget {
       td.className(cellStyles);
       if (!isFriend) {
         td.style().outlineStyle(OutlineStyle.NONE).endStyle();
-        utility.renderCell(td, utility.createContext(1), dataGrid.getColumn(1), rowValue);
+        renderCell(td, createContext(1), dataGrid.getColumn(1), rowValue);
       }
       td.endTD();
 
@@ -447,7 +445,7 @@ public class CwCustomDataGrid extends ContentWidget {
       if (isFriend) {
         td.text(rowValue.getFirstName());
       } else {
-        utility.renderCell(td, utility.createContext(2), dataGrid.getColumn(2), rowValue);
+        renderCell(td, createContext(2), dataGrid.getColumn(2), rowValue);
       }
       td.endTD();
 
@@ -458,7 +456,7 @@ public class CwCustomDataGrid extends ContentWidget {
       if (isFriend) {
         td.text(rowValue.getLastName());
       } else {
-        utility.renderCell(td, utility.createContext(3), dataGrid.getColumn(3), rowValue);
+        renderCell(td, createContext(3), dataGrid.getColumn(3), rowValue);
       }
       td.endTD();
 
@@ -475,7 +473,7 @@ public class CwCustomDataGrid extends ContentWidget {
       if (isFriend) {
         td.text(rowValue.getCategory().getDisplayName());
       } else {
-        utility.renderCell(td, utility.createContext(5), dataGrid.getColumn(5), rowValue);
+        renderCell(td, createContext(5), dataGrid.getColumn(5), rowValue);
       }
       td.endTD();
 
