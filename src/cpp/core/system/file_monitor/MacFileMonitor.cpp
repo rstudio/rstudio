@@ -16,7 +16,6 @@
 #include <CoreServices/CoreServices.h>
 
 #include <list>
-#include <algorithm>
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -58,7 +57,7 @@ void addEvent(FileChangeEvent::Type type,
 
 Error processAdded(tree<FileInfo>::iterator parentIt,
                    const FileChangeEvent& fileChange,
-                   FileEventContext* pContext,
+                   tree<FileInfo>* pTree,
                    std::vector<FileChangeEvent>* pFileChanges)
 {
    if (fileChange.fileInfo().isDirectory())
@@ -72,10 +71,9 @@ Error processAdded(tree<FileInfo>::iterator parentIt,
 
       // merge in the sub-tree
       tree<FileInfo>::sibling_iterator addedIter =
-         pContext->fileTree.append_child(parentIt, fileChange.fileInfo());
-      pContext->fileTree.insert_subtree_after(addedIter,
-                                              subTree.begin());
-      pContext->fileTree.erase(addedIter);
+         pTree->append_child(parentIt, fileChange.fileInfo());
+      pTree->insert_subtree_after(addedIter, subTree.begin());
+      pTree->erase(addedIter);
 
       // generate events
       std::for_each(subTree.begin(),
@@ -87,34 +85,33 @@ Error processAdded(tree<FileInfo>::iterator parentIt,
    }
    else
    {
-       pContext->fileTree.append_child(parentIt, fileChange.fileInfo());
+       pTree->append_child(parentIt, fileChange.fileInfo());
        pFileChanges->push_back(fileChange);
    }
 
-   // sort the container after insert (so future calls to collectFileChangeEvents
-   // can rely on this order)
-   pContext->fileTree.sort(pContext->fileTree.begin(parentIt),
-                           pContext->fileTree.end(parentIt),
-                           fileInfoPathLessThan,
-                           false);
+   // sort the container after insert
+   pTree->sort(pTree->begin(parentIt),
+               pTree->end(parentIt),
+               fileInfoPathLessThan,
+               false);
 
    return Success();
 }
 
 void processModified(tree<FileInfo>::iterator parentIt,
                      const FileChangeEvent& fileChange,
-                     FileEventContext* pContext,
+                     tree<FileInfo>* pTree,
                      std::vector<FileChangeEvent>* pFileChanges)
 {
    tree<FileInfo>::sibling_iterator modIt =
          std::find_if(
-            pContext->fileTree.begin(parentIt),
-            pContext->fileTree.end(parentIt),
+            pTree->begin(parentIt),
+            pTree->end(parentIt),
             boost::bind(fileInfoHasPath,
                         _1,
                         fileChange.fileInfo().absolutePath()));
-   if (modIt != pContext->fileTree.end(parentIt))
-      pContext->fileTree.replace(modIt, fileChange.fileInfo());
+   if (modIt != pTree->end(parentIt))
+      pTree->replace(modIt, fileChange.fileInfo());
 
    // add it to the fileChanges
    pFileChanges->push_back(fileChange);
@@ -122,16 +119,16 @@ void processModified(tree<FileInfo>::iterator parentIt,
 
 void processRemoved(tree<FileInfo>::iterator parentIt,
                     const FileChangeEvent& fileChange,
-                    FileEventContext* pContext,
+                    tree<FileInfo>* pTree,
                     std::vector<FileChangeEvent>* pFileChanges)
 {
    // find the item in the current tree
    tree<FileInfo>::sibling_iterator remIt =
-         std::find(pContext->fileTree.begin(parentIt),
-                   pContext->fileTree.end(parentIt),
+         std::find(pTree->begin(parentIt),
+                   pTree->end(parentIt),
                    fileChange.fileInfo());
 
-   if (remIt != pContext->fileTree.end(parentIt))
+   if (remIt != pTree->end(parentIt))
    {
       // if this is folder then we need to generate recursive
       // remove events, otherwise can just add single event
@@ -151,7 +148,7 @@ void processRemoved(tree<FileInfo>::iterator parentIt,
       }
 
       // remove it from the tree
-      pContext->fileTree.erase(remIt);
+      pTree->erase(remIt);
    }
 
 
@@ -160,7 +157,8 @@ void processRemoved(tree<FileInfo>::iterator parentIt,
 
 Error processFileChanges(const FileInfo& fileInfo,
                          bool recursive,
-                         FileEventContext* pContext)
+                         tree<FileInfo>* pTree,
+                         const Callbacks::FilesChanged& onFilesChanged)
 {
    // scan this directory into a new tree which we can compare to the old tree
    tree<FileInfo> subdirTree;
@@ -169,10 +167,10 @@ Error processFileChanges(const FileInfo& fileInfo,
       return error;
 
    // find this path in our fileTree
-   tree<FileInfo>::iterator it = std::find(pContext->fileTree.begin(),
-                                           pContext->fileTree.end(),
+   tree<FileInfo>::iterator it = std::find(pTree->begin(),
+                                           pTree->end(),
                                            fileInfo);
-   if (it != pContext->fileTree.end())
+   if (it != pTree->end())
    {
       // handle recursive vs. non-recursive scan differnetly
       if (recursive)
@@ -187,18 +185,18 @@ Error processFileChanges(const FileInfo& fileInfo,
                                  &fileChanges);
 
          // fire events
-         pContext->onFilesChanged(fileChanges);
+         onFilesChanged(fileChanges);
 
          // wholesale replace subtree
-         pContext->fileTree.insert_subtree_after(it, subdirTree.begin());
-         pContext->fileTree.erase(it);
+         pTree->insert_subtree_after(it, subdirTree.begin());
+         pTree->erase(it);
       }
       else
       {
          // scan for changes on just the children
          std::vector<FileChangeEvent> childrenFileChanges;
-         collectFileChangeEvents(pContext->fileTree.begin(it),
-                                 pContext->fileTree.end(it),
+         collectFileChangeEvents(pTree->begin(it),
+                                 pTree->end(it),
                                  subdirTree.begin(subdirTree.begin()),
                                  subdirTree.end(subdirTree.begin()),
                                  &childrenFileChanges);
@@ -211,19 +209,19 @@ Error processFileChanges(const FileInfo& fileInfo,
             {
             case FileChangeEvent::FileAdded:
             {
-               Error error = processAdded(it, fileChange, pContext, &fileChanges);
+               Error error = processAdded(it, fileChange, pTree, &fileChanges);
                if (error)
                   LOG_ERROR(error);
                break;
             }
             case FileChangeEvent::FileModified:
             {
-               processModified(it, fileChange, pContext, &fileChanges);
+               processModified(it, fileChange, pTree, &fileChanges);
                break;
             }
             case FileChangeEvent::FileRemoved:
             {
-               processRemoved(it, fileChange, pContext, &fileChanges);
+               processRemoved(it, fileChange, pTree, &fileChanges);
                break;
             }
             case FileChangeEvent::None:
@@ -233,7 +231,7 @@ Error processFileChanges(const FileInfo& fileInfo,
          }
 
          // fire events
-         pContext->onFilesChanged(fileChanges);
+         onFilesChanged(fileChanges);
       }
    }
    else
@@ -282,7 +280,10 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       bool recursive = eventFlags[i] & kFSEventStreamEventFlagMustScanSubDirs;
 
       // process changes
-      Error error = processFileChanges(fileInfo, recursive, pContext);
+      Error error = processFileChanges(fileInfo,
+                                       recursive,
+                                       &(pContext->fileTree),
+                                       pContext->onFilesChanged);
       if (error)
          LOG_ERROR(error);
    }
@@ -409,9 +410,7 @@ void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
    }
 
    // scan the files
-   Error error = scanFiles(FileInfo(filePath),
-                           true,
-                           &pContext->fileTree);
+   Error error = scanFiles(FileInfo(filePath), true, &pContext->fileTree);
    if (error)
    {
        // stop, invalidate, release
