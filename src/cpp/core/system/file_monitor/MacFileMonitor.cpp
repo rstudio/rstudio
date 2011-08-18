@@ -156,11 +156,23 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
                              CurrentIterator currEnd,
                              std::vector<FileChangeEvent>* pEvents)
 {
+   // sort the ranges
+   std::vector<FileInfo> prev;
+   std::copy(prevBegin, prevEnd, std::back_inserter(prev));
+   std::sort(prev.begin(), prev.end(), fileInfoComparePaths);
+   std::vector<FileInfo> curr;
+   std::copy(currBegin, currEnd, std::back_inserter(curr));
+   std::sort(curr.begin(), curr.end(), fileInfoComparePaths);
+
+   // initalize the iterators
+   std::vector<FileInfo>::iterator prevIt = prev.begin();
+   std::vector<FileInfo>::iterator currIt = curr.begin();
+
    FileInfo noFile;
-   while (prevBegin != prevEnd || currBegin != currEnd)
+   while (prevIt != prev.end() || currIt != curr.end())
    {
-      const FileInfo& prevFile = prevBegin != prevEnd ? *prevBegin : noFile;
-      const FileInfo& currFile = currBegin != currEnd ? *currBegin : noFile;
+      const FileInfo& prevFile = prevIt != prev.end() ? *prevIt : noFile;
+      const FileInfo& currFile = currIt != curr.end() ? *currIt : noFile;
 
       int comp;
       if (prevFile.empty())
@@ -177,20 +189,20 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
             pEvents->push_back(FileChangeEvent(FileChangeEvent::FileModified,
                                                currFile));
          }
-         prevBegin++;
-         currBegin++;
+         prevIt++;
+         currIt++;
       }
       else if (comp < 0)
       {
          pEvents->push_back(FileChangeEvent(FileChangeEvent::FileRemoved,
                                             prevFile));
-         prevBegin++;
+         prevIt++;
       }
       else // comp > 1
       {
          pEvents->push_back(FileChangeEvent(FileChangeEvent::FileAdded,
                                             currFile));
-         currBegin++;
+         currIt++;
       }
    }
 }
