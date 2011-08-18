@@ -143,6 +143,7 @@ else()
       system/Win32OutputCapture.cpp
       system/Win32System.cpp
       system/Win32ChildProcess.cpp
+      system/file_monitor/Win32FileMonitor.cpp
    )
 
 endif()
