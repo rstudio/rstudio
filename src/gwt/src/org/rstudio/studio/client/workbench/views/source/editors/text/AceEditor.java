@@ -61,6 +61,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 
 public class AceEditor implements DocDisplay, InputEditorDisplay
@@ -201,13 +202,53 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
                      break;
                   case 'Y':
                      event.preventDefault();
+                     Position start = getSelectionStart();
                      InputEditorUtil.pasteYanked(AceEditor.this);
+                     indentPastedRange(Range.fromPoints(start,
+                                                        getSelectionEnd()));
                      break;
                }
             }
 
          }
       });
+
+      addPasteHandler(new PasteEvent.Handler()
+      {
+         @Override
+         public void onPaste(PasteEvent event)
+         {
+            final Position start = getSelectionStart();
+
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  Range range = Range.fromPoints(start, getSelectionEnd());
+                  indentPastedRange(range);
+               }
+            });
+         }
+      });
+   }
+
+   private void indentPastedRange(Range range)
+   {
+      String firstLinePrefix = getSession().getTextRange(
+            Range.fromPoints(Position.create(range.getStart().getRow(), 0),
+                             range.getStart()));
+
+      if (firstLinePrefix.trim().length() != 0)
+      {
+         Position newStart = Position.create(range.getStart().getRow() + 1, 0);
+         if (newStart.compareTo(range.getEnd()) >= 0)
+            return;
+
+         range = Range.fromPoints(newStart, range.getEnd());
+      }
+
+      getSession().reindent(range);
    }
 
    @Inject
@@ -587,7 +628,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public void reindent()
    {
       boolean emptySelection = getSelection().isEmpty();
-      getSession().reindent();
+      getSession().reindent(getSession().getSelection().getRange());
       if (emptySelection)
          moveSelectionToNextLine(false);
    }
@@ -802,6 +843,11 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler)
    {
       return widget_.addUndoRedoHandler(handler);
+   }
+
+   public HandlerRegistration addPasteHandler(PasteEvent.Handler handler)
+   {
+      return widget_.addPasteHandler(handler);
    }
 
    public JavaScriptObject getCleanStateToken()

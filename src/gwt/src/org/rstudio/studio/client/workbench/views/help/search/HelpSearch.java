@@ -1,5 +1,5 @@
 /*
- * Search.java
+ * HelpSearch.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *

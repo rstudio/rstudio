@@ -1,5 +1,5 @@
 /*
- * SwitchViewEvent.java
+ * PasteEvent.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,20 +10,29 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.vcs.events;
+package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent.Handler;
 
-public class SwitchViewEvent extends GwtEvent<SwitchViewEvent.Handler>
+public class PasteEvent extends GwtEvent<Handler>
 {
+   public static final Type<Handler> TYPE = new Type<Handler>();
+
    public interface Handler extends EventHandler
    {
-      void onSwitchView(SwitchViewEvent event);
+      void onPaste(PasteEvent event);
    }
 
-   public SwitchViewEvent()
+   public PasteEvent(String pastedText)
    {
+      this.pastedText = pastedText;
+   }
+
+   public String getPastedText()
+   {
+      return pastedText;
    }
 
    @Override
@@ -35,8 +44,8 @@ public class SwitchViewEvent extends GwtEvent<SwitchViewEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onSwitchView(this);
+      handler.onPaste(this);
    }
 
-   private static final Type<Handler> TYPE = new Type<Handler>();
+   private final String pastedText;
 }
