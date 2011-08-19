@@ -11,13 +11,9 @@
  *
  */
 
-
+// TODO: check error logs
 
 // TODO: try to coalesce the modified events at a higher level
-
-// Root issues (it looksl like root mods never occur)
-// TODO: make sure we handle modification of the root itself
-// TODO: make sure we handle deletion of the root itself
 
 // TODO: explicitly handle case of volume type not supporting monitoring
 // (on windows indicated by ERROR_INVALID_FUNCTION)
@@ -34,16 +30,8 @@
 // to call ReadDirectoryChangesW (DirectoryChangeWatcher sample does. see
 // the CPrivillegeEnabler)
 
-// TODO: what happens when a parent directory is renamed? if this
-// occurs do we need to update our root path name
-
-// TODO: for non-recursive mode check article reference to FILE_ACTION_REMOVED
-
 // TOOD: for non-recursive mode don't do full recursive re-scan on
 // dwBytesTransferred == 0 sentienl for buffer overflow
-
-// TODO: buffer notices and remove duplicates? (issue of multiple notifications
-// for a single file)
 
 
 #include <core/system/FileMonitor.hpp>
@@ -83,7 +71,7 @@ public:
    }
    virtual ~FileEventContext() {}
 
-   std::wstring path;
+   FilePath rootPath;
    HANDLE hDirectory;
    OVERLAPPED overlapped;
    std::vector<BYTE> receiveBuffer;
@@ -125,12 +113,12 @@ void ensureLongFilePath(FilePath* pFilePath)
    if (filename.length() <= 12 && filename.find('~') != std::string::npos)
    {
       const std::size_t kBuffSize = (MAX_PATH*2) + 1;
-      wchar_t buffer[kBuffSize];
-      if (::GetLongPathNameW(pFilePath->absolutePathW().c_str(),
-                             buffer,
-                             kBuffSize) > 0)
+      char buffer[kBuffSize];
+      if (::GetLongPathName(pFilePath->absolutePath().c_str(),
+                            buffer,
+                            kBuffSize) > 0)
       {
-         *pFilePath = FilePath(std::wstring(buffer));
+         *pFilePath = FilePath(buffer);
       }
    }
 }
@@ -145,11 +133,12 @@ void processFileChange(DWORD action,
    if (filePath.isDirectory() && (action == FILE_ACTION_MODIFIED))
       return;
 
-   // screen out the root directory
+   // screen out the root directory (this should never occur but if it
+   // does for any reason we want to prevent it from interfering
+   // with the logic below (which assumes a child path)
    if (filePath.isDirectory() &&
-       (filePath.absolutePath() == pTree->begin()->absolutePath()))
+      (filePath.absolutePath() == pTree->begin()->absolutePath()))
    {
-      // TODO: what about remove?
       return;
    }
 
@@ -158,6 +147,14 @@ void processFileChange(DWORD action,
    tree<FileInfo>::iterator parentIt = impl::findFile(pTree->begin(),
                                                       pTree->end(),
                                                       parentFileInfo);
+
+   // bail if there is no parent (we never expect this to occur so log it)
+   if (parentIt == pTree->end())
+   {
+      LOG_WARNING_MESSAGE("Unable to find parent: " +
+                          parentFileInfo.absolutePath());
+      return;
+   }
 
    // handle the various types of actions
    FileInfo fileInfo(filePath);
@@ -218,7 +215,7 @@ void processFileChanges(FileEventContext* pContext,
       std::wstring name(fileNotify.FileName,
                         fileNotify.FileNameLength/sizeof(wchar_t));
       removeTrailingSlash(&name);
-      FilePath filePath(pContext->path + L"\\" + name);
+      FilePath filePath(pContext->rootPath.absolutePathW() + L"\\" + name);
 
       // ensure this is a long file name (docs say it could be short or long!)
       // (note that the call to GetLongFileNameW will fail if the file has
@@ -242,6 +239,13 @@ void processFileChanges(FileEventContext* pContext,
 
    // notify client of file changes
    pContext->onFilesChanged(fileChanges);
+}
+
+void terminateWithMonitoringError(FileEventContext* pContext,
+                                  const Error& error)
+{
+   pContext->onMonitoringError(error);
+   file_monitor::unregisterMonitor((Handle)pContext);
 }
 
 // track number of active requests (we wait for this to get to zero before
@@ -278,6 +282,15 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    if (!pContext->onFilesChanged)
       return;
 
+   // make sure the root path still exists (if it doesn't then bail)
+   if (!pContext->rootPath.exists())
+   {
+      Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
+                                      ERROR_LOCATION);
+      terminateWithMonitoringError(pContext, error);
+      return;
+   }
+
    // check for buffer overflow
    if(dwNumberOfBytesTransfered == 0)
    {
@@ -293,10 +306,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
       // read the next change
       error = readDirectoryChanges(pContext);
       if (error)
-      {
-         pContext->onMonitoringError(error);
-         file_monitor::unregisterMonitor((Handle)pContext);
-      }
+         terminateWithMonitoringError(pContext, error);
 
       return;
    }
@@ -316,13 +326,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    // report the (fatal) error if necessary and unregister the monitor
    // (do this here so file notifications are received prior to the error)
    if (error)
-   {
-      // report the error
-      pContext->onMonitoringError(error);
-
-      // unregister the monitor
-      file_monitor::unregisterMonitor((Handle)pContext);
-   }
+      terminateWithMonitoringError(pContext, error);
 }
 
 Error readDirectoryChanges(FileEventContext* pContext)
@@ -363,8 +367,9 @@ Handle registerMonitor(const core::FilePath& filePath,
 
    // save the wide absolute path (notifications only come in wide strings)
    // strip any trailing slash for predictable append semantics
-   pContext->path = filePath.absolutePathW();
-   removeTrailingSlash(&(pContext->path));
+   std::wstring wpath = filePath.absolutePathW();
+   removeTrailingSlash(&wpath);
+   pContext->rootPath = FilePath(wpath);
 
    // open the directory
    pContext->hDirectory = ::CreateFile(

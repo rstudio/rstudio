@@ -169,6 +169,23 @@ Error fileExistsError(const ErrorLocation& location)
 #endif
 }
 
+Error fileNotFoundError(const ErrorLocation& location)
+{
+#ifdef _WIN32
+   return systemError(boost::system::windows_error::file_not_found, location);
+#else
+   return systemError(boost::system::errc::no_such_file_or_directory, location);
+#endif
+}
+
+Error fileNotFoundError(const std::string& path,
+                        const ErrorLocation& location)
+{
+   Error error = fileNotFoundError(location);
+   error.addProperty("path", path);
+   return error;
+}
+
 Error pathNotFoundError(const ErrorLocation& location)
 {
 #ifdef _WIN32
