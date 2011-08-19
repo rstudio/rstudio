@@ -388,14 +388,20 @@ void unregisterAll()
 
 void fileMonitorThreadMain()
 {
+   // run the file monitor thread
    try
    {
       file_monitor::detail::run(boost::bind(checkForInput));   
    }
    catch(const boost::thread_interrupted& e)
    {
-      unregisterAll();
+   }
+   CATCH_UNEXPECTED_EXCEPTION
 
+   // always clean up (even for unexpected exception case)
+   try
+   {
+      unregisterAll();
       detail::stop();
    }
    CATCH_UNEXPECTED_EXCEPTION

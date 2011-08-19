@@ -11,8 +11,7 @@
  *
  */
 
-// TODO: clean shutdown logic (confirm boost thread interrupt works and
-// figure out how to wait on pending io operations)
+
 
 // TODO: convert to short file name (docs say it could be short or long!)
 
@@ -96,6 +95,9 @@ void removeTrailingSlash(std::wstring* pPath)
 
 void processFileChanges(FileEventContext* pContext)
 {
+   // accumulate file changes
+   std::vector<FileChangeEvent> fileChanges;
+
    char* pBuffer = (char*)&pContext->handlingBuffer[0];
 
    while(true)
@@ -107,10 +109,13 @@ void processFileChanges(FileEventContext* pContext)
       std::wstring name(fileNotify.FileName,
                         fileNotify.FileNameLength/sizeof(wchar_t));
       removeTrailingSlash(&name);
-      std::wstring path = pContext->path + L'\\' + name;
+      std::wstring path = pContext->path + L"\\" + name;
 
       // TODO: convert to short file name (docs say it could be short or long!)
 
+
+      fileChanges.push_back(FileChangeEvent(FileChangeEvent::FileModified,
+                                            FileInfo(FilePath(path))));
 
       // break or advance to next notification as necessary
       if (!fileNotify.NextEntryOffset)
@@ -119,6 +124,8 @@ void processFileChanges(FileEventContext* pContext)
       pBuffer += fileNotify.NextEntryOffset;
    };
 
+   // forward file changes
+   pContext->onFilesChanged(fileChanges);
 }
 
 // track number of active requests (we wait for this to get to zero before
@@ -145,6 +152,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
       // OVERLAPPED structure and buffers, and so if we deleted it earlier
       // and the OS tried to access those memory regions we would crash
       delete pContext; 
+
       return;
    }
 
@@ -164,8 +172,8 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    }
 
    // copy to processing buffer (so we can immediately begin another read)
-   ::CopyMemory(&(pContext->handlingBuffer),
-                &(pContext->receiveBuffer),
+   ::CopyMemory(&(pContext->handlingBuffer[0]),
+                &(pContext->receiveBuffer[0]),
                 dwNumberOfBytesTransfered);
 
    // begin the next read -- if this fails then the file change notification
@@ -244,8 +252,6 @@ Handle registerMonitor(const core::FilePath& filePath,
       return NULL;
    }
 
-
-
    // initialize overlapped structure to point to our context
    ::ZeroMemory(&(pContext->overlapped), sizeof(OVERLAPPED));
    pContext->overlapped.hEvent = pContext;
@@ -312,7 +318,6 @@ void run(const boost::function<void()>& checkForInput)
    // loop waiting for:
    //   - completion routine callbacks (occur during SleepEx); or
    //   - inbound commands (occur during checkForInput)
-   //
    while (true)
    {
       ::SleepEx(1000, TRUE);
