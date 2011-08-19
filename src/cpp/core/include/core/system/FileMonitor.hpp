@@ -62,7 +62,9 @@ struct Callbacks
 };
 
 // register a new file monitor
-void registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks);
+void registerMonitor(const core::FilePath& filePath,
+                     bool recursive,
+                     const Callbacks& callbacks);
 
 // unregister a file monitor
 void unregisterMonitor(Handle handle);

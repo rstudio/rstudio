@@ -35,7 +35,9 @@ namespace {
 namespace detail {
 
 // register a new file monitor
-Handle registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
+Handle registerMonitor(const core::FilePath& filePath,
+                       bool recursive,
+                       const Callbacks& callbacks)
 {
    return NULL;
 }

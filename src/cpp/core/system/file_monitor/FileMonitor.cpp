@@ -248,7 +248,9 @@ namespace detail {
 void run(const boost::function<void()>& checkForInput);
 
 // register a new file monitor
-Handle registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks);
+Handle registerMonitor(const core::FilePath& filePath,
+                       bool recursive,
+                       const Callbacks& callbacks);
 
 // unregister a file monitor
 void unregisterMonitor(Handle handle);
@@ -270,8 +272,13 @@ public:
    {
    }
 
-   RegistrationCommand(const core::FilePath& filePath, const Callbacks& callbacks)
-      : type_(Register), filePath_(filePath), callbacks_(callbacks)
+   RegistrationCommand(const core::FilePath& filePath,
+                       bool recursive,
+                       const Callbacks& callbacks)
+      : type_(Register),
+        filePath_(filePath),
+        recursive_(recursive),
+        callbacks_(callbacks)
    {
    }
 
@@ -283,6 +290,7 @@ public:
    Type type() const { return type_; }
 
    const core::FilePath& filePath() const { return filePath_; }
+   bool recursive() const { return recursive_; }
    const Callbacks& callbacks() const { return callbacks_; }
 
    Handle handle() const
@@ -296,6 +304,7 @@ private:
 
    // register command data
    core::FilePath filePath_;
+   bool recursive_;
    Callbacks callbacks_;
 
    // unregister command data
@@ -336,6 +345,7 @@ void checkForInput()
       case RegistrationCommand::Register:
       {
          Handle handle = detail::registerMonitor(command.filePath(),
+                                                 command.recursive(),
                                                  command.callbacks());
          if (handle != NULL)
             s_activeHandles.push_back(handle);
@@ -434,7 +444,9 @@ void stop()
    }
 }
 
-void registerMonitor(const FilePath& filePath, const Callbacks& callbacks)
+void registerMonitor(const FilePath& filePath,
+                     bool recursive,
+                     const Callbacks& callbacks)
 {
    // bind a new version of the callbacks that puts them on the callback queue
    Callbacks qCallbacks;
@@ -448,7 +460,9 @@ void registerMonitor(const FilePath& filePath, const Callbacks& callbacks)
    qCallbacks.onFilesChanged = boost::bind(enqueOnFilesChanged, callbacks, _1);
 
    // enque the registration
-   registrationCommandQueue().enque(RegistrationCommand(filePath, qCallbacks));
+   registrationCommandQueue().enque(RegistrationCommand(filePath,
+                                                        recursive,
+                                                        qCallbacks));
 }
 
 void unregisterMonitor(Handle handle)

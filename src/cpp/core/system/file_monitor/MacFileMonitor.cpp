@@ -129,7 +129,9 @@ void stopInvalidateAndReleaseEventStream(FSEventStreamRef streamRef)
 namespace detail {
 
 // register a new file monitor
-Handle registerMonitor(const core::FilePath& filePath, const Callbacks& callbacks)
+Handle registerMonitor(const core::FilePath& filePath,
+                       bool recursive,
+                       const Callbacks& callbacks)
 {
    // allocate file path
    std::string path = filePath.absolutePath();

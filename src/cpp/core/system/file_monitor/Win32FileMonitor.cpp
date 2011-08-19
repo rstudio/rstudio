@@ -195,6 +195,7 @@ namespace detail {
 
 // register a new file monitor
 Handle registerMonitor(const core::FilePath& filePath,
+                       bool recursive,
                        const Callbacks& callbacks)
 {
    // create and allocate FileEventContext (create auto-ptr in case we
