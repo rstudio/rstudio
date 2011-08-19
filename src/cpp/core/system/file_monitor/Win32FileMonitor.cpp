@@ -11,8 +11,6 @@
  *
  */
 
-// TODO: check error logs
-
 // TODO: try to coalesce the modified events at a higher level
 
 // TODO: explicitly handle case of volume type not supporting monitoring

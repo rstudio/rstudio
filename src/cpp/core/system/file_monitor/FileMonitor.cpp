@@ -11,9 +11,9 @@
  *
  */
 
-// TODO: make sure that when we apply/generate events that if the file
-// isn't where we expect it (due to scanning and events being out of sync)
-// that we still handle gracefully
+// TODO: evaluate performance implications of searching to make sure
+// that changes haven't already been applied (perhaps since we have
+// to search anyone it isn't a big deal)
 
 // TODO: consider addings filters as a feature
 
