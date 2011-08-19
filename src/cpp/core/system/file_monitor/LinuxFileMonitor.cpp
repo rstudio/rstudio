@@ -53,6 +53,11 @@ void run(const boost::function<void()>& checkForInput)
 
 }
 
+void stop()
+{
+
+}
+
 } // namespace detail
 } // namespace file_monitor
 } // namespace system

@@ -20,6 +20,8 @@
 
 // TODO: review code and comments for other egde/boundary conditions
 
+// TODO: test error reporting
+
 
 #include <core/system/FileMonitor.hpp>
 
@@ -44,8 +46,7 @@ namespace file_monitor {
 
 namespace {
 
-// buffer size for received notifications -- cannot be larger than
-// 64kb for network shares
+// buffer size for notifications (cannot be > 64kb for network drives)
 const std::size_t kBuffSize = 32768;
 
 class FileEventContext : boost::noncopyable
@@ -120,19 +121,38 @@ void processFileChanges(FileEventContext* pContext)
 
 }
 
+// track number of active requests (we wait for this to get to zero before
+// allowing the exit of the monitoring thread -- this ensures that we have
+// performed full cleanup for all monitoring contexts before exiting.
+volatile LONG s_activeRequests = 0;
+
 Error readDirectoryChanges(FileEventContext* pContext);
 
 VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completion code
                                           DWORD dwNumberOfBytesTransfered,
                                           LPOVERLAPPED lpOverlapped)
 {
+   // get the context
    FileEventContext* pContext = (FileEventContext*)(lpOverlapped->hEvent);
 
+   // check for aborted
    if (dwErrorCode == ERROR_OPERATION_ABORTED)
    {
-      delete pContext;
+      // decrement the active request counter
+      ::InterlockedDecrement(&s_activeRequests);
+
+      // we wait to delete the pContext until here because it owns the
+      // OVERLAPPED structure and buffers, and so if we deleted it earlier
+      // and the OS tried to access those memory regions we would crash
+      delete pContext; 
       return;
    }
+
+   // bail if we don't have an onFilesChanged callback (could have occurred
+   // if we encountered an error during file scanning which caused us to
+   // fail but then a file notification still snuck through)
+   if (!pContext->onFilesChanged)
+      return;
 
    // check for buffer overflow
    if(dwNumberOfBytesTransfered == 0)
@@ -224,6 +244,8 @@ Handle registerMonitor(const core::FilePath& filePath,
       return NULL;
    }
 
+
+
    // initialize overlapped structure to point to our context
    ::ZeroMemory(&(pContext->overlapped), sizeof(OVERLAPPED));
    pContext->overlapped.hEvent = pContext;
@@ -240,6 +262,14 @@ Handle registerMonitor(const core::FilePath& filePath,
 
       return NULL;
    }
+
+   // we have passed the pContext into the system so it's ownership will
+   // now be governed by the receipt of ERROR_OPERATION_ABORTED within
+   // the completion callback
+   autoPtrContext.release();
+
+   // increment the number of active requests
+   ::InterlockedIncrement(&s_activeRequests);
 
    // scan the files
    error = scanFiles(FileInfo(filePath), true, &pContext->fileTree);
@@ -259,10 +289,6 @@ Handle registerMonitor(const core::FilePath& filePath,
    pContext->onMonitoringError = callbacks.onMonitoringError;
    pContext->onFilesChanged = callbacks.onFilesChanged;
 
-   // we are going to pass the context pointer to the client (as the Handle)
-   // so we release it here to relinquish ownership
-   autoPtrContext.release();
-
    // notify the caller that we have successfully registered
    callbacks.onRegistered((Handle)pContext, pContext->fileTree);
 
@@ -280,10 +306,26 @@ void unregisterMonitor(Handle handle)
 
 void run(const boost::function<void()>& checkForInput)
 {
+   // initialize active requests to zero
+   s_activeRequests = 0;
+
+   // loop waiting for:
+   //   - completion routine callbacks (occur during SleepEx); or
+   //   - inbound commands (occur during checkForInput)
+   //
    while (true)
    {
       ::SleepEx(1000, TRUE);
       checkForInput();
+   }
+}
+
+void stop()
+{
+   // call ::SleepEx until all active requests hae terminated
+   while (s_activeRequests > 0)
+   {
+      ::SleepEx(100, TRUE);
    }
 }
 

@@ -13,6 +13,9 @@
 
 // TODO: see if there are filesystems/scenarios where filemon won't work
 
+// TODO: is there any global cleanup (stopping run loop or setting a "done"
+// flag) required on osx
+
 // TODO: think more deeply about failure cases during scanning
 
 #include <core/system/FileMonitor.hpp>
@@ -255,6 +258,9 @@ Handle registerMonitor(const core::FilePath& filePath,
 // unregister a file monitor
 void unregisterMonitor(Handle handle);
 
+// stop the monitor. allows for optinal global cleanup and/or waiting
+// for termination state on the monitor thread
+void stop();
 
 } // namespace impl
 
@@ -389,6 +395,8 @@ void fileMonitorThreadMain()
    catch(const boost::thread_interrupted& e)
    {
       unregisterAll();
+
+      detail::stop();
    }
    CATCH_UNEXPECTED_EXCEPTION
 }

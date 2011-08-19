@@ -272,6 +272,11 @@ void run(const boost::function<void()>& checkForInput)
    }
 }
 
+void stop()
+{
+   // nothing to do here (no global cleanup or waiting necessary on osx)
+}
+
 } // namespace detail
 } // namespace file_monitor
 } // namespace system
