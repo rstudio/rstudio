@@ -24,8 +24,11 @@ namespace core {
 namespace system {
 
 namespace {
-
+#ifdef __APPLE__
+int entryFilter(struct dirent *entry)
+#else
 int entryFilter(const struct dirent *entry)
+#endif
 {
    if (::strcmp(entry->d_name, ".") == 0 || ::strcmp(entry->d_name, "..") == 0)
       return 0;
