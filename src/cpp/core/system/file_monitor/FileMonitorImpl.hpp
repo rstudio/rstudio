@@ -15,7 +15,9 @@
 #define CORE_SYSTEM_FILE_MONITOR_IMPL_HPP
 
 #include <string>
+#include <algorithm>
 
+#include <boost/bind.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/collection/Tree.hpp>
@@ -48,6 +50,14 @@ Error discoverAndProcessFileChanges(const FileInfo& fileInfo,
                                     bool recursive,
                                     tree<FileInfo>* pTree,
                                     const Callbacks::FilesChanged& onFilesChanged);
+
+template <typename Iterator>
+Iterator findFile(Iterator begin, Iterator end, const FileInfo& fileInfo)
+{
+   return std::find_if(begin, end, boost::bind(fileInfoHasPath,
+                                               _1,
+                                               fileInfo.absolutePath()));
+}
 
 
 } // namespace impl

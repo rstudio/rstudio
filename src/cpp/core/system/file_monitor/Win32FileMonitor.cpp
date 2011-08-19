@@ -13,13 +13,37 @@
 
 
 
-// TODO: convert to short file name (docs say it could be short or long!)
+// TODO: try to coalesce the modified events at a higher level
 
-// TODO: reconciliation / event-generation logic
+// Root issues (it looksl like root mods never occur)
+// TODO: make sure we handle modification of the root itself
+// TODO: make sure we handle deletion of the root itself
 
-// TODO: review code and comments for other egde/boundary conditions
+// TODO: explicitly handle case of volume type not supporting monitoring
+// (on windows indicated by ERROR_INVALID_FUNCTION)
 
-// TODO: test error reporting
+// TODO: investigate ERROR_TOO_MANY_CMDS network bios error referenced
+// in article. believe it has to do with many simultaneous reads/writes.
+// one possible workaround is to queue an APC for a retry. open incident
+// with Microsof Professional Advisory Services (reference article)
+//
+//   http://support.microsoft.com/gp/advisoryservice#tab0
+//
+
+// TODO: investigate whether we need to call AdjustTokenPrivilleges in order
+// to call ReadDirectoryChangesW (DirectoryChangeWatcher sample does. see
+// the CPrivillegeEnabler)
+
+// TODO: what happens when a parent directory is renamed? if this
+// occurs do we need to update our root path name
+
+// TODO: for non-recursive mode check article reference to FILE_ACTION_REMOVED
+
+// TOOD: for non-recursive mode don't do full recursive re-scan on
+// dwBytesTransferred == 0 sentienl for buffer overflow
+
+// TODO: buffer notices and remove duplicates? (issue of multiple notifications
+// for a single file)
 
 
 #include <core/system/FileMonitor.hpp>
@@ -93,15 +117,100 @@ void removeTrailingSlash(std::wstring* pPath)
    boost::algorithm::trim_right_if(*pPath, boost::algorithm::is_any_of(L"\\"));
 }
 
-void processFileChanges(FileEventContext* pContext)
+void ensureLongFilePath(FilePath* pFilePath)
+{
+   // get the filename, if it is 12 characters or less and it contains
+   // a "~" then it may be a short file name. in that case do the conversion
+   std::string filename = pFilePath->filename();
+   if (filename.length() <= 12 && filename.find('~') != std::string::npos)
+   {
+      const std::size_t kBuffSize = (MAX_PATH*2) + 1;
+      wchar_t buffer[kBuffSize];
+      if (::GetLongPathNameW(pFilePath->absolutePathW().c_str(),
+                             buffer,
+                             kBuffSize) > 0)
+      {
+         *pFilePath = FilePath(std::wstring(buffer));
+      }
+   }
+}
+
+void processFileChange(DWORD action,
+                       const FilePath& filePath,
+                       tree<FileInfo>* pTree,
+                       std::vector<FileChangeEvent>* pFileChanges)
+{
+   // ignore all directory modified actions (we rely instead on the
+   // actions which occur inside the directory)
+   if (filePath.isDirectory() && (action == FILE_ACTION_MODIFIED))
+      return;
+
+   // screen out the root directory
+   if (filePath.isDirectory() &&
+       (filePath.absolutePath() == pTree->begin()->absolutePath()))
+   {
+      // TODO: what about remove?
+      return;
+   }
+
+   // get an iterator to this file's parent
+   FileInfo parentFileInfo = FileInfo(filePath.parent());
+   tree<FileInfo>::iterator parentIt = impl::findFile(pTree->begin(),
+                                                      pTree->end(),
+                                                      parentFileInfo);
+
+   // handle the various types of actions
+   FileInfo fileInfo(filePath);
+   switch(action)
+   {
+      case FILE_ACTION_ADDED:
+      case FILE_ACTION_RENAMED_NEW_NAME:
+      {
+         FileChangeEvent event(FileChangeEvent::FileAdded, fileInfo);
+         Error error = impl::processFileAdded(parentIt,
+                                              event,
+                                              pTree,
+                                              pFileChanges);
+         if (error)
+            LOG_ERROR(error);
+         break;
+      }
+      case FILE_ACTION_REMOVED:
+      case FILE_ACTION_RENAMED_OLD_NAME:
+      {
+         FileChangeEvent event(FileChangeEvent::FileRemoved, fileInfo);
+         impl::processFileRemoved(parentIt, event, pTree, pFileChanges);
+         break;
+      }
+      case FILE_ACTION_MODIFIED:
+      {
+         FileChangeEvent event(FileChangeEvent::FileModified, fileInfo);
+         impl::processFileModified(parentIt, event, pTree, pFileChanges);
+         break;
+      }
+   }
+}
+
+void processFileChanges(FileEventContext* pContext,
+                        DWORD dwNumberOfBytesTransfered)
 {
    // accumulate file changes
    std::vector<FileChangeEvent> fileChanges;
 
+   // cycle through the entries in the buffer
    char* pBuffer = (char*)&pContext->handlingBuffer[0];
-
    while(true)
    {
+      // check for buffer pointer which has overflowed the end (apparently this
+      // can happen if the underlying directory is deleted)
+      if( (DWORD)((BYTE*)pBuffer - &(pContext->handlingBuffer[0])) >
+          dwNumberOfBytesTransfered )
+      {
+         Error error = systemError(ERROR_BUFFER_OVERFLOW, ERROR_LOCATION);
+         LOG_ERROR(error);
+         break;
+      }
+
       // get file notify struct
       FILE_NOTIFY_INFORMATION& fileNotify = (FILE_NOTIFY_INFORMATION&)*pBuffer;
 
@@ -109,22 +218,29 @@ void processFileChanges(FileEventContext* pContext)
       std::wstring name(fileNotify.FileName,
                         fileNotify.FileNameLength/sizeof(wchar_t));
       removeTrailingSlash(&name);
-      std::wstring path = pContext->path + L"\\" + name;
+      FilePath filePath(pContext->path + L"\\" + name);
 
-      // TODO: convert to short file name (docs say it could be short or long!)
+      // ensure this is a long file name (docs say it could be short or long!)
+      // (note that the call to GetLongFileNameW will fail if the file has
+      // already been deleted, therefore if a delete notification using a
+      // short file name comes in we may not successfully match it to
+      // our in-memory tree and thus "miss" the delete
+      ensureLongFilePath(&filePath);
 
-
-      fileChanges.push_back(FileChangeEvent(FileChangeEvent::FileModified,
-                                            FileInfo(FilePath(path))));
+      // process the file change
+      processFileChange(fileNotify.Action,
+                        filePath,
+                        &(pContext->fileTree),
+                        &fileChanges);
 
       // break or advance to next notification as necessary
       if (!fileNotify.NextEntryOffset)
          break;
-
-      pBuffer += fileNotify.NextEntryOffset;
+      else
+         pBuffer += fileNotify.NextEntryOffset;
    };
 
-   // forward file changes
+   // notify client of file changes
    pContext->onFilesChanged(fileChanges);
 }
 
@@ -165,8 +281,22 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    // check for buffer overflow
    if(dwNumberOfBytesTransfered == 0)
    {
+      // full recursive scan is required
+      Error error = impl::discoverAndProcessFileChanges(
+                                                  *(pContext->fileTree.begin()),
+                                                  true,
+                                                  &(pContext->fileTree),
+                                                  pContext->onFilesChanged);
+      if (error)
+         LOG_ERROR(error);
 
-      // TODO: full rescan of directory goes here
+      // read the next change
+      error = readDirectoryChanges(pContext);
+      if (error)
+      {
+         pContext->onMonitoringError(error);
+         file_monitor::unregisterMonitor((Handle)pContext);
+      }
 
       return;
    }
@@ -181,7 +311,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    Error error = readDirectoryChanges(pContext);
 
    // process file changes
-   processFileChanges(pContext);
+   processFileChanges(pContext, dwNumberOfBytesTransfered);
 
    // report the (fatal) error if necessary and unregister the monitor
    // (do this here so file notifications are received prior to the error)
@@ -202,9 +332,9 @@ Error readDirectoryChanges(FileEventContext* pContext)
                                &(pContext->receiveBuffer[0]),
                                pContext->receiveBuffer.size(),
                                TRUE,
-                               FILE_NOTIFY_CHANGE_LAST_WRITE |
-                               FILE_NOTIFY_CHANGE_CREATION |
-                               FILE_NOTIFY_CHANGE_FILE_NAME,
+                               FILE_NOTIFY_CHANGE_FILE_NAME |
+                               FILE_NOTIFY_CHANGE_DIR_NAME |
+                               FILE_NOTIFY_CHANGE_LAST_WRITE,
                                &dwBytes,
                                &(pContext->overlapped),
                                &FileChangeCompletionRoutine))

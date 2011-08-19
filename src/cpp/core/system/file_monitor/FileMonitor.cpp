@@ -11,12 +11,28 @@
  *
  */
 
+// TODO: make sure that when we apply/generate events that if the file
+// isn't where we expect it (due to scanning and events being out of sync)
+// that we still handle gracefully
+
+// TODO: consider addings filters as a feature
+
+// TODO: implement non-recursive mode
+
 // TODO: see if there are filesystems/scenarios where filemon won't work
+// (we know remote SAMBA filesystems on windows won't for sure -- do
+// we get an error in this case or do notifications just not come)
 
 // TODO: is there any global cleanup (stopping run loop or setting a "done"
 // flag) required on osx
 
-// TODO: think more deeply about failure cases during scanning
+// TODO: think more deeply about failure cases during scanning (meaning
+// scanning after we've already successfully initialize file monitoring)
+
+// TODO: is the Callbacks interface too low-level (Handle implies you
+// need a stateful class -- perhaps a class should implement the callbacks
+// and unregister in its destructor -- we could then push the low-level
+// callbacks interface deeper down
 
 #include <core/system/FileMonitor.hpp>
 
@@ -57,6 +73,13 @@ Error processFileAdded(tree<FileInfo>::iterator parentIt,
                        tree<FileInfo>* pTree,
                        std::vector<FileChangeEvent>* pFileChanges)
 {
+   // see if this node already exists. if it does then ignore
+   tree<FileInfo>::sibling_iterator it = impl::findFile(pTree->begin(parentIt),
+                                                        pTree->end(parentIt),
+                                                        fileChange.fileInfo());
+   if (it != pTree->end(parentIt))
+      return Success();
+
    if (fileChange.fileInfo().isDirectory())
    {
       tree<FileInfo> subTree;
@@ -82,8 +105,8 @@ Error processFileAdded(tree<FileInfo>::iterator parentIt,
    }
    else
    {
-       pTree->append_child(parentIt, fileChange.fileInfo());
-       pFileChanges->push_back(fileChange);
+      pTree->append_child(parentIt, fileChange.fileInfo());
+      pFileChanges->push_back(fileChange);
    }
 
    // sort the container after insert
@@ -100,18 +123,23 @@ void processFileModified(tree<FileInfo>::iterator parentIt,
                          tree<FileInfo>* pTree,
                          std::vector<FileChangeEvent>* pFileChanges)
 {
-   tree<FileInfo>::sibling_iterator modIt =
-         std::find_if(
-            pTree->begin(parentIt),
-            pTree->end(parentIt),
-            boost::bind(fileInfoHasPath,
-                        _1,
-                        fileChange.fileInfo().absolutePath()));
-   if (modIt != pTree->end(parentIt))
+   // search for a child with this path
+   tree<FileInfo>::sibling_iterator modIt = impl::findFile(
+                                                     pTree->begin(parentIt),
+                                                     pTree->end(parentIt),
+                                                     fileChange.fileInfo());
+
+   // only generate actions if the data is actually new (win32 file monitoring
+   // can generate redundant modified events for save operatoins as well as
+   // when directories are copied and pasted, in which case an add is followed
+   // by a modified)
+   if (modIt != pTree->end(parentIt) && fileChange.fileInfo() != *modIt)
+   {
       pTree->replace(modIt, fileChange.fileInfo());
 
-   // add it to the fileChanges
-   pFileChanges->push_back(fileChange);
+      // add it to the fileChanges
+      pFileChanges->push_back(fileChange);
+   }
 }
 
 void processFileRemoved(tree<FileInfo>::iterator parentIt,
@@ -119,12 +147,12 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
                         tree<FileInfo>* pTree,
                         std::vector<FileChangeEvent>* pFileChanges)
 {
-   // find the item in the current tree
-   tree<FileInfo>::sibling_iterator remIt =
-         std::find(pTree->begin(parentIt),
-                   pTree->end(parentIt),
-                   fileChange.fileInfo());
+   // search for a child with this path
+   tree<FileInfo>::sibling_iterator remIt = findFile(pTree->begin(parentIt),
+                                                     pTree->end(parentIt),
+                                                     fileChange.fileInfo());
 
+   // only generate actions if the item was found in the tree
    if (remIt != pTree->end(parentIt))
    {
       // if this is folder then we need to generate recursive
