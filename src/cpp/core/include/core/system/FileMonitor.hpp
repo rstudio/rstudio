@@ -48,7 +48,13 @@ struct Callbacks
    boost::function<void(Handle, const tree<FileInfo>&)> onRegistered;
 
    // callback which occurs if a registration error occurs
-   boost::function<void(const core::Error&)> onRegistrationError;
+   typedef boost::function<void(const core::Error&)> ReportError;
+   ReportError onRegistrationError;
+
+   // callback which occurs if an error occurs during monitoring which causes
+   // file monitoring to terminate. after this error no more onFilesChanged
+   // notifications will be received
+   ReportError onMonitoringError;
 
    // callback which occurs when files change
    typedef boost::function<void(const std::vector<FileChangeEvent>&)> FilesChanged;

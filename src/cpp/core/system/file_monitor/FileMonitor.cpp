@@ -397,6 +397,11 @@ void enqueOnRegistrationError(const Callbacks& callbacks, const Error& error)
    callbackQueue().enque(boost::bind(callbacks.onRegistrationError, error));
 }
 
+void enqueOnMonitoringError(const Callbacks& callbacks, const Error& error)
+{
+   callbackQueue().enque(boost::bind(callbacks.onMonitoringError, error));
+}
+
 void enqueOnFilesChanged(const Callbacks& callbacks,
                          const std::vector<FileChangeEvent>& fileChanges)
 {
@@ -437,6 +442,9 @@ void registerMonitor(const FilePath& filePath, const Callbacks& callbacks)
    qCallbacks.onRegistrationError = boost::bind(enqueOnRegistrationError,
                                                 callbacks,
                                                 _1);
+   qCallbacks.onMonitoringError = boost::bind(enqueOnMonitoringError,
+                                              callbacks,
+                                              _1);
    qCallbacks.onFilesChanged = boost::bind(enqueOnFilesChanged, callbacks, _1);
 
    // enque the registration
