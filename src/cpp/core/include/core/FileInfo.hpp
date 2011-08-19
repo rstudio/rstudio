@@ -16,10 +16,7 @@
 
 #include <stdint.h>
 #include <ctime>
-
-#ifdef _WIN32
 #include <string.h>
-#endif
 
 #include <string>
 #include <iosfwd>

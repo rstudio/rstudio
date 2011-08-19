@@ -125,6 +125,10 @@ if (UNIX)
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
          system/file_monitor/MacFileMonitor.cpp
       )
+   else()
+      set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
+         system/file_monitor/LinuxFileMonitor.cpp
+      )
    endif()
 
 # Win32 specific

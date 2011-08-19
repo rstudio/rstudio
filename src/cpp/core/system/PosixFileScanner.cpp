@@ -25,7 +25,7 @@ namespace system {
 
 namespace {
 
-int entryFilter(struct dirent *entry)
+int entryFilter(const struct dirent *entry)
 {
    if (::strcmp(entry->d_name, ".") == 0 || ::strcmp(entry->d_name, "..") == 0)
       return 0;
@@ -72,7 +72,12 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
       // get the entry (then free it) and compute the path
       dirent entry = *namelist[i];
       ::free(namelist[i]);
-      std::string name(entry.d_name, entry.d_namlen);
+      std::string name(entry.d_name,
+#ifdef __APPLE__
+                       entry.d_namlen);
+#else
+                       entry.d_reclen);
+#endif
       std::string path = rootPath.childPath(name).absolutePath();
 
       // get the attributes
@@ -104,7 +109,11 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
          pTree->append_child(fromNode, FileInfo(path,
                                             false,
                                             st.st_size,
+ #ifdef __APPLE__
                                             st.st_mtimespec.tv_sec));
+ #else
+                                            st.st_mtime));
+ #endif
       }
    }
 
