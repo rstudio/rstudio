@@ -41,8 +41,10 @@ public:
    FileEventContext() : streamRef(NULL) {}
    virtual ~FileEventContext() {}
    FSEventStreamRef streamRef;
+   FilePath rootPath;
    tree<FileInfo> fileTree;
    Callbacks::FilesChanged onFilesChanged;
+   Callbacks::ReportError onMonitoringError;
 };
 
 void fileEventCallback(ConstFSEventStreamRef streamRef,
@@ -67,7 +69,10 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       // check for root changed (unregister)
       if (eventFlags[i] & kFSEventStreamEventFlagRootChanged)
       {
-         unregisterMonitor((Handle)pContext);
+         Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
+                                         ERROR_LOCATION);
+         pContext->onMonitoringError(error);
+         file_monitor::unregisterMonitor((Handle)pContext);
          return;
       }
 
@@ -129,7 +134,7 @@ void stopInvalidateAndReleaseEventStream(FSEventStreamRef streamRef)
 namespace detail {
 
 // register a new file monitor
-Handle registerMonitor(const core::FilePath& filePath,
+Handle registerMonitor(const FilePath& filePath,
                        bool recursive,
                        const Callbacks& callbacks)
 {
@@ -166,6 +171,7 @@ Handle registerMonitor(const core::FilePath& filePath,
    // create and allocate FileEventContext (create auto-ptr in case we
    // return early, we'll call release later before returning)
    FileEventContext* pContext = new FileEventContext();
+   pContext->rootPath = filePath;
    std::auto_ptr<FileEventContext> autoPtrContext(pContext);
    FSEventStreamContext context;
    context.version = 0;
@@ -225,6 +231,7 @@ Handle registerMonitor(const core::FilePath& filePath,
    // file-monitor so set the onFilesChanged callback so that the
    // client can receive events
    pContext->onFilesChanged = callbacks.onFilesChanged;
+   pContext->onMonitoringError = callbacks.onMonitoringError;
 
    // we are going to pass the context pointer to the client (as the Handle)
    // so we release it here to relinquish ownership
