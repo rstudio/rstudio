@@ -15,12 +15,6 @@
 // Handle (to prevent bad pointer deref). Note this is related to the final
 // item below on the correct abstraction level of the interface.
 
-// TODO: evaluate performance implications of searching to make sure
-// that changes haven't already been applied (perhaps since we have
-// to search anyone it isn't a big deal). note I think we are just
-// searching from the parent down. the only bad case might be the windows
-// copy and paste in the explorer which recursively generates a ton of events
-
 // TODO: consider addings filters as a feature
 
 // TODO: implement non-recursive mode
@@ -181,8 +175,6 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
       // remove it from the tree
       pTree->erase(remIt);
    }
-
-
 }
 
 Error discoverAndProcessFileChanges(const FileInfo& fileInfo,
