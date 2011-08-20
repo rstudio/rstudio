@@ -11,6 +11,15 @@
  *
  */
 
+// TODO: implications of underlying unreliabilty:
+//   http://social.msdn.microsoft.com/forums/en-US/netfxbcl/thread/4465cafb-f4ed-434f-89d8-c85ced6ffaa8/
+
+// TODO: do we need to call GetLongFileName on all of the files as
+// we scan them (for consistency)
+
+// TODO: windows file names are case insensitive and the notification
+// is determined by the command that caused the notification
+
 // TODO: consider whether we should go with a more convervative style
 // of watch/scan (basically directory modification only and go full
 // mac style)
