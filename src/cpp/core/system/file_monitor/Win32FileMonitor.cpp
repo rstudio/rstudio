@@ -11,6 +11,13 @@
  *
  */
 
+// TODO: consider whether we should go with a more convervative style
+// of watch/scan (basically directory modification only and go full
+// mac style)
+
+// TODO: handle ERROR_NOTIFY_ENUM_DIR
+//  (see http://blogs.msdn.com/b/oldnewthing/archive/2011/08/12/10195186.aspx)
+
 // TODO: ensure that ReadDirectoryChangesW definitely doesn't drop
 // events in between calls (because we could be doing arbitrarily long
 // scanning operations)
@@ -294,22 +301,24 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    // check for buffer overflow
    if(dwNumberOfBytesTransfered == 0)
    {
-      // full recursive scan is required
-      Error error = impl::discoverAndProcessFileChanges(
-                                                  *(pContext->fileTree.begin()),
+      // start reading again (always do this before the scan so we don't
+      // miss any events which occur while we are scanning)
+      Error error = readDirectoryChanges(pContext);
+      if (error)
+         terminateWithMonitoringError(pContext, error);
+
+      // full recursive scan to detect changes and refresh the tree
+      error = impl::discoverAndProcessFileChanges(*(pContext->fileTree.begin()),
                                                   true,
                                                   &(pContext->fileTree),
                                                   pContext->onFilesChanged);
       if (error)
          LOG_ERROR(error);
 
-      // read the next change
-      error = readDirectoryChanges(pContext);
-      if (error)
-         terminateWithMonitoringError(pContext, error);
-
       return;
    }
+
+
 
    // copy to processing buffer (so we can immediately begin another read)
    ::CopyMemory(&(pContext->handlingBuffer[0]),
