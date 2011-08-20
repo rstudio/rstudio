@@ -11,10 +11,6 @@
  *
  */
 
-// TODO: there is still some flakiness/unreliablity around copy and paste
-// of folders within the Explorer. try some lower level logging to see what is
-// actually being generated and how we might be mis-interpreting it
-
 // TODO: ensure that ReadDirectoryChangesW definitely doesn't drop
 // events in between calls (because we could be doing arbitrarily long
 // scanning operations)
