@@ -11,6 +11,14 @@
  *
  */
 
+// TODO: consider batching strategy (Mac already does immediate notification +
+// waiting up to 1 full second for additional notifications)
+// On Windows some tools which could be used to affect this are:
+//    QueueUserAPC and SetWaitableTimer
+// or perhaps just a standard sleep call with event coalescing would do it
+
+// TODO: consider wrapping the entire thread within an object lifetime
+
 // TODO: safety feature for unregistration -- ignore requets with a non-active
 // Handle (to prevent bad pointer deref). Note this is related to the final
 // item below on the correct abstraction level of the interface.

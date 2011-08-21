@@ -11,6 +11,10 @@
  *
  */
 
+// TODO: if we go with granular monitoring then we might need to monitor
+// additional types of changes to catch all events (see .net FileSystemWatcher
+// dodumentation)
+
 // TODO: implications of underlying unreliabilty:
 //   http://social.msdn.microsoft.com/forums/en-US/netfxbcl/thread/4465cafb-f4ed-434f-89d8-c85ced6ffaa8/
 
