@@ -18,6 +18,12 @@
 // TODO: implications of underlying unreliabilty:
 //   http://social.msdn.microsoft.com/forums/en-US/netfxbcl/thread/4465cafb-f4ed-434f-89d8-c85ced6ffaa8/
 
+// TODO: for known error conditions (see below for ERROR_NOTIFY_ENUM_DIR and
+// ERROR_TOO_MANY_CMDS) use (bounded, e.g. 10x) retry logic which uses
+// SetWaitableTimer. Note that the retry must include a full scan (because
+// events have been dropped and will continue to be dropped while we wait
+// to do the retry)
+
 // TODO: do we need to call GetLongFileName on all of the files as
 // we scan them (for consistency)
 
@@ -30,10 +36,6 @@
 
 // TODO: handle ERROR_NOTIFY_ENUM_DIR
 //  (see http://blogs.msdn.com/b/oldnewthing/archive/2011/08/12/10195186.aspx)
-
-// TODO: ensure that ReadDirectoryChangesW definitely doesn't drop
-// events in between calls (because we could be doing arbitrarily long
-// scanning operations)
 
 // TODO: explicitly handle case of volume type not supporting monitoring
 // (on windows indicated by ERROR_INVALID_FUNCTION)
