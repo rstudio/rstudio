@@ -63,15 +63,26 @@ public:
    }
    virtual ~FileEventContext() {}
 
+   // path we are monitorin and persistent handle the the directory
    FilePath rootPath;
    HANDLE hDirectory;
+
+   // structures/buffers used to reach changes (and flag used to
+   // determine whether the system may write into these buffers)
    OVERLAPPED overlapped;
    std::vector<BYTE> receiveBuffer;
    std::vector<BYTE> handlingBuffer;
-   tree<FileInfo> fileTree;
    bool readDirChangesPending;
+
+   // our own snapshot of the file tree
+   tree<FileInfo> fileTree;
+
+   // timer for attempting restarts on a delayed basis (and counter
+   // to enforce a maximum number of retries)
    HANDLE hRestartTimer;
    int restartCount;
+
+   // callbacks to client
    Callbacks::ReportError onMonitoringError;
    Callbacks::FilesChanged onFilesChanged;
 };
