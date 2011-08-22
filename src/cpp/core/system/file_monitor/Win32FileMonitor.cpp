@@ -41,7 +41,8 @@ class FileEventContext : boost::noncopyable
 {
 public:
    FileEventContext()
-      : hDirectory(NULL),
+      : recursive(false),
+        hDirectory(NULL),
         readDirChangesPending(false),
         hRestartTimer(NULL),
         restartCount(0)
@@ -51,8 +52,9 @@ public:
    }
    virtual ~FileEventContext() {}
 
-   // path we are monitorin and persistent handle the the directory
+   // path we are monitoring, recursive flag, and handle to the directory
    FilePath rootPath;
+   bool recursive;
    HANDLE hDirectory;
 
    // structures/buffers used to reach changes (and flag used to
@@ -139,6 +141,7 @@ void ensureLongFilePath(FilePath* pFilePath)
 
 void processFileChange(DWORD action,
                        const FilePath& filePath,
+                       bool recursive,
                        tree<FileInfo>* pTree,
                        std::vector<FileChangeEvent>* pFileChanges)
 {
@@ -180,6 +183,7 @@ void processFileChange(DWORD action,
          FileChangeEvent event(FileChangeEvent::FileAdded, fileInfo);
          Error error = impl::processFileAdded(parentIt,
                                               event,
+                                              recursive,
                                               pTree,
                                               pFileChanges);
          if (error)
@@ -190,7 +194,11 @@ void processFileChange(DWORD action,
       case FILE_ACTION_RENAMED_OLD_NAME:
       {
          FileChangeEvent event(FileChangeEvent::FileRemoved, fileInfo);
-         impl::processFileRemoved(parentIt, event, pTree, pFileChanges);
+         impl::processFileRemoved(parentIt,
+                                  event,
+                                  recursive,
+                                  pTree,
+                                  pFileChanges);
          break;
       }
       case FILE_ACTION_MODIFIED:
@@ -241,6 +249,7 @@ void processFileChanges(FileEventContext* pContext,
       // process the file change
       processFileChange(fileNotify.Action,
                         filePath,
+                        pContext->recursive,
                         &(pContext->fileTree),
                         &fileChanges);
 
@@ -301,7 +310,7 @@ void restartMonitoring(FileEventContext* pContext)
 
    // full recursive scan to detect changes and refresh the tree
    error = impl::discoverAndProcessFileChanges(*(pContext->fileTree.begin()),
-                                               true,
+                                               pContext->recursive,
                                                &(pContext->fileTree),
                                                pContext->onFilesChanged);
    if (error)
@@ -437,7 +446,7 @@ Error readDirectoryChanges(FileEventContext* pContext)
    if(!::ReadDirectoryChangesW(pContext->hDirectory,
                                &(pContext->receiveBuffer[0]),
                                pContext->receiveBuffer.size(),
-                               TRUE,
+                               pContext->recursive ? TRUE : FALSE,
                                FILE_NOTIFY_CHANGE_FILE_NAME |
                                FILE_NOTIFY_CHANGE_DIR_NAME |
                                FILE_NOTIFY_CHANGE_LAST_WRITE,
@@ -473,6 +482,7 @@ Handle registerMonitor(const core::FilePath& filePath,
    std::wstring wpath = filePath.absolutePathW();
    removeTrailingSlash(&wpath);
    pContext->rootPath = FilePath(wpath);
+   pContext->recursive = recursive;
 
    // open the directory
    pContext->hDirectory = ::CreateFile(
@@ -516,7 +526,7 @@ Handle registerMonitor(const core::FilePath& filePath,
    ::InterlockedIncrement(&s_activeRequests);
 
    // scan the files
-   error = scanFiles(FileInfo(filePath), true, &pContext->fileTree);
+   error = scanFiles(FileInfo(filePath), recursive, &pContext->fileTree);
    if (error)
    {
        // cleanup

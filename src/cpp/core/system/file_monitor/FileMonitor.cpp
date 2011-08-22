@@ -11,27 +11,10 @@
  *
  */
 
-// TODO: consider batching strategy (Mac already does immediate notification +
-// waiting up to 1 full second for additional notifications)
-// On Windows some tools which could be used to affect this are:
-//    QueueUserAPC and SetWaitableTimer
-// or perhaps just a standard sleep call with event coalescing would do it
-
 // TODO: deal with non case-sentitive file systems on Mac & Windows
 
 // TODO: consider addings filters as a feature
 
-// TODO: implement non-recursive mode
-
-// TOOD: for windows non-recursive mode don't do full recursive re-scan on
-// dwBytesTransferred == 0 sentienl for buffer overflow
-
-
-// TODO: consider returning parent iterator from function that does scan
-// for existing file items (so we don't keep having to re-scan from the top
-
-// TODO: is there any global cleanup (stopping run loop or setting a "done"
-// flag) required on osx
 
 // TODO: think more deeply about failure cases during scanning (meaning
 // scanning after we've already successfully initialize file monitoring)
@@ -77,6 +60,7 @@ namespace impl {
 
 Error processFileAdded(tree<FileInfo>::iterator parentIt,
                        const FileChangeEvent& fileChange,
+                       bool recursive,
                        tree<FileInfo>* pTree,
                        std::vector<FileChangeEvent>* pFileChanges)
 {
@@ -87,7 +71,7 @@ Error processFileAdded(tree<FileInfo>::iterator parentIt,
    if (it != pTree->end(parentIt))
       return Success();
 
-   if (fileChange.fileInfo().isDirectory())
+   if (fileChange.fileInfo().isDirectory() && recursive)
    {
       tree<FileInfo> subTree;
       Error error = scanFiles(fileChange.fileInfo(),
@@ -151,6 +135,7 @@ void processFileModified(tree<FileInfo>::iterator parentIt,
 
 void processFileRemoved(tree<FileInfo>::iterator parentIt,
                         const FileChangeEvent& fileChange,
+                        bool recursive,
                         tree<FileInfo>* pTree,
                         std::vector<FileChangeEvent>* pFileChanges)
 {
@@ -164,7 +149,7 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
    {
       // if this is folder then we need to generate recursive
       // remove events, otherwise can just add single event
-      if (remIt->isDirectory())
+      if (remIt->isDirectory() && recursive)
       {
          tree<FileInfo> subTree(remIt);
          std::for_each(subTree.begin(),
@@ -238,7 +223,11 @@ Error discoverAndProcessFileChanges(const FileInfo& fileInfo,
             {
             case FileChangeEvent::FileAdded:
             {
-               Error error = processFileAdded(it, fileChange, pTree, &fileChanges);
+               Error error = processFileAdded(it,
+                                              fileChange,
+                                              recursive,
+                                              pTree,
+                                              &fileChanges);
                if (error)
                   LOG_ERROR(error);
                break;
@@ -250,7 +239,11 @@ Error discoverAndProcessFileChanges(const FileInfo& fileInfo,
             }
             case FileChangeEvent::FileRemoved:
             {
-               processFileRemoved(it, fileChange, pTree, &fileChanges);
+               processFileRemoved(it,
+                                  fileChange,
+                                  recursive,
+                                  pTree,
+                                  &fileChanges);
                break;
             }
             case FileChangeEvent::None:

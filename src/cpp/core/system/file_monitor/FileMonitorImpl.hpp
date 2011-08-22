@@ -33,6 +33,7 @@ namespace impl {
 
 Error processFileAdded(tree<FileInfo>::iterator parentIt,
                        const FileChangeEvent& fileChange,
+                       bool recursive,
                        tree<FileInfo>* pTree,
                        std::vector<FileChangeEvent>* pFileChanges);
 
@@ -43,6 +44,7 @@ void processFileModified(tree<FileInfo>::iterator parentIt,
 
 void processFileRemoved(tree<FileInfo>::iterator parentIt,
                         const FileChangeEvent& fileChange,
+                        bool recursive,
                         tree<FileInfo>* pTree,
                         std::vector<FileChangeEvent>* pFileChanges);
 
