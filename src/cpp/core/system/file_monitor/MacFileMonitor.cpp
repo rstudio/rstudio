@@ -38,10 +38,11 @@ namespace {
 class FileEventContext : boost::noncopyable
 {
 public:
-   FileEventContext() : streamRef(NULL) {}
+   FileEventContext() : streamRef(NULL), recursive(false) {}
    virtual ~FileEventContext() {}
    FSEventStreamRef streamRef;
    FilePath rootPath;
+   bool recursive;
    tree<FileInfo> fileTree;
    Callbacks::FilesChanged onFilesChanged;
    Callbacks::ReportError onMonitoringError;
@@ -80,11 +81,17 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       std::string path(paths[i]);
       boost::algorithm::trim_right_if(path, boost::algorithm::is_any_of("/"));
 
+      // if we aren't in recursive mode then ignore this if it isn't for
+      // the root directory
+      if (!pContext->recursive && (path != pContext->rootPath.absolutePath()))
+         continue;
+
       // get FileInfo for this directory
       FileInfo fileInfo(path, true);
 
       // check for need to do recursive scan
-      bool recursive = eventFlags[i] & kFSEventStreamEventFlagMustScanSubDirs;
+      bool recursive = pContext->recursive &&
+                       (eventFlags[i] & kFSEventStreamEventFlagMustScanSubDirs);
 
       // process changes
       Error error = impl::discoverAndProcessFileChanges(fileInfo,
@@ -172,6 +179,7 @@ Handle registerMonitor(const FilePath& filePath,
    // return early, we'll call release later before returning)
    FileEventContext* pContext = new FileEventContext();
    pContext->rootPath = filePath;
+   pContext->recursive = recursive;
    std::auto_ptr<FileEventContext> autoPtrContext(pContext);
    FSEventStreamContext context;
    context.version = 0;
@@ -281,7 +289,8 @@ void run(const boost::function<void()>& checkForInput)
 
 void stop()
 {
-   // nothing to do here (no global cleanup or waiting necessary on osx)
+   // no need to call CFRunLoopStop(CFRunLoopGetCurrent()) because control
+   // is already outside of the run loop logic (above).
 }
 
 } // namespace detail
