@@ -12,12 +12,12 @@
  */
 
 
-// TODO: change filters to use FilePath (less transformations)
-
 // TODO: is the Callbacks interface too low-level (Handle implies you
 // need a stateful class -- perhaps a class should implement the callbacks
 // and unregister in its destructor -- we could then push the low-level
 // callbacks interface deeper down
+
+// TODO: high level documentation for usage/callbacks in FileMonitor.hpp
 
 #include <core/system/FileMonitor.hpp>
 
@@ -83,7 +83,7 @@ std::string prefixString(const std::string& str, char ch)
 
 bool notHidden(const FileInfo& fileInfo)
 {
-   return !core::system::isHiddenFile(FilePath(fileInfo.absolutePath()));
+   return !core::system::isHiddenFile(fileInfo);
 }
 
 } // anonymous namespace

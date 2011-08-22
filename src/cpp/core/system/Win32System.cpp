@@ -38,6 +38,7 @@
 #include <core/FileLogWriter.hpp>
 #include <core/StderrLogWriter.hpp>
 #include <core/FilePath.hpp>
+#include <core/FileInfo.hpp>
 #include <core/DateTime.hpp>
 #include <core/StringUtils.hpp>
 
@@ -97,6 +98,17 @@ Error initJobObject(bool* detachFromJob)
    }
 
    return Success();
+}
+
+bool isHiddenFile(const std::string& path)
+{
+   DWORD attribs = ::GetFileAttributesA(path.c_str());
+   if (attribs == INVALID_FILE_ATTRIBUTES)
+      return false;
+   else if (attribs & FILE_ATTRIBUTE_HIDDEN)
+      return true;
+   else
+      return false;
 }
 
 } // anonymous namespace
@@ -333,13 +345,12 @@ Error captureCommand(const std::string& command, std::string* pOutput)
 
 bool isHiddenFile(const FilePath& filePath)
 {
-   DWORD attribs = ::GetFileAttributesA(filePath.absolutePath().c_str());
-   if (attribs == INVALID_FILE_ATTRIBUTES)
-      return false;
-   else if (attribs & FILE_ATTRIBUTE_HIDDEN)
-      return true;
-   else
-      return false;
+   return isHiddenFile(filePath.absolutePath());
+}
+
+bool isHiddenFile(const FileInfo& fileInfo)
+{
+   return isHiddenFile(fileInfo.absolutePath());
 }
 
 Error makeFileHidden(const FilePath& path)

@@ -41,6 +41,7 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
+#include <core/FileInfo.hpp>
 #include <core/FileLogWriter.hpp>
 #include <core/Exec.hpp>
 #include <core/SyslogLogWriter.hpp>
@@ -517,6 +518,11 @@ bool isHiddenFile(const FilePath& filePath)
    std::string filename = filePath.filename() ;
    return (!filename.empty() && (filename[0] == '.')) ;
 }  
+
+bool isHiddenFile(const FileInfo& fileInfo)
+{
+   return isHiddenFile(FilePath(fileInfo.absolutePath()));
+}
    
 bool stderrIsTerminal()
 {

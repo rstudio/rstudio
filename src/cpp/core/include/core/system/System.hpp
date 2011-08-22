@@ -27,7 +27,8 @@
 
 namespace core {
 
-class FilePath ;
+class FileInfo;
+class FilePath;
 
 namespace system {
 
@@ -139,6 +140,7 @@ void log(LogLevel level, const std::string& message) ;
 
 // filesystem
 bool isHiddenFile(const FilePath& filePath) ;
+bool isHiddenFile(const FileInfo& fileInfo) ;
    
 // terminals
 bool stderrIsTerminal();
