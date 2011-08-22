@@ -21,6 +21,9 @@
 
 // TODO: implement non-recursive mode
 
+// TODO: consider returning parent iterator from function that does scan
+// for existing file items (so we don't keep having to re-scan from the top
+
 // TODO: see if there are filesystems/scenarios where filemon won't work
 // (we know remote SAMBA filesystems on windows won't for sure -- do
 // we get an error in this case or do notifications just not come)
@@ -290,7 +293,7 @@ void unregisterMonitor(Handle handle);
 // for termination state on the monitor thread
 void stop();
 
-} // namespace impl
+} // namespace detail
 
 
 namespace {
@@ -361,7 +364,9 @@ CallbackQueue& callbackQueue()
 }
 
 
-// track active handles so we can implement unregisterAll
+// track active handles so we can implement unregisterAll. note that this
+// list is accessed from the platform-specific file-monitor thread
+// (checkForInput and catch clause of fileMonitorMainThread
 std::list<Handle> s_activeHandles;
 
 void checkForInput()
