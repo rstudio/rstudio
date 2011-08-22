@@ -1,5 +1,5 @@
 /*
- * PosixFileScanner.cpp
+ * FileScanner.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -33,13 +33,23 @@ inline FileInfo toFileInfo(const FilePath& filePath)
 
 Error scanFiles(const FileInfo& fromRoot,
                 bool recursive,
+                const boost::function<bool(const FileInfo&)>& filter,
                 tree<FileInfo>* pTree)
 {
-   return scanFiles(pTree->set_head(fromRoot), recursive, pTree);
+   return scanFiles(pTree->set_head(fromRoot), recursive, filter, pTree);
 }
 
+// NOTE: we bail with an error if the top level directory can't be
+// enumerated however we merely log errors for children. this reflects
+// the notion that a top-level failure will report major problems
+// (e.g. permission to access a volume/drive) whereas errors which
+// occur in children are more likely to refect some idiosyncratic
+// problem with a child dir or file, and we don't want that to
+// interfere with the caller getting a listing of everything else
+// and proceeding with its work
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 bool recursive,
+                const boost::function<bool(const FileInfo&)>& filter,
                 tree<FileInfo>* pTree)
 {
    // clear all existing
@@ -69,6 +79,10 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    // iterate over entries
    BOOST_FOREACH(const FileInfo& childFileInfo, childrenFileInfo)
    {
+      // apply filter if we have one
+      if (filter && !filter(childFileInfo))
+         continue;
+
       // add the correct type of FileEntry
       if (childFileInfo.isDirectory())
       {
@@ -76,7 +90,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                               pTree->append_child(fromNode, childFileInfo);
          if (recursive)
          {
-            Error error = scanFiles(child, true, pTree);
+            Error error = scanFiles(child, true, filter, pTree);
             if (error)
             {
                LOG_ERROR(error);

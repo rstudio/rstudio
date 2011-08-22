@@ -64,6 +64,7 @@ struct Callbacks
 // register a new file monitor
 void registerMonitor(const core::FilePath& filePath,
                      bool recursive,
+                     const boost::function<bool(const FileInfo&)>& filter,
                      const Callbacks& callbacks);
 
 // unregister a file monitor
@@ -73,6 +74,24 @@ void unregisterMonitor(Handle handle);
 // the same thread that called checkForChanges)
 void checkForChanges();
 
+
+
+// convenience functions for creating filters that are useful in
+// file monitoring scenarios
+
+
+// filter out any directory (and its children) with the specified name
+// (no matter where it is located within the tree). useful for directories
+// like .git, .svn, .RProj.user, etc.
+boost::function<bool(const FileInfo&)> excludeDirectoryFilter(
+                                                     const std::string& name);
+
+// aggregate version of above
+boost::function<bool(const FileInfo&)> excludeDirectoriesFilter(
+                                    const std::vector<std::string>& names);
+
+// exclude hidden files
+boost::function<bool(const FileInfo&)> excludeHiddenFilter();
 
 } // namespace file_monitor
 } // namespace system

@@ -15,6 +15,8 @@
 #ifndef CORE_SYSTEM_FILE_SCANNER_HPP
 #define CORE_SYSTEM_FILE_SCANNER_HPP
 
+#include <boost/function.hpp>
+
 #include <core/FileInfo.hpp>
 
 #include <core/collection/Tree.hpp>
@@ -28,10 +30,12 @@ namespace system {
 
 Error scanFiles(const FileInfo& fromRoot,
                 bool recursive,
+                const boost::function<bool(const FileInfo&)>& filter,
                 tree<FileInfo>* pTree);
 
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 bool recursive,
+                const boost::function<bool(const FileInfo&)>& filter,
                 tree<FileInfo>* pTree);
 
 } // namespace system

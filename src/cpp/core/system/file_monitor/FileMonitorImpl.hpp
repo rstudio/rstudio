@@ -34,6 +34,7 @@ namespace impl {
 Error processFileAdded(tree<FileInfo>::iterator parentIt,
                        const FileChangeEvent& fileChange,
                        bool recursive,
+                       const boost::function<bool(const FileInfo&)>& filter,
                        tree<FileInfo>* pTree,
                        std::vector<FileChangeEvent>* pFileChanges);
 
@@ -48,10 +49,12 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
                         tree<FileInfo>* pTree,
                         std::vector<FileChangeEvent>* pFileChanges);
 
-Error discoverAndProcessFileChanges(const FileInfo& fileInfo,
-                                    bool recursive,
-                                    tree<FileInfo>* pTree,
-                                    const Callbacks::FilesChanged& onFilesChanged);
+Error discoverAndProcessFileChanges(
+               const FileInfo& fileInfo,
+               bool recursive,
+               const boost::function<bool(const FileInfo&)>& filter,
+               tree<FileInfo>* pTree,
+               const Callbacks::FilesChanged& onFilesChanged);
 
 template <typename Iterator>
 Iterator findFile(Iterator begin, Iterator end, const FileInfo& fileInfo)

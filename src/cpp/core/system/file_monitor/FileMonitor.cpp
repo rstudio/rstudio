@@ -11,13 +11,8 @@
  *
  */
 
-// TODO: deal with non case-sentitive file systems on Mac & Windows
 
-// TODO: consider addings filters as a feature
-
-
-// TODO: think more deeply about failure cases during scanning (meaning
-// scanning after we've already successfully initialize file monitoring)
+// TODO: change filters to use FilePath (less transformations)
 
 // TODO: is the Callbacks interface too low-level (Handle implies you
 // need a stateful class -- perhaps a class should implement the callbacks
@@ -30,15 +25,22 @@
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 
 #include <core/Thread.hpp>
 
+#include <core/system/System.hpp>
 #include <core/system/FileScanner.hpp>
 
 #include "FileMonitorImpl.hpp"
+
+// NOTE: the functions below assume case-sensitive file names. this could
+// in theory cause us to lose notifications on Win32 and OS X however in
+// practice we can't think of an easy way for the user to specify the
+// non case-sensitive variant of a file
 
 namespace core {
 namespace system {
@@ -53,7 +55,64 @@ void addEvent(FileChangeEvent::Type type,
    pEvents->push_back(FileChangeEvent(type, fileInfo));
 }
 
+bool notDirectories(const FileInfo& fileInfo,
+                    const std::vector<std::string>& dirNames)
+{
+   std::string path = fileInfo.absolutePath();
+
+   for (int i=0; i<dirNames.size(); i++)
+   {
+      if (fileInfo.isDirectory() && boost::algorithm::ends_with(path,
+                                                                dirNames[i]))
+      {
+         return false;
+      }
+   }
+
+   return true;
+}
+
+std::string prefixString(const std::string& str, char ch)
+{
+   prefixed.reserve(str.length() + 1);
+   prefixed.append(1, ch);
+   prefixed.append(str);
+   return prefixed;
+}
+
+bool notHidden(const FileInfo& fileInfo)
+{
+   return !core::system::isHiddenFile(FilePath(fileInfo.absolutePath()));
+}
+
 } // anonymous namespace
+
+
+boost::function<bool(const FileInfo&)> excludeDirectoryFilter(
+                                                      const std::string& name)
+{
+   std::vector<std::string> names;
+   names.push_back(name);
+   return excludeDirectoriesFilter(names);
+}
+
+boost::function<bool(const FileInfo&)> excludeDirectoriesFilter(
+                                     const std::vector<std::string>& names)
+{
+   std::vector<std::string> dirNames;
+   std::transform(names.begin(),
+                  names.end(),
+                  std::back_inserter(dirNames),
+                  boost::bind(prefixString, _1, '/'));
+
+   return boost::bind(notDirectories, _1, dirNames);
+}
+
+boost::function<bool(const FileInfo&)> excludeHiddenFilter()
+{
+   return boost::bind(notHidden, _1);
+}
+
 
 // helpers for platform-specific implementations
 namespace impl {
@@ -61,6 +120,7 @@ namespace impl {
 Error processFileAdded(tree<FileInfo>::iterator parentIt,
                        const FileChangeEvent& fileChange,
                        bool recursive,
+                       const boost::function<bool(const FileInfo&)>& filter,
                        tree<FileInfo>* pTree,
                        std::vector<FileChangeEvent>* pFileChanges)
 {
@@ -76,6 +136,7 @@ Error processFileAdded(tree<FileInfo>::iterator parentIt,
       tree<FileInfo> subTree;
       Error error = scanFiles(fileChange.fileInfo(),
                               true,
+                              filter,
                               &subTree);
       if (error)
          return error;
@@ -169,14 +230,16 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
    }
 }
 
-Error discoverAndProcessFileChanges(const FileInfo& fileInfo,
-                                    bool recursive,
-                                    tree<FileInfo>* pTree,
-                                    const Callbacks::FilesChanged& onFilesChanged)
+Error discoverAndProcessFileChanges(
+                  const FileInfo& fileInfo,
+                  bool recursive,
+                  const boost::function<bool(const FileInfo&)>& filter,
+                  tree<FileInfo>* pTree,
+                  const Callbacks::FilesChanged& onFilesChanged)
 {
    // scan this directory into a new tree which we can compare to the old tree
    tree<FileInfo> subdirTree;
-   Error error = scanFiles(fileInfo, recursive, &subdirTree);
+   Error error = scanFiles(fileInfo, recursive, filter, &subdirTree);
    if (error)
       return error;
 
@@ -226,6 +289,7 @@ Error discoverAndProcessFileChanges(const FileInfo& fileInfo,
                Error error = processFileAdded(it,
                                               fileChange,
                                               recursive,
+                                              filter,
                                               pTree,
                                               &fileChanges);
                if (error)
@@ -279,6 +343,7 @@ void run(const boost::function<void()>& checkForInput);
 // register a new file monitor
 Handle registerMonitor(const core::FilePath& filePath,
                        bool recursive,
+                       const boost::function<bool(const FileInfo&)>& filter,
                        const Callbacks& callbacks);
 
 // unregister a file monitor
@@ -306,10 +371,12 @@ public:
 
    RegistrationCommand(const core::FilePath& filePath,
                        bool recursive,
+                       const boost::function<bool(const FileInfo&)>& filter,
                        const Callbacks& callbacks)
       : type_(Register),
         filePath_(filePath),
         recursive_(recursive),
+        filter_(filter),
         callbacks_(callbacks)
    {
    }
@@ -323,6 +390,10 @@ public:
 
    const core::FilePath& filePath() const { return filePath_; }
    bool recursive() const { return recursive_; }
+   const boost::function<bool(const FileInfo&)>& filter() const
+   {
+      return filter_;
+   }
    const Callbacks& callbacks() const { return callbacks_; }
 
    Handle handle() const
@@ -337,6 +408,7 @@ private:
    // register command data
    core::FilePath filePath_;
    bool recursive_;
+   boost::function<bool(const FileInfo&)> filter_;
    Callbacks callbacks_;
 
    // unregister command data
@@ -380,6 +452,7 @@ void checkForInput()
       {
          Handle handle = detail::registerMonitor(command.filePath(),
                                                  command.recursive(),
+                                                 command.filter(),
                                                  command.callbacks());
          if (handle != NULL)
             s_activeHandles.push_back(handle);
@@ -500,6 +573,7 @@ void stop()
 
 void registerMonitor(const FilePath& filePath,
                      bool recursive,
+                     const boost::function<bool(const FileInfo&)>& filter,
                      const Callbacks& callbacks)
 {
    // bind a new version of the callbacks that puts them on the callback queue
@@ -516,6 +590,7 @@ void registerMonitor(const FilePath& filePath,
    // enque the registration
    registrationCommandQueue().enque(RegistrationCommand(filePath,
                                                         recursive,
+                                                        filter,
                                                         qCallbacks));
 }
 

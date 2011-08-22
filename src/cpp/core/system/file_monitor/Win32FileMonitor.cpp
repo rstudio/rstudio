@@ -72,7 +72,8 @@ public:
    HANDLE hRestartTimer;
    int restartCount;
 
-   // callbacks to client
+   // filter/callbacks
+   boost::function<bool(const FileInfo&)> filter;
    Callbacks::ReportError onMonitoringError;
    Callbacks::FilesChanged onFilesChanged;
 };
@@ -142,6 +143,7 @@ void ensureLongFilePath(FilePath* pFilePath)
 void processFileChange(DWORD action,
                        const FilePath& filePath,
                        bool recursive,
+                       const boost::function<bool(const FileInfo&)>& filter,
                        tree<FileInfo>* pTree,
                        std::vector<FileChangeEvent>* pFileChanges)
 {
@@ -165,13 +167,10 @@ void processFileChange(DWORD action,
                                                       pTree->end(),
                                                       parentFileInfo);
 
-   // bail if there is no parent (we never expect this to occur so log it)
+   // if we can't find a parent then return (this directory may have
+   // been excluded from scanning due to a filter)
    if (parentIt == pTree->end())
-   {
-      LOG_WARNING_MESSAGE("Unable to find parent: " +
-                          parentFileInfo.absolutePath());
       return;
-   }
 
    // handle the various types of actions
    FileInfo fileInfo(filePath);
@@ -184,6 +183,7 @@ void processFileChange(DWORD action,
          Error error = impl::processFileAdded(parentIt,
                                               event,
                                               recursive,
+                                              filter,
                                               pTree,
                                               pFileChanges);
          if (error)
@@ -246,12 +246,17 @@ void processFileChanges(FileEventContext* pContext,
       // our in-memory tree and thus "miss" the delete
       ensureLongFilePath(&filePath);
 
-      // process the file change
-      processFileChange(fileNotify.Action,
-                        filePath,
-                        pContext->recursive,
-                        &(pContext->fileTree),
-                        &fileChanges);
+      // apply filter if we have one
+      if (!pContext->filter || pContext->filter(FileInfo(filePath)))
+      {
+         // process the file change
+         processFileChange(fileNotify.Action,
+                           filePath,
+                           pContext->recursive,
+                           pContext->filter,
+                           &(pContext->fileTree),
+                           &fileChanges);
+      }
 
       // break or advance to next notification as necessary
       if (!fileNotify.NextEntryOffset)
@@ -311,6 +316,7 @@ void restartMonitoring(FileEventContext* pContext)
    // full recursive scan to detect changes and refresh the tree
    error = impl::discoverAndProcessFileChanges(*(pContext->fileTree.begin()),
                                                pContext->recursive,
+                                               pContext->filter,
                                                &(pContext->fileTree),
                                                pContext->onFilesChanged);
    if (error)
@@ -470,6 +476,7 @@ namespace detail {
 // register a new file monitor
 Handle registerMonitor(const core::FilePath& filePath,
                        bool recursive,
+                       const boost::function<bool(const FileInfo&)>& filter,
                        const Callbacks& callbacks)
 {
    // create and allocate FileEventContext (create auto-ptr in case we
@@ -526,7 +533,10 @@ Handle registerMonitor(const core::FilePath& filePath,
    ::InterlockedIncrement(&s_activeRequests);
 
    // scan the files
-   error = scanFiles(FileInfo(filePath), recursive, &pContext->fileTree);
+   error = scanFiles(FileInfo(filePath),
+                     recursive,
+                     filter,
+                     &pContext->fileTree);
    if (error)
    {
        // cleanup
@@ -540,6 +550,7 @@ Handle registerMonitor(const core::FilePath& filePath,
 
    // now that we have finished the file listing we know we have a valid
    // file-monitor so set the callbacks
+   pContext->filter = filter;
    pContext->onMonitoringError = callbacks.onMonitoringError;
    pContext->onFilesChanged = callbacks.onFilesChanged;
 
