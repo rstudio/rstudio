@@ -17,12 +17,6 @@
 //    QueueUserAPC and SetWaitableTimer
 // or perhaps just a standard sleep call with event coalescing would do it
 
-// TODO: consider wrapping the entire thread within an object lifetime
-
-// TODO: safety feature for unregistration -- ignore requets with a non-active
-// Handle (to prevent bad pointer deref). Note this is related to the final
-// item below on the correct abstraction level of the interface.
-
 // TODO: consider addings filters as a feature
 
 // TODO: implement non-recursive mode
@@ -394,8 +388,20 @@ void checkForInput()
 
       case RegistrationCommand::Unregister:
       {
-         detail::unregisterMonitor(command.handle());
-         s_activeHandles.remove(command.handle());
+         // verify that this is an active handle (protect against two calls
+         // to unregister or a call to unregister after a call to stop)
+         if (std::find(s_activeHandles.begin(),
+                       s_activeHandles.end(),
+                       command.handle()) != s_activeHandles.end())
+         {
+            detail::unregisterMonitor(command.handle());
+            s_activeHandles.remove(command.handle());
+         }
+         else
+         {
+            LOG_WARNING_MESSAGE("attempted to unregister file monitor handle "
+                                "which isn't currently active");
+         }
          break;
       }
 
