@@ -35,7 +35,8 @@ namespace file_monitor {
 // which performs the monitoring)
 void initialize();
 
-// stop the file monitoring service
+// stop the file monitoring service (automatically unregisters all
+// active file monitoring handles)
 void stop();
 
 // opaque handle to a registration (used to unregister)
@@ -53,7 +54,8 @@ struct Callbacks
 
    // callback which occurs if an error occurs during monitoring which causes
    // file monitoring to terminate. after this error no more onFilesChanged
-   // notifications will be received
+   // notifications will be received and the previously provided Handle
+   // is invalid (it is automatically unregistered after the error)
    ReportError onMonitoringError;
 
    // callback which occurs when files change
@@ -61,24 +63,33 @@ struct Callbacks
    FilesChanged onFilesChanged;
 };
 
-// register a new file monitor
+// register a new file monitor. the result of this call will be an
+// aynchronous call to either onRegistered or onRegistrationError. onRegistered
+// will provide an opaque Handle which can used for a subsequent call
+// to unregisterMonitor
 void registerMonitor(const core::FilePath& filePath,
                      bool recursive,
                      const boost::function<bool(const FileInfo&)>& filter,
                      const Callbacks& callbacks);
 
-// unregister a file monitor
+// unregister a file monitor. note that file monitors can also be unregistered
+// as a result of a monitoring error (reported by onMonitoringError) or by
+// a call to the global file_monitor::stop function. if a monitor has been
+// previously unregistered then a call to unregisterMonitor with its handle
+// will be a no-op
 void unregisterMonitor(Handle handle);
 
-// check for changes (will cause onRegistered and/or onFilesChanged calls on
-// the same thread that called checkForChanges)
+
+
+// check for changes (will cause onRegistered, onRegistrationError,
+// onMonitoringError, and onFilesChanged calls to occur on the same
+// thread that calls checkForChanges)
 void checkForChanges();
 
 
 
 // convenience functions for creating filters that are useful in
 // file monitoring scenarios
-
 
 // filter out any directory (and its children) with the specified name
 // (no matter where it is located within the tree). useful for directories
@@ -92,6 +103,7 @@ boost::function<bool(const FileInfo&)> excludeDirectoriesFilter(
 
 // exclude hidden files
 boost::function<bool(const FileInfo&)> excludeHiddenFilter();
+
 
 } // namespace file_monitor
 } // namespace system
