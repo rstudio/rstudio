@@ -11,49 +11,16 @@
  *
  */
 
-// TODO: if we go with granular monitoring then we might need to monitor
-// additional types of changes to catch all events (see .net FileSystemWatcher
-// dodumentation)
-
-// TODO: implications of underlying unreliabilty:
-//   http://social.msdn.microsoft.com/forums/en-US/netfxbcl/thread/4465cafb-f4ed-434f-89d8-c85ced6ffaa8/
-
-// TODO: for known error conditions (see below for ERROR_NOTIFY_ENUM_DIR and
-// ERROR_TOO_MANY_CMDS) use (bounded, e.g. 10x) retry logic which uses
-// SetWaitableTimer. Note that the retry must include a full scan (because
-// events have been dropped and will continue to be dropped while we wait
-// to do the retry)
-
 // TODO: do we need to call GetLongFileName on all of the files as
 // we scan them (for consistency)
 
 // TODO: windows file names are case insensitive and the notification
 // is determined by the command that caused the notification
 
-// TODO: consider whether we should go with a more convervative style
-// of watch/scan (basically directory modification only and go full
-// mac style)
-
-// TODO: handle ERROR_NOTIFY_ENUM_DIR
-//  (see http://blogs.msdn.com/b/oldnewthing/archive/2011/08/12/10195186.aspx)
-
-// TODO: explicitly handle case of volume type not supporting monitoring
-// (on windows indicated by ERROR_INVALID_FUNCTION)
-
-// TODO: investigate ERROR_TOO_MANY_CMDS network bios error referenced
-// in article. believe it has to do with many simultaneous reads/writes.
-// one possible workaround is to queue an APC for a retry. open incident
-// with Microsof Professional Advisory Services (reference article)
-//
-//   http://support.microsoft.com/gp/advisoryservice#tab0
-//
 
 // TODO: investigate whether we need to call AdjustTokenPrivilleges in order
 // to call ReadDirectoryChangesW (DirectoryChangeWatcher sample does. see
 // the CPrivillegeEnabler)
-
-// TOOD: for non-recursive mode don't do full recursive re-scan on
-// dwBytesTransferred == 0 sentienl for buffer overflow
 
 
 #include <core/system/FileMonitor.hpp>
@@ -86,7 +53,10 @@ class FileEventContext : boost::noncopyable
 {
 public:
    FileEventContext()
-      : hDirectory(NULL)
+      : hDirectory(NULL),
+        readDirChangesPending(false),
+        hRestartTimer(NULL),
+        restartCount(0)
    {
       receiveBuffer.resize(kBuffSize);
       handlingBuffer.resize(kBuffSize);
@@ -99,14 +69,20 @@ public:
    std::vector<BYTE> receiveBuffer;
    std::vector<BYTE> handlingBuffer;
    tree<FileInfo> fileTree;
+   bool readDirChangesPending;
+   HANDLE hRestartTimer;
+   int restartCount;
    Callbacks::ReportError onMonitoringError;
    Callbacks::FilesChanged onFilesChanged;
 };
 
-void closeDirectoryHandle(HANDLE hDirectory)
+void safeCloseHandle(HANDLE hObject, const ErrorLocation& location)
 {
-   if (!::CloseHandle(hDirectory))
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+   if (hObject != NULL)
+   {
+      if (!::CloseHandle(hObject))
+         LOG_ERROR(systemError(::GetLastError(), location));
+   }
 }
 
 void cleanupContext(FileEventContext* pContext)
@@ -116,10 +92,27 @@ void cleanupContext(FileEventContext* pContext)
       if (!::CancelIo(pContext->hDirectory))
          LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
 
-      closeDirectoryHandle(pContext->hDirectory);
+      safeCloseHandle(pContext->hDirectory, ERROR_LOCATION);
 
       pContext->hDirectory = NULL;
    }
+
+   if (pContext->hRestartTimer != NULL)
+   {
+      // make sure timer APC is never called after a cleanupContext
+      if (!::CancelWaitableTimer(pContext->hRestartTimer))
+         LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+
+      safeCloseHandle(pContext->hRestartTimer, ERROR_LOCATION);
+
+      pContext->hRestartTimer = NULL;
+   }
+
+   // delete pContext only if there are no read dir changes operations
+   // pending -- if there are then we wait to delete pContext until
+   // the completion routine gets ERROR_OPERATION_ABORTED
+   if (!pContext->readDirChangesPending)
+      delete pContext;
 }
 
 void removeTrailingSlash(std::wstring* pPath)
@@ -270,12 +263,103 @@ void terminateWithMonitoringError(FileEventContext* pContext,
    file_monitor::unregisterMonitor((Handle)pContext);
 }
 
+bool isRecoverableByRestart(const Error& error)
+{
+   return
+      // undocumented return value that indicates we should do a restart
+      // (see: http://blogs.msdn.com/b/oldnewthing/archive/2011/08/12/10195186.aspx)
+      error.code().value() == ERROR_NOTIFY_ENUM_DIR ||
+
+      // error which some users have observed occuring if a network
+      // volume is being monitored and there are too many simultaneous
+      // reads and writes
+      error.code().value() == ERROR_TOO_MANY_CMDS;
+}
+
+Error readDirectoryChanges(FileEventContext* pContext);
+void enqueRestartMonitoring(FileEventContext* pContext);
+
+void restartMonitoring(FileEventContext* pContext)
+{
+   // start monitoring again (always do this before the scan so we don't
+   // miss any events which occur while we are scanning)
+   Error error = readDirectoryChanges(pContext);
+   if (error)
+   {
+      // try to recover up to 10 times if the error is known to be recoverable
+      // (note the enque delays the attempted restart by 1 second to give
+      // the volume/system the chance to catch up from too many file changes)
+      if (isRecoverableByRestart(error) && (++(pContext->restartCount) <= 10))
+         enqueRestartMonitoring(pContext);
+      else
+         terminateWithMonitoringError(pContext, error);
+
+      return;
+   }
+
+   // successfully restarted monitoring, reset the restart count to 0
+   pContext->restartCount = 0;
+
+   // full recursive scan to detect changes and refresh the tree
+   error = impl::discoverAndProcessFileChanges(*(pContext->fileTree.begin()),
+                                               true,
+                                               &(pContext->fileTree),
+                                               pContext->onFilesChanged);
+   if (error)
+      terminateWithMonitoringError(pContext, error);
+}
+
+VOID CALLBACK restartMonitoringApcProc(LPVOID lpArg, DWORD, DWORD)
+{
+   // get context
+   FileEventContext* pContext = (FileEventContext*)lpArg;
+
+   // close the timer handle
+   safeCloseHandle(pContext->hRestartTimer, ERROR_LOCATION);
+   pContext->hRestartTimer = NULL;
+
+   // attempt the restart
+   restartMonitoring(pContext);
+}
+
+
+void enqueRestartMonitoring(FileEventContext* pContext)
+{
+   // create the restart timer (1 second from now)
+   pContext->hRestartTimer = ::CreateWaitableTimer(NULL, true, NULL);
+   if (pContext->hRestartTimer == NULL)
+   {
+      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      terminateWithMonitoringError(pContext, error);
+      return;
+   }
+
+   // setup large integer to indicate 1 second from now
+   const __int64 kSECOND = 10000000;
+   __int64 qwDueTime = -1 * kSECOND;
+   LARGE_INTEGER dueTime;
+   dueTime.LowPart  = (DWORD) ( qwDueTime & 0xFFFFFFFF );
+   dueTime.HighPart = (LONG)  ( qwDueTime >> 32 );
+
+   // enque the restart proc to run after time timer expires
+   BOOL success = ::SetWaitableTimer(pContext->hRestartTimer,
+                                     &dueTime,
+                                     0,
+                                     restartMonitoringApcProc,
+                                     (PVOID)pContext,
+                                     FALSE);
+
+   if (!success)
+   {
+      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      terminateWithMonitoringError(pContext, error);
+   }
+}
+
 // track number of active requests (we wait for this to get to zero before
 // allowing the exit of the monitoring thread -- this ensures that we have
 // performed full cleanup for all monitoring contexts before exiting.
 volatile LONG s_activeRequests = 0;
-
-Error readDirectoryChanges(FileEventContext* pContext);
 
 VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completion code
                                           DWORD dwNumberOfBytesTransfered,
@@ -283,6 +367,9 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
 {
    // get the context
    FileEventContext* pContext = (FileEventContext*)(lpOverlapped->hEvent);
+
+   // note that read changes is no longer pending
+   pContext->readDirChangesPending = false;
 
    // check for aborted
    if (dwErrorCode == ERROR_OPERATION_ABORTED)
@@ -313,36 +400,28 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
       return;
    }
 
-   // check for buffer overflow
+   // check for buffer overflow. this means there are too many file changes
+   // for the systme to keep up with -- in this case try to restart monitoring
+   // (after a 1 second delay) and repeat the restart up to 10 times
    if(dwNumberOfBytesTransfered == 0)
    {
-      // start reading again (always do this before the scan so we don't
-      // miss any events which occur while we are scanning)
-      Error error = readDirectoryChanges(pContext);
-      if (error)
-         terminateWithMonitoringError(pContext, error);
-
-      // full recursive scan to detect changes and refresh the tree
-      error = impl::discoverAndProcessFileChanges(*(pContext->fileTree.begin()),
-                                                  true,
-                                                  &(pContext->fileTree),
-                                                  pContext->onFilesChanged);
-      if (error)
-         LOG_ERROR(error);
-
+      // attempt to restart monitoring
+      enqueRestartMonitoring(pContext);
       return;
    }
-
-
 
    // copy to processing buffer (so we can immediately begin another read)
    ::CopyMemory(&(pContext->handlingBuffer[0]),
                 &(pContext->receiveBuffer[0]),
                 dwNumberOfBytesTransfered);
 
-   // begin the next read -- if this fails then the file change notification
-   // is effectively dead in the water
+   // begin the next read -- if this fails then enque a restart
    Error error = readDirectoryChanges(pContext);
+   if (isRecoverableByRestart(error))
+   {
+      enqueRestartMonitoring(pContext);
+      error = Success();
+   }
 
    // process file changes
    processFileChanges(pContext, dwNumberOfBytesTransfered);
@@ -371,6 +450,7 @@ Error readDirectoryChanges(FileEventContext* pContext)
    }
    else
    {
+      pContext->readDirChangesPending = true;
       return Success();
    }
 }
@@ -420,7 +500,7 @@ Handle registerMonitor(const core::FilePath& filePath,
    if (error)
    {
       // cleanup
-      closeDirectoryHandle(pContext->hDirectory);
+      safeCloseHandle(pContext->hDirectory, ERROR_LOCATION);
 
       // return error
       callbacks.onRegistrationError(error);

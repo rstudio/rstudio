@@ -21,12 +21,12 @@
 
 // TODO: implement non-recursive mode
 
+// TOOD: for windows non-recursive mode don't do full recursive re-scan on
+// dwBytesTransferred == 0 sentienl for buffer overflow
+
+
 // TODO: consider returning parent iterator from function that does scan
 // for existing file items (so we don't keep having to re-scan from the top
-
-// TODO: see if there are filesystems/scenarios where filemon won't work
-// (we know remote SAMBA filesystems on windows won't for sure -- do
-// we get an error in this case or do notifications just not come)
 
 // TODO: is there any global cleanup (stopping run loop or setting a "done"
 // flag) required on osx
