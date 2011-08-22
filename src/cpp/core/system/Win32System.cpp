@@ -36,6 +36,7 @@
 #include <core/LogWriter.hpp>
 #include <core/Error.hpp>
 #include <core/FileLogWriter.hpp>
+#include <core/StderrLogWriter.hpp>
 #include <core/FilePath.hpp>
 #include <core/DateTime.hpp>
 #include <core/StringUtils.hpp>
@@ -149,6 +150,15 @@ void initHook()
 void initializeSystemLog(const std::string& programIdentity, int logLevel)
 {
 }
+
+void initializeStderrLog(const std::string& programIdentity, int logLevel)
+{
+   if (s_pLogWriter)
+      delete s_pLogWriter;
+
+   s_pLogWriter = new StderrLogWriter(programIdentity, logLevel);
+}
+
 
 void initializeLog(const std::string& programIdentity, int logLevel, const FilePath& settingsDir)
 {

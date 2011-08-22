@@ -29,11 +29,13 @@ set (CORE_SOURCE_FILES
    FileSerializer.cpp
    Hash.cpp
    Log.cpp
+   LogWriter.cpp
    PerformanceTimer.cpp
    ProgramOptions.cpp
    RegexUtils.cpp
    SafeConvert.cpp
    Settings.cpp
+   StderrLogWriter.cpp
    StringUtils.cpp
    Thread.cpp
    WaitUtils.cpp

@@ -44,6 +44,7 @@
 #include <core/FileLogWriter.hpp>
 #include <core/Exec.hpp>
 #include <core/SyslogLogWriter.hpp>
+#include <core/StderrLogWriter.hpp>
 
 #include <core/system/ProcessArgs.hpp>
 
@@ -147,6 +148,14 @@ void initializeSystemLog(const std::string& programIdentity, int logLevel)
       delete s_pLogWriter;
 
    s_pLogWriter = new SyslogLogWriter(programIdentity, logLevel);
+}
+
+void initializeStderrLog(const std::string& programIdentity, int logLevel)
+{
+   if (s_pLogWriter)
+      delete s_pLogWriter;
+
+   s_pLogWriter = new StderrLogWriter(programIdentity, logLevel);
 }
 
 void initializeLog(const std::string& programIdentity,

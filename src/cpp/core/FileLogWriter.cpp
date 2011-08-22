@@ -13,10 +13,7 @@
 
 #include <core/FileLogWriter.hpp>
 
-#include <boost/algorithm/string/replace.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <core/DateTime.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
@@ -54,28 +51,10 @@ void FileLogWriter::log(core::system::LogLevel logLevel,
    rotateLogFile();
 
    // Swallow errors--we can't do anything anyway
-   core::appendToFile(logFile_, formatLogEntry(message));
+   core::appendToFile(logFile_, formatLogEntry(programIdentity_, message));
 }
 
-std::string FileLogWriter::formatLogEntry(const std::string& message)
-{
-   // replace newlines with standard escape sequence
-   std::string cleanedMessage(message);
-   boost::algorithm::replace_all(cleanedMessage, "\n", "|||");
 
-   // generate time string
-   using namespace boost::posix_time;
-   ptime time = microsec_clock::universal_time();
-   std::string dateTime = date_time::format(time,  "%d %b %Y %H:%M:%S");
-
-   // generate log entry
-   std::ostringstream ostr;
-   ostr << dateTime
-        << " [" << programIdentity_ << "] "
-        << cleanedMessage
-        << std::endl;
-   return ostr.str();
-}
 
 #define LOGMAX (4096*1024)  // remove every 4 megabytes
 bool FileLogWriter::rotateLogFile()

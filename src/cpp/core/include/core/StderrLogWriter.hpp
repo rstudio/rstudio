@@ -1,5 +1,5 @@
 /*
- * FileLogWriter.hpp
+ * StderrLogWriter.hpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,33 +11,27 @@
  *
  */
 
-#ifndef FILE_LOG_WRITER_HPP
-#define FILE_LOG_WRITER_HPP
+#ifndef STDERR_LOG_WRITER_HPP
+#define STDERR_LOG_WRITER_HPP
 
-#include <core/FilePath.hpp>
 #include <core/LogWriter.hpp>
 
 namespace core {
 
-class FileLogWriter : public LogWriter
+class StderrLogWriter : public LogWriter
 {
 public:
-    FileLogWriter(const std::string& programIdentity,
-                  int logLevel,
-                  const FilePath& logDir);
-    virtual ~FileLogWriter();
+    StderrLogWriter(const std::string& programIdentity, int logLevel);
+    virtual ~StderrLogWriter();
 
     virtual void log(core::system::LogLevel level,
                      const std::string& message);
 
 private:
-    bool rotateLogFile();
-
     std::string programIdentity_;
     int logLevel_;
-    FilePath logFile_;
 };
 
 } // namespace core
 
-#endif // FILE_LOG_WRITER_HPP
+#endif // STDERR_LOG_WRITER_HPP

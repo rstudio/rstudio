@@ -58,6 +58,7 @@ Error copyMetafileToClipboard(const FilePath& path);
 void initHook();
 // initialization (not thread safe, call from main thread at app startup)  
 void initializeSystemLog(const std::string& programIdentity, int logLevel);
+void initializeStderrLog(const std::string& programIdentity, int logLevel);
 void initializeLog(const std::string& programIdentity,
                    int logLevel,
                    const FilePath& logDir);
