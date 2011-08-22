@@ -60,7 +60,7 @@ bool notDirectories(const FileInfo& fileInfo,
 {
    std::string path = fileInfo.absolutePath();
 
-   for (int i=0; i<dirNames.size(); i++)
+   for (std::size_t i=0; i<dirNames.size(); i++)
    {
       if (fileInfo.isDirectory() && boost::algorithm::ends_with(path,
                                                                 dirNames[i]))
@@ -74,6 +74,7 @@ bool notDirectories(const FileInfo& fileInfo,
 
 std::string prefixString(const std::string& str, char ch)
 {
+   std::string prefixed;
    prefixed.reserve(str.length() + 1);
    prefixed.append(1, ch);
    prefixed.append(str);
@@ -237,93 +238,90 @@ Error discoverAndProcessFileChanges(
                   tree<FileInfo>* pTree,
                   const Callbacks::FilesChanged& onFilesChanged)
 {
+   // find this path in our fileTree
+   tree<FileInfo>::iterator it = std::find(pTree->begin(),
+                                           pTree->end(),
+                                           fileInfo);
+
+   // if we don't find it then it may have been excluded by a filter, just bail
+   if (it == pTree->end())
+      return Success();
+
    // scan this directory into a new tree which we can compare to the old tree
    tree<FileInfo> subdirTree;
    Error error = scanFiles(fileInfo, recursive, filter, &subdirTree);
    if (error)
       return error;
 
-   // find this path in our fileTree
-   tree<FileInfo>::iterator it = std::find(pTree->begin(),
-                                           pTree->end(),
-                                           fileInfo);
-   if (it != pTree->end())
+   // handle recursive vs. non-recursive scan differnetly
+   if (recursive)
    {
-      // handle recursive vs. non-recursive scan differnetly
-      if (recursive)
-      {
-         // check for changes on full subtree
-         std::vector<FileChangeEvent> fileChanges;
-         tree<FileInfo> existingSubtree(it);
-         collectFileChangeEvents(existingSubtree.begin(),
-                                 existingSubtree.end(),
-                                 subdirTree.begin(),
-                                 subdirTree.end(),
-                                 &fileChanges);
+      // check for changes on full subtree
+      std::vector<FileChangeEvent> fileChanges;
+      tree<FileInfo> existingSubtree(it);
+      collectFileChangeEvents(existingSubtree.begin(),
+                              existingSubtree.end(),
+                              subdirTree.begin(),
+                              subdirTree.end(),
+                              &fileChanges);
 
-         // fire events
-         onFilesChanged(fileChanges);
+      // fire events
+      onFilesChanged(fileChanges);
 
-         // wholesale replace subtree
-         pTree->insert_subtree_after(it, subdirTree.begin());
-         pTree->erase(it);
-      }
-      else
-      {
-         // scan for changes on just the children
-         std::vector<FileChangeEvent> childrenFileChanges;
-         collectFileChangeEvents(pTree->begin(it),
-                                 pTree->end(it),
-                                 subdirTree.begin(subdirTree.begin()),
-                                 subdirTree.end(subdirTree.begin()),
-                                 &childrenFileChanges);
-
-         // build up actual file changes and mutate the tree as appropriate
-         std::vector<FileChangeEvent> fileChanges;
-         BOOST_FOREACH(const FileChangeEvent& fileChange, childrenFileChanges)
-         {
-            switch(fileChange.type())
-            {
-            case FileChangeEvent::FileAdded:
-            {
-               Error error = processFileAdded(it,
-                                              fileChange,
-                                              recursive,
-                                              filter,
-                                              pTree,
-                                              &fileChanges);
-               if (error)
-                  LOG_ERROR(error);
-               break;
-            }
-            case FileChangeEvent::FileModified:
-            {
-               processFileModified(it, fileChange, pTree, &fileChanges);
-               break;
-            }
-            case FileChangeEvent::FileRemoved:
-            {
-               processFileRemoved(it,
-                                  fileChange,
-                                  recursive,
-                                  pTree,
-                                  &fileChanges);
-               break;
-            }
-            case FileChangeEvent::None:
-            default:
-               break;
-            }
-         }
-
-         // fire events
-         onFilesChanged(fileChanges);
-      }
+      // wholesale replace subtree
+      pTree->insert_subtree_after(it, subdirTree.begin());
+      pTree->erase(it);
    }
    else
    {
-      LOG_WARNING_MESSAGE("Unable to find treeItem for " +
-                          fileInfo.absolutePath());
+      // scan for changes on just the children
+      std::vector<FileChangeEvent> childrenFileChanges;
+      collectFileChangeEvents(pTree->begin(it),
+                              pTree->end(it),
+                              subdirTree.begin(subdirTree.begin()),
+                              subdirTree.end(subdirTree.begin()),
+                              &childrenFileChanges);
+
+      // build up actual file changes and mutate the tree as appropriate
+      std::vector<FileChangeEvent> fileChanges;
+      BOOST_FOREACH(const FileChangeEvent& fileChange, childrenFileChanges)
+      {
+         switch(fileChange.type())
+         {
+         case FileChangeEvent::FileAdded:
+         {
+            Error error = processFileAdded(it,
+                                           fileChange,
+                                           recursive,
+                                           filter,
+                                           pTree,
+                                           &fileChanges);
+            if (error)
+               LOG_ERROR(error);
+            break;
+         }
+         case FileChangeEvent::FileModified:
+         {
+            processFileModified(it, fileChange, pTree, &fileChanges);
+            break;
+         }
+         case FileChangeEvent::FileRemoved:
+         {
+            processFileRemoved(it,
+                               fileChange,
+                               recursive,
+                               pTree,
+                               &fileChanges);
+            break;
+         }
+         case FileChangeEvent::None:
+         default:
+            break;
+         }
+      }
+
+      // fire events
+      onFilesChanged(fileChanges);
    }
 
    return Success();

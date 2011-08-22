@@ -43,6 +43,7 @@ public:
    FSEventStreamRef streamRef;
    FilePath rootPath;
    bool recursive;
+   boost::function<bool(const FileInfo&)> filter;
    tree<FileInfo> fileTree;
    Callbacks::FilesChanged onFilesChanged;
    Callbacks::ReportError onMonitoringError;
@@ -89,17 +90,23 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       // get FileInfo for this directory
       FileInfo fileInfo(path, true);
 
-      // check for need to do recursive scan
-      bool recursive = pContext->recursive &&
-                       (eventFlags[i] & kFSEventStreamEventFlagMustScanSubDirs);
+      // apply the filter (if any)
+      if (!pContext->filter || pContext->filter(fileInfo))
+      {
+         // check for need to do recursive scan
+         bool recursive = pContext->recursive &&
+                          (eventFlags[i] & kFSEventStreamEventFlagMustScanSubDirs);
 
-      // process changes
-      Error error = impl::discoverAndProcessFileChanges(fileInfo,
-                                                        recursive,
-                                                        &(pContext->fileTree),
-                                                        pContext->onFilesChanged);
-      if (error)
-         LOG_ERROR(error);
+         // process changes
+         Error error = impl::discoverAndProcessFileChanges(
+                                                         fileInfo,
+                                                         recursive,
+                                                         pContext->filter,
+                                                         &(pContext->fileTree),
+                                                         pContext->onFilesChanged);
+         if (error)
+            LOG_ERROR(error);
+      }
    }
 }
 
@@ -143,10 +150,10 @@ namespace detail {
 // register a new file monitor
 Handle registerMonitor(const FilePath& filePath,
                        bool recursive,
+                       const boost::function<bool(const FileInfo&)>& filter,
                        const Callbacks& callbacks)
 {
    // allocate file path
-   std::string path = filePath.absolutePath();
    CFStringRef filePathRef = ::CFStringCreateWithCString(
                                        kCFAllocatorDefault,
                                        filePath.absolutePath().c_str(),
@@ -180,6 +187,7 @@ Handle registerMonitor(const FilePath& filePath,
    FileEventContext* pContext = new FileEventContext();
    pContext->rootPath = filePath;
    pContext->recursive = recursive;
+   pContext->filter = filter;
    std::auto_ptr<FileEventContext> autoPtrContext(pContext);
    FSEventStreamContext context;
    context.version = 0;
@@ -224,7 +232,10 @@ Handle registerMonitor(const FilePath& filePath,
    }
 
    // scan the files
-   Error error = scanFiles(FileInfo(filePath), true, &pContext->fileTree);
+   Error error = scanFiles(FileInfo(filePath),
+                           recursive,
+                           filter,
+                           &pContext->fileTree);
    if (error)
    {
        // stop, invalidate, release

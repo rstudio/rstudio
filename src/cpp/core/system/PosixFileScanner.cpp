@@ -40,13 +40,15 @@ int entryFilter(const struct dirent *entry)
 
 Error scanFiles(const FileInfo& fromRoot,
                 bool recursive,
+                const boost::function<bool(const FileInfo&)>& filter,
                 tree<FileInfo>* pTree)
 {
-   return scanFiles(pTree->set_head(fromRoot), recursive, pTree);
+   return scanFiles(pTree->set_head(fromRoot), recursive, filter, pTree);
 }
 
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 bool recursive,
+                const boost::function<bool(const FileInfo&)>& filter,
                 tree<FileInfo>* pTree)
 {
    // clear all existing
@@ -92,31 +94,46 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
          continue;
       }
 
-      // add the correct type of FileEntry
-      if ( S_ISDIR(st.st_mode))
+      // create the FileInfo
+      FileInfo fileInfo;
+      if (S_ISDIR(st.st_mode))
       {
-         tree<FileInfo>::iterator_base child =
-                              pTree->append_child(fromNode, FileInfo(path, true));
-         if (recursive)
-         {
-            Error error = scanFiles(child, true, pTree);
-            if (error)
-            {
-               LOG_ERROR(error);
-               continue;
-            }
-         }
+         fileInfo = FileInfo(path, true);
       }
       else
       {
-         pTree->append_child(fromNode, FileInfo(path,
-                                            false,
-                                            st.st_size,
- #ifdef __APPLE__
-                                            st.st_mtimespec.tv_sec));
- #else
-                                            st.st_mtime));
- #endif
+         fileInfo = FileInfo(path,
+                             false,
+                             st.st_size,
+#ifdef __APPLE__
+                             st.st_mtimespec.tv_sec);
+#else
+                             st.st_mtime);
+#endif
+      }
+
+      // apply the filter (if any)
+      if (!filter || filter(fileInfo))
+      {
+         // add the correct type of FileEntry
+         if (fileInfo.isDirectory())
+         {
+            tree<FileInfo>::iterator_base child = pTree->append_child(fromNode,
+                                                                      fileInfo);
+            if (recursive)
+            {
+               Error error = scanFiles(child, true, filter, pTree);
+               if (error)
+               {
+                  LOG_ERROR(error);
+                  continue;
+               }
+            }
+         }
+         else
+         {
+            pTree->append_child(fromNode, fileInfo);
+         }
       }
    }
 
