@@ -11,18 +11,6 @@
  *
  */
 
-// TODO: do we need to call GetLongFileName on all of the files as
-// we scan them (for consistency)
-
-// TODO: windows file names are case insensitive and the notification
-// is determined by the command that caused the notification
-
-
-// TODO: investigate whether we need to call AdjustTokenPrivilleges in order
-// to call ReadDirectoryChangesW (DirectoryChangeWatcher sample does. see
-// the CPrivillegeEnabler)
-
-
 #include <core/system/FileMonitor.hpp>
 
 #include <windows.h>

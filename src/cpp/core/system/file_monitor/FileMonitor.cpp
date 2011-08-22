@@ -17,6 +17,8 @@
 //    QueueUserAPC and SetWaitableTimer
 // or perhaps just a standard sleep call with event coalescing would do it
 
+// TODO: deal with non case-sentitive file systems on Mac & Windows
+
 // TODO: consider addings filters as a feature
 
 // TODO: implement non-recursive mode
