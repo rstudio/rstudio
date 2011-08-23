@@ -490,23 +490,6 @@ void checkForInput()
    }
 }
 
-void unregisterAll()
-{
-   // make a copy of all active handles so we can unregister them
-   std::vector<Handle> activeHandles;
-   std::copy(s_activeHandles.begin(),
-             s_activeHandles.end(),
-             std::back_inserter(activeHandles));
-
-   // clear the list
-   s_activeHandles.clear();
-
-   // unregister all
-   std::for_each(activeHandles.begin(),
-                 activeHandles.end(),
-                 detail::unregisterMonitor);
-}
-
 void fileMonitorThreadMain()
 {
    // run the file monitor thread
@@ -522,7 +505,14 @@ void fileMonitorThreadMain()
    // always clean up (even for unexpected exception case)
    try
    {
-      unregisterAll();
+      // unregister all active handles
+      std::for_each(s_activeHandles.begin(),
+                    s_activeHandles.end(),
+                    detail::unregisterMonitor);
+
+      // clear the list
+      s_activeHandles.clear();
+
       detail::stop();
    }
    CATCH_UNEXPECTED_EXCEPTION
