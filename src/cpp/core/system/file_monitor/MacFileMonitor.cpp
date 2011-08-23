@@ -45,8 +45,7 @@ public:
    bool recursive;
    boost::function<bool(const FileInfo&)> filter;
    tree<FileInfo> fileTree;
-   Callbacks::FilesChanged onFilesChanged;
-   Callbacks::ReportError onMonitoringError;
+   Callbacks callbacks;
 };
 
 void fileEventCallback(ConstFSEventStreamRef streamRef,
@@ -59,10 +58,10 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
    // get context
    FileEventContext* pContext = (FileEventContext*)pCallbackInfo;
 
-   // bail if we don't have onFilesChanged (we wouldn't if a callback snuck
+   // bail if we don't have callbacks (we wouldn't if a callback snuck
    // through to us even after we failed to fully initialize the file monitor
    // (e.g. if there was an error during file listing)
-   if (!pContext->onFilesChanged)
+   if (!pContext->callbacks.onFilesChanged)
       return;
 
    char **paths = (char**)eventPaths;
@@ -73,8 +72,7 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       {
          Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
                                          ERROR_LOCATION);
-         pContext->onMonitoringError(error);
-         file_monitor::unregisterMonitor((Handle)pContext);
+         pContext->callbacks.onMonitoringError(error);
          return;
       }
 
@@ -99,11 +97,11 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
 
          // process changes
          Error error = impl::discoverAndProcessFileChanges(
-                                                         fileInfo,
-                                                         recursive,
-                                                         pContext->filter,
-                                                         &(pContext->fileTree),
-                                                         pContext->onFilesChanged);
+                                             fileInfo,
+                                             recursive,
+                                             pContext->filter,
+                                             &(pContext->fileTree),
+                                             pContext->callbacks.onFilesChanged);
          if (error)
             LOG_ERROR(error);
       }
@@ -247,10 +245,8 @@ Handle registerMonitor(const FilePath& filePath,
    }
 
    // now that we have finished the file listing we know we have a valid
-   // file-monitor so set the onFilesChanged callback so that the
-   // client can receive events
-   pContext->onFilesChanged = callbacks.onFilesChanged;
-   pContext->onMonitoringError = callbacks.onMonitoringError;
+   // file-monitor so set the callbacks
+   pContext->callbacks = callbacks;
 
    // we are going to pass the context pointer to the client (as the Handle)
    // so we release it here to relinquish ownership
@@ -272,7 +268,11 @@ void unregisterMonitor(Handle handle)
    // stop, invalidate, release
    stopInvalidateAndReleaseEventStream(pContext->streamRef);
 
-   // delete context
+   // let the clieht know we are unregistered (so it is safe to tear
+   // down the callback context)
+   pContext->callbacks.onUnregistered();
+
+   // delete the context
    delete pContext;
 }
 

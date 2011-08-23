@@ -17,16 +17,6 @@
 // and unregister in its destructor -- we could then push the low-level
 // callbacks interface deeper down
 
-// TODO: could the Handle be repeated? (since it is just the address of
-// an allocation). perhaps we need a guid -> handle map in the intermediate
-// layer
-
-// TODO: should there be an onStopped call to notify an existing
-// registration that it has been stopped (and therefore its Handle
-// has become invalid)
-
-// TODO: write unit tests
-
 #include <core/system/FileMonitor.hpp>
 
 #include <list>
