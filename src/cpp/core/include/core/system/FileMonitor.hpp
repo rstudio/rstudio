@@ -83,13 +83,6 @@ struct Callbacks
 
    // callback which occurs when files change
    boost::function<void(const std::vector<FileChangeEvent>&)> onFilesChanged;
-
-   // callback which occurs when the monitor is fully unregistered. note that this
-   // callback can occur as a result of:
-   //    - an explicit call to unregisterMonitor;
-   //    - a monitoring error which caused an automatic unregistration; or
-   //    - a call to the global file_monitor::stop function
-   boost::function<void()> onUnregistered;
 };
 
 // register a new file monitor. the result of this call will be an
@@ -97,10 +90,7 @@ struct Callbacks
 // will provide an opaque Handle which can used for a subsequent call
 // to unregisterMonitor. if you want to bind a c++ object to the lifetime
 // of this file monitor simply create a shared_ptr and bind its members
-// to the file monitor callbacks. note that if you also would like to
-// guarantee that the deletion of your shared_ptr object is invoked on the same
-// thread that called registerMonitor you should also bind a function to
-// onUnregistered (otherwise the delete will occur on the file monitoring thread)
+// to the file monitor callbacks.
 void registerMonitor(const core::FilePath& filePath,
                      bool recursive,
                      const boost::function<bool(const FileInfo&)>& filter,
@@ -114,8 +104,8 @@ void unregisterMonitor(Handle handle);
 
 
 // check for changes (will cause onRegistered, onRegistrationError,
-// onMonitoringError, onFilesChanged, and onUnregistered calls to occur
-// on the same thread that calls checkForChanges)
+// onMonitoringError, and onFilesChanged to occur on the same thread that calls
+// checkForChanges)
 void checkForChanges();
 
 

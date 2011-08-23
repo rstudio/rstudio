@@ -399,10 +399,6 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
       // decrement the active request counter
       ::InterlockedDecrement(&s_activeRequests);
 
-      // let the client know we are unregistered (note this call should always
-      // be prior to delete pContext below!)
-      pContext->callbacks.onUnregistered();
-
       // we wait to delete the pContext until here because it owns the
       // OVERLAPPED structure and buffers, and so if we deleted it earlier
       // and the OS tried to access those memory regions we would crash
