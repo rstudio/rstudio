@@ -49,18 +49,25 @@ struct Callbacks
    boost::function<void(Handle, const tree<FileInfo>&)> onRegistered;
 
    // callback which occurs if a registration error occurs
-   typedef boost::function<void(const core::Error&)> ReportError;
-   ReportError onRegistrationError;
+   boost::function<void(const core::Error&)> onRegistrationError;
 
-   // callback which occurs if an error occurs during monitoring which causes
-   // file monitoring to terminate. after this error no more onFilesChanged
-   // notifications will be received and the previously provided Handle
-   // is invalid (it is automatically unregistered after the error)
-   ReportError onMonitoringError;
+   // callback which occurs if an error occurs during monitoring. depending
+   // upon the nature of the error this may (and likely will) result in
+   // no more file chagne events being fired for this context. therefore,
+   // after receiving this callback unregisterMonitor should then be called
+   boost::function<void(const core::Error&)> onMonitoringError;
 
    // callback which occurs when files change
-   typedef boost::function<void(const std::vector<FileChangeEvent>&)> FilesChanged;
-   FilesChanged onFilesChanged;
+   boost::function<void(const std::vector<FileChangeEvent>&)> onFilesChanged;
+
+   // callback which occurs when the monitor is fully unregistered. only
+   // after this callback is received is it safe to tear down the
+   // context (e.g. c++ object) setup for the other callbacks. note that this
+   // callback can be received as a result of a call to file_monitor::stop
+   // (as opposed to an explicit unregistration) -- in this case the callback
+   // context needs to ensure that it doesn't subsequently call
+   // unregisterMonitor (as that would result in a double-free of the Handle)
+   boost::function<void()> onUnregistered;
 };
 
 // register a new file monitor. the result of this call will be an
@@ -72,11 +79,8 @@ void registerMonitor(const core::FilePath& filePath,
                      const boost::function<bool(const FileInfo&)>& filter,
                      const Callbacks& callbacks);
 
-// unregister a file monitor. note that file monitors can also be unregistered
-// as a result of a monitoring error (reported by onMonitoringError) or by
-// a call to the global file_monitor::stop function. if a monitor has been
-// previously unregistered then a call to unregisterMonitor with its handle
-// will be a no-op
+// unregister a file monitor. this function can only be called once per file
+// monitor registration (it is equivilant to calling delete on the Handle)
 void unregisterMonitor(Handle handle);
 
 

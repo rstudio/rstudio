@@ -240,11 +240,12 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
 }
 
 Error discoverAndProcessFileChanges(
-                  const FileInfo& fileInfo,
-                  bool recursive,
-                  const boost::function<bool(const FileInfo&)>& filter,
-                  tree<FileInfo>* pTree,
-                  const Callbacks::FilesChanged& onFilesChanged)
+   const FileInfo& fileInfo,
+   bool recursive,
+   const boost::function<bool(const FileInfo&)>& filter,
+   tree<FileInfo>* pTree,
+   const  boost::function<void(const std::vector<FileChangeEvent>&)>&
+                                                               onFilesChanged)
 {
    // find this path in our fileTree
    tree<FileInfo>::iterator it = std::find(pTree->begin(),
@@ -467,20 +468,8 @@ void checkForInput()
 
       case RegistrationCommand::Unregister:
       {
-         // verify that this is an active handle (protect against two calls
-         // to unregister or a call to unregister after a call to stop)
-         if (std::find(s_activeHandles.begin(),
-                       s_activeHandles.end(),
-                       command.handle()) != s_activeHandles.end())
-         {
-            detail::unregisterMonitor(command.handle());
-            s_activeHandles.remove(command.handle());
-         }
-         else
-         {
-            LOG_WARNING_MESSAGE("attempted to unregister file monitor handle "
-                                "which isn't currently active");
-         }
+         detail::unregisterMonitor(command.handle());
+         s_activeHandles.remove(command.handle());
          break;
       }
 
@@ -505,7 +494,12 @@ void fileMonitorThreadMain()
    // always clean up (even for unexpected exception case)
    try
    {
-      // unregister all active handles
+      // unregister all active handles. note that there is a constraint
+      // that detail::unregisterMonitor can only be called once per active
+      // file monitor registration -- unregistering all handlers here
+      // is safe because at this point we have stopped calling checkForInput
+      // so it isn't possible for clients to sneak it additional calls
+      // to unregisterMonitor
       std::for_each(s_activeHandles.begin(),
                     s_activeHandles.end(),
                     detail::unregisterMonitor);
@@ -513,6 +507,8 @@ void fileMonitorThreadMain()
       // clear the list
       s_activeHandles.clear();
 
+      // allow the implementation a chance to stop completely (e.g. may
+      // need to wait for pending async operations to complete)
       detail::stop();
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -541,6 +537,11 @@ void enqueOnFilesChanged(const Callbacks& callbacks,
                          const std::vector<FileChangeEvent>& fileChanges)
 {
    callbackQueue().enque(boost::bind(callbacks.onFilesChanged, fileChanges));
+}
+
+void enqueOnUnregistered(const Callbacks& callbacks)
+{
+   callbackQueue().enque(boost::bind(callbacks.onUnregistered));
 }
 
 boost::thread s_fileMonitorThread;
@@ -584,6 +585,7 @@ void registerMonitor(const FilePath& filePath,
                                               callbacks,
                                               _1);
    qCallbacks.onFilesChanged = boost::bind(enqueOnFilesChanged, callbacks, _1);
+   qCallbacks.onUnregistered = boost::bind(enqueOnUnregistered, callbacks);
 
    // enque the registration
    registrationCommandQueue().enque(RegistrationCommand(filePath,

@@ -74,8 +74,7 @@ public:
 
    // filter/callbacks
    boost::function<bool(const FileInfo&)> filter;
-   Callbacks::ReportError onMonitoringError;
-   Callbacks::FilesChanged onFilesChanged;
+   Callbacks callbacks;
 };
 
 void safeCloseHandle(HANDLE hObject, const ErrorLocation& location)
@@ -266,14 +265,7 @@ void processFileChanges(FileEventContext* pContext,
    };
 
    // notify client of file changes
-   pContext->onFilesChanged(fileChanges);
-}
-
-void terminateWithMonitoringError(FileEventContext* pContext,
-                                  const Error& error)
-{
-   pContext->onMonitoringError(error);
-   file_monitor::unregisterMonitor((Handle)pContext);
+   pContext->callbacks.onFilesChanged(fileChanges);
 }
 
 bool isRecoverableByRestart(const Error& error)
@@ -305,7 +297,7 @@ void restartMonitoring(FileEventContext* pContext)
       if (isRecoverableByRestart(error) && (++(pContext->restartCount) <= 10))
          enqueRestartMonitoring(pContext);
       else
-         terminateWithMonitoringError(pContext, error);
+         pContext->callbacks.onMonitoringError(error);
 
       return;
    }
@@ -314,13 +306,14 @@ void restartMonitoring(FileEventContext* pContext)
    pContext->restartCount = 0;
 
    // full recursive scan to detect changes and refresh the tree
-   error = impl::discoverAndProcessFileChanges(*(pContext->fileTree.begin()),
-                                               pContext->recursive,
-                                               pContext->filter,
-                                               &(pContext->fileTree),
-                                               pContext->onFilesChanged);
+   error = impl::discoverAndProcessFileChanges(
+                                       *(pContext->fileTree.begin()),
+                                       pContext->recursive,
+                                       pContext->filter,
+                                       &(pContext->fileTree),
+                                       pContext->callbacks.onFilesChanged);
    if (error)
-      terminateWithMonitoringError(pContext, error);
+      pContext->callbacks.onMonitoringError(error);
 }
 
 VOID CALLBACK restartMonitoringApcProc(LPVOID lpArg, DWORD, DWORD)
@@ -344,7 +337,7 @@ void enqueRestartMonitoring(FileEventContext* pContext)
    if (pContext->hRestartTimer == NULL)
    {
       Error error = systemError(::GetLastError(), ERROR_LOCATION);
-      terminateWithMonitoringError(pContext, error);
+      pContext->callbacks.onMonitoringError(error);
       return;
    }
 
@@ -366,7 +359,7 @@ void enqueRestartMonitoring(FileEventContext* pContext)
    if (!success)
    {
       Error error = systemError(::GetLastError(), ERROR_LOCATION);
-      terminateWithMonitoringError(pContext, error);
+      pContext->callbacks.onMonitoringError(error);
    }
 }
 
@@ -391,6 +384,10 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
       // decrement the active request counter
       ::InterlockedDecrement(&s_activeRequests);
 
+      // notify the client that we are done with the context (so it is
+      // free to tear down any context setup for callbacks)
+      pContext->callbacks.onUnregistered();
+
       // we wait to delete the pContext until here because it owns the
       // OVERLAPPED structure and buffers, and so if we deleted it earlier
       // and the OS tried to access those memory regions we would crash
@@ -399,10 +396,10 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
       return;
    }
 
-   // bail if we don't have an onFilesChanged callback (could have occurred
+   // bail if we don't have callbacks installed yet (could have occurred
    // if we encountered an error during file scanning which caused us to
    // fail but then a file notification still snuck through)
-   if (!pContext->onFilesChanged)
+   if (!pContext->callbacks.onFilesChanged)
       return;
 
    // make sure the root path still exists (if it doesn't then bail)
@@ -410,7 +407,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    {
       Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
                                       ERROR_LOCATION);
-      terminateWithMonitoringError(pContext, error);
+      pContext->callbacks.onMonitoringError(error);
       return;
    }
 
@@ -440,10 +437,9 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    // process file changes
    processFileChanges(pContext, dwNumberOfBytesTransfered);
 
-   // report the (fatal) error if necessary and unregister the monitor
-   // (do this here so file notifications are received prior to the error)
+   // report the (fatal) error if necessary
    if (error)
-      terminateWithMonitoringError(pContext, error);
+      pContext->callbacks.onMonitoringError(error);
 }
 
 Error readDirectoryChanges(FileEventContext* pContext)
@@ -551,8 +547,7 @@ Handle registerMonitor(const core::FilePath& filePath,
    // now that we have finished the file listing we know we have a valid
    // file-monitor so set the callbacks
    pContext->filter = filter;
-   pContext->onMonitoringError = callbacks.onMonitoringError;
-   pContext->onFilesChanged = callbacks.onFilesChanged;
+   pContext->callbacks = callbacks;
 
    // notify the caller that we have successfully registered
    callbacks.onRegistered((Handle)pContext, pContext->fileTree);
