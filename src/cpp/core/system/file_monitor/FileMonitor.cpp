@@ -493,11 +493,13 @@ void checkForInput()
 void unregisterAll()
 {
    // make a copy of all active handles so we can unregister them
-   // (unregistering mutates the list so that's why we need a copy)
    std::vector<Handle> activeHandles;
    std::copy(s_activeHandles.begin(),
              s_activeHandles.end(),
              std::back_inserter(activeHandles));
+
+   // clear the list
+   s_activeHandles.clear();
 
    // unregister all
    std::for_each(activeHandles.begin(),
