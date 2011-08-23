@@ -276,8 +276,7 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
             var pos = tokenCursor.currentPosition();
             if (tokenCursor.isLastSignificantTokenOnLine())
             {
-               pos.row++;
-               pos.column = 0;
+               pos.column = this.$getLine(pos.row).length + 1;
             }
             else
             {
