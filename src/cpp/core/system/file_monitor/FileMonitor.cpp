@@ -541,6 +541,14 @@ void enqueOnFilesChanged(const Callbacks& callbacks,
    }
 }
 
+void enqueOnUnregistered(const Callbacks& callbacks)
+{
+   if (callbacks.onUnregistered)
+   {
+      callbackQueue().enque(boost::bind(callbacks.onUnregistered));
+   }
+}
+
 boost::thread s_fileMonitorThread;
 
 } // anonymous namespace
@@ -582,6 +590,7 @@ void registerMonitor(const FilePath& filePath,
                                               callbacks,
                                               _1);
    qCallbacks.onFilesChanged = boost::bind(enqueOnFilesChanged, callbacks, _1);
+   qCallbacks.onUnregistered = boost::bind(enqueOnUnregistered, callbacks);
 
    // enque the registration
    registrationCommandQueue().enque(RegistrationCommand(filePath,
