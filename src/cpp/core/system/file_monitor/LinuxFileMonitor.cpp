@@ -39,7 +39,7 @@ Handle registerMonitor(const core::FilePath& filePath,
                        bool recursive,
                        const Callbacks& callbacks)
 {
-   return NULL;
+   return Handle();
 }
 
 // unregister a file monitor
