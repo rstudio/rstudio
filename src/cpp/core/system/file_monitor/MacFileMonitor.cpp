@@ -38,8 +38,13 @@ namespace {
 class FileEventContext : boost::noncopyable
 {
 public:
-   FileEventContext() : streamRef(NULL), recursive(false) {}
+   FileEventContext()
+      : streamRef(NULL), recursive(false)
+   {
+      handle = Handle((void*)this);
+   }
    virtual ~FileEventContext() {}
+   Handle handle;
    FSEventStreamRef streamRef;
    FilePath rootPath;
    bool recursive;
@@ -70,9 +75,15 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       // check for root changed (unregister)
       if (eventFlags[i] & kFSEventStreamEventFlagRootChanged)
       {
+         // propagate error to client
          Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
                                          ERROR_LOCATION);
          pContext->callbacks.onMonitoringError(error);
+
+         // unregister this monitor (this is done via postback from the
+         // main file_monitor loop so that the monitor Handle can be tracked)
+         file_monitor::unregisterMonitor(pContext->handle);
+
          return;
       }
 
@@ -161,7 +172,7 @@ Handle registerMonitor(const FilePath& filePath,
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::not_enough_memory,
                                        ERROR_LOCATION));
-      return NULL;
+      return Handle();
    }
    CFRefScope filePathRefScope(filePathRef);
 
@@ -175,7 +186,7 @@ Handle registerMonitor(const FilePath& filePath,
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::not_enough_memory,
                                        ERROR_LOCATION));
-      return NULL;
+      return Handle();
    }
    CFRefScope pathsArrayRefScope(pathsArrayRef);
 
@@ -209,7 +220,7 @@ Handle registerMonitor(const FilePath& filePath,
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::no_stream_resources,
                                        ERROR_LOCATION));
-      return NULL;
+      return Handle();
    }
 
    // schedule with the run loop
@@ -225,8 +236,7 @@ Handle registerMonitor(const FilePath& filePath,
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::no_stream_resources,
                                        ERROR_LOCATION));
-      return NULL;
-
+      return Handle();
    }
 
    // scan the files
@@ -241,7 +251,7 @@ Handle registerMonitor(const FilePath& filePath,
 
        // return error
        callbacks.onRegistrationError(error);
-       return NULL;
+       return Handle();
    }
 
    // now that we have finished the file listing we know we have a valid
@@ -253,17 +263,17 @@ Handle registerMonitor(const FilePath& filePath,
    autoPtrContext.release();
 
    // notify the caller that we have successfully registered
-   callbacks.onRegistered((Handle)pContext, pContext->fileTree);
+   callbacks.onRegistered(pContext->handle, pContext->fileTree);
 
    // return the handle
-   return (Handle)pContext;
+   return pContext->handle;
 }
 
 // unregister a file monitor
 void unregisterMonitor(Handle handle)
 {
    // cast to context
-   FileEventContext* pContext = (FileEventContext*)handle;
+   FileEventContext* pContext = (FileEventContext*)handle.pData;
 
    // stop, invalidate, release
    stopInvalidateAndReleaseEventStream(pContext->streamRef);

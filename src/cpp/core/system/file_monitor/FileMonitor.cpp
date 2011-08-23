@@ -12,11 +12,6 @@
  */
 
 
-// TODO: is the Callbacks interface too low-level (Handle implies you
-// need a stateful class -- perhaps a class should implement the callbacks
-// and unregister in its destructor -- we could then push the low-level
-// callbacks interface deeper down
-
 #include <core/system/FileMonitor.hpp>
 
 #include <list>
@@ -451,15 +446,24 @@ void checkForInput()
                                                  command.recursive(),
                                                  command.filter(),
                                                  command.callbacks());
-         if (handle != NULL)
+         if (!handle.empty())
             s_activeHandles.push_back(handle);
          break;
       }
 
       case RegistrationCommand::Unregister:
       {
-         detail::unregisterMonitor(command.handle());
-         s_activeHandles.remove(command.handle());
+         // first ensure that this handle is active (protects against double
+         // unregister, which can occur if we've automatically unregistered
+         // as a result of an error or a call to file_monitor::stop)
+         std::list<Handle>::iterator it = std::find(s_activeHandles.begin(),
+                                                    s_activeHandles.end(),
+                                                    command.handle());
+         if (it != s_activeHandles.end())
+         {
+            detail::unregisterMonitor(*it);
+            s_activeHandles.erase(it);
+         }
          break;
       }
 
@@ -484,12 +488,8 @@ void fileMonitorThreadMain()
    // always clean up (even for unexpected exception case)
    try
    {
-      // unregister all active handles. note that there is a constraint
-      // that detail::unregisterMonitor can only be called once per active
-      // file monitor registration -- unregistering all handlers here
-      // is safe because at this point we have stopped calling checkForInput
-      // so it isn't possible for clients to sneak it additional calls
-      // to unregisterMonitor
+      // unregister all active handles. these are direct calls to
+      // detail::unregisterMonitor (on the background thread)
       std::for_each(s_activeHandles.begin(),
                     s_activeHandles.end(),
                     detail::unregisterMonitor);
@@ -508,30 +508,45 @@ void enqueOnRegistered(const Callbacks& callbacks,
                        Handle handle,
                        const tree<FileInfo>& fileTree)
 {
-   callbackQueue().enque(boost::bind(callbacks.onRegistered,
-                                     handle,
-                                     fileTree));
+   if (callbacks.onRegistered)
+   {
+      callbackQueue().enque(boost::bind(callbacks.onRegistered,
+                                        handle,
+                                        fileTree));
+   }
 }
 
 void enqueOnRegistrationError(const Callbacks& callbacks, const Error& error)
 {
-   callbackQueue().enque(boost::bind(callbacks.onRegistrationError, error));
+   if (callbacks.onRegistrationError)
+   {
+      callbackQueue().enque(boost::bind(callbacks.onRegistrationError, error));
+   }
 }
 
 void enqueOnMonitoringError(const Callbacks& callbacks, const Error& error)
 {
-   callbackQueue().enque(boost::bind(callbacks.onMonitoringError, error));
+   if (callbacks.onMonitoringError)
+   {
+      callbackQueue().enque(boost::bind(callbacks.onMonitoringError, error));
+   }
 }
 
 void enqueOnFilesChanged(const Callbacks& callbacks,
                          const std::vector<FileChangeEvent>& fileChanges)
 {
-   callbackQueue().enque(boost::bind(callbacks.onFilesChanged, fileChanges));
+   if (callbacks.onFilesChanged)
+   {
+      callbackQueue().enque(boost::bind(callbacks.onFilesChanged, fileChanges));
+   }
 }
 
 void enqueOnUnregistered(const Callbacks& callbacks)
 {
-   callbackQueue().enque(boost::bind(callbacks.onUnregistered));
+   if (callbacks.onUnregistered)
+   {
+      callbackQueue().enque(boost::bind(callbacks.onUnregistered));
+   }
 }
 
 boost::thread s_fileMonitorThread;

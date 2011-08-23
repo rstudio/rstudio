@@ -23,6 +23,7 @@
 #include <core/FilePath.hpp>
 #include <core/collection/Tree.hpp>
 
+#include <core/system/System.hpp>
 #include <core/system/FileChangeEvent.hpp>
 
 namespace core {   
@@ -38,8 +39,34 @@ void initialize();
 void stop();
 
 
-// opaque handle to a registration (used to unregister)
-typedef void* Handle;
+// opaque handle to a registration (used to unregister). the id field
+// is included so that handles have additional uniqueness beyond the
+// value of the pData pointer (which could be duplicated accross monitors
+// depending upon the order of allocations/deallocations)
+struct Handle
+{
+   Handle()
+      : pData(NULL)
+   {
+   }
+
+   explicit Handle(void* pData)
+      : id(core::system::generateUuid()),
+        pData(pData)
+   {
+   }
+
+   bool empty() const { return id.empty(); }
+
+   bool operator==(const Handle& other) const
+   {
+      return id == other.id &&
+             pData == other.pData;
+   }
+
+   std::string id;
+   void* pData;
+};
 
 struct Callbacks
 {
@@ -50,10 +77,9 @@ struct Callbacks
    // callback which occurs if a registration error occurs
    boost::function<void(const core::Error&)> onRegistrationError;
 
-   // callback which occurs if an error occurs during monitoring. depending
-   // upon the nature of the error this may (and likely will) result in
-   // no more file change events being fired for this context. therefore,
-   // after receiving this callback unregisterMonitor should then be called
+   // callback which occurs if an error occurs during monitoring (the
+   // monitor is automatically unregistered if a monitoring error is
+   // received)
    boost::function<void(const core::Error&)> onMonitoringError;
 
    // callback which occurs when files change
@@ -62,10 +88,9 @@ struct Callbacks
    // callback which occurs when the monitor is fully unregistered. only
    // after this callback is received is it safe to tear down the
    // context (e.g. c++ object) setup for the other callbacks. note that this
-   // callback can be received as a result of a call to file_monitor::stop
-   // (as opposed to an explicit unregistration) -- in this case the callback
-   // context needs to ensure that it doesn't subsequently call
-   // unregisterMonitor (as that would result in a double-free of the Handle)
+   // callback can occur as a result of an explicit call to unregisterMonitor,
+   // a monitoring error which caused an automatic unregistration, or a
+   // call to the global file_monitor::stop function
    boost::function<void()> onUnregistered;
 };
 
@@ -78,10 +103,10 @@ void registerMonitor(const core::FilePath& filePath,
                      const boost::function<bool(const FileInfo&)>& filter,
                      const Callbacks& callbacks);
 
-// unregister a file monitor. this function can only be called once per file
-// monitor registration (it is equivilant to calling delete on the Handle)
+// unregister a file monitor. note that file monitors can be automatically
+// unregistered in the case of errors or a call to global file_monitor::stop,
+// as a result multiple calls to unregisterMonitor are permitted
 void unregisterMonitor(Handle handle);
-
 
 
 // check for changes (will cause onRegistered, onRegistrationError,
