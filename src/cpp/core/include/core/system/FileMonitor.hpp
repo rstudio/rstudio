@@ -18,8 +18,6 @@
 #include <set>
 #include <vector>
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 
 #include <core/FilePath.hpp>
@@ -39,6 +37,7 @@ void initialize();
 // active file monitoring handles)
 void stop();
 
+
 // opaque handle to a registration (used to unregister)
 typedef void* Handle;
 
@@ -53,7 +52,7 @@ struct Callbacks
 
    // callback which occurs if an error occurs during monitoring. depending
    // upon the nature of the error this may (and likely will) result in
-   // no more file chagne events being fired for this context. therefore,
+   // no more file change events being fired for this context. therefore,
    // after receiving this callback unregisterMonitor should then be called
    boost::function<void(const core::Error&)> onMonitoringError;
 
