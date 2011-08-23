@@ -278,8 +278,8 @@ void unregisterMonitor(Handle handle)
    // stop, invalidate, release
    stopInvalidateAndReleaseEventStream(pContext->streamRef);
 
-   // let the clieht know we are unregistered (so it is safe to tear
-   // down the callback context)
+   // let the client know we are unregistered (note this call should always
+   // be prior to delete pContext below!)
    pContext->callbacks.onUnregistered();
 
    // delete the context

@@ -399,8 +399,8 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
       // decrement the active request counter
       ::InterlockedDecrement(&s_activeRequests);
 
-      // notify the client that we are done with the context (so it is
-      // free to tear down any context setup for callbacks)
+      // let the client know we are unregistered (note this call should always
+      // be prior to delete pContext below!)
       pContext->callbacks.onUnregistered();
 
       // we wait to delete the pContext until here because it owns the
