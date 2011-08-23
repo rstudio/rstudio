@@ -273,7 +273,7 @@ Handle registerMonitor(const FilePath& filePath,
 void unregisterMonitor(Handle handle)
 {
    // cast to context
-   FileEventContext* pContext = (FileEventContext*)handle.pData;
+   FileEventContext* pContext = (FileEventContext*)(handle.pData);
 
    // stop, invalidate, release
    stopInvalidateAndReleaseEventStream(pContext->streamRef);

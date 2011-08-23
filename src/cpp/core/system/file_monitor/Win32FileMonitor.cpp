@@ -576,7 +576,7 @@ void unregisterMonitor(Handle handle)
 {
    // this will end up calling the completion routine with
    // ERROR_OPERATION_ABORTED at which point we'll delete the context
-   cleanupContext((FileEventContext*)handle.pData);
+   cleanupContext((FileEventContext*)(handle.pData));
 }
 
 void run(const boost::function<void()>& checkForInput)
