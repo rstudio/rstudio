@@ -78,8 +78,7 @@ struct Callbacks
    boost::function<void(const core::Error&)> onRegistrationError;
 
    // callback which occurs if an error occurs during monitoring (the
-   // monitor is automatically unregistered if a monitoring error is
-   // received)
+   // monitor is automatically unregistered if a monitoring error occurs)
    boost::function<void(const core::Error&)> onMonitoringError;
 
    // callback which occurs when files change
@@ -88,16 +87,17 @@ struct Callbacks
    // callback which occurs when the monitor is fully unregistered. only
    // after this callback is received is it safe to tear down the
    // context (e.g. c++ object) setup for the other callbacks. note that this
-   // callback can occur as a result of an explicit call to unregisterMonitor,
-   // a monitoring error which caused an automatic unregistration, or a
-   // call to the global file_monitor::stop function
+   // callback can occur as a result of:
+   //    - an explicit call to unregisterMonitor;
+   //    - a monitoring error which caused an automatic unregistration; or
+   //    - a call to the global file_monitor::stop function
    boost::function<void()> onUnregistered;
 };
 
 // register a new file monitor. the result of this call will be an
 // aynchronous call to either onRegistered or onRegistrationError. onRegistered
 // will provide an opaque Handle which can used for a subsequent call
-// to unregisterMonitor
+// to unregisterMonitor.
 void registerMonitor(const core::FilePath& filePath,
                      bool recursive,
                      const boost::function<bool(const FileInfo&)>& filter,

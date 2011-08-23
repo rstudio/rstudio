@@ -49,8 +49,12 @@ public:
    {
       receiveBuffer.resize(kBuffSize);
       handlingBuffer.resize(kBuffSize);
+      handle = Handle((void*)this);
    }
    virtual ~FileEventContext() {}
+
+   // handle
+   Handle handle;
 
    // path we are monitoring, recursive flag, and handle to the directory
    FilePath rootPath;
@@ -268,6 +272,17 @@ void processFileChanges(FileEventContext* pContext,
    pContext->callbacks.onFilesChanged(fileChanges);
 }
 
+void terminateWithMonitoringError(FileEventContext* pContext,
+                                  const Error& error)
+{
+   pContext->callbacks.onMonitoringError(error);
+
+   // unregister this monitor (this is done via postback from the
+   // main file_monitor loop so that the monitor Handle can be tracked)
+   file_monitor::unregisterMonitor(pContext->handle);
+}
+
+
 bool isRecoverableByRestart(const Error& error)
 {
    return
@@ -297,7 +312,7 @@ void restartMonitoring(FileEventContext* pContext)
       if (isRecoverableByRestart(error) && (++(pContext->restartCount) <= 10))
          enqueRestartMonitoring(pContext);
       else
-         pContext->callbacks.onMonitoringError(error);
+         terminateWithMonitoringError(pContext, error);
 
       return;
    }
@@ -313,7 +328,7 @@ void restartMonitoring(FileEventContext* pContext)
                                        &(pContext->fileTree),
                                        pContext->callbacks.onFilesChanged);
    if (error)
-      pContext->callbacks.onMonitoringError(error);
+      terminateWithMonitoringError(pContext, error);
 }
 
 VOID CALLBACK restartMonitoringApcProc(LPVOID lpArg, DWORD, DWORD)
@@ -337,7 +352,7 @@ void enqueRestartMonitoring(FileEventContext* pContext)
    if (pContext->hRestartTimer == NULL)
    {
       Error error = systemError(::GetLastError(), ERROR_LOCATION);
-      pContext->callbacks.onMonitoringError(error);
+      terminateWithMonitoringError(pContext, error);
       return;
    }
 
@@ -359,7 +374,7 @@ void enqueRestartMonitoring(FileEventContext* pContext)
    if (!success)
    {
       Error error = systemError(::GetLastError(), ERROR_LOCATION);
-      pContext->callbacks.onMonitoringError(error);
+      terminateWithMonitoringError(pContext, error);
    }
 }
 
@@ -407,7 +422,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    {
       Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
                                       ERROR_LOCATION);
-      pContext->callbacks.onMonitoringError(error);
+      terminateWithMonitoringError(pContext, error);
       return;
    }
 
@@ -439,7 +454,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
 
    // report the (fatal) error if necessary
    if (error)
-      pContext->callbacks.onMonitoringError(error);
+      terminateWithMonitoringError(pContext, error);
 }
 
 Error readDirectoryChanges(FileEventContext* pContext)
@@ -500,7 +515,7 @@ Handle registerMonitor(const core::FilePath& filePath,
    {
       callbacks.onRegistrationError(
                      systemError(::GetLastError(),ERROR_LOCATION));
-      return NULL;
+      return Handle();
    }
 
    // initialize overlapped structure to point to our context
@@ -517,7 +532,7 @@ Handle registerMonitor(const core::FilePath& filePath,
       // return error
       callbacks.onRegistrationError(error);
 
-      return NULL;
+      return Handle();
    }
 
    // we have passed the pContext into the system so it's ownership will
@@ -541,7 +556,7 @@ Handle registerMonitor(const core::FilePath& filePath,
        // return error
        callbacks.onRegistrationError(error);
 
-       return NULL;
+       return Handle();
    }
 
    // now that we have finished the file listing we know we have a valid
@@ -550,10 +565,10 @@ Handle registerMonitor(const core::FilePath& filePath,
    pContext->callbacks = callbacks;
 
    // notify the caller that we have successfully registered
-   callbacks.onRegistered((Handle)pContext, pContext->fileTree);
+   callbacks.onRegistered(pContext->handle, pContext->fileTree);
 
    // return the handle
-   return (Handle)pContext;
+   return pContext->handle;
 }
 
 // unregister a file monitor
@@ -561,7 +576,7 @@ void unregisterMonitor(Handle handle)
 {
    // this will end up calling the completion routine with
    // ERROR_OPERATION_ABORTED at which point we'll delete the context
-   cleanupContext((FileEventContext*)handle);
+   cleanupContext((FileEventContext*)handle.pData);
 }
 
 void run(const boost::function<void()>& checkForInput)
