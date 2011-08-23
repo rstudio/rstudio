@@ -93,6 +93,10 @@ class ProxySerializerImpl extends AbstractRequestContext implements ProxySeriali
   }
 
   public String serialize(BaseProxy rootObject) {
+    if (rootObject == null) {
+      return "null";
+    }
+    
     final AutoBean<? extends BaseProxy> root = AutoBeanUtils.getAutoBean(rootObject);
     if (root == null) {
       // Unexpected, some kind of foreign implementation of the BaseProxy?

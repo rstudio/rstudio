@@ -124,6 +124,53 @@ public class SimpleFoo {
     foo3.persist();
     return Arrays.asList(foo1, foo2, foo3);
   }
+  
+  public static SimpleFoo getLongChain() {
+    SimpleFoo foo0 = new SimpleFoo();
+    SimpleFoo foo1 = new SimpleFoo();
+    SimpleFoo foo2 = new SimpleFoo();
+    SimpleFoo foo3 = new SimpleFoo();
+    SimpleFoo foo4 = new SimpleFoo();
+    SimpleFoo foo5 = new SimpleFoo();
+    
+    foo0.setSelfOneToManyField(Arrays.asList(foo1, foo2));
+    foo0.setFooField(foo1);
+    foo1.setFooField(foo2);
+    foo2.setFooField(foo3);
+    foo3.setFooField(foo4);
+    foo4.setFooField(foo5);
+    foo5.setFooField(foo5);
+    
+    foo0.persist();
+    foo1.persist();
+    foo2.persist();
+    foo3.persist();
+    foo4.persist();
+    foo5.persist();
+    
+    return foo0;
+  }
+  
+  public static SimpleFoo getNullInEntityList() {
+    SimpleFoo foo0 = new SimpleFoo();
+    SimpleFoo foo1 = new SimpleFoo();
+    SimpleFoo foo2 = new SimpleFoo();
+    SimpleFoo foo2FooField = new SimpleFoo();
+
+    foo0.setSelfOneToManyField(Arrays.asList(foo1, null, foo2));
+
+    foo1.setSelfOneToManyField(Arrays.asList(foo0));
+
+    foo2.setSelfOneToManyField(Arrays.asList(foo0));
+    foo2.setFooField(foo2FooField);
+    foo2FooField.setFooField(foo0);
+    
+    foo0.persist();
+    foo1.persist();
+    foo2.persist();
+    foo2FooField.persist();
+    return foo0;
+  }
 
   public static List<Integer> getNumberList() {
     ArrayList<Integer> list = new ArrayList<Integer>();
@@ -139,6 +186,12 @@ public class SimpleFoo {
     list.add(2);
     list.add(3);
     return list;
+  }
+
+  public static SimpleFoo getSimpleFooWithNullRelationship() {
+    SimpleFoo foo = new SimpleFoo();
+    foo.persist();
+    return foo;
   }
 
   /**

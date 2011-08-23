@@ -198,6 +198,11 @@ class Resolver {
      * not been previously resolved for the next batch of work.
      */
     public void addPaths(String prefix, Collection<String> requestedPaths) {
+      if (clientObject == null) {
+        // No point trying to follow paths past a null value
+        return;
+      }
+      
       // Identity comparison intentional
       if (toResolve == EMPTY) {
         toResolve = new TreeSet<String>();
@@ -207,6 +212,8 @@ class Resolver {
       for (String path : requestedPaths) {
         if (path.startsWith(prefix)) {
           toResolve.add(path.substring(prefixLength));
+        } else if (path.startsWith("*.")) {
+          toResolve.add(path.substring("*.".length()));
         }
       }
       toResolve.removeAll(resolved);
@@ -310,7 +317,14 @@ class Resolver {
    * references.
    */
   static boolean matchesPropertyRef(Set<String> propertyRefs, String newPrefix) {
-    return propertyRefs.contains(newPrefix.replaceAll("\\[\\d+\\]", ""));
+    /* 
+     * Match all fields for a wildcard
+     * 
+     * Also, remove list index suffixes. Not actually used, was in anticipation
+     * of OGNL type schemes. That said, Editor will slip in such things.
+     */
+    return propertyRefs.contains("*")
+        || propertyRefs.contains(newPrefix.replaceAll("\\[\\d+\\]", ""));
   }
 
   /**
@@ -567,7 +581,7 @@ class Resolver {
    */
   private Resolution resolveClientValue(Object domainValue, Type clientType) {
     if (domainValue == null) {
-      return null;
+      return new Resolution(null);
     }
 
     boolean anyType = clientType == null;

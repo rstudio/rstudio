@@ -49,9 +49,15 @@ public interface SimpleFooRequest extends RequestContext {
 
   Request<List<SimpleFooProxy>> getFlattenedTripletReference();
 
-  Request<List<Integer>> getNumberList();
+  Request<SimpleFooProxy> getLongChain();
 
+  Request<SimpleFooProxy> getNullInEntityList();
+
+  Request<List<Integer>> getNumberList();
+  
   Request<Set<Integer>> getNumberSet();
+
+  Request<SimpleFooProxy> getSimpleFooWithNullRelationship();
 
   Request<SimpleFooProxy> getSimpleFooWithNullVersion();
 

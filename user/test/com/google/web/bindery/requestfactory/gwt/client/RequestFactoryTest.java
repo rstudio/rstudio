@@ -700,6 +700,23 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
           }
         });
   }
+ 
+  public void testForwardReferenceWildcardDecode() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    simpleFooRequest().getTripletReference().with("selfOneToManyField.*.fooField")
+        .fire(new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+            response = checkSerialization(response);
+            assertNotNull(response.getSelfOneToManyField().get(0));
+            assertNotNull(response.getSelfOneToManyField().get(0).getSelfOneToManyField());
+            assertNotNull(response.getSelfOneToManyField().get(0).getSelfOneToManyField().get(0));
+            assertNotNull(response.getSelfOneToManyField().get(0).getSelfOneToManyField().get(0)
+                .getFooField());
+            finishTestAndReset();
+          }
+        });
+  }
 
   public void testGetEventBus() {
     assertEquals(eventBus, req.getEventBus());
@@ -979,6 +996,19 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().returnNullSimpleFoo().fire(new NullReceiver());
   }
+  
+  public void testNullEntityFieldResult() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    simpleFooRequest().getSimpleFooWithNullRelationship().with("fooField.fooField.fooField").fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy v) {
+            checkSerialization(v);
+            assertNull(v.getFooField());
+            finishTestAndReset();
+          }
+        });
+  }
 
   /**
    * Test that a null value can be sent in a request.
@@ -1081,6 +1111,63 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             finishTestAndReset();
           }
         });
+      }
+    });
+  }
+  
+  public void testNullValueInEntityListResponse() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    final Request<SimpleFooProxy> fooReq =
+      req.simpleFooRequest().getNullInEntityList().with("selfOneToManyField");
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onSuccess(SimpleFooProxy v) {
+        List<SimpleFooProxy> manyFoos = v.getSelfOneToManyField();
+        assertEquals(3, manyFoos.size());
+        
+        assertNotNull(manyFoos.get(0));
+        assertNull(manyFoos.get(1));
+        assertNotNull(manyFoos.get(2));
+        
+        finishTestAndReset();
+      }
+    });
+  }
+
+  public void testNullValueInEntityListResponseWithWildcard() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    final Request<SimpleFooProxy> fooReq =
+      req.simpleFooRequest().getNullInEntityList().with("selfOneToManyField.*.fooField");
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onSuccess(SimpleFooProxy foo0) {
+        List<SimpleFooProxy> manyFoos = foo0.getSelfOneToManyField();
+        assertEquals(3, manyFoos.size());
+        
+        assertSame(foo0, manyFoos.get(0).getSelfOneToManyField().get(0));
+        assertNull(manyFoos.get(1));
+        assertSame(foo0, manyFoos.get(2).getSelfOneToManyField().get(0));
+        assertSame(foo0, manyFoos.get(2).getFooField().getFooField());
+        
+        finishTestAndReset();
+      }
+    });
+  }
+
+  public void testNullValueInEntityListResponseWithLongResolvePaths() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    final Request<SimpleFooProxy> fooReq =
+        req.simpleFooRequest().getNullInEntityList().with("selfOneToManyField.selfOneToManyField.selfOneToManyField");
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onSuccess(SimpleFooProxy v) {
+        assertEquals(3, v.getSelfOneToManyField().size());
+        
+        assertNotNull(v.getSelfOneToManyField().get(0));
+        assertNull(v.getSelfOneToManyField().get(1));
+        assertNotNull(v.getSelfOneToManyField().get(2));
+        
+        finishTestAndReset();
       }
     });
   }
@@ -2043,6 +2130,31 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             finishTestAndReset();
           }
         });
+  }
+  
+  public void testPropertyRefsOnWildcardChain() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    final Request<SimpleFooProxy> fooReq =
+      req.simpleFooRequest().getLongChain().with("fooField.*.*.fooField");
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onSuccess(SimpleFooProxy foo0) {
+        assertNull(foo0.getSelfOneToManyField()); // didn't ask for it
+        
+        SimpleFooProxy foo1 = foo0.getFooField(); // "fooField
+        SimpleFooProxy foo2 = foo1.getFooField(); //          .*
+        SimpleFooProxy foo3 = foo2.getFooField(); //            .*
+        SimpleFooProxy foo4 = foo3.getFooField(); //              .fooField"
+        SimpleFooProxy foo5 = foo4.getFooField(); 
+        
+        assertNotNull(foo1);
+        assertNotNull(foo2);
+        assertNotNull(foo3);
+        assertNotNull(foo4);
+        assertNull(foo5);
+        finishTestAndReset();
+      }
+    });
   }
 
   public void testPropertyRefsOnSameObjectReturnedTwice() {

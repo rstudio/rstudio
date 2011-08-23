@@ -55,12 +55,21 @@ public class RequestFactoryPolymorphicTest extends GWTTestCase {
 
     protected int id = idCount++;
 
+    private A nextA;
+
     public String getA() {
       return a;
     }
 
     public int getId() {
       return id;
+    }
+
+    public A getNextA() {
+      if (nextA == null) {
+        nextA = new A();
+      }
+      return nextA;
     }
 
     public int getVersion() {
@@ -77,6 +86,8 @@ public class RequestFactoryPolymorphicTest extends GWTTestCase {
    */
   @ProxyFor(A.class)
   public interface AProxy extends EntityProxy, HasA {
+    AProxy getNextA();
+
     // Mix in getA() from HasA
     void setA(String value);
   }
@@ -146,8 +157,18 @@ public class RequestFactoryPolymorphicTest extends GWTTestCase {
 
     private String c = "c";
 
+    private C nextC;
+
     public String getC() {
       return c;
+    }
+
+    public C getNextC() {
+      if (nextC == null) {
+        nextC = new C();
+      }
+
+      return nextC;
     }
 
     public void setC(String value) {
@@ -160,6 +181,8 @@ public class RequestFactoryPolymorphicTest extends GWTTestCase {
   @ProxyFor(C.class)
   public interface C1Proxy extends B1Proxy {
     String getC();
+
+    C1Proxy getNextC();
 
     void setC(String value);
   }
@@ -605,6 +628,50 @@ public class RequestFactoryPolymorphicTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.web.bindery.requestfactory.gwt.RequestFactorySuite";
+  }
+
+  public void testChain() {
+    delayTestFinish(TEST_DELAY);
+    Context ctx = factory.ctx();
+    ctx.CasA().with("nextA.nextA").fire(new Receiver<AProxy>() {
+      @Override
+      public void onSuccess(AProxy response) {
+        new CastAndCheckReceiver(AProxy.class).onSuccess(response.getNextA().getNextA());
+        assertNull(response.getNextA().getNextA().getNextA());
+        assertNull(((C1Proxy) response).getNextC());
+        finishTest();
+      }
+    });
+  }
+
+  public void testChainWithExtras() {
+    delayTestFinish(TEST_DELAY);
+    Context ctx = factory.ctx();
+    ctx.CasA().with("nextC.nextC").fire(new Receiver<AProxy>() {
+      @Override
+      public void onSuccess(AProxy response) {
+        assertNull(response.getNextA());
+        C1Proxy cast = (C1Proxy) response;
+        new CastAndCheckReceiver(C1Proxy.class).onSuccess(cast.getNextC().getNextC());
+        assertNull(cast.getNextC().getNextC().getNextC());
+        finishTest();
+      }
+    });
+  }
+
+  public void testChainWithWildcards() {
+    delayTestFinish(TEST_DELAY);
+    Context ctx = factory.ctx();
+    ctx.CasA().with("*.*").fire(new Receiver<AProxy>() {
+      @Override
+      public void onSuccess(AProxy response) {
+        new CastAndCheckReceiver(AProxy.class).onSuccess(response.getNextA().getNextA());
+        C1Proxy cast = (C1Proxy) response;
+        new CastAndCheckReceiver(C1Proxy.class).onSuccess(cast.getNextC().getNextC());
+        assertNull(cast.getNextC().getNextC().getNextC());
+        finishTest();
+      }
+    });
   }
 
   public void testCreation() {
