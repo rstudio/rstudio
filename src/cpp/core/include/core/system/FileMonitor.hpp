@@ -68,6 +68,7 @@ struct Handle
    void* pData;
 };
 
+// file monitoring callbacks (all callbacks are optional)
 struct Callbacks
 {
    // callback which occurs after a successful registration (includes an initial
@@ -84,8 +85,8 @@ struct Callbacks
    // callback which occurs when files change
    boost::function<void(const std::vector<FileChangeEvent>&)> onFilesChanged;
 
-   // callback which occurs when the monitor is fully unregistered. note that this
-   // callback can occur as a result of:
+   // callback which occurs when the monitor is fully unregistered. note that
+   // this callback can occur as a result of:
    //    - an explicit call to unregisterMonitor;
    //    - a monitoring error which caused an automatic unregistration; or
    //    - a call to the global file_monitor::stop function
