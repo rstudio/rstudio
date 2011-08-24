@@ -31,10 +31,10 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 /**
@@ -48,15 +48,13 @@ public class BindingProperty extends Property {
   private static final String EMPTY = "";
 
   private List<SortedSet<String>> collapsedValues = Lists.create();
-  private final Map<Condition, SortedSet<String>> conditionalValues =
-      new LinkedHashMap<Condition, SortedSet<String>>();
+  private final Map<Condition, SortedSet<String>> conditionalValues = new LinkedHashMap<Condition, SortedSet<String>>();
   private final SortedSet<String> definedValues = new TreeSet<String>();
   private PropertyProvider provider;
   private Class<? extends PropertyProviderGenerator> providerGenerator;
   private String fallback;
-  private HashMap<String, LinkedList<LinkedHashSet<String>>> fallbackValueMap;
-  private HashMap<String, LinkedList<String>> fallbackValues =
-      new HashMap<String, LinkedList<String>>();
+  private HashMap<String,LinkedList<LinkedHashSet<String>>> fallbackValueMap;
+  private HashMap<String,LinkedList<String>> fallbackValues = new HashMap<String,LinkedList<String>>();
   private final ConditionAll rootCondition = new ConditionAll();
 
   {
@@ -79,7 +77,8 @@ public class BindingProperty extends Property {
         // Expanded in normalizeCollapsedValues()
         continue;
       } else if (!definedValues.contains(value)) {
-        throw new IllegalArgumentException("Attempting to collapse unknown value " + value);
+        throw new IllegalArgumentException(
+            "Attempting to collapse unknown value " + value);
       }
     }
 
@@ -100,8 +99,7 @@ public class BindingProperty extends Property {
   }
 
   /**
-   * Adds fall back value to given property name.
-   * 
+   * Adds fall back value to given property name. 
    * @param value the property value.
    * @param fallbackValue the fall back value for given property value.
    */
@@ -166,15 +164,13 @@ public class BindingProperty extends Property {
   }
 
   /**
-   * Returns the map of values to fall back values. the list of fall back values
-   * is in decreasing order of preference.
-   * 
+   * Returns the map of values to fall back values. the list of fall
+   * back values is in decreasing order of preference.
    * @return map of property value to fall back values.
    */
-  public Map<String, ? extends List<? extends Set<String>>> getFallbackValuesMap() {
+  public Map<String,? extends List<? extends Set<String>>> getFallbackValuesMap() {
     if (fallbackValueMap == null) {
-      HashMap<String, LinkedList<LinkedHashSet<String>>> valuesMap =
-          new HashMap<String, LinkedList<LinkedHashSet<String>>>();
+      HashMap<String,LinkedList<LinkedHashSet<String>>> valuesMap = new HashMap<String,LinkedList<LinkedHashSet<String>>>();
       // compute closure of fall back values preserving order
       for (Entry<String, LinkedList<String>> e : fallbackValues.entrySet()) {
         String from = e.getKey();
@@ -183,7 +179,8 @@ public class BindingProperty extends Property {
         LinkedList<String> childList = fallbackValues.get(from);
         LinkedHashSet<String> children = new LinkedHashSet<String>();
         children.addAll(childList);
-        while (children != null && children.size() > 0) {
+        while (children != null && children.size() > 0) 
+        {
           alternates.add(children);
           LinkedHashSet<String> newChildren = new LinkedHashSet<String>();
           for (String child : children) {
@@ -202,7 +199,7 @@ public class BindingProperty extends Property {
     }
     return fallbackValueMap;
   }
-
+  
   public PropertyProvider getProvider() {
     return provider;
   }
@@ -265,7 +262,7 @@ public class BindingProperty extends Property {
    * the currently-defined values.
    * 
    * @throws IllegalArgumentException if any of the provided values were not
-   *           provided to {@link #addDefinedValue(Condition,String)}.
+   *     provided to {@link #addDefinedValue(Condition,String)}.
    */
   public void setAllowedValues(Condition condition, String... values) {
     SortedSet<String> temp = new TreeSet<String>(Arrays.asList(values));
@@ -311,29 +308,6 @@ public class BindingProperty extends Property {
    * Create a minimal number of equivalence sets, expanding any glob patterns.
    */
   void normalizeCollapsedValues() {
-    /*
-     * Properties that depend upon a collapsed property value must be recombined
-     * into an equivalence set.
-     */
-    if (!getRequiredProperties().isEmpty()) {
-      // This defines additional equivalence sets
-      Map<String, SortedSet<String>> requiredPropertyNamesToDependentValues =
-          new HashMap<String, SortedSet<String>>();
-      for (Map.Entry<Condition, SortedSet<String>> entry : getConditionalValues().entrySet()) {
-        for (String requiredPropertyName : entry.getKey().getRequiredProperties()) {
-          SortedSet<String> set = requiredPropertyNamesToDependentValues.get(requiredPropertyName);
-          if (set == null) {
-            set = new TreeSet<String>();
-            requiredPropertyNamesToDependentValues.put(requiredPropertyName, set);
-          }
-          set.addAll(entry.getValue());
-        }
-      }
-      for (SortedSet<String> valuesToCollapse : requiredPropertyNamesToDependentValues.values()) {
-        addCollapsedValues(valuesToCollapse.toArray(new String[valuesToCollapse.size()]));
-      }
-    }
-
     if (collapsedValues.isEmpty()) {
       return;
     }
@@ -394,8 +368,8 @@ public class BindingProperty extends Property {
     }
 
     // The values of the maps will now contain the minimal number of sets
-    collapsedValues =
-        new ArrayList<SortedSet<String>>(new IdentityHashSet<SortedSet<String>>(map.values()));
+    collapsedValues = new ArrayList<SortedSet<String>>(
+        new IdentityHashSet<SortedSet<String>>(map.values()));
 
     // Sort the list
     Lists.sort(collapsedValues, new Comparator<SortedSet<String>>() {

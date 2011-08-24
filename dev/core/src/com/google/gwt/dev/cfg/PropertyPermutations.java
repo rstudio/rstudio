@@ -61,12 +61,12 @@ public class PropertyPermutations implements Iterable<String[]> {
      * We delete items from this set, but want to retain the original order as
      * much as possible.
      */
-    Set<BindingProperty> bindingProps =
-        new LinkedHashSet<BindingProperty>(properties.getBindingProperties());
+    Set<BindingProperty> bindingProps = new LinkedHashSet<BindingProperty>(
+        properties.getBindingProperties());
 
     // Accumulates the order in which the properties should be evaluated
-    Map<String, BindingProperty> evaluationOrder =
-        new LinkedHashMap<String, BindingProperty>(bindingProps.size());
+    Map<String, BindingProperty> evaluationOrder = new LinkedHashMap<String, BindingProperty>(
+        bindingProps.size());
 
     /*
      * Insert a property after all of the properties that it depends upon have
@@ -87,16 +87,19 @@ public class PropertyPermutations implements Iterable<String[]> {
       }
 
       if (!changed) {
-        throw new IllegalStateException("Cycle detected within remaining property dependencies "
-            + bindingProps.toString());
+        throw new IllegalStateException(
+            "Cycle detected within remaining property dependencies "
+                + bindingProps.toString());
       }
     }
 
-    return evaluationOrder.values().toArray(new BindingProperty[evaluationOrder.size()]);
+    return evaluationOrder.values().toArray(
+        new BindingProperty[evaluationOrder.size()]);
   }
 
-  private static void permute(BindingProperty[] properties, Set<String> activeLinkerNames,
-      String[] soFar, int whichProp, List<String[]> permutations) {
+  private static void permute(BindingProperty[] properties,
+      Set<String> activeLinkerNames, String[] soFar, int whichProp,
+      List<String[]> permutations) {
     int lastProp = properties.length - 1;
 
     BindingProperty prop = properties[whichProp];
@@ -108,17 +111,18 @@ public class PropertyPermutations implements Iterable<String[]> {
     } else {
       BindingProperty[] answerable = new BindingProperty[soFar.length];
       System.arraycopy(properties, 0, answerable, 0, soFar.length);
-      PropertyOracle propertyOracle =
-          new StaticPropertyOracle(answerable, soFar, new ConfigurationProperty[0]);
+      PropertyOracle propertyOracle = new StaticPropertyOracle(answerable,
+          soFar, new ConfigurationProperty[0]);
 
       for (Condition cond : prop.getConditionalValues().keySet()) {
         try {
-          if (cond.isTrue(TreeLogger.NULL, new DeferredBindingQuery(propertyOracle,
-              activeLinkerNames))) {
+          if (cond.isTrue(TreeLogger.NULL, new DeferredBindingQuery(
+              propertyOracle, activeLinkerNames))) {
             winner = cond;
           }
         } catch (UnableToCompleteException e) {
-          throw new IllegalStateException("Should never get here for simple properties", e);
+          throw new IllegalStateException(
+              "Should never get here for simple properties", e);
         }
       }
     }
@@ -136,7 +140,8 @@ public class PropertyPermutations implements Iterable<String[]> {
       nextStep[whichProp] = knownValue;
 
       if (whichProp < lastProp) {
-        permute(properties, activeLinkerNames, nextStep, whichProp + 1, permutations);
+        permute(properties, activeLinkerNames, nextStep, whichProp + 1,
+            permutations);
       } else {
         // Finished this permutation.
         permutations.add(nextStep);
@@ -147,12 +152,14 @@ public class PropertyPermutations implements Iterable<String[]> {
   private final Properties properties;
   private final List<String[]> values;
 
-  public PropertyPermutations(Properties properties, Set<String> activeLinkerNames) {
+  public PropertyPermutations(Properties properties,
+      Set<String> activeLinkerNames) {
     this.properties = properties;
     this.values = allPermutationsOf(properties, activeLinkerNames);
   }
 
-  public PropertyPermutations(PropertyPermutations allPermutations, int firstPerm, int numPerms) {
+  public PropertyPermutations(PropertyPermutations allPermutations,
+      int firstPerm, int numPerms) {
     this.properties = allPermutations.properties;
     values = allPermutations.values.subList(firstPerm, firstPerm + numPerms);
   }
@@ -160,7 +167,8 @@ public class PropertyPermutations implements Iterable<String[]> {
   /**
    * Copy constructor that allows the list of property values to be reset.
    */
-  public PropertyPermutations(PropertyPermutations allPermutations, List<String[]> values) {
+  public PropertyPermutations(PropertyPermutations allPermutations,
+      List<String[]> values) {
     this.properties = allPermutations.properties;
     this.values = values;
   }
@@ -172,18 +180,17 @@ public class PropertyPermutations implements Iterable<String[]> {
    */
   public List<PropertyPermutations> collapseProperties() {
     // Collate property values in this map
-    SortedMap<CollapsedPropertyKey, List<String[]>> map =
-        new TreeMap<CollapsedPropertyKey, List<String[]>>();
+    SortedMap<CollapsedPropertyKey, List<String[]>> map = new TreeMap<CollapsedPropertyKey, List<String[]>>();
 
     // Loop over all possible property value permutations
     for (Iterator<String[]> it = iterator(); it.hasNext();) {
       String[] propertyValues = it.next();
       assert propertyValues.length == getOrderedProperties().length;
 
-      StaticPropertyOracle oracle =
-          new StaticPropertyOracle(getOrderedProperties(), propertyValues,
-              new ConfigurationProperty[0]);
-      CollapsedPropertyKey key = new CollapsedPropertyKey(oracle);
+      StaticPropertyOracle oracle = new StaticPropertyOracle(
+          getOrderedProperties(), propertyValues, new ConfigurationProperty[0]);
+      CollapsedPropertyKey key = new CollapsedPropertyKey(
+          oracle);
 
       List<String[]> list = map.get(key);
       if (list == null) {
@@ -194,7 +201,8 @@ public class PropertyPermutations implements Iterable<String[]> {
     }
 
     // Return the collated values
-    List<PropertyPermutations> toReturn = new ArrayList<PropertyPermutations>(map.size());
+    List<PropertyPermutations> toReturn = new ArrayList<PropertyPermutations>(
+        map.size());
     for (List<String[]> list : map.values()) {
       toReturn.add(new PropertyPermutations(this, list));
     }
@@ -221,35 +229,5 @@ public class PropertyPermutations implements Iterable<String[]> {
 
   public int size() {
     return values.size();
-  }
-
-  /**
-   * For debugging use only.
-   */
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("{");
-    boolean needsComma = false;
-    for (String[] strings : values) {
-      if (needsComma) {
-        sb.append(", ");
-      } else {
-        needsComma = true;
-      }
-      sb.append("[");
-      boolean innerNeedsComma = false;
-      for (String string : strings) {
-        if (innerNeedsComma) {
-          sb.append(", ");
-        } else {
-          innerNeedsComma = true;
-        }
-        sb.append(string);
-      }
-      sb.append("]");
-    }
-    sb.append("}");
-    return sb.toString();
   }
 }
