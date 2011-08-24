@@ -145,7 +145,8 @@ public class Window {
       }
       String hash = getHash();
       if (hash != null && hash.length() > 0) {
-        builder.setHash(hash);
+        // Decode the hash now, because UrlBuilder.buildString() later encodes it.
+        builder.setHash(URL.decodeQueryString(hash));
       }
       String port = getPort();
       if (port != null && port.length() > 0) {
