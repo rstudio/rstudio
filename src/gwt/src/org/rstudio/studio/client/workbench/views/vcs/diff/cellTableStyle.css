@@ -5,8 +5,11 @@
 @def selectionBorderWidth 1px;
 .cellTableWidget {
    font-family: fixedWidthFont;
-   white-space: pre;
+   white-space: pre-wrap;
    color: #888;
+}
+.cellTableWidget > tbody > tr > td {
+   vertical-align: top;
 }
 
 .header {

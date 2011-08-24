@@ -35,6 +35,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarFramePanel;
@@ -203,7 +204,8 @@ public class ReviewPanel extends Composite implements Display
                       LineTableView diffPane,
                       ConsoleBarFramePanel consoleBarFramePanel,
                       Commands commands,
-                      FileTypeRegistry fileTypeRegistry)
+                      FileTypeRegistry fileTypeRegistry,
+                      BranchToolbarButton branchToolbarButton)
    {
       fileTypeRegistry_ = fileTypeRegistry;
       splitPanel_ = new SplitLayoutPanel(4);
@@ -227,6 +229,8 @@ public class ReviewPanel extends Composite implements Display
 
       switchViewButton_ = new LeftRightToggleButton("Changes", "History", true);
       topToolbar_.addLeftWidget(switchViewButton_);
+
+      topToolbar_.addLeftWidget(branchToolbarButton);
 
       stageAllFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Stage All Files", RES.stageAllFiles(), (ClickHandler) null));

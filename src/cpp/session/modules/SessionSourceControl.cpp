@@ -18,6 +18,7 @@
 #include <boost/foreach.hpp>
 #include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/optional.hpp>
 #include <boost/regex.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -110,6 +111,19 @@ public:
 
    virtual core::Error unstage(const std::vector<FilePath>& filePaths,
                                std::string* pStdErr)
+   {
+      return Success();
+   }
+
+   virtual core::Error listBranches(std::vector<std::string>* pBranches,
+                                    boost::optional<size_t>* pActiveBranchIndex,
+                                    std::string* pStdErr)
+   {
+      return Success();
+   }
+
+   virtual core::Error checkout(const std::string& id,
+                                std::string* pStdErr)
    {
       return Success();
    }
@@ -362,6 +376,43 @@ public:
       std::vector<std::string> args;
       args.push_back("HEAD");
       return doSimpleCmd("reset", args, filePaths, pStdErr);
+   }
+
+   core::Error listBranches(std::vector<std::string>* pBranches,
+                            boost::optional<size_t>* pActiveBranchIndex,
+                            std::string* pStdErr)
+   {
+      std::vector<std::string> args;
+      args.push_back("branch");
+      Error error = runCommand("git", args, pBranches);
+      if (error)
+         return error;
+
+      for (std::vector<std::string>::iterator it = pBranches->begin();
+           it != pBranches->end();
+           it++)
+      {
+         if (*it == "")
+         {
+            pBranches->resize(it - pBranches->begin());
+            break;
+         }
+
+         if (it->substr(0, 2) == "* ")
+            *pActiveBranchIndex = it - pBranches->begin();
+         *it = it->substr(2);
+      }
+
+      return Success();
+   }
+
+   core::Error checkout(const std::string& id,
+                        std::string* pStdErr)
+   {
+      std::vector<std::string> args;
+      args.push_back("checkout");
+      args.push_back(id);
+      return runCommand("git", args);
    }
 
    core::Error commit(const std::string& message, bool amend, bool signOff)
@@ -763,6 +814,54 @@ Error vcsUnstage(const json::JsonRpcRequest& request,
    return s_pVcsImpl_->unstage(resolveAliasedPaths(paths), NULL);
 }
 
+Error vcsListBranches(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   std::vector<std::string> branches;
+   boost::optional<size_t> activeIndex;
+   std::string stderr;
+   Error error = s_pVcsImpl_->listBranches(&branches, &activeIndex, &stderr);
+   if (error)
+      return error;
+
+   json::Array jsonBranches;
+   for (std::vector<std::string>::const_iterator it = branches.begin();
+        it != branches.end();
+        it++)
+   {
+      jsonBranches.push_back(*it);
+   }
+
+   json::Object result;
+   result["branches"] = jsonBranches;
+   result["activeIndex"] =
+         activeIndex
+            ? json::Value(static_cast<boost::uint64_t>(activeIndex.get()))
+            : json::Value();
+
+   pResponse->setResult(result);
+
+   return Success();
+}
+
+Error vcsCheckout(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   RefreshOnExit refreshOnExit;
+
+   std::string id;
+   Error error = json::readParams(request.params, &id);
+   if (error)
+      return error;
+
+   std::string stderr;
+   error = s_pVcsImpl_->checkout(id, &stderr);
+   if (error)
+      return error;
+
+   return Success();
+}
+
 Error vcsFullStatus(const json::JsonRpcRequest&,
                     json::JsonRpcResponse* pResponse)
 {
@@ -989,6 +1088,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_revert", vcsRevert))
       (bind(registerRpcMethod, "vcs_stage", vcsStage))
       (bind(registerRpcMethod, "vcs_unstage", vcsUnstage))
+      (bind(registerRpcMethod, "vcs_list_branches", vcsListBranches))
+      (bind(registerRpcMethod, "vcs_checkout", vcsCheckout))
       (bind(registerRpcMethod, "vcs_full_status", vcsFullStatus))
       (bind(registerRpcMethod, "vcs_commit_git", vcsCommitGit))
       (bind(registerRpcMethod, "vcs_diff_file", vcsDiffFile))

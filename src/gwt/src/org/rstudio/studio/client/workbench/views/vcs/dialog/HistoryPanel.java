@@ -21,8 +21,10 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 import org.rstudio.core.client.widget.LeftRightToggleButton;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitListDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.Display;
@@ -45,7 +47,8 @@ public class HistoryPanel extends Composite implements Display
    interface Binder extends UiBinder<Widget, HistoryPanel>
    {}
 
-   public HistoryPanel()
+   @Inject
+   public HistoryPanel(BranchToolbarButton branchToolbarButton)
    {
       splitPanel_ = new SplitLayoutPanel(4);
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
@@ -57,6 +60,7 @@ public class HistoryPanel extends Composite implements Display
 
       switchViewButton_ = new LeftRightToggleButton("Changes", "History", false);
       topToolbar_.addLeftWidget(switchViewButton_);
+      topToolbar_.addLeftWidget(branchToolbarButton);
    }
 
    @Override

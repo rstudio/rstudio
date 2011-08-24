@@ -33,6 +33,7 @@ import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.HttpLogEntry;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.ExecuteCommandResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
@@ -1213,6 +1214,19 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, VCS_FULL_STATUS, requestCallback);
    }
 
+   @Override
+   public void vcsListBranches(ServerRequestCallback<BranchesInfo> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, VCS_LIST_BRANCHES, requestCallback);
+   }
+
+   @Override
+   public void vcsCheckout(String id,
+                           ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, VCS_CHECKOUT, id, requestCallback);
+   }
+
    public void vcsCommitGit(String message,
                             boolean amend,
                             boolean signOff,
@@ -1749,6 +1763,8 @@ public class RemoteServer implements Server
    private static final String VCS_STAGE = "vcs_stage";
    private static final String VCS_UNSTAGE = "vcs_unstage";
    private static final String VCS_FULL_STATUS = "vcs_full_status";
+   private static final String VCS_LIST_BRANCHES = "vcs_list_branches";
+   private static final String VCS_CHECKOUT = "vcs_checkout";
    private static final String VCS_COMMIT_GIT = "vcs_commit_git";
    private static final String VCS_DIFF_FILE = "vcs_diff_file";
    private static final String VCS_APPLY_PATCH = "vcs_apply_patch";

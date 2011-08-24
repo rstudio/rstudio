@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.events.*;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent.Action;
+import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;
 
 import java.util.ArrayList;
 
@@ -159,23 +160,23 @@ public class ReviewPresenter implements IsWidget
    @Inject
    public ReviewPresenter(VCSServerOperations server,
                           Display view,
-                          final EventBus events)
+                          final EventBus events,
+                          final VcsState vcsState)
    {
       server_ = server;
       view_ = view;
 
-      events.addHandler(
-            view_,
-            VcsRefreshEvent.TYPE,
-            new VcsRefreshHandler()
-            {
-               @Override
-               public void onVcsRefresh(
-                     VcsRefreshEvent event)
-               {
-                  updateDiff(false);
-               }
-            });
+      vcsState.addVcsRefreshHandler(new VcsRefreshHandler()
+      {
+         @Override
+         public void onVcsRefresh(VcsRefreshEvent event)
+         {
+            updateDiff(false);
+         }
+      });
+
+      // Ensure that we're fresh
+      vcsState.refresh();
 
       view_.getChangelistTable().addSelectionChangeHandler(new Handler()
       {
@@ -251,7 +252,7 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onClick(ClickEvent event)
          {
-            events.fireEvent(new VcsRefreshEvent());
+            vcsState.refresh();
          }
       });
 
@@ -337,14 +338,16 @@ public class ReviewPresenter implements IsWidget
          }
       });
 
-      view_.getCommitButton().addClickHandler(new ClickHandler() {
+      view_.getCommitButton().addClickHandler(new ClickHandler()
+      {
          @Override
          public void onClick(ClickEvent event)
          {
             server_.vcsCommitGit(view_.getCommitMessage().getText(),
                                  view_.getCommitIsAmend().getValue(),
                                  false,
-                                 new SimpleRequestCallback<Void>() {
+                                 new SimpleRequestCallback<Void>()
+                                 {
                                     @Override
                                     public void onResponseReceived(Void resp)
                                     {
@@ -352,17 +355,6 @@ public class ReviewPresenter implements IsWidget
                                        view_.getCommitMessage().setText("");
                                     }
                                  });
-         }
-      });
-
-      server_.vcsFullStatus(new SimpleRequestCallback<JsArray<StatusAndPath>>() {
-         @Override
-         public void onResponseReceived(JsArray<StatusAndPath> response)
-         {
-            ArrayList<StatusAndPath> items = new ArrayList<StatusAndPath>();
-            for (int i = 0; i < response.length(); i++)
-               items.add(response.get(i));
-            view_.getChangelistTable().setItems(items);
          }
       });
    }

@@ -13,6 +13,10 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -24,15 +28,16 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
+import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;
 
 import java.util.ArrayList;
 
@@ -43,7 +48,6 @@ public class VCS extends BasePresenter implements IsWidget
    public interface Display extends WorkbenchView, IsWidget
    {
       void setItems(ArrayList<StatusAndPath> items);
-
       ArrayList<String> getSelectedPaths();
    }
 
@@ -53,20 +57,26 @@ public class VCS extends BasePresenter implements IsWidget
               Provider<HistoryPresenter> pHistoryPresenter,
               VCSServerOperations server,
               Commands commands,
-              EventBus events,
               Binder commandBinder,
-              GlobalDisplay globalDisplay)
+              VcsState vcsState)
    {
       super(view);
       view_ = view;
       pReviewPresenter_ = pReviewPresenter;
       pHistoryPresenter_ = pHistoryPresenter;
       server_ = server;
-      globalDisplay_ = globalDisplay;
+      vcsState_ = vcsState;
 
       commandBinder.bind(commands, this);
 
-      refresh(false);
+      vcsState_.addVcsRefreshHandler(new VcsRefreshHandler()
+      {
+         @Override
+         public void onVcsRefresh(VcsRefreshEvent event)
+         {
+            refresh();
+         }
+      });
    }
 
    @Override
@@ -95,14 +105,7 @@ public class VCS extends BasePresenter implements IsWidget
       if (paths.size() == 0)
          return;
 
-      server_.vcsAdd(paths, new SimpleRequestCallback<Void>("Stage Changes")
-      {
-         @Override
-         public void onResponseReceived(Void response)
-         {
-            refresh(true);
-         }
-      });
+      server_.vcsAdd(paths, new SimpleRequestCallback<Void>("Stage Changes"));
    }
 
    @Handler
@@ -113,14 +116,7 @@ public class VCS extends BasePresenter implements IsWidget
          return;
 
       server_.vcsUnstage(paths,
-                         new SimpleRequestCallback<Void>("Unstage Changes")
-                         {
-                            @Override
-                            public void onResponseReceived(Void response)
-                            {
-                               refresh(true);
-                            }
-                         });
+                         new SimpleRequestCallback<Void>("Unstage Changes"));
    }
 
    @Handler
@@ -130,14 +126,7 @@ public class VCS extends BasePresenter implements IsWidget
       if (paths.size() == 0)
          return;
 
-      server_.vcsRevert(paths, new SimpleRequestCallback<Void>("Revert Changes")
-      {
-         @Override
-         public void onResponseReceived(Void response)
-         {
-            refresh(true);
-         }
-      });
+      server_.vcsRevert(paths, new SimpleRequestCallback<Void>("Revert Changes"));
    }
 
    @Handler
@@ -149,7 +138,7 @@ public class VCS extends BasePresenter implements IsWidget
    @Handler
    void onVcsRefresh()
    {
-      refresh(true);
+      vcsState_.refresh();
    }
 
    @Handler
@@ -158,34 +147,18 @@ public class VCS extends BasePresenter implements IsWidget
       showReviewPane(true);
    }
 
-   private void refresh(final boolean showError)
+   private void refresh()
    {
-      server_.vcsFullStatus(new ServerRequestCallback<JsArray<StatusAndPath>>()
-      {
-         @Override
-         public void onResponseReceived(JsArray<StatusAndPath> response)
-         {
-            ArrayList<StatusAndPath> list = new ArrayList<StatusAndPath>();
-            for (int i = 0; i < response.length(); i++)
-               list.add(response.get(i));
-            view_.setItems(list);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            if (showError)
-            {
-               globalDisplay_.showErrorMessage("Error",
-                                               error.getUserMessage());
-            }
-         }
-      });
+      JsArray<StatusAndPath> status = vcsState_.getStatus();
+      ArrayList<StatusAndPath> list = new ArrayList<StatusAndPath>();
+      for (int i = 0; i < status.length(); i++)
+         list.add(status.get(i));
+      view_.setItems(list);
    }
 
    private final Display view_;
    private final Provider<ReviewPresenter> pReviewPresenter_;
    private final Provider<HistoryPresenter> pHistoryPresenter_;
    private final VCSServerOperations server_;
-   private final GlobalDisplay globalDisplay_;
+   private final VcsState vcsState_;
 }

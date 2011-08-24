@@ -114,6 +114,7 @@ public class ToolbarButton extends FocusWidget
    private void addMenuHandlers(final ToolbarPopupMenu menu, 
                                 final boolean rightAlign)
    {
+      menu_ = menu;
       /*
        * We want clicks on this button to toggle the visibility of the menu,
        * as well as having the menu auto-hide itself as it normally does.
@@ -188,13 +189,7 @@ public class ToolbarButton extends FocusWidget
 
       this.setStylePrimaryName(styles_.toolbarButton());
 
-      if (!StringUtil.isNullOrEmpty(text))
-         label_.setInnerText(text);
-      else
-      {
-         label_.getStyle().setDisplay(Display.NONE);
-         addStyleName(styles_.noLabel());
-      }
+      setText(text);
       if (leftImage != null)
          leftImageWidget_ = new Image(leftImage);
       else
@@ -299,6 +294,11 @@ public class ToolbarButton extends FocusWidget
       return null;
    }
 
+   public ToolbarPopupMenu getMenu()
+   {
+      return menu_;
+   }
+
    public void setLeftImage(ImageResource imageResource)
    {
       leftImageWidget_.setResource(imageResource);
@@ -306,12 +306,24 @@ public class ToolbarButton extends FocusWidget
 
    public void setText(String label)
    {
-      label_.setInnerText(label);
+      if (!StringUtil.isNullOrEmpty(label))
+      {
+         label_.setInnerText(label);
+         label_.getStyle().setDisplay(Display.BLOCK);
+         removeStyleName(styles_.noLabel());
+      }
+      else
+      {
+         label_.getStyle().setDisplay(Display.NONE);
+         addStyleName(styles_.noLabel());
+      }
    }
 
    private boolean down_;
    
    interface Binder extends UiBinder<Element, ToolbarButton> { }
+
+   private ToolbarPopupMenu menu_;
    private static final Binder binder = GWT.create(Binder.class);
 
    private static final ThemeStyles styles_ = ThemeResources.INSTANCE.themeStyles();

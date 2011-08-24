@@ -12,6 +12,14 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs;
 
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Toolbar;
@@ -29,15 +37,34 @@ import java.util.ArrayList;
 
 public class VCSPane extends WorkbenchPane implements Display
 {
+   private class HasValueChangeHandlersImpl<T> implements HasValueChangeHandlers<T>
+   {
+      @Override
+      public HandlerRegistration addValueChangeHandler(ValueChangeHandler<T> handler)
+      {
+         return handlers_.addHandler(ValueChangeEvent.getType(), handler);
+      }
+
+      @Override
+      public void fireEvent(GwtEvent<?> event)
+      {
+         handlers_.fireEvent(event);
+      }
+
+      private final HandlerManager handlers_ = new HandlerManager(this);
+   }
+
    @Inject
    public VCSPane(ConsoleBarFramePanel consoleBarFrame,
                   ChangelistTablePresenter changelistTablePresenter,
                   Session session,
-                  Commands commands)
+                  Commands commands,
+                  BranchToolbarButton branchToolbarButton)
    {
       super(session.getSessionInfo().getVcsName());
       consoleBarFrame_ = consoleBarFrame;
       commands_ = commands;
+      branchToolbarButton_ = branchToolbarButton;
 
       changelistTablePresenter.initializeClientState();
       table_ = changelistTablePresenter.getView();
@@ -67,6 +94,7 @@ public class VCSPane extends WorkbenchPane implements Display
             StandardIcons.INSTANCE.more_actions(),
             moreMenu));
 
+      toolbar.addRightWidget(branchToolbarButton_);
       toolbar.addRightWidget(commands_.vcsRefresh().createToolbarButton());
       return toolbar;
    }
@@ -90,6 +118,7 @@ public class VCSPane extends WorkbenchPane implements Display
    }
 
    private final Commands commands_;
+   private final BranchToolbarButton branchToolbarButton_;
    private ChangelistTable table_;
    private ConsoleBarFramePanel consoleBarFrame_;
 }

@@ -30,6 +30,7 @@ import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
@@ -339,18 +340,19 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
          if (newState != Line.Type.Same && i == lines_.size() - 1)
             endRows_.add(i);
 
-         if (newState == state)
-            continue;
+         if (newState != state)
+         {
+            // Note: endRows_ doesn't include the borders between insertions and
+            // deletions, or vice versa. This is to avoid 2px borders between
+            // these regions when just about everything else is 1px.
+            if (state != Line.Type.Same && newState == Line.Type.Same)
+               endRows_.add(i-1);
+            if (!suppressNextStart && newState != Line.Type.Same)
+               startRows_.add(i);
 
-         // Note: endRows_ doesn't include the borders between insertions and
-         // deletions, or vice versa. This is to avoid 2px borders between
-         // these regions when just about everything else is 1px.
-         if (state != Line.Type.Same && newState == Line.Type.Same)
-            endRows_.add(i-1);
-         if (!suppressNextStart && newState != Line.Type.Same)
-            startRows_.add(i);
+            state = newState;
+         }
 
-         state = newState;
          suppressNextStart = isChunk;
       }
    }

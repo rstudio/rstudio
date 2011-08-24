@@ -56,6 +56,10 @@ public interface VCSServerOperations
    void vcsFullStatus(
          ServerRequestCallback<JsArray<StatusAndPath>> requestCallback);
 
+   void vcsListBranches(ServerRequestCallback<BranchesInfo> requestCallback);
+
+   void vcsCheckout(String id, ServerRequestCallback<Void> requestCallback);
+
    void vcsCommitGit(String message,
                      boolean amend,
                      boolean signOff,

@@ -22,6 +22,9 @@
       .toc {
 
       }
+      .detailPanel {
+         width: 100%;
+      }
    </ui:style>
 
    <g:HTMLPanel visible="false">
@@ -48,7 +51,7 @@
          </tr>
       </table>
       <g:VerticalPanel ui:field="tocPanel_" styleName="{style.toc}" />
-      <g:VerticalPanel ui:field="detailPanel_" />
+      <g:VerticalPanel ui:field="detailPanel_" styleName="{style.detailPanel}" />
    </g:HTMLPanel>
 
 </ui:UiBinder>
