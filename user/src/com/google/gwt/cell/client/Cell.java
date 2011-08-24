@@ -63,6 +63,12 @@ import java.util.Set;
  * {@example com.google.gwt.examples.cell.CellExample}
  * </p>
  * 
+ * <p>
+ * <span style="color:red;">Warning: The Cell interface may change in subtle but breaking ways as we
+ * continuously seek to improve performance. You should always subclass {@link AbstractCell} instead
+ * of implementing {@link Cell} directly.</span>
+ * </p>
+ * 
  * @param <C> the type that this Cell represents
  */
 public interface Cell<C> {

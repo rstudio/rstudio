@@ -33,6 +33,8 @@ import java.util.Set;
  * <dl>
  * <dt>Read only cell</dt>
  * <dd>{@example com.google.gwt.examples.cell.CellExample}</dd>
+ * <dt>Cell with events</dt>
+ * <dd>{@example com.google.gwt.examples.cell.CellWithEventsExample}</dd>
  * <dt>Interactive cell</dt>
  * <dd>{@example com.google.gwt.examples.cell.InteractionCellExample}</dd>
  * <dt>Editable cell</dt>
