@@ -74,6 +74,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -1220,11 +1221,7 @@ public class JUnitShell extends DevMode {
   }
 
   private boolean mustNotExecuteTest(Set<Platform> bannedPlatforms) {
-    // TODO (amitmanjhi): Remove this hard-coding. A RunStyle somehow needs to
-    // specify how it interacts with the platforms.
-    if (runStyle instanceof RunStyleHtmlUnit
-        && (bannedPlatforms.contains(Platform.HtmlUnitUnknown)
-            || bannedPlatforms.contains(Platform.HtmlUnitLayout) || bannedPlatforms.contains(Platform.HtmlUnitBug))) {
+    if (!Collections.disjoint(bannedPlatforms, runStyle.getPlatforms())) {
       return true;
     }
 

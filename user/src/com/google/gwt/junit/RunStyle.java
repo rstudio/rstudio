@@ -20,6 +20,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * An abstract class that handles the details of launching a browser.
@@ -66,6 +68,13 @@ public abstract class RunStyle {
     } catch (UnknownHostException e) {
       throw new RuntimeException("Unable to determine my ip address", e);
     }
+  }
+
+  /**
+   * Returns the platforms specific to this run style.
+   */
+  public Set<Platform> getPlatforms() {
+    return Collections.emptySet();
   }
 
   /**

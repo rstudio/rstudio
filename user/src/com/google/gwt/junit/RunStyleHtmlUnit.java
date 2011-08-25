@@ -17,6 +17,7 @@ package com.google.gwt.junit;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.shell.HostedModePluginObject;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 
 import com.gargoylesoftware.htmlunit.AlertHandler;
 import com.gargoylesoftware.htmlunit.BrowserVersion;
@@ -180,6 +181,9 @@ public class RunStyleHtmlUnit extends RunStyle {
    */
   private static final int DEFAULT_TRIES = 1;
 
+  private static final Set<Platform> PLATFORMS = ImmutableSet.of(Platform.HtmlUnitBug,
+      Platform.HtmlUnitLayout, Platform.HtmlUnitUnknown);
+
   /**
    * Returns the list of browsers Htmlunit emulates as a comma separated string.
    */
@@ -214,6 +218,11 @@ public class RunStyleHtmlUnit extends RunStyle {
    */
   public RunStyleHtmlUnit(JUnitShell shell) {
     super(shell);
+  }
+
+  @Override
+  public Set<Platform> getPlatforms() {
+    return PLATFORMS;
   }
 
   @Override
