@@ -69,7 +69,7 @@ public class SafeUriIntegrationTest extends GWTTestCase {
     BinderUi ui = new BinderUi();
 
     assertEquals(values.anUnsafeUri(), ui.jsAnchorFromSafeUri.getHref());
-    AnchorElement anchor = expectedEscapedAnchor();
+    AnchorElement anchor = UiBinderUtil.fromHtml("<a href='#'>snot</a>").cast();
     assertEquals(anchor.getHref(), ui.jsAnchorFromString.getHref());
     assertEquals("http://www.google.com/images/logo_sm.gif", ui.inlineHttpAnchor.getHref());
     assertEquals("javascript:void(0)", ui.inlineJavascriptAnchor.getHref());
@@ -78,10 +78,5 @@ public class SafeUriIntegrationTest extends GWTTestCase {
     assertEquals(values.anUnsafeUri(), ui.jsAnchorFromSafeUriObj.uri.asString());
     assertEquals("http://www.google.com/images/logo_sm.gif", ui.inlineHttpAnchorObj.uri.asString());
     assertEquals("javascript:void(0)", ui.inlineJavascriptAnchorObj.uri.asString());
-  }
-
-  protected AnchorElement expectedEscapedAnchor() {
-    AnchorElement anchor = UiBinderUtil.fromHtml("<a href='#'>snot</a>").cast();
-    return anchor;
   }
 }

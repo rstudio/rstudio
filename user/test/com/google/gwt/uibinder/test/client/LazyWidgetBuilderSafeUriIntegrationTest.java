@@ -36,6 +36,8 @@ public class LazyWidgetBuilderSafeUriIntegrationTest extends SafeUriIntegrationT
     AnchorElement getJsAnchorFromSafeUri(Element ancestor);
 
     AnchorElement getJsAnchorFromString(Element ancestor);
+    
+    AnchorElement getJsAnchorFromStringControl(Element ancestor);
 
     AnchorElement getHttpAnchorFromString(Element ancestor);
 
@@ -58,6 +60,8 @@ public class LazyWidgetBuilderSafeUriIntegrationTest extends SafeUriIntegrationT
     AnchorElement jsAnchorFromSafeUri;
     @UiField
     AnchorElement jsAnchorFromString;
+    @UiField
+    AnchorElement jsAnchorFromStringControl;
     @UiField
     AnchorElement httpAnchorFromString;
     @UiField
@@ -90,8 +94,7 @@ public class LazyWidgetBuilderSafeUriIntegrationTest extends SafeUriIntegrationT
     try {
       RootPanel.get().add(ui);
       assertEquals(values.anUnsafeUri(), ui.jsAnchorFromSafeUri.getHref());
-      AnchorElement anchor = expectedEscapedAnchor();
-      assertEquals(anchor.getHref(), ui.jsAnchorFromString.getHref());
+      assertEquals(ui.jsAnchorFromString.getHref(), ui.jsAnchorFromString.getHref());
       assertEquals("http://www.google.com/images/logo_sm.gif", ui.inlineHttpAnchor.getHref());
       assertEquals("javascript:void(0)", ui.inlineJavascriptAnchor.getHref());
       assertEquals(values.aSelector() + values.aGifPath(),
@@ -116,8 +119,7 @@ public class LazyWidgetBuilderSafeUriIntegrationTest extends SafeUriIntegrationT
     try {
       assertEquals(values.anUnsafeUri(), r.getJsAnchorFromSafeUri(e).getHref());
 
-      AnchorElement anchor = expectedEscapedAnchor();
-      assertEquals(anchor.getHref(), r.getJsAnchorFromString(e).getHref());
+      assertEquals(r.getJsAnchorFromStringControl(e).getHref(), r.getJsAnchorFromString(e).getHref());
 
       assertEquals("http://www.google.com/images/logo_sm.gif", r.getInlineHttpAnchor(e).getHref());
       assertEquals("javascript:void(0)", r.getInlineJavascriptAnchor(e).getHref());
