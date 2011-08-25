@@ -948,6 +948,7 @@ struct RecursiveDirectoryIterator::Impl
    }
    recursive_dir_iterator itr_;
    recursive_dir_iterator end_;
+   std::string lastPath_;
 };
 
 
@@ -972,8 +973,11 @@ Error RecursiveDirectoryIterator::next(FilePath* pFilePath)
                             ERROR_LOCATION);
       }
 
-      // get the next file path then increment the iterator
-      *pFilePath = FilePath(BOOST_FS_PATH2STR(pImpl_->itr_->path()));
+      // get the next file path (save it so we can use it in error messages)
+      pImpl_->lastPath_ = BOOST_FS_PATH2STR(pImpl_->itr_->path());
+      *pFilePath = FilePath(pImpl_->lastPath_);
+
+      // increment the iterator
       ++(pImpl_->itr_);
 
       // success
@@ -981,7 +985,9 @@ Error RecursiveDirectoryIterator::next(FilePath* pFilePath)
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      return Error(e.code(), ERROR_LOCATION) ;
+      Error error(e.code(), ERROR_LOCATION);
+      error.addProperty("last-path", pImpl_->lastPath_);
+      return error;
    }
 }
 
