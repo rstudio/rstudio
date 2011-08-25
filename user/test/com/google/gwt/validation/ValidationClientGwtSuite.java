@@ -17,6 +17,7 @@ package com.google.gwt.validation;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.validation.client.BaseMessageInterpolatorTest;
+import com.google.gwt.validation.client.GwtValidatorContextTest;
 import com.google.gwt.validation.client.SimpleSampleTest;
 
 import junit.framework.Test;
@@ -30,6 +31,7 @@ public class ValidationClientGwtSuite {
     GWTTestSuite suite = new GWTTestSuite(
         "Test suite for all validation code.");
     suite.addTestSuite(BaseMessageInterpolatorTest.class);
+    suite.addTestSuite(GwtValidatorContextTest.class);
     suite.addTestSuite(SimpleSampleTest.class);
     return suite;
   }

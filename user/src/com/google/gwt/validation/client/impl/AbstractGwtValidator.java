@@ -37,7 +37,7 @@ import javax.validation.Validator;
 public abstract class AbstractGwtValidator implements Validator {
 
   private final Set<Class<?>> validGroups;
-  private ConstraintValidatorFactory factory;
+  private ConstraintValidatorFactory contraintValidatorFactory;
   private MessageInterpolator messageInterpolator;
   private TraversableResolver traversableResolver;
 
@@ -53,7 +53,7 @@ public abstract class AbstractGwtValidator implements Validator {
   public void init(ConstraintValidatorFactory factory,
       MessageInterpolator messageInterpolator,
       TraversableResolver traversableResolver) {
-    this.factory = factory;
+    this.contraintValidatorFactory = factory;
     this.messageInterpolator = messageInterpolator;
     this.traversableResolver = traversableResolver;
   }
@@ -82,8 +82,8 @@ public abstract class AbstractGwtValidator implements Validator {
     }
   }
 
-  protected ConstraintValidatorFactory getFactory() {
-    return factory;
+  protected ConstraintValidatorFactory getConstraintValidatorFactory() {
+    return contraintValidatorFactory;
   }
 
   protected MessageInterpolator getMessageInterpolator() {

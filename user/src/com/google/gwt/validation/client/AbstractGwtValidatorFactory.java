@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -56,24 +56,30 @@ import javax.validation.ValidatorFactory;
  */
 public abstract class AbstractGwtValidatorFactory implements ValidatorFactory {
 
+  private final ConstraintValidatorFactory constraintValidatorFactory = GWT
+      .create(ConstraintValidatorFactory.class);
+  private final GwtMessageInterpolator messageInterpolator = new GwtMessageInterpolator();
+  private final TraversableResolver traversableResolver = GWT
+      .create(TraversableResolver.class);;
+
   /**
    * Implement this method to returns a {@link GWT#create}ed {@link Validator}
    * annotated with {@link GwtValidation}.
-   *
+   * 
    * @return newly created Validator
    */
   public abstract AbstractGwtValidator createValidator();
 
   public final ConstraintValidatorFactory getConstraintValidatorFactory() {
-    return GWT.create(ConstraintValidatorFactory.class);
+    return constraintValidatorFactory;
   }
 
   public final MessageInterpolator getMessageInterpolator() {
-    return new GwtMessageInterpolator();
+    return messageInterpolator;
   }
 
   public final TraversableResolver getTraversableResolver() {
-    return GWT.create(TraversableResolver.class);
+    return traversableResolver;
   }
 
   public final Validator getValidator() {
@@ -89,6 +95,6 @@ public abstract class AbstractGwtValidatorFactory implements ValidatorFactory {
   }
 
   public final ValidatorContext usingContext() {
-    return GWT.create(ValidatorContext.class);
+    return new GwtValidatorContext(this);
   }
 }

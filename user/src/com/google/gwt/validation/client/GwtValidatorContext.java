@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,7 +15,6 @@
  */
 package com.google.gwt.validation.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
 import javax.validation.ConstraintValidatorFactory;
@@ -23,7 +22,6 @@ import javax.validation.MessageInterpolator;
 import javax.validation.TraversableResolver;
 import javax.validation.Validator;
 import javax.validation.ValidatorContext;
-import javax.validation.ValidatorFactory;
 
 /**
  * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
@@ -31,20 +29,39 @@ import javax.validation.ValidatorFactory;
  * <p>
  * GWT {@link ValidatorContext}.
  */
-public class GwtValidatorContext implements ValidatorContext {
+class GwtValidatorContext implements ValidatorContext {
 
-  private final AbstractGwtValidatorFactory validatorFactory = GWT.create(ValidatorFactory.class);
+  private final AbstractGwtValidatorFactory validatorFactory;
 
-  private ConstraintValidatorFactory constraintValidatorfactory = validatorFactory.getConstraintValidatorFactory();
-  private MessageInterpolator messageInterpolator = validatorFactory.getMessageInterpolator();
-  private TraversableResolver traversableResolver = validatorFactory.getTraversableResolver();
+  private final ConstraintValidatorFactory factoryConstraintValidatorfactory;
+  private final MessageInterpolator factoryMessageInterpolator;
+  private final TraversableResolver factoryTraversableResolver;
+
+  private ConstraintValidatorFactory constraintValidatorfactory = null;
+  private MessageInterpolator messageInterpolator = null;
+  private TraversableResolver traversableResolver = null;
+
+  GwtValidatorContext(AbstractGwtValidatorFactory validatorFactory) {
+    this.validatorFactory = validatorFactory;
+
+    factoryConstraintValidatorfactory = validatorFactory
+        .getConstraintValidatorFactory();
+    constraintValidatorfactory = validatorFactory
+        .getConstraintValidatorFactory();
+
+    factoryMessageInterpolator = validatorFactory.getMessageInterpolator();
+    messageInterpolator = validatorFactory.getMessageInterpolator();
+
+    factoryTraversableResolver = validatorFactory.getTraversableResolver();
+    traversableResolver = validatorFactory.getTraversableResolver();
+  }
 
   public ValidatorContext constraintValidatorFactory(
-      ConstraintValidatorFactory factory) {
-    if (factory == null) {
-      this.constraintValidatorfactory = GWT.create(ConstraintValidatorFactory.class);
+      ConstraintValidatorFactory constraintValidatorfactory) {
+    if (constraintValidatorfactory == null) {
+      this.constraintValidatorfactory = factoryConstraintValidatorfactory;
     } else {
-      this.constraintValidatorfactory = factory;
+      this.constraintValidatorfactory = constraintValidatorfactory;
     }
     return this;
   }
@@ -59,7 +76,7 @@ public class GwtValidatorContext implements ValidatorContext {
   public ValidatorContext messageInterpolator(
       MessageInterpolator messageInterpolator) {
     if (messageInterpolator == null) {
-      this.messageInterpolator = GWT.create(MessageInterpolator.class);
+      this.messageInterpolator = factoryMessageInterpolator;
     } else {
       this.messageInterpolator = messageInterpolator;
     }
@@ -69,11 +86,10 @@ public class GwtValidatorContext implements ValidatorContext {
   public ValidatorContext traversableResolver(
       TraversableResolver traversableResolver) {
     if (traversableResolver == null) {
-      this.traversableResolver = GWT.create(TraversableResolver.class);
+      this.traversableResolver = factoryTraversableResolver;
     } else {
       this.traversableResolver = traversableResolver;
     }
     return this;
   }
-
 }
