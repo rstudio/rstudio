@@ -76,7 +76,7 @@ public:
       if (error)
       {
          LOG_ERROR(error);
-         return true;
+         return false;
       }
 
       // index
