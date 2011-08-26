@@ -16,6 +16,7 @@
 package com.google.web.bindery.event.shared;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -26,15 +27,48 @@ import java.util.Set;
  */
 public class UmbrellaException extends RuntimeException {
 
-  private static final String MSG =
-      "One or more exceptions caught, see full set in UmbrellaException#getCauses";
+  // Visible for testing
+  static final String MULTIPLE = " exceptions caught: ";
+
+  // Visible for testing
+  static final String ONE = "Exception caught: ";
+
+  protected static Throwable makeCause(Set<Throwable> causes) {
+    Iterator<Throwable> iterator = causes.iterator();
+    if (!iterator.hasNext()) {
+      return null;
+    }
+
+    return iterator.next();
+  }
+
+  protected static String makeMessage(Set<Throwable> causes) {
+    int count = causes.size();
+    if (count == 0) {
+      return null;
+    }
+
+    StringBuilder b = new StringBuilder(count == 1 ? ONE : count + MULTIPLE);
+    boolean first = true;
+    for (Throwable t : causes) {
+      if (first) {
+        first = false;
+      } else {
+        b.append("; ");
+      }
+      b.append(t.getMessage());
+    }
+
+    return b.toString();
+  }
+
   /**
    * The causes of the exception.
    */
   private Set<Throwable> causes;
 
   public UmbrellaException(Set<Throwable> causes) {
-    super(MSG, causes.size() == 0 ? null : causes.toArray(new Throwable[0])[0]);
+    super(makeMessage(causes), makeCause(causes));
     this.causes = causes;
   }
 
@@ -43,7 +77,7 @@ public class UmbrellaException extends RuntimeException {
    */
   protected UmbrellaException() {
     // Can't delegate to the other constructor or GWT RPC gets cranky
-    super(MSG);
+    super(MULTIPLE);
     this.causes = Collections.<Throwable> emptySet();
   }
 
