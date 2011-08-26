@@ -300,7 +300,7 @@ public final class RPC {
         // RPC stream. For stronger message verification, get the parameterized
         // types from the method declaration.
         Type[] methodParameterTypes = method.getGenericParameterTypes();
-        DequeMap<Type, Type> resolvedTypes = new DequeMap<Type, Type>();
+        DequeMap<TypeVariable<?>, Type> resolvedTypes = new DequeMap<TypeVariable<?>, Type>();
 
         TypeVariable<Method>[] methodTypes = method.getTypeParameters();
         for (TypeVariable<Method> methodType : methodTypes) {
@@ -309,9 +309,8 @@ public final class RPC {
 
         Object[] parameterValues = new Object[parameterTypes.length];
         for (int i = 0; i < parameterValues.length; i++) {
-          parameterValues[i] =
-              streamReader.deserializeValue(parameterTypes[i], methodParameterTypes[i],
-                  resolvedTypes);
+          parameterValues[i] = streamReader.deserializeValue(parameterTypes[i],
+              methodParameterTypes[i], resolvedTypes);
         }
 
         return new RPCRequest(method, parameterValues, rpcToken, serializationPolicy, streamReader

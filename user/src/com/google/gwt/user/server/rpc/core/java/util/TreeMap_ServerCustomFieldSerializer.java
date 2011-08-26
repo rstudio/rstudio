@@ -24,6 +24,7 @@ import com.google.gwt.user.server.rpc.impl.DequeMap;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.Comparator;
 import java.util.TreeMap;
 
@@ -34,14 +35,16 @@ import java.util.TreeMap;
 public class TreeMap_ServerCustomFieldSerializer extends ServerCustomFieldSerializer<TreeMap> {
 
   public static void deserialize(ServerSerializationStreamReader streamReader, TreeMap instance,
-      Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
-    Map_ServerCustomFieldSerializerBase.deserialize(streamReader, instance, instanceClass,
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException {
+    Map_ServerCustomFieldSerializerBase.deserialize(streamReader, instance, expectedParameterTypes,
         resolvedTypes);
   }
 
   @SuppressWarnings("unused")
   public static TreeMap instantiate(ServerSerializationStreamReader streamReader,
-      Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException {
     return new TreeMap((Comparator) streamReader.readObject(Comparator.class, resolvedTypes));
   }
 
@@ -53,8 +56,9 @@ public class TreeMap_ServerCustomFieldSerializer extends ServerCustomFieldSerial
 
   @Override
   public void deserializeInstance(ServerSerializationStreamReader streamReader, TreeMap instance,
-      Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
-    deserialize(streamReader, instance, instanceClass, resolvedTypes);
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException {
+    deserialize(streamReader, instance, expectedParameterTypes, resolvedTypes);
   }
 
   @Override
@@ -70,9 +74,9 @@ public class TreeMap_ServerCustomFieldSerializer extends ServerCustomFieldSerial
 
   @Override
   public TreeMap instantiateInstance(ServerSerializationStreamReader streamReader,
-      Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes)
-      throws SerializationException {
-    return instantiate(streamReader, instanceClass, resolvedTypes);
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException {
+    return instantiate(streamReader, expectedParameterTypes, resolvedTypes);
   }
 
   @Override

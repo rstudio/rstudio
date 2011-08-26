@@ -16,12 +16,11 @@
 package com.google.gwt.user.server.rpc.core.java.util;
 
 import com.google.gwt.user.client.rpc.SerializationException;
-import com.google.gwt.user.client.rpc.core.java.util.Collection_CustomFieldSerializerBase;
 import com.google.gwt.user.server.rpc.impl.DequeMap;
-import com.google.gwt.user.server.rpc.impl.SerializabilityUtil;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.Collection;
 
 /**
@@ -32,16 +31,11 @@ public final class Collection_ServerCustomFieldSerializerBase {
 
   @SuppressWarnings({"rawtypes", "unchecked"})
   public static void deserialize(ServerSerializationStreamReader streamReader, Collection instance,
-      Class<?> actualClass, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
-    Type[] actualTypes = SerializabilityUtil.findInstanceParameters(actualClass, resolvedTypes);
-    if (actualTypes == null || actualTypes.length < 1) {
-      Collection_CustomFieldSerializerBase.deserialize(streamReader, instance);
-      return;
-    }
-
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException {
     int size = streamReader.readInt();
     for (int i = 0; i < size; ++i) {
-      Object obj = streamReader.readObject(actualTypes[0], resolvedTypes);
+      Object obj = streamReader.readObject(expectedParameterTypes[0], resolvedTypes);
       instance.add(obj);
     }
   }

@@ -24,6 +24,7 @@ import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.HashMap;
 
 /**
@@ -35,8 +36,8 @@ import java.util.HashMap;
 public class TypeCheckedGenericClass_ServerCustomFieldSerializer {
   @SuppressWarnings("unchecked")
   public static void deserializeChecked(ServerSerializationStreamReader streamReader,
-      TypeCheckedGenericClass instance, Class<?> instanceClass,
-      DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+      TypeCheckedGenericClass instance, Type[] expectedParameterTypes,
+      DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
     Object junkKey = streamReader.readObject();
     Object junkValue = streamReader.readObject();
 
@@ -68,9 +69,43 @@ public class TypeCheckedGenericClass_ServerCustomFieldSerializer {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  public static void deserialize(ServerSerializationStreamReader streamReader,
+      TypeCheckedGenericClass instance) throws SerializationException {
+    Object junkKey = streamReader.readObject();
+    Object junkValue = streamReader.readObject();
+
+    /*
+     * If deserializing a superclass we will not have been instantiated using
+     * the custom instantiator, so skip the checks for correct markers.
+     */
+    if (instance.getClass() != TypeCheckedGenericClass.class
+        || ((instance.getMarkerKey() instanceof Integer)
+            && ((Integer) instance.getMarkerKey()).intValue() == 54321
+            && (instance.getMarkerValue() instanceof String) && ((String) instance.getMarkerValue())
+            .equals("LocalMarker"))) {
+      instance.setMarker(TypeCheckedObjectsTestSetValidator.markerKey,
+          TypeCheckedObjectsTestSetValidator.markerValue);
+    } else {
+      throw new SerializationException(
+          "Incorrect markers in TypeCheckedGenericClass server deserialization. "
+              + "Custom instantiate probably not called.");
+    }
+
+    instance.hashField = (HashMap) streamReader.readObject();
+  }
+
   public static TypeCheckedGenericClass instantiateChecked(
-      ServerSerializationStreamReader streamReader, Class<?> instanceClass,
-      DequeMap<Type, Type> resolvedTypes) {
+      ServerSerializationStreamReader streamReader, Type[] expectedParameterTypes,
+      DequeMap<TypeVariable<?>, Type> resolvedTypes) {
+    TypeCheckedGenericClass<Integer, String> result =
+        new TypeCheckedGenericClass<Integer, String>();
+    result.setMarker(54321, "LocalMarker");
+    return result;
+  }
+
+  public static TypeCheckedGenericClass instantiate(
+      ServerSerializationStreamReader streamReader) {
     TypeCheckedGenericClass<Integer, String> result =
         new TypeCheckedGenericClass<Integer, String>();
     result.setMarker(54321, "LocalMarker");

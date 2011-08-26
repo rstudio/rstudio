@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedFieldClass;
+import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedNestedLists;
 import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedSuperClass;
 
 /**
@@ -24,11 +25,13 @@ import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheck
  * TypeCheckedObjectsTest} unit test.
  */
 public interface TypeCheckedObjectsTestService extends RemoteService {
+  TypeCheckedFieldClass<Integer, String> echo(TypeCheckedFieldClass<Integer, String> arg1);
+
   TypeCheckedGenericClass<Integer, String> echo(TypeCheckedGenericClass<Integer, String> arg1);
 
-  TypeCheckedSuperClass<Integer, String> echo(TypeCheckedSuperClass<Integer, String> arg1);
+  TypeCheckedNestedLists echo(TypeCheckedNestedLists arg1);
 
-  TypeCheckedFieldClass<Integer, String> echo(TypeCheckedFieldClass<Integer, String> arg1);
+  TypeCheckedSuperClass<Integer, String> echo(TypeCheckedSuperClass<Integer, String> arg1);
 
   TypeUncheckedGenericClass<Integer, String> echo(TypeUncheckedGenericClass<Integer, String> arg1);
 }

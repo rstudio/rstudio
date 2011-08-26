@@ -21,10 +21,10 @@ import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.core.java.lang.Object_Array_CustomFieldSerializer;
 import com.google.gwt.user.server.rpc.ServerCustomFieldSerializer;
 import com.google.gwt.user.server.rpc.impl.DequeMap;
-import com.google.gwt.user.server.rpc.impl.SerializabilityUtil;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 
 /**
  * Server-side Custom Serializer for arrays of {@link java.lang.Object}.
@@ -33,12 +33,10 @@ public class Object_Array_ServerCustomFieldSerializer
     extends ServerCustomFieldSerializer<Object[]> {
 
   public static void deserialize(ServerSerializationStreamReader streamReader,
-      Object[] instance, Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes)
-      throws SerializationException {
-    Type componentType =
-        SerializabilityUtil.findInstanceParameters(instanceClass, resolvedTypes)[0];
+      Object[] instance, Type[] expectedParameterTypes,
+      DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
     for (int itemIndex = 0; itemIndex < instance.length; ++itemIndex) {
-      instance[itemIndex] = streamReader.readObject(componentType, resolvedTypes);
+      instance[itemIndex] = streamReader.readObject(expectedParameterTypes[0], resolvedTypes);
     }
   }
 
@@ -50,9 +48,9 @@ public class Object_Array_ServerCustomFieldSerializer
 
   @Override
   public void deserializeInstance(ServerSerializationStreamReader streamReader,
-      Object[] instance, Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes)
-      throws SerializationException {
-    deserialize(streamReader, instance, instanceClass, resolvedTypes);
+      Object[] instance, Type[] expectedParameterTypes,
+      DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
+    deserialize(streamReader, instance, expectedParameterTypes, resolvedTypes);
   }
 
   @Override

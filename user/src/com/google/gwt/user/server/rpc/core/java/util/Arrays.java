@@ -25,6 +25,7 @@ import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.List;
 
 /**
@@ -35,6 +36,7 @@ public final class Arrays {
   /**
    * Server-side Custom field serializer for {@link java.util.Arrays.ArrayList}.
    */
+  @SuppressWarnings("rawtypes")
   public static final class ArrayList_ServerCustomFieldSerializer extends
       ServerCustomFieldSerializer<List> {
 
@@ -56,17 +58,10 @@ public final class Arrays {
      * type.
      */
     public static List<?> instantiate(ServerSerializationStreamReader streamReader,
-        Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes)
+        Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes)
         throws SerializationException {
-
-      Type[] actualTypes =
-        SerializabilityUtil.findInstanceParameters(instanceClass, resolvedTypes);
-      if (actualTypes == null || actualTypes.length < 1) {
-        return com.google.gwt.user.client.rpc.core.java.util.Arrays.ArrayList_CustomFieldSerializer
-            .instantiate(streamReader);
-      }
-      
-      Class<?> componentClass = SerializabilityUtil.getClassFromType(actualTypes[0], resolvedTypes);
+      Class<?> componentClass = SerializabilityUtil.getClassFromType(expectedParameterTypes[0],
+          resolvedTypes);
       if (componentClass == null) {
         return com.google.gwt.user.client.rpc.core.java.util.Arrays.ArrayList_CustomFieldSerializer
             .instantiate(streamReader);
@@ -84,9 +79,10 @@ public final class Arrays {
           .deserialize(streamReader, instance);
     }
 
+    @SuppressWarnings("unused")
     @Override
     public void deserializeInstance(ServerSerializationStreamReader streamReader, List instance,
-        Class<?> instanceClass, DequeMap<Type, Type> actualParameterTypes)
+        Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> actualParameterTypes)
         throws SerializationException {
       // Handled in instantiateInstance.
     }
@@ -105,8 +101,9 @@ public final class Arrays {
 
     @Override
     public List instantiateInstance(ServerSerializationStreamReader streamReader,
-        Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
-      return instantiate(streamReader, instanceClass, resolvedTypes);
+        Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+        SerializationException {
+      return instantiate(streamReader, expectedParameterTypes, resolvedTypes);
     }
 
     @Override

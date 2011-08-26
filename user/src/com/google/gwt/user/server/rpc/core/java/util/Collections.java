@@ -20,10 +20,10 @@ import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.server.rpc.ServerCustomFieldSerializer;
 import com.google.gwt.user.server.rpc.impl.DequeMap;
-import com.google.gwt.user.server.rpc.impl.SerializabilityUtil;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.List;
 
 /**
@@ -43,15 +43,9 @@ public final class Collections {
     }
 
     public static List instantiate(ServerSerializationStreamReader streamReader,
-        Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes)
+        Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes)
         throws SerializationException {
-      Type[] actualTypes =
-          SerializabilityUtil.findInstanceParameters(instanceClass, resolvedTypes);
-      if (actualTypes == null || actualTypes.length < 1) {
-        return com.google.gwt.user.client.rpc.core.java.util.Collections.SingletonList_CustomFieldSerializer.instantiate(streamReader);
-      }
-
-      return java.util.Collections.singletonList(streamReader.readObject(actualTypes[0],
+      return java.util.Collections.singletonList(streamReader.readObject(expectedParameterTypes[0],
           resolvedTypes));
     }
 
@@ -65,7 +59,7 @@ public final class Collections {
     @SuppressWarnings("unused")
     @Override
     public void deserializeInstance(ServerSerializationStreamReader streamReader, List instance,
-        Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes)
+        Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes)
         throws SerializationException {
       // Handled in instantiate.
     }
@@ -83,9 +77,9 @@ public final class Collections {
 
     @Override
     public List instantiateInstance(ServerSerializationStreamReader streamReader,
-        Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes)
+        Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes)
         throws SerializationException {
-      return instantiate(streamReader, instanceClass, resolvedTypes);
+      return instantiate(streamReader, expectedParameterTypes, resolvedTypes);
     }
 
     @Override

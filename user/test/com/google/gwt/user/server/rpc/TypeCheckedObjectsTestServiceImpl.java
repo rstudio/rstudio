@@ -18,6 +18,7 @@ package com.google.gwt.user.server.rpc;
 import com.google.gwt.user.client.rpc.TypeCheckedGenericClass;
 import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestService;
 import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedFieldClass;
+import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedNestedLists;
 import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedSuperClass;
 import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetValidator;
 import com.google.gwt.user.client.rpc.TypeUncheckedGenericClass;
@@ -28,6 +29,36 @@ import com.google.gwt.user.client.rpc.TypeUncheckedGenericClass;
  */
 public class TypeCheckedObjectsTestServiceImpl extends HybridServiceServlet implements
     TypeCheckedObjectsTestService {
+
+  /*
+   * @see
+   * com.google.gwt.user.client.rpc.TypeCheckedObjectsTestService#echo(com.google
+   * .
+   * gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedFieldClass)
+   */
+  @Override
+  public TypeCheckedFieldClass<Integer, String> echo(TypeCheckedFieldClass<Integer, String> arg1) {
+    if (!TypeCheckedObjectsTestSetValidator.isValid(arg1)) {
+      throw new RuntimeException();
+    }
+
+    return arg1;
+  }
+
+  /*
+   * @see
+   * com.google.gwt.user.client.rpc.TypeCheckedObjectsTestService#echo(com.google
+   * .
+   * gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedNestedLists)
+   */
+  @Override
+  public TypeCheckedNestedLists echo(TypeCheckedNestedLists arg1) {
+    if (!TypeCheckedObjectsTestSetValidator.isValid(arg1)) {
+      throw new RuntimeException();
+    }
+
+    return arg1;
+  }
 
   /*
    * @see
@@ -52,21 +83,6 @@ public class TypeCheckedObjectsTestServiceImpl extends HybridServiceServlet impl
    */
   @Override
   public TypeCheckedSuperClass<Integer, String> echo(TypeCheckedSuperClass<Integer, String> arg1) {
-    if (!TypeCheckedObjectsTestSetValidator.isValid(arg1)) {
-      throw new RuntimeException();
-    }
-
-    return arg1;
-  }
-
-  /*
-   * @see
-   * com.google.gwt.user.client.rpc.TypeCheckedObjectsTestService#echo(com.google
-   * .
-   * gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedFieldClass)
-   */
-  @Override
-  public TypeCheckedFieldClass<Integer, String> echo(TypeCheckedFieldClass<Integer, String> arg1) {
     if (!TypeCheckedObjectsTestSetValidator.isValid(arg1)) {
       throw new RuntimeException();
     }

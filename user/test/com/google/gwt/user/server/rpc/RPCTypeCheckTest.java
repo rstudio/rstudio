@@ -76,6 +76,7 @@ public class RPCTypeCheckTest extends TestCase {
    * Test collections in fields of classes:
    *   - BClass contains a List<Integer>: testClassField
    *   - CClass contains a BClass: testClassField
+   *   - KClass<X> contains a DClass<X, Integer> and List<X>: testGenericFields
    *   
    * Test generic classes that use their generic types in various ways
    *   - DClass<X, Y> extends LinkedList<X>: testGenericClasses
@@ -83,12 +84,12 @@ public class RPCTypeCheckTest extends TestCase {
    *   - FClass<X, Y> { List<X> ... List<Y> ... }: testGenericClasses
    *   - GClass<X, Y> { DClass<X, Y>, ... }: testNestedGenericClasses
    *   - JClass<X, Y> { fields of HashMap }: testGenericFields
-   *   - DClass<X, Y> where <X, Y> come from declaring class:
-   *      testMethodClassGenerics
+   *      
    * 
    * Wildcard types
    *   - (IClass<? extends T> arg1) with
-   *      <T extends Set<? super GEClass<Integer, String>>>: testComplexGenerics 
+   *      <T extends Set<? super GEClass<Integer, String>>>: testComplexGenerics
+   *   - LClass<T implements List<X> & MClass<Y>>: testMethodClassGenerics 
    */  
   
   /**
@@ -185,7 +186,8 @@ public class RPCTypeCheckTest extends TestCase {
    * A class containing a method used to check type spoofing attacks on RPC
    * messages containing novel classes.
    */
-  public static class ClassesParamTestClass<X, Y> implements RemoteService {
+  public static class ClassesParamTestClass<T extends List<Integer> & MInterface<String>>
+      implements RemoteService {
     @SuppressWarnings("unused")
     public static void testAClass(AClass arg1) {
     }
@@ -276,8 +278,16 @@ public class RPCTypeCheckTest extends TestCase {
     public static void testJClassRaw2(JClass arg1) {
     }
 
+    @SuppressWarnings({"unused"})
+    public static void testKClass(KClass<String> arg1) {
+    }
+
+    @SuppressWarnings({"unused", "rawtypes"})
+    public static void testKClassRaw(KClass arg1) {
+    }
+
     @SuppressWarnings("unused")
-    public void testDClassGeneric(DClass<X, Y> arg1) {
+    public void testWildcardBounds(T arg1) {
     }
   }
 
@@ -461,6 +471,66 @@ public class RPCTypeCheckTest extends TestCase {
   }
 
   /**
+   * Test case for a generic type that extends a generic type with fewer
+   * parameters, used as a field and as an array.
+   * 
+   * During testing, instances of DClass are used for all of the fields.
+   */
+  public static class KClass<X> implements IsSerializable {
+    public DClass<X, Integer> field1 = null;
+    public List<X> field2 = null;
+    public DClass<X, Integer>[] field3 = null;
+    public List<X>[] field4 = null;
+  }
+
+  /**
+   * Test case for multiple wildcard bounds.
+   */
+  public static class LClass<X, Y> extends LinkedList<X>
+      implements MInterface<Y>, IsSerializable {
+    public Y field1 = null;
+    public List<Y> field2 = null;
+    
+    @Override
+    public Y echo(Y arg) {
+      return arg;
+    }
+  }
+
+  /**
+   * An invalid test case for multiple wildcard bounds.
+   * 
+   * It does not implement List.
+   */
+  public static class LClassInvalid1<X, Y> extends IClass<X>
+      implements MInterface<Y> {
+    public Y field1 = null;
+    public List<Y> field2 = null;
+    
+    @Override
+    public Y echo(Y arg) {
+      return arg;
+    }
+  }
+
+  /**
+   * An invalid test case for multiple wildcard bounds.
+   * 
+   * It does not implement MInterface.
+   */
+  public static class LClassInvalid2<X, Y> extends LinkedList<X> implements IsSerializable {
+    public Y field1 = null;
+    public List<Y> field2 = null;
+  }
+
+  /**
+   * Test interface for multiple wildcard bounds.
+   */
+  public interface MInterface<X> {
+    public X echo(X arg);
+  }
+
+  /**
    * A class containing a method used to check type spoofing attacks on RPC
    * messages containing primitive types.
    */
@@ -485,7 +555,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arrayList);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -502,7 +571,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arrayAsList);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -523,7 +591,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -543,7 +610,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -566,7 +632,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -588,7 +653,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -608,45 +672,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write((Object) arg1);
 
       return strFactory.toString();
-
-    } catch (Exception e) {
-      fail(e.getMessage());
-
-      return null;
-    }
-  }
-
-  private static String generateDClassValid1() {
-    try {
-      RPCTypeCheckFactory strFactory =
-          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testDClassGeneric");
-
-      DClass<Integer, String> arg1 = new DClass<Integer, String>();
-      arg1.setY("foo");
-      arg1.add(12345);
-      strFactory.write((Object) arg1);
-
-      return strFactory.toString();
-
-    } catch (Exception e) {
-      fail(e.getMessage());
-
-      return null;
-    }
-  }
-
-  private static String generateDClassValid2() {
-    try {
-      RPCTypeCheckFactory strFactory =
-          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testDClassGeneric");
-
-      DClass<String, Integer> arg1 = new DClass<String, Integer>();
-      arg1.setY(12345);
-      arg1.add("foo");
-      strFactory.write((Object) arg1);
-
-      return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -666,7 +691,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write((Object) arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -686,7 +710,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write((Object) arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -705,7 +728,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -726,7 +748,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -742,7 +763,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.writeEmptyList();
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -758,7 +778,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.writeEmptyMap();
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -774,7 +793,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.writeEmptySet();
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -797,7 +815,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -821,7 +838,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -845,7 +861,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -865,7 +880,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write((Object) gClass);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -885,7 +899,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write((Object) gClass);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -905,7 +918,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write((Object) gClass);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -925,7 +937,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write((Object) gClass);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -946,7 +957,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write((Object) arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -965,7 +975,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write((Object) arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -983,7 +992,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(hashMap);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1002,7 +1010,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(hashSet);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1023,7 +1030,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(hClass);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1044,7 +1050,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(hClass);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1066,7 +1071,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1086,7 +1090,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1118,7 +1121,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1158,7 +1160,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1189,7 +1190,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1224,7 +1224,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1265,7 +1264,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1283,7 +1281,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(hashMap);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1303,7 +1300,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(j);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1323,7 +1319,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(j);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1354,7 +1349,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1385,7 +1379,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1415,7 +1408,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1444,7 +1436,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1474,7 +1465,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1504,7 +1494,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1533,7 +1522,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1563,7 +1551,405 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg1);
 
       return strFactory.toString();
+    } catch (Exception e) {
+      fail(e.getMessage());
 
+      return null;
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static String generateKClassValid(String methodName) {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, methodName);
+    
+      DClass<String, Integer> field1 = new DClass<String, Integer>();
+      field1.setY(12);
+      field1.add("foo");
+
+      DClass<String, Integer> field2 = new DClass<String, Integer>();
+      field2.setY(34);
+      field2.add("bar");
+
+      DClass<String, Integer>[] field3 = new DClass[1];
+      field3[0] = new DClass<String, Integer>();
+      field3[0].setY(56);
+      field3[0].add("oof");
+
+      DClass<String, Integer>[] field4 = new DClass[1];
+      field4[0] = new DClass<String, Integer>();
+      field4[0].setY(78);
+      field4[0].add("rab");
+      
+      KClass<String> arg1 = new KClass<String>();
+      arg1.field1 = field1;
+      arg1.field2 = field2;
+      arg1.field3 = field3;
+      arg1.field4 = field4;
+      strFactory.write(arg1);
+      
+      return strFactory.toString();
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+      return null;
+    }
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static String generateKClassInvalid1(String methodName) {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, methodName);
+    
+      DClass<Integer, Integer> field1 = new DClass<Integer, Integer>();
+      field1.setY(12);
+      field1.add(90);
+
+      DClass<String, Integer> field2 = new DClass<String, Integer>();
+      field2.setY(34);
+      field2.add("bar");
+
+      DClass<String, Integer>[] field3 = new DClass[1];
+      field3[0] = new DClass<String, Integer>();
+      field3[0].setY(56);
+      field3[0].add("oof");
+
+      DClass<String, Integer>[] field4 = new DClass[1];
+      field4[0] = new DClass<String, Integer>();
+      field4[0].setY(78);
+      field4[0].add("rab");
+      
+      KClass arg1 = new KClass();
+      arg1.field1 = field1;
+      arg1.field2 = field2;
+      arg1.field3 = field3;
+      arg1.field4 = field4;
+      strFactory.write(arg1);
+      
+      return strFactory.toString();
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+      return null;
+    }
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static String generateKClassInvalid2() {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testKClass");
+    
+      DClass<String, Integer> field1 = new DClass<String, Integer>();
+      field1.setY(12);
+      field1.add("foo");
+
+      DClass<Integer, Integer> field2 = new DClass<Integer, Integer>();
+      field2.setY(34);
+      field2.add(90);
+
+      DClass<String, Integer>[] field3 = new DClass[1];
+      field3[0] = new DClass<String, Integer>();
+      field3[0].setY(56);
+      field3[0].add("oof");
+
+      DClass<String, Integer>[] field4 = new DClass[1];
+      field4[0] = new DClass<String, Integer>();
+      field4[0].setY(78);
+      field4[0].add("rab");
+      
+      KClass arg1 = new KClass();
+      arg1.field1 = field1;
+      arg1.field2 = field2;
+      arg1.field3 = field3;
+      arg1.field4 = field4;
+      strFactory.write(arg1);
+      
+      return strFactory.toString();
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+      return null;
+    }
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static String generateKClassInvalid3() {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testKClass");
+    
+      DClass<String, Integer> field1 = new DClass<String, Integer>();
+      field1.setY(12);
+      field1.add("foo");
+
+      DClass<String, Integer> field2 = new DClass<String, Integer>();
+      field2.setY(34);
+      field2.add("bar");
+
+      DClass<Integer, Integer>[] field3 = new DClass[1];
+      field3[0] = new DClass<Integer, Integer>();
+      field3[0].setY(56);
+      field3[0].add(90);
+
+      DClass<String, Integer>[] field4 = new DClass[1];
+      field4[0] = new DClass<String, Integer>();
+      field4[0].setY(78);
+      field4[0].add("rab");
+      
+      KClass arg1 = new KClass();
+      arg1.field1 = field1;
+      arg1.field2 = field2;
+      arg1.field3 = field3;
+      arg1.field4 = field4;
+      strFactory.write(arg1);
+      
+      return strFactory.toString();
+
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+      return null;
+    }
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static String generateKClassInvalid4() {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testKClass");
+    
+      DClass<String, Integer> field1 = new DClass<String, Integer>();
+      field1.setY(12);
+      field1.add("foo");
+
+      DClass<String, Integer> field2 = new DClass<String, Integer>();
+      field2.setY(34);
+      field2.add("bar");
+
+      DClass<String, Integer>[] field3 = new DClass[1];
+      field3[0] = new DClass<String, Integer>();
+      field3[0].setY(56);
+      field3[0].add("oof");
+
+      DClass<Integer, Integer>[] field4 = new DClass[1];
+      field4[0] = new DClass<Integer, Integer>();
+      field4[0].setY(78);
+      field4[0].add(90);
+      
+      KClass arg1 = new KClass();
+      arg1.field1 = field1;
+      arg1.field2 = field2;
+      arg1.field3 = field3;
+      arg1.field4 = field4;
+      strFactory.write(arg1);
+      
+      return strFactory.toString();
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+      return null;
+    }
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static String generateKClassInvalid5() {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testKClass");
+    
+      DClass<String, String> field1 = new DClass<String, String>();
+      field1.setY("bar");
+      field1.add("foo");
+
+      DClass<String, Integer> field2 = new DClass<String, Integer>();
+      field2.setY(34);
+      field2.add("bar");
+
+      DClass<String, Integer>[] field3 = new DClass[1];
+      field3[0] = new DClass<String, Integer>();
+      field3[0].setY(56);
+      field3[0].add("oof");
+
+      DClass<String, Integer>[] field4 = new DClass[1];
+      field4[0] = new DClass<String, Integer>();
+      field4[0].setY(78);
+      field4[0].add("rab");
+      
+      KClass arg1 = new KClass();
+      arg1.field1 = field1;
+      arg1.field2 = field2;
+      arg1.field3 = field3;
+      arg1.field4 = field4;
+      strFactory.write(arg1);
+      
+      return strFactory.toString();
+
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+      return null;
+    }
+  }
+  
+  private static String generateLClassInvalid1() {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testWildcardBounds");
+    
+      LClass<String, String> arg = new LClass<String, String>();
+      arg.add("foo");
+      arg.field1 = "foo";
+      arg.field2 = new LinkedList<String>();
+      arg.field2.add("bar");
+      strFactory.write((Object) arg);
+
+      return strFactory.toString();
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+      return null;
+    }
+  }
+
+  private static String generateLClassInvalid2() {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testWildcardBounds");
+    
+      LClass<Integer, Integer> arg = new LClass<Integer, Integer>();
+      arg.add(12345);
+      arg.field1 = 67890;
+      arg.field2 = new LinkedList<Integer>();
+      arg.field2.add(45678);
+      strFactory.write((Object) arg);
+
+      return strFactory.toString();
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+      return null;
+    }
+  }
+
+  private static String generateLClassInvalid3() {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testWildcardBounds");
+    
+      LClassInvalid1<Integer, String> arg = new LClassInvalid1<Integer, String>();
+      arg.setA(12345);
+      arg.field1 = "foo";
+      arg.field2 = new LinkedList<String>();
+      arg.field2.add("bar");
+      strFactory.write(arg);
+
+      return strFactory.toString();
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+      return null;
+    }
+  }
+
+  private static String generateLClassInvalid4() {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testWildcardBounds");
+    
+      LClassInvalid2<Integer, String> arg = new LClassInvalid2<Integer, String>();
+      arg.add(12345);
+      arg.field1 = "foo";
+      arg.field2 = new LinkedList<String>();
+      arg.field2.add("bar");
+      strFactory.write((Object) arg);
+
+      return strFactory.toString();
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+      return null;
+    }
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private static String generateLClassInvalid5() {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testWildcardBounds");
+    
+      LClass arg = new LClass();
+      arg.add("oof");
+      arg.field1 = "foo";
+      arg.field2 = new LinkedList<String>();
+      arg.field2.add("bar");
+      strFactory.write((Object) arg);
+
+      return strFactory.toString();
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+      return null;
+    }
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private static String generateLClassInvalid6() {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testWildcardBounds");
+    
+      LClass arg = new LClass();
+      arg.add(12345);
+      arg.field1 = 67890;
+      arg.field2 = new LinkedList<String>();
+      arg.field2.add("bar");
+      strFactory.write((Object) arg);
+
+      return strFactory.toString();
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+      return null;
+    }
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private static String generateLClassInvalid7() {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testWildcardBounds");
+    
+      LClass arg = new LClass();
+      arg.add(12345);
+      arg.field1 = "foo";
+      arg.field2 = new LinkedList<Integer>();
+      arg.field2.add(67890);
+      strFactory.write((Object) arg);
+
+      return strFactory.toString();
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+      return null;
+    }
+  }
+
+  private static String generateLClassValid() {
+    try {
+      RPCTypeCheckFactory strFactory =
+          new RPCTypeCheckFactory(ClassesParamTestClass.class, "testWildcardBounds");
+    
+      LClass<Integer, String> arg = new LClass<Integer, String>();
+      arg.add(12345);
+      arg.field1 = "foo";
+      arg.field2 = new LinkedList<String>();
+      arg.field2.add("bar");
+      strFactory.write((Object) arg);
+
+      return strFactory.toString();
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1581,7 +1967,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(hashMap);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1600,7 +1985,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(hashSet);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1619,7 +2003,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(list);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1637,7 +2020,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(singletonList);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1657,7 +2039,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg2);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1677,7 +2058,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(arg2);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1695,7 +2075,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(treeMap);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1715,7 +2094,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(treeSet);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1734,7 +2112,6 @@ public class RPCTypeCheckTest extends TestCase {
       strFactory.write(vector);
 
       return strFactory.toString();
-
     } catch (Exception e) {
       fail(e.getMessage());
 
@@ -1962,6 +2339,10 @@ public class RPCTypeCheckTest extends TestCase {
   /**
    * This tests that generic class with fields that have the same types but
    * different actual parameters are correctly handled.
+   *
+   * It also checks classes with fields that have more generic arguments
+   * than the class provides, or that use instances with more parameters than
+   * the field itself requires (i.e List<X> when used as Object).
    */
   public void testGenericFields() {
     try {
@@ -2018,6 +2399,61 @@ public class RPCTypeCheckTest extends TestCase {
       // Expected to get here
       assertEquals(SerializedTypeViolationException.class, e.getCause().getClass());
       assertTrue(e.getCause().getMessage().matches(".*HashSet.*Integer.*"));
+    }
+    try {
+      RPC.decodeRequest(generateKClassValid("testKClass"));
+    } catch (Exception e) {
+      fail("Unexpected assertion from testGenericFields (7a): " + e.getMessage());
+    }
+    try {
+      RPC.decodeRequest(generateKClassValid("testKClassRaw"));
+    } catch (Exception e) {
+      fail("Unexpected assertion from testGenericFields (7b): " + e.getMessage());
+    }
+    try {
+      RPC.decodeRequest(generateKClassInvalid1("testKClass"));
+      fail("Expected IncompatibleRemoteServiceException from testGenericFields (7c)");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected to get here
+      assertEquals(SerializedTypeViolationException.class, e.getCause().getClass());
+      assertTrue(e.getCause().getMessage().matches(".*Integer.*String.*"));
+    }
+    try {
+      RPC.decodeRequest(generateKClassInvalid1("testKClassRaw"));
+    } catch (Exception e) {
+      fail("Unexpected assertion from testGenericFields (7d): " + e.getMessage());
+    }
+    try {
+      RPC.decodeRequest(generateKClassInvalid2());
+      fail("Expected IncompatibleRemoteServiceException from testGenericFields (7e)");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected to get here
+      assertEquals(SerializedTypeViolationException.class, e.getCause().getClass());
+      assertTrue(e.getCause().getMessage().matches(".*Integer.*String.*"));
+    }
+    try {
+      RPC.decodeRequest(generateKClassInvalid3());
+      fail("Expected IncompatibleRemoteServiceException from testGenericFields (7f)");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected to get here
+      assertEquals(SerializedTypeViolationException.class, e.getCause().getClass());
+      assertTrue(e.getCause().getMessage().matches(".*Integer.*String.*"));
+    }
+    try {
+      RPC.decodeRequest(generateKClassInvalid4());
+      fail("Expected IncompatibleRemoteServiceException from testGenericFields (7g)");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected to get here
+      assertEquals(SerializedTypeViolationException.class, e.getCause().getClass());
+      assertTrue(e.getCause().getMessage().matches(".*Integer.*String.*"));
+    }
+    try {
+      RPC.decodeRequest(generateKClassInvalid5());
+      fail("Expected IncompatibleRemoteServiceException from testGenericFields (7h)");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected to get here
+      assertEquals(SerializedTypeViolationException.class, e.getCause().getClass());
+      assertTrue(e.getCause().getMessage().matches(".*String.*Integer.*"));
     }
   }
 
@@ -2102,20 +2538,76 @@ public class RPCTypeCheckTest extends TestCase {
   }
 
   /**
-   * This checks that we do not report an error when we cannot know the actual
-   * value of a generic because it comes from the method class (which has no
-   * known parameters when the method is invoked on the server).
+   * This checks that we correctly report, or don't report, errors when we
+   * cannot know the actual value of a generic but may have bounds from the
+   * method class.
+   * 
+   * In this case,
+   * ClassesParamTestClass<T extends List<Integer> & MInterface<String>>
+   * is the class containing the method, and the method expects an argument of
+   * type T, so the thing in the RPC method should meet the bounds on T.
    */
   public void testMethodClassGenerics() {
     try {
-      RPC.decodeRequest(generateDClassValid1());
+      RPC.decodeRequest(generateLClassValid());
     } catch (Exception e) {
-      fail("Unexpected Exception from testMethodClassGenerics (1): " + e.getMessage());
+      fail("Unexpected assertion from testMethodClassGenerics (1): " + e.getMessage());
     }
     try {
-      RPC.decodeRequest(generateDClassValid2());
-    } catch (Exception e) {
-      fail("Unexpected Exception from testMethodClassGenerics (2): " + e.getMessage());
+      RPC.decodeRequest(generateLClassInvalid1());
+      fail("Expected IncompatibleRemoteServiceException from testMethodClassGenerics (2)");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected to get here
+      assertEquals(SerializedTypeViolationException.class, e.getCause().getClass());
+      assertTrue(e.getCause().getMessage().matches(".*String.*Integer.*"));
+    }
+    try {
+      RPC.decodeRequest(generateLClassInvalid2());
+      fail("Expected IncompatibleRemoteServiceException from testMethodClassGenerics (3)");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected to get here
+      assertEquals(SerializedTypeViolationException.class, e.getCause().getClass());
+      assertTrue(e.getCause().getMessage().matches(".*Integer.*String.*"));
+    }
+    try {
+      RPC.decodeRequest(generateLClassInvalid3());
+      fail("Expected IncompatibleRemoteServiceException from testMethodClassGenerics (4)");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected to get here
+      assertEquals(SerializedTypeViolationException.class, e.getCause().getClass());
+      assertTrue(e.getCause().getMessage().matches(".*LClassInvalid1.*T.*"));
+    }
+    try {
+      RPC.decodeRequest(generateLClassInvalid4());
+      fail("Expected IncompatibleRemoteServiceException from testMethodClassGenerics (5)");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected to get here
+      assertEquals(SerializedTypeViolationException.class, e.getCause().getClass());
+      assertTrue(e.getCause().getMessage().matches(".*LClassInvalid2.*T.*"));
+    }
+    try {
+      RPC.decodeRequest(generateLClassInvalid5());
+      fail("Expected IncompatibleRemoteServiceException from testMethodClassGenerics (6)");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected to get here
+      assertEquals(SerializedTypeViolationException.class, e.getCause().getClass());
+      assertTrue(e.getCause().getMessage().matches(".*String.*Integer.*"));
+    }
+    try {
+      RPC.decodeRequest(generateLClassInvalid6());
+      fail("Expected IncompatibleRemoteServiceException from testMethodClassGenerics (7)");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected to get here
+      assertEquals(SerializedTypeViolationException.class, e.getCause().getClass());
+      assertTrue(e.getCause().getMessage().matches(".*Integer.*String.*"));
+    }
+    try {
+      RPC.decodeRequest(generateLClassInvalid7());
+      fail("Expected IncompatibleRemoteServiceException from testMethodClassGenerics (8)");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected to get here
+      assertEquals(SerializedTypeViolationException.class, e.getCause().getClass());
+      assertTrue(e.getCause().getMessage().matches(".*Integer.*String.*"));
     }
   }
 

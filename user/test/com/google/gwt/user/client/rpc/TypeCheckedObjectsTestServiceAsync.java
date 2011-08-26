@@ -17,6 +17,7 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedFieldClass;
+import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedNestedLists;
 import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedSuperClass;
 
 /**
@@ -27,6 +28,17 @@ import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheck
  * 
  */
 public interface TypeCheckedObjectsTestServiceAsync {
+  /**
+   * @see com.google.gwt.user.client.rpc.TypeCheckedObjectsTestService#echo(com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedFieldClass)
+   */
+  @SuppressWarnings("rawtypes")
+  void echo(TypeCheckedFieldClass arg1,
+      AsyncCallback<TypeCheckedFieldClass<Integer, String>> callback);
+
+  /**
+   * @see com.google.gwt.user.client.rpc.TypeCheckedObjectsTestService#echo(com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedNestedLists)
+   */
+  void echo(TypeCheckedNestedLists arg1, AsyncCallback<TypeCheckedNestedLists> callback);
 
   /**
    * @see com.google.gwt.user.client.rpc.TypeCheckedObjectsTestService#echo(com.google.gwt.user.client.rpc.TypeCheckedGenericClass)
@@ -41,13 +53,6 @@ public interface TypeCheckedObjectsTestServiceAsync {
   @SuppressWarnings("rawtypes")
   void echo(TypeCheckedSuperClass arg1,
       AsyncCallback<TypeCheckedSuperClass<Integer, String>> callback);
-
-  /**
-   * @see com.google.gwt.user.client.rpc.TypeCheckedObjectsTestService#echo(com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedFieldClass)
-   */
-  @SuppressWarnings("rawtypes")
-  void echo(TypeCheckedFieldClass arg1,
-      AsyncCallback<TypeCheckedFieldClass<Integer, String>> callback);
 
   /**
    * @see com.google.gwt.user.client.rpc.TypeCheckedObjectsTestService#echo(com.google.gwt.user.client.rpc.TypeUncheckedGenericClass)

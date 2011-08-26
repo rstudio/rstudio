@@ -25,6 +25,7 @@ import com.google.gwt.user.server.rpc.impl.DequeMap;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.Comparator;
 import java.util.TreeSet;
 
@@ -35,14 +36,16 @@ import java.util.TreeSet;
 public class TreeSet_ServerCustomFieldSerializer extends ServerCustomFieldSerializer<TreeSet> {
 
   public static void deserialize(ServerSerializationStreamReader streamReader, TreeSet instance,
-      Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
-    Collection_ServerCustomFieldSerializerBase.deserialize(streamReader, instance, instanceClass,
-        resolvedTypes);
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException {
+    Collection_ServerCustomFieldSerializerBase.deserialize(streamReader, instance,
+        expectedParameterTypes, resolvedTypes);
   }
 
   @SuppressWarnings({"cast", "unused"})
   public static TreeSet instantiate(ServerSerializationStreamReader streamReader,
-      Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException {
     return new TreeSet((Comparator) streamReader.readObject((Type) Comparator.class,
         resolvedTypes));
   }
@@ -55,8 +58,9 @@ public class TreeSet_ServerCustomFieldSerializer extends ServerCustomFieldSerial
 
   @Override
   public void deserializeInstance(ServerSerializationStreamReader streamReader, TreeSet instance,
-      Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
-    deserialize(streamReader, instance, instanceClass, resolvedTypes);
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException {
+    deserialize(streamReader, instance, expectedParameterTypes, resolvedTypes);
   }
 
   @Override
@@ -72,8 +76,9 @@ public class TreeSet_ServerCustomFieldSerializer extends ServerCustomFieldSerial
 
   @Override
   public TreeSet instantiateInstance(ServerSerializationStreamReader streamReader,
-      Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
-    return instantiate(streamReader, instanceClass, resolvedTypes);
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException {
+    return instantiate(streamReader, expectedParameterTypes, resolvedTypes);
   }
 
   @Override

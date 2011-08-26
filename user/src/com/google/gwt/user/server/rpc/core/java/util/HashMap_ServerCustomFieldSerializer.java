@@ -24,6 +24,7 @@ import com.google.gwt.user.server.rpc.impl.DequeMap;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.HashMap;
 
 /**
@@ -34,10 +35,10 @@ public final class HashMap_ServerCustomFieldSerializer extends
     ServerCustomFieldSerializer<HashMap> {
 
   public static void deserialize(ServerSerializationStreamReader streamReader,
-      HashMap instance, Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes)
-      throws SerializationException {
-    Map_ServerCustomFieldSerializerBase.deserialize(streamReader, instance, instanceClass,
-        resolvedTypes);
+      HashMap instance, Type[] expectedParameterTypes,
+      DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
+    Map_ServerCustomFieldSerializerBase.deserialize(streamReader, instance,
+        expectedParameterTypes, resolvedTypes);
   }
 
   @Override
@@ -48,9 +49,9 @@ public final class HashMap_ServerCustomFieldSerializer extends
 
   @Override
   public void deserializeInstance(ServerSerializationStreamReader streamReader,
-      HashMap instance, Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes)
-      throws SerializationException {
-    deserialize(streamReader, instance, instanceClass, resolvedTypes);
+      HashMap instance, Type[] expectedParameterTypes,
+      DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
+    deserialize(streamReader, instance, expectedParameterTypes, resolvedTypes);
   }
 
   @Override

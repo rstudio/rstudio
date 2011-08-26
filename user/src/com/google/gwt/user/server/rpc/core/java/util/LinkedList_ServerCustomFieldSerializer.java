@@ -24,6 +24,7 @@ import com.google.gwt.user.server.rpc.impl.DequeMap;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.LinkedList;
 
 /**
@@ -34,9 +35,10 @@ public final class LinkedList_ServerCustomFieldSerializer extends
     ServerCustomFieldSerializer<LinkedList> {
 
   public static void deserialize(ServerSerializationStreamReader streamReader, LinkedList instance,
-      Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
-    Collection_ServerCustomFieldSerializerBase.deserialize(streamReader, instance, instanceClass,
-        resolvedTypes);
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException {
+    Collection_ServerCustomFieldSerializerBase.deserialize(streamReader, instance,
+        expectedParameterTypes, resolvedTypes);
   }
 
   @Override
@@ -47,9 +49,9 @@ public final class LinkedList_ServerCustomFieldSerializer extends
 
   @Override
   public void deserializeInstance(ServerSerializationStreamReader streamReader,
-      LinkedList instance, Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes)
-      throws SerializationException {
-    deserialize(streamReader, instance, instanceClass, resolvedTypes);
+      LinkedList instance, Type[] expectedParameterTypes,
+      DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
+    deserialize(streamReader, instance, expectedParameterTypes, resolvedTypes);
   }
 
   @Override

@@ -17,6 +17,7 @@ package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedFieldClass;
+import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedNestedLists;
 import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedSuperClass;
 
 import junit.framework.AssertionFailedError;
@@ -132,6 +133,28 @@ public class TypeCheckedObjectsTest extends RpcTestBase {
 
           @Override
           public void onSuccess(TypeCheckedFieldClass<Integer, String> result) {
+            assertNotNull(result);
+            assertTrue(TypeCheckedObjectsTestSetValidator.isValid(result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testTypeCheckedNestedLists() {
+    TypeCheckedObjectsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echo(TypeCheckedObjectsTestSetFactory.createTypeCheckedNestedLists(),
+        new AsyncCallback<TypeCheckedNestedLists>() {
+          @Override
+          public void onFailure(Throwable caught) {
+            AssertionFailedError er =
+                new AssertionFailedError("Could not serialize/deserialize TypeCheckedNestedLists");
+            er.initCause(caught);
+            throw er;
+          }
+
+          @Override
+          public void onSuccess(TypeCheckedNestedLists result) {
             assertNotNull(result);
             assertTrue(TypeCheckedObjectsTestSetValidator.isValid(result));
             finishTest();

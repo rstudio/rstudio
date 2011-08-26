@@ -26,6 +26,7 @@ import com.google.gwt.user.server.rpc.impl.DequeMap;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.logging.LogRecord;
 
 /**
@@ -34,7 +35,8 @@ import java.util.logging.LogRecord;
 public class LogRecord_ServerCustomFieldSerializer extends ServerCustomFieldSerializer<LogRecord> {
   @SuppressWarnings("unused")
   public static void deserialize(ServerSerializationStreamReader streamReader, LogRecord instance,
-      Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException {
     String loggerName = streamReader.readString();
     Long millis = streamReader.readLong();
     Object throwable = streamReader.readObject(SerializableThrowable.class, resolvedTypes);
@@ -54,8 +56,9 @@ public class LogRecord_ServerCustomFieldSerializer extends ServerCustomFieldSeri
 
   @Override
   public void deserializeInstance(ServerSerializationStreamReader streamReader, LogRecord instance,
-      Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
-    deserialize(streamReader, instance, instanceClass, resolvedTypes);
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException {
+    deserialize(streamReader, instance, expectedParameterTypes, resolvedTypes);
   }
 
   @Override
@@ -64,8 +67,9 @@ public class LogRecord_ServerCustomFieldSerializer extends ServerCustomFieldSeri
   }
 
   @Override
-  public LogRecord instantiateInstance(ServerSerializationStreamReader reader, Class<?> instanceClass,
-      DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+  public LogRecord instantiateInstance(ServerSerializationStreamReader reader,
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException {
     return LogRecord_CustomFieldSerializer.instantiate(reader);
   }
 

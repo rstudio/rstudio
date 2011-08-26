@@ -53,6 +53,7 @@ public class SerializabilityUtil {
    * Comparator used to sort fields.
    */
   public static final Comparator<Field> FIELD_COMPARATOR = new Comparator<Field>() {
+    @Override
     public int compare(Field f1, Field f2) {
       return f1.getName().compareTo(f2.getName());
     }
@@ -131,8 +132,8 @@ public class SerializabilityUtil {
 
         @Override
         public void deserializeInstance(ServerSerializationStreamReader streamReader,
-            Object instance, Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes)
-            throws SerializationException {
+            Object instance, Type[] expectedParameterTypes,
+            DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
           throw new SerializationException("This should never be called.");
         }
 
@@ -219,10 +220,12 @@ public class SerializabilityUtil {
         encodedSerializedInstanceReference
             .split(SerializedInstanceReference.SERIALIZED_REFERENCE_SEPARATOR);
     return new SerializedInstanceReference() {
+      @Override
       public String getName() {
         return components.length > 0 ? components[0] : "";
       }
 
+      @Override
       public String getSignature() {
         return components.length > 1 ? components[1] : "";
       }
@@ -242,70 +245,84 @@ public class SerializabilityUtil {
    * @param resolvedTypes A map of generic types to actual types.
    * @return The actual type, which may be of any subclass of Type.
    */
-  public static Type findActualType(Type genericType, DequeMap<Type, Type> resolvedTypes) {
+  public static Type findActualType(Type genericType,
+      DequeMap<TypeVariable<?>, Type> resolvedTypes) {
     Type result = genericType;
     // Look for things that TypeVariables are mapped to, but stop if mapped
     // to itself. We map a TypeVariable to itself when we wish to explicitly
     // mark it as unmapped.
     while (result instanceof TypeVariable<?> &&
-        resolvedTypes.get(result) != result &&
-        resolvedTypes.get(result) != null) {
-      result = resolvedTypes.get(result);
+        resolvedTypes.get((TypeVariable<?>) result) != result &&
+        resolvedTypes.get((TypeVariable<?>) result) != null) {
+      result = resolvedTypes.get((TypeVariable<?>) result);
     }
 
     return result;
   }
 
   /**
-   * Attempt to find the actual types for the generic parameters of an instance,
-   * given the types we have resolved from the method signature.
+   * Determine the expected types for any instance type parameters.
    * 
-   * @param instanceClass The instance for which we want actual generic
-   *          parameter types.
+   * This method also determines whether or not the instance can be assigned to
+   * the expected type. We combine the tasks because they require traversing the
+   * same data structures.
+   * 
+   * @param instanceClass The instance for which we want generic parameter types
+   * @param expectedType The type we are expecting this instance to be
    * @param resolvedTypes The types that have been resolved to actual values
-   * @return An array of types representing the actual declared types for the
-   *         parameters of the instanceClass. Some may be of type TypeVariable,
-   *         in which case they could not be resolved.
+   * @return The expected types of the instance class' parameters. If null, the
+   *     instance class is not assignable to the expected type.
    */
-  public static Type[] findInstanceParameters(Class<?> instanceClass,
-      DequeMap<Type, Type> resolvedTypes) {
+  public static Type[] findExpectedParameterTypes(Class<?> instanceClass,
+      Type expectedType, DequeMap<TypeVariable<?>, Type> resolvedTypes) {
+    // Make a copy of the instance parameters from its class
     TypeVariable<?>[] instanceTypes = instanceClass.getTypeParameters();
-    Type[] foundParameters = Arrays.copyOf(instanceTypes, instanceTypes.length, Type[].class);
+    Type[] expectedParameterTypes = Arrays.copyOf(instanceTypes, instanceTypes.length,
+        Type[].class);
 
-    if (resolvedTypes == null) {
-      return foundParameters;
-    }
-
-    for (int i = 0; i < foundParameters.length; ++i) {
-      // Check if we already know about this type.
-      Type capturedType = findActualType(foundParameters[i], resolvedTypes);
-      if (capturedType != foundParameters[i]) {
-        foundParameters[i] = capturedType;
-        continue;
+    // Determine the type we are really expecting, to the best of our knowledge
+    if (expectedType == null) {
+      // Match up parameters assuming that the instance class is the best match
+      // for the expected class, which we can only do if we have resolved types.
+      if (resolvedTypes != null) {
+        findInstanceParameters(instanceClass, resolvedTypes, expectedParameterTypes);
       }
-
-      if (instanceClass.getGenericSuperclass() != null) {
-        Type superParameter =
-            findInstanceParameter(instanceTypes[i], instanceClass.getGenericSuperclass(),
-                resolvedTypes);
-        if (!(superParameter instanceof TypeVariable)) {
-          foundParameters[i] = superParameter;
-          continue;
+      
+      // With no expected type, the instance is assignable and we fall through
+    } else {
+      // First determine what type we are really expecting. The type may still
+      // be a TypeVariable<?> at this time when we are deserializing class
+      // fields or components of another data structure.
+      Type actualType = findActualType(expectedType, resolvedTypes);
+      
+      // Try to match the instanceClass to the expected type, updating the
+      // expectedParameterTypes so that we can track them back to the resolved
+      // types once we determine what class to treat the instance as. In
+      // this method, only type information from the instance is used to resolve
+      // types because the information in the resolved types map is only
+      // relevant to the expected type(s). We still pass in the resolvedTypes
+      // because we may need to resolve expected types.
+      // Note that certain expected types may require the instance to extend
+      // or implement multiple classes or interfaces, so we may capture multiple
+      // types here.
+      Set<Class<?>> expectedInstanceClasses = new HashSet<Class<?>>();
+      if (!findExpectedInstanceClass(instanceClass, actualType,
+          resolvedTypes, expectedInstanceClasses, expectedParameterTypes)) {
+        // If we could not match the instance to the expected, it is not assignable
+        // and we are done.
+        return null;
+      }
+      
+      // Now that we know what class the instance should be,
+      // get any remaining parameters using resolved types.
+      if (resolvedTypes != null) {
+        for (Class<?> expectedClass : expectedInstanceClasses) {
+          findInstanceParameters(expectedClass, resolvedTypes, expectedParameterTypes);
         }
       }
-
-      Type[] interfaceTypes = instanceClass.getGenericInterfaces();
-      for (Type interfaceType : interfaceTypes) {
-        Type interfaceParameter =
-            findInstanceParameter(instanceTypes[i], interfaceType, resolvedTypes);
-        if (!(interfaceParameter instanceof TypeVariable)) {
-          foundParameters[i] = interfaceParameter;
-          break;
-        }
-      }
     }
 
-    return foundParameters;
+    return expectedParameterTypes;
   }
 
   /**
@@ -314,7 +331,8 @@ public class SerializabilityUtil {
    * @param type The type of interest
    * @return The Class that type represents
    */
-  public static Class<?> getClassFromType(Type type, DequeMap<Type, Type> resolvedTypes) {
+  public static Class<?> getClassFromType(Type type,
+      DequeMap<TypeVariable<?>, Type> resolvedTypes) {
     Type actualType = findActualType(type, resolvedTypes);
     if (actualType instanceof Class) {
       return (Class<?>) actualType;
@@ -426,7 +444,7 @@ public class SerializabilityUtil {
    * @param methodType The type we wish to assign this instance to
    * @param resolvedTypes The types that have been resolved to actual values
    */
-  public static void releaseTypes(Type methodType, DequeMap<Type, Type> resolvedTypes) {
+  public static void releaseTypes(Type methodType, DequeMap<TypeVariable<?>, Type> resolvedTypes) {
     SerializabilityUtil.resolveTypesWorker(methodType, resolvedTypes, false);
   }
 
@@ -441,59 +459,8 @@ public class SerializabilityUtil {
    * @param methodType The type we wish to assign this instance to
    * @param resolvedTypes The types that have been resolved to actual values
    */
-  public static void resolveTypes(Type methodType, DequeMap<Type, Type> resolvedTypes) {
+  public static void resolveTypes(Type methodType, DequeMap<TypeVariable<?>, Type> resolvedTypes) {
     SerializabilityUtil.resolveTypesWorker(methodType, resolvedTypes, true);
-  }
-
-  /**
-   * Determine whether or not an instance can be assigned to the type expected
-   * by a method.
-   * 
-   * @param instanceClass The instance to check
-   * @param expectedType The type we wish to assign this instance to
-   * @param resolvedTypes The types that have been resolved to actual values
-   * 
-   * @return True if the instance may be assigned to the type; otherwise false.
-   */
-  static boolean isInstanceAssignableToType(Class<?> instanceClass, Type expectedType,
-      DequeMap<Type, Type> resolvedTypes) {
-    if (expectedType == null) {
-      return true;
-    }
-    Type actualType = findActualType(expectedType, resolvedTypes);
-
-    if (actualType instanceof TypeVariable) {
-      Type[] typeVariableBounds = ((TypeVariable<?>) actualType).getBounds();
-      for (Type boundType : typeVariableBounds) {
-        if (!isInstanceAssignableToType(instanceClass, boundType, resolvedTypes)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    if (actualType instanceof ParameterizedType) {
-      ParameterizedType paramType = (ParameterizedType) actualType;
-      if (!((Class<?>) paramType.getRawType()).isAssignableFrom(instanceClass)) {
-        return false;
-      }
-    } else if (actualType instanceof GenericArrayType) {
-      if (!(instanceClass.isArray())) {
-        return false;
-      }
-      Type expectedComponentType = ((GenericArrayType) actualType).getGenericComponentType();
-      Class<?> instanceComponentClass = instanceClass.getComponentType();
-      return isInstanceAssignableToType(instanceComponentClass, expectedComponentType,
-          resolvedTypes);
-    } else if (actualType instanceof WildcardType) {
-      if (!isInstanceAssignableToWildcard(instanceClass, (WildcardType) actualType,
-          resolvedTypes)) {
-        return false;
-      }
-    } else if (!((Class<?>) actualType).isAssignableFrom(instanceClass)) {
-      return false;
-    }
-
-    return true;
   }
 
   static boolean isNotStaticTransientOrFinal(Field field) {
@@ -634,7 +601,157 @@ public class SerializabilityUtil {
     }
   }
 
-  /**
+  private static boolean findExpectedInstanceClass(Class<?> instanceClass,
+      Type expectedType, DequeMap<TypeVariable<?>, Type> resolvedTypes,
+      Set<Class<?>> expectedInstanceClasses, Type[] expectedParameterTypes) {
+    // Check for an exact match for the instance class and the expected type.
+    // If found, we can return. For expected types that allow one of several
+    // possible class to match (wildcards, type variables) see if this
+    // instance matches any of the allowed types.
+    if (expectedType instanceof TypeVariable) {
+      // Every bound must have a match
+      Type[] typeVariableBounds = ((TypeVariable<?>) expectedType).getBounds();
+      for (Type boundType : typeVariableBounds) {
+        if (!findExpectedInstanceClass(instanceClass, boundType, resolvedTypes,
+            expectedInstanceClasses, expectedParameterTypes)) {
+          return false;
+        }
+      }
+      return true;
+    } else if (expectedType instanceof ParameterizedType) {
+      ParameterizedType paramType = (ParameterizedType) expectedType;
+      if (paramType.getRawType() == instanceClass) {
+        expectedInstanceClasses.add(instanceClass);
+        return true;
+      }
+    } else if (expectedType instanceof GenericArrayType) {
+      if (instanceClass.isArray()) {
+        expectedInstanceClasses.add(instanceClass);
+        return true;
+      }
+    } else if (expectedType instanceof WildcardType) {
+      WildcardType wildcardType = (WildcardType) expectedType;
+      
+      Type[] lowerBounds = wildcardType.getLowerBounds();
+      for (Type type : lowerBounds) {
+        /* Require instance to be a superclass of type, or type itself. */
+        Class<?> boundClass = getClassFromType(type, resolvedTypes);
+
+        while (boundClass != null) {
+          if (instanceClass == boundClass) {
+            expectedInstanceClasses.add(boundClass);
+            break;
+          }
+          boundClass = boundClass.getSuperclass();
+        }
+        
+        // We fail if the class does not meet any bound, as we should.
+        if (boundClass == null) {
+          return false;
+        }
+      }
+
+      Type[] upperBounds = wildcardType.getUpperBounds();
+      for (Type type : upperBounds) {
+        /* Require instanceClass to be a subclass of type. */
+        if (!findExpectedInstanceClass(instanceClass, type, resolvedTypes,
+            expectedInstanceClasses, expectedParameterTypes)) {
+          return false;
+        }
+      }
+      return true;
+    } else if (((Class<?>) expectedType).getComponentType() != null) {
+      // Array types just pass through here, and we catch any problems when
+      // we try to deserialize the entries.
+      if (((Class<?>) expectedType).isAssignableFrom(instanceClass)) {
+        expectedInstanceClasses.add(instanceClass);
+        return true;
+      } else {
+        return false;
+      }
+    } else if (((Class<?>) expectedType) == instanceClass) {
+      expectedInstanceClasses.add(instanceClass);
+      return true;
+    }
+
+    // We know that the instance class does not exactly match the expected type,
+    // so try its superclass and its interfaces. At the same time, update any
+    // expected types to use the superclass or interface type. We know at this
+    // point that the expected type does not involve wildcards or TypeVariables,
+    // so we know that the first thing to return true indicates we are done,
+    // and failure of anything to return true means the instance does not meet
+    // the expected type.
+    if (instanceClass.getGenericSuperclass() != null) {
+      Type[] localTypes = expectedParameterTypes.clone();
+      if (findExpectedInstanceClassFromSuper(instanceClass.getGenericSuperclass(), expectedType,
+          resolvedTypes, expectedInstanceClasses, localTypes)) {
+        for (int i = 0; i < expectedParameterTypes.length; ++i) {
+          expectedParameterTypes[i] = localTypes[i];
+        }
+        return true;
+      }
+    }
+    
+    Type[] interfaces = instanceClass.getGenericInterfaces();
+    for (Type interfaceType : interfaces) {
+      Type[] localTypes = expectedParameterTypes.clone();
+      if (findExpectedInstanceClassFromSuper(interfaceType, expectedType, resolvedTypes,
+          expectedInstanceClasses, localTypes)) {
+        for (int i = 0; i < expectedParameterTypes.length; ++i) {
+          expectedParameterTypes[i] = localTypes[i];
+        }
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean findExpectedInstanceClassFromSuper(
+      Type superType, Type expectedType, DequeMap<TypeVariable<?>, Type> resolvedTypes,
+      Set<Class<?>> expectedInstanceClasses, Type[] expectedParameterTypes) {
+    
+    if (superType instanceof GenericArrayType) {
+      // Can't use array types as supertypes or interfaces
+      return false;
+    } else if (superType instanceof Class) {
+      // No additional type info from the superclass
+      return findExpectedInstanceClass((Class<?>) superType, expectedType, resolvedTypes,
+          expectedInstanceClasses, expectedParameterTypes);
+    } else if (superType instanceof ParameterizedType) {
+      ParameterizedType paramType = (ParameterizedType) superType;
+      Type rawType = paramType.getRawType();
+
+      if (rawType instanceof Class) {
+        Class<?> rawClass = (Class<?>) rawType;
+        TypeVariable<?>[] classGenericTypes = rawClass.getTypeParameters();
+        Type[] actualTypes = paramType.getActualTypeArguments();
+
+        for (int i = 0; i < actualTypes.length; ++i) {
+          for (int j = 0; j < expectedParameterTypes.length; ++j) {
+            if (actualTypes[i] == expectedParameterTypes[j]) {
+              expectedParameterTypes[j] = classGenericTypes[i];
+            }
+          }
+        }
+        return findExpectedInstanceClass(rawClass, expectedType, resolvedTypes,
+            expectedInstanceClasses, expectedParameterTypes);
+      }
+    } else if (superType instanceof WildcardType) {
+      WildcardType wildcardType = (WildcardType) superType;
+      Type[] upperBounds = wildcardType.getUpperBounds();
+      for (Type boundType : upperBounds) {
+        if (findExpectedInstanceClassFromSuper(boundType, expectedType,
+            resolvedTypes, expectedInstanceClasses, expectedParameterTypes)) { 
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+
+    /**
    * Attempt to find known type for TypeVariable type from an instance.
    * 
    * @param foundParameter The currently known parameter, which must be of type
@@ -645,9 +762,8 @@ public class SerializabilityUtil {
    * @return A new value for the foundParameter, if we find one
    */
   private static Type findInstanceParameter(Type foundParameter, Type instanceType,
-      DequeMap<Type, Type> resolvedTypes) {
+      DequeMap<TypeVariable<?>, Type> resolvedTypes) {
     // See what we know about the types that are matched to this type.
-
     if (instanceType instanceof GenericArrayType) {
       return findInstanceParameter(foundParameter, ((GenericArrayType) instanceType)
           .getGenericComponentType(), resolvedTypes);
@@ -701,6 +817,67 @@ public class SerializabilityUtil {
     return foundParameter;
   }
 
+  /**
+   * Attempt to find the actual types for the generic parameters of an instance,
+   * given the types we have resolved from the method signature or class field
+   * declaration.
+   * 
+   * @param instanceClass The instance for which we want actual generic
+   *          parameter types.
+   * @param resolvedTypes The types that have been resolved to actual values
+   * @param expectedParameterTypes An array of types representing the actual
+   *         declared types for the  parameters of the instanceClass. Some may
+   *         be of type TypeVariable, in which case they need to be resolved, if
+   *         possible, by this method.
+   */
+  private static void findInstanceParameters(Class<?> instanceClass,
+      DequeMap<TypeVariable<?>, Type> resolvedTypes, Type[] expectedParameterTypes) {
+    TypeVariable<?>[] instanceTypes = instanceClass.getTypeParameters();
+
+    for (int i = 0; i < expectedParameterTypes.length; ++i) {
+      if (!(expectedParameterTypes[i] instanceof TypeVariable)) {
+        // We already have an actual type
+        continue;
+      }
+
+      // Check if we already know about this type.
+      boolean haveMatch = false;
+      for (int j = 0; !haveMatch && j < instanceTypes.length; ++j) {
+        if (expectedParameterTypes[i] == instanceTypes[j]) {
+          Type capturedType = findActualType(instanceTypes[j], resolvedTypes);
+          if (!(capturedType instanceof TypeVariable)) {
+            expectedParameterTypes[i] = capturedType;
+            haveMatch = true;
+          }
+        }
+      }
+      if (haveMatch) {
+        continue;
+      }
+
+      // Check if it is defined by superclasses
+      if (instanceClass.getGenericSuperclass() != null) {
+        Type superParameter = findInstanceParameter(expectedParameterTypes[i],
+                instanceClass.getGenericSuperclass(), resolvedTypes);
+        if (!(superParameter instanceof TypeVariable)) {
+          expectedParameterTypes[i] = superParameter;
+          continue;
+        }
+      }
+
+      // Check if it is defined by interfaces
+      Type[] interfaceTypes = instanceClass.getGenericInterfaces();
+      for (Type interfaceType : interfaceTypes) {
+        Type interfaceParameter =
+            findInstanceParameter(expectedParameterTypes[i], interfaceType, resolvedTypes);
+        if (!(interfaceParameter instanceof TypeVariable)) {
+          expectedParameterTypes[i] = interfaceParameter;
+          break;
+        }
+      }
+    }
+  }
+
   private static void generateSerializationSignature(Class<?> instanceType, CRC32 crc,
       SerializationPolicy policy) throws UnsupportedEncodingException {
     crc.update(getSerializedTypeName(instanceType).getBytes(DEFAULT_ENCODING));
@@ -746,66 +923,8 @@ public class SerializabilityUtil {
     }
   }
 
-  /**
-   * Determine if an instance class may be assigned to a wildcard type.
-   * 
-   * @param instanceClass The instance class that we wish to assign
-   * @param wildcardType The wildcard type we wish to assign to
-   * @param resolvedTypes The type variables that we have actual types for
-   * @return True when the instance may be assigned to the wildcard; false
-   *         otherwise.
-   */
-  private static boolean isInstanceAssignableToWildcard(Class<?> instanceClass,
-      WildcardType wildcardType, DequeMap<Type, Type> resolvedTypes) {
-    Type[] lowerBounds = wildcardType.getLowerBounds();
-    for (Type type : lowerBounds) {
-      /* Require instance to be a superclass of type, or type itself. */
-      if (!isInstanceSuperOfType(instanceClass, type, resolvedTypes)) {
-        return false;
-      }
-    }
-
-    Type[] upperBounds = wildcardType.getUpperBounds();
-    for (Type type : upperBounds) {
-      /* Require instanceClass to be a subclass of type. */
-      if (!isInstanceAssignableToType(instanceClass, type, resolvedTypes)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /**
-   * Determine if an instance class is a superclass of a given type, in the
-   * generic wildcard sense of super.
-   * 
-   * @param instanceClass The instance class that we wish to assign
-   * @param boundType The type that must represent a subclass of instance class,
-   *          or instance class itself.
-   * @param resolvedTypes The type variables that we have actual types for
-   * @return True when the instance may be used in ? super boundType; false
-   *         otherwise.
-   */
-  private static boolean isInstanceSuperOfType(Class<?> instanceClass, Type boundType,
-      DequeMap<Type, Type> resolvedTypes) {
-    Class<?> boundClass = getClassFromType(boundType, resolvedTypes);
-    if (boundClass == null) {
-      // Can't verify against an unknown class, so just assume it's acceptable.
-      return true;
-    }
-
-    while (boundClass != null) {
-      if (instanceClass == boundClass) {
-        return true;
-      }
-      boundClass = boundClass.getSuperclass();
-    }
-
-    return false;
-  }
-
-  private static void resolveTypesWorker(Type methodType, DequeMap<Type, Type> resolvedTypes,
-      boolean addTypes) {
+  private static void resolveTypesWorker(Type methodType,
+      DequeMap<TypeVariable<?>, Type> resolvedTypes, boolean addTypes) {
     if (methodType instanceof GenericArrayType) {
       SerializabilityUtil.resolveTypesWorker(((GenericArrayType) methodType)
           .getGenericComponentType(), resolvedTypes, addTypes);
@@ -857,8 +976,8 @@ public class SerializabilityUtil {
       
       // A type that is of instance Class, with TypeParameters, must be a raw
       // class, so strip off any parameters in the map.
-      Type[] classParams = classType.getTypeParameters();
-      for (Type classParamType : classParams) {
+      TypeVariable<?>[] classParams = classType.getTypeParameters();
+      for (TypeVariable<?> classParamType : classParams) {
         if (addTypes) {
           resolvedTypes.add(classParamType, classParamType);
         } else {

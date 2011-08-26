@@ -37,6 +37,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -135,7 +136,7 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
 
       @Override
       Object readValue(ServerSerializationStreamReader stream, Type expectedType,
-          DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+          DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
         return stream.readObject(expectedType, resolvedTypes);
       }
     },
@@ -156,7 +157,7 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
 
     @SuppressWarnings("unused")
     Object readValue(ServerSerializationStreamReader stream, Type expectedType,
-        DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+        DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
       return readValue(stream);
     }
   }
@@ -258,7 +259,7 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
 
       @Override
       protected Object readSingleValue(ServerSerializationStreamReader stream, Type expectedType,
-          DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+          DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
         return stream.readObject(expectedType, resolvedTypes);
       }
 
@@ -297,7 +298,7 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
 
     @SuppressWarnings("unused")
     protected Object readSingleValue(ServerSerializationStreamReader stream, Type expectedType,
-        DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+        DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
       return readSingleValue(stream);
     }
 
@@ -333,7 +334,8 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
     }
 
     Object read(ServerSerializationStreamReader stream, BoundedList<Object> instance,
-        Type expectedType, DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+        Type expectedType, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+        SerializationException {
       for (int i = 0, n = instance.getExpectedSize(); i < n; ++i) {
         instance.add(readSingleValue(stream, expectedType, resolvedTypes));
       }
@@ -414,7 +416,7 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
   }
 
   public Object deserializeValue(Class<?> rpcType, Type methodType,
-      DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+      DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
     ValueReader valueReader = CLASS_TO_VALUE_READER.get(rpcType);
     if (valueReader != null) {
       return valueReader.readValue(this, methodType, resolvedTypes);
@@ -495,10 +497,12 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
     }
   }
 
+  @Override
   public boolean readBoolean() throws SerializationException {
     return !extract().equals("0");
   }
 
+  @Override
   public byte readByte() throws SerializationException {
     String value = extract();
     try {
@@ -508,19 +512,23 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
     }
   }
 
+  @Override
   public char readChar() throws SerializationException {
     // just use an int, it's more foolproof
     return (char) readInt();
   }
 
+  @Override
   public double readDouble() throws SerializationException {
     return Double.parseDouble(extract());
   }
 
+  @Override
   public float readFloat() throws SerializationException {
     return (float) Double.parseDouble(extract());
   }
 
+  @Override
   public int readInt() throws SerializationException {
     String value = extract();
     try {
@@ -530,6 +538,7 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
     }
   }
 
+  @Override
   public long readLong() throws SerializationException {
     if (getVersion() == SERIALIZATION_STREAM_MIN_VERSION) {
       return (long) readDouble() + (long) readDouble();
@@ -538,7 +547,7 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
     }
   }
 
-  public Object readObject(Type expectedType, DequeMap<Type, Type> resolvedTypes)
+  public Object readObject(Type expectedType, DequeMap<TypeVariable<?>, Type> resolvedTypes)
       throws SerializationException {
     int token = readInt();
 
@@ -558,6 +567,7 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
     return deserialize(typeSignature, expectedType, resolvedTypes);
   }
 
+  @Override
   public short readShort() throws SerializationException {
     String value = extract();
     try {
@@ -567,6 +577,7 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
     }
   }
 
+  @Override
   public String readString() throws SerializationException {
     return getString(readInt());
   }
@@ -577,7 +588,7 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
   }
 
   protected Object deserialize(String typeSignature, Type expectedType,
-      DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+      DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
     Object instance = null;
     try {
       Class<?> instanceClass;
@@ -606,17 +617,32 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
         // resolvedTypes because we did not pass it through the non-type
         // checking serializer. Create a map, so that from this point forward
         // we have some way of type checking.
-        resolvedTypes = new DequeMap<Type, Type>();
+        resolvedTypes = new DequeMap<TypeVariable<?>, Type>();
       }
       
+      // Try to determine the type for the generic type parameters of the
+      // instance class, based upon the expected type and any class hierarchy
+      // type information.
+      // In looking for the expected parameter types, we also find out the
+      // way in which the instance meets the expected type, and hence can find
+      // out when it does not meet expectations.
+      TypeVariable<?>[] instanceParameterTypes = instanceClass.getTypeParameters();
+      Type[] expectedParameterTypes = null;
       if (expectedType != null) {
         SerializabilityUtil.resolveTypes(expectedType, resolvedTypes);
-        if (!SerializabilityUtil.isInstanceAssignableToType(instanceClass, expectedType,
-            resolvedTypes)) {
+        expectedParameterTypes = SerializabilityUtil.findExpectedParameterTypes(
+            instanceClass, expectedType, resolvedTypes);
+        if (expectedParameterTypes == null) {
           throw new SerializedTypeViolationException("Attempt to deserialize an object of type "
               + instanceClass.toString() + " when an object of type "
               + SerializabilityUtil.findActualType(expectedType, resolvedTypes).toString()
               + " is expected");
+        }
+        
+        // Add mappings from the instance type variables to the resolved types
+        // map.
+        for (int i = 0; i < instanceParameterTypes.length; ++i) {
+          resolvedTypes.add(instanceParameterTypes[i], expectedParameterTypes[i]);
         }
       }
 
@@ -628,13 +654,20 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
 
       int index = reserveDecodedObjectIndex();
 
-      instance = instantiate(customSerializer, instanceClass, expectedType, resolvedTypes);
+      instance = instantiate(customSerializer, instanceClass, expectedParameterTypes,
+          resolvedTypes);
 
       rememberDecodedObject(index, instance);
 
-      Object replacement =
-          deserializeImpl(customSerializer, instanceClass, instance, expectedType, resolvedTypes);
+      Object replacement = deserializeImpl(customSerializer, instanceClass, instance, expectedType,
+          expectedParameterTypes, resolvedTypes);
 
+      // Remove resolved types that were added for this instance.
+      if (expectedParameterTypes != null) {
+        for (int i = 0; i < instanceParameterTypes.length; ++i) {
+          resolvedTypes.remove(instanceParameterTypes[i]);
+        }
+      }
       SerializabilityUtil.releaseTypes(expectedType, resolvedTypes);
 
       // It's possible that deserializing an object requires the original proxy
@@ -707,7 +740,7 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
    */
   @SuppressWarnings("unchecked")
   private Object deserializeArray(Class<?> instanceClass, Object instance, Type expectedType,
-      DequeMap<Type, Type> resolvedTypes) throws SerializationException {
+      DequeMap<TypeVariable<?>, Type> resolvedTypes) throws SerializationException {
     assert (instanceClass.isArray());
 
     BoundedList<Object> buffer = (BoundedList<Object>) instance;
@@ -720,8 +753,9 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
   }
 
   private void deserializeClass(Class<?> instanceClass, Object instance, Type expectedType,
-      DequeMap<Type, Type> resolvedTypes) throws SerializationException, IllegalAccessException,
-      NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      SerializationException, IllegalAccessException, NoSuchMethodException,
+      InvocationTargetException, ClassNotFoundException {
     /**
      * A map from field names to corresponding setter methods. The reference
      * will be null for classes that do not require special handling for
@@ -797,13 +831,16 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
 
     Class<?> superClass = instanceClass.getSuperclass();
     if (serializationPolicy.shouldDeserializeFields(superClass)) {
+      Type[] superParameterTypes = SerializabilityUtil.findExpectedParameterTypes(
+          superClass, superClass, resolvedTypes);
       deserializeImpl(SerializabilityUtil.hasServerCustomFieldSerializer(superClass), superClass,
-          instance, expectedType, resolvedTypes);
+          instance, expectedType, superParameterTypes, resolvedTypes);
     }
   }
 
   private Object deserializeImpl(Class<?> customSerializer, Class<?> instanceClass,
-      Object instance, Type expectedType, DequeMap<Type, Type> resolvedTypes)
+      Object instance, Type expectedType, Type[] expectedParameterTypes,
+      DequeMap<TypeVariable<?>, Type> resolvedTypes)
       throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException,
       InvocationTargetException, SerializationException, ClassNotFoundException {
 
@@ -814,11 +851,12 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
               .loadCustomFieldSerializer(customSerializer);
       if (customFieldSerializer == null) {
         deserializeWithCustomFieldDeserializer(customSerializer, instanceClass, instance,
-            resolvedTypes);
-      } else if (customFieldSerializer instanceof ServerCustomFieldSerializer) {
+            expectedParameterTypes, resolvedTypes);
+      } else if (customFieldSerializer instanceof ServerCustomFieldSerializer &&
+          expectedParameterTypes != null) {
         ServerCustomFieldSerializer<Object> serverCFS =
             (ServerCustomFieldSerializer<Object>) customFieldSerializer;
-        serverCFS.deserializeInstance(this, instance, instanceClass, resolvedTypes);
+        serverCFS.deserializeInstance(this, instance, expectedParameterTypes, resolvedTypes);
       } else {
         customFieldSerializer.deserializeInstance(this, instance);
       }
@@ -837,7 +875,8 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
     } else if (instanceClass.isEnum()) {
       // Enums are deserialized when they are instantiated
     } else {
-      deserializeClass(instanceClass, instance, expectedType, resolvedTypes);
+      deserializeClass(instanceClass, instance, expectedType, expectedParameterTypes,
+          resolvedTypes);
     }
 
     return instance;
@@ -901,14 +940,17 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
   }
 
   private void deserializeWithCustomFieldDeserializer(Class<?> customSerializer,
-      Class<?> instanceClass, Object instance, DequeMap<Type, Type> resolvedTypes)
+      Class<?> instanceClass, Object instance, Type[] expectedParameterTypes,
+      DequeMap<TypeVariable<?>, Type> resolvedTypes)
       throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     assert (!instanceClass.isArray());
 
-    for (Method method : customSerializer.getMethods()) {
-      if ("deserializeChecked".equals(method.getName())) {
-        method.invoke(null, this, instance, instanceClass, resolvedTypes);
-        return;
+    if (expectedParameterTypes != null) {
+      for (Method method : customSerializer.getMethods()) {
+        if ("deserializeChecked".equals(method.getName())) {
+          method.invoke(null, this, instance, expectedParameterTypes, resolvedTypes);
+          return;
+        }
       }
     }
     for (Method method : customSerializer.getMethods()) {
@@ -999,25 +1041,26 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
     }
   }
 
-  private Object instantiate(Class<?> customSerializer, Class<?> instanceClass, Type expectedType,
-      DequeMap<Type, Type> resolvedTypes) throws InstantiationException, IllegalAccessException,
-      IllegalArgumentException, InvocationTargetException, NoSuchMethodException,
-      SerializationException {
+  private Object instantiate(Class<?> customSerializer, Class<?> instanceClass,
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes) throws
+      InstantiationException, IllegalAccessException, IllegalArgumentException,
+      InvocationTargetException, NoSuchMethodException, SerializationException {
     if (customSerializer != null) {
       CustomFieldSerializer<?> customFieldSerializer =
           SerializabilityUtil.loadCustomFieldSerializer(customSerializer);
       if (customFieldSerializer == null) {
-        Object result = instantiateWithCustomFieldInstantiator(customSerializer, instanceClass, resolvedTypes);
+        Object result = instantiateWithCustomFieldInstantiator(customSerializer,
+            expectedParameterTypes, resolvedTypes);
         if (result != null) {
           return result;
         }
         // Ok to not have a custom instantiate.
       } else if (customFieldSerializer.hasCustomInstantiateInstance()) {
-        if (expectedType != null &&
+        if (expectedParameterTypes != null &&
             (customFieldSerializer instanceof ServerCustomFieldSerializer)) {
           ServerCustomFieldSerializer<?> serverCFS =
               (ServerCustomFieldSerializer<?>) customFieldSerializer;
-          return serverCFS.instantiateInstance(this, instanceClass, resolvedTypes);
+          return serverCFS.instantiateInstance(this, expectedParameterTypes, resolvedTypes);
         } else {
           return customFieldSerializer.instantiateInstance(this);
         }
@@ -1041,11 +1084,13 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
   }
 
   private Object instantiateWithCustomFieldInstantiator(Class<?> customSerializer,
-      Class<?> instanceClass, DequeMap<Type, Type> resolvedTypes)
+      Type[] expectedParameterTypes, DequeMap<TypeVariable<?>, Type> resolvedTypes)
       throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-    for (Method method : customSerializer.getMethods()) {
-      if ("instantiateChecked".equals(method.getName())) {
-        return method.invoke(null, this, instanceClass, resolvedTypes);
+    if (expectedParameterTypes != null) {
+      for (Method method : customSerializer.getMethods()) {
+        if ("instantiateChecked".equals(method.getName())) {
+          return method.invoke(null, this, expectedParameterTypes, resolvedTypes);
+        }
       }
     }
 

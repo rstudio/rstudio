@@ -16,14 +16,15 @@
 package com.google.gwt.user.client.rpc;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * Generated test data for the
  * {@link com.google.gwt.user.client.rpc.TypeCheckedObjectsTest} unit tests.
  */
 public class TypeCheckedObjectsTestSetFactory {
-
   /**
    * Used to test that the type checked field for an unchecked class is actually
    * type checked.
@@ -44,12 +45,24 @@ public class TypeCheckedObjectsTestSetFactory {
   }
 
   /**
+   * Used to test classes that use other classes as fields, where some of those
+   * fields are of the same type, and use nested static classes as parameters to
+   * generic types.
+   */
+  public static class TypeCheckedNestedLists implements Serializable {
+    public ArrayList<TypeCheckedBaseClass> values;
+    
+    TypeCheckedNestedLists() {
+    }
+  }
+  
+  /**
    * Used to test that the type checked base class for an unchecked class is
    * actually type checked.
    */
   public static class TypeCheckedSuperClass<X, Y> extends TypeCheckedGenericClass<X, Y> {
   }
-
+  
   public static TypeCheckedFieldClass<HashSet<Integer>, String> createInvalidCheckedFieldClass() {
     TypeCheckedFieldClass<HashSet<Integer>, String> result =
       new TypeCheckedFieldClass<HashSet<Integer>, String>();
@@ -78,6 +91,17 @@ public class TypeCheckedObjectsTestSetFactory {
     return result;
   }
 
+  public static
+  TypeUncheckedGenericClass<Integer, HashSet<String>> createInvalidUncheckedGenericClass() {
+    TypeUncheckedGenericClass<Integer, HashSet<String>> result =
+        new TypeUncheckedGenericClass<Integer, HashSet<String>>();
+    result.setMarker(TypeCheckedObjectsTestSetValidator.markerKey,
+        TypeCheckedObjectsTestSetValidator.invalidMarkerValue);
+    result.checkedField.hashField.put(TypeCheckedObjectsTestSetValidator.markerKey,
+        TypeCheckedObjectsTestSetValidator.invalidMarkerValue);
+    return result;
+  }
+
   public static TypeCheckedFieldClass<Integer, String> createTypeCheckedFieldClass() {
     TypeCheckedFieldClass<Integer, String> result =
       new TypeCheckedFieldClass<Integer, String>();
@@ -97,21 +121,30 @@ public class TypeCheckedObjectsTestSetFactory {
     return result;
   }
 
+  public static TypeCheckedNestedLists createTypeCheckedNestedLists() {
+    TypeCheckedInnerClass nestedContent = new TypeCheckedInnerClass();
+    TypeCheckedInnerClass.InnerClass value1 = new TypeCheckedInnerClass.InnerClass();
+    value1.value = 12345;
+    TypeCheckedInnerClass.InnerClass value2 = new TypeCheckedInnerClass.InnerClass();
+    value2.value = 67890;
+    List<TypeCheckedInnerClass.InnerClass> values =
+      new ArrayList<TypeCheckedInnerClass.InnerClass>(2);
+    values.add(value1);
+    values.add(value2);
+    nestedContent.values = values;
+    nestedContent.name = "foo";
+    
+    TypeCheckedNestedLists result = new TypeCheckedNestedLists();
+    result.values = new ArrayList<TypeCheckedBaseClass>();
+    result.values.add(nestedContent);
+    
+    return result;
+  }
+
   public static TypeCheckedSuperClass<Integer, String> createTypeCheckedSuperClass() {
     TypeCheckedSuperClass<Integer, String> result = new TypeCheckedSuperClass<Integer, String>();
     result.hashField.put(TypeCheckedObjectsTestSetValidator.markerKey,
         TypeCheckedObjectsTestSetValidator.markerValue);
-    return result;
-  }
-
-  public static
-  TypeUncheckedGenericClass<Integer, HashSet<String>> createInvalidUncheckedGenericClass() {
-    TypeUncheckedGenericClass<Integer, HashSet<String>> result =
-        new TypeUncheckedGenericClass<Integer, HashSet<String>>();
-    result.setMarker(TypeCheckedObjectsTestSetValidator.markerKey,
-        TypeCheckedObjectsTestSetValidator.invalidMarkerValue);
-    result.checkedField.hashField.put(TypeCheckedObjectsTestSetValidator.markerKey,
-        TypeCheckedObjectsTestSetValidator.invalidMarkerValue);
     return result;
   }
 

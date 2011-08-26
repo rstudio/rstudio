@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedFieldClass;
+import com.google.gwt.user.client.rpc.TypeCheckedObjectsTestSetFactory.TypeCheckedNestedLists;
 
 import java.util.HashSet;
 
@@ -87,6 +88,36 @@ public class TypeCheckedObjectsTestSetValidator {
       return false;
     }
 
+    return true;
+  }
+
+  public static boolean isValid(TypeCheckedNestedLists arg1) {
+    if (arg1 == null) {
+      return false;
+    }
+
+    if (arg1.values.size() != 1) {
+      return false;
+    }
+    
+    TypeCheckedBaseClass baseClass = arg1.values.get(0);
+    if (!(baseClass instanceof TypeCheckedInnerClass)) {
+      return false;
+    }
+    TypeCheckedInnerClass innerClass = (TypeCheckedInnerClass) baseClass;
+    
+    if (innerClass.values.get(0).value != 12345) {
+      return false;
+    }
+
+    if (innerClass.values.get(1).value != 67890) {
+      return false;
+    }
+
+    if (!innerClass.name.equals("foo")) {
+      return false;
+    }
+    
     return true;
   }
 
