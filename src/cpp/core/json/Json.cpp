@@ -34,7 +34,12 @@ json_spirit::Value_type BooleanType = json_spirit::bool_type;
 json_spirit::Value_type IntegerType = json_spirit::int_type;
 json_spirit::Value_type RealType = json_spirit::real_type;
 json_spirit::Value_type NullType = json_spirit::null_type;
-   
+
+json::Value toJsonString(const std::string& val)
+{
+   return json::Value(val);
+}
+
 bool parse(const std::string& input, Value* pValue)
 {
    // two threads simultaneously using the json parser has been observed

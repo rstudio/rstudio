@@ -66,6 +66,8 @@ json::Value toJsonValue(const T& val)
    return json::Value(val);
 }
 
+json::Value toJsonString(const std::string& val);
+
 bool parse(const std::string& input, Value* pValue);
 
 void write(const Value& value, std::ostream& os);

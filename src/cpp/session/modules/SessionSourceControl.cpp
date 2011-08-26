@@ -411,25 +411,22 @@ public:
                             boost::optional<size_t>* pActiveBranchIndex,
                             std::string* pStdErr)
    {
+      std::vector<std::string> lines;
       std::vector<std::string> args;
       args.push_back("branch");
-      Error error = runCommand("git", args, pBranches);
+      Error error = runCommand("git", args, &lines);
       if (error)
          return error;
 
-      for (std::vector<std::string>::iterator it = pBranches->begin();
-           it != pBranches->end();
-           it++)
+      for (size_t i = 0; i < lines.size(); i++)
       {
-         if (*it == "")
-         {
-            pBranches->resize(it - pBranches->begin());
+         const std::string line = lines.at(i);
+         if (line.size() < 2)
             break;
-         }
 
-         if (it->substr(0, 2) == "* ")
-            *pActiveBranchIndex = it - pBranches->begin();
-         *it = it->substr(2);
+         if (boost::algorithm::starts_with(line, "* "))
+            *pActiveBranchIndex = i;
+         pBranches->push_back(line.substr(2));
       }
 
       return Success();
@@ -854,12 +851,9 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
       return error;
 
    json::Array jsonBranches;
-   for (std::vector<std::string>::const_iterator it = branches.begin();
-        it != branches.end();
-        it++)
-   {
-      jsonBranches.push_back(*it);
-   }
+   std::transform(branches.begin(), branches.end(),
+                  std::back_inserter(jsonBranches),
+                  json::toJsonString);
 
    json::Object result;
    result["branches"] = jsonBranches;
