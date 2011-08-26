@@ -13,6 +13,7 @@
 #include "SessionSourceControl.hpp"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
@@ -71,6 +72,7 @@ public:
 
    virtual VCS id() { return VCSNone; }
    virtual std::string name() { return std::string(); }
+   FilePath root() { return root_; }
 
    virtual core::Error status(const FilePath&,
                               StatusResult* pStatusResult)
@@ -211,6 +213,33 @@ boost::scoped_ptr<VCSImpl> s_pVcsImpl_;
 class GitVCSImpl : public VCSImpl
 {
 public:
+   static std::string detectGitDir(FilePath workingDir)
+   {
+      std::string command("cd ");
+      command.append(string_utils::bash_escape(workingDir.absolutePath()));
+      command.append("; git rev-parse --show-toplevel");
+
+      std::vector<std::string> args;
+      args.push_back("rev-parse");
+      args.push_back("--show-toplevel");
+      std::string output;
+
+      core::system::ProcessResult result;
+      Error error = core::system::runCommand(command, &result);
+      if (error)
+         return std::string();
+
+      if (result.exitStatus != 0)
+         return std::string();
+
+      return boost::algorithm::trim_copy(result.stdOut);
+   }
+
+   GitVCSImpl(FilePath workingDir) : VCSImpl()
+   {
+      root_ = FilePath(detectGitDir(workingDir));
+   }
+
    VCS id() { return VCSGit; }
    std::string name() { return "Git"; }
 
@@ -1026,6 +1055,11 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   command = "(cd " +
+             string_utils::bash_escape(s_pVcsImpl_->root().absolutePath()) +
+             "; " + command +
+             ") 2>&1";
+
    // TODO: Capture stderr
    // TODO: Indicate error in result if exit code != 0
    // TODO: Make interruptible, and not on main thread
@@ -1038,7 +1072,7 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
 
    json::Object result;
    result["output"] = processResult.stdOut;
-   result["error"] = 0;
+   result["error"] = processResult.exitStatus;
 
    pResponse->setResult(result);
 
@@ -1070,8 +1104,8 @@ core::Error initialize()
       s_pVcsImpl_.reset(new VCSImpl());
    else if (workingDir.empty())
       s_pVcsImpl_.reset(new VCSImpl());
-   else if (workingDir.childPath(".git").isDirectory())
-      s_pVcsImpl_.reset(new GitVCSImpl());
+   else if (!GitVCSImpl::detectGitDir(workingDir).empty())
+      s_pVcsImpl_.reset(new GitVCSImpl(workingDir));
    else if (workingDir.childPath(".svn").isDirectory())
       s_pVcsImpl_.reset(new SubversionVCSImpl());
    else
