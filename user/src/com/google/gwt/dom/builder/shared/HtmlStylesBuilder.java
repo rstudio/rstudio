@@ -259,6 +259,11 @@ class HtmlStylesBuilder implements StylesBuilder {
   }
 
   @Override
+  public StylesBuilder lineHeight(double value, Unit unit) {
+    return delegate.styleProperty(SafeStylesUtils.forLineHeight(value, unit));
+  }
+
+  @Override
   public StylesBuilder listStyleType(ListStyleType value) {
     return delegate.styleProperty(SafeStylesUtils.forListStyleType(value));
   }

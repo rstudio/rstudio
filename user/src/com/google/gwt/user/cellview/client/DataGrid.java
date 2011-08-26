@@ -854,7 +854,7 @@ public class DataGrid<T> extends AbstractCellTable<T> implements RequiresResize 
     super.refreshColumnWidths();
 
     // Hide unused col elements in the colgroup.
-    int columnCount = getColumnCount();
+    int columnCount = getRealColumnCount();
     tableHeader.hideUnusedColumns(columnCount);
     tableData.hideUnusedColumns(columnCount);
     tableFooter.hideUnusedColumns(columnCount);

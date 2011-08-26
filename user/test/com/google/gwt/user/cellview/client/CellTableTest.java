@@ -248,6 +248,9 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
   protected int getHeaderCount(CellTable<String> table) {
     TableElement tableElem = table.getElement().cast();
     TableSectionElement thead = tableElem.getTHead();
+    if (thead.getRows().getLength() == 0) {
+      return 0;
+    }
     TableRowElement tr = thead.getRows().getItem(0);
     return tr.getCells().getLength();
   }

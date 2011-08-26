@@ -224,6 +224,12 @@ class DomStylesBuilder implements StylesBuilder {
   }
 
   @Override
+  public StylesBuilder lineHeight(double value, Unit unit) {
+    delegate.assertCanAddStyleProperty().setLineHeight(value, unit);
+    return this;
+  }
+
+  @Override
   public StylesBuilder listStyleType(ListStyleType value) {
     delegate.assertCanAddStyleProperty().setListStyleType(value);
     return this;

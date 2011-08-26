@@ -19,14 +19,12 @@ import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.HasCell;
-import com.google.gwt.cell.client.IconCellDecorator;
-import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.builder.shared.DivBuilder;
+import com.google.gwt.dom.builder.shared.ElementBuilderBase;
+import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
 import com.google.gwt.dom.builder.shared.HtmlTableSectionBuilder;
-import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.dom.builder.shared.TableSectionBuilder;
 import com.google.gwt.dom.client.Document;
@@ -34,7 +32,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.dom.client.Style.OutlineStyle;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
@@ -48,7 +45,6 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
@@ -245,119 +241,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Default cell table builder that renders row values into a grid of columns.
-   * 
-   * @param <T> the data type of the rows.
-   */
-  public static class DefaultCellTableBuilder<T> extends AbstractCellTableBuilder<T> {
-
-    private final String evenRowStyle;
-    private final String oddRowStyle;
-    private final String selectedRowStyle;
-    private final String cellStyle;
-    private final String evenCellStyle;
-    private final String oddCellStyle;
-    private final String firstColumnStyle;
-    private final String lastColumnStyle;
-    private final String selectedCellStyle;
-
-    public DefaultCellTableBuilder(AbstractCellTable<T> cellTable) {
-      super(cellTable);
-      // Cache styles for faster access.
-      Style style = cellTable.getResources().style();
-      evenRowStyle = style.evenRow();
-      oddRowStyle = style.oddRow();
-      selectedRowStyle = " " + style.selectedRow();
-      cellStyle = style.cell();
-      evenCellStyle = " " + style.evenRowCell();
-      oddCellStyle = " " + style.oddRowCell();
-      firstColumnStyle = " " + style.firstColumn();
-      lastColumnStyle = " " + style.lastColumn();
-      selectedCellStyle = " " + style.selectedRowCell();
-    }
-    
-    @Override
-    public void buildRowImpl(T rowValue, int absRowIndex) {
-
-      // Calculate the row styles.
-      SelectionModel<? super T> selectionModel = cellTable.getSelectionModel();
-      boolean isSelected =
-          (selectionModel == null || rowValue == null) ? false : selectionModel
-              .isSelected(rowValue);
-      boolean isEven = absRowIndex % 2 == 0;
-      StringBuilder trClasses = new StringBuilder(isEven ? evenRowStyle : oddRowStyle);
-      if (isSelected) {
-        trClasses.append(selectedRowStyle);
-      }
-
-      // Add custom row styles.
-      RowStyles<T> rowStyles = cellTable.getRowStyles();
-      if (rowStyles != null) {
-        String extraRowStyles = rowStyles.getStyleNames(rowValue, absRowIndex);
-        if (extraRowStyles != null) {
-          trClasses.append(" ").append(extraRowStyles);
-        }
-      }
-
-      // Build the row.
-      TableRowBuilder tr = startRow();
-      tr.className(trClasses.toString());
-
-      // Build the columns.
-      int columnCount = cellTable.getColumnCount();
-      for (int curColumn = 0; curColumn < columnCount; curColumn++) {
-        Column<T, ?> column = cellTable.getColumn(curColumn);
-        // Create the cell styles.
-        StringBuilder tdClasses = new StringBuilder(cellStyle);
-        tdClasses.append(isEven ? evenCellStyle : oddCellStyle);
-        if (curColumn == 0) {
-          tdClasses.append(firstColumnStyle);
-        }
-        if (isSelected) {
-          tdClasses.append(selectedCellStyle);
-        }
-        // The first and last column could be the same column.
-        if (curColumn == columnCount - 1) {
-          tdClasses.append(lastColumnStyle);
-        }
-
-        // Add class names specific to the cell.
-        Context context = new Context(absRowIndex, curColumn, cellTable.getValueKey(rowValue));
-        String cellStyles = column.getCellStyleNames(context, rowValue);
-        if (cellStyles != null) {
-          tdClasses.append(" " + cellStyles);
-        }
-
-        // Builder the cell.
-        HorizontalAlignmentConstant hAlign = column.getHorizontalAlignment();
-        VerticalAlignmentConstant vAlign = column.getVerticalAlignment();
-        TableCellBuilder td = tr.startTD();
-        td.className(tdClasses.toString());
-        if (hAlign != null) {
-          td.align(hAlign.getTextAlignString());
-        }
-        if (vAlign != null) {
-          td.vAlign(vAlign.getVerticalAlignString());
-        }
-
-        // Add the inner div.
-        DivBuilder div = td.startDiv();
-        div.style().outlineStyle(OutlineStyle.NONE).endStyle();
-
-        // Render the cell into the div.
-        renderCell(div, context, column, rowValue);
-
-        // End the cell.
-        div.endDiv();
-        td.endTD();
-      }
-
-      // End the row.
-      tr.endTR();
-    }
-  }
-
-  /**
    * A ClientBundle that provides images for this widget.
    */
   public interface Resources {
@@ -506,9 +389,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     @SafeHtmlTemplates.Template("<div style=\"outline:none;\">{0}</div>")
     SafeHtml div(SafeHtml contents);
 
-    @SafeHtmlTemplates.Template("<div class=\"{0}\"></div>")
-    SafeHtml loading(String loading);
-
     @SafeHtmlTemplates.Template("<table><tbody>{0}</tbody></table>")
     SafeHtml tbody(SafeHtml rowHtml);
 
@@ -527,14 +407,103 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     @SafeHtmlTemplates.Template("<table><tfoot>{0}</tfoot></table>")
     SafeHtml tfoot(SafeHtml rowHtml);
 
-    @SafeHtmlTemplates.Template("<th colspan=\"{0}\" class=\"{1}\">{2}</th>")
-    SafeHtml th(int colspan, String classes, SafeHtml contents);
-
     @SafeHtmlTemplates.Template("<table><thead>{0}</thead></table>")
     SafeHtml thead(SafeHtml rowHtml);
 
     @SafeHtmlTemplates.Template("<tr onclick=\"\" class=\"{0}\">{1}</tr>")
     SafeHtml tr(String classes, SafeHtml contents);
+  }
+
+  /**
+   * Implementation of {@link HeaderCreator.Helper}.
+   */
+  private class HeaderHelperImpl extends HeaderCreator.Helper<T> {
+
+    private final Map<String, Column<T, ?>> columnMap;
+    private final TwoWayHashMap<String, Header<?>> headerMap;
+    private boolean isEmpty = true;
+    private final HtmlTableSectionBuilder section;
+    private final String tag;
+
+    public HeaderHelperImpl(AbstractCellTable<T> cellTable, boolean isFooter) {
+      super(cellTable);
+      if (isFooter) {
+        section = HtmlBuilderFactory.get().createTFootBuilder();
+        tag = "tfoot";
+        headerMap = idToFooterMap;
+        columnMap = idToFooterColumnMap;
+      } else {
+        section = HtmlBuilderFactory.get().createTHeadBuilder();
+        tag = "thead";
+        headerMap = idToHeaderMap;
+        columnMap = idToHeaderColumnMap;
+      }
+    }
+
+    @Override
+    public void enableColumnHandlers(ElementBuilderBase<?> builder, Column<T, ?> column) {
+      String columnId = "column-" + Document.get().createUniqueId();
+      columnMap.put(columnId, column);
+      builder.attribute(COLUMN_ATTRIBUTE, columnId);
+    }
+
+    @Override
+    public <H> void renderHeader(ElementBuilderBase<?> out, Context context, Header<H> header) {
+      // Generate a unique ID for the header.
+      String headerId = headerMap.getKey(header);
+      if (headerId == null) {
+        headerId = "header-" + Document.get().createUniqueId();
+        headerMap.put(headerId, header);
+      }
+      out.attribute(HEADER_ATTRIBUTE, headerId);
+
+      // Render the cell into the builder.
+      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+      header.render(context, sb);
+      out.html(sb.toSafeHtml());
+    }
+
+    @Override
+    public TableRowBuilder startRow() {
+      isEmpty = false;
+
+      // End any dangling rows.
+      while (section.getDepth() > 1) {
+        section.end();
+      }
+
+      // Verify the depth.
+      if (section.getDepth() < 1) {
+        throw new IllegalStateException(
+            "Cannot start a row.  Did you call TableRowBuilder.end() too many times?");
+      }
+
+      // Start the next row.
+      TableRowBuilder row = section.startTR();
+      return row;
+    }
+
+    /**
+     * Get the {@link TableSectionElement} containing the children.
+     */
+    private SafeHtml asSafeHtml() {
+      // Strip the table section tags off of the tbody.
+      String rawHtml = section.asSafeHtml().asString();
+      assert (tag.length()) == 5 : "Unrecognized tag: " + tag;
+      assert rawHtml.startsWith("<" + tag + ">") : "Malformed html";
+      assert rawHtml.endsWith("</" + tag + ">") : "Malformed html";
+      rawHtml = rawHtml.substring(7, rawHtml.length() - 8);
+      return SafeHtmlUtils.fromTrustedString(rawHtml);
+    }
+
+    /**
+     * Check if the header is empty.
+     * 
+     * @return true if no rows were created, false if not empty
+     */
+    private boolean isEmpty() {
+      return isEmpty;
+    }
   }
 
   /**
@@ -667,8 +636,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
           count++;
         }
       } else {
-        while (insertBefore != null && table.tableBuilder.getRowValueIndex(
-            insertBefore.<TableRowElement> cast()) < absEndIndex) {
+        while (insertBefore != null
+            && table.tableBuilder.getRowValueIndex(insertBefore.<TableRowElement> cast()) <
+                absEndIndex) {
           Element next = insertBefore.getNextSiblingElement();
           section.removeChild(insertBefore);
           insertBefore = next;
@@ -812,7 +782,43 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * A map that provides O(1) access to a value given the key, or to the key
+   * given the value.
+   */
+  private static class TwoWayHashMap<K, V> {
+    private final Map<K, V> keyToValue = new HashMap<K, V>();
+    private final Map<V, K> valueToKey = new HashMap<V, K>();
 
+    void clear() {
+      keyToValue.clear();
+      valueToKey.clear();
+    }
+
+    K getKey(V value) {
+      return valueToKey.get(value);
+    }
+
+    V getValue(K key) {
+      return keyToValue.get(key);
+    }
+
+    void put(K key, V value) {
+      keyToValue.put(key, value);
+      valueToKey.put(value, key);
+    }
+  }
+
+  /**
+   * The attribute used to indicate that an element contains a Column.
+   */
+  private static final String COLUMN_ATTRIBUTE = "__gwt_column";
+
+  /**
+   * The attribute used to indicate that an element contains a header.
+   */
+  private static final String HEADER_ATTRIBUTE = "__gwt_header";
+
+  /*
    * The table specific {@link Impl}.
    */
   private static Impl TABLE_IMPL;
@@ -827,6 +833,16 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     return consumedEvents != null && consumedEvents.size() > 0;
   }
 
+  /**
+   * A mapping of unique cell IDs to the cell.
+   */
+  private final Map<String, Column<T, ?>> idToFooterColumnMap = new HashMap<String, Column<T, ?>>();
+  private final TwoWayHashMap<String, Header<?>> idToFooterMap =
+      new TwoWayHashMap<String, Header<?>>();
+  private final Map<String, Column<T, ?>> idToHeaderColumnMap = new HashMap<String, Column<T, ?>>();
+  private final TwoWayHashMap<String, Header<?>> idToHeaderMap =
+      new TwoWayHashMap<String, Header<?>>();
+
   private boolean cellIsEditing;
   private final List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
   private final Map<Column<T, ?>, String> columnWidths = new HashMap<Column<T, ?>, String>();
@@ -834,11 +850,17 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   private final Map<Integer, String> columnWidthsByIndex = new HashMap<Integer, String>();
 
   /**
+   * The maximum column index specified in column widths by index.
+   */
+  private int maxColumnIndex = -1;
+
+  /**
    * Indicates that at least one column depends on selection.
    */
   private boolean dependsOnSelection;
 
   private Widget emptyTableWidget;
+  private HeaderCreator<T> footerCreator;
   private boolean footerRefreshDisabled;
   private final List<Header<?>> footers = new ArrayList<Header<?>>();
 
@@ -847,6 +869,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   private boolean handlesSelection;
 
+  private HeaderCreator<T> headerCreator;
   private boolean headerRefreshDisabled;
   private final List<Header<?>> headers = new ArrayList<Header<?>>();
 
@@ -870,8 +893,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   private boolean legacyRenderRowValues = true;
   private final Resources resources;
   private RowStyles<T> rowStyles;
-  private IconCellDecorator<SafeHtml> sortAscDecorator;
-  private IconCellDecorator<SafeHtml> sortDescDecorator;
   private final ColumnSortList sortList = new ColumnSortList(new ColumnSortList.Delegate() {
     @Override
     public void onModification() {
@@ -1031,8 +1052,17 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   public void clearColumnWidth(Integer column) {
     columnWidthsByIndex.remove(column);
-    // TODO(jlabanca): Compare to realColumnCount when headerBuilder lands.
-    if (column < getColumnCount()) {
+
+    // Recalculate the maximum column index.
+    if (column >= maxColumnIndex) {
+      maxColumnIndex = -1;
+      for (Integer index : columnWidthsByIndex.keySet()) {
+        maxColumnIndex = Math.max(maxColumnIndex, index);
+      }
+    }
+
+    // Update the width of the column.
+    if (column < getRealColumnCount()) {
       doSetColumnWidth(column, null);
     }
   }
@@ -1050,7 +1080,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   public void flush() {
     getPresenter().flush();
   }
-  
+
   /**
    * Get the column at the specified index.
    * 
@@ -1115,6 +1145,36 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   public Widget getEmptyTableWidget() {
     return emptyTableWidget;
+  }
+
+  /**
+   * Get the {@link Header} from the footer section that was added with a
+   * {@link Column}.
+   */
+  public Header<?> getFooter(int index) {
+    return footers.get(index);
+  }
+
+  /**
+   * Get the {@link HeaderCreator} used to generate the footer section.
+   */
+  public HeaderCreator<T> getFooterCreator() {
+    return footerCreator;
+  }
+
+  /**
+   * Get the {@link Header} from the header section that was added with a
+   * {@link Column}.
+   */
+  public Header<?> getHeader(int index) {
+    return headers.get(index);
+  }
+
+  /**
+   * Get the {@link HeaderCreator} used to generate the header section.
+   */
+  public HeaderCreator<T> getHeaderCreator() {
+    return headerCreator;
   }
 
   /**
@@ -1311,7 +1371,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Check if auto footer refresh is enabled or disabled
+   * Check if auto footer refresh is enabled or disabled.
    * 
    * @return true if disabled, false if enabled
    * @see #setAutoFooterRefreshDisabled(boolean)
@@ -1321,7 +1381,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Check if auto header refresh is enabled or disabled
+   * Check if auto header refresh is enabled or disabled.
    * 
    * @return true if disabled, false if enabled
    * @see #setAutoHeaderRefreshDisabled(boolean)
@@ -1466,8 +1526,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   public void setColumnWidth(int column, String width) {
     columnWidthsByIndex.put(column, width);
-    // TODO(jlabanca): Compare to realColumnCount when headerBuilder lands.
-    if (column < getColumnCount()) {
+    maxColumnIndex = Math.max(maxColumnIndex, column);
+
+    // Update the column width.
+    if (column < getRealColumnCount()) {
       doSetColumnWidth(column, width);
     }
   }
@@ -1479,6 +1541,26 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   public void setEmptyTableWidget(Widget widget) {
     this.emptyTableWidget = widget;
+  }
+
+  /**
+   * Set the {@link HeaderCreator} used to build the footer section of the
+   * table.
+   */
+  public void setFooterCreator(HeaderCreator<T> creator) {
+    assert creator != null : "creator cannot be null";
+    this.footerCreator = creator;
+    redrawFooters();
+  }
+
+  /**
+   * Set the {@link HeaderCreator} used to build the header section of the
+   * table.
+   */
+  public void setHeaderCreator(HeaderCreator<T> creator) {
+    assert creator != null : "creator cannot be null";
+    this.headerCreator = creator;
+    redrawHeaders();
   }
 
   /**
@@ -1622,6 +1704,14 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Get the real column count, which is the greater of the number of Columns or
+   * the maximum index of a column with a defined column width.
+   */
+  protected int getRealColumnCount() {
+    return Math.max(getColumnCount(), maxColumnIndex + 1);
+  }
+
+  /**
    * Get the tbody element that contains the render row values.
    */
   protected abstract TableSectionElement getTableBodyElement();
@@ -1668,6 +1758,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     TableSectionElement targetTableSection = null;
     TableCellElement targetTableCell = null;
     Element cellParent = null;
+    String columnId = null;
+    String headerId = null;
     {
       Element maybeTableCell = null;
       Element cur = target;
@@ -1695,10 +1787,26 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
           maybeTableCell = cur;
         }
 
-        // Look for the most immediate cell parent if not already found.
-        boolean isColumn = tableBuilder.isColumn(cur);
-        if (cellParent == null && isColumn) {
-          cellParent = cur;
+        // Look for the most immediate associated column if not already found.
+        if (columnId == null) {
+          String curColumnId = cur.getAttribute(COLUMN_ATTRIBUTE);
+          if (curColumnId != null && curColumnId.length() > 0) {
+            columnId = curColumnId;
+          }
+        }
+
+        if (cellParent == null) {
+          // Look for the most immediate cell parent if not already found.
+          if (tableBuilder.isColumn(cur)) {
+            cellParent = cur;
+          }
+
+          // Look for the most immediate header parent if not already found.
+          String curHeaderId = isHeaderParent(cur);
+          if (curHeaderId != null) {
+            headerId = curHeaderId;
+            cellParent = cur;
+          }
         }
 
         // Iterate.
@@ -1722,37 +1830,35 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     String eventType = event.getType();
     boolean isClick = "click".equals(eventType);
     int col = targetTableCell.getCellIndex();
-    if (targetTableSection == thead) {
-      Header<?> header = headers.get(col);
-      if (header != null) {
-        // Fire the event to the header.
-        if (cellConsumesEventType(header.getCell(), eventType)) {
-          Context context = new Context(0, col, header.getKey());
-          header.onBrowserEvent(context, targetTableCell, event);
-        }
+    if (targetTableSection == thead || targetTableSection == tfoot) {
+      boolean isHeader = (targetTableSection == thead);
 
-        // Sort the header.
-        if (isClick) {
-          // TODO(jlabanca): Get visible col when custom headers are supported.
-          Column<T, ?> column = col < columns.size() ? columns.get(col) : null;
-          if (column != null && column.isSortable()) {
-            /*
-             * Force the headers to refresh the next time data is pushed so we
-             * update the sort icon in the header.
-             */
-            headersDirty = true;
-            updatingSortList = true;
-            sortList.push(column);
-            updatingSortList = false;
-            ColumnSortEvent.fire(this, sortList);
-          }
+      // Fire the event to the header.
+      TwoWayHashMap<String, Header<?>> headerMap = isHeader ? idToHeaderMap : idToFooterMap;
+      if (headerId != null) {
+        Header<?> header = headerMap.getValue(headerId);
+        if (header != null && cellConsumesEventType(header.getCell(), eventType)) {
+          Context context = new Context(0, col, header.getKey());
+          header.onBrowserEvent(context, cellParent, event);
         }
       }
-    } else if (targetTableSection == tfoot) {
-      Header<?> footer = footers.get(col);
-      if (footer != null && cellConsumesEventType(footer.getCell(), eventType)) {
-        Context context = new Context(0, col, footer.getKey());
-        footer.onBrowserEvent(context, targetTableCell, event);
+
+      // Sort the header.
+      Map<String, Column<T, ?>> columnMap = isHeader ? idToHeaderColumnMap : idToFooterColumnMap;
+      if (isClick) {
+        Column<T, ?> column = columnMap.get(columnId);
+        if (column != null && column.isSortable()) {
+          /*
+           * Force the headers to refresh the next time data is pushed so we
+           * update the sort icon in the header.
+           */
+          headersDirty = true;
+
+          updatingSortList = true;
+          sortList.push(column);
+          updatingSortList = false;
+          ColumnSortEvent.fire(this, sortList);
+        }
       }
     } else if (targetTableSection == tbody) {
       /*
@@ -1789,6 +1895,15 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
           handlesSelection
               || KeyboardSelectionPolicy.BOUND_TO_SELECTION == getKeyboardSelectionPolicy();
       T value = getVisibleItem(relRow);
+
+      /*
+       * Create a new context based on the dom column index instead of using the
+       * user provided one from TableBuilder. We trigger cell preview events for
+       * table cells even if there is no associated Cell instance. If we used
+       * the user provided context, we could get inconsistent states where the
+       * Context is sometimes user provided and sometimes generated based on the
+       * DOM column index.
+       */
       Context context = new Context(absRow, col, getValueKey(value), subrow);
       CellPreviewEvent<T> previewEvent =
           CellPreviewEvent.fire(this, event, this, context, value, cellIsEditing,
@@ -1820,23 +1935,16 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   protected void refreshColumnWidths() {
-    // TODO(jlabanca): Set size without looking at column count when custom
-    // headers added?
-    int columnCount = getColumnCount();
+    int columnCount = getRealColumnCount();
     for (int i = 0; i < columnCount; i++) {
-      Column<T, ?> column = columns.get(i);
-      String width = columnWidths.get(column);
-      if (width == null) {
-        width = columnWidthsByIndex.get(i);
-      }
-      doSetColumnWidth(i, width);
+      doSetColumnWidth(i, getColumnWidth(i));
     }
   }
 
   /**
    * Throws an {@link UnsupportedOperationException}.
    * 
-   * @deprecated as of GWT 2.5, use a {@link TableCellBuilder} to customize the
+   * @deprecated as of GWT 2.5, use a {@link CellTableBuilder} to customize the
    *             table structure instead
    * @see #renderRowValuesLegacy(SafeHtmlBuilder, List, int, SelectionModel)
    */
@@ -1860,7 +1968,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    * @param values the row values
    * @param start the absolute start index of the values
    * @param selectionModel the {@link SelectionModel}
-   * @deprecated as of GWT 2.5, use a {@link TableCellBuilder} to customize the
+   * @deprecated as of GWT 2.5, use a {@link CellTableBuilder} to customize the
    *             table structure instead
    */
   @Deprecated
@@ -2060,6 +2168,26 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Get the column width. Associating a width with a {@link Column} takes
+   * precedence over setting the width of a column index.
+   * 
+   * @param columnIndex the column index
+   * @return the column width, or null if none specified
+   */
+  String getColumnWidth(int columnIndex) {
+    String width = null;
+    if (columns.size() > columnIndex) {
+      // Look for the width by Column.
+      width = columnWidths.get(columns.get(columnIndex));
+    }
+    if (width == null) {
+      // Look for the width by index.
+      width = columnWidthsByIndex.get(columnIndex);
+    }
+    return width;
+  }
+
+  /**
    * Get a subrow element given the index of the row value and the sub row
    * index.
    * 
@@ -2199,127 +2327,21 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    * @param isFooter true if this is the footer table, false if the header table
    */
   private void createHeaders(boolean isFooter) {
-    List<Header<?>> theHeaders = isFooter ? footers : headers;
-    TableSectionElement section = isFooter ? getTableFootElement() : getTableHeadElement();
-    String className = isFooter ? style.footer() : style.header();
-    String firstColumnStyle =
-        " " + (isFooter ? style.firstColumnFooter() : style.firstColumnHeader());
-    String lastColumnStyle = " " + (isFooter ? style.lastColumnFooter() : style.lastColumnHeader());
-    String sortableStyle = " " + style.sortableHeader();
-    String sortedAscStyle = " " + style.sortedHeaderAscending();
-    String sortedDescStyle = " " + style.sortedHeaderDescending();
-
-    boolean hasHeader = false;
-    SafeHtmlBuilder sb = new SafeHtmlBuilder();
-    sb.appendHtmlConstant("<tr>");
-    int columnCount = columns.size();
-    if (columnCount > 0) {
-      // Get information about the sorted column.
-      ColumnSortInfo sortedInfo = (sortList.size() == 0) ? null : sortList.get(0);
-      Column<?, ?> sortedColumn = (sortedInfo == null) ? null : sortedInfo.getColumn();
-      boolean isSortAscending = (sortedInfo == null) ? false : sortedInfo.isAscending();
-
-      // Setup the first column.
-      Header<?> prevHeader = theHeaders.get(0);
-      Column<T, ?> column = columns.get(0);
-      int prevColspan = 1;
-      boolean isSortable = false;
-      boolean isSorted = false;
-      StringBuilder classesBuilder = new StringBuilder(className);
-      classesBuilder.append(firstColumnStyle);
-      if (!isFooter && column.isSortable()) {
-        isSortable = true;
-        isSorted = (column == sortedColumn);
-      }
-
-      // Loop through all column headers.
-      int curColumn;
-      for (curColumn = 1; curColumn < columnCount; curColumn++) {
-        Header<?> header = theHeaders.get(curColumn);
-
-        if (header != prevHeader) {
-          // The header has changed, so append the previous one.
-          SafeHtml headerHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
-          if (prevHeader != null) {
-            hasHeader = true;
-
-            // Build the header.
-            SafeHtmlBuilder headerBuilder = new SafeHtmlBuilder();
-            Context context = new Context(0, curColumn - prevColspan, prevHeader.getKey());
-            prevHeader.render(context, headerBuilder);
-
-            // Wrap the header with a sort icon.
-            if (isSorted) {
-              SafeHtml unwrappedHeader = headerBuilder.toSafeHtml();
-              headerBuilder = new SafeHtmlBuilder();
-              getSortDecorator(isSortAscending).render(null, unwrappedHeader, headerBuilder);
-            }
-            headerHtml = headerBuilder.toSafeHtml();
-          }
-          if (isSortable) {
-            classesBuilder.append(sortableStyle);
-          }
-          if (isSorted) {
-            classesBuilder.append(isSortAscending ? sortedAscStyle : sortedDescStyle);
-          }
-          sb.append(template.th(prevColspan, classesBuilder.toString(), headerHtml));
-
-          // Reset the previous header.
-          prevHeader = header;
-          prevColspan = 1;
-          classesBuilder = new StringBuilder(className);
-          isSortable = false;
-          isSorted = false;
-        } else {
-          // Increment the colspan if the headers == each other.
-          prevColspan++;
-        }
-
-        // Update the sorted state.
-        column = columns.get(curColumn);
-        if (!isFooter && column.isSortable()) {
-          isSortable = true;
-          isSorted = (column == sortedColumn);
-        }
-      }
-
-      // Append the last header.
-      SafeHtml headerHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
-      if (prevHeader != null) {
-        hasHeader = true;
-
-        // Build the header.
-        SafeHtmlBuilder headerBuilder = new SafeHtmlBuilder();
-        Context context = new Context(0, curColumn - prevColspan, prevHeader.getKey());
-        prevHeader.render(context, headerBuilder);
-
-        // Wrap the header with a sort icon.
-        if (isSorted) {
-          SafeHtml unwrappedHeader = headerBuilder.toSafeHtml();
-          headerBuilder = new SafeHtmlBuilder();
-          getSortDecorator(isSortAscending).render(null, unwrappedHeader, headerBuilder);
-        }
-        headerHtml = headerBuilder.toSafeHtml();
-      }
-      if (isSortable) {
-        classesBuilder.append(sortableStyle);
-      }
-      if (isSorted) {
-        classesBuilder.append(isSortAscending ? sortedAscStyle : sortedDescStyle);
-      }
-
-      // The first and last columns could be the same column.
-      classesBuilder.append(" ");
-      classesBuilder.append(lastColumnStyle);
-      sb.append(template.th(prevColspan, classesBuilder.toString(), headerHtml));
+    HeaderHelperImpl helper = new HeaderHelperImpl(this, isFooter);
+    if (isFooter) {
+      idToFooterMap.clear();
+      idToFooterColumnMap.clear();
+      footerCreator.buildHeader(helper);
+      TABLE_IMPL.replaceAllRows(this, getTableFootElement(), helper.asSafeHtml());
+    } else {
+      idToHeaderMap.clear();
+      idToHeaderColumnMap.clear();
+      headerCreator.buildHeader(helper);
+      TABLE_IMPL.replaceAllRows(this, getTableHeadElement(), helper.asSafeHtml());
     }
-    sb.appendHtmlConstant("</tr>");
-
-    // Render the section contents.
-    TABLE_IMPL.replaceAllRows(this, section, sb.toSafeHtml());
 
     // If the section isn't used, hide it.
-    doSetHeaderVisible(isFooter, hasHeader);
+    doSetHeaderVisible(isFooter, !helper.isEmpty());
   }
 
   /**
@@ -2429,28 +2451,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
     return null;
   }
-  
-  /**
-   * Get the {@link IconCellDecorator} used to decorate sorted column headers.
-   * 
-   * @param ascending true if ascending, false if descending
-   * @return the {@link IconCellDecorator}
-   */
-  private IconCellDecorator<SafeHtml> getSortDecorator(boolean ascending) {
-    if (ascending) {
-      if (sortAscDecorator == null) {
-        sortAscDecorator =
-            new IconCellDecorator<SafeHtml>(resources.sortAscending(), new SafeHtmlCell());
-      }
-      return sortAscDecorator;
-    } else {
-      if (sortDescDecorator == null) {
-        sortDescDecorator =
-            new IconCellDecorator<SafeHtml>(resources.sortDescending(), new SafeHtmlCell());
-      }
-      return sortDescDecorator;
-    }
-  }
 
   /**
    * Initialize the widget.
@@ -2471,9 +2471,22 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
 
     // Set the table builder.
     tableBuilder = new DefaultCellTableBuilder<T>(this);
+    headerCreator = new DefaultHeaderCreator<T>(this, false);
+    footerCreator = new DefaultHeaderCreator<T>(this, true);
 
     // Set the keyboard handler.
     setKeyboardSelectionHandler(new CellTableKeyboardSelectionHandler<T>(this));
+  }
+
+  /**
+   * Check if an element is the parent of a rendered header.
+   * 
+   * @param elem the element to check
+   * @return the headerId if a cell parent, null if not
+   */
+  private String isHeaderParent(Element elem) {
+    String headerId = elem.getAttribute(HEADER_ATTRIBUTE);
+    return (headerId == null) || (headerId.length() == 0) ? null : headerId;
   }
 
   /**
@@ -2536,7 +2549,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    * @param width the width of the column, or null to clear the width
    */
   private void updateColumnWidthImpl(Column<T, ?> column, String width) {
-    // TODO(jlabanca): Use realColumnCount when headerBuilder lands.
     int columnCount = getColumnCount();
     for (int i = 0; i < columnCount; i++) {
       if (columns.get(i) == column) {
@@ -2545,4 +2557,3 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
   }
 }
-

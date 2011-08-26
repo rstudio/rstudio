@@ -115,6 +115,11 @@ public interface StylesBuilder {
   StylesBuilder left(double value, Unit unit);
 
   /**
+   * Set the line-height css property.
+   */
+  StylesBuilder lineHeight(double value, Unit unit);
+
+  /**
    * Sets the list-style-type CSS property.
    */
   StylesBuilder listStyleType(ListStyleType value);

@@ -22,8 +22,10 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.AbstractHasData.DefaultKeyboardSelectionHandler;
@@ -107,24 +109,23 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
   public void testBuildTooManyEnds() {
     final List<Integer> builtRows = new ArrayList<Integer>();
     T table = createAbstractHasData(new TextCell());
-    CellTableBuilder<String> builder =
-        new AbstractCellTable.DefaultCellTableBuilder<String>(table) {
-          @Override
-          public void buildRowImpl(String rowValue, int absRowIndex) {
-            builtRows.add(absRowIndex);
-            TableRowBuilder tr = startRow();
-            tr.endTR(); // End the tr.
-            tr.end(); // Accidentally end the table section.
+    CellTableBuilder<String> builder = new DefaultCellTableBuilder<String>(table) {
+      @Override
+      public void buildRowImpl(String rowValue, int absRowIndex) {
+        builtRows.add(absRowIndex);
+        TableRowBuilder tr = startRow();
+        tr.endTR(); // End the tr.
+        tr.end(); // Accidentally end the table section.
 
-            // Try to start another row.
-            try {
-              startRow();
-              fail("Expected IllegalStateException: tbody is already ended");
-            } catch (IllegalStateException e) {
-              // Expected.
-            }
-          }
-        };
+        // Try to start another row.
+        try {
+          startRow();
+          fail("Expected IllegalStateException: tbody is already ended");
+        } catch (IllegalStateException e) {
+          // Expected.
+        }
+      }
+    };
     table.setTableBuilder(builder);
     table.setVisibleRange(0, 1);
     populateData(table);
@@ -139,22 +140,21 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
    */
   public void testBuildMultipleRows() {
     T table = createAbstractHasData(new TextCell());
-    CellTableBuilder<String> builder =
-        new AbstractCellTable.DefaultCellTableBuilder<String>(table) {
-          @Override
-          public void buildRowImpl(String rowValue, int absRowIndex) {
-            super.buildRowImpl(rowValue, absRowIndex);
+    CellTableBuilder<String> builder = new DefaultCellTableBuilder<String>(table) {
+      @Override
+      public void buildRowImpl(String rowValue, int absRowIndex) {
+        super.buildRowImpl(rowValue, absRowIndex);
 
-            // Add child rows to row five.
-            if (absRowIndex == 5) {
-              for (int i = 0; i < 4; i++) {
-                TableRowBuilder tr = startRow();
-                tr.startTD().colSpan(2).text("child " + i).endTD();
-                tr.endTR();
-              }
-            }
+        // Add child rows to row five.
+        if (absRowIndex == 5) {
+          for (int i = 0; i < 4; i++) {
+            TableRowBuilder tr = startRow();
+            tr.startTD().colSpan(2).text("child " + i).endTD();
+            tr.endTR();
           }
-        };
+        }
+      }
+    };
     table.setTableBuilder(builder);
     table.setVisibleRange(0, 10);
     populateData(table);
@@ -183,16 +183,15 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
    */
   public void testBuildZeroRows() {
     T table = createAbstractHasData(new TextCell());
-    CellTableBuilder<String> builder =
-        new AbstractCellTable.DefaultCellTableBuilder<String>(table) {
-          @Override
-          public void buildRowImpl(String rowValue, int absRowIndex) {
-            // Skip row index 5.
-            if (absRowIndex != 5) {
-              super.buildRowImpl(rowValue, absRowIndex);
-            }
-          }
-        };
+    CellTableBuilder<String> builder = new DefaultCellTableBuilder<String>(table) {
+      @Override
+      public void buildRowImpl(String rowValue, int absRowIndex) {
+        // Skip row index 5.
+        if (absRowIndex != 5) {
+          super.buildRowImpl(rowValue, absRowIndex);
+        }
+      }
+    };
     table.setTableBuilder(builder);
     table.setVisibleRange(0, 10);
     populateData(table);
@@ -317,6 +316,20 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     assertFalse(getBodyElement(table, 1, 0).getClassName().contains(" test_1"));
     assertFalse(getBodyElement(table, 1, 1).getClassName().contains(" col0"));
     assertTrue(getBodyElement(table, 1, 1).getClassName().contains(" test_1"));
+  }
+
+  public void testClearColumnWidth() {
+    T table = createAbstractHasData();
+    assertEquals(0, table.getRealColumnCount());
+
+    table.setColumnWidth(0, "100px");
+    assertEquals(1, table.getRealColumnCount());
+
+    table.setColumnWidth(2, "300px");
+    assertEquals(3, table.getRealColumnCount());
+
+    table.clearColumnWidth(2);
+    assertEquals(1, table.getRealColumnCount());
   }
 
   public void testDefaultKeyboardSelectionHandlerChangePage() {
@@ -649,20 +662,19 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
 
   public void testGetSubRowElement() {
     T table = createAbstractHasData(new TextCell());
-    CellTableBuilder<String> builder =
-        new AbstractCellTable.DefaultCellTableBuilder<String>(table) {
-          @Override
-          public void buildRowImpl(String rowValue, int absRowIndex) {
-            super.buildRowImpl(rowValue, absRowIndex);
+    CellTableBuilder<String> builder = new DefaultCellTableBuilder<String>(table) {
+      @Override
+      public void buildRowImpl(String rowValue, int absRowIndex) {
+        super.buildRowImpl(rowValue, absRowIndex);
 
-            // Add some children.
-            for (int i = 0; i < 4; i++) {
-              TableRowBuilder tr = startRow();
-              tr.startTD().colSpan(2).text("child " + absRowIndex + ":" + i).endTD();
-              tr.endTR();
-            }
-          }
-        };
+        // Add some children.
+        for (int i = 0; i < 4; i++) {
+          TableRowBuilder tr = startRow();
+          tr.startTD().colSpan(2).text("child " + absRowIndex + ":" + i).endTD();
+          tr.endTR();
+        }
+      }
+    };
     table.setTableBuilder(builder);
     table.setVisibleRange(0, 5);
     populateData(table);
@@ -692,6 +704,88 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     } catch (IndexOutOfBoundsException e) {
       // Expected.
     }
+  }
+
+  public void testHeaderEvent() {
+    T table = createAbstractHasData();
+    IndexCell<String> cell = new IndexCell<String>("click");
+    table.addColumn(new TextColumn<String>() {
+      @Override
+      public String getValue(String object) {
+        return object;
+      }
+    }, new Header<String>(cell) {
+      @Override
+      public String getValue() {
+        return "header0";
+      }
+    });
+    RootPanel.get().add(table);
+    table.setRowData(createData(0, 10));
+    table.getPresenter().flush();
+
+    // Trigger an event on the header.
+    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
+    getHeaderElement(table, 0).dispatchEvent(event);
+    cell.assertLastBrowserEventIndex(0);
+
+    RootPanel.get().remove(table);
+  }
+
+  public void testSetHeaderCreator() {
+    T table = createAbstractHasData();
+    HeaderCreator<String> headerCreator = new HeaderCreator<String>() {
+      @Override
+      public void buildHeader(HeaderCreator.Helper<String> utility) {
+        TableRowBuilder tr = utility.startRow();
+        tr.startTH().text("Col 0").endTH();
+        tr.startTH().text("Col 1").endTH();
+        tr.startTH().text("Col 2").endTH();
+        tr.endTR();
+      }
+    };
+
+    // Change the header builder.
+    table.setHeaderCreator(headerCreator);
+    assertEquals(headerCreator, table.getHeaderCreator());
+    table.getPresenter().flush();
+
+    // Verify the new header.
+    NodeList<TableRowElement> rows = table.getTableHeadElement().getRows();
+    assertEquals(1, rows.getLength());
+    NodeList<TableCellElement> cells = rows.getItem(0).getCells();
+    assertEquals(3, cells.getLength());
+    assertEquals("Col 0", cells.getItem(0).getInnerText());
+    assertEquals("Col 1", cells.getItem(1).getInnerText());
+    assertEquals("Col 2", cells.getItem(2).getInnerText());
+  }
+
+  public void testSetFooterCreator() {
+    T table = createAbstractHasData();
+    HeaderCreator<String> footerCreator = new HeaderCreator<String>() {
+      @Override
+      public void buildHeader(HeaderCreator.Helper<String> utility) {
+        TableRowBuilder tr = utility.startRow();
+        tr.startTH().text("Col 0").endTH();
+        tr.startTH().text("Col 1").endTH();
+        tr.startTH().text("Col 2").endTH();
+        tr.endTR();
+      }
+    };
+
+    // Change the header builder.
+    table.setFooterCreator(footerCreator);
+    assertEquals(footerCreator, table.getFooterCreator());
+    table.getPresenter().flush();
+
+    // Verify the new header.
+    NodeList<TableRowElement> rows = table.getTableFootElement().getRows();
+    assertEquals(1, rows.getLength());
+    NodeList<TableCellElement> cells = rows.getItem(0).getCells();
+    assertEquals(3, cells.getLength());
+    assertEquals("Col 0", cells.getItem(0).getInnerText());
+    assertEquals("Col 1", cells.getItem(1).getInnerText());
+    assertEquals("Col 2", cells.getItem(2).getInnerText());
   }
 
   public void testInsertColumn() {
@@ -943,6 +1037,43 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     assertEquals("100px", table.getColumnWidth(col0));
 
     // Some browsers return 200.0, others 200.
+    assertTrue(table.getColumnWidth(col1).contains("200"));
+
+    // Check a column that has not been set.
+    assertNull(table.getColumnWidth(col2));
+
+    // Check a column that has been cleared.
+    table.clearColumnWidth(col0);
+    assertNull(table.getColumnWidth(col0));
+  }
+
+  /**
+   * Test that setting column widths using columns and column indexes works
+   * correctly.
+   */
+  public void testSetColumnWidthMixed() {
+    AbstractCellTable<String> table = createAbstractHasData(new TextCell());
+    Column<String, ?> col0 = new MockColumn<String, String>();
+    Column<String, ?> col1 = new MockColumn<String, String>();
+    Column<String, ?> col2 = new MockColumn<String, String>();
+
+    // Column 0 set by Column.
+    table.setColumnWidth(col0, "100px");
+
+    // Column 1 set by Column and column index.
+    table.setColumnWidth(col1, 200.0, Unit.EM);
+    table.setColumnWidth(1, "210em");
+
+    // Column 2 set by column index.
+    table.setColumnWidth(2, "300px");
+
+    assertEquals("100px", table.getColumnWidth(col0));
+    assertEquals("300px", table.getColumnWidth(2));
+
+    /*
+     * Some browsers return 200.0, others 200. Column takes precendence over
+     * column index.
+     */
     assertTrue(table.getColumnWidth(col1).contains("200"));
 
     // Check a column that has not been set.

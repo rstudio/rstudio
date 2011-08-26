@@ -170,6 +170,13 @@ public final class SafeStylesUtils {
   }
 
   /**
+   * Set the line-height css property.
+   */
+  public static SafeStyles forLineHeight(double value, Unit unit) {
+    return fromTrustedNameAndValue("line-height", value, unit);
+  }
+
+  /**
    * Sets the list-style-type CSS property.
    */
   public static SafeStyles forListStyleType(ListStyleType value) {

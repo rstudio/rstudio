@@ -795,6 +795,7 @@ public class Style extends JavaScriptObject {
   private static final String STYLE_OUTLINE_WIDTH = "outlineWidth";
   private static final String STYLE_OUTLINE_STYLE = "outlineStyle";
   private static final String STYLE_OUTLINE_COLOR = "outlineColor";
+  private static final String STYLE_LINE_HEIGHT = "lineHeight";
 
   private static final String TABLE_LAYOUT_AUTO = "auto";
   private static final String TABLE_LAYOUT_FIXED = "fixed";
@@ -925,14 +926,21 @@ public class Style extends JavaScriptObject {
    */
   public final void clearHeight() {
      clearProperty(STYLE_HEIGHT);
-   }
+  }
 
   /**
    * Clear the left css property.
    */
   public final void clearLeft() {
      clearProperty(STYLE_LEFT);
-   }
+  }
+
+  /**
+   * Clear the line-height css property.
+   */
+  public final void clearLineHeight() {
+     clearProperty(STYLE_LINE_HEIGHT);
+  }
 
   /**
    * Clears the list-style-type CSS property.
@@ -1222,6 +1230,13 @@ public class Style extends JavaScriptObject {
   }
 
   /**
+   * Get the line-height css property.
+   */
+  public final String getLineHeight() {
+    return getProperty(STYLE_LINE_HEIGHT);
+  }
+
+  /**
    * Gets the list-style-type CSS property.
    */
   public final String getListStyleType() {
@@ -1500,6 +1515,13 @@ public class Style extends JavaScriptObject {
    */
   public final void setLeft(double value, Unit unit) {
     setProperty(STYLE_LEFT, value, unit);
+  }
+
+  /**
+   * Set the line-height css property.
+   */
+  public final void setLineHeight(double value, Unit unit) {
+    setProperty(STYLE_LINE_HEIGHT, value, unit);
   }
 
   /**

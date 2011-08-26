@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.showcase.client.content.cell;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.EditTextCell;
@@ -27,6 +28,7 @@ import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.builder.shared.DivBuilder;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.OutlineStyle;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.i18n.client.Constants;
@@ -35,7 +37,6 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
@@ -50,12 +51,17 @@ import com.google.gwt.user.cellview.client.AbstractCellTable.Style;
 import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent.ListHandler;
+import com.google.gwt.user.cellview.client.ColumnSortList;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.cellview.client.DataGrid;
+import com.google.gwt.user.cellview.client.DefaultHeaderCreator;
 import com.google.gwt.user.cellview.client.Header;
-import com.google.gwt.user.cellview.client.SafeHtmlHeader;
+import com.google.gwt.user.cellview.client.HeaderCreator;
 import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
+import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
@@ -70,7 +76,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Example file.
+ * Defines a custom table that displays a contact in each row. This is an
+ * example that shows how to completely customize the appearance of the headers,
+ * data rows, and footers in a CellTable.
  */
 @ShowcaseRaw({"ContactDatabase.java", "CwCustomDataGrid.ui.xml", "CwCustomDataGrid.css"})
 public class CwCustomDataGrid extends ContentWidget {
@@ -126,16 +134,179 @@ public class CwCustomDataGrid extends ContentWidget {
      * Indents cells in child rows.
      */
     String childCell();
+
+    /**
+     * Applies to group headers.
+     */
+    String groupHeaderCell();
   }
 
   /**
-   * A custom version of {@link CellTableBuilder}.
+   * Renders custom table headers. The top header row includes the groups "Name"
+   * and "Information", each of which spans multiple columns. The second row of
+   * the headers includes the contacts' first and last names grouped under the
+   * "Name" category. The second row also includes the age, category, and
+   * address of the contacts grouped under the "Information" category.
+   */
+  @ShowcaseSource
+  private class CustomHeaderCreator extends DefaultHeaderCreator<ContactInfo> {
+
+    private Header<String> firstNameHeader = new TextHeader(constants
+        .cwCustomDataGridColumnFirstName());
+    private Header<String> lastNameHeader = new TextHeader(constants
+        .cwCustomDataGridColumnLastName());
+    private Header<String> ageHeader = new TextHeader(constants.cwCustomDataGridColumnAge());
+    private Header<String> categoryHeader = new TextHeader(constants
+        .cwCustomDataGridColumnCategory());
+    private Header<String> addressHeader =
+        new TextHeader(constants.cwCustomDataGridColumnAddress());
+
+    public CustomHeaderCreator() {
+      super(dataGrid, false);
+      setSortIconStartOfLine(false);
+    }
+
+    @Override
+    public void buildHeader(Helper<ContactInfo> helper) {
+      Style style = dataGrid.getResources().style();
+      String groupHeaderCell = resources.styles().groupHeaderCell();
+
+      // Add a 2x2 header above the checkbox and show friends columns.
+      TableRowBuilder tr = helper.startRow();
+      tr.startTH().colSpan(2).rowSpan(2)
+          .className(style.header() + " " + style.firstColumnHeader());
+      tr.endTH();
+
+      /*
+       * Name group header. Associated with the last name column, so clicking on
+       * the group header sorts by last name.
+       */
+      TableCellBuilder th = tr.startTH().colSpan(2).className(groupHeaderCell);
+      helper.enableColumnHandlers(th, lastNameColumn);
+      th.style().trustedProperty("border-right", "10px solid white").cursor(Cursor.POINTER)
+          .endStyle();
+      th.text("Name").endTH();
+
+      // Information group header.
+      th = tr.startTH().colSpan(3).className(groupHeaderCell);
+      th.text("Information").endTH();
+
+      // Get information about the sorted column.
+      ColumnSortList sortList = dataGrid.getColumnSortList();
+      ColumnSortInfo sortedInfo = (sortList.size() == 0) ? null : sortList.get(0);
+      Column<?, ?> sortedColumn = (sortedInfo == null) ? null : sortedInfo.getColumn();
+      boolean isSortAscending = (sortedInfo == null) ? false : sortedInfo.isAscending();
+
+      // Add column headers.
+      tr = helper.startRow();
+      buildHeader(helper, tr, firstNameHeader, firstNameColumn, sortedColumn, isSortAscending,
+          false, false);
+      buildHeader(helper, tr, lastNameHeader, lastNameColumn, sortedColumn, isSortAscending, false,
+          false);
+      buildHeader(helper, tr, ageHeader, ageColumn, sortedColumn, isSortAscending, false, false);
+      buildHeader(helper, tr, categoryHeader, categoryColumn, sortedColumn, isSortAscending, false,
+          false);
+      buildHeader(helper, tr, addressHeader, addressColumn, sortedColumn, isSortAscending, false,
+          true);
+      tr.endTR();
+    }
+
+    /**
+     * Renders the header of one column, with the given options.
+     * 
+     * @param helper the helper used to build the header
+     * @param out the table row to build into
+     * @param header the {@link Header} to render
+     * @param column the column to associate with the header
+     * @param sortedColumn the column that is currently sorted
+     * @param isSortAscending true if the sorted column is in ascending order
+     * @param isFirst true if this the first column
+     * @param isLast true if this the last column
+     */
+    private void buildHeader(Helper<ContactInfo> helper, TableRowBuilder out, Header<?> header,
+        Column<ContactInfo, ?> column, Column<?, ?> sortedColumn, boolean isSortAscending,
+        boolean isFirst, boolean isLast) {
+      // Choose the classes to include with the element.
+      Style style = dataGrid.getResources().style();
+      boolean isSorted = (sortedColumn == column);
+      StringBuilder classesBuilder = new StringBuilder(style.header());
+      if (isFirst) {
+        classesBuilder.append(" " + style.firstColumnHeader());
+      }
+      if (isLast) {
+        classesBuilder.append(" " + style.lastColumnHeader());
+      }
+      if (column.isSortable()) {
+        classesBuilder.append(" " + style.sortableHeader());
+      }
+      if (isSorted) {
+        classesBuilder.append(" "
+            + (isSortAscending ? style.sortedHeaderAscending() : style.sortedHeaderDescending()));
+      }
+
+      // Create the table cell.
+      TableCellBuilder th = out.startTH().className(classesBuilder.toString());
+
+      // Associate the cell with the column to enable sorting of the column.
+      helper.enableColumnHandlers(th, column);
+
+      // Render the header.
+      Context context = new Context(0, 2, header.getKey());
+      renderHeader(th, context, header, helper, isSorted, isSortAscending);
+
+      // End the table cell.
+      th.endTH();
+    }
+  }
+
+  /**
+   * Renders custom table footers that appear beneath the columns in the table.
+   * This footer consists of a single cell containing the average age of all
+   * contacts on the current page. This is an example of a dynamic footer that
+   * changes with the row data in the table.
+   */
+  @ShowcaseSource
+  private class CustomFooterCreator implements HeaderCreator<ContactInfo> {
+
+    @Override
+    public void buildHeader(HeaderCreator.Helper<ContactInfo> helper) {
+      String footerStyle = dataGrid.getResources().style().footer();
+
+      // Calculate the age of all visible contacts.
+      String ageStr = "";
+      List<ContactInfo> items = dataGrid.getVisibleItems();
+      if (items.size() > 0) {
+        int totalAge = 0;
+        for (ContactInfo item : items) {
+          totalAge += item.getAge();
+        }
+        ageStr = "Avg: " + totalAge / items.size();
+      }
+
+      // Cells before age column.
+      TableRowBuilder tr = helper.startRow();
+      tr.startTH().colSpan(4).className(footerStyle).endTH();
+
+      // Show the average age of all contacts.
+      TableCellBuilder th =
+          tr.startTH().className(footerStyle).align(
+              HasHorizontalAlignment.ALIGN_CENTER.getTextAlignString());
+      th.text(ageStr);
+      th.endTH();
+
+      // Cells after age column.
+      tr.startTH().colSpan(2).className(footerStyle).endTH();
+      tr.endTR();
+    }
+  }
+
+  /**
+   * Renders the data rows that display each contact in the table.
    */
   @ShowcaseSource
   private class CustomTableBuilder extends AbstractCellTableBuilder<ContactInfo> {
 
     private final int todayMonth;
-    private final Set<Integer> showingFriends = new HashSet<Integer>();
 
     private final String childCell = " " + resources.styles().childCell();
     private final String rowStyle;
@@ -144,8 +315,9 @@ public class CwCustomDataGrid extends ContentWidget {
     private final String selectedCellStyle;
 
     @SuppressWarnings("deprecation")
-    public CustomTableBuilder(ListHandler<ContactInfo> sortHandler) {
+    public CustomTableBuilder() {
       super(dataGrid);
+
       // Cache styles for faster access.
       Style style = dataGrid.getResources().style();
       rowStyle = style.evenRow();
@@ -156,190 +328,6 @@ public class CwCustomDataGrid extends ContentWidget {
       // Record today's date.
       Date today = new Date();
       todayMonth = today.getMonth();
-
-      /*
-       * Checkbox column.
-       * 
-       * This table will uses a checkbox column for selection. Alternatively,
-       * you can call dataGrid.setSelectionEnabled(true) to enable mouse
-       * selection.
-       */
-      Column<ContactInfo, Boolean> checkboxColumn =
-          new Column<ContactInfo, Boolean>(new CheckboxCell(true, false)) {
-            @Override
-            public Boolean getValue(ContactInfo object) {
-              // Get the value from the selection model.
-              return dataGrid.getSelectionModel().isSelected(object);
-            }
-          };
-      dataGrid.addColumn(checkboxColumn, SafeHtmlUtils.fromSafeConstant("<br/>"));
-      dataGrid.setColumnWidth(0, 40, Unit.PX);
-
-      // View friends.
-      SafeHtmlRenderer<String> anchorRenderer = new AbstractSafeHtmlRenderer<String>() {
-        @Override
-        public SafeHtml render(String object) {
-          SafeHtmlBuilder sb = new SafeHtmlBuilder();
-          sb.appendHtmlConstant("(<a href=\"javascript:;\">").appendEscaped(object)
-              .appendHtmlConstant("</a>)");
-          return sb.toSafeHtml();
-        }
-      };
-      Column<ContactInfo, String> viewFriendsColumn =
-          new Column<ContactInfo, String>(new ClickableTextCell(anchorRenderer)) {
-            @Override
-            public String getValue(ContactInfo object) {
-              if (showingFriends.contains(object.getId())) {
-                return "hide friends";
-              } else {
-                return "show friends";
-              }
-            }
-          };
-      dataGrid.addColumn(viewFriendsColumn, SafeHtmlUtils.fromSafeConstant("<br/>"));
-      viewFriendsColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
-        @Override
-        public void update(int index, ContactInfo object, String value) {
-          if (showingFriends.contains(object.getId())) {
-            showingFriends.remove(object.getId());
-          } else {
-            showingFriends.add(object.getId());
-          }
-
-          // Redraw the modified row.
-          dataGrid.redrawRow(index);
-        }
-      });
-      dataGrid.setColumnWidth(1, 10, Unit.EM);
-
-      // First name.
-      Column<ContactInfo, String> firstNameColumn =
-          new Column<ContactInfo, String>(new EditTextCell()) {
-            @Override
-            public String getValue(ContactInfo object) {
-              return object.getFirstName();
-            }
-          };
-      firstNameColumn.setSortable(true);
-      sortHandler.setComparator(firstNameColumn, new Comparator<ContactInfo>() {
-        @Override
-        public int compare(ContactInfo o1, ContactInfo o2) {
-          return o1.getFirstName().compareTo(o2.getFirstName());
-        }
-      });
-      dataGrid.addColumn(firstNameColumn, constants.cwCustomDataGridColumnFirstName());
-      firstNameColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
-        @Override
-        public void update(int index, ContactInfo object, String value) {
-          // Called when the user changes the value.
-          object.setFirstName(value);
-          ContactDatabase.get().refreshDisplays();
-        }
-      });
-      dataGrid.setColumnWidth(2, 20, Unit.PCT);
-
-      // Last name.
-      Column<ContactInfo, String> lastNameColumn =
-          new Column<ContactInfo, String>(new EditTextCell()) {
-            @Override
-            public String getValue(ContactInfo object) {
-              return object.getLastName();
-            }
-          };
-      lastNameColumn.setSortable(true);
-      sortHandler.setComparator(lastNameColumn, new Comparator<ContactInfo>() {
-        @Override
-        public int compare(ContactInfo o1, ContactInfo o2) {
-          return o1.getLastName().compareTo(o2.getLastName());
-        }
-      });
-      dataGrid.addColumn(lastNameColumn, constants.cwCustomDataGridColumnLastName());
-      lastNameColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
-        @Override
-        public void update(int index, ContactInfo object, String value) {
-          // Called when the user changes the value.
-          object.setLastName(value);
-          ContactDatabase.get().refreshDisplays();
-        }
-      });
-      dataGrid.setColumnWidth(3, 20, Unit.PCT);
-
-      // Age.
-      Column<ContactInfo, Number> ageColumn = new Column<ContactInfo, Number>(new NumberCell()) {
-        @Override
-        public Number getValue(ContactInfo object) {
-          return object.getAge();
-        }
-      };
-      ageColumn.setSortable(true);
-      sortHandler.setComparator(ageColumn, new Comparator<ContactInfo>() {
-        @Override
-        public int compare(ContactInfo o1, ContactInfo o2) {
-          return o1.getAge() - o2.getAge();
-        }
-      });
-      Header<String> ageFooter = new Header<String>(new TextCell()) {
-        @Override
-        public String getValue() {
-          List<ContactInfo> items = dataGrid.getVisibleItems();
-          if (items.size() == 0) {
-            return "";
-          } else {
-            int totalAge = 0;
-            for (ContactInfo item : items) {
-              totalAge += item.getAge();
-            }
-            return "Avg: " + totalAge / items.size();
-          }
-        }
-      };
-      dataGrid.addColumn(ageColumn, new SafeHtmlHeader(SafeHtmlUtils.fromSafeConstant(constants
-          .cwCustomDataGridColumnAge())), ageFooter);
-      dataGrid.setColumnWidth(4, 7, Unit.EM);
-
-      // Category.
-      final Category[] categories = ContactDatabase.get().queryCategories();
-      List<String> categoryNames = new ArrayList<String>();
-      for (Category category : categories) {
-        categoryNames.add(category.getDisplayName());
-      }
-      SelectionCell categoryCell = new SelectionCell(categoryNames);
-      Column<ContactInfo, String> categoryColumn = new Column<ContactInfo, String>(categoryCell) {
-        @Override
-        public String getValue(ContactInfo object) {
-          return object.getCategory().getDisplayName();
-        }
-      };
-      dataGrid.addColumn(categoryColumn, constants.cwCustomDataGridColumnCategory());
-      categoryColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
-        @Override
-        public void update(int index, ContactInfo object, String value) {
-          for (Category category : categories) {
-            if (category.getDisplayName().equals(value)) {
-              object.setCategory(category);
-            }
-          }
-          ContactDatabase.get().refreshDisplays();
-        }
-      });
-      dataGrid.setColumnWidth(5, 130, Unit.PX);
-
-      // Address.
-      Column<ContactInfo, String> addressColumn = new Column<ContactInfo, String>(new TextCell()) {
-        @Override
-        public String getValue(ContactInfo object) {
-          return object.getAddress();
-        }
-      };
-      addressColumn.setSortable(true);
-      sortHandler.setComparator(addressColumn, new Comparator<ContactInfo>() {
-        @Override
-        public int compare(ContactInfo o1, ContactInfo o2) {
-          return o1.getAddress().compareTo(o2.getAddress());
-        }
-      });
-      dataGrid.addColumn(addressColumn, constants.cwCustomDataGridColumnAddress());
-      dataGrid.setColumnWidth(6, 60, Unit.PCT);
     }
 
     @SuppressWarnings("deprecation")
@@ -420,7 +408,7 @@ public class CwCustomDataGrid extends ContentWidget {
       td.className(cellStyles);
       td.style().outlineStyle(OutlineStyle.NONE).endStyle();
       if (!isFriend) {
-        renderCell(td, createContext(0), dataGrid.getColumn(0), rowValue);
+        renderCell(td, createContext(0), checkboxColumn, rowValue);
       }
       td.endTD();
 
@@ -434,7 +422,7 @@ public class CwCustomDataGrid extends ContentWidget {
       td.className(cellStyles);
       if (!isFriend) {
         td.style().outlineStyle(OutlineStyle.NONE).endStyle();
-        renderCell(td, createContext(1), dataGrid.getColumn(1), rowValue);
+        renderCell(td, createContext(1), viewFriendsColumn, rowValue);
       }
       td.endTD();
 
@@ -445,7 +433,7 @@ public class CwCustomDataGrid extends ContentWidget {
       if (isFriend) {
         td.text(rowValue.getFirstName());
       } else {
-        renderCell(td, createContext(2), dataGrid.getColumn(2), rowValue);
+        renderCell(td, createContext(2), firstNameColumn, rowValue);
       }
       td.endTD();
 
@@ -456,7 +444,7 @@ public class CwCustomDataGrid extends ContentWidget {
       if (isFriend) {
         td.text(rowValue.getLastName());
       } else {
-        renderCell(td, createContext(3), dataGrid.getColumn(3), rowValue);
+        renderCell(td, createContext(3), lastNameColumn, rowValue);
       }
       td.endTD();
 
@@ -473,7 +461,7 @@ public class CwCustomDataGrid extends ContentWidget {
       if (isFriend) {
         td.text(rowValue.getCategory().getDisplayName());
       } else {
-        renderCell(td, createContext(5), dataGrid.getColumn(5), rowValue);
+        renderCell(td, createContext(5), categoryColumn, rowValue);
       }
       td.endTD();
 
@@ -514,6 +502,55 @@ public class CwCustomDataGrid extends ContentWidget {
    */
   @ShowcaseData
   private Resources resources;
+
+  /**
+   * Contains the contact id for each row in the table where the friends list is
+   * currently expanded.
+   */
+  @ShowcaseData
+  private final Set<Integer> showingFriends = new HashSet<Integer>();
+
+  /**
+   * Column to control selection.
+   */
+  @ShowcaseData
+  private Column<ContactInfo, Boolean> checkboxColumn;
+
+  /**
+   * Column to expand friends list.
+   */
+  @ShowcaseData
+  private Column<ContactInfo, String> viewFriendsColumn;
+
+  /**
+   * Column displays first name.
+   */
+  @ShowcaseData
+  private Column<ContactInfo, String> firstNameColumn;
+
+  /**
+   * Column displays last name.
+   */
+  @ShowcaseData
+  private Column<ContactInfo, String> lastNameColumn;
+
+  /**
+   * Column displays age.
+   */
+  @ShowcaseData
+  private Column<ContactInfo, Number> ageColumn;
+
+  /**
+   * Column displays category.
+   */
+  @ShowcaseData
+  private Column<ContactInfo, String> categoryColumn;
+
+  /**
+   * Column displays address.
+   */
+  @ShowcaseData
+  private Column<ContactInfo, String> addressColumn;
 
   /**
    * Constructor.
@@ -581,8 +618,13 @@ public class CwCustomDataGrid extends ContentWidget {
     dataGrid.setSelectionModel(selectionModel, DefaultSelectionEventManager
         .<ContactInfo> createCheckboxManager());
 
+    // Initialize the columns.
+    initializeColumns(sortHandler);
+
     // Specify a custom table.
-    dataGrid.setTableBuilder(new CustomTableBuilder(sortHandler));
+    dataGrid.setTableBuilder(new CustomTableBuilder());
+    dataGrid.setHeaderCreator(new CustomHeaderCreator());
+    dataGrid.setFooterCreator(new CustomFooterCreator());
 
     // Add the CellList to the adapter in the database.
     ContactDatabase.get().addDataDisplay(dataGrid);
@@ -606,5 +648,169 @@ public class CwCustomDataGrid extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  /**
+   * Defines the columns in the custom table. Maps the data in the ContactInfo
+   * for each row into the appropriate column in the table, and defines handlers
+   * for each column.
+   */
+  @ShowcaseSource
+  private void initializeColumns(ListHandler<ContactInfo> sortHandler) {
+    /*
+     * Checkbox column.
+     * 
+     * This table will uses a checkbox column for selection. Alternatively, you
+     * can call dataGrid.setSelectionEnabled(true) to enable mouse selection.
+     */
+    checkboxColumn = new Column<ContactInfo, Boolean>(new CheckboxCell(true, false)) {
+      @Override
+      public Boolean getValue(ContactInfo object) {
+        // Get the value from the selection model.
+        return dataGrid.getSelectionModel().isSelected(object);
+      }
+    };
+    dataGrid.setColumnWidth(0, 40, Unit.PX);
+
+    // View friends.
+    SafeHtmlRenderer<String> anchorRenderer = new AbstractSafeHtmlRenderer<String>() {
+      @Override
+      public SafeHtml render(String object) {
+        SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        sb.appendHtmlConstant("(<a href=\"javascript:;\">").appendEscaped(object)
+            .appendHtmlConstant("</a>)");
+        return sb.toSafeHtml();
+      }
+    };
+    viewFriendsColumn = new Column<ContactInfo, String>(new ClickableTextCell(anchorRenderer)) {
+      @Override
+      public String getValue(ContactInfo object) {
+        if (showingFriends.contains(object.getId())) {
+          return "hide friends";
+        } else {
+          return "show friends";
+        }
+      }
+    };
+    viewFriendsColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
+      @Override
+      public void update(int index, ContactInfo object, String value) {
+        if (showingFriends.contains(object.getId())) {
+          showingFriends.remove(object.getId());
+        } else {
+          showingFriends.add(object.getId());
+        }
+
+        // Redraw the modified row.
+        dataGrid.redrawRow(index);
+      }
+    });
+    dataGrid.setColumnWidth(1, 10, Unit.EM);
+
+    // First name.
+    firstNameColumn = new Column<ContactInfo, String>(new EditTextCell()) {
+      @Override
+      public String getValue(ContactInfo object) {
+        return object.getFirstName();
+      }
+    };
+    firstNameColumn.setSortable(true);
+    sortHandler.setComparator(firstNameColumn, new Comparator<ContactInfo>() {
+      @Override
+      public int compare(ContactInfo o1, ContactInfo o2) {
+        return o1.getFirstName().compareTo(o2.getFirstName());
+      }
+    });
+    firstNameColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
+      @Override
+      public void update(int index, ContactInfo object, String value) {
+        // Called when the user changes the value.
+        object.setFirstName(value);
+        ContactDatabase.get().refreshDisplays();
+      }
+    });
+    dataGrid.setColumnWidth(2, 20, Unit.PCT);
+
+    // Last name.
+    lastNameColumn = new Column<ContactInfo, String>(new EditTextCell()) {
+      @Override
+      public String getValue(ContactInfo object) {
+        return object.getLastName();
+      }
+    };
+    lastNameColumn.setSortable(true);
+    sortHandler.setComparator(lastNameColumn, new Comparator<ContactInfo>() {
+      @Override
+      public int compare(ContactInfo o1, ContactInfo o2) {
+        return o1.getLastName().compareTo(o2.getLastName());
+      }
+    });
+    lastNameColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
+      @Override
+      public void update(int index, ContactInfo object, String value) {
+        // Called when the user changes the value.
+        object.setLastName(value);
+        ContactDatabase.get().refreshDisplays();
+      }
+    });
+    dataGrid.setColumnWidth(3, 20, Unit.PCT);
+
+    // Age.
+    ageColumn = new Column<ContactInfo, Number>(new NumberCell()) {
+      @Override
+      public Number getValue(ContactInfo object) {
+        return object.getAge();
+      }
+    };
+    ageColumn.setSortable(true);
+    sortHandler.setComparator(ageColumn, new Comparator<ContactInfo>() {
+      @Override
+      public int compare(ContactInfo o1, ContactInfo o2) {
+        return o1.getAge() - o2.getAge();
+      }
+    });
+    dataGrid.setColumnWidth(4, 7, Unit.EM);
+
+    // Category.
+    final Category[] categories = ContactDatabase.get().queryCategories();
+    List<String> categoryNames = new ArrayList<String>();
+    for (Category category : categories) {
+      categoryNames.add(category.getDisplayName());
+    }
+    SelectionCell categoryCell = new SelectionCell(categoryNames);
+    categoryColumn = new Column<ContactInfo, String>(categoryCell) {
+      @Override
+      public String getValue(ContactInfo object) {
+        return object.getCategory().getDisplayName();
+      }
+    };
+    categoryColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
+      @Override
+      public void update(int index, ContactInfo object, String value) {
+        for (Category category : categories) {
+          if (category.getDisplayName().equals(value)) {
+            object.setCategory(category);
+          }
+        }
+        ContactDatabase.get().refreshDisplays();
+      }
+    });
+    dataGrid.setColumnWidth(5, 130, Unit.PX);
+
+    // Address.
+    addressColumn = new Column<ContactInfo, String>(new TextCell()) {
+      @Override
+      public String getValue(ContactInfo object) {
+        return object.getAddress();
+      }
+    };
+    addressColumn.setSortable(true);
+    sortHandler.setComparator(addressColumn, new Comparator<ContactInfo>() {
+      @Override
+      public int compare(ContactInfo o1, ContactInfo o2) {
+        return o1.getAddress().compareTo(o2.getAddress());
+      }
+    });
+    dataGrid.setColumnWidth(6, 60, Unit.PCT);
   }
 }

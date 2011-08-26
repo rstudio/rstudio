@@ -19,11 +19,48 @@ import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
+import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * Tests for {@link DataGrid}.
  */
 public class DataGridTest extends AbstractCellTableTestBase<DataGrid<String>> {
+
+  /**
+   * Test that if a header creator does not add any rows, the header is hidden.
+   */
+  public void testHeaderCreatorEmpty() {
+    DataGrid<String> table = createAbstractHasData();
+    RootPanel.get().add(table);
+    HeaderCreator<String> emptyBuilder = new HeaderCreator<String>() {
+      @Override
+      public void buildHeader(HeaderCreator.Helper<String> utility) {
+        // No-op.
+      }
+    };
+    HeaderCreator<String> notEmptyBuilder = new HeaderCreator<String>() {
+      @Override
+      public void buildHeader(HeaderCreator.Helper<String> utility) {
+        utility.startRow();
+      }
+    };
+
+    // Header is empty, footer is not.
+    table.setHeaderCreator(emptyBuilder);
+    table.setFooterCreator(notEmptyBuilder);
+    table.getPresenter().flush();
+    assertFalse(table.tableHeader.isAttached());
+    assertTrue(table.tableFooter.isAttached());
+
+    // Footer is empty, header is not.
+    table.setHeaderCreator(notEmptyBuilder);
+    table.setFooterCreator(emptyBuilder);
+    table.getPresenter().flush();
+    assertTrue(table.tableHeader.isAttached());
+    assertFalse(table.tableFooter.isAttached());
+
+    RootPanel.get().remove(table);
+  }
 
   @Override
   protected DataGrid<String> createAbstractHasData() {
@@ -42,6 +79,9 @@ public class DataGridTest extends AbstractCellTableTestBase<DataGrid<String>> {
   protected int getHeaderCount(DataGrid<String> table) {
     TableElement tableElem = table.tableHeader.getElement().cast();
     TableSectionElement thead = tableElem.getTHead();
+    if (thead.getRows().getLength() == 0) {
+      return 0;
+    }
     TableRowElement tr = thead.getRows().getItem(0);
     return tr.getCells().getLength();
   }

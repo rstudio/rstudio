@@ -70,7 +70,7 @@ import java.util.Set;
  * <dt>Handling user input with complex FieldUpdater example</dt>
  * <dd>{@example
  * com.google.gwt.examples.cellview.CellTableFieldUpdaterExampleComplex}</dd>
- * <dt>Pushing data with List Data Provider (backed by {@link List})</dt>
+ * <dt>Pushing data with List Data Provider (backed by {@link java.util.List})</dt>
  * <dd>{@example com.google.gwt.examples.view.ListDataProviderExample}</dd>
  * <dt>Pushing data asynchronously with Async Data Provider</dt>
  * <dd>{@example com.google.gwt.examples.view.AsyncDataProviderExample}</dd>
@@ -802,7 +802,7 @@ public class CellTable<T> extends AbstractCellTable<T> {
     }
 
     // Adjust the colspan of the messages panel container.
-    tbodyLoadingCell.setColSpan(Math.max(1, getColumnCount()));
+    tbodyLoadingCell.setColSpan(Math.max(1, getRealColumnCount()));
 
     // Show the correct container.
     showOrHide(getChildContainer(), message == null);
@@ -822,7 +822,7 @@ public class CellTable<T> extends AbstractCellTable<T> {
      * in a fixed layout table.
      */
     int colCount = colgroup.getChildCount();
-    for (int i = getColumnCount(); i < colCount; i++) {
+    for (int i = getRealColumnCount(); i < colCount; i++) {
       doSetColumnWidth(i, "0px");
     }
   }
