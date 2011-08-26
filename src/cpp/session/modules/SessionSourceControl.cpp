@@ -61,9 +61,9 @@ struct CommitInfo
 class VCSImpl : boost::noncopyable
 {
 public:
-   VCSImpl()
+   VCSImpl(FilePath rootDir)
    {
-      root_ = projects::projectContext().directory();
+      root_ = rootDir;
    }
 
    virtual ~VCSImpl()
@@ -213,7 +213,7 @@ boost::scoped_ptr<VCSImpl> s_pVcsImpl_;
 class GitVCSImpl : public VCSImpl
 {
 public:
-   static std::string detectGitDir(FilePath workingDir)
+   static FilePath detectGitDir(FilePath workingDir)
    {
       std::string command("cd ");
       command.append(string_utils::bash_escape(workingDir.absolutePath()));
@@ -227,17 +227,16 @@ public:
       core::system::ProcessResult result;
       Error error = core::system::runCommand(command, &result);
       if (error)
-         return std::string();
+         return FilePath();
 
       if (result.exitStatus != 0)
-         return std::string();
+         return FilePath();
 
-      return boost::algorithm::trim_copy(result.stdOut);
+      return FilePath(boost::algorithm::trim_copy(result.stdOut));
    }
 
-   GitVCSImpl(FilePath workingDir) : VCSImpl()
+   GitVCSImpl(FilePath repoDir) : VCSImpl(repoDir)
    {
-      root_ = FilePath(detectGitDir(workingDir));
    }
 
    VCS id() { return VCSGit; }
@@ -438,6 +437,7 @@ public:
       std::vector<std::string> args;
       args.push_back("checkout");
       args.push_back(id);
+      args.push_back("--");
       return runCommand("git", args);
    }
 
@@ -631,6 +631,11 @@ public:
 
 class SubversionVCSImpl : public VCSImpl
 {
+public:
+   SubversionVCSImpl(FilePath rootDir) : VCSImpl(rootDir)
+   {
+   }
+
    VCS id() { return VCSSubversion; }
    std::string name() { return "SVN"; }
 
@@ -889,8 +894,7 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
                     json::JsonRpcResponse* pResponse)
 {
    StatusResult statusResult;
-   Error error = s_pVcsImpl_->status(projects::projectContext().directory(),
-                                     &statusResult);
+   Error error = s_pVcsImpl_->status(s_pVcsImpl_->root(), &statusResult);
    if (error)
       return error;
 
@@ -904,7 +908,7 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
       FilePath path = it->path;
       json::Object obj;
       obj["status"] = status.status();
-      obj["path"] = path.relativePath(projects::projectContext().directory());
+      obj["path"] = path.relativePath(s_pVcsImpl_->root());
       obj["raw_path"] = path.absolutePath();
       obj["discardable"] = status.status()[1] != ' ' && status.status()[1] != '?';
       result.push_back(obj);
@@ -1095,15 +1099,15 @@ core::Error initialize()
    FilePath workingDir = projects::projectContext().directory();
 
    if (!userSettings().vcsEnabled())
-      s_pVcsImpl_.reset(new VCSImpl());
+      s_pVcsImpl_.reset(new VCSImpl(workingDir));
    else if (workingDir.empty())
-      s_pVcsImpl_.reset(new VCSImpl());
+      s_pVcsImpl_.reset(new VCSImpl(workingDir));
    else if (!GitVCSImpl::detectGitDir(workingDir).empty())
-      s_pVcsImpl_.reset(new GitVCSImpl(workingDir));
+      s_pVcsImpl_.reset(new GitVCSImpl(GitVCSImpl::detectGitDir(workingDir)));
    else if (workingDir.childPath(".svn").isDirectory())
-      s_pVcsImpl_.reset(new SubversionVCSImpl());
+      s_pVcsImpl_.reset(new SubversionVCSImpl(workingDir));
    else
-      s_pVcsImpl_.reset(new VCSImpl());
+      s_pVcsImpl_.reset(new VCSImpl(workingDir));
 
    // install rpc methods
    using boost::bind;
