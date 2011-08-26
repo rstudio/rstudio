@@ -71,10 +71,20 @@ public class DefaultHeaderCreator<T> implements HeaderCreator<T> {
      */
     ImageResource asc = table.getResources().sortAscending();
     ImageResource desc = table.getResources().sortDescending();
-    sortAscIconWidth = asc.getWidth() + ICON_PADDING;
-    sortDescIconWidth = desc.getWidth() + ICON_PADDING;
-    sortAscIconHalfHeight = (int) Math.round(asc.getHeight() / 2.0);
-    sortDescIconHalfHeight = (int) Math.round(desc.getHeight() / 2.0);
+    if (asc != null) {
+      sortAscIconWidth = asc.getWidth() + ICON_PADDING;
+      sortAscIconHalfHeight = (int) Math.round(asc.getHeight() / 2.0);
+    } else {
+      sortAscIconWidth = 0;
+      sortAscIconHalfHeight = 0;
+    }
+    if (desc != null) {
+      sortDescIconWidth = desc.getWidth() + ICON_PADDING;
+      sortDescIconHalfHeight = (int) Math.round(desc.getHeight() / 2.0);
+    } else {
+      sortDescIconWidth = 0;
+      sortDescIconHalfHeight = 0;
+    }
   }
 
   @Override
