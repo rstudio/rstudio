@@ -149,5 +149,4 @@ public class VcsState
    private final VCSServerOperations server_;
    private final EventBus eventBus_;
    private final GlobalDisplay globalDisplay_;
-   private HandlerRegistration handlerRegistration_;
 }
