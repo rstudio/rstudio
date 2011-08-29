@@ -219,11 +219,6 @@ public:
       command.append(string_utils::bash_escape(workingDir.absolutePath()));
       command.append("; git rev-parse --show-toplevel");
 
-      std::vector<std::string> args;
-      args.push_back("rev-parse");
-      args.push_back("--show-toplevel");
-      std::string output;
-
       core::system::ProcessResult result;
       Error error = core::system::runCommand(command, &result);
       if (error)
