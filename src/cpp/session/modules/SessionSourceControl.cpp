@@ -845,8 +845,8 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
 {
    std::vector<std::string> branches;
    boost::optional<size_t> activeIndex;
-   std::string stderr;
-   Error error = s_pVcsImpl_->listBranches(&branches, &activeIndex, &stderr);
+   std::string stdErr;
+   Error error = s_pVcsImpl_->listBranches(&branches, &activeIndex, &stdErr);
    if (error)
       return error;
 
@@ -877,8 +877,8 @@ Error vcsCheckout(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   std::string stderr;
-   error = s_pVcsImpl_->checkout(id, &stderr);
+   std::string stdErr;
+   error = s_pVcsImpl_->checkout(id, &stdErr);
    if (error)
       return error;
 
