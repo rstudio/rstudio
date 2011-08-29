@@ -22,6 +22,10 @@
 
 #include "FileMonitorImpl.hpp"
 
+// TODO: investigate parallel package (multicore) interactions with file monitor
+
+// TODO: should we be using lstat64?
+
 namespace core {
 namespace system {
 namespace file_monitor {
