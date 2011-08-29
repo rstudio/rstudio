@@ -30,13 +30,6 @@
 
 #include "FileMonitorImpl.hpp"
 
-
-// TODO: prevent recursing over links outside of directory during indexing
-// (note this should be done for posix but needs to be done for win32)
-
-// TODO: as part of this consider re-implementing Win32 filescanner using
-// findnextfile
-
 // NOTE: the functions below assume case-sensitive file names. this could
 // in theory cause us to lose notifications on Win32 and OS X however in
 // practice we can't think of an easy way for the user to specify the
