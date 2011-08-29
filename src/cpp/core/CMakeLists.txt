@@ -60,7 +60,6 @@ set (CORE_SOURCE_FILES
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
    r_util/RTokenizerTests.cpp
-   system/FileScanner.cpp
    system/Process.cpp
    system/System.cpp
    system/file_monitor/FileMonitor.cpp
