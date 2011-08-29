@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+      <key>CFBundleDocumentTypes</key>
+      <array>
+      <dict>
+         <key>CFBundleTypeOSTypes</key>
+         <array>
+            <string>fold</string>
+         </array>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+            <string>RData</string>
+            <string>Rdata</string>
+            <string>rdata</string>
+            <string>rda</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RData.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Data File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+         <key>LSTypeIsPackage</key>
+         <false/>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+            <string>Rproj</string>
+            <string>RProj</string>
+            <string>rproj</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RProject.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Project</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+         <key>LSTypeIsPackage</key>
+         <false/>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>R</string>
+             <string>r</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RSource.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Source File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>Rd</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RDoc.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Doc File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>Rnw</string>
+             <string>rnw</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RSweave.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>Sweave File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>tex</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RTex.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>TeX File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+      </dict>
+   </array>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>RStudio</string>
+	<key>CFBundleGetInfoString</key>
+   <string>RStudio ${CPACK_PACKAGE_VERSION}, © 2009-2011 RStudio, Inc.</string>
+	<key>CFBundleIconFile</key>
+	<string>RStudio.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>org.rstudio.RStudio</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleLongVersionString</key>
+	<string>${CPACK_PACKAGE_VERSION}</string>
+	<key>CFBundleName</key>
+	<string>RStudio</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>${CPACK_PACKAGE_VERSION}</string>
+	<key>CFBundleSignature</key>
+	<string>Rstd</string>
+	<key>CFBundleVersion</key>
+	<string>${CPACK_PACKAGE_VERSION}</string>
+	<key>CSResourcesFileMapped</key>
+	<true/>
+	<key>LSRequiresCarbon</key>
+	<true/>
+	<key>NSHumanReadableCopyright</key>
+   <string>RStudio ${CPACK_PACKAGE_VERSION}, © 2009-2011 RStudio, Inc.</string>
+</dict>
+</plist>

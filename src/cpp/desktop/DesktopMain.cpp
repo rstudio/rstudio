@@ -20,7 +20,9 @@
 
 #include <core/Log.hpp>
 
+#include <core/system/FileScanner.hpp>
 #include <core/Error.hpp>
+#include <core/FileInfo.hpp>
 #include <core/FilePath.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
@@ -169,6 +171,11 @@ QString verifyAndNormalizeFilename(QString filename)
       return QString();
 }
 
+bool dummy(const FileInfo& file)
+{
+   return true;
+}
+
 } // anonymous namespace
 
 int main(int argc, char* argv[])
@@ -273,6 +280,12 @@ int main(int argc, char* argv[])
 #endif
       }
       core::system::fixupExecutablePath(&sessionPath);
+
+      tree<FileInfo> resultTree;
+      core::system::scanFiles(FileInfo("/Users/jcheng/rstudio", true),
+                              true,
+                              &dummy,
+                              &resultTree);
 
       // launch session
       SessionLauncher sessionLauncher(sessionPath, confPath);
