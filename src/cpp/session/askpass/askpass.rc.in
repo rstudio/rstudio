@@ -1,9 +1,8 @@
 #include "winuser.h"
 
-1 ICON RStudio.ico
-2 ICON RProject.ico
+1 ICON AskPass.ico
 
-1 RT_MANIFEST "rstudio.exe.manifest"
+1 RT_MANIFEST "askpass.exe.manifest"
 1 VERSIONINFO
 FILEVERSION ${CPACK_PACKAGE_VERSION_MAJOR},${CPACK_PACKAGE_VERSION_MINOR},${CPACK_PACKAGE_VERSION_PATCH},0
 PRODUCTVERSION ${CPACK_PACKAGE_VERSION_MAJOR},${CPACK_PACKAGE_VERSION_MINOR},${CPACK_PACKAGE_VERSION_PATCH},0
@@ -13,12 +12,12 @@ BEGIN
         BLOCK "040904E4"
         BEGIN
             VALUE "CompanyName",      "RStudio, Inc.\0"
-            VALUE "FileDescription",  "RStudio\0"
+            VALUE "FileDescription",  "AskPass\0"
             VALUE "FileVersion",      "${CPACK_PACKAGE_VERSION_MAJOR},${CPACK_PACKAGE_VERSION_MINOR},${CPACK_PACKAGE_VERSION_PATCH},0\0"
-            VALUE "InternalName",     "RStudio\0"
+            VALUE "InternalName",     "AskPass\0"
             VALUE "LegalCopyright",   "Copyright (C) 2009-11 by RStudio, Inc.\0"
             VALUE "LegalTrademarks",  "RStudio (TM) is a trademark of RStudio, Inc.\0"
-            VALUE "OriginalFilename", "rstudio.exe\0"
+            VALUE "OriginalFilename", "askpass.exe\0"
             VALUE "ProductName",      "RStudio\0"
             VALUE "ProductVersion",   "${CPACK_PACKAGE_VERSION_MAJOR},${CPACK_PACKAGE_VERSION_MINOR},${CPACK_PACKAGE_VERSION_PATCH},0\0"
         END
