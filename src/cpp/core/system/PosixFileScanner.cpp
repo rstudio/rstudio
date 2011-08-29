@@ -120,7 +120,8 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
          {
             tree<FileInfo>::iterator_base child = pTree->append_child(fromNode,
                                                                       fileInfo);
-            if (recursive)
+            // recurse if requested and this isn't a link
+            if (recursive && !S_ISLNK(st.st_mode))
             {
                Error error = scanFiles(child, true, filter, pTree);
                if (error)
