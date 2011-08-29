@@ -26,6 +26,8 @@
 
 // TODO: should we be using lstat64?
 
+// TODO: investigate use of IN_DONT_FOLLOW to prevent following links
+
 namespace core {
 namespace system {
 namespace file_monitor {
