@@ -471,7 +471,9 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
     ImageResourceDeclaration image = new ImageResourceDeclaration(method);
     DisplayedImage bundle = getImage(image);
     ImageRect rect = bundle.getImageRect(image);
-    assert rect != null : "No ImageRect ever computed for " + name;
+    if (rect == null) {
+      throw new NullPointerException("No ImageRect ever computed for " + name);
+    }
 
     String[] urlExpressions =
         new String[] {bundle.getNormalContentsFieldName(), bundle.getRtlContentsFieldName()};
