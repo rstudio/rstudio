@@ -191,6 +191,8 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
   }
 
+  protected transient int modCount = 0;
+
   protected AbstractList() {
   }
 
