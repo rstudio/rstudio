@@ -22,6 +22,8 @@
 
 #include "FileMonitorImpl.hpp"
 
+// TODO: replace pstreams with native implementation
+
 // TODO: investigate parallel package (multicore) interactions with file monitor
 
 // TODO: should we be using lstat64?
