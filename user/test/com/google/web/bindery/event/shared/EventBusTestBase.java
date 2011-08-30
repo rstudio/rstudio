@@ -25,7 +25,10 @@ import java.util.HashSet;
  */
 public abstract class EventBusTestBase extends TestCase {
 
-  class Adaptor implements FooEvent.Handler, BarEvent.Handler {
+  /**
+   * Handler implementation to allow for easy testing of whether the handler is being called.
+   */
+  protected class Adaptor implements FooEvent.Handler, BarEvent.Handler {
 
     public void onFoo(FooEvent event) {
       add(this);
@@ -41,11 +44,11 @@ public abstract class EventBusTestBase extends TestCase {
     }
   }
 
-  Adaptor adaptor1 = new Adaptor();
+  protected Adaptor adaptor1 = new Adaptor();
 
   private HashSet<Object> active = new HashSet<Object>();
 
-  FooEvent.Handler fooHandler1 = new FooEvent.Handler() {
+  protected FooEvent.Handler fooHandler1 = new FooEvent.Handler() {
     public void onFoo(FooEvent event) {
       add(fooHandler1);
     }
@@ -56,7 +59,7 @@ public abstract class EventBusTestBase extends TestCase {
     }
   };
 
-  FooEvent.Handler fooHandler2 = new FooEvent.Handler() {
+  protected FooEvent.Handler fooHandler2 = new FooEvent.Handler() {
     public void onFoo(FooEvent event) {
       add(fooHandler2);
     }
@@ -67,7 +70,7 @@ public abstract class EventBusTestBase extends TestCase {
     }
   };
 
-  FooEvent.Handler fooHandler3 = new FooEvent.Handler() {
+  protected FooEvent.Handler fooHandler3 = new FooEvent.Handler() {
     public void onFoo(FooEvent event) {
       add(fooHandler3);
     }
@@ -78,7 +81,7 @@ public abstract class EventBusTestBase extends TestCase {
     }
   };
 
-  BarEvent.Handler barHandler1 = new BarEvent.Handler() {
+  protected BarEvent.Handler barHandler1 = new BarEvent.Handler() {
 
     public void onBar(BarEvent event) {
       add(barHandler1);
@@ -90,7 +93,7 @@ public abstract class EventBusTestBase extends TestCase {
     }
   };
 
-  BarEvent.Handler barHandler2 = new BarEvent.Handler() {
+  protected BarEvent.Handler barHandler2 = new BarEvent.Handler() {
 
     public void onBar(BarEvent event) {
       add(barHandler2);
@@ -102,7 +105,7 @@ public abstract class EventBusTestBase extends TestCase {
     }
   };
 
-  BarEvent.Handler barHandler3 = new BarEvent.Handler() {
+  protected BarEvent.Handler barHandler3 = new BarEvent.Handler() {
 
     public void onBar(BarEvent event) {
       add(barHandler3);
@@ -114,24 +117,24 @@ public abstract class EventBusTestBase extends TestCase {
     }
   };
 
-  void add(Object handler) {
+  protected void add(Object handler) {
     active.add(handler);
   }
 
-  void assertFired(Object... handler) {
+  protected void assertFired(Object... handler) {
     for (int i = 0; i < handler.length; i++) {
       assertTrue(handler[i] + " should have fired", active.contains(handler[i]));
     }
   }
 
-  void assertNotFired(Object... handler) {
+  protected void assertNotFired(Object... handler) {
     for (int i = 0; i < handler.length; i++) {
       assertFalse(handler[i] + " should not have fired",
           active.contains(handler[i]));
     }
   }
 
-  void reset() {
+  protected void reset() {
     active.clear();
   }
 

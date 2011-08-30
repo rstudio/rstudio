@@ -19,11 +19,14 @@ package com.google.web.bindery.event.shared;
  * For {@link EventBus} tests.
  */
 public class BarEvent extends Event<BarEvent.Handler> {
-  interface Handler {
+  /**
+   * The handler for the event.
+   */
+  public interface Handler {
     void onBar(BarEvent e);
   }
   
-  static final Type<Handler> TYPE = new Type<Handler>();
+  public static final Type<Handler> TYPE = new Type<Handler>();
 
   public static HandlerRegistration register(EventBus bus, Handler handler) {
     return bus.addHandler(TYPE, handler);
