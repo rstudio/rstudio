@@ -1034,6 +1034,16 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    * @param styleName the style name to add
    */
   public abstract void addColumnStyleName(int index, String styleName);
+  
+  /**
+   * Add a handler to handle {@link RowHoverEvent}s.
+   * 
+   * @param handler the {@link RowHoverEvent.Handler} to add
+   * @return a {@link HandlerRegistration} to remove the handler
+   */
+  public HandlerRegistration addRowHoverHandler(RowHoverEvent.Handler handler) {
+    return addHandler(handler, RowHoverEvent.getType());
+  }
 
   /**
    * Clear the width of the specified {@link Column}.
@@ -1871,12 +1881,12 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       if ("mouseover".equals(eventType)) {
         // Unstyle the old row if it is still part of the table.
         if (hoveringRow != null && getTableBodyElement().isOrHasChild(hoveringRow)) {
-          setRowStyleName(hoveringRow, style.hoveredRow(), style.hoveredRowCell(), false);
+          setRowHover(hoveringRow, false);
         }
         hoveringRow = targetTableRow;
-        setRowStyleName(hoveringRow, style.hoveredRow(), style.hoveredRowCell(), true);
+        setRowHover(hoveringRow, true);
       } else if ("mouseout".equals(eventType) && hoveringRow != null) {
-        setRowStyleName(hoveringRow, style.hoveredRow(), style.hoveredRowCell(), false);
+        setRowHover(hoveringRow, false);
         hoveringRow = null;
       }
 
@@ -1923,7 +1933,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       }
     }
   }
-
+  
   @Override
   protected void onFocus() {
     TableCellElement td = getKeyboardSelectedTableCellElement();
@@ -2525,6 +2535,17 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     return cell.resetFocus(context, cellParent, cellValue);
   }
 
+  /**
+   * Set a row's hovering style and fire a {@link RowHoverEvent}
+   * 
+   * @param tr the row element
+   * @param isHovering false if this is an unhover event
+   */
+  private void setRowHover(TableRowElement tr, boolean isHovering) {
+    setRowStyleName(tr, style.hoveredRow(), style.hoveredRowCell(), isHovering);
+    RowHoverEvent.fire(this, tr, isHovering);
+  }
+  
   /**
    * Apply a style to a row and all cells in the row.
    * 
