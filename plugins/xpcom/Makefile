@@ -49,7 +49,7 @@ endif
 export FLAG32BIT
 
 ifeq ($(BROWSER),)
-$(warning Defaulting to FF3 build [set with BROWSER=ff3, ff3+, ff35, ff36, ff40, or ff50])
+$(warning Defaulting to FF3 build [set with BROWSER=ff3, ff3+, ff35, ff36, ff40, ff50, or ff60])
 BROWSER=ff3
 endif
 
@@ -112,7 +112,18 @@ ifeq ($(OS),mac)
 ALLARCHCFLAGS = -arch i386 -arch x86_64 -Xarch_i386 -DFLAG32BIT=32 -Xarch_x86_64 -DFLAG32BIT=64
 endif
 else
-$(error Unrecognized BROWSER of $(BROWSER) - options are ff3, ff3+, ff35, ff36, ff40, ff50)
+ifeq ($(BROWSER),ff60)
+GECKO_VERSION   = 6.0.0
+CFLAGS += -DGECKO_VERSION=6000
+MOZALLOC_DLLFLAGS = -lmozalloc
+MOZJS_DLLFLAGS = -lxul
+#FF4 drops PPC, adds x86_64. Use FLAG32BIT as a switch in the unified headers.
+ifeq ($(OS),mac)
+ALLARCHCFLAGS = -arch i386 -arch x86_64 -Xarch_i386 -DFLAG32BIT=32 -Xarch_x86_64 -DFLAG32BIT=64
+endif
+else
+$(error Unrecognized BROWSER of $(BROWSER) - options are ff3, ff3+, ff35, ff36, ff40, ff50, ff60)
+endif
 endif
 endif
 endif
@@ -188,12 +199,14 @@ linuxplatforms:
 	$(MAKE) lib BROWSER=ff36 ARCH=x86
 	$(MAKE) lib BROWSER=ff40 ARCH=x86
 	$(MAKE) lib BROWSER=ff50 ARCH=x86
+	$(MAKE) lib BROWSER=ff60 ARCH=x86
 	$(MAKE) lib BROWSER=ff3 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff3+ ARCH=x86_64
 	$(MAKE) lib BROWSER=ff35 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff36 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff40 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff50 ARCH=x86_64
+	$(MAKE) lib BROWSER=ff60 ARCH=x86_64
 
 macplatforms:
 	$(MAKE) lib BROWSER=ff3
