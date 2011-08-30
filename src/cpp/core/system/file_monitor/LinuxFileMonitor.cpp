@@ -29,6 +29,8 @@
 // TODO: should we be using lstat64?
 
 // TODO: investigate use of IN_DONT_FOLLOW to prevent following links
+//       (also add documentation to the API and comment in generic
+//        FileScanner.cpp)
 
 namespace core {
 namespace system {
