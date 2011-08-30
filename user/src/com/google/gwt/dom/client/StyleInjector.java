@@ -26,6 +26,15 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
  * {@link #inject}, {@link #injectAtEnd}, and {@link #injectAtStart} use
  * {@link Scheduler#scheduleFinally} to minimize the number of individual style
  * elements created.
+ * <p>
+ * The api here is a bit redundant, with similarly named methods returning
+ * either <code>void</code> or {@link StyleElement} &mdash; e.g.,
+ * {@link #inject(String) void inject(String)} v.
+ * {@link #injectStylesheet(String) StyleElement injectStylesheet(String)}. The
+ * methods that return {@link StyleElement} are not guaranteed to work as
+ * expected on Internet Explorer. Because they are still useful to developers on
+ * other browsers they are not deprecated, but <strong>IE developers should
+ * avoid the methods with {@link StyleElement} return values</strong>.
  */
 public class StyleInjector {
 
@@ -277,15 +286,17 @@ public class StyleInjector {
   }
 
   /**
-   * Add a stylesheet to the document. The StyleElement returned by this method
-   * is not guaranteed to be unique.
+   * Add a stylesheet to the document.
+   * <p>
+   * The returned StyleElement cannot be implemented consistently across all
+   * browsers. Specifically, <strong>applications that need to run on Internet
+   * Explorer should not use this method. Call {@link #inject(String)}
+   * instead.</strong>
    * 
    * @param contents the CSS contents of the stylesheet
-   * @return the StyleElement that contains the newly-injected CSS
-   * @deprecated The returned StyleElement cannot be implemented consistently
-   *             across all browsers
+   * @return the StyleElement that contains the newly-injected CSS (unreliable
+   *         on Internet Explorer)
    */
-  @Deprecated
   public static StyleElement injectStylesheet(String contents) {
     toInject.push(contents);
     return flush(toInject);
@@ -293,15 +304,17 @@ public class StyleInjector {
 
   /**
    * Add stylesheet data to the document as though it were declared after all
-   * stylesheets previously created by {@link #injectStylesheet(String)}. The
-   * StyleElement returned by this method is not guaranteed to be unique.
+   * stylesheets previously created by {@link #injectStylesheet(String)}.
+   * <p>
+   * The returned StyleElement cannot be implemented consistently across all
+   * browsers. Specifically, <strong>applications that need to run on Internet
+   * Explorer should not use this method. Call {@link #injectAtEnd(String)}
+   * instead.</strong>
    * 
    * @param contents the CSS contents of the stylesheet
-   * @return the StyleElement that contains the newly-injected CSS
-   * @deprecated The returned StyleElement cannot be implemented consistently
-   *             across all browsers
+   * @return the StyleElement that contains the newly-injected CSS (unreliable
+   *         on Internet Explorer)
    */
-  @Deprecated
   public static StyleElement injectStylesheetAtEnd(String contents) {
     toInjectAtEnd.push(contents);
     return flush(toInjectAtEnd);
@@ -309,15 +322,17 @@ public class StyleInjector {
 
   /**
    * Add stylesheet data to the document as though it were declared before any
-   * stylesheet previously created by {@link #injectStylesheet(String)}. The
-   * StyleElement returned by this method is not guaranteed to be unique.
+   * stylesheet previously created by {@link #injectStylesheet(String)}.
+   * <p>
+   * The returned StyleElement cannot be implemented consistently across all
+   * browsers. Specifically, <strong>applications that need to run on Internet
+   * Explorer should not use this method. Call {@link #injectAtStart(String, boolean)}
+   * instead.</strong>
    * 
    * @param contents the CSS contents of the stylesheet
-   * @return the StyleElement that contains the newly-injected CSS
-   * @deprecated The returned StyleElement cannot be implemented consistently
-   *             across all browsers
+   * @return the StyleElement that contains the newly-injected CSS (unreliable
+   *         on Internet Explorer)
    */
-  @Deprecated
   public static StyleElement injectStylesheetAtStart(String contents) {
     toInjectAtStart.unshift(contents);
     return flush(toInjectAtStart);
@@ -326,17 +341,16 @@ public class StyleInjector {
   /**
    * Replace the contents of a previously-injected stylesheet. Updating the
    * stylesheet in-place is typically more efficient than removing a
-   * previously-created element and adding a new one. This method should be used
-   * with some caution as StyleInjector may recycle StyleElements on certain
-   * browsers.
+   * previously-created element and adding a new one.
+   * <p>
+   * This method should be used with some caution as StyleInjector may recycle
+   * StyleElements on certain browsers. Specifically, <strong>applications that
+   * need to run on Internet Explorer should not use this method. </strong>
    * 
    * @param style a StyleElement previously-returned from
    *          {@link #injectStylesheet(String)}.
    * @param contents the new contents of the stylesheet.
-   * @deprecated The associated StyleElement cannot be implemented consistently
-   *             across all browsers
    */
-  @Deprecated
   public static void setContents(StyleElement style, String contents) {
     StyleInjectorImpl.IMPL.setContents(style, contents);
   }
