@@ -27,34 +27,46 @@ import com.google.gwt.user.client.ui.RootPanel;
 public class DataGridTest extends AbstractCellTableTestBase<DataGrid<String>> {
 
   /**
-   * Test that if a header creator does not add any rows, the header is hidden.
+   * Test that if a header builder does not add any rows, the header is hidden.
    */
-  public void testHeaderCreatorEmpty() {
+  public void testHeaderBuilderEmpty() {
     DataGrid<String> table = createAbstractHasData();
     RootPanel.get().add(table);
-    HeaderCreator<String> emptyBuilder = new HeaderCreator<String>() {
+    HeaderBuilder<String> emptyHeader = new AbstractHeaderOrFooterBuilder<String>(table, false) {
       @Override
-      public void buildHeader(HeaderCreator.Helper<String> utility) {
-        // No-op.
+      protected boolean buildHeaderOrFooterImpl() {
+        return false;
       }
     };
-    HeaderCreator<String> notEmptyBuilder = new HeaderCreator<String>() {
+    HeaderBuilder<String> notEmptyHeader = new AbstractHeaderOrFooterBuilder<String>(table, false) {
       @Override
-      public void buildHeader(HeaderCreator.Helper<String> utility) {
-        utility.startRow();
+      protected boolean buildHeaderOrFooterImpl() {
+        return true;
+      }
+    };
+    FooterBuilder<String> emptyFooter = new AbstractHeaderOrFooterBuilder<String>(table, true) {
+      @Override
+      protected boolean buildHeaderOrFooterImpl() {
+        return false;
+      }
+    };
+    FooterBuilder<String> notEmptyFooter = new AbstractHeaderOrFooterBuilder<String>(table, true) {
+      @Override
+      protected boolean buildHeaderOrFooterImpl() {
+        return true;
       }
     };
 
     // Header is empty, footer is not.
-    table.setHeaderCreator(emptyBuilder);
-    table.setFooterCreator(notEmptyBuilder);
+    table.setHeaderBuilder(emptyHeader);
+    table.setFooterBuilder(notEmptyFooter);
     table.getPresenter().flush();
     assertFalse(table.tableHeader.isAttached());
     assertTrue(table.tableFooter.isAttached());
 
     // Footer is empty, header is not.
-    table.setHeaderCreator(notEmptyBuilder);
-    table.setFooterCreator(emptyBuilder);
+    table.setHeaderBuilder(notEmptyHeader);
+    table.setFooterBuilder(emptyFooter);
     table.getPresenter().flush();
     assertTrue(table.tableHeader.isAttached());
     assertFalse(table.tableFooter.isAttached());

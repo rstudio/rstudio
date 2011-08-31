@@ -732,22 +732,23 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     RootPanel.get().remove(table);
   }
 
-  public void testSetHeaderCreator() {
+  public void testSetHeaderBuilder() {
     T table = createAbstractHasData();
-    HeaderCreator<String> headerCreator = new HeaderCreator<String>() {
+    HeaderBuilder<String> headerBuilder = new AbstractHeaderOrFooterBuilder<String>(table, false) {
       @Override
-      public void buildHeader(HeaderCreator.Helper<String> utility) {
-        TableRowBuilder tr = utility.startRow();
+      protected boolean buildHeaderOrFooterImpl() {
+        TableRowBuilder tr = startRow();
         tr.startTH().text("Col 0").endTH();
         tr.startTH().text("Col 1").endTH();
         tr.startTH().text("Col 2").endTH();
         tr.endTR();
+        return true;
       }
     };
 
     // Change the header builder.
-    table.setHeaderCreator(headerCreator);
-    assertEquals(headerCreator, table.getHeaderCreator());
+    table.setHeaderBuilder(headerBuilder);
+    assertEquals(headerBuilder, table.getHeaderBuilder());
     table.getPresenter().flush();
 
     // Verify the new header.
@@ -760,22 +761,23 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
     assertEquals("Col 2", cells.getItem(2).getInnerText());
   }
 
-  public void testSetFooterCreator() {
+  public void testSetFooterBuilder() {
     T table = createAbstractHasData();
-    HeaderCreator<String> footerCreator = new HeaderCreator<String>() {
+    FooterBuilder<String> footerBuilder = new AbstractHeaderOrFooterBuilder<String>(table, true) {
       @Override
-      public void buildHeader(HeaderCreator.Helper<String> utility) {
-        TableRowBuilder tr = utility.startRow();
+      protected boolean buildHeaderOrFooterImpl() {
+        TableRowBuilder tr = startRow();
         tr.startTH().text("Col 0").endTH();
         tr.startTH().text("Col 1").endTH();
         tr.startTH().text("Col 2").endTH();
         tr.endTR();
+        return true;
       }
     };
 
     // Change the header builder.
-    table.setFooterCreator(footerCreator);
-    assertEquals(footerCreator, table.getFooterCreator());
+    table.setFooterBuilder(footerBuilder);
+    assertEquals(footerBuilder, table.getFooterBuilder());
     table.getPresenter().flush();
 
     // Verify the new header.

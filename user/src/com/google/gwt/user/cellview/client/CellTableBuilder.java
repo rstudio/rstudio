@@ -33,7 +33,6 @@ import java.util.Collection;
  * 
  * @param <T> the row data type
  */
-// TODO(jlabanca): Rename to CellTableCreator
 public interface CellTableBuilder<T> {
 
   /**

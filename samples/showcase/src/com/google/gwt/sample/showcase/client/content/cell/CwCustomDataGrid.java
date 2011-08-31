@@ -49,14 +49,13 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.AbstractCellTable.Style;
 import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
+import com.google.gwt.user.cellview.client.AbstractHeaderOrFooterBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent.ListHandler;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.cellview.client.DataGrid;
-import com.google.gwt.user.cellview.client.DefaultHeaderCreator;
 import com.google.gwt.user.cellview.client.Header;
-import com.google.gwt.user.cellview.client.HeaderCreator;
 import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.cellview.client.TextHeader;
@@ -149,7 +148,7 @@ public class CwCustomDataGrid extends ContentWidget {
    * address of the contacts grouped under the "Information" category.
    */
   @ShowcaseSource
-  private class CustomHeaderCreator extends DefaultHeaderCreator<ContactInfo> {
+  private class CustomHeaderBuilder extends AbstractHeaderOrFooterBuilder<ContactInfo> {
 
     private Header<String> firstNameHeader = new TextHeader(constants
         .cwCustomDataGridColumnFirstName());
@@ -161,18 +160,18 @@ public class CwCustomDataGrid extends ContentWidget {
     private Header<String> addressHeader =
         new TextHeader(constants.cwCustomDataGridColumnAddress());
 
-    public CustomHeaderCreator() {
+    public CustomHeaderBuilder() {
       super(dataGrid, false);
       setSortIconStartOfLine(false);
     }
 
     @Override
-    public void buildHeader(Helper<ContactInfo> helper) {
+    protected boolean buildHeaderOrFooterImpl() {
       Style style = dataGrid.getResources().style();
       String groupHeaderCell = resources.styles().groupHeaderCell();
 
       // Add a 2x2 header above the checkbox and show friends columns.
-      TableRowBuilder tr = helper.startRow();
+      TableRowBuilder tr = startRow();
       tr.startTH().colSpan(2).rowSpan(2)
           .className(style.header() + " " + style.firstColumnHeader());
       tr.endTH();
@@ -182,7 +181,7 @@ public class CwCustomDataGrid extends ContentWidget {
        * the group header sorts by last name.
        */
       TableCellBuilder th = tr.startTH().colSpan(2).className(groupHeaderCell);
-      helper.enableColumnHandlers(th, lastNameColumn);
+      enableColumnHandlers(th, lastNameColumn);
       th.style().trustedProperty("border-right", "10px solid white").cursor(Cursor.POINTER)
           .endStyle();
       th.text("Name").endTH();
@@ -198,23 +197,20 @@ public class CwCustomDataGrid extends ContentWidget {
       boolean isSortAscending = (sortedInfo == null) ? false : sortedInfo.isAscending();
 
       // Add column headers.
-      tr = helper.startRow();
-      buildHeader(helper, tr, firstNameHeader, firstNameColumn, sortedColumn, isSortAscending,
-          false, false);
-      buildHeader(helper, tr, lastNameHeader, lastNameColumn, sortedColumn, isSortAscending, false,
-          false);
-      buildHeader(helper, tr, ageHeader, ageColumn, sortedColumn, isSortAscending, false, false);
-      buildHeader(helper, tr, categoryHeader, categoryColumn, sortedColumn, isSortAscending, false,
-          false);
-      buildHeader(helper, tr, addressHeader, addressColumn, sortedColumn, isSortAscending, false,
-          true);
+      tr = startRow();
+      buildHeader(tr, firstNameHeader, firstNameColumn, sortedColumn, isSortAscending, false, false);
+      buildHeader(tr, lastNameHeader, lastNameColumn, sortedColumn, isSortAscending, false, false);
+      buildHeader(tr, ageHeader, ageColumn, sortedColumn, isSortAscending, false, false);
+      buildHeader(tr, categoryHeader, categoryColumn, sortedColumn, isSortAscending, false, false);
+      buildHeader(tr, addressHeader, addressColumn, sortedColumn, isSortAscending, false, true);
       tr.endTR();
+
+      return true;
     }
 
     /**
      * Renders the header of one column, with the given options.
      * 
-     * @param helper the helper used to build the header
      * @param out the table row to build into
      * @param header the {@link Header} to render
      * @param column the column to associate with the header
@@ -223,9 +219,8 @@ public class CwCustomDataGrid extends ContentWidget {
      * @param isFirst true if this the first column
      * @param isLast true if this the last column
      */
-    private void buildHeader(Helper<ContactInfo> helper, TableRowBuilder out, Header<?> header,
-        Column<ContactInfo, ?> column, Column<?, ?> sortedColumn, boolean isSortAscending,
-        boolean isFirst, boolean isLast) {
+    private void buildHeader(TableRowBuilder out, Header<?> header, Column<ContactInfo, ?> column,
+        Column<?, ?> sortedColumn, boolean isSortAscending, boolean isFirst, boolean isLast) {
       // Choose the classes to include with the element.
       Style style = dataGrid.getResources().style();
       boolean isSorted = (sortedColumn == column);
@@ -248,11 +243,11 @@ public class CwCustomDataGrid extends ContentWidget {
       TableCellBuilder th = out.startTH().className(classesBuilder.toString());
 
       // Associate the cell with the column to enable sorting of the column.
-      helper.enableColumnHandlers(th, column);
+      enableColumnHandlers(th, column);
 
       // Render the header.
       Context context = new Context(0, 2, header.getKey());
-      renderHeader(th, context, header, helper, isSorted, isSortAscending);
+      renderSortableHeader(th, context, header, isSorted, isSortAscending);
 
       // End the table cell.
       th.endTH();
@@ -266,10 +261,14 @@ public class CwCustomDataGrid extends ContentWidget {
    * changes with the row data in the table.
    */
   @ShowcaseSource
-  private class CustomFooterCreator implements HeaderCreator<ContactInfo> {
+  private class CustomFooterBuilder extends AbstractHeaderOrFooterBuilder<ContactInfo> {
+
+    public CustomFooterBuilder() {
+      super(dataGrid, true);
+    }
 
     @Override
-    public void buildHeader(HeaderCreator.Helper<ContactInfo> helper) {
+    protected boolean buildHeaderOrFooterImpl() {
       String footerStyle = dataGrid.getResources().style().footer();
 
       // Calculate the age of all visible contacts.
@@ -284,7 +283,7 @@ public class CwCustomDataGrid extends ContentWidget {
       }
 
       // Cells before age column.
-      TableRowBuilder tr = helper.startRow();
+      TableRowBuilder tr = startRow();
       tr.startTH().colSpan(4).className(footerStyle).endTH();
 
       // Show the average age of all contacts.
@@ -297,6 +296,8 @@ public class CwCustomDataGrid extends ContentWidget {
       // Cells after age column.
       tr.startTH().colSpan(2).className(footerStyle).endTH();
       tr.endTR();
+
+      return true;
     }
   }
 
@@ -334,16 +335,6 @@ public class CwCustomDataGrid extends ContentWidget {
     @Override
     public void buildRowImpl(ContactInfo rowValue, int absRowIndex) {
       buildContactRow(rowValue, absRowIndex, false);
-
-      // Display information about the user in another row that spans the entire
-      // table.
-      if (rowValue.getAge() > 65) {
-        TableRowBuilder row = startRow();
-        TableCellBuilder td = row.startTD().colSpan(7).className(cellStyle);
-        td.style().trustedBackgroundColor("#ffa").outlineStyle(OutlineStyle.NONE).endStyle();
-        td.text(rowValue.getFirstName() + " is elegible for retirement benefits").endTD();
-        row.endTR();
-      }
 
       // Display information about the user in another row that spans the entire
       // table.
@@ -623,8 +614,8 @@ public class CwCustomDataGrid extends ContentWidget {
 
     // Specify a custom table.
     dataGrid.setTableBuilder(new CustomTableBuilder());
-    dataGrid.setHeaderCreator(new CustomHeaderCreator());
-    dataGrid.setFooterCreator(new CustomFooterCreator());
+    dataGrid.setHeaderBuilder(new CustomHeaderBuilder());
+    dataGrid.setFooterBuilder(new CustomFooterBuilder());
 
     // Add the CellList to the adapter in the database.
     ContactDatabase.get().addDataDisplay(dataGrid);

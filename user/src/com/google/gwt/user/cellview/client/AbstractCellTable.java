@@ -22,10 +22,7 @@ import com.google.gwt.cell.client.HasCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.builder.shared.ElementBuilderBase;
-import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
 import com.google.gwt.dom.builder.shared.HtmlTableSectionBuilder;
-import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.dom.builder.shared.TableSectionBuilder;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -415,98 +412,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Implementation of {@link HeaderCreator.Helper}.
-   */
-  private class HeaderHelperImpl extends HeaderCreator.Helper<T> {
-
-    private final Map<String, Column<T, ?>> columnMap;
-    private final TwoWayHashMap<String, Header<?>> headerMap;
-    private boolean isEmpty = true;
-    private final HtmlTableSectionBuilder section;
-    private final String tag;
-
-    public HeaderHelperImpl(AbstractCellTable<T> cellTable, boolean isFooter) {
-      super(cellTable);
-      if (isFooter) {
-        section = HtmlBuilderFactory.get().createTFootBuilder();
-        tag = "tfoot";
-        headerMap = idToFooterMap;
-        columnMap = idToFooterColumnMap;
-      } else {
-        section = HtmlBuilderFactory.get().createTHeadBuilder();
-        tag = "thead";
-        headerMap = idToHeaderMap;
-        columnMap = idToHeaderColumnMap;
-      }
-    }
-
-    @Override
-    public void enableColumnHandlers(ElementBuilderBase<?> builder, Column<T, ?> column) {
-      String columnId = "column-" + Document.get().createUniqueId();
-      columnMap.put(columnId, column);
-      builder.attribute(COLUMN_ATTRIBUTE, columnId);
-    }
-
-    @Override
-    public <H> void renderHeader(ElementBuilderBase<?> out, Context context, Header<H> header) {
-      // Generate a unique ID for the header.
-      String headerId = headerMap.getKey(header);
-      if (headerId == null) {
-        headerId = "header-" + Document.get().createUniqueId();
-        headerMap.put(headerId, header);
-      }
-      out.attribute(HEADER_ATTRIBUTE, headerId);
-
-      // Render the cell into the builder.
-      SafeHtmlBuilder sb = new SafeHtmlBuilder();
-      header.render(context, sb);
-      out.html(sb.toSafeHtml());
-    }
-
-    @Override
-    public TableRowBuilder startRow() {
-      isEmpty = false;
-
-      // End any dangling rows.
-      while (section.getDepth() > 1) {
-        section.end();
-      }
-
-      // Verify the depth.
-      if (section.getDepth() < 1) {
-        throw new IllegalStateException(
-            "Cannot start a row.  Did you call TableRowBuilder.end() too many times?");
-      }
-
-      // Start the next row.
-      TableRowBuilder row = section.startTR();
-      return row;
-    }
-
-    /**
-     * Get the {@link TableSectionElement} containing the children.
-     */
-    private SafeHtml asSafeHtml() {
-      // Strip the table section tags off of the tbody.
-      String rawHtml = section.asSafeHtml().asString();
-      assert (tag.length()) == 5 : "Unrecognized tag: " + tag;
-      assert rawHtml.startsWith("<" + tag + ">") : "Malformed html";
-      assert rawHtml.endsWith("</" + tag + ">") : "Malformed html";
-      rawHtml = rawHtml.substring(7, rawHtml.length() - 8);
-      return SafeHtmlUtils.fromTrustedString(rawHtml);
-    }
-
-    /**
-     * Check if the header is empty.
-     * 
-     * @return true if no rows were created, false if not empty
-     */
-    private boolean isEmpty() {
-      return isEmpty;
-    }
-  }
-
-  /**
    * Implementation of {@link AbstractCellTable}.
    */
   private static class Impl {
@@ -626,22 +531,21 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       // Remove all children in the range.
       final int absEndIndex = table.getPageStart() + startIndex + childCount;
       boolean done = false;
-      Element insertBefore = table.getChildElement(startIndex);
+      TableRowElement insertBefore = table.getChildElement(startIndex).cast();
       if (table.legacyRenderRowValues) {
         int count = 0;
         while (insertBefore != null && count < childCount) {
           Element next = insertBefore.getNextSiblingElement();
           section.removeChild(insertBefore);
-          insertBefore = next;
+          insertBefore = (next == null) ? null : next.<TableRowElement> cast();
           count++;
         }
       } else {
         while (insertBefore != null
-            && table.tableBuilder.getRowValueIndex(insertBefore.<TableRowElement> cast()) <
-                absEndIndex) {
+            && table.tableBuilder.getRowValueIndex(insertBefore) < absEndIndex) {
           Element next = insertBefore.getNextSiblingElement();
           section.removeChild(insertBefore);
-          insertBefore = next;
+          insertBefore = (next == null) ? null : next.<TableRowElement> cast();
         }
       }
 
@@ -782,41 +686,12 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * A map that provides O(1) access to a value given the key, or to the key
-   * given the value.
+   * The error message used when {@link HeaderBuilder} returns malformed table
+   * section HTML.
    */
-  private static class TwoWayHashMap<K, V> {
-    private final Map<K, V> keyToValue = new HashMap<K, V>();
-    private final Map<V, K> valueToKey = new HashMap<V, K>();
-
-    void clear() {
-      keyToValue.clear();
-      valueToKey.clear();
-    }
-
-    K getKey(V value) {
-      return valueToKey.get(value);
-    }
-
-    V getValue(K key) {
-      return keyToValue.get(key);
-    }
-
-    void put(K key, V value) {
-      keyToValue.put(key, value);
-      valueToKey.put(value, key);
-    }
-  }
-
-  /**
-   * The attribute used to indicate that an element contains a Column.
-   */
-  private static final String COLUMN_ATTRIBUTE = "__gwt_column";
-
-  /**
-   * The attribute used to indicate that an element contains a header.
-   */
-  private static final String HEADER_ATTRIBUTE = "__gwt_header";
+  private static final String MALFORMED_HTML_SECTION =
+      "Malformed HTML: The table section returned by HeaderBuilder or FooterBuilder must use the "
+          + "tag name thead or tfoot, as appropriate, and cannot contain any attributes or styles.";
 
   /*
    * The table specific {@link Impl}.
@@ -834,14 +709,24 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * A mapping of unique cell IDs to the cell.
+   * Get the {@link TableSectionElement} containing the children.
+   * 
+   * @param tag the expected tag (tbody, tfoot, or thead)
    */
-  private final Map<String, Column<T, ?>> idToFooterColumnMap = new HashMap<String, Column<T, ?>>();
-  private final TwoWayHashMap<String, Header<?>> idToFooterMap =
-      new TwoWayHashMap<String, Header<?>>();
-  private final Map<String, Column<T, ?>> idToHeaderColumnMap = new HashMap<String, Column<T, ?>>();
-  private final TwoWayHashMap<String, Header<?>> idToHeaderMap =
-      new TwoWayHashMap<String, Header<?>>();
+  private static SafeHtml tableSectionToSafeHtml(TableSectionBuilder section, String tag) {
+    if (!(section instanceof HtmlTableSectionBuilder)) {
+      throw new IllegalArgumentException("Only HtmlTableSectionBuilder is supported at this time");
+    }
+
+    // Strip the table section tags off of the tbody.
+    HtmlTableSectionBuilder htmlSection = (HtmlTableSectionBuilder) section;
+    String rawHtml = htmlSection.asSafeHtml().asString();
+    assert (tag.length()) == 5 : "Unrecognized tag: " + tag;
+    assert rawHtml.startsWith("<" + tag + ">") : MALFORMED_HTML_SECTION;
+    assert rawHtml.endsWith("</" + tag + ">") : MALFORMED_HTML_SECTION;
+    rawHtml = rawHtml.substring(7, rawHtml.length() - 8);
+    return SafeHtmlUtils.fromTrustedString(rawHtml);
+  }
 
   private boolean cellIsEditing;
   private final List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
@@ -860,7 +745,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   private boolean dependsOnSelection;
 
   private Widget emptyTableWidget;
-  private HeaderCreator<T> footerCreator;
+  private FooterBuilder<T> footerBuilder;
   private boolean footerRefreshDisabled;
   private final List<Header<?>> footers = new ArrayList<Header<?>>();
 
@@ -869,7 +754,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   private boolean handlesSelection;
 
-  private HeaderCreator<T> headerCreator;
+  private HeaderBuilder<T> headerBuilder;
   private boolean headerRefreshDisabled;
   private final List<Header<?>> headers = new ArrayList<Header<?>>();
 
@@ -1166,10 +1051,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Get the {@link HeaderCreator} used to generate the footer section.
+   * Get the {@link HeaderBuilder} used to generate the footer section.
    */
-  public HeaderCreator<T> getFooterCreator() {
-    return footerCreator;
+  public FooterBuilder<T> getFooterBuilder() {
+    return footerBuilder;
   }
 
   /**
@@ -1181,10 +1066,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Get the {@link HeaderCreator} used to generate the header section.
+   * Get the {@link HeaderBuilder} used to generate the header section.
    */
-  public HeaderCreator<T> getHeaderCreator() {
-    return headerCreator;
+  public HeaderBuilder<T> getHeaderBuilder() {
+    return headerBuilder;
   }
 
   /**
@@ -1554,22 +1439,22 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Set the {@link HeaderCreator} used to build the footer section of the
+   * Set the {@link HeaderBuilder} used to build the footer section of the
    * table.
    */
-  public void setFooterCreator(HeaderCreator<T> creator) {
-    assert creator != null : "creator cannot be null";
-    this.footerCreator = creator;
+  public void setFooterBuilder(FooterBuilder<T> builder) {
+    assert builder != null : "builder cannot be null";
+    this.footerBuilder = builder;
     redrawFooters();
   }
 
   /**
-   * Set the {@link HeaderCreator} used to build the header section of the
+   * Set the {@link HeaderBuilder} used to build the header section of the
    * table.
    */
-  public void setHeaderCreator(HeaderCreator<T> creator) {
-    assert creator != null : "creator cannot be null";
-    this.headerCreator = creator;
+  public void setHeaderBuilder(HeaderBuilder<T> builder) {
+    assert builder != null : "builder cannot be null";
+    this.headerBuilder = builder;
     redrawHeaders();
   }
 
@@ -1732,7 +1617,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   protected abstract TableSectionElement getTableFootElement();
 
   /**
-   * Get the thead element that contains theh eaders.
+   * Get the thead element that contains the headers.
    */
   protected abstract TableSectionElement getTableHeadElement();
 
@@ -1768,8 +1653,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     TableSectionElement targetTableSection = null;
     TableCellElement targetTableCell = null;
     Element cellParent = null;
-    String columnId = null;
-    String headerId = null;
+    Element headerParent = null; // Header in the headerBuilder.
+    Element headerColumnParent = null; // Column in the headerBuilder.
+    Element footerParent = null; // Header in the footerBuilder.
+    Element footerColumnParent = null; // Column in the footerBuilder.
     {
       Element maybeTableCell = null;
       Element cur = target;
@@ -1797,26 +1684,31 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
           maybeTableCell = cur;
         }
 
-        // Look for the most immediate associated column if not already found.
-        if (columnId == null) {
-          String curColumnId = cur.getAttribute(COLUMN_ATTRIBUTE);
-          if (curColumnId != null && curColumnId.length() > 0) {
-            columnId = curColumnId;
-          }
+        // Look for the most immediate cell parent if not already found.
+        if (cellParent == null && tableBuilder.isColumn(cur)) {
+          cellParent = cur;
         }
 
-        if (cellParent == null) {
-          // Look for the most immediate cell parent if not already found.
-          if (tableBuilder.isColumn(cur)) {
-            cellParent = cur;
-          }
+        /*
+         * Look for the most immediate header parent if not already found. Its
+         * possible that the footer or header will mistakenly identify a header
+         * from the other section, so we remember both. When we eventually reach
+         * the target table section element, we'll know for sure if its a header
+         * of footer.
+         */
+        if (headerParent == null && headerBuilder.isHeader(cur)) {
+          headerParent = cur;
+        }
+        if (footerParent == null && footerBuilder.isHeader(cur)) {
+          footerParent = cur;
+        }
 
-          // Look for the most immediate header parent if not already found.
-          String curHeaderId = isHeaderParent(cur);
-          if (curHeaderId != null) {
-            headerId = curHeaderId;
-            cellParent = cur;
-          }
+        // Look for the most immediate column parent if not already found.
+        if (headerColumnParent == null && headerBuilder.isColumn(cur)) {
+          headerColumnParent = cur;
+        }
+        if (footerColumnParent == null && footerBuilder.isColumn(cur)) {
+          footerColumnParent = cur;
         }
 
         // Iterate.
@@ -1842,11 +1734,14 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     int col = targetTableCell.getCellIndex();
     if (targetTableSection == thead || targetTableSection == tfoot) {
       boolean isHeader = (targetTableSection == thead);
+      headerParent = isHeader ? headerParent : footerParent;
+      Element columnParent = isHeader ? headerColumnParent : footerColumnParent;
 
       // Fire the event to the header.
-      TwoWayHashMap<String, Header<?>> headerMap = isHeader ? idToHeaderMap : idToFooterMap;
-      if (headerId != null) {
-        Header<?> header = headerMap.getValue(headerId);
+      if (headerParent != null) {
+        Header<?> header =
+            isHeader ? headerBuilder.getHeader(headerParent) : footerBuilder
+                .getHeader(footerParent);
         if (header != null && cellConsumesEventType(header.getCell(), eventType)) {
           Context context = new Context(0, col, header.getKey());
           header.onBrowserEvent(context, cellParent, event);
@@ -1854,9 +1749,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       }
 
       // Sort the header.
-      Map<String, Column<T, ?>> columnMap = isHeader ? idToHeaderColumnMap : idToFooterColumnMap;
-      if (isClick) {
-        Column<T, ?> column = columnMap.get(columnId);
+      if (isClick && columnParent != null) {
+        Column<T, ?> column =
+            isHeader ? headerBuilder.getColumn(columnParent) : footerBuilder
+                .getColumn(columnParent);
         if (column != null && column.isSortable()) {
           /*
            * Force the headers to refresh the next time data is pushed so we
@@ -2285,16 +2181,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     // Update the properties of the table.
     coalesceCellProperties();
     TableSectionBuilder tableSectionBuilder = tableBuilder.finish();
-    if (tableSectionBuilder instanceof HtmlTableSectionBuilder) {
-      // Strip the table section tags off of the tbody.
-      String rawHtml = ((HtmlTableSectionBuilder) tableSectionBuilder).asSafeHtml().asString();
-      assert rawHtml.startsWith("<tbody>") : "Malformed html";
-      assert rawHtml.endsWith("</tbody>") : "Malformed html";
-      rawHtml = rawHtml.substring(7, rawHtml.length() - 8);
-      return SafeHtmlUtils.fromTrustedString(rawHtml);
-    } else {
-      throw new IllegalStateException("Only HTML table section builder is supported at this time");
-    }
+    return tableSectionToSafeHtml(tableSectionBuilder, "tbody");
   }
 
   /**
@@ -2337,21 +2224,16 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    * @param isFooter true if this is the footer table, false if the header table
    */
   private void createHeaders(boolean isFooter) {
-    HeaderHelperImpl helper = new HeaderHelperImpl(this, isFooter);
-    if (isFooter) {
-      idToFooterMap.clear();
-      idToFooterColumnMap.clear();
-      footerCreator.buildHeader(helper);
-      TABLE_IMPL.replaceAllRows(this, getTableFootElement(), helper.asSafeHtml());
+    TableSectionBuilder section =
+        isFooter ? footerBuilder.buildFooter() : headerBuilder.buildHeader();
+    if (section != null) {
+      TABLE_IMPL.replaceAllRows(this, isFooter ? getTableFootElement() : getTableHeadElement(),
+          tableSectionToSafeHtml(section, isFooter ? "tfoot" : "thead"));
+      doSetHeaderVisible(isFooter, true);
     } else {
-      idToHeaderMap.clear();
-      idToHeaderColumnMap.clear();
-      headerCreator.buildHeader(helper);
-      TABLE_IMPL.replaceAllRows(this, getTableHeadElement(), helper.asSafeHtml());
+      // If the section isn't used, hide it.
+      doSetHeaderVisible(isFooter, false);
     }
-
-    // If the section isn't used, hide it.
-    doSetHeaderVisible(isFooter, !helper.isEmpty());
   }
 
   /**
@@ -2481,22 +2363,11 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
 
     // Set the table builder.
     tableBuilder = new DefaultCellTableBuilder<T>(this);
-    headerCreator = new DefaultHeaderCreator<T>(this, false);
-    footerCreator = new DefaultHeaderCreator<T>(this, true);
+    headerBuilder = new DefaultHeaderOrFooterBuilder<T>(this, false);
+    footerBuilder = new DefaultHeaderOrFooterBuilder<T>(this, true);
 
     // Set the keyboard handler.
     setKeyboardSelectionHandler(new CellTableKeyboardSelectionHandler<T>(this));
-  }
-
-  /**
-   * Check if an element is the parent of a rendered header.
-   * 
-   * @param elem the element to check
-   * @return the headerId if a cell parent, null if not
-   */
-  private String isHeaderParent(Element elem) {
-    String headerId = elem.getAttribute(HEADER_ATTRIBUTE);
-    return (headerId == null) || (headerId.length() == 0) ? null : headerId;
   }
 
   /**
