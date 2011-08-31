@@ -18,7 +18,7 @@
     <maven.compiler.target>1.6</maven.compiler.target>
 
     <!-- GAE properties -->
-    <gae.version>1.5.0.1</gae.version>
+    <gae.version>1.5.3</gae.version>
     <gae.home>${user.home}/.m2/repository/com/google/appengine/appengine-java-sdk/${gae.version}/appengine-java-sdk-${gae.version}</gae.home>
     <gae.application.version>1</gae.application.version>
 
@@ -130,12 +130,6 @@
       <artifactId>appengine-api-labs</artifactId>
       <version>${gae.version}</version>
     </dependency>
-    <!-- uncomment for testing <dependency> <groupId>com.google.appengine</groupId> 
-      <artifactId>appengine-local-runtime</artifactId> <version>${gae.version}</version> 
-      <scope>system</scope> <systemPath>${gae.home}/lib/impl/appengine-local-runtime.jar</systemPath> 
-      </dependency> <dependency> <groupId>com.google.appengine</groupId> <artifactId>appengine-tools-api</artifactId> 
-      <version>${gae.version}</version> <scope>system</scope> <systemPath>${gae.home}/lib/appengine-tools-api.jar</systemPath> 
-      </dependency> -->
 
     <!-- Objectify for persistence. It uses the stock javax.persistence annotations -->
 
@@ -181,7 +175,7 @@
   
   <build>
     <!-- Generate compiled stuff in the folder used for developing mode --> 
-    <outputDirectory>target/www/WEB-INF/classes</outputDirectory>
+    <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
     
     <plugins>
       <!-- GWT Maven Plugin-->
@@ -220,18 +214,14 @@
         <configuration>
           <!-- URL that should be automatically opened in the GWT shell (gwt:run). -->
           <runTarget>MobileWebApp.html</runTarget>
-          <!-- Location of the develop-mode web application structure (gwt:run). -->
-          <hostedWebapp>target/www</hostedWebapp>
           <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
           <compileReport>true</compileReport>
           <module>com.google.gwt.sample.mobilewebapp.MobileWebApp</module>
-
           <appEngineVersion>${gae.version}</appEngineVersion>
           <appEngineHome>${gae.home}</appEngineHome>
           <logLevel>INFO</logLevel>
           <style>${gwt.style}</style>
 
-          <hostedWebapp>${project.build.directory}/${project.build.finalName}</hostedWebapp>
           <server>com.google.appengine.tools.development.gwt.AppEngineLauncher</server>
           <copyWebapp>true</copyWebapp>
         </configuration>
@@ -241,7 +231,7 @@
       <plugin>
         <groupId>net.kindleit</groupId>
         <artifactId>maven-gae-plugin</artifactId>
-        <version>0.8.0</version>
+        <version>0.8.1</version>
         <executions>
           <execution>
             <id />
@@ -269,7 +259,7 @@
           <systemProperties>
             <property>
               <name>gwt.args</name>
-              <value>-out target/www</value>
+              <value>-out ${project.build.directory}/${project.build.finalName}</value>
             </property>
           </systemProperties>
         </configuration>
@@ -312,7 +302,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>target/www</outputDirectory>
+              <outputDirectory>${project.build.directory}/${project.build.finalName}</outputDirectory>
               <resources>
                 <resource>
                   <directory>src/main/webapp</directory>
@@ -373,6 +363,19 @@
                     <versionRange>[0.7.3,)</versionRange>
                     <goals>
                       <goal>unpack</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <execute />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <versionRange>[1.2,)</versionRange>
+                    <goals>
+                      <goal>exec</goal>
                     </goals>
                   </pluginExecutionFilter>
                   <action>
