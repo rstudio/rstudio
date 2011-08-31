@@ -2414,7 +2414,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   private void setRowHover(TableRowElement tr, boolean isHovering) {
     setRowStyleName(tr, style.hoveredRow(), style.hoveredRowCell(), isHovering);
-    RowHoverEvent.fire(this, tr, isHovering);
+    RowHoverEvent.fire(this, tr, !isHovering);
   }
   
   /**
