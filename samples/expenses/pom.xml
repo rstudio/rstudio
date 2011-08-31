@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.google.gwt.sample.expenses</groupId>
   <artifactId>expenses</artifactId>
@@ -7,12 +8,12 @@
   <version>0.1.0.BUILD-SNAPSHOT</version>
   <name>expenses</name>
   <properties>
-    <gwt.version>2.3.0</gwt.version>
+    <gwt.version>2.4.0</gwt.version>
     <roo.version>1.1.0.RELEASE</roo.version>
     <spring.version>3.0.3.RELEASE</spring.version>
     <slf4j.version>1.6.1</slf4j.version>
-    <gae.version>1.5.0.1</gae.version>
-    <gae-test.version>1.5.0.1</gae-test.version>
+    <gae.version>1.5.3</gae.version>
+    <gae-test.version>1.5.3</gae-test.version>
     <gae.home>${user.home}/.m2/repository/com/google/appengine/appengine-java-sdk/${gae.version}/appengine-java-sdk-${gae.version}</gae.home>
     <datanucleus.version>1.1.5</datanucleus.version>
   </properties>
@@ -404,24 +405,6 @@
       <artifactId>json</artifactId>
       <version>20090211</version>
     </dependency>
-    <!-- Uncomment appengine-local-runtime and appengine-tools-api to be able to run App Engine unit tests -->
-    <!-- With these uncommented, you must run mvn gae:unpack before importing the project into Eclipse -->
-    <!-- 
-       <dependency>
-         <groupId>com.google.appengine</groupId>
-         <artifactId>appengine-local-runtime</artifactId>
-         <version>${gae.version}</version>
-         <scope>system</scope>
-         <systemPath>${gae.home}/lib/impl/appengine-local-runtime.jar</systemPath>
-       </dependency>
-       <dependency>
-         <groupId>com.google.appengine</groupId>
-         <artifactId>appengine-tools-api</artifactId>
-         <version>${gae.version}</version>
-         <scope>system</scope>
-         <systemPath>${gae.home}/lib/appengine-tools-api.jar</systemPath>
-       </dependency>
-       -->
     <dependency>
       <groupId>net.sf.jsr107cache</groupId>
       <artifactId>jsr107cache</artifactId>
@@ -579,7 +562,7 @@
       <plugin>
         <groupId>net.kindleit</groupId>
         <artifactId>maven-gae-plugin</artifactId>
-        <version>0.7.3</version>
+        <version>0.8.1</version>
         <configuration>
           <unpackVersion>${gae.version}</unpackVersion>
         </configuration>
@@ -676,7 +659,8 @@
             <module>${project.groupId}.Expenses</module>
             <module>${project.groupId}.ExpensesMobile</module>
             <module>${project.groupId}.LoadExpensesDB</module>
-          </modules>          <server>com.google.appengine.tools.development.gwt.AppEngineLauncher</server>
+          </modules>
+          <server>com.google.appengine.tools.development.gwt.AppEngineLauncher</server>
           <!--
              comment as it failed when running the application
              <extraJvmArgs>-javaagent:${gae.home}/appengine-java-sdk-${gae.version}/lib/agent/appengine-agent.jar -Xmx1024m
@@ -701,7 +685,92 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- Run the RequestFactory ValidationTool -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.2</version>
+        <executions>
+          <execution>
+            <phase>process-classes</phase>
+            <configuration>
+              <id>VerifyRequestFactoryInterfaces</id>
+              <executable>java</executable>
+              <arguments>
+                <argument>-cp</argument>
+                <classpath />
+                <argument>com.google.web.bindery.requestfactory.apt.ValidationTool</argument>
+                <argument>${project.build.outputDirectory}</argument>
+                <argument>com.google.gwt.sample.expenses.shared.ExpensesRequestFactory</argument>
+              </arguments>
+            </configuration>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
+
+    <pluginManagement>
+      <plugins>
+        <!--This plugin's configuration is used to store Eclipse m2e settings only.
+          It has no influence on the Maven build itself. -->
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.datanucleus</groupId>
+                    <artifactId>maven-datanucleus-plugin</artifactId>
+                    <versionRange>[1.1.4,)</versionRange>
+                    <goals>
+                      <goal>enhance</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore></ignore>
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>net.kindleit</groupId>
+                    <artifactId>maven-gae-plugin</artifactId>
+                    <versionRange>[0.7.3,)</versionRange>
+                    <goals>
+                      <goal>unpack</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <execute />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>maven-exec-plugin</artifactId>
+                    <versionRange>[1.2)</versionRange>
+                    <goals>
+                      <goal>process-classes</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <execute />
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
     <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
   </build>
 </project>
