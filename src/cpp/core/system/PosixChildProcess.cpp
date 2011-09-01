@@ -13,96 +13,107 @@
 
 #include "ChildProcess.hpp"
 
-// PStreams 0.7.0
-//
-// The implementation of PosixChildProcess uses an embedded copy of the
-// PStreams posix process control library. Links to the PStreams docs:
-//
-// http://pstreams.sourceforge.net/
-// http://pstreams.sourceforge.net/doc/
-// http://pstreams.sourceforge.net/faq.html
-//
-#include "pstreams-0.7.0/pstream.h"
+#include <fcntl.h>
+#include <signal.h>
 
-#include <iostream>
-#include <sstream>
-
-#include <boost/iostreams/copy.hpp>
+#include <boost/bind.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
+#include <core/system/System.hpp>
+#include <core/system/ProcessArgs.hpp>
+
+#include <core/PerformanceTimer.hpp>
 
 #include "ChildProcess.hpp"
+
+// TODO: test child process code
+
+// TODO: test posixCall code for error cases
+
+// TODO: add process handle to onContinue and onExit calls
+
+// TODO: add the ability to run & terminate as a process group
+
+// TODO: add the abilty to assume root
+
+// TODO: replace custom rolled SessionPamAuth calls
 
 namespace core {
 namespace system {
 
 namespace {
 
-Error readStream(redi::basic_pstream<char>& stream, std::string* pStr)
-{
-   try
-   {
-      // set exception mask (required for consistent reporting of errors since
-      // boost::iostreams::copy throws)
-      stream.exceptions(std::istream::failbit | std::istream::badbit);
-
-      // copy file to string stream
-      std::ostringstream ostr;
-      boost::iostreams::copy(stream, ostr);
-      *pStr = ostr.str();
-
-      // reset exception mask
-      stream.exceptions(std::istream::goodbit);
-
-      // return success
-      return Success();
-   }
-   catch(const std::exception& e)
-   {
-      Error error = systemError(boost::system::errc::io_error,
-                                ERROR_LOCATION);
-      error.addProperty("what", e.what());
-      return error;
-   }
-}
-
-void asyncReadStream(redi::basic_pstream<char>& stream, std::string* pOutput)
-{
-   char ch;
-   while (stream.readsome(&ch, 1) > 0)
-      pOutput->append(1, ch);
-}
-
-Error checkStreamState(redi::basic_pstream<char>& stream,
-                       bool *pFinished,
-                       bool otherFinished)
-{
-   // defualt to no error
-   Error error;
-
-   // check for eof or error
-   if (stream.eof())
-   {
-      *pFinished = true;
-   }
-   else if (stream.fail())
-   {
-      error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
-   }
-
-   // clear any error bit if the other stream isn't finished yet
-   if (!stream.good() && !otherFinished)
-      stream.clear();
-
-   // return error status
-   return error;
-}
-
+// pipe handle indexes
+const int READ = 0;
+const int WRITE = 1;
+const std::size_t READ_ERR = -1;
 
 int resolveExitStatus(int status)
 {
    return WIFEXITED(status) ? WEXITSTATUS(status) : status;
+}
+
+void setPipeNonBlocking(int pipeFd)
+{
+   int flags = ::fcntl(pipeFd, F_GETFL);
+   if ( (flags != -1) && !(flags & O_NONBLOCK) )
+     ::fcntl(pipeFd, F_SETFL, flags | O_NONBLOCK);
+}
+
+void closePipe(int pipeFd, const ErrorLocation& location)
+{
+   safePosixCall<int>(boost::bind(::close, pipeFd), location);
+}
+
+
+void closePipe(int* pipeDescriptors, const ErrorLocation& location)
+{
+   closePipe(pipeDescriptors[READ], location);
+   closePipe(pipeDescriptors[WRITE], location);
+}
+
+Error readPipe(int pipeFd, std::string* pOutput, bool *pEOF = NULL)
+{
+   // default to not eof
+   if (pEOF)
+      *pEOF = false;
+
+   // setup and read into buffer
+   const std::size_t kBufferSize = 512;
+   char buffer[kBufferSize];
+   std::size_t bytesRead = posixCall<std::size_t>(
+                     boost::bind(::read, pipeFd, buffer, kBufferSize));
+   while (true)
+   {
+      // check for error
+      if (bytesRead == READ_ERR)
+      {
+         if (errno == EAGAIN) // carve-out for O_NONBLOCK pipes
+            return Success();
+         else
+            return systemError(errno, ERROR_LOCATION);
+      }
+
+      // check for eof
+      else if (bytesRead == 0)
+      {
+         if (pEOF)
+            *pEOF = true;
+
+         return Success();
+      }
+
+      // append to output
+      pOutput->append(buffer, bytesRead);
+
+      // read more bytes
+      bytesRead = posixCall<std::size_t>(
+                        boost::bind(::read, pipeFd, buffer, kBufferSize));
+   }
+
+   // keep compiler happy
+   return Success();
 }
 
 } // anonymous namespace
@@ -111,8 +122,28 @@ int resolveExitStatus(int status)
 
 struct ChildProcess::Impl
 {
-   redi::basic_pstreambuf<char>& rdbuf() { return *pstream_.rdbuf(); }
-   redi::basic_pstream<char> pstream_;
+   Impl() : pid(-1), fdStdin(-1), fdStdout(-1), fdStderr(-1) {}
+   pid_t pid;
+   int fdStdin;
+   int fdStdout;
+   int fdStderr;
+
+   void closeAll(const ErrorLocation& location)
+   {
+      pid = -1;
+      closeFD(&fdStdin, location);
+      closeFD(&fdStdout, location);
+      closeFD(&fdStderr, location);
+   }
+
+   void closeFD(int* pFD, const ErrorLocation& location)
+   {
+      if (*pFD >= 0)
+      {
+         closePipe(*pFD, location);
+         *pFD = -1;
+      }
+   }
 };
 
 
@@ -142,88 +173,193 @@ ChildProcess::~ChildProcess()
 
 Error ChildProcess::writeToStdin(const std::string& input, bool eof)
 {
-   try
-   {
-      // write and check for error
-      pImpl_->pstream_ << input;
-      if (pImpl_->pstream_.fail())
-         return systemError(boost::system::errc::io_error, ERROR_LOCATION);
-
-      // write eof if requested
-      if (eof)
-      {
-         pImpl_->rdbuf().peof();
-
-         if (pImpl_->pstream_.fail())
-            return systemError(boost::system::errc::io_error, ERROR_LOCATION);
-      }
-
-      return Success();
-   }
-   catch(const std::ios_base::failure& e)
-   {
-      // we don't expect this to ever happen (since we haven't set the
-      // exception flag on our io objects)
-      Error error = systemError(boost::system::errc::io_error,
-                                ERROR_LOCATION);
-      error.addProperty("what", e.what());
+   std::size_t written;
+   Error error = posixCall<std::size_t>(boost::bind(::write,
+                                                   pImpl_->fdStdin,
+                                                   input.c_str(),
+                                                   input.length()),
+                                        ERROR_LOCATION,
+                                        &written);
+   if (error)
       return error;
-   }
+
+   // close if requested
+   if (eof)
+      pImpl_->closeFD(&pImpl_->fdStdin, ERROR_LOCATION);
+
+   // check for correct bytes written
+   if (written != static_cast<std::size_t>(input.length()))
+       return systemError(boost::system::errc::io_error, ERROR_LOCATION);
+
+   // return success
+   return Success();
 }
 
 
 Error ChildProcess::terminate()
 {
    // only send signal if the process is open
-   if (!pImpl_->pstream_.is_open())
+   if (pImpl_->pid == -1)
       return systemError(ESRCH, ERROR_LOCATION);
 
    // send signal
-   if (pImpl_->rdbuf().kill(SIGTERM) != NULL)
-      return Success();
+   if (::kill(pImpl_->pid, SIGTERM) == -1)
+      return systemError(errno, ERROR_LOCATION);
    else
-      return systemError(pImpl_->rdbuf().error(), ERROR_LOCATION);
+      return Success();
 }
 
 
 Error ChildProcess::run()
-{
-   // create set of args to pass (needs to include the cmd)
-   std::vector<std::string> args;
-   args.push_back(exe_);
-   args.insert(args.end(), args_.begin(), args_.end());
+{  
+   // standard input
+   int fdInput[2];
+   Error error = posixCall<int>(boost::bind(::pipe, fdInput), ERROR_LOCATION);
+   if (error)
+      return error;
 
-   // open the process
-   pImpl_->pstream_.open(exe_, args, redi::pstreambuf::pstdin |
-                                     redi::pstreambuf::pstdout |
-                                     redi::pstreambuf::pstderr);
-
-   // return success if we are running
-   if (pImpl_->pstream_.is_open())
+   // standard output
+   int fdOutput[2];
+   error = posixCall<int>(boost::bind(::pipe, fdOutput), ERROR_LOCATION);
+   if (error)
    {
-      return Success();
+      closePipe(fdInput, ERROR_LOCATION);
+      return error;
    }
+
+   // standard error
+   int fdError[2];
+   error = posixCall<int>(boost::bind(::pipe, fdError), ERROR_LOCATION);
+   if (error)
+   {
+      closePipe(fdInput, ERROR_LOCATION);
+      closePipe(fdOutput, ERROR_LOCATION);
+      return error;
+   }
+
+   // fork
+   pid_t pid;
+   error = posixCall<pid_t>(::fork, ERROR_LOCATION, &pid);
+   if (error)
+   {
+      closePipe(fdInput, ERROR_LOCATION);
+      closePipe(fdOutput, ERROR_LOCATION);
+      closePipe(fdError, ERROR_LOCATION);
+      return error;
+   }
+
+   // child
+   else if (pid == 0)
+   {
+      // NOTE: within the child we want to make sure in all cases that
+      // we call ::execv to execute the program. as a result if any
+      // errors occur while we are setting up for the ::execv we log
+      // and continue rather than calling ::exit (we do this to avoid
+      // strange error conditions related to global c++ objects being
+      // torn down in a non-standard sequence).
+
+      // close unused pipes -- intentionally fail forward (see note above)
+      closePipe(fdInput[WRITE], ERROR_LOCATION);
+      closePipe(fdOutput[READ], ERROR_LOCATION);
+      closePipe(fdError[READ], ERROR_LOCATION);
+
+      // clear the child signal mask
+      error = core::system::clearSignalMask();
+      if (error)
+      {
+         LOG_ERROR(error);
+         // intentionally fail forward (see note above)
+      }
+
+      // wire standard streams (intentionally fail forward)
+      safePosixCall<int>(boost::bind(::dup2, fdInput[READ], STDIN_FILENO),
+                         ERROR_LOCATION);
+      safePosixCall<int>(boost::bind(::dup2, fdOutput[WRITE], STDOUT_FILENO),
+                         ERROR_LOCATION);
+      safePosixCall<int>(boost::bind(::dup2, fdError[WRITE], STDERR_FILENO),
+                         ERROR_LOCATION);
+
+      // close all open file descriptors other than std streams
+      error = core::system::closeNonStdFileDescriptors();
+      if (error)
+      {
+         LOG_ERROR(error);
+         // intentionally fail forward (see note above)
+      }
+
+      // build args (on heap so they stay around after exec)
+      // create set of args to pass (needs to include the cmd)
+      std::vector<std::string> args;
+      args.push_back(exe_);
+      args.insert(args.end(), args_.begin(), args_.end());
+      using core::system::ProcessArgs;
+
+      ProcessArgs* pProcessArgs = new ProcessArgs(args);
+      ::execv(exe_.c_str(), pProcessArgs->args()) ;
+
+      // in the normal case control should never return from execv (it starts
+      // anew at main of the process pointed to by path). therefore, if we get
+      // here then there was an error
+      LOG_ERROR(systemError(errno, ERROR_LOCATION)) ;
+      ::exit(EXIT_FAILURE) ;
+   }
+
+   // parent
    else
    {
-      return systemError(pImpl_->rdbuf().error(), ERROR_LOCATION);
+      // close unused pipes
+      closePipe(fdInput[READ], ERROR_LOCATION);
+      closePipe(fdOutput[WRITE], ERROR_LOCATION);
+      closePipe(fdError[WRITE], ERROR_LOCATION);
+
+      // record pid and pipe handles
+      pImpl_->pid = pid;
+      pImpl_->fdStdin = fdInput[WRITE];
+      pImpl_->fdStdout = fdOutput[READ];
+      pImpl_->fdStderr = fdError[READ];
+
+      return Success();
    }
+
+   // keep compiler happy
+   return Success();
 }
 
 Error SyncChildProcess::readStdOut(std::string* pOutput)
 {
-   return readStream(pImpl_->pstream_.out(), pOutput);
+   return readPipe(pImpl_->fdStdout, pOutput);
 }
 
 Error SyncChildProcess::readStdErr(std::string* pOutput)
 {
-   return readStream(pImpl_->pstream_.err(), pOutput);
+   return readPipe(pImpl_->fdStderr, pOutput);
 }
 
 Error SyncChildProcess::waitForExit(int* pExitStatus)
 {
-   pImpl_->pstream_.close();
-   *pExitStatus = resolveExitStatus(pImpl_->rdbuf().status());
-   return Success();
+   // blocking wait for exit
+   int status;
+   pid_t result = posixCall<pid_t>(
+      boost::bind(::waitpid, pImpl_->pid, &status, 0));
+
+   // always close all of the pipes
+   pImpl_->closeAll(ERROR_LOCATION);
+
+   // check result
+   if (result == -1)
+   {
+      *pExitStatus = -1;
+
+      if (errno == ECHILD) // carve out for child already reaped
+         return Success();
+      else
+         return systemError(errno, ERROR_LOCATION);
+   }
+   else
+   {
+      *pExitStatus = resolveExitStatus(status);
+      return Success();
+   }
 }
 
 struct AsyncChildProcess::AsyncImpl
@@ -261,100 +397,110 @@ AsyncChildProcess::~AsyncChildProcess()
 
 void AsyncChildProcess::poll()
 {
-   // check for output
-   try
+   // call onStarted if we haven't yet
+   if (!(pAsyncImpl_->calledOnStarted_))
    {
-      // call onStarted if we haven't yet
-      if (!(pAsyncImpl_->calledOnStarted_))
-      {
-         if (callbacks_.onStarted)
-            callbacks_.onStarted(*this);
-         pAsyncImpl_->calledOnStarted_ = true;
-      }
+      // make sure the output pipes are setup for async reading
+      setPipeNonBlocking(pImpl_->fdStdout);
+      setPipeNonBlocking(pImpl_->fdStderr);
 
-      // call onContinue
-      if (callbacks_.onContinue)
-      {
-         if (!callbacks_.onContinue())
-         {
-            // terminate the proces
-            Error error = terminate();
-            if (error)
-               LOG_ERROR(error);
-         }
-      }
+      if (callbacks_.onStarted)
+         callbacks_.onStarted(*this);
+      pAsyncImpl_->calledOnStarted_ = true;
+   }
 
-      // check stdout and fire event if we got output
-      if (!pAsyncImpl_->finishedStdout_)
+   // call onContinue
+   if (callbacks_.onContinue)
+   {
+      if (!callbacks_.onContinue())
       {
-         std::string out;
-         asyncReadStream(pImpl_->pstream_.out(), &out);
+         // terminate the proces
+         Error error = terminate();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+
+   // check stdout and fire event if we got output
+   if (!pAsyncImpl_->finishedStdout_)
+   {
+      bool eof;
+      std::string out;
+      Error error = readPipe(pImpl_->fdStdout, &out, &eof);
+      if (error)
+      {
+         reportError(error);
+      }
+      else
+      {
          if (!out.empty() && callbacks_.onStdout)
             callbacks_.onStdout(*this, out);
 
-         // check stream state
-         Error error = checkStreamState(pImpl_->pstream_,
-                                        &(pAsyncImpl_->finishedStdout_),
-                                        pAsyncImpl_->finishedStderr_);
-         if (error)
-            reportError(error);
+         if (eof)
+           pAsyncImpl_->finishedStdout_ = true;
       }
+   }
 
-      // check stderr and fire event if we got output
-      if (!pAsyncImpl_->finishedStderr_)
+   // check stderr and fire event if we got output
+   if (!pAsyncImpl_->finishedStderr_)
+   {
+      bool eof;
+      std::string err;
+      Error error = readPipe(pImpl_->fdStderr, &err, &eof);
+
+      if (error)
       {
-         std::string err;
-         asyncReadStream(pImpl_->pstream_.err(), &err);
+         reportError(error);
+      }
+      else
+      {
          if (!err.empty() && callbacks_.onStderr)
             callbacks_.onStderr(*this, err);
 
-         // check stream state
-         Error error = checkStreamState(pImpl_->pstream_,
-                                        &(pAsyncImpl_->finishedStderr_),
-                                        pAsyncImpl_->finishedStdout_);
-         if (error)
-            reportError(error);
-      }
-
-      // Check for exited. Note that this method specifies WNOHANG
-      // so we don't block forever waiting for a process the exit. We may
-      // not be able to reap the child due to EINTR, in that case we'll
-      // just call exited again at the next polling interval. We may not
-      // be able to reap the child due to ECHILD (reaped by a global
-      // handler) in which case we'll allow the exit sequence to proceed
-      // and simply pass -1 as the exit status. If we fail to reap the
-      // the child for any other reason (there aren't actually any other
-      // failure codes defined for waitpid) then we'll simply continue
-      // calling exited in every polling interval (and this leak this
-      // object). Note that we don't anticipate this ever occuring based
-      // on our understanding of waitpid, PStreams, etc.
-      if (pImpl_->rdbuf().exited() || (pImpl_->rdbuf().error() == ECHILD))
-      {
-         // close the stream (this won't block because we have
-         // already established that the child is not running)
-         pImpl_->pstream_.close();
-
-         // fire exit event
-         if (callbacks_.onExit)
-         {
-            // resolve exit status
-            int status = resolveExitStatus(pImpl_->rdbuf().status());
-
-            // call onExit
-            callbacks_.onExit(status);
-         }
-
-         // set exited_ flag so that our exited function always
-         // returns the right value (even if we haven't been able
-         // to successfully wait/reap the child)
-         pAsyncImpl_->exited_ = true;
+         if (eof)
+           pAsyncImpl_->finishedStderr_ = true;
       }
    }
-   catch(const std::ios_base::failure& e)
+
+
+   // Check for exited. Note that this method specifies WNOHANG
+   // so we don't block forever waiting for a process the exit. We may
+   // not be able to reap the child due to an error (typically ECHILD,
+   // which occurs if the child was reaped by a global handler) in which
+   // case we'll allow the exit sequence to proceed and simply pass -1 as
+   // the exit status.
+   int status;
+   pid_t result = posixCall<pid_t>(
+            boost::bind(::waitpid, pImpl_->pid, &status, WNOHANG));
+
+   // either a normal exit or an error while waiting
+   if (result != 0)
    {
-      // we don't expect this to ever happen (since we haven't set the
-      // exception flag on our io objects)
-      reportIOError(e.what(), ERROR_LOCATION);
+      // close all of our pipes
+      pImpl_->closeAll(ERROR_LOCATION);
+
+      // fire exit event
+      if (callbacks_.onExit)
+      {
+         // resolve exit status
+         if (result > 0)
+            status = resolveExitStatus(status);
+         else
+            status = -1;
+
+         // call onExit
+         callbacks_.onExit(status);
+      }
+
+      // set exited_ flag so that our exited function always
+      // returns the right value
+      pAsyncImpl_->exited_ = true;
+
+      // if this is an error that isn't ECHILD then log it (we never
+      // expect this to occur as the only documented error codes are
+      // EINTR and ECHILD, and EINTR is handled internally by posixCall)
+      if (result == -1 && errno != ECHILD)
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
    }
 }
 
@@ -362,8 +508,6 @@ bool AsyncChildProcess::exited()
 {
    return pAsyncImpl_->exited_;
 }
-
-
 
 } // namespace system
 } // namespace core
