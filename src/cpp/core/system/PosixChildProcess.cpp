@@ -28,13 +28,11 @@
 
 #include "ChildProcess.hpp"
 
-// TODO: test child process code
-
-// TODO: test posixCall code for error cases
-
 // TODO: add process handle to onContinue and onExit calls
 
-// TODO: add the ability to run & terminate as a process group
+// TODO: add the ability to run & terminate as a process group and
+//       specify this option for ExecuteInterruptableChild (note
+//       we should look into this for Windows as well)
 
 // TODO: add the abilty to assume root
 
