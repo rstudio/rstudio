@@ -444,6 +444,7 @@ public:
 
       *pStream << message;
       pStream->flush();
+      pStream.reset();
 
       std::vector<std::string> args;
       args.push_back("-F");

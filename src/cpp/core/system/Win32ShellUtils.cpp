@@ -19,6 +19,12 @@ namespace shell_utils {
 
 std::string escape(const std::string& arg)
 {
+   /* NOTE: This may be broken in cases where the arg contains special
+      characters like %, ", etc. However, unlike with any sane shell, the
+      Windows shell does not have a consistent way to escape out special
+      characters. And what it does have is horribly under-documented. I
+      thought it best to leave this simple to start and see if anything
+      comes up from field testing. */
    return "\"" + arg + "\"";
 }
 
