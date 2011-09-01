@@ -36,6 +36,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 using namespace core;
+using namespace core::shell_utils;
 
 namespace session {
 namespace modules {
@@ -131,14 +132,11 @@ public:
       return Success();
    }
 
-   core::Error runCommand(const std::string& command,
-                          const std::vector<std::string>& args,
+   core::Error runCommand(const ShellCommand& command,
                           std::vector<std::string>* pOutputLines=NULL)
    {
       std::string output;
-      Error error = runCommand(command,
-                               args,
-                               &output);
+      Error error = runCommand(command, &output, NULL);
       if (error)
          return error;
 
@@ -151,13 +149,13 @@ public:
       return Success();
    }
 
-   core::Error runCommand(const std::string& command,
-                          const std::vector<std::string>& args,
-                          std::string* pOutput)
+   core::Error runCommand(const ShellCommand& command,
+                          std::string* pOutput,
+                          std::string* pStdErr)
    {
       std::string cmd = shell_utils::join(
-            (std::string)(shell_utils::ShellCommand(std::string("cd")) << root_),
-            (std::string)(shell_utils::ShellCommand(command) << args));
+            ShellCommand(std::string("cd")) << root_,
+            command);
 
       core::system::ProcessResult result;
       Error error = core::system::runCommand(cmd,
@@ -166,7 +164,10 @@ public:
       if (error)
          return error;
 
-      *pOutput = result.stdOut;
+      if (pOutput)
+         *pOutput = result.stdOut;
+      if (pStdErr)
+         *pStdErr = result.stdErr;
 
       return Success();
    }
@@ -205,14 +206,28 @@ protected:
 
 boost::scoped_ptr<VCSImpl> s_pVcsImpl_;
 
+namespace {
+
+ShellCommand git()
+{
+   return ShellCommand("git");
+}
+
+ShellCommand svn()
+{
+   return ShellCommand("svn");
+}
+
+} // anonymous namespace
+
 class GitVCSImpl : public VCSImpl
 {
 public:
    static FilePath detectGitDir(FilePath workingDir)
    {
       std::string command = shell_utils::join_and(
-            shell_utils::ShellCommand("cd") << workingDir,
-            shell_utils::ShellCommand("git") << "rev-parse" << "--show-toplevel");
+            ShellCommand("cd") << workingDir,
+            git() << "rev-parse" << "--show-toplevel");
 
       core::system::ProcessResult result;
       Error error = core::system::runCommand(command,
@@ -247,7 +262,9 @@ public:
       args.push_back(string_utils::utf8ToSystem(dir.absolutePath()));
 
       std::vector<std::string> lines;
-      Error error = runCommand("git", args, &lines);
+      Error error = runCommand(
+            git() << "status" << "--porcelain" << "--" << dir,
+            &lines);
       if (error)
          return error;
 
@@ -275,51 +292,23 @@ public:
       return Success();
    }
 
-   core::Error doSimpleCmd(const std::string& command,
-                           const std::vector<std::string>& options,
-                           const std::vector<FilePath>& filePaths,
+   core::Error doSimpleCmd(const ShellCommand& command,
                            std::string* pStdErr)
    {
-      std::vector<std::string> args;
-      args.push_back(command);
-      for (std::vector<std::string>::const_iterator it = options.begin();
-           it != options.end();
-           it++)
-      {
-         args.push_back(*it);
-      }
-      args.push_back("--");
-      for (std::vector<FilePath>::const_iterator it = filePaths.begin();
-           it != filePaths.end();
-           it++)
-      {
-        args.push_back(string_utils::utf8ToSystem((*it).absolutePath()));
-      }
-
-      runCommand("git", args);
-
-      // TODO: Once we capture stderr we need to set it here
-      if (pStdErr)
-         *pStdErr = std::string();
-
-      return Success();
+      return runCommand(command, NULL, pStdErr);
    }
 
    core::Error add(const std::vector<FilePath>& filePaths,
                    std::string* pStdErr)
    {
-      return doSimpleCmd("add",
-                         std::vector<std::string>(),
-                         filePaths,
+      return doSimpleCmd(git() << "add" << "--" << filePaths,
                          pStdErr);
    }
 
    core::Error remove(const std::vector<FilePath>& filePaths,
                       std::string* pStdErr)
    {
-      return doSimpleCmd("rm",
-                         std::vector<std::string>(),
-                         filePaths,
+      return doSimpleCmd(git() << "rm" << "--" << filePaths,
                          pStdErr);
    }
 
@@ -328,34 +317,32 @@ public:
    {
       std::vector<std::string> args;
       args.push_back("-f"); // don't fail on unmerged entries
-      return doSimpleCmd("checkout",
-                         args,
-                         filePaths,
-                         pStdErr);
+      return doSimpleCmd(
+            git() << "checkout" << "-f" << "--" << filePaths,
+            pStdErr);
    }
 
    core::Error revert(const std::vector<FilePath>& filePaths,
                       std::string* pStdErr)
    {
-      std::vector<std::string> args;
-      args.push_back("HEAD");
-      Error error = doSimpleCmd("reset",  args, filePaths, pStdErr);
+      Error error = doSimpleCmd(
+            git() << "reset" << "HEAD" << "--" << filePaths,
+            pStdErr);
       if (error)
          return error;
 
       std::vector<std::string> args2;
       args2.push_back("-f"); // don't fail on unmerged entries
-      return doSimpleCmd("checkout",
-                         args2,
-                         filePaths,
-                         pStdErr);
+      return doSimpleCmd(
+            git() << "checkout" << "-f" << "--" << filePaths,
+            pStdErr);
    }
 
    core::Error stage(const std::vector<FilePath> &filePaths,
                      std::string *pStdErr)
    {
       StatusResult statusResult;
-      this->status(FilePath("."), &statusResult);
+      this->status(root_, &statusResult);
 
       std::vector<FilePath> filesToAdd;
       std::vector<FilePath> filesToRm;
@@ -393,9 +380,8 @@ public:
    core::Error unstage(const std::vector<FilePath>& filePaths,
                        std::string* pStdErr)
    {
-      std::vector<std::string> args;
-      args.push_back("HEAD");
-      return doSimpleCmd("reset", args, filePaths, pStdErr);
+      return doSimpleCmd(git() << "reset" << "HEAD" << "--" << filePaths,
+                         pStdErr);
    }
 
    core::Error listBranches(std::vector<std::string>* pBranches,
@@ -403,9 +389,8 @@ public:
                             std::string* pStdErr)
    {
       std::vector<std::string> lines;
-      std::vector<std::string> args;
-      args.push_back("branch");
-      Error error = runCommand("git", args, &lines);
+
+      Error error = runCommand(git() << "branch", &lines);
       if (error)
          return error;
 
@@ -426,11 +411,7 @@ public:
    core::Error checkout(const std::string& id,
                         std::string* pStdErr)
    {
-      std::vector<std::string> args;
-      args.push_back("checkout");
-      args.push_back(id);
-      args.push_back("--");
-      return runCommand("git", args);
+      return runCommand(git() << "checkout" << id << "--");
    }
 
    core::Error commit(const std::string& message, bool amend, bool signOff)
@@ -444,18 +425,16 @@ public:
 
       *pStream << message;
       pStream->flush();
-      pStream.reset();
+      pStream.reset();  // release file handle
 
-      std::vector<std::string> args;
-      args.push_back("-F");
-      args.push_back(string_utils::utf8ToSystem(tempFile.absolutePath()));
+      ShellCommand command = git() << "commit" << "-F" << tempFile;
       if (amend)
-         args.push_back("--amend");
+         command << "--amend";
       if (signOff)
-         args.push_back("--signoff");
+         command << "--signoff";
 
       std::string stdErr;
-      error = doSimpleCmd("commit", args, std::vector<FilePath>(), &stdErr);
+      error = doSimpleCmd(command, &stdErr);
 
       // clean up commit message temp file
       Error removeError = tempFile.remove();
@@ -465,20 +444,37 @@ public:
       return error;
    }
 
+   core::Error push(std::string* pOutput, std::string* pError)
+   {
+      Error error = runCommand(git() << "push", pOutput, pError);
+      if (error)
+         return error;
+      return Success();
+   }
+
+   core::Error pull(std::string* pOutput, std::string* pError)
+   {
+      Error error = runCommand(git() << "pull", pOutput, pError);
+      if (error)
+         return error;
+      return Success();
+   }
+
    core::Error diffFile(const FilePath& filePath,
                         PatchMode mode,
                         int contextLines,
                         std::string* pOutput)
    {
-      std::vector<std::string> args;
-      args.push_back("diff");
-      args.push_back("-U" + boost::lexical_cast<std::string>(contextLines));
+      ShellCommand command = git() << "diff";
+      command << "-U" + boost::lexical_cast<std::string>(contextLines);
       if (mode == PatchModeStage)
-         args.push_back("--cached");
-      args.push_back("--");
-      args.push_back(string_utils::utf8ToSystem(filePath.absolutePath()));
+         command << "--cached";
+      command << "--";
+      command << filePath;
 
-      runCommand("git", args, pOutput);
+      Error error = runCommand(command, pOutput, NULL);
+      if (error)
+         return error;
 
       return Success();
    }
@@ -508,15 +504,13 @@ public:
                           PatchMode patchMode,
                           std::string* pStdErr)
    {
-      std::vector<std::string> args;
-
+      ShellCommand cmd = git() << "apply";
       if (patchMode == PatchModeStage)
-         args.push_back("--cached");
+         cmd << "--cached";
+      cmd << "--";
+      cmd << patchFile;
 
-      std::vector<FilePath> filePaths;
-      filePaths.push_back(patchFile);
-
-      return doSimpleCmd("apply", args, filePaths, pStdErr);
+      return doSimpleCmd(cmd, pStdErr);
    }
 
    core::Error log(const std::string& rev,
@@ -530,12 +524,15 @@ public:
       args.push_back("--pretty=raw");
       args.push_back("--abbrev-commit");
       args.push_back("--abbrev=8");
-      if (maxentries >= 0)
-         args.push_back("-" + boost::lexical_cast<std::string>(maxentries));
-      if (!rev.empty())
-         args.push_back(rev);
 
-      Error error = runCommand("git", args, &outLines);
+      ShellCommand cmd = git() << "log";
+      cmd << "--pretty=raw" << "--abbrev-commit" << "--abbrev=8";
+      if (maxentries >= 0)
+         cmd << "-" + boost::lexical_cast<std::string>(maxentries);
+      if (!rev.empty())
+         cmd << rev;
+
+      Error error = runCommand(cmd, &outLines);
       if (error)
          return error;
 
@@ -611,14 +608,8 @@ public:
    virtual core::Error show(const std::string& rev,
                             std::string* pOutput)
    {
-      std::vector<std::string> args;
-
-      args.push_back("show");
-      args.push_back("--pretty=oneline");
-      args.push_back("-M"); // detect renames
-      args.push_back(rev);
-
-      return runCommand("git", args, pOutput);
+      return runCommand(git() << "show" << "--pretty=oneline" << "-M" << rev,
+                        pOutput, NULL);
    }
 };
 
@@ -638,15 +629,11 @@ public:
 
       std::vector<FileWithStatus> files;
 
-      std::vector<std::string> args;
-      args.push_back("status");
-      args.push_back("--non-interactive");
-      args.push_back("--depth=immediates");
-      args.push_back("--");
-      args.push_back(string_utils::utf8ToSystem(dir.absolutePath()));
-
       std::vector<std::string> lines;
-      Error error = runCommand("svn", args, &lines);
+      Error error = runCommand(
+            svn() << "status" << "--non-interactive" << "--depth=immediates"
+                  << "--" << dir,
+            &lines);
       if (error)
          return error;
 
@@ -676,25 +663,18 @@ public:
    core::Error revert(const std::vector<FilePath>& filePaths,
                       std::string* pStdErr)
    {
-      std::vector<std::string> args;
-      args.push_back("revert");
-      args.push_back("--");
-      for (std::vector<FilePath>::const_iterator it = filePaths.begin();
-           it != filePaths.end();
-           it++)
-      {
-        args.push_back(string_utils::utf8ToSystem((*it).absolutePath()));
-      }
-
-      runCommand("svn", args);
-
-      // TODO: Once we capture stderr we need to set it here
-      if (pStdErr)
-         *pStdErr = std::string();
-
-      return Success();
+      return runCommand(svn() << "revert" << "--" << filePaths,
+                        NULL, pStdErr);
    }
 };
+
+FilePath resolveAliasedPath(std::string path)
+{
+   if (boost::algorithm::starts_with(path, "~/"))
+      return module_context::resolveAliasedPath(path);
+   else
+      return s_pVcsImpl_->root().childPath(path);
+}
 
 std::vector<FilePath> resolveAliasedPaths(json::Array paths)
 {
@@ -704,10 +684,19 @@ std::vector<FilePath> resolveAliasedPaths(json::Array paths)
         it++)
    {
       json::Value value = *it;
-      parsedPaths.push_back(
-            module_context::resolveAliasedPath(value.get_str()));
+      parsedPaths.push_back(resolveAliasedPath(value.get_str()));
    }
    return parsedPaths;
+}
+
+Error ensureSshAgentRunning()
+{
+   if (system::getenv("SSH_AUTH_SOCK").empty())
+   {
+      system::ProcessResult result;
+      return system::runCommand("ssh-agent -s", &result);
+   }
+   return Success();
 }
 
 } // anonymous namespace
@@ -934,6 +923,38 @@ Error vcsCommitGit(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsPush(const json::JsonRpcRequest& request,
+              json::JsonRpcResponse* pResponse)
+{
+   RefreshOnExit refreshOnExit;
+
+   GitVCSImpl* pGit = dynamic_cast<GitVCSImpl*>(s_pVcsImpl_.get());
+   if (!pGit)
+      return systemError(boost::system::errc::operation_not_supported, ERROR_LOCATION);
+
+   Error error = pGit->push(NULL, NULL);
+   if (error)
+      return error;
+
+   return Success();
+}
+
+Error vcsPull(const json::JsonRpcRequest& request,
+              json::JsonRpcResponse* pResponse)
+{
+   RefreshOnExit refreshOnExit;
+
+   GitVCSImpl* pGit = dynamic_cast<GitVCSImpl*>(s_pVcsImpl_.get());
+   if (!pGit)
+      return systemError(boost::system::errc::operation_not_supported, ERROR_LOCATION);
+
+   Error error = pGit->pull(NULL, NULL);
+   if (error)
+      return error;
+
+   return Success();
+}
+
 Error vcsDiffFile(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
@@ -951,7 +972,7 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
       contextLines = 999999999;
 
    std::string output;
-   error = s_pVcsImpl_->diffFile(module_context::resolveAliasedPath(path),
+   error = s_pVcsImpl_->diffFile(resolveAliasedPath(path),
                                  static_cast<PatchMode>(mode),
                                  contextLines,
                                  &output);
@@ -1047,7 +1068,7 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
       return error;
 
    command = shell_utils::sendStdErrToStdOut(shell_utils::join(
-         shell_utils::ShellCommand("cd") << s_pVcsImpl_->root(),
+         ShellCommand("cd") << s_pVcsImpl_->root(),
          command));
 
    // TODO: Make interruptible, and not on main thread
@@ -1144,6 +1165,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_checkout", vcsCheckout))
       (bind(registerRpcMethod, "vcs_full_status", vcsFullStatus))
       (bind(registerRpcMethod, "vcs_commit_git", vcsCommitGit))
+      (bind(registerRpcMethod, "vcs_push", vcsPush))
+      (bind(registerRpcMethod, "vcs_pull", vcsPull))
       (bind(registerRpcMethod, "vcs_diff_file", vcsDiffFile))
       (bind(registerRpcMethod, "vcs_apply_patch", vcsApplyPatch))
       (bind(registerRpcMethod, "vcs_history", vcsHistory))

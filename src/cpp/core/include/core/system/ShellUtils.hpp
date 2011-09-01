@@ -43,8 +43,14 @@ public:
    ShellCommand& operator<<(const std::string& arg);
    ShellCommand& operator<<(const FilePath& path);
    ShellCommand& operator<<(const std::vector<std::string> args);
+   ShellCommand& operator<<(const std::vector<FilePath> args);
 
    operator std::string() const
+   {
+      return output_;
+   }
+
+   std::string string() const
    {
       return output_;
    }

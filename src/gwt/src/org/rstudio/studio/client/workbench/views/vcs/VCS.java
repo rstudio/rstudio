@@ -35,6 +35,8 @@ import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;
 
 import java.util.ArrayList;
 
+// TODO: Pull/push results should be shown in a dialog, even on success
+
 public class VCS extends BasePresenter implements IsWidget
 {
    public interface Binder extends CommandBinder<Commands, VCS> {}
@@ -139,6 +141,18 @@ public class VCS extends BasePresenter implements IsWidget
    void onVcsShowHistory()
    {
       showReviewPane(true);
+   }
+
+   @Handler
+   void onVcsPull()
+   {
+      server_.vcsPull(new SimpleRequestCallback<Void>());
+   }
+
+   @Handler
+   void onVcsPush()
+   {
+      server_.vcsPush(new SimpleRequestCallback<Void>());
    }
 
    private void refresh()

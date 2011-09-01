@@ -42,5 +42,16 @@ ShellCommand& ShellCommand::operator<<(const std::vector<std::string> args)
    return *this;
 }
 
+ShellCommand& ShellCommand::operator<<(const std::vector<FilePath> args)
+{
+   for (std::vector<FilePath>::const_iterator it = args.begin();
+        it != args.end();
+        it++)
+   {
+      *this << *it;
+   }
+   return *this;
+}
+
 }
 }
