@@ -135,9 +135,6 @@ Error utf8Advance(InputIterator begin,
    return Success();
 }
 
-std::string bash_escape(const std::string& arg);
-std::string bash_escape(const FilePath& filePath);
-
 bool isalpha(wchar_t c);
 bool isalnum(wchar_t c);
 
