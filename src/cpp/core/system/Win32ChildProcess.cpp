@@ -455,7 +455,7 @@ void AsyncChildProcess::poll()
    // call onContinue
    if (callbacks_.onContinue)
    {
-      if (!callbacks_.onContinue())
+      if (!callbacks_.onContinue(*this))
       {
          // terminate the proces
          Error error = terminate();

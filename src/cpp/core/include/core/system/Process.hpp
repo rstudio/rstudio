@@ -122,7 +122,7 @@ struct ProcessCallbacks
    // lifetime of the child process (will not be called until after the
    // first call to onStarted). If it returns false then the child process
    // is terminated.
-   boost::function<bool()> onContinue;
+   boost::function<bool(ProcessOperations&)> onContinue;
 
    // Streaming callback for standard output
    boost::function<void(ProcessOperations&, const std::string&)> onStdout;
@@ -133,7 +133,7 @@ struct ProcessCallbacks
    // Called if an IO error occurs while reading from standard streams. The
    // default behavior if no callback is specified is to log and then terminate
    // the child (which will result in onExit being called w/ exitStatus == 15)
-   boost::function<void(const Error&)> onError;
+   boost::function<void(ProcessOperations&,const Error&)> onError;
 
    // Called after the process has exited. Passes exitStatus (see ProcessResult
    // comment above for potential values)

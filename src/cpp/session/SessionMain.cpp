@@ -1921,7 +1921,7 @@ Error registerRpcMethod(const std::string& name,
 
 namespace {
 
-bool continueChildProcess()
+bool continueChildProcess(core::system::ProcessOperations&)
 {
    // pump events so we can actually receive an interrupt
    polledEventHandler();

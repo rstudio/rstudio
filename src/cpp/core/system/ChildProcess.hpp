@@ -162,7 +162,7 @@ private:
    {
       if (callbacks_.onError)
       {
-         callbacks_.onError(error);
+         callbacks_.onError(*this, error);
       }
       else
       {

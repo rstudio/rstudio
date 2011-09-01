@@ -28,8 +28,6 @@
 
 #include "ChildProcess.hpp"
 
-// TODO: add process handle to onContinue and onExit calls
-
 // TODO: add the ability to run & terminate as a process group and
 //       specify this option for ExecuteInterruptableChild (note
 //       we should look into this for Windows as well)
@@ -411,7 +409,7 @@ void AsyncChildProcess::poll()
    // call onContinue
    if (callbacks_.onContinue)
    {
-      if (!callbacks_.onContinue())
+      if (!callbacks_.onContinue(*this))
       {
          // terminate the proces
          Error error = terminate();
