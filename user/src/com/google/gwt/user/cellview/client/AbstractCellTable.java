@@ -1744,7 +1744,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
                 .getHeader(footerParent);
         if (header != null && cellConsumesEventType(header.getCell(), eventType)) {
           Context context = new Context(0, col, header.getKey());
-          header.onBrowserEvent(context, cellParent, event);
+          header.onBrowserEvent(context, headerParent, event);
         }
       }
 
