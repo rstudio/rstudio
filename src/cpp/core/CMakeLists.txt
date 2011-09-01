@@ -61,6 +61,7 @@ set (CORE_SOURCE_FILES
    r_util/RSourceIndex.cpp
    r_util/RTokenizerTests.cpp
    system/Process.cpp
+   system/ShellUtils.cpp
    system/System.cpp
    system/file_monitor/FileMonitor.cpp
    text/DcfParser.cpp
@@ -137,6 +138,7 @@ else()
       system/RegistryKey.cpp
       system/Win32ParentProcessMonitor.cpp
       system/Win32OutputCapture.cpp
+      system/Win32ShellUtils.cpp
       system/Win32System.cpp
       system/Win32ChildProcess.cpp
       system/file_monitor/Win32FileMonitor.cpp

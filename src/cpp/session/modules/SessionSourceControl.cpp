@@ -23,6 +23,7 @@
 #include <boost/regex.hpp>
 
 #include <core/json/JsonRpc.hpp>
+#include <core/system/ShellUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Process.hpp>
 #include <core/Exec.hpp>
@@ -154,17 +155,9 @@ public:
                           const std::vector<std::string>& args,
                           std::string* pOutput)
    {
-      std::string cmd("cd ");
-      cmd.append(string_utils::bash_escape(root_));
-      cmd.append("; ");
-      cmd.append(command);
-      for (std::vector<std::string>::const_iterator it = args.begin();
-           it != args.end();
-           it++)
-      {
-         cmd.append(" ");
-         cmd.append(string_utils::bash_escape(*it));
-      }
+      std::string cmd = shell_utils::join(
+            (std::string)(shell_utils::ShellCommand(std::string("cd")) << root_),
+            (std::string)(shell_utils::ShellCommand(command) << args));
 
       core::system::ProcessResult result;
       Error error = core::system::runCommand(cmd,
@@ -217,9 +210,9 @@ class GitVCSImpl : public VCSImpl
 public:
    static FilePath detectGitDir(FilePath workingDir)
    {
-      std::string command("cd ");
-      command.append(string_utils::bash_escape(workingDir.absolutePath()));
-      command.append("; git rev-parse --show-toplevel");
+      std::string command = shell_utils::join_and(
+            shell_utils::ShellCommand("cd") << workingDir,
+            shell_utils::ShellCommand("git") << "rev-parse" << "--show-toplevel");
 
       core::system::ProcessResult result;
       Error error = core::system::runCommand(command,
@@ -482,7 +475,7 @@ public:
       if (mode == PatchModeStage)
          args.push_back("--cached");
       args.push_back("--");
-      args.push_back(string_utils::bash_escape(filePath));
+      args.push_back(string_utils::utf8ToSystem(filePath.absolutePath()));
 
       runCommand("git", args, pOutput);
 
@@ -1052,13 +1045,10 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   command = "(cd " +
-             string_utils::bash_escape(s_pVcsImpl_->root().absolutePath()) +
-             "; " + command +
-             ") 2>&1";
+   command = shell_utils::sendStdErrToStdOut(shell_utils::join(
+         shell_utils::ShellCommand("cd") << s_pVcsImpl_->root(),
+         command));
 
-   // TODO: Capture stderr
-   // TODO: Indicate error in result if exit code != 0
    // TODO: Make interruptible, and not on main thread
    // TODO: Stream results
 
@@ -1110,7 +1100,6 @@ int postbackSSHAskPass(const std::string& command, std::string* pOutput)
 core::Error initialize()
 {
    FilePath workingDir = projects::projectContext().directory();
-
    if (!userSettings().vcsEnabled())
       s_pVcsImpl_.reset(new VCSImpl(workingDir));
    else if (workingDir.empty())
