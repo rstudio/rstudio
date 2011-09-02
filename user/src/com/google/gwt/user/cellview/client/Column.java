@@ -173,7 +173,7 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
    * {@link #getCellStyleNames(Context, Object)} directly.
    * </p>
    * 
-   * @param styleNames the extra style names to applyin a space-separated list,
+   * @param styleNames the extra style names to apply in a space-separated list,
    *          or {@code null} if there are no extra styles for this cell
    */
   public void setCellStyleNames(String styleNames) {

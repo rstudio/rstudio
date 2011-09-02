@@ -102,6 +102,7 @@ public class DefaultHeaderOrFooterBuilder<T> extends AbstractHeaderOrFooterBuild
         if (isSorted) {
           classesBuilder.append(sortedStyle);
         }
+        appendExtraStyles(prevHeader, classesBuilder);
 
         // Render the header.
         TableCellBuilder th =
@@ -144,6 +145,7 @@ public class DefaultHeaderOrFooterBuilder<T> extends AbstractHeaderOrFooterBuild
     // The first and last columns could be the same column.
     classesBuilder.append(" ").append(
         isFooter ? style.lastColumnFooter() : style.lastColumnHeader());
+    appendExtraStyles(prevHeader, classesBuilder);
 
     // Render the last header.
     TableCellBuilder th = tr.startTH().colSpan(prevColspan).className(classesBuilder.toString());
@@ -158,5 +160,21 @@ public class DefaultHeaderOrFooterBuilder<T> extends AbstractHeaderOrFooterBuild
     tr.endTR();
 
     return true;
+  }
+  
+  /**
+   * Append the extra style names for the header.
+   * @param header the header that may contain extra styles, it can be null
+   * @param classesBuilder the string builder for the TD classes
+   */  
+  private <H> void appendExtraStyles(Header<H> header, StringBuilder classesBuilder) {
+    if (header == null) {
+      return;
+    }
+    String headerStyleNames = header.getHeaderStyleNames();
+    if (headerStyleNames != null) {
+      classesBuilder.append(" ");
+      classesBuilder.append(headerStyleNames);
+    }
   }
 }

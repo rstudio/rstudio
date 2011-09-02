@@ -31,6 +31,7 @@ public abstract class Header<H> {
 
   private final Cell<H> cell;
 
+  private String headerStyleNames = null;
   private ValueUpdater<H> updater;
 
   /**
@@ -51,6 +52,18 @@ public abstract class Header<H> {
     return cell;
   }
 
+  /**
+   * Get extra style names that should be applied to a cell in this header. May be overriden to
+   * get value dependent styles by calling {@link #getValue}.
+   * 
+   * @return the extra styles of the given row in a space-separated list, or
+   *         {@code null} if there are no extra styles for the cells in this
+   *         header
+   */
+  public String getHeaderStyleNames() {
+    return headerStyleNames;
+  }
+  
   /**
    * Get the key for the header value. By default, the key is the same as the
    * value. Override this method to return a custom key.
@@ -89,6 +102,21 @@ public abstract class Header<H> {
     cell.render(context, getValue(), sb);
   }
 
+  /**
+   * Set extra style names that should be applied to every cell in this header.
+   * 
+   * <p>
+   * If you want to apply style names based on the header value, override
+   * {@link #getHeaderStyleNames(Object)} directly.
+   * </p>
+   * 
+   * @param styleNames the extra style names to apply in a space-separated list,
+   *          or {@code null} if there are no extra styles for this cell
+   */
+  public void setHeaderStyleNames(String styleNames) {
+    this.headerStyleNames = styleNames;
+  }
+    
   /**
    * Set the {@link ValueUpdater}.
    * 
