@@ -128,6 +128,8 @@ Error runCommand(const std::string& command,
 class ProcessOperations
 {
 public:
+   virtual ~ProcessOperations() {}
+
    // Write (synchronously) to standard input
    virtual Error writeToStdin(const std::string& input, bool eof) = 0;
 
