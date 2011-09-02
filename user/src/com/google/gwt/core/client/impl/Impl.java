@@ -15,6 +15,7 @@
  */
 package com.google.gwt.core.client.impl;
 
+import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -24,11 +25,23 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 public final class Impl {
 
+  private static final int WATCHDOG_ENTRY_DEPTH_CHECK_INTERVAL_MS = 2000;
+
   /**
    * Used by {@link #entry0(Object, Object)} to handle reentrancy.
    */
   private static int entryDepth = 0;
   private static int sNextHashId = 0;
+
+  /**
+   * TimeStamp indicating last scheduling of the entry depth watchdog.
+   */
+  private static double watchdogEntryDepthLastScheduled;
+
+  /**
+   * Timer id of the entry depth watchdog. -1 if not scheduled.
+   */
+  private static int watchdogEntryDepthTimerId = -1;
 
   /**
    * This method should be used whenever GWT code is entered from a JS context
@@ -182,6 +195,14 @@ public final class Impl {
   private static boolean enter() {
     assert entryDepth >= 0 : "Negative entryDepth value at entry " + entryDepth;
 
+    if (entryDepth != 0) {
+      double now = Duration.currentTimeMillis();
+      if (now - watchdogEntryDepthLastScheduled > WATCHDOG_ENTRY_DEPTH_CHECK_INTERVAL_MS) {
+        watchdogEntryDepthLastScheduled = now;
+        watchdogEntryDepthTimerId = watchdogEntryDepthSchedule();
+      }
+    }
+
     // We want to disable some actions in the reentrant case
     if (entryDepth++ == 0) {
       SchedulerImpl.INSTANCE.flushEntryCommands();
@@ -242,6 +263,10 @@ public final class Impl {
     assert entryDepth >= 0 : "Negative entryDepth value at exit " + entryDepth;
     if (initialEntry) {
       assert entryDepth == 0 : "Depth not 0" + entryDepth;
+      if (watchdogEntryDepthTimerId != -1) {
+        watchdogEntryDepthCancel(watchdogEntryDepthTimerId);
+        watchdogEntryDepthTimerId = -1;
+      }
     }
   }
 
@@ -258,5 +283,30 @@ public final class Impl {
   private static native Object undefined() /*-{
     // Intentionally not returning a value
     return;
+  }-*/;
+
+  private static native void watchdogEntryDepthCancel(int timerId) /*-{
+    $wnd.clearTimeout(timerId);
+  }-*/;
+
+  private static void watchdogEntryDepthRun() {
+    // Note: this must NEVER be called nested in a $entry() call.
+    // This method is call from a "setTimeout": entryDepth should be set to 0.
+    if (entryDepth != 0) {
+      int oldDepth = entryDepth;
+      entryDepth = 0;
+      if (GWT.getUncaughtExceptionHandler() != null) {
+        // Report the problem.
+        GWT.getUncaughtExceptionHandler().onUncaughtException(
+            new IllegalStateException("Invalid entryDepth value " + oldDepth));
+      }
+    }
+    watchdogEntryDepthTimerId = -1;  // Timer has run.
+  }
+
+  private static native int watchdogEntryDepthSchedule() /*-{
+    return $wnd.setTimeout(function() {
+      @com.google.gwt.core.client.impl.Impl::watchdogEntryDepthRun()();
+    }, 10);
   }-*/;
 }
