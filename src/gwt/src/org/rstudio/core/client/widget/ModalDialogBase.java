@@ -95,14 +95,14 @@ public abstract class ModalDialogBase extends DialogBox
    @Override
    protected void onLoad()
    {
-      // 728: Focus remains in Source view when message dialog pops up over it
-      NativeWindow.get().focus();
-      
       super.onLoad();
       allActiveDialogs_.add(this);
       if (shortcutDisableHandle_ != null)
          shortcutDisableHandle_.close();
       shortcutDisableHandle_ = ShortcutManager.INSTANCE.disable();
+
+      // 728: Focus remains in Source view when message dialog pops up over it
+      NativeWindow.get().focus();
    }
 
    @Override
