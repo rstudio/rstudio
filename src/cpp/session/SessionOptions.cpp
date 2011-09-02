@@ -282,7 +282,15 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // shared secret with parent
    secret_ = core::system::getenv("RS_SHARED_SECRET");
-   core::system::unsetenv("RS_SHARED_SECRET");
+   /* SECURITY: Need RS_SHARED_SECRET to be available to
+      rpostback. However, we really ought to communicate
+      it in a more secure manner than this, at least on
+      Windows where even within the same user session some
+      processes can have different priviliges (integrity
+      levels) than others. For example, using a named pipe
+      with proper SACL to retrieve the shared secret, where
+      the name of the pipe is in an environment variable. */
+   //core::system::unsetenv("RS_SHARED_SECRET");
 
    // initial working dir override
    initialWorkingDirOverride_ = core::system::getenv("RS_INITIAL_WD");

@@ -2189,6 +2189,8 @@ int main (int argc, char * const argv[])
       // username in debug configurations). this is provided so that 
       // rpostback knows what local stream to connect back to
       core::system::setenv(kRStudioUserIdentity, options.userIdentity());
+      // do the same for port number, for rpostback in rdesktop configs
+      core::system::setenv(kRSessionPortNumber, options.wwwPort());
            
       // ensure we aren't being started as a low (priviliged) account
       if (serverMode &&

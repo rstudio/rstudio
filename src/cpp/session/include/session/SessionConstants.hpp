@@ -17,7 +17,8 @@
 #define kEventsPending                    "ep"
 
 #define kRStudioUserIdentity              "RSTUDIO_USER_IDENTITY"
-#define kRStudioLimitRpcClientUid         "RSTUIDO_LIMIT_RPC_CLIENT_UID"
+#define kRStudioLimitRpcClientUid         "RSTUDIO_LIMIT_RPC_CLIENT_UID"
+#define kRSessionPortNumber               "RSTUDIO_SESSION_PORT"
 
 #define kProgramModeSessionOption         "program-mode"
 #define kSessionProgramModeDesktop        "desktop"

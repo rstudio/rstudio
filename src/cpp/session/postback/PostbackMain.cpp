@@ -24,6 +24,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/LocalStreamBlockingClient.hpp>
+#include <core/http/TcpIpBlockingClient.hpp>
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionLocalStreams.hpp>
@@ -37,6 +38,24 @@ int exitFailure(const Error& error)
 {
    LOG_ERROR(error);
    return EXIT_FAILURE;
+}
+
+Error sendRequest(http::Request* pRequest, http::Response* pResponse)
+{
+   std::string portNum = system::getenv(kRSessionPortNumber);
+   if (!portNum.empty())
+   {
+      pRequest->setHeader("X-Shared-Secret", system::getenv("RS_SHARED_SECRET"));
+      return http::sendRequest("127.0.0.1", portNum, *pRequest, pResponse);
+   }
+   else
+   {
+      // determine stream path
+      std::string userIdentity = system::getenv(kRStudioUserIdentity);
+      FilePath streamPath = session::local_streams::streamPath(userIdentity);
+
+      return http::sendRequest(streamPath, *pRequest, pResponse);
+   }
 }
 
 int main(int argc, char * const argv[]) 
@@ -56,10 +75,6 @@ int main(int argc, char * const argv[])
       std::string uri = std::string(kLocalUriLocationPrefix kPostbackUriScope) + 
                         options.command();
       
-      // determine stream path
-      std::string userIdentity = core::system::getenv(kRStudioUserIdentity);
-      FilePath streamPath = session::local_streams::streamPath(userIdentity);
-
       // build postback request
       http::Request request;
       request.setMethod("POST");
@@ -70,7 +85,7 @@ int main(int argc, char * const argv[])
 
       // send it
       http::Response response;
-      Error error = http::sendRequest(streamPath, request,  &response);
+      Error error = sendRequest(&request, &response);
       if (error)
          return exitFailure(error);
 
