@@ -180,7 +180,7 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
    // run script to capture paths
    std::string command = ldPathsScript.absolutePath() + " " + rHome;
    system::ProcessResult result;
-   Error error = runCommand(command, &result);
+   Error error = runCommand(command, core::system::ProcessOptions(), &result);
    if (error)
       LOG_ERROR(error);
    std::string libraryPaths = result.stdOut;
@@ -192,7 +192,9 @@ FilePath systemDefaultRScript(std::string* pErrMsg)
 {
    // ask system which R to use
    system::ProcessResult result;
-   Error error = core::system::runCommand("which R", &result);
+   Error error = core::system::runCommand("which R",
+                                          core::system::ProcessOptions(),
+                                          &result);
    std::string whichR = result.stdOut;
    boost::algorithm::trim(whichR);
    if (error || whichR.empty())
@@ -246,7 +248,7 @@ bool getRHomeAndLibPath(const FilePath& rScriptPath,
    // run R script to detect R home
    std::string command = rScriptPath.absolutePath() + " RHOME";
    system::ProcessResult result;
-   Error error = runCommand(command, &result);
+   Error error = runCommand(command, core::system::ProcessOptions(), &result);
    if (error)
    {
       *pErrMsg = "Error running R (" + rScriptPath.absolutePath() + "): " +
