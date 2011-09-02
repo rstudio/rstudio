@@ -28,28 +28,24 @@ public class ImageFrame extends Frame
    protected void onLoad()
    {
       super.onLoad();
-      if (!initialized_)
-      {
-         initialized_ = true;
-         new Timer() {
-            @Override
-            public void run()
+      new Timer() {
+         @Override
+         public void run()
+         {
+            // No way to tell when iframe is actually ready to be
+            // manipulated (sometimes contentWindow is null). Need
+            // to probe and retry.
+            if (!isReadyForContent(getElement()))
             {
-               // No way to tell when iframe is actually ready to be
-               // manipulated (sometimes contentWindow is null). Need
-               // to probe and retry.
-               if (!isReadyForContent(getElement()))
-               {
-                  this.schedule(200);
-               }
-               else
-               {
-                  setupContent(getElement());
-                  replaceLocation(getElement(), url_);
-               }
+               this.schedule(200);
             }
-         }.schedule(100);
-      }
+            else
+            {
+               setupContent(getElement());
+               replaceLocation(getElement(), url_);
+            }
+         }
+      }.schedule(100);
    }
 
    public void setMarginWidth(int width)
@@ -114,5 +110,4 @@ public class ImageFrame extends Frame
    }-*/;
 
    private String url_ = "javascript:false";
-   private boolean initialized_;
 }
