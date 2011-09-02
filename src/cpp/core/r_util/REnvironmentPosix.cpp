@@ -456,7 +456,7 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
             "R.home('include'),"
             "R.home('doc'),sep=':'))\"";
    system::ProcessResult result;
-   Error error = runCommand(command, &result);
+   Error error = runCommand(command, system::ProcessOptions(), &result);
    if (error)
    {
       LOG_ERROR(error);

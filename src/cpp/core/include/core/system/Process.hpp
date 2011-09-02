@@ -33,6 +33,28 @@ namespace system {
 //
 //
 
+// Struct for specifying process options
+struct ProcessOptions
+{
+   ProcessOptions()
+      : terminateChildren(false)
+   {
+   }
+
+   // terminate should also terminate all children owned by the process
+   // NOTE: currently only supported on posix -- in the posix case this
+   // results in a call to ::setpgid(0,0) to create a new process group
+   // and the specification of -pid to kill so as to kill the child and
+   // all of its subprocesses
+   // NOTE: to support the same behavior on Win32 we'll need to use
+   // CreateJobObject/CREATE_BREAKAWAY_FROM_JOB to get the same effect
+   bool terminateChildren;
+
+   // function to run within the child process immediately after the fork
+   // NOTE: only supported on posix as there is no fork on Win32
+   boost::function<void()> onAfterFork;
+};
+
 // Struct for returning output and exit status from a process
 struct ProcessResult
 {
@@ -69,15 +91,19 @@ struct ProcessResult
 Error runProgram(const std::string& executable,
                  const std::vector<std::string>& args,
                  const std::string& input,
+                 const ProcessOptions& options,
                  ProcessResult* pResult);
 
 // Run a command synchronously. The command will be passed to and executed
 // by a command shell (/bin/sh on posix, cmd.exe on windows).
 //
-Error runCommand(const std::string& command, ProcessResult* pResult);
+Error runCommand(const std::string& command,
+                 const ProcessOptions& options,
+                 ProcessResult* pResult);
 
 Error runCommand(const std::string& command,
                  const std::string& input,
+                 const ProcessOptions& options,
                  ProcessResult* pResult);
 
 
@@ -157,11 +183,13 @@ public:
    // argument.
    Error runProgram(const std::string& executable,
                     const std::vector<std::string>& args,
+                    const ProcessOptions& options,
                     const ProcessCallbacks& callbacks);
 
    // Run a command asynchronously (same as above but uses a command shell
    // rather than running the executable directly)
    Error runCommand(const std::string& command,
+                    const ProcessOptions& options,
                     const ProcessCallbacks& callbacks);
 
    // Run a child asynchronously, invoking the completed callback when the
@@ -175,18 +203,20 @@ public:
             const std::string& executable,
             const std::vector<std::string>& args,
             const std::string& input,
+            const ProcessOptions& options,
             const boost::function<void(const ProcessResult&)>& onCompleted);
 
    // Run a command asynchronously (same as above but uses a command shell
    // rather than running the executable directly)
-   //
    Error runCommand(
             const std::string& command,
+            const ProcessOptions& options,
             const boost::function<void(const ProcessResult&)>& onCompleted);
 
    Error runCommand(
             const std::string& command,
             const std::string& input,
+            const ProcessOptions& options,
             const boost::function<void(const ProcessResult&)>& onCompleted);
 
 
@@ -196,6 +226,9 @@ public:
    // Poll for child (output and exit) events. returns true if there
    // are still children being supervised after the poll
    bool poll();
+
+   // Terminate all running children
+   void terminateAll();
 
    // Wait for all children to exit
    void wait(int pollingIntervalMs = 100);

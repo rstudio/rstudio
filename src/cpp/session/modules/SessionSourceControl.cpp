@@ -167,7 +167,9 @@ public:
       }
 
       core::system::ProcessResult result;
-      Error error = core::system::runCommand(cmd, &result);
+      Error error = core::system::runCommand(cmd,
+                                             core::system::ProcessOptions(),
+                                             &result);
       if (error)
          return error;
 
@@ -220,7 +222,9 @@ public:
       command.append("; git rev-parse --show-toplevel");
 
       core::system::ProcessResult result;
-      Error error = core::system::runCommand(command, &result);
+      Error error = core::system::runCommand(command,
+                                             core::system::ProcessOptions(),
+                                             &result);
       if (error)
          return FilePath();
 
@@ -1059,7 +1063,9 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
    // TODO: Stream results
 
    core::system::ProcessResult processResult;
-   error = core::system::runCommand(command, &processResult);
+   error = core::system::runCommand(command,
+                                    core::system::ProcessOptions(),
+                                    &processResult);
    if (error)
       return error;
 

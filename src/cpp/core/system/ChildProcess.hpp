@@ -34,10 +34,13 @@ protected:
    // separate init from construction so subclassees can use custom
    // processing to calculate exe and args (e.g. lookup paths or
    // invoke within a command processor)
-   void init(const std::string& exe, const std::vector<std::string>& args);
+   void init(const std::string& exe,
+             const std::vector<std::string>& args,
+             const ProcessOptions& options);
 
    // init from a command (platform specific)
-   void init(const std::string& command);
+   void init(const std::string& command,
+             const ProcessOptions& options);
 
 public:
    virtual ~ChildProcess();
@@ -61,6 +64,7 @@ private:
    // command and args
    std::string exe_;
    std::vector<std::string> args_;
+   ProcessOptions options_;
 };
 
 
@@ -68,16 +72,19 @@ private:
 class SyncChildProcess : public ChildProcess
 {
 public:
-   SyncChildProcess(const std::string& exe, const std::vector<std::string>& args)
+   SyncChildProcess(const std::string& exe,
+                    const std::vector<std::string>& args,
+                    const ProcessOptions& options)
       : ChildProcess()
    {
-      init(exe, args);
+      init(exe, args, options);
    }
 
-   SyncChildProcess(const std::string& command)
+   SyncChildProcess(const std::string& command,
+                    const ProcessOptions& options)
       : ChildProcess()
    {
-      init(command);
+      init(command, options);
    }
 
    Error run(const std::string& input, ProcessResult* pResult)
@@ -131,8 +138,11 @@ private:
 class AsyncChildProcess : public ChildProcess
 {
 public:
-   AsyncChildProcess(const std::string& exe, const std::vector<std::string>& args);
-   AsyncChildProcess(const std::string& command);
+   AsyncChildProcess(const std::string& exe,
+                     const std::vector<std::string>& args,
+                     const ProcessOptions& options);
+   AsyncChildProcess(const std::string& command,
+                     const ProcessOptions& options);
    virtual ~AsyncChildProcess();
 
    // run process asynchronously

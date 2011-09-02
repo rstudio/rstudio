@@ -1116,7 +1116,9 @@ Error runPreflightScript()
             // the outcome of the script is)
             std::string script = preflightScriptPath.absolutePath();
             core::system::ProcessResult result;
-            Error error = runCommand(script, &result);
+            Error error = runCommand(script,
+                                     core::system::ProcessOptions(),
+                                     &result);
             if (error)
             {
                error.addProperty("preflight-script", script);
@@ -1626,6 +1628,9 @@ void rCleanup(bool terminatedNormally)
       // fire shutdown event to modules
       module_context::events().onShutdown(terminatedNormally);
 
+      // terminate any running subprocesses
+      module_context::processSupervisor().terminateAll();
+
       // cause graceful exit of clientEventService (ensures delivery
       // of any pending events prior to process termination). wait a
       // very brief interval first to allow the quit or other termination
@@ -1944,6 +1949,14 @@ bool continueChildProcess(core::system::ProcessOperations&)
 Error executeInterruptableChild(const std::string& path,
                                 const std::vector<std::string>& args)
 {
+   // NOTE: we specify ProcessOptions::terminateChildren so that when
+   // the user interrupts the job then we end up killing both the
+   // child and all of its subprocesses (desirable for sweave so we
+   // can kill the underlying R executable as well). There is a
+   // tradeoff though: to get this to work we have to run the child
+   // in its own process group, which means that if this process dies
+   // it does not automatically take this child with it.
+
    // setup callbacks
    core::system::ProcessCallbacks cb;
    cb.onStdout = boost::bind(rConsoleWrite, _2, 0);
@@ -1952,7 +1965,9 @@ Error executeInterruptableChild(const std::string& path,
 
    // run process with a supervisor
    core::system::ProcessSupervisor supervisor;
-   Error error = supervisor.runProgram(path, args, cb);
+   core::system::ProcessOptions options;
+   options.terminateChildren = true;
+   Error error = supervisor.runProgram(path, args, options, cb);
    if (error)
       return error;
 

@@ -16,6 +16,7 @@
 #include <iostream>
 
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
@@ -32,22 +33,26 @@ namespace system {
 Error runProgram(const std::string& executable,
                  const std::vector<std::string>& args,
                  const std::string& input,
+                 const ProcessOptions& options,
                  ProcessResult* pResult)
 {
-   SyncChildProcess child(executable, args);
+   SyncChildProcess child(executable, args, options);
    return child.run(input, pResult);
 }
 
-Error runCommand(const std::string& command, ProcessResult* pResult)
+Error runCommand(const std::string& command,
+                 const ProcessOptions& options,
+                 ProcessResult* pResult)
 {
-   return runCommand(command, "", pResult);
+   return runCommand(command, "", options, pResult);
 }
 
 Error runCommand(const std::string& command,
                  const std::string& input,
+                 const ProcessOptions& options,
                  ProcessResult* pResult)
 {
-   SyncChildProcess child(command);
+   SyncChildProcess child(command, options);
    return child.run(input, pResult);
 }
 
@@ -88,22 +93,26 @@ Error runChild(boost::shared_ptr<AsyncChildProcess> pChild,
 
 Error ProcessSupervisor::runProgram(const std::string& executable,
                                     const std::vector<std::string>& args,
+                                    const ProcessOptions& options,
                                     const ProcessCallbacks& callbacks)
 {
    // create the child
    boost::shared_ptr<AsyncChildProcess> pChild(
-                                 new AsyncChildProcess(executable, args));
+                                 new AsyncChildProcess(executable,
+                                                       args,
+                                                       options));
 
    // run the child
    return runChild(pChild, &(pImpl_->children), callbacks);
 }
 
 Error ProcessSupervisor::runCommand(const std::string& command,
+                                    const ProcessOptions& options,
                                     const ProcessCallbacks& callbacks)
 {
    // create the child
    boost::shared_ptr<AsyncChildProcess> pChild(
-                                 new AsyncChildProcess(command));
+                                 new AsyncChildProcess(command, options));
 
    // run the child
    return runChild(pChild, &(pImpl_->children), callbacks);
@@ -190,32 +199,35 @@ Error ProcessSupervisor::runProgram(
             const std::string& executable,
             const std::vector<std::string>& args,
             const std::string& input,
+            const ProcessOptions& options,
             const boost::function<void(const ProcessResult&)>& onCompleted)
 {
    // create proces callbacks
    ProcessCallbacks cb = createProcessCallbacks(input, onCompleted);
 
    // run the child
-   return runProgram(executable, args, cb);
+   return runProgram(executable, args, options, cb);
 }
 
 Error ProcessSupervisor::runCommand(
              const std::string& command,
+             const ProcessOptions& options,
              const boost::function<void(const ProcessResult&)>& onCompleted)
 {
-   return runCommand(command, "", onCompleted);
+   return runCommand(command, "", options, onCompleted);
 }
 
 Error ProcessSupervisor::runCommand(
              const std::string& command,
              const std::string& input,
+             const ProcessOptions& options,
              const boost::function<void(const ProcessResult&)>& onCompleted)
 {
    // create proces callbacks
    ProcessCallbacks cb = createProcessCallbacks(input, onCompleted);
 
    // run the child
-   return runCommand(command, cb);
+   return runCommand(command, options, cb);
 }
 
 
@@ -245,6 +257,18 @@ bool ProcessSupervisor::poll()
 
    // return status
    return hasRunningChildren();
+}
+
+void ProcessSupervisor::terminateAll()
+{
+   // call terminate on all of our children
+   BOOST_FOREACH(boost::shared_ptr<AsyncChildProcess> pChild,
+                 pImpl_->children)
+   {
+      Error error = pChild->terminate();
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 void ProcessSupervisor::wait(int pollingIntervalMs)

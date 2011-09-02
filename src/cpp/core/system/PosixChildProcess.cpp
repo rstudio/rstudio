@@ -28,14 +28,6 @@
 
 #include "ChildProcess.hpp"
 
-// TODO: add the ability to run & terminate as a process group and
-//       specify this option for ExecuteInterruptableChild (note
-//       we should look into this for Windows as well)
-
-// TODO: add the abilty to assume root
-
-// TODO: replace custom rolled SessionPamAuth calls
-
 namespace core {
 namespace system {
 
@@ -150,18 +142,21 @@ ChildProcess::ChildProcess()
 }
 
 void ChildProcess::init(const std::string& exe,
-                        const std::vector<std::string>& args)
+                        const std::vector<std::string>& args,
+                        const ProcessOptions& options)
 {
    exe_ = exe;
    args_ = args;
+   options_ = options;
 }
 
-void ChildProcess::init(const std::string& command)
+void ChildProcess::init(const std::string& command,
+                        const ProcessOptions& options)
 {
    std::vector<std::string> args;
    args.push_back("-c");
    args.push_back(command);
-   init("/bin/sh", args);
+   init("/bin/sh", args, options);
 }
 
 ChildProcess::~ChildProcess()
@@ -199,8 +194,13 @@ Error ChildProcess::terminate()
    if (pImpl_->pid == -1)
       return systemError(ESRCH, ERROR_LOCATION);
 
+   // determine target pid (kill just this pid or pid + children)
+   pid_t pid = pImpl_->pid;
+   if (options_.terminateChildren)
+      pid = -pid;
+
    // send signal
-   if (::kill(pImpl_->pid, SIGTERM) == -1)
+   if (::kill(pid, SIGTERM) == -1)
       return systemError(errno, ERROR_LOCATION);
    else
       return Success();
@@ -255,10 +255,24 @@ Error ChildProcess::run()
       // strange error conditions related to global c++ objects being
       // torn down in a non-standard sequence).
 
-      // close unused pipes -- intentionally fail forward (see note above)
-      closePipe(fdInput[WRITE], ERROR_LOCATION);
-      closePipe(fdOutput[READ], ERROR_LOCATION);
-      closePipe(fdError[READ], ERROR_LOCATION);
+      // check for an onAfterFork function
+       if (options_.onAfterFork)
+          options_.onAfterFork();
+
+      // if options.terminateChildren is requested then obtain a new process
+      // group (using our own process id). this enables terminate to
+      // specify -pid to kill which will kill this process and all of its
+      // children. note that another side-effect is that this process
+      // will not automatically die with its parent, so the parent
+      // may want to kill all children from the processSupervisor on exit
+      if (options_.terminateChildren)
+      {
+         if (::setpgid(0,0) == -1)
+         {
+            LOG_ERROR(systemError(errno, ERROR_LOCATION));
+            // intentionally fail forward (see note above)
+         }
+      }
 
       // clear the child signal mask
       error = core::system::clearSignalMask();
@@ -266,7 +280,12 @@ Error ChildProcess::run()
       {
          LOG_ERROR(error);
          // intentionally fail forward (see note above)
-      }
+      }  
+
+      // close unused pipes -- intentionally fail forward (see note above)
+      closePipe(fdInput[WRITE], ERROR_LOCATION);
+      closePipe(fdOutput[READ], ERROR_LOCATION);
+      closePipe(fdError[READ], ERROR_LOCATION);
 
       // wire standard streams (intentionally fail forward)
       safePosixCall<int>(boost::bind(::dup2, fdInput[READ], STDIN_FILENO),
@@ -376,16 +395,18 @@ struct AsyncChildProcess::AsyncImpl
 };
 
 AsyncChildProcess::AsyncChildProcess(const std::string& exe,
-                                     const std::vector<std::string>& args)
+                                     const std::vector<std::string>& args,
+                                     const ProcessOptions& options)
    : ChildProcess(), pAsyncImpl_(new AsyncImpl())
 {
-   init(exe, args);
+   init(exe, args, options);
 }
 
-AsyncChildProcess::AsyncChildProcess(const std::string& command)
+AsyncChildProcess::AsyncChildProcess(const std::string& command,
+                                     const ProcessOptions& options)
       : ChildProcess(), pAsyncImpl_(new AsyncImpl())
 {
-   init(command);
+   init(command, options);
 }
 
 AsyncChildProcess::~AsyncChildProcess()
