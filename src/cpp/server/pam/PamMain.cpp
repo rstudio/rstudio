@@ -273,9 +273,9 @@ int main(int argc, char * const argv[])
 
       // verify password
       if (PAMAuth(false).login(username, password) == PAM_SUCCESS)
-         std::cout << '1' ;
-
-      return EXIT_SUCCESS;
+         return EXIT_SUCCESS;
+      else
+         return EXIT_FAILURE;
    }
    CATCH_UNEXPECTED_EXCEPTION
    

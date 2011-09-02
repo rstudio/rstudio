@@ -12,11 +12,9 @@
  */
 #include "ServerPAMAuth.hpp"
 
-#include <sys/wait.h>
 
 #include <core/Error.hpp>
-#include <core/system/System.hpp>
-#include <core/system/ProcessArgs.hpp>
+#include <core/system/Process.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -40,24 +38,22 @@ namespace pam_auth {
 
 namespace {
 
-// Handles error logging and EINTR retrying. Only for use with
-// functions that return -1 on error and set errno.
-int posixcall(boost::function<ssize_t()> func, const ErrorLocation& location)
+void assumeRootPriv()
 {
-   while (true)
-   {
-      int result;
-      if ((result = func()) == -1)
-      {
-         if (errno == EINTR)
-            continue;
-         LOG_ERROR(systemError(errno, location));
-         return result;
-      }
-      return result;
-   }
+    // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
+    // running with geteuid != getuid (as is the case when we temporarily
+    // drop privileges). We've also seen kerberos on Ubuntu require
+    // priv to work correctly -- so, restore privilliges in the child
+    if (util::system::realUserIsRoot())
+    {
+       Error error = util::system::restorePriv();
+       if (error)
+       {
+          LOG_ERROR(error);
+          // intentionally fail forward (see note above)
+       }
+    }
 }
-
 
 bool pamLogin(const std::string& username, const std::string& password)
 {
@@ -70,125 +66,29 @@ bool pamLogin(const std::string& username, const std::string& password)
       return false;
    }
 
-   // create pipes
-   const int READ = 0;
-   const int WRITE = 1;
-   int fdInput[2];
-   if (posixcall(boost::bind(::pipe, fdInput), ERROR_LOCATION) == -1)
-      return false;
-   int fdOutput[2];
-   if (posixcall(boost::bind(::pipe, fdOutput), ERROR_LOCATION) == -1)
-      return false;
+   // form args
+   std::vector<std::string> args;
+   args.push_back(username);
 
-   // fork
-   pid_t pid = posixcall(::fork, ERROR_LOCATION);
-   if (pid == -1)
-      return false;
+   // options (assume priv after fork)
+   core::system::ProcessOptions options;
+   options.onAfterFork = assumeRootPriv;
 
-   // child
-   else if (pid == 0)
+   // run pam helper
+   core::system::ProcessResult result;
+   Error error = core::system::runProgram(pamHelperPath.absolutePath(),
+                                          args,
+                                          password,
+                                          options,
+                                          &result);
+   if (error)
    {
-      // NOTE: within the child we want to make sure in all cases that
-      // we call ::execv to execute the pam helper. as a result if any
-      // errors occur while we are setting up for the ::execv we log
-      // and continue rather than calling ::exit (we do this to avoid
-      // strange error conditions related to global c++ objects being
-      // torn down in a non-standard sequence).
-
-      // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
-      // running with geteuid != getuid (as is the case when we temporarily
-      // drop privileges). We've also seen kerberos on Ubuntu require
-      // priv to work correctly -- so, restore privilliges in the child
-      if (util::system::realUserIsRoot())
-      {
-         Error error = util::system::restorePriv();
-         if (error)
-         {
-            LOG_ERROR(error);
-            // intentionally fail forward (see note above)
-         }
-      }
-
-      // close unused pipes
-      posixcall(boost::bind(::close, fdInput[WRITE]), ERROR_LOCATION);
-      posixcall(boost::bind(::close, fdOutput[READ]), ERROR_LOCATION);
-
-      // clear the child signal mask
-      Error error = core::system::clearSignalMask();
-      if (error)
-      {
-         LOG_ERROR(error);
-         // intentionally fail forward (see note above)
-      }
-
-      // wire standard streams
-      posixcall(boost::bind(::dup2, fdInput[READ], STDIN_FILENO),
-                ERROR_LOCATION);
-      posixcall(boost::bind(::dup2, fdOutput[WRITE], STDOUT_FILENO),
-                ERROR_LOCATION);
-
-      // close all open file descriptors other than std streams
-      error = core::system::closeNonStdFileDescriptors();
-      if (error)
-      {
-         LOG_ERROR(error);
-         // intentionally fail forward (see note above)
-      }
-
-      // build username args (on heap so they stay around after exec)
-      // and execute pam helper
-      using core::system::ProcessArgs;
-      std::vector<std::string> args;
-      args.push_back(pamHelperPath.absolutePath());
-      args.push_back(username);
-      ProcessArgs* pProcessArgs = new ProcessArgs(args);
-      ::execv(pamHelperPath.absolutePath().c_str(), pProcessArgs->args()) ;
-
-      // in the normal case control should never return from execv (it starts
-      // anew at main of the process pointed to by path). therefore, if we get
-      // here then there was an error
-      LOG_ERROR(systemError(errno, ERROR_LOCATION)) ;
-      ::exit(EXIT_FAILURE) ;
+      LOG_ERROR(error);
+      return false;
    }
 
-   // parent
-   else
-   {
-      // close unused pipes
-      posixcall(boost::bind(::close, fdInput[READ]), ERROR_LOCATION);
-      posixcall(boost::bind(::close, fdOutput[WRITE]), ERROR_LOCATION);
-
-      // write the password to standard input then close the pipe
-      std::string input = password ;
-      std::size_t written = posixcall(boost::bind(::write,
-                                                   fdInput[WRITE],
-                                                   input.c_str(),
-                                                   input.length()),
-                                      ERROR_LOCATION);
-      posixcall(boost::bind(::close, fdInput[WRITE]), ERROR_LOCATION);
-
-      // check for correct bytes written
-      if (written != static_cast<std::size_t>(input.length()))
-      {
-         // first close stdout pipe
-         posixcall(boost::bind(::close, fdOutput[READ]), ERROR_LOCATION);
-
-         // log error and return false
-         LOG_ERROR_MESSAGE("Error writing to pam helper stdin");
-         return false;
-      }
-
-      // read the response from standard output
-      char buf;
-      size_t bytesRead = posixcall(boost::bind(::read, fdOutput[READ], &buf, 1),
-                                   ERROR_LOCATION);
-      posixcall(boost::bind(::close, fdOutput[READ]), ERROR_LOCATION);
-
-      // return true if bytes were read
-      return bytesRead > 0;
-   }
-
-   return false;
+   // check for success
+   return result.exitStatus == 0;
 }
 
 
