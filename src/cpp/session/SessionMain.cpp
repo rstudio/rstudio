@@ -117,7 +117,7 @@ http::UriHandlers s_uriHandlers;
 http::UriHandlerFunction s_defaultUriHandler;
 
 // json rpc methods
-core::json::JsonRpcMethods s_jsonRpcMethods;
+core::json::JsonRpcAsyncMethods s_jsonRpcMethods;
    
 // R browseUrl handlers
 std::vector<module_context::RBrowseUrlHandler> s_rBrowseUrlHandlers;
@@ -435,6 +435,43 @@ enum ConnectionType
    BackgroundConnection
 };
 
+void endHandleRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection,
+                         boost::posix_time::ptime executeStartTime,
+                         core::Error executeError,
+                         boost::optional<core::json::JsonRpcResponse> jsonRpcResponse)
+{
+   // return error or result then continue waiting for requests
+   if (executeError)
+   {
+      ptrConnection->sendJsonRpcError(executeError);
+   }
+   else
+   {
+      // allow modules to detect changes after rpc calls
+      if (!jsonRpcResponse->suppressDetectChanges())
+         detectChanges(module_context::ChangeSourceRPC);
+
+      // are there (or will there likely be) events pending?
+      // (if not then notify the client)
+      if ( !clientEventQueue().eventAddedSince(executeStartTime) &&
+           !jsonRpcResponse->hasAfterResponse() )
+      {
+         jsonRpcResponse->setField(kEventsPending, "false");
+      }
+
+      // send the response
+      ptrConnection->sendJsonRpcResponse(*jsonRpcResponse);
+
+      // run after response if we have one (then detect changes again)
+      if (jsonRpcResponse->hasAfterResponse())
+      {
+         jsonRpcResponse->runAfterResponse();
+         if (!jsonRpcResponse->suppressDetectChanges())
+            detectChanges(module_context::ChangeSourceRPC);
+      }
+   }
+}
+
 void handleRpcRequest(const core::json::JsonRpcRequest& request,
                       boost::shared_ptr<HttpConnection> ptrConnection,
                       ConnectionType connectionType)
@@ -445,56 +482,32 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
    ptime executeStartTime = microsec_clock::universal_time();
    
    // execute the method
-   Error executeError;
-   core::json::JsonRpcResponse jsonRpcResponse ;
-   if (connectionType == BackgroundConnection)
-      jsonRpcResponse.setSuppressDetectChanges(true);
-   json::JsonRpcMethods::const_iterator it = s_jsonRpcMethods.find(request.method);
+   json::JsonRpcAsyncMethods::const_iterator it =
+                                     s_jsonRpcMethods.find(request.method);
    if (it != s_jsonRpcMethods.end())
    {
-      json::JsonRpcFunction handlerFunction = it->second ;
-      executeError = handlerFunction(request, &jsonRpcResponse) ;
+      json::JsonRpcAsyncFunction handlerFunction = it->second ;
+      handlerFunction(request,
+                      boost::bind(endHandleRpcRequest,
+                                  ptrConnection,
+                                  executeStartTime,
+                                  _1,
+                                  _2));
    }
    else
    {
-      executeError = Error(json::errc::MethodNotFound, ERROR_LOCATION);
+      Error executeError = Error(json::errc::MethodNotFound, ERROR_LOCATION);
       executeError.addProperty("method", request.method);
 
       // we need to know about these because they represent unexpected
       // application states
       LOG_ERROR(executeError);
+
+      endHandleRpcRequest(ptrConnection, executeStartTime, executeError,
+                          boost::optional<core::json::JsonRpcResponse>());
    }
 
-   // return error or result then continue waiting for requests
-   if (executeError)
-   {
-      ptrConnection->sendJsonRpcError(executeError);
-   }
-   else
-   {
-      // allow modules to detect changes after rpc calls
-      if (!jsonRpcResponse.suppressDetectChanges())
-         detectChanges(module_context::ChangeSourceRPC);
-      
-      // are there (or will there likely be) events pending?
-      // (if not then notify the client)
-      if ( !clientEventQueue().eventAddedSince(executeStartTime) &&
-           !jsonRpcResponse.hasAfterResponse() )
-      {
-         jsonRpcResponse.setField(kEventsPending, "false");
-      }
-      
-      // send the response
-      ptrConnection->sendJsonRpcResponse(jsonRpcResponse);
-      
-      // run after response if we have one (then detect changes again)
-      if (jsonRpcResponse.hasAfterResponse())
-      {
-         jsonRpcResponse.runAfterResponse();
-         if (!jsonRpcResponse.suppressDetectChanges())
-            detectChanges(module_context::ChangeSourceRPC);
-      }
-   }
+
 }
 
 bool isMethod(const std::string& uri, const std::string& method)
@@ -618,6 +631,8 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
          // other rpc method, handle it
          else
          {
+            jsonRpcRequest.isBackgroundConnection =
+                  (connectionType == BackgroundConnection);
             handleRpcRequest(jsonRpcRequest, ptrConnection, connectionType);
          }
       }
@@ -1218,7 +1233,10 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    error = r::json::getRpcMethods(&rMethods);
    if (error)
       return error ;
-   s_jsonRpcMethods.insert(rMethods.begin(), rMethods.end());
+   BOOST_FOREACH(const json::JsonRpcMethod& method, rMethods)
+   {
+      s_jsonRpcMethods.insert(json::adaptMethodToAsync(method));
+   }
 
    // add gwt handlers if we are running desktop mode
    if (session::options().programMode() == kSessionProgramModeDesktop)
@@ -1916,6 +1934,13 @@ Error registerLocalUriHandler(const std::string& name,
 
 Error registerRpcMethod(const std::string& name,
                         const core::json::JsonRpcFunction& function)
+{
+   s_jsonRpcMethods.insert(std::make_pair(name, json::adaptToAsync(function)));
+   return Success();
+}
+
+Error registerAsyncRpcMethod(const std::string& name,
+                             const core::json::JsonRpcAsyncFunction& function)
 {
    s_jsonRpcMethods.insert(std::make_pair(name, function));
    return Success();

@@ -93,6 +93,8 @@ core::Error registerPostbackHandler(
 core::Error registerRpcMethod(const std::string& name,
                               const core::json::JsonRpcFunction& function);
 
+core::Error registerAsyncRpcMethod(const std::string& name,
+                                   const core::json::JsonRpcAsyncFunction& function);
 
 core::Error executeAsync(const core::json::JsonRpcFunction& function,
                          const core::json::JsonRpcRequest& request,

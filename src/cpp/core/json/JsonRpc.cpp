@@ -329,6 +329,32 @@ std::string JsonRpcErrorCategory::message( int ev ) const
    }
 }
 
+namespace {
+
+void runSynchronousFunction(const JsonRpcFunction& func,
+                            const core::json::JsonRpcRequest& request,
+                            JsonRpcFunctionContinuation continuation)
+{
+   core::json::JsonRpcResponse response;
+   if (request.isBackgroundConnection)
+      response.setSuppressDetectChanges(true);
+   core::Error error = func(request, &response);
+   continuation(error, response);
+}
+
+} // anonymous namespace
+
+JsonRpcAsyncFunction adaptToAsync(JsonRpcFunction synchronousFunction)
+{
+   return boost::bind(runSynchronousFunction, synchronousFunction, _1, _2);
+}
+
+JsonRpcAsyncMethod adaptMethodToAsync(JsonRpcMethod synchronousMethod)
+{
+   return JsonRpcAsyncMethod(synchronousMethod.first,
+                             adaptToAsync(synchronousMethod.second));
+}
+
 } // namespace json
 } // namespace core
 

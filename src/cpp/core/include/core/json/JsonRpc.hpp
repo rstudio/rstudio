@@ -16,7 +16,9 @@
 
 #include <string>
 
+#include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/optional.hpp>
 #include <boost/unordered_map.hpp>
 
 #include <core/Error.hpp>
@@ -105,14 +107,14 @@ namespace json {
 
 struct JsonRpcRequest
 {
-   JsonRpcRequest() : version(0) {}
-   JsonRpcRequest(const std::string& method) : method(method) {}
+   JsonRpcRequest() : version(0), isBackgroundConnection(false) {}
    
    std::string method ;
    json::Array params ;
    json::Object kwparams ;
    std::string clientId ;
    double version;
+   bool isBackgroundConnection ;
 
    bool empty() const { return method.empty(); }
    
@@ -677,12 +679,34 @@ void setJsonRpcError(const T& error, core::http::Response* pResponse)
 
 
 // convenience typedefs for managing a map of json rpc functions
-typedef boost::function<core::Error(const core::json::JsonRpcRequest&, 
-                                    core::json::JsonRpcResponse*)>
-                                                            JsonRpcFunction ;
-   
-typedef std::pair<std::string,core::json::JsonRpcFunction> JsonRpcMethod ;   
-typedef boost::unordered_map<std::string,JsonRpcFunction> JsonRpcMethods;
+typedef boost::function<core::Error(const core::json::JsonRpcRequest&, core::json::JsonRpcResponse*)>
+      JsonRpcFunction ;
+typedef std::pair<std::string,core::json::JsonRpcFunction>
+      JsonRpcMethod ;
+typedef boost::unordered_map<std::string,JsonRpcFunction>
+      JsonRpcMethods;
+
+/*
+   Async method support -- JsonRpcAsyncFunction is intended for potentially
+   long running operations that need to keep the HTTP connection open until
+   their work is done. (See registerRpcAsyncCoupleMethod for a different
+   mechanism that provides similar functionality, but closes the HTTP
+   connection and uses an event to simulate returning a result to the client.)
+*/
+
+// JsonRpcFunctionContinuation is what a JsonRpcAsyncFunction needs to call
+// when its work is complete
+typedef boost::function<void(core::Error, boost::optional<core::json::JsonRpcResponse>)>
+      JsonRpcFunctionContinuation ;
+typedef boost::function<void(const core::json::JsonRpcRequest&, JsonRpcFunctionContinuation)>
+      JsonRpcAsyncFunction ;
+typedef std::pair<std::string,core::json::JsonRpcAsyncFunction>
+      JsonRpcAsyncMethod ;
+typedef boost::unordered_map<std::string,JsonRpcAsyncFunction>
+      JsonRpcAsyncMethods ;
+
+JsonRpcAsyncFunction adaptToAsync(JsonRpcFunction synchronousFunction);
+JsonRpcAsyncMethod adaptMethodToAsync(JsonRpcMethod synchronousMethod);
 
 } // namespace json
 } // namespace core
