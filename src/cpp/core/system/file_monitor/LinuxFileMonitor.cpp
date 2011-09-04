@@ -22,7 +22,8 @@
 
 #include "FileMonitorImpl.hpp"
 
-// TODO: replace pstreams with native implementation
+// TODO: consider calling terminateAll on module context supervisor as well
+//       retaining interrupable child supervisor so we can do the same
 
 // TODO: investigate parallel package (multicore) interactions with file monitor
 
