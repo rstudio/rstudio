@@ -27,6 +27,8 @@
 
 // TODO: investigate parallel package (multicore) interactions with file monitor
 
+// TODO: checkout inotifywait (http://linux.die.net/man/1/inotifywait)
+
 // TODO: should we be using lstat64?
 
 // TODO: investigate use of IN_DONT_FOLLOW to prevent following links
