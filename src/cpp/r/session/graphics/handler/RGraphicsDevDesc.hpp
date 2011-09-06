@@ -22,7 +22,7 @@
 
 extern "C" {
 
-struct DevDescVersion8
+struct DevDescVersion9
 {
    double left;
    double right;
@@ -109,6 +109,13 @@ struct DevDescVersion8
    SEXP eventEnv;
    void (*eventHelper)(pDevDesc dd, int code);
 
+   // holdFlush and have* added in version 9 (R 2.14)
+   int (*holdflush)(pDevDesc dd, int level);
+   int haveTransparency;
+   int haveTransparentBg;
+   int haveRaster;
+   int haveCapture, haveLocator;
+
    char reserved[64];
 };
 
@@ -120,7 +127,7 @@ namespace graphics {
 namespace handler {
 namespace dev_desc {
 
-pDevDesc allocate(const DevDescVersion8& devDescVersion8);
+pDevDesc allocate(const DevDescVersion9& devDescVersion9);
 
 void setSize(pDevDesc pDevDesc);
 
