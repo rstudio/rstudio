@@ -696,7 +696,7 @@ typedef boost::unordered_map<std::string,JsonRpcFunction>
 
 // JsonRpcFunctionContinuation is what a JsonRpcAsyncFunction needs to call
 // when its work is complete
-typedef boost::function<void(core::Error, core::json::JsonRpcResponse*)>
+typedef boost::function<void(const core::Error&, core::json::JsonRpcResponse*)>
       JsonRpcFunctionContinuation ;
 typedef boost::function<void(const core::json::JsonRpcRequest&, const JsonRpcFunctionContinuation&)>
       JsonRpcAsyncFunction ;

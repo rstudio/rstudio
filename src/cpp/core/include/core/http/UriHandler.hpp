@@ -26,9 +26,15 @@ namespace http {
 
 class Request;
 
+typedef boost::function<void(Response*)> UriHandlerFunctionContinuation ;
+
+// UriHandlerFunction concept
+typedef boost::function<void(const Request&,const UriHandlerFunctionContinuation&)>
+                                                UriAsyncHandlerFunction ;
+
 // UriHandlerFunction concept
 typedef boost::function<void(const Request&,Response*)> UriHandlerFunction ;
-   
+
 // UriFilterFunction concept - return true if the filter handled the request
 typedef boost::function<bool(const http::Request&, http::Response*)> 
                                                          UriFilterFunction; 
@@ -36,20 +42,22 @@ typedef boost::function<bool(const http::Request&, http::Response*)>
 class UriHandler
 {
 public:
+   UriHandler(const std::string& prefix, const UriAsyncHandlerFunction& function);
    UriHandler(const std::string& prefix, const UriHandlerFunction& function);
-   
+
    // COPYING: via compiler
    
    bool matches(const std::string& uri) const;
    
-   UriHandlerFunction function() const;
+   UriAsyncHandlerFunction function() const;
   
    // implement UriHandlerFunction concept
-   void operator()(const Request& request, Response* pResponse) const;
+   void operator()(const Request& request,
+                   const UriHandlerFunctionContinuation& cont) const;
    
 private:
    std::string prefix_;
-   UriHandlerFunction function_ ;
+   UriAsyncHandlerFunction function_ ;
 };
 
 class UriHandlers
@@ -61,7 +69,7 @@ public:
    
    void add(const UriHandler& handler);
    
-   UriHandlerFunction handlerFor(const std::string& uri) const;
+   UriAsyncHandlerFunction handlerFor(const std::string& uri) const;
    
 private:
    std::vector<UriHandler> uriHandlers_;

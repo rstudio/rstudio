@@ -23,26 +23,51 @@
 namespace core {
 namespace http {
 
-UriHandler::UriHandler(const std::string& prefix, 
-                       const UriHandlerFunction& function)
+namespace {
+
+void runSynchronousHandler(const UriHandlerFunction& function,
+                           const Request& request,
+                           const UriHandlerFunctionContinuation& cont)
+{
+   http::Response response;
+   function(request, &response);
+   cont(&response);
+}
+
+UriAsyncHandlerFunction adaptToAsync(const UriHandlerFunction& function)
+{
+   return boost::bind(runSynchronousHandler, function, _1, _2);
+}
+
+} // anonymous namespace
+
+UriHandler::UriHandler(const std::string& prefix,
+                       const UriAsyncHandlerFunction& function)
    : prefix_(prefix), function_(function)
 {
 }
-   
+
+UriHandler::UriHandler(const std::string& prefix,
+                       const UriHandlerFunction& function)
+   : prefix_(prefix), function_(adaptToAsync(function))
+{
+}
+
 bool UriHandler::matches(const std::string& uri) const
 {
    return boost::algorithm::starts_with(uri, prefix_);
 }
 
-UriHandlerFunction UriHandler::function() const
+UriAsyncHandlerFunction UriHandler::function() const
 {
    return function_;
 }
 
 // implement UriHandlerFunction concept
-void UriHandler::operator()(const Request& request, Response* pResponse) const
+void UriHandler::operator()(const Request& request,
+                            const UriHandlerFunctionContinuation& cont) const
 {
-   function_(request, pResponse);
+   function_(request, cont);
 }
    
 void UriHandlers::add(const UriHandler& handler) 
@@ -50,7 +75,7 @@ void UriHandlers::add(const UriHandler& handler)
    uriHandlers_.push_back(handler);
 }
 
-UriHandlerFunction UriHandlers::handlerFor(const std::string& uri) const
+UriAsyncHandlerFunction UriHandlers::handlerFor(const std::string& uri) const
 {
    std::vector<UriHandler>::const_iterator handler = std::find_if(
                               uriHandlers_.begin(), 
@@ -62,7 +87,7 @@ UriHandlerFunction UriHandlers::handlerFor(const std::string& uri) const
    }
    else
    {
-      return UriHandlerFunction();
+      return UriAsyncHandlerFunction();
    }
 }
    

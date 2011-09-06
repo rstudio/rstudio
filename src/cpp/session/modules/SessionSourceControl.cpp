@@ -1107,16 +1107,18 @@ Error vcsShow(const json::JsonRpcRequest& request,
    return Success();
 }
 
-int postbackGitSSH(const std::string& command, std::string* pOutput)
+void postbackGitSSH(const std::string& command,
+                    const module_context::PostbackHandlerContinuation& cont)
 {
    // TODO
-   return EXIT_SUCCESS;
+   cont(EXIT_FAILURE, "");
 }
 
-int postbackSSHAskPass(const std::string& command, std::string* pOutput)
+void postbackSSHAskPass(const std::string& command,
+                        const module_context::PostbackHandlerContinuation& cont)
 {
    // TODO
-   return EXIT_FAILURE;
+   cont(EXIT_FAILURE, "");
 }
 
 } // anonymous namespace

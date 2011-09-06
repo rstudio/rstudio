@@ -443,7 +443,7 @@ enum ConnectionType
 
 void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
                          boost::posix_time::ptime executeStartTime,
-                         core::Error executeError,
+                         const core::Error& executeError,
                          json::JsonRpcResponse* pJsonRpcResponse)
 {
    json::JsonRpcResponse temp;
@@ -486,7 +486,7 @@ void endHandleRpcRequestIndirect(
       boost::shared_ptr<HttpConnection> ptrConnection,
       boost::posix_time::ptime executeStartTime,
       const std::string& asyncHandle,
-      core::Error executeError,
+      const core::Error& executeError,
       json::JsonRpcResponse* pJsonRpcResponse)
 {
    // TODO: Should we detect changes?
@@ -618,26 +618,32 @@ bool parseAndValidateJsonRpcConnection(
    return true;
 }
 
+void endHandleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
+                         ConnectionType connectionType,
+                         http::Response* pResponse)
+{
+   ptrConnection->sendResponse(*pResponse);
+   if (connectionType == ForegroundConnection)
+      detectChanges(module_context::ChangeSourceURI);
+}
+
 void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                       ConnectionType connectionType)
 {
    // check for a uri handler registered by a module
    const http::Request& request = ptrConnection->request();
    std::string uri = request.uri();
-   http::UriHandlerFunction uriHandler = s_uriHandlers.handlerFor(uri);
+   http::UriAsyncHandlerFunction uriHandler = s_uriHandlers.handlerFor(uri);
 
    if (uriHandler) // uri handler
    {
       // r code may execute - ensure session is initialized
       ensureSessionInitialized();
 
-      http::Response response;
-      uriHandler(request, &response);
-      ptrConnection->sendResponse(response);
-
-      // allow modules to check for changes after http requests
-      if (connectionType == ForegroundConnection)
-         detectChanges(module_context::ChangeSourceURI);
+      uriHandler(request, boost::bind(endHandleConnection,
+                                      ptrConnection,
+                                      connectionType,
+                                      _1));
    }
    else if (isJsonRpcRequest(ptrConnection)) // check for json-rpc
    {
@@ -1986,25 +1992,44 @@ Error registerRBrowseFileHandler(const RBrowseFileHandler& handler)
    s_rBrowseFileHandlers.push_back(handler);
    return Success();
 }
- 
-Error registerUriHandler(const std::string& name, 
-                         const http::UriHandlerFunction& handlerFunction)  
+
+Error registerAsyncUriHandler(
+                         const std::string& name,
+                         const http::UriAsyncHandlerFunction& handlerFunction)
 {
-   
+
    s_uriHandlers.add(http::UriHandler(name,
                                       handlerFunction));
    return Success();
 }
-   
-  
-Error registerLocalUriHandler(const std::string& name, 
+
+Error registerUriHandler(const std::string& name,
+                         const http::UriHandlerFunction& handlerFunction)
+{
+
+   s_uriHandlers.add(http::UriHandler(name,
+                                      handlerFunction));
+   return Success();
+}
+
+
+Error registerAsyncLocalUriHandler(
+                         const std::string& name,
+                         const http::UriAsyncHandlerFunction& handlerFunction)
+{
+   s_uriHandlers.add(http::UriHandler(kLocalUriLocationPrefix + name,
+                                      handlerFunction));
+   return Success();
+}
+
+Error registerLocalUriHandler(const std::string& name,
                               const http::UriHandlerFunction& handlerFunction)
 {
    s_uriHandlers.add(http::UriHandler(kLocalUriLocationPrefix + name,
                                       handlerFunction));
    return Success();
 }
-   
+
 
 Error registerAsyncRpcMethod(const std::string& name,
                              const core::json::JsonRpcAsyncFunction& function)
@@ -2242,8 +2267,11 @@ int main (int argc, char * const argv[])
       // username in debug configurations). this is provided so that 
       // rpostback knows what local stream to connect back to
       core::system::setenv(kRStudioUserIdentity, options.userIdentity());
-      // do the same for port number, for rpostback in rdesktop configs
-      core::system::setenv(kRSessionPortNumber, options.wwwPort());
+      if (desktopMode)
+      {
+         // do the same for port number, for rpostback in rdesktop configs
+         core::system::setenv(kRSessionPortNumber, options.wwwPort());
+      }
            
       // ensure we aren't being started as a low (priviliged) account
       if (serverMode &&

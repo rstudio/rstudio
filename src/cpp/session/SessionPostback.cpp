@@ -60,22 +60,27 @@ namespace {
 std::map<std::string,
          module_context::PostbackHandlerFunction> s_postbackHandlers;
 
+void endHandlePostback(const http::UriHandlerFunctionContinuation& cont,
+                       int exitCode,
+                       const std::string& output)
+{
+   http::Response response;
+   // send basic response
+   response.setStatusCode(http::status::Ok);
+   response.setContentType("text/plain");
+   response.setHeader(kPostbackExitCodeHeader,
+                        boost::lexical_cast<std::string>(exitCode));
+   response.setBody(output);
+   cont(&response);
+}
+
 // UriHandlerFunction wrapper for simple postbacks
 void handlePostback(const PostbackHandlerFunction& handlerFunction,
                     const http::Request& request, 
-                    http::Response* pResponse)
+                    const http::UriHandlerFunctionContinuation& cont)
 {
    // pass the body to the postback function
-   int exitCode;
-   std::string output;
-   exitCode = handlerFunction(request.body(), &output);
-   
-   // send basic response
-   pResponse->setStatusCode(http::status::Ok);
-   pResponse->setContentType("text/plain");
-   pResponse->setHeader(kPostbackExitCodeHeader,
-                        boost::lexical_cast<std::string>(exitCode));
-   pResponse->setBody(output);
+   handlerFunction(request.body(), boost::bind(endHandlePostback, cont, _1, _2));
 }
    
 } // anonymous namespace
@@ -89,7 +94,7 @@ Error registerPostbackHandler(const std::string& name,
    std::string postback = kPostbackUriScope + name;
    
    // register a uri handler for this prefix
-   Error error = module_context::registerLocalUriHandler(
+   Error error = module_context::registerAsyncLocalUriHandler(
                     postback,
                     boost::bind(handlePostback, handlerFunction, _1, _2));
    if (error)

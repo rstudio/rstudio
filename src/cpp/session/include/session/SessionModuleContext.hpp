@@ -71,19 +71,32 @@ typedef boost::function<bool(const core::FilePath&)> RBrowseFileHandler;
 core::Error registerRBrowseFileHandler(const RBrowseFileHandler& handler);
    
 // register an inbound uri handler (include a leading slash)
+core::Error registerAsyncUriHandler(
+                   const std::string& name,
+                   const core::http::UriAsyncHandlerFunction& handlerFunction);
+
+// register an inbound uri handler (include a leading slash)
 core::Error registerUriHandler(
-                        const std::string& name, 
+                        const std::string& name,
                         const core::http::UriHandlerFunction& handlerFunction);
-   
+
+// register a local uri handler (scoped by a special prefix which indicates
+// a local scope)
+core::Error registerAsyncLocalUriHandler(
+                   const std::string& name,
+                   const core::http::UriAsyncHandlerFunction& handlerFunction);
+
 // register a local uri handler (scoped by a special prefix which indicates
 // a local scope)
 core::Error registerLocalUriHandler(
-                        const std::string& name, 
+                        const std::string& name,
                         const core::http::UriHandlerFunction& handlerFunction);
-   
+
+typedef boost::function<void(int, const std::string&)> PostbackHandlerContinuation;
+
 // register a postback handler. see docs in SessionPostback.cpp for 
 // details on the requirements of postback handlers
-typedef boost::function<int(const std::string&, std::string*)>
+typedef boost::function<void(const std::string&, const PostbackHandlerContinuation&)>
                                                       PostbackHandlerFunction;
 core::Error registerPostbackHandler(
                               const std::string& name,
