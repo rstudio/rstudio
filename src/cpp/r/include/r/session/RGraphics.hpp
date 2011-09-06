@@ -94,9 +94,11 @@ public:
    // display
    virtual bool hasOutput() const = 0 ;
    virtual bool hasChanges() const = 0 ;
+   virtual bool hasRenderableChanges() const = 0 ; // respects holdflush state
    virtual void render(boost::function<void(DisplayState)> outputFunction)=0; 
    virtual std::string imageFilename() const = 0 ;
    virtual void refresh() = 0;
+   virtual boost::signal<void ()>& onFlush() = 0 ;
 
    // retrieve image path based on filename
    virtual core::FilePath imagePath(const std::string& imageFilename) const = 0;

@@ -120,6 +120,15 @@ void CFD_OnExit(pDevDesc dd)
    // suggests you might want to do this!)
 }
 
+int CFD_HoldFlush(pDevDesc dd, int level)
+{
+   // NOTE: holdflush does not apply to bitmap devices since they are
+   // already "buffered" via the fact that they only do expensive operations
+   // (write to file) on dev.off
+
+   return 0;
+}
+
 
 void createDevice(int width, int height, const FilePath& targetPath)
 {
@@ -127,8 +136,8 @@ void createDevice(int width, int height, const FilePath& targetPath)
 
    BEGIN_SUSPEND_INTERRUPTS
    {
-      // initialize v8 structure
-      DevDescVersion8 devDesc;
+      // initialize v9 structure
+      DevDescVersion9 devDesc;
 
       // device functions
       devDesc.activate = CFD_Activate;
@@ -157,6 +166,14 @@ void createDevice(int width, int height, const FilePath& targetPath)
       devDesc.onExit = CFD_OnExit;
       devDesc.eventEnv = R_NilValue;
       devDesc.eventHelper = NULL;
+      devDesc.holdflush = CFD_HoldFlush;
+
+      // capabilities flags
+      devDesc.haveTransparency = 2;
+      devDesc.haveTransparentBg = 2;
+      devDesc.haveRaster = 2;
+      devDesc.haveCapture = 1;
+      devDesc.haveLocator = 1;
 
       // allocate device
       pDevDesc pDev = handler::dev_desc::allocate(devDesc);

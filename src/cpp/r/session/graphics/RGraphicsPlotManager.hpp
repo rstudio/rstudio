@@ -86,8 +86,10 @@ public:
                                           int heightPx);
 
    // display
+   virtual boost::signal<void ()>& onFlush() { return onFlush_; }
    virtual bool hasOutput() const;
    virtual bool hasChanges() const;
+   virtual bool hasRenderableChanges() const;
    virtual void render(boost::function<void(DisplayState)> outputFunction); 
    virtual std::string imageFilename() const ;
    virtual void refresh() ;
@@ -164,6 +166,9 @@ private:
   
    // interface to graphics device
    GraphicsDeviceFunctions graphicsDevice_ ;
+
+   // onFlush event
+   boost::signal<void ()> onFlush_;
    
    // state
    bool displayHasChanges_;

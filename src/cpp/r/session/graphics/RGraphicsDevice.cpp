@@ -351,6 +351,25 @@ void GD_OnExit(pDevDesc dd)
    // suggests you might want to do this!)
 }
 
+int GD_HoldFlush(pDevDesc dd, int level)
+{
+   TRACE_GD_CALL
+
+   // get device context
+   DeviceContext* pDC = (DeviceContext*)dd->deviceSpecific;
+
+   // apply new level (ensure it never goes below zero)
+   pDC->holdlevel += level;
+   if (pDC->holdlevel < 0)
+      pDC->holdlevel = 0;
+
+   // if we have returned to zero then flush
+   if (pDC->holdlevel == 0)
+      plotManager().onFlush();
+
+   return pDC->holdlevel;
+}
+
 void resyncDisplayList()
 {
    // get pointers to device desc and cairo data
@@ -402,8 +421,8 @@ SEXP createGD()
    
    BEGIN_SUSPEND_INTERRUPTS 
    {
-      // initialize v8 structure
-      DevDescVersion8 devDesc;
+      // initialize v9 structure
+      DevDescVersion9 devDesc;
 
       // device functions
       devDesc.activate = GD_Activate;
@@ -434,6 +453,14 @@ SEXP createGD()
       devDesc.onExit = GD_OnExit;
       devDesc.eventEnv = R_NilValue;
       devDesc.eventHelper = NULL;
+      devDesc.holdflush = GD_HoldFlush;
+
+      // capabilities flags
+      devDesc.haveTransparency = 2;
+      devDesc.haveTransparentBg = 2;
+      devDesc.haveRaster = 2;
+      devDesc.haveCapture = 1;
+      devDesc.haveLocator = 2;
 
       // allocate device
       pDevDesc pDev = handler::dev_desc::allocate(devDesc);
@@ -590,6 +617,22 @@ void onBeforeExecute()
    }
 }
 
+bool isHolding()
+{
+   if (s_pGEDevDesc != NULL)
+   {
+      DeviceContext* pDC = (DeviceContext*)s_pGEDevDesc->dev->deviceSpecific;
+      if (pDC != NULL)
+         return pDC->holdlevel > 0;
+      else
+         return false;
+   }
+   else
+   {
+      return false;
+   }
+}
+
 } // anonymous namespace
     
 const int kDefaultWidth = 500;   
@@ -611,6 +654,7 @@ Error initialize(
    graphicsDevice.imageFileExtension = imageFileExtension;
    graphicsDevice.close = close;
    graphicsDevice.onBeforeExecute = onBeforeExecute;
+   graphicsDevice.isHolding = isHolding;
    Error error = plotManager().initialize(graphicsPath, 
                                           graphicsDevice,
                                           &s_graphicsDeviceEvents);
