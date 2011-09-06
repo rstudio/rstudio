@@ -32,5 +32,7 @@
 #define kLocalUriLocationPrefix           "/rsession-local/"
 #define kPostbackUriScope                 "postback/"
 
+#define kPostbackExitCodeHeader           "X-Postback-ExitCode"
+
 #endif // SESSION_CONSTANTS_HPP
 

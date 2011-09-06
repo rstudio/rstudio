@@ -17,6 +17,7 @@
 #include <core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/ProgramStatus.hpp>
+#include <core/SafeConvert.hpp>
 
 #include <core/system/System.hpp>
 
@@ -72,8 +73,10 @@ int main(int argc, char * const argv[])
       Error error = http::sendRequest(streamPath, request,  &response);
       if (error)
          return exitFailure(error);
-      else
-         return EXIT_SUCCESS;
+
+      std::string exitCode = response.headerValue(kPostbackExitCodeHeader);
+      std::cout << response.body();
+      return safe_convert::stringTo<int>(exitCode, EXIT_FAILURE);
    }
    CATCH_UNEXPECTED_EXCEPTION
    

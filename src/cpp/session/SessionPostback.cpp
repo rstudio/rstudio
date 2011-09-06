@@ -41,6 +41,7 @@ To create a new postback handler for an action 'foo' do the following:
 #include <boost/function.hpp>
 
 #include <core/Error.hpp>
+#include <core/SafeConvert.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -65,12 +66,16 @@ void handlePostback(const PostbackHandlerFunction& handlerFunction,
                     http::Response* pResponse)
 {
    // pass the body to the postback function
-   handlerFunction(request.body());
+   int exitCode;
+   std::string output;
+   exitCode = handlerFunction(request.body(), &output);
    
    // send basic response
    pResponse->setStatusCode(http::status::Ok);
    pResponse->setContentType("text/plain");
-   pResponse->setBody("");
+   pResponse->setHeader(kPostbackExitCodeHeader,
+                        boost::lexical_cast<std::string>(exitCode));
+   pResponse->setBody(output);
 }
    
 } // anonymous namespace

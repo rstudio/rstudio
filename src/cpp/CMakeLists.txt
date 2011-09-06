@@ -208,10 +208,12 @@ else()
       configure_file(conf/rserver-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rserver-dev.conf)
       configure_file(conf/rsession-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf)
 
-      add_subdirectory(session/postback)
-      configure_file(session/postback/rpostback-pdfviewer session/postback)
-
    endif()
+
+   add_subdirectory(session/postback)
+   configure_file(session/postback/rpostback-pdfviewer session/postback)
+   configure_file(session/postback/rpostback-gitssh session/postback)
+   configure_file(session/postback/rpostback-askpass session/postback)
 
 endif()
 

@@ -1093,6 +1093,18 @@ Error vcsShow(const json::JsonRpcRequest& request,
    return Success();
 }
 
+int postbackGitSSH(const std::string& command, std::string* pOutput)
+{
+   // TODO
+   return EXIT_SUCCESS;
+}
+
+int postbackSSHAskPass(const std::string& command, std::string* pOutput)
+{
+   // TODO
+   return EXIT_FAILURE;
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -1109,6 +1121,23 @@ core::Error initialize()
       s_pVcsImpl_.reset(new SubversionVCSImpl(workingDir));
    else
       s_pVcsImpl_.reset(new VCSImpl(workingDir));
+
+   std::string gitSshCmd;
+   Error error = module_context::registerPostbackHandler("gitssh",
+                                                         postbackGitSSH,
+                                                         &gitSshCmd);
+   if (error)
+      return error;
+   system::setenv("GIT_SSH", gitSshCmd);
+
+   std::string sshAskCmd;
+   error = module_context::registerPostbackHandler("askpass",
+                                                   postbackSSHAskPass,
+                                                   &sshAskCmd);
+   if (error)
+      return error;
+   system::setenv("SSH_ASKPASS", sshAskCmd);
+   system::setenv("GIT_ASKPASS", sshAskCmd);
 
    // install rpc methods
    using boost::bind;
@@ -1130,7 +1159,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_history", vcsHistory))
       (bind(registerRpcMethod, "vcs_execute_command", vcsExecuteCommand))
       (bind(registerRpcMethod, "vcs_show", vcsShow));
-   Error error = initBlock.execute();
+   error = initBlock.execute();
    if (error)
       return error;
 

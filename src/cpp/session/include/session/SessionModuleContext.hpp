@@ -83,7 +83,8 @@ core::Error registerLocalUriHandler(
    
 // register a postback handler. see docs in SessionPostback.cpp for 
 // details on the requirements of postback handlers
-typedef boost::function<void(const std::string&)> PostbackHandlerFunction;
+typedef boost::function<int(const std::string&, std::string*)>
+                                                      PostbackHandlerFunction;
 core::Error registerPostbackHandler(
                               const std::string& name,
                               const PostbackHandlerFunction& handlerFunction,
@@ -93,8 +94,6 @@ core::Error registerPostbackHandler(
 core::Error registerRpcMethod(const std::string& name,
                               const core::json::JsonRpcFunction& function);
 
-core::Error registerAsyncRpcMethod(const std::string& name,
-                                   const core::json::JsonRpcAsyncFunction& function);
 
 core::Error executeAsync(const core::json::JsonRpcFunction& function,
                          const core::json::JsonRpcRequest& request,

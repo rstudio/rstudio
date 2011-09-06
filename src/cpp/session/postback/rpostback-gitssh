@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# rpostback-pdfviewer
+# rpostback-gitssh
 #
 # Copyright (C) 2009-11 by RStudio, Inc.
 #
@@ -13,4 +13,7 @@
 #
 #
 
-$(dirname $0)/rpostback pdfviewer $1 
+set -e
+
+$(dirname $0)/rpostback gitssh
+ssh $@
