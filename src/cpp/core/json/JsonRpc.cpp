@@ -333,13 +333,13 @@ namespace {
 
 void runSynchronousFunction(const JsonRpcFunction& func,
                             const core::json::JsonRpcRequest& request,
-                            JsonRpcFunctionContinuation continuation)
+                            const JsonRpcFunctionContinuation& continuation)
 {
    core::json::JsonRpcResponse response;
    if (request.isBackgroundConnection)
       response.setSuppressDetectChanges(true);
    core::Error error = func(request, &response);
-   continuation(error, response);
+   continuation(error, &response);
 }
 
 } // anonymous namespace
@@ -351,8 +351,9 @@ JsonRpcAsyncFunction adaptToAsync(JsonRpcFunction synchronousFunction)
 
 JsonRpcAsyncMethod adaptMethodToAsync(JsonRpcMethod synchronousMethod)
 {
-   return JsonRpcAsyncMethod(synchronousMethod.first,
-                             adaptToAsync(synchronousMethod.second));
+   return JsonRpcAsyncMethod(
+         synchronousMethod.first,
+         std::make_pair(true, adaptToAsync(synchronousMethod.second)));
 }
 
 } // namespace json

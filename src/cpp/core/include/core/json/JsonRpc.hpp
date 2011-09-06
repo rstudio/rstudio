@@ -696,13 +696,20 @@ typedef boost::unordered_map<std::string,JsonRpcFunction>
 
 // JsonRpcFunctionContinuation is what a JsonRpcAsyncFunction needs to call
 // when its work is complete
-typedef boost::function<void(core::Error, boost::optional<core::json::JsonRpcResponse>)>
+typedef boost::function<void(core::Error, core::json::JsonRpcResponse*)>
       JsonRpcFunctionContinuation ;
-typedef boost::function<void(const core::json::JsonRpcRequest&, JsonRpcFunctionContinuation)>
+typedef boost::function<void(const core::json::JsonRpcRequest&, const JsonRpcFunctionContinuation&)>
       JsonRpcAsyncFunction ;
-typedef std::pair<std::string,core::json::JsonRpcAsyncFunction>
+// The bool in the next two typedefs specifies whether the function wants the
+// HTTP connection to stay open until the method finishes executing (direct return),
+// or for the HTTP connection to immediate return with an "asyncHandle" value that
+// can be used to look in the event stream later when the method completes (indirect
+// return). Direct return provides lower latency for short operations, and indirect
+// return must be used for longer-running operations to prevent the browser from
+// being starved of available HTTP connections to the server.
+typedef std::pair<std::string,std::pair<bool, core::json::JsonRpcAsyncFunction> >
       JsonRpcAsyncMethod ;
-typedef boost::unordered_map<std::string,JsonRpcAsyncFunction>
+typedef boost::unordered_map<std::string,std::pair<bool, JsonRpcAsyncFunction> >
       JsonRpcAsyncMethods ;
 
 JsonRpcAsyncFunction adaptToAsync(JsonRpcFunction synchronousFunction);

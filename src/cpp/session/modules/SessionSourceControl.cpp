@@ -694,7 +694,9 @@ Error ensureSshAgentRunning()
    if (system::getenv("SSH_AUTH_SOCK").empty())
    {
       system::ProcessResult result;
-      return system::runCommand("ssh-agent -s", &result);
+      return system::runCommand(std::string("ssh-agent -s"),
+                                system::ProcessOptions(),
+                                &result);
    }
    return Success();
 }
