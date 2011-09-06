@@ -195,7 +195,7 @@ public final class Impl {
   private static boolean enter() {
     assert entryDepth >= 0 : "Negative entryDepth value at entry " + entryDepth;
 
-    if (entryDepth != 0) {
+    if (GWT.isScript() && entryDepth != 0) {
       double now = Duration.currentTimeMillis();
       if (now - watchdogEntryDepthLastScheduled > WATCHDOG_ENTRY_DEPTH_CHECK_INTERVAL_MS) {
         watchdogEntryDepthLastScheduled = now;
@@ -263,7 +263,7 @@ public final class Impl {
     assert entryDepth >= 0 : "Negative entryDepth value at exit " + entryDepth;
     if (initialEntry) {
       assert entryDepth == 0 : "Depth not 0" + entryDepth;
-      if (watchdogEntryDepthTimerId != -1) {
+      if (GWT.isScript() && watchdogEntryDepthTimerId != -1) {
         watchdogEntryDepthCancel(watchdogEntryDepthTimerId);
         watchdogEntryDepthTimerId = -1;
       }
@@ -292,7 +292,7 @@ public final class Impl {
   private static void watchdogEntryDepthRun() {
     // Note: this must NEVER be called nested in a $entry() call.
     // This method is call from a "setTimeout": entryDepth should be set to 0.
-    if (entryDepth != 0) {
+    if (GWT.isScript() && entryDepth != 0) {
       int oldDepth = entryDepth;
       entryDepth = 0;
       if (GWT.getUncaughtExceptionHandler() != null) {
