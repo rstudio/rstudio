@@ -211,7 +211,8 @@ class CellTreeNodeView<T> extends UIObject {
         int childCount = nodeView.children.size();
         while (childCount > size) {
           childCount--;
-          nodeView.children.remove(childCount);
+          CellTreeNodeView<?> deleted = nodeView.children.remove(childCount);
+          deleted.cleanup(true);
         }
 
         // Reattach the open nodes.

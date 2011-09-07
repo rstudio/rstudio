@@ -202,6 +202,24 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
     return "com.google.gwt.user.cellview.CellView";
   }
 
+  /**
+   * Issue 6677: Deleting the last element on a CellTree causes NPE in IE.
+   */
+  public void testDeleteLastNode() {
+    // Remove all but the last tree node from the model.
+    TreeNode root = tree.getRootTreeNode();
+    for (int i = 0; i < 9; i++) {
+      model.rootDataProvider.getList().remove(0);
+    }
+    model.rootDataProvider.flush();
+    assertEquals(1, root.getChildCount());
+
+    // Remove the last tree node.
+    model.rootDataProvider.getList().remove(0);
+    model.rootDataProvider.flush();
+    assertEquals(0, root.getChildCount());
+  }
+
   public void testGetRootNode() {
     TreeNode root = tree.getRootTreeNode();
     assertEquals(10, root.getChildCount());
