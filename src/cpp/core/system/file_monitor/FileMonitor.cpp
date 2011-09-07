@@ -41,6 +41,12 @@ namespace file_monitor {
 
 namespace {
 
+// track active handles so we can implement unregisterAll and
+// activeEventContexts. note that this  list is accessed from
+// the platform-specific file-monitor thread (checkForInput and
+// catch clause of fileMonitorMainThread
+std::list<Handle> s_activeHandles;
+
 void addEvent(FileChangeEvent::Type type,
               const FileInfo& fileInfo,
               std::vector<FileChangeEvent>* pEvents)
@@ -321,6 +327,17 @@ Error discoverAndProcessFileChanges(
    return Success();
 }
 
+std::list<void*> activeEventContexts()
+{
+   std::list<void*> contexts;
+   std::transform(s_activeHandles.begin(),
+                  s_activeHandles.end(),
+                  std::back_inserter(contexts),
+                  boost::bind(&Handle::pData, _1));
+
+  return contexts;
+}
+
 
 } // namespace impl
 
@@ -422,11 +439,6 @@ CallbackQueue& callbackQueue()
    return instance;
 }
 
-
-// track active handles so we can implement unregisterAll. note that this
-// list is accessed from the platform-specific file-monitor thread
-// (checkForInput and catch clause of fileMonitorMainThread
-std::list<Handle> s_activeHandles;
 
 void checkForInput()
 {

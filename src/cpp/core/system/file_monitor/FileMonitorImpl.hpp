@@ -16,6 +16,7 @@
 
 #include <string>
 #include <algorithm>
+#include <list>
 
 #include <boost/bind.hpp>
 
@@ -64,6 +65,8 @@ Iterator findFile(Iterator begin, Iterator end, const FileInfo& fileInfo)
                                                _1,
                                                fileInfo.absolutePath()));
 }
+
+std::list<void*> activeEventContexts();
 
 
 } // namespace impl
