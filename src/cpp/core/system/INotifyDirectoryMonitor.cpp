@@ -96,6 +96,7 @@ Error DirectoryMonitor::start(const std::string& path, const Filter& filter)
    mask |= IN_MODIFY;
    mask |= IN_MOVED_TO;
    mask |= IN_MOVED_FROM;
+   mask |= IN_DONT_FOLLOW;
 
    // initialize watch
    pImpl_->wd = ::inotify_add_watch(pImpl_->fd, path.c_str(), mask);
