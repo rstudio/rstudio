@@ -614,7 +614,7 @@ void endHandleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                          http::Response* pResponse)
 {
    ptrConnection->sendResponse(*pResponse);
-   if (connectionType == ForegroundConnection)
+   if (!s_rProcessingInput)
       detectChanges(module_context::ChangeSourceURI);
 }
 
