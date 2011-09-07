@@ -446,10 +446,6 @@ void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
                          const core::Error& executeError,
                          json::JsonRpcResponse* pJsonRpcResponse)
 {
-   json::JsonRpcResponse temp;
-   json::JsonRpcResponse& jsonRpcResponse =
-                                 pJsonRpcResponse ? *pJsonRpcResponse : temp;
-
    // return error or result then continue waiting for requests
    if (executeError)
    {
@@ -458,39 +454,35 @@ void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
    else
    {
       // allow modules to detect changes after rpc calls
-      if (!jsonRpcResponse.suppressDetectChanges())
+      if (!pJsonRpcResponse->suppressDetectChanges())
          detectChanges(module_context::ChangeSourceRPC);
 
       // are there (or will there likely be) events pending?
       // (if not then notify the client)
       if ( !clientEventQueue().eventAddedSince(executeStartTime) &&
-           !jsonRpcResponse.hasAfterResponse() )
+           !pJsonRpcResponse->hasAfterResponse() )
       {
-         jsonRpcResponse.setField(kEventsPending, "false");
+         pJsonRpcResponse->setField(kEventsPending, "false");
       }
 
       // send the response
-      ptrConnection->sendJsonRpcResponse(jsonRpcResponse);
+      ptrConnection->sendJsonRpcResponse(*pJsonRpcResponse);
 
       // run after response if we have one (then detect changes again)
-      if (jsonRpcResponse.hasAfterResponse())
+      if (pJsonRpcResponse->hasAfterResponse())
       {
-         jsonRpcResponse.runAfterResponse();
-         if (!jsonRpcResponse.suppressDetectChanges())
+         pJsonRpcResponse->runAfterResponse();
+         if (!pJsonRpcResponse->suppressDetectChanges())
             detectChanges(module_context::ChangeSourceRPC);
       }
    }
 }
 
 void endHandleRpcRequestIndirect(
-      boost::shared_ptr<HttpConnection> ptrConnection,
-      boost::posix_time::ptime executeStartTime,
       const std::string& asyncHandle,
       const core::Error& executeError,
       json::JsonRpcResponse* pJsonRpcResponse)
 {
-   // TODO: Should we detect changes?
-
    json::JsonRpcResponse temp;
    json::JsonRpcResponse& jsonRpcResponse =
                                  pJsonRpcResponse ? *pJsonRpcResponse : temp;
@@ -540,12 +532,11 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
          std::string handle = core::system::generateUuid(true);
          json::JsonRpcResponse response;
          response.setAsyncHandle(handle);
+         response.setField(kEventsPending, "false");
          ptrConnection->sendJsonRpcResponse(response);
 
          handlerFunction(request,
                          boost::bind(endHandleRpcRequestIndirect,
-                                     ptrConnection,
-                                     executeStartTime,
                                      handle,
                                      _1,
                                      _2));
