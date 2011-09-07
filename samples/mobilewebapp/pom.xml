@@ -48,10 +48,15 @@
     <!-- Google Web Toolkit (GWT) itself -->
 
     <dependency>
-      <groupId>com.google.gwt</groupId>
-      <artifactId>gwt-servlet</artifactId>
+      <groupId>com.google.web.bindery</groupId>
+      <artifactId>requestfactory-server</artifactId>
       <version>${gwtVersion}</version>
       <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.web.bindery</groupId>
+      <artifactId>requestfactory-apt</artifactId>
+      <version>${gwtVersion}</version>
     </dependency>
     <dependency>
       <groupId>com.google.gwt</groupId>
@@ -76,12 +81,6 @@
 
     <!-- GWT RequestFactory will use JSR 303 javax.validation if you let it -->
     <dependency>
-      <groupId>javax.validation</groupId>
-      <artifactId>validation-api</artifactId>
-      <version>1.0.0.GA</version>
-      <classifier>sources</classifier>
-    </dependency>
-    <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-validator</artifactId>
       <version>4.0.2.GA</version>
@@ -97,17 +96,7 @@
       </exclusions>
     </dependency>
 
-    <!-- GWT RequestFactory requires org.json -->
-    <!-- TODO: can we declare the json and validation dependencies somewhere for the world to pick up,
-    rather than requiring everyone to know about them? -->
-    <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-      <version>20090211</version>
-    </dependency>
-
     <!-- Google App Engine (GAE) itself -->
-
     <dependency>
       <groupId>com.google.appengine</groupId>
       <artifactId>appengine-api-1.0-sdk</artifactId>
@@ -172,11 +161,11 @@
       <version>1.6.1</version>
     </dependency>
   </dependencies>
-  
+
   <build>
-    <!-- Generate compiled stuff in the folder used for developing mode --> 
+    <!-- Generate compiled stuff in the folder used for developing mode -->
     <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
-    
+
     <plugins>
       <!-- GWT Maven Plugin-->
       <plugin>
@@ -200,7 +189,7 @@
             <version>${gwtVersion}</version>
           </dependency>
         </dependencies>
-        <!-- JS is only needed in the package phase, this speeds up testing --> 
+        <!-- JS is only needed in the package phase, this speeds up testing -->
         <executions>
           <execution>
             <phase>prepare-package</phase>
@@ -209,8 +198,8 @@
             </goals>
           </execution>
         </executions>
-        <!-- Plugin configuration. There are many available options, 
-             see gwt-maven-plugin documentation at codehaus.org --> 
+        <!-- Plugin configuration. There are many available options,
+             see gwt-maven-plugin documentation at codehaus.org -->
         <configuration>
           <!-- URL that should be automatically opened in the GWT shell (gwt:run). -->
           <runTarget>MobileWebApp.html</runTarget>
@@ -255,7 +244,7 @@
           <useManifestOnlyJar>false</useManifestOnlyJar>
           <forkMode>always</forkMode>
 
-          <!-- Folder for generated testing stuff --> 
+          <!-- Folder for generated testing stuff -->
           <systemProperties>
             <property>
               <name>gwt.args</name>
