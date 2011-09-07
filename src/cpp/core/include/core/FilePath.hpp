@@ -72,6 +72,9 @@ public:
    // does this file exist?
    bool exists() const;
 
+   // is the file a symlink?
+   bool isSymlink() const;
+
    // size of file in bytes
    uintmax_t size() const;
   

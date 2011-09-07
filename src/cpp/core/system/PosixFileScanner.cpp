@@ -96,9 +96,10 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
 
       // create the FileInfo
       FileInfo fileInfo;
+      bool isSymlink = S_ISLNK(st.st_mode);
       if (S_ISDIR(st.st_mode))
       {
-         fileInfo = FileInfo(path, true);
+         fileInfo = FileInfo(path, true, isSymlink);
       }
       else
       {
@@ -106,10 +107,11 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                              false,
                              st.st_size,
 #ifdef __APPLE__
-                             st.st_mtimespec.tv_sec);
+                             st.st_mtimespec.tv_sec,
 #else
-                             st.st_mtime);
+                             st.st_mtime,
 #endif
+                             isSymlink);
       }
 
       // apply the filter (if any)
@@ -121,7 +123,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
             tree<FileInfo>::iterator_base child = pTree->append_child(fromNode,
                                                                       fileInfo);
             // recurse if requested and this isn't a link
-            if (recursive && !S_ISLNK(st.st_mode))
+            if (recursive && !fileInfo.isSymlink())
             {
                Error error = scanFiles(child, true, filter, pTree);
                if (error)

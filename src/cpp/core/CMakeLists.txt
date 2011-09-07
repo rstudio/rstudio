@@ -142,7 +142,7 @@ else()
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
       Win32StringUtils.cpp
       system/DirectoryMonitor.cpp
-      system/FileScanner.cpp
+      system/Win32FileScanner.cpp
       system/RegistryKey.cpp
       system/Win32ParentProcessMonitor.cpp
       system/Win32OutputCapture.cpp

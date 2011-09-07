@@ -21,7 +21,8 @@ FileInfo::FileInfo(const FilePath& filePath)
    :  absolutePath_(filePath.absolutePath()),
       isDirectory_(filePath.isDirectory()),
       size_(0),
-      lastWriteTime_(0)
+      lastWriteTime_(0),
+      isSymlink_(false)
 {
    if (!isDirectory_ && filePath.exists())
    {
@@ -30,22 +31,27 @@ FileInfo::FileInfo(const FilePath& filePath)
    }
 }
 
-FileInfo::FileInfo(const std::string& absolutePath, bool isDirectory)
+FileInfo::FileInfo(const std::string& absolutePath,
+                   bool isDirectory,
+                   bool isSymlink)
  :    absolutePath_(absolutePath),
       isDirectory_(isDirectory),
       size_(0),
-      lastWriteTime_(0)
+      lastWriteTime_(0),
+      isSymlink_(isSymlink)
 {
 }
    
 FileInfo::FileInfo(const std::string& absolutePath,
                    bool isDirectory,
                    uintmax_t size,
-                   std::time_t lastWriteTime)
+                   std::time_t lastWriteTime,
+                   bool isSymlink)
    :  absolutePath_(absolutePath),
       isDirectory_(isDirectory),
       size_(size),
-      lastWriteTime_(lastWriteTime)
+      lastWriteTime_(lastWriteTime),
+      isSymlink_(isSymlink)
 {
 }
    

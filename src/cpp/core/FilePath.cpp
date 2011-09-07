@@ -292,6 +292,19 @@ bool FilePath::exists() const
     }
 }
 
+bool FilePath::isSymlink() const
+{
+   try
+   {
+      return !empty() && boost::filesystem::is_symlink(pImpl_->path);
+   }
+   catch(const boost::filesystem::filesystem_error& e)
+   {
+      logError(pImpl_->path, e, ERROR_LOCATION);
+      return false;
+   }
+}
+
 uintmax_t FilePath::size() const
 {
    try 

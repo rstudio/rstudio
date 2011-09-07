@@ -26,6 +26,12 @@
 #include <core/system/System.hpp>
 #include <core/system/FileChangeEvent.hpp>
 
+// cross-platform recursive file monitoring service. note that the
+// implementation specifically avoids following soft-links. only directories
+// physically contained in the root will be monitored (this is to prevent
+// both extremely large trees and or self-referential (and thus infinitely
+// recursive) trees.
+
 namespace core {   
 namespace system {
 namespace file_monitor {

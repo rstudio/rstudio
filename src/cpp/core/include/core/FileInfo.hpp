@@ -36,14 +36,26 @@ public:
    {
    }
    
+
+   // NOTE: this constructor will NOT read symlink info from the passed
+   // FilePath object. this is because we want to restrict reading of
+   // symlink to status to funcitons that are expressly symlink aware
+   // (this is because the behavior of reading symlink status is not
+   // fully known and we don't want to make a change underneath our
+   // entire codebase which does this universally (note that we've been
+   // burned by boost filesystem having nasty beahvior for seemingly
+   // innocuous operations before!)
    explicit FileInfo(const FilePath& filePath) ;
    
-   FileInfo(const std::string& absolutePath, bool isDirectory);
+   FileInfo(const std::string& absolutePath,
+            bool isDirectory,
+            bool isSymlink = false);
    
    FileInfo(const std::string& absolutePath,
             bool isDirectory,
             uintmax_t size,
-            std::time_t lastWriteTime);
+            std::time_t lastWriteTime,
+            bool isSymlink = false);
    
    virtual ~FileInfo()
    {
@@ -59,7 +71,8 @@ public:
       return absolutePath_ == other.absolutePath_ &&
              isDirectory_ == other.isDirectory_ &&
              size_ == other.size_ &&
-             lastWriteTime_ == other.lastWriteTime_;
+             lastWriteTime_ == other.lastWriteTime_ &&
+             isSymlink_ == other.isSymlink_;
    }
    
    bool operator!=(const FileInfo& other) const
@@ -72,12 +85,14 @@ public:
    bool isDirectory() const { return isDirectory_; }
    uintmax_t size() const { return size_; }
    std::time_t lastWriteTime() const { return lastWriteTime_; }
+   bool isSymlink() const { return isSymlink_; }
    
 private:
    std::string absolutePath_;
    bool isDirectory_;
    uintmax_t size_;
    std::time_t lastWriteTime_;
+   bool isSymlink_;
 };
    
 inline int fileInfoPathCompare(const FileInfo& a, const FileInfo& b)

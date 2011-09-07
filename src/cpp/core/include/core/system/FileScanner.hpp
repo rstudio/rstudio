@@ -26,6 +26,12 @@ namespace core {
 
 class Error;
 
+// recursively enumerate files from the specified root. these functions
+// are symlink aware -- this has two implications:
+//
+//   (1) The FileInfo::isSymlink member returns accurate symlink status
+//   (2) Symlink to directories are not traversed recursively
+
 namespace system {
 
 Error scanFiles(const FileInfo& fromRoot,
