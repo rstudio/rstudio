@@ -20,6 +20,7 @@
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 namespace core {
 
@@ -232,8 +233,12 @@ public:
    // Terminate all running children
    void terminateAll();
 
-   // Wait for all children to exit
-   void wait(int pollingIntervalMs = 100);
+   // Wait for all children to exit. Returns false if the operaiton timed out
+   bool wait(
+      const boost::posix_time::time_duration& pollingInterval =
+         boost::posix_time::milliseconds(100),
+      const boost::posix_time::time_duration& maxWait =
+         boost::posix_time::time_duration(boost::posix_time::not_a_date_time));
 
 private:
    struct Impl;

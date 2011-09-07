@@ -140,6 +140,11 @@ bool s_printCharsetWarning = false;
 
 std::queue<r::session::RConsoleInput> s_consoleInputBuffer;
 
+// superivsor is a module level static so that we can terminateChildren
+// upon exit of the session (otherwise we could leave a long running
+// sweave operation still hogging cpu after we exit)
+core::system::ProcessSupervisor s_interruptableChildSupervisor;
+
 // json rpc methods we handle (the rest are delegated to the HttpServer)
 const char * const kClientInit = "client_init" ;
 const char * const kConsoleInput = "console_input" ;
@@ -1631,6 +1636,24 @@ void rSuicide(const std::string& message)
    session::clientEventQueue().add(suicideEvent);
 }
 
+// terminate all children of the provided process supervisor
+// and then wait a brief period to attempt to reap the child
+void terminateAllChildren(core::system::ProcessSupervisor* pSupervisor,
+                          const ErrorLocation& location)
+{
+   // send kill signal
+   pSupervisor->terminateAll();
+
+   // wait and reap children (but for no longer than 1 second)
+   if (!pSupervisor->wait(boost::posix_time::milliseconds(10),
+                          boost::posix_time::milliseconds(1000)))
+   {
+      core::log::logWarningMessage(
+            "Process supervisor did not terminate within 1 second",
+            location);
+   }
+}
+
 void rCleanup(bool terminatedNormally)
 {
    try
@@ -1662,6 +1685,12 @@ void rCleanup(bool terminatedNormally)
          clientEventService().stop();
          httpConnectionListener().stop();
       }
+
+      // terminate known child processes
+      terminateAllChildren(&s_interruptableChildSupervisor,
+                           ERROR_LOCATION);
+      terminateAllChildren(&module_context::processSupervisor(),
+                           ERROR_LOCATION);
    }
    CATCH_UNEXPECTED_EXCEPTION
 
@@ -1971,13 +2000,19 @@ bool continueChildProcess(core::system::ProcessOperations&)
 Error executeInterruptableChild(const std::string& path,
                                 const std::vector<std::string>& args)
 {
+   // error if an interruptable child is already running (we can't
+   // marry more than one child process to the interrupt state without)
+   if (s_interruptableChildSupervisor.hasRunningChildren())
+   {
+      return systemError(boost::system::errc::device_or_resource_busy,
+                         ERROR_LOCATION);
+   }
+
+
    // NOTE: we specify ProcessOptions::terminateChildren so that when
    // the user interrupts the job then we end up killing both the
    // child and all of its subprocesses (desirable for sweave so we
-   // can kill the underlying R executable as well). There is a
-   // tradeoff though: to get this to work we have to run the child
-   // in its own process group, which means that if this process dies
-   // it does not automatically take this child with it.
+   // can kill the underlying R executable as well).
 
    // setup callbacks
    core::system::ProcessCallbacks cb;
@@ -1986,15 +2021,17 @@ Error executeInterruptableChild(const std::string& path,
    cb.onContinue = continueChildProcess;
 
    // run process with a supervisor
-   core::system::ProcessSupervisor supervisor;
    core::system::ProcessOptions options;
    options.terminateChildren = true;
-   Error error = supervisor.runProgram(path, args, options, cb);
+   Error error = s_interruptableChildSupervisor.runProgram(path,
+                                                           args,
+                                                           options,
+                                                           cb);
    if (error)
       return error;
 
-   // wait for process
-   supervisor.wait();
+   // wait for process (no timeout)
+   s_interruptableChildSupervisor.wait();
 
    return Success();
 }

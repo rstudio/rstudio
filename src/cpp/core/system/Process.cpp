@@ -271,13 +271,28 @@ void ProcessSupervisor::terminateAll()
    }
 }
 
-void ProcessSupervisor::wait(int pollingIntervalMs)
+bool ProcessSupervisor::wait(
+      const boost::posix_time::time_duration& pollingInterval,
+      const boost::posix_time::time_duration& maxWait)
 {
+   boost::posix_time::ptime timeoutTime(boost::posix_time::not_a_date_time);
+   if (!maxWait.is_not_a_date_time())
+      timeoutTime = boost::get_system_time() + maxWait;
+
    while (poll())
    {
-      boost::this_thread::sleep(
-           boost::posix_time::milliseconds(pollingIntervalMs));
-  }
+      // wait the specified polling interval
+      boost::this_thread::sleep(pollingInterval);
+
+      // check for timeout if appropriate
+      if (!timeoutTime.is_not_a_date_time())
+      {
+         if (boost::get_system_time() > timeoutTime)
+            return false;
+      }
+   }
+
+   return true;
 }
 
 } // namespace system
