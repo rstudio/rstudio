@@ -56,7 +56,7 @@ public class UiRendererValidationTest extends AbstractUiBinderWriterTest {
 
     assertParseFailure("Expected failure due to getter parameter not of type Element.",
         "Getter getRoot must have exactly one parameter of type assignable to "
-            + "com.google.gwt.dom.client.Element");
+            + "com.google.gwt.dom.client.Element in renderer.OwnerClass.Renderer");
   }
 
   public void testGetterParameterAssignableToElement()
@@ -74,7 +74,7 @@ public class UiRendererValidationTest extends AbstractUiBinderWriterTest {
     init(UI_XML, generateRendererResource(declaredMethods));
 
     assertParseFailure("Expected failure due to getter with no parameters.",
-        "Getter getRoot must have exactly one parameter");
+        "Getter getRoot must have exactly one parameter in renderer.OwnerClass.Renderer");
   }
 
   public void testGetterTooManyParameters() throws SAXParseException, UnableToCompleteException {
@@ -83,7 +83,7 @@ public class UiRendererValidationTest extends AbstractUiBinderWriterTest {
     init(UI_XML, generateRendererResource(declaredMethods));
 
     assertParseFailure("Expected failure due to bad getter signature.",
-        "Getter getRoot must have exactly one parameter");
+        "Getter getRoot must have exactly one parameter in renderer.OwnerClass.Renderer");
   }
 
   public void testGetterUnknownField() throws SAXParseException, UnableToCompleteException {
@@ -91,7 +91,7 @@ public class UiRendererValidationTest extends AbstractUiBinderWriterTest {
     declaredMethods.append("    public DivElement getQuux(Element parent);");
     init(UI_XML, generateRendererResource(declaredMethods));
     assertParseFailure("Expected failure due to getter for an unexpected field name.",
-        "getQuux does not match a \"ui:field='quux'\" declaration");
+        "getQuux does not match a \"ui:field='quux'\" declaration in renderer.OwnerClass.Renderer");
   }
 
   public void testRenderBadReturnType() throws SAXParseException, UnableToCompleteException {
@@ -143,7 +143,7 @@ public class UiRendererValidationTest extends AbstractUiBinderWriterTest {
     declaredMethods.append("    public void quux();");
     init(UI_XML_TYPED_WITH, generateRendererResource(declaredMethods));
     assertParseFailure("Expected failure due to unexpected method.",
-        "Unexpected method \"quux\" found");
+        "Unexpected method \"quux\" found in renderer.OwnerClass.Renderer");
   }
 
   private void assertParseFailure(String message, String expectedMessage) {
@@ -153,6 +153,8 @@ public class UiRendererValidationTest extends AbstractUiBinderWriterTest {
     } catch (UnableToCompleteException e) {
       if (expectedMessage != null) {
         assertEquals(expectedMessage, logger.died);
+      } else {
+        fail("No message was received. " + message);
       }
     }
   }
@@ -171,7 +173,7 @@ public class UiRendererValidationTest extends AbstractUiBinderWriterTest {
         code.append("import foo.Foo;\n");
         code.append("public class OwnerClass {");
         code.append("  public interface Renderer");
-        code.append("      extends UiRenderer<OwnerClass> {");
+        code.append("      extends UiRenderer {");
         code.append(declarations);
         code.append("  }");
         code.append("}");

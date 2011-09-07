@@ -32,7 +32,7 @@ import com.google.gwt.user.client.ui.Widget;
  * Tests SafeUri parsing with the lazy widget builder.
  */
 public class LazyWidgetBuilderSafeUriIntegrationTest extends SafeUriIntegrationTest {
-  interface Renderer extends UiRenderer<LazyWidgetBuilderSafeUriIntegrationTest> {
+  interface Renderer extends UiRenderer {
     AnchorElement getJsAnchorFromSafeUri(Element ancestor);
 
     AnchorElement getJsAnchorFromString(Element ancestor);

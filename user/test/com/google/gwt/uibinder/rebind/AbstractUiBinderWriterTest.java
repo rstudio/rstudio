@@ -37,6 +37,7 @@ import org.xml.sax.SAXParseException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -146,14 +147,15 @@ public abstract class AbstractUiBinderWriterTest extends TestCase {
     printWriter = new AbortablePrintWriter(new PrintWriter(new StringWriter()));
   }
 
-  protected void init(String domString, MockJavaResource rendererClass) throws SAXParseException,
-      UnableToCompleteException {
+  protected void init(String domString, MockJavaResource rendererClass,
+      MockJavaResource... otherClasses) throws SAXParseException, UnableToCompleteException {
     resources.add(RENDERABLE_PANEL);
     resources.add(CLIENT_BUNDLE);
     resources.add(DIV_ELEMENT);
     resources.add(SPAN_ELEMENT);
     resources.add(FOO);
     resources.add(rendererClass);
+    resources.addAll(Arrays.asList(otherClasses));
     CompilationState state = CompilationStateBuilder.buildFrom(createCompileLogger(), resources);
     types = state.getTypeOracle();
     logger = new MockMortalLogger();

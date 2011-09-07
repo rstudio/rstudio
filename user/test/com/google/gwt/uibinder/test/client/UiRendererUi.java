@@ -16,6 +16,7 @@ package com.google.gwt.uibinder.test.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableColElement;
@@ -26,6 +27,9 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiRenderer;
+import com.google.gwt.uibinder.test.client.UiRendererEventsTest.MockBarReceiver;
+import com.google.gwt.uibinder.test.client.UiRendererEventsTest.MockBazReceiver;
+import com.google.gwt.uibinder.test.client.UiRendererEventsTest.MockFooReceiver;
 
 /**
  * Sample use of a {@code UiRenderer} with no dependency on com.google.gwt.user.
@@ -61,7 +65,19 @@ public class UiRendererUi {
     }
   }
 
-  interface HtmlRenderer extends UiRenderer<UiRendererUi> {
+  static class Bar {
+    Integer baz;
+
+    public Bar(Integer bar) {
+      this.baz = bar;
+    }
+
+    Integer getBar() {
+      return baz;
+    }
+  }
+
+  interface HtmlRenderer extends UiRenderer {
     SpanElement getNameSpan(Element owner);
     TableColElement getNarrowColumn(Element owner);
     DivElement getRoot(Element owner);
@@ -73,12 +89,25 @@ public class UiRendererUi {
     TableRowElement getTr(Element owner);
 
     void render(SafeHtmlBuilder sb, Foo aValue, Foo aValueTwice);
+    void onBrowserEvent(MockFooReceiver o, NativeEvent e, Element p, Foo f, String s);
+    void onBrowserEvent(MockBarReceiver o, NativeEvent e, Element p, Bar b, int i);
+  }
+
+  interface InheritedRenderer extends HtmlRenderer {
+    TableCellElement getTh3(Element owner);
+    void onBrowserEvent(MockBazReceiver o, NativeEvent e, Element p);
   }
 
   private static final HtmlRenderer renderer = GWT.create(HtmlRenderer.class);
 
+  private static final InheritedRenderer inheritedRenderer = GWT.create(InheritedRenderer.class);
+
   public static HtmlRenderer getRenderer() {
     return renderer;
+  }
+
+  public static InheritedRenderer getInheritedRenderer() {
+    return inheritedRenderer;
   }
 
   public UiRendererUi() {

@@ -20,6 +20,7 @@ import com.google.gwt.uibinder.test.client.IsRenderableIntegrationTest;
 import com.google.gwt.uibinder.test.client.LazyWidgetBuilderSafeUriIntegrationTest;
 import com.google.gwt.uibinder.test.client.SafeHtmlAsComponentsTest;
 import com.google.gwt.uibinder.test.client.UiRendererTest;
+import com.google.gwt.uibinder.test.client.UiRendererEventsTest;
 
 import junit.framework.Test;
 
@@ -35,6 +36,7 @@ public class LazyWidgetBuilderSuite {
     suite.addTestSuite(LazyWidgetBuilderSafeUriIntegrationTest.class);
     suite.addTestSuite(SafeHtmlAsComponentsTest.class);
     suite.addTestSuite(UiRendererTest.class);
+    suite.addTestSuite(UiRendererEventsTest.class);
 
     return suite;
   }

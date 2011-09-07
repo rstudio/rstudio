@@ -106,7 +106,7 @@ public class UiBinderParserUiWithTest extends TestCase {
       code.append("import foo.Foo;\n");
       code.append("public class OwnerClass {");
       code.append("  public interface Renderer");
-      code.append("      extends UiRenderer<OwnerClass> {");
+      code.append("      extends UiRenderer {");
       code.append("    public void render(SafeHtmlBuilder sb, foo.Fooish fieldName);");
       code.append("  }");
       code.append("}");

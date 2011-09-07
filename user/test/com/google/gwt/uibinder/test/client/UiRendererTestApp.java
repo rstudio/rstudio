@@ -36,16 +36,16 @@ public class UiRendererTestApp implements EntryPoint {
 
   private static void setAndInitInstance(UiRendererTestApp newInstance) {
     instance = newInstance;
-    instance.safeHtmlUi = new UiRendererUi();
+    instance.uiRendererUi = new UiRendererUi();
   }
 
-  private UiRendererUi safeHtmlUi;
+  private UiRendererUi uiRendererUi;
 
   private UiRendererTestApp() {
   }
 
-  public UiRendererUi getSafeHtmlUi() {
-    return safeHtmlUi;
+  public UiRendererUi getUiRendererUi() {
+    return uiRendererUi;
   }
 
   /**

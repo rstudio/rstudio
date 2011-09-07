@@ -443,12 +443,17 @@ public class UiBinderParser {
     return publicType;
   }
 
-  private JClassType findRenderParameterType(String resourceName) {
+  private JClassType findRenderParameterType(String resourceName) throws UnableToCompleteException {
     JMethod renderMethod = null;
-    for (JMethod method : writer.getBaseClass().getMethods()) {
+    JClassType baseClass = writer.getBaseClass();
+    for (JMethod method : baseClass.getInheritableMethods()) {
       if (method.getName().equals("render")) {
-        renderMethod = method;
-        break;
+        if (renderMethod == null) {
+          renderMethod = method;
+        } else {
+          writer.die("%s declares more than one method named render",
+              baseClass.getQualifiedSourceName());
+        }
       }
     }
     if (renderMethod == null) {
@@ -467,6 +472,7 @@ public class UiBinderParser {
   private void findResources(XMLElement binderElement)
       throws UnableToCompleteException {
     binderElement.consumeChildElements(new XMLElement.Interpreter<Boolean>() {
+      @Override
       public Boolean interpretElement(XMLElement elem)
           throws UnableToCompleteException {
 

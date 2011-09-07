@@ -16,7 +16,6 @@
 package com.google.gwt.uibinder.client;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 
 /**
  * Marker interface for classes whose implementation is to be provided via UiBinder code
@@ -25,9 +24,8 @@ import com.google.gwt.dom.client.NativeEvent;
  * <span style='color: red'>This is experimental code in active
  * developement. It is unsupported, and its api is subject to
  * change.</span>
- * @param <T> the type to render
  */
-public interface UiRenderer<T> {
+public interface UiRenderer {
 
   /**
    * Checks whether {@code parent} is a valid element to use as an argument for field getters.
@@ -36,14 +34,4 @@ public interface UiRenderer<T> {
    *         In DevMode it also checks whether the parent is attached to the DOM
    */
   boolean isParentOrRenderer(Element parent);
-
-  /**
-   * Receives an event and dispatches it to the appropriate handler method annotated
-   * with {@code @UiHandler}.
-   *
-   * @param receiver of events
-   * @param parent element containing a previously rendered element
-   * @param event received by the browser
-   */
-  void onBrowserEvent(T receiver, Element parent, NativeEvent event);
 }

@@ -35,7 +35,7 @@ public class UiRendererTest extends GWTTestCase {
   private DivElement docDiv;
   private SafeHtml renderedHtml;
   private HtmlRenderer renderer;
-  private UiRendererUi safeHtmlUi;
+  private UiRendererUi uiRendererUi;
 
   @Override
   public String getModuleName() {
@@ -46,8 +46,8 @@ public class UiRendererTest extends GWTTestCase {
   public void gwtSetUp() throws Exception {
     super.gwtSetUp();
     UiRendererTestApp app = UiRendererTestApp.getInstance();
-    safeHtmlUi = app.getSafeHtmlUi();
-    renderedHtml = safeHtmlUi.render(RENDERED_VALUE, RENDERED_VALUE_TWICE);
+    uiRendererUi = app.getUiRendererUi();
+    renderedHtml = uiRendererUi.render(RENDERED_VALUE, RENDERED_VALUE_TWICE);
     renderer = UiRendererUi.getRenderer();
 
     docDiv = Document.get().createDivElement();

@@ -66,7 +66,7 @@ public class UiJavaResources {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.event.dom.client;\n");
       code.append("import com.google.gwt.event.shared.GwtEvent;\n");
-      code.append("public class ClickEvent extends GwtEvent<ClickHandler> {\n");
+      code.append("public class ClickEvent extends DomEvent<ClickHandler> {\n");
       code.append("}\n");
       return code;
     }
@@ -195,6 +195,19 @@ public class UiJavaResources {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class DockLayoutPanel extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource DOM_EVENT = new MockJavaResource(
+      "com.google.gwt.event.dom.client.DomEvent") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.event.dom.client;\n");
+      code.append("import com.google.gwt.event.shared.EventHandler;\n");
+      code.append("import com.google.gwt.event.shared.GwtEvent;\n");
+      code.append("public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H> {\n");
       code.append("}\n");
       return code;
     }
@@ -459,6 +472,20 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource NATIVE_EVENT = new MockJavaResource(
+      "com.google.gwt.dom.client.NativeEvent") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.dom.client;\n");
+      code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+      code.append("public class NativeEvent extends JavaScriptObject {\n");
+      code.append("  protected NativeEvent() {\n");
+      code.append("  }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource NUMBER_FORMAT = new MockJavaResource(
       "com.google.gwt.i18n.client.NumberFormat") {
     @Override
@@ -682,6 +709,26 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource UI_HANDLER = new MockJavaResource(
+      "com.google.gwt.uibinder.client.UiHandler") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.uibinder.client;");
+      code.append("import java.lang.annotation.Documented;");
+      code.append("import java.lang.annotation.ElementType;");
+      code.append("import java.lang.annotation.Retention;");
+      code.append("import java.lang.annotation.RetentionPolicy;");
+      code.append("import java.lang.annotation.Target;");
+      code.append("@Documented");
+      code.append("@Retention(RetentionPolicy.RUNTIME)");
+      code.append("@Target(ElementType.METHOD)");
+      code.append("public @interface UiHandler {");
+      code.append("String[] value();");
+      code.append("}");
+      return code;
+    }
+  };
   public static final MockJavaResource UI_OBJECT = new MockJavaResource(
       "com.google.gwt.user.client.ui.UIObject") {
     @Override
@@ -699,7 +746,7 @@ public class UiJavaResources {
     public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.uibinder.client;\n");
-      code.append("public interface UiRenderer<T> {");
+      code.append("public interface UiRenderer {");
       code.append("}");
       return code;
     }
@@ -748,6 +795,7 @@ public class UiJavaResources {
     rtn.add(DATE_TIME_FORMAT_OLD);
     rtn.add(DIALOG_BOX);
     rtn.add(DISCLOSURE_PANEL);
+    rtn.add(DOM_EVENT);
     rtn.add(DOCK_LAYOUT_PANEL);
     rtn.add(ELEMENT);
     rtn.add(EVENT_HANDLER);
@@ -769,6 +817,7 @@ public class UiJavaResources {
     rtn.add(MENU_ITEM_SEPARATOR);
     rtn.add(MOUSE_OVER_EVENT);
     rtn.add(MOUSE_OVER_HANDLER);
+    rtn.add(NATIVE_EVENT);
     rtn.add(NUMBER_LABEL);
     rtn.add(NUMBER_FORMAT);
     rtn.add(RENDERER);
@@ -790,6 +839,7 @@ public class UiJavaResources {
     rtn.add(UI_BINDER);
     rtn.add(UI_FACTORY);
     rtn.add(UI_FIELD);
+    rtn.add(UI_HANDLER);
     rtn.add(UI_RENDERER);
     rtn.add(VALUE_LABEL);
     rtn.add(WIDGET);
