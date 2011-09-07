@@ -46,13 +46,6 @@ FileInfo toFileInfo(const FilePath& filePath)
 
 } // anonymous namespace
 
-Error scanFiles(const FileInfo& fromRoot,
-                bool recursive,
-                const boost::function<bool(const FileInfo&)>& filter,
-                tree<FileInfo>* pTree)
-{
-   return scanFiles(pTree->set_head(fromRoot), recursive, filter, pTree);
-}
 
 // NOTE: we bail with an error if the top level directory can't be
 // enumerated however we merely log errors for children. this reflects
@@ -65,6 +58,7 @@ Error scanFiles(const FileInfo& fromRoot,
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 bool recursive,
                 const boost::function<bool(const FileInfo&)>& filter,
+                const boost::function<void(const FileInfo&)>& onBeforeScanDir,
                 tree<FileInfo>* pTree)
 {
    // clear all existing
@@ -72,6 +66,10 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
 
    // create FilePath for root
    FilePath rootPath(fromNode->absolutePath());
+
+   // call onBeforeScanDir hook
+   if (onBeforeScanDir)
+      onBeforeScanDir(*fromNode);
 
    // read directory entries
    std::vector<FilePath> children;

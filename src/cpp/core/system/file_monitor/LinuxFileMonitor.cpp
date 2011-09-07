@@ -31,6 +31,8 @@
 
 #include "FileMonitorImpl.hpp"
 
+// TODO: what happens if a symlink is the root entry
+
 // TODO: investigate parallel package (multicore) interactions with file monitor
 
 namespace core {

@@ -17,6 +17,7 @@
 
 #include <boost/function.hpp>
 
+#include <core/Error.hpp>
 #include <core/FileInfo.hpp>
 
 #include <core/collection/Tree.hpp>
@@ -34,15 +35,49 @@ class Error;
 
 namespace system {
 
+Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
+                bool recursive,
+                const boost::function<bool(const FileInfo&)>& filter,
+                const boost::function<void(const FileInfo&)>& onBeforeScanDir,
+                tree<FileInfo>* pTree);
+
 Error scanFiles(const FileInfo& fromRoot,
                 bool recursive,
                 const boost::function<bool(const FileInfo&)>& filter,
-                tree<FileInfo>* pTree);
+                const boost::function<void(const FileInfo&)>& onBeforeScanDir,
+                tree<FileInfo>* pTree)
+{
+   return scanFiles(pTree->set_head(fromRoot),
+                    recursive,
+                    filter,
+                    onBeforeScanDir,
+                    pTree);
+}
+
+
+Error scanFiles(const FileInfo& fromRoot,
+                bool recursive,
+                const boost::function<bool(const FileInfo&)>& filter,
+                tree<FileInfo>* pTree)
+{
+   return scanFiles(fromRoot,
+                    recursive,
+                    filter,
+                    boost::function<void(const FileInfo&)>(),
+                    pTree);
+}
 
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 bool recursive,
                 const boost::function<bool(const FileInfo&)>& filter,
-                tree<FileInfo>* pTree);
+                tree<FileInfo>* pTree)
+{
+   return scanFiles(fromNode,
+                    recursive,
+                    filter,
+                    boost::function<void(const FileInfo&)>(),
+                    pTree);
+}
 
 } // namespace system
 } // namespace core

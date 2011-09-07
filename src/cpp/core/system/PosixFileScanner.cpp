@@ -38,17 +38,10 @@ int entryFilter(const struct dirent *entry)
 
 } // anonymous namespace
 
-Error scanFiles(const FileInfo& fromRoot,
-                bool recursive,
-                const boost::function<bool(const FileInfo&)>& filter,
-                tree<FileInfo>* pTree)
-{
-   return scanFiles(pTree->set_head(fromRoot), recursive, filter, pTree);
-}
-
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 bool recursive,
                 const boost::function<bool(const FileInfo&)>& filter,
+                const boost::function<void(const FileInfo&)>& onBeforeScanDir,
                 tree<FileInfo>* pTree)
 {
    // clear all existing
@@ -56,6 +49,10 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
 
    // create FilePath for root
    FilePath rootPath(fromNode->absolutePath());
+
+   // call onBeforeScanDir hook
+   if (onBeforeScanDir)
+      onBeforeScanDir(*fromNode);
 
    // read directory contents
    struct dirent **namelist;
