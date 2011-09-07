@@ -107,9 +107,46 @@
             "url" : "https://dl-ssl.google.com/gwt/plugins/safari/gwt-dev-plugin.dmg",
             "platforms" : "Mac x86/x86_64/PPC",
             "supported" : true
+          },
+
+          "safari-mac-late" :
+          {
+            "caption" : "Sorry, there is currently no GWT Developer Plugin for Safari 5.1<br>"
+              + "or later, due to major changes in the Safari plugin API. <br><br>"
+              + "In the meantime, <a href='http://www.omnigroup.com/products/omniweb/'>OmniWeb 5.11</a> is similar to Safari 5.0 and <br>"
+              + "known to work.",
+            "url" : troubleshootingUrl,
+            "supported" : false
           }
         }
       };
+
+      function leadingDigits(s) {
+         var suffix = s.search(/[^\d]/g);
+         if (suffix != -1) {
+           s = s.substring(0, suffix);
+         }
+         return s;
+      }
+
+      function isSafariLate(ua) {
+        // Distinguish Safari from something "like Safari", e.g. OmniWeb
+        // "Version/" comes after "like"
+        var versionAndBeyond = ua.substring(ua.indexOf("version/"));
+        if (versionAndBeyond.indexOf("safari/") == -1) {
+          return false;
+        }
+
+        var componentsAfterVersion =
+          ua.substring(ua.indexOf("version/") + "version/".length).split(" ");
+        var version = componentsAfterVersion[0].split(".");
+
+        var major = Number(version[0]);
+        // Sometimes minor has a suffix like "dp1"
+        var minor = Number(leadingDigits(version[1]));
+
+        return major > 5 || major == 5 && minor > 0;
+      }
 
       var ua = navigator.userAgent.toLowerCase();
       var id = 'unknown';
@@ -121,7 +158,11 @@
         } else if (ua.indexOf("chrome") != -1) {
             id = 'chrome';
         } else if (ua.indexOf("macintosh") != -1) {
-          id = 'safari-mac';
+          if (isSafariLate(ua)) {
+            id = 'safari-mac-late';
+          } else {
+            id = 'safari-mac';
+          }
         } else if (ua.indexOf("windows") != -1) {
           id = 'safari-win';
         }
@@ -153,4 +194,3 @@
   </noscript>
   </body>
 </html>
-
