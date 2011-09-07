@@ -1423,6 +1423,10 @@ public class TextEditingTarget implements EditingTarget
       String code = docDisplay_.getCode();
       if (code != null && code.trim().length() > 0)
       {
+         // R 2.14 prints a warning when sourcing a file with no trailing \n
+         if (!code.endsWith("\n"))
+            code = code + "\n";
+
          boolean sweave = fileType_.canCompilePDF();
          
          if (dirtyState_.getValue() || sweave)
