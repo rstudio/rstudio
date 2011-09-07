@@ -6,6 +6,7 @@
   <!-- Remove all output files -->
   <target name="clean" description="Cleans this project's output files">
     <delete file="${gwt.build.lib}/requestfactory-apt.jar" />
+    <delete file="${gwt.build.lib}/requestfactory-apt-src.jar" />
     <delete file="${gwt.build.lib}/requestfactory-client.jar" />
     <delete file="${gwt.build.lib}/requestfactory-client-src.jar" />
     <delete file="${gwt.build.lib}/requestfactory-client+src.jar" />
@@ -47,6 +48,11 @@
     <requestfactory-jar target="apt"/>
   </target>
 
+  <!-- Targets for individual jars -->
+  <target name="requestfactory-apt-src" description="Build RequestFactory apt source jar">
+    <requestfactory-jar target="apt-src"/>
+  </target>
+
   <!-- Useful for Android testing -->
   <target name="requestfactory-all" description="Build RequestFactory all jar">
     <requestfactory-jar target="all"/>
@@ -83,7 +89,7 @@
   </target>
 
   <!-- Build all client jars -->
-  <target name="clientjars" depends="requestfactory-apt,requestfactory-client,requestfactory-client-src,requestfactory-client+src" description="Build requestfactory client jars" />
+  <target name="clientjars" depends="requestfactory-apt,requestfactory-apt-src,requestfactory-client,requestfactory-client-src,requestfactory-client+src" description="Build requestfactory client jars" />
 
   <!-- Build all server jars -->
   <target name="serverjars" depends="requestfactory-server,requestfactory-server-src,requestfactory-server+src" description="Build requestfactory server jars" />
