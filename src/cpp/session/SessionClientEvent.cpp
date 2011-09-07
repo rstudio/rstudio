@@ -65,6 +65,7 @@ const int kConsoleWriteInput = 38;
 const int kShowWarningBar = 39;
 const int kOpenProjectError = 40;
 const int kVcsRefresh = 41;
+const int kAskPass = 42;
 
 }   
 
@@ -163,6 +164,8 @@ std::string ClientEvent::typeName() const
          return "open_project_error";
       case client_events::kVcsRefresh:
          return "vcs_refresh";
+      case client_events::kAskPass:
+         return "ask_pass";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

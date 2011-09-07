@@ -1059,37 +1059,56 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error vcsExecuteCommand(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
+void vcsExecuteCommand_onStdOut(boost::shared_ptr<std::string> ptrBuffer,
+              const std::string& output)
+{
+   *ptrBuffer += output;
+}
+
+void vcsExecuteCommand_onExit(boost::shared_ptr<std::string> ptrBuffer,
+            int exitCode,
+            const json::JsonRpcFunctionContinuation& continuation)
+{
+   json::Object result;
+   result["output"] = *ptrBuffer;
+   result["error"] = exitCode;
+   json::JsonRpcResponse response;
+   response.setResult(result);
+
+   continuation(Success(), &response);
+}
+
+void vcsExecuteCommand(const json::JsonRpcRequest& request,
+                       const json::JsonRpcFunctionContinuation& continuation)
 {
    RefreshOnExit refreshOnExit;
 
    std::string command;
    Error error = json::readParams(request.params, &command);
    if (error)
-      return error;
+   {
+      continuation(error, NULL);
+      return;
+   }
 
    command = shell_utils::sendStdErrToStdOut(shell_utils::join(
          ShellCommand("cd") << s_pVcsImpl_->root(),
          command));
 
-   // TODO: Make interruptible, and not on main thread
-   // TODO: Stream results
+   boost::shared_ptr<std::string> ptrBuffer(new std::string);
+   system::ProcessCallbacks processCallbacks;
+   processCallbacks.onStdout = boost::bind(vcsExecuteCommand_onStdOut,
+                                           ptrBuffer, _2);
+   processCallbacks.onExit = boost::bind(vcsExecuteCommand_onExit,
+                                         ptrBuffer, _1, continuation);
+   error = module_context::processSupervisor().runCommand(
+         command, system::ProcessOptions(), processCallbacks);
 
-   core::system::ProcessResult processResult;
-   error = core::system::runCommand(command,
-                                    core::system::ProcessOptions(),
-                                    &processResult);
    if (error)
-      return error;
-
-   json::Object result;
-   result["output"] = processResult.stdOut;
-   result["error"] = processResult.exitStatus;
-
-   pResponse->setResult(result);
-
-   return Success();
+   {
+      continuation(error, NULL);
+      return;
+   }
 }
 
 Error vcsShow(const json::JsonRpcRequest& request,
@@ -1110,15 +1129,50 @@ Error vcsShow(const json::JsonRpcRequest& request,
 void postbackGitSSH(const std::string& command,
                     const module_context::PostbackHandlerContinuation& cont)
 {
-   // TODO
-   cont(EXIT_FAILURE, "");
+   cont(EXIT_SUCCESS, "");
 }
+
+typedef std::map<std::string, module_context::PostbackHandlerContinuation>
+      AskPassContinuations;
+AskPassContinuations  s_askpassContinuations;
 
 void postbackSSHAskPass(const std::string& command,
                         const module_context::PostbackHandlerContinuation& cont)
 {
-   // TODO
-   cont(EXIT_FAILURE, "");
+   std::string handle = system::generateUuid();
+
+   s_askpassContinuations.insert(std::make_pair(handle, cont));
+
+   json::Object payload;
+   payload["handle"] = handle;
+   payload["prompt"] = std::string("Enter passphrase:");
+   module_context::enqueClientEvent(
+         ClientEvent(client_events::kAskPass, payload));
+   // TODO: Need to do something to simulate initEvent
+}
+
+Error askpassReturn(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   bool success;
+   std::string value;
+   Error error = json::readParams(request.params, &handle, &success, &value);
+   if (error)
+      return error;
+
+   AskPassContinuations::iterator pos = s_askpassContinuations.find(handle);
+   if (pos != s_askpassContinuations.end())
+   {
+      if (success)
+         pos->second(EXIT_SUCCESS, value);
+      else
+         pos->second(EXIT_FAILURE, "");
+      return Success();
+   }
+
+   LOG_ERROR_MESSAGE("Unknown askpass handle " + handle);
+   return Success();
 }
 
 } // anonymous namespace
@@ -1174,8 +1228,9 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_diff_file", vcsDiffFile))
       (bind(registerRpcMethod, "vcs_apply_patch", vcsApplyPatch))
       (bind(registerRpcMethod, "vcs_history", vcsHistory))
-      (bind(registerRpcMethod, "vcs_execute_command", vcsExecuteCommand))
-      (bind(registerRpcMethod, "vcs_show", vcsShow));
+      (bind(registerAsyncRpcMethod, "vcs_execute_command", vcsExecuteCommand))
+      (bind(registerRpcMethod, "vcs_show", vcsShow))
+      (bind(registerRpcMethod, "askpass_return", askpassReturn));
    error = initBlock.execute();
    if (error)
       return error;

@@ -19,6 +19,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
@@ -26,6 +29,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
@@ -54,7 +58,9 @@ public class VCS extends BasePresenter implements IsWidget
               VCSServerOperations server,
               Commands commands,
               Binder commandBinder,
-              VcsState vcsState)
+              VcsState vcsState,
+              EventBus events,
+              final GlobalDisplay globalDisplay)
    {
       super(view);
       view_ = view;
@@ -71,6 +77,28 @@ public class VCS extends BasePresenter implements IsWidget
          public void onVcsRefresh(VcsRefreshEvent event)
          {
             refresh();
+         }
+      });
+
+      events.addHandler(AskPassEvent.TYPE, new org.rstudio.studio.client.workbench.views.vcs.events.AskPassEvent.Handler()
+      {
+         @Override
+         public void onAskPass(final AskPassEvent e)
+         {
+            globalDisplay.promptForText(
+                  "Password",
+                  e.getPrompt(),
+                  "",
+                  new OperationWithInput<String>()
+                  {
+                     @Override
+                     public void execute(String input)
+                     {
+                        // TODO: handle case where user cancels
+                        server_.askpassReturn(e.getHandle(), true, input,
+                                              new SimpleRequestCallback<Void>());
+                     }
+                  });
          }
       });
    }

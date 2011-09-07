@@ -64,6 +64,7 @@ import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
+import org.rstudio.studio.client.workbench.views.vcs.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceObjectRemovedEvent;
@@ -116,6 +117,7 @@ class RemoteServerEventListener
       public static final String ShowWarningBar = "show_warning_bar";
       public static final String OpenProjectError = "open_project_error";
       public static final String VcsRefresh = "vcs_refresh";
+      public static final String AskPass = "ask_pass";
 
       protected ClientEvent()
       {
@@ -646,6 +648,12 @@ class RemoteServerEventListener
          else if (type.equals(ClientEvent.VcsRefresh))
          {
             eventBus.fireEvent(new VcsRefreshEvent());
+         }
+         else if (type.equals(ClientEvent.AskPass))
+         {
+            AskPassEvent.Data data = event.getData();
+            eventBus.fireEvent(new AskPassEvent(data.getHandle(),
+                                                data.getPrompt()));
          }
          else if (type.equals(ClientEvent.Quit))
          {

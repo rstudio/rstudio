@@ -92,4 +92,7 @@ public interface VCSServerOperations
    void vcsPush(ServerRequestCallback<Void> requestCallback);
 
    void vcsPull(ServerRequestCallback<Void> requestCallback);
+
+   void askpassReturn(String handle, boolean success, String value,
+                      ServerRequestCallback<Void> requestCallback);
 }

@@ -64,6 +64,7 @@ extern const int kConsoleWriteInput;
 extern const int kShowWarningBar;
 extern const int kOpenProjectError;
 extern const int kVcsRefresh;
+extern const int kAskPass;
 }
    
 class ClientEvent
