@@ -38,17 +38,16 @@
 
 #include "FileMonitorImpl.hpp"
 
-// TODO: analyze whether duplicate watches are possbile and what the
-// implication of this is for the implementation (multi_index_collection)
+// TODO: handle IN_UNMOUNT
+
+
+// TODO: what happens if a symlink is the root entry?
+
+// TODO: does processFileAdded successfully ignore symlinks
+
 
 // TODO: processFileAdded change detection (at top) depends on isSymlink
 // semantic consistency -- should we take that out of the ==
-
-// TODO: multiple file changes in mask should be handled explicitly
-// rather than by convention
-
-// TODO: make sure assumption about single directory add or remove is correct
-// (no sub events generated -- check explorer copy and paste)
 
 // TODO: make sure filter is applied (on all platforms!)
 
@@ -58,12 +57,7 @@
 // of watch to catch directory deletes) -- or, could we get a modified event
 // on the directory itself and then scan for deletes?
 
-// TODO: what happens if a symlink is the root entry
 
-// TODO: does processFileAdded successfully ignore symlinks
-
-// TODO: review other implementations for edge conditions (out of
-//  monitoring resources, buffer overflow, etc.)
 
 // TODO: investigate parallel package (multicore) interactions with file monitor
 
@@ -229,6 +223,7 @@ Error addWatch(const FileInfo& fileInfo, int fd, Watches* pWatches)
    mask |= IN_MODIFY;
    mask |= IN_MOVED_TO;
    mask |= IN_MOVED_FROM;
+   mask |= IN_Q_OVERFLOW;
    mask |= IN_DONT_FOLLOW;
 
    // initialize watch
@@ -249,7 +244,7 @@ boost::function<Error(const FileInfo&)> addWatchFunction(
    return boost::bind(addWatch, _1, pContext->fd, &pContext->watches);
 }
 
-void removeWatch(int fd, const Watch& watch)
+void removeWatch(int fd, const Watch& watch, Watches* pWatches)
 {
    // remove the watch
    int result = ::inotify_rm_watch(fd, watch.wd);
@@ -261,12 +256,23 @@ void removeWatch(int fd, const Watch& watch)
       error.addProperty("path", watch.path);
       LOG_ERROR(error);
    }
+
+   // remove it from the container
+   pWatches->erase(watch);
+}
+
+void removeAllWatches(FileEventContext* pContext)
+{
+   pContext->watches.forEach(boost::bind(removeWatch,
+                                          pContext->fd,
+                                          _1,
+                                          &pContext->watches));
 }
 
 void closeContext(FileEventContext* pContext)
 {
    // remove all watches
-   pContext->watches.forEach(boost::bind(removeWatch, pContext->fd, _1));
+   removeAllWatches(pContext);
 
    // close the file descriptor
    if (pContext->fd >= 0)
@@ -316,26 +322,22 @@ Error processEvent(FileEventContext* pContext,
       if (parentIt == pContext->fileTree.end())
          return Success();
 
-      // get file info (w/ extended attributes if this isn't a remove)
+      // get file info
       FilePath filePath = FilePath(parentIt->absolutePath()).complete(
                                                                  pEvent->name);
+
+
+      // if the file exists then collect as many extended attributes
+      // as necessary -- otherwise just record path and dir status
       FileInfo fileInfo;
-      if (eventType != FileChangeEvent::FileRemoved)
+      if (filePath.exists())
       {
-         // may have been added then deleted -- in this case we
-         // don't want to send any events
-         if (filePath.exists())
-            fileInfo = FileInfo(filePath);
+         fileInfo = FileInfo(filePath, filePath.isSymlink());
       }
       else
       {
-         fileInfo = FileInfo(filePath.absolutePath(),
-                             filePath.isDirectory());
+         fileInfo = FileInfo(filePath.absolutePath(), pEvent->mask & IN_ISDIR);
       }
-
-      // if there is no FileInfo then this was an add then delete
-      if (fileInfo.empty())
-         return Success();
 
       // if this doesn't meet the filter then ignore
       if (pContext->filter && !pContext->filter(fileInfo))
@@ -363,10 +365,7 @@ Error processEvent(FileEventContext* pContext,
                   Watch watch = pContext->watches.find(
                                              event.fileInfo().absolutePath());
                   if (!watch.empty())
-                  {
-                     removeWatch(pContext->fd, watch);
-                     pContext->watches.erase(watch);
-                  }
+                     removeWatch(pContext->fd, watch, &pContext->watches);
                }
             }
 
@@ -542,9 +541,35 @@ void run(const boost::function<void()>& checkForInput)
             int i = 0;
             while (i < len)
             {
-               // get the event and process it
+               // get the event
                typedef struct inotify_event* EventPtr;
                EventPtr pEvent = (EventPtr)&eventBuffer[i];
+
+               // buffer overflow is handled specially -- basically
+               // we start over because we missed events
+               if (pEvent->mask & IN_Q_OVERFLOW)
+               {
+                  // remove all watches
+                  removeAllWatches(pContext);
+
+                  // generate events based on scanning
+                  Error error =impl::discoverAndProcessFileChanges(
+                        FileInfo(pContext->rootPath),
+                        pContext->recursive,
+                        pContext->filter,
+                        addWatchFunction(pContext),
+                        &pContext->fileTree,
+                        pContext->callbacks.onFilesChanged);
+                  if (error)
+                     terminateWithMonitoringError(pContext, error);
+
+                  // always break here -- we've generated events based on
+                  // a fresh scan so any other events in the queue would
+                  // be duplicates
+                  break;
+               }
+
+               // process the event
                Error error = processEvent(pContext, pEvent, &fileChanges);
                if (error)
                {

@@ -73,9 +73,27 @@ Error discoverAndProcessFileChanges(
    const FileInfo& fileInfo,
    bool recursive,
    const boost::function<bool(const FileInfo&)>& filter,
+   const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
    tree<FileInfo>* pTree,
    const boost::function<void(const std::vector<FileChangeEvent>&)>&
                                                             onFilesChanged);
+
+inline Error discoverAndProcessFileChanges(
+   const FileInfo& fileInfo,
+   bool recursive,
+   const boost::function<bool(const FileInfo&)>& filter,
+   tree<FileInfo>* pTree,
+   const boost::function<void(const std::vector<FileChangeEvent>&)>&
+                                                            onFilesChanged)
+{
+   return discoverAndProcessFileChanges(
+                                 fileInfo,
+                                 recursive,
+                                 filter,
+                                 boost::function<Error(const FileInfo&)>(),
+                                 pTree,
+                                 onFilesChanged);
+}
 
 template <typename Iterator>
 Iterator findFile(Iterator begin, Iterator end, const std::string& path)

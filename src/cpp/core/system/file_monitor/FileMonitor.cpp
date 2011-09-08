@@ -129,7 +129,7 @@ Error processFileAdded(
    // see if this node already exists. if it does then check it for changes
    // (if there are no changes then ignore). we do this because some editors
    // (for example gedit) actually save files in such a way that FileAdded
-   // is generated
+   // is generated (because they overwrite the old file with a move)
    tree<FileInfo>::sibling_iterator it = impl::findFile(pTree->begin(parentIt),
                                                         pTree->end(parentIt),
                                                         fileChange.fileInfo());
@@ -199,7 +199,7 @@ void processFileModified(tree<FileInfo>::iterator parentIt,
                                                      fileChange.fileInfo());
 
    // only generate actions if the data is actually new (win32 file monitoring
-   // can generate redundant modified events for save operatoins as well as
+   // can generate redundant modified events for save operations as well as
    // when directories are copied and pasted, in which case an add is followed
    // by a modified)
    if (modIt != pTree->end(parentIt) && fileChange.fileInfo() != *modIt)
@@ -251,6 +251,7 @@ Error discoverAndProcessFileChanges(
    const FileInfo& fileInfo,
    bool recursive,
    const boost::function<bool(const FileInfo&)>& filter,
+   const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
    tree<FileInfo>* pTree,
    const  boost::function<void(const std::vector<FileChangeEvent>&)>&
                                                                onFilesChanged)
@@ -266,7 +267,11 @@ Error discoverAndProcessFileChanges(
 
    // scan this directory into a new tree which we can compare to the old tree
    tree<FileInfo> subdirTree;
-   Error error = scanFiles(fileInfo, recursive, filter, &subdirTree);
+   Error error = scanFiles(fileInfo,
+                           recursive,
+                           filter,
+                           onBeforeScanDir,
+                           &subdirTree);
    if (error)
       return error;
 
