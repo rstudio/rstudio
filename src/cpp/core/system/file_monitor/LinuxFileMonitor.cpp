@@ -19,8 +19,11 @@
 #include <sys/types.h>
 #include <sys/inotify.h>
 
+#include <set>
+
 #include <boost/utility.hpp>
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
@@ -31,9 +34,38 @@
 
 #include "FileMonitorImpl.hpp"
 
+// TODO: check with Joe on watch data structure
+
+// TODO: processFileAdded change detection (at top) depends on isSymlink
+// semantic consistency -- should we take that out of the ==
+
+// TODO: multiple file changes in mask should be handled explicitly
+// rather than by convention
+
+// TODO: make sure assumption about single directory add or remove is correct
+// (no sub events generated -- check explorer copy and paste)
+
+// TODO: make sure filter is applied (on all platforms!)
+
+// TODO: does a removed sub-directory generate a modified event on the dir?
+
+// TODO: implement recursive, non-recursive (note we need an additional level
+// of watch to catch directory deletes) -- or, could we get a modified event
+// on the directory itself and then scan for deletes?
+
 // TODO: what happens if a symlink is the root entry
 
+// TODO: does processFileAdded successfully ignore symlinks
+
+// TODO: review other implementations for edge conditions (out of
+//  monitoring resources, buffer overflow, etc.)
+
 // TODO: investigate parallel package (multicore) interactions with file monitor
+
+// TODO: don't restore graphics device (seen two incidences of crashing after
+//       restore on the mac
+
+// TODO: from email "investigate error" -- graphics/INDEX not found
 
 namespace core {
 namespace system {
@@ -41,17 +73,47 @@ namespace file_monitor {
 
 namespace {
 
+struct Watch
+{
+   Watch()
+      : wd(-1), fileInfo()
+   {
+   }
+
+   Watch(int wd, const FileInfo& fileInfo)
+      : wd(wd), fileInfo(fileInfo)
+   {
+   }
+
+   bool empty() const { return fileInfo.empty(); }
+
+   int wd;
+   FileInfo fileInfo;
+};
+
+struct WatchComp
+{
+   bool operator() (const Watch& w1, const Watch& w2)
+   {
+      return core::fileInfoPathLessThan(w1.fileInfo, w2.fileInfo);
+   }
+};
+
+typedef std::set<Watch,WatchComp> Watches;
+
 class FileEventContext : boost::noncopyable
 {
 public:
    FileEventContext()
-      : fd(-1), recursive(false)
+      : fd(-1),
+        recursive(false)
    {
       handle = Handle((void*)this);
    }
    virtual ~FileEventContext() {}
    Handle handle;
    int fd;
+   Watches watches;
    FilePath rootPath;
    bool recursive;
    boost::function<bool(const FileInfo&)> filter;
@@ -59,11 +121,94 @@ public:
    Callbacks callbacks;
 };
 
-void closeWatch(FileEventContext* pContext)
+Watch findWatch(const Watches& watches, int wd)
 {
-   // TODO: remove all watches
+   for(Watches::const_iterator it = watches.begin(); it != watches.end(); ++it)
+   {
+      if (it->wd == wd)
+         return *it;
+   }
 
+   return Watch();
+}
 
+Watch findWatch(const Watches& watches, const FileInfo& fileInfo)
+{
+   for(Watches::const_iterator it = watches.begin(); it != watches.end(); ++it)
+   {
+      if (it->fileInfo == fileInfo)
+         return *it;
+   }
+
+   return Watch();
+}
+
+void terminateWithMonitoringError(FileEventContext* pContext,
+                                  const Error& error)
+{
+   pContext->callbacks.onMonitoringError(error);
+
+   // unregister this monitor (this is done via postback from the
+   // main file_monitor loop so that the monitor Handle can be tracked)
+   file_monitor::unregisterMonitor(pContext->handle);
+}
+
+Error addWatch(const FileInfo& fileInfo, int fd, Watches* pWatches)
+{
+   // NOTE: both inotify_add_watch and std::set::insert gracefully
+   // handle duplicate additions, inotify_add_watch by modifying the
+   // existing watch and returning the same watch descriptor, and
+   // set::set by simply doing nothing. therefore, we don't bother
+   // checking to see if the watch exists and don't generally worry
+   // about adding duplicate watches
+
+   // define watch mask
+   uint32_t mask = 0 ;
+   mask |= IN_CREATE;
+   mask |= IN_DELETE;
+   mask |= IN_MODIFY;
+   mask |= IN_MOVED_TO;
+   mask |= IN_MOVED_FROM;
+   mask |= IN_DONT_FOLLOW;
+
+   // initialize watch
+   int wd = ::inotify_add_watch(fd, fileInfo.absolutePath().c_str(), mask);
+   if (wd < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // record it
+   pWatches->insert(Watch(wd, fileInfo));
+
+   // return success
+   return Success();
+}
+
+boost::function<Error(const FileInfo&)> addWatchFunction(
+                                                FileEventContext* pContext)
+{
+   return boost::bind(addWatch, _1, pContext->fd, &pContext->watches);
+}
+
+void removeWatch(int fd, const Watch& watch)
+{
+   // remove the watch
+   int result = ::inotify_rm_watch(fd, watch.wd);
+
+   // log error
+   if (result < 0)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", watch.fileInfo.absolutePath());
+      LOG_ERROR(error);
+   }
+}
+
+void closeContext(FileEventContext* pContext)
+{
+   // remove all watches
+   std::for_each(pContext->watches.begin(),
+                 pContext->watches.end(),
+                 boost::bind(removeWatch, pContext->fd, _1));
 
    // close the file descriptor
    if (pContext->fd >= 0)
@@ -76,15 +221,134 @@ void closeWatch(FileEventContext* pContext)
    }
 }
 
-
-void terminateWithMonitoringError(FileEventContext* pContext,
-                                  const Error& error)
+Error processEvent(FileEventContext* pContext,
+                   struct inotify_event* pEvent,
+                   std::vector<FileChangeEvent>* pFileChanges)
 {
-   pContext->callbacks.onMonitoringError(error);
+   // determine event type
+   FileChangeEvent::Type eventType = FileChangeEvent::None;
+   if (pEvent->mask & IN_CREATE)
+      eventType = FileChangeEvent::FileAdded;
+   else if (pEvent->mask & IN_DELETE)
+      eventType = FileChangeEvent::FileRemoved;
+   else if (pEvent->mask & IN_MODIFY)
+      eventType = FileChangeEvent::FileModified;
+   else if (pEvent->mask & IN_MOVED_TO)
+      eventType = FileChangeEvent::FileAdded;
+   else if (pEvent->mask & IN_MOVED_FROM)
+      eventType = FileChangeEvent::FileRemoved;
 
-   // unregister this monitor (this is done via postback from the
-   // main file_monitor loop so that the monitor Handle can be tracked)
-   file_monitor::unregisterMonitor(pContext->handle);
+   // return event if we got a valid event type and the event applies to a
+   // child of the monitored directory (len == 0 occurs for root element)
+   if ((eventType != FileChangeEvent::None) && (pEvent->len > 0))
+   {
+      // find the FileInfo for this wd (ignore if we can't find one)
+      Watch watch = findWatch(pContext->watches, pEvent->wd);
+      if (watch.empty())
+         return Success();
+
+      // get an iterator to the parent dir
+      tree<FileInfo>::iterator parentIt = impl::findFile(
+                                                   pContext->fileTree.begin(),
+                                                   pContext->fileTree.end(),
+                                                   watch.fileInfo);
+
+      // if we can't find a parent then return (this directory may have
+      // been excluded from scanning due to a filter)
+      if (parentIt == pContext->fileTree.end())
+         return Success();
+
+      // get file info (w/ extended attributes if this isn't a remove)
+      FilePath filePath = FilePath(watch.fileInfo.absolutePath()).complete(
+                                                                 pEvent->name);
+      FileInfo fileInfo;
+      if (eventType != FileChangeEvent::FileRemoved)
+      {
+         // may have been added then deleted -- in this case we
+         // don't want to send any events
+         if (filePath.exists())
+            fileInfo = FileInfo(filePath);
+      }
+      else
+      {
+         fileInfo = FileInfo(filePath.absolutePath(),
+                             filePath.isDirectory());
+      }
+
+      // if there is no FileInfo then this was an add then delete
+      if (fileInfo.empty())
+         return Success();
+
+      // if this doesn't meet the filter then ignore
+      if (pContext->filter && !pContext->filter(fileInfo))
+         return Success();
+
+      // handle the various types of actions
+      switch(eventType)
+      {
+         case FileChangeEvent::FileRemoved:
+         {
+            // generate events
+            FileChangeEvent event(FileChangeEvent::FileRemoved, fileInfo);
+            std::vector<FileChangeEvent> removeEvents;
+            impl::processFileRemoved(parentIt,
+                                     event,
+                                     pContext->recursive,
+                                     &pContext->fileTree,
+                                     &removeEvents);
+
+            // for each directory remove event remove any watches we have for it
+            BOOST_FOREACH(const FileChangeEvent& event, removeEvents)
+            {
+               if (event.fileInfo().isDirectory())
+               {
+                  Watch watch = findWatch(pContext->watches, event.fileInfo());
+                  if (!watch.empty())
+                  {
+                     removeWatch(pContext->fd, watch);
+                     pContext->watches.erase(watch);
+                  }
+               }
+            }
+
+            // copy to the target events
+            std::copy(removeEvents.begin(),
+                      removeEvents.end(),
+                      std::back_inserter(*pFileChanges));
+
+            break;
+         }
+         case FileChangeEvent::FileAdded:
+         {
+            FileChangeEvent event(FileChangeEvent::FileAdded, fileInfo);
+            Error error = impl::processFileAdded(parentIt,
+                                                 event,
+                                                 pContext->recursive,
+                                                 pContext->filter,
+                                                 addWatchFunction(pContext),
+                                                 &pContext->fileTree,
+                                                 pFileChanges);
+            if (error)
+               LOG_ERROR(error);
+            break;
+         }
+         case FileChangeEvent::FileModified:
+         {
+            FileChangeEvent event(FileChangeEvent::FileModified, fileInfo);
+            impl::processFileModified(parentIt,
+                                      event,
+                                      &pContext->fileTree,
+                                      pFileChanges);
+            break;
+         }
+         case FileChangeEvent::None:
+            break;
+      }
+   }
+
+
+
+   return Success();
 }
 
 
@@ -115,15 +379,15 @@ Handle registerMonitor(const core::FilePath& filePath,
    }
 
    // scan the files (use callback to setup watches)
-   // TODO: add callback interface for watch setup
    Error error = scanFiles(FileInfo(filePath),
                            recursive,
                            filter,
+                           addWatchFunction(pContext),
                            &pContext->fileTree);
    if (error)
    {
-       // close watch
-       closeWatch(pContext);
+       // close context
+       closeContext(pContext);
 
        // return error
        callbacks.onRegistrationError(error);
@@ -152,7 +416,7 @@ void unregisterMonitor(Handle handle)
    FileEventContext* pContext = (FileEventContext*)(handle.pData);
 
    // close context
-   closeWatch(pContext);
+   closeContext(pContext);
 
    // let the client know we are unregistered (note this call should always
    // be prior to delete pContext below!)
@@ -175,10 +439,26 @@ void run(const boost::function<void()>& checkForInput)
       std::list<void*> contexts = impl::activeEventContexts();
       BOOST_FOREACH(void* ctx, contexts)
       {
-         // cast to context and get fd
+         // cast to context
          FileEventContext* pContext = (FileEventContext*)ctx;
 
+         // bail if we don't have callbacks (we wouldn't if a callback snuck
+         // through to us even after we failed to fully initialize the
+         // file monitor  (e.g. if there was an error during file listing)
+         if (!pContext->callbacks.onFilesChanged)
+            continue;
+
+         // check for context root directory deleted
+         if (!pContext->rootPath.exists())
+         {
+            Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
+                                            ERROR_LOCATION);
+            terminateWithMonitoringError(pContext, error);
+            continue;
+         }
+
          // loop reading from this context's fd until EAGAIN or EWOULDBLOCK
+         std::vector<FileChangeEvent> fileChanges;
          while (true)
          {
             // read
@@ -199,26 +479,28 @@ void run(const boost::function<void()>& checkForInput)
                break;
             }
 
-
             // iterate through the events
             int i = 0;
             while (i < len)
             {
-               // get the event
-               struct inotify_event* pEvent =
-                                       (struct inotify_event*)&eventBuffer[i];
+               // get the event and process it
+               typedef struct inotify_event* EventPtr;
+               EventPtr pEvent = (EventPtr)&eventBuffer[i];
+               Error error = processEvent(pContext, pEvent, &fileChanges);
+               if (error)
+               {
+                  terminateWithMonitoringError(pContext, error);
+                  break;
+               }
 
-
-               // TODO: process events
-
-
-
-               // next event (note: this code must execute to advance within
-               // the event buffer so don't ever "continue" from the code above
-               // (always let execution fall through to here)
+               // advance to next event
                i += kEventSize + pEvent->len;
             }
          }
+
+         // fire any events we got
+         if (!fileChanges.empty())
+            pContext->callbacks.onFilesChanged(fileChanges);
       }
 
       // check for input (register/unregister of monitors)

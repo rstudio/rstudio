@@ -117,19 +117,33 @@ boost::function<bool(const FileInfo&)> excludeHiddenFilter()
 // helpers for platform-specific implementations
 namespace impl {
 
-Error processFileAdded(tree<FileInfo>::iterator parentIt,
-                       const FileChangeEvent& fileChange,
-                       bool recursive,
-                       const boost::function<bool(const FileInfo&)>& filter,
-                       tree<FileInfo>* pTree,
-                       std::vector<FileChangeEvent>* pFileChanges)
+Error processFileAdded(
+              tree<FileInfo>::iterator parentIt,
+              const FileChangeEvent& fileChange,
+              bool recursive,
+              const boost::function<bool(const FileInfo&)>& filter,
+              const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
+              tree<FileInfo>* pTree,
+              std::vector<FileChangeEvent>* pFileChanges)
 {
-   // see if this node already exists. if it does then ignore
+   // see if this node already exists. if it does then check it for changes
+   // (if there are no changes then ignore).
    tree<FileInfo>::sibling_iterator it = impl::findFile(pTree->begin(parentIt),
                                                         pTree->end(parentIt),
                                                         fileChange.fileInfo());
    if (it != pTree->end(parentIt))
+   {
+      if (fileChange.fileInfo() != *it)
+      {
+         pTree->replace(it, fileChange.fileInfo());
+
+         // add it to the fileChanges
+         pFileChanges->push_back(FileChangeEvent(FileChangeEvent::FileModified,
+                                                 fileChange.fileInfo()));
+      }
       return Success();
+
+   }
 
    if (fileChange.fileInfo().isDirectory() && recursive)
    {
@@ -137,6 +151,7 @@ Error processFileAdded(tree<FileInfo>::iterator parentIt,
       Error error = scanFiles(fileChange.fileInfo(),
                               true,
                               filter,
+                              onBeforeScanDir,
                               &subTree);
       if (error)
          return error;

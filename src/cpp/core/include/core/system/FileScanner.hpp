@@ -25,8 +25,6 @@
 
 namespace core {
 
-class Error;
-
 // recursively enumerate files from the specified root. these functions
 // are symlink aware -- this has two implications:
 //
@@ -38,13 +36,14 @@ namespace system {
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 bool recursive,
                 const boost::function<bool(const FileInfo&)>& filter,
-                const boost::function<void(const FileInfo&)>& onBeforeScanDir,
+                const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
                 tree<FileInfo>* pTree);
 
-Error scanFiles(const FileInfo& fromRoot,
+inline Error scanFiles(
+                const FileInfo& fromRoot,
                 bool recursive,
                 const boost::function<bool(const FileInfo&)>& filter,
-                const boost::function<void(const FileInfo&)>& onBeforeScanDir,
+                const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
                 tree<FileInfo>* pTree)
 {
    return scanFiles(pTree->set_head(fromRoot),
@@ -55,7 +54,8 @@ Error scanFiles(const FileInfo& fromRoot,
 }
 
 
-Error scanFiles(const FileInfo& fromRoot,
+inline Error scanFiles(
+                const FileInfo& fromRoot,
                 bool recursive,
                 const boost::function<bool(const FileInfo&)>& filter,
                 tree<FileInfo>* pTree)
@@ -63,11 +63,12 @@ Error scanFiles(const FileInfo& fromRoot,
    return scanFiles(fromRoot,
                     recursive,
                     filter,
-                    boost::function<void(const FileInfo&)>(),
+                    boost::function<Error(const FileInfo&)>(),
                     pTree);
 }
 
-Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
+inline Error scanFiles(
+                const tree<FileInfo>::iterator_base& fromNode,
                 bool recursive,
                 const boost::function<bool(const FileInfo&)>& filter,
                 tree<FileInfo>* pTree)
@@ -75,7 +76,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    return scanFiles(fromNode,
                     recursive,
                     filter,
-                    boost::function<void(const FileInfo&)>(),
+                    boost::function<Error(const FileInfo&)>(),
                     pTree);
 }
 

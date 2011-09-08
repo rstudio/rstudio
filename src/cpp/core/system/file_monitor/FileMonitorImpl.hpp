@@ -32,12 +32,31 @@ namespace system {
 namespace file_monitor {
 namespace impl {
 
-Error processFileAdded(tree<FileInfo>::iterator parentIt,
-                       const FileChangeEvent& fileChange,
-                       bool recursive,
-                       const boost::function<bool(const FileInfo&)>& filter,
-                       tree<FileInfo>* pTree,
-                       std::vector<FileChangeEvent>* pFileChanges);
+Error processFileAdded(
+               tree<FileInfo>::iterator parentIt,
+               const FileChangeEvent& fileChange,
+               bool recursive,
+               const boost::function<bool(const FileInfo&)>& filter,
+               const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
+               tree<FileInfo>* pTree,
+               std::vector<FileChangeEvent>* pFileChanges);
+
+inline Error processFileAdded(
+               tree<FileInfo>::iterator parentIt,
+               const FileChangeEvent& fileChange,
+               bool recursive,
+               const boost::function<bool(const FileInfo&)>& filter,
+               tree<FileInfo>* pTree,
+               std::vector<FileChangeEvent>* pFileChanges)
+{
+   return processFileAdded(parentIt,
+                           fileChange,
+                           recursive,
+                           filter,
+                           boost::function<Error(const FileInfo&)>(),
+                           pTree,
+                           pFileChanges);
+}
 
 void processFileModified(tree<FileInfo>::iterator parentIt,
                          const FileChangeEvent& fileChange,

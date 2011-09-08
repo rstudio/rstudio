@@ -41,7 +41,7 @@ int entryFilter(const struct dirent *entry)
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 bool recursive,
                 const boost::function<bool(const FileInfo&)>& filter,
-                const boost::function<void(const FileInfo&)>& onBeforeScanDir,
+                const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
                 tree<FileInfo>* pTree)
 {
    // clear all existing
@@ -52,7 +52,11 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
 
    // call onBeforeScanDir hook
    if (onBeforeScanDir)
-      onBeforeScanDir(*fromNode);
+   {
+      Error error = onBeforeScanDir(*fromNode);
+      if (error)
+         return error;
+   }
 
    // read directory contents
    struct dirent **namelist;
@@ -122,12 +126,13 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
             // recurse if requested and this isn't a link
             if (recursive && !fileInfo.isSymlink())
             {
-               Error error = scanFiles(child, true, filter, pTree);
+               Error error = scanFiles(child,
+                                       true,
+                                       filter,
+                                       onBeforeScanDir,
+                                       pTree);
                if (error)
-               {
-                  LOG_ERROR(error);
-                  continue;
-               }
+                  return error;
             }
          }
          else

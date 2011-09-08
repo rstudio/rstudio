@@ -58,7 +58,7 @@ FileInfo toFileInfo(const FilePath& filePath)
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 bool recursive,
                 const boost::function<bool(const FileInfo&)>& filter,
-                const boost::function<void(const FileInfo&)>& onBeforeScanDir,
+                const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
                 tree<FileInfo>* pTree)
 {
    // clear all existing
@@ -69,7 +69,11 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
 
    // call onBeforeScanDir hook
    if (onBeforeScanDir)
-      onBeforeScanDir(*fromNode);
+   {
+      Error error = onBeforeScanDir(*fromNode);
+      if (error)
+         return error;
+   }
 
    // read directory entries
    std::vector<FilePath> children;
@@ -103,12 +107,13 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                               pTree->append_child(fromNode, childFileInfo);
          if (recursive && !childFileInfo.isSymlink())
          {
-            Error error = scanFiles(child, true, filter, pTree);
+            Error error = scanFiles(child,
+                                    true,
+                                    filter,
+                                    onBeforeScanDir,
+                                    pTree);
             if (error)
-            {
-               LOG_ERROR(error);
-               continue;
-            }
+               return error;
          }
       }
       else
