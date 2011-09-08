@@ -21,6 +21,9 @@
 #include <string>
 #include <iosfwd>
 
+// TODO: satisfy outselves that it is safe to query for symlink status
+// in all cases and eliminate its "optional" semantics
+
 namespace core {
 
 class FilePath;
@@ -67,13 +70,14 @@ public:
 public:
    bool empty() const { return absolutePath_.empty(); }
    
+   // NOTE: because symlink status is optional, it is NOT taken
+   // into account for equality tests
    bool operator==(const FileInfo& other) const
    {
       return absolutePath_ == other.absolutePath_ &&
              isDirectory_ == other.isDirectory_ &&
              size_ == other.size_ &&
-             lastWriteTime_ == other.lastWriteTime_ &&
-             isSymlink_ == other.isSymlink_;
+             lastWriteTime_ == other.lastWriteTime_;
    }
    
    bool operator!=(const FileInfo& other) const

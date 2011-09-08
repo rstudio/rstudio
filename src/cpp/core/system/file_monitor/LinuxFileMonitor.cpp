@@ -42,10 +42,6 @@
 
 // TODO: does processFileAdded successfully ignore symlinks
 
-// TODO: processFileAdded change detection (at top) depends on isSymlink
-// semantic consistency -- should we take that out of the ==
-
-
 // TODO: general test of all behaviors/apis (unregister, multiple monitors, etc)
 
 // TODO: investigate parallel package (multicore) interactions with file monitor
