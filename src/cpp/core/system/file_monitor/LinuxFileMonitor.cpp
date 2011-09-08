@@ -25,6 +25,10 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/member.hpp>
+
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FileInfo.hpp>
@@ -34,7 +38,8 @@
 
 #include "FileMonitorImpl.hpp"
 
-// TODO: check with Joe on watch data structure
+// TODO: analyze whether duplicate watches are possbile and what the
+// implication of this is for the implementation (multi_index_collection)
 
 // TODO: processFileAdded change detection (at top) depends on isSymlink
 // semantic consistency -- should we take that out of the ==
@@ -76,30 +81,107 @@ namespace {
 struct Watch
 {
    Watch()
-      : wd(-1), fileInfo()
+      : wd(-1), path()
    {
    }
 
-   Watch(int wd, const FileInfo& fileInfo)
-      : wd(wd), fileInfo(fileInfo)
+   Watch(int wd, const std::string& path)
+      : wd(wd), path(path)
    {
    }
 
-   bool empty() const { return fileInfo.empty(); }
+   bool empty() const { return path.empty(); }
 
    int wd;
-   FileInfo fileInfo;
-};
+   std::string path;
 
-struct WatchComp
-{
-   bool operator() (const Watch& w1, const Watch& w2)
+   bool operator < (const Watch& other) const
    {
-      return core::fileInfoPathLessThan(w1.fileInfo, w2.fileInfo);
+      return this->wd < other.wd;
    }
 };
 
-typedef std::set<Watch,WatchComp> Watches;
+// boost::multi_index_container based class for managing a set of watches
+class Watches
+{
+public:
+
+   void insert(const Watch& watch)
+   {
+      watches_.insert(watch);
+   }
+
+   void erase(const Watch& watch)
+   {
+      watches_.get<wd>().erase(watch.wd);
+   }
+
+   Watch find(int wd) const
+   {
+      WatchesByDescriptor::const_iterator it = descriptorIndex().find(wd);
+      if (it != descriptorIndex().end())
+         return *it;
+      else
+         return Watch();
+   }
+
+   Watch find(const std::string& path) const
+   {
+      WatchesByPath::const_iterator it = pathIndex().find(path);
+      if (it != pathIndex().end())
+         return *it;
+      else
+         return Watch();
+   }
+
+   void forEach(const boost::function<void(const Watch&)> op) const
+   {
+      std::for_each(descriptorIndex().begin(), descriptorIndex().end(), op);
+   }
+
+private:
+
+   struct wd {};
+   struct path {};
+
+   typedef boost::multi_index::multi_index_container<
+
+      Watch,
+
+      boost::multi_index::indexed_by<
+
+         boost::multi_index::hashed_unique<
+            boost::multi_index::tag<wd>,
+            boost::multi_index::member<Watch,
+                                       int,
+                                       &Watch::wd>
+         >,
+
+         boost::multi_index::hashed_unique<
+            boost::multi_index::tag<path>,
+            boost::multi_index::member<Watch,
+                                       std::string,
+                                       &Watch::path>
+         >
+      >
+   > WatchesContainer;
+
+   typedef WatchesContainer::index<wd>::type WatchesByDescriptor;
+   typedef WatchesContainer::index<path>::type WatchesByPath;
+
+   const WatchesByDescriptor& descriptorIndex() const
+   {
+      return watches_.get<wd>();
+   }
+
+   const WatchesByPath& pathIndex() const
+   {
+      return watches_.get<path>();
+   }
+
+   WatchesContainer watches_;
+};
+
 
 class FileEventContext : boost::noncopyable
 {
@@ -120,28 +202,6 @@ public:
    tree<FileInfo> fileTree;
    Callbacks callbacks;
 };
-
-Watch findWatch(const Watches& watches, int wd)
-{
-   for(Watches::const_iterator it = watches.begin(); it != watches.end(); ++it)
-   {
-      if (it->wd == wd)
-         return *it;
-   }
-
-   return Watch();
-}
-
-Watch findWatch(const Watches& watches, const FileInfo& fileInfo)
-{
-   for(Watches::const_iterator it = watches.begin(); it != watches.end(); ++it)
-   {
-      if (it->fileInfo == fileInfo)
-         return *it;
-   }
-
-   return Watch();
-}
 
 void terminateWithMonitoringError(FileEventContext* pContext,
                                   const Error& error)
@@ -177,7 +237,7 @@ Error addWatch(const FileInfo& fileInfo, int fd, Watches* pWatches)
       return systemError(errno, ERROR_LOCATION);
 
    // record it
-   pWatches->insert(Watch(wd, fileInfo));
+   pWatches->insert(Watch(wd, fileInfo.absolutePath()));
 
    // return success
    return Success();
@@ -198,7 +258,7 @@ void removeWatch(int fd, const Watch& watch)
    if (result < 0)
    {
       Error error = systemError(errno, ERROR_LOCATION);
-      error.addProperty("path", watch.fileInfo.absolutePath());
+      error.addProperty("path", watch.path);
       LOG_ERROR(error);
    }
 }
@@ -206,9 +266,7 @@ void removeWatch(int fd, const Watch& watch)
 void closeContext(FileEventContext* pContext)
 {
    // remove all watches
-   std::for_each(pContext->watches.begin(),
-                 pContext->watches.end(),
-                 boost::bind(removeWatch, pContext->fd, _1));
+   pContext->watches.forEach(boost::bind(removeWatch, pContext->fd, _1));
 
    // close the file descriptor
    if (pContext->fd >= 0)
@@ -243,7 +301,7 @@ Error processEvent(FileEventContext* pContext,
    if ((eventType != FileChangeEvent::None) && (pEvent->len > 0))
    {
       // find the FileInfo for this wd (ignore if we can't find one)
-      Watch watch = findWatch(pContext->watches, pEvent->wd);
+      Watch watch = pContext->watches.find(pEvent->wd);
       if (watch.empty())
          return Success();
 
@@ -251,7 +309,7 @@ Error processEvent(FileEventContext* pContext,
       tree<FileInfo>::iterator parentIt = impl::findFile(
                                                    pContext->fileTree.begin(),
                                                    pContext->fileTree.end(),
-                                                   watch.fileInfo);
+                                                   watch.path);
 
       // if we can't find a parent then return (this directory may have
       // been excluded from scanning due to a filter)
@@ -259,7 +317,7 @@ Error processEvent(FileEventContext* pContext,
          return Success();
 
       // get file info (w/ extended attributes if this isn't a remove)
-      FilePath filePath = FilePath(watch.fileInfo.absolutePath()).complete(
+      FilePath filePath = FilePath(parentIt->absolutePath()).complete(
                                                                  pEvent->name);
       FileInfo fileInfo;
       if (eventType != FileChangeEvent::FileRemoved)
@@ -302,7 +360,8 @@ Error processEvent(FileEventContext* pContext,
             {
                if (event.fileInfo().isDirectory())
                {
-                  Watch watch = findWatch(pContext->watches, event.fileInfo());
+                  Watch watch = pContext->watches.find(
+                                             event.fileInfo().absolutePath());
                   if (!watch.empty())
                   {
                      removeWatch(pContext->fd, watch);

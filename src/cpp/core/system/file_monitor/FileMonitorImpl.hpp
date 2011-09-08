@@ -78,11 +78,17 @@ Error discoverAndProcessFileChanges(
                                                             onFilesChanged);
 
 template <typename Iterator>
-Iterator findFile(Iterator begin, Iterator end, const FileInfo& fileInfo)
+Iterator findFile(Iterator begin, Iterator end, const std::string& path)
 {
    return std::find_if(begin, end, boost::bind(fileInfoHasPath,
                                                _1,
-                                               fileInfo.absolutePath()));
+                                               path));
+}
+
+template <typename Iterator>
+Iterator findFile(Iterator begin, Iterator end, const FileInfo& fileInfo)
+{
+   return findFile(begin, end, fileInfo.absolutePath());
 }
 
 std::list<void*> activeEventContexts();

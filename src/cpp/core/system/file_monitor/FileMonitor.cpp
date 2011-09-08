@@ -127,7 +127,9 @@ Error processFileAdded(
               std::vector<FileChangeEvent>* pFileChanges)
 {
    // see if this node already exists. if it does then check it for changes
-   // (if there are no changes then ignore).
+   // (if there are no changes then ignore). we do this because some editors
+   // (for example gedit) actually save files in such a way that FileAdded
+   // is generated
    tree<FileInfo>::sibling_iterator it = impl::findFile(pTree->begin(parentIt),
                                                         pTree->end(parentIt),
                                                         fileChange.fileInfo());
