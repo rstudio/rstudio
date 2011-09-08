@@ -11,7 +11,7 @@
   </target>
 
   <target name="dynatablerf" description="Build dynatablerf">
-    <gwt.ant dir="dynatablerf" />
+    <gwt.ant dir="dynatablerf" target="source" />
   </target>
 
   <target name="expenses" description="Build expenses">
