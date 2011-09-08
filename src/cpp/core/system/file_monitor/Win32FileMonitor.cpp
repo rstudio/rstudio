@@ -175,8 +175,13 @@ void processFileChange(DWORD action,
    if (parentIt == pTree->end())
       return;
 
-   // handle the various types of actions
+   // get the file info
    FileInfo fileInfo(filePath);
+
+   // apply the filter
+   if (filter && !filter(fileInfo))
+      return;
+
    switch(action)
    {
       case FILE_ACTION_ADDED:

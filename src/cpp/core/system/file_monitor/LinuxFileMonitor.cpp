@@ -45,8 +45,6 @@
 // TODO: processFileAdded change detection (at top) depends on isSymlink
 // semantic consistency -- should we take that out of the ==
 
-// TODO: make sure filter is applied (on all platforms!)
-
 
 // TODO: general test of all behaviors/apis (unregister, multiple monitors, etc)
 
