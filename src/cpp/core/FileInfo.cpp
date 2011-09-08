@@ -17,12 +17,12 @@
 
 namespace core {
 
-FileInfo::FileInfo(const FilePath& filePath)
+FileInfo::FileInfo(const FilePath& filePath, bool isSymlink)
    :  absolutePath_(filePath.absolutePath()),
       isDirectory_(filePath.isDirectory()),
       size_(0),
       lastWriteTime_(0),
-      isSymlink_(false)
+      isSymlink_(isSymlink)
 {
    if (!isDirectory_ && filePath.exists())
    {

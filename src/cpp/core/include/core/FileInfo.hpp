@@ -45,7 +45,8 @@ public:
    // entire codebase which does this universally (note that we've been
    // burned by boost filesystem having nasty beahvior for seemingly
    // innocuous operations before!)
-   explicit FileInfo(const FilePath& filePath) ;
+   explicit FileInfo(const FilePath& filePath,
+                     bool isSymlink = false) ;
    
    FileInfo(const std::string& absolutePath,
             bool isDirectory,
