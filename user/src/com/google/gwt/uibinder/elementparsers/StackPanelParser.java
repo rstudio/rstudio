@@ -31,7 +31,10 @@ public class StackPanelParser implements ElementParser {
       UiBinderWriter writer) throws UnableToCompleteException {
     // Parse children.
     for (XMLElement child : elem.consumeChildElements()) {
-
+      if (!writer.isWidgetElement(child)) {
+        writer.die(child, "Widget required");
+      }
+      
       // Stack panel label comes from the StackPanel-text attribute of the child
       String stackItemLabel = null;
       String variableAttributeName = elem.getPrefix() + ":" + ATTRIBUTE_TEXT;

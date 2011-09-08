@@ -15,7 +15,11 @@
  */
 package com.google.gwt.uibinder.elementparsers;
 
+import com.google.gwt.core.ext.UnableToCompleteException;
+
 import junit.framework.TestCase;
+
+import org.xml.sax.SAXParseException;
 
 import java.util.Iterator;
 
@@ -34,7 +38,7 @@ public class StackPanelParserTest extends TestCase {
     tester = new ElementParserTester(PARSED_TYPE, new StackPanelParser());
   }
 
-  public void testHappy_noStackText() throws Exception {
+  public void testHappy_noStackText() throws SAXParseException, UnableToCompleteException {
     StringBuffer b = new StringBuffer();
     b.append("<g:StackPanel>");
     b.append("  <g:Button/>");
@@ -45,7 +49,7 @@ public class StackPanelParserTest extends TestCase {
     assertStatements("fieldName.add(<g:Button>);");
   }
 
-  public void testHappy_hasStackText() throws Exception {
+  public void testHappy_hasStackText() throws SAXParseException, UnableToCompleteException {
     StringBuffer b = new StringBuffer();
     b.append("<g:StackPanel>");
     b.append("  <g:Button g:StackPanel-text='Foo'/>");
@@ -54,6 +58,19 @@ public class StackPanelParserTest extends TestCase {
     tester.parse(b.toString());
 
     assertStatements("fieldName.add(<g:Button>, \"Foo\");");
+  }
+  
+  public void testBadChild() throws SAXParseException {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:StackPanel>");
+    b.append("  <g:UIObject/>");
+    b.append("</g:StackPanel>");
+    try {
+      tester.parse(b.toString());
+      fail("Expected UnableToCompleteException");
+    } catch (UnableToCompleteException e) {
+      /* pass */
+    }
   }
 
   private void assertStatements(String... expected) {

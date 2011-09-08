@@ -774,11 +774,6 @@ public class XMLElement {
     return elem.getNamespaceURI();
   }
 
-  public String getNamespaceUriForAttribute(String fieldName) {
-    Attr attr = elem.getAttributeNode(fieldName);
-    return attr.getNamespaceURI();
-  }
-
   /**
    * Returns the parent element, or null if parent is null or a node type other
    * than Element.

@@ -141,7 +141,6 @@ public class UiBinderParserUiWithTest extends TestCase {
 
   private UiBinderWriter writer;
 
-  @SuppressWarnings("deprecation")
   @Override
   public void setUp() throws Exception {
     super.setUp();

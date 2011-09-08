@@ -131,6 +131,12 @@ public class HtmlInterpreter implements XMLElement.Interpreter<String> {
       writer.die(elem, "Not allowed in an HTML context");
     }
 
+    if (elem.getNamespaceUri() != null && !writer.isBinderElement(elem)) {
+      // It's not a widget, and it's not a ui: element.
+      writer.die(elem, "Prefix \"%s:\" has unrecognized xmlns \"%s\" (bad import?)",
+        elem.getPrefix(), elem.getNamespaceUri());
+    }
+
     return pipe.interpretElement(elem);
   }
 }
