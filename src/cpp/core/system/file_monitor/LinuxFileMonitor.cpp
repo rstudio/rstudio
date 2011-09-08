@@ -38,13 +38,9 @@
 
 #include "FileMonitorImpl.hpp"
 
-// TODO: handle IN_UNMOUNT
-
-
 // TODO: what happens if a symlink is the root entry?
 
 // TODO: does processFileAdded successfully ignore symlinks
-
 
 // TODO: processFileAdded change detection (at top) depends on isSymlink
 // semantic consistency -- should we take that out of the ==
@@ -57,7 +53,7 @@
 // of watch to catch directory deletes) -- or, could we get a modified event
 // on the directory itself and then scan for deletes?
 
-
+// TODO: general test of all behaviors/apis (unregister, multiple monitors, etc)
 
 // TODO: investigate parallel package (multicore) interactions with file monitor
 
@@ -249,8 +245,9 @@ void removeWatch(int fd, const Watch& watch, Watches* pWatches)
    // remove the watch
    int result = ::inotify_rm_watch(fd, watch.wd);
 
-   // log error
-   if (result < 0)
+   // log error if it isn't EINVAL (which is expected if e.g. the
+   // filesystem has been unmounted or the root directory has been deleted)
+   if (result < 0 && errno != EINVAL)
    {
       Error error = systemError(errno, ERROR_LOCATION);
       error.addProperty("path", watch.path);
