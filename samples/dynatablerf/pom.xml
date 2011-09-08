@@ -3,11 +3,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.google.gwt.sample.mobilewebapp</groupId>
-  <artifactId>MobileWebApp</artifactId>
+  <groupId>com.google.gwt.sample.dynatablerf</groupId>
+  <artifactId>DynaTableRf</artifactId>
   <packaging>war</packaging>
   <version>1.0-SNAPSHOT</version>
-  <name>com.google.gwt.sample.mobilewebapp.MobileWebApp</name>
+  <name>com.google.gwt.sample.dynatablerf.DynaTableRf</name>
 
   <properties>
     <!-- Convenience property to set the GWT version -->
@@ -16,47 +16,17 @@
     <!-- GWT needs at least java 1.6 -->
     <maven.compiler.source>1.6</maven.compiler.source>
     <maven.compiler.target>1.6</maven.compiler.target>
-
-    <!-- GAE properties -->
-    <gae.version>1.5.3</gae.version>
-    <gae.home>${user.home}/.m2/repository/com/google/appengine/appengine-java-sdk/${gae.version}/appengine-java-sdk-${gae.version}</gae.home>
-    <gae.application.version>1</gae.application.version>
-
   </properties>
 
-  <repositories>
-    <repository>
-      <id>objectify-appengine</id>
-      <url>http://objectify-appengine.googlecode.com/svn/maven</url>
-    </repository>
-  </repositories>
-
   <dependencies>
-    <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
-      <version>1</version>
-    </dependency>
-
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.8.1</version>
-      <scope>test</scope>
-    </dependency>
-
     <!-- Google Web Toolkit (GWT) itself -->
 
     <dependency>
-      <groupId>com.google.web.bindery</groupId>
-      <artifactId>requestfactory-server</artifactId>
+      <groupId>com.google.gwt</groupId>
+      <!-- Could use requestfactory-server instead -->
+      <artifactId>gwt-servlet</artifactId>
       <version>${gwtVersion}</version>
       <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.web.bindery</groupId>
-      <artifactId>requestfactory-apt</artifactId>
-      <version>${gwtVersion}</version>
     </dependency>
     <dependency>
       <groupId>com.google.gwt</groupId>
@@ -65,21 +35,13 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- GWT projects do not usually need a dependency on gwt-dev, but MobileWebApp
-         contains a GWTC Linker (AppCacheLinker) which in turn depends on internals
-         of the GWT compiler.
-
-         This dependency has a scope of "provided" so that it only gets used as a
-         compiler dependecy.
-    -->
-    <dependency>
-      <groupId>com.google.gwt</groupId>
-      <artifactId>gwt-dev</artifactId>
-      <version>${gwtVersion}</version>
-      <scope>provided</scope>
-    </dependency>
-
     <!-- GWT RequestFactory will use JSR 303 javax.validation if you let it -->
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <version>1.0.0.GA</version>
+      <classifier>sources</classifier>
+    </dependency>
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-validator</artifactId>
@@ -96,54 +58,20 @@
       </exclusions>
     </dependency>
 
-    <!-- Google App Engine (GAE) itself -->
+    <!-- GWT RequestFactory requires org.json -->
+    <!-- TODO: can we declare the json and validation dependencies somewhere for the world to pick up,
+    rather than requiring everyone to know about them? -->
     <dependency>
-      <groupId>com.google.appengine</groupId>
-      <artifactId>appengine-api-1.0-sdk</artifactId>
-      <version>${gae.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.appengine</groupId>
-      <artifactId>appengine-testing</artifactId>
-      <version>${gae.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.appengine</groupId>
-      <artifactId>appengine-api-stubs</artifactId>
-      <version>${gae.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.appengine</groupId>
-      <artifactId>appengine-api-labs</artifactId>
-      <version>${gae.version}</version>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20090211</version>
     </dependency>
 
-    <!-- Objectify for persistence. It uses the stock javax.persistence annotations -->
-
+    <!-- for the servlet filter -->
     <dependency>
-      <groupId>com.googlecode.objectify</groupId>
-      <artifactId>objectify</artifactId>
-      <version>3.0</version>
-    </dependency>
-    <dependency>
-      <groupId>javax.persistence</groupId>
-      <artifactId>persistence-api</artifactId>
-      <version>1.0</version>
-    </dependency>
-
-    <!-- GIN and Guice for IoC / DI -->
-
-    <dependency>
-      <groupId>com.google.inject</groupId>
-      <artifactId>guice</artifactId>
-      <version>2.0</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.gwt.inject</groupId>
-      <artifactId>gin</artifactId>
-      <version>1.0</version>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>2.5</version>
     </dependency>
 
     <!-- Required by Hibernate validator because slf4j-log4j is
@@ -160,11 +88,11 @@
       <version>1.6.1</version>
     </dependency>
   </dependencies>
-
+  
   <build>
-    <!-- Generate compiled stuff in the folder used for developing mode -->
+    <!-- Generate compiled stuff in the folder used for developing mode --> 
     <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
-
+    
     <plugins>
       <!-- GWT Maven Plugin-->
       <plugin>
@@ -188,7 +116,7 @@
             <version>${gwtVersion}</version>
           </dependency>
         </dependencies>
-        <!-- JS is only needed in the package phase, this speeds up testing -->
+        <!-- JS is only needed in the package phase, this speeds up testing --> 
         <executions>
           <execution>
             <phase>prepare-package</phase>
@@ -197,59 +125,18 @@
             </goals>
           </execution>
         </executions>
-        <!-- Plugin configuration. There are many available options,
-             see gwt-maven-plugin documentation at codehaus.org -->
+        <!-- Plugin configuration. There are many available options, 
+             see gwt-maven-plugin documentation at codehaus.org --> 
         <configuration>
           <!-- URL that should be automatically opened in the GWT shell (gwt:run). -->
-          <runTarget>MobileWebApp.html</runTarget>
+          <runTarget>DynaTableRf.html</runTarget>
           <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
           <compileReport>true</compileReport>
-          <module>com.google.gwt.sample.mobilewebapp.MobileWebApp</module>
-          <appEngineVersion>${gae.version}</appEngineVersion>
-          <appEngineHome>${gae.home}</appEngineHome>
+          <module>com.google.gwt.sample.dynatablerf.DynaTableRf</module>
           <logLevel>INFO</logLevel>
           <style>${gwt.style}</style>
 
-          <server>com.google.appengine.tools.development.gwt.AppEngineLauncher</server>
           <copyWebapp>true</copyWebapp>
-        </configuration>
-      </plugin>
-
-      <!-- Google App Engine plugin -->
-      <plugin>
-        <groupId>net.kindleit</groupId>
-        <artifactId>maven-gae-plugin</artifactId>
-        <version>0.8.1</version>
-        <executions>
-          <execution>
-            <id />
-            <phase>validate</phase>
-            <goals>
-              <goal>unpack</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <!-- Add source folders to test classpath in order to run gwt-tests as normal junit-tests -->
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.5</version>
-        <configuration>
-          <additionalClasspathElements>
-            <additionalClasspathElement>${project.build.sourceDirectory}</additionalClasspathElement>
-            <additionalClasspathElement>${project.build.testSourceDirectory}</additionalClasspathElement>
-          </additionalClasspathElements>
-          <useManifestOnlyJar>false</useManifestOnlyJar>
-          <forkMode>always</forkMode>
-
-          <!-- Folder for generated testing stuff -->
-          <systemProperties>
-            <property>
-              <name>gwt.args</name>
-              <value>-out ${project.build.directory}/${project.build.finalName}</value>
-            </property>
-          </systemProperties>
         </configuration>
       </plugin>
 
@@ -269,7 +156,7 @@
                 <classpath />
                 <argument>com.google.web.bindery.requestfactory.apt.ValidationTool</argument>
                 <argument>${project.build.outputDirectory}</argument>
-                <argument>com.google.gwt.sample.mobilewebapp.shared.MobileWebAppRequestFactory</argument>
+                <argument>com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory</argument>
               </arguments>
             </configuration>
             <goals>
@@ -315,7 +202,6 @@
           </additionalBuildcommands>
           <additionalProjectnatures>
             <projectnature>com.google.gwt.eclipse.core.gwtNature</projectnature>
-            <projectnature>com.google.appengine.eclipse.core.gaeNature</projectnature>
           </additionalProjectnatures>
         </configuration>
       </plugin>
@@ -331,32 +217,6 @@
           <configuration>
             <lifecycleMappingMetadata>
               <pluginExecutions>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.datanucleus</groupId>
-                    <artifactId>maven-datanucleus-plugin</artifactId>
-                    <versionRange>[1.1.4,)</versionRange>
-                    <goals>
-                      <goal>enhance</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore></ignore>
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>net.kindleit</groupId>
-                    <artifactId>maven-gae-plugin</artifactId>
-                    <versionRange>[0.7.3,)</versionRange>
-                    <goals>
-                      <goal>unpack</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <execute />
-                  </action>
-                </pluginExecution>
                 <pluginExecution>
                   <pluginExecutionFilter>
                     <groupId>org.codehaus.mojo</groupId>

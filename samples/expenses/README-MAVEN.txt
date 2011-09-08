@@ -1,20 +1,7 @@
 -- Option A: Import your project into Eclipse (recommended) --
 
-If you use Eclipse for Jave EE, you can simply import the generated
-project into Eclipse. We've tested against Eclipse 3.5. Later versions
-will likely also work, earlier versions may not. (Please note that
-this demo requires WTP, which is pre-installed with the Jave EE
-versions of Eclipse.)
-
-Eclipse users will need to install the following plugin components:
-- Google Plugin for Eclipse (instructions at http://code.google.com/eclipse/)
-- m2eclipse Core
-- Maven Integration for WTP (in m2eclipse extras)
-  Instructions for installing the maven plugins can be found here:
-  http://m2eclipse.sonatype.org/installing-m2eclipse.html
-
-Ensure Eclipse is configured to use Java 1.6 as this sample uses
-AppEngine.
+Configure Eclipse following the instructions at 
+http://code.google.com/p/google-web-toolkit/wiki/WorkingWithMaven#Using_Maven_with_Google_Plugin_for_Eclipse
 
 In Eclipse, go to the File menu and choose:
 
