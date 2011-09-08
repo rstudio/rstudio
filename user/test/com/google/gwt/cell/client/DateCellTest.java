@@ -16,7 +16,7 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
+import com.google.gwt.i18n.client.TimeZone;
 
 import java.util.Date;
 
@@ -27,13 +27,17 @@ public class DateCellTest extends CellTestBase<Date> {
 
   @Override
   protected Cell<Date> createCell() {
-    return new DateCell(DateTimeFormat.getFormat(PredefinedFormat.DATE_MEDIUM));
+    // Set format that shows all fields and timezone of GMT-7
+    return new DateCell(DateTimeFormat.getFormat("dd-MM-yyyy HH:mm:ss"),
+        TimeZone.createTimeZone(7 * 60));
   }
 
   @Override
   @SuppressWarnings("deprecation")
   protected Date createCellValue() {
-    return new Date(2010 - 1900, 0, 1);
+    Date date = new Date();
+    date.setTime(3600 * 1000 * 10); // In GMT, Jan 1, 1970, 10:00:00
+    return date;
   }
 
   @Override
@@ -48,7 +52,7 @@ public class DateCellTest extends CellTestBase<Date> {
 
   @Override
   protected String getExpectedInnerHtml() {
-    return "Jan 1, 2010";
+    return "01-01-1970 03:00:00";  // 10 - 7 == 3
   }
 
   @Override

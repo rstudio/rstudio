@@ -17,6 +17,7 @@ package com.google.gwt.cell.client;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
+import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
@@ -32,13 +33,15 @@ public class DateCell extends AbstractCell<Date> {
 
   private final SafeHtmlRenderer<String> renderer;
 
+  private final TimeZone timeZone;
+
   /**
    * Construct a new {@link DateCell} using the format
    * {@link PredefinedFormat#DATE_FULL} and a {@link SimpleSafeHtmlRenderer}.
    */
   public DateCell() {
     this(DateTimeFormat.getFormat(PredefinedFormat.DATE_FULL),
-        SimpleSafeHtmlRenderer.getInstance());
+        SimpleSafeHtmlRenderer.getInstance(), null);
   }
 
   /**
@@ -49,7 +52,7 @@ public class DateCell extends AbstractCell<Date> {
    *          formatted date as HTML
    */
   public DateCell(SafeHtmlRenderer<String> renderer) {
-    this(DateTimeFormat.getFormat(PredefinedFormat.DATE_FULL), renderer);
+    this(DateTimeFormat.getFormat(PredefinedFormat.DATE_FULL), renderer, null);
   }
 
   /**
@@ -59,7 +62,7 @@ public class DateCell extends AbstractCell<Date> {
    * @param format the {@link DateTimeFormat} used to render the date
    */
   public DateCell(DateTimeFormat format) {
-    this(format, SimpleSafeHtmlRenderer.getInstance());
+    this(format, SimpleSafeHtmlRenderer.getInstance(), null);
   }
 
   /**
@@ -71,6 +74,36 @@ public class DateCell extends AbstractCell<Date> {
    *          formatted date
    */
   public DateCell(DateTimeFormat format, SafeHtmlRenderer<String> renderer) {
+    this(format, renderer, null);
+  }
+
+  /**
+   * Construct a new {@link DateCell} using the specified format and time zone.
+   *
+   * @param format the {@link DateTimeFormat} used to render the date
+   * @param timezone the {@link TimeZone} used to render the date, or null to
+   *          use the default behavior for the local time zone and the rendered
+   *          date. See {@link DateTimeFormat#format(Date)} and
+   *          {@link Date#getTimeZoneOffset}
+   */
+  public DateCell(DateTimeFormat format, TimeZone timeZone) {
+    this(format, SimpleSafeHtmlRenderer.getInstance(), timeZone);
+  }
+
+  /**
+   * Construct a new {@link DateCell} using the specified format, the given
+   * {@link SafeHtmlRenderer}, and the specified time zone.
+   *
+   * @param format the {@link DateTimeFormat} used to render the date
+   * @param renderer a non-null {@link SafeHtmlRenderer} used to render the
+   *          formatted date
+   * @param timezone the {@link TimeZone} used to render the date, or null to
+   *          use the default behavior for the local time zone and the rendered
+   *          date. See {@link DateTimeFormat#format(Date)} and
+   *          {@link Date#getTimeZoneOffset}
+   */
+  public DateCell(DateTimeFormat format, SafeHtmlRenderer<String> renderer,
+      TimeZone timeZone) {
     if (format == null) {
       throw new IllegalArgumentException("format == null");
     }
@@ -79,12 +112,13 @@ public class DateCell extends AbstractCell<Date> {
     }
     this.format = format;
     this.renderer = renderer;
+    this.timeZone = timeZone;
   }
 
   @Override
   public void render(Context context, Date value, SafeHtmlBuilder sb) {
     if (value != null) {
-      sb.append(renderer.render(format.format(value)));
+      sb.append(renderer.render(format.format(value, timeZone)));
     }
   }
 }
