@@ -47,11 +47,6 @@
 
 // TODO: make sure filter is applied (on all platforms!)
 
-// TODO: does a removed sub-directory generate a modified event on the dir?
-
-// TODO: implement recursive, non-recursive (note we need an additional level
-// of watch to catch directory deletes) -- or, could we get a modified event
-// on the directory itself and then scan for deletes?
 
 // TODO: general test of all behaviors/apis (unregister, multiple monitors, etc)
 
