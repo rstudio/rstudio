@@ -53,5 +53,10 @@ std::string sendStdErrToStdOut(const std::string& command)
    return "(" + command + ") 2>&1";
 }
 
+std::string sendNullToStdIn(const std::string& command)
+{
+   return "(" + command + ") < NUL";
+}
+
 }
 }

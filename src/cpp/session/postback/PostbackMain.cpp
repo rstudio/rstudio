@@ -23,11 +23,15 @@
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
+#if !defined(_WIN32)
 #include <core/http/LocalStreamBlockingClient.hpp>
+#endif
 #include <core/http/TcpIpBlockingClient.hpp>
 
 #include <session/SessionConstants.hpp>
+#if !defined(_WIN32)
 #include <session/SessionLocalStreams.hpp>
+#endif
 
 #include "PostbackOptions.hpp"
 
@@ -50,18 +54,20 @@ Error sendRequest(http::Request* pRequest, http::Response* pResponse)
    }
    else
    {
+#if !defined(_WIN32)
       // determine stream path
       std::string userIdentity = system::getenv(kRStudioUserIdentity);
       FilePath streamPath = session::local_streams::streamPath(userIdentity);
 
       return http::sendRequest(streamPath, *pRequest, pResponse);
+#endif
    }
 }
 
 int main(int argc, char * const argv[]) 
 {
    try
-   { 
+   {
       // initialize log
       initializeSystemLog("rpostback", core::system::kLogLevelWarning);
 

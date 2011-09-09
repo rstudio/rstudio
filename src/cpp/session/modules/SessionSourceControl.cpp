@@ -35,6 +35,9 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+// TODO: git fetch doesn't work due to path differences between bash and cmd
+// TODO: Discover/configure git bin dir, and add it to the path (needed to find ssh)
+
 using namespace core;
 using namespace core::shell_utils;
 
@@ -1126,10 +1129,166 @@ Error vcsShow(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void postbackGitSSH(const std::string& command,
+std::string toBashPath(const std::string& path)
+{
+#ifdef _WIN32
+   std::string result(path);
+   for (std::string::iterator it = result.begin();
+        it != result.end();
+        it++)
+   {
+      if (*it == '\\')
+         *it = '/';
+   }
+
+   return boost::regex_replace(result, boost::regex("^([A-Za-z]):"), "/\\1");
+}
+#else
+   return path;
+#endif
+
+FilePath getTrueHomeDir()
+{
+#if _WIN32
+   // On Windows, R's idea of "$HOME" is not, by default, the same as
+   // $USERPROFILE, which is what we want for ssh purposes
+   return FilePath(string_utils::systemToUtf8(system::getenv("USERPROFILE")));
+#else
+   return FilePath(string_utils::systemToUtf8(system::getenv("HOME")));
+#endif
+}
+
+// This is necessary to hook up the completion of ssh-add (which we
+// must run asynchronously) with the continuation passed into
+// postbackGitSSH. It's important that we pass the output along, as
+// it may contain the output from ssh-agent that is needed by the
+// postback-gitssh script.
+void postbackGitSSH_onSSHAddComplete(
+      const module_context::PostbackHandlerContinuation& cont,
+      const std::string output,
+      const system::ProcessResult& result)
+{
+   cont(result.exitStatus, output);
+}
+
+// If we fail to initialize ssh-agent, don't attempt to do it again
+bool s_suppressSshAgentStart = false;
+
+// This is a hook that runs whenever git calls into ssh. We prepare
+// ssh-agent and add the ~/.ssh/id_rsa key, which may involve
+// prompting the user (a complex process which involves $SSH_ASKPASS
+// and rpostback-askpass, and calling into the client to show the
+// passphrase prompt).
+//
+// This function uses continuation-passing-style, which means the
+// "cont" param is a function that MUST be called. Failure to call
+// the param means the CPS operation will be stuck forever.
+//
+// TODO: Lots of failure modes here, all of which will *probably*
+// result in the user not succeeding in whatever they were trying
+// to do. Think about how to let them know what went wrong and how
+// they can go about making things work.
+void postbackGitSSH(const std::string& argument,
                     const module_context::PostbackHandlerContinuation& cont)
 {
-   cont(EXIT_SUCCESS, "");
+   using namespace core::system;
+
+   FilePath key = getTrueHomeDir().childPath(".ssh/id_rsa");
+   if (!key.exists())
+   {
+      // No default key, we're not going to know how to call ssh-add. Give up.
+      cont(EXIT_FAILURE, "");
+      return;
+   }
+
+   if (s_suppressSshAgentStart)
+   {
+      // I failed in an earlier attempt and told myself not to try again.
+      cont(EXIT_FAILURE, "");
+      return;
+   }
+
+   // Use "ssh-add -l" to see if ssh-agent is running
+   ProcessResult result;
+   Error error = runCommand("ssh-add -l", ProcessOptions(), &result);
+   if (error)
+   {
+      // We couldn't even launch ssh-add. Seems unlikely we'll be able to
+      // in the future.
+      s_suppressSshAgentStart = true;
+      LOG_ERROR(error);
+      cont(EXIT_FAILURE, "");
+      return;
+   }
+
+   if (result.exitStatus == EXIT_SUCCESS)
+   {
+      // ssh-agent is already running. Let's assume that either the current
+      // default key is already registered, or was never intended to.
+      cont(EXIT_SUCCESS, "");
+      return;
+   }
+
+
+
+   // If we got here, it means that we were able to run ssh-add (so openssh
+   // is on the path); and it means that we don't have a running ssh-agent
+   // bound to our environment. So we need to  start our own and preemptively
+   // call ssh-add to register the default key. We must use ssh-add rather
+   // than letting ssh ask for a passphrase, because (on Windows at least)
+   // only ssh-add, not ssh, make use of the SSH_ASKPASS environment variable.
+
+   // This will hold the values we eventually will write to stdout by
+   // passing it into the continuation--specifically, the output of ssh-agent.
+   std::ostringstream output;
+
+   // Start ssh-agent using bash-style output
+   error = runCommand("ssh-agent -s", ProcessOptions(), &result);
+   if (error)
+   {
+      // Failed to start ssh-agent, give up.
+      s_suppressSshAgentStart = true;
+      LOG_ERROR(error);
+      cont(EXIT_FAILURE, "");
+      return;
+   }
+   if (result.exitStatus != EXIT_SUCCESS)
+   {
+      // Failed to start ssh-agent, give up.
+      s_suppressSshAgentStart = true;
+      cont(result.exitStatus, "");
+      return;
+   }
+
+   // ssh-agent succeeded, so capture its output
+   output << result.stdOut;
+
+   // In addition to dumping the ssh-agent output, we also need to parse
+   // it so we can modify rsession's environment to use the new ssh-agent
+   // as well.
+   boost::sregex_iterator it(result.stdOut.begin(), result.stdOut.end(),
+                             boost::regex("^([A-Za-z0-9_]+)=([^;]+);"));
+   boost::sregex_iterator end;
+   for (; it != end; it++)
+   {
+      std::string name = (*it).str(1);
+      std::string value = (*it).str(2);
+      system::setenv(name, value);
+   }
+
+   // Finally, call ssh-add, which will (probably) use git-
+   ShellCommand cmd("ssh-add");
+#ifdef _APPLE_
+   // Automatically use Keychain for passphrase
+   cmd << "-k";
+#endif
+   cmd << string_utils::utf8ToSystem(toBashPath(key.absolutePath()));
+   module_context::processSupervisor().runCommand(
+         shell_utils::sendNullToStdIn(cmd), "", ProcessOptions(),
+         boost::bind(postbackGitSSH_onSSHAddComplete,
+                     cont,
+                     output.str(),
+                     _1));
 }
 
 typedef std::map<std::string, module_context::PostbackHandlerContinuation>
@@ -1151,12 +1310,13 @@ void postbackSSHAskPass(const std::string& command,
    // TODO: Need to do something to simulate initEvent
 }
 
+// Called by the client after user has given a passphrase (or cancelled)
 Error askpassReturn(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
    std::string handle;
    bool success;
-   std::string value;
+   json::Value value;
    Error error = json::readParams(request.params, &handle, &success, &value);
    if (error)
       return error;
@@ -1191,13 +1351,14 @@ core::Error initialize()
    else
       s_pVcsImpl_.reset(new VCSImpl(workingDir));
 
+
    std::string gitSshCmd;
    Error error = module_context::registerPostbackHandler("gitssh",
                                                          postbackGitSSH,
                                                          &gitSshCmd);
    if (error)
       return error;
-   system::setenv("GIT_SSH", gitSshCmd);
+   system::setenv("GIT_SSH", toBashPath(gitSshCmd));
 
    std::string sshAskCmd;
    error = module_context::registerPostbackHandler("askpass",
@@ -1205,8 +1366,10 @@ core::Error initialize()
                                                    &sshAskCmd);
    if (error)
       return error;
+   sshAskCmd = toBashPath(sshAskCmd);
    system::setenv("SSH_ASKPASS", sshAskCmd);
    system::setenv("GIT_ASKPASS", sshAskCmd);
+
 
    // install rpc methods
    using boost::bind;

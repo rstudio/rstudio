@@ -15,5 +15,6 @@
 
 set -e
 
-$(dirname $0)/rpostback gitssh
-ssh $@
+export SSH_AGENT_SCRIPT=`$(dirname $0)/rpostback gitssh`
+eval "$SSH_AGENT_SCRIPT" &> /dev/null
+ssh $*
