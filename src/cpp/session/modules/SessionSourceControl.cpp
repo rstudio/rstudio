@@ -1169,7 +1169,7 @@ FilePath getTrueHomeDir()
 // postback-gitssh script.
 void postbackGitSSH_onSSHAddComplete(
       const module_context::PostbackHandlerContinuation& cont,
-      const std::string output,
+      const std::string& output,
       const system::ProcessResult& result)
 {
    cont(result.exitStatus, output);
