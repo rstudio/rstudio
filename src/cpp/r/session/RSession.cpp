@@ -163,36 +163,15 @@ void restoreWorkingState()
    // restore client metrics so the plot doesn't need to re-render
    client_metrics::restore(s_options.persistentState());
 
-   // for migration we may need to restore from the suspended plots file
-   // or from the plots file contained in the root of the scopedScratchDir
-   // TODO: eliminate these migration-oriented checks once we are
-   // sufficiently clear of the migration date (7/11/2011)
+   // restore plots if we have them
    FilePath plotsFile = plotsStateFilePath();
-   FilePath oldPlotsFile = s_options.scopedScratchPath.complete("plots");
-   FilePath suspendedPlotsFile = s_suspendedSessionPath.childPath("plots");
-   if (!plotsFile.exists())
+   if (plotsFile.exists())
    {
-      // look in other potential locations for the file (migration)
-      plotsFile = oldPlotsFile;
-      if (!plotsFile.exists() && s_suspendedSessionPath.exists())
-         plotsFile = suspendedPlotsFile;
+      // restore the plots
+      Error plotError = graphics::plotManager().restorePlotsState(plotsFile);
+      if (plotError)
+         reportDeferredDeserializationError(plotError);
    }
-   else
-   {
-      // the first time we find the plots state file in the correct
-      // location we can delete it from the old locations
-      Error error = oldPlotsFile.removeIfExists();
-      if (error)
-         LOG_ERROR(error);
-      error = suspendedPlotsFile.removeIfExists();
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   // restore the plots
-   Error plotError = graphics::plotManager().restorePlotsState(plotsFile);
-   if (plotError)
-      reportDeferredDeserializationError(plotError);
 }
 
 
