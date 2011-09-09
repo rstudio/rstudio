@@ -85,6 +85,12 @@ bool notHidden(const FileInfo& fileInfo)
    return !core::system::isHiddenFile(fileInfo);
 }
 
+bool shouldTraverse(const FileInfo& fileInfo)
+{
+   return fileInfo.isDirectory() &&
+          !FilePath(fileInfo.absolutePath()).isSymlink();
+}
+
 } // anonymous namespace
 
 
@@ -147,7 +153,7 @@ Error processFileAdded(
 
    }
 
-   if (fileChange.fileInfo().isDirectory() && recursive)
+   if (recursive && shouldTraverse(fileChange.fileInfo()))
    {
       tree<FileInfo> subTree;
       Error error = scanFiles(fileChange.fileInfo(),
@@ -227,7 +233,7 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
    {
       // if this is folder then we need to generate recursive
       // remove events, otherwise can just add single event
-      if (remIt->isDirectory() && recursive)
+      if (recursive && shouldTraverse(*remIt))
       {
          tree<FileInfo> subTree(remIt);
          std::for_each(subTree.begin(),

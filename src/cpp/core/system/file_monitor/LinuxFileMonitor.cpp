@@ -38,9 +38,6 @@
 
 #include "FileMonitorImpl.hpp"
 
-// TODO: what happens if a symlink is the root entry?
-
-// TODO: does processFileAdded successfully ignore symlinks
 
 // TODO: general test of all behaviors/apis (unregister, multiple monitors, etc)
 
@@ -192,7 +189,11 @@ void terminateWithMonitoringError(FileEventContext* pContext,
    file_monitor::unregisterMonitor(pContext->handle);
 }
 
-Error addWatch(const FileInfo& fileInfo, int fd, Watches* pWatches)
+Error addWatch(const FileInfo& fileInfo,
+               const FilePath& rootPath,
+               bool allowRootSymlink,
+               int fd,
+               Watches* pWatches)
 {
    // NOTE: both inotify_add_watch and std::set::insert gracefully
    // handle duplicate additions, inotify_add_watch by modifying the
@@ -209,7 +210,14 @@ Error addWatch(const FileInfo& fileInfo, int fd, Watches* pWatches)
    mask |= IN_MOVED_TO;
    mask |= IN_MOVED_FROM;
    mask |= IN_Q_OVERFLOW;
-   mask |= IN_DONT_FOLLOW;
+
+   // add IN_DONT_FOLLOW unless we are explicitly allowing root symlinks
+   // and this is a watch for the root path
+   if (!allowRootSymlink ||
+       (fileInfo.absolutePath() != rootPath.absolutePath()))
+   {
+      mask |= IN_DONT_FOLLOW;
+   }
 
    // initialize watch
    int wd = ::inotify_add_watch(fd, fileInfo.absolutePath().c_str(), mask);
@@ -224,9 +232,15 @@ Error addWatch(const FileInfo& fileInfo, int fd, Watches* pWatches)
 }
 
 boost::function<Error(const FileInfo&)> addWatchFunction(
-                                                FileEventContext* pContext)
+                                           FileEventContext* pContext,
+                                           bool allowRootSymlink = false)
 {
-   return boost::bind(addWatch, _1, pContext->fd, &pContext->watches);
+   return boost::bind(addWatch,
+                        _1,
+                        pContext->rootPath,
+                        allowRootSymlink,
+                        pContext->fd,
+                        &pContext->watches);
 }
 
 void removeWatch(int fd, const Watch& watch, Watches* pWatches)
@@ -426,7 +440,7 @@ Handle registerMonitor(const core::FilePath& filePath,
    Error error = scanFiles(FileInfo(filePath),
                            recursive,
                            filter,
-                           addWatchFunction(pContext),
+                           addWatchFunction(pContext, true),
                            &pContext->fileTree);
    if (error)
    {
@@ -543,7 +557,7 @@ void run(const boost::function<void()>& checkForInput)
                         FileInfo(pContext->rootPath),
                         pContext->recursive,
                         pContext->filter,
-                        addWatchFunction(pContext),
+                        addWatchFunction(pContext, true),
                         &pContext->fileTree,
                         pContext->callbacks.onFilesChanged);
                   if (error)

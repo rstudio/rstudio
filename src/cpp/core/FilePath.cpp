@@ -296,7 +296,7 @@ bool FilePath::isSymlink() const
 {
    try
    {
-      return !empty() && boost::filesystem::is_symlink(pImpl_->path);
+      return exists() && boost::filesystem::is_symlink(pImpl_->path);
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
