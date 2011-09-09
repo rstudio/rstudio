@@ -37,6 +37,10 @@
 
 // TODO: git fetch doesn't work due to path differences between bash and cmd
 // TODO: Discover/configure git bin dir, and add it to the path (needed to find ssh)
+// TODO: It's actually pretty easy to look in an id_rsa file and see if it's encrypted,
+//       use that to see if we even need to do ssh-agent stuff at all
+// TODO: We could use the "right" ssh key if we wanted to, by reading ~/.ssh/config:
+//       http://technosophos.com/content/ssh-host-configuration
 
 using namespace core;
 using namespace core::shell_utils;
