@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# Pushes GWT artifacts to a local (the default) or remote maven repository
+# To push remote, set 2 env variables: GWT_MAVEN_REPO_URL and GWT_MAVEN_REPO_ID
+#
+# GWT_MAVEN_REPO_ID = a server id in your .m2/settings.xml with remote repo username and password
+#
+# Sonatype staging repo (promotes to Maven Central)
+#   GWT_MAVEN_REPO_URL=https://oss.sonatype.org/service/local/staging/deploy/maven2/ 
+#
+# Sonatype Google SNAPSHOTs repo (can only deploy SNAPSHOTs here, and they are immediately public)
+#   GWT_MAVEN_REPO_URL=https://oss.sonatype.org/content/repositories/google-snapshots/
+
+pushd $(dirname $0) >/dev/null 2>&1
+
+export pomDir=./poms
+
+source lib-gwt.sh
+
+# use GWT_MAVEN_REPO_URL if set else M2_REPO else default location for local repo
+localRepoUrl=${M2_REPO:="$HOME/.m2/repository"}
+localRepoUrl="file://$localRepoUrl"
+repoUrl=${GWT_MAVEN_REPO_URL:=$localRepoUrl}
+# repo id is ignored by local repo
+repoId=${GWT_MAVEN_REPO_ID:=none}
+
+# prompt for info
+read -e -p"GWT version for Maven (ex: 2.4.0): " -i "$GWT_VERSION" gwtVersion
+gwtTrunk=$(dirname $(pwd))
+if [ -f ${gwtTrunk}/build/dist/gwt-*.zip ]; then
+  gwtPath=$(ls ${gwtTrunk}/build/dist/gwt-*.zip | head -n1)
+fi
+read -e -p"Path to GWT distro zip: " -i "$gwtPath" gwtPath
+if [[ "$gwtPath" == "" || ! -f  $gwtPath ]]; then
+  echo "ERROR: Cannot find file at \"$gwtPath\""
+  exit 1
+fi
+read -e -p"Deploy to repo URL: " -i "$repoUrl" repoUrl
+read -p"GPG passphrase for jar signing (may skip for local deployment): " gpgPassphrase
+
+# GWT from distribution ZIP
+gwtCl=$(ls -lrt $gwtPath | tail -n2 | head -n1 | sed -r 's/.*r([0-9]+).zip.*/\1/')
+maven-gwt "$gwtVersion" \
+          "$gwtPath" \
+          "$gwtCl" \
+	  "$repoUrl" \
+	  "$repoId"
+
+popd >/dev/null 2>&1

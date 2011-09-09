@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+	<groupId>org.sonatype.oss</groupId>
+	<artifactId>oss-parent</artifactId>
+	<version>4</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.google.gwt</groupId>
+    <artifactId>gwt</artifactId>
+    <packaging>pom</packaging>
+    <name>Google Web Toolkit</name>
+    <url>http://code.google.com/webtoolkit/</url>
+    <version>${gwtVersion}</version>
+    <licenses>
+        <license>
+            <name>Google Web Toolkit Terms</name>
+            <url>http://code.google.com/webtoolkit/terms.html</url>
+        </license>
+    </licenses>
+</project>
