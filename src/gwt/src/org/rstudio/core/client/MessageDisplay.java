@@ -43,6 +43,13 @@ public abstract class MessageDisplay
                                       String okButtonCaption,
                                       ProgressOperationWithInput<String> operation);
 
+   public abstract void promptForPassword(
+         String title,
+         String label,
+         String initialValue,
+         ProgressOperationWithInput<String> okOperation,
+         Operation cancelOperation);
+
    protected abstract DialogBuilder createDialog(int type,
                                                  String caption,
                                                  String message);

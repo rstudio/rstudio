@@ -15,6 +15,7 @@
 #define DESKTOPINPUTDIALOG_HPP
 
 #include <QDialog>
+#include <QLineEdit>
 
 namespace Ui {
     class InputDialog;
@@ -34,6 +35,7 @@ public:
     void setTextValue(QString value);
     void setSelection(int offset, int length);
     void setOkButtonLabel(QString label);
+    void setEchoMode(QLineEdit::EchoMode mode);
 
 private:
     Ui::InputDialog *ui;

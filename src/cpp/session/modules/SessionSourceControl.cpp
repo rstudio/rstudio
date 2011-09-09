@@ -1319,19 +1319,27 @@ Error askpassReturn(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
    std::string handle;
-   bool success;
    json::Value value;
-   Error error = json::readParams(request.params, &handle, &success, &value);
+   Error error = json::readParams(request.params, &handle, &value);
    if (error)
       return error;
+
+   int retcode;
+   std::string passphrase;
+   if (json::isType<std::string>(value))
+   {
+      retcode = EXIT_SUCCESS;
+      passphrase = value.get_value<std::string>();
+   }
+   else
+   {
+      retcode = EXIT_FAILURE;
+   }
 
    AskPassContinuations::iterator pos = s_askpassContinuations.find(handle);
    if (pos != s_askpassContinuations.end())
    {
-      if (success)
-         pos->second(EXIT_SUCCESS, value);
-      else
-         pos->second(EXIT_FAILURE, "");
+      pos->second(retcode, passphrase);
       return Success();
    }
 

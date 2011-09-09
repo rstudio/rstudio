@@ -69,3 +69,8 @@ void InputDialog::setOkButtonLabel(QString label)
 {
    pOK_->setText(label);
 }
+
+void InputDialog::setEchoMode(QLineEdit::EchoMode mode)
+{
+   ui->lineEdit->setEchoMode(mode);
+}

@@ -81,9 +81,10 @@ public slots:
                       int defaultButton,
                       int cancelButton);
 
-   QString promptForText(QString title,
+   QVariant promptForText(QString title,
                          QString caption,
                          QString defaultValue,
+                         bool usePasswordMask,
                          int selectionStart,
                          int selectionLength);
 

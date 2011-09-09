@@ -208,9 +208,11 @@ public abstract class ModalDialogBase extends DialogBox
       }
    }
    
-   protected void addCancelButton()
+   protected ThemedButton addCancelButton()
    {
-      addCancelButton(createCancelButton(null));
+      ThemedButton cancelButton = createCancelButton(null);
+      addCancelButton(cancelButton);
+      return cancelButton;
    }
    
    protected ThemedButton createCancelButton(final Operation cancelOperation)

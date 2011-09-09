@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.common.impl;
 
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextEntryModalDialog;
 import org.rstudio.studio.client.common.TextInput;
@@ -21,19 +22,23 @@ public class WebTextInput implements TextInput
    public void promptForText(String title,
                              String label,
                              String initialValue,
+                             boolean usePasswordMask,
                              int selectionStart,
                              int selectionLength,
                              String okButtonCaption,
-                             ProgressOperationWithInput<String> operation)
+                             ProgressOperationWithInput<String> okOperation,
+                             Operation cancelOperation)
    {
       new TextEntryModalDialog(title,
                                label,
                                initialValue,
+                               usePasswordMask,
                                selectionStart,
                                selectionLength,
                                okButtonCaption,
                                300,
-                               operation).showModal();
+                               okOperation,
+                               cancelOperation).showModal();
    }
 
 }

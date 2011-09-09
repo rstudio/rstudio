@@ -19,13 +19,17 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -85,17 +89,29 @@ public class VCS extends BasePresenter implements IsWidget
          @Override
          public void onAskPass(final AskPassEvent e)
          {
-            globalDisplay.promptForText(
+            globalDisplay.promptForPassword(
                   "Password",
                   e.getPrompt(),
                   "",
-                  new OperationWithInput<String>()
+                  new ProgressOperationWithInput<String>()
                   {
                      @Override
-                     public void execute(String input)
+                     public void execute(String input,
+                                         ProgressIndicator indicator)
                      {
-                        // TODO: handle case where user cancels
-                        server_.askpassReturn(e.getHandle(), true, input,
+                        indicator.onCompleted();
+                        server_.askpassReturn(
+                              e.getHandle(),
+                              input,
+                              new VoidServerRequestCallback(indicator));
+                     }
+                  },
+                  new Operation()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        server_.askpassReturn(e.getHandle(), null,
                                               new SimpleRequestCallback<Void>());
                      }
                   });

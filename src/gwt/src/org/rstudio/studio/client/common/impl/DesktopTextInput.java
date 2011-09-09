@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.common.impl;
 
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
@@ -22,23 +23,31 @@ public class DesktopTextInput implements TextInput
    public void promptForText(String title,
                              String label,
                              String initialValue,
+                             boolean usePasswordMask,
                              int selectionStart,
                              int selectionLength,
                              String okButtonCaption,
-                             ProgressOperationWithInput<String> operation)
+                             ProgressOperationWithInput<String> okOperation,
+                             Operation cancelOperation)
    {
       String result = Desktop.getFrame().promptForText(title,
                                                        label,
                                                        initialValue,
+                                                       usePasswordMask,
                                                        selectionStart,
                                                        selectionLength,
                                                        okButtonCaption);
-      if (result.length() == 0)
-         return;
-
-      operation.execute(result,
-                        RStudioGinjector.INSTANCE
-                              .getGlobalDisplay()
-                              .getProgressIndicator("Error"));
+      if (result == null)
+      {
+         if (cancelOperation != null)
+            cancelOperation.execute();
+      }
+      else
+      {
+         okOperation.execute(result,
+                             RStudioGinjector.INSTANCE
+                                   .getGlobalDisplay()
+                                   .getProgressIndicator("Error"));
+      }
    }
 }

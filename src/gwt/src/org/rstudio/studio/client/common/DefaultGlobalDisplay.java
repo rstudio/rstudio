@@ -58,7 +58,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                              final OperationWithInput<String> operation)
    {
       ((TextInput)GWT.create(TextInput.class)).promptForText(
-            title, label, initialValue, -1, -1, null,
+            title, label, initialValue, false, -1, -1, null,
             new ProgressOperationWithInput<String>()
             {
                public void execute(String input, ProgressIndicator indicator)
@@ -66,7 +66,8 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                   indicator.onCompleted();
                   operation.execute(input);
                }
-            });
+            },
+            null);
    }
 
    @Override
@@ -76,7 +77,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                              ProgressOperationWithInput<String> operation)
    {
       ((TextInput)GWT.create(TextInput.class)).promptForText(
-            title, label, initialValue, -1, -1, null, operation);
+            title, label, initialValue, false, -1, -1, null, operation, null);
    }
 
    @Override
@@ -92,10 +93,31 @@ public class DefaultGlobalDisplay extends GlobalDisplay
             title,
             label,
             initialValue,
+            false,
             selectionOffset,
             selectionLength,
             okButtonCaption,
-            operation);
+            operation,
+            null);
+   }
+
+   @Override
+   public void promptForPassword(String title,
+                                 String label,
+                                 String initialValue,
+                                 ProgressOperationWithInput<String> okOperation,
+                                 Operation cancelOperation)
+   {
+      ((TextInput)GWT.create(TextInput.class)).promptForText(
+            title,
+            label,
+            initialValue,
+            true,
+            -1,
+            -1,
+            null,
+            okOperation,
+            cancelOperation);
    }
 
    @Override

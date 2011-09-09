@@ -36,7 +36,7 @@ public abstract class ModalDialog<T> extends ModalDialogBase
          }
       });
       
-      commonInit(caption, okButton);
+      commonInit(caption, okButton, null);
    }
 
    protected void onSuccess()
@@ -44,8 +44,15 @@ public abstract class ModalDialog<T> extends ModalDialogBase
    }
 
 
-   public ModalDialog(String caption, 
+   public ModalDialog(String caption,
                       final ProgressOperationWithInput<T> operation)
+   {
+      this(caption, operation, null);
+   }
+
+   public ModalDialog(String caption, 
+                      final ProgressOperationWithInput<T> operation,
+                      Operation cancelOperation)
    {
       super();
 
@@ -62,14 +69,27 @@ public abstract class ModalDialog<T> extends ModalDialogBase
          }
       });
       
-      commonInit(caption, okButton);
+      commonInit(caption, okButton, cancelOperation);
    }
    
-   private void commonInit(String caption, ThemedButton okButton)
+   private void commonInit(String caption,
+                           ThemedButton okButton,
+                           final Operation cancelOperation)
    {
       setText(caption);
-      addOkButton(okButton); 
-      addCancelButton();
+      addOkButton(okButton);
+      ThemedButton cancelButton = addCancelButton();
+      if (cancelOperation != null)
+      {
+         cancelButton.addClickHandler(new ClickHandler()
+         {
+            @Override
+            public void onClick(ClickEvent event)
+            {
+               cancelOperation.execute();
+            }
+         });
+      }
    }
    
    protected abstract T collectInput();

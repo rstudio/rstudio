@@ -458,15 +458,18 @@ int GwtCallback::showMessageBox(int type,
    return cancelButton;
 }
 
-QString GwtCallback::promptForText(QString title,
+QVariant GwtCallback::promptForText(QString title,
                                    QString caption,
                                    QString defaultValue,
+                                   bool usePasswordMask,
                                    int selectionStart,
                                    int selectionLength)
 {
    InputDialog dialog(pOwnerWindow_);
    dialog.setWindowTitle(title);
    dialog.setCaption(caption);
+   if (usePasswordMask)
+      dialog.setEchoMode(QLineEdit::Password);
    if (!defaultValue.isEmpty())
    {
       dialog.setTextValue(defaultValue);
@@ -481,9 +484,9 @@ QString GwtCallback::promptForText(QString title,
    }
 
    if (dialog.exec() == QDialog::Accepted)
-      return dialog.textValue();
+      return QVariant(dialog.textValue());
    else
-      return QString();
+      return QVariant();
 }
 
 void GwtCallback::checkForUpdates()

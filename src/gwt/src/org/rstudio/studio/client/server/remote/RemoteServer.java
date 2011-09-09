@@ -1251,15 +1251,13 @@ public class RemoteServer implements Server
 
    @Override
    public void askpassReturn(String handle,
-                             boolean success,
                              String value,
                              ServerRequestCallback<Void> requestCallback)
    {
       // TODO: Sending private key passphrase, potentially over unencrypted HTTP
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(handle));
-      params.set(1, JSONBoolean.getInstance(success));
-      params.set(2, value == null ? JSONNull.getInstance()
+      params.set(1, value == null ? JSONNull.getInstance()
                                   : new JSONString(value));
       sendRequest(RPC_SCOPE, ASKPASS_RETURN, params, requestCallback);
    }
