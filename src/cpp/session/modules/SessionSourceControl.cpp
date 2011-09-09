@@ -1142,10 +1142,10 @@ std::string toBashPath(const std::string& path)
    }
 
    return boost::regex_replace(result, boost::regex("^([A-Za-z]):"), "/\\1");
-}
 #else
    return path;
 #endif
+}
 
 FilePath getTrueHomeDir()
 {
