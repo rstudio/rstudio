@@ -38,16 +38,6 @@
 
 #include "FileMonitorImpl.hpp"
 
-
-// TODO: general test of all behaviors/apis (unregister, multiple monitors, etc)
-
-// TODO: investigate parallel package (multicore) interactions with file monitor
-
-// TODO: don't restore graphics device (seen two incidences of crashing after
-//       restore on the mac
-
-// TODO: from email "investigate error" -- graphics/INDEX not found
-
 namespace core {
 namespace system {
 namespace file_monitor {
