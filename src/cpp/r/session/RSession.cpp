@@ -61,6 +61,9 @@ extern "C" SA_TYPE SaveAction;
 #undef TRUE
 #undef FALSE
 
+// constants for graphics scratch subdirectory
+#define kGraphicsPath "graphics"
+
 using namespace core ;
 
 namespace r {
@@ -104,7 +107,7 @@ public:
 
 FilePath plotsStateFilePath()
 {
-   return s_options.scopedScratchPath.complete("graphics/INDEX");
+   return s_options.scopedScratchPath.complete(kGraphicsPath "/INDEX");
 }
 
 FilePath rHistoryFilePath()
@@ -375,7 +378,18 @@ Error initialize()
    }
 
    // initialize graphics device
-   FilePath graphicsPath = s_options.scopedScratchPath.complete("graphics");
+   FilePath graphicsPath = s_options.scopedScratchPath.complete(kGraphicsPath);
+
+   // if the last session had an abend then wipe out the graphics path
+   // (because it may have been the cause of the abend)
+   if (s_options.lastSessionHadAbend)
+   {
+      error = graphicsPath.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // call initialize
    error = graphics::device::initialize(plotsStateFilePath(),
                                         graphicsPath,
                                         s_callbacks.locator);
@@ -1382,6 +1396,11 @@ FilePath tempDir()
       LOG_ERROR(error);
    FilePath filePath(r::util::fixPath(tempDir));
    return filePath;
+}
+
+Error removeGraphics(const FilePath& scratchPath)
+{
+   return scratchPath.complete(kGraphicsPath).removeIfExists();
 }
 
 

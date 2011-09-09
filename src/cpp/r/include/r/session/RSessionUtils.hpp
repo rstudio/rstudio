@@ -17,13 +17,14 @@
 #include <string>
 
 namespace core {
+   class Error;
    class FilePath;
 }
 
 namespace r {
 namespace session {
 namespace utils {
-   
+      
 // user home path
 const core::FilePath& userHomePath();  
 
@@ -33,6 +34,12 @@ core::FilePath tempFile(const std::string& prefix,
                         const std::string& extension);
 
 core::FilePath tempDir();
+
+// convenience method to remove the graphics context from
+// a scratch path (used so that SessionProjects can remove
+// the graphics from a project without internal knowledge
+// of the file structure
+core::Error removeGraphics(const core::FilePath& scratchPath);
 
      
 } // namespace utils

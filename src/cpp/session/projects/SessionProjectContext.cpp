@@ -50,6 +50,9 @@ bool canWriteToProjectDir(const FilePath& projectDirPath)
    }
 }
 
+}  // anonymous namespace
+
+
 Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
 {
    // ensure project user dir
@@ -89,9 +92,6 @@ Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
    *pScratchPath = scratchPath;
    return Success();
 }
-
-}  // anonymous namespace
-
 
 // NOTE: this function is called very early in the process lifetime (from
 // session::projects::startup) so can only have limited dependencies.

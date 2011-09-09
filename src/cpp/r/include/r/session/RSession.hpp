@@ -70,6 +70,7 @@ struct ROptions
    bool autoReloadSource ;
    bool shellEscape;
    bool restoreWorkspace;
+   bool lastSessionHadAbend;
    SA_TYPE saveWorkspace;
 };
       

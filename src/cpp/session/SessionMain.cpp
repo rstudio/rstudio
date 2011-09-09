@@ -2296,6 +2296,7 @@ int main (int argc, char * const argv[])
       rOptions.shellEscape = options.rShellEscape();
       rOptions.restoreWorkspace = restoreWorkspaceOption();
       rOptions.saveWorkspace = saveWorkspaceOption();
+      rOptions.lastSessionHadAbend = persistentState().hadAbend();
       
       // r callbacks
       r::session::RCallbacks rCallbacks;
