@@ -12,6 +12,8 @@
  */
 package org.rstudio.core.client;
 
+import org.rstudio.core.client.theme.ThemeFonts;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 
@@ -21,6 +23,9 @@ public class BrowseCap
    {
       if (hasMetaKey())
          return -1;
+      else if (isLinux() &&
+               ThemeFonts.getFixedWidthFont().equals("\"UbuntuBeta Mono\""))
+         return 1;
       else
          return 0;
    }

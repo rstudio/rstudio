@@ -140,6 +140,7 @@ QString Options::fixedWidthFont() const
    // in the History pane).
    QStringList fontList;
    fontList <<
+           QString::fromAscii("UbuntuBeta Mono") <<
            QString::fromAscii("Monospace") << QString::fromAscii("Droid Sans Mono") << QString::fromAscii("DejaVu Sans Mono") << // Linux
            QString::fromAscii("Monaco") <<                      // Mac
            QString::fromAscii("Lucida Console") << QString::fromAscii("Consolas")   // Windows;

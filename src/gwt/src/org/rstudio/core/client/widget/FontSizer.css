@@ -4,6 +4,10 @@
    line-height: 1.45;
 }
 
+.linux .normalSize, .linux .normalSize td, .linux .normalSize pre {
+   line-height: 1.2;
+}
+
 .normalSize, .normalSize td, .normalSize pre {
    line-height: 1.3;
 }
