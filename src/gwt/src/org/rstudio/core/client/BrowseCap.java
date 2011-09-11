@@ -23,8 +23,7 @@ public class BrowseCap
    {
       if (hasMetaKey())
          return -1;
-      else if (isLinux() &&
-               ThemeFonts.getFixedWidthFont().equals("\"UbuntuBeta Mono\""))
+      else if (FIXED_UBUNTU_MONO)
          return 1;
       else
          return 0;
@@ -86,8 +85,19 @@ public class BrowseCap
    }-*/;
    private static final String OPERATING_SYSTEM = getOperatingSystem();
 
+   private static final boolean getFixedUbuntuMono()
+   {
+      return isLinux() &&
+             ThemeFonts.getFixedWidthFont().equals("\"UbuntuBeta Mono\"");
+   }
+
+   private static final boolean FIXED_UBUNTU_MONO = getFixedUbuntuMono();
+
    static
    {
       Document.get().getBody().addClassName(OPERATING_SYSTEM);
+
+      if (FIXED_UBUNTU_MONO)
+         Document.get().getBody().addClassName("ubuntu_mono");
    }
 }
