@@ -20,29 +20,51 @@ source lib-gwt.sh
 # use GWT_MAVEN_REPO_URL if set else M2_REPO else default location for local repo
 localRepoUrl=${M2_REPO:="$HOME/.m2/repository"}
 localRepoUrl="file://$localRepoUrl"
-repoUrl=${GWT_MAVEN_REPO_URL:=$localRepoUrl}
+repoUrlDefault=${GWT_MAVEN_REPO_URL:=$localRepoUrl}
 # repo id is ignored by local repo
 repoId=${GWT_MAVEN_REPO_ID:=none}
 
 # prompt for info
-read -e -p"GWT version for Maven (ex: 2.4.0): " -i "$GWT_VERSION" gwtVersion
+read -e -p"GWT version for Maven (ex: 2.4.0): " gwtVersion
+case $gwtVersion in
+  *.*.* )
+    ;;
+  * )
+    echo "Please enter a version of the form x.y.z" 
+    exit 1;;
+esac
+
 gwtTrunk=$(dirname $(pwd))
 if [ -f ${gwtTrunk}/build/dist/gwt-*.zip ]; then
-  gwtPath=$(ls ${gwtTrunk}/build/dist/gwt-*.zip | head -n1)
+  gwtPathDefault=$(ls ${gwtTrunk}/build/dist/gwt-*.zip | head -n1)
+  gwtPathPrompt=" ($gwtPathDefault)"
 fi
-read -e -p"Path to GWT distro zip: " -i "$gwtPath" gwtPath
+read -e -p"Path to GWT distro zip $gwtPathPrompt: " gwtPath
+case $gwtPath in
+  "" )
+    gwtPath=$gwtPathDefault
+    ;;
+  * )
+    ;;
+esac
 if [[ "$gwtPath" == "" || ! -f  $gwtPath ]]; then
   echo "ERROR: Cannot find file at \"$gwtPath\""
   exit 1
 fi
-read -e -p"Deploy to repo URL: " -i "$repoUrl" repoUrl
+
+read -e -p"Deploy to repo URL ($repoUrlDefault): " repoUrl
+case $repoUrl in
+  "" )
+    repoUrl=$repoUrlDefault
+    ;;
+  * )
+    ;;
+esac
+
 read -p"GPG passphrase for jar signing (may skip for local deployment): " gpgPassphrase
 
-# GWT from distribution ZIP
-gwtCl=$(ls -lrt $gwtPath | tail -n2 | head -n1 | sed -r 's/.*r([0-9]+).zip.*/\1/')
 maven-gwt "$gwtVersion" \
           "$gwtPath" \
-          "$gwtCl" \
 	  "$repoUrl" \
 	  "$repoId"
 

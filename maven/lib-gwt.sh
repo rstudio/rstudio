@@ -46,8 +46,6 @@ function maven-gwt() {
   shift
   local gwtSdkArchive=$1
   shift
-  local gwtCl=$1
-  shift
   local mavenRepoUrl=$1
   shift
   local mavenRepoId=$1
@@ -101,6 +99,7 @@ function maven-gwt() {
     
     # Get rid of the INDEX.LIST file, since it's going to be out of date
     # once we rename the jar files for Maven
+    echo "Removing INDEX.LIST from gwt-${i}"
     zip -d $CUR_FILE META-INF/INDEX.LIST
 
     SOURCES_FILE=gwt-${i}-sources.jar
