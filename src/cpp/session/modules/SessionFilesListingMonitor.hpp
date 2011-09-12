@@ -15,7 +15,6 @@
 #define SESSION_SESSION_FILES_LISTING_MONITOR_HPP
 
 #include <string>
-#include <set>
 #include <vector>
 
 #include <boost/utility.hpp>
@@ -60,7 +59,7 @@ public:
                                    core::json::JsonRpcFunctionContinuation cont);
 
 private:
-   // stateful callbacks for registration and unregistration
+   // stateful handlers for registration and unregistration
    void onRegistered(core::system::file_monitor::Handle handle,
                      const std::string& path,
                      const tree<core::FileInfo>& files,
@@ -88,7 +87,7 @@ private:
 
 private:
    std::string currentPath_;
-   std::set<core::system::file_monitor::Handle> activeHandles_;
+   core::system::file_monitor::Handle currentHandle_;
 };
 
 

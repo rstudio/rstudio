@@ -38,14 +38,13 @@ namespace files {
 void FilesListingMonitor::startMonitoring(const std::string& path,
                                           core::json::JsonRpcFunctionContinuation cont)
 {
-   // reset monitored path
+   // reset monitored path and unregister any existing handle
    currentPath_.clear();
-
-   // unregister any existing monitors
-   std::for_each(activeHandles_.begin(),
-                 activeHandles_.end(),
-                 core::system::file_monitor::unregisterMonitor);
-   activeHandles_.clear();
+   if (!currentHandle_.empty())
+   {
+      core::system::file_monitor::unregisterMonitor(currentHandle_);
+      currentHandle_ = core::system::file_monitor::Handle();
+   }
 
    // kickoff monitor
    core::system::file_monitor::Callbacks cb;
@@ -88,9 +87,9 @@ void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle
                                        const tree<core::FileInfo>& files,
                                        core::json::JsonRpcFunctionContinuation cont)
 {
-   // set path and add to our list of handles
+   // set path and current handle
    currentPath_ = path;
-   activeHandles_.insert(handle);
+   currentHandle_ = handle;
 
    // if there is a continuation then satisfy it
    if (cont)
@@ -109,7 +108,15 @@ void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle
 
 void FilesListingMonitor::onUnregistered(core::system::file_monitor::Handle handle)
 {
-   activeHandles_.erase(handle);
+   // typically we clear our internal state explicitly when a new registration
+   // comes in. however, it is possible that our monitor could be unregistered
+   // as a result of an error which occurs during monitoring. in this case
+   // we clear our state explicitly here as well
+   if (currentHandle_ == handle)
+   {
+      currentPath_.clear();
+      currentHandle_ = core::system::file_monitor::Handle();
+   }
 }
 
 
