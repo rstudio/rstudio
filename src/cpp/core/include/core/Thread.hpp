@@ -139,6 +139,18 @@ public:
       return false;
    }
 
+   bool isEmpty()
+   {
+      LOCK_MUTEX(*pMutex_)
+      {
+         return queue_.empty();
+      }
+      END_LOCK_MUTEX
+
+      // keep compiler happy
+      return true;
+   }
+
    bool deque(T* pVal, const boost::posix_time::time_duration& waitDuration)
    {
       // first see if we already have one
@@ -152,16 +164,23 @@ public:
          return false;
    }
 
-private:
-
-   bool wait(const boost::posix_time::time_duration& waitDuration)
+   bool wait(const boost::posix_time::time_duration& waitDuration =
+                boost::posix_time::time_duration(boost::posix_time::not_a_date_time))
    {
       using namespace boost;
       try
       {
          unique_lock<mutex> lock(*pMutex_);
-         system_time timeoutTime = get_system_time() + waitDuration;
-         return pWaitCondition_->timed_wait(lock, timeoutTime);
+         if (waitDuration.is_not_a_date_time())
+         {
+            pWaitCondition_->wait(lock);
+            return true;
+         }
+         else
+         {
+            system_time timeoutTime = get_system_time() + waitDuration;
+            return pWaitCondition_->timed_wait(lock, timeoutTime);
+         }
       }
       catch(const thread_resource_error& e)
       {

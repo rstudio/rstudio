@@ -470,13 +470,12 @@ CallbackQueue& callbackQueue()
 
 void checkForInput()
 {
-   // this function is called from the platform specific thread run-loop
-   // so we take as a chance to sleep for 100ms (so we don't spin and so
-   // we have a boost thread-interruption point)
-   boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-
+   // wait for up to 100ms for new input (we can't block indefinitely because this
+   // code runs within the context of the monitoring thread which also needs to free
+   // up so that filesystem change notifications can be received)
    RegistrationCommand command;
-   while (registrationCommandQueue().deque(&command))
+   while (registrationCommandQueue().deque(&command,
+                                           boost::posix_time::milliseconds(100)))
    {
       switch(command.type())
       {
@@ -516,8 +515,16 @@ void checkForInput()
 void fileMonitorThreadMain()
 {
    // run the file monitor thread
+   bool running = false;
    try
    {
+      // first wait until there is at least one command to process
+      // (makes us immediately responsive to the first request)
+      if (registrationCommandQueue().isEmpty())
+         registrationCommandQueue().wait();
+
+      // now run the monitoring thread
+      running = true;
       file_monitor::detail::run(boost::bind(checkForInput));   
    }
    catch(const boost::thread_interrupted& e)
@@ -539,7 +546,8 @@ void fileMonitorThreadMain()
 
       // allow the implementation a chance to stop completely (e.g. may
       // need to wait for pending async operations to complete)
-      detail::stop();
+      if (running)
+         detail::stop();
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
