@@ -43,7 +43,7 @@
   </target>
 
   <target name="validation" description="Build validation">
-    <gwt.ant dir="validation" />
+    <gwt.ant dir="validation" target="source" />
   </target>
 
   <target name="validationtck" description="Build validation TCK">

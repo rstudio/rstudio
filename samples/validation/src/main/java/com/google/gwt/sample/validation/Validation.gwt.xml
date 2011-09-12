@@ -13,6 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <module rename-to='validation'>
+
   <inherits name='com.google.gwt.rpc.RPC' />
   <inherits name='com.google.gwt.user.User' />
   <inherits name='com.google.gwt.user.theme.standard.Standard' />
@@ -22,6 +23,7 @@
 
   <source path='client' />
   <source path='shared' />
+  <!-- The super source files are in src/main/resources --> 
   <super-source path="super" />
 
   <!-- Specify the Validator for the Validation bootstrap to use. -->
