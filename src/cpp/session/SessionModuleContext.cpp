@@ -450,7 +450,7 @@ void onBackgroundProcessing(bool isIdle)
    processSupervisor().poll();
 
    // check for file monitor changes
-   system::file_monitor::checkForChanges();
+   core::system::file_monitor::checkForChanges();
 
    // fire event
    events().onBackgroundProcessing(isIdle);

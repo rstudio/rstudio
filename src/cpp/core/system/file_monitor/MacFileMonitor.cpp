@@ -298,7 +298,7 @@ void run(const boost::function<void()>& checkForInput)
       SInt32 reason = ::CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, true);
 
       // if we handled a source then run again
-      if (reason == kRunLoopRunHandledSource)
+      if (reason == kCFRunLoopRunHandledSource)
       {
          continue;
       }
