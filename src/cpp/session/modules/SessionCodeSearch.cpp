@@ -229,9 +229,12 @@ void searchSource(const std::string& term,
       return;
    }
 
+   // compute project max results based on existing results
+   std::size_t maxProjResults = maxResults - pItems->size();
+
    // now search the project (excluding contexts already searched in the source db)
    std::vector<r_util::RSourceItem> projItems;
-   searchProject(term, maxResults, prefixOnly, srcDBContexts, &projItems);
+   searchProject(term, maxProjResults, prefixOnly, srcDBContexts, &projItems);
 
    // add project items to the list
    BOOST_FOREACH(const r_util::RSourceItem& sourceItem, projItems)
