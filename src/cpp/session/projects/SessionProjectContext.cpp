@@ -20,6 +20,8 @@
 #include <core/FileSerializer.hpp>
 #include <core/r_util/RProjectFile.hpp>
 
+#include <core/system/FileMonitor.hpp>
+
 #include <r/RExec.hpp>
 
 #include <session/SessionUserSettings.hpp>
@@ -152,6 +154,11 @@ Error ProjectContext::startup(const FilePath& projectFile,
    scratchPath_ = scratchPath;
    config_ = config;
 
+   // assume true so that the initial files pane listing doesn't register a duplicate
+   // monitor. if it turns out to be false then this can be repaired by a single
+   // refresh of the files pane
+   hasFileMonitor_ = true;
+
    // return success
    return Success();
 
@@ -185,11 +192,55 @@ Error ProjectContext::initialize()
          ClientEvent event(client_events::kShowWarningBar, msgJson);
          module_context::enqueClientEvent(event);
       }
+
+      // kickoff file monitoring for this directory
+      system::file_monitor::Callbacks cb;
+      cb.onRegistered = boost::bind(&ProjectContext::onFileMonitorRegistered, this, _2);
+      cb.onRegistrationError = boost::bind(&ProjectContext::onFileMonitorRegistrationError,
+                                            this, _1);
+      cb.onUnregistered = boost::bind(&ProjectContext::onFileMonitorUnregistered, this);
+      cb.onMonitoringError = boost::bind(core::log::logError, _1, ERROR_LOCATION);
+      cb.onFilesChanged = boost::bind(module_context::enqueFileChangedEvents,
+                                       directory(), _1);
+      system::file_monitor::registerMonitor(directory(),
+                                            true,
+                                            module_context::fileListingFilter,
+                                            cb);
    }
 
    return Success();
 }
 
+
+void ProjectContext::onFileMonitorRegistered(const tree<core::FileInfo>& files)
+{
+   hasFileMonitor_ = true;
+
+   // TODO: scan files
+}
+
+void ProjectContext::onFileMonitorRegistrationError(const Error& error)
+{
+   LOG_ERROR(error);
+
+   hasFileMonitor_ = false;
+
+   // TODO: fire event to disable code search UI
+}
+
+void ProjectContext::onFileMonitorUnregistered()
+{
+   hasFileMonitor_ = false;
+
+   // TODO: fire event to disable code search UI (note: what happens if this event
+   // gets fired during shutdown -- I think we are ok because the client event
+   // service has already been stopped
+}
+
+bool ProjectContext::isMonitoringDirectory(const FilePath& dir) const
+{
+   return hasProject() && hasFileMonitor_ && dir.isWithin(directory());
+}
 
 std::string ProjectContext::defaultEncoding() const
 {

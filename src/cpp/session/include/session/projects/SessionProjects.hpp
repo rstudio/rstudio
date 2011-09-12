@@ -14,16 +14,22 @@
 #ifndef SESSION_PROJECTS_PROJECTS_HPP
 #define SESSION_PROJECTS_PROJECTS_HPP
 
+#include <vector>
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
 
+#include <core/FileInfo.hpp>
 #include <core/FilePath.hpp>
+
+#include <core/system/FileChangeEvent.hpp>
+
 #include <core/json/Json.hpp>
 
-#include <core/r_util/RProjectFile.hpp>
+#include <core/collection/Tree.hpp>
 
+#include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSourceIndex.hpp>
  
 namespace session {
@@ -32,7 +38,10 @@ namespace projects {
 class ProjectContext : boost::noncopyable
 {
 public:
-   ProjectContext() {}
+   ProjectContext()
+      : hasFileMonitor_(false)
+   {
+   }
    virtual ~ProjectContext() {}
 
    core::Error startup(const core::FilePath& projectFile,
@@ -42,6 +51,10 @@ public:
 
 public:
    bool hasProject() const { return !file_.empty(); }
+
+   // are we monitoring the specified directory? (used by other modules to
+   // suppress file monitoring if the project already has it covered)
+   bool isMonitoringDirectory(const core::FilePath& directory) const;
 
    const core::FilePath& file() const { return file_; }
    const core::FilePath& directory() const { return directory_; }
@@ -67,14 +80,22 @@ public:
    static core::r_util::RProjectConfig defaultConfig();
 
 private:
+   // file monitor event handlers
+   void onFileMonitorRegistered(const tree<core::FileInfo>& files);
+   void onFileMonitorRegistrationError(const core::Error& error);
+   void onFileMonitorUnregistered();
+
+private:
    core::FilePath file_;
    core::FilePath directory_;
    core::FilePath scratchPath_;
    core::r_util::RProjectConfig config_;
+   bool hasFileMonitor_;
    std::string defaultEncoding_;
 };
 
 const ProjectContext& projectContext();
+
 
 } // namespace projects
 } // namesapce session

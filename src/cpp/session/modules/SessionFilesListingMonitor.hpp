@@ -46,12 +46,14 @@ class FilesListingMonitor : boost::noncopyable
 {
 public:
    // kickoff monitoring and call the continuation (if specifed) once it's initialized
-   void startMonitoring(const std::string& path,
-                        core::json::JsonRpcFunctionContinuation cont =
+   void start(const core::FilePath& filePath,
+              core::json::JsonRpcFunctionContinuation cont =
                                           core::json::JsonRpcFunctionContinuation());
 
+   void stop();
+
    // what path are we currently monitoring?
-   const std::string& currentMonitoredPath() const;
+   const core::FilePath& currentMonitoredPath() const;
 
    // convenience method which is also called by listFiles for requests that
    // don't specify monitoring (e.g. file dialog listing)
@@ -61,7 +63,7 @@ public:
 private:
    // stateful handlers for registration and unregistration
    void onRegistered(core::system::file_monitor::Handle handle,
-                     const std::string& path,
+                     const core::FilePath& filePath,
                      const tree<core::FileInfo>& files,
                      core::json::JsonRpcFunctionContinuation cont);
 
@@ -69,24 +71,16 @@ private:
 
    // error during registration
    static void onRegistrationError(const core::Error& error,
-                                   const std::string& path,
+                                   const core::FilePath& filePath,
                                    core::json::JsonRpcFunctionContinuation cont);
 
-   // file change notification
-   static void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events);
-
-   // more helpers
-   static void enqueFileChangeEvent(const source_control::StatusResult& statusResult,
-                                    const core::system::FileChangeEvent& event);
-
+   // helpers
    static void fileListingResponse(const core::FilePath& rootPath,
                                    const std::vector<core::FilePath>& children,
                                    core::json::JsonRpcFunctionContinuation cont);
 
-   static bool fileEventFilter(const core::FileInfo& fileInfo);
-
 private:
-   std::string currentPath_;
+   core::FilePath currentPath_;
    core::system::file_monitor::Handle currentHandle_;
 };
 

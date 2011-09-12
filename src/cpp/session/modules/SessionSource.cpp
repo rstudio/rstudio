@@ -303,16 +303,19 @@ Error saveDocumentCore(const std::string& contents,
       if (error)
          return error ;
 
-      // enque file changed event
-      using core::system::FileChangeEvent;
-      FileChangeEvent changeEvent(newFile ? FileChangeEvent::FileAdded :
-                                            FileChangeEvent::FileModified,
-                                  FileInfo(fullDocPath));
-      source_control::VCSStatus vcsStatus;
-      error = source_control::fileStatus(fullDocPath, &vcsStatus);
-      if (error)
-         LOG_ERROR(error);
-      module_context::enqueFileChangedEvent(changeEvent, vcsStatus.status());
+      // enque file changed event if we need to
+      if (!module_context::isDirectoryMonitored(fullDocPath.parent()))
+      {
+         using core::system::FileChangeEvent;
+         FileChangeEvent changeEvent(newFile ? FileChangeEvent::FileAdded :
+                                               FileChangeEvent::FileModified,
+                                     FileInfo(fullDocPath));
+         source_control::VCSStatus vcsStatus;
+         error = source_control::fileStatus(fullDocPath, &vcsStatus);
+         if (error)
+            LOG_ERROR(error);
+         module_context::enqueFileChangedEvent(changeEvent, vcsStatus.status());
+      }
    }
 
    // always update the contents so it holds the original UTF-8 data

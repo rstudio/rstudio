@@ -35,32 +35,38 @@ namespace session {
 namespace modules { 
 namespace files {
 
-void FilesListingMonitor::startMonitoring(const std::string& path,
-                                          core::json::JsonRpcFunctionContinuation cont)
+void FilesListingMonitor::start(const FilePath& filePath,
+                                core::json::JsonRpcFunctionContinuation cont)
+{
+   // always stop existing
+   stop();
+
+   // kickoff new monitor
+   core::system::file_monitor::Callbacks cb;
+   cb.onRegistered = boost::bind(&FilesListingMonitor::onRegistered,
+                                    this, _1, filePath, _2, cont);
+   cb.onRegistrationError = boost::bind(onRegistrationError, _1, filePath, cont);
+   cb.onFilesChanged = boost::bind(module_context::enqueFileChangedEvents, filePath, _1);
+   cb.onMonitoringError = boost::bind(core::log::logError, _1, ERROR_LOCATION);
+   cb.onUnregistered = boost::bind(&FilesListingMonitor::onUnregistered, this, _1);
+   core::system::file_monitor::registerMonitor(filePath,
+                                               false,
+                                               module_context::fileListingFilter,
+                                               cb);
+}
+
+void FilesListingMonitor::stop()
 {
    // reset monitored path and unregister any existing handle
-   currentPath_.clear();
+   currentPath_ = FilePath();
    if (!currentHandle_.empty())
    {
       core::system::file_monitor::unregisterMonitor(currentHandle_);
       currentHandle_ = core::system::file_monitor::Handle();
    }
-
-   // kickoff monitor
-   core::system::file_monitor::Callbacks cb;
-   cb.onRegistered = boost::bind(&FilesListingMonitor::onRegistered,
-                                    this, _1, path, _2, cont);
-   cb.onRegistrationError = boost::bind(onRegistrationError, _1, path, cont);
-   cb.onFilesChanged = onFilesChanged;
-   cb.onMonitoringError = boost::bind(core::log::logError, _1, ERROR_LOCATION);
-   cb.onUnregistered = boost::bind(&FilesListingMonitor::onUnregistered, this, _1);
-   core::system::file_monitor::registerMonitor(core::FilePath(path),
-                                               false,
-                                               fileEventFilter,
-                                               cb);
 }
 
-const std::string& FilesListingMonitor::currentMonitoredPath() const
+const FilePath& FilesListingMonitor::currentMonitoredPath() const
 {
    return currentPath_;
 }
@@ -83,12 +89,12 @@ void FilesListingMonitor::fileListingResponse(
 }
 
 void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle,
-                                       const std::string& path,
+                                       const FilePath& filePath,
                                        const tree<core::FileInfo>& files,
                                        core::json::JsonRpcFunctionContinuation cont)
 {
    // set path and current handle
-   currentPath_ = path;
+   currentPath_ = filePath;
    currentHandle_ = handle;
 
    // if there is a continuation then satisfy it
@@ -102,7 +108,7 @@ void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle
                      core::toFilePath);
 
       // satisfy the continuation
-      fileListingResponse(core::FilePath(path), children, cont);
+      fileListingResponse(filePath, children, cont);
    }
 }
 
@@ -114,16 +120,15 @@ void FilesListingMonitor::onUnregistered(core::system::file_monitor::Handle hand
    // we clear our state explicitly here as well
    if (currentHandle_ == handle)
    {
-      currentPath_.clear();
+      currentPath_ = FilePath();
       currentHandle_ = core::system::file_monitor::Handle();
    }
 }
 
 
-void FilesListingMonitor::onRegistrationError(
-                                            const core::Error& error,
-                                            const std::string& path,
-                                            core::json::JsonRpcFunctionContinuation cont)
+void FilesListingMonitor::onRegistrationError(const Error& error,
+                                              const FilePath& filePath,
+                                              json::JsonRpcFunctionContinuation cont)
 {
    // always log the error
    LOG_ERROR(error);
@@ -133,37 +138,8 @@ void FilesListingMonitor::onRegistrationError(
    if (cont)
    {
       // retreive list of files
-      fileListingResponse(core::FilePath(path), cont);
+      fileListingResponse(filePath, cont);
    }
-}
-
-void FilesListingMonitor::onFilesChanged(
-                              const std::vector<core::system::FileChangeEvent>& events)
-{
-   if (events.empty())
-      return;
-
-   source_control::StatusResult statusResult;
-   core::Error error = source_control::status(
-         core::FilePath(events.front().fileInfo().absolutePath()).parent(),
-         &statusResult);
-   if (error)
-      LOG_ERROR(error);
-
-   // fire client events as necessary
-   std::for_each(events.begin(), events.end(), boost::bind(enqueFileChangeEvent,
-                                                           statusResult,
-                                                           _1));
-}
-
-void FilesListingMonitor::enqueFileChangeEvent(
-                                 const source_control::StatusResult& statusResult,
-                                 const core::system::FileChangeEvent& event)
-{
-   using namespace source_control;
-   core::FilePath filePath(event.fileInfo().absolutePath());
-   std::string vcsStatus = statusResult.getStatus(filePath).status();
-   module_context::enqueFileChangedEvent(event, vcsStatus);
 }
 
 
@@ -191,7 +167,7 @@ void FilesListingMonitor::fileListingResponse(
    {
       // files which may have been deleted after the listing or which
       // are not end-user visible
-      if (filePath.exists() && fileEventFilter(core::FileInfo(filePath)))
+      if (filePath.exists() && module_context::fileListingFilter(core::FileInfo(filePath)))
       {
          source_control::VCSStatus status = vcsStatus.getStatus(filePath);
          core::json::Object fileObject = module_context::createFileSystemItem(filePath);
@@ -205,29 +181,6 @@ void FilesListingMonitor::fileListingResponse(
    response.setResult(jsonFiles) ;
    cont(core::Success(), response);
 }
-
-
-bool FilesListingMonitor::fileEventFilter(const core::FileInfo& fileInfo)
-{
-   // check extension for special file types which are always visible
-   core::FilePath filePath(fileInfo.absolutePath());
-   std::string ext = filePath.extensionLowerCase();
-   if (ext == ".rprofile" ||
-       ext == ".rdata"    ||
-       ext == ".rhistory" ||
-       ext == ".renviron" )
-   {
-      return true;
-   }
-   else
-   {
-      return !filePath.isHidden();
-   }
-}
-
-
-
-
 
 
 } // namepsace files

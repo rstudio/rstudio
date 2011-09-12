@@ -49,6 +49,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 
+#include <session/projects/SessionProjects.hpp>
+
 #include "SessionFilesQuotas.hpp"
 #include "SessionFilesListingMonitor.hpp"
 
@@ -70,7 +72,7 @@ const char * const kMonitoredPath = "files.monitored-path";
 void onSuspend(Settings* pSettings)
 {
    // get monitored path and alias it
-   std::string monitoredPath = s_filesListingMonitor.currentMonitoredPath();
+   std::string monitoredPath = s_filesListingMonitor.currentMonitoredPath().absolutePath();
    if (!monitoredPath.empty())
    {
       monitoredPath = FilePath::createAliasedPath(FilePath(monitoredPath),
@@ -93,7 +95,7 @@ void onResume(const Settings& settings)
                                             module_context::userHomePath());
 
       // start monitoriing
-      s_filesListingMonitor.startMonitoring(resolvedPath.absolutePath());
+      s_filesListingMonitor.start(resolvedPath);
    }
 
    quotas::checkQuotaStatus();
@@ -152,11 +154,21 @@ void listFiles(const core::json::JsonRpcRequest& request,
    }
    FilePath targetPath = module_context::resolveAliasedPath(path) ;
    
-   // if this includes a request for monitoring then we simply start the monitor
-   // and allow its onRegistered callback to satisfy the request
+   // if this includes a request for monitoring
    if (monitor)
    {
-      s_filesListingMonitor.startMonitoring(targetPath.absolutePath(), cont);
+      // always stop existing if we have one
+      s_filesListingMonitor.stop();
+
+      // install a monitor only if we aren't already covered by the project monitor
+      if (!session::projects::projectContext().isMonitoringDirectory(targetPath))
+      {
+         s_filesListingMonitor.start(targetPath, cont);
+      }
+      else
+      {
+         FilesListingMonitor::fileListingResponse(targetPath, cont);
+      }
    }
    else
    {
@@ -783,6 +795,12 @@ SEXP rs_pathInfo(SEXP pathSEXP)
 }
 
 } // anonymous namespace
+
+bool isMonitoringDirectory(const FilePath& directory)
+{
+   FilePath monitoredPath = s_filesListingMonitor.currentMonitoredPath();
+   return !monitoredPath.empty() && (directory == monitoredPath);
+}
 
 Error initialize()
 {

@@ -212,9 +212,17 @@ core::Error sourceModuleRFile(const std::string& rSourceFile);
 // enque client events (note R methods can do this via .rs.enqueClientEvent)
 void enqueClientEvent(const ClientEvent& event);
 
-// enque file changed event
+// check whether a directory is currently being monitored by one of our subsystems
+bool isDirectoryMonitored(const core::FilePath& directory);
+
+// convenience method for filtering out file listing and changes
+bool fileListingFilter(const core::FileInfo& fileInfo);
+
+// enque file changed events
 void enqueFileChangedEvent(const core::system::FileChangeEvent& event,
                            const std::string& vcsStatus);
+void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
+                            const std::vector<core::system::FileChangeEvent>& events);
 
 // write output to the console (convenience wrapper for enquing a 
 // kConsoleWriteOutput event)

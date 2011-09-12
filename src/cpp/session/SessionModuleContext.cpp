@@ -53,6 +53,8 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "modules/SessionContentUrls.hpp"
+#include "modules/SessionSourceControl.hpp"
+#include "modules/SessionFiles.hpp"
 
 #include "config.h"
 
@@ -584,6 +586,30 @@ void enqueClientEvent(const ClientEvent& event)
    session::clientEventQueue().add(event);
 }
 
+bool isDirectoryMonitored(const FilePath& directory)
+{
+   return session::projects::projectContext().isMonitoringDirectory(directory) ||
+          session::modules::files::isMonitoringDirectory(directory);
+}
+
+bool fileListingFilter(const core::FileInfo& fileInfo)
+{
+   // check extension for special file types which are always visible
+   core::FilePath filePath(fileInfo.absolutePath());
+   std::string ext = filePath.extensionLowerCase();
+   if (ext == ".rprofile" ||
+       ext == ".rdata"    ||
+       ext == ".rhistory" ||
+       ext == ".renviron" )
+   {
+      return true;
+   }
+   else
+   {
+      return !filePath.isHidden();
+   }
+}
+
 // enque file changed event
 void enqueFileChangedEvent(const core::system::FileChangeEvent& event,
                            const std::string& vcsStatus)
@@ -600,6 +626,27 @@ void enqueFileChangedEvent(const core::system::FileChangeEvent& event,
    module_context::enqueClientEvent(clientEvent);
 }
 
+
+void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
+                            const std::vector<core::system::FileChangeEvent>& events)
+{
+   if (events.empty())
+      return;
+
+   // get vcs status in one shot
+   session::modules::source_control::StatusResult statusResult;
+   Error error = session::modules::source_control::status(vcsStatusRoot, &statusResult);
+   if (error)
+      LOG_ERROR(error);
+
+   // fire client events as necessary
+   BOOST_FOREACH(const system::FileChangeEvent& event, events)
+   {
+      core::FilePath filePath(event.fileInfo().absolutePath());
+      std::string vcsStatus = statusResult.getStatus(filePath).status();
+      module_context::enqueFileChangedEvent(event, vcsStatus);
+   }
+}
 
 // NOTE: we used to call explicitly back into r::session to write output
 // and errors however the fact that these functions are called from
