@@ -299,6 +299,11 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    public void setCode(String code, boolean preserveCursorPosition)
    {
+      // Filter out Escape characters that might have snuck in from an old
+      // bug in 0.95. We can choose to remove this when 0.95 ships, hopefully
+      // any documents that would be affected by this will be gone by then.
+      code = code.replaceAll("\u001B", "");
+
       final AceEditorNative ed = widget_.getEditor();
 
       if (preserveCursorPosition)
