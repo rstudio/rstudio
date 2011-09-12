@@ -149,7 +149,7 @@ void listFiles(const core::json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &path, &monitor);
    if (error)
    {
-      cont(error, boost::optional<core::json::JsonRpcResponse>());
+      cont(error, NULL);
       return;
    }
    FilePath targetPath = module_context::resolveAliasedPath(path) ;

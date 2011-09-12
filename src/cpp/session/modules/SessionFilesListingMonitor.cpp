@@ -81,7 +81,7 @@ void FilesListingMonitor::fileListingResponse(
    core::Error error = rootPath.children(&files) ;
    if (error)
    {
-      cont(error, boost::optional<core::json::JsonRpcResponse>());
+      cont(error, NULL);
       return;
    }
 
@@ -152,7 +152,7 @@ void FilesListingMonitor::fileListingResponse(
    core::Error error = source_control::status(rootPath, &vcsStatus);
    if (error)
    {
-      cont(error, boost::optional<core::json::JsonRpcResponse>());
+      cont(error, NULL);
       return;
    }
 
@@ -179,7 +179,7 @@ void FilesListingMonitor::fileListingResponse(
    // return listing
    core::json::JsonRpcResponse response;
    response.setResult(jsonFiles) ;
-   cont(core::Success(), response);
+   cont(core::Success(), &response);
 }
 
 
