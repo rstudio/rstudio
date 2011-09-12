@@ -50,6 +50,7 @@
 #include <core/gwt/GwtFileHandler.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
+#include <core/system/FileMonitor.hpp>
 #include <core/text/TemplateFilter.hpp>
 
 #include <r/RJsonRpc.hpp>
@@ -672,13 +673,6 @@ void prepareFork()
    if (boost::this_thread::get_id() != s_mainThreadId)
       return;
 
-   // if the main thread is being forked then it could be multicore
-   // (or another package which works in the same way). we don't want
-   // file monitoring objects inherited by the forked multicore child
-   // so we pause file monitoring in the parent first. we'll resume
-   // after the fork in the atForkParent call below.
-   session::modules::files::pauseDirectoryMonitor();
-
 }
 
 void atForkParent()
@@ -686,8 +680,6 @@ void atForkParent()
    if (boost::this_thread::get_id() != s_mainThreadId)
       return;
 
-   // resume monitoring
-   session::modules::files::resumeDirectoryMonitor();
 }
 
 void atForkChild()
@@ -1686,6 +1678,9 @@ void rCleanup(bool terminatedNormally)
          httpConnectionListener().stop();
       }
 
+      // stop the file monitor
+      core::system::file_monitor::stop();
+
       // terminate known child processes
       terminateAllChildren(&s_interruptableChildSupervisor,
                            ERROR_LOCATION);
@@ -2202,8 +2197,11 @@ int main (int argc, char * const argv[])
          Error error = systemError(boost::system::errc::permission_denied,
                                    ERROR_LOCATION);
          return sessionExitFailure(error, ERROR_LOCATION);
-      }   
-      
+      }
+
+      // start the file monitor
+      core::system::file_monitor::initialize();
+
       // initialize client event queue. this must be done very early
       // in main so that any other code which needs to enque an event
       // has access to the queue

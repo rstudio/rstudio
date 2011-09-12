@@ -40,6 +40,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionData.cpp
    modules/SessionDiff.cpp
    modules/SessionFiles.cpp
+   modules/SessionFilesListingMonitor.cpp
    modules/SessionFilesQuotas.cpp
    modules/SessionHelp.cpp
    modules/SessionHistory.cpp

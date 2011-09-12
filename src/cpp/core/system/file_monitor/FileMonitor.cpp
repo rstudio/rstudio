@@ -589,11 +589,11 @@ void enqueOnFilesChanged(const Callbacks& callbacks,
    }
 }
 
-void enqueOnUnregistered(const Callbacks& callbacks)
+void enqueOnUnregistered(const Callbacks& callbacks, Handle handle)
 {
    if (callbacks.onUnregistered)
    {
-      callbackQueue().enque(boost::bind(callbacks.onUnregistered));
+      callbackQueue().enque(boost::bind(callbacks.onUnregistered, handle));
    }
 }
 
@@ -638,7 +638,7 @@ void registerMonitor(const FilePath& filePath,
                                               callbacks,
                                               _1);
    qCallbacks.onFilesChanged = boost::bind(enqueOnFilesChanged, callbacks, _1);
-   qCallbacks.onUnregistered = boost::bind(enqueOnUnregistered, callbacks);
+   qCallbacks.onUnregistered = boost::bind(enqueOnUnregistered, callbacks, _1);
 
    // enque the registration
    registrationCommandQueue().enque(RegistrationCommand(filePath,

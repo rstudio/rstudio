@@ -11,6 +11,7 @@
  *
  */
 
+
 #include "SessionFiles.hpp"
 
 #include <csignal>
@@ -33,8 +34,6 @@
 #include <core/Exec.hpp>
 #include <core/DateTime.hpp>
 
-#include <core/system/DirectoryMonitor.hpp>
-
 #include <core/http/Util.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -49,8 +48,9 @@
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+
 #include "SessionFilesQuotas.hpp"
-#include "SessionSourceControl.hpp"
+#include "SessionFilesListingMonitor.hpp"
 
 using namespace core ;
 
@@ -61,66 +61,8 @@ namespace files {
 
 namespace {
 
-// record previously monitored path for restoration after pause
-std::string s_pausedDirectoryMonitorPath;
-
-const char * const kTargetFile = "targetFile";
-   
-void enqueFileChangeEvent(const source_control::StatusResult& statusResult,
-                          const core::system::FileChangeEvent& event)
-{
-   using namespace source_control;
-   FilePath filePath(event.fileInfo().absolutePath());
-   std::string vcsStatus = statusResult.getStatus(filePath).status();
-   module_context::enqueFileChangedEvent(event, vcsStatus);
-}
-   
-// NOTE: we explicitly fire removed events for directories because of
-// limitations in the way we use inotify in DirectoryMonitor. once we 
-// lift these restrictions we need to get rid of these explicit calls
-void enqueDirectoryRemovedEvent(const FileInfo& fileInfo)
-{
-   using core::system::FileChangeEvent;
-   enqueFileChangeEvent(source_control::StatusResult(),
-                        FileChangeEvent(FileChangeEvent::FileRemoved,
-                                        fileInfo));
-}
-
-bool isVisible(const FilePath& file)
-{
-   // check extension for special file types which are always visible
-   std::string ext = file.extensionLowerCase();
-   if (ext == ".rprofile" ||
-       ext == ".rdata"    ||
-       ext == ".rhistory" ||
-       ext == ".renviron" )
-   {
-      return true;
-   }
-   else
-   {
-      return !file.isHidden();
-   }
-}
-
-// directory monitor instance. the DirectoryMonitor is started when a 
-// call to list_files includes monitor=true or when a session which was
-// previously monitoring files is resumed
-core::system::DirectoryMonitor s_directoryMonitor;
- 
-bool fileEventFilter(const FileInfo& fileInfo)
-{
-   return isVisible(FilePath(fileInfo.absolutePath()));
-}
-   
-void startMonitoring(const std::string& path)
-{
-   Error error = s_directoryMonitor.start(path,
-                                          boost::bind(fileEventFilter, 
-                                                         _1));
-   if (error)
-      LOG_ERROR(error);
-}
+// monitor for file listings
+FilesListingMonitor s_filesListingMonitor;
 
 // make sure that monitoring persists accross suspended sessions
 const char * const kMonitoredPath = "files.monitored-path";   
@@ -128,12 +70,11 @@ const char * const kMonitoredPath = "files.monitored-path";
 void onSuspend(Settings* pSettings)
 {
    // get monitored path and alias it
-   std::string monitoredPath = s_directoryMonitor.path();
+   std::string monitoredPath = s_filesListingMonitor.currentMonitoredPath();
    if (!monitoredPath.empty())
    {
-      monitoredPath = FilePath::createAliasedPath(
-                                            FilePath(monitoredPath),
-                                            module_context::userHomePath());
+      monitoredPath = FilePath::createAliasedPath(FilePath(monitoredPath),
+                                                  module_context::userHomePath());
    }
 
    // set it
@@ -152,7 +93,7 @@ void onResume(const Settings& settings)
                                             module_context::userHomePath());
 
       // start monitoriing
-      startMonitoring(resolvedPath.absolutePath());
+      s_filesListingMonitor.startMonitoring(resolvedPath.absolutePath());
    }
 
    quotas::checkQuotaStatus();
@@ -163,37 +104,6 @@ void onClientInit()
    quotas::checkQuotaStatus();
 }
    
-void onDetectChanges(module_context::ChangeSource source)
-{
-   // poll for events
-   std::vector<core::system::FileChangeEvent> events;
-   Error error = s_directoryMonitor.checkForEvents(&events);
-   if (error)
-      LOG_ERROR(error);
-
-   if (events.empty())
-      return;
-
-   source_control::StatusResult statusResult;
-   error = source_control::status(
-         FilePath(events.front().fileInfo().absolutePath()).parent(),
-         &statusResult);
-   if (error)
-      LOG_ERROR(error);
-
-   // fire client events as necessary
-   std::for_each(events.begin(), events.end(), boost::bind(enqueFileChangeEvent,
-                                                           statusResult,
-                                                           _1));
-}
-   
-void onShutdown(bool terminatedNormally)
-{
-   Error error = s_directoryMonitor.stop();
-   if (error)
-      LOG_ERROR(error);
-}
-
 
 // extract a set of FilePath object from a list of home path relative strings
 Error extractFilePaths(const json::Array& files, 
@@ -228,58 +138,30 @@ core::Error stat(const json::JsonRpcRequest& request,
    return Success();
 }
    
-// IN: String path
-// OUT: Array<FileEntry> files
-core::Error listFiles(const json::JsonRpcRequest& request, 
-                      json::JsonRpcResponse* pResponse)
+void listFiles(const core::json::JsonRpcRequest& request,
+               core::json::JsonRpcFunctionContinuation cont)
 {
-   // get path
+   // get args
    std::string path;
    bool monitor;
    Error error = json::readParams(request.params, &path, &monitor);
    if (error)
-      return error ;
-   
-   // retreive list of files
-   FilePath targetPath = module_context::resolveAliasedPath(path) ;
-   std::vector<FilePath> files ;
-   error = targetPath.children(&files) ;
-   if (error)
-      return error ;
-
-   source_control::StatusResult vcsStatus;
-   error = source_control::status(targetPath, &vcsStatus);
-   if (error)
-      return error;
-
-   // sort the files by name
-   std::sort(files.begin(), files.end(), compareAbsolutePathNoCase);
-   
-   // produce json listing
-   json::Array jsonFiles ;
-   BOOST_FOREACH( FilePath& filePath, files )
    {
-      // files which may have been deleted after the listing or which
-      // are not end-user visible
-      if (filePath.exists() && isVisible(filePath))
-      {
-         source_control::VCSStatus status = vcsStatus.getStatus(filePath);
-         json::Object fileObject = module_context::createFileSystemItem(filePath);
-         fileObject["vcs_status"] = status.status();
-         jsonFiles.push_back(fileObject) ;
-      }
+      cont(error, boost::optional<core::json::JsonRpcResponse>());
+      return;
    }
-
-   // return listing
-   pResponse->setResult(jsonFiles) ;
+   FilePath targetPath = module_context::resolveAliasedPath(path) ;
    
-   // setup monitoring if requested (merely log errors so if something
-   // unexpected happens the user still gets the file listing)
+   // if this includes a request for monitoring then we simply start the monitor
+   // and allow its onRegistered callback to satisfy the request
    if (monitor)
-      startMonitoring(targetPath.absolutePath());
-   
-   // success
-   return Success();
+   {
+      s_filesListingMonitor.startMonitoring(targetPath.absolutePath(), cont);
+   }
+   else
+   {
+      FilesListingMonitor::fileListingResponse(targetPath, cont);
+   }
 }
 
 
@@ -330,17 +212,10 @@ core::Error deleteFiles(const core::json::JsonRpcRequest& request,
          it != filePaths.end();
          ++it)
    {    
-      // cache file info before we delete
-      FileInfo fileInfo(*it);
-     
       // remove the file
       deleteError = it->remove();
       if (deleteError)
          return deleteError ;
-      
-      // post delete event (inotify doesn't pick up folder deletes)
-      if (fileInfo.isDirectory())
-         enqueDirectoryRemovedEvent(fileInfo);
    }
 
    return Success() ;
@@ -442,19 +317,12 @@ Error moveFiles(const core::json::JsonRpcRequest& request,
          it = filePaths.begin();
          it != filePaths.end();
          ++it)
-   {
-      // cache FileInfo before deleting
-      FileInfo fileInfo(*it);
-      
+   {      
       // move the file
       FilePath targetPath = targetDirPath.childPath(it->filename()) ;
       Error moveError = it->move(targetPath) ;
       if (moveError)
          return moveError ;
-      
-      // enque delete event if necessary
-      if (fileInfo.isDirectory())
-         enqueDirectoryRemovedEvent(fileInfo);
    }
 
    return Success() ;
@@ -474,19 +342,12 @@ core::Error renameFile(const core::json::JsonRpcRequest& request,
     FilePath destPath = module_context::resolveAliasedPath(targetPath) ;
     if (destPath.exists())
        return fileExistsError(ERROR_LOCATION);
-  
-   // create file info now before we remove
-   FilePath sourcePath = module_context::resolveAliasedPath(path);
-   FileInfo sourceFileInfo(sourcePath);
-      
+
    // move the file
+   FilePath sourcePath = module_context::resolveAliasedPath(path);
    Error renameError = sourcePath.move(destPath);
    if (renameError)
       return renameError ;
-                           
-   // generate delete event for folders (inotify doesn't do this right now)
-   if (sourceFileInfo.isDirectory())
-      enqueDirectoryRemovedEvent(sourceFileInfo);
    
    return Success() ;
 }
@@ -923,26 +784,6 @@ SEXP rs_pathInfo(SEXP pathSEXP)
 
 } // anonymous namespace
 
-void pauseDirectoryMonitor()
-{
-   s_pausedDirectoryMonitorPath = s_directoryMonitor.path();
-   if (!s_pausedDirectoryMonitorPath.empty())
-   {
-      Error error = s_directoryMonitor.stop();
-      if (error)
-         LOG_ERROR(error);
-   }
-}
-
-void resumeDirectoryMonitor()
-{
-   if (!s_pausedDirectoryMonitorPath.empty())
-   {
-      startMonitoring(s_pausedDirectoryMonitorPath);
-      s_pausedDirectoryMonitorPath.clear();
-   }
-}
-
 Error initialize()
 {
    // register suspend handler
@@ -952,8 +793,6 @@ Error initialize()
    // subscribe to events
    using boost::bind;
    events().onClientInit.connect(bind(onClientInit));
-   events().onDetectChanges.connect(bind(onDetectChanges, _1));
-   events().onShutdown.connect(bind(onShutdown, _1));
 
    // register path info function
    R_CallMethodDef pathInfoMethodDef ;
@@ -967,7 +806,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "stat", stat))
-      (bind(registerRpcMethod, "list_files", listFiles))
+      (bind(registerAsyncRpcMethod, "list_files", listFiles))
       (bind(registerRpcMethod, "create_folder", createFolder))
       (bind(registerRpcMethod, "delete_files", deleteFiles))
       (bind(registerRpcMethod, "copy_file", copyFile))

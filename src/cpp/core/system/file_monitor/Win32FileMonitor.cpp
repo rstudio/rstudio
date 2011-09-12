@@ -406,7 +406,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
 
       // let the client know we are unregistered (note this call should always
       // be prior to delete pContext below!)
-      pContext->callbacks.onUnregistered();
+      pContext->callbacks.onUnregistered(pContext->handle);
 
       // we wait to delete the pContext until here because it owns the
       // OVERLAPPED structure and buffers, and so if we deleted it earlier

@@ -32,6 +32,7 @@
 #include <core/http/Util.hpp>
 
 #include <core/system/Process.hpp>
+#include <core/system/FileMonitor.hpp>
 #include <core/system/FileChangeEvent.hpp>
 
 #include <r/RSexp.hpp>
@@ -447,6 +448,9 @@ void onBackgroundProcessing(bool isIdle)
 {
    // allow process supervisor to poll for events
    processSupervisor().poll();
+
+   // check for file monitor changes
+   system::file_monitor::checkForChanges();
 
    // fire event
    events().onBackgroundProcessing(isIdle);

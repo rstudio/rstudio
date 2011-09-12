@@ -21,12 +21,12 @@
 #include <string>
 #include <iosfwd>
 
+#include <core/FilePath.hpp>
+
 // TODO: satisfy outselves that it is safe to query for symlink status
 // in all cases and eliminate its "optional" semantics
 
 namespace core {
-
-class FilePath;
 
 class FileInfo
 {
@@ -124,6 +124,11 @@ inline bool fileInfoPathLessThan(const FileInfo& a, const FileInfo& b)
 inline bool fileInfoHasPath(const FileInfo& fileInfo, const std::string& path)
 {
    return fileInfo.absolutePath() == path;
+}
+
+inline FilePath toFilePath(const FileInfo& fileInfo)
+{
+   return FilePath(fileInfo.absolutePath());
 }
    
 std::ostream& operator << (std::ostream& stream, const FileInfo& fileInfo) ;

@@ -70,6 +70,11 @@ struct Handle
              pData == other.pData;
    }
 
+   bool operator < (const Handle& other) const
+   {
+      return id < other.id;
+   }
+
    std::string id;
    void* pData;
 };
@@ -96,7 +101,7 @@ struct Callbacks
    //    - an explicit call to unregisterMonitor;
    //    - a monitoring error which caused an automatic unregistration; or
    //    - a call to the global file_monitor::stop function
-   boost::function<void()> onUnregistered;
+   boost::function<void(Handle)> onUnregistered;
 };
 
 // register a new file monitor. the result of this call will be an

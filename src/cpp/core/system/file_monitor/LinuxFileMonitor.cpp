@@ -212,7 +212,11 @@ Error addWatch(const FileInfo& fileInfo,
    // initialize watch
    int wd = ::inotify_add_watch(fd, fileInfo.absolutePath().c_str(), mask);
    if (wd < 0)
-      return systemError(errno, ERROR_LOCATION);
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", fileInfo.absolutePath());
+      return error;
+   }
 
    // record it
    pWatches->insert(Watch(wd, fileInfo.absolutePath()));
@@ -468,7 +472,7 @@ void unregisterMonitor(Handle handle)
 
    // let the client know we are unregistered (note this call should always
    // be prior to delete pContext below!)
-   pContext->callbacks.onUnregistered();
+   pContext->callbacks.onUnregistered(handle);
 
    // delete the context
    delete pContext;

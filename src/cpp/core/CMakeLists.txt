@@ -72,7 +72,6 @@ if (UNIX)
 
    # platform introspection
    check_symbol_exists(SA_NOCLDWAIT "signal.h" HAVE_SA_NOCLDWAIT)
-   check_function_exists(inotify_init1 HAVE_INOTIFY)
    check_symbol_exists(SO_PEERCRED "sys/socket.h" HAVE_SO_PEERCRED)
    check_function_exists(getpeereid HAVE_GETPEEREID)
    if(EXISTS "/proc/self")
@@ -100,13 +99,6 @@ if (UNIX)
       ${ZLIB_LIBRARIES}
       ${CORE_SERVICES_LIBRARY}
    )
-
-   # make directory monitor conditional
-   if(HAVE_INOTIFY)
-      set(DIRECTORY_MONITOR_CPP system/INotifyDirectoryMonitor.cpp)
-   else()
-      set(DIRECTORY_MONITOR_CPP system/DirectoryMonitor.cpp)
-   endif()
 
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
@@ -141,7 +133,6 @@ else()
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
       Win32StringUtils.cpp
-      system/DirectoryMonitor.cpp
       system/Win32FileScanner.cpp
       system/RegistryKey.cpp
       system/Win32ParentProcessMonitor.cpp

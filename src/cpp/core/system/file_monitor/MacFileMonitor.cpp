@@ -280,7 +280,7 @@ void unregisterMonitor(Handle handle)
 
    // let the client know we are unregistered (note this call should always
    // be prior to delete pContext below!)
-   pContext->callbacks.onUnregistered();
+   pContext->callbacks.onUnregistered(handle);
 
    // delete the context
    delete pContext;
