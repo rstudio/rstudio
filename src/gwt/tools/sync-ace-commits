@@ -26,6 +26,7 @@ git merge \
     origin/bugfix/search-regexp \
     origin/bugfix/selected-word-colors2 \
     origin/patch/scroll-granularity \
+    origin/patch/escape-characters \
 
 
 make clean
