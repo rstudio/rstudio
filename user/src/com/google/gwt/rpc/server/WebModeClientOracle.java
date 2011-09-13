@@ -383,12 +383,14 @@ public final class WebModeClientOracle extends ClientOracle implements
   @Override
   public String getTypeName(String seedName) {
     // TODO: Decide how to handle the no-metadata case
+    ClassData data = null;
     if (seedName.startsWith("Class$")) {
       seedName = seedName.substring(6);
-    }
-    ClassData data = seedNamesToClassData.get(seedName);
-    if (data == null) {
       data = seedIdsToClassData.get(seedName);
+    }
+
+    if (data == null) {
+      data = seedNamesToClassData.get(seedName);
     }
     return data == null ? null : data.typeName;
   }
