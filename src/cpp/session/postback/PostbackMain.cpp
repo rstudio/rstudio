@@ -46,17 +46,18 @@ int exitFailure(const Error& error)
 
 Error sendRequest(http::Request* pRequest, http::Response* pResponse)
 {
-   std::string portNum = system::getenv(kRSessionPortNumber);
+   std::string portNum = core::system::getenv(kRSessionPortNumber);
    if (!portNum.empty())
    {
-      pRequest->setHeader("X-Shared-Secret", system::getenv("RS_SHARED_SECRET"));
+      pRequest->setHeader("X-Shared-Secret",
+                          core::system::getenv("RS_SHARED_SECRET"));
       return http::sendRequest("127.0.0.1", portNum, *pRequest, pResponse);
    }
    else
    {
 #if !defined(_WIN32)
       // determine stream path
-      std::string userIdentity = system::getenv(kRStudioUserIdentity);
+      std::string userIdentity = core::system::getenv(kRStudioUserIdentity);
       FilePath streamPath = session::local_streams::streamPath(userIdentity);
 
       return http::sendRequest(streamPath, *pRequest, pResponse);

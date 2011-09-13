@@ -635,7 +635,7 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
 
    // try to find the common parent of the events
    FilePath commonParentPath = FilePath(events.front().fileInfo().absolutePath()).parent();
-   BOOST_FOREACH(const system::FileChangeEvent& event, events)
+   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
    {
       // if not within the common parent then revert to the vcs status root
       if (!FilePath(event.fileInfo().absolutePath()).isWithin(commonParentPath))
@@ -653,7 +653,7 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
       LOG_ERROR(error);
 
    // fire client events as necessary
-   BOOST_FOREACH(const system::FileChangeEvent& event, events)
+   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
    {
       core::FilePath filePath(event.fileInfo().absolutePath());
       std::string vcsStatus = statusResult.getStatus(filePath).status();

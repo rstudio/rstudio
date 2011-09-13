@@ -698,12 +698,12 @@ std::vector<FilePath> resolveAliasedPaths(json::Array paths)
 
 Error ensureSshAgentRunning()
 {
-   if (system::getenv("SSH_AUTH_SOCK").empty())
+   if (core::system::getenv("SSH_AUTH_SOCK").empty())
    {
-      system::ProcessResult result;
-      return system::runCommand(std::string("ssh-agent -s"),
-                                system::ProcessOptions(),
-                                &result);
+      core::system::ProcessResult result;
+      return core::system::runCommand(std::string("ssh-agent -s"),
+                                      core::system::ProcessOptions(),
+                                      &result);
    }
    return Success();
 }
@@ -1103,13 +1103,13 @@ void vcsExecuteCommand(const json::JsonRpcRequest& request,
          command));
 
    boost::shared_ptr<std::string> ptrBuffer(new std::string);
-   system::ProcessCallbacks processCallbacks;
+   core::system::ProcessCallbacks processCallbacks;
    processCallbacks.onStdout = boost::bind(vcsExecuteCommand_onStdOut,
                                            ptrBuffer, _2);
    processCallbacks.onExit = boost::bind(vcsExecuteCommand_onExit,
                                          ptrBuffer, _1, continuation);
    error = module_context::processSupervisor().runCommand(
-         command, system::ProcessOptions(), processCallbacks);
+         command, core::system::ProcessOptions(), processCallbacks);
 
    if (error)
    {
@@ -1156,9 +1156,9 @@ FilePath getTrueHomeDir()
 #if _WIN32
    // On Windows, R's idea of "$HOME" is not, by default, the same as
    // $USERPROFILE, which is what we want for ssh purposes
-   return FilePath(string_utils::systemToUtf8(system::getenv("USERPROFILE")));
+   return FilePath(string_utils::systemToUtf8(core::system::getenv("USERPROFILE")));
 #else
-   return FilePath(string_utils::systemToUtf8(system::getenv("HOME")));
+   return FilePath(string_utils::systemToUtf8(core::system::getenv("HOME")));
 #endif
 }
 
@@ -1170,7 +1170,7 @@ FilePath getTrueHomeDir()
 void postbackGitSSH_onSSHAddComplete(
       const module_context::PostbackHandlerContinuation& cont,
       const std::string& output,
-      const system::ProcessResult& result)
+      const core::system::ProcessResult& result)
 {
    cont(result.exitStatus, output);
 }
@@ -1277,7 +1277,7 @@ void postbackGitSSH(const std::string& argument,
    {
       std::string name = (*it).str(1);
       std::string value = (*it).str(2);
-      system::setenv(name, value);
+      core::system::setenv(name, value);
    }
 
    // Finally, call ssh-add, which will (probably) use git-
@@ -1302,7 +1302,7 @@ AskPassContinuations  s_askpassContinuations;
 void postbackSSHAskPass(const std::string& command,
                         const module_context::PostbackHandlerContinuation& cont)
 {
-   std::string handle = system::generateUuid();
+   std::string handle = core::system::generateUuid();
 
    s_askpassContinuations.insert(std::make_pair(handle, cont));
 
@@ -1370,7 +1370,7 @@ core::Error initialize()
                                                          &gitSshCmd);
    if (error)
       return error;
-   system::setenv("GIT_SSH", toBashPath(gitSshCmd));
+   core::system::setenv("GIT_SSH", toBashPath(gitSshCmd));
 
    std::string sshAskCmd;
    error = module_context::registerPostbackHandler("askpass",
@@ -1379,8 +1379,8 @@ core::Error initialize()
    if (error)
       return error;
    sshAskCmd = toBashPath(sshAskCmd);
-   system::setenv("SSH_ASKPASS", sshAskCmd);
-   system::setenv("GIT_ASKPASS", sshAskCmd);
+   core::system::setenv("SSH_ASKPASS", sshAskCmd);
+   core::system::setenv("GIT_ASKPASS", sshAskCmd);
 
 
    // install rpc methods

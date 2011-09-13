@@ -194,7 +194,7 @@ Error ProjectContext::initialize()
       }
 
       // kickoff file monitoring for this directory
-      system::file_monitor::Callbacks cb;
+      core::system::file_monitor::Callbacks cb;
       cb.onRegistered = boost::bind(&ProjectContext::onFileMonitorRegistered, this, _2);
       cb.onRegistrationError = boost::bind(&ProjectContext::onFileMonitorRegistrationError,
                                             this, _1);
@@ -202,7 +202,8 @@ Error ProjectContext::initialize()
       cb.onMonitoringError = boost::bind(core::log::logError, _1, ERROR_LOCATION);
       cb.onFilesChanged = boost::bind(module_context::enqueFileChangedEvents,
                                        directory(), _1);
-      system::file_monitor::registerMonitor(directory(),
+      core::system::file_monitor::registerMonitor(
+                                            directory(),
                                             true,
                                             module_context::fileListingFilter,
                                             cb);
