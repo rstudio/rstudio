@@ -25,6 +25,7 @@ import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.google.gwt.user.server.rpc.ServerCustomFieldSerializer;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Modifier;
@@ -463,6 +464,18 @@ public class SerializabilityUtil {
     SerializabilityUtil.resolveTypesWorker(methodType, resolvedTypes, true);
   }
 
+  /**
+   * Returns true if this field has an annotation named "GwtTransient".
+   */
+  static boolean hasGwtTransientAnnotation(Field field) {
+    for (Annotation a : field.getAnnotations()) {
+      if (a.annotationType().getSimpleName().equals(GwtTransient.class.getSimpleName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   static boolean isNotStaticTransientOrFinal(Field field) {
     /*
      * Only serialize fields that are not static, transient (including
@@ -470,7 +483,7 @@ public class SerializabilityUtil {
      */
     int fieldModifiers = field.getModifiers();
     return !Modifier.isStatic(fieldModifiers) && !Modifier.isTransient(fieldModifiers)
-        && !field.isAnnotationPresent(GwtTransient.class) && !Modifier.isFinal(fieldModifiers);
+        && !hasGwtTransientAnnotation(field) && !Modifier.isFinal(fieldModifiers);
   }
 
   /**

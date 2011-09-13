@@ -27,6 +27,10 @@ import java.lang.annotation.Target;
  * <code>transient</code> keyword should be used in preference to this
  * annotation. However, for types used with multiple serialization systems, it
  * can be useful.
+ * <p>
+ * Note that GWT will actually accept any annotation named GwtTransient for this
+ * purpose. This is done to allow libraries to support GWT serialization without
+ * creating a direct dependency on the GWT distribution.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

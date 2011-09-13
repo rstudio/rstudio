@@ -48,7 +48,6 @@ import com.google.gwt.user.rebind.rpc.testcases.client.NotAllSubtypesAreSerializ
 
 import junit.framework.TestCase;
 
-// import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -63,6 +62,7 @@ import java.util.TreeSet;
  * Used to test the {@link SerializableTypeOracleBuilder}.
  */
 public class SerializableTypeOracleBuilderTest extends TestCase {
+  
   /**
    * Just enough of a {@code GeneratorContext} to satisfy
    * {@code SerializableTypeOracleBuilder}.
@@ -127,6 +127,19 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   private static final int EXPOSURE_NONE = TypeParameterExposureComputer.EXPOSURE_NONE;
 
   private static TypeOracle sTypeOracle;
+
+  /**
+   * Mocks the source of the {@link GwtTransient} type in this package. 
+   */
+  private static void addCustomGwtTransient(Set<Resource> resources) {
+    StringBuffer code = new StringBuffer();
+    code.append("package com.google.gwt.user.rebind.rpc;\n");
+    code.append("import java.lang.annotation.Retention;");
+    code.append("import java.lang.annotation.RetentionPolicy;");
+    code.append("@Retention(RetentionPolicy.RUNTIME)");
+    code.append("public @interface GwtTransient { }\n");
+    resources.add(new StaticJavaResource("com.google.gwt.user.rebind.rpc.GwtTransient", code));
+  }
 
   private static void addGwtTransient(Set<Resource> resources) {
     StringBuffer code = new StringBuffer();
@@ -2077,6 +2090,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   public void testTransient() throws UnableToCompleteException, NotFoundException {
     Set<Resource> resources = new HashSet<Resource>();
     addStandardClasses(resources);
+    addCustomGwtTransient(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -2085,6 +2099,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class A implements Serializable {\n");
       code.append("  transient ServerOnly1 serverOnly1;\n");
       code.append("  @GwtTransient ServerOnly2 serverOnly2;\n");
+      code.append("  @com.google.gwt.user.rebind.rpc.GwtTransient ServerOnly3 serverOnly3;\n");
       code.append("}\n");
       resources.add(new StaticJavaResource("A", code));
     }
@@ -2105,12 +2120,21 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       resources.add(new StaticJavaResource("ServerOnly2", code));
     }
 
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("class ServerOnly3 implements Serializable {\n");
+      code.append("}\n");
+      resources.add(new StaticJavaResource("ServerOnly3", code));
+    }
+
     TreeLogger logger = createLogger();
     TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JClassType a = to.getType("A");
     JClassType serverOnly1 = to.getType("ServerOnly1");
     JClassType serverOnly2 = to.getType("ServerOnly2");
+    JClassType serverOnly3 = to.getType("ServerOnly3");
 
     SerializableTypeOracleBuilder sob = createSerializableTypeOracleBuilder(logger, to);
     sob.addRootType(logger, a);
@@ -2120,6 +2144,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     assertInstantiable(so, a);
     assertNotFieldSerializable(so, serverOnly1);
     assertNotFieldSerializable(so, serverOnly2);
+    assertNotFieldSerializable(so, serverOnly3);
   }
 
   /**

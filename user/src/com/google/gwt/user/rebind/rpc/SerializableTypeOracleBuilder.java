@@ -452,6 +452,15 @@ public class SerializableTypeOracleBuilder {
     return (JRealClassType) type;
   }
 
+  static boolean hasGwtTransientAnnotation(JField field) {
+    for (Annotation a : field.getAnnotations()) {
+      if (a.annotationType().getSimpleName().equals(GwtTransient.class.getSimpleName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * @param type the type to query
    * @return true if the type is annotated with @PersistenceCapable(...,
@@ -607,7 +616,7 @@ public class SerializableTypeOracleBuilder {
       return false;
     }
 
-    if (field.isAnnotationPresent(GwtTransient.class)) {
+    if (hasGwtTransientAnnotation(field)) {
       return false;
     }
 
