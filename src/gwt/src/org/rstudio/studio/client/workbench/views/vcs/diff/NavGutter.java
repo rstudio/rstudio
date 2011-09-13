@@ -69,6 +69,7 @@ public class NavGutter extends Composite implements ValueSink<ArrayList<ChunkOrL
             case Insertion:  colors.add(CssColor.make("#6F6")); break;
             case Deletion:   colors.add(CssColor.make("pink")); break;
             default:
+            case Comment:
             case Same:       colors.add(null); break;
          }
       }

@@ -49,6 +49,11 @@
    border-bottom: #E1938F solid selectionBorderWidth !important;
 }
 
+.comment {
+   background-color: #F0F0F0;
+   color: #777;
+}
+
 /* First column */
 .cellTableWidget > tbody > tr > td:first-child {
    text-align: right;

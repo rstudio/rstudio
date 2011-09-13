@@ -60,6 +60,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
       String same();
       String insertion();
       String deletion();
+      String comment();
 
       String actions();
       String lineActions();
@@ -190,6 +191,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
             Line line = object.getLine();
             return line == null ? "" :
                    line.getType() == Type.Insertion ? "" :
+                   line.getType() == Type.Comment ? "" :
                    intToString(line.getOldLine());
          }
       };
@@ -202,8 +204,9 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
          {
             Line line = object.getLine();
             return line == null ? "" :
-                   line.getType() == Type.Deletion ? ""
-                   : intToString(line.getNewLine());
+                   line.getType() == Type.Deletion ? "" :
+                   line.getType() == Type.Comment ? "" :
+                   intToString(line.getNewLine());
          }
       };
       addColumn(newCol);
@@ -250,6 +253,8 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
                      return prefix + res.cellTableStyle().insertion();
                   case Deletion:
                      return prefix + res.cellTableStyle().deletion();
+                  case Comment:
+                     return prefix + res.cellTableStyle().comment();
                   default:
                      return "";
                }

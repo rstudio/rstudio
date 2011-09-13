@@ -85,6 +85,7 @@ public class UnifiedEmitter
                case Same:       p.append(' '); break;
                case Insertion:  p.append('+'); break;
                case Deletion:   p.append('-'); break;
+               case Comment:    p.append('\\'); break;
                default:
                   throw new IllegalArgumentException();
             }
@@ -180,8 +181,14 @@ public class UnifiedEmitter
       // Clean up diffLines_ so it only contains lines that represent actual
       // changes. If we don't do this then the merge logic gets very confusing!
       for (int i = 0; i < diffLines_.size(); i++)
-         if (diffLines_.get(i).getType() == Type.Same)
-            diffLines_.remove(i--);
+      {
+         switch (diffLines_.get(i).getType())
+         {
+            case Same:
+            case Comment:
+               diffLines_.remove(i--);
+         }
+      }
 
       // Check to see if maybe there's nothing to do
       if (diffLines_.size() == 0)
@@ -273,7 +280,8 @@ public class UnifiedEmitter
       switch (ctx.getType())
       {
          case Same:
-            output.add(new Line(Type.Same, ctx.getOldLine(),
+         case Comment:
+            output.add(new Line(ctx.getType(), ctx.getOldLine(),
                                 ctx.getOldLine() + skew,
                                 ctx.getText()));
             break;

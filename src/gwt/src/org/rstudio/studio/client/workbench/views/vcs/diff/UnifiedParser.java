@@ -81,7 +81,7 @@ public class UnifiedParser
       int newRowsLeft = newCount;
 
       ArrayList<Line> lines = new ArrayList<Line>();
-      while (oldRowsLeft > 0 || newRowsLeft > 0)
+      while (oldRowsLeft > 0 || newRowsLeft > 0 || nextLineIsComment())
       {
          String diffLine = nextLine();
          if (diffLine == null)
@@ -114,6 +114,10 @@ public class UnifiedParser
                break;
             case '\\':
                // e.g. "\\ No newline at end of file"
+               lines.add(new Line(Type.Comment,
+                                  oldRow-1,
+                                  newRow-1,
+                                  diffLine.substring(1)));
                break;
             default:
                throw new DiffFormatException("Unexpected leading character");
@@ -132,6 +136,28 @@ public class UnifiedParser
       return pos_ >= data_.length();
    }
 
+   private boolean nextLineIsComment()
+   {
+      return !isEOL() && data_.charAt(pos_) == '\\';
+   }
+
+   private String peekLine()
+   {
+      if (isEOL())
+         return null;
+
+      Match match = newline_.match(data_, pos_);
+      if (match == null)
+      {
+         return data_.substring(pos_);
+      }
+      else
+      {
+         String value = data_.substring(pos_, match.getIndex());
+         return value;
+      }
+   }
+
    private String nextLine()
    {
       if (isEOL())
@@ -140,8 +166,9 @@ public class UnifiedParser
       Match match = newline_.match(data_, pos_);
       if (match == null)
       {
+         int pos = pos_;
          pos_ = data_.length();
-         return data_.substring(pos_);
+         return data_.substring(pos);
       }
       else
       {
