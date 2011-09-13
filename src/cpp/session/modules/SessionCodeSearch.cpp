@@ -49,6 +49,12 @@
 
 // TODO: faster search for removed items
 
+// TODO: some kind of scanning progress ui
+
+// TODO: enable/disable of code searching / file-mon in project prefs
+
+// TODO: some type of integration with editor (detect change, etc.)
+
 
 using namespace core ;
 
