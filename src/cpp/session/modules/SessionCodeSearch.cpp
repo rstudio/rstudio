@@ -58,33 +58,45 @@ public:
    {
    }
 
-
-   void enqueAdd(const core::FileInfo& fileInfo)
+   virtual ~SourceFileIndex()
    {
-      using namespace core::system;
-      enqueChangeEvent(FileChangeEvent(FileChangeEvent::FileAdded, fileInfo));
    }
 
-   void enqueChangeEvent(const core::system::FileChangeEvent& event)
+   // COPYING: prohibited
+
+   template <typename ForwardIterator>
+   void enqueFiles(ForwardIterator begin, ForwardIterator end)
+   {
+      // note whether we had anything in the queue before we start
+      // (if we don't then we'll schedule indexing after the add)
+      bool schedule = indexingQueue_.empty();
+
+      // enque change events (but don't schedule indexing)
+      using namespace core::system;
+      for ( ; begin != end; ++begin)
+         enqueFileChange(FileChangeEvent(FileChangeEvent::FileAdded, *begin), false);
+
+      // schedule indexing if necessary
+      if (schedule)
+         scheduleIndexing();
+   }
+
+   void enqueFileChange(const core::system::FileChangeEvent& event, bool schedule)
    {
       // screen out files which aren't R source files
       FilePath filePath(event.fileInfo().absolutePath());
       if (filePath.isDirectory() || filePath.extensionLowerCase() != ".r")
          return;
 
+      // note whether we need to schedule after we are done
+      schedule = schedule && indexingQueue_.empty();
+
       // add to the queue
       indexingQueue_.push(event);
 
-      // if there was nothing in the queue prior to this then kickoff
-      // an indexing operation (this will continue until there is
-      // nothing left in the queue)
-      if (indexingQueue_.size() == 1)
-      {
-         // schedule indexing (allow up to 100ms of indexing at a time before yielding)
-         module_context::scheduleIncrementalWork(
-                           boost::posix_time::milliseconds(100),
-                           boost::bind(&SourceFileIndex::dequeAndIndex, this));
-      }
+      // schedule indexing if necessary
+      if (schedule)
+         scheduleIndexing();
    }
 
    void searchSource(const std::string& term,
@@ -199,6 +211,18 @@ private:
    };
 
 private:
+
+   void scheduleIndexing()
+   {
+      // schedule indexing -- perform up to 300ms of work immediately and then continue
+      // in periodic 100ms chunks until we are completed. note also that we accept the
+      // default behavior of only indexing during idle time so as not to interfere
+      // with running computations
+      module_context::scheduleIncrementalWork(
+                        boost::posix_time::milliseconds(300),
+                        boost::posix_time::milliseconds(100),
+                        boost::bind(&SourceFileIndex::dequeAndIndex, this));
+   }
 
    bool dequeAndIndex()
    {
@@ -468,9 +492,7 @@ Error searchCode(const json::JsonRpcRequest& request,
 
 void onFileMonitorRegistered(const tree<core::FileInfo>& files)
 {
-   std::for_each(files.begin_leaf(),
-                 files.end_leaf(),
-                 boost::bind(&SourceFileIndex::enqueAdd, &s_projectIndex, _1));
+   s_projectIndex.enqueFiles(files.begin_leaf(), files.end_leaf());
 }
 
 void onFileMonitorRegistrationError(const core::Error& error)
@@ -486,9 +508,10 @@ void onFileMonitorUnregistered()
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
    // index all of the changes
-   std::for_each(events.begin(),
-                 events.end(),
-                 boost::bind(&SourceFileIndex::enqueChangeEvent, &s_projectIndex, _1));
+   std::for_each(
+         events.begin(),
+         events.end(),
+         boost::bind(&SourceFileIndex::enqueFileChange, &s_projectIndex, _1, true));
 }
 
    
