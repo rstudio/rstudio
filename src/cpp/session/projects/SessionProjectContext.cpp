@@ -192,55 +192,85 @@ Error ProjectContext::initialize()
          ClientEvent event(client_events::kShowWarningBar, msgJson);
          module_context::enqueClientEvent(event);
       }
-
-      // kickoff file monitoring for this directory
-      core::system::file_monitor::Callbacks cb;
-      cb.onRegistered = boost::bind(&ProjectContext::onFileMonitorRegistered, this, _2);
-      cb.onRegistrationError = boost::bind(&ProjectContext::onFileMonitorRegistrationError,
-                                            this, _1);
-      cb.onUnregistered = boost::bind(&ProjectContext::onFileMonitorUnregistered, this);
-      cb.onMonitoringError = boost::bind(core::log::logError, _1, ERROR_LOCATION);
-      cb.onFilesChanged = boost::bind(module_context::enqueFileChangedEvents,
-                                       directory(), _1);
-      core::system::file_monitor::registerMonitor(
-                                            directory(),
-                                            true,
-                                            module_context::fileListingFilter,
-                                            cb);
    }
+
+   // subscribe to deferred init (for initializing our file monitor)
+   module_context::events().onDeferredInit.connect(
+                                 boost::bind(&ProjectContext::onDeferredInit, this));
 
    return Success();
 }
 
 
-void ProjectContext::onFileMonitorRegistered(const tree<core::FileInfo>& files)
+void ProjectContext::onDeferredInit()
+{
+   // kickoff file monitoring for this directory
+   core::system::file_monitor::Callbacks cb;
+   cb.onRegistered = boost::bind(&ProjectContext::fileMonitorRegistered, this, _1, _2);
+   cb.onRegistrationError = boost::bind(&ProjectContext::fileMonitorRegistrationError,
+                                        this, _1);
+   cb.onMonitoringError = boost::bind(&ProjectContext::fileMonitorMonitoringError,
+                                      this, _1);
+   cb.onFilesChanged = boost::bind(&ProjectContext::fileMonitorFilesChanged, this, _1);
+   cb.onUnregistered = boost::bind(&ProjectContext::fileMonitorUnregistered, this, _1);
+   core::system::file_monitor::registerMonitor(
+                                         directory(),
+                                         true,
+                                         module_context::fileListingFilter,
+                                         cb);
+}
+
+void ProjectContext::fileMonitorRegistered(core::system::file_monitor::Handle handle,
+                                           const tree<core::FileInfo>& files)
 {
    hasFileMonitor_ = true;
-
-   // TODO: scan files
+   onFileMonitorRegistered_(handle, files);
 }
 
-void ProjectContext::onFileMonitorRegistrationError(const Error& error)
+void ProjectContext::fileMonitorRegistrationError(const Error& error)
 {
    LOG_ERROR(error);
-
    hasFileMonitor_ = false;
-
-   // TODO: fire event to disable code search UI
+   onFileMonitorRegistrationError_(error);
 }
 
-void ProjectContext::onFileMonitorUnregistered()
+void ProjectContext::fileMonitorMonitoringError(const Error& error)
+{
+   LOG_ERROR(error);
+   onMonitoringError_(error);
+}
+
+void ProjectContext::fileMonitorFilesChanged(
+                           const std::vector<core::system::FileChangeEvent>& events)
+{
+   module_context::enqueFileChangedEvents(directory(), events);
+   onFilesChanged_(events);
+}
+
+void ProjectContext::fileMonitorUnregistered(core::system::file_monitor::Handle handle)
 {
    hasFileMonitor_ = false;
-
-   // TODO: fire event to disable code search UI (note: what happens if this event
-   // gets fired during shutdown -- I think we are ok because the client event
-   // service has already been stopped
+   onFileMonitorUnregistered_(handle);
 }
 
 bool ProjectContext::isMonitoringDirectory(const FilePath& dir) const
 {
-   return hasProject() && hasFileMonitor_ && dir.isWithin(directory());
+   return hasProject() && hasFileMonitor() && dir.isWithin(directory());
+}
+
+void ProjectContext::registerFileMonitorCallbacks(
+                              const core::system::file_monitor::Callbacks& cb)
+{
+   if (cb.onRegistered)
+      onFileMonitorRegistered_.connect(cb.onRegistered);
+   if (cb.onRegistrationError)
+      onFileMonitorRegistrationError_.connect(cb.onRegistrationError);
+   if (cb.onMonitoringError)
+      onMonitoringError_.connect(cb.onMonitoringError);
+   if (cb.onFilesChanged)
+      onFilesChanged_.connect(cb.onFilesChanged);
+   if (cb.onUnregistered)
+      onFileMonitorUnregistered_.connect(cb.onUnregistered);
 }
 
 std::string ProjectContext::defaultEncoding() const

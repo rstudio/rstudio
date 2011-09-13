@@ -268,7 +268,7 @@ Error initialize()
    return initBlock.execute();
 }
 
-const ProjectContext& projectContext()
+ProjectContext& projectContext()
 {
    return s_projectContext;
 }

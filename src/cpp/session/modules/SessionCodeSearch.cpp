@@ -30,6 +30,9 @@
 
 #include <core/r_util/RSourceIndex.hpp>
 
+#include <core/system/FileChangeEvent.hpp>
+#include <core/system/FileMonitor.hpp>
+
 #include <R_ext/rlocale.h>
 
 #include <session/SessionUserSettings.hpp>
@@ -39,6 +42,7 @@
 
 #include "SessionSource.hpp"
 
+
 using namespace core ;
 
 namespace session {  
@@ -47,95 +51,244 @@ namespace code_search {
 
 namespace {
 
-std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > s_sourceIndexes;
-
-class SourceFileIndexer : boost::noncopyable
+class SourceFileIndex : boost::noncopyable
 {
 public:
-   SourceFileIndexer()
-      : encoding_(projects::projectContext().defaultEncoding()),
-        projectRootDir_(projects::projectContext().directory()),
-        dirIter_(projectRootDir_)
+   SourceFileIndex()
    {
    }
 
-   virtual ~SourceFileIndexer()
+
+   void enqueAdd(const core::FileInfo& fileInfo)
    {
+      using namespace core::system;
+      enqueChangeEvent(FileChangeEvent(FileChangeEvent::FileAdded, fileInfo));
    }
 
-public:
-   bool indexNextFile()
+   void enqueChangeEvent(const core::system::FileChangeEvent& event)
    {
-      // see if we are finished
-      if (dirIter_.finished())
-         return false;
+      // screen out files which aren't R source files
+      FilePath filePath(event.fileInfo().absolutePath());
+      if (filePath.isDirectory() || filePath.extensionLowerCase() != ".r")
+         return;
 
-      // get next file
-      FilePath filePath;
-      Error error = dirIter_.next(&filePath);
-      if (error)
+      // add to the queue
+      indexingQueue_.push(event);
+
+      // if there was nothing in the queue prior to this then kickoff
+      // an indexing operation (this will continue until there is
+      // nothing left in the queue)
+      if (indexingQueue_.size() == 1)
       {
-         LOG_ERROR(error);
-         return false;
+         // schedule indexing (allow up to 100ms of indexing at a time before yielding)
+         module_context::scheduleIncrementalWork(
+                           boost::posix_time::milliseconds(100),
+                           boost::bind(&SourceFileIndex::dequeAndIndex, this));
       }
-
-      // index
-      indexProjectFile(filePath);
-
-      // return status
-      return !dirIter_.finished();
    }
 
-private:
-
-   void indexProjectFile(const FilePath& filePath)
+   void searchSource(const std::string& term,
+                     std::size_t maxResults,
+                     bool prefixOnly,
+                     const std::set<std::string>& excludeContexts,
+                     std::vector<r_util::RSourceItem>* pItems)
    {
-      if (isRSourceFile(filePath))
+      BOOST_FOREACH(const Entry& entry, entries_)
       {
-         // read the file
-         std::string code;
-         Error error = module_context::readAndDecodeFile(filePath,
-                                                         encoding_,
-                                                         true,
-                                                         &code);
-         if (error)
+         // bail if this is an exluded context
+         if (excludeContexts.find(entry.pIndex->context()) != excludeContexts.end())
+            continue;
+
+         // scan the next index
+         entry.pIndex->search(term,
+                              prefixOnly,
+                              false,
+                              std::back_inserter(*pItems));
+
+         // return if we are past maxResults
+         if (pItems->size() >= maxResults)
          {
-            error.addProperty("src-file", filePath.absolutePath());
-            LOG_ERROR(error);
+            pItems->resize(maxResults);
             return;
          }
-
-         // compute project relative directory (used for context)
-         std::string context = filePath.relativePath(projectRootDir_);
-
-         // index the source
-         s_sourceIndexes.push_back(boost::shared_ptr<r_util::RSourceIndex>(
-                                       new r_util::RSourceIndex(context, code)));
       }
    }
 
-   static bool isRSourceFile(const FilePath& filePath)
+   void searchFiles(const std::string& term,
+                    std::size_t maxResults,
+                    bool prefixOnly,
+                    json::Array* pNames,
+                    json::Array* pPaths,
+                    bool* pMoreAvailable)
    {
-      return !filePath.isDirectory() && (filePath.extensionLowerCase() == ".r");
+      // default to no more available
+      *pMoreAvailable = false;
+
+      // create wildcard pattern if the search has a '*'
+      bool hasWildcard = term.find('*') != std::string::npos;
+      boost::regex pattern;
+      if (hasWildcard)
+         pattern = regex_utils::wildcardPatternToRegex(term);
+
+      // iterate over the files
+      FilePath projectRoot = projects::projectContext().directory();
+      BOOST_FOREACH(const Entry& entry, entries_)
+      {
+         // get the next file
+         FilePath filePath(entry.fileInfo.absolutePath());
+
+         // get name for comparison
+         std::string name = filePath.filename();
+
+         // compare for match (wildcard or standard)
+         bool matches = false;
+         if (hasWildcard)
+         {
+            matches = regex_utils::textMatches(name,
+                                               pattern,
+                                               prefixOnly,
+                                               false);
+         }
+         else
+         {
+            if (prefixOnly)
+               matches = boost::algorithm::istarts_with(name, term);
+            else
+               matches = boost::algorithm::icontains(name, term);
+         }
+
+         // add the file if we found a match
+         if (matches)
+         {
+            // name and project relative directory
+            pNames->push_back(filePath.filename());
+            pPaths->push_back(filePath.relativePath(projectRoot));
+
+            // return if we are past max results
+            if (pNames->size() > maxResults)
+            {
+               *pMoreAvailable = true;
+               pNames->resize(maxResults);
+               pPaths->resize(maxResults);
+               return;
+            }
+         }
+
+      }
    }
 
 private:
-   std::string encoding_;
-   FilePath projectRootDir_;
-   RecursiveDirectoryIterator dirIter_;
+
+   // index entries we are managing
+   struct Entry
+   {
+      Entry(const FileInfo& fileInfo,
+            boost::shared_ptr<core::r_util::RSourceIndex> pIndex)
+         : fileInfo(fileInfo), pIndex(pIndex)
+      {
+      }
+
+      FileInfo fileInfo;
+
+      boost::shared_ptr<core::r_util::RSourceIndex> pIndex;
+
+      bool operator < (const Entry& other) const
+      {
+         return core::fileInfoPathLessThan(fileInfo, other.fileInfo);
+      }
+   };
+
+private:
+
+   bool dequeAndIndex()
+   {
+      using namespace core::system;
+
+      // remove the event from the queue
+      FileChangeEvent event = indexingQueue_.front();
+      indexingQueue_.pop();
+
+      // process the change
+      const FileInfo& fileInfo = event.fileInfo();
+      switch(event.type())
+      {
+         case FileChangeEvent::FileAdded:
+         {
+            addIndexEntry(fileInfo);
+            break;
+         }
+
+         case FileChangeEvent::FileModified:
+         {
+            removeIndexEntry(fileInfo);
+            addIndexEntry(fileInfo);
+            break;
+         }
+
+         case FileChangeEvent::FileRemoved:
+         {
+            removeIndexEntry(fileInfo);
+            break;
+         }
+
+         case FileChangeEvent::None:
+            break;
+      }
+
+      // return status
+      return !indexingQueue_.empty();
+   }
+
+   void addIndexEntry(const FileInfo& fileInfo)
+   {
+      // read the file
+      FilePath filePath(fileInfo.absolutePath());
+      std::string code;
+      Error error = module_context::readAndDecodeFile(
+                              filePath,
+                              projects::projectContext().defaultEncoding(),
+                              true,
+                              &code);
+      if (error)
+      {
+         error.addProperty("src-file", filePath.absolutePath());
+         LOG_ERROR(error);
+         return;
+      }
+
+      // compute project relative directory (used for context)
+      std::string context = filePath.relativePath(projects::projectContext().directory());
+
+      // index the source
+      boost::shared_ptr<r_util::RSourceIndex> pIndex(
+                                          new r_util::RSourceIndex(context, code));
+
+      // add the entry
+      entries_.insert(Entry(fileInfo, pIndex));
+   }
+
+   void removeIndexEntry(const FileInfo& fileInfo)
+   {
+      for (std::set<Entry>::iterator it = entries_.begin(); it != entries_.end(); ++it)
+      {
+         if (core::fileInfoPathCompare(it->fileInfo, fileInfo) == 0)
+         {
+            entries_.erase(it);
+            break;
+         }
+      }
+   }
+
+private:
+   // index entries
+   std::set<Entry> entries_;
+
+   // indexing queue
+   std::queue<core::system::FileChangeEvent> indexingQueue_;
 };
 
-void indexProjectFiles()
-{
-   // create indexer
-   boost::shared_ptr<SourceFileIndexer> pIndexer(new SourceFileIndexer());
-
-   // schedule indexing to occur up front + at idle time
-   module_context::scheduleIncrementalWork(
-         boost::posix_time::milliseconds(200),
-         boost::posix_time::milliseconds(20),
-         boost::bind(&SourceFileIndexer::indexNextFile, pIndexer));
-}
+// global source file index
+SourceFileIndex s_projectIndex;
 
 
 void searchSourceDatabase(const std::string& term,
@@ -180,34 +333,6 @@ void searchSourceDatabase(const std::string& term,
    }
 }
 
-void searchProject(const std::string& term,
-                   std::size_t maxResults,
-                   bool prefixOnly,
-                   const std::set<std::string>& excludeContexts,
-                   std::vector<r_util::RSourceItem>* pItems)
-{
-   BOOST_FOREACH(const boost::shared_ptr<core::r_util::RSourceIndex>& pIndex,
-                 s_sourceIndexes)
-   {
-      // bail if this is an exluded context
-      if (excludeContexts.find(pIndex->context()) != excludeContexts.end())
-         continue;
-
-      // scan the next index
-      pIndex->search(term,
-                     prefixOnly,
-                     false,
-                     std::back_inserter(*pItems));
-
-      // return if we are past maxResults
-      if (pItems->size() >= maxResults)
-      {
-         pItems->resize(maxResults);
-         return;
-      }
-   }
-}
-
 void searchSource(const std::string& term,
                   std::size_t maxResults,
                   bool prefixOnly,
@@ -234,7 +359,11 @@ void searchSource(const std::string& term,
 
    // now search the project (excluding contexts already searched in the source db)
    std::vector<r_util::RSourceItem> projItems;
-   searchProject(term, maxProjResults, prefixOnly, srcDBContexts, &projItems);
+   s_projectIndex.searchSource(term,
+                               maxProjResults,
+                               prefixOnly,
+                               srcDBContexts,
+                               &projItems);
 
    // add project items to the list
    BOOST_FOREACH(const r_util::RSourceItem& sourceItem, projItems)
@@ -252,87 +381,6 @@ void searchSource(const std::string& term,
    }
 }
 
-
-void searchFiles(const std::string& term,
-                 std::size_t maxResults,
-                 bool prefixOnly,
-                 json::Array* pNames,
-                 json::Array* pPaths,
-                 bool* pMoreAvailable)
-{
-   // default to no more available
-   *pMoreAvailable = false;
-
-   // search from project root
-   FilePath rootDir = projects::projectContext().directory();
-
-    // create wildcard pattern if the search has a '*'
-   bool hasWildcard = term.find('*') != std::string::npos;
-   boost::regex pattern;
-   if (hasWildcard)
-      pattern = regex_utils::wildcardPatternToRegex(term);
-
-   // iterate over project files
-   FilePath filePath;
-   RecursiveDirectoryIterator dirIter(rootDir);
-   while (!dirIter.finished())
-   {
-      // get the next file
-      Error error = dirIter.next(&filePath);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-
-      // filter directories
-      if (filePath.isDirectory())
-         continue;
-
-      // filter file extensions
-      std::string ext = filePath.extensionLowerCase();
-      if (ext != ".r")
-         continue;
-
-      // get name for comparison
-      std::string name = filePath.filename();
-
-      // compare for match (wildcard or standard)
-      bool matches = false;
-      if (hasWildcard)
-      {
-         matches = regex_utils::textMatches(name,
-                                            pattern,
-                                            prefixOnly,
-                                            false);
-      }
-      else
-      {
-         if (prefixOnly)
-            matches = boost::algorithm::istarts_with(name, term);
-         else
-            matches = boost::algorithm::icontains(name, term);
-      }
-
-      // add the file if we found a match
-      if (matches)
-      {
-         // name and project relative directory
-         pNames->push_back(filePath.filename());
-         pPaths->push_back(filePath.relativePath(rootDir));
-
-         // return if we are past max results
-         if (pNames->size() > maxResults)
-         {
-            *pMoreAvailable = true;
-            pNames->resize(maxResults);
-            pPaths->resize(maxResults);
-            return;
-         }
-      }
-
-   }
-}
 
 
 template <typename TValue, typename TFunc>
@@ -373,12 +421,12 @@ Error searchCode(const json::JsonRpcRequest& request,
    json::Array names;
    json::Array paths;
    bool moreFilesAvailable = false;
-   searchFiles(term,
-               maxResults,
-               true,
-               &names,
-               &paths,
-               &moreFilesAvailable);
+   s_projectIndex.searchFiles(term,
+                              maxResults,
+                              true,
+                              &names,
+                              &paths,
+                              &moreFilesAvailable);
    json::Object files;
    files["filename"] = names;
    files["path"] = paths;
@@ -418,12 +466,31 @@ Error searchCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void onDeferredInit()
+void onFileMonitorRegistered(const tree<core::FileInfo>& files)
 {
-   // initialize source index
-   if (code_search::enabled())
-      indexProjectFiles();
+   std::for_each(files.begin_leaf(),
+                 files.end_leaf(),
+                 boost::bind(&SourceFileIndex::enqueAdd, &s_projectIndex, _1));
 }
+
+void onFileMonitorRegistrationError(const core::Error& error)
+{
+   // TODO: disable code searching
+}
+
+void onFileMonitorUnregistered()
+{
+   // TODO: disable code searching
+}
+
+void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   // index all of the changes
+   std::for_each(events.begin(),
+                 events.end(),
+                 boost::bind(&SourceFileIndex::enqueChangeEvent, &s_projectIndex, _1));
+}
+
    
 } // anonymous namespace
 
@@ -435,9 +502,13 @@ bool enabled()
    
 Error initialize()
 {
-   // sign up for deferred init
-   module_context::events().onDeferredInit.connect(onDeferredInit);
-
+   // subscribe to project context file monitoring state changes
+   core::system::file_monitor::Callbacks cb;
+   cb.onRegistered = boost::bind(onFileMonitorRegistered, _2);
+   cb.onRegistrationError = onFileMonitorRegistrationError;
+   cb.onUnregistered = boost::bind(onFileMonitorUnregistered);
+   cb.onFilesChanged = onFilesChanged;
+   projects::projectContext().registerFileMonitorCallbacks(cb);
 
    using boost::bind;
    using namespace module_context;

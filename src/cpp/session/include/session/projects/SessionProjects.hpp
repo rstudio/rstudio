@@ -15,14 +15,17 @@
 #define SESSION_PROJECTS_PROJECTS_HPP
 
 #include <vector>
+#include <map>
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
+#include <boost/signals.hpp>
 
 #include <core/FileInfo.hpp>
 #include <core/FilePath.hpp>
 
+#include <core/system/FileMonitor.hpp>
 #include <core/system/FileChangeEvent.hpp>
 
 #include <core/json/Json.hpp>
@@ -52,10 +55,6 @@ public:
 public:
    bool hasProject() const { return !file_.empty(); }
 
-   // are we monitoring the specified directory? (used by other modules to
-   // suppress file monitoring if the project already has it covered)
-   bool isMonitoringDirectory(const core::FilePath& directory) const;
-
    const core::FilePath& file() const { return file_; }
    const core::FilePath& directory() const { return directory_; }
    const core::FilePath& scratchPath() const { return scratchPath_; }
@@ -76,25 +75,51 @@ public:
 
    core::json::Object uiPrefs() const;
 
+   // projects perform recursive file-monitoring of the project directory. this service
+   // is used by other modules (e.g. code search) and so requires this interface:
+
+   // are we monitoring the specified directory? (used by other modules to
+   // suppress file monitoring if the project already has it covered)
+   bool isMonitoringDirectory(const core::FilePath& directory) const;
+
+   // register and unregister file monitor callbacks (register returns an opaque
+   // handle which can be used to subsequently unregister)
+   bool hasFileMonitor() const { return hasFileMonitor_; }
+   void registerFileMonitorCallbacks(const core::system::file_monitor::Callbacks& cb);
+
 public:
    static core::r_util::RProjectConfig defaultConfig();
 
 private:
+   // deferred init handler (this allows other modules to reliably subscribe to our file
+   // monitoring events with no concern that they'll miss onFileMonitorRegistered)
+   void onDeferredInit();
+
    // file monitor event handlers
-   void onFileMonitorRegistered(const tree<core::FileInfo>& files);
-   void onFileMonitorRegistrationError(const core::Error& error);
-   void onFileMonitorUnregistered();
+   void fileMonitorRegistered(core::system::file_monitor::Handle handle,
+                              const tree<core::FileInfo>& files);
+   void fileMonitorRegistrationError(const core::Error& error);
+   void fileMonitorMonitoringError(const core::Error& error);
+   void fileMonitorFilesChanged(const std::vector<core::system::FileChangeEvent>& events);
+   void fileMonitorUnregistered(core::system::file_monitor::Handle);
 
 private:
    core::FilePath file_;
    core::FilePath directory_;
    core::FilePath scratchPath_;
    core::r_util::RProjectConfig config_;
-   bool hasFileMonitor_;
    std::string defaultEncoding_;
+
+   bool hasFileMonitor_;
+   boost::signal<void(core::system::file_monitor::Handle,
+                      const tree<core::FileInfo>&)> onFileMonitorRegistered_;
+   boost::signal<void(const core::Error&)> onFileMonitorRegistrationError_;
+   boost::signal<void(const core::Error&)> onMonitoringError_;
+   boost::signal<void(const std::vector<core::system::FileChangeEvent>&)> onFilesChanged_;
+   boost::signal<void(core::system::file_monitor::Handle)> onFileMonitorUnregistered_;
 };
 
-const ProjectContext& projectContext();
+ProjectContext& projectContext();
 
 
 } // namespace projects
