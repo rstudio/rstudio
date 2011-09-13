@@ -42,6 +42,13 @@
 
 #include "SessionSource.hpp"
 
+// TODO: introduce a boolean to control indexing behavior
+
+// TODO: use updateEntry with insert which recovers from duplicate
+//       by removing the returned iterator
+
+// TODO: faster search for removed items
+
 
 using namespace core ;
 
