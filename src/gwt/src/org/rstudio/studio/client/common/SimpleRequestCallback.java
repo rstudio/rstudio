@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.common;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -31,6 +32,7 @@ public class SimpleRequestCallback<T> extends ServerRequestCallback<T>
    @Override
    public void onError(ServerError error)
    {
+      Debug.logError(error);
       RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
             caption_,
             error.getUserMessage());
