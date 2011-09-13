@@ -70,9 +70,9 @@ public class UnifiedParser
          throw new DiffFormatException("Malformed chunk header");
 
       final int oldRowStart = Integer.parseInt(match.getGroup(1));
-      final int oldCount = Integer.parseInt(match.getGroup(2));
+      final int oldCount = match.hasGroup(2) ? Integer.parseInt(match.getGroup(2)) : 1;
       final int newRowStart = Integer.parseInt(match.getGroup(3));
-      final int newCount = Integer.parseInt(match.getGroup(4));
+      final int newCount = match.hasGroup(4) ? Integer.parseInt(match.getGroup(4)) : 1;
       final String text = match.getGroup(6);
 
       int oldRow = oldRowStart;
@@ -164,5 +164,5 @@ public class UnifiedParser
    private final String data_;
    private int pos_;
    private final Pattern newline_ = Pattern.create("\\r?\\n");
-   private final Pattern range_ = Pattern.create("^@@\\s*-([\\d]+),([\\d]+)\\s+\\+([\\d]+),([\\d]+)\\s*@@( (.*))?$", "m");
+   private final Pattern range_ = Pattern.create("^@@\\s*-([\\d]+)(?:,([\\d]+))?\\s+\\+([\\d]+)(?:,([\\d]+))?\\s*@@( (.*))?$", "m");
 }

@@ -34,6 +34,10 @@ public class Match extends JavaScriptObject
       return this.match[number];
    }-*/;
 
+   public final native boolean hasGroup(int number) /*-{
+      return typeof(this.match[number]) != 'undefined';
+   }-*/;
+
    private static Match doNextMatch(Pattern pattern, String input, int index)
    {
       return pattern.match(input, index);
