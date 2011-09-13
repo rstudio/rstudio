@@ -472,7 +472,9 @@ Error launchChildProcess(std::string path,
       // in the normal case control should never return from execv (it starts
       // anew at main of the process pointed to by path). therefore, if we get
       // here then there was an error
-      LOG_ERROR(systemError(errno, ERROR_LOCATION)) ;
+      error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("child-path", path);
+      LOG_ERROR(error) ;
       ::exit(EXIT_FAILURE) ;
    }
 
