@@ -141,23 +141,6 @@ public class UnifiedParser
       return !isEOL() && data_.charAt(pos_) == '\\';
    }
 
-   private String peekLine()
-   {
-      if (isEOL())
-         return null;
-
-      Match match = newline_.match(data_, pos_);
-      if (match == null)
-      {
-         return data_.substring(pos_);
-      }
-      else
-      {
-         String value = data_.substring(pos_, match.getIndex());
-         return value;
-      }
-   }
-
    private String nextLine()
    {
       if (isEOL())
