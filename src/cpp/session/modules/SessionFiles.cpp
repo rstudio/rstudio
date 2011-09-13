@@ -95,7 +95,8 @@ void onResume(const Settings& settings)
                                             module_context::userHomePath());
 
       // start monitoriing
-      s_filesListingMonitor.start(resolvedPath);
+      json::Array jsonFiles;
+      s_filesListingMonitor.start(resolvedPath, &jsonFiles);
    }
 
    quotas::checkQuotaStatus();
@@ -140,21 +141,18 @@ core::Error stat(const json::JsonRpcRequest& request,
    return Success();
 }
    
-void listFiles(const core::json::JsonRpcRequest& request,
-               core::json::JsonRpcFunctionContinuation cont)
+Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
 {
    // get args
    std::string path;
    bool monitor;
    Error error = json::readParams(request.params, &path, &monitor);
    if (error)
-   {
-      cont(error, NULL);
-      return;
-   }
+      return error;
    FilePath targetPath = module_context::resolveAliasedPath(path) ;
    
    // if this includes a request for monitoring
+   core::json::Array jsonFiles;
    if (monitor)
    {
       // always stop existing if we have one
@@ -163,17 +161,26 @@ void listFiles(const core::json::JsonRpcRequest& request,
       // install a monitor only if we aren't already covered by the project monitor
       if (!session::projects::projectContext().isMonitoringDirectory(targetPath))
       {
-         s_filesListingMonitor.start(targetPath, cont);
+         error = s_filesListingMonitor.start(targetPath, &jsonFiles);
+         if (error)
+            return error;
       }
       else
       {
-         FilesListingMonitor::fileListingResponse(targetPath, cont);
+         error = FilesListingMonitor::listFiles(targetPath, &jsonFiles);
+         if (error)
+            return error;
       }
    }
    else
    {
-      FilesListingMonitor::fileListingResponse(targetPath, cont);
+      error = FilesListingMonitor::listFiles(targetPath, &jsonFiles);
+      if (error)
+         return error;
    }
+
+   pResponse->setResult(jsonFiles);
+   return Success();
 }
 
 
@@ -824,7 +831,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "stat", stat))
-      (bind(registerAsyncRpcMethod, "list_files", listFiles))
+      (bind(registerRpcMethod, "list_files", listFiles))
       (bind(registerRpcMethod, "create_folder", createFolder))
       (bind(registerRpcMethod, "delete_files", deleteFiles))
       (bind(registerRpcMethod, "copy_file", copyFile))

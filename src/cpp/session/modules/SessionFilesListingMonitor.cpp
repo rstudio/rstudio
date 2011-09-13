@@ -23,7 +23,10 @@
 #include <core/FileInfo.hpp>
 #include <core/FilePath.hpp>
 
+#include <core/json/JsonRpc.hpp>
+
 #include <core/system/FileMonitor.hpp>
+#include <core/system/FileChangeEvent.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -35,17 +38,30 @@ namespace session {
 namespace modules { 
 namespace files {
 
-void FilesListingMonitor::start(const FilePath& filePath,
-                                core::json::JsonRpcFunctionContinuation cont)
+Error FilesListingMonitor::start(const FilePath& filePath, json::Array* pJsonFiles)
 {
    // always stop existing
    stop();
 
+   // scan the directory (populates pJsonFiles out parameter)
+   std::vector<FilePath> files;
+   Error error = listFiles(filePath, &files, pJsonFiles);
+   if (error)
+      return error;
+
+   // copy the file listing into a vector of FileInfo which we will order so that it can
+   // be compared with the initial scan of the file montor for changes
+   std::vector<FileInfo> prevFiles;
+   std::transform(files.begin(),
+                  files.end(),
+                  std::back_inserter(prevFiles),
+                  core::toFileInfo);
+
    // kickoff new monitor
    core::system::file_monitor::Callbacks cb;
    cb.onRegistered = boost::bind(&FilesListingMonitor::onRegistered,
-                                    this, _1, filePath, _2, cont);
-   cb.onRegistrationError = boost::bind(onRegistrationError, _1, filePath, cont);
+                                    this, _1, filePath, prevFiles, _2);
+   cb.onRegistrationError =  boost::bind(core::log::logError, _1, ERROR_LOCATION);
    cb.onFilesChanged = boost::bind(module_context::enqueFileChangedEvents, filePath, _1);
    cb.onMonitoringError = boost::bind(core::log::logError, _1, ERROR_LOCATION);
    cb.onUnregistered = boost::bind(&FilesListingMonitor::onUnregistered, this, _1);
@@ -53,6 +69,8 @@ void FilesListingMonitor::start(const FilePath& filePath,
                                                false,
                                                module_context::fileListingFilter,
                                                cb);
+
+   return Success();
 }
 
 void FilesListingMonitor::stop()
@@ -71,45 +89,28 @@ const FilePath& FilesListingMonitor::currentMonitoredPath() const
    return currentPath_;
 }
 
-// convenience method which is also called by listFiles for requests that
-// don't specify monitoring (e.g. file dialog listing)
-void FilesListingMonitor::fileListingResponse(
-                                          const core::FilePath& rootPath,
-                                          core::json::JsonRpcFunctionContinuation cont)
-{
-   std::vector<core::FilePath> files ;
-   core::Error error = rootPath.children(&files) ;
-   if (error)
-   {
-      cont(error, NULL);
-      return;
-   }
-
-   fileListingResponse(rootPath, files, cont);
-}
-
 void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle,
                                        const FilePath& filePath,
-                                       const tree<core::FileInfo>& files,
-                                       core::json::JsonRpcFunctionContinuation cont)
+                                       const std::vector<FileInfo>& prevFiles,
+                                       const tree<core::FileInfo>& files)
 {
    // set path and current handle
    currentPath_ = filePath;
    currentHandle_ = handle;
 
-   // if there is a continuation then satisfy it
-   if (cont)
-   {
-      // convert file tree into flat vector of FilePath
-      std::vector<core::FilePath> children;
-      std::transform(files.begin(files.begin()),
-                     files.end(files.begin()),
-                     std::back_inserter(children),
-                     core::toFilePath);
+   // compare the previously returned listing with the initial scan to see if any
+   // file changes occurred between listings
+   std::vector<core::system::FileChangeEvent> events;
+   core::system::collectFileChangeEvents(prevFiles.begin(),
+                                         prevFiles.end(),
+                                         files.begin(files.begin()),
+                                         files.end(files.begin()),
+                                         module_context::fileListingFilter,
+                                         &events);
 
-      // satisfy the continuation
-      fileListingResponse(filePath, children, cont);
-   }
+   // enque any events we discovered
+   if (!events.empty())
+      module_context::enqueFileChangedEvents(filePath, events);
 }
 
 void FilesListingMonitor::onUnregistered(core::system::file_monitor::Handle handle)
@@ -125,45 +126,27 @@ void FilesListingMonitor::onUnregistered(core::system::file_monitor::Handle hand
    }
 }
 
-
-void FilesListingMonitor::onRegistrationError(const Error& error,
-                                              const FilePath& filePath,
-                                              json::JsonRpcFunctionContinuation cont)
+Error FilesListingMonitor::listFiles(const FilePath& rootPath,
+                                     std::vector<FilePath>* pFiles,
+                                     json::Array* pJsonFiles)
 {
-   // always log the error
-   LOG_ERROR(error);
-
-   // if there is a continuation then we still need to satisfy the file listing
-   // request using a standard scan of the fileystem
-   if (cont)
-   {
-      // retreive list of files
-      fileListingResponse(filePath, cont);
-   }
-}
-
-
-void FilesListingMonitor::fileListingResponse(
-                                       const core::FilePath& rootPath,
-                                       const std::vector<core::FilePath>& children,
-                                       core::json::JsonRpcFunctionContinuation cont)
-{
-   source_control::StatusResult vcsStatus;
-   core::Error error = source_control::status(rootPath, &vcsStatus);
+   // enumerate the files
+   pFiles->clear();
+   core::Error error = rootPath.children(pFiles) ;
    if (error)
-   {
-      cont(error, NULL);
-      return;
-   }
+      return error;
 
-   // sort the files by name (first make a copy)
-   std::vector<core::FilePath> files;
-   std::copy(children.begin(), children.end(), std::back_inserter(files));
-   std::sort(files.begin(), files.end(), core::compareAbsolutePathNoCase);
+   // get source control status (merely log errors doing this)
+   source_control::StatusResult vcsStatus;
+   error = source_control::status(rootPath, &vcsStatus);
+   if (error)
+      LOG_ERROR(error);
+
+   // sort the files by name
+   std::sort(pFiles->begin(), pFiles->end(), core::compareAbsolutePathNoCase);
 
    // produce json listing
-   core::json::Array jsonFiles ;
-   BOOST_FOREACH( core::FilePath& filePath, files )
+   BOOST_FOREACH( core::FilePath& filePath, *pFiles)
    {
       // files which may have been deleted after the listing or which
       // are not end-user visible
@@ -172,14 +155,11 @@ void FilesListingMonitor::fileListingResponse(
          source_control::VCSStatus status = vcsStatus.getStatus(filePath);
          core::json::Object fileObject = module_context::createFileSystemItem(filePath);
          fileObject["vcs_status"] = status.status();
-         jsonFiles.push_back(fileObject) ;
+         pJsonFiles->push_back(fileObject) ;
       }
    }
 
-   // return listing
-   core::json::JsonRpcResponse response;
-   response.setResult(jsonFiles) ;
-   cont(core::Success(), &response);
+   return Success();
 }
 
 

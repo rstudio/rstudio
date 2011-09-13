@@ -21,7 +21,7 @@
 
 #include <core/collection/Tree.hpp>
 
-#include <core/json/JsonRpc.hpp>
+#include <core/json/Json.hpp>
 #include <core/system/FileMonitor.hpp>
 
 namespace core {
@@ -45,10 +45,8 @@ namespace files {
 class FilesListingMonitor : boost::noncopyable
 {
 public:
-   // kickoff monitoring and call the continuation (if specifed) once it's initialized
-   void start(const core::FilePath& filePath,
-              core::json::JsonRpcFunctionContinuation cont =
-                                          core::json::JsonRpcFunctionContinuation());
+   // kickoff monitoring
+   core::Error start(const core::FilePath& filePath, core::json::Array* pJsonFiles);
 
    void stop();
 
@@ -57,27 +55,26 @@ public:
 
    // convenience method which is also called by listFiles for requests that
    // don't specify monitoring (e.g. file dialog listing)
-   static void fileListingResponse(const core::FilePath& rootPath,
-                                   core::json::JsonRpcFunctionContinuation cont);
+   static core::Error listFiles(const core::FilePath& rootPath,
+                                core::json::Array* pJsonFiles)
+   {
+      std::vector<core::FilePath> files;
+      return listFiles(rootPath, &files, pJsonFiles);
+   }
 
 private:
    // stateful handlers for registration and unregistration
    void onRegistered(core::system::file_monitor::Handle handle,
                      const core::FilePath& filePath,
-                     const tree<core::FileInfo>& files,
-                     core::json::JsonRpcFunctionContinuation cont);
+                     const std::vector<core::FileInfo>& prevFiles,
+                     const tree<core::FileInfo>& files);
 
    void onUnregistered(core::system::file_monitor::Handle handle);
 
-   // error during registration
-   static void onRegistrationError(const core::Error& error,
-                                   const core::FilePath& filePath,
-                                   core::json::JsonRpcFunctionContinuation cont);
-
    // helpers
-   static void fileListingResponse(const core::FilePath& rootPath,
-                                   const std::vector<core::FilePath>& children,
-                                   core::json::JsonRpcFunctionContinuation cont);
+   static core::Error listFiles(const core::FilePath& rootPath,
+                                std::vector<core::FilePath>* pFiles,
+                                core::json::Array* pJsonFiles);
 
 private:
    core::FilePath currentPath_;

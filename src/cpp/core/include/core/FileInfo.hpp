@@ -130,6 +130,12 @@ inline FilePath toFilePath(const FileInfo& fileInfo)
 {
    return FilePath(fileInfo.absolutePath());
 }
+
+inline FileInfo toFileInfo(const FilePath& filePath)
+{
+   return FileInfo(filePath);
+}
+
    
 std::ostream& operator << (std::ostream& stream, const FileInfo& fileInfo) ;
 
