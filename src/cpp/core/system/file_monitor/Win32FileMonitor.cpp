@@ -594,9 +594,7 @@ void run(const boost::function<void()>& checkForInput)
    //   - inbound commands (occur during checkForInput)
    while (true)
    {
-      // look for changes and keep calling SleepEx as long as we have them
-      while(::SleepEx(1, TRUE) == WAIT_IO_COMPLETION) ;
-
+      ::SleepEx(1000, TRUE);
       checkForInput();
    }
 }
