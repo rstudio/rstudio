@@ -633,9 +633,22 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
    if (events.empty())
       return;
 
+   // try to find the common parent of the events
+   FilePath commonParentPath = FilePath(events.front().fileInfo().absolutePath()).parent();
+   BOOST_FOREACH(const system::FileChangeEvent& event, events)
+   {
+      // if not within the common parent then revert to the vcs status root
+      if (!FilePath(event.fileInfo().absolutePath()).isWithin(commonParentPath))
+      {
+         commonParentPath = vcsStatusRoot;
+         break;
+      }
+   }
+
    // get vcs status in one shot
    session::modules::source_control::StatusResult statusResult;
-   Error error = session::modules::source_control::status(vcsStatusRoot, &statusResult);
+   Error error = session::modules::source_control::status(commonParentPath,
+                                                          &statusResult);
    if (error)
       LOG_ERROR(error);
 
