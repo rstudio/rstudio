@@ -20,6 +20,7 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Error.hpp>
@@ -42,9 +43,7 @@
 
 #include "SessionSource.hpp"
 
-// TODO: enable/disable of code searching / file-mon in project prefs
-//       (and disabling with warning if file monitoring fails)
-
+// TODO: pref for "index R code" in projects
 
 using namespace core ;
 
@@ -425,8 +424,6 @@ void searchSource(const std::string& term,
    }
 }
 
-
-
 template <typename TValue, typename TFunc>
 json::Array toJsonArray(
       const std::vector<r_util::RSourceItem> &items,
@@ -515,14 +512,23 @@ void onFileMonitorRegistered(const tree<core::FileInfo>& files)
    s_projectIndex.enqueFiles(files.begin_leaf(), files.end_leaf());
 }
 
-void onFileMonitorRegistrationError(const core::Error& error)
-{
-   // TODO: disable code searching
-}
 
-void onFileMonitorUnregistered()
+void onFileMonitoringError(const core::Error& error)
 {
-   // TODO: disable code searching
+   // file monitoring either didn't work or has stopped working
+
+   // notify the client it should disable code searching
+   ClientEvent event(client_events::kCodeIndexingDisabled);
+   module_context::enqueClientEvent(event);
+
+   // print a warning to the console so the user knows
+   std::string dir = projects::projectContext().directory().absolutePath();
+   boost::format fmt(
+      "Warning message:\n"
+      "Unable to index R code for project. File monitoring failed "
+      "for directory \"%1%\" (%2% - %3%)");
+   module_context::consoleWriteError(boost::str(
+       fmt % dir % error.code().value() % error.code().message()));
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
@@ -540,7 +546,7 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 
 bool enabled()
 {
-   return projects::projectContext().hasProject();
+   return projects::projectContext().hasFileMonitor();
 }
    
 Error initialize()
@@ -548,8 +554,8 @@ Error initialize()
    // subscribe to project context file monitoring state changes
    core::system::file_monitor::Callbacks cb;
    cb.onRegistered = boost::bind(onFileMonitorRegistered, _2);
-   cb.onRegistrationError = onFileMonitorRegistrationError;
-   cb.onUnregistered = boost::bind(onFileMonitorUnregistered);
+   cb.onRegistrationError = onFileMonitoringError;
+   cb.onMonitoringError = onFileMonitoringError;
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().registerFileMonitorCallbacks(cb);
 
@@ -564,6 +570,6 @@ Error initialize()
 }
 
 
-} // namespace agreement
+} // namespace code_search
 } // namespace modules
 } // namespace session

@@ -18,6 +18,9 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.events.CodeIndexingDisabledEvent;
+import org.rstudio.studio.client.application.events.CodeIndexingDisabledHandler;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -25,6 +28,7 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 
 
@@ -32,11 +36,13 @@ public class GlobalToolbar extends Toolbar
 {
    public GlobalToolbar(Commands commands, 
                         FileTypeCommands fileTypeCommands,
+                        EventBus eventBus,
                         Provider<CodeSearch> pCodeSearch)
    {
       super();
       commands_ = commands;
       pCodeSearch_ = pCodeSearch;
+      searchWidget_ = null;
       ThemeResources res = ThemeResources.INSTANCE;
       addStyleName(res.themeStyles().globalToolbar());
       
@@ -87,6 +93,20 @@ public class GlobalToolbar extends Toolbar
       addLeftSeparator();
       
       addLeftWidget(commands.printSourceDoc().createToolbarButton());
+      
+      eventBus.addHandler(CodeIndexingDisabledEvent.TYPE,
+                          new CodeIndexingDisabledHandler() {
+         @Override
+         public void onCodeSearchDisabled(CodeIndexingDisabledEvent event)
+         {
+            commands_.goToFileFunction().setVisible(false);
+            if (searchWidget_ != null)
+            {
+               removeLeftWidget(searchWidget_);
+               searchWidget_ = null;
+            }
+         }
+      });
    }
    
    public void addProjectTools(SessionInfo sessionInfo)
@@ -96,8 +116,8 @@ public class GlobalToolbar extends Toolbar
          addLeftSeparator();
          
          CodeSearch codeSearch = pCodeSearch_.get();
-         
-         addLeftWidget(codeSearch.getSearchWidget());
+         searchWidget_ = codeSearch.getSearchWidget();
+         addLeftWidget(searchWidget_);
       }
       else
       {
@@ -118,8 +138,9 @@ public class GlobalToolbar extends Toolbar
      
    private final Commands commands_;
    
-   
+   private Widget searchWidget_;
    private final Provider<CodeSearch> pCodeSearch_;
+
    
   
 }

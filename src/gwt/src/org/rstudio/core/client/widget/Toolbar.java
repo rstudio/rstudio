@@ -183,10 +183,20 @@ public class Toolbar extends Composite
       invalidateSeparators();
       return widget;
    }
+   
+   public void removeLeftWidget(Widget widget)
+   {
+      leftToolbarPanel_.remove(widget);
+   }
 
    public void removeLeftWidgets()
    {
       removeAllWidgets(leftToolbarPanel_);
+   }
+   
+   public void removeRightWidget(Widget widget)
+   {
+      rightToolbarPanel_.remove(widget);
    }
    
    public void removeRightWidgets()

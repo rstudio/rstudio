@@ -181,7 +181,10 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       });
       
       // create toolbar
-      toolbar_ = new GlobalToolbar(commands, fileTypeCommands, pCodeSearch);
+      toolbar_ = new GlobalToolbar(commands, 
+                                   fileTypeCommands,
+                                   eventBus,
+                                   pCodeSearch);
       toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());
      
       // initialize widget
