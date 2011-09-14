@@ -281,12 +281,6 @@ int main(int argc, char* argv[])
       }
       core::system::fixupExecutablePath(&sessionPath);
 
-      tree<FileInfo> resultTree;
-      core::system::scanFiles(FileInfo("/Users/jcheng/rstudio", true),
-                              true,
-                              &dummy,
-                              &resultTree);
-
       // launch session
       SessionLauncher sessionLauncher(sessionPath, confPath);
       error = sessionLauncher.launchFirstSession(filename, pAppLaunch.get());
