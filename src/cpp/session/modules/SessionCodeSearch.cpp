@@ -42,12 +42,10 @@
 
 #include "SessionSource.hpp"
 
-// TODO: some kind of scanning progress ui
-
 // TODO: enable/disable of code searching / file-mon in project prefs
+//       (and disabling if file monitoring fails)
 
 // TODO: some type of integration with editor (detect change, etc.)
-
 
 using namespace core ;
 
@@ -86,7 +84,7 @@ public:
       }
 
       // schedule indexing if necessary. perform up to 200ms of work
-      // immediately and then continue in periodic 50ms chunks until
+      // immediately and then continue in periodic 20ms chunks until
       // we are completed.
       if (!indexing_)
       {
@@ -94,7 +92,7 @@ public:
 
          module_context::scheduleIncrementalWork(
                            boost::posix_time::milliseconds(200),
-                           boost::posix_time::milliseconds(50),
+                           boost::posix_time::milliseconds(20),
                            boost::bind(&SourceFileIndex::dequeAndIndex, this),
                            true /* only index during idle time */);
       }
@@ -112,13 +110,13 @@ public:
       // schedule indexing if necessary. don't index anything immediately
       // (this is to defend against large numbers of files being enqued
       // at once and typing up the main thread). rather, schedule indexing
-      // to occur during idle time in 50ms chunks
+      // to occur during idle time in 20ms chunks
       if (!indexing_)
       {
          indexing_ = true;
 
          module_context::scheduleIncrementalWork(
-                           boost::posix_time::milliseconds(50),
+                           boost::posix_time::milliseconds(20),
                            boost::bind(&SourceFileIndex::dequeAndIndex, this),
                            true /* only index during idle time */);
       }
