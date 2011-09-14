@@ -59,6 +59,9 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
+import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
@@ -494,6 +497,35 @@ public class TextEditingTarget implements EditingTarget
                }
             }
       ));
+
+      releaseOnDismiss_.add(events_.addHandler(FileChangeEvent.TYPE,
+                                               new FileChangeHandler() {
+         @Override
+         public void onFileChange(FileChangeEvent event)
+         {
+            // screen out adds and events that aren't for our path
+            FileChange fileChange = event.getFileChange();
+            if (fileChange.getType() == FileChange.ADD)
+               return;
+            else if (!fileChange.getFile().getPath().equals(getPath()))
+               return;
+
+            // always check for changes if this is the active editor
+            if (commandHandlerReg_ != null)
+            {
+               checkForExternalEdit();
+            }
+
+            // also check for changes on modifications if we are not dirty
+            // note that we don't check for changes on removed files because
+            // this will show a confirmation dialog
+            else if (event.getFileChange().getType() == FileChange.MODIFIED &&
+                     dirtyState().getValue() == false)
+            {
+               checkForExternalEdit();
+            }
+         }
+      }));
 
       initStatusBar();
    }
