@@ -803,13 +803,14 @@
           <countfilter match="@Failing"  property="jsr303.marked.Failing" init="0"/>
           <countfilter match="@NonTckTest"  property="jsr303.marked.NonTckTest" init="0"/>
           <countfilter match="@NotSupported"  property="jsr303.marked.NotSupported" init="0"/>
-          <countfilter match="@TestNotCompatible"  property="jsr303.marked.NotSupported" init="0"/>
+          <countfilter match="@TestNotCompatible"  property="jsr303.marked.TestNotCompatible" init="0"/>
         </filterchain>
       </scan>
       
       <!-- force to zero if not set above -->
       <property name="jsr303.marked.Failing" value="0"/>
       <property name="jsr303.marked.NonTckTest" value="0"/>
+      <property name="jsr303.marked.NotSupported" value="0"/>
       <property name="jsr303.marked.TestNotCompatible" value="0"/>
       
       <echo message="Marked Failing = ${jsr303.marked.Failing}" />

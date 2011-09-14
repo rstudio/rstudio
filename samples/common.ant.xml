@@ -189,8 +189,8 @@
   <target name="checkstyle" description="Static analysis of source">
     <gwt.checkstyle outputdirectory="${sample.build}">
       <fileset dir="src" >
-        <exclude name="org/**/super/org/**/*.java"/>
-        <exclude name="com/google/gwt/sample/validation*/**/ValidationMessages.java" />
+        <exclude name="main/java/org/**/super/org/**/*.java"/>
+        <exclude name="main/java/com/google/gwt/sample/validation*/**/ValidationMessages.java" />
       </fileset>
     </gwt.checkstyle>
   </target>
