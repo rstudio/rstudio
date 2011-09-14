@@ -240,10 +240,11 @@ Handle registerMonitor(const FilePath& filePath,
    }
 
    // scan the files
-   Error error = scanFiles(FileInfo(filePath),
-                           recursive,
-                           filter,
-                           &pContext->fileTree);
+   core::system::FileScannerOptions options;
+   options.recursive = recursive;
+   options.yield = true;
+   options.filter = filter;
+   Error error = scanFiles(FileInfo(filePath), options, &pContext->fileTree);
    if (error)
    {
        // stop, invalidate, release
