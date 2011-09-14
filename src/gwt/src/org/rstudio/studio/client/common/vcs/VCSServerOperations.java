@@ -14,7 +14,6 @@ package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.core.client.JsArray;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
