@@ -45,10 +45,6 @@
 // TODO: enable/disable of code searching / file-mon in project prefs
 //       (and disabling with warning if file monitoring fails)
 
-// TODO: some type of integration with editor:
-//          - all non-dirty docs are auto-reloaded
-//          - hint for foreground non dirty doc
-
 
 using namespace core ;
 

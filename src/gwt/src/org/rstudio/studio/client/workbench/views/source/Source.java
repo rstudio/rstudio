@@ -57,6 +57,9 @@ import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
+import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
+import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
@@ -75,6 +78,7 @@ import java.util.HashSet;
 public class Source implements InsertSourceHandler,
                                IsWidget,
                              OpenSourceFileHandler,
+                             FileChangeHandler,
                              TabClosingHandler,
                              SelectionHandler<Integer>,
                              TabClosedHandler,
@@ -270,6 +274,9 @@ public class Source implements InsertSourceHandler,
       manageCommands();
       // Same with this event
       fireDocTabsChanged();
+
+      // subscribe to file change notifications to auto-update, remove, etc.
+      events.addHandler(FileChangeEvent.TYPE, this);
    }
 
    /**
@@ -1105,6 +1112,52 @@ public class Source implements InsertSourceHandler,
 
       if (initialized_)
          manageCommands();
+   }
+
+   @Override
+   public void onFileChange(FileChangeEvent event)
+   {
+      // we don't handle add events
+      if (event.getFileChange().getType() == FileChange.ADD)
+         return;
+
+      // see if this applies to one of our editors
+      FileSystemItem changedFile = event.getFileChange().getFile();
+      EditingTarget changedTarget = null;
+      for (EditingTarget target : editors_)
+      {
+         if (changedFile.getPath().equals(target.getPath()))
+         {
+            changedTarget = target;
+            break;
+         }
+      }
+
+      // do we have a change to one of our editors? if so then determine
+      // if we are going to call checkForExternalEdit -- the guiding
+      // principle is that we don't want to show a prompt unless it is
+      // for the currently active tab.
+      if (changedTarget != null)
+      {
+         // cast to text editing target (safe to do so because we know
+         // that getPath was equal to changedFile.getPath)
+         TextEditingTarget textEditor = (TextEditingTarget) changedTarget;
+
+         // always check for changes if this is the active editor
+         if (changedTarget == activeEditor_)
+         {
+            textEditor.checkForExternalEdit();
+         }
+
+         // also check for changes on modifications to any non-dirty
+         // files. note that we don't check for changes on removal of
+         // these files because this shows a confirmation dialog
+         else if (event.getFileChange().getType() == FileChange.MODIFIED &&
+                  changedTarget.dirtyState().getValue() == false)
+         {
+            textEditor.checkForExternalEdit();
+         }
+      }
    }
 
    private void manageCommands()
