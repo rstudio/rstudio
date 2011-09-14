@@ -43,9 +43,12 @@
 #include "SessionSource.hpp"
 
 // TODO: enable/disable of code searching / file-mon in project prefs
-//       (and disabling if file monitoring fails)
+//       (and disabling with warning if file monitoring fails)
 
-// TODO: some type of integration with editor (detect change, etc.)
+// TODO: some type of integration with editor:
+//          - all non-dirty docs are auto-reloaded
+//          - hint for foreground non dirty doc
+
 
 using namespace core ;
 
@@ -94,7 +97,7 @@ public:
                            boost::posix_time::milliseconds(200),
                            boost::posix_time::milliseconds(20),
                            boost::bind(&SourceFileIndex::dequeAndIndex, this),
-                           true /* only index during idle time */);
+                           false /* allow indexing even when non-idle */);
       }
    }
 
@@ -118,7 +121,7 @@ public:
          module_context::scheduleIncrementalWork(
                            boost::posix_time::milliseconds(20),
                            boost::bind(&SourceFileIndex::dequeAndIndex, this),
-                           true /* only index during idle time */);
+                           false /* allow indexing even when non-idle */);
       }
    }
 
@@ -234,18 +237,6 @@ private:
    };
 
 private:
-
-   void scheduleIndexing()
-   {
-      // schedule indexing -- perform up to 300ms of work immediately and then continue
-      // in periodic 100ms chunks until we are completed. note also that we accept the
-      // default behavior of only indexing during idle time so as not to interfere
-      // with running computations
-      module_context::scheduleIncrementalWork(
-                        boost::posix_time::milliseconds(300),
-                        boost::posix_time::milliseconds(100),
-                        boost::bind(&SourceFileIndex::dequeAndIndex, this));
-   }
 
    bool dequeAndIndex()
    {
