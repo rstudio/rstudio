@@ -319,6 +319,9 @@ public class UiRendererEventsTest extends GWTTestCase {
     var event = {};
 
     event.target = target;
+    // For IE < 9
+    event.srcElement = target;
+
     event.type = type;
     return event;
   }-*/;
