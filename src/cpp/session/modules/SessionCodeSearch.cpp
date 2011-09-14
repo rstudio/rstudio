@@ -522,11 +522,12 @@ void onFileMonitoringError(const core::Error& error)
    module_context::enqueClientEvent(event);
 
    // print a warning to the console so the user knows
-   std::string dir = projects::projectContext().directory().absolutePath();
+   std::string dir = module_context::createAliasedPath(
+                                    projects::projectContext().directory());
    boost::format fmt(
       "Warning message:\n"
-      "Unable to index R code for project. File monitoring failed "
-      "for directory \"%1%\" (%2% - %3%)");
+      "File monitoring failed for directory \"%1%\"; code search features "
+      "are not available for this project [%2% - %3%]");
    module_context::consoleWriteError(boost::str(
        fmt % dir % error.code().value() % error.code().message()));
 }
