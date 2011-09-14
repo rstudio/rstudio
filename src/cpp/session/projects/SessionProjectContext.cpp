@@ -192,11 +192,11 @@ Error ProjectContext::initialize()
          ClientEvent event(client_events::kShowWarningBar, msgJson);
          module_context::enqueClientEvent(event);
       }
-   }
 
-   // subscribe to deferred init (for initializing our file monitor)
-   module_context::events().onDeferredInit.connect(
-                                 boost::bind(&ProjectContext::onDeferredInit, this));
+      // subscribe to deferred init (for initializing our file monitor)
+      module_context::events().onDeferredInit.connect(
+                          boost::bind(&ProjectContext::onDeferredInit, this));
+   }
 
    return Success();
 }
