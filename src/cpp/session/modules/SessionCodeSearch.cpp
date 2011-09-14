@@ -42,8 +42,6 @@
 
 #include "SessionSource.hpp"
 
-// TODO: introduce a boolean to control indexing behavior
-
 // TODO: use updateEntry with insert which recovers from duplicate
 //       by removing the returned iterator
 
@@ -68,6 +66,7 @@ class SourceFileIndex : boost::noncopyable
 {
 public:
    SourceFileIndex()
+      : indexing_(false)
    {
    }
 
@@ -80,36 +79,54 @@ public:
    template <typename ForwardIterator>
    void enqueFiles(ForwardIterator begin, ForwardIterator end)
    {
-      // note whether we had anything in the queue before we start
-      // (if we don't then we'll schedule indexing after the add)
-      bool schedule = indexingQueue_.empty();
-
-      // enque change events (but don't schedule indexing)
+      // add all R source files to the indexing queue
       using namespace core::system;
       for ( ; begin != end; ++begin)
-         enqueFileChange(FileChangeEvent(FileChangeEvent::FileAdded, *begin), false);
+      {
+         if (isRSourceFile(*begin))
+         {
+            FileChangeEvent addEvent(FileChangeEvent::FileAdded, *begin);
+            indexingQueue_.push(addEvent);
+         }
+      }
 
-      // schedule indexing if necessary
-      if (schedule)
-         scheduleIndexing();
+      // schedule indexing if necessary. perform up to 200ms of work
+      // immediately and then continue in periodic 50ms chunks until
+      // we are completed.
+      if (!indexing_)
+      {
+         indexing_ = true;
+
+         module_context::scheduleIncrementalWork(
+                           boost::posix_time::milliseconds(200),
+                           boost::posix_time::milliseconds(50),
+                           boost::bind(&SourceFileIndex::dequeAndIndex, this),
+                           true /* only index during idle time */);
+      }
    }
 
-   void enqueFileChange(const core::system::FileChangeEvent& event, bool schedule)
+   void enqueFileChange(const core::system::FileChangeEvent& event)
    {
       // screen out files which aren't R source files
-      FilePath filePath(event.fileInfo().absolutePath());
-      if (filePath.isDirectory() || filePath.extensionLowerCase() != ".r")
+      if (!isRSourceFile(event.fileInfo()))
          return;
-
-      // note whether we need to schedule after we are done
-      schedule = schedule && indexingQueue_.empty();
 
       // add to the queue
       indexingQueue_.push(event);
 
-      // schedule indexing if necessary
-      if (schedule)
-         scheduleIndexing();
+      // schedule indexing if necessary. don't index anything immediately
+      // (this is to defend against large numbers of files being enqued
+      // at once and typing up the main thread). rather, schedule indexing
+      // to occur during idle time in 50ms chunks
+      if (!indexing_)
+      {
+         indexing_ = true;
+
+         module_context::scheduleIncrementalWork(
+                           boost::posix_time::milliseconds(50),
+                           boost::bind(&SourceFileIndex::dequeAndIndex, this),
+                           true /* only index during idle time */);
+      }
    }
 
    void searchSource(const std::string& term,
@@ -273,7 +290,8 @@ private:
       }
 
       // return status
-      return !indexingQueue_.empty();
+      indexing_ = !indexingQueue_.empty();
+      return indexing_;
    }
 
    void addIndexEntry(const FileInfo& fileInfo)
@@ -316,11 +334,19 @@ private:
       }
    }
 
+   static bool isRSourceFile(const FileInfo& fileInfo)
+   {
+      FilePath filePath(fileInfo.absolutePath());
+      return !filePath.isDirectory() &&
+              filePath.extensionLowerCase() == ".r";
+   }
+
 private:
    // index entries
    std::set<Entry> entries_;
 
    // indexing queue
+   bool indexing_;
    std::queue<core::system::FileChangeEvent> indexingQueue_;
 };
 
@@ -524,7 +550,7 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
    std::for_each(
          events.begin(),
          events.end(),
-         boost::bind(&SourceFileIndex::enqueFileChange, &s_projectIndex, _1, true));
+         boost::bind(&SourceFileIndex::enqueFileChange, &s_projectIndex, _1));
 }
 
    
