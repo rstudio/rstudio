@@ -42,11 +42,6 @@
 
 #include "SessionSource.hpp"
 
-// TODO: use updateEntry with insert which recovers from duplicate
-//       by removing the returned iterator
-
-// TODO: faster search for removed items
-
 // TODO: some kind of scanning progress ui
 
 // TODO: enable/disable of code searching / file-mon in project prefs
@@ -267,15 +262,9 @@ private:
       switch(event.type())
       {
          case FileChangeEvent::FileAdded:
-         {
-            addIndexEntry(fileInfo);
-            break;
-         }
-
          case FileChangeEvent::FileModified:
          {
-            removeIndexEntry(fileInfo);
-            addIndexEntry(fileInfo);
+            updateIndexEntry(fileInfo);
             break;
          }
 
@@ -294,7 +283,7 @@ private:
       return indexing_;
    }
 
-   void addIndexEntry(const FileInfo& fileInfo)
+   void updateIndexEntry(const FileInfo& fileInfo)
    {
       // read the file
       FilePath filePath(fileInfo.absolutePath());
@@ -318,20 +307,27 @@ private:
       boost::shared_ptr<r_util::RSourceIndex> pIndex(
                                           new r_util::RSourceIndex(context, code));
 
-      // add the entry
-      entries_.insert(Entry(fileInfo, pIndex));
+      // attempt to add the entry
+      Entry entry(fileInfo, pIndex);
+      std::pair<std::set<Entry>::iterator,bool> result = entries_.insert(entry);
+
+      // insert failed, remove then re-add
+      if (result.second == false)
+      {
+         entries_.erase(result.first);
+         entries_.insert(entry);
+      }
    }
 
    void removeIndexEntry(const FileInfo& fileInfo)
    {
-      for (std::set<Entry>::iterator it = entries_.begin(); it != entries_.end(); ++it)
-      {
-         if (core::fileInfoPathCompare(it->fileInfo, fileInfo) == 0)
-         {
-            entries_.erase(it);
-            break;
-         }
-      }
+      // create a fake entry with a null source index to pass to find
+      Entry entry(fileInfo, boost::shared_ptr<r_util::RSourceIndex>());
+
+      // do the find (will use Entry::operator< for equivilance test)
+      std::set<Entry>::iterator it = entries_.find(entry);
+      if (it != entries_.end())
+         entries_.erase(it);
    }
 
    static bool isRSourceFile(const FileInfo& fileInfo)
