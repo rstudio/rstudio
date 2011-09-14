@@ -61,7 +61,10 @@ public class UnifiedEmitter
 
    public String createPatch()
    {
-      final ArrayList<DiffChunk> chunks = toDiffChunks(generateOutputLines());
+      prepareList(contextLines_, Type.Insertion);
+      prepareList(diffLines_, Type.Same);
+      final ArrayList<DiffChunk> chunks = toDiffChunks(
+            new OutputLinesGenerator(contextLines_, diffLines_).getOutput());
 
       if (chunks.size() == 0)
          return "";
@@ -167,159 +170,178 @@ public class UnifiedEmitter
                            new ArrayList<Line>(sublist));
    }
 
-   /**
-    * Here is where the heavy lifting of merging is done
-    */
-   private ArrayList<Line> generateOutputLines()
+   private static void prepareList(ArrayList<Line> lines, Type typeToRemove)
    {
-      // Clean up contextLines_ so it only contains lines that are part of
-      // the original document.
-      for (int i = 0; i < contextLines_.size(); i++)
-         if (contextLines_.get(i).getType() == Type.Insertion)
-            contextLines_.remove(i--);
+      // Remove any entries that match the given type
+      for (int i = 0; i < lines.size(); i++)
+         if (lines.get(i).getType() == typeToRemove)
+            lines.remove(i--);
 
-      // Clean up diffLines_ so it only contains lines that represent actual
-      // changes. If we don't do this then the merge logic gets very confusing!
-      for (int i = 0; i < diffLines_.size(); i++)
-      {
-         switch (diffLines_.get(i).getType())
-         {
-            case Same:
-            case Comment:
-               diffLines_.remove(i--);
-         }
-      }
+      // Sort and deduplicate
+      Collections.sort(lines);
+      DuplicateHelper.dedupeSortedList(lines);
+   }
 
-      // Check to see if maybe there's nothing to do
-      if (diffLines_.size() == 0)
-         return new ArrayList<Line>();
+   /**
+    * Here is where the heavy lifting of merging is done. The only reason this
+    * is factored into a class is to make up for the lack of real closures in
+    * Java.
+    */
+   private static class OutputLinesGenerator
+   {
+      private final ArrayList<Line> output = new ArrayList<Line>();
 
-      // It's quite possible that the same DiffChunk was added multiple times.
-      // (Less likely--maybe impossible--is for overlapping DiffChunks to be
-      // added, but that would be dealt with by this as long as those DiffChunks
-      // contain consistent data.)
-      Collections.sort(contextLines_);
-      DuplicateHelper.dedupeSortedList(contextLines_);
-
-      // Clean up all the diff lines as well.
-      Collections.sort(diffLines_);
-      DuplicateHelper.dedupeSortedList(diffLines_);
-
-      final ArrayList<Line> output = new ArrayList<Line>();
-
-      final Iterator<Line> ctxit = contextLines_.iterator();
-      final Iterator<Line> dffit = diffLines_.iterator();
-      Line ctx = ctxit.hasNext() ? ctxit.next() : null;
-      Line dff = dffit.hasNext() ? dffit.next() : null;
-
-      /**
-       * Now we have two ordered iterators, one for the context (original
-       * document) and one for the diffs we want to apply to it. We want to
-       * merge them together into the output ArrayList in the proper order,
-       * being careful to throw out any context lines that are made obsolete
-       * by the diff lines.
-       */
+      private final Iterator<Line> ctxit; // Iterator for all context lines
+      private final Iterator<Line> dffit; // Iterator for all diff lines
+      private Line ctx; // Points to the current context line
+      private Line dff; // Points to the current diff line
 
       // Tracks the amount that the "new" line numbers are offset from the "old"
       // line numbers. new = old + skew
-      int skew = 0;
+      private int skew = 0;
 
-      // Do this while loop while both iterators still have elements
-      while (ctx != null && dff != null)
+      private OutputLinesGenerator(ArrayList<Line> contextLines,
+                                   ArrayList<Line> diffLines)
       {
-         // Now we have a context line (ctx) and a diff line (dff) in hand.
+         ctxit = contextLines.iterator();
+         dffit = diffLines.iterator();
 
-         int cmp = ctx.getOldLine() - dff.getOldLine();
-         if (cmp == 0 && ctx.equals(dff))
+         // Set ctx and dff to first lines (or null if empty)
+         ctxPop(false);
+         dffPop(false);
+
+         /**
+          * Now we have two ordered iterators, one for the context (original
+          * document) and one for the diffs we want to apply to it. We want to
+          * merge them together into the output ArrayList in the proper order,
+          * being careful to throw out any context lines that are made obsolete
+          * by the diff lines.
+          */
+
+         // Do this while loop while both iterators still have elements
+         while (ctx != null && dff != null)
          {
-            /**
-             * ctx and dff are identical. And since we dropped Insertions from
-             * contextLines_ and Sames from diffLines_, we know they're
-             * Deletions. The dff takes precedence; we need to discard ctx so
-             * the line actually gets deleted.
-             */
-            ctx = ctxit.hasNext() ? ctxit.next() : null;
-            continue;
+            // Now we have a context line (ctx) and a diff line (dff) in hand.
+
+            int cmp = ctx.getDiffIndex() - dff.getDiffIndex();
+            if (cmp < 0)
+               ctxPop(true);
+            else if (cmp > 0)
+               dffPop(true);
+            else
+            {
+               /**
+                * ctx and dff are identical. And since we dropped all Insertions
+                * from contextLines_ and all Sames from diffLines_, we know they
+                * must be either Deletions or Comments.
+                */
+               if (ctx.getType() == Type.Deletion)
+               {
+                  dffPop(true);
+                  ctxPop(false);
+               }
+               else if (ctx.getType() == Type.Comment)
+               {
+                  dffPop(false);
+                  ctxPop(true);
+               }
+               else
+               {
+                  throw new IllegalStateException(
+                        "Unexpected line type: " + ctx.getType().name());
+               }
+            }
          }
 
-         // In the case where cmp == 0, the oldLine properties were equal but
-         // the newLine properties were not. This means the diff is an
-         // insertion. We let the ctx line go first so the insertion happens
-         // in the right place.
-         if (cmp <= 0)
-         {
-            processContextLine(output, ctx, skew);
-            ctx = ctxit.hasNext() ? ctxit.next() : null;
-         }
-         else
-         {
-            skew = processDiffLine(output, dff, skew);
-            dff = dffit.hasNext() ? dffit.next() : null;
-         }
+         // Finish off the context iterator if necessary
+         while (ctx != null)
+            ctxPop(true);
+
+         // Finish off the diff iterator if necessary
+         while (dff != null)
+            dffPop(true);
       }
 
-      // Finish off the context iterator if necessary
-      while (ctx != null)
+      /**
+       * (Optionally) adds the value of ctx to the output, and then (always)
+       * sets ctx to the next context line
+       */
+      private void ctxPop(boolean addToOutput)
       {
-         processContextLine(output, ctx, skew);
+         if (addToOutput)
+            writeContextLine(output, ctx, skew);
          ctx = ctxit.hasNext() ? ctxit.next() : null;
       }
 
-      // Finish off the diff iterator if necessary
-      while (dff != null)
+      /**
+       * (Optionally) adds the value of dff to the output, and then (always)
+       * sets dff to the next diff line
+       */
+      private void dffPop(boolean addToOutput)
       {
-         skew = processDiffLine(output, dff, skew);
+         if (addToOutput)
+            skew = writeDiffLine(output, dff, skew);
          dff = dffit.hasNext() ? dffit.next() : null;
       }
 
-      return output;
-   }
-
-   private void processContextLine(ArrayList<Line> output, Line ctx, int skew)
-   {
-      switch (ctx.getType())
+      private void writeContextLine(ArrayList<Line> output, Line ctx, int skew)
       {
-         case Same:
-         case Comment:
-            output.add(new Line(ctx.getType(), ctx.getOldLine(),
-                                ctx.getOldLine() + skew,
-                                ctx.getText()));
-            break;
-         case Deletion:
-            // This is a line that, in the source diff, was deleted from orig.
-            // But since we're processing it as context, we ignore the delete,
-            // so we turn it back into "Same".
-            output.add(new Line(Type.Same, ctx.getOldLine(),
-                                ctx.getOldLine() + skew,
-                                ctx.getText()));
-            break;
-         default:
-            assert false : "Unexpected context line type";
-            throw new IllegalStateException();
+         switch (ctx.getType())
+         {
+            case Same:
+            case Comment:
+               output.add(new Line(ctx.getType(), ctx.getOldLine(),
+                                   ctx.getOldLine() + skew,
+                                   ctx.getText(),
+                                   ctx.getDiffIndex()));
+               break;
+            case Deletion:
+               // This is a line that, in the source diff, was deleted from orig.
+               // But since we're processing it as context, we ignore the delete,
+               // so we turn it back into "Same".
+               output.add(new Line(Type.Same, ctx.getOldLine(),
+                                   ctx.getOldLine() + skew,
+                                   ctx.getText(),
+                                   ctx.getDiffIndex()));
+               break;
+            default:
+               assert false : "Unexpected context line type";
+               throw new IllegalStateException();
+         }
       }
-   }
 
-   private int processDiffLine(ArrayList<Line> output, Line dff, int skew)
-   {
-      switch (dff.getType())
+      private int writeDiffLine(ArrayList<Line> output, Line dff, int skew)
       {
-         case Deletion:
-            output.add(new Line(Type.Deletion, dff.getOldLine(),
-                                dff.getOldLine() + skew,
-                                dff.getText()));
-            skew--;
-            break;
-         case Insertion:
-            output.add(new Line(Type.Insertion, dff.getOldLine(),
-                                dff.getOldLine() + skew,
-                                dff.getText()));
-            skew++;
-            break;
-         default:
-            assert false : "Unexpected diff line type";
-            throw new IllegalStateException();
+         switch (dff.getType())
+         {
+            case Deletion:
+               output.add(new Line(Type.Deletion, dff.getOldLine(),
+                                   dff.getOldLine() + skew,
+                                   dff.getText(),
+                                   dff.getDiffIndex()));
+               skew--;
+               break;
+            case Insertion:
+               output.add(new Line(Type.Insertion, dff.getOldLine(),
+                                   dff.getOldLine() + skew,
+                                   dff.getText(),
+                                   dff.getDiffIndex()));
+               skew++;
+               break;
+            default:
+               assert false : "Unexpected diff line type";
+               throw new IllegalStateException();
+         }
+         return skew;
       }
-      return skew;
+
+      /**
+       * Get the result
+       */
+      public ArrayList<Line> getOutput()
+      {
+         return output;
+      }
    }
 
    private final ArrayList<Line> contextLines_ = new ArrayList<Line>();

@@ -54,12 +54,13 @@ public class Line implements Comparable<Line>
       private final char value_;
    }
 
-   public Line(Type type, int oldLine, int newLine, String text)
+   public Line(Type type, int oldLine, int newLine, String text, int diffIndex)
    {
       type_ = type;
       oldLine_ = oldLine;
       newLine_ = newLine;
       text_ = text;
+      diffIndex_ = diffIndex;
    }
 
    public Type getType()
@@ -82,23 +83,24 @@ public class Line implements Comparable<Line>
       return text_;
    }
 
+   public int getDiffIndex()
+   {
+      return diffIndex_;
+   }
+
    public Line reverse()
    {
       return new Line(type_.getInverse(),
                       newLine_,
                       oldLine_,
-                      text_);
+                      text_,
+                      diffIndex_);
    }
 
    @Override
    public int compareTo(Line line)
    {
-      int comp = oldLine_ - line.oldLine_;
-      if (comp == 0)
-         comp = newLine_ - line.newLine_;
-      if (comp == 0)
-         comp = type_.getValue() - line.type_.getValue();
-      return comp;
+      return diffIndex_ - line.diffIndex_;
    }
 
    @Override
@@ -125,4 +127,5 @@ public class Line implements Comparable<Line>
    private final int oldLine_;
    private final int newLine_;
    private final String text_;
+   private final int diffIndex_;
 }

@@ -81,7 +81,9 @@ public class UnifiedParser
       int newRowsLeft = newCount;
 
       ArrayList<Line> lines = new ArrayList<Line>();
-      while (oldRowsLeft > 0 || newRowsLeft > 0 || nextLineIsComment())
+      for (int i = 0;
+           oldRowsLeft > 0 || newRowsLeft > 0 || nextLineIsComment();
+           i++)
       {
          String diffLine = nextLine();
          if (diffLine == null)
@@ -96,28 +98,32 @@ public class UnifiedParser
                lines.add(new Line(Type.Same,
                                   oldRow++,
                                   newRow++,
-                                  diffLine.substring(1)));
+                                  diffLine.substring(1),
+                                  i));
                break;
             case '-':
                oldRowsLeft--;
                lines.add(new Line(Type.Deletion,
                                   oldRow++,
                                   newRow-1,
-                                  diffLine.substring(1)));
+                                  diffLine.substring(1),
+                                  i));
                break;
             case '+':
                newRowsLeft--;
                lines.add(new Line(Type.Insertion,
                                   oldRow-1,
                                   newRow++,
-                                  diffLine.substring(1)));
+                                  diffLine.substring(1),
+                                  i));
                break;
             case '\\':
                // e.g. "\\ No newline at end of file"
                lines.add(new Line(Type.Comment,
                                   oldRow-1,
                                   newRow-1,
-                                  diffLine.substring(1)));
+                                  diffLine.substring(1),
+                                  i));
                break;
             default:
                throw new DiffFormatException("Unexpected leading character");
