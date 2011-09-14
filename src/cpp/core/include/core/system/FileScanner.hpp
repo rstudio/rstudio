@@ -31,54 +31,32 @@ namespace core {
 //   (1) The FileInfo::isSymlink member returns accurate symlink status
 //   (2) Symlink to directories are not traversed recursively
 
-namespace system {
+namespace system {  
+
+struct FileScannerOptions
+{
+   FileScannerOptions()
+      : recursive(false), yield(false)
+   {
+   }
+
+   bool recursive;
+   bool yield;
+   boost::function<bool(const FileInfo&)> filter;
+   boost::function<Error(const FileInfo&)> onBeforeScanDir;
+};
 
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
-                bool recursive,
-                const boost::function<bool(const FileInfo&)>& filter,
-                const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
+                const FileScannerOptions& options,
                 tree<FileInfo>* pTree);
 
-inline Error scanFiles(
-                const FileInfo& fromRoot,
-                bool recursive,
-                const boost::function<bool(const FileInfo&)>& filter,
-                const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
-                tree<FileInfo>* pTree)
+inline Error scanFiles(const FileInfo& fromRoot,
+                       const FileScannerOptions& options,
+                       tree<FileInfo>* pTree)
 {
-   return scanFiles(pTree->set_head(fromRoot),
-                    recursive,
-                    filter,
-                    onBeforeScanDir,
-                    pTree);
+   return scanFiles(pTree->set_head(fromRoot), options, pTree);
 }
 
-
-inline Error scanFiles(
-                const FileInfo& fromRoot,
-                bool recursive,
-                const boost::function<bool(const FileInfo&)>& filter,
-                tree<FileInfo>* pTree)
-{
-   return scanFiles(fromRoot,
-                    recursive,
-                    filter,
-                    boost::function<Error(const FileInfo&)>(),
-                    pTree);
-}
-
-inline Error scanFiles(
-                const tree<FileInfo>::iterator_base& fromNode,
-                bool recursive,
-                const boost::function<bool(const FileInfo&)>& filter,
-                tree<FileInfo>* pTree)
-{
-   return scanFiles(fromNode,
-                    recursive,
-                    filter,
-                    boost::function<Error(const FileInfo&)>(),
-                    pTree);
-}
 
 } // namespace system
 } // namespace core

@@ -156,11 +156,12 @@ Error processFileAdded(
    if (recursive && shouldTraverse(fileChange.fileInfo()))
    {
       tree<FileInfo> subTree;
-      Error error = scanFiles(fileChange.fileInfo(),
-                              true,
-                              filter,
-                              onBeforeScanDir,
-                              &subTree);
+      FileScannerOptions options;
+      options.recursive = true;
+      options.yield = true;
+      options.filter = filter;
+      options.onBeforeScanDir = onBeforeScanDir;
+      Error error = scanFiles(fileChange.fileInfo(), options, &subTree);
       if (error)
          return error;
 
@@ -273,11 +274,12 @@ Error discoverAndProcessFileChanges(
 
    // scan this directory into a new tree which we can compare to the old tree
    tree<FileInfo> subdirTree;
-   Error error = scanFiles(fileInfo,
-                           recursive,
-                           filter,
-                           onBeforeScanDir,
-                           &subdirTree);
+   FileScannerOptions options;
+   options.recursive = recursive;
+   options.yield = true;
+   options.filter = filter;
+   options.onBeforeScanDir = onBeforeScanDir;
+   Error error = scanFiles(fileInfo, options, &subdirTree);
    if (error)
       return error;
 

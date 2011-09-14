@@ -431,11 +431,12 @@ Handle registerMonitor(const core::FilePath& filePath,
    }
 
    // scan the files (use callback to setup watches)
-   Error error = scanFiles(FileInfo(filePath),
-                           recursive,
-                           filter,
-                           addWatchFunction(pContext, true),
-                           &pContext->fileTree);
+   FileScannerOptions options;
+   options.recursive = recursive;
+   options.yield = true;
+   options.filter = filter;
+   options.onBeforeScanDir = addWatchFunction(pContext, true);
+   Error error = scanFiles(FileInfo(filePath), options, &pContext->fileTree);
    if (error)
    {
        // close context

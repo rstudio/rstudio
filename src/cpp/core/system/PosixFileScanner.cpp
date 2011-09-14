@@ -19,6 +19,7 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
+#include <core/BoostThread.hpp>
 
 namespace core {
 namespace system {
@@ -39,9 +40,7 @@ int entryFilter(const struct dirent *entry)
 } // anonymous namespace
 
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
-                bool recursive,
-                const boost::function<bool(const FileInfo&)>& filter,
-                const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
+                const FileScannerOptions& options,
                 tree<FileInfo>* pTree)
 {
    // clear all existing
@@ -50,10 +49,14 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    // create FilePath for root
    FilePath rootPath(fromNode->absolutePath());
 
+   // yield if requested (only applies to recursive scans)
+   if (options.recursive && options.yield)
+      boost::this_thread::yield();
+
    // call onBeforeScanDir hook
-   if (onBeforeScanDir)
+   if (options.onBeforeScanDir)
    {
-      Error error = onBeforeScanDir(*fromNode);
+      Error error = options.onBeforeScanDir(*fromNode);
       if (error)
          return error;
    }
@@ -116,7 +119,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
       }
 
       // apply the filter (if any)
-      if (!filter || filter(fileInfo))
+      if (!options.filter || options.filter(fileInfo))
       {
          // add the correct type of FileEntry
          if (fileInfo.isDirectory())
@@ -124,13 +127,9 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
             tree<FileInfo>::iterator_base child = pTree->append_child(fromNode,
                                                                       fileInfo);
             // recurse if requested and this isn't a link
-            if (recursive && !fileInfo.isSymlink())
+            if (options.recursive && !fileInfo.isSymlink())
             {
-               Error error = scanFiles(child,
-                                       true,
-                                       filter,
-                                       onBeforeScanDir,
-                                       pTree);
+               Error error = scanFiles(child, options, pTree);
                if (error)
                   return error;
             }
