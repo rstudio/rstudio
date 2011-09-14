@@ -78,6 +78,13 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    // iterate over entries
    for(int i=0; i<entries; i++)
    {
+      // yield every 10 entries if requested
+      if (options.yield)
+      {
+         if (i % 10 == 0)
+            boost::this_thread::yield();
+      }
+
       // get the entry (then free it) and compute the path
       dirent entry = *namelist[i];
       ::free(namelist[i]);
