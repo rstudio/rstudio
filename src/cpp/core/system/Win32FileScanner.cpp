@@ -18,14 +18,25 @@
 #include <core/Error.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FilePath.hpp>
+#include <core/BoostThread.hpp>
 
 namespace core {
 namespace system {
 
 namespace {
 
-FileInfo toFileInfo(const FilePath& filePath)
+FileInfo convertToFileInfo(const FilePath& filePath, bool yield, int *pCount)
 {
+   // yield every 10 files (defend against pegging the cpu for directories
+   // with a huge number of files)
+   if (yield)
+   {
+      *pCount = *pCount + 1;
+      if (*pCount % 10 == 0)
+         boost::this_thread::yield();
+
+   }
+
    if (filePath.isDirectory())
    {
       return FileInfo(filePath.absolutePath(), true, filePath.isSymlink());
@@ -56,9 +67,7 @@ FileInfo toFileInfo(const FilePath& filePath)
 // interfere with the caller getting a listing of everything else
 // and proceeding with its work
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
-                bool recursive,
-                const boost::function<bool(const FileInfo&)>& filter,
-                const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
+                const core::system::FileScannerOptions& options,
                 tree<FileInfo>* pTree)
 {
    // clear all existing
@@ -67,10 +76,14 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    // create FilePath for root
    FilePath rootPath(fromNode->absolutePath());
 
+   // yield if requested (only applies to recursive scans)
+   if (options.recursive && options.yield)
+      boost::this_thread::yield();
+
    // call onBeforeScanDir hook
-   if (onBeforeScanDir)
+   if (options.onBeforeScanDir)
    {
-      Error error = onBeforeScanDir(*fromNode);
+      Error error = options.onBeforeScanDir(*fromNode);
       if (error)
          return error;
    }
@@ -84,11 +97,12 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    // convert to FileInfo and sort using alphasort equivilant (for
    // compatability with scandir, which is what is used in our
    // posix-specific implementation
+   int count = 0;
    std::vector<FileInfo> childrenFileInfo;
    std::transform(children.begin(),
                   children.end(),
                   std::back_inserter(childrenFileInfo),
-                  toFileInfo);
+                  boost::bind(convertToFileInfo, _1, options.yield, &count));
    std::sort(childrenFileInfo.begin(),
              childrenFileInfo.end(),
              fileInfoPathLessThan);
@@ -97,7 +111,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    BOOST_FOREACH(const FileInfo& childFileInfo, childrenFileInfo)
    {
       // apply filter if we have one
-      if (filter && !filter(childFileInfo))
+      if (options.filter && !options.filter(childFileInfo))
          continue;
 
       // add the correct type of FileEntry
@@ -105,13 +119,9 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
       {
          tree<FileInfo>::iterator_base child =
                               pTree->append_child(fromNode, childFileInfo);
-         if (recursive && !childFileInfo.isSymlink())
+         if (options.recursive && !childFileInfo.isSymlink())
          {
-            Error error = scanFiles(child,
-                                    true,
-                                    filter,
-                                    onBeforeScanDir,
-                                    pTree);
+            Error error = scanFiles(child, options, pTree);
             if (error)
                return error;
          }

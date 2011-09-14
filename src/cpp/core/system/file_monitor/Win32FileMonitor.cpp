@@ -549,10 +549,11 @@ Handle registerMonitor(const core::FilePath& filePath,
    ::InterlockedIncrement(&s_activeRequests);
 
    // scan the files
-   error = scanFiles(FileInfo(filePath),
-                     recursive,
-                     filter,
-                     &pContext->fileTree);
+   core::system::FileScannerOptions options;
+   options.recursive = recursive;
+   options.yield = true;
+   options.filter = filter;
+   error = scanFiles(FileInfo(filePath), options, &pContext->fileTree);
    if (error)
    {
        // cleanup
