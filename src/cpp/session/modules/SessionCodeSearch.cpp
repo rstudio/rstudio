@@ -462,7 +462,7 @@ Error searchCode(const json::JsonRpcRequest& request,
 {
    // get params
    std::string term;
-   int maxResultsInt;
+   int maxResultsInt = 20;
    Error error = json::readParams(request.params, &term, &maxResultsInt);
    if (error)
       return error;
