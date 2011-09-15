@@ -24,7 +24,7 @@ public class BrowseCap
       if (hasMetaKey())
          return -1;
       else if (FIXED_UBUNTU_MONO)
-         return 1;
+         return 0.4;
       else
          return 0;
    }
