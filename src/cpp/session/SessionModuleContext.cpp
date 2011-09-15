@@ -600,7 +600,8 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    if (ext == ".rprofile" ||
        ext == ".rdata"    ||
        ext == ".rhistory" ||
-       ext == ".renviron" )
+       ext == ".renviron" ||
+       ext == ".gitignore")
    {
       return true;
    }

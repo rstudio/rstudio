@@ -82,6 +82,7 @@ public class FileTypeRegistry
       register("*.txt", TEXT, icons.iconText());
       register("*.log", TEXT, icons.iconText());
       register("README", TEXT, icons.iconText());
+      register(".gitignore", TEXT, icons.iconText());
       register("*.r", R, icons.iconRdoc());
       register(".rprofile", R, icons.iconRprofile());
       register("*.rhistory", RHISTORY, icons.iconRhistory());
