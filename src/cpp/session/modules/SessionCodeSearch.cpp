@@ -45,7 +45,6 @@
 
 // TODO: pref for "index R code" in projects
 
-// TODO: don't cache empty code search result sets (return from suspend)
 
 using namespace core ;
 
@@ -527,6 +526,9 @@ Error searchCode(const json::JsonRpcRequest& request,
 void onFileMonitorEnabled(const tree<core::FileInfo>& files)
 {
    s_projectIndex.enqueFiles(files.begin_leaf(), files.end_leaf());
+
+   ClientEvent event(client_events::kCodeIndexingStatusChanged, true);
+   module_context::enqueClientEvent(event);
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
@@ -539,7 +541,7 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 
 void onFileMonitorDisabled()
 {
-   ClientEvent event(client_events::kCodeIndexingDisabled);
+   ClientEvent event(client_events::kCodeIndexingStatusChanged, false);
    module_context::enqueClientEvent(event);
 }
 

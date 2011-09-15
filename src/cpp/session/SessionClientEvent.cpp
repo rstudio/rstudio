@@ -66,7 +66,7 @@ const int kShowWarningBar = 39;
 const int kOpenProjectError = 40;
 const int kVcsRefresh = 41;
 const int kAskPass = 42;
-const int kCodeIndexingDisabled = 43;
+const int kCodeIndexingStatusChanged = 43;
 
 }   
 
@@ -167,8 +167,8 @@ std::string ClientEvent::typeName() const
          return "vcs_refresh";
       case client_events::kAskPass:
          return "ask_pass";
-      case client_events::kCodeIndexingDisabled:
-         return "code_indexing_disabled";
+      case client_events::kCodeIndexingStatusChanged:
+         return "code_indexing_status_changed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

@@ -18,8 +18,8 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.application.events.CodeIndexingDisabledEvent;
-import org.rstudio.studio.client.application.events.CodeIndexingDisabledHandler;
+import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedEvent;
+import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -94,40 +94,53 @@ public class GlobalToolbar extends Toolbar
       
       addLeftWidget(commands.printSourceDoc().createToolbarButton());
       
-      eventBus.addHandler(CodeIndexingDisabledEvent.TYPE,
-                          new CodeIndexingDisabledHandler() {
+      eventBus.addHandler(CodeIndexingStatusChangedEvent.TYPE,
+                          new CodeIndexingStatusChangedHandler() {
          @Override
-         public void onCodeSearchDisabled(CodeIndexingDisabledEvent event)
+         public void onCodeIndexingStatusChanged(
+                                    CodeIndexingStatusChangedEvent event)
          {
-            commands_.goToFileFunction().setVisible(false);
-            if (searchWidget_ != null)
-            {
-               removeLeftWidget(searchWidget_);
-               searchWidget_ = null;
-            }
+            manageCodeSearch(event.getEnabled());
          }
       });
    }
    
    public void addProjectTools(SessionInfo sessionInfo)
    {
-      if (sessionInfo.isIndexingEnabled())
+      // code search
+      manageCodeSearch(sessionInfo.isIndexingEnabled());
+      
+      // project popup menu
+      ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
+                                                          commands_);
+      addRightWidget(projectMenu.getToolbarButton());
+   }
+   
+   private void manageCodeSearch(boolean enabled)
+   {
+      // if our current enabled state matches the passed value then bail
+      boolean isEnabled = searchWidget_ != null;
+      if (enabled == isEnabled)
+         return;
+      
+      // manage go to file command
+      commands_.goToFileFunction().setVisible(enabled);
+   
+      // manage seach widget
+      if (enabled)
       {
-         addLeftSeparator();
-         
+         searchWidgetSeparator_ = addLeftSeparator();
          CodeSearch codeSearch = pCodeSearch_.get();
          searchWidget_ = codeSearch.getSearchWidget();
          addLeftWidget(searchWidget_);
       }
       else
       {
-         commands_.goToFileFunction().setVisible(false);
-      }
-      
-      // project popup menu
-      ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
-                                                          commands_);
-      addRightWidget(projectMenu.getToolbarButton());
+         removeLeftWidget(searchWidgetSeparator_);
+         searchWidgetSeparator_ = null;
+         removeLeftWidget(searchWidget_);
+         searchWidget_ = null;
+      } 
    }
 
    @Override
@@ -138,6 +151,7 @@ public class GlobalToolbar extends Toolbar
      
    private final Commands commands_;
    
+   private Widget searchWidgetSeparator_;
    private Widget searchWidget_;
    private final Provider<CodeSearch> pCodeSearch_;
 

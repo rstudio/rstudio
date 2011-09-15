@@ -1,5 +1,5 @@
 /*
- * CodeIndexingDisabledHandler.java
+ * CodeIndexingStatusChangedHandler.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -14,7 +14,7 @@ package org.rstudio.studio.client.application.events;
 
 import com.google.gwt.event.shared.EventHandler;
 
-public interface CodeIndexingDisabledHandler extends EventHandler
+public interface CodeIndexingStatusChangedHandler extends EventHandler
 {
-   void onCodeSearchDisabled(CodeIndexingDisabledEvent event);
+   void onCodeIndexingStatusChanged(CodeIndexingStatusChangedEvent event);
 }

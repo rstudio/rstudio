@@ -15,11 +15,15 @@ package org.rstudio.studio.client.workbench.codesearch;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
+import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedEvent;
+import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeNavigationTarget;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -108,6 +112,8 @@ public class CodeSearch
          }
       });
      
+     // various conditions invalidate the search oracle's cache
+      
      searchDisplay.addBlurHandler(new BlurHandler() {
          @Override
          public void onBlur(BlurEvent event)
@@ -123,6 +129,32 @@ public class CodeSearch
         { 
            display_.getSearchOracle().clear();
         }
+     });
+     
+     eventBus.addHandler(CodeIndexingStatusChangedEvent.TYPE,
+                         new CodeIndexingStatusChangedHandler() {
+
+         @Override
+         public void onCodeIndexingStatusChanged(
+                                       CodeIndexingStatusChangedEvent event)
+         {
+            display_.getSearchOracle().clear();  
+         }    
+     });
+     
+     eventBus.addHandler(FileChangeEvent.TYPE, new FileChangeHandler() {
+        @Override
+        public void onFileChange(FileChangeEvent event)
+        {           
+           // if this was an R file then invalide the cache
+           CodeSearchOracle oracle = display_.getSearchOracle();
+           if (oracle.hasCachedResults())
+           {
+              FileSystemItem fsi = event.getFileChange().getFile();
+              if (fsi.getExtension().toLowerCase().equals(".r"))
+                 oracle.clear();
+           }
+        } 
      });
      
      searchDisplay.addValueChangeHandler(new ValueChangeHandler<String>() {

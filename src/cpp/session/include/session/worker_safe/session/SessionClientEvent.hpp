@@ -65,7 +65,7 @@ extern const int kShowWarningBar;
 extern const int kOpenProjectError;
 extern const int kVcsRefresh;
 extern const int kAskPass;
-extern const int kCodeIndexingDisabled;
+extern const int kCodeIndexingStatusChanged;
 }
    
 class ClientEvent

@@ -114,6 +114,11 @@ public class CodeSearchOracle extends SuggestOracle
       searchInvalidation_.invalidate();
    }
    
+   public boolean hasCachedResults()
+   {
+      return !resultCache_.isEmpty();
+   }
+   
    public void clear()
    {
       resultCache_.clear();
