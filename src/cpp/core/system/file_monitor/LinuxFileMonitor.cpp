@@ -423,32 +423,10 @@ Handle registerMonitor(const core::FilePath& filePath,
    std::auto_ptr<FileEventContext> autoPtrContext(pContext);
 
    // init file descriptor
-   pContext->fd = ::inotify_init();
+   pContext->fd = ::inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
    if (pContext->fd < 0 )
    {
       callbacks.onRegistrationError(systemError(errno, ERROR_LOCATION));
-      return Handle();
-   }
-
-   // set non-blocking and close on exec
-   int flags = ::fcntl(pContext->fd, F_GETFL);
-   if (flags == -1)
-   {
-      // record error, close context, and return an error
-      int err = errno;
-      closeContext(pContext);
-      callbacks.onRegistrationError(systemError(err, ERROR_LOCATION));
-      return Handle();
-   }
-   flags |= O_NONBLOCK;
-   flags |= FD_CLOEXEC;
-   int res = ::fcntl(pContext->fd, F_SETFD, flags);
-   if (res == -1)
-   {
-      // record error, close context, and return an error
-      int err = errno;
-      closeContext(pContext);
-      callbacks.onRegistrationError(systemError(err, ERROR_LOCATION));
       return Handle();
    }
 
