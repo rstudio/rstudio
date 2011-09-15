@@ -45,6 +45,15 @@
 
 // TODO: pref for "index R code" in projects
 
+// TODO: further optimize modify of code index?
+
+// TODO: cleaner API for registering project level file monitor dependencies
+
+// TODO: don't cache empty code search result sets (return from suspend)
+
+// TODO: is reset on the check for changes invalidator on save okay?
+//       (miss changes immediately after save)
+
 using namespace core ;
 
 namespace session {  
