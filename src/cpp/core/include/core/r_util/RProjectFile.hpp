@@ -41,6 +41,7 @@ struct RProjectConfig
         saveWorkspace(DefaultValue),
         restoreWorkspace(DefaultValue),
         alwaysSaveHistory(DefaultValue),
+        enableCodeIndexing(true),
         useSpacesForTab(true),
         numSpacesForTab(2),
         encoding()
@@ -51,6 +52,7 @@ struct RProjectConfig
    int saveWorkspace;
    int restoreWorkspace;
    int alwaysSaveHistory;
+   bool enableCodeIndexing;
    bool useSpacesForTab;
    int numSpacesForTab;
    std::string encoding;

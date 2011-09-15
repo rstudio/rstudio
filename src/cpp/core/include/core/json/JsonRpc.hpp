@@ -581,6 +581,58 @@ core::Error readObjectParam(const json::Array& params,
                      name7, pValue7);
 }
 
+template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+core::Error readObject(const json::Object& object,
+                       const std::string& name1, T1* pValue1,
+                       const std::string& name2, T2* pValue2,
+                       const std::string& name3, T3* pValue3,
+                       const std::string& name4, T4* pValue4,
+                       const std::string& name5, T5* pValue5,
+                       const std::string& name6, T6* pValue6,
+                       const std::string& name7, T7* pValue7,
+                       const std::string& name8, T8* pValue8)
+{
+   Error error = readObject(object,
+                            name1, pValue1,
+                            name2, pValue2,
+                            name3, pValue3,
+                            name4, pValue4,
+                            name5, pValue5,
+                            name6, pValue6,
+                            name7, pValue7);
+   if (error)
+      return error;
+
+   return readObject(object, name8, pValue8);
+}
+
+template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+core::Error readObjectParam(const json::Array& params,
+                            unsigned int index,
+                            const std::string& name1, T1* pValue1,
+                            const std::string& name2, T2* pValue2,
+                            const std::string& name3, T3* pValue3,
+                            const std::string& name4, T4* pValue4,
+                            const std::string& name5, T5* pValue5,
+                            const std::string& name6, T6* pValue6,
+                            const std::string& name7, T7* pValue7,
+                            const std::string& name8, T8* pValue8)
+{
+   json::Object object;
+   Error error = json::readParam(params, index, &object);
+   if (error)
+      return error;
+
+   return readObject(object,
+                     name1, pValue1,
+                     name2, pValue2,
+                     name3, pValue3,
+                     name4, pValue4,
+                     name5, pValue5,
+                     name6, pValue6,
+                     name7, pValue7,
+                     name8, pValue8);
+}
 
 
 // json rpc response

@@ -77,6 +77,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["restore_workspace"] = config.restoreWorkspace;
    configJson["save_workspace"] = config.saveWorkspace;
    configJson["always_save_history"] = config.alwaysSaveHistory;
+   configJson["enable_code_indexing"] = config.enableCodeIndexing;
    configJson["use_spaces_for_tab"] = config.useSpacesForTab;
    configJson["num_spaces_for_tab"] = config.numSpacesForTab;
    configJson["default_encoding"] = config.encoding;
@@ -101,6 +102,7 @@ Error writeProjectConfig(const json::JsonRpcRequest& request,
                     "restore_workspace", &(config.restoreWorkspace),
                     "save_workspace", &(config.saveWorkspace),
                     "always_save_history", &(config.alwaysSaveHistory),
+                    "enable_code_indexing", &(config.enableCodeIndexing),
                     "use_spaces_for_tab", &(config.useSpacesForTab),
                     "num_spaces_for_tab", &(config.numSpacesForTab),
                     "default_encoding", &(config.encoding));

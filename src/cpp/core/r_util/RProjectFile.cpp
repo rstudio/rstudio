@@ -230,6 +230,19 @@ Error readProjectFile(const FilePath& projectFilePath,
       *pProvidedDefaults = true;
    }
 
+   // extract enable code indexing
+   it = dcfFields.find("EnableCodeIndexing");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->enableCodeIndexing)))
+         return requiredFieldError("EnableCodeIndexing", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->enableCodeIndexing = defaultConfig.enableCodeIndexing;
+      *pProvidedDefaults = true;
+   }
+
    // extract spaces for tab
    it = dcfFields.find("UseSpacesForTab");
    if (it != dcfFields.end())
@@ -283,15 +296,17 @@ Error writeProjectFile(const FilePath& projectFilePath,
       "SaveWorkspace: %3%\n"
       "AlwaysSaveHistory: %4%\n"
       "\n"
-      "UseSpacesForTab: %5%\n"
-      "NumSpacesForTab: %6%\n"
-      "Encoding: %7%\n");
+      "EnableCodeIndexing: %5%\n"
+      "UseSpacesForTab: %6%\n"
+      "NumSpacesForTab: %7%\n"
+      "Encoding: %8%\n");
 
    std::string contents = boost::str(fmt %
         boost::io::group(std::fixed, std::setprecision(1), config.version) %
         yesNoAskValueToString(config.restoreWorkspace) %
         yesNoAskValueToString(config.saveWorkspace) %
         yesNoAskValueToString(config.alwaysSaveHistory) %
+        boolValueToString(config.enableCodeIndexing) %
         boolValueToString(config.useSpacesForTab) %
         config.numSpacesForTab %
         config.encoding);

@@ -157,7 +157,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    // assume true so that the initial files pane listing doesn't register
    // a duplicate monitor. if it turns out to be false then this can be
    // repaired by a single refresh of the files pane
-   hasFileMonitor_ = true;
+   hasFileMonitor_ = config_.enableCodeIndexing;
 
    // return success
    return Success();
@@ -194,8 +194,11 @@ Error ProjectContext::initialize()
       }
 
       // subscribe to deferred init (for initializing our file monitor)
-      module_context::events().onDeferredInit.connect(
+      if (config().enableCodeIndexing)
+      {
+         module_context::events().onDeferredInit.connect(
                           boost::bind(&ProjectContext::onDeferredInit, this));
+      }
    }
 
    return Success();

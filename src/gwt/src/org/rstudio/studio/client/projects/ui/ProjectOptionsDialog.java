@@ -54,6 +54,7 @@ public class ProjectOptionsDialog extends ModalDialog<RProjectConfig>
       return RProjectConfig.create(restoreWorkspace_.getSelectedValue(), 
                                    saveWorkspace_.getSelectedValue(), 
                                    alwaysSaveHistory_.getSelectedValue(),
+                                   enableCodeIndexing_.getValue(),
                                    chkSpacesForTab_.getValue(),
                                    getTabWidth(),
                                    encodingValue_);
@@ -104,6 +105,11 @@ public class ProjectOptionsDialog extends ModalDialog<RProjectConfig>
       sourceEditingLabel.addStyleName(RESOURCES.styles().headerLabel());
       sourceEditingLabel.addStyleName(RESOURCES.styles().sourceEditingHeader());
       mainPanel.add(sourceEditingLabel);
+      
+      enableCodeIndexing_ = new CheckBox("Enable R code indexing", false);
+      enableCodeIndexing_.setValue(initialSettings_.getEnableCodeIndexing());
+      enableCodeIndexing_.addStyleName(RESOURCES.styles().enableCodeIndexing());
+      mainPanel.add(enableCodeIndexing_);
       
       chkSpacesForTab_ = new CheckBox("Insert spaces for tab", false);
       chkSpacesForTab_.setValue(initialSettings_.getUseSpacesForTab());
@@ -210,6 +216,7 @@ public class ProjectOptionsDialog extends ModalDialog<RProjectConfig>
       String infoLabel();
       String workspaceGrid();
       String sourceEditingHeader();
+      String enableCodeIndexing();
       String useSpacesForTab();
       String numberOfTabs();
       String encodingChooser();
@@ -236,6 +243,7 @@ public class ProjectOptionsDialog extends ModalDialog<RProjectConfig>
    private YesNoAskDefault restoreWorkspace_;
    private YesNoAskDefault saveWorkspace_;
    private YesNoAskDefault alwaysSaveHistory_;
+   private CheckBox enableCodeIndexing_;
    private CheckBox chkSpacesForTab_;
    private NumericValueWidget numSpacesForTab_;
    private TextBoxWithButton encoding_;

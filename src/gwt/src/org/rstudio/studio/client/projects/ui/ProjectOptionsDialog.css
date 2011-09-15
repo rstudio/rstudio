@@ -18,8 +18,16 @@
    margin-bottom: 10px;	
 }
 
+.enableCodeIndexing {
+   margin-left: 5px;
+}
+
+.enableCodeIndexing input[type=checkbox] {
+   margin-bottom: 13px;	
+}
+
 .useSpacesForTab {
-	margin-left: 5px;
+   margin-left: 5px;
 }
 
 .numberOfTabs {

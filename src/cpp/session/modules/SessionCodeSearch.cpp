@@ -43,8 +43,6 @@
 
 #include "SessionSource.hpp"
 
-// TODO: pref for "index R code" in projects
-
 
 using namespace core ;
 
