@@ -26,6 +26,14 @@ public class IntervalTracker
       lastTime_ = System.currentTimeMillis();
    }
 
+   // alternate verison of reset which will prevent subsequent checks
+   // for only the duration specified (rather than the full intervalMillis)
+   public void reset(long preventMillis)
+   {
+      long offsetMillis = Math.max(0, threshold_ - preventMillis); 
+      lastTime_ = System.currentTimeMillis() - offsetMillis;
+   }
+
    public boolean hasElapsed()
    {
       return lastTime_ == null

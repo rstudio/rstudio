@@ -47,9 +47,6 @@
 
 // TODO: don't cache empty code search result sets (return from suspend)
 
-// TODO: is reset on the check for changes invalidator on save okay?
-//       (miss changes immediately after save)
-
 using namespace core ;
 
 namespace session {  

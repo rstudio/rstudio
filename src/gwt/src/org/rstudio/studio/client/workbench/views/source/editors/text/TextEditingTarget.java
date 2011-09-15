@@ -188,7 +188,7 @@ public class TextEditingTarget implements EditingTarget
          // don't need to check again soon because we just saved
          // (without this and when file monitoring is active we'd
          // end up immediately checking for external edits)
-         externalEditCheckInterval_.reset();
+         externalEditCheckInterval_.reset(250);
 
          if (newFileType_ != null)
             fileType_ = newFileType_;
