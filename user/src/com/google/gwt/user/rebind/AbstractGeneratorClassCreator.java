@@ -28,6 +28,7 @@ import com.google.gwt.i18n.shared.GwtLocale;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,7 +45,7 @@ public abstract class AbstractGeneratorClassCreator extends
    * @return interface methods.
    */
   public static JMethod[] getAllInterfaceMethods(JClassType type) {
-    Map<String, JMethod> methods = new HashMap<String, JMethod>();
+    Map<String, JMethod> methods = new LinkedHashMap<String, JMethod>();
     getAllInterfaceMethodsAux(type, methods);
     return methods.values().toArray(new JMethod[methods.size()]);
   }
