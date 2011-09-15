@@ -47,8 +47,6 @@
 
 // TODO: further optimize modify of code index?
 
-// TODO: cleaner API for registering project level file monitor dependencies
-
 // TODO: don't cache empty code search result sets (return from suspend)
 
 // TODO: is reset on the check for changes invalidator on save okay?
@@ -516,38 +514,23 @@ Error searchCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void onFileMonitorRegistered(const tree<core::FileInfo>& files)
+void onFileMonitorEnabled(const tree<core::FileInfo>& files)
 {
    s_projectIndex.enqueFiles(files.begin_leaf(), files.end_leaf());
 }
 
-
-void onFileMonitoringError(const core::Error& error)
-{
-   // file monitoring either didn't work or has stopped working
-
-   // notify the client it should disable code searching
-   ClientEvent event(client_events::kCodeIndexingDisabled);
-   module_context::enqueClientEvent(event);
-
-   // print a warning to the console so the user knows
-   std::string dir = module_context::createAliasedPath(
-                                    projects::projectContext().directory());
-   boost::format fmt(
-      "Warning message:\n"
-      "File monitoring failed for directory \"%1%\"; code search features "
-      "are not available for this project [%2% - %3%]");
-   module_context::consoleWriteError(boost::str(
-       fmt % dir % error.code().value() % error.code().message()));
-}
-
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   // index all of the changes
    std::for_each(
          events.begin(),
          events.end(),
          boost::bind(&SourceFileIndex::enqueFileChange, &s_projectIndex, _1));
+}
+
+void onFileMonitorDisabled()
+{
+   ClientEvent event(client_events::kCodeIndexingDisabled);
+   module_context::enqueClientEvent(event);
 }
 
    
@@ -562,12 +545,11 @@ bool enabled()
 Error initialize()
 {
    // subscribe to project context file monitoring state changes
-   core::system::file_monitor::Callbacks cb;
-   cb.onRegistered = boost::bind(onFileMonitorRegistered, _2);
-   cb.onRegistrationError = onFileMonitoringError;
-   cb.onMonitoringError = onFileMonitoringError;
+   session::projects::FileMonitorCallbacks cb;
+   cb.onMonitoringEnabled = onFileMonitorEnabled;
    cb.onFilesChanged = onFilesChanged;
-   projects::projectContext().registerFileMonitorCallbacks(cb);
+   cb.onMonitoringDisabled = onFileMonitorDisabled;
+   projects::projectContext().subscribeToFileMonitor("Code searching", cb);
 
    using boost::bind;
    using namespace module_context;

@@ -38,6 +38,16 @@
 namespace session {
 namespace projects {
 
+
+// file monitoring callbacks (all callbacks are optional)
+struct FileMonitorCallbacks
+{
+   boost::function<void(const tree<core::FileInfo>&)> onMonitoringEnabled;
+   boost::function<void(
+         const std::vector<core::system::FileChangeEvent>&)> onFilesChanged;
+   boost::function<void()> onMonitoringDisabled;
+};
+
 class ProjectContext : boost::noncopyable
 {
 public:
@@ -75,33 +85,36 @@ public:
 
    core::json::Object uiPrefs() const;
 
-   // projects perform recursive file-monitoring of the project directory. this service
-   // is used by other modules (e.g. code search) and so requires this interface:
+   // does this project context have a file monitor? (might not have one
+   // if the user has disabled code indexing or if file monitoring failed
+   // for this path)
+   bool hasFileMonitor() const { return hasFileMonitor_; }
 
    // are we monitoring the specified directory? (used by other modules to
    // suppress file monitoring if the project already has it covered)
    bool isMonitoringDirectory(const core::FilePath& directory) const;
 
-   // register and unregister file monitor callbacks (register returns an opaque
-   // handle which can be used to subsequently unregister)
-   bool hasFileMonitor() const { return hasFileMonitor_; }
-   void registerFileMonitorCallbacks(const core::system::file_monitor::Callbacks& cb);
+   // subscribe to file monitor notifications -- note that to ensure
+   // receipt of the onMonitoringEnabled callback subscription should
+   // occur during module initialization
+   void subscribeToFileMonitor(const std::string& featureName,
+                               const FileMonitorCallbacks& cb);
 
 public:
    static core::r_util::RProjectConfig defaultConfig();
 
 private:
-   // deferred init handler (this allows other modules to reliably subscribe to our file
-   // monitoring events with no concern that they'll miss onFileMonitorRegistered)
+   // deferred init handler (this allows other modules to reliably subscribe
+   // to our file monitoring events with no concern that they'll miss
+   // onMonitoringEnabled)
    void onDeferredInit();
 
    // file monitor event handlers
    void fileMonitorRegistered(core::system::file_monitor::Handle handle,
                               const tree<core::FileInfo>& files);
-   void fileMonitorRegistrationError(const core::Error& error);
-   void fileMonitorMonitoringError(const core::Error& error);
-   void fileMonitorFilesChanged(const std::vector<core::system::FileChangeEvent>& events);
-   void fileMonitorUnregistered(core::system::file_monitor::Handle);
+   void fileMonitorFilesChanged(
+                   const std::vector<core::system::FileChangeEvent>& events);
+   void fileMonitorTermination(const core::Error& error);
 
 private:
    core::FilePath file_;
@@ -111,12 +124,11 @@ private:
    std::string defaultEncoding_;
 
    bool hasFileMonitor_;
-   boost::signal<void(core::system::file_monitor::Handle,
-                      const tree<core::FileInfo>&)> onFileMonitorRegistered_;
-   boost::signal<void(const core::Error&)> onFileMonitorRegistrationError_;
-   boost::signal<void(const core::Error&)> onMonitoringError_;
-   boost::signal<void(const std::vector<core::system::FileChangeEvent>&)> onFilesChanged_;
-   boost::signal<void(core::system::file_monitor::Handle)> onFileMonitorUnregistered_;
+   std::vector<std::string> monitorSubscribers_;
+   boost::signal<void(const tree<core::FileInfo>&)> onMonitoringEnabled_;
+   boost::signal<void(const std::vector<core::system::FileChangeEvent>&)>
+                                                            onFilesChanged_;
+   boost::signal<void()> onMonitoringDisabled_;
 };
 
 ProjectContext& projectContext();

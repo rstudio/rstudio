@@ -154,9 +154,9 @@ Error ProjectContext::startup(const FilePath& projectFile,
    scratchPath_ = scratchPath;
    config_ = config;
 
-   // assume true so that the initial files pane listing doesn't register a duplicate
-   // monitor. if it turns out to be false then this can be repaired by a single
-   // refresh of the files pane
+   // assume true so that the initial files pane listing doesn't register
+   // a duplicate monitor. if it turns out to be false then this can be
+   // repaired by a single refresh of the files pane
    hasFileMonitor_ = true;
 
    // return success
@@ -205,14 +205,18 @@ Error ProjectContext::initialize()
 void ProjectContext::onDeferredInit()
 {
    // kickoff file monitoring for this directory
+   using namespace boost;
    core::system::file_monitor::Callbacks cb;
-   cb.onRegistered = boost::bind(&ProjectContext::fileMonitorRegistered, this, _1, _2);
-   cb.onRegistrationError = boost::bind(&ProjectContext::fileMonitorRegistrationError,
-                                        this, _1);
-   cb.onMonitoringError = boost::bind(&ProjectContext::fileMonitorMonitoringError,
-                                      this, _1);
-   cb.onFilesChanged = boost::bind(&ProjectContext::fileMonitorFilesChanged, this, _1);
-   cb.onUnregistered = boost::bind(&ProjectContext::fileMonitorUnregistered, this, _1);
+   cb.onRegistered = bind(&ProjectContext::fileMonitorRegistered,
+                          this, _1, _2);
+   cb.onRegistrationError = bind(&ProjectContext::fileMonitorTermination,
+                                 this, _1);
+   cb.onMonitoringError = bind(&ProjectContext::fileMonitorTermination,
+                               this, _1);
+   cb.onFilesChanged = bind(&ProjectContext::fileMonitorFilesChanged,
+                            this, _1);
+   cb.onUnregistered = bind(&ProjectContext::fileMonitorTermination,
+                            this, Success());
    core::system::file_monitor::registerMonitor(
                                          directory(),
                                          true,
@@ -220,37 +224,69 @@ void ProjectContext::onDeferredInit()
                                          cb);
 }
 
-void ProjectContext::fileMonitorRegistered(core::system::file_monitor::Handle handle,
-                                           const tree<core::FileInfo>& files)
+void ProjectContext::fileMonitorRegistered(
+                              core::system::file_monitor::Handle handle,
+                              const tree<core::FileInfo>& files)
 {
+   // update state
    hasFileMonitor_ = true;
-   onFileMonitorRegistered_(handle, files);
-}
 
-void ProjectContext::fileMonitorRegistrationError(const Error& error)
-{
-   LOG_ERROR(error);
-   hasFileMonitor_ = false;
-   onFileMonitorRegistrationError_(error);
-}
-
-void ProjectContext::fileMonitorMonitoringError(const Error& error)
-{
-   LOG_ERROR(error);
-   onMonitoringError_(error);
+   // notify subscribers
+   onMonitoringEnabled_(files);
 }
 
 void ProjectContext::fileMonitorFilesChanged(
-                           const std::vector<core::system::FileChangeEvent>& events)
+                   const std::vector<core::system::FileChangeEvent>& events)
 {
+   // notify client (gwt)
    module_context::enqueFileChangedEvents(directory(), events);
+
+   // notify subscribers
    onFilesChanged_(events);
 }
 
-void ProjectContext::fileMonitorUnregistered(core::system::file_monitor::Handle handle)
+void ProjectContext::fileMonitorTermination(const Error& error)
 {
-   hasFileMonitor_ = false;
-   onFileMonitorUnregistered_(handle);
+   // always log error
+   if (error)
+      LOG_ERROR(error);
+
+   // if we have a file monitor then unwind it
+   if (hasFileMonitor_)
+   {
+      // do this only once
+      hasFileMonitor_ = false;
+
+      // notify end-user if this was an error condition
+      if (error)
+      {
+         // base error message
+         boost::system::error_code ec = error.code();
+         std::string dir = module_context::createAliasedPath(directory());
+         boost::format fmt(
+          "\nWarning message:\n"
+          "File monitoring failed for project at \"%1%\"\n"
+          "Error %2% (%3%)");
+         std::string msg = boost::str(fmt % dir % ec.value() % ec.message());
+
+         // enumeration of affected features
+         if (!monitorSubscribers_.empty())
+            msg.append("\nFeatures disabled:");
+         for(std::size_t i=0; i<monitorSubscribers_.size(); ++i)
+         {
+            if (i > 0)
+               msg.append(",");
+            msg.append(" ");
+            msg.append(monitorSubscribers_[i]);
+         }
+
+         // write to console
+         module_context::consoleWriteError(msg);
+      }
+
+      // notify subscribers
+      onMonitoringDisabled_();
+   }
 }
 
 bool ProjectContext::isMonitoringDirectory(const FilePath& dir) const
@@ -258,19 +294,18 @@ bool ProjectContext::isMonitoringDirectory(const FilePath& dir) const
    return hasProject() && hasFileMonitor() && dir.isWithin(directory());
 }
 
-void ProjectContext::registerFileMonitorCallbacks(
-                              const core::system::file_monitor::Callbacks& cb)
+void ProjectContext::subscribeToFileMonitor(const std::string& featureName,
+                                            const FileMonitorCallbacks& cb)
 {
-   if (cb.onRegistered)
-      onFileMonitorRegistered_.connect(cb.onRegistered);
-   if (cb.onRegistrationError)
-      onFileMonitorRegistrationError_.connect(cb.onRegistrationError);
-   if (cb.onMonitoringError)
-      onMonitoringError_.connect(cb.onMonitoringError);
+   if (!featureName.empty())
+      monitorSubscribers_.push_back(featureName);
+
+   if (cb.onMonitoringEnabled)
+      onMonitoringEnabled_.connect(cb.onMonitoringEnabled);
    if (cb.onFilesChanged)
       onFilesChanged_.connect(cb.onFilesChanged);
-   if (cb.onUnregistered)
-      onFileMonitorUnregistered_.connect(cb.onUnregistered);
+   if (cb.onMonitoringDisabled)
+      onMonitoringDisabled_.connect(cb.onMonitoringDisabled);
 }
 
 std::string ProjectContext::defaultEncoding() const
