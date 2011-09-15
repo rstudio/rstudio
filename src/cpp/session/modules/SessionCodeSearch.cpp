@@ -45,8 +45,6 @@
 
 // TODO: pref for "index R code" in projects
 
-// TODO: further optimize modify of code index?
-
 // TODO: don't cache empty code search result sets (return from suspend)
 
 // TODO: is reset on the check for changes invalidator on save okay?
@@ -305,8 +303,23 @@ private:
       // insert failed, remove then re-add
       if (result.second == false)
       {
-         entries_.erase(result.first);
-         entries_.insert(entry);
+         // was the first item, erase and re-insert without a hint
+         if (result.first == entries_.begin())
+         {
+            entries_.erase(result.first);
+            entries_.insert(entry);
+         }
+         // can derive a valid hint
+         else
+         {
+            // derive hint iterator
+            std::set<Entry>::iterator hintIter = result.first;
+            hintIter--;
+
+            // erase and re-insert with hint
+            entries_.erase(result.first);
+            entries_.insert(hintIter, entry);
+         }
       }
    }
 
