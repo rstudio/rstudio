@@ -199,24 +199,29 @@ public class BrowserChannelServerTest extends TestCase {
     boolean ended;
 
     @Override
-    public void devModeEvent(DevModeSession session, String eventType, long startTimeNanos,
-        long durationNanos) {
-      fail("BrowserChannelServer should not be calling DashboardNotifier.devModeEvent()");
+    public void devModeEventBegin() {
+      fail("BrowserChannelServer should not be calling DashboardNotifier.devModeEventBegin()");
     }
 
     @Override
-    public void devModeSession(DevModeSession session) {
+    public void devModeEventEnd(DevModeSession session, String eventType, long startTimeNanos,
+        long durationNanos) {
+      fail("BrowserChannelServer should not be calling DashboardNotifier.devModeEventEnd()");
+    }
+
+    @Override
+    public void devModeSessionBegin(DevModeSession session) {
       currentSession = session;
-      assertFalse("DashboardNotifier.devModeSession() called more than once", started);
+      assertFalse("DashboardNotifier.devModeSessionBegin() called more than once", started);
       started = true;
     }
 
     @Override
-    public void devModeSessionEnded(DevModeSession session) {
-      assertTrue("DashboardNotifier.devModeSessionEnded() without prior call to "
-          + "DashboardNotifier.devModeSession()", started);
-      assertFalse("DashboardNotifier.devModeSessionEnded() called more than once", ended);
-      assertEquals("Wrong session passed to DashboardNotifier.devModeSessionEnded()",
+    public void devModeSessionEnd(DevModeSession session) {
+      assertTrue("DashboardNotifier.devModeSessionEnd() without prior call to "
+          + "DashboardNotifier.devModeSessionBegin()", started);
+      assertFalse("DashboardNotifier.devModeSessionEnd() called more than once", ended);
+      assertEquals("Wrong session passed to DashboardNotifier.devModeSessionEnd()",
           currentSession, session);
       ended = true;
     }

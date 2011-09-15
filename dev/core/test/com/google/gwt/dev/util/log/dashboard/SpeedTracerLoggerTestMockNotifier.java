@@ -92,29 +92,49 @@ public class SpeedTracerLoggerTestMockNotifier implements DashboardNotifier {
    * Keeps track of calls to {@code devModeEvent()}.
    */
   private LinkedList<DevModeEvent> eventSeq = new LinkedList<DevModeEvent>();
+  private boolean started;
 
   @Override
-  public void devModeEvent(DevModeSession session, String eventType, long startTimeNanos,
+  public void devModeEventBegin() {
+    Assert.assertFalse("DashboardNotifier.devModeEventBegin() called more than once "
+        + "before call DashboardNotifier.devModeEventEnd()", started);
+    started = true;
+  }
+  
+  @Override
+  public void devModeEventEnd(DevModeSession session, String eventType, long startTimeNanos,
       long durationNanos) {
+    Assert.assertTrue("DashboardNotifier.devModeEventEnd() without prior call to "
+        + "DashboardNotifier.devModeEventBegin()", started);
+    started = false;
     DevModeEvent e = new DevModeEvent(session, eventType, startTimeNanos, durationNanos);
     eventSeq.add(e);
   }
 
   @Override
-  public void devModeSessionEnded(DevModeSession session) {
+  public void devModeSessionBegin(DevModeSession session) {
     // always raise exception here - this method shouldn't be invoked from
     // SpeedTracerLogger
-    Assert.fail("SpeedTracerLogger should not be calling DashboardNotifier.devModeSessionEnded()");
+    Assert.fail("SpeedTracerLogger should not be calling DashboardNotifier.devModeSessionBegin()");
   }
 
   @Override
-  public void devModeSession(DevModeSession session) {
+  public void devModeSessionEnd(DevModeSession session) {
     // always raise exception here - this method shouldn't be invoked from
     // SpeedTracerLogger
-    Assert.fail("SpeedTracerLogger should not be calling DashboardNotifier.devModeSession()");
+    Assert.fail("SpeedTracerLogger should not be calling DashboardNotifier.devModeSessionEnd()");
   }
 
+  /**
+   * Returns the sequence of events posted to the notifier. Also validates that
+   * the notifier is in a valid state (i.e. not between calls to beginning and
+   * ending an event).
+   * 
+   * @return the sequence of events posted to the notifier
+   */
   public LinkedList<DevModeEvent> getEventSequence() {
+    Assert.assertFalse("DashboardNotifier.devModeEventBegin() called without matching "
+        + "call to DashboardNotifier.devModeEventEnd()", started);
     return eventSeq;
   }
 }

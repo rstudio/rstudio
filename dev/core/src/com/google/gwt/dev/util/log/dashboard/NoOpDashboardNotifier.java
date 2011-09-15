@@ -24,18 +24,23 @@ import com.google.gwt.dev.shell.DevModeSession;
 public class NoOpDashboardNotifier implements DashboardNotifier {
 
   @Override
-  public void devModeEvent(DevModeSession sesion, String eventType, long startTimeNanos,
+  public void devModeEventBegin() {
+    // do nothing
+  }
+
+  @Override
+  public void devModeEventEnd(DevModeSession sesion, String eventType, long startTimeNanos,
       long durationNanos) {
     // do nothing
   }
 
   @Override
-  public void devModeSession(DevModeSession session) {
+  public void devModeSessionBegin(DevModeSession session) {
     // do nothing
   }
 
   @Override
-  public void devModeSessionEnded(DevModeSession session) {
+  public void devModeSessionEnd(DevModeSession session) {
     // do nothing
   }
 

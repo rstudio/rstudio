@@ -381,7 +381,7 @@ public class BrowserChannelServer extends BrowserChannel
    * @throws IOException
    */
   public void shutdown() throws IOException {
-    getDashboardNotifier().devModeSessionEnded(devModeSession);
+    getDashboardNotifier().devModeSessionEnd(devModeSession);
     QuitMessage.send(this);
   }
 
@@ -664,7 +664,7 @@ public class BrowserChannelServer extends BrowserChannel
   private void createDevModeSession() {
     devModeSession = new DevModeSession(moduleName, userAgent);
     DevModeSession.setSessionForCurrentThread(devModeSession);
-    getDashboardNotifier().devModeSession(devModeSession);
+    getDashboardNotifier().devModeSessionBegin(devModeSession);
   }
 
   /**

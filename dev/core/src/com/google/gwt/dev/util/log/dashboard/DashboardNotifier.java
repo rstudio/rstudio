@@ -23,32 +23,28 @@ import com.google.gwt.dev.shell.DevModeSession;
  * information from GWT runtime and compiler instrumentation.
  */
 public interface DashboardNotifier {
-  // First: Compiler related entry points
-
-  // TODO(jhumphries) Add interface methods for collecting data from the
-  // compiler
-
-  // Second: Devmode related entry points
 
   /**
-   * Notifies the dashboard of a top-level event.
+   * Notifies the dashboard of a new top-level event starting.
    */
-  void devModeEvent(DevModeSession session, String eventType, long startTimeNanos,
+  void devModeEventBegin();
+
+  /**
+   * Notifies the dashboard of a top-level event ending.
+   */
+  void devModeEventEnd(DevModeSession session, String eventType, long startTimeNanos,
       long durationNanos);
 
   /**
    * Notifies the dashboard of a new session starting.
    */
-  void devModeSession(DevModeSession session);
+  void devModeSessionBegin(DevModeSession session);
 
   /**
    * Notifies the dashboard of a session ending.
    */
-  void devModeSessionEnded(DevModeSession session);
+  void devModeSessionEnd(DevModeSession session);
 
-  // Third: Test related entry points
-
-  // TODO(jhumphries) Add interface methods for collecting data from automated
-  // tests
+  // TODO(jhumphries) Add instrumentation for compiles and GWT tests, too
 
 }

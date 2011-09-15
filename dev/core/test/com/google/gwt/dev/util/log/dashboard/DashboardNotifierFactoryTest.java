@@ -28,18 +28,23 @@ public class DashboardNotifierFactoryTest extends TestCase {
     // create test notifier instance
     DashboardNotifier obj = new DashboardNotifier() {
       @Override
-      public void devModeEvent(DevModeSession session, String eventType, long startTimeNanos,
+      public void devModeEventBegin() {
+        // no need to do anything
+      }
+
+      @Override
+      public void devModeEventEnd(DevModeSession session, String eventType, long startTimeNanos,
           long durationNanos) {
         // no need to do anything
       }
 
       @Override
-      public void devModeSession(DevModeSession session) {
+      public void devModeSessionBegin(DevModeSession session) {
         // no need to do anything
       }
 
       @Override
-      public void devModeSessionEnded(DevModeSession session) {
+      public void devModeSessionEnd(DevModeSession session) {
         // no need to do anything
       }
     };

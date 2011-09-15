@@ -38,6 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Logs performance metrics for internal development purposes. The output is
@@ -53,6 +55,8 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public final class SpeedTracerLogger {
+  
+  private static final Logger log = Logger.getLogger(SpeedTracerLogger.class.getName());
   
   // Log file name (logging is enabled if this is non-null)
   private static final String logFile = 
@@ -548,9 +552,8 @@ public final class SpeedTracerLogger {
         writer.close();
       } catch (InterruptedException ignored) {
       } catch (IOException e) {
-        System.err.println("Unable to write to gwt.speedtracerlog '"
-            + (fileName == null ? "" : fileName) + "'");
-        e.printStackTrace();
+        log.log(Level.SEVERE, "Unable to write to gwt.speedtracerlog '"
+            + (fileName == null ? "" : fileName) + "'", e);
       } finally {
         shutDownLatch.countDown();
       }
@@ -862,7 +865,7 @@ public final class SpeedTracerLogger {
         eventsToWrite.add(currentEvent);
       }
 
-      DashboardNotifierFactory.getNotifier().devModeEvent(currentEvent.getDevModeSession(),
+      DashboardNotifierFactory.getNotifier().devModeEventEnd(currentEvent.getDevModeSession(),
           currentEvent.getType().getName(), currentEvent.getElapsedStartTimeNanos(),
           currentEvent.getElapsedDurationNanos());
     }
@@ -902,6 +905,7 @@ public final class SpeedTracerLogger {
     if (!threadPendingEvents.isEmpty()) {
       parent = threadPendingEvents.peek();
     } else {
+      DashboardNotifierFactory.getNotifier().devModeEventBegin();
       if (logThreadCpuTime) {
         // reset the thread CPU time base for top-level events (so events can be
         // properly sequenced chronologically)
@@ -938,9 +942,7 @@ public final class SpeedTracerLogger {
         writer = new BufferedWriter(new FileWriter(logFile));
         return openLogWriter(writer, logFile);
       } catch (IOException e) {
-        System.err.println(
-            "Unable to open gwt.speedtracerlog '" + logFile + "'");
-        e.printStackTrace();
+        log.log(Level.SEVERE, "Unable to open gwt.speedtracerlog '" + logFile + "'", e);
       }
     }
     return null;
@@ -962,9 +964,8 @@ public final class SpeedTracerLogger {
                 + "<div style=\"display: none\" id=\"traceData\" version=\"0.17\">\n");
       }
     } catch (IOException e) {
-      System.err.println("Unable to write to gwt.speedtracerlog '"
-          + (fileName == null ? "" : fileName) + "'");
-      e.printStackTrace();
+      log.log(Level.SEVERE, "Unable to write to gwt.speedtracerlog '"
+          + (fileName == null ? "" : fileName) + "'", e);
       return null;
     }
 
