@@ -11,6 +11,11 @@
  *
  */
 
+#if defined(_WIN32)
+// Necessary to avoid compile error on Win x64
+#include <winsock2.h>
+#endif
+
 #include <iostream>
 
 #include <core/Error.hpp>
