@@ -296,9 +296,15 @@ void run(const boost::function<void()>& checkForInput)
    while (true)
    {
       // check the run loop
-      SInt32 reason = ::CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
+      SInt32 reason = ::CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, true);
 
-      if (reason == kCFRunLoopRunStopped)
+      // if we handled a source then run again
+      if (reason == kCFRunLoopRunHandledSource)
+      {
+         continue;
+      }
+
+      else if (reason == kCFRunLoopRunStopped)
       {
          LOG_WARNING_MESSAGE("Unexpected stop of file monitor run loop");
          break;
