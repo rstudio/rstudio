@@ -92,7 +92,7 @@
   </dependencies>
   
   <build>
-    <!-- Generate compiled stuff in the folder used for developing mode --> 
+    <!-- Generate compiled stuff in the folder used for development mode -->
     <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
     
     <plugins>

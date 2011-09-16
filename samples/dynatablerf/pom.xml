@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project
+   xmlns="http://maven.apache.org/POM/4.0.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.google.gwt.sample.dynatablerf</groupId>
@@ -23,23 +25,42 @@
   </properties>
 
   <dependencies>
-    <!-- Google Web Toolkit (GWT) itself -->
+    <!-- Google Web Toolkit (GWT) -->
 
-    <dependency>
-      <groupId>com.google.gwt</groupId>
-      <!-- Could use requestfactory-server instead -->
-      <artifactId>gwt-servlet</artifactId>
-      <version>${gwtVersion}</version>
-      <scope>runtime</scope>
-    </dependency>
     <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-user</artifactId>
       <version>${gwtVersion}</version>
+      <!-- "provided" so that we don't deploy -->
       <scope>provided</scope>
     </dependency>
 
-    <!-- GWT RequestFactory will use JSR 303 javax.validation if you let it -->
+    <!-- For the servlet filter -->
+
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>2.5</version>
+    </dependency>
+
+    <!-- RequestFactory server -->
+
+    <dependency>
+      <groupId>com.google.web.bindery</groupId>
+      <artifactId>requestfactory-server</artifactId>
+      <version>${gwtVersion}</version>
+    </dependency>
+
+    <!-- Generate the decoder needed by RequestFactory Server -->
+    <!-- Doesn't yet work in eclipse. See maven-processor-plugin below.
+    <dependency>
+      <groupId>com.google.web.bindery</groupId>
+      <artifactId>requestfactory-apt</artifactId>
+      <version>${gwtVersion}</version>
+    </dependency>
+-->
+
+    <!-- RequestFactory will use JSR 303 javax.validation if you let it -->
     <dependency>
       <groupId>javax.validation</groupId>
       <artifactId>validation-api</artifactId>
@@ -62,25 +83,8 @@
       </exclusions>
     </dependency>
 
-    <!-- GWT RequestFactory requires org.json -->
-    <!-- TODO: can we declare the json and validation dependencies somewhere for the world to pick up,
-    rather than requiring everyone to know about them? -->
-    <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-      <version>20090211</version>
-    </dependency>
-
-    <!-- for the servlet filter -->
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
-      <version>2.5</version>
-    </dependency>
-
     <!-- Required by Hibernate validator because slf4j-log4j is
-         optional in the hibernate-validator POM
-     -->
+         optional in the hibernate-validator POM  -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
@@ -94,10 +98,62 @@
   </dependencies>
   
   <build>
-    <!-- Generate compiled stuff in the folder used for developing mode --> 
+    <!-- Generate compiled stuff in the folder used for development mode -->
     <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
     
     <plugins>
+      <!-- requestfactory-apt runs an annotation processor (APT) to
+           instrument its service interfaces so that
+           RequestFactoryServer can decode client requests. Normally
+           you would just have a dependency on requestfactory-apt
+           with <scope>provided</scope>, but that won't work in
+           eclipse due to m2e bug
+           https://bugs.eclipse.org/bugs/show_bug.cgi?id=335036 -->
+      <plugin>
+        <groupId>org.bsc.maven</groupId>
+        <artifactId>maven-processor-plugin</artifactId>
+        <version>2.0.5</version>
+        <executions>
+          <execution>
+            <id>process</id>
+            <goals>
+              <goal>process</goal>
+            </goals>
+            <phase>generate-sources</phase>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>com.google.web.bindery</groupId>
+            <artifactId>requestfactory-apt</artifactId>
+            <version>${gwtVersion}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+
+      <!-- Google Plugin for Eclipse (GPE) won't see the source
+           generated above by requestfactory-apt unless it is exposed
+           as an additional source dir-->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/apt</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <!-- GWT Maven Plugin-->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -129,6 +185,7 @@
             </goals>
           </execution>
         </executions>
+
         <!-- Plugin configuration. There are many available options, 
              see gwt-maven-plugin documentation at codehaus.org --> 
         <configuration>
@@ -142,32 +199,6 @@
 
           <copyWebapp>true</copyWebapp>
         </configuration>
-      </plugin>
-
-      <!-- Run the RequestFactory ValidationTool -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.2</version>
-        <executions>
-          <execution>
-            <phase>process-classes</phase>
-            <configuration>
-              <id>VerifyRequestFactoryInterfaces</id>
-              <executable>java</executable>
-              <arguments>
-                <argument>-cp</argument>
-                <classpath />
-                <argument>com.google.web.bindery.requestfactory.apt.ValidationTool</argument>
-                <argument>${project.build.outputDirectory}</argument>
-                <argument>com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory</argument>
-              </arguments>
-            </configuration>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
 
       <!-- Copy static web files before executing gwt:run -->
@@ -192,6 +223,7 @@
         </executions>
       </plugin>
 
+      <!-- Mark the project for Google Plugin for Eclipse (GPE) -->
       <plugin>
         <artifactId>maven-eclipse-plugin</artifactId>
         <version>2.8</version>
@@ -211,9 +243,9 @@
       </plugin>
     </plugins>
 
+    <!-- Required by m2e for import into eclipse. No effect on command line builds  -->
     <pluginManagement>
       <plugins>
-        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
@@ -223,11 +255,11 @@
               <pluginExecutions>
                 <pluginExecution>
                   <pluginExecutionFilter>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>exec-maven-plugin</artifactId>
-                    <versionRange>[1.2,)</versionRange>
+                    <groupId>org.bsc.maven</groupId>
+                    <artifactId>maven-processor-plugin</artifactId>
+                    <versionRange>[2.0.5,)</versionRange>
                     <goals>
-                      <goal>exec</goal>
+                      <goal>process</goal>
                     </goals>
                   </pluginExecutionFilter>
                   <action>
