@@ -90,7 +90,7 @@ public:
       // schedule indexing if necessary. perform up to 200ms of work
       // immediately and then continue in periodic 20ms chunks until
       // we are completed.
-      if (!indexing_)
+      if (indexingQueue_.empty() && !indexing_)
       {
          indexing_ = true;
 
