@@ -246,7 +246,11 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
       }
       else
       {
-         pFileChanges->push_back(fileChange);
+         // use the previous FileInfo for the event payload (since the
+         // passed FileInfo might not have a correct value for isDirectory
+         // since we couldn't read it from the filesystem)
+         pFileChanges->push_back(FileChangeEvent(FileChangeEvent::FileRemoved,
+                                                 *remIt));
       }
 
       // remove it from the tree

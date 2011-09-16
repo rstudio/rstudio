@@ -43,8 +43,6 @@
 
 #include "SessionSource.hpp"
 
-// TODO: Investigate why renames on Windows result in add but no remove
-
 // TODO: Investigate double-entry for gedit of file on RedHat
 
 // TODO: consider higher polling granularity than 100ms
