@@ -12,6 +12,7 @@
  */
 
 #cmakedefine HAVE_SA_NOCLDWAIT
+#cmakedefine HAVE_INOTIFY_INIT1
 #cmakedefine HAVE_SO_PEERCRED
 #cmakedefine HAVE_GETPEEREID
 #cmakedefine HAVE_PROCSELF

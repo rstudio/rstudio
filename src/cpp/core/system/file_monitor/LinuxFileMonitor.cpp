@@ -38,6 +38,8 @@
 
 #include "FileMonitorImpl.hpp"
 
+#include "config.h"
+
 namespace core {
 namespace system {
 namespace file_monitor {
@@ -404,6 +406,17 @@ Error processEvent(FileEventContext* pContext,
 }
 
 
+Handle registrationFailure(int errorNumber,
+                           FileEventContext* pContext,
+                           const Callbacks& callbacks,
+                           const ErrorLocation& location)
+{
+   closeContext(pContext);
+   callbacks.onRegistrationError(systemError(errorNumber, location));
+   return Handle();
+}
+
+
 } // anonymous namespace
 
 namespace detail {
@@ -423,12 +436,30 @@ Handle registerMonitor(const core::FilePath& filePath,
    std::auto_ptr<FileEventContext> autoPtrContext(pContext);
 
    // init file descriptor
+#ifdef HAVE_INOTIFY_INIT1
    pContext->fd = ::inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
-   if (pContext->fd < 0 )
-   {
-      callbacks.onRegistrationError(systemError(errno, ERROR_LOCATION));
-      return Handle();
-   }
+   if (pContext->fd < 0)
+      return registrationFailure(errno, pContext, callbacks, ERROR_LOCATION);
+#else
+   // init file descriptor
+   pContext->fd = ::inotify_init();
+   if (pContext->fd < 0)
+      return registrationFailure(errno, pContext, callbacks, ERROR_LOCATION);
+
+   // set non-blocking
+   int flags = ::fcntl(pContext->fd, F_GETFL);
+   if (flags == -1)
+      return registrationFailure(errno, pContext, callbacks, ERROR_LOCATION);
+   if (::fcntl(pContext->fd, F_SETFL, flags | O_NONBLOCK) == -1)
+      return registrationFailure(errno, pContext, callbacks, ERROR_LOCATION);
+
+   // set close on exec
+   int fdFlags = ::fcntl(pContext->fd, F_GETFD);
+   if (fdFlags == -1)
+      return registrationFailure(errno, pContext, callbacks, ERROR_LOCATION);
+   if (::fcntl(pContext->fd, F_SETFD, fdFlags | FD_CLOEXEC) == -1)
+      return registrationFailure(errno, pContext, callbacks, ERROR_LOCATION);
+#endif
 
    // scan the files (use callback to setup watches)
    FileScannerOptions options;

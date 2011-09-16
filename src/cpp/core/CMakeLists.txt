@@ -74,6 +74,7 @@ if (UNIX)
    # platform introspection
    check_symbol_exists(SA_NOCLDWAIT "signal.h" HAVE_SA_NOCLDWAIT)
    check_symbol_exists(SO_PEERCRED "sys/socket.h" HAVE_SO_PEERCRED)
+   check_function_exists(inotify_init1 HAVE_INOTIFY_INIT1)
    check_function_exists(getpeereid HAVE_GETPEEREID)
    if(EXISTS "/proc/self")
       set(HAVE_PROCSELF TRUE)
