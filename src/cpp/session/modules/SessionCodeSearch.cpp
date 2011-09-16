@@ -90,7 +90,7 @@ public:
       // schedule indexing if necessary. perform up to 200ms of work
       // immediately and then continue in periodic 20ms chunks until
       // we are completed.
-      if (indexingQueue_.empty() && !indexing_)
+      if (!indexingQueue_.empty() && !indexing_)
       {
          indexing_ = true;
 
@@ -243,29 +243,32 @@ private:
    {
       using namespace core::system;
 
-      // remove the event from the queue
-      FileChangeEvent event = indexingQueue_.front();
-      indexingQueue_.pop();
-
-      // process the change
-      const FileInfo& fileInfo = event.fileInfo();
-      switch(event.type())
+      if (!indexingQueue_.empty())
       {
-         case FileChangeEvent::FileAdded:
-         case FileChangeEvent::FileModified:
-         {
-            updateIndexEntry(fileInfo);
-            break;
-         }
+         // remove the event from the queue
+         FileChangeEvent event = indexingQueue_.front();
+         indexingQueue_.pop();
 
-         case FileChangeEvent::FileRemoved:
+         // process the change
+         const FileInfo& fileInfo = event.fileInfo();
+         switch(event.type())
          {
-            removeIndexEntry(fileInfo);
-            break;
-         }
+            case FileChangeEvent::FileAdded:
+            case FileChangeEvent::FileModified:
+            {
+               updateIndexEntry(fileInfo);
+               break;
+            }
 
-         case FileChangeEvent::None:
-            break;
+            case FileChangeEvent::FileRemoved:
+            {
+               removeIndexEntry(fileInfo);
+               break;
+            }
+
+            case FileChangeEvent::None:
+               break;
+         }
       }
 
       // return status
