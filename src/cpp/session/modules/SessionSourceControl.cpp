@@ -12,6 +12,12 @@
  */
 #include "SessionSourceControl.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+#include <shlobj.h>
+#include <shlwapi.h>
+#endif
+
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -1347,25 +1353,185 @@ Error askpassReturn(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+#ifdef _WIN32
+
+template <typename T>
+class AutoRelease
+{
+public:
+   AutoRelease(T* pUnk) : pUnk_(pUnk)
+   {
+   }
+
+   ~AutoRelease()
+   {
+      if (pUnk_)
+         pUnk_->Release();
+   }
+
+private:
+   T* pUnk_;
+};
+
+bool isGitExeOnPath()
+{
+   std::vector<wchar_t> path(MAX_PATH+2);
+   wcscpy(&(path[0]), L"git.exe");
+   return ::PathFindOnPathW(&(path[0]), NULL);
+}
+
+bool detectGitBinDirFromPath(FilePath* pPath)
+{
+   std::vector<wchar_t> path(MAX_PATH+2);
+   wcscpy(&(path[0]), L"git.cmd");
+
+   if (::PathFindOnPathW(&(path[0]), NULL))
+   {
+      *pPath = FilePath(&(path[0])).parent().parent().childPath("bin");
+      return true;
+   }
+
+   return false;
+}
+
+HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
+{
+   using namespace boost;
+
+   CoInitialize(NULL);
+
+   // Step 1. Find the Git Bash shortcut on the Start menu
+   std::vector<wchar_t> data(MAX_PATH+2);
+   HRESULT hr = ::SHGetFolderPathW(NULL,
+                                   CSIDL_COMMON_PROGRAMS,
+                                   NULL,
+                                   SHGFP_TYPE_CURRENT,
+                                   &(data[0]));
+   if (FAILED(hr))
+      return hr;
+
+   std::wstring path(&(data[0]));
+   path.append(L"\\Git\\Git Bash.lnk");
+   if (::GetFileAttributesW(path.c_str()) == INVALID_FILE_ATTRIBUTES)
+      return E_FAIL;
+
+
+   // Step 2. Extract the argument from the Git Bash shortcut
+   IShellLinkW* pShellLink;
+   hr = CoCreateInstance(CLSID_ShellLink,
+                         NULL,
+                         CLSCTX_INPROC_SERVER,
+                         IID_IShellLinkW,
+                         (void**)&pShellLink);
+   if (FAILED(hr))
+      return hr;
+   AutoRelease<IShellLinkW> arShellLink(pShellLink);
+
+   IPersistFile* pPersistFile;
+   hr = pShellLink->QueryInterface(IID_IPersistFile, (void**)&pPersistFile);
+   if (FAILED(hr))
+      return hr;
+   AutoRelease<IPersistFile> arPersistFile(pPersistFile);
+
+   pPersistFile->Load(path.c_str(), STGM_READ);
+   if (FAILED(hr))
+      return hr;
+
+   hr = pShellLink->Resolve(NULL, SLR_NO_UI | 0x10000);
+   if (FAILED(hr))
+      return hr;
+   std::vector<wchar_t> argbuff(1024);
+   hr = pShellLink->GetArguments(&(argbuff[0]), argbuff.capacity() - 1);
+   if (FAILED(hr))
+      return hr;
+
+
+   // Step 3. Extract the git/bin directory from the arguments.
+   // Example: /c ""C:\Program Files\Git\bin\sh.exe" --login -i"
+   wcmatch match;
+   if (!regex_search(&(argbuff[0]), match, wregex(L"\"\"([^\"]*)\"")))
+   {
+      LOG_ERROR_MESSAGE("Unexpected git bash argument format: " +
+                        string_utils::wideToUtf8(&(argbuff[0])));
+      return E_FAIL;
+   }
+
+   *pPath = FilePath(match[1]);
+   if (!pPath->exists())
+      return E_FAIL;
+   // The path we have is to sh.exe, we want the parent
+   *pPath = pPath->parent();
+   if (!pPath->exists())
+      return E_FAIL;
+
+   return S_OK;
+}
+
+Error discoverGitBinDir(FilePath* pPath)
+{
+   if (detectGitBinDirFromPath(pPath))
+      return Success();
+
+   HRESULT hr = detectGitBinDirFromShortcut(pPath);
+   if (SUCCEEDED(hr))
+      return Success();
+
+   return systemError(boost::system::errc::no_such_file_or_directory,
+                      ERROR_LOCATION);
+}
+
+Error addGitBinDirToPath()
+{
+   if (isGitExeOnPath())
+      return Success();
+
+   FilePath path;
+   Error error = discoverGitBinDir(&path);
+   if (error)
+      return error;
+
+   system::setenv("PATH", system::getenv("PATH") + ";" +
+                  string_utils::utf8ToSystem(path.absolutePath()));
+
+   return Success();
+}
+
+#endif
+
 } // anonymous namespace
 
 core::Error initialize()
 {
+   Error error;
+
    FilePath workingDir = projects::projectContext().directory();
    if (!userSettings().vcsEnabled())
       s_pVcsImpl_.reset(new VCSImpl(workingDir));
    else if (workingDir.empty())
       s_pVcsImpl_.reset(new VCSImpl(workingDir));
    else if (!GitVCSImpl::detectGitDir(workingDir).empty())
+   {
+#ifdef _WIN32
+      error = addGitBinDirToPath();
+      if (error)
+      {
+         // Git could not be found
+         s_pVcsImpl_.reset(new VCSImpl(workingDir));
+      }
+      else
+         s_pVcsImpl_.reset(new GitVCSImpl(GitVCSImpl::detectGitDir(workingDir)));
+#else
       s_pVcsImpl_.reset(new GitVCSImpl(GitVCSImpl::detectGitDir(workingDir)));
+#endif
+   }
    else if (workingDir.childPath(".svn").isDirectory())
       s_pVcsImpl_.reset(new SubversionVCSImpl(workingDir));
    else
       s_pVcsImpl_.reset(new VCSImpl(workingDir));
 
-
    std::string gitSshCmd;
-   Error error = module_context::registerPostbackHandler("gitssh",
+   error = module_context::registerPostbackHandler("gitssh",
                                                          postbackGitSSH,
                                                          &gitSshCmd);
    if (error)
