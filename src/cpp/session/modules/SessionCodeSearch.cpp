@@ -43,6 +43,13 @@
 
 #include "SessionSource.hpp"
 
+// TODO: Windows crash on create new project as of 0.95.98
+
+// TOOD: Investigate double-entry for gedit of file on RedHat
+
+// TODO: Unhook event-bus events from CodeSearch after dialog dismiss
+
+// TODO: quit latency on Win32 and OSX introduced by 1 second filemon poll
 
 using namespace core ;
 
