@@ -123,7 +123,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
          {
             Error error = scanFiles(child, options, pTree);
             if (error)
-               return error;
+               LOG_ERROR(error);
          }
       }
       else

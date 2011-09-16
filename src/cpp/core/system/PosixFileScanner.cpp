@@ -136,9 +136,14 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
             // recurse if requested and this isn't a link
             if (options.recursive && !fileInfo.isSymlink())
             {
+               // try to scan the files in the subdirectory -- if we fail
+               // we continue because we don't want one "bad" directory
+               // to cause us to abort the entire scan. yes the tree
+               // will be incomplete however it will be even more incompete
+               // if we fail entirely
                Error error = scanFiles(child, options, pTree);
                if (error)
-                  return error;
+                  LOG_ERROR(error);
             }
          }
          else
