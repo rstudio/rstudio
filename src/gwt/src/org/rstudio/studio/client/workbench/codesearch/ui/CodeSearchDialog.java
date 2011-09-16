@@ -74,6 +74,14 @@ public class CodeSearchDialog extends ModalDialogBase
    }
    
    @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+      if (codeSearch_ != null)
+         codeSearch_.detachEventBusHandlers();
+   }
+   
+   @Override
    protected void onEscapeKeyDown(Event.NativePreviewEvent event)
    {
       // close dialog on ESC -- delay so that the ESC key doesn't 

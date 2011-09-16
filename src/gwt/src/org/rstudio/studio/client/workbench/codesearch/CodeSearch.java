@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.codesearch;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
@@ -38,6 +40,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import com.google.gwt.user.client.ui.Widget;
@@ -131,18 +134,19 @@ public class CodeSearch
         }
      });
      
-     eventBus.addHandler(CodeIndexingStatusChangedEvent.TYPE,
+     eventBusHandlers_.add(
+           eventBus.addHandler(CodeIndexingStatusChangedEvent.TYPE,
                          new CodeIndexingStatusChangedHandler() {
-
          @Override
          public void onCodeIndexingStatusChanged(
                                        CodeIndexingStatusChangedEvent event)
          {
             display_.getSearchOracle().clear();  
          }    
-     });
+     }));
      
-     eventBus.addHandler(FileChangeEvent.TYPE, new FileChangeHandler() {
+     eventBusHandlers_.add(
+           eventBus.addHandler(FileChangeEvent.TYPE, new FileChangeHandler() {
         @Override
         public void onFileChange(FileChangeEvent event)
         {           
@@ -155,7 +159,7 @@ public class CodeSearch
                  oracle.clear();
            }
         } 
-     });
+     }));
      
      searchDisplay.addValueChangeHandler(new ValueChangeHandler<String>() {
         @Override
@@ -205,7 +209,18 @@ public class CodeSearch
             display_.setCueText(cueText);
       }
    }
+   
+   // notify the CodeSearch that the search is completed so that it 
+   // can un-hook from EventBus events
+   public void detachEventBusHandlers()
+   {
+      for (int i=0; i<eventBusHandlers_.size(); i++)
+         eventBusHandlers_.get(i).removeHandler();
+      eventBusHandlers_.clear();
+   }
      
    private final Display display_;
    private Observer observer_ = null;
+   private ArrayList<HandlerRegistration> eventBusHandlers_ = 
+                                 new ArrayList<HandlerRegistration>();
 }
