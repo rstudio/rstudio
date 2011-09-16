@@ -43,9 +43,11 @@
 
 #include "SessionSource.hpp"
 
-// TOOD: Investigate double-entry for gedit of file on RedHat
+// TODO: Investigate why renames on Windows result in add but no remove
 
-// TODO: quit latency on Win32 and OSX introduced by 1 second filemon poll
+// TODO: Investigate double-entry for gedit of file on RedHat
+
+// TODO: consider higher polling granularity than 100ms
 
 using namespace core ;
 
