@@ -45,8 +45,6 @@
 
 // TODO: Investigate double-entry for gedit of file on RedHat
 
-// TODO: consider higher polling granularity than 100ms
-
 using namespace core ;
 
 namespace session {  
