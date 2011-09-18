@@ -26,6 +26,16 @@ public class FileChange extends JavaScriptObject
    {
       return create(ADD, file);
    }
+   
+   public static final FileChange createDelete(FileSystemItem file)
+   {
+      return create(DELETE, file);
+   }
+   
+   public static final FileChange createModified(FileSystemItem file)
+   {
+      return create(MODIFIED, file);
+   }
   
    private static final native FileChange create(int type, 
                                                  FileSystemItem file) /*-{

@@ -43,8 +43,6 @@
 
 #include "SessionSource.hpp"
 
-// TODO: Investigate double-entry for gedit of file on RedHat
-
 using namespace core ;
 
 namespace session {  

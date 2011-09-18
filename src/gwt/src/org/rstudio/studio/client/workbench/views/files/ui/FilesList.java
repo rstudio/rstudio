@@ -423,7 +423,7 @@ public class FilesList extends Composite
    }
    
    public void updateWithAction(FileChange viewAction)
-   {   
+   {        
       final FileSystemItem file = viewAction.getFile();
       final List<FileSystemItem> files = getFiles();
       switch(viewAction.getType())
@@ -463,6 +463,13 @@ public class FilesList extends Composite
             if (row != -1)
             {
                files.remove(row);
+               
+               // if a file is deleted and then re-added within the same
+               // event loop (as occurs when gedit saves a text file) the
+               // table doesn't always update correctly (it has a duplicate
+               // of the item deleted / re-added). the call to flush overcomes
+               // this issue
+               dataProvider_.flush();
             }
          }
          break;
