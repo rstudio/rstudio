@@ -103,19 +103,32 @@ Annotations:
 
 ------- Annotation Processor --------
 
-Some components of GWT (RequestFactory) use annotation processing.
+Some components of GWT (RequestFactory) use annotation processing. Do
+the following to add a directory named '.apt-generated' to the source
+path, and put on the APT factory path annotation processors required
+by the RequestFactory unit tests.
 
 Select project 'gwt-user'
 
-Project->Preferences->Java Compiler->AnnotationProcessor
+Project->Properties->Java Compiler->AnnotationProcessor
 - Check Enable project specific settings
 - Check Enable annotation processing
+- Optional: check Enable processing in editor (for on-the-fly
+  validation of RequestFactory interfaces)
 
-This adds a directory named '.apt-generated' to the source path.
+Project->Properties->Java Compiler->AnnotationProcessor->Factory Path
+- Add Variable
+- Select GWT_TOOLS and click Extend
+- Select lib/requestfactory and the most recently dated
+  requestfactory-apt-YYYY-MM-DD.jar
+- Optional: deselect org.eclipse.jst.ws.annoations.core if eclipse has
+  added it, it can make eclipse sluggish
 
 == Checkstyle ==
 
-Checkstyle is used to enforce good programming style.
+Checkstyle is used to enforce good programming style. Its use in
+Eclipse is optional, since it is also run as part of the acceptance
+test suite.
 
 1. Install Checkstyle version 4.4.3 (newer versions will not work)
 
@@ -156,7 +169,7 @@ libraries.
 
 Window->Preferences->Run/Debug->String Substitution->New...
 Set the Name to "gwt_devjar".
-Set the Value to the approprate path for your install -- for example:
+Set the Value to the appropriate path for your install -- for example:
   <path-to-trunk>\trunk\build\staging\gwt-0.0.0\gwt-dev.jar
   <path-to-trunk>/trunk/build/staging/gwt-0.0.0/gwt-dev.jar
 Description can be left blank.
