@@ -185,7 +185,7 @@ Error SessionLauncher::launchNextSession()
    // mac client crash during switching of projects and this could
    // be some type of timing related issue
    nextSessionUrl_ = url;
-   QTimer::singleShot(50, this, SLOT(onReloadFrameForNextSession()));
+   QTimer::singleShot(100, this, SLOT(onReloadFrameForNextSession()));
 
    return Success();
 }
