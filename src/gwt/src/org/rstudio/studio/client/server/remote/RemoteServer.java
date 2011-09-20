@@ -22,6 +22,7 @@ import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.*;
 import com.google.gwt.user.client.Random;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -32,6 +33,8 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.HttpLogEntry;
 import org.rstudio.studio.client.common.codetools.Completions;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.ExecuteCommandResult;
@@ -73,8 +76,10 @@ import java.util.Map;
 public class RemoteServer implements Server
 { 
    @Inject
-   public RemoteServer(Session session, EventBus eventBus)
+   public RemoteServer(Session session, EventBus eventBus,
+                       Provider<ConsoleProcessFactory> pConsoleProcessFactory)
    {
+      pConsoleProcessFactory_ = pConsoleProcessFactory;
       clientId_ = null;
       disconnected_ = false;
       workbenchReady_ = false;
@@ -269,7 +274,39 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, RESET_CONSOLE_ACTIONS, requestCallback);
    }
-   
+
+   @Override
+   public void processInit(String command,
+                           ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, PROCESS_INIT, command, requestCallback);
+   }
+
+   public void processStart(String handle,
+                            ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, PROCESS_START, handle, requestCallback);
+   }
+
+   @Override
+   public void processInterrupt(String handle,
+                                ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, PROCESS_INTERRUPT, handle, requestCallback);
+   }
+
+   @Override
+   public void processWriteStdin(String handle,
+                                 String input,
+                                 ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONString(input));
+      sendRequest(RPC_SCOPE, PROCESS_WRITE_STDIN, params, requestCallback);
+   }
+
+
    public void interrupt(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, INTERRUPT, requestCallback);
@@ -1239,14 +1276,41 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, VCS_COMMIT_GIT, params, requestCallback);
    }
 
-   public void vcsPush(ServerRequestCallback<Void> requestCallback)
+   private class ConsoleProcessCallbackAdapter
+         extends ServerRequestCallback<String>
    {
-      sendRequest(RPC_SCOPE, VCS_PUSH, requestCallback);
+      private ConsoleProcessCallbackAdapter(
+            ServerRequestCallback<ConsoleProcess> callback)
+      {
+         callback_ = callback;
+      }
+
+      @Override
+      public void onResponseReceived(String response)
+      {
+         pConsoleProcessFactory_.get().connectToProcess(response,
+                                                        callback_);
+      }
+
+      @Override
+      public void onError(ServerError error)
+      {
+         callback_.onError(error);
+      }
+
+      private final ServerRequestCallback<ConsoleProcess> callback_;
    }
 
-   public void vcsPull(ServerRequestCallback<Void> requestCallback)
+   public void vcsPush(ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_PULL, requestCallback);
+      sendRequest(RPC_SCOPE, VCS_PUSH,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+
+   public void vcsPull(ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, VCS_PULL,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
    @Override
@@ -1658,10 +1722,12 @@ public class RemoteServer implements Server
    
    private final RemoteServerAuth serverAuth_;
    private final RemoteServerEventListener serverEventListener_ ;
+
+   private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
   
    private final Session session_;
    private final EventBus eventBus_;
-  
+
    // url scopes
    private static final String RPC_SCOPE = "rpc";
    private static final String FILES_SCOPE = "files";
@@ -1694,6 +1760,11 @@ public class RemoteServer implements Server
    private static final String HTTP_LOG = "http_log";
    private static final String GET_COMPLETIONS = "get_completions";
    private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";
+
+   private static final String PROCESS_INIT = "process_init";
+   private static final String PROCESS_START = "process_start";
+   private static final String PROCESS_INTERRUPT = "process_interrupt";
+   private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
 
    private static final String LIST_OBJECTS = "list_objects";
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";

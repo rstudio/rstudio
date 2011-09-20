@@ -36,6 +36,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionAgreement.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConsole.cpp
+   modules/SessionConsoleProcess.cpp
    modules/SessionContentUrls.cpp
    modules/SessionData.cpp
    modules/SessionDiff.cpp

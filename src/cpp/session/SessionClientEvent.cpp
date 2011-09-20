@@ -67,6 +67,8 @@ const int kOpenProjectError = 40;
 const int kVcsRefresh = 41;
 const int kAskPass = 42;
 const int kCodeIndexingStatusChanged = 43;
+const int kConsoleProcessOutput = 44;
+const int kConsoleProcessExit = 45;
 
 }   
 
@@ -169,6 +171,10 @@ std::string ClientEvent::typeName() const
          return "ask_pass";
       case client_events::kCodeIndexingStatusChanged:
          return "code_indexing_status_changed";
+      case client_events::kConsoleProcessOutput:
+         return "console_process_output";
+      case client_events::kConsoleProcessExit:
+         return "console_process_exit";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

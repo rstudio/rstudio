@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.Void;
@@ -189,13 +190,25 @@ public class VCS extends BasePresenter implements IsWidget
    @Handler
    void onVcsPull()
    {
-      server_.vcsPull(new SimpleRequestCallback<Void>());
+      server_.vcsPull(new SimpleRequestCallback<ConsoleProcess>() {
+         @Override
+         public void onResponseReceived(ConsoleProcess proc)
+         {
+            new ConsoleProgressDialog(proc).showModal();
+         }
+      });
    }
 
    @Handler
    void onVcsPush()
    {
-      server_.vcsPush(new SimpleRequestCallback<Void>());
+      server_.vcsPush(new SimpleRequestCallback<ConsoleProcess>() {
+         @Override
+         public void onResponseReceived(ConsoleProcess proc)
+         {
+            new ConsoleProgressDialog(proc).showModal();
+         }
+      });
    }
 
    private void refresh()

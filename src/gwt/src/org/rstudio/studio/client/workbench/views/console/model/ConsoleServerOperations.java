@@ -28,4 +28,17 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
                      ServerRequestCallback<Void> requestCallback);
    
    void resetConsoleActions(ServerRequestCallback<Void> requestCallback);
+
+   void processInit(String command,
+                    ServerRequestCallback<String> requestCallback);
+
+   void processStart(String handle,
+                     ServerRequestCallback<Void> requestCallback);
+
+   void processInterrupt(String handle,
+                         ServerRequestCallback<Void> requestCallback);
+
+   void processWriteStdin(String handle,
+                          String input,
+                          ServerRequestCallback<Void> requestCallback);
 }
