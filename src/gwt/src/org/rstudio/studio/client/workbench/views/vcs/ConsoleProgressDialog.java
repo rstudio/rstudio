@@ -22,7 +22,6 @@ import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent.Handler;

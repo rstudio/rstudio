@@ -19,7 +19,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.console.ConsoleOutputEvent.Handler;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
