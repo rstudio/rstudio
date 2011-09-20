@@ -30,11 +30,11 @@ namespace {
    ProcTable s_procs;
 } // anonymous namespace
 
-ConsoleProcess::ConsoleProcess(
-         const std::string& command, const system::ProcessOptions& options)
+ConsoleProcess::ConsoleProcess(const std::string& command,
+                               const core::system::ProcessOptions& options)
    : command_(command), options_(options), started_(false), interrupt_(false)
 {
-   handle_ = system::generateUuid(false);
+   handle_ = core::system::generateUuid(false);
 }
 
 Error ConsoleProcess::start()
@@ -59,7 +59,7 @@ void ConsoleProcess::interrupt()
    interrupt_ = true;
 }
 
-bool ConsoleProcess::onContinue(system::ProcessOperations& ops)
+bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 {
    while (!inputQueue_.empty())
    {
@@ -72,7 +72,7 @@ bool ConsoleProcess::onContinue(system::ProcessOperations& ops)
    return !interrupt_;
 }
 
-void ConsoleProcess::onStdout(system::ProcessOperations& ops,
+void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
                                      const std::string& output)
 {
    json::Object data;
@@ -83,7 +83,7 @@ void ConsoleProcess::onStdout(system::ProcessOperations& ops,
          ClientEvent(client_events::kConsoleProcessOutput, data));
 }
 
-void ConsoleProcess::onStderr(system::ProcessOperations& ops,
+void ConsoleProcess::onStderr(core::system::ProcessOperations& ops,
                                      const std::string& output)
 {
    json::Object data;
@@ -105,9 +105,9 @@ void ConsoleProcess::onExit(int exitCode)
    s_procs.erase(handle_);
 }
 
-system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
+core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
 {
-   system::ProcessCallbacks cb;
+   core::system::ProcessCallbacks cb;
    cb.onContinue = boost::bind(&ConsoleProcess::onContinue, this, _1);
    cb.onStdout = boost::bind(&ConsoleProcess::onStdout, this, _1, _2);
    cb.onStderr = boost::bind(&ConsoleProcess::onStderr, this, _1, _2);
@@ -174,7 +174,7 @@ Error procInterrupt(const json::JsonRpcRequest& request,
 boost::shared_ptr<ConsoleProcess> createProcess(const std::string &command)
 {
    boost::shared_ptr<ConsoleProcess> ptrProc(
-         new ConsoleProcess(command, system::ProcessOptions()));
+         new ConsoleProcess(command, core::system::ProcessOptions()));
    s_procs.insert(std::make_pair(ptrProc->handle(), ptrProc));
    return ptrProc;
 }

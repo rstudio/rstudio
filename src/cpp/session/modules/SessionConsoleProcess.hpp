@@ -13,10 +13,11 @@
 #ifndef SESSION_CONSOLE_PROCESS_HPP
 #define SESSION_CONSOLE_PROCESS_HPP
 
-#include <core/Error.hpp>
 #include <core/system/Process.hpp>
 
-using namespace core;
+namespace core {
+   class Error;
+}
 
 namespace session {
 namespace modules {
@@ -26,25 +27,27 @@ class ConsoleProcess
 {
 public:
    ConsoleProcess(const std::string& command,
-                  const system::ProcessOptions& options);
+                  const core::system::ProcessOptions& options);
 
    std::string handle() const { return handle_; }
 
-   Error start();
+   core::Error start();
    void enqueueInput(const std::string& input);
    void interrupt();
 
-   system::ProcessCallbacks createProcessCallbacks();
+   core::system::ProcessCallbacks createProcessCallbacks();
 
-   bool onContinue(system::ProcessOperations& ops);
-   void onStdout(system::ProcessOperations& ops, const std::string& output);
-   void onStderr(system::ProcessOperations& ops, const std::string& output);
+   bool onContinue(core::system::ProcessOperations& ops);
+   void onStdout(core::system::ProcessOperations& ops,
+                 const std::string& output);
+   void onStderr(core::system::ProcessOperations& ops,
+                 const std::string& output);
    void onExit(int exitCode);
 
 private:
    // Command and options that will be used when start() is called
    std::string command_;
-   system::ProcessOptions options_;
+   core::system::ProcessOptions options_;
 
    // The handle that the client can use to refer to this process
    std::string handle_;
@@ -60,7 +63,7 @@ private:
 
 boost::shared_ptr<ConsoleProcess> createProcess(const std::string& command);
 
-Error initialize();
+core::Error initialize();
 
 } // namespace console_process
 } // namespace modules
