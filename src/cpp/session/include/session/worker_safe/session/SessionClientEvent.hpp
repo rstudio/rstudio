@@ -66,6 +66,8 @@ extern const int kOpenProjectError;
 extern const int kVcsRefresh;
 extern const int kAskPass;
 extern const int kCodeIndexingStatusChanged;
+extern const int kConsoleProcessOutput;
+extern const int kConsoleProcessExit;
 }
    
 class ClientEvent

@@ -41,6 +41,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include "SessionConsoleProcess.hpp"
+
 // TODO: git fetch doesn't work due to path differences between bash and cmd
 // TODO: Discover/configure git bin dir, and add it to the path (needed to find ssh)
 // TODO: It's actually pretty easy to look in an id_rsa file and see if it's encrypted,
@@ -50,6 +52,7 @@
 
 using namespace core;
 using namespace core::shell_utils;
+using session::modules::console_process::ConsoleProcess;
 
 namespace session {
 namespace modules {
@@ -457,19 +460,21 @@ public:
       return error;
    }
 
-   core::Error push(std::string* pOutput, std::string* pError)
+   core::Error push(std::string* pHandle)
    {
-      Error error = runCommand(git() << "push", pOutput, pError);
-      if (error)
-         return error;
+      boost::shared_ptr<ConsoleProcess> ptrProc =
+            console_process::createProcess(git() << "push");
+
+      *pHandle = ptrProc->handle();
       return Success();
    }
 
-   core::Error pull(std::string* pOutput, std::string* pError)
+   core::Error pull(std::string* pHandle)
    {
-      Error error = runCommand(git() << "pull", pOutput, pError);
-      if (error)
-         return error;
+      boost::shared_ptr<ConsoleProcess> ptrProc =
+            console_process::createProcess(git() << "pull");
+
+      *pHandle = ptrProc->handle();
       return Success();
    }
 
@@ -947,9 +952,12 @@ Error vcsPush(const json::JsonRpcRequest& request,
    if (!pGit)
       return systemError(boost::system::errc::operation_not_supported, ERROR_LOCATION);
 
-   Error error = pGit->push(NULL, NULL);
+   std::string handle;
+   Error error = pGit->push(&handle);
    if (error)
       return error;
+
+   pResponse->setResult(handle);
 
    return Success();
 }
@@ -963,9 +971,12 @@ Error vcsPull(const json::JsonRpcRequest& request,
    if (!pGit)
       return systemError(boost::system::errc::operation_not_supported, ERROR_LOCATION);
 
-   Error error = pGit->pull(NULL, NULL);
+   std::string handle;
+   Error error = pGit->pull(&handle);
    if (error)
       return error;
+
+   pResponse->setResult(handle);
 
    return Success();
 }

@@ -34,6 +34,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
@@ -537,31 +538,6 @@ public class ShellPane extends Composite implements Shell.Display,
       public void focus()
       {
          getElement().focus();
-      }
-   }
-
-   private class PreWidget extends Widget
-         implements HasKeyDownHandlers, HasClickHandlers
-   {
-      public PreWidget()
-      {
-         setElement(Document.get().createPreElement());
-         getElement().setTabIndex(0);
-      }
-
-      public HandlerRegistration addClickHandler(ClickHandler handler)
-      {
-         return addDomHandler(handler, ClickEvent.getType());
-      }
-
-      public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
-      {
-         return addDomHandler(handler, KeyDownEvent.getType());
-      }
-
-      public void setText(String text)
-      {
-         getElement().setInnerText(text);
       }
    }
 

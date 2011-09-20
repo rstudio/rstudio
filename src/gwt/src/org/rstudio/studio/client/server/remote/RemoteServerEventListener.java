@@ -29,17 +29,15 @@ import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.common.console.ServerConsoleOutputEvent;
+import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.events.*;
-import org.rstudio.studio.client.workbench.model.BrowseUrlInfo;
-import org.rstudio.studio.client.workbench.model.ErrorMessage;
-import org.rstudio.studio.client.workbench.model.OAuthApproval;
-import org.rstudio.studio.client.workbench.model.QuotaStatus;
-import org.rstudio.studio.client.workbench.model.WarningBarMessage;
+import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsolePrompt;
@@ -119,6 +117,8 @@ class RemoteServerEventListener
       public static final String VcsRefresh = "vcs_refresh";
       public static final String AskPass = "ask_pass";
       public static final String CodeIndexingStatusChanged = "code_indexing_status_changed";
+      public static final String ConsoleProcessOutput = "console_process_output";
+      public static final String ConsoleProcessExit = "console_process_exit";
 
       protected ClientEvent()
       {
@@ -660,6 +660,19 @@ class RemoteServerEventListener
          {
             boolean enabled = event.<Bool>getData().getValue(); 
             eventBus.fireEvent(new CodeIndexingStatusChangedEvent(enabled));
+         }
+         else if (type.equals(ClientEvent.ConsoleProcessOutput))
+         {
+            ServerConsoleOutputEvent.Data data = event.getData();
+            eventBus.fireEvent(new ServerConsoleOutputEvent(data.getHandle(),
+                                                            data.getOutput(),
+                                                            data.isError()));
+         }
+         else if (type.equals(ClientEvent.ConsoleProcessExit))
+         {
+            ServerProcessExitEvent.Data data = event.getData();
+            eventBus.fireEvent(new ServerProcessExitEvent(data.getHandle(),
+                                                          data.getExitCode()));
          }
          else if (type.equals(ClientEvent.Quit))
          {

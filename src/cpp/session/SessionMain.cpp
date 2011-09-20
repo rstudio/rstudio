@@ -82,6 +82,7 @@
 #include "modules/SessionAgreement.hpp"
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConsole.hpp"
+#include "modules/SessionConsoleProcess.hpp"
 #include "modules/SessionDiff.hpp"
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionWorkspace.hpp"
@@ -1233,6 +1234,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::limits::initialize)
       (modules::agreement::initialize)
       (modules::console::initialize)
+      (modules::console_process::initialize)
       (modules::diff::initialize)
       (modules::files::initialize)
       (modules::workspace::initialize)
