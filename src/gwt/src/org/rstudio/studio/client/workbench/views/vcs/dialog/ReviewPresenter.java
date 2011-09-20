@@ -40,6 +40,7 @@ import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.events.*;
@@ -161,7 +162,8 @@ public class ReviewPresenter implements IsWidget
    public ReviewPresenter(VCSServerOperations server,
                           Display view,
                           final EventBus events,
-                          final VcsState vcsState)
+                          final VcsState vcsState,
+                          final Commands commands)
    {
       server_ = server;
       view_ = view;
@@ -247,14 +249,9 @@ public class ReviewPresenter implements IsWidget
          }
       });
 
-      view_.getRefreshButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            vcsState.refresh();
-         }
-      });
+      view_.getRefreshButton().addClickHandler(commands.vcsRefresh());
+      view_.getPullButton().addClickHandler(commands.vcsPull());
+      view_.getPushButton().addClickHandler(commands.vcsPush());
 
       view_.getCommitIsAmend().addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
