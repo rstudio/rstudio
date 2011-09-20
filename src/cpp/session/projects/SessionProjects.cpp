@@ -181,42 +181,17 @@ void startup()
    // had an abend on our last session -- this might have been a
    // result of something in the project)
    else if (userSettings().alwaysRestoreLastProject() &&
-            !userSettings().lastProjectPath().empty())
+            !userSettings().lastProjectPath().empty() &&
+            !session::persistentState().hadAbend())
    {
-      if (!session::persistentState().hadAbend())
-      {
-         // get last project path
-         projectFilePath = userSettings().lastProjectPath();
 
-         // reset it to empty so that we only attempt to load the "lastProject"
-         // a single time (this will be reset to the path below after we
-         // clear the s_projectContext.initialize)
-         userSettings().setLastProjectPath(FilePath());
-      }
-      // last session had an abend -- this could have been due to
-      // a corrupted graphics state in the project. in this case
-      // we want to wipe out any graphics state in the project as
-      // a precautionary measure
-      else
-      {
-         FilePath lastProjectPath = userSettings().lastProjectPath();
-         FilePath projectScratchPath;
-         Error error = projects::computeScratchPath(lastProjectPath,
-                                                    &projectScratchPath);
-         if (!error)
-         {
-            error = r::session::utils::removeGraphics(projectScratchPath);
-            if (error)
-               LOG_ERROR(error);
-         }
-         else
-         {
-            LOG_ERROR(error);
-         }
+      // get last project path
+      projectFilePath = userSettings().lastProjectPath();
 
-         // always set to empty to suppress loading of the project
-         projectFilePath = FilePath();
-      }
+      // reset it to empty so that we only attempt to load the "lastProject"
+      // a single time (this will be reset to the path below after we
+      // clear the s_projectContext.initialize)
+      userSettings().setLastProjectPath(FilePath());
    }
 
    // else no active project for this session

@@ -661,7 +661,6 @@ const int kDefaultWidth = 500;
 const int kDefaultHeight = 500; 
    
 Error initialize(
-            const FilePath& plotsStateFile,
             const FilePath& graphicsPath,
             const boost::function<bool(double*,double*)>& locatorFunction)
 {      
@@ -686,8 +685,7 @@ Error initialize(
    graphicsDevice.close = close;
    graphicsDevice.onBeforeExecute = onBeforeExecute;
    graphicsDevice.isHolding = isHolding;
-   Error error = plotManager().initialize(plotsStateFile,
-                                          graphicsPath,
+   Error error = plotManager().initialize(graphicsPath,
                                           graphicsDevice,
                                           &s_graphicsDeviceEvents);
    if (error)

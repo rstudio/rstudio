@@ -29,8 +29,11 @@
 #include <r/session/RSession.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
+#include <r/session/RGraphics.hpp>
 
+#include "RClientMetrics.hpp"
 #include "RSearchPath.hpp"
+#include "graphics/RGraphicsPlotManager.hpp"
 
 using namespace core ;
 
@@ -48,6 +51,7 @@ const char * const kSettingsFile = "settings";
 const char * const kConsoleActionsFile = "console_actions";
 const char * const kOptionsFile = "options";
 const char * const kHistoryFile = "history";
+const char * const kPlotsFile = "plots";
 const char * const kSearchPath = "search_path";
 
 // settings
@@ -135,6 +139,14 @@ bool save(const FilePath& statePath)
       reportError(kSaving, kSettingsFile, error, ERROR_LOCATION);
       saved = false;
    }
+
+   // save plots
+   error = graphics::plotManager().savePlotsState();
+   if (error)
+   {
+      reportError(kSaving, kPlotsFile, error, ERROR_LOCATION);
+      saved = false;
+   }
    
    // save options 
    error = r::options::saveOptions(statePath.complete(kOptionsFile));
@@ -152,6 +164,9 @@ bool save(const FilePath& statePath)
       reportError(kSaving, kHistoryFile, error, ERROR_LOCATION);
       saved = false;
    }
+
+   // save client metrics
+   client_metrics::save(&settings);
    
    // save aliased path to current working directory
    std::string workingDirectory = FilePath::createAliasedPath(
@@ -183,7 +198,11 @@ bool save(const FilePath& statePath)
 Error deferredRestore(const FilePath& statePath)
 {
    // search path
-   return search_path::restore(statePath);
+   Error error = search_path::restore(statePath);
+   if (error)
+      return error;
+
+   return graphics::plotManager().restorePlotsState();
 }
    
 bool restore(const FilePath& statePath,
@@ -217,6 +236,10 @@ bool restore(const FilePath& statePath,
    if (error)
       reportError(kRestoring, kOptionsFile, error, ERROR_LOCATION, er);
    
+   // restore client_metrics (must execute after restore of options for
+   // console width but prior to graphics::device for device size)
+   client_metrics::restore(settings);
+
    // restore history
    FilePath historyFilePath = statePath.complete(kHistoryFile);
    error = consoleHistory().loadFromFile(historyFilePath, false);

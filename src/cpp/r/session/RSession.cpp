@@ -105,11 +105,6 @@ public:
    ~SuppressOutputInScope() { s_suppressOuput = false; }
 };
 
-FilePath plotsStateFilePath()
-{
-   return s_options.scopedScratchPath.complete(kGraphicsPath "/INDEX");
-}
-
 FilePath rHistoryFilePath()
 {
    std::string histFile = core::system::getenv("R_HISTFILE");
@@ -161,34 +156,14 @@ void reportDeferredDeserializationError(const Error& error)
    REprintf((errMsg + "\n").c_str());
 }
 
-void restoreWorkingState()
-{
-   // restore client metrics so the plot doesn't need to re-render
-   client_metrics::restore(s_options.persistentState());
-
-   // restore plots if we have them
-   FilePath plotsFile = plotsStateFilePath();
-   if (plotsFile.exists())
-   {
-      // restore the plots
-      Error plotError = graphics::plotManager().restorePlotsState(plotsFile);
-      if (plotError)
-         reportDeferredDeserializationError(plotError);
-   }
-}
-
-
 void completeDeferredSessionInit()
 {
-   // restore client metrics and plots
-   restoreWorkingState();
-
    // call external hook
    if (s_callbacks.deferredInit)
       s_callbacks.deferredInit();
 }
 
-void saveWorkingState(ClientStateCommitType commitType)
+void saveClientState(ClientStateCommitType commitType)
 {
    using namespace r::session;
 
@@ -199,14 +174,6 @@ void saveWorkingState(ClientStateCommitType commitType)
    r::session::clientState().commit(commitType,
                                     s_clientStatePath,
                                     s_projectClientStatePath);
-
-   // save client metrics
-   client_metrics::save(&(s_options.persistentState()));
-
-   // save plots state
-   Error error = graphics::plotManager().savePlotsState(plotsStateFilePath());
-   if (error)
-      LOG_ERROR(error);
 }
 
 
@@ -379,19 +346,7 @@ Error initialize()
 
    // initialize graphics device
    FilePath graphicsPath = s_options.scopedScratchPath.complete(kGraphicsPath);
-
-   // if the last session had an abend then wipe out the graphics path
-   // (because it may have been the cause of the abend)
-   if (s_options.lastSessionHadAbend)
-   {
-      error = graphicsPath.removeIfExists();
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   // call initialize
-   error = graphics::device::initialize(plotsStateFilePath(),
-                                        graphicsPath,
+   error = graphics::device::initialize(graphicsPath,
                                         s_callbacks.locator);
    if (error) 
       return error;
@@ -450,8 +405,8 @@ Error initialize()
       error = consoleHistory().loadFromFile(historyPath, false);
       if (error)
          reportHistoryAccessError("read history from", historyPath, error);
-      
-      // defer loading of global environment and plots
+
+      // defer loading of global environment
       s_deferredDeserializationAction = deferredRestoreNewSession;
    }
    
@@ -1048,12 +1003,10 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
             r::exec::error("Unable to quit (session cleanup failure)\n");
          }
 
-         // commit working state (client state and plots)
-         saveWorkingState(ClientStateCommitPersistentOnly);
+         // commit client state
+         saveClientState(ClientStateCommitPersistentOnly);
 
-         // clear display (closes the device, however graphics files
-         // are not deleted because saveWorkingState turned off
-         // device events).
+         // clear display
          r::session::graphics::display().clear();
          
          // print warnings (do this here even though R does it within 
@@ -1282,8 +1235,8 @@ bool isSuspendable(const std::string& currentPrompt)
    
 bool suspend(bool force)
 {
-   // commit all working state
-   saveWorkingState(ClientStateCommitAll);
+   // commit all client state
+   saveClientState(ClientStateCommitAll);
 
    // save the session state. errors are handled internally and reported
    // directly to the end user and written to the server log.
@@ -1397,12 +1350,6 @@ FilePath tempDir()
    FilePath filePath(r::util::fixPath(tempDir));
    return filePath;
 }
-
-Error removeGraphics(const FilePath& scratchPath)
-{
-   return scratchPath.complete(kGraphicsPath).removeIfExists();
-}
-
 
 } // namespace utils
    

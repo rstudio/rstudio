@@ -77,8 +77,7 @@ PlotManager::PlotManager()
    plots_.set_capacity(30);
 }
       
-Error PlotManager::initialize(const FilePath& plotsStateFile,
-                              const FilePath& graphicsPath,
+Error PlotManager::initialize(const FilePath& graphicsPath,
                               const GraphicsDeviceFunctions& graphicsDevice,
                               GraphicsDeviceEvents* pEvents)
 {
@@ -87,14 +86,14 @@ Error PlotManager::initialize(const FilePath& plotsStateFile,
    if (error)
       return error;
 
-   // save reference to plots state file
-   plotsStateFile_ = plotsStateFile;
-
    // save reference to graphics path and make sure it exists
    graphicsPath_ = graphicsPath ;
    error = graphicsPath_.ensureDirectory();
    if (error)
       return error;
+
+   // save reference to plots state file
+   plotsStateFile_ = graphicsPath_.complete("INDEX");
    
    // save reference to graphics device functions
    graphicsDevice_ = graphicsDevice;
@@ -529,7 +528,7 @@ void PlotManager::onBeforeExecute()
    graphicsDevice_.onBeforeExecute();
 }
 
-Error PlotManager::savePlotsState(const FilePath& plotsStateFile)
+Error PlotManager::savePlotsState()
 {
    // list to write
    std::vector<std::string> plots ;
@@ -556,18 +555,18 @@ Error PlotManager::savePlotsState(const FilePath& plotsStateFile)
    suppressDeviceEvents_ = true ;
    
    // write plot list
-   return writeStringVectorToFile(plotsStateFile, plots);
+   return writeStringVectorToFile(plotsStateFile_, plots);
 }
    
-Error PlotManager::restorePlotsState(const FilePath& plotsStateFile)
+Error PlotManager::restorePlotsState()
 {
    // exit if we don't have a plot list
-   if (!plotsStateFile.exists())
+   if (!plotsStateFile_.exists())
       return Success() ;
    
    // read plot list from file
    std::vector<std::string> plots;
-   Error error = readStringVectorFromFile(plotsStateFile, &plots);
+   Error error = readStringVectorFromFile(plotsStateFile_, &plots);
    if (error)
       return error;
 
