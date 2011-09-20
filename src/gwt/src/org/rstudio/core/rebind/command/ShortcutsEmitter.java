@@ -161,6 +161,30 @@ public class ShortcutsEmitter
          return "com.google.gwt.event.dom.client.KeyCodes.KEY_PAGEUP";
       if (val.equalsIgnoreCase("pagedown"))
          return "com.google.gwt.event.dom.client.KeyCodes.KEY_PAGEDOWN";
+      if (val.equalsIgnoreCase("F1"))
+         return "112";
+      if (val.equalsIgnoreCase("F2"))
+         return "113";
+      if (val.equalsIgnoreCase("F3"))
+         return "114";
+      if (val.equalsIgnoreCase("F4"))
+         return "115";
+      if (val.equalsIgnoreCase("F5"))
+         return "116";
+      if (val.equalsIgnoreCase("F6"))
+         return "117";
+      if (val.equalsIgnoreCase("F7"))
+         return "118";
+      if (val.equalsIgnoreCase("F8"))
+         return "119";
+      if (val.equalsIgnoreCase("F9"))
+         return "120";
+      if (val.equalsIgnoreCase("F10"))
+         return "121";
+      if (val.equalsIgnoreCase("F11"))
+         return "122";
+      if (val.equalsIgnoreCase("F12"))
+         return "123";
       if (val.equals("`"))
          return "192";
       if (val.equals("."))

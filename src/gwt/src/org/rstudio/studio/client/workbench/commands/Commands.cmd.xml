@@ -234,7 +234,18 @@ well as menu structures (for main menu and popup menus).
    </menu>
 
    <shortcuts>
-      <!-- Only alphanumeric values may be used -->
+      <!--
+         Only the following keys may be used:
+            Alphanumerics
+            /
+            Enter
+            Left, Right, Up, Down
+            Tab
+            PageUp, PageDown
+            F1-F12
+            `
+            .
+      -->
       <!-- Valid modifiers are Ctrl, Alt, Meta, Shift, and Cmd -->
       <!-- "Cmd" means Ctrl OR Meta -->
       <shortcut refid="saveSourceDoc" value="Cmd+S"/>
