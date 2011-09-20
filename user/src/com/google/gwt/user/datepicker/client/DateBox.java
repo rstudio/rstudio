@@ -229,7 +229,7 @@ public class DateBox extends Composite implements HasValue<Date>,
     }
 
     public void onValueChange(ValueChangeEvent<Date> event) {
-      setValue(parseDate(false), event.getValue(), true);
+      setValue(parseDate(false), event.getValue(), true, true);
       hideDatePicker();
       preventDatePickerPopup();
       box.setFocus(true);
@@ -252,6 +252,7 @@ public class DateBox extends Composite implements HasValue<Date>,
   private LeafValueEditor<Date> editor;
   private Format format;
   private boolean allowDPShow = true;
+  private boolean fireNullValues = false;
 
   /**
    * Create a date box with a new {@link DatePicker}.
@@ -325,6 +326,14 @@ public class DateBox extends Composite implements HasValue<Date>,
   }
 
   /**
+   * Returns true iff the date box will fire {@code ValueChangeEvents} with a
+   * date value of {@code null} for invalid or empty string values.
+   */
+  public boolean getFireNullValues() {
+    return fireNullValues;
+  }
+  
+  /**
    * Gets the format instance used to control formatting and parsing of this
    * {@link DateBox}.
    *
@@ -396,6 +405,14 @@ public class DateBox extends Composite implements HasValue<Date>,
   }
 
   /**
+   * Sets whether or not the date box will fire {@code ValueChangeEvents} with a
+   * date value of {@code null} for invalid or empty string values.
+   */
+  public void setFireNullValues(boolean fireNullValues) {
+    this.fireNullValues = fireNullValues;
+  }
+  
+  /**
    * Explicitly focus/unfocus this widget. Only one widget can have focus at a
    * time, and the widget that does will receive all keyboard events.
    *
@@ -448,7 +465,7 @@ public class DateBox extends Composite implements HasValue<Date>,
   }
 
   public void setValue(Date date, boolean fireEvents) {
-    setValue(picker.getValue(), date, fireEvents);
+    setValue(picker.getValue(), date, fireEvents, true);
   }
 
   /**
@@ -480,14 +497,17 @@ public class DateBox extends Composite implements HasValue<Date>,
     });
   }
 
-  private void setValue(Date oldDate, Date date, boolean fireEvents) {
+  private void setValue(Date oldDate, Date date, boolean fireEvents, boolean updateText) {
     if (date != null) {
       picker.setCurrentMonth(date);
     }
     picker.setValue(date, false);
-    format.reset(this, false);
-    box.setText(getFormat().format(this, date));
-
+    
+    if (updateText) {
+      format.reset(this, false);
+      box.setText(getFormat().format(this, date));
+    }
+    
     if (fireEvents) {
       DateChangeEvent.fireIfNotEqualDates(this, oldDate, date);
     }
@@ -495,8 +515,8 @@ public class DateBox extends Composite implements HasValue<Date>,
 
   private void updateDateFromTextBox() {
     Date parsedDate = parseDate(true);
-    if (parsedDate != null) {
-      setValue(picker.getValue(), parsedDate, true);
+    if (fireNullValues || (parsedDate != null)) {
+      setValue(picker.getValue(), parsedDate, true, false);
     }
   }
 }

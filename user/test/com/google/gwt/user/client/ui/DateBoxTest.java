@@ -17,9 +17,13 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.user.datepicker.client.DateBox;
+
+import java.util.Date;
 
 /**
  * Tests {@link DateBox}.
@@ -69,5 +73,41 @@ public class DateBoxTest extends WidgetTestBase {
         db3.getDatePicker().setValue(d, true);
       }
     }.run();
+  }
+  
+  @DoNotRunWith({Platform.HtmlUnitBug})
+  public void testFireNullValues() {
+    DateBox db = new DateBox();
+    db.setFireNullValues(true);
+    assertTrue(db.getFireNullValues());
+    RootPanel.get().add(db);
+    @SuppressWarnings("unchecked")
+    final ValueChangeEvent<Date>[] eventHolder = new ValueChangeEvent[1];
+    final boolean[] wasCalled = new boolean[1];
+    db.addValueChangeHandler(new ValueChangeHandler<Date>() {
+      @Override
+      public void onValueChange(ValueChangeEvent<Date> event) {
+        wasCalled[0] = true;
+        eventHolder[0] = event;
+      }
+    });
+
+    // test that an empty string fires an event
+    db.setValue(new Date(1976,1,20));
+    db.getTextBox().setText("");
+    NativeEvent e = Document.get().createBlurEvent();
+    db.getTextBox().getElement().dispatchEvent(e);
+    assertTrue(wasCalled[0]);
+    assertNull(eventHolder[0].getValue());
+    
+    // test that an invalid date string fires an event, and leaves the text in
+    // the textbox
+    db.setValue(new Date(1976,1,20));
+    db.getTextBox().setText("abcd");
+    e = Document.get().createBlurEvent();
+    db.getTextBox().getElement().dispatchEvent(e);
+    assertTrue(wasCalled[0]);
+    assertNull(eventHolder[0].getValue());
+    assertEquals("abcd", db.getTextBox().getText());
   }
 }
