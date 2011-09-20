@@ -463,7 +463,7 @@ public:
    core::Error push(std::string* pHandle)
    {
       boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::createProcess(git() << "push");
+            console_process::ConsoleProcess::create(git() << "push");
 
       *pHandle = ptrProc->handle();
       return Success();
@@ -472,7 +472,7 @@ public:
    core::Error pull(std::string* pHandle)
    {
       boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::createProcess(git() << "pull");
+            console_process::ConsoleProcess::create(git() << "pull");
 
       *pHandle = ptrProc->handle();
       return Success();

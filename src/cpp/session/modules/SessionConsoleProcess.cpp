@@ -61,7 +61,7 @@ void ConsoleProcess::interrupt()
 
 bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 {
-   while (!inputQueue_.empty())
+   if (!inputQueue_.empty())
    {
       Error error = ops.writeToStdin(inputQueue_, false);
       if (error)
@@ -69,6 +69,7 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 
       inputQueue_.clear();
    }
+
    return !interrupt_;
 }
 
@@ -127,7 +128,7 @@ Error procInit(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   boost::shared_ptr<ConsoleProcess> ptrProc = createProcess(command);
+   boost::shared_ptr<ConsoleProcess> ptrProc = ConsoleProcess::create(command);
    pResponse->setResult(ptrProc->handle());
    return Success();
 }
@@ -171,11 +172,14 @@ Error procInterrupt(const json::JsonRpcRequest& request,
    }
 }
 
-boost::shared_ptr<ConsoleProcess> createProcess(const std::string &command)
+boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
+      const std::string &command)
 {
+   core::system::ProcessOptions options;
+   options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
-         new ConsoleProcess(command, core::system::ProcessOptions()));
-   s_procs.insert(std::make_pair(ptrProc->handle(), ptrProc));
+         new ConsoleProcess(command, options));
+   s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
 }
 
@@ -191,8 +195,6 @@ Error initialize()
       (bind(registerRpcMethod, "process_interrupt", procInterrupt));
 
    return initBlock.execute();
-
-   return Success();
 }
 
 } // namespace console_process
