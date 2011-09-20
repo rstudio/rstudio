@@ -43,6 +43,8 @@ public abstract class
    public abstract AppCommand executeFromCurrentLine();
    public abstract AppCommand executeCurrentFunction();
    public abstract AppCommand executeLastCode();
+   public abstract AppCommand goToFunctionDefinition();
+   public abstract AppCommand backToPreviousLocation();
    public abstract AppCommand compilePDF();
    public abstract AppCommand publishPDF();
    public abstract AppCommand activateSource();

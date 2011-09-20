@@ -89,11 +89,13 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="sourceActiveDocumentWithEcho"/>
          <cmd refid="sourceFile"/>
          <separator/>
-         <cmd refid="jumpToFunction"/>
-         <separator/>
          <cmd refid="extractFunction"/>
          <cmd refid="commentUncomment"/>
          <cmd refid="reindent"/>
+         <separator/>
+         <cmd refid="jumpToFunction"/>
+         <cmd refid="goToFunctionDefinition"/>
+         <cmd refid="backToPreviousLocation"/>
          <separator/>
          <cmd refid="consoleClear"/>
       </menu>
@@ -259,6 +261,8 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="executeToCurrentLine" value="Cmd+Shift+B"/>
       <shortcut refid="executeFromCurrentLine" value="Cmd+Shift+E"/>
       <shortcut refid="executeCurrentFunction" value="Cmd+Shift+F"/>
+      <shortcut refid="goToFunctionDefinition" value="F2"/>
+      <shortcut refid="backToPreviousLocation" value="Shift+F2"/>
       <shortcut refid="sourceFile" value="Cmd+Shift+O"/>
       <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S"/>
       <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
@@ -468,6 +472,12 @@ well as menu structures (for main menu and popup menus).
    <cmd id="executeLastCode"
         menuLabel="Re-Run _Previous Region"
         desc="Re-run the previous code region"/>
+   <cmd id ="goToFunctionDefinition"
+        menuLabel="_Go To Function Definition"
+        desc="Go to to the definition of the currently highlighted function"/>
+   <cmd id = "backToPreviousLocation"
+        menuLabel="Bac_k to Previous Location"
+        desc="Go back to the previous editing location"/>
    <cmd id="extractFunction"
         menuLabel="E_xtract Function"
         desc="Turn the current selection into a function"/>
@@ -577,7 +587,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Push..."/>
 
    <cmd id="consoleClear"
-        menuLabel="C_lear Console"/>
+        menuLabel="Clear Con_sole"/>
    <cmd id="interruptR"
         menuLabel="_Interrupt R"/>
 

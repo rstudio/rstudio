@@ -105,6 +105,12 @@ public class WorkbenchContext
       return activeProjectDir_;
    }
    
+   public boolean isProjectActive()
+   {
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      return sessionInfo != null && sessionInfo.getActiveProjectFile() != null;
+   }
+   
    
    FileSystemItem currentWorkingDir_ = FileSystemItem.home();
    FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();

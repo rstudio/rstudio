@@ -20,4 +20,15 @@ public interface CodeSearchServerOperations
          String term, 
          int maxResults,
          ServerRequestCallback<CodeSearchResults> requestCallback);
+   
+   /*
+    * Get the location where the specified function is defined (if known).
+    * We pass a line and pos rather than a function name because that is
+    * the level of fidelity we have in the editor -- we use R on the server
+    * to sort out the name of the token to lookup.
+    */
+   void getFunctionDefinitionLocation(
+         String line, 
+         int pos,
+         ServerRequestCallback<FunctionDefinitionLocation> requestCallback);
 }

@@ -23,6 +23,13 @@
    })
 })
 
+.rs.addFunction("guessToken", function(line, cursorPos)
+{
+   utils:::.assignLinebuffer(line)
+   utils:::.assignEnd(cursorPos)
+   utils:::.guessTokenFromLine()
+})
+
 utils:::rc.settings(files=T)
 .rs.addJsonRpcHandler("get_completions", function(line, cursorPos)
 {
@@ -49,10 +56,7 @@ utils:::rc.settings(files=T)
 
 .rs.addJsonRpcHandler("get_help_at_cursor", function(line, cursorPos)
 {
-   utils:::.assignLinebuffer(line)
-   utils:::.assignEnd(cursorPos)
-   token <- utils:::.guessTokenFromLine()
-
+   token <- .rs.guessToken(line, cursorPos)
    if (token == '')
       return()
 

@@ -181,13 +181,15 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.commentUncomment());
       dynamicCommands_.add(commands.reindent());
       dynamicCommands_.add(commands.jumpToFunction());
+      dynamicCommands_.add(commands.goToFunctionDefinition());
+      dynamicCommands_.add(commands.backToPreviousLocation());
       dynamicCommands_.add(commands.setWorkingDirToActiveDoc());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
          command.setEnabled(false);
       }
-      
+             
       // allow Ctrl+W to propagate to the browser if close doc is disabled
       if (!Desktop.isDesktop())
       {
@@ -1125,6 +1127,12 @@ public class Source implements InsertSourceHandler,
       HashSet<AppCommand> newCommands =
             activeEditor_ != null ? activeEditor_.getSupportedCommands()
                                   : new HashSet<AppCommand>();
+            
+      // if necessary, remove commands which require a project
+      if (!workbenchContext_.isProjectActive())
+      {
+         newCommands.remove(commands_.goToFunctionDefinition());
+      }
 
       HashSet<AppCommand> commandsToEnable = new HashSet<AppCommand>(newCommands);
       commandsToEnable.removeAll(activeCommands_);
@@ -1144,7 +1152,7 @@ public class Source implements InsertSourceHandler,
          command.setVisible(false);
       }
       
-  
+      
       // commands which should always be visible even when disabled
       commands_.saveSourceDoc().setVisible(true);
       commands_.saveSourceDocAs().setVisible(true);

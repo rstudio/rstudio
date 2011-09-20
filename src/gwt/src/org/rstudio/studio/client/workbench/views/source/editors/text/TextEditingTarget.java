@@ -52,6 +52,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinitionLocation;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -59,6 +60,9 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
@@ -105,7 +109,8 @@ public class TextEditingTarget implements EditingTarget
    public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                        IsWidget,
                                        HasFocusHandlers,
-                                       HasKeyDownHandlers
+                                       HasKeyDownHandlers,
+                                       InputEditorDisplay
    {
       public interface AnchoredSelection
       {
@@ -1392,6 +1397,51 @@ public class TextEditingTarget implements EditingTarget
    {
       statusBar_.getFunction().click();
    }
+   
+   @Handler
+   void onGoToFunctionDefinition()
+   {
+      // determine current line and cursor position
+      InputEditorLineWithCursorPosition lineWithPos = 
+                      InputEditorUtil.getLineWithCursorPosition(docDisplay_);
+      
+      // lookup function definition at this location
+      server_.getFunctionDefinitionLocation(
+         lineWithPos.getLine(),
+         lineWithPos.getPosition(), 
+         new ServerRequestCallback<FunctionDefinitionLocation>() {
+            @Override
+            public void onResponseReceived(FunctionDefinitionLocation loc)
+            {
+                // if we got a hit
+                if (loc.getFunctionName() != null)
+                {
+                  // TODO: look locally first
+
+                  // navigate editor
+                   if (loc.getFile() != null)
+                   {
+                      fileTypeRegistry_.editFile(loc.getFile(), 
+                                                 loc.getPosition());
+                   }
+               }
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               // fail silently (but Debug.log for dev mode)
+               Debug.log(error.getUserMessage());
+            }
+         });
+   }
+   
+   @Handler
+   void onBackToPreviousLocation()
+   {
+      
+   }
+   
    
    @Handler
    public void onSetWorkingDirToActiveDoc()

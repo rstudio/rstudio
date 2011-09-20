@@ -36,12 +36,31 @@
 
 #include <R_ext/rlocale.h>
 
+#include <r/RExec.hpp>
+
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 
 #include "SessionSource.hpp"
+
+// TODO: do local function lookup on client before yielding server result
+
+// TODO: search for FULL match of ONLY global functions
+
+// TODO: disable go to function definition if code indexing fails
+//       (same as we do for the search box)
+
+// TODO: make sure the failure code branches are hit as expected
+
+// TODO: some type of "none found" UI?
+
+// TODO: consider doing a help navigation if not found?
+
+// TODO: global progress for long-running function lookup
+
+// TODO: hookup back (stack/jump/gotofile/enable/disable)
 
 using namespace core ;
 
@@ -459,6 +478,7 @@ bool compareItems(const r_util::RSourceItem& i1, const r_util::RSourceItem& i2)
    return i1.name() < i2.name();
 }
 
+
 Error searchCode(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
@@ -523,6 +543,61 @@ Error searchCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getFunctionDefinitionLocation(const json::JsonRpcRequest& request,
+                                    json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string line;
+   int pos;
+   Error error = json::readParams(request.params, &line, &pos);
+   if (error)
+      return error;
+
+   // confirm that code search is enabled
+   if (!code_search::enabled())
+      return Error(core::json::errc::MethodUnexpected, ERROR_LOCATION);
+
+   // call into R to determine the token
+   std::string token;
+   error = r::exec::RFunction(".rs.guessToken", line, pos).call(&token);
+   if (error)
+      return error;
+
+   // default return value is null function name (indicating no results)
+   json::Object defJson;
+   defJson["function_name"] = json::Value();
+
+   // if we got a token then search the code
+   if (!token.empty())
+   {
+      // discovered a token so we have at least a function name to return
+      defJson["function_name"] = token;
+
+      // perform code search
+      std::vector<r_util::RSourceItem> items;
+      bool moreSourceItemsAvailable = false;
+      searchSource(token, 1, true, &items, &moreSourceItemsAvailable);
+      if (items.size() > 0)
+      {
+         // return full path to file
+         FilePath projDir = projects::projectContext().directory();
+         FilePath srcFilePath = projDir.complete(items[0].context());
+         defJson["file"] = module_context::createFileSystemItem(srcFilePath);
+
+         // return location in file
+         json::Object posJson;
+         posJson["line"] = items[0].line();
+         posJson["column"] = items[0].column();
+         defJson["position"] = posJson;
+      }
+   }
+
+   // set result
+   pResponse->setResult(defJson);
+
+   return Success();
+}
+
 void onFileMonitorEnabled(const tree<core::FileInfo>& files)
 {
    s_projectIndex.enqueFiles(files.begin_leaf(), files.end_leaf());
@@ -567,8 +642,8 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "search_code", searchCode));
-   ;
+      (bind(registerRpcMethod, "search_code", searchCode))
+      (bind(registerRpcMethod, "get_function_definition_location", getFunctionDefinitionLocation));
 
    return initBlock.execute();
 }
