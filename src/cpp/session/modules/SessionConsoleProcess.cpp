@@ -31,8 +31,10 @@ namespace {
 } // anonymous namespace
 
 ConsoleProcess::ConsoleProcess(const std::string& command,
-                               const core::system::ProcessOptions& options)
-   : command_(command), options_(options), started_(false), interrupt_(false)
+                               const core::system::ProcessOptions& options,
+                               const boost::function<void()>& onExit)
+   : command_(command), options_(options), started_(false),
+     interrupt_(false), onExit_(onExit)
 {
    handle_ = core::system::generateUuid(false);
 }
@@ -104,6 +106,9 @@ void ConsoleProcess::onExit(int exitCode)
          ClientEvent(client_events::kConsoleProcessExit, data));
 
    s_procs.erase(handle_);
+
+   if (onExit_)
+      onExit_();
 }
 
 core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
@@ -173,12 +178,13 @@ Error procInterrupt(const json::JsonRpcRequest& request,
 }
 
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
-      const std::string &command)
+      const std::string &command,
+      const boost::function<void()>& onExit)
 {
    core::system::ProcessOptions options;
    options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
-         new ConsoleProcess(command, options));
+         new ConsoleProcess(command, options, onExit));
    s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
 }

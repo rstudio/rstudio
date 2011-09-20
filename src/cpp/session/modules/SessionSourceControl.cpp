@@ -76,6 +76,11 @@ struct CommitInfo
    boost::int64_t date; // millis since epoch, UTC
 };
 
+void enqueueRefreshEvent()
+{
+   module_context::enqueClientEvent(ClientEvent(client_events::kVcsRefresh));
+}
+
 class VCSImpl : boost::noncopyable
 {
 public:
@@ -463,7 +468,8 @@ public:
    core::Error push(std::string* pHandle)
    {
       boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::ConsoleProcess::create(git() << "push");
+            console_process::ConsoleProcess::create(git() << "push",
+                                                    &enqueueRefreshEvent);
 
       *pHandle = ptrProc->handle();
       return Success();
@@ -472,7 +478,8 @@ public:
    core::Error pull(std::string* pHandle)
    {
       boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::ConsoleProcess::create(git() << "pull");
+            console_process::ConsoleProcess::create(git() << "pull",
+                                                    &enqueueRefreshEvent);
 
       *pHandle = ptrProc->handle();
       return Success();
@@ -765,7 +772,7 @@ struct RefreshOnExit : public boost::noncopyable
 {
    ~RefreshOnExit()
    {
-      module_context::enqueClientEvent(ClientEvent(client_events::kVcsRefresh));
+      enqueueRefreshEvent();
    }
 };
 
@@ -946,8 +953,6 @@ Error vcsCommitGit(const json::JsonRpcRequest& request,
 Error vcsPush(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
-   RefreshOnExit refreshOnExit;
-
    GitVCSImpl* pGit = dynamic_cast<GitVCSImpl*>(s_pVcsImpl_.get());
    if (!pGit)
       return systemError(boost::system::errc::operation_not_supported, ERROR_LOCATION);
@@ -965,8 +970,6 @@ Error vcsPush(const json::JsonRpcRequest& request,
 Error vcsPull(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
-   RefreshOnExit refreshOnExit;
-
    GitVCSImpl* pGit = dynamic_cast<GitVCSImpl*>(s_pVcsImpl_.get());
    if (!pGit)
       return systemError(boost::system::errc::operation_not_supported, ERROR_LOCATION);
@@ -1083,56 +1086,24 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void vcsExecuteCommand_onStdOut(boost::shared_ptr<std::string> ptrBuffer,
-              const std::string& output)
+Error vcsExecuteCommand(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
 {
-   *ptrBuffer += output;
-}
-
-void vcsExecuteCommand_onExit(boost::shared_ptr<std::string> ptrBuffer,
-            int exitCode,
-            const json::JsonRpcFunctionContinuation& continuation)
-{
-   json::Object result;
-   result["output"] = *ptrBuffer;
-   result["error"] = exitCode;
-   json::JsonRpcResponse response;
-   response.setResult(result);
-
-   continuation(Success(), &response);
-}
-
-void vcsExecuteCommand(const json::JsonRpcRequest& request,
-                       const json::JsonRpcFunctionContinuation& continuation)
-{
-   RefreshOnExit refreshOnExit;
-
    std::string command;
    Error error = json::readParams(request.params, &command);
    if (error)
-   {
-      continuation(error, NULL);
-      return;
-   }
+      return error;
 
    command = shell_utils::sendStdErrToStdOut(shell_utils::join(
          ShellCommand("cd") << s_pVcsImpl_->root(),
          command));
 
-   boost::shared_ptr<std::string> ptrBuffer(new std::string);
-   core::system::ProcessCallbacks processCallbacks;
-   processCallbacks.onStdout = boost::bind(vcsExecuteCommand_onStdOut,
-                                           ptrBuffer, _2);
-   processCallbacks.onExit = boost::bind(vcsExecuteCommand_onExit,
-                                         ptrBuffer, _1, continuation);
-   error = module_context::processSupervisor().runCommand(
-         command, core::system::ProcessOptions(), processCallbacks);
+   boost::shared_ptr<ConsoleProcess> ptrProc =
+         console_process::ConsoleProcess::create(command,
+                                                 &enqueueRefreshEvent);
 
-   if (error)
-   {
-      continuation(error, NULL);
-      return;
-   }
+   pResponse->setResult(ptrProc->handle());
+   return Success();
 }
 
 Error vcsShow(const json::JsonRpcRequest& request,
@@ -1580,7 +1551,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_diff_file", vcsDiffFile))
       (bind(registerRpcMethod, "vcs_apply_patch", vcsApplyPatch))
       (bind(registerRpcMethod, "vcs_history", vcsHistory))
-      (bind(registerAsyncRpcMethod, "vcs_execute_command", vcsExecuteCommand))
+      (bind(registerRpcMethod, "vcs_execute_command", vcsExecuteCommand))
       (bind(registerRpcMethod, "vcs_show", vcsShow))
       (bind(registerRpcMethod, "askpass_return", askpassReturn));
    error = initBlock.execute();

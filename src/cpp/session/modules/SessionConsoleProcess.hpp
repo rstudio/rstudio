@@ -27,11 +27,15 @@ namespace console_process {
 class ConsoleProcess : boost::noncopyable
 {
 private:
-   ConsoleProcess(const std::string& command,
-                  const core::system::ProcessOptions& options);
+   ConsoleProcess(
+         const std::string& command,
+         const core::system::ProcessOptions& options,
+         const boost::function<void()>& onExit);
 
 public:
-   static boost::shared_ptr<ConsoleProcess> create(const std::string& command);
+   static boost::shared_ptr<ConsoleProcess> create(
+         const std::string& command,
+         const boost::function<void()>& onExit=boost::function<void()>());
 
    virtual ~ConsoleProcess() {}
 
@@ -65,6 +69,8 @@ private:
 
    // Pending writes to stdin
    std::string inputQueue_;
+
+   boost::function<void()> onExit_;
 };
 
 core::Error initialize();
