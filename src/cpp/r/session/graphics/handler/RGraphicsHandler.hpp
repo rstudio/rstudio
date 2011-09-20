@@ -37,7 +37,6 @@ struct DeviceContext
          pDeviceSpecific(NULL),
          width(0),
          height(0),
-         holdlevel(0),
          dev(ownerDev) {}
 
    // platform specific device info
@@ -47,9 +46,6 @@ struct DeviceContext
    core::FilePath targetPath;
    int width;
    int height;
-
-   // hold-level
-   int holdlevel;
 
    // back pointer to owning device
    pDevDesc dev;

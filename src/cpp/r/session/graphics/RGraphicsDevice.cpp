@@ -355,19 +355,17 @@ int GD_HoldFlush(pDevDesc dd, int level)
 {
    TRACE_GD_CALL
 
-   // get device context
-   DeviceContext* pDC = (DeviceContext*)dd->deviceSpecific;
+   // NOTE: holdflush does not apply to bitmap devices since they are
+   // already "buffered" via the fact that they only do expensive operations
+   // (write to file) on dev.off. We could in theory use dev.flush as
+   // an indicator that we should detectChanges (e.g. when in a long
+   // running piece of code which doesn't yield to the REPL -- in practice
+   // however there are way too many flushes yielding lots of extra disk io
+   // and http round trips. If anything perhaps we could introduce a
+   // time-buffered variation where flush could set a flag that is checked
+   // every e.g. 1-second during background processing.
 
-   // apply new level (ensure it never goes below zero)
-   pDC->holdlevel += level;
-   if (pDC->holdlevel < 0)
-      pDC->holdlevel = 0;
-
-   // if we have returned to zero then flush
-   if (pDC->holdlevel == 0)
-      plotManager().onFlush();
-
-   return pDC->holdlevel;
+   return 0;
 }
 
 void resyncDisplayList()
@@ -617,22 +615,6 @@ void onBeforeExecute()
    }
 }
 
-bool isHolding()
-{
-   if (s_pGEDevDesc != NULL)
-   {
-      DeviceContext* pDC = (DeviceContext*)s_pGEDevDesc->dev->deviceSpecific;
-      if (pDC != NULL)
-         return pDC->holdlevel > 0;
-      else
-         return false;
-   }
-   else
-   {
-      return false;
-   }
-}
-
 } // anonymous namespace
     
 const int kDefaultWidth = 500;   
@@ -654,7 +636,6 @@ Error initialize(
    graphicsDevice.imageFileExtension = imageFileExtension;
    graphicsDevice.close = close;
    graphicsDevice.onBeforeExecute = onBeforeExecute;
-   graphicsDevice.isHolding = isHolding;
    Error error = plotManager().initialize(graphicsPath, 
                                           graphicsDevice,
                                           &s_graphicsDeviceEvents);
