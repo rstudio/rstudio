@@ -46,6 +46,7 @@
 #include "SessionSource.hpp"
 
 // TODO: do local function lookup on client before yielding server result
+//       for local search, need to go all the way up the chain to the top
 
 // TODO: search for FULL match of ONLY global functions
 
