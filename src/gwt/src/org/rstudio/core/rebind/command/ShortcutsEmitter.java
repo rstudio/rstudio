@@ -75,7 +75,7 @@ public class ShortcutsEmitter
                               String commandId) throws UnableToCompleteException
    {
       String[] chunks = shortcutValue.split("\\+");
-      int modifiers = 0;
+      int modifiers = KeyboardShortcut.NONE;
       boolean cmd = false;
       for (int i = 0; i < chunks.length - 1; i++)
       {
@@ -98,7 +98,7 @@ public class ShortcutsEmitter
       }
 
       String key = toKey(chunks[chunks.length - 1]);
-      if ((modifiers == 0 && !cmd) || key == null)
+      if (key == null)
       {
          logger_.log(Type.ERROR, "Invalid shortcut " + shortcutValue + ", only " +
                                  "modified alphanumeric characters, enter, " +
