@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native gesture start event.
  */
@@ -25,7 +27,7 @@ public class GestureStartEvent extends DomEvent<GestureStartHandler> {
    * with this event.
    */
   private static final Type<GestureStartHandler> TYPE = new Type<
-      GestureStartHandler>("gesturestart", new GestureStartEvent());
+      GestureStartHandler>(BrowserEvents.GESTURESTART, new GestureStartEvent());
 
   /**
    * Gets the event type associated with gesture start events.

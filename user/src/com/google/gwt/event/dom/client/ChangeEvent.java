@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native change event.
  */
@@ -25,7 +27,7 @@ public class ChangeEvent extends DomEvent<ChangeHandler> {
    * event.
    */
   private static final Type<ChangeHandler> TYPE = new Type<ChangeHandler>(
-      "change", new ChangeEvent());
+      BrowserEvents.CHANGE, new ChangeEvent());
 
   /**
    * Gets the event type associated with change events.

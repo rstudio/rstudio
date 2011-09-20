@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native drag enter event.
  */
@@ -25,7 +27,7 @@ public class DragEnterEvent extends DragDropEventBase<DragEnterHandler> {
    * with this event.
    */
   private static final Type<DragEnterHandler> TYPE = new Type<DragEnterHandler>(
-      "dragenter", new DragEnterEvent());
+      BrowserEvents.DRAGENTER, new DragEnterEvent());
 
   /**
    * Gets the event type associated with drag enter events.

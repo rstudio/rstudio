@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native drag over event.
  */
@@ -25,7 +27,7 @@ public class DragOverEvent extends DragDropEventBase<DragOverHandler> {
    * with this event.
    */
   private static final Type<DragOverHandler> TYPE = new Type<DragOverHandler>(
-      "dragover", new DragOverEvent());
+      BrowserEvents.DRAGOVER, new DragOverEvent());
 
   /**
    * Gets the event type associated with drag over events.

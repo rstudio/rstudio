@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native key down event.
  */
@@ -25,7 +27,7 @@ public class KeyDownEvent extends KeyCodeEvent<KeyDownHandler> {
    * this event.
    */
   private static final Type<KeyDownHandler> TYPE = new Type<KeyDownHandler>(
-      "keydown", new KeyDownEvent());
+      BrowserEvents.KEYDOWN, new KeyDownEvent());
 
   /**
    * Gets the event type associated with key down events.

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native mouse move event.
  */
@@ -25,7 +27,7 @@ public class MouseMoveEvent extends MouseEvent<MouseMoveHandler> {
    * this event.
    */
   private static final Type<MouseMoveHandler> TYPE = new Type<MouseMoveHandler>(
-      "mousemove", new MouseMoveEvent());
+      BrowserEvents.MOUSEMOVE, new MouseMoveEvent());
 
   /**
    * Gets the event type associated with mouse move events.

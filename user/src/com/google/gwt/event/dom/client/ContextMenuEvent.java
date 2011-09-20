@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native context menu event.
  */
@@ -25,7 +27,7 @@ public class ContextMenuEvent extends DomEvent<ContextMenuHandler> {
    * with this event.
    */
   private static final Type<ContextMenuHandler> TYPE = new Type<ContextMenuHandler>(
-      "contextmenu", new ContextMenuEvent());
+      BrowserEvents.CONTEXTMENU, new ContextMenuEvent());
 
   /**
    * Gets the event type associated with context menu events.

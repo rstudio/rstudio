@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native key press event.
  */
@@ -25,7 +27,7 @@ public class KeyPressEvent extends KeyEvent<KeyPressHandler> {
    * this event.
    */
   private static final Type<KeyPressHandler> TYPE = new Type<KeyPressHandler>(
-      "keypress", new KeyPressEvent());
+      BrowserEvents.KEYPRESS, new KeyPressEvent());
 
   /**
    * Gets the event type associated with key press events.

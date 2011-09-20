@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
@@ -31,9 +32,9 @@ import com.google.gwt.event.dom.client.DragEndHandler;
 import com.google.gwt.event.dom.client.DragEnterEvent;
 import com.google.gwt.event.dom.client.DragEnterHandler;
 import com.google.gwt.event.dom.client.DragEvent;
+import com.google.gwt.event.dom.client.DragHandler;
 import com.google.gwt.event.dom.client.DragLeaveEvent;
 import com.google.gwt.event.dom.client.DragLeaveHandler;
-import com.google.gwt.event.dom.client.DragHandler;
 import com.google.gwt.event.dom.client.DragOverEvent;
 import com.google.gwt.event.dom.client.DragOverHandler;
 import com.google.gwt.event.dom.client.DragStartEvent;
@@ -282,7 +283,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
       // If an onload event fired while the image wasn't attached, we need to
       // synthesize one now.
       String unhandledEvent = getImageElement(image).getPropertyString(UNHANDLED_EVENT_ATTR);
-      if ("load".equals(unhandledEvent)) {
+      if (BrowserEvents.LOAD.equals(unhandledEvent)) {
         fireSyntheticLoadEvent(image);
       }
     }
@@ -334,7 +335,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
            * the widget is attached.
            */
           if (!image.isAttached()) {
-            getImageElement(image).setPropertyString(UNHANDLED_EVENT_ATTR, "load");
+            getImageElement(image).setPropertyString(UNHANDLED_EVENT_ATTR, BrowserEvents.LOAD);
             return;
           }
 

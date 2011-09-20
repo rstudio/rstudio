@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native touch start event.
  */
@@ -25,7 +27,7 @@ public class TouchCancelEvent extends TouchEvent<TouchCancelHandler> {
    * this event.
    */
   private static final Type<TouchCancelHandler> TYPE = new Type<
-      TouchCancelHandler>("touchcancel", new TouchCancelEvent());
+      TouchCancelHandler>(BrowserEvents.TOUCHCANCEL, new TouchCancelEvent());
 
   /**
    * Gets the event type associated with touch start events.

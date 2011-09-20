@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native error event.
  */
@@ -25,7 +27,7 @@ public class ErrorEvent extends DomEvent<ErrorHandler> {
    * event.
    */
   private static final Type<ErrorHandler> TYPE = new Type<ErrorHandler>(
-      "error", new ErrorEvent());
+      BrowserEvents.ERROR, new ErrorEvent());
 
   /**
    * Gets the event type associated with error events.

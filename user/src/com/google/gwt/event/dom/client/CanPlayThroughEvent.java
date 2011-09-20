@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native media can play through event.
  * 
@@ -31,7 +33,7 @@ public class CanPlayThroughEvent extends DomEvent<CanPlayThroughHandler> {
    * associated with this event.
    */
   private static final Type<CanPlayThroughHandler> TYPE = new Type<
-      CanPlayThroughHandler>("canplaythrough", new CanPlayThroughEvent());
+      CanPlayThroughHandler>(BrowserEvents.CANPLAYTHROUGH, new CanPlayThroughEvent());
 
   /**
    * Gets the event type associated with media can play through events.

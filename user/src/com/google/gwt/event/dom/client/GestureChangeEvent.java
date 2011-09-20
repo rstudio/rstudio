@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native gesture change event.
  */
@@ -25,7 +27,7 @@ public class GestureChangeEvent extends DomEvent<GestureChangeHandler> {
    * with this event.
    */
   private static final Type<GestureChangeHandler> TYPE = new Type<
-      GestureChangeHandler>("gesturechange", new GestureChangeEvent());
+      GestureChangeHandler>(BrowserEvents.GESTURECHANGE, new GestureChangeEvent());
 
   /**
    * Gets the event type associated with gesture change events.

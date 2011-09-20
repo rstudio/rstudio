@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native scroll event.
  */
@@ -25,7 +27,7 @@ public class ScrollEvent extends DomEvent<ScrollHandler> {
    * event.
    */
   private static final Type<ScrollHandler> TYPE = new Type<ScrollHandler>(
-      "scroll", new ScrollEvent());
+      BrowserEvents.SCROLL, new ScrollEvent());
 
   /**
    * Gets the event type associated with scroll events.

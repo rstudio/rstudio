@@ -16,6 +16,7 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
@@ -132,7 +133,7 @@ public class TextInputCell extends
    * Constructs a TextInputCell that renders its text without HTML markup.
    */
   public TextInputCell() {
-    super("change", "keyup");
+    super(BrowserEvents.CHANGE, BrowserEvents.KEYUP);
     if (template == null) {
       template = GWT.create(Template.class);
     }
@@ -164,9 +165,9 @@ public class TextInputCell extends
 
     String eventType = event.getType();
     Object key = context.getKey();
-    if ("change".equals(eventType)) {
+    if (BrowserEvents.CHANGE.equals(eventType)) {
       finishEditing(parent, value, key, valueUpdater);
-    } else if ("keyup".equals(eventType)) {
+    } else if (BrowserEvents.KEYUP.equals(eventType)) {
       // Record keys as they are typed.
       ViewData vd = getViewData(key);
       if (vd == null) {

@@ -16,6 +16,7 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
@@ -169,7 +170,7 @@ public class ImageLoadingCell extends AbstractCell<String> {
    * @param renderers an instance of {@link ImageLoadingCell.Renderers Renderers}
    */
   public ImageLoadingCell(Renderers renderers) {
-    super("load", "error");
+    super(BrowserEvents.LOAD, BrowserEvents.ERROR);
     if (template == null) {
       template = GWT.create(Template.class);
     }
@@ -184,7 +185,7 @@ public class ImageLoadingCell extends AbstractCell<String> {
     // The loading indicator can fire its own load or error event, so we check
     // that the event actually occurred on the main image.
     String type = event.getType();
-    if ("load".equals(type) && eventOccurredOnImage(event, parent)) {
+    if (BrowserEvents.LOAD.equals(type) && eventOccurredOnImage(event, parent)) {
       // Remove the loading indicator.
       parent.getFirstChildElement().getStyle().setDisplay(Display.NONE);
 
@@ -193,7 +194,7 @@ public class ImageLoadingCell extends AbstractCell<String> {
       imgWrapper.getStyle().setProperty("height", "auto");
       imgWrapper.getStyle().setProperty("width", "auto");
       imgWrapper.getStyle().setProperty("overflow", "auto");
-    } else if ("error".equals(type) && eventOccurredOnImage(event, parent)) {
+    } else if (BrowserEvents.ERROR.equals(type) && eventOccurredOnImage(event, parent)) {
       // Replace the loading indicator with an error message.
       parent.getFirstChildElement().setInnerHTML(
           errorRenderer.render(value).asString());

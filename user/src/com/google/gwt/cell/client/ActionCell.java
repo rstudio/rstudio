@@ -15,6 +15,9 @@
  */
 package com.google.gwt.cell.client;
 
+import static com.google.gwt.dom.client.BrowserEvents.CLICK;
+import static com.google.gwt.dom.client.BrowserEvents.KEYDOWN;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
@@ -54,7 +57,7 @@ public class ActionCell<C> extends AbstractCell<C> {
    * @param delegate the delegate that will handle events
    */
   public ActionCell(SafeHtml message, Delegate<C> delegate) {
-    super("click", "keydown");
+    super(CLICK, KEYDOWN);
     this.delegate = delegate;
     this.html = new SafeHtmlBuilder().appendHtmlConstant(
         "<button type=\"button\" tabindex=\"-1\">").append(message).appendHtmlConstant(
@@ -76,7 +79,7 @@ public class ActionCell<C> extends AbstractCell<C> {
   public void onBrowserEvent(Context context, Element parent, C value,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
     super.onBrowserEvent(context, parent, value, event, valueUpdater);
-    if ("click".equals(event.getType())) {
+    if (CLICK.equals(event.getType())) {
       EventTarget eventTarget = event.getEventTarget();
       if (!Element.is(eventTarget)) {
         return;

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native touch move event.
  */
@@ -25,7 +27,7 @@ public class TouchMoveEvent extends TouchEvent<TouchMoveHandler> {
    * this event.
    */
   private static final Type<TouchMoveHandler> TYPE = new Type<TouchMoveHandler>(
-      "touchmove", new TouchMoveEvent());
+      BrowserEvents.TOUCHMOVE, new TouchMoveEvent());
 
   /**
    * Gets the event type associated with touch move events.

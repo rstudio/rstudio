@@ -15,7 +15,12 @@
  */
 package com.google.gwt.cell.client;
 
+import static com.google.gwt.dom.client.BrowserEvents.CLICK;
+import static com.google.gwt.dom.client.BrowserEvents.KEYDOWN;
+import static com.google.gwt.dom.client.BrowserEvents.MOUSEDOWN;
+
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -333,7 +338,7 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
     }
 
     public void onPreviewNativeEvent(NativePreviewEvent event) {
-      if ("mouseup".equals(event.getNativeEvent().getType())) {
+      if (BrowserEvents.MOUSEUP.equals(event.getNativeEvent().getType())) {
         // Unregister self.
         reg.removeHandler();
 
@@ -365,7 +370,7 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
    * @param appearance the appearance of the cell
    */
   public ButtonCellBase(Appearance<C> appearance) {
-    super("click", "keydown", "mousedown");
+    super(CLICK, KEYDOWN, MOUSEDOWN);
     this.appearance = appearance;
   }
 
@@ -433,10 +438,10 @@ public class ButtonCellBase<C> extends AbstractCell<C> implements IsCollapsible,
     }
 
     String eventType = event.getType();
-    if ("click".equals(eventType)) {
+    if (CLICK.equals(eventType)) {
       // Click the button.
       onEnterKeyDown(context, parent, value, event, valueUpdater);
-    } else if ("mousedown".equals(eventType)) {
+    } else if (MOUSEDOWN.equals(eventType)) {
       // Push.
       appearance.onPush(parent);
 

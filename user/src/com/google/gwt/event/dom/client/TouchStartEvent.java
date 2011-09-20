@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native touch start event.
  */
@@ -25,7 +27,7 @@ public class TouchStartEvent extends TouchEvent<TouchStartHandler> {
    * this event.
    */
   private static final Type<TouchStartHandler> TYPE = new Type<
-      TouchStartHandler>("touchstart", new TouchStartEvent());
+      TouchStartHandler>(BrowserEvents.TOUCHSTART, new TouchStartEvent());
 
   /**
    * Gets the event type associated with touch start events.

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.EventTarget;
 
 /**
@@ -27,7 +28,7 @@ public class MouseOutEvent extends MouseEvent<MouseOutHandler> {
    * this event.
    */
   private static final Type<MouseOutHandler> TYPE = new Type<MouseOutHandler>(
-      "mouseout", new MouseOutEvent());
+      BrowserEvents.MOUSEOUT, new MouseOutEvent());
 
   /**
    * Gets the event type associated with mouse out events.

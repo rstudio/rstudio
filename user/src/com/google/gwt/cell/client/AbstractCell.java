@@ -15,7 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
-import com.google.gwt.cell.client.Cell.Context;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -55,7 +55,10 @@ public abstract class AbstractCell<C> implements Cell<C> {
    * Construct a new {@link AbstractCell} with the specified consumed events.
    * The input arguments are passed by copy.
    * 
-   * @param consumedEvents the events that this cell consumes
+   * @param consumedEvents the {@link com.google.gwt.dom.client.BrowserEvents
+   *          events} that this cell consumes
+   * 
+   * @see com.google.gwt.dom.client.BrowserEvents
    */
   public AbstractCell(String... consumedEvents) {
     Set<String> events = null;
@@ -109,7 +112,7 @@ public abstract class AbstractCell<C> implements Cell<C> {
       NativeEvent event, ValueUpdater<C> valueUpdater) {
     String eventType = event.getType();
     // Special case the ENTER key for a unified user experience.
-    if ("keydown".equals(eventType) && event.getKeyCode() == KeyCodes.KEY_ENTER) {
+    if (BrowserEvents.KEYDOWN.equals(eventType) && event.getKeyCode() == KeyCodes.KEY_ENTER) {
       onEnterKeyDown(context, parent, value, event, valueUpdater);
     }
   }

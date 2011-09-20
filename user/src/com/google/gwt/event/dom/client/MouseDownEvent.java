@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native mouse down event.
  */
@@ -25,7 +27,7 @@ public class MouseDownEvent extends MouseEvent<MouseDownHandler> {
    * this event.
    */
   private static final Type<MouseDownHandler> TYPE = new Type<MouseDownHandler>(
-      "mousedown", new MouseDownEvent());
+      BrowserEvents.MOUSEDOWN, new MouseDownEvent());
 
   /**
    * Gets the event type associated with mouse down events.

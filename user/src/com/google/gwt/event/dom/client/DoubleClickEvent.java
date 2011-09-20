@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native double click event.
  */
@@ -25,7 +27,7 @@ public class DoubleClickEvent extends MouseEvent<DoubleClickHandler> {
    * with this event.
    */
   private static final Type<DoubleClickHandler> TYPE = new Type<DoubleClickHandler>(
-      "dblclick", new DoubleClickEvent());
+      BrowserEvents.DBLCLICK, new DoubleClickEvent());
 
   /**
    * Gets the event type associated with double click events.

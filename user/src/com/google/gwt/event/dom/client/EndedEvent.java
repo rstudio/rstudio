@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native media ended event.
  * 
@@ -31,7 +33,7 @@ public class EndedEvent extends DomEvent<EndedHandler> {
    * this event.
    */
   private static final Type<EndedHandler> TYPE = new Type<
-      EndedHandler>("ended", new EndedEvent());
+      EndedHandler>(BrowserEvents.ENDED, new EndedEvent());
 
   /**
    * Gets the event type associated with media ended events.

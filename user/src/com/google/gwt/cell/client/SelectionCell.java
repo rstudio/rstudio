@@ -16,6 +16,7 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.SelectElement;
@@ -52,7 +53,7 @@ public class SelectionCell extends AbstractInputCell<String, String> {
    * @param options the options in the cell
    */
   public SelectionCell(List<String> options) {
-    super("change");
+    super(BrowserEvents.CHANGE);
     if (template == null) {
       template = GWT.create(Template.class);
     }
@@ -68,7 +69,7 @@ public class SelectionCell extends AbstractInputCell<String, String> {
       NativeEvent event, ValueUpdater<String> valueUpdater) {
     super.onBrowserEvent(context, parent, value, event, valueUpdater);
     String type = event.getType();
-    if ("change".equals(type)) {
+    if (BrowserEvents.CHANGE.equals(type)) {
       Object key = context.getKey();
       SelectElement select = parent.getFirstChild().cast();
       String newValue = options.get(select.getSelectedIndex());

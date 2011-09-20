@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
@@ -40,11 +41,11 @@ abstract class DOMImplStandard extends DOMImpl {
 
   @Override
   public Element eventGetFromElement(Event evt) {
-    if (evt.getType().equals("mouseover")) {
+    if (evt.getType().equals(BrowserEvents.MOUSEOVER)) {
       return evt.getRelatedEventTarget().cast();
     }
 
-    if (evt.getType().equals("mouseout")) {
+    if (evt.getType().equals(BrowserEvents.MOUSEOUT)) {
       return evt.getEventTarget().cast();
     }
 
@@ -53,11 +54,11 @@ abstract class DOMImplStandard extends DOMImpl {
  
   @Override
   public Element eventGetToElement(Event evt) {
-    if (evt.getType().equals("mouseover")) {
+    if (evt.getType().equals(BrowserEvents.MOUSEOVER)) {
       return evt.getEventTarget().cast();
     }
 
-    if (evt.getType().equals("mouseout")) {
+    if (evt.getType().equals(BrowserEvents.MOUSEOUT)) {
       return evt.getRelatedEventTarget().cast();
     }
 

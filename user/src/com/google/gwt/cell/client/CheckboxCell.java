@@ -15,6 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
@@ -67,7 +68,7 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
    * @param handlesSelection true if the cell modifies the selection state
    */
   public CheckboxCell(boolean dependsOnSelection, boolean handlesSelection) {
-    super("change", "keydown");
+    super(BrowserEvents.CHANGE, BrowserEvents.KEYDOWN);
     this.dependsOnSelection = dependsOnSelection;
     this.handlesSelection = handlesSelection;
   }
@@ -94,9 +95,9 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
       NativeEvent event, ValueUpdater<Boolean> valueUpdater) {
     String type = event.getType();
 
-    boolean enterPressed = "keydown".equals(type)
+    boolean enterPressed = BrowserEvents.KEYDOWN.equals(type)
         && event.getKeyCode() == KeyCodes.KEY_ENTER;
-    if ("change".equals(type) || enterPressed) {
+    if (BrowserEvents.CHANGE.equals(type) || enterPressed) {
       InputElement input = parent.getFirstChild().cast();
       Boolean isChecked = input.isChecked();
 

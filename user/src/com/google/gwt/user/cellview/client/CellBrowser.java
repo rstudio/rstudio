@@ -19,6 +19,7 @@ import com.google.gwt.animation.client.Animation;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -45,7 +46,6 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
@@ -255,7 +255,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
 
       // Handle keyboard navigation between lists.
       String eventType = event.getType();
-      if ("keydown".equals(eventType) && !isKeyboardNavigationSuppressed()) {
+      if (BrowserEvents.KEYDOWN.equals(eventType) && !isKeyboardNavigationSuppressed()) {
         int keyCode = event.getKeyCode();
         switch (keyCode) {
           case KeyCodes.KEY_LEFT:

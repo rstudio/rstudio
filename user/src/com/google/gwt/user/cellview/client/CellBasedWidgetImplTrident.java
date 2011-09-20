@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
@@ -158,7 +159,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
     }
 
     String type = event.getType();
-    if ("focusin".equals(type)) {
+    if (BrowserEvents.FOCUSIN.equals(type)) {
       // If this is an input element, remember that we focused it.
       String tagName = target.getTagName().toLowerCase();
       if (inputTypes.contains(tagName)) {
@@ -171,7 +172,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
       // The focus event has not fired yet, so we just need to set the
       // CellTable as the event listener and wait for it.
       dispatchCellEvent(widget, target, Event.ONFOCUS, null);
-    } else if ("focusout".equals(type)) {
+    } else if (BrowserEvents.FOCUSOUT.equals(type)) {
       // Fire a change event on the input element if the value changed.
       maybeFireChangeEvent(widget);
       focusedInput = null;
@@ -179,7 +180,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
       // The blur event has already fired, so we need to synthesize one.
       Event blurEvent = Document.get().createFocusEvent().cast();
       dispatchCellEvent(widget, target, Event.ONBLUR, null);
-    } else if ("load".equals(type) || "error".equals(type)) {
+    } else if (BrowserEvents.LOAD.equals(type) || BrowserEvents.ERROR.equals(type)) {
       dispatchEvent(event, widget.getElement(), listener);
     }
   }
@@ -242,8 +243,8 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
 
     // Initialize the change event triggers.
     changeEventTriggers = new HashSet<String>();
-    changeEventTriggers.add("mouseup");
-    changeEventTriggers.add("mousewheel");
+    changeEventTriggers.add(BrowserEvents.MOUSEUP);
+    changeEventTriggers.add(BrowserEvents.MOUSEWHEEL);
   }
 
   @Override
@@ -257,7 +258,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
     // We need to remove the event listener from the cell now that the event
     // has fired.
     String type = event.getType().toLowerCase();
-    if ("focus".equals(type) || "blur".equals(type) || "change".equals(type)) {
+    if (BrowserEvents.FOCUS.equals(type) || BrowserEvents.BLUR.equals(type) || BrowserEvents.CHANGE.equals(type)) {
       EventTarget eventTarget = event.getEventTarget();
       if (Element.is(eventTarget)) {
         com.google.gwt.user.client.Element target = eventTarget.cast();
@@ -268,7 +269,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
     }
 
     // Update the value of the focused input box.
-    if (focusedInput != null && "change".equals(type)) {
+    if (focusedInput != null && BrowserEvents.CHANGE.equals(type)) {
       focusedInputValue = getInputValue(focusedInput);
     }
 
@@ -312,8 +313,8 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
 
   @Override
   protected int sinkEvent(Widget widget, String typeName) {
-    if ("change".equals(typeName) || "focus".equals(typeName)
-        || "blur".equals(typeName)) {
+    if (BrowserEvents.CHANGE.equals(typeName) || BrowserEvents.FOCUS.equals(typeName)
+        || BrowserEvents.BLUR.equals(typeName)) {
       // Initialize the focus events.
       if (dispatchFocusEvent == null) {
         initFocusEventSystem();
@@ -335,7 +336,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
         }
       }
       return eventsToSink;
-    } else if ("load".equals(typeName) || "error".equals(typeName)) {
+    } else if (BrowserEvents.LOAD.equals(typeName) || BrowserEvents.ERROR.equals(typeName)) {
       // Initialize the load listener.
       if (!loadEventsInitialized) {
         loadEventsInitialized = true;

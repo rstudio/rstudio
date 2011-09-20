@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native gesture end event.
  */
@@ -25,7 +27,7 @@ public class GestureEndEvent extends DomEvent<GestureEndHandler> {
    * this event.
    */
   private static final Type<GestureEndHandler> TYPE = new Type<
-      GestureEndHandler>("gestureend", new GestureEndEvent());
+      GestureEndHandler>(BrowserEvents.GESTUREEND, new GestureEndEvent());
 
   /**
    * Gets the event type associated with gesture end events.

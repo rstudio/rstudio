@@ -16,6 +16,7 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.user.client.DOM;
@@ -93,10 +94,10 @@ class CellBasedWidgetImplStandard extends CellBasedWidgetImpl {
   public CellBasedWidgetImplStandard() {
     // Initialize the set of non-bubbling events.
     nonBubblingEvents = new HashSet<String>();
-    nonBubblingEvents.add("focus");
-    nonBubblingEvents.add("blur");
-    nonBubblingEvents.add("load");
-    nonBubblingEvents.add("error");
+    nonBubblingEvents.add(BrowserEvents.FOCUS);
+    nonBubblingEvents.add(BrowserEvents.BLUR);
+    nonBubblingEvents.add(BrowserEvents.LOAD);
+    nonBubblingEvents.add(BrowserEvents.ERROR);
   }
 
   @Override

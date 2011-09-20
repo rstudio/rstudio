@@ -15,6 +15,10 @@
  */
 package com.google.gwt.cell.client;
 
+
+import static com.google.gwt.dom.client.BrowserEvents.CLICK;
+import static com.google.gwt.dom.client.BrowserEvents.KEYDOWN;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
@@ -41,14 +45,14 @@ public class ButtonCell extends AbstractSafeHtmlCell<String> {
    * @param renderer a {@link SafeHtmlRenderer SafeHtmlRenderer<String>} instance
    */
   public ButtonCell(SafeHtmlRenderer<String> renderer) {
-    super(renderer, "click", "keydown");
+    super(renderer, CLICK, KEYDOWN);
   }
 
   @Override
   public void onBrowserEvent(Context context, Element parent, String value,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
     super.onBrowserEvent(context, parent, value, event, valueUpdater);
-    if ("click".equals(event.getType())) {
+    if (CLICK.equals(event.getType())) {
       EventTarget eventTarget = event.getEventTarget();
       if (!Element.is(eventTarget)) {
         return;

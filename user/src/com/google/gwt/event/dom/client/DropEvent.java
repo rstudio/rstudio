@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native drop event.
  */
@@ -25,7 +27,7 @@ public class DropEvent extends DragDropEventBase<DropHandler> {
    * with this event.
    */
   private static final Type<DropHandler> TYPE = new Type<DropHandler>(
-      "drop", new DropEvent());
+      BrowserEvents.DROP, new DropEvent());
 
   /**
    * Gets the event type associated with drop events.

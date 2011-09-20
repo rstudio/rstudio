@@ -15,6 +15,7 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.EventTarget;
 
 /**
@@ -27,7 +28,7 @@ public class MouseOverEvent extends MouseEvent<MouseOverHandler> {
    * this event.
    */
   private static final Type<MouseOverHandler> TYPE = new Type<MouseOverHandler>(
-      "mouseover", new MouseOverEvent());
+      BrowserEvents.MOUSEOVER, new MouseOverEvent());
 
   /**
    * Gets the event type associated with mouse over events.

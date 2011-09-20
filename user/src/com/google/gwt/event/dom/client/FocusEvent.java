@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native focus event.
  */
@@ -25,7 +27,7 @@ public class FocusEvent extends DomEvent<FocusHandler> {
    * event.
    */
   private static final Type<FocusHandler> TYPE = new Type<FocusHandler>(
-      "focus", new FocusEvent());
+      BrowserEvents.FOCUS, new FocusEvent());
 
   /**
    * Gets the event type associated with focus events.

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native drag event.
  */
@@ -24,7 +26,7 @@ public class DragEvent extends DragDropEventBase<DragHandler> {
    * Event type for drag events. Represents the meta-data associated with this
    * event.
    */
-  private static final Type<DragHandler> TYPE = new Type<DragHandler>("drag", new DragEvent());
+  private static final Type<DragHandler> TYPE = new Type<DragHandler>(BrowserEvents.DRAG, new DragEvent());
 
   /**
    * Gets the event type associated with drag events.

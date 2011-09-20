@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native mouse wheel event.
  */
@@ -25,7 +27,7 @@ public class MouseWheelEvent extends MouseEvent<MouseWheelHandler> {
    * this event.
    */
   private static final Type<MouseWheelHandler> TYPE = new Type<MouseWheelHandler>(
-      "mousewheel", new MouseWheelEvent());
+      BrowserEvents.MOUSEWHEEL, new MouseWheelEvent());
 
   static {
     /**

@@ -155,8 +155,10 @@ public interface Cell<C> {
   boolean dependsOnSelection();
 
   /**
-   * Get the set of events that this cell consumes. The container that uses this
-   * cell should only pass these events to
+   * Get the set of events that this cell consumes (see
+   * {@link com.google.gwt.dom.client.BrowserEvents BrowserEvents} for useful
+   * constants). The container that uses this cell should only pass these events
+   * to
    * {@link #onBrowserEvent(Context, Element, Object, NativeEvent, ValueUpdater)}
    * when the event occurs.
    * 
@@ -166,6 +168,8 @@ public interface Cell<C> {
    * </p>
    * 
    * @return the consumed events, or null if no events are consumed
+   * 
+   * @see com.google.gwt.dom.client.BrowserEvents
    */
   Set<String> getConsumedEvents();
 

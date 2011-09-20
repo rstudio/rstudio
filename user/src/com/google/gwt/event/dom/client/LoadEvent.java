@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native load event.
  */
@@ -24,7 +26,7 @@ public class LoadEvent extends DomEvent<LoadHandler> {
    * Event type for load events. Represents the meta-data associated with this
    * event.
    */
-  private static final Type<LoadHandler> TYPE = new Type<LoadHandler>("load",
+  private static final Type<LoadHandler> TYPE = new Type<LoadHandler>(BrowserEvents.LOAD,
       new LoadEvent());
 
   /**

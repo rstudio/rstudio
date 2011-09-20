@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native drag end event.
  */
@@ -24,7 +26,7 @@ public class DragEndEvent extends DragDropEventBase<DragEndHandler> {
    * Event type for drag end events. Represents the meta-data associated with
    * this event.
    */
-  private static final Type<DragEndHandler> TYPE = new Type<DragEndHandler>("dragend",
+  private static final Type<DragEndHandler> TYPE = new Type<DragEndHandler>(BrowserEvents.DRAGEND,
       new DragEndEvent());
 
   /**

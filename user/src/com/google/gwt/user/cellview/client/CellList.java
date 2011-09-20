@@ -20,6 +20,7 @@ import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -437,7 +438,7 @@ public class CellList<T> extends AbstractHasData<T> {
       // before firing the event to the cell in case the cell operates on the
       // currently selected item.
       String eventType = event.getType();
-      boolean isClick = "click".equals(eventType);
+      boolean isClick = BrowserEvents.CLICK.equals(eventType);
       int idx = Integer.parseInt(idxString);
       int indexOnPage = idx - getPageStart();
       if (!isRowWithinBounds(indexOnPage)) {

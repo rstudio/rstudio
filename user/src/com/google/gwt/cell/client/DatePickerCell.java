@@ -15,6 +15,9 @@
  */
 package com.google.gwt.cell.client;
 
+import static com.google.gwt.dom.client.BrowserEvents.CLICK;
+import static com.google.gwt.dom.client.BrowserEvents.KEYDOWN;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -107,7 +110,7 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
    * @param renderer a {@link SafeHtmlRenderer SafeHtmlRenderer<String>} instance
    */
   public DatePickerCell(DateTimeFormat format, SafeHtmlRenderer<String> renderer) {
-    super("click", "keydown");
+    super(CLICK, KEYDOWN);
     if (format == null) {
       throw new IllegalArgumentException("format == null");
     }
@@ -176,7 +179,7 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
   public void onBrowserEvent(Context context, Element parent, Date value,
       NativeEvent event, ValueUpdater<Date> valueUpdater) {
     super.onBrowserEvent(context, parent, value, event, valueUpdater);
-    if ("click".equals(event.getType())) {
+    if (CLICK.equals(event.getType())) {
       onEnterKeyDown(context, parent, value, event, valueUpdater);
     }
   }

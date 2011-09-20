@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native key up event.
  */
@@ -25,7 +27,7 @@ public class KeyUpEvent extends KeyCodeEvent<KeyUpHandler> {
    * event.
    */
   private static final Type<KeyUpHandler> TYPE = new Type<KeyUpHandler>(
-      "keyup", new KeyUpEvent());
+      BrowserEvents.KEYUP, new KeyUpEvent());
 
   /**
    * Gets the event type associated with key up events.

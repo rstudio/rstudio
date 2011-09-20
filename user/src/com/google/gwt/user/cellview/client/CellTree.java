@@ -18,6 +18,7 @@ package com.google.gwt.user.cellview.client;
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -588,12 +589,12 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
 
     // Add event handlers.
     Set<String> eventTypes = new HashSet<String>();
-    eventTypes.add("focus");
-    eventTypes.add("blur");
-    eventTypes.add("keydown");
-    eventTypes.add("keyup");
-    eventTypes.add("mousedown");
-    eventTypes.add("click");
+    eventTypes.add(BrowserEvents.FOCUS);
+    eventTypes.add(BrowserEvents.BLUR);
+    eventTypes.add(BrowserEvents.KEYDOWN);
+    eventTypes.add(BrowserEvents.KEYUP);
+    eventTypes.add(BrowserEvents.MOUSEDOWN);
+    eventTypes.add(BrowserEvents.CLICK);
     CellBasedWidgetImpl.get().sinkEvents(this, eventTypes);
 
     // Associate a view with the item.
@@ -648,15 +649,15 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     super.onBrowserEvent(event);
 
     String eventType = event.getType();
-    if ("focus".equals(eventType)) {
+    if (BrowserEvents.FOCUS.equals(eventType)) {
       // Remember the focus state.
       isFocused = true;
       onFocus();
-    } else if ("blur".equals(eventType)) {
+    } else if (BrowserEvents.BLUR.equals(eventType)) {
       // Remember the blur state.
       isFocused = false;
       onBlur();
-    } else if ("keydown".equals(eventType) && !cellIsEditing) {
+    } else if (BrowserEvents.KEYDOWN.equals(eventType) && !cellIsEditing) {
       int keyCode = event.getKeyCode();
       switch (keyCode) {
         // Handle keyboard navigation.
@@ -679,8 +680,8 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     ArrayList<Element> chain = new ArrayList<Element>();
     collectElementChain(chain, getElement(), target);
 
-    final boolean isMouseDown = "mousedown".equals(eventType);
-    final boolean isClick = "click".equals(eventType);
+    final boolean isMouseDown = BrowserEvents.MOUSEDOWN.equals(eventType);
+    final boolean isClick = BrowserEvents.CLICK.equals(eventType);
     final CellTreeNodeView<?> nodeView = findItemByChain(chain, 0, rootNode);
     if (nodeView != null) {
       if (isMouseDown) {

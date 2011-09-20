@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native touch end event.
  */
@@ -25,7 +27,7 @@ public class TouchEndEvent extends TouchEvent<TouchEndHandler> {
    * this event.
    */
   private static final Type<TouchEndHandler> TYPE = new Type<TouchEndHandler>(
-      "touchend", new TouchEndEvent());
+      BrowserEvents.TOUCHEND, new TouchEndEvent());
 
   /**
    * Gets the event type associated with touch end events.

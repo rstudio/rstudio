@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.impl;
 
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.user.client.Element;
 
 /**
@@ -35,12 +36,12 @@ class DOMImplIE9 extends DOMImplStandardBase {
   protected void sinkBitlessEventImpl(Element elem, String eventTypeName) {
     super.sinkBitlessEventImpl(elem, eventTypeName);
 
-    if ("dragover".equals(eventTypeName)) {
+    if (BrowserEvents.DRAGOVER.equals(eventTypeName)) {
       /*
        * In IE, we have to sink dragenter with dragover in order to make an
        * element a drop target.
        */
-      super.sinkBitlessEventImpl(elem, "dragenter");
+      super.sinkBitlessEventImpl(elem, BrowserEvents.DRAGENTER);
     }
   }
 

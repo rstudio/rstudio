@@ -16,6 +16,7 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.TableLayout;
 import com.google.gwt.dom.client.Style.Unit;
@@ -615,8 +616,8 @@ public class CellTable<T> extends AbstractCellTable<T> {
 
     // Sink events.
     Set<String> eventTypes = new HashSet<String>();
-    eventTypes.add("mouseover");
-    eventTypes.add("mouseout");
+    eventTypes.add(BrowserEvents.MOUSEOVER);
+    eventTypes.add(BrowserEvents.MOUSEOUT);
     CellBasedWidgetImpl.get().sinkEvents(this, eventTypes);
   }
 

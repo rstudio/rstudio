@@ -24,6 +24,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.builder.shared.HtmlTableSectionBuilder;
 import com.google.gwt.dom.builder.shared.TableSectionBuilder;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
@@ -112,7 +113,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     public void onCellPreview(CellPreviewEvent<T> event) {
       NativeEvent nativeEvent = event.getNativeEvent();
       String eventType = event.getNativeEvent().getType();
-      if ("keydown".equals(eventType) && !event.isCellEditing()) {
+      if (BrowserEvents.KEYDOWN.equals(eventType) && !event.isCellEditing()) {
         /*
          * Handle keyboard navigation, unless the cell is being edited. If the
          * cell is being edited, we do not want to change rows.
@@ -159,7 +160,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
             return;
           }
         }
-      } else if ("click".equals(eventType) || "focus".equals(eventType)) {
+      } else if (BrowserEvents.CLICK.equals(eventType) || BrowserEvents.FOCUS.equals(eventType)) {
         /*
          * Move keyboard focus to the clicked column, even if the cell is being
          * edited. Unlike key events, we aren't moving the currently selected
@@ -175,7 +176,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
             || (table.getKeyboardSelectedRow() != relRow)
             || (table.getKeyboardSelectedSubRow() != subrow)) {
           boolean stealFocus = false;
-          if ("click".equals(eventType)) {
+          if (BrowserEvents.CLICK.equals(eventType)) {
             // If a natively focusable element was just clicked, then do not
             // steal focus.
             Element target = Element.as(event.getNativeEvent().getEventTarget());
@@ -531,7 +532,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
 
       // Remove all children in the range.
       final int absEndIndex = table.getPageStart() + startIndex + childCount;
-      boolean done = false;
+
       TableRowElement insertBefore = table.getChildElement(startIndex).cast();
       if (table.legacyRenderRowValues) {
         int count = 0;
@@ -1731,7 +1732,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      */
     TableRowElement targetTableRow = targetTableCell.getParentElement().cast();
     String eventType = event.getType();
-    boolean isClick = "click".equals(eventType);
+    boolean isClick = BrowserEvents.CLICK.equals(eventType);
     int col = targetTableCell.getCellIndex();
     if (targetTableSection == thead || targetTableSection == tfoot) {
       boolean isHeader = (targetTableSection == thead);
@@ -1775,14 +1776,14 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       int absRow = tableBuilder.getRowValueIndex(targetTableRow);
       int relRow = absRow - getPageStart();
       int subrow = tableBuilder.getSubrowValueIndex(targetTableRow);
-      if ("mouseover".equals(eventType)) {
+      if (BrowserEvents.MOUSEOVER.equals(eventType)) {
         // Unstyle the old row if it is still part of the table.
         if (hoveringRow != null && getTableBodyElement().isOrHasChild(hoveringRow)) {
           setRowHover(hoveringRow, event, false);
         }
         hoveringRow = targetTableRow;
         setRowHover(hoveringRow, event, true);
-      } else if ("mouseout".equals(eventType) && hoveringRow != null) {
+      } else if (BrowserEvents.MOUSEOUT.equals(eventType) && hoveringRow != null) {
         // Ignore events happening directly over the hovering row. If there are floating element
         // on top of the row, mouseout event should not be triggered. This is to avoid the flickring
         // effect if the floating element is shown/hide based on hover event.
@@ -2371,8 +2372,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
 
     // Sink events.
     Set<String> eventTypes = new HashSet<String>();
-    eventTypes.add("mouseover");
-    eventTypes.add("mouseout");
+    eventTypes.add(BrowserEvents.MOUSEOVER);
+    eventTypes.add(BrowserEvents.MOUSEOUT);
     CellBasedWidgetImpl.get().sinkEvents(this, eventTypes);
 
     // Set the table builder.

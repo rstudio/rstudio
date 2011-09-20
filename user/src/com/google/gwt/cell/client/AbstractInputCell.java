@@ -15,6 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
@@ -38,9 +39,9 @@ public abstract class AbstractInputCell<C, V> extends
    */
   private static Set<String> getConsumedEventsImpl(Set<String> userEvents) {
     Set<String> events = new HashSet<String>();
-    events.add("focus");
-    events.add("blur");
-    events.add("keydown");
+    events.add(BrowserEvents.FOCUS);
+    events.add(BrowserEvents.BLUR);
+    events.add(BrowserEvents.KEYDOWN);
     if (userEvents != null && userEvents.size() > 0) {
       events.addAll(userEvents);
     }
@@ -105,9 +106,9 @@ public abstract class AbstractInputCell<C, V> extends
     }
 
     String eventType = event.getType();
-    if ("focus".equals(eventType)) {
+    if (BrowserEvents.FOCUS.equals(eventType)) {
       focusedKey = context.getKey();
-    } else if ("blur".equals(eventType)) {
+    } else if (BrowserEvents.BLUR.equals(eventType)) {
       focusedKey = null;
     }
   }

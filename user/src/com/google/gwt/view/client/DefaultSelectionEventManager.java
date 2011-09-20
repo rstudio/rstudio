@@ -15,6 +15,7 @@
  */
 package com.google.gwt.view.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
@@ -141,7 +142,7 @@ public class DefaultSelectionEventManager<T> implements
     public SelectAction translateSelectionEvent(CellPreviewEvent<T> event) {
       // Handle the event.
       NativeEvent nativeEvent = event.getNativeEvent();
-      if ("click".equals(nativeEvent.getType())) {
+      if (BrowserEvents.CLICK.equals(nativeEvent.getType())) {
         // Ignore if the event didn't occur in the correct column.
         if (column > -1 && column != event.getColumn()) {
           return SelectAction.IGNORE;
@@ -506,7 +507,7 @@ public class DefaultSelectionEventManager<T> implements
       SelectAction action, MultiSelectionModel<? super T> selectionModel) {
     NativeEvent nativeEvent = event.getNativeEvent();
     String type = nativeEvent.getType();
-    if ("click".equals(type)) {
+    if (BrowserEvents.CLICK.equals(type)) {
       /*
        * Update selection on click. Selection is toggled only if the user
        * presses the ctrl key. If the user does not press the control key,
@@ -521,7 +522,7 @@ public class DefaultSelectionEventManager<T> implements
       }
       doMultiSelection(selectionModel, event.getDisplay(), event.getIndex(),
           event.getValue(), action, shift, clearOthers);
-    } else if ("keyup".equals(type)) {
+    } else if (BrowserEvents.KEYUP.equals(type)) {
       int keyCode = nativeEvent.getKeyCode();
       if (keyCode == 32) {
         /*
@@ -572,7 +573,7 @@ public class DefaultSelectionEventManager<T> implements
     // Handle default selection.
     NativeEvent nativeEvent = event.getNativeEvent();
     String type = nativeEvent.getType();
-    if ("click".equals(type)) {
+    if (BrowserEvents.CLICK.equals(type)) {
       if (nativeEvent.getCtrlKey() || nativeEvent.getMetaKey()) {
         // Toggle selection on ctrl+click.
         selectionModel.setSelected(value, !selectionModel.isSelected(value));
@@ -580,7 +581,7 @@ public class DefaultSelectionEventManager<T> implements
         // Select on click.
         selectionModel.setSelected(value, true);
       }
-    } else if ("keyup".equals(type)) {
+    } else if (BrowserEvents.KEYUP.equals(type)) {
       // Toggle selection on space.
       int keyCode = nativeEvent.getKeyCode();
       if (keyCode == 32) {

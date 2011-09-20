@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native drag leave event.
  */
@@ -24,7 +26,7 @@ public class DragLeaveEvent extends DragDropEventBase<DragLeaveHandler> {
    * Event type for drag leave events. Represents the meta-data associated with
    * this event.
    */
-  private static final Type<DragLeaveHandler> TYPE = new Type<DragLeaveHandler>("dragleave",
+  private static final Type<DragLeaveHandler> TYPE = new Type<DragLeaveHandler>(BrowserEvents.DRAGLEAVE,
       new DragLeaveEvent());
 
   /**

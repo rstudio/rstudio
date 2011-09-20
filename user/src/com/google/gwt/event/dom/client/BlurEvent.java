@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native blur event.
  */
@@ -24,7 +26,7 @@ public class BlurEvent extends DomEvent<BlurHandler> {
    * Event type for blur events. Represents the meta-data associated with this
    * event.
    */
-  private static final Type<BlurHandler> TYPE = new Type<BlurHandler>("blur",
+  private static final Type<BlurHandler> TYPE = new Type<BlurHandler>(BrowserEvents.BLUR,
       new BlurEvent());
 
   /**

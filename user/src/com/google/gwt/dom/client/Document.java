@@ -105,7 +105,7 @@ public class Document extends Node {
    * Creates a 'blur' event.
    */
   public final NativeEvent createBlurEvent() {
-    return createHtmlEvent("blur", false, false);
+    return createHtmlEvent(BrowserEvents.BLUR, false, false);
   }
 
   /**
@@ -165,7 +165,7 @@ public class Document extends Node {
    * Creates a 'change' event.
    */
   public final NativeEvent createChangeEvent() {
-    return createHtmlEvent("change", false, true);
+    return createHtmlEvent(BrowserEvents.CHANGE, false, true);
   }
 
   /**
@@ -201,7 +201,7 @@ public class Document extends Node {
       boolean shiftKey, boolean metaKey) {
     // We disallow setting the button here, because IE doesn't provide the
     // button property for click events.
-    return createMouseEvent("click", true, true, detail, screenX, screenY,
+    return createMouseEvent(BrowserEvents.CLICK, true, true, detail, screenX, screenY,
         clientX, clientY, ctrlKey, altKey, shiftKey, metaKey,
         NativeEvent.BUTTON_LEFT, null);
   }
@@ -235,7 +235,7 @@ public class Document extends Node {
    * @return the event object
    */
   public final NativeEvent createContextMenuEvent() {
-    return createHtmlEvent("contextmenu", true, true);
+    return createHtmlEvent(BrowserEvents.CONTEXTMENU, true, true);
   }
 
   /**
@@ -267,7 +267,7 @@ public class Document extends Node {
       boolean shiftKey, boolean metaKey) {
     // We disallow setting the button here, because IE doesn't provide the
     // button property for click events.
-    return createMouseEvent("dblclick", true, true, detail, screenX, screenY,
+    return createMouseEvent(BrowserEvents.DBLCLICK, true, true, detail, screenX, screenY,
         clientX, clientY, ctrlKey, altKey, shiftKey, metaKey,
         NativeEvent.BUTTON_LEFT, null);
   }
@@ -315,7 +315,7 @@ public class Document extends Node {
    * @return the event object
    */
   public final NativeEvent createErrorEvent() {
-    return createHtmlEvent("error", false, false);
+    return createHtmlEvent(BrowserEvents.ERROR, false, false);
   }
 
   /**
@@ -343,7 +343,7 @@ public class Document extends Node {
    * @return the event object
    */
   public final NativeEvent createFocusEvent() {
-    return createHtmlEvent("focus", false, false);
+    return createHtmlEvent(BrowserEvents.FOCUS, false, false);
   }
 
   /**
@@ -427,7 +427,7 @@ public class Document extends Node {
    * based upon its type).
    * </p>
    * 
-   * @param type the type of event (e.g., "focus", "load", etc)
+   * @param type the type of event (e.g., BrowserEvents.FOCUS, BrowserEvents.LOAD, etc)
    * @param canBubble <code>true</code> if the event should bubble
    * @param cancelable <code>true</code> if the event should be cancelable
    * @return the event object
@@ -483,7 +483,7 @@ public class Document extends Node {
    * {@link #createKeyUpEvent(boolean, boolean, boolean, boolean, int)}.
    * </p>
    * 
-   * @param type the type of event (e.g., "keydown", "keypress", etc)
+   * @param type the type of event (e.g., BrowserEvents.KEYDOWN, BrowserEvents.KEYPRESS, etc)
    * @param ctrlKey <code>true</code> if the ctrl key is depressed
    * @param altKey <code>true</code> if the alt key is depressed
    * @param shiftKey <code>true</code> if the shift key is depressed
@@ -509,7 +509,7 @@ public class Document extends Node {
    */
   public final NativeEvent createKeyDownEvent(boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int keyCode) {
-    return createKeyCodeEvent("keydown", ctrlKey, altKey, shiftKey, metaKey,
+    return createKeyCodeEvent(BrowserEvents.KEYDOWN, ctrlKey, altKey, shiftKey, metaKey,
         keyCode);
   }
 
@@ -530,7 +530,7 @@ public class Document extends Node {
   @Deprecated
   public final NativeEvent createKeyDownEvent(boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int keyCode, int charCode) {
-    return createKeyEvent("keydown", true, true, ctrlKey, altKey, shiftKey,
+    return createKeyEvent(BrowserEvents.KEYDOWN, true, true, ctrlKey, altKey, shiftKey,
         metaKey, keyCode, charCode);
   }
 
@@ -550,7 +550,7 @@ public class Document extends Node {
    * based upon its type).
    * </p>
    * 
-   * @param type the type of event (e.g., "keydown", "keypress", etc)
+   * @param type the type of event (e.g., BrowserEvents.KEYDOWN, BrowserEvents.KEYPRESS, etc)
    * @param canBubble <code>true</code> if the event should bubble
    * @param cancelable <code>true</code> if the event should be cancelable
    * @param ctrlKey <code>true</code> if the ctrl key is depressed
@@ -607,7 +607,7 @@ public class Document extends Node {
   @Deprecated
   public final NativeEvent createKeyPressEvent(boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int keyCode, int charCode) {
-    return createKeyEvent("keypress", true, true, ctrlKey, altKey, shiftKey,
+    return createKeyEvent(BrowserEvents.KEYPRESS, true, true, ctrlKey, altKey, shiftKey,
         metaKey, keyCode, charCode);
   }
 
@@ -623,7 +623,7 @@ public class Document extends Node {
    */
   public final NativeEvent createKeyUpEvent(boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int keyCode) {
-    return createKeyCodeEvent("keyup", ctrlKey, altKey, shiftKey, metaKey,
+    return createKeyCodeEvent(BrowserEvents.KEYUP, ctrlKey, altKey, shiftKey, metaKey,
         keyCode);
   }
 
@@ -644,7 +644,7 @@ public class Document extends Node {
   @Deprecated
   public final NativeEvent createKeyUpEvent(boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int keyCode, int charCode) {
-    return createKeyEvent("keyup", true, true, ctrlKey, altKey, shiftKey,
+    return createKeyEvent(BrowserEvents.KEYUP, true, true, ctrlKey, altKey, shiftKey,
         metaKey, keyCode, charCode);
   }
 
@@ -690,7 +690,7 @@ public class Document extends Node {
    * @return the event object
    */
   public final NativeEvent createLoadEvent() {
-    return createHtmlEvent("load", false, false);
+    return createHtmlEvent(BrowserEvents.LOAD, false, false);
   }
 
   /**
@@ -730,7 +730,7 @@ public class Document extends Node {
   public final NativeEvent createMouseDownEvent(int detail, int screenX,
       int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int button) {
-    return createMouseEvent("mousedown", true, true, detail, screenX, screenY,
+    return createMouseEvent(BrowserEvents.MOUSEDOWN, true, true, detail, screenX, screenY,
         clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button, null);
   }
 
@@ -750,7 +750,7 @@ public class Document extends Node {
    * based upon its type).
    * </p>
    * 
-   * @param type the type of event (e.g., "focus", "load", etc)
+   * @param type the type of event (e.g., BrowserEvents.FOCUS, BrowserEvents.LOAD, etc)
    * @param canBubble <code>true</code> if the event should bubble
    * @param cancelable <code>true</code> if the event should be cancelable
    * @param detail the event's detail property
@@ -796,7 +796,7 @@ public class Document extends Node {
   public final NativeEvent createMouseMoveEvent(int detail, int screenX,
       int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int button) {
-    return createMouseEvent("mousemove", true, true, detail, screenX, screenY,
+    return createMouseEvent(BrowserEvents.MOUSEMOVE, true, true, detail, screenX, screenY,
         clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button, null);
   }
 
@@ -823,7 +823,7 @@ public class Document extends Node {
   public final NativeEvent createMouseOutEvent(int detail, int screenX,
       int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int button, Element relatedTarget) {
-    return createMouseEvent("mouseout", true, true, detail, screenX, screenY,
+    return createMouseEvent(BrowserEvents.MOUSEOUT, true, true, detail, screenX, screenY,
         clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button,
         relatedTarget);
   }
@@ -851,7 +851,7 @@ public class Document extends Node {
   public final NativeEvent createMouseOverEvent(int detail, int screenX,
       int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int button, Element relatedTarget) {
-    return createMouseEvent("mouseover", true, true, detail, screenX, screenY,
+    return createMouseEvent(BrowserEvents.MOUSEOVER, true, true, detail, screenX, screenY,
         clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button,
         relatedTarget);
   }
@@ -875,7 +875,7 @@ public class Document extends Node {
   public final NativeEvent createMouseUpEvent(int detail, int screenX,
       int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int button) {
-    return createMouseEvent("mouseup", true, true, detail, screenX, screenY,
+    return createMouseEvent(BrowserEvents.MOUSEUP, true, true, detail, screenX, screenY,
         clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button, null);
   }
 
@@ -1027,7 +1027,7 @@ public class Document extends Node {
    * @return the event object
    */
   public final NativeEvent createScrollEvent() {
-    return createHtmlEvent("scroll", false, false);
+    return createHtmlEvent(BrowserEvents.SCROLL, false, false);
   }
 
   /**

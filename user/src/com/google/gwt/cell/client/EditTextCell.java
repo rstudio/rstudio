@@ -15,7 +15,11 @@
  */
 package com.google.gwt.cell.client;
 
-import com.google.gwt.cell.client.Cell.Context;
+import static com.google.gwt.dom.client.BrowserEvents.BLUR;
+import static com.google.gwt.dom.client.BrowserEvents.CLICK;
+import static com.google.gwt.dom.client.BrowserEvents.KEYDOWN;
+import static com.google.gwt.dom.client.BrowserEvents.KEYUP;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
@@ -149,7 +153,7 @@ public class EditTextCell extends
    *          instance
    */
   public EditTextCell(SafeHtmlRenderer<String> renderer) {
-    super("click", "keyup", "keydown", "blur");
+    super(CLICK, KEYUP, KEYDOWN, BLUR);
     if (template == null) {
       template = GWT.create(Template.class);
     }
@@ -176,9 +180,9 @@ public class EditTextCell extends
     } else {
       String type = event.getType();
       int keyCode = event.getKeyCode();
-      boolean enterPressed = "keyup".equals(type)
+      boolean enterPressed = KEYUP.equals(type)
           && keyCode == KeyCodes.KEY_ENTER;
-      if ("click".equals(type) || enterPressed) {
+      if (CLICK.equals(type) || enterPressed) {
         // Go into edit mode.
         if (viewData == null) {
           viewData = new ViewData(value);
@@ -290,8 +294,8 @@ public class EditTextCell extends
   private void editEvent(Context context, Element parent, String value,
       ViewData viewData, NativeEvent event, ValueUpdater<String> valueUpdater) {
     String type = event.getType();
-    boolean keyUp = "keyup".equals(type);
-    boolean keyDown = "keydown".equals(type);
+    boolean keyUp = KEYUP.equals(type);
+    boolean keyDown = KEYDOWN.equals(type);
     if (keyUp || keyDown) {
       int keyCode = event.getKeyCode();
       if (keyUp && keyCode == KeyCodes.KEY_ENTER) {
@@ -311,7 +315,7 @@ public class EditTextCell extends
         // Update the text in the view data on each key.
         updateViewData(parent, viewData, true);
       }
-    } else if ("blur".equals(type)) {
+    } else if (BLUR.equals(type)) {
       // Commit the change. Ensure that we are blurring the input element and
       // not the parent element itself.
       EventTarget eventTarget = event.getEventTarget();

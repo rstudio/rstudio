@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native media progress event.
  * 
@@ -31,7 +33,7 @@ public class ProgressEvent extends DomEvent<ProgressHandler> {
    * with this event.
    */
   private static final Type<ProgressHandler> TYPE = new Type<
-  ProgressHandler>("progress", new ProgressEvent());
+  ProgressHandler>(BrowserEvents.PROGRESS, new ProgressEvent());
 
   /**
    * Gets the event type associated with media progress events.

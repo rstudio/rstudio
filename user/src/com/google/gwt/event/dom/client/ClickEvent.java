@@ -15,6 +15,8 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.BrowserEvents;
+
 /**
  * Represents a native click event.
  */
@@ -25,7 +27,7 @@ public class ClickEvent extends MouseEvent<ClickHandler> {
    * event.
    */
   private static final Type<ClickHandler> TYPE = new Type<ClickHandler>(
-      "click", new ClickEvent());
+      BrowserEvents.CLICK, new ClickEvent());
 
   /**
    * Gets the event type associated with click events.
