@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.Event;
 
 /**
  * Represents a row hover event.
@@ -55,7 +56,23 @@ public class RowHoverEvent extends GwtEvent<RowHoverEvent.Handler> {
    */
   public static RowHoverEvent fire(HasHandlers source, TableRowElement hoveringRow,
       boolean isUnHover) {
-    RowHoverEvent event = new RowHoverEvent(hoveringRow, isUnHover);
+    return fire(source, hoveringRow, null, isUnHover);
+  }
+  
+  /**
+   * Fires a row hover event on all registered handlers in the handler
+   * manager. If no such handlers exist, this implementation will do nothing.
+   * 
+   * @param source the source of the event
+   * @param hoveringRow the currently hovering {@link TableRowElement}. If isUnHover is false, this
+   *          should be the previouly hovering {@link TableRowElement}
+   * @param browserEvent the original browser event
+   * @param isUnHover false if this is an unhover event
+   * @return the {@link RowHoverEvent} that was fired
+   */
+  public static RowHoverEvent fire(HasHandlers source, TableRowElement hoveringRow,
+      Event browserEvent, boolean isUnHover) {
+    RowHoverEvent event = new RowHoverEvent(hoveringRow, browserEvent, isUnHover);
     if (TYPE != null) {
       source.fireEvent(event);
     }
@@ -73,6 +90,8 @@ public class RowHoverEvent extends GwtEvent<RowHoverEvent.Handler> {
     }
     return TYPE;
   }
+
+  private Event browserEvent;
   
   private TableRowElement hoveringRow;
   
@@ -86,13 +105,34 @@ public class RowHoverEvent extends GwtEvent<RowHoverEvent.Handler> {
    * @param isUnHover false if this is an unhover event
    */
   protected RowHoverEvent(TableRowElement hoveringRow, boolean isUnHover) {
+    this(hoveringRow, null, isUnHover);
+  }
+  
+  /**
+   * Construct a new {@link RowHoverEvent}.
+   * 
+   * @param hoveringRow the currently hovering {@link TableRowElement}. If isUnHover is false, this
+   *                    should be the previouly hovering {@link TableRowElement}
+   * @param browserEvent the original browser event
+   * @param isUnHover false if this is an unhover event
+   */
+  protected RowHoverEvent(TableRowElement hoveringRow, Event browserEvent, boolean isUnHover) {
     this.hoveringRow = hoveringRow;
+    this.browserEvent = browserEvent;
     this.isUnHover = isUnHover;
   }
   
   @Override
   public Type<Handler> getAssociatedType() {
     return TYPE;
+  }
+  
+  /**
+   * Return the original browser {@link Event}. The browser event could be null if the event is
+   * fired without one (e.g., by calling {@link #fire(HasHandler, TableRowElement, isUnHover)})
+   */
+  public Event getBrowserEvent() {
+    return browserEvent;
   }
   
   /**

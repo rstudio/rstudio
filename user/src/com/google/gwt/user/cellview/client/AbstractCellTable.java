@@ -44,6 +44,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import com.google.gwt.user.client.ui.Widget;
@@ -1777,13 +1778,26 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
       if ("mouseover".equals(eventType)) {
         // Unstyle the old row if it is still part of the table.
         if (hoveringRow != null && getTableBodyElement().isOrHasChild(hoveringRow)) {
-          setRowHover(hoveringRow, false);
+          setRowHover(hoveringRow, event, false);
         }
         hoveringRow = targetTableRow;
-        setRowHover(hoveringRow, true);
+        setRowHover(hoveringRow, event, true);
       } else if ("mouseout".equals(eventType) && hoveringRow != null) {
-        setRowHover(hoveringRow, false);
-        hoveringRow = null;
+        // Ignore events happening directly over the hovering row. If there are floating element
+        // on top of the row, mouseout event should not be triggered. This is to avoid the flickring
+        // effect if the floating element is shown/hide based on hover event.
+        int clientX = event.getClientX() + Window.getScrollLeft();
+        int clientY = event.getClientY() + Window.getScrollTop();
+        int rowLeft = hoveringRow.getAbsoluteLeft();
+        int rowTop = hoveringRow.getAbsoluteTop();
+        int rowWidth = hoveringRow.getOffsetWidth();
+        int rowHeight = hoveringRow.getOffsetHeight();
+        int rowBottom = rowTop + rowHeight;
+        int rowRight = rowLeft + rowWidth;
+        if (clientX < rowLeft || clientX > rowRight || clientY < rowTop || clientY > rowBottom) {
+          setRowHover(hoveringRow, event, false);
+          hoveringRow = null;
+        }
       }
 
       // If the event causes us to page, then the physical index will be out
@@ -2410,11 +2424,12 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    * Set a row's hovering style and fire a {@link RowHoverEvent}
    * 
    * @param tr the row element
+   * @param event the original event
    * @param isHovering false if this is an unhover event
    */
-  private void setRowHover(TableRowElement tr, boolean isHovering) {
+  private void setRowHover(TableRowElement tr, Event event, boolean isHovering) {
     setRowStyleName(tr, style.hoveredRow(), style.hoveredRowCell(), isHovering);
-    RowHoverEvent.fire(this, tr, !isHovering);
+    RowHoverEvent.fire(this, tr, event, !isHovering);
   }
   
   /**
