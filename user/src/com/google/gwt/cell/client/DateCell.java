@@ -84,7 +84,7 @@ public class DateCell extends AbstractCell<Date> {
    * @param timezone the {@link TimeZone} used to render the date, or null to
    *          use the default behavior for the local time zone and the rendered
    *          date. See {@link DateTimeFormat#format(Date)} and
-   *          {@link Date#getTimeZoneOffset}
+   *          {@link Date#getTimezoneOffset()}
    */
   public DateCell(DateTimeFormat format, TimeZone timeZone) {
     this(format, SimpleSafeHtmlRenderer.getInstance(), timeZone);
@@ -100,7 +100,7 @@ public class DateCell extends AbstractCell<Date> {
    * @param timezone the {@link TimeZone} used to render the date, or null to
    *          use the default behavior for the local time zone and the rendered
    *          date. See {@link DateTimeFormat#format(Date)} and
-   *          {@link Date#getTimeZoneOffset}
+   *          {@link Date#getTimezoneOffset()}
    */
   public DateCell(DateTimeFormat format, SafeHtmlRenderer<String> renderer,
       TimeZone timeZone) {
