@@ -55,6 +55,29 @@ public class InputEditorUtil
          editor.replaceSelection(lastYanked, true);
       }
    }
+   
+   public static InputEditorLineWithCursorPosition getLineWithCursorPosition(
+                                                InputEditorDisplay editor)
+   {
+      String line;
+      int pos;
+      if (editor.getSelection().isEmpty())
+      {
+         line = editor.getText();
+         pos = editor.getSelection().getStart().getPosition();
+         // Move pos to the right until we get to a break
+         for (; pos < line.length() && Character.isLetterOrDigit(line.charAt(pos)); pos++)
+         {
+         }
+      }
+      else
+      {
+         line = editor.getSelectionValue();
+         pos = line.length();
+      }
+      
+      return new InputEditorLineWithCursorPosition(line, pos);
+   }
 
    private static String lastYanked;
 }

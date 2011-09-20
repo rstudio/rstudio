@@ -33,7 +33,9 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 
 import java.util.ArrayList;
 
@@ -130,25 +132,11 @@ public class RCompletionManager implements CompletionManager
          else if (event.getKeyCode() == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
          {
-            String line;
-            int pos;
-            if (input_.getSelection().isEmpty())
-            {
-               line = input_.getText();
-               pos = input_.getSelection().getStart().getPosition();
-               // Move pos to the right until we get to a break
-               for (; pos < line.length() && Character.isLetterOrDigit(line.charAt(pos)); pos++)
-               {
-               }
-            }
-            else
-            {
-               line = input_.getSelectionValue();
-               pos = line.length();
-            }
-
+            InputEditorLineWithCursorPosition linePos = 
+                        InputEditorUtil.getLineWithCursorPosition(input_);
+           
             server_.getHelpAtCursor(
-                  line, pos,
+                  linePos.getLine(), linePos.getPosition(),
                   new SimpleRequestCallback<Void>("Help"));
          }
       }
