@@ -1727,9 +1727,6 @@ void rCleanup(bool terminatedNormally)
          httpConnectionListener().stop();
       }
 
-      // stop the file monitor
-      core::system::file_monitor::stop();
-
       // terminate known child processes
       terminateAllChildren(&s_interruptableChildSupervisor,
                            ERROR_LOCATION);
