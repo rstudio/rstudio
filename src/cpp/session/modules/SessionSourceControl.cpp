@@ -772,7 +772,13 @@ struct RefreshOnExit : public boost::noncopyable
 {
    ~RefreshOnExit()
    {
-      enqueueRefreshEvent();
+      try
+      {
+         enqueueRefreshEvent();
+      }
+      catch(...)
+      {
+      }
    }
 };
 
@@ -1512,24 +1518,33 @@ core::Error initialize()
    else
       s_pVcsImpl_.reset(new VCSImpl(workingDir));
 
-   std::string gitSshCmd;
-   error = module_context::registerPostbackHandler("gitssh",
-                                                         postbackGitSSH,
-                                                         &gitSshCmd);
-   if (error)
-      return error;
-   core::system::setenv("GIT_SSH", toBashPath(gitSshCmd));
+   bool interceptSsh;
+#ifdef _WIN32
+   interceptSsh = true;
+#else
+   interceptSsh = options().programMode() != "desktop";
+#endif
 
-   std::string sshAskCmd;
-   error = module_context::registerPostbackHandler("askpass",
-                                                   postbackSSHAskPass,
-                                                   &sshAskCmd);
-   if (error)
-      return error;
-   sshAskCmd = toBashPath(sshAskCmd);
-   core::system::setenv("SSH_ASKPASS", sshAskCmd);
-   core::system::setenv("GIT_ASKPASS", sshAskCmd);
+   if (interceptSsh)
+   {
+      std::string gitSshCmd;
+      error = module_context::registerPostbackHandler("gitssh",
+                                                      postbackGitSSH,
+                                                      &gitSshCmd);
+      if (error)
+         return error;
+      core::system::setenv("GIT_SSH", toBashPath(gitSshCmd));
 
+      std::string sshAskCmd;
+      error = module_context::registerPostbackHandler("askpass",
+                                                      postbackSSHAskPass,
+                                                      &sshAskCmd);
+      if (error)
+         return error;
+      sshAskCmd = toBashPath(sshAskCmd);
+      core::system::setenv("SSH_ASKPASS", sshAskCmd);
+      core::system::setenv("GIT_ASKPASS", sshAskCmd);
+   }
 
    // install rpc methods
    using boost::bind;
