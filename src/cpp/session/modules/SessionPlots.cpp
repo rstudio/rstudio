@@ -630,7 +630,7 @@ void detectChanges(bool activatePlots)
 {
    // check for changes
    using namespace r::session;
-   if (graphics::display().hasRenderableChanges())
+   if (graphics::display().hasChanges())
    {
       graphics::display().render(boost::bind(enquePlotsChanged,
                                              _1,
@@ -716,9 +716,6 @@ Error initialize()
    using namespace r::session;
    graphics::display().onShowManipulator().connect(bind(onShowManipulator));
    
-   // connect to onFlush (always activate plots)
-   graphics::display().onFlush().connect(bind(detectChanges, true));
-
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()

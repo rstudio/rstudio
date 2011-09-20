@@ -401,11 +401,6 @@ bool PlotManager::hasChanges() const
 {
    return displayHasChanges_ ;
 }
-
-bool PlotManager::hasRenderableChanges() const
-{
-   return hasChanges() && !graphicsDevice_.isHolding();
-}
    
 void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
 {
