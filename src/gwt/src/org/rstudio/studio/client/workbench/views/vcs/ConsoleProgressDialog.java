@@ -33,9 +33,11 @@ import org.rstudio.studio.client.server.Void;
 public class ConsoleProgressDialog extends ModalDialogBase
       implements Handler, ClickHandler, ProcessExitEvent.Handler
 {
-   public ConsoleProgressDialog(ConsoleProcess consoleProcess)
+   public ConsoleProgressDialog(String title, ConsoleProcess consoleProcess)
    {
       consoleProcess_ = consoleProcess;
+
+      setText(title);
 
       registrations_ = new HandlerRegistrations();
       registrations_.add(consoleProcess.addConsoleOutputHandler(this));
