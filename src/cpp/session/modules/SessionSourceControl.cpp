@@ -1558,11 +1558,30 @@ core::Error initialize()
       s_pVcsImpl_.reset(new VCSImpl(workingDir));
 
    bool interceptSsh;
+   bool interceptAskPass;
+
+   if (options().programMode() == kSessionProgramModeServer)
+   {
+      interceptSsh = true;
+      interceptAskPass = true;
+   }
+   else
+   {
 #ifdef __APPLE__
-   interceptSsh = options().programMode() != kSessionProgramModeDesktop;
+      // Default behavior on Mac desktop works great
+      interceptSsh = false;
+      interceptAskPass = false;
+#elif defined(_WIN32)
+      // Windows probably unlikely to have either ssh-agent or askpass
+      interceptSsh = true;
+      interceptAskPass = true;
 #else
-   interceptSsh = true;
+      // Everything fine on Linux except we need to detach the console
+      // using setsid
+      interceptSsh = true;
+      interceptAskPass = false;
 #endif
+   }
 
    if (interceptSsh)
    {
@@ -1573,7 +1592,10 @@ core::Error initialize()
       if (error)
          return error;
       core::system::setenv("GIT_SSH", toBashPath(gitSshCmd));
+   }
 
+   if (interceptAskPass)
+   {
       std::string sshAskCmd;
       error = module_context::registerPostbackHandler("askpass",
                                                       postbackSSHAskPass,

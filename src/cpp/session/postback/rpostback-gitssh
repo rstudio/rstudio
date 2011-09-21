@@ -17,4 +17,10 @@ set -e
 
 SSH_AGENT_SCRIPT=`$(dirname $0)/rpostback gitssh`
 eval "$SSH_AGENT_SCRIPT" &> /dev/null
-ssh -o StrictHostKeyChecking=no $*
+
+unamestr=`uname`
+if [[ "$unamestr" == "Linux" ]]; then
+   setsid ssh -o StrictHostKeyChecking=no $*
+else
+   ssh -o StrictHostKeyChecking=no $*
+fi
