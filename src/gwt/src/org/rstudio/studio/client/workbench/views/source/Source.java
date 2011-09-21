@@ -141,7 +141,7 @@ public class Source implements InsertSourceHandler,
                  EventBus events,
                  Session session,
                  WorkbenchContext workbenchContext,
-                 FileMRUList mruList,
+                 Provider<FileMRUList> pMruList,
                  UIPrefs uiPrefs)
    {
       commands_ = commands;
@@ -154,7 +154,7 @@ public class Source implements InsertSourceHandler,
       fileContext_ = fileContext;
       events_ = events;
       workbenchContext_ = workbenchContext;
-      mruList_ = mruList;
+      pMruList_ = pMruList;
       uiPrefs_ = uiPrefs;
       codeIndexingEnabled_ = session.getSessionInfo().isIndexingEnabled();
 
@@ -248,7 +248,7 @@ public class Source implements InsertSourceHandler,
       {
          public void onSourceFileSaved(SourceFileSavedEvent event)
          {
-            mruList_.add(event.getPath());
+            pMruList_.get().add(event.getPath());
          }
       });
       
@@ -857,7 +857,7 @@ public class Source implements InsertSourceHandler,
              && thisPath.equalsIgnoreCase(file.getPath()))
          {
             view_.selectTab(i);
-            mruList_.add(thisPath);
+            pMruList_.get().add(thisPath);
             executeOnSuccess.execute(target);
             return;
          }
@@ -942,7 +942,7 @@ public class Source implements InsertSourceHandler,
                public void onResponseReceived(SourceDocument document)
                {
                   dismissProgress.execute();
-                  mruList_.add(document.getPath());
+                  pMruList_.get().add(document.getPath());
                   EditingTarget target = addTab(document);
                   executeOnSuccess.execute(target);
                }
@@ -1250,7 +1250,7 @@ public class Source implements InsertSourceHandler,
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileContext_;
    private final EventBus events_;
-   private final FileMRUList mruList_;
+   private final Provider<FileMRUList> pMruList_;
    private final UIPrefs uiPrefs_;
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();
    private final HashSet<AppCommand> dynamicCommands_;
