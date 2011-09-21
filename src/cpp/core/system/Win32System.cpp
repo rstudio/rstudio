@@ -619,7 +619,15 @@ Error copyMetafileToClipboard(const FilePath& path)
    return Success();
 }
 
-
+Error terminateProcess(pid_t pid)
+{
+   HANDLE hProc = ::OpenProcess(PROCESS_TERMINATE, false, pid);
+   if (!hProc)
+      return systemError(::GetLastError(), ERROR_LOCATION);
+   if (!::TerminateProcess(hProc, 1))
+      return systemError(::GetLastError(), ERROR_LOCATION);
+   return Success();
+}
 
 } // namespace system
 } // namespace core
