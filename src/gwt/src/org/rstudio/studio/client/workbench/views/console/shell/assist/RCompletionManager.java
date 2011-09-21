@@ -18,6 +18,8 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.inject.Inject;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
@@ -54,6 +56,8 @@ public class RCompletionManager implements CompletionManager
                              CodeToolsServerOperations server,
                              InitCompletionFilter initFilter)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       input_ = input ;
       popup_ = popup ;
       server_ = server ;
@@ -100,6 +104,16 @@ public class RCompletionManager implements CompletionManager
             ignoreNextInputBlur_ = true ;
          }
       }) ;
+   }
+   
+   @Inject
+   public void initialize(GlobalDisplay globalDisplay,
+                          Commands commands,
+                          FileTypeRegistry fileTypeRegistry)
+   {
+      globalDisplay_ = globalDisplay;
+      commands_ = commands;
+      fileTypeRegistry_ = fileTypeRegistry;
    }
 
    public void close()
@@ -541,12 +555,9 @@ public class RCompletionManager implements CompletionManager
       private HelpStrategy helpStrategy_ ;
    }
    
-   private final GlobalDisplay globalDisplay_ = 
-                           RStudioGinjector.INSTANCE.getGlobalDisplay();
-   private final Commands commands_ = 
-                           RStudioGinjector.INSTANCE.getCommands();
-   private final FileTypeRegistry fileTypeRegistry_ = 
-                           RStudioGinjector.INSTANCE.getFileTypeRegistry();
+   private GlobalDisplay globalDisplay_;
+   private Commands commands_;
+   private FileTypeRegistry fileTypeRegistry_;
       
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_ ;
