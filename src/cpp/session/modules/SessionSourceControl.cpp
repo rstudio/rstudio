@@ -1534,7 +1534,7 @@ core::Error initialize()
 
    bool interceptSsh;
 #ifdef __APPLE__
-   interceptSsh = options().programMode() != "desktop";
+   interceptSsh = options().programMode() != kSessionProgramModeDesktop;
 #else
    interceptSsh = true;
 #endif
