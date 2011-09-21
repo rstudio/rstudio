@@ -26,6 +26,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -192,6 +193,13 @@ public class Source implements InsertSourceHandler,
          command.setVisible(false);
          command.setEnabled(false);
       }
+      
+      // fake shortcuts for commands which we handle at a lower level
+      int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
+                                         KeyboardShortcut.CTRL;
+      commands.findReplace().setShortcut(new KeyboardShortcut(mod, 'F'));
+      commands.goToFunctionDefinition().setShortcut(new KeyboardShortcut(113));
+      
              
       // allow Ctrl+W to propagate to the browser if close doc is disabled
       if (!Desktop.isDesktop())

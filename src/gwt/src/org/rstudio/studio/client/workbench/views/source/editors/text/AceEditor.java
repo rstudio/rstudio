@@ -357,6 +357,11 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    {
       widget_.getEditor().focus();
    }
+   
+   public void goToFunctionDefinition()
+   {
+      completionManager_.goToFunctionDefinition();
+   }
 
    class PrintIFrame extends DynamicIFrame
    {

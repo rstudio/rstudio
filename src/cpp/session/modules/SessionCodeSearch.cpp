@@ -45,11 +45,9 @@
 
 #include "SessionSource.hpp"
 
-// TODO: do local function lookup on client before yielding server result
-//       for local search, need to go all the way up the chain to the top
-//       also search top-level
+// TODO: ability to open source pane for nav from console
 
-// TODO: add implementation to console as well
+// TODO: local go to function should position cursor
 
 // TODO: don't index code which is commented out
 

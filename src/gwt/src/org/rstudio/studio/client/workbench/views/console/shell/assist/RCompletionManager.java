@@ -25,23 +25,30 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinitionLocation;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
+import org.rstudio.studio.client.workbench.views.source.editors.text.FunctionStart;
 
 import java.util.ArrayList;
 
 
 public class RCompletionManager implements CompletionManager
-{
+{  
    public RCompletionManager(InputEditorDisplay input,
                              CompletionPopupDisplay popup,
                              CodeToolsServerOperations server,
@@ -99,7 +106,79 @@ public class RCompletionManager implements CompletionManager
    {
       popup_.hide();
    }
+   
+   public void goToFunctionDefinition()
+   {
+      // don't do it if the command is disabled
+      if (!commands_.goToFunctionDefinition().isEnabled())
+         return;
+      
+      // determine current line and cursor position
+      InputEditorLineWithCursorPosition lineWithPos = 
+                      InputEditorUtil.getLineWithCursorPosition(input_);
+      
+      // lookup function definition at this location
+      
+      // delayed progress indicator
+      final GlobalProgressDelayer progress = new GlobalProgressDelayer(
+            globalDisplay_, 1000, "Searching for function definition...");
+      
+      server_.getFunctionDefinitionLocation(
+         lineWithPos.getLine(),
+         lineWithPos.getPosition(), 
+         new ServerRequestCallback<FunctionDefinitionLocation>() {
+            @Override
+            public void onResponseReceived(FunctionDefinitionLocation loc)
+            {
+                // dismiss progress
+                progress.dismiss();
+                    
+                // if we got a hit
+                if (loc.getFunctionName() != null)
+                {   
+                   // search locally first
+                   FunctionStart func = 
+                      input_.findFunctionDefinitionFromUsage(
+                                           input_.getCursorPosition(), 
+                                           loc.getFunctionName());
+                   if (func != null)
+                   {
+                      input_.setCursorPosition(func.getPreamble());
+                      input_.moveCursorNearTop();
+                   }
+                   
+                   // if a hook didn't take the navigation and we got a
+                   // file back from the server then navigate to the file/loc
+                   else if (loc.getFile() != null)
+                   {
+                      fileTypeRegistry_.editFile(loc.getFile(), 
+                                                 loc.getPosition());
+                   }
+                   
+                   // otherwise try to show help
+                   else
+                   {
+                      String function = loc.getFunctionName();
+                      server_.getHelpAtCursor(
+                            function, 
+                            function.length(),
+                            new SimpleRequestCallback<Void>("Help"));   
+                   }
+               }
+            }
 
+            @Override
+            public void onError(ServerError error)
+            {
+               progress.dismiss();
+               
+               globalDisplay_.showErrorMessage("Error Searching for Function",
+                                               error.getUserMessage());
+            }
+         });
+   }
+   
+   
    public boolean previewKeyDown(NativeEvent event)
    {
       /**
@@ -138,6 +217,11 @@ public class RCompletionManager implements CompletionManager
             server_.getHelpAtCursor(
                   linePos.getLine(), linePos.getPosition(),
                   new SimpleRequestCallback<Void>("Help"));
+         }
+         else if (event.getKeyCode() == 113 // F2
+                  && modifier == KeyboardShortcut.NONE)
+         {
+            goToFunctionDefinition();
          }
       }
       else
@@ -189,6 +273,11 @@ public class RCompletionManager implements CompletionManager
             {
                context_.showHelpTopic() ;
                return true ;
+            }
+            else if (event.getKeyCode() == 113) // F2
+            {
+               goToFunctionDefinition();
+               return true;
             }
          }
          
@@ -452,9 +541,16 @@ public class RCompletionManager implements CompletionManager
       private HelpStrategy helpStrategy_ ;
    }
    
+   private final GlobalDisplay globalDisplay_ = 
+                           RStudioGinjector.INSTANCE.getGlobalDisplay();
+   private final Commands commands_ = 
+                           RStudioGinjector.INSTANCE.getCommands();
+   private final FileTypeRegistry fileTypeRegistry_ = 
+                           RStudioGinjector.INSTANCE.getFileTypeRegistry();
+      
+   private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_ ;
    private final CompletionPopupDisplay popup_ ;
-   private final CodeToolsServerOperations server_ ;
    private final CompletionRequester requester_ ;
    private final InitCompletionFilter initFilter_ ;
    // Prevents completion popup from being dismissed when you merely

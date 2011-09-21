@@ -52,7 +52,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
-import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinitionLocation;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -61,8 +60,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
@@ -124,6 +121,7 @@ public class TextEditingTarget implements EditingTarget
       void insertCode(String code, boolean blockMode);
       void focus();
       void print();
+      void goToFunctionDefinition();
       String getSelectionValue();
       String getCurrentLine();
       void replaceSelection(String code);
@@ -1409,67 +1407,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onGoToFunctionDefinition()
    {
-      // determine current line and cursor position
-      final InputEditorLineWithCursorPosition lineWithPos =
-                      InputEditorUtil.getLineWithCursorPosition(docDisplay_);
-      
-      // lookup function definition at this location
-      
-      // delayed progress indicator
-      final GlobalProgressDelayer progress = new GlobalProgressDelayer(
-            globalDisplay_, 1000, "Searching for function definition...");
-      
-      server_.getFunctionDefinitionLocation(
-         lineWithPos.getLine(),
-         lineWithPos.getPosition(), 
-         new ServerRequestCallback<FunctionDefinitionLocation>() {
-            @Override
-            public void onResponseReceived(FunctionDefinitionLocation loc)
-            {
-               // dismiss progress
-               progress.dismiss();
-
-               // if we got a hit
-               if (loc.getFunctionName() != null)
-               {
-                  // try to satisfy the request from the current function tree
-                  FunctionStart func = docDisplay_.findFunctionDefinitionFromUsage(
-                        docDisplay_.getCursorPosition(),
-                        loc.getFunctionName());
-
-                  if (func != null)
-                  {
-                     docDisplay_.setCursorPosition(func.getPreamble());
-                     docDisplay_.moveCursorNearTop();
-                  }
-                  else if (loc.getFile() != null)
-                  {
-                     // if we didn't find the function locally and we got a
-                     // file back from the server then navigate to the file/loc
-                     fileTypeRegistry_.editFile(loc.getFile(),
-                                                loc.getPosition());
-                  }
-                  else
-                  {
-                     // otherwise try to show help
-                     String function = loc.getFunctionName();
-                     server_.getHelpAtCursor(
-                           function,
-                           function.length(),
-                           new SimpleRequestCallback<Void>("Help"));
-                  }
-               }
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               progress.dismiss();
-               
-               globalDisplay_.showErrorMessage("Error Searching for Function",
-                                               error.getUserMessage());
-            }
-         });
+      docDisplay_.goToFunctionDefinition();
    }
    
    @Handler
@@ -1819,32 +1757,6 @@ public class TextEditingTarget implements EditingTarget
                   Debug.logError(error);
                }
             });
-   }
-
-   private Position findFunctionInScope(String functionName, FunctionStart fun)
-   {
-      // get the full tree
-      // TODO: is this null check necessary?
-      JsArray<FunctionStart> tree = docDisplay_.getFunctionTree();
-      if (tree == null)
-         return null;
-
-      //
-      // TODO: search this function and appropriate parent scopes to see
-      // if we can find a definition of functionName
-      //
-
-      // now search global functions defined in the file. this is here so that
-      // we can go to definition using the latest client edits (rather than
-      // waiting for the server index to update)
-      for (int i=0; i<tree.length(); i++)
-      {
-         FunctionStart child = tree.get(i);
-         if (child.getLabel().equals(functionName))
-            return child.getPreamble();
-      }
-
-      return null;
    }
    
    private void updateUIPrefs()

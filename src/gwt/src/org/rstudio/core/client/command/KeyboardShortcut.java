@@ -18,6 +18,11 @@ import org.rstudio.core.client.BrowseCap;
 
 public class KeyboardShortcut
 {
+   public KeyboardShortcut(int keycode)
+   {
+      this(KeyboardShortcut.NONE, keycode);
+   }
+   
    public KeyboardShortcut(int modifiers, int keycode)
    {
       modifiers_ = modifiers;

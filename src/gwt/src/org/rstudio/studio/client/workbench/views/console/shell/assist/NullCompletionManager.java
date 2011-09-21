@@ -19,6 +19,10 @@ public class NullCompletionManager implements CompletionManager
    public void close()
    {
    }
+   
+   public void goToFunctionDefinition()
+   {
+   }
 
    public boolean previewKeyDown(NativeEvent event)
    {
