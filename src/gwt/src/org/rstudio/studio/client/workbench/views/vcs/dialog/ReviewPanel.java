@@ -67,12 +67,6 @@ public class ReviewPanel extends Composite implements Display
       @Source("images/ignore.png")
       ImageResource ignore();
 
-      @Source("images/pull.png")
-      ImageResource pull();
-
-      @Source("images/push.png")
-      ImageResource push();
-
       @Source("images/stage.png")
       ImageResource stage();
 
