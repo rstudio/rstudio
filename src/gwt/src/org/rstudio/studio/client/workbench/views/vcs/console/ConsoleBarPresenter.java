@@ -22,10 +22,8 @@ import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
-import org.rstudio.studio.client.common.console.ConsoleOutputEvent.Handler;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
-import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 
 public class ConsoleBarPresenter

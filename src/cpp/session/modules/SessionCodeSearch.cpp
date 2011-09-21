@@ -55,8 +55,6 @@
 
 // TODO: make sure the failure code branches are hit as expected
 
-// TODO: some type of "none found" UI?
-
 // TODO: consider doing a help navigation if not found?
 
 // TODO: global progress for long-running function lookup
