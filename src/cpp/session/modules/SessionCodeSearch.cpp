@@ -45,7 +45,6 @@
 
 #include "SessionSource.hpp"
 
-// TODO: ability to open source pane for nav from console
 
 // TODO: local go to function should position cursor
 

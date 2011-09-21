@@ -36,8 +36,8 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinitionLocation;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -111,11 +111,11 @@ public class RCompletionManager implements CompletionManager
    
    @Inject
    public void initialize(GlobalDisplay globalDisplay,
-                          Commands commands,
+                          WorkbenchContext workbenchContext,
                           FileTypeRegistry fileTypeRegistry)
    {
       globalDisplay_ = globalDisplay;
-      commands_ = commands;
+      workbenchContext_ = workbenchContext;
       fileTypeRegistry_ = fileTypeRegistry;
    }
 
@@ -127,8 +127,8 @@ public class RCompletionManager implements CompletionManager
    public void goToFunctionDefinition()
    {
       // don't do it if the command is disabled
-      if (!commands_.goToFunctionDefinition().isEnabled())
-         return;
+      if (!workbenchContext_.isCodeIndexingEnabled())
+         return ;
       
       // determine current line and cursor position
       InputEditorLineWithCursorPosition lineWithPos = 
@@ -564,8 +564,8 @@ public class RCompletionManager implements CompletionManager
    }
    
    private GlobalDisplay globalDisplay_;
-   private Commands commands_;
    private FileTypeRegistry fileTypeRegistry_;
+   private WorkbenchContext workbenchContext_;
       
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_ ;

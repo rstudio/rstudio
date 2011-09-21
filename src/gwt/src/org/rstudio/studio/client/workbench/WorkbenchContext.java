@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedEvent;
+import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -43,6 +45,16 @@ public class WorkbenchContext
             defaultFileDialogDir_ = FileSystemItem.createDir(event.getPath());;
          }      
       }); 
+      
+      eventBus.addHandler(CodeIndexingStatusChangedEvent.TYPE,
+                          new CodeIndexingStatusChangedHandler() {
+         @Override
+         public void onCodeIndexingStatusChanged(
+                                    CodeIndexingStatusChangedEvent event)
+         {
+            codeIndexingEnabled_ = event.getEnabled();
+         }
+      });
    }
    
   
@@ -111,9 +123,15 @@ public class WorkbenchContext
       return sessionInfo != null && sessionInfo.getActiveProjectFile() != null;
    }
    
+   public boolean isCodeIndexingEnabled()
+   {
+      return isProjectActive() && codeIndexingEnabled_;
+   }
+   
    
    FileSystemItem currentWorkingDir_ = FileSystemItem.home();
    FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
    FileSystemItem activeProjectDir_ = null;
    Session session_;
+   private boolean codeIndexingEnabled_ = true;
 }

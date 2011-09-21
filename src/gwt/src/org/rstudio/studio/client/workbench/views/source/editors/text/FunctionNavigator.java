@@ -14,13 +14,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 
 import org.rstudio.studio.client.workbench.views.source.editors.text.FunctionStart;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 public interface FunctionNavigator 
 {
-   Position getCursorPosition();
-   void setCursorPosition(Position position);
-   void moveCursorNearTop();
-   FunctionStart findFunctionDefinitionFromUsage(Position usagePos,
-                                                 String functionName);
+   FunctionStart findFunctionDefinitionFromCursor(String functionName);
+   void moveToFunction(FunctionStart func);
 }
