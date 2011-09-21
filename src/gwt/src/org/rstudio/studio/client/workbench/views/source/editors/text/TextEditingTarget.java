@@ -1441,6 +1441,16 @@ public class TextEditingTarget implements EditingTarget
                       fileTypeRegistry_.editFile(loc.getFile(), 
                                                  loc.getPosition());
                    }
+                   
+                   // otherwise try to show help
+                   else
+                   {
+                      String function = loc.getFunctionName();
+                      server_.getHelpAtCursor(
+                            function, 
+                            function.length(),
+                            new SimpleRequestCallback<Void>("Help"));   
+                   }
                }
             }
 

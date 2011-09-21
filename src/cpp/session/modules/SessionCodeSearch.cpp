@@ -53,10 +53,6 @@
 
 // TODO: don't index code which is commented out
 
-// TODO: make sure the failure code branches are hit as expected
-
-// TODO: consider doing a help navigation if not found?
-
 // TODO: hookup back (stack/jump/gotofile/enable/disable)
 
 using namespace core ;
