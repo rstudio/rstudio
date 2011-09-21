@@ -714,18 +714,6 @@ std::vector<FilePath> resolveAliasedPaths(json::Array paths)
    return parsedPaths;
 }
 
-Error ensureSshAgentRunning()
-{
-   if (core::system::getenv("SSH_AUTH_SOCK").empty())
-   {
-      core::system::ProcessResult result;
-      return core::system::runCommand(std::string("ssh-agent -s"),
-                                      core::system::ProcessOptions(),
-                                      &result);
-   }
-   return Success();
-}
-
 } // anonymous namespace
 
 
@@ -1206,9 +1194,34 @@ void postbackGitSSH(const std::string& argument,
       return;
    }
 
+   boost::shared_ptr<std::istream> pKeyStream;
+   Error error = key.open_r(&pKeyStream);
+   if (error)
+   {
+      LOG_ERROR(error);
+      // OK to continue in this case.
+   }
+   else
+   {
+      std::vector<char> buffer(300);
+      pKeyStream->read(&(buffer[0]), buffer.capacity());
+      if (!pKeyStream->fail())
+      {
+         buffer.resize(pKeyStream->gcount());
+         std::string data(buffer.begin(), buffer.end());
+         if (data.find("ENCRYPTED") == std::string::npos)
+         {
+            // The key was found to be unencrypted
+            cont(EXIT_SUCCESS, "");
+            return;
+         }
+      }
+   }
+
    // Use "ssh-add -l" to see if ssh-agent is running
    ProcessResult result;
-   Error error = runCommand("ssh-add -l", ProcessOptions(), &result);
+   error = runCommand(shell_utils::sendAllOutputToNull("ssh-add -l"),
+                      ProcessOptions(), &result);
    if (error)
    {
       // We couldn't even launch ssh-add. Seems unlikely we'll be able to
@@ -1276,13 +1289,14 @@ void postbackGitSSH(const std::string& argument,
 
    // Finally, call ssh-add, which will (probably) use git-
    ShellCommand cmd("ssh-add");
-#ifdef _APPLE_
+#ifdef __APPLE__
    // Automatically use Keychain for passphrase
    cmd << "-k";
 #endif
    cmd << string_utils::utf8ToSystem(toBashPath(key.absolutePath()));
    module_context::processSupervisor().runCommand(
-         shell_utils::sendNullToStdIn(cmd), "", ProcessOptions(),
+         shell_utils::sendAllOutputToNull(shell_utils::sendNullToStdIn(cmd)),
+         "", ProcessOptions(),
          boost::bind(postbackGitSSH_onSSHAddComplete,
                      cont,
                      output.str(),
@@ -1519,10 +1533,10 @@ core::Error initialize()
       s_pVcsImpl_.reset(new VCSImpl(workingDir));
 
    bool interceptSsh;
-#ifdef _WIN32
-   interceptSsh = true;
-#else
+#ifdef __APPLE__
    interceptSsh = options().programMode() != "desktop";
+#else
+   interceptSsh = true;
 #endif
 
    if (interceptSsh)
