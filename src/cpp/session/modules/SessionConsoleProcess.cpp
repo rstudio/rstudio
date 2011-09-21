@@ -31,8 +31,10 @@ namespace {
 } // anonymous namespace
 
 ConsoleProcess::ConsoleProcess(const std::string& command,
-                               const core::system::ProcessOptions& options)
-   : command_(command), options_(options), started_(false), interrupt_(false)
+                               const core::system::ProcessOptions& options,
+                               const boost::function<void()>& onExit)
+   : command_(command), options_(options), started_(false),
+     interrupt_(false), onExit_(onExit)
 {
    handle_ = core::system::generateUuid(false);
 }
@@ -61,7 +63,7 @@ void ConsoleProcess::interrupt()
 
 bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 {
-   while (!inputQueue_.empty())
+   if (!inputQueue_.empty())
    {
       Error error = ops.writeToStdin(inputQueue_, false);
       if (error)
@@ -69,6 +71,7 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 
       inputQueue_.clear();
    }
+
    return !interrupt_;
 }
 
@@ -103,6 +106,9 @@ void ConsoleProcess::onExit(int exitCode)
          ClientEvent(client_events::kConsoleProcessExit, data));
 
    s_procs.erase(handle_);
+
+   if (onExit_)
+      onExit_();
 }
 
 core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
@@ -127,7 +133,7 @@ Error procInit(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   boost::shared_ptr<ConsoleProcess> ptrProc = createProcess(command);
+   boost::shared_ptr<ConsoleProcess> ptrProc = ConsoleProcess::create(command);
    pResponse->setResult(ptrProc->handle());
    return Success();
 }
@@ -171,11 +177,15 @@ Error procInterrupt(const json::JsonRpcRequest& request,
    }
 }
 
-boost::shared_ptr<ConsoleProcess> createProcess(const std::string &command)
+boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
+      const std::string &command,
+      const boost::function<void()>& onExit)
 {
+   core::system::ProcessOptions options;
+   options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
-         new ConsoleProcess(command, core::system::ProcessOptions()));
-   s_procs.insert(std::make_pair(ptrProc->handle(), ptrProc));
+         new ConsoleProcess(command, options, onExit));
+   s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
 }
 
@@ -191,8 +201,6 @@ Error initialize()
       (bind(registerRpcMethod, "process_interrupt", procInterrupt));
 
    return initBlock.execute();
-
-   return Success();
 }
 
 } // namespace console_process

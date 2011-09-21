@@ -68,9 +68,6 @@ public class ReviewPresenter implements IsWidget
       HasClickHandlers getDiscardSelectedFiles();
       HasClickHandlers getDiscardAllFiles();
       HasClickHandlers getIgnoreButton();
-      HasClickHandlers getRefreshButton();
-      HasClickHandlers getPullButton();
-      HasClickHandlers getPushButton();
       HasClickHandlers getStageAllButton();
       HasClickHandlers getDiscardAllButton();
       HasClickHandlers getUnstageAllButton();
@@ -248,10 +245,6 @@ public class ReviewPresenter implements IsWidget
             });
          }
       });
-
-      view_.getRefreshButton().addClickHandler(commands.vcsRefresh());
-      view_.getPullButton().addClickHandler(commands.vcsPull());
-      view_.getPushButton().addClickHandler(commands.vcsPush());
 
       view_.getCommitIsAmend().addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {

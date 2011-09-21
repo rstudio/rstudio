@@ -84,7 +84,7 @@ public interface VCSServerOperations
 
    void vcsExecuteCommand(
          String command,
-         ServerRequestCallback<ExecuteCommandResult> requestCallback);
+         ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void vcsShow(String rev,
                 ServerRequestCallback<String> requestCallback);

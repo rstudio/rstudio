@@ -194,7 +194,7 @@ public class VCS extends BasePresenter implements IsWidget
          @Override
          public void onResponseReceived(ConsoleProcess proc)
          {
-            new ConsoleProgressDialog(proc).showModal();
+            new ConsoleProgressDialog("Pull", proc).showModal();
          }
       });
    }
@@ -206,7 +206,7 @@ public class VCS extends BasePresenter implements IsWidget
          @Override
          public void onResponseReceived(ConsoleProcess proc)
          {
-            new ConsoleProgressDialog(proc).showModal();
+            new ConsoleProgressDialog("Push", proc).showModal();
          }
       });
    }

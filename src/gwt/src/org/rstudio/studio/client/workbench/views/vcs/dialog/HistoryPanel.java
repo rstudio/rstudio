@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -24,6 +25,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.LeftRightToggleButton;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitListDisplay;
@@ -48,7 +51,8 @@ public class HistoryPanel extends Composite implements Display
    {}
 
    @Inject
-   public HistoryPanel(BranchToolbarButton branchToolbarButton)
+   public HistoryPanel(BranchToolbarButton branchToolbarButton,
+                       Commands commands)
    {
       splitPanel_ = new SplitLayoutPanel(4);
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
@@ -61,6 +65,23 @@ public class HistoryPanel extends Composite implements Display
       switchViewButton_ = new LeftRightToggleButton("Changes", "History", false);
       topToolbar_.addLeftWidget(switchViewButton_);
       topToolbar_.addLeftWidget(branchToolbarButton);
+
+      topToolbar_.addRightWidget(new ToolbarButton(
+            "Refresh", commands.vcsRefresh().getImageResource(),
+            commands.vcsRefresh()));
+
+      topToolbar_.addRightSeparator();
+
+      topToolbar_.addRightWidget(new ToolbarButton(
+            "Pull", commands.vcsPull().getImageResource(),
+            commands.vcsPull()));
+
+      topToolbar_.addRightSeparator();
+
+      topToolbar_.addRightWidget(new ToolbarButton(
+            "Push", commands.vcsPush().getImageResource(),
+            commands.vcsPush()));
+
    }
 
    @Override

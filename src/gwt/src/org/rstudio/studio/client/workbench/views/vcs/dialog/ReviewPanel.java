@@ -251,19 +251,21 @@ public class ReviewPanel extends Composite implements Display
       ignoreButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Ignore", RES.ignore(), (ClickHandler) null));
 
-      refreshButton_ = topToolbar_.addRightWidget(new ToolbarButton(
+      topToolbar_.addRightWidget(new ToolbarButton(
             "Refresh", commands.vcsRefresh().getImageResource(),
-            (ClickHandler) null));
+            commands.vcsRefresh()));
 
       topToolbar_.addRightSeparator();
 
-      pullButton_ = topToolbar_.addRightWidget(new ToolbarButton(
-            "Pull", RES.pull(), (ClickHandler) null));
+      topToolbar_.addRightWidget(new ToolbarButton(
+            "Pull", commands.vcsPull().getImageResource(),
+            commands.vcsPull()));
 
       topToolbar_.addRightSeparator();
 
-      pushButton_ = topToolbar_.addRightWidget(new ToolbarButton(
-            "Push", RES.push(), (ClickHandler) null));
+      topToolbar_.addRightWidget(new ToolbarButton(
+            "Push", commands.vcsPush().getImageResource(),
+            commands.vcsPush()));
 
       diffToolbar_.addStyleName(RES.styles().toolbar());
       diffToolbar_.addStyleName(RES.styles().diffToolbar());
@@ -330,24 +332,6 @@ public class ReviewPanel extends Composite implements Display
    public HasClickHandlers getIgnoreButton()
    {
       return ignoreButton_;
-   }
-
-   @Override
-   public HasClickHandlers getRefreshButton()
-   {
-      return refreshButton_;
-   }
-
-   @Override
-   public HasClickHandlers getPullButton()
-   {
-      return pullButton_;
-   }
-
-   @Override
-   public HasClickHandlers getPushButton()
-   {
-      return pushButton_;
    }
 
    @Override
@@ -504,9 +488,6 @@ public class ReviewPanel extends Composite implements Display
 
    private ToolbarButton stageAllFilesButton_;
    private ToolbarButton ignoreButton_;
-   private ToolbarButton refreshButton_;
-   private ToolbarButton pullButton_;
-   private ToolbarButton pushButton_;
    private ToolbarButton stageAllButton_;
    private ToolbarButton discardAllButton_;
    private ToolbarButton unstageAllButton_;

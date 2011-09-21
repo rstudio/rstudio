@@ -37,7 +37,6 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
-import org.rstudio.studio.client.common.vcs.ExecuteCommandResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.server.Bool;
@@ -1378,9 +1377,10 @@ public class RemoteServer implements Server
 
    @Override
    public void vcsExecuteCommand(String command,
-                                 ServerRequestCallback<ExecuteCommandResult> requestCallback)
+                                 ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_EXECUTE_COMMAND, command, requestCallback);
+      sendRequest(RPC_SCOPE, VCS_EXECUTE_COMMAND, command,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
    @Override

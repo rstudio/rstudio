@@ -21,8 +21,12 @@ import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.vcs.ExecuteCommandResult;
+import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
+import org.rstudio.studio.client.common.console.ConsoleOutputEvent.Handler;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.Void;
 
 public class ConsoleBarPresenter
 {
@@ -110,12 +114,21 @@ public class ConsoleBarPresenter
 
       outputView_.addCommand(command);
 
-      server_.vcsExecuteCommand(command, new SimpleRequestCallback<ExecuteCommandResult>()
+      server_.vcsExecuteCommand(command, new SimpleRequestCallback<ConsoleProcess>()
       {
          @Override
-         public void onResponseReceived(ExecuteCommandResult response)
+         public void onResponseReceived(ConsoleProcess response)
          {
-            outputView_.addOutput(response.getOutput());
+            response.addConsoleOutputHandler(new ConsoleOutputEvent.Handler()
+            {
+               @Override
+               public void onConsoleOutput(ConsoleOutputEvent event)
+               {
+                  outputView_.addOutput(event.getOutput());
+               }
+            });
+
+            response.start(new SimpleRequestCallback<Void>());
          }
       });
    }

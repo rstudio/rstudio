@@ -14,6 +14,7 @@
 #define SESSION_CONSOLE_PROCESS_HPP
 
 #include <core/system/Process.hpp>
+#include <core/Log.hpp>
 
 namespace core {
    class Error;
@@ -23,11 +24,20 @@ namespace session {
 namespace modules {
 namespace console_process {
 
-class ConsoleProcess
+class ConsoleProcess : boost::noncopyable
 {
+private:
+   ConsoleProcess(
+         const std::string& command,
+         const core::system::ProcessOptions& options,
+         const boost::function<void()>& onExit);
+
 public:
-   ConsoleProcess(const std::string& command,
-                  const core::system::ProcessOptions& options);
+   static boost::shared_ptr<ConsoleProcess> create(
+         const std::string& command,
+         const boost::function<void()>& onExit=boost::function<void()>());
+
+   virtual ~ConsoleProcess() {}
 
    std::string handle() const { return handle_; }
 
@@ -59,9 +69,9 @@ private:
 
    // Pending writes to stdin
    std::string inputQueue_;
-};
 
-boost::shared_ptr<ConsoleProcess> createProcess(const std::string& command);
+   boost::function<void()> onExit_;
+};
 
 core::Error initialize();
 

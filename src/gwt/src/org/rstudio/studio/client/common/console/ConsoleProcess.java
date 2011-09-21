@@ -82,8 +82,8 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
    }
 
    private ConsoleProcess(ConsoleServerOperations server,
-                            EventBus eventBus,
-                            final String handle)
+                          EventBus eventBus,
+                          final String handle)
    {
       server_ = server;
       handle_ = handle;
