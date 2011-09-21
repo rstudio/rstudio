@@ -1520,7 +1520,7 @@ void onShutdown(bool)
    {
       int pid = s_pidsToTerminate_.back();
       s_pidsToTerminate_.pop_back();
-      ::kill(pid, SIGTERM);
+      system::terminateProcess(pid);
    }
 }
 

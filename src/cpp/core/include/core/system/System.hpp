@@ -220,6 +220,8 @@ Error installPath(const std::string& relativeToExecutable,
 void fixupExecutablePath(FilePath* pExePath);
 
 void abort();
+
+Error terminateProcess(pid_t pid);
    
 } // namespace system
 } // namespace core 

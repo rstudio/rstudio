@@ -617,6 +617,13 @@ void abort()
 	::abort();
 }
 
+Error terminateProcess(pid_t pid)
+{
+   if (::kill(pid, SIGTERM))
+      return systemError(errno, ERROR_LOCATION);
+   else
+      return Success();
+}
 
 } // namespace system
 } // namespace core
