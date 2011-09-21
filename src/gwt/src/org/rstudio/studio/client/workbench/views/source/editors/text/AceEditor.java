@@ -833,7 +833,16 @@ public class AceEditor implements DocDisplay,
    
    public void moveToFunction(FunctionStart func)
    {
+      // set cursor to function line
       setCursorPosition(func.getPreamble());
+
+      // skip whitespace if necessary
+      int curRow = getSession().getSelection().getCursor().getRow();
+      String line = getSession().getLine(curRow);
+      int funStart = line.indexOf(line.trim());
+      setCursorPosition(Position.create(curRow, funStart));
+
+      // scroll if necessary
       moveCursorNearTop();
    }
 

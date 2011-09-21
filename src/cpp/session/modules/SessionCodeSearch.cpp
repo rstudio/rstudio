@@ -45,11 +45,6 @@
 
 #include "SessionSource.hpp"
 
-
-// TODO: local go to function should position cursor
-
-// TODO: don't index code which is commented out
-
 // TODO: hookup back (stack/jump/gotofile/enable/disable)
 
 using namespace core ;
