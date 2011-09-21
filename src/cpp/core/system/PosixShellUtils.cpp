@@ -52,7 +52,7 @@ std::string sendStdErrToStdOut(const std::string& command)
 
 std::string sendAllOutputToNull(const std::string& command)
 {
-   return "(" + command + ") 2>&1 > /dev/null";
+   return "(" + command + ") > /dev/null 2>&1";
 }
 
 std::string sendNullToStdIn(const std::string& command)
