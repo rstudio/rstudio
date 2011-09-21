@@ -27,6 +27,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -81,6 +82,11 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
    * The attribute used to indicate that an element contains a header.
    */
   private static final String HEADER_ATTRIBUTE = "__gwt_header";
+  
+  /**
+   * The attribute used to specify the row index of a TR element in the header.
+   */
+  private static final String ROW_ATTRIBUTE = "__gwt_header_row";
 
   private static final int ICON_PADDING = 6;
 
@@ -93,6 +99,7 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
   private SafeHtml sortDescIconHtml;
   private final int sortDescIconWidth;
   private final AbstractCellTable<T> table;
+  private int rowIndex;
 
   // The following fields are reset on every build.
   private HtmlTableSectionBuilder section;
@@ -163,6 +170,11 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
     return (headerId == null) ? null : idToHeaderMap.getValue(headerId);
   }
 
+  @Override
+  public int getRowIndex(TableRowElement row) {
+    return Integer.parseInt(row.getAttribute(ROW_ATTRIBUTE));
+  }
+  
   /**
    * Check if this builder is building a header or footer table.
    * 
@@ -348,6 +360,8 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
 
     // Start the next row.
     TableRowBuilder row = section.startTR();
+    row.attribute(ROW_ATTRIBUTE, rowIndex);
+    rowIndex++;
     return row;
   }
 
@@ -358,6 +372,7 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
             .createTHeadBuilder();
     idToHeaderMap.clear();
     idToColumnMap.clear();
+    rowIndex = 0;
 
     // Build the header.
     if (!buildHeaderOrFooterImpl()) {

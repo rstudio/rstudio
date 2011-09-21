@@ -17,6 +17,7 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.dom.builder.shared.TableSectionBuilder;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.TableRowElement;
 
 /**
  * Builds the DOM elements for the footer section of a CellTable. It also
@@ -78,6 +79,15 @@ public interface FooterBuilder<T> {
    */
   Header<?> getHeader(Element elem);
 
+  /**
+   * Get the row index from the associated
+   * {@link TableRowElement} (an TR element).
+   * 
+   * @param row the row element
+   * @return the row value index
+   */
+  int getRowIndex(TableRowElement row);
+  
   /**
    * Check if an element contains a {@link Column}. This method should return
    * false if and only if {@link #getColumn(Element)} would return null.
