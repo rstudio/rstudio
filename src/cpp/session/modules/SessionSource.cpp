@@ -720,6 +720,36 @@ SEXP fileEditHook(SEXP call, SEXP op, SEXP args, SEXP rho)
    return R_NilValue;
 }
 
+void onSuspend(Settings*)
+{
+}
+
+// update the source database index on resume
+
+// TODO: a resume followed by a client_init will cause us to call
+// source_database::list twice (which will cause us to read all of
+// the files twice). find a way to prevent this.
+
+void onResume(const Settings&)
+{
+   rSourceIndexes().removeAll();
+
+   // get the docs and sort them by created
+   std::vector<boost::shared_ptr<SourceDocument> > docs ;
+   Error error = source_database::list(&docs);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   std::sort(docs.begin(), docs.end(), sortByCreated);
+
+   // update the indexes
+   std::for_each(docs.begin(),
+                 docs.end(),
+                 boost::bind(&RSourceIndexes::update, &rSourceIndexes(), _1));
+}
+
 void onShutdown(bool terminatedNormally)
 {
    FilePath activeDocumentFile =
@@ -780,12 +810,15 @@ std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > rIndexes()
 
 Error initialize()
 {   
-   // connect to shutdown event
-   module_context::events().onShutdown.connect(onShutdown);
+   // connect to events
+   using namespace module_context;
+   events().onShutdown.connect(onShutdown);
+
+   // add suspend/resume handler
+   addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    // install rpc methods
    using boost::bind;
-   using namespace module_context;
    using namespace r::function_hook;
    ExecBlock initBlock ;
    initBlock.addFunctions()

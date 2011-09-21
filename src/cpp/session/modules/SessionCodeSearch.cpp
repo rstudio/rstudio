@@ -54,8 +54,6 @@
 
 // TODO: don't index code which is commented out
 
-// TODO: rebuild source database index on resume
-
 // TODO: make sure the failure code branches are hit as expected
 
 // TODO: some type of "none found" UI?
@@ -190,8 +188,11 @@ public:
       BOOST_FOREACH(const Entry& entry, entries_)
       {
          // bail if this is an exluded context
-         if (excludeContexts.find(entry.pIndex->context()) != excludeContexts.end())
+         if (excludeContexts.find(entry.pIndex->context()) !=
+             excludeContexts.end())
+         {
             continue;
+         }
 
          // scan the next index
          entry.pIndex->search(term,
