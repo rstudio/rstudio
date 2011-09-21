@@ -1406,6 +1406,11 @@ public class TextEditingTarget implements EditingTarget
                       InputEditorUtil.getLineWithCursorPosition(docDisplay_);
       
       // lookup function definition at this location
+      
+      // delayed progress indicator
+      final GlobalProgressDelayer progress = new GlobalProgressDelayer(
+            globalDisplay_, 1000, "Searching for function definition...");
+      
       server_.getFunctionDefinitionLocation(
          lineWithPos.getLine(),
          lineWithPos.getPosition(), 
@@ -1413,6 +1418,9 @@ public class TextEditingTarget implements EditingTarget
             @Override
             public void onResponseReceived(FunctionDefinitionLocation loc)
             {
+                // dismiss progress
+                progress.dismiss();
+               
                 // if we got a hit
                 if (loc.getFunctionName() != null)
                 {
@@ -1439,8 +1447,10 @@ public class TextEditingTarget implements EditingTarget
             @Override
             public void onError(ServerError error)
             {
-               // fail silently (but Debug.log for dev mode)
-               Debug.log(error.getUserMessage());
+               progress.dismiss();
+               
+               globalDisplay_.showErrorMessage("Error Searching for Function",
+                                               error.getUserMessage());
             }
          });
    }

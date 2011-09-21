@@ -57,8 +57,6 @@
 
 // TODO: consider doing a help navigation if not found?
 
-// TODO: global progress for long-running function lookup
-
 // TODO: hookup back (stack/jump/gotofile/enable/disable)
 
 using namespace core ;
