@@ -13,6 +13,7 @@
 
 #include <session/SessionHttpConnectionListener.hpp>
 
+#include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionLocalStreams.hpp>
 
@@ -36,7 +37,7 @@ void initializeHttpConnectionListener()
    // alias options
    session::Options& options = session::options();
 
-   if (options.programMode() == "desktop")
+   if (options.programMode() == kSessionProgramModeDesktop)
    {
       s_pHttpConnectionListener =
             new TcpIpHttpConnectionListener("127.0.0.1",

@@ -12,6 +12,8 @@
  */
 #include "SessionSourceControl.hpp"
 
+#include <signal.h>
+
 #ifdef _WIN32
 #include <windows.h>
 #include <shlobj.h>
@@ -225,9 +227,10 @@ protected:
    FilePath root_;
 };
 
-boost::scoped_ptr<VCSImpl> s_pVcsImpl_;
-
 namespace {
+
+boost::scoped_ptr<VCSImpl> s_pVcsImpl_;
+std::vector<int> s_pidsToTerminate_;
 
 ShellCommand git()
 {
@@ -1232,8 +1235,11 @@ void postbackGitSSH(const std::string& argument,
       return;
    }
 
-   if (result.exitStatus == EXIT_SUCCESS)
+   if (result.exitStatus == EXIT_SUCCESS || result.exitStatus == 1)
    {
+      // exitStatus == 1 means ssh-agent was running but no identities were
+      // present. If exitStatus == 2 that means couldn't connect to ssh-agent
+
       // ssh-agent is already running. Let's assume that either the current
       // default key is already registered, or was never intended to.
       cont(EXIT_SUCCESS, "");
@@ -1285,6 +1291,13 @@ void postbackGitSSH(const std::string& argument,
       std::string name = (*it).str(1);
       std::string value = (*it).str(2);
       core::system::setenv(name, value);
+
+      if (name == "SSH_AGENT_PID")
+      {
+         int pid = safe_convert::stringTo<int>(value, 0);
+         if (pid)
+            s_pidsToTerminate_.push_back(pid);
+      }
    }
 
    // Finally, call ssh-add, which will (probably) use git-
@@ -1501,11 +1514,23 @@ Error addGitBinDirToPath()
 
 #endif
 
+void onShutdown(bool)
+{
+   while (!s_pidsToTerminate_.empty())
+   {
+      int pid = s_pidsToTerminate_.back();
+      s_pidsToTerminate_.pop_back();
+      ::kill(pid, SIGTERM);
+   }
+}
+
 } // anonymous namespace
 
 core::Error initialize()
 {
    Error error;
+
+   module_context::events().onShutdown.connect(onShutdown);
 
    FilePath workingDir = projects::projectContext().directory();
    if (!userSettings().vcsEnabled())
@@ -1534,7 +1559,7 @@ core::Error initialize()
 
    bool interceptSsh;
 #ifdef __APPLE__
-   interceptSsh = options().programMode() != "desktop";
+   interceptSsh = options().programMode() != kSessionProgramModeDesktop;
 #else
    interceptSsh = true;
 #endif
