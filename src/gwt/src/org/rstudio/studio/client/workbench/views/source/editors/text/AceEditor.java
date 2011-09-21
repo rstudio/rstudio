@@ -816,6 +816,13 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return getSession().getMode().getFunctionTree();
    }
 
+   public FunctionStart findFunctionDefinitionFromUsage(Position usagePos,
+                                                        String functionName)
+   {
+      return getSession().getMode().findFunctionDefinitionFromUsage(
+                                                        usagePos, functionName);
+   }
+
    public void setFontSize(double size)
    {
       // No change needed--the AceEditorWidget uses the "normalSize" style

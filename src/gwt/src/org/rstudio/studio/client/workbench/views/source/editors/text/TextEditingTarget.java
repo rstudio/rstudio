@@ -161,6 +161,8 @@ public class TextEditingTarget implements EditingTarget
 
       FunctionStart getCurrentFunction();
       JsArray<FunctionStart> getFunctionTree();
+      FunctionStart findFunctionDefinitionFromUsage(Position usagePos,
+                                                        String functionName);
 
       HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler);
       JavaScriptObject getCleanStateToken();
@@ -330,8 +332,11 @@ public class TextEditingTarget implements EditingTarget
       Position cursor = docDisplay_.getCursorPosition();
       JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
       FunctionStart jumpTo = findPreviousFunction(functions, cursor);
-      docDisplay_.setCursorPosition(jumpTo.getPreamble());
-      docDisplay_.moveCursorNearTop();
+      if (jumpTo != null)
+      {
+         docDisplay_.setCursorPosition(jumpTo.getPreamble());
+         docDisplay_.moveCursorNearTop();
+      }
    }
 
    private FunctionStart findPreviousFunction(JsArray<FunctionStart> funcs, Position pos)
@@ -361,8 +366,11 @@ public class TextEditingTarget implements EditingTarget
       Position cursor = docDisplay_.getCursorPosition();
       JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
       FunctionStart jumpTo = findNextFunction(functions, cursor);
-      docDisplay_.setCursorPosition(jumpTo.getPreamble());
-      docDisplay_.moveCursorNearTop();
+      if (jumpTo != null)
+      {
+         docDisplay_.setCursorPosition(jumpTo.getPreamble());
+         docDisplay_.moveCursorNearTop();
+      }
    }
 
    private FunctionStart findNextFunction(JsArray<FunctionStart> funcs, Position pos)
@@ -1402,7 +1410,7 @@ public class TextEditingTarget implements EditingTarget
    void onGoToFunctionDefinition()
    {
       // determine current line and cursor position
-      InputEditorLineWithCursorPosition lineWithPos = 
+      final InputEditorLineWithCursorPosition lineWithPos =
                       InputEditorUtil.getLineWithCursorPosition(docDisplay_);
       
       // lookup function definition at this location
@@ -1418,39 +1426,38 @@ public class TextEditingTarget implements EditingTarget
             @Override
             public void onResponseReceived(FunctionDefinitionLocation loc)
             {
-                // dismiss progress
-                progress.dismiss();
-               
-                // if we got a hit
-                if (loc.getFunctionName() != null)
-                {
-                   // try to satisfy the request from the current function tree
-                   Position pos = findFunctionInScope(
-                                        loc.getFunctionName(),
-                                        docDisplay_.getCurrentFunction());
-                   if (pos != null)
-                   {
-                      docDisplay_.setCursorPosition(pos);
-                      docDisplay_.moveCursorNearTop();
-                   }
+               // dismiss progress
+               progress.dismiss();
 
-                   // if we didn't find the function locally and we got a
-                   // file back from the server then navigate to the file/loc
-                   else if (loc.getFile() != null)
-                   {
-                      fileTypeRegistry_.editFile(loc.getFile(), 
-                                                 loc.getPosition());
-                   }
-                   
-                   // otherwise try to show help
-                   else
-                   {
-                      String function = loc.getFunctionName();
-                      server_.getHelpAtCursor(
-                            function, 
-                            function.length(),
-                            new SimpleRequestCallback<Void>("Help"));   
-                   }
+               // if we got a hit
+               if (loc.getFunctionName() != null)
+               {
+                  // try to satisfy the request from the current function tree
+                  FunctionStart func = docDisplay_.findFunctionDefinitionFromUsage(
+                        docDisplay_.getCursorPosition(),
+                        loc.getFunctionName());
+
+                  if (func != null)
+                  {
+                     docDisplay_.setCursorPosition(func.getPreamble());
+                     docDisplay_.moveCursorNearTop();
+                  }
+                  else if (loc.getFile() != null)
+                  {
+                     // if we didn't find the function locally and we got a
+                     // file back from the server then navigate to the file/loc
+                     fileTypeRegistry_.editFile(loc.getFile(),
+                                                loc.getPosition());
+                  }
+                  else
+                  {
+                     // otherwise try to show help
+                     String function = loc.getFunctionName();
+                     server_.getHelpAtCursor(
+                           function,
+                           function.length(),
+                           new SimpleRequestCallback<Void>("Help"));
+                  }
                }
             }
 

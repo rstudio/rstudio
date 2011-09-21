@@ -59,6 +59,12 @@ define("mode/r", function(require, exports, module)
          return this.$rCodeModel.getFunctionTree();
       };
 
+      this.findFunctionDefinitionFromUsage = function(usagePos, functionName)
+      {
+         return this.$rCodeModel.findFunctionDefinitionFromUsage(usagePos,
+                                                                 functionName);
+      };
+
       this.checkOutdent = function(state, line, input) {
          if (! /^\s+$/.test(line))
             return false;

@@ -71,6 +71,11 @@ define('mode/r_scope_tree', function(require, exports, module) {
          return list;
       };
 
+      this.findFunctionDefinitionFromUsage = function(usagePos, functionName) {
+         return this.$root.findFunctionDefinitionFromUsage(usagePos,
+                                                           functionName);
+      };
+
       this.invalidateFrom = function(pos) {
          pos = {row: Math.max(0, pos.row-1), column: 0};
          debuglog("Invalidate from " + pos.row + ", " + pos.column);
@@ -181,6 +186,31 @@ define('mode/r_scope_tree', function(require, exports, module) {
          else {
             return this.label ? this : null;
          }
+      };
+
+      this.$getFunctionStack = function(pos) {
+         var index = this.$binarySearch(pos);
+         var stack = index >= 0 ? this.$children[index].$getFunctionStack(pos)
+                                : [];
+         if (this.label) {
+            stack.push(this);
+         }
+         return stack;
+      };
+
+      this.findFunctionDefinitionFromUsage = function(usagePos, functionName) {
+         var functionStack = this.$getFunctionStack(usagePos);
+         for (var i = 0; i < functionStack.length; i++) {
+            var thisLevel = functionStack[i];
+            for (var j = 0; j < thisLevel.$children.length; j++) {
+               // optionally, short-circuit iteration if usagePos comes before
+               // thisLevel.$children[j].preamble (or .start?)
+               if (thisLevel.$children[j].label == functionName)
+                  return thisLevel.$children[j];
+            }
+         }
+
+         return null;
       };
 
       // Invalidates everything after pos, and possibly some stuff before.

@@ -302,6 +302,13 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       return list[0].children;
    };
 
+   this.findFunctionDefinitionFromUsage = function(usagePos, functionName)
+   {
+      this.$buildScopeTreeUpToRow(this.$doc.getLength() - 1);
+      return this.$scopes.findFunctionDefinitionFromUsage(usagePos,
+                                                          functionName);
+   };
+
    this.getIndentForOpenBrace = function(pos)
    {
       if (this.$tokenizeUpToRow(pos.row))
