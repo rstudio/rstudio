@@ -16,8 +16,6 @@ import com.google.gwt.event.dom.client.HasAllFocusHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.ui.HasText;
 import org.rstudio.core.client.Rectangle;
-import org.rstudio.studio.client.workbench.views.source.editors.text.FunctionStart;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 public interface InputEditorDisplay extends HasAllFocusHandlers,
                                             HasClickHandlers,
@@ -46,10 +44,4 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
 
    int getCurrentLineNum();
    int getCurrentLineCount();
-   
-   Position getCursorPosition();
-   void setCursorPosition(Position position);
-   void moveCursorNearTop();
-   FunctionStart findFunctionDefinitionFromUsage(Position usagePos,
-                                                 String functionName);
 }

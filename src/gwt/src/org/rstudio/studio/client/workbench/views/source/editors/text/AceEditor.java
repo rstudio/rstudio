@@ -64,7 +64,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Curs
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 
-public class AceEditor implements DocDisplay, InputEditorDisplay
+public class AceEditor implements DocDisplay, 
+                                  InputEditorDisplay,
+                                  FunctionNavigator
 {
    public enum NewLineMode
    {
@@ -276,6 +278,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       if (!suppressCompletion && fileType_.getEditorLanguage().useRCompletion())
       {
          completionManager_ = new RCompletionManager(this,
+                                                     this,
                                                      new CompletionPopupPanel(),
                                                      server_,
                                                      new Filter());
@@ -820,12 +823,18 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    {
       return getSession().getMode().getFunctionTree();
    }
-
-   public FunctionStart findFunctionDefinitionFromUsage(Position usagePos,
-                                                        String functionName)
+   
+   public FunctionStart findFunctionDefinitionFromCursor(String functionName)
    {
       return getSession().getMode().findFunctionDefinitionFromUsage(
-                                                        usagePos, functionName);
+                                                      getCursorPosition(), 
+                                                      functionName);
+   }
+   
+   public void moveToFunction(FunctionStart func)
+   {
+      setCursorPosition(func.getPreamble());
+      moveCursorNearTop();
    }
 
    public void setFontSize(double size)

@@ -144,6 +144,7 @@ public class Shell implements ConsoleInputHandler,
       
       final CompletionManager completionManager
                   = new RCompletionManager(view_.getInputEditorDisplay(),
+                                          null,
                                           new CompletionPopupPanel(), 
                                           server, 
                                           null) ;

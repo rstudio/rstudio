@@ -159,8 +159,6 @@ public class TextEditingTarget implements EditingTarget
 
       FunctionStart getCurrentFunction();
       JsArray<FunctionStart> getFunctionTree();
-      FunctionStart findFunctionDefinitionFromUsage(Position usagePos,
-                                                        String functionName);
 
       HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler);
       JavaScriptObject getCleanStateToken();

@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
+import org.rstudio.studio.client.workbench.views.source.editors.text.FunctionNavigator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.FunctionStart;
 
 import java.util.ArrayList;
@@ -52,6 +53,7 @@ import java.util.ArrayList;
 public class RCompletionManager implements CompletionManager
 {  
    public RCompletionManager(InputEditorDisplay input,
+                             FunctionNavigator functionNavigator,
                              CompletionPopupDisplay popup,
                              CodeToolsServerOperations server,
                              InitCompletionFilter initFilter)
@@ -59,6 +61,7 @@ public class RCompletionManager implements CompletionManager
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       input_ = input ;
+      functionNavigator_ = functionNavigator;
       popup_ = popup ;
       server_ = server ;
       requester_ = new CompletionRequester(server_) ;
@@ -150,20 +153,25 @@ public class RCompletionManager implements CompletionManager
                 // if we got a hit
                 if (loc.getFunctionName() != null)
                 {   
-                   // search locally first
-                   FunctionStart func = 
-                      input_.findFunctionDefinitionFromUsage(
-                                           input_.getCursorPosition(), 
-                                           loc.getFunctionName());
-                   if (func != null)
+                   // search locally if a function navigator was provided
+                   if (functionNavigator_ != null)
                    {
-                      input_.setCursorPosition(func.getPreamble());
-                      input_.moveCursorNearTop();
+                      // try to search for the function locally
+                      FunctionStart func = 
+                         functionNavigator_.findFunctionDefinitionFromCursor(
+                                                         loc.getFunctionName());
+                      if (func != null)
+                      {
+                         functionNavigator_.moveToFunction(func);
+                         return; // we're done
+                      }
+
                    }
                    
-                   // if a hook didn't take the navigation and we got a
-                   // file back from the server then navigate to the file/loc
-                   else if (loc.getFile() != null)
+                   // if we didn't satisfy the request using a function
+                   // navigator and we got a file back from the server then
+                   // navigate to the file/loc
+                   if (loc.getFile() != null)
                    {
                       fileTypeRegistry_.editFile(loc.getFile(), 
                                                  loc.getPosition());
@@ -561,6 +569,7 @@ public class RCompletionManager implements CompletionManager
       
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_ ;
+   private final FunctionNavigator functionNavigator_;
    private final CompletionPopupDisplay popup_ ;
    private final CompletionRequester requester_ ;
    private final InitCompletionFilter initFilter_ ;
