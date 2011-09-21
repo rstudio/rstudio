@@ -44,20 +44,35 @@ public:
    };
 
 public:
+   RSourceItem() : type_(None), braceLevel_(0), line_(0), column_(0)
+   {
+   }
+
    RSourceItem(int type,
                const std::string& name,
+               int braceLevel,
                std::size_t line,
                std::size_t column)
-      : type_(type), name_(name), line_(line), column_(column)
+      : type_(type),
+        name_(name),
+        braceLevel_(braceLevel),
+        line_(line),
+        column_(column)
    {
    }
 
    RSourceItem(const std::string& context,
                int type,
                const std::string& name,
+               int braceLevel,
                std::size_t line,
                std::size_t column)
-      : context_(context), type_(type), name_(name), line_(line), column_(column)
+      : context_(context),
+        type_(type),
+        name_(name),
+        braceLevel_(braceLevel),
+        line_(line),
+        column_(column)
    {
    }
 
@@ -69,6 +84,7 @@ public:
    int type() const { return type_; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
+   const int braceLevel() const { return braceLevel_; }
    int line() const { return core::safe_convert::numberTo<int>(line_,0); }
    int column() const { return core::safe_convert::numberTo<int>(column_,0); }
 
@@ -99,20 +115,16 @@ public:
 
    RSourceItem withContext(const std::string& context) const
    {
-      return RSourceItem(context, type_, name_, line_, column_);
+      return RSourceItem(context, type_, name_, braceLevel_, line_, column_);
    }
 
 private:
    std::string context_;
    int type_;
    std::string name_;
+   int braceLevel_;
    std::size_t line_;
    std::size_t column_;
-
-// convenience friendship for doing vector operations e.g. resize()
-private:
-   friend class std::vector<RSourceItem>;
-   RSourceItem() : line_(0), column_(0) {}
 };
 
 
@@ -130,6 +142,32 @@ public:
                 const std::string& code);
 
    const std::string& context() const { return context_; }
+
+   template <typename OutputIterator>
+   OutputIterator search(
+                  const std::string& newContext,
+                  const boost::function<bool(const RSourceItem&)> predicate,
+                  OutputIterator out) const
+   {
+      // perform the copy and transform to include context
+      core::algorithm::copy_transformed_if(
+                items_.begin(),
+                items_.end(),
+                out,
+                predicate,
+                boost::bind(&RSourceItem::withContext, _1, newContext));
+
+      // return the output iterator
+      return out;
+   }
+
+   template <typename OutputIterator>
+   OutputIterator search(
+                  const boost::function<bool(const RSourceItem&)> predicate,
+                  OutputIterator out) const
+   {
+      return search(context_, predicate, out);
+   }
 
    template <typename OutputIterator>
    OutputIterator search(const std::string& term,
@@ -164,16 +202,7 @@ public:
                                        _1, term, caseSensitive);
       }
 
-      // perform the copy and transform to include context
-      core::algorithm::copy_transformed_if(
-                items_.begin(),
-                items_.end(),
-                out,
-                predicate,
-                boost::bind(&RSourceItem::withContext, _1, newContext));
-
-      // return the output iterator
-      return out;
+      return search(newContext, predicate, out);
    }
 
    template <typename OutputIterator>

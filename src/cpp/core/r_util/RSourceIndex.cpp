@@ -55,7 +55,8 @@ RSourceIndex::RSourceIndex(const std::string& context,
    // tokenize
    RTokens rTokens(wCode, RTokens::StripWhitespace | RTokens::StripComments);
 
-   // scan for function, method, and class definitions
+   // scan for function, method, and class definitions (track indent level)
+   int braceLevel = 0;
    std::wstring function(L"function");
    std::wstring set(L"set");
    std::wstring setGeneric(L"setGeneric");
@@ -76,9 +77,23 @@ RSourceIndex::RSourceIndex(const std::string& context,
       // alias the token
       const RToken& token = rTokens.at(i);
 
-      // bail if this isn't an identifier
-      if (token.type() != RToken::ID)
+      // see if this is a begin or end brace and update the level
+      if (token.type() == RToken::LBRACE)
+      {
+         braceLevel++;
          continue;
+      }
+
+      else if (token.type() == RToken::RBRACE)
+      {
+         braceLevel--;
+         continue;
+      }
+      // bail for non-identifiers
+      else if (token.type() != RToken::ID)
+      {
+         continue;
+      }
 
       // is this a potential method or class definition?
       if (token.contentStartsWith(set))
@@ -176,6 +191,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
       // add to index
       items_.push_back(RSourceItem(type,
                                    string_utils::wideToUtf8(name),
+                                   braceLevel,
                                    line,
                                    column));
    }

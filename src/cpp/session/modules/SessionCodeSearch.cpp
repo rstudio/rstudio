@@ -48,10 +48,13 @@
 // TODO: do local function lookup on client before yielding server result
 //       for local search, need to go all the way up the chain to the top
 
-// TODO: search for FULL match of ONLY global functions
 
 // TODO: disable go to function definition if code indexing fails
 //       (same as we do for the search box)
+
+// TODO: don't index code which is commented out
+
+// TODO: rebuild source database index on resume
 
 // TODO: make sure the failure code branches are hit as expected
 
@@ -70,6 +73,14 @@ namespace modules {
 namespace code_search {
 
 namespace {
+
+bool isGlobalFunctionNamed(const r_util::RSourceItem& sourceItem,
+                           const std::string& name)
+{
+   return sourceItem.braceLevel() == 0 &&
+          sourceItem.type() == r_util::RSourceItem::Function &&
+          sourceItem.name() == name;
+}
 
 class SourceFileIndex : boost::noncopyable
 {
@@ -136,6 +147,38 @@ public:
                            boost::bind(&SourceFileIndex::dequeAndIndex, this),
                            false /* allow indexing even when non-idle */);
       }
+   }
+
+   bool findGlobalFunction(const std::string& functionName,
+                           const std::set<std::string>& excludeContexts,
+                           r_util::RSourceItem* pFunctionItem)
+   {
+      std::vector<r_util::RSourceItem> sourceItems;
+      BOOST_FOREACH(const Entry& entry, entries_)
+      {
+         // bail if this is an exluded context
+         if (excludeContexts.find(entry.pIndex->context()) !=
+             excludeContexts.end())
+         {
+            continue;
+         }
+
+         // scan the next index
+         sourceItems.clear();
+         entry.pIndex->search(
+                  boost::bind(isGlobalFunctionNamed, _1, functionName),
+                  std::back_inserter(sourceItems));
+
+         // return if we got a hit
+         if (sourceItems.size() > 0)
+         {
+            *pFunctionItem = sourceItems[0];
+            return true;
+         }
+      }
+
+      // none found
+      return false;
    }
 
    void searchSource(const std::string& term,
@@ -370,27 +413,72 @@ private:
 SourceFileIndex s_projectIndex;
 
 
+bool computeProjRelativePath(boost::shared_ptr<r_util::RSourceIndex> pIndex,
+                             std::string* pProjRelativePath)
+{
+   // get file path
+   FilePath docPath = module_context::resolveAliasedPath(pIndex->context());
+
+   // get proj relative path
+   *pProjRelativePath = docPath.relativePath(
+                                    projects::projectContext().directory());
+
+   // return status
+   return !pProjRelativePath->empty();
+}
+
+bool findGlobalFunctionInSourceDatabase(
+                        const std::string& functionName,
+                        r_util::RSourceItem* pFunctionItem,
+                        std::set<std::string>* pContextsSearched)
+{
+   // get all of the source indexes
+   std::vector<boost::shared_ptr<r_util::RSourceIndex> > rIndexes =
+                                             modules::source::rIndexes();
+
+   std::vector<r_util::RSourceItem> sourceItems;
+   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, rIndexes)
+   {
+      std::string projRelativePath;
+      if (!computeProjRelativePath(pIndex, &projRelativePath))
+         continue;
+
+      // record that we searched this path
+      pContextsSearched->insert(projRelativePath);
+
+      // scan the next index
+      sourceItems.clear();
+      pIndex->search(
+               projRelativePath,
+               boost::bind(isGlobalFunctionNamed, _1, functionName),
+               std::back_inserter(sourceItems));
+
+      // return if we got a hit
+      if (sourceItems.size() > 0)
+      {
+         *pFunctionItem = sourceItems[0];
+         return true;
+      }
+   }
+
+   // none found
+   return false;
+}
+
 void searchSourceDatabase(const std::string& term,
                           std::size_t maxResults,
                           bool prefixOnly,
                           std::vector<r_util::RSourceItem>* pItems,
                           std::set<std::string>* pContextsSearched)
 {
-
-
    // get all of the source indexes
    std::vector<boost::shared_ptr<r_util::RSourceIndex> > rIndexes =
                                              modules::source::rIndexes();
 
    BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, rIndexes)
    {
-      // get file path
-      FilePath docPath = module_context::resolveAliasedPath(pIndex->context());
-
-      // bail if the file isn't in the project
-      std::string projRelativePath =
-            docPath.relativePath(projects::projectContext().directory());
-      if (projRelativePath.empty())
+      std::string projRelativePath;
+      if (!computeProjRelativePath(pIndex, &projRelativePath))
          continue;
 
       // record that we searched this path
@@ -574,21 +662,24 @@ Error getFunctionDefinitionLocation(const json::JsonRpcRequest& request,
       // discovered a token so we have at least a function name to return
       defJson["function_name"] = token;
 
-      // perform code search
-      std::vector<r_util::RSourceItem> items;
-      bool moreSourceItemsAvailable = false;
-      searchSource(token, 1, true, &items, &moreSourceItemsAvailable);
-      if (items.size() > 0)
+      // find in source database then in project index
+      std::set<std::string> contexts;
+      r_util::RSourceItem sourceItem;
+      bool found =
+         findGlobalFunctionInSourceDatabase(token, &sourceItem, &contexts) ||
+         s_projectIndex.findGlobalFunction(token, contexts, &sourceItem);
+
+      if (found)
       {
          // return full path to file
          FilePath projDir = projects::projectContext().directory();
-         FilePath srcFilePath = projDir.complete(items[0].context());
+         FilePath srcFilePath = projDir.complete(sourceItem.context());
          defJson["file"] = module_context::createFileSystemItem(srcFilePath);
 
          // return location in file
          json::Object posJson;
-         posJson["line"] = items[0].line();
-         posJson["column"] = items[0].column();
+         posJson["line"] = sourceItem.line();
+         posJson["column"] = sourceItem.column();
          defJson["position"] = posJson;
       }
    }
