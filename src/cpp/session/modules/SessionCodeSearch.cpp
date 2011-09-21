@@ -47,10 +47,9 @@
 
 // TODO: do local function lookup on client before yielding server result
 //       for local search, need to go all the way up the chain to the top
+//       also search top-level
 
-
-// TODO: disable go to function definition if code indexing fails
-//       (same as we do for the search box)
+// TODO: add implementation to console as well
 
 // TODO: don't index code which is commented out
 

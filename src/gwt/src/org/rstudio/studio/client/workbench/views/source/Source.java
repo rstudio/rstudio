@@ -34,6 +34,8 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedEvent;
+import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -153,6 +155,7 @@ public class Source implements InsertSourceHandler,
       workbenchContext_ = workbenchContext;
       mruList_ = mruList;
       uiPrefs_ = uiPrefs;
+      codeIndexingEnabled_ = session.getSessionInfo().isIndexingEnabled();
 
       view_.addTabClosingHandler(this);
       view_.addTabClosedHandler(this);
@@ -238,6 +241,18 @@ public class Source implements InsertSourceHandler,
          public void onSourceFileSaved(SourceFileSavedEvent event)
          {
             mruList_.add(event.getPath());
+         }
+      });
+      
+      
+      events.addHandler(CodeIndexingStatusChangedEvent.TYPE,
+                           new CodeIndexingStatusChangedHandler() {
+         @Override
+         public void onCodeIndexingStatusChanged(
+                      CodeIndexingStatusChangedEvent event)
+         {
+            codeIndexingEnabled_ = event.getEnabled();
+            manageCommands();
          }
       });
 
@@ -1129,7 +1144,7 @@ public class Source implements InsertSourceHandler,
                                   : new HashSet<AppCommand>();
             
       // if necessary, remove commands which require a project
-      if (!workbenchContext_.isProjectActive())
+      if (!isCodeSearchEnabled())
       {
          newCommands.remove(commands_.goToFunctionDefinition());
       }
@@ -1209,6 +1224,11 @@ public class Source implements InsertSourceHandler,
          onNewSourceDoc();
       }
    }
+   
+   private boolean isCodeSearchEnabled()
+   {
+      return workbenchContext_.isProjectActive() && codeIndexingEnabled_;
+   }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    private EditingTarget activeEditor_;
@@ -1233,4 +1253,6 @@ public class Source implements InsertSourceHandler,
 
    // If positive, a new tab is about to be created
    private int newTabPending_;
+   
+   boolean codeIndexingEnabled_ ;
 }
