@@ -1416,10 +1416,19 @@ public class TextEditingTarget implements EditingTarget
                 // if we got a hit
                 if (loc.getFunctionName() != null)
                 {
-                  // TODO: look locally first
+                   // try to satisfy the request from the current function tree
+                   Position pos = findFunctionInScope(
+                                        loc.getFunctionName(),
+                                        docDisplay_.getCurrentFunction());
+                   if (pos != null)
+                   {
+                      docDisplay_.setCursorPosition(pos);
+                      docDisplay_.moveCursorNearTop();
+                   }
 
-                  // navigate editor
-                   if (loc.getFile() != null)
+                   // if we didn't find the function locally and we got a
+                   // file back from the server then navigate to the file/loc
+                   else if (loc.getFile() != null)
                    {
                       fileTypeRegistry_.editFile(loc.getFile(), 
                                                  loc.getPosition());
@@ -1783,6 +1792,32 @@ public class TextEditingTarget implements EditingTarget
                   Debug.logError(error);
                }
             });
+   }
+
+   private Position findFunctionInScope(String functionName, FunctionStart fun)
+   {
+      // get the full tree
+      // TODO: is this null check necessary?
+      JsArray<FunctionStart> tree = docDisplay_.getFunctionTree();
+      if (tree == null)
+         return null;
+
+      //
+      // TODO: search this function and appropriate parent scopes to see
+      // if we can find a definition of functionName
+      //
+
+      // now search global functions defined in the file. this is here so that
+      // we can go to definition using the latest client edits (rather than
+      // waiting for the server index to update)
+      for (int i=0; i<tree.length(); i++)
+      {
+         FunctionStart child = tree.get(i);
+         if (child.getLabel().equals(functionName))
+            return child.getPreamble();
+      }
+
+      return null;
    }
    
    private void updateUIPrefs()
