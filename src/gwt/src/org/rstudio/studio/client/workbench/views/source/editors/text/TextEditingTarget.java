@@ -71,6 +71,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
+import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
+import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.*;
@@ -78,8 +80,7 @@ import org.rstudio.studio.client.workbench.views.source.model.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-public class TextEditingTarget implements EditingTarget, 
-                                          SourceNavigationListener
+public class TextEditingTarget implements EditingTarget
 {
    interface MyCommandBinder
          extends CommandBinder<Commands, TextEditingTarget>
@@ -271,9 +272,26 @@ public class TextEditingTarget implements EditingTarget,
       pPublishPdf_ = pPublishPdf;
 
       docDisplay_ = docDisplay;
-      docDisplay_.setSourceNavigationListener(this);
       dirtyState_ = new DirtyState(docDisplay_, false);
       prefs_ = prefs;
+      
+      
+      releaseOnDismiss_.add(docDisplay_.addRecordNavigationPositionHandler(
+        new RecordNavigationPositionHandler() {
+          @Override
+          public void onRecordNavigationPosition(
+                                     RecordNavigationPositionEvent event)
+          {
+             events_.fireEvent(new SourceNavigationEvent(
+                                           SourceNavigation.create(
+                                                 getId(), 
+                                                 getPath(), 
+                                                 event.getPosition())));
+            
+          }           
+       }));
+      
+      
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
       {
          public void onKeyDown(KeyDownEvent event)
@@ -682,14 +700,7 @@ public class TextEditingTarget implements EditingTarget,
                                         (pos.getColumn() + 1));
       updateCurrentFunction();
    }
-   
-   @Override
-   public void onRecordNavigationPosition(SourcePosition position)
-   {
-      events_.fireEvent(new SourceNavigationEvent(
-                  SourceNavigation.create(getId(), getPath(), position)));
-   }
-
+  
    private void updateCurrentFunction()
    {
       Scheduler.get().scheduleDeferred(

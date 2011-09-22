@@ -12,9 +12,11 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
-//TODO: add an event listener for AceEditor source navigation events
+import com.google.gwt.event.shared.HandlerRegistration;
+
 
 //TODO: implement Back and Forward (Cmd+Shift+[, Cmd+Shift+])
 
@@ -36,5 +38,6 @@ public interface NavigableSourceEditor
    
    boolean isAtPosition(SourcePosition position);
    
-   void setSourceNavigationListener(SourceNavigationListener listener);
+   HandlerRegistration addRecordNavigationPositionHandler(
+                              RecordNavigationPositionHandler handler);
 }

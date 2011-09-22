@@ -63,6 +63,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
+import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
+import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 public class AceEditor implements DocDisplay, 
@@ -271,11 +273,6 @@ public class AceEditor implements DocDisplay,
       updateLanguage(suppressCompletion);
    }
    
-   public void setSourceNavigationListener(SourceNavigationListener listener)
-   {
-      sourceNavigationListener_ = listener;
-   }
-
    private void updateLanguage(boolean suppressCompletion)
    {
       if (fileType_ == null)
@@ -851,12 +848,7 @@ public class AceEditor implements DocDisplay,
    @Override 
    public void recordCurrentNavigationPosition()
    {
-      if (sourceNavigationListener_ != null)
-      {
-         Position currPos = getCursorPosition();
-         sourceNavigationListener_.onRecordNavigationPosition(
-               SourcePosition.create(currPos.getRow(), currPos.getColumn()));
-      }
+      fireRecordNavigationPosition(getCursorPosition());
    }
    
    @Override 
@@ -905,11 +897,22 @@ public class AceEditor implements DocDisplay,
       
       // add to navigation history if requested and our current mode
       // supports history navigation
-      if (addToHistory && (sourceNavigationListener_ != null))
-      {
-         sourceNavigationListener_.onRecordNavigationPosition(
-               SourcePosition.create(pos.getRow(), pos.getColumn()));
-      }
+      if (addToHistory)
+         fireRecordNavigationPosition(pos);
+   }
+   
+   private void fireRecordNavigationPosition(Position pos)
+   {
+      SourcePosition srcPos = SourcePosition.create(pos.getRow(), 
+                                                    pos.getColumn());
+      fireEvent(new RecordNavigationPositionEvent(srcPos));
+   }
+   
+   @Override
+   public HandlerRegistration addRecordNavigationPositionHandler(
+                                    RecordNavigationPositionHandler handler)
+   {
+      return handlers_.addHandler(RecordNavigationPositionEvent.TYPE, handler);
    }
 
    public void setFontSize(double size)
@@ -1047,7 +1050,6 @@ public class AceEditor implements DocDisplay,
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private CompletionManager completionManager_;
-   private SourceNavigationListener sourceNavigationListener_ = null;
    private CodeToolsServerOperations server_;
    private TextFileType fileType_;
 

@@ -1,5 +1,5 @@
 /*
- * SourceNavigationListener.java
+ * RecordNavigationPositionHandler.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,11 +10,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text;
+package org.rstudio.studio.client.workbench.views.source.events;
 
-import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
+import com.google.gwt.event.shared.EventHandler;
 
-public interface SourceNavigationListener
+public interface RecordNavigationPositionHandler extends EventHandler
 {
-   void onRecordNavigationPosition(SourcePosition position);
+   public void onRecordNavigationPosition(RecordNavigationPositionEvent event);
 }
