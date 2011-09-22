@@ -20,7 +20,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 //TODO: implement Back and Forward (Cmd+Shift+[, Cmd+Shift+])
 
-//TODO: move Back and Forward menu items?
+//TODO: Back and Forward on toolbar?
 
 //TODO: consider making history part of client state
 
