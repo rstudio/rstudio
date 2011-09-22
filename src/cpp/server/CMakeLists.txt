@@ -95,9 +95,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
 # require openssl (for crypto)
 find_package(OpenSSL REQUIRED QUIET)
 
+# required on Fedora for AppArmor-related code to compile
+find_library(DL_LIBRARIES dl)
+
 # include directories and libraries
 set(SERVER_SYSTEM_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIRS})
-set(SERVER_SYSTEM_LIBRARIES ${OPENSSL_LIBRARIES})
+set(SERVER_SYSTEM_LIBRARIES ${OPENSSL_LIBRARIES} ${DL_LIBRARIES})
 
 set(SERVER_SOURCE_FILES ${SERVER_SOURCE_FILES}
    util/system/PosixCrypto.cpp
