@@ -1406,14 +1406,7 @@ public class TextEditingTarget implements EditingTarget
    void onGoToFunctionDefinition()
    {
       docDisplay_.goToFunctionDefinition();
-   }
-   
-   @Handler
-   void onBackToPreviousLocation()
-   {
-      
-   }
-   
+   } 
    
    @Handler
    public void onSetWorkingDirToActiveDoc()

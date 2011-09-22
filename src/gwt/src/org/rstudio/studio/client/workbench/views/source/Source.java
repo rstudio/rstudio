@@ -70,10 +70,12 @@ import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Stack;
 
 public class Source implements InsertSourceHandler,
                                IsWidget,
@@ -84,7 +86,8 @@ public class Source implements InsertSourceHandler,
                              FileEditHandler,
                              ShowContentHandler,
                              ShowDataHandler,
-                             BeforeShowHandler
+                             BeforeShowHandler,
+                             SourceNavigationHandler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -263,6 +266,8 @@ public class Source implements InsertSourceHandler,
             manageCommands();
          }
       });
+      
+      events.addHandler(SourceNavigationEvent.TYPE, this);
 
       restoreDocuments(session);
 
@@ -1187,6 +1192,8 @@ public class Source implements InsertSourceHandler,
                             activeEditor_.dirtyState().getValue() == true;
       commands_.saveSourceDoc().setEnabled(saveEnabled);
       manageSaveAllCommand();
+      
+      manageBackToPreviousLocationCommand();
 
       activeCommands_ = newCommands;
 
@@ -1208,6 +1215,12 @@ public class Source implements InsertSourceHandler,
       
       // not one was dirty, disabled
       commands_.saveAllSourceDocs().setEnabled(false);
+   }
+   
+   private void manageBackToPreviousLocationCommand()
+   {
+      commands_.backToPreviousLocation().setEnabled(
+                                          !sourceNavigations_.empty());
    }
 
    private boolean verifyNoUnsupportedCommands(HashSet<AppCommand> commands)
@@ -1233,6 +1246,39 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+   @Override
+   public void onSourceNavigation(SourceNavigationEvent event)
+   {
+      sourceNavigations_.push(event.getNavigation());
+      commands_.backToPreviousLocation().setEnabled(true);
+   }
+   
+   @Handler
+   void onBackToPreviousLocation()
+   {
+      if (!sourceNavigations_.empty())
+      {
+         // get the navigation and doc-id
+         SourceNavigation navigation = sourceNavigations_.pop();
+         String docId = navigation.getDocumentId();
+         
+         // search for a document with this id
+         for (EditingTarget editingTarget : editors_)
+         {
+            if (editingTarget.getId().equals(docId))
+            {
+               // TODO: navigate, but don't let it enter the stack
+               
+               
+               break;
+               
+            }
+         }
+         
+         manageBackToPreviousLocationCommand();
+      }
+   }
+   
    private boolean isCodeSearchEnabled()
    {
       return workbenchContext_.isProjectActive() && codeIndexingEnabled_;
@@ -1254,6 +1300,8 @@ public class Source implements InsertSourceHandler,
    private final UIPrefs uiPrefs_;
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();
    private final HashSet<AppCommand> dynamicCommands_;
+   private final Stack<SourceNavigation> sourceNavigations_ = 
+                                                 new Stack<SourceNavigation>();
 
    private static final String MODULE_SOURCE = "source-pane";
    private static final String KEY_ACTIVETAB = "activeTab";
