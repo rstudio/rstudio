@@ -14,6 +14,14 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
+//TODO: add an event listener for AceEditor source navigation events
+
+//TODO: implement Back and Forward (Cmd+Shift+[, Cmd+Shift+])
+
+//TODO: implement navigation for files (on tab deactivated)
+
+//TODO: move Back and Forward menu items?
+
 
 public interface NavigableSourceEditor 
 {
