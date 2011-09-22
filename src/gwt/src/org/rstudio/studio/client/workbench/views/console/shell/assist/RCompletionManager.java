@@ -44,8 +44,8 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
-import org.rstudio.studio.client.workbench.views.source.editors.text.FunctionNavigator;
-import org.rstudio.studio.client.workbench.views.source.editors.text.FunctionStart;
+import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.ArrayList;
 
@@ -53,7 +53,7 @@ import java.util.ArrayList;
 public class RCompletionManager implements CompletionManager
 {  
    public RCompletionManager(InputEditorDisplay input,
-                             FunctionNavigator functionNavigator,
+                             NavigableSourceEditor navigableSourceEditor,
                              CompletionPopupDisplay popup,
                              CodeToolsServerOperations server,
                              InitCompletionFilter initFilter)
@@ -61,7 +61,7 @@ public class RCompletionManager implements CompletionManager
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       input_ = input ;
-      functionNavigator_ = functionNavigator;
+      navigableSourceEditor_ = navigableSourceEditor;
       popup_ = popup ;
       server_ = server ;
       requester_ = new CompletionRequester(server_) ;
@@ -154,15 +154,15 @@ public class RCompletionManager implements CompletionManager
                 if (loc.getFunctionName() != null)
                 {   
                    // search locally if a function navigator was provided
-                   if (functionNavigator_ != null)
+                   if (navigableSourceEditor_ != null)
                    {
                       // try to search for the function locally
-                      FunctionStart func = 
-                         functionNavigator_.findFunctionDefinitionFromCursor(
+                      SourcePosition position = 
+                         navigableSourceEditor_.findFunctionPositionFromCursor(
                                                          loc.getFunctionName());
-                      if (func != null)
+                      if (position != null)
                       {
-                         functionNavigator_.moveToFunction(func);
+                         navigableSourceEditor_.navigateToPosition(position);
                          return; // we're done
                       }
 
@@ -569,7 +569,7 @@ public class RCompletionManager implements CompletionManager
       
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_ ;
-   private final FunctionNavigator functionNavigator_;
+   private final NavigableSourceEditor navigableSourceEditor_;
    private final CompletionPopupDisplay popup_ ;
    private final CompletionRequester requester_ ;
    private final InitCompletionFilter initFilter_ ;

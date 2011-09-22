@@ -63,10 +63,11 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 public class AceEditor implements DocDisplay, 
                                   InputEditorDisplay,
-                                  FunctionNavigator
+                                  NavigableSourceEditor
 {
    public enum NewLineMode
    {
@@ -268,6 +269,11 @@ public class AceEditor implements DocDisplay,
    {
       fileType_ = fileType;
       updateLanguage(suppressCompletion);
+   }
+   
+   public void setSourceNavigationListener(SourceNavigationListener listener)
+   {
+      sourceNavigationListener_ = listener;
    }
 
    private void updateLanguage(boolean suppressCompletion)
@@ -824,17 +830,38 @@ public class AceEditor implements DocDisplay,
       return getSession().getMode().getFunctionTree();
    }
    
-   public FunctionStart findFunctionDefinitionFromCursor(String functionName)
+   @Override
+   public SourcePosition findFunctionPositionFromCursor(String functionName)
    {
-      return getSession().getMode().findFunctionDefinitionFromUsage(
+      FunctionStart func = 
+         getSession().getMode().findFunctionDefinitionFromUsage(
                                                       getCursorPosition(), 
                                                       functionName);
+      if (func != null)
+      {
+         Position position = func.getPreamble();
+         return SourcePosition.create(position.getRow(), position.getColumn());
+      }
+      else
+      {
+         return null;
+      }
    }
    
-   public void moveToFunction(FunctionStart func)
+   @Override 
+   public void navigateToPosition(SourcePosition position)
+   {
+      navigateToPosition(position, true);
+   }
+   
+   @Override 
+   public void navigateToPosition(SourcePosition srcPosition, 
+                                  boolean addToHistory)
    {
       // set cursor to function line
-      setCursorPosition(func.getPreamble());
+      Position position = Position.create(srcPosition.getRow(), 
+                                          srcPosition.getColumn());
+      setCursorPosition(position);
 
       // skip whitespace if necessary
       int curRow = getSession().getSelection().getCursor().getRow();
@@ -844,6 +871,14 @@ public class AceEditor implements DocDisplay,
 
       // scroll if necessary
       moveCursorNearTop();
+      
+      // set focus
+      focus();
+      
+      // add to navigation history if requested and our current mode
+      // supports history navigation
+      if (addToHistory && (sourceNavigationListener_ != null))
+         sourceNavigationListener_.onSourceNavigated(srcPosition);
    }
 
    public void setFontSize(double size)
@@ -981,6 +1016,7 @@ public class AceEditor implements DocDisplay,
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private CompletionManager completionManager_;
+   private SourceNavigationListener sourceNavigationListener_ = null;
    private CodeToolsServerOperations server_;
    private TextFileType fileType_;
 

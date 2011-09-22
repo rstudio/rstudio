@@ -19,7 +19,6 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Provider;
 
-import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -27,6 +26,7 @@ import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.HashSet;
 
@@ -54,7 +54,7 @@ public interface EditingTarget extends IsWidget,
 
    void onInitiallyLoaded();
 
-   void jumpToPosition(FilePosition position);
+   void navigateToPosition(SourcePosition position, boolean addToHistory);
    
    /**
     * @return True if dismissal is allowed, false to cancel.

@@ -24,7 +24,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -41,6 +40,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.HashSet;
@@ -143,7 +143,8 @@ public class UrlContentEditingTarget implements EditingTarget
    }
    
    @Override
-   public void jumpToPosition(FilePosition position)
+   public void navigateToPosition(SourcePosition position, 
+                                  boolean addToNavigationHistory)
    {   
    }
    

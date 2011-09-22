@@ -71,6 +71,7 @@ import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.ArrayList;
@@ -795,7 +796,10 @@ public class Source implements InsertSourceHandler,
                   FilePosition position = event.getPosition();
                   if (position != null)
                   {
-                     target.jumpToPosition(position);
+                     target.navigateToPosition(
+                           SourcePosition.create(position.getLine() - 1,
+                                                 position.getColumn() - 1),
+                           true);
                      target.focus();
                   }
                }
@@ -833,6 +837,7 @@ public class Source implements InsertSourceHandler,
          action.execute(event.getFile());
       }
    }
+   
    
    // top-level wrapper for opening files. takes care of:
    //  - making sure the view is visible
@@ -887,6 +892,15 @@ public class Source implements InsertSourceHandler,
       {
          openFileFromServer(file, fileType, executeOnSuccess);
       }
+   }
+   
+   // variation of top-level file opening wrapper which automatically 
+   // deduces the file type
+   private void openFile(FileSystemItem file,
+                         CommandWithArg<EditingTarget> executeOnSuccess)
+   {
+      TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);
+      openFile(file, fileType, executeOnSuccess);
    }
 
    private void showFileTooLargeWarning(FileSystemItem file,
@@ -1254,28 +1268,34 @@ public class Source implements InsertSourceHandler,
    }
    
    @Handler
-   void onBackToPreviousLocation()
+   public void onBackToPreviousLocation()
    {
       if (!sourceNavigations_.empty())
       {
-         // get the navigation and doc-id
-         SourceNavigation navigation = sourceNavigations_.pop();
-         String docId = navigation.getDocumentId();
-         
-         // search for a document with this id
-         for (EditingTarget editingTarget : editors_)
-         {
-            if (editingTarget.getId().equals(docId))
-            {
-               // TODO: navigate, but don't let it enter the stack
-               
-               
-               break;
-               
-            }
-         }
-         
+         // get the navigation & manage resulting command state
+         final SourceNavigation navigation = sourceNavigations_.pop();
          manageBackToPreviousLocationCommand();
+         
+         // see if we can navigate by id
+         String docId = navigation.getDocumentId();
+         EditingTarget target = getEditingTargetForId(docId);
+         if (target != null)
+         {
+            view_.selectTab(target.asWidget());
+            target.navigateToPosition(navigation.getPosition(), false);
+         }
+         // otherwise we need to re-open the file
+         else if (navigation.getPath() != null)
+         {
+            openFile(FileSystemItem.createFile(navigation.getPath()), 
+                     new CommandWithArg<EditingTarget>() {
+               @Override
+               public void execute(EditingTarget target)
+               {
+                  target.navigateToPosition(navigation.getPosition(), false);
+               }
+            });
+         } 
       }
    }
    

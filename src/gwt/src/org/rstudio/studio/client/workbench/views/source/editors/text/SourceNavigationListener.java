@@ -1,5 +1,5 @@
 /*
- * InputEditorDisplay.java
+ * SourceNavigationListener.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -12,11 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
-import org.rstudio.studio.client.workbench.views.source.editors.text.FunctionStart;
-
-public interface FunctionNavigator 
+public interface SourceNavigationListener
 {
-   FunctionStart findFunctionDefinitionFromCursor(String functionName);
-   void moveToFunction(FunctionStart func);
+   void onSourceNavigated(SourcePosition position);
 }

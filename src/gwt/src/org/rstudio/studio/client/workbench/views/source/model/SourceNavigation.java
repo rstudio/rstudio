@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
-import org.rstudio.core.client.FilePosition;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -24,10 +23,12 @@ public class SourceNavigation extends JavaScriptObject
 
    public static final native SourceNavigation create(
                                                  String document_id,
-                                                 FilePosition position) /*-{
+                                                 String path,
+                                                 SourcePosition position) /*-{
       var sourceNavPosition = new Object();
-      sourceNavPosition.document_id = document_id ;
-      sourceNavPosition.position = position ;
+      sourceNavPosition.document_id = document_id;
+      sourceNavPosition.path = path;
+      sourceNavPosition.position = position;
       return sourceNavPosition ;
    }-*/;
    
@@ -35,7 +36,11 @@ public class SourceNavigation extends JavaScriptObject
       return this.document_id;
    }-*/;
    
-   public native final FilePosition getPosition() /*-{
+   public native final String getPath() /*-{
+     return this.path;
+   }-*/;  
+   
+   public native final SourcePosition getPosition() /*-{
       return this.position;
    }-*/;
 }

@@ -72,12 +72,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEn
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 
-public class TextEditingTarget implements EditingTarget
+public class TextEditingTarget implements EditingTarget, 
+                                          SourceNavigationListener
 {
    interface MyCommandBinder
          extends CommandBinder<Commands, TextEditingTarget>
@@ -107,7 +109,8 @@ public class TextEditingTarget implements EditingTarget
                                        IsWidget,
                                        HasFocusHandlers,
                                        HasKeyDownHandlers,
-                                       InputEditorDisplay
+                                       InputEditorDisplay,
+                                       NavigableSourceEditor
    {
       public interface AnchoredSelection
       {
@@ -270,6 +273,7 @@ public class TextEditingTarget implements EditingTarget
       pPublishPdf_ = pPublishPdf;
 
       docDisplay_ = docDisplay;
+      docDisplay_.setSourceNavigationListener(this);
       dirtyState_ = new DirtyState(docDisplay_, false);
       prefs_ = prefs;
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
@@ -313,26 +317,20 @@ public class TextEditingTarget implements EditingTarget
    }
    
    @Override
-   public void jumpToPosition(FilePosition position)
+   public void navigateToPosition(SourcePosition position,
+                                  boolean addToNavigationHistory)
    {
       // set cursor (adjust by 1 to account for 0-based ace positions)
-      docDisplay_.setCursorPosition(Position.create(position.getLine() - 1, 
-                                                    position.getColumn() - 1));
-      
-      // scroll into view at top
-      docDisplay_.moveCursorNearTop();
+      docDisplay_.navigateToPosition(position, addToNavigationHistory);
    }
-
+   
    private void jumpToPreviousFunction()
    {
       Position cursor = docDisplay_.getCursorPosition();
       JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
       FunctionStart jumpTo = findPreviousFunction(functions, cursor);
       if (jumpTo != null)
-      {
-         docDisplay_.setCursorPosition(jumpTo.getPreamble());
-         docDisplay_.moveCursorNearTop();
-      }
+         docDisplay_.navigateToPosition(toSourcePosition(jumpTo));
    }
 
    private FunctionStart findPreviousFunction(JsArray<FunctionStart> funcs, Position pos)
@@ -363,10 +361,7 @@ public class TextEditingTarget implements EditingTarget
       JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
       FunctionStart jumpTo = findNextFunction(functions, cursor);
       if (jumpTo != null)
-      {
-         docDisplay_.setCursorPosition(jumpTo.getPreamble());
-         docDisplay_.moveCursorNearTop();
-      }
+         docDisplay_.navigateToPosition(toSourcePosition(jumpTo));
    }
 
    private FunctionStart findNextFunction(JsArray<FunctionStart> funcs, Position pos)
@@ -630,9 +625,7 @@ public class TextEditingTarget implements EditingTarget
                {
                   public void execute()
                   {
-                     docDisplay_.setCursorPosition(func.getPreamble());
-                     docDisplay_.moveCursorNearTop();
-                     docDisplay_.focus();
+                     docDisplay_.navigateToPosition(toSourcePosition(func));
                   }
                });
          menu.addItem(menuItem);
@@ -672,6 +665,13 @@ public class TextEditingTarget implements EditingTarget
       statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
                                         (pos.getColumn() + 1));
       updateCurrentFunction();
+   }
+   
+   @Override
+   public void onSourceNavigated(SourcePosition position)
+   {
+      events_.fireEvent(new SourceNavigationEvent(
+                  SourceNavigation.create(getId(), getPath(), position)));
    }
 
    private void updateCurrentFunction()
@@ -1755,6 +1755,12 @@ public class TextEditingTarget implements EditingTarget
       server2_.setUiPrefs(
             session_.getSessionInfo().getUiPrefs(), 
             new SimpleRequestCallback<Void>("Error Saving Preference"));
+   }
+   
+   private SourcePosition toSourcePosition(FunctionStart func)
+   {
+      Position pos = func.getPreamble();
+      return SourcePosition.create(pos.getRow(), pos.getColumn());
    }
 
    private StatusBar statusBar_;
