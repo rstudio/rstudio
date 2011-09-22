@@ -1516,12 +1516,9 @@ Error addGitBinDirToPath()
 
 void onShutdown(bool)
 {
-   while (!s_pidsToTerminate_.empty())
-   {
-      int pid = s_pidsToTerminate_.back();
-      s_pidsToTerminate_.pop_back();
-      core::system::terminateProcess(pid);
-   }
+   std::for_each(s_pidsToTerminate_.begin(), s_pidsToTerminate_.end(),
+                 &core::system::terminateProcess);
+   s_pidsToTerminate_.clear();
 }
 
 } // anonymous namespace
