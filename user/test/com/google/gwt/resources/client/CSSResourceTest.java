@@ -60,6 +60,8 @@ public class CSSResourceTest extends GWTTestCase {
     float rawFloat();
 
     int rawInt();
+
+    String multiValueBorderDef();
   }
 
   /**
@@ -362,6 +364,8 @@ public class CSSResourceTest extends GWTTestCase {
     assertNotNull(defines.overrideIntClass());
     assertFalse("10px".equals(defines.overrideIntClass()));
     assertFalse("10".equals(defines.overrideIntClass()));
+
+    assertEquals("1px solid rgba(0,0,0,0.2)", defines.multiValueBorderDef());
   }
 
   public void testEnsureInjected() {

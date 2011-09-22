@@ -70,6 +70,7 @@ import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
@@ -896,6 +897,11 @@ public class CssResourceGenerator extends AbstractResourceGenerator
         operableTypes);
   }
 
+  private boolean isReturnTypeString(JClassType classReturnType) {
+    return (classReturnType != null
+        && String.class.getName().equals(classReturnType.getQualifiedSourceName()));
+  }
+
   /**
    * Check for the presence of the NotStrict annotation on the method. This will
    * also perform some limited sanity-checking for the now-deprecated Strict
@@ -1079,21 +1085,21 @@ public class CssResourceGenerator extends AbstractResourceGenerator
       throw new UnableToCompleteException();
     }
 
-    // TODO: Allow returning an array of values
-    if (def.getValues().size() != 1) {
+    JClassType classReturnType = toImplement.getReturnType().isClass();
+
+    if (def.getValues().size() != 1 && !isReturnTypeString(classReturnType)) {
       logger.log(TreeLogger.ERROR, "@def rule " + name
-          + " must define exactly one value");
+          + " must define exactly one value or return type must be String");
       throw new UnableToCompleteException();
     }
 
-    NumberValue numberValue = def.getValues().get(0).isNumberValue();
-
     String returnExpr = "";
-    JClassType classReturnType = toImplement.getReturnType().isClass();
-    if (classReturnType != null
-        && "java.lang.String".equals(classReturnType.getQualifiedSourceName())) {
-      returnExpr = "\"" + Generator.escape(def.getValues().get(0).toString())
-          + "\"";
+    if (isReturnTypeString(classReturnType)) {
+      List<String> returnValues = new ArrayList<String>();
+      for (Value val : def.getValues()) {
+        returnValues.add(Generator.escape(val.toString()));
+      }
+      returnExpr = "\"" + Joiner.on(" ").join(returnValues) + "\"";
     } else {
       JPrimitiveType returnType = toImplement.getReturnType().isPrimitive();
       if (returnType == null) {
@@ -1102,6 +1108,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
             + "@def accessors");
         throw new UnableToCompleteException();
       }
+      NumberValue numberValue = def.getValues().get(0).isNumberValue();
       if (returnType == JPrimitiveType.INT || returnType == JPrimitiveType.LONG) {
         returnExpr = "" + Math.round(numberValue.getValue());
       } else if (returnType == JPrimitiveType.FLOAT) {

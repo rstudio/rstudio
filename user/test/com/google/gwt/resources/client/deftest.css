@@ -27,6 +27,8 @@
  @def lengthString 100px;
  @def colorString #f00;
  
+ @def multiValueBorderDef 1px solid rgba(0,0,0,0.2);
+
  /* Uncomment this, and you should get an error about a @def shadowing a name */
  /*
  .colorString {
@@ -41,5 +43,3 @@
  .overrideInt {
    width: 10px;
  }
- 
- 
