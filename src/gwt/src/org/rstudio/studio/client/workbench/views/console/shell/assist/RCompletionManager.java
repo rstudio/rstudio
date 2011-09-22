@@ -162,7 +162,8 @@ public class RCompletionManager implements CompletionManager
                                                          loc.getFunctionName());
                       if (position != null)
                       {
-                         navigableSourceEditor_.navigateToPosition(position);
+                         navigableSourceEditor_.navigateToPosition(position, 
+                                                                   true);
                          return; // we're done
                       }
 
@@ -172,7 +173,7 @@ public class RCompletionManager implements CompletionManager
                    // navigator and we got a file back from the server then
                    // navigate to the file/loc
                    if (loc.getFile() != null)
-                   {
+                   {  
                       fileTypeRegistry_.editFile(loc.getFile(), 
                                                  loc.getPosition());
                    }

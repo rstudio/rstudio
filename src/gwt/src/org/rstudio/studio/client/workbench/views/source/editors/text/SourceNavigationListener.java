@@ -16,5 +16,5 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 public interface SourceNavigationListener
 {
-   void onSourceNavigated(SourcePosition position);
+   void onRecordNavigationPosition(SourcePosition position);
 }

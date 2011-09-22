@@ -849,15 +849,42 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override 
-   public void navigateToPosition(SourcePosition position)
+   public void recordCurrentNavigationPosition()
    {
-      navigateToPosition(position, true);
+      if (sourceNavigationListener_ != null)
+      {
+         Position currPos = getCursorPosition();
+         sourceNavigationListener_.onRecordNavigationPosition(
+               SourcePosition.create(currPos.getRow(), currPos.getColumn()));
+      }
    }
    
    @Override 
-   public void navigateToPosition(SourcePosition srcPosition, 
-                                  boolean addToHistory)
+   public void navigateToPosition(SourcePosition position, 
+                                  boolean recordCurrent)
    {
+      if (recordCurrent)
+         recordCurrentNavigationPosition();
+      
+      navigate(position, true);
+   }
+   
+   @Override
+   public void restorePosition(SourcePosition position)
+   {
+      navigate(position, false);
+   }
+   
+   @Override 
+   public boolean isAtPosition(SourcePosition position)
+   {
+      Position currPos = getCursorPosition();
+      return currPos.getRow() == position.getRow() &&
+             currPos.getColumn() == position.getColumn();
+   }
+   
+   private void navigate(SourcePosition srcPosition, boolean addToHistory)
+   {  
       // set cursor to function line
       Position position = Position.create(srcPosition.getRow(), 
                                           srcPosition.getColumn());
@@ -867,7 +894,8 @@ public class AceEditor implements DocDisplay,
       int curRow = getSession().getSelection().getCursor().getRow();
       String line = getSession().getLine(curRow);
       int funStart = line.indexOf(line.trim());
-      setCursorPosition(Position.create(curRow, funStart));
+      Position pos = Position.create(curRow, funStart);
+      setCursorPosition(pos);
 
       // scroll if necessary
       moveCursorNearTop();
@@ -878,7 +906,10 @@ public class AceEditor implements DocDisplay,
       // add to navigation history if requested and our current mode
       // supports history navigation
       if (addToHistory && (sourceNavigationListener_ != null))
-         sourceNavigationListener_.onSourceNavigated(srcPosition);
+      {
+         sourceNavigationListener_.onRecordNavigationPosition(
+               SourcePosition.create(pos.getRow(), pos.getColumn()));
+      }
    }
 
    public void setFontSize(double size)

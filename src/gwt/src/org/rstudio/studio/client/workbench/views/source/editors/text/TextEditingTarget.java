@@ -317,11 +317,28 @@ public class TextEditingTarget implements EditingTarget,
    }
    
    @Override
-   public void navigateToPosition(SourcePosition position,
-                                  boolean addToNavigationHistory)
+   public void recordCurrentNavigationPosition()
    {
-      // set cursor (adjust by 1 to account for 0-based ace positions)
-      docDisplay_.navigateToPosition(position, addToNavigationHistory);
+      docDisplay_.recordCurrentNavigationPosition();
+   }
+   
+   @Override
+   public void navigateToPosition(SourcePosition position, 
+                                  boolean recordCurrent)
+   {
+      docDisplay_.navigateToPosition(position, recordCurrent);
+   }
+   
+   @Override
+   public void restorePosition(SourcePosition position)
+   {
+      docDisplay_.restorePosition(position);
+   }
+   
+   @Override
+   public boolean isAtPosition(SourcePosition position)
+   {
+      return docDisplay_.isAtPosition(position);
    }
    
    private void jumpToPreviousFunction()
@@ -330,7 +347,7 @@ public class TextEditingTarget implements EditingTarget,
       JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
       FunctionStart jumpTo = findPreviousFunction(functions, cursor);
       if (jumpTo != null)
-         docDisplay_.navigateToPosition(toSourcePosition(jumpTo));
+         docDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);  
    }
 
    private FunctionStart findPreviousFunction(JsArray<FunctionStart> funcs, Position pos)
@@ -361,7 +378,7 @@ public class TextEditingTarget implements EditingTarget,
       JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
       FunctionStart jumpTo = findNextFunction(functions, cursor);
       if (jumpTo != null)
-         docDisplay_.navigateToPosition(toSourcePosition(jumpTo));
+         docDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);
    }
 
    private FunctionStart findNextFunction(JsArray<FunctionStart> funcs, Position pos)
@@ -625,7 +642,8 @@ public class TextEditingTarget implements EditingTarget,
                {
                   public void execute()
                   {
-                     docDisplay_.navigateToPosition(toSourcePosition(func));
+                     docDisplay_.navigateToPosition(toSourcePosition(func), 
+                                                    true);
                   }
                });
          menu.addItem(menuItem);
@@ -668,7 +686,7 @@ public class TextEditingTarget implements EditingTarget,
    }
    
    @Override
-   public void onSourceNavigated(SourcePosition position)
+   public void onRecordNavigationPosition(SourcePosition position)
    {
       events_.fireEvent(new SourceNavigationEvent(
                   SourceNavigation.create(getId(), getPath(), position)));

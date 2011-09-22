@@ -43,4 +43,18 @@ public class SourceNavigation extends JavaScriptObject
    public native final SourcePosition getPosition() /*-{
       return this.position;
    }-*/;
+   
+   public final boolean isEqualTo(SourceNavigation other)
+   {
+      if (other == null)
+      {
+         return false;
+      }
+      else
+      {
+         return getDocumentId().equals(other.getDocumentId()) &&
+                getPosition().getRow() == other.getPosition().getRow() &&
+                getPosition().getColumn() == other.getPosition().getColumn();
+      }
+   }
 }

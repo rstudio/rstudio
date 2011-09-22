@@ -143,9 +143,25 @@ public class UrlContentEditingTarget implements EditingTarget
    }
    
    @Override
+   public void recordCurrentNavigationPosition()
+   {
+   }
+   
+   @Override
    public void navigateToPosition(SourcePosition position, 
-                                  boolean addToNavigationHistory)
+                                  boolean recordCurrent)
    {   
+   }
+   
+   @Override
+   public void restorePosition(SourcePosition position)
+   {   
+   }
+   
+   @Override 
+   public boolean isAtPosition(SourcePosition position)
+   {
+      return false;
    }
    
    public boolean onBeforeDismiss()

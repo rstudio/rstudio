@@ -54,7 +54,10 @@ public interface EditingTarget extends IsWidget,
 
    void onInitiallyLoaded();
 
-   void navigateToPosition(SourcePosition position, boolean addToHistory);
+   void recordCurrentNavigationPosition();
+   void navigateToPosition(SourcePosition position, boolean recordCurrent);
+   void restorePosition(SourcePosition position);
+   boolean isAtPosition(SourcePosition position);
    
    /**
     * @return True if dismissal is allowed, false to cancel.

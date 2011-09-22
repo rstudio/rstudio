@@ -781,6 +781,11 @@ public class Source implements InsertSourceHandler,
    
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
+      // save a reference to the currently active editing target (so we 
+      // can ask it to record its navigation position if we need to 
+      // jump away from it)
+      final EditingTarget previousTarget = activeEditor_;
+      
       final CommandWithArg<FileSystemItem> action = new CommandWithArg<FileSystemItem>()
       {
          @Override
@@ -796,11 +801,16 @@ public class Source implements InsertSourceHandler,
                   FilePosition position = event.getPosition();
                   if (position != null)
                   {
+                     // if we had a previous editing target then ask it
+                     // to record its navigation position
+                     if (previousTarget != null)
+                        previousTarget.recordCurrentNavigationPosition();
+                     
+                     // now navigate to the new position
                      target.navigateToPosition(
                            SourcePosition.create(position.getLine() - 1,
                                                  position.getColumn() - 1),
-                           true);
-                     target.focus();
+                           false);
                   }
                }
 
@@ -1262,8 +1272,16 @@ public class Source implements InsertSourceHandler,
    
    @Override
    public void onSourceNavigation(SourceNavigationEvent event)
-   {
+   {      
+      // de-dup if necessary
+      if (!sourceNavigations_.empty() &&
+          event.getNavigation().isEqualTo(sourceNavigations_.peek()))
+      {
+         return;
+      }
+      
       sourceNavigations_.push(event.getNavigation());
+      
       commands_.backToPreviousLocation().setEnabled(true);
    }
    
@@ -1281,9 +1299,21 @@ public class Source implements InsertSourceHandler,
          EditingTarget target = getEditingTargetForId(docId);
          if (target != null)
          {
-            view_.selectTab(target.asWidget());
-            target.navigateToPosition(navigation.getPosition(), false);
+            // check for navigation to the current position -- in this
+            // case call the function back to go to the previous location
+            if ( (target == activeEditor_) && 
+                  target.isAtPosition(navigation.getPosition()))
+            {
+               onBackToPreviousLocation();
+               return;
+            }
+            else
+            {
+               view_.selectTab(target.asWidget());
+               target.restorePosition(navigation.getPosition());
+            }
          }
+         
          // otherwise we need to re-open the file
          else if (navigation.getPath() != null)
          {
@@ -1292,7 +1322,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void execute(EditingTarget target)
                {
-                  target.navigateToPosition(navigation.getPosition(), false);
+                  target.restorePosition(navigation.getPosition());
                }
             });
          } 

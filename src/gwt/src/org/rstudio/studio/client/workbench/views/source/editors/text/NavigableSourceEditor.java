@@ -19,8 +19,14 @@ public interface NavigableSourceEditor
 {
    SourcePosition findFunctionPositionFromCursor(String functionName);
    
-   void navigateToPosition(SourcePosition position);
-   void navigateToPosition(SourcePosition position, boolean addToHistory);
+   void recordCurrentNavigationPosition();
+   
+   void navigateToPosition(SourcePosition position, 
+                           boolean recordCurrentPosition);
+   
+   void restorePosition(SourcePosition position);
+   
+   boolean isAtPosition(SourcePosition position);
    
    void setSourceNavigationListener(SourceNavigationListener listener);
 }
