@@ -190,7 +190,6 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.reindent());
       dynamicCommands_.add(commands.jumpToFunction());
       dynamicCommands_.add(commands.goToFunctionDefinition());
-      dynamicCommands_.add(commands.backToPreviousLocation());
       dynamicCommands_.add(commands.setWorkingDirToActiveDoc());
       for (AppCommand command : dynamicCommands_)
       {
@@ -1217,7 +1216,7 @@ public class Source implements InsertSourceHandler,
       commands_.saveSourceDoc().setEnabled(saveEnabled);
       manageSaveAllCommand();
       
-      manageBackToPreviousLocationCommand();
+      manageBackAndForwardCommands();
 
       activeCommands_ = newCommands;
 
@@ -1241,10 +1240,11 @@ public class Source implements InsertSourceHandler,
       commands_.saveAllSourceDocs().setEnabled(false);
    }
    
-   private void manageBackToPreviousLocationCommand()
+   private void manageBackAndForwardCommands()
    {
       commands_.backToPreviousLocation().setEnabled(
                                           !sourceNavigations_.empty());
+      commands_.forwardToNextLocation().setEnabled(false);
    }
 
    private boolean verifyNoUnsupportedCommands(HashSet<AppCommand> commands)
@@ -1282,7 +1282,7 @@ public class Source implements InsertSourceHandler,
       
       sourceNavigations_.push(event.getNavigation());
       
-      commands_.backToPreviousLocation().setEnabled(true);
+      manageBackAndForwardCommands();
    }
    
    @Handler
@@ -1292,7 +1292,7 @@ public class Source implements InsertSourceHandler,
       {
          // get the navigation & manage resulting command state
          final SourceNavigation navigation = sourceNavigations_.pop();
-         manageBackToPreviousLocationCommand();
+         manageBackAndForwardCommands();
          
          // see if we can navigate by id
          String docId = navigation.getDocumentId();
@@ -1327,6 +1327,12 @@ public class Source implements InsertSourceHandler,
             });
          } 
       }
+   }
+   
+   @Handler
+   public void onForwardToNextLocation()
+   {
+      
    }
    
    private boolean isCodeSearchEnabled()

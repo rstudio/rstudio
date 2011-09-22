@@ -73,6 +73,8 @@ public class SourceShim extends Composite
       public abstract void onSwitchToTab();
       @Handler
       public abstract void onBackToPreviousLocation();
+      @Handler
+      public abstract void onForwardToNextLocation();
 
       @Override
       protected void preInstantiationHook(Command continuation)
