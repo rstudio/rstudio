@@ -41,6 +41,10 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientState;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.events.*;
@@ -160,7 +164,8 @@ public class ReviewPresenter implements IsWidget
                           Display view,
                           final EventBus events,
                           final VcsState vcsState,
-                          final Commands commands)
+                          final Commands commands,
+                          final Session session)
    {
       server_ = server;
       view_ = view;
@@ -319,6 +324,23 @@ public class ReviewPresenter implements IsWidget
          }
       });
 
+      new IntStateValue(MODULE_VCS, KEY_CONTEXT_LINES, ClientState.PERSISTENT,
+                        session.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(Integer value)
+         {
+            if (value != null)
+               view_.getContextLines().setValue(value);
+         }
+
+         @Override
+         protected Integer getValue()
+         {
+            return view_.getContextLines().getValue();
+         }
+      };
+
       view_.getContextLines().addValueChangeHandler(new ValueChangeHandler<Integer>()
       {
          @Override
@@ -459,4 +481,6 @@ public class ReviewPresenter implements IsWidget
    private final VCSServerOperations server_;
    private final Display view_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
+   private static final String MODULE_VCS = "vcs";
+   private static final String KEY_CONTEXT_LINES = "context_lines";
 }
