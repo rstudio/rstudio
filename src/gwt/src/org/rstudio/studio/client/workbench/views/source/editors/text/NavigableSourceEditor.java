@@ -20,9 +20,9 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 //TODO: implement Back and Forward (Cmd+Shift+[, Cmd+Shift+])
 
-//TODO: implement navigation for files (on tab deactivated)
-
 //TODO: move Back and Forward menu items?
+
+//TODO: consider making history part of client state
 
 
 public interface NavigableSourceEditor 
