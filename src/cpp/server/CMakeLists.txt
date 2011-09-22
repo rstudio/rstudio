@@ -96,7 +96,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
 find_package(OpenSSL REQUIRED QUIET)
 
 # required on Fedora for AppArmor-related code to compile
-find_library(DL_LIBRARIES dl)
+if(NOT APPLE)
+   find_library(DL_LIBRARIES dl)
+endif()
 
 # include directories and libraries
 set(SERVER_SYSTEM_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIRS})
