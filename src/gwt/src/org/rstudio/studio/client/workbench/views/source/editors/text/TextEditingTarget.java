@@ -157,9 +157,7 @@ public class TextEditingTarget implements EditingTarget,
 
       HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
       Position getCursorPosition();
-      void setCursorPosition(Position position);
-      void moveCursorNearTop();
-
+    
       FunctionStart getCurrentFunction();
       JsArray<FunctionStart> getFunctionTree();
 
