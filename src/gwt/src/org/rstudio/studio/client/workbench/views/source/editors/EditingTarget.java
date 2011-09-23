@@ -57,7 +57,7 @@ public interface EditingTarget extends IsWidget,
    void recordCurrentNavigationPosition();
    void navigateToPosition(SourcePosition position, boolean recordCurrent);
    void restorePosition(SourcePosition position);
-   boolean isAtPosition(SourcePosition position);
+   boolean isAtSourceRow(SourcePosition position);
    
    /**
     * @return True if dismissal is allowed, false to cancel.

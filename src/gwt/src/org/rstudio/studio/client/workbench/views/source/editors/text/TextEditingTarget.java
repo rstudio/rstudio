@@ -352,9 +352,9 @@ public class TextEditingTarget implements EditingTarget
    }
    
    @Override
-   public boolean isAtPosition(SourcePosition position)
+   public boolean isAtSourceRow(SourcePosition position)
    {
-      return docDisplay_.isAtPosition(position);
+      return docDisplay_.isAtSourceRow(position);
    }
    
    private void jumpToPreviousFunction()

@@ -159,7 +159,7 @@ public class UrlContentEditingTarget implements EditingTarget
    }
    
    @Override 
-   public boolean isAtPosition(SourcePosition position)
+   public boolean isAtSourceRow(SourcePosition position)
    {
       return false;
    }

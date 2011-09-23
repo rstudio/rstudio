@@ -12,16 +12,6 @@
  */
 
 
-// TODO: in no-project mode we can't navigate to a function in a source
-// file with no path
-
-// TODO: sometimes we need two forward commands to reach an item
-
-// TODO: back/forward gets confused if function call is nested in line
-// (rather than first char of line)
-
-// TODO: for above, should we consider de-dup and skip by line?
-
 // TODO: right now paths are presented and interpreted differently on
 // the client depending upon whether we are returning results from a
 // project or not. this means that it is impossible for the server

@@ -868,11 +868,10 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override 
-   public boolean isAtPosition(SourcePosition position)
+   public boolean isAtSourceRow(SourcePosition position)
    {
       Position currPos = getCursorPosition();
-      return currPos.getRow() == position.getRow() &&
-             currPos.getColumn() == position.getColumn();
+      return currPos.getRow() == position.getRow();
    }
    
    private void navigate(SourcePosition srcPosition, boolean addToHistory)

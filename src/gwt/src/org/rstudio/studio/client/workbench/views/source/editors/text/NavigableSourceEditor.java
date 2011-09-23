@@ -29,7 +29,7 @@ public interface NavigableSourceEditor
    
    void restorePosition(SourcePosition position);
    
-   boolean isAtPosition(SourcePosition position);
+   boolean isAtSourceRow(SourcePosition position);
    
    HandlerRegistration addRecordNavigationPositionHandler(
                               RecordNavigationPositionHandler handler);

@@ -1146,6 +1146,7 @@ public class Source implements InsertSourceHandler,
 
       if (view_.getTabCount() == 0)
       {
+         sourceNavigationHistory_.clear();
          events_.fireEvent(new LastSourceDocClosedEvent());
       }
    }
@@ -1329,10 +1330,9 @@ public class Source implements InsertSourceHandler,
          // check for navigation to the current position -- in this
          // case execute the retry command
          if ( (target == activeEditor_) && 
-               target.isAtPosition(navigation.getPosition()))
+               target.isAtSourceRow(navigation.getPosition()))
          {
-            if (retryCommand.isEnabled())
-               retryCommand.execute();
+            retryCommand.execute();
          }
          else
          {
