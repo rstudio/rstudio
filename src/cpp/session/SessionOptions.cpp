@@ -176,7 +176,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    options_description external("external");
    external.add_options()
       ("external-rpostback-path", 
-       value<std::string>(&rpostbackPath_)->default_value("bin/rpostback"),
+       value<std::string>(&rpostbackPath_)->default_value("bin/postback/rpostback"),
        "Path to rpostback executable");
    
    // user options (default user identity to current username)

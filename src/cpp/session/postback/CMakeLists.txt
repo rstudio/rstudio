@@ -38,9 +38,10 @@ target_link_libraries(rpostback
 )
 
 # installation rules
-install(TARGETS rpostback DESTINATION ${RSTUDIO_INSTALL_BIN})
+install(TARGETS rpostback DESTINATION ${RSTUDIO_INSTALL_BIN}/postback)
 file(GLOB POSTBACK_SCRIPTS "rpostback-*")
-install(PROGRAMS ${POSTBACK_SCRIPTS} DESTINATION ${RSTUDIO_INSTALL_BIN})
+install(PROGRAMS ${POSTBACK_SCRIPTS}
+        DESTINATION ${RSTUDIO_INSTALL_BIN}/postback)
 
 
 
