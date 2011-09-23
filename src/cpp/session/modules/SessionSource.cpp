@@ -80,22 +80,12 @@ public:
          return;
       }
 
-      // if the doc is dirty then index it
-      if (pDoc->dirty())
-      {
-         // index the source
-         boost::shared_ptr<r_util::RSourceIndex> pIndex(
+      // index the source
+      boost::shared_ptr<r_util::RSourceIndex> pIndex(
                  new r_util::RSourceIndex(pDoc->path(), pDoc->contents()));
 
-         // insert it
-         indexes_[pDoc->id()] = pIndex;
-      }
-
-      // otherwise make sure it isn't in the index
-      else
-      {
-         remove(pDoc->id());
-      }
+      // insert it
+      indexes_[pDoc->id()] = pIndex;
    }
 
    void remove(const std::string& id)
