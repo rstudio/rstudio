@@ -18,13 +18,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 
-// TODO: enable code navigation even when not in a project 
-//          - for sure go to defintion
-//          - what about search
-
-// TODO: consider allowing other file types into file list
-
 // TODO: joe on whether we should save nav point for navigating to 
+
 
 
 public interface NavigableSourceEditor 
