@@ -72,6 +72,10 @@ public class TextEditingTargetWidget
    {
       Toolbar toolbar = new Toolbar();
       
+      toolbar.addLeftWidget(commands_.sourceNavigateBack().createToolbarButton());
+      toolbar.addLeftWidget(commands_.sourceNavigateForward().createToolbarButton());
+      toolbar.addLeftSeparator();
+      
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       toolbar.addLeftWidget(sourceOnSave_);
 
@@ -156,9 +160,6 @@ public class TextEditingTargetWidget
          ImageResource icon = ThemeResources.INSTANCE.codeTransform();
 
          ToolbarPopupMenu menu = new ToolbarPopupMenu();
-         menu.addItem(commands_.backToPreviousLocation().createMenuItem(false));
-         menu.addItem(commands_.forwardToNextLocation().createMenuItem(false));
-         menu.addSeparator();
          menu.addItem(commands_.jumpToFunction().createMenuItem(false));
          menu.addItem(commands_.goToFunctionDefinition().createMenuItem(false));
          menu.addSeparator();

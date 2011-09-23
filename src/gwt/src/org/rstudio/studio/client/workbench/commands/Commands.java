@@ -44,8 +44,8 @@ public abstract class
    public abstract AppCommand executeCurrentFunction();
    public abstract AppCommand executeLastCode();
    public abstract AppCommand goToFunctionDefinition();
-   public abstract AppCommand backToPreviousLocation();
-   public abstract AppCommand forwardToNextLocation();
+   public abstract AppCommand sourceNavigateBack();
+   public abstract AppCommand sourceNavigateForward();
    public abstract AppCommand compilePDF();
    public abstract AppCommand publishPDF();
    public abstract AppCommand activateSource();

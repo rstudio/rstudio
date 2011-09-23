@@ -1242,9 +1242,9 @@ public class Source implements InsertSourceHandler,
    
    private void manageBackAndForwardCommands()
    {
-      commands_.backToPreviousLocation().setEnabled(
+      commands_.sourceNavigateBack().setEnabled(
                                           !sourceNavigations_.empty());
-      commands_.forwardToNextLocation().setEnabled(false);
+      commands_.sourceNavigateForward().setEnabled(false);
    }
 
    private boolean verifyNoUnsupportedCommands(HashSet<AppCommand> commands)
@@ -1286,7 +1286,7 @@ public class Source implements InsertSourceHandler,
    }
    
    @Handler
-   public void onBackToPreviousLocation()
+   public void onSourceNavigateBack()
    {
       if (!sourceNavigations_.empty())
       {
@@ -1304,7 +1304,7 @@ public class Source implements InsertSourceHandler,
             if ( (target == activeEditor_) && 
                   target.isAtPosition(navigation.getPosition()))
             {
-               onBackToPreviousLocation();
+               onSourceNavigateBack();
                return;
             }
             else
@@ -1330,7 +1330,7 @@ public class Source implements InsertSourceHandler,
    }
    
    @Handler
-   public void onForwardToNextLocation()
+   public void onSourceNavigateForward()
    {
       
    }
