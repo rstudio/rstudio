@@ -273,21 +273,25 @@ public class Source implements InsertSourceHandler,
          @Override
          public void onSourceNavigation(SourceNavigationEvent event)
          {
-            sourceNavigationHistory_.add(event.getNavigation());
+            if (!suspendSourceNavigationAdding_)
+            {
+               sourceNavigationHistory_.add(event.getNavigation());
+            }
          }
       });
       
-      sourceNavigationHistory_.addChangeHandler(new ChangeHandler() {
+      sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
+      {
 
          @Override
          public void onChange(ChangeEvent event)
          {
             commands_.sourceNavigateBack().setEnabled(
-                                 sourceNavigationHistory_.isBackEnabled());
-                                               
+                  sourceNavigationHistory_.isBackEnabled());
+
             commands_.sourceNavigateForward().setEnabled(
-                                 sourceNavigationHistory_.isForwardEnabled());   
-         }      
+                  sourceNavigationHistory_.isForwardEnabled());
+         }
       });
 
       restoreDocuments(session);
@@ -307,7 +311,7 @@ public class Source implements InsertSourceHandler,
             {
                editors_.get(view_.getActiveTabIndex()).onInitiallyLoaded();
             }
-            
+
             // clear the history manager
             sourceNavigationHistory_.clear();
          }
@@ -417,7 +421,7 @@ public class Source implements InsertSourceHandler,
    }
 
    private void newDoc(EditableFileType fileType,
-                       final CommandWithArg<EditingTarget> executeOnSuccess)
+                       final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       ensureVisible(true);
       server_.newDocument(
@@ -430,8 +434,15 @@ public class Source implements InsertSourceHandler,
                public void onResponseReceived(SourceDocument newDoc)
                {
                   EditingTarget target = addTab(newDoc);
-                  if (executeOnSuccess != null)
-                     executeOnSuccess.execute(target);
+                  if (resultCallback != null)
+                     resultCallback.onSuccess(target);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  if (resultCallback != null)
+                     resultCallback.onFailure(error);
                }
             });
    }
@@ -871,7 +882,15 @@ public class Source implements InsertSourceHandler,
       }
    }
    
-   
+
+   private void openFile(final FileSystemItem file,
+                         final TextFileType fileType,
+                         final CommandWithArg<EditingTarget> executeOnSuccess)
+   {
+      openFile(file, fileType,
+               ResultCallback.<EditingTarget, ServerError>create(executeOnSuccess));
+   }
+
    // top-level wrapper for opening files. takes care of:
    //  - making sure the view is visible
    //  - checking whether it is already open and re-selecting its tab
@@ -881,16 +900,15 @@ public class Source implements InsertSourceHandler,
    //    via the call to the lower level openFile method
    private void openFile(final FileSystemItem file,
                          final TextFileType fileType,
-                         final CommandWithArg<EditingTarget> executeOnSuccess)
+                         final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       ensureVisible(true);
 
       if (file == null)
       {
-         newDoc(fileType, null);
+         newDoc(fileType, resultCallback);
          return;
       }
-
 
       for (int i = 0; i < editors_.size(); i++)
       {
@@ -901,7 +919,8 @@ public class Source implements InsertSourceHandler,
          {
             view_.selectTab(i);
             pMruList_.get().add(thisPath);
-            executeOnSuccess.execute(target);
+            if (resultCallback != null)
+               resultCallback.onSuccess(target);
             return;
          }
       }
@@ -910,30 +929,38 @@ public class Source implements InsertSourceHandler,
 
       if (file.getLength() > target.getFileSizeLimit())
       {
+         resultCallback.onFailure(null);
          showFileTooLargeWarning(file, target.getFileSizeLimit());
       }
       else if (file.getLength() > target.getLargeFileSize())
       {
-         confirmOpenLargeFile(file,  new Operation() {
+         confirmOpenLargeFile(file, new Operation() {
             public void execute()
             {
-               openFileFromServer(file, fileType, executeOnSuccess);
+               openFileFromServer(file, fileType, resultCallback);
+            }
+         }, new Operation() {
+            public void execute()
+            {
+               // user (wisely) cancelled
+               if (resultCallback != null)
+                  resultCallback.onFailure(null);
             }
          });
       }
       else
       {
-         openFileFromServer(file, fileType, executeOnSuccess);
+         openFileFromServer(file, fileType, resultCallback);
       }
    }
    
    // variation of top-level file opening wrapper which automatically 
    // deduces the file type
    private void openFile(FileSystemItem file,
-                         CommandWithArg<EditingTarget> executeOnSuccess)
+                         ResultCallback<EditingTarget, ServerError> callback)
    {
       TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);
-      openFile(file, fileType, executeOnSuccess);
+      openFile(file, fileType, callback);
    }
 
    private void showFileTooLargeWarning(FileSystemItem file,
@@ -952,7 +979,8 @@ public class Source implements InsertSourceHandler,
    }
 
    private void confirmOpenLargeFile(FileSystemItem file,
-                                     Operation openOperation)
+                                     Operation openOperation,
+                                     Operation cancelOperation)
    {
       StringBuilder msg = new StringBuilder();
       msg.append("The source file '" + file.getName() + "' is large (");
@@ -969,7 +997,7 @@ public class Source implements InsertSourceHandler,
    private void openFileFromServer(
          final FileSystemItem file,
          final TextFileType fileType,
-         final CommandWithArg<EditingTarget> executeOnSuccess)
+         final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       final Command dismissProgress = globalDisplay_.showProgress(
                                                          "Opening file...");
@@ -985,6 +1013,8 @@ public class Source implements InsertSourceHandler,
                {
                   dismissProgress.execute();
                   Debug.logError(error);
+                  if (resultCallback != null)
+                     resultCallback.onFailure(error);
                   globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
                                              "Error while opening file",
                                              error.getUserMessage());
@@ -996,7 +1026,8 @@ public class Source implements InsertSourceHandler,
                   dismissProgress.execute();
                   pMruList_.get().add(document.getPath());
                   EditingTarget target = addTab(document);
-                  executeOnSuccess.execute(target);
+                  if (resultCallback != null)
+                     resultCallback.onSuccess(target);
                }
             });
    }
@@ -1095,9 +1126,9 @@ public class Source implements InsertSourceHandler,
       else
       {
          newDoc(FileTypeRegistry.R,
-                new CommandWithArg<EditingTarget>()
+                new ResultCallback<EditingTarget, ServerError>()
          {
-            public void execute(EditingTarget arg)
+            public void onSuccess(EditingTarget arg)
             {
                ((TextEditingTarget)arg).insertCode(event.getCode(),
                                                    event.isBlock());
@@ -1289,6 +1320,12 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onSourceNavigateBack()
    {
+      if (!sourceNavigationHistory_.isForwardEnabled())
+      {
+         if (activeEditor_ != null)
+            activeEditor_.recordCurrentNavigationPosition();
+      }
+
       SourceNavigation navigation = sourceNavigationHistory_.goBack();
       if (navigation != null)
          attemptSourceNavigation(navigation, commands_.sourceNavigateBack());
@@ -1317,26 +1354,46 @@ public class Source implements InsertSourceHandler,
          {
             if (retryCommand.isEnabled())
                retryCommand.execute();
-            return;
          }
          else
          {
-            view_.selectTab(target.asWidget());
-            target.restorePosition(navigation.getPosition());
+            suspendSourceNavigationAdding_ = true;
+            try
+            {
+               view_.selectTab(target.asWidget());
+               target.restorePosition(navigation.getPosition());
+            }
+            finally
+            {
+               suspendSourceNavigationAdding_ = false;
+            }
          }
       }
       
       // otherwise we need to re-open the file
       else if (navigation.getPath() != null)
       {
-         openFile(FileSystemItem.createFile(navigation.getPath()), 
-                  new CommandWithArg<EditingTarget>() {
-            @Override
-            public void execute(EditingTarget target)
-            {
-               target.restorePosition(navigation.getPosition());
-            }
-         });
+         suspendSourceNavigationAdding_ = true;
+         openFile(FileSystemItem.createFile(navigation.getPath()),
+                  new ResultCallback<EditingTarget, ServerError>() {
+                     public void onSuccess(EditingTarget target)
+                     {
+                        try
+                        {
+                           target.restorePosition(navigation.getPosition());
+                        }
+                        finally
+                        {
+                           suspendSourceNavigationAdding_ = false;
+                        }
+                     }
+
+                     @Override
+                     public void onFailure(ServerError info)
+                     {
+                        suspendSourceNavigationAdding_ = false;
+                     }
+                  });
       } 
    }
    
@@ -1363,6 +1420,8 @@ public class Source implements InsertSourceHandler,
    private final HashSet<AppCommand> dynamicCommands_;
    private final SourceNavigationHistory sourceNavigationHistory_ = 
                                               new SourceNavigationHistory(30);
+
+   private boolean suspendSourceNavigationAdding_;
   
    private static final String MODULE_SOURCE = "source-pane";
    private static final String KEY_ACTIVETAB = "activeTab";
