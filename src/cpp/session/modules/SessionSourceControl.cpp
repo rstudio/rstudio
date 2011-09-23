@@ -1235,85 +1235,98 @@ void postbackGitSSH(const std::string& argument,
       return;
    }
 
-   if (result.exitStatus == EXIT_SUCCESS || result.exitStatus == 1)
+   bool startSshAgent;
+   bool runSshAdd;
+   if (result.exitStatus == 1)
    {
       // exitStatus == 1 means ssh-agent was running but no identities were
-      // present. If exitStatus == 2 that means couldn't connect to ssh-agent
-
-      // ssh-agent is already running. Let's assume that either the current
-      // default key is already registered, or was never intended to.
-      cont(EXIT_SUCCESS, "");
-      return;
+      // present.
+      startSshAgent = false;
+      runSshAdd = true;
    }
-
-
-
-   // If we got here, it means that we were able to run ssh-add (so openssh
-   // is on the path); and it means that we don't have a running ssh-agent
-   // bound to our environment. So we need to  start our own and preemptively
-   // call ssh-add to register the default key. We must use ssh-add rather
-   // than letting ssh ask for a passphrase, because (on Windows at least)
-   // only ssh-add, not ssh, make use of the SSH_ASKPASS environment variable.
+   else if (result.exitStatus == EXIT_SUCCESS)
+   {
+      startSshAgent = false;
+      std::string keyPathSys =
+            core::string_utils::utf8ToSystem(toBashPath(key.absolutePath()));
+      runSshAdd = result.stdOut.find(keyPathSys) == std::string::npos;
+   }
+   else
+   {
+      startSshAgent = true;
+      runSshAdd = true;
+   }
 
    // This will hold the values we eventually will write to stdout by
    // passing it into the continuation--specifically, the output of ssh-agent.
    std::ostringstream output;
 
-   // Start ssh-agent using bash-style output
-   error = runCommand("ssh-agent -s", ProcessOptions(), &result);
-   if (error)
+   if (startSshAgent)
    {
-      // Failed to start ssh-agent, give up.
-      s_suppressSshAgentStart = true;
-      LOG_ERROR(error);
-      cont(EXIT_FAILURE, "");
-      return;
-   }
-   if (result.exitStatus != EXIT_SUCCESS)
-   {
-      // Failed to start ssh-agent, give up.
-      s_suppressSshAgentStart = true;
-      cont(result.exitStatus, "");
-      return;
-   }
-
-   // ssh-agent succeeded, so capture its output
-   output << result.stdOut;
-
-   // In addition to dumping the ssh-agent output, we also need to parse
-   // it so we can modify rsession's environment to use the new ssh-agent
-   // as well.
-   boost::sregex_iterator it(result.stdOut.begin(), result.stdOut.end(),
-                             boost::regex("^([A-Za-z0-9_]+)=([^;]+);"));
-   boost::sregex_iterator end;
-   for (; it != end; it++)
-   {
-      std::string name = (*it).str(1);
-      std::string value = (*it).str(2);
-      core::system::setenv(name, value);
-
-      if (name == "SSH_AGENT_PID")
+      // Start ssh-agent using bash-style output
+      error = runCommand("ssh-agent -s", ProcessOptions(), &result);
+      if (error)
       {
-         int pid = safe_convert::stringTo<int>(value, 0);
-         if (pid)
-            s_pidsToTerminate_.push_back(pid);
+         // Failed to start ssh-agent, give up.
+         s_suppressSshAgentStart = true;
+         LOG_ERROR(error);
+         cont(EXIT_FAILURE, "");
+         return;
+      }
+      if (result.exitStatus != EXIT_SUCCESS)
+      {
+         // Failed to start ssh-agent, give up.
+         s_suppressSshAgentStart = true;
+         cont(result.exitStatus, "");
+         return;
+      }
+
+      // ssh-agent succeeded, so capture its output
+      output << result.stdOut;
+
+      // In addition to dumping the ssh-agent output, we also need to parse
+      // it so we can modify rsession's environment to use the new ssh-agent
+      // as well.
+      boost::sregex_iterator it(result.stdOut.begin(), result.stdOut.end(),
+                                boost::regex("^([A-Za-z0-9_]+)=([^;]+);"));
+      boost::sregex_iterator end;
+      for (; it != end; it++)
+      {
+         std::string name = (*it).str(1);
+         std::string value = (*it).str(2);
+         core::system::setenv(name, value);
+
+         if (name == "SSH_AGENT_PID")
+         {
+            int pid = safe_convert::stringTo<int>(value, 0);
+            if (pid)
+               s_pidsToTerminate_.push_back(pid);
+         }
       }
    }
 
-   // Finally, call ssh-add, which will (probably) use git-
-   ShellCommand cmd("ssh-add");
+   if (runSshAdd)
+   {
+      // Finally, call ssh-add, which will (probably) use git-
+      ShellCommand cmd("ssh-add");
 #ifdef __APPLE__
-   // Automatically use Keychain for passphrase
-   cmd << "-k";
+      // Automatically use Keychain for passphrase
+      cmd << "-k";
 #endif
-   cmd << string_utils::utf8ToSystem(toBashPath(key.absolutePath()));
-   module_context::processSupervisor().runCommand(
-         shell_utils::sendAllOutputToNull(shell_utils::sendNullToStdIn(cmd)),
-         "", ProcessOptions(),
-         boost::bind(postbackGitSSH_onSSHAddComplete,
-                     cont,
-                     output.str(),
-                     _1));
+      cmd << string_utils::utf8ToSystem(toBashPath(key.absolutePath()));
+      module_context::processSupervisor().runCommand(
+            shell_utils::sendAllOutputToNull(shell_utils::sendNullToStdIn(cmd)),
+            "", ProcessOptions(),
+            boost::bind(postbackGitSSH_onSSHAddComplete,
+                        cont,
+                        output.str(),
+                        _1));
+   }
+   else
+   {
+      cont(EXIT_SUCCESS, output.str());
+      return;
+   }
 }
 
 typedef std::map<std::string, module_context::PostbackHandlerContinuation>
