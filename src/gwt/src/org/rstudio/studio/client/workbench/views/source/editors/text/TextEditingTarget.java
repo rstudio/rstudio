@@ -846,16 +846,6 @@ public class TextEditingTarget implements EditingTarget
 
       commandHandlerReg_.removeHandler();
       commandHandlerReg_ = null;
-      
-      // switching tabs is a navigation action
-      try
-      {
-         docDisplay_.recordCurrentNavigationPosition();
-      }
-      catch(Exception e)
-      {
-         Debug.log("Exception recording nav position: " + e.toString());
-      }
    }
 
    @Override

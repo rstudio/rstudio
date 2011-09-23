@@ -15,6 +15,8 @@ package org.rstudio.studio.client.workbench.views.source;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
@@ -71,12 +73,12 @@ import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
+import org.rstudio.studio.client.workbench.views.source.model.SourceNavigationHistory;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Stack;
 
 public class Source implements InsertSourceHandler,
                                IsWidget,
@@ -87,8 +89,7 @@ public class Source implements InsertSourceHandler,
                              FileEditHandler,
                              ShowContentHandler,
                              ShowDataHandler,
-                             BeforeShowHandler,
-                             SourceNavigationHandler
+                             BeforeShowHandler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -267,7 +268,27 @@ public class Source implements InsertSourceHandler,
          }
       });
       
-      events.addHandler(SourceNavigationEvent.TYPE, this);
+      events.addHandler(SourceNavigationEvent.TYPE, 
+                        new SourceNavigationHandler() {
+         @Override
+         public void onSourceNavigation(SourceNavigationEvent event)
+         {
+            sourceNavigationHistory_.add(event.getNavigation());
+         }
+      });
+      
+      sourceNavigationHistory_.addChangeHandler(new ChangeHandler() {
+
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            commands_.sourceNavigateBack().setEnabled(
+                                 sourceNavigationHistory_.isBackEnabled());
+                                               
+            commands_.sourceNavigateForward().setEnabled(
+                                 sourceNavigationHistory_.isForwardEnabled());   
+         }      
+      });
 
       restoreDocuments(session);
 
@@ -286,6 +307,9 @@ public class Source implements InsertSourceHandler,
             {
                editors_.get(view_.getActiveTabIndex()).onInitiallyLoaded();
             }
+            
+            // clear the history manager
+            sourceNavigationHistory_.clear();
          }
 
          @Override
@@ -1215,8 +1239,6 @@ public class Source implements InsertSourceHandler,
                             activeEditor_.dirtyState().getValue() == true;
       commands_.saveSourceDoc().setEnabled(saveEnabled);
       manageSaveAllCommand();
-      
-      manageBackAndForwardCommands();
 
       activeCommands_ = newCommands;
 
@@ -1240,13 +1262,7 @@ public class Source implements InsertSourceHandler,
       commands_.saveAllSourceDocs().setEnabled(false);
    }
    
-   private void manageBackAndForwardCommands()
-   {
-      commands_.sourceNavigateBack().setEnabled(
-                                          !sourceNavigations_.empty());
-      commands_.sourceNavigateForward().setEnabled(false);
-   }
-
+  
    private boolean verifyNoUnsupportedCommands(HashSet<AppCommand> commands)
    {
       HashSet<AppCommand> temp = new HashSet<AppCommand>(commands);
@@ -1269,70 +1285,59 @@ public class Source implements InsertSourceHandler,
          onNewSourceDoc();
       }
    }
-   
-   @Override
-   public void onSourceNavigation(SourceNavigationEvent event)
-   {      
-      // de-dup if necessary
-      if (!sourceNavigations_.empty() &&
-          event.getNavigation().isEqualTo(sourceNavigations_.peek()))
-      {
-         return;
-      }
       
-      sourceNavigations_.push(event.getNavigation());
-      
-      manageBackAndForwardCommands();
-   }
-   
    @Handler
    public void onSourceNavigateBack()
    {
-      if (!sourceNavigations_.empty())
-      {
-         // get the navigation & manage resulting command state
-         final SourceNavigation navigation = sourceNavigations_.pop();
-         manageBackAndForwardCommands();
-         
-         // see if we can navigate by id
-         String docId = navigation.getDocumentId();
-         EditingTarget target = getEditingTargetForId(docId);
-         if (target != null)
-         {
-            // check for navigation to the current position -- in this
-            // case call the function back to go to the previous location
-            if ( (target == activeEditor_) && 
-                  target.isAtPosition(navigation.getPosition()))
-            {
-               onSourceNavigateBack();
-               return;
-            }
-            else
-            {
-               view_.selectTab(target.asWidget());
-               target.restorePosition(navigation.getPosition());
-            }
-         }
-         
-         // otherwise we need to re-open the file
-         else if (navigation.getPath() != null)
-         {
-            openFile(FileSystemItem.createFile(navigation.getPath()), 
-                     new CommandWithArg<EditingTarget>() {
-               @Override
-               public void execute(EditingTarget target)
-               {
-                  target.restorePosition(navigation.getPosition());
-               }
-            });
-         } 
-      }
+      SourceNavigation navigation = sourceNavigationHistory_.goBack();
+      if (navigation != null)
+         attemptSourceNavigation(navigation, commands_.sourceNavigateBack());
    }
    
    @Handler
    public void onSourceNavigateForward()
    {
+      SourceNavigation navigation = sourceNavigationHistory_.goForward();
+      if (navigation != null)
+         attemptSourceNavigation(navigation, commands_.sourceNavigateForward());
+   }
+   
+   private void attemptSourceNavigation(final SourceNavigation navigation,
+                                        AppCommand retryCommand)
+   {
+      // see if we can navigate by id
+      String docId = navigation.getDocumentId();
+      final EditingTarget target = getEditingTargetForId(docId);
+      if (target != null)
+      {
+         // check for navigation to the current position -- in this
+         // case execute the retry command
+         if ( (target == activeEditor_) && 
+               target.isAtPosition(navigation.getPosition()))
+         {
+            if (retryCommand.isEnabled())
+               retryCommand.execute();
+            return;
+         }
+         else
+         {
+            view_.selectTab(target.asWidget());
+            target.restorePosition(navigation.getPosition());
+         }
+      }
       
+      // otherwise we need to re-open the file
+      else if (navigation.getPath() != null)
+      {
+         openFile(FileSystemItem.createFile(navigation.getPath()), 
+                  new CommandWithArg<EditingTarget>() {
+            @Override
+            public void execute(EditingTarget target)
+            {
+               target.restorePosition(navigation.getPosition());
+            }
+         });
+      } 
    }
    
    private boolean isCodeSearchEnabled()
@@ -1356,9 +1361,9 @@ public class Source implements InsertSourceHandler,
    private final UIPrefs uiPrefs_;
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();
    private final HashSet<AppCommand> dynamicCommands_;
-   private final Stack<SourceNavigation> sourceNavigations_ = 
-                                                 new Stack<SourceNavigation>();
-
+   private final SourceNavigationHistory sourceNavigationHistory_ = 
+                                              new SourceNavigationHistory(30);
+  
    private static final String MODULE_SOURCE = "source-pane";
    private static final String KEY_ACTIVETAB = "activeTab";
    private boolean initialized_;
