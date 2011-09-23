@@ -1,5 +1,5 @@
 /*
- * SourceNavigator.java
+ * NavigableSourceEditor.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -16,10 +16,6 @@ import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationP
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.event.shared.HandlerRegistration;
-
-
-// TODO: joe on whether we should save nav point for navigating to 
-
 
 
 public interface NavigableSourceEditor 
