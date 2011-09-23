@@ -18,21 +18,14 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 
-// TODO: implement Forward
-
-// TODO: for tab switching you get trapped in back cycle
-
-// TODO: consider making history part of client state
-
 // TODO: enable code navigation even when not in a project 
 //          - for sure go to defintion
 //          - what about search
 
-// TODO: consider file search also finding other files in the project
+// TODO: consider allowing other file types into file list
 
 // TODO: joe on whether we should save nav point for navigating to 
 
-// TODO: see whether we can get commands to active even when src closed
 
 public interface NavigableSourceEditor 
 {
