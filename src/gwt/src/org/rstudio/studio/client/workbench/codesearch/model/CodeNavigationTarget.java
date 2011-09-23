@@ -23,20 +23,20 @@ public class CodeNavigationTarget
                                                           srcItem.getColumn()));
    }
    
-   public CodeNavigationTarget(String projectFile)
+   public CodeNavigationTarget(String file)
    {
-      this(projectFile, null);
+      this(file, null);
    }
    
-   public CodeNavigationTarget(String projectFile, FilePosition pos)
+   public CodeNavigationTarget(String file, FilePosition pos)
    {
-      projectFile_ = projectFile;
+      file_ = file;
       pos_ = pos;
    }
    
-   public String getProjectFile()
+   public String getFile()
    {
-      return projectFile_;
+      return file_;
    }
    
    public FilePosition getPosition()
@@ -44,6 +44,6 @@ public class CodeNavigationTarget
       return pos_;
    }
    
-   private final String projectFile_;
+   private final String file_;
    private final FilePosition pos_;
 }

@@ -11,6 +11,26 @@
  *
  */
 
+
+// TODO: in no-project mode we can't navigate to a function in a source
+// file with no path
+
+// TODO: sometimes we need two forward commands to reach an item
+
+// TODO: back/forward gets confused if function call is nested in line
+// (rather than first char of line)
+
+// TODO: for above, should we consider de-dup and skip by line?
+
+// TODO: right now paths are presented and interpreted differently on
+// the client depending upon whether we are returning results from a
+// project or not. this means that it is impossible for the server
+// side to fall back to source-db searches if file monitoring fails
+// (because the client will interpret paths as project relative)
+// perhaps the client should always expect full paths and then we
+// can have better fallback on the server
+
+
 #include "SessionCodeSearch.hpp"
 
 #include <iostream>
@@ -60,6 +80,36 @@ bool isGlobalFunctionNamed(const r_util::RSourceItem& sourceItem,
           sourceItem.type() == r_util::RSourceItem::Function &&
           sourceItem.name() == name;
 }
+
+boost::regex regexFromTerm(const std::string& term)
+{
+   // create wildcard pattern if the search has a '*'
+   bool hasWildcard = term.find('*') != std::string::npos;
+   boost::regex pattern;
+   if (hasWildcard)
+      pattern = regex_utils::wildcardPatternToRegex(term);
+   return pattern;
+}
+
+// return if we are past max results
+bool enforceMaxResults(std::size_t maxResults,
+                        json::Array* pNames,
+                        json::Array* pPaths,
+                        bool* pMoreAvailable)
+{
+   if (pNames->size() > maxResults)
+   {
+      *pMoreAvailable = true;
+      pNames->resize(maxResults);
+      pPaths->resize(maxResults);
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
 
 class SourceFileIndex : boost::noncopyable
 {
@@ -201,24 +251,19 @@ public:
       *pMoreAvailable = false;
 
       // create wildcard pattern if the search has a '*'
-      bool hasWildcard = term.find('*') != std::string::npos;
-      boost::regex pattern;
-      if (hasWildcard)
-         pattern = regex_utils::wildcardPatternToRegex(term);
+      boost::regex pattern = regexFromTerm(term);
 
       // iterate over the files
       FilePath projectRoot = projects::projectContext().directory();
       BOOST_FOREACH(const Entry& entry, entries_)
       {
-         // get the next file
+         // get file and name
          FilePath filePath(entry.fileInfo.absolutePath());
-
-         // get name for comparison
          std::string name = filePath.filename();
 
          // compare for match (wildcard or standard)
          bool matches = false;
-         if (hasWildcard)
+         if (!pattern.empty())
          {
             matches = regex_utils::textMatches(name,
                                                pattern,
@@ -241,15 +286,9 @@ public:
             pPaths->push_back(filePath.relativePath(projectRoot));
 
             // return if we are past max results
-            if (pNames->size() > maxResults)
-            {
-               *pMoreAvailable = true;
-               pNames->resize(maxResults);
-               pPaths->resize(maxResults);
+            if (enforceMaxResults(maxResults, pNames, pPaths, pMoreAvailable))
                return;
-            }
          }
-
       }
    }
 
@@ -402,11 +441,11 @@ private:
 SourceFileIndex s_projectIndex;
 
 
-bool computeProjRelativePath(boost::shared_ptr<r_util::RSourceIndex> pIndex,
+bool computeProjRelativePath(const r_util::RSourceIndex& index,
                              std::string* pProjRelativePath)
 {
    // get file path
-   FilePath docPath = module_context::resolveAliasedPath(pIndex->context());
+   FilePath docPath = module_context::resolveAliasedPath(index.context());
 
    // get proj relative path
    *pProjRelativePath = docPath.relativePath(
@@ -414,6 +453,26 @@ bool computeProjRelativePath(boost::shared_ptr<r_util::RSourceIndex> pIndex,
 
    // return status
    return !pProjRelativePath->empty();
+}
+
+
+bool determineContext(const r_util::RSourceIndex& index,
+                      std::string* pContext,
+                      std::set<std::string>* pContextsSearched)
+{
+   // define context (proj-relative if we have a project)
+   *pContext = index.context();
+   if (session::projects::projectContext().hasProject())
+   {
+      if (!computeProjRelativePath(index, pContext))
+         return false;
+   }
+
+   // record that we searched this context
+   pContextsSearched->insert(*pContext);
+
+   // return success
+   return true;
 }
 
 bool findGlobalFunctionInSourceDatabase(
@@ -428,17 +487,14 @@ bool findGlobalFunctionInSourceDatabase(
    std::vector<r_util::RSourceItem> sourceItems;
    BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, rIndexes)
    {
-      std::string projRelativePath;
-      if (!computeProjRelativePath(pIndex, &projRelativePath))
+      std::string context;
+      if (!determineContext(*pIndex, &context, pContextsSearched))
          continue;
-
-      // record that we searched this path
-      pContextsSearched->insert(projRelativePath);
 
       // scan the next index
       sourceItems.clear();
       pIndex->search(
-               projRelativePath,
+               context,
                boost::bind(isGlobalFunctionNamed, _1, functionName),
                std::back_inserter(sourceItems));
 
@@ -466,16 +522,13 @@ void searchSourceDatabase(const std::string& term,
 
    BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, rIndexes)
    {
-      std::string projRelativePath;
-      if (!computeProjRelativePath(pIndex, &projRelativePath))
+      std::string context;
+      if (!determineContext(*pIndex, &context, pContextsSearched))
          continue;
-
-      // record that we searched this path
-      pContextsSearched->insert(projRelativePath);
 
       // scan the source index
       pIndex->search(term,
-                     projRelativePath,
+                     context,
                      prefixOnly,
                      false,
                      std::back_inserter(*pItems));
@@ -537,6 +590,87 @@ void searchSource(const std::string& term,
    }
 }
 
+void searchSourceDatabaseFiles(const std::string& term,
+                               std::size_t maxResults,
+                               json::Array* pNames,
+                               json::Array* pPaths,
+                               bool* pMoreAvailable)
+{
+   // default to no more available
+   *pMoreAvailable = false;
+
+   // create wildcard pattern if the search has a '*'
+   boost::regex pattern = regexFromTerm(term);
+
+   // get all of the source indexes
+   std::vector<boost::shared_ptr<r_util::RSourceIndex> > rIndexes =
+                                             modules::source::rIndexes();
+
+   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, rIndexes)
+   {
+      // bail if there is no path
+      if (pIndex->context().empty())
+         continue;
+
+      // get path and name
+      FilePath filePath(pIndex->context());
+      std::string name = filePath.filename();
+
+      // compare for match (wildcard or standard)
+      bool matches = false;
+      if (!pattern.empty())
+      {
+         matches = regex_utils::textMatches(name,
+                                            pattern,
+                                            true,
+                                            false);
+      }
+      else
+      {
+         matches = boost::algorithm::istarts_with(name, term);
+      }
+
+      // add the file if we found a match
+      if (matches)
+      {
+         // name and aliased path
+         pNames->push_back(filePath.filename());
+         pPaths->push_back(module_context::createAliasedPath(filePath));
+
+         // return if we are past max results
+         if (enforceMaxResults(maxResults, pNames, pPaths, pMoreAvailable))
+            return;
+      }
+
+   }
+}
+
+void searchFiles(const std::string& term,
+                 std::size_t maxResults,
+                 json::Array* pNames,
+                 json::Array* pPaths,
+                 bool* pMoreAvailable)
+{
+   if (session::projects::projectContext().hasProject())
+   {
+      s_projectIndex.searchFiles(term,
+                                 maxResults,
+                                 true,
+                                 pNames,
+                                 pPaths,
+                                 pMoreAvailable);
+   }
+   else
+   {
+      searchSourceDatabaseFiles(term,
+                                maxResults,
+                                pNames,
+                                pPaths,
+                                pMoreAvailable);
+   }
+}
+
+
 template <typename TValue, typename TFunc>
 json::Array toJsonArray(
       const std::vector<r_util::RSourceItem> &items,
@@ -576,12 +710,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    json::Array names;
    json::Array paths;
    bool moreFilesAvailable = false;
-   s_projectIndex.searchFiles(term,
-                              maxResults,
-                              true,
-                              &names,
-                              &paths,
-                              &moreFilesAvailable);
+   searchFiles(term, maxResults, &names, &paths, &moreFilesAvailable);
    json::Object files;
    files["filename"] = names;
    files["path"] = paths;
@@ -631,10 +760,6 @@ Error getFunctionDefinitionLocation(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // confirm that code search is enabled
-   if (!code_search::enabled())
-      return Error(core::json::errc::MethodUnexpected, ERROR_LOCATION);
-
    // call into R to determine the token
    std::string token;
    error = r::exec::RFunction(".rs.guessToken", line, pos).call(&token);
@@ -661,8 +786,16 @@ Error getFunctionDefinitionLocation(const json::JsonRpcRequest& request,
       if (found)
       {
          // return full path to file
-         FilePath projDir = projects::projectContext().directory();
-         FilePath srcFilePath = projDir.complete(sourceItem.context());
+         FilePath srcFilePath;
+         if (projects::projectContext().hasProject())
+         {
+            FilePath projDir = projects::projectContext().directory();
+            srcFilePath = projDir.complete(sourceItem.context());
+         }
+         else
+         {
+            srcFilePath = FilePath(sourceItem.context());
+         }
          defJson["file"] = module_context::createFileSystemItem(srcFilePath);
 
          // return location in file
@@ -682,9 +815,6 @@ Error getFunctionDefinitionLocation(const json::JsonRpcRequest& request,
 void onFileMonitorEnabled(const tree<core::FileInfo>& files)
 {
    s_projectIndex.enqueFiles(files.begin_leaf(), files.end_leaf());
-
-   ClientEvent event(client_events::kCodeIndexingStatusChanged, true);
-   module_context::enqueClientEvent(event);
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
@@ -697,30 +827,23 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 
 void onFileMonitorDisabled()
 {
-   ClientEvent event(client_events::kCodeIndexingStatusChanged, false);
-   module_context::enqueClientEvent(event);
-
    // clear the index so we don't ever get stale results
    s_projectIndex.clear();
 }
 
    
 } // anonymous namespace
-
-
-bool enabled()
-{
-   return projects::projectContext().hasFileMonitor();
-}
    
 Error initialize()
 {
    // subscribe to project context file monitoring state changes
+   // (note that if there is no project this will no-op)
    session::projects::FileMonitorCallbacks cb;
    cb.onMonitoringEnabled = onFileMonitorEnabled;
    cb.onFilesChanged = onFilesChanged;
    cb.onMonitoringDisabled = onFileMonitorDisabled;
-   projects::projectContext().subscribeToFileMonitor("Code searching", cb);
+   projects::projectContext().subscribeToFileMonitor(
+                                          "Project-wide code search", cb);
 
    using boost::bind;
    using namespace module_context;

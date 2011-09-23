@@ -115,7 +115,6 @@ public class RCompletionManager implements CompletionManager
                           FileTypeRegistry fileTypeRegistry)
    {
       globalDisplay_ = globalDisplay;
-      workbenchContext_ = workbenchContext;
       fileTypeRegistry_ = fileTypeRegistry;
    }
 
@@ -125,11 +124,7 @@ public class RCompletionManager implements CompletionManager
    }
    
    public void goToFunctionDefinition()
-   {
-      // don't do it if the command is disabled
-      if (!workbenchContext_.isCodeIndexingEnabled())
-         return ;
-      
+   { 
       // determine current line and cursor position
       InputEditorLineWithCursorPosition lineWithPos = 
                       InputEditorUtil.getLineWithCursorPosition(input_);
@@ -556,7 +551,6 @@ public class RCompletionManager implements CompletionManager
    
    private GlobalDisplay globalDisplay_;
    private FileTypeRegistry fileTypeRegistry_;
-   private WorkbenchContext workbenchContext_;
       
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_ ;

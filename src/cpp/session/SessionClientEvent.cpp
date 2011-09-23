@@ -66,9 +66,8 @@ const int kShowWarningBar = 39;
 const int kOpenProjectError = 40;
 const int kVcsRefresh = 41;
 const int kAskPass = 42;
-const int kCodeIndexingStatusChanged = 43;
-const int kConsoleProcessOutput = 44;
-const int kConsoleProcessExit = 45;
+const int kConsoleProcessOutput = 43;
+const int kConsoleProcessExit = 44;
 
 }   
 
@@ -169,8 +168,6 @@ std::string ClientEvent::typeName() const
          return "vcs_refresh";
       case client_events::kAskPass:
          return "ask_pass";
-      case client_events::kCodeIndexingStatusChanged:
-         return "code_indexing_status_changed";
       case client_events::kConsoleProcessOutput:
          return "console_process_output";
       case client_events::kConsoleProcessExit:

@@ -17,8 +17,6 @@ import java.util.ArrayList;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
-import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedEvent;
-import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeNavigationTarget;
@@ -88,12 +86,16 @@ public class CodeSearch
                display_.getSearchOracle().navigationTargetFromSuggestion(
                                                 event.getSelectedItem());
             
-            // get the active project directory
+            // get the src file path
+            String srcFile = target.getFile();
+            
+            // if we are in a project then this path is project relative
             SessionInfo sessionInfo = session.getSessionInfo();
             FileSystemItem projDir = sessionInfo.getActiveProjectDir(); 
+            if (projDir != null)
+               srcFile = projDir.completePath(srcFile);
             
-            // calculate full file path and position
-            String srcFile = projDir.completePath(target.getProjectFile());
+            // create full file path and position
             final FileSystemItem srcItem = FileSystemItem.createFile(srcFile);
             final FilePosition pos = target.getPosition();  
             
@@ -133,17 +135,6 @@ public class CodeSearch
            display_.getSearchOracle().clear();
         }
      });
-     
-     eventBusHandlers_.add(
-           eventBus.addHandler(CodeIndexingStatusChangedEvent.TYPE,
-                         new CodeIndexingStatusChangedHandler() {
-         @Override
-         public void onCodeIndexingStatusChanged(
-                                       CodeIndexingStatusChangedEvent event)
-         {
-            display_.getSearchOracle().clear();  
-         }    
-     }));
      
      eventBusHandlers_.add(
            eventBus.addHandler(FileChangeEvent.TYPE, new FileChangeHandler() {

@@ -37,8 +37,6 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedEvent;
-import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -161,7 +159,6 @@ public class Source implements InsertSourceHandler,
       workbenchContext_ = workbenchContext;
       pMruList_ = pMruList;
       uiPrefs_ = uiPrefs;
-      codeIndexingEnabled_ = session.getSessionInfo().isIndexingEnabled();
 
       view_.addTabClosingHandler(this);
       view_.addTabClosedHandler(this);
@@ -255,19 +252,7 @@ public class Source implements InsertSourceHandler,
             pMruList_.get().add(event.getPath());
          }
       });
-      
-      
-      events.addHandler(CodeIndexingStatusChangedEvent.TYPE,
-                           new CodeIndexingStatusChangedHandler() {
-         @Override
-         public void onCodeIndexingStatusChanged(
-                      CodeIndexingStatusChangedEvent event)
-         {
-            codeIndexingEnabled_ = event.getEnabled();
-            manageCommands();
-         }
-      });
-      
+            
       events.addHandler(SourceNavigationEvent.TYPE, 
                         new SourceNavigationHandler() {
          @Override
@@ -1234,12 +1219,6 @@ public class Source implements InsertSourceHandler,
             activeEditor_ != null ? activeEditor_.getSupportedCommands()
                                   : new HashSet<AppCommand>();
             
-      // if necessary, remove commands which require a project
-      if (!isCodeSearchEnabled())
-      {
-         newCommands.remove(commands_.goToFunctionDefinition());
-      }
-
       HashSet<AppCommand> commandsToEnable = new HashSet<AppCommand>(newCommands);
       commandsToEnable.removeAll(activeCommands_);
 
@@ -1396,11 +1375,6 @@ public class Source implements InsertSourceHandler,
                   });
       } 
    }
-   
-   private boolean isCodeSearchEnabled()
-   {
-      return workbenchContext_.isProjectActive() && codeIndexingEnabled_;
-   }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    private EditingTarget activeEditor_;
@@ -1429,6 +1403,4 @@ public class Source implements InsertSourceHandler,
 
    // If positive, a new tab is about to be created
    private int newTabPending_;
-   
-   boolean codeIndexingEnabled_ ;
 }

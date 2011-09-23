@@ -18,8 +18,6 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedEvent;
-import org.rstudio.studio.client.application.events.CodeIndexingStatusChangedHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -28,7 +26,6 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 
 
@@ -42,7 +39,6 @@ public class GlobalToolbar extends Toolbar
       super();
       commands_ = commands;
       pCodeSearch_ = pCodeSearch;
-      searchWidget_ = null;
       ThemeResources res = ThemeResources.INSTANCE;
       addStyleName(res.themeStyles().globalToolbar());
       
@@ -94,55 +90,19 @@ public class GlobalToolbar extends Toolbar
       
       addLeftWidget(commands.printSourceDoc().createToolbarButton());
       
-      eventBus.addHandler(CodeIndexingStatusChangedEvent.TYPE,
-                          new CodeIndexingStatusChangedHandler() {
-         @Override
-         public void onCodeIndexingStatusChanged(
-                                    CodeIndexingStatusChangedEvent event)
-         {
-            manageCodeSearch(event.getEnabled());
-         }
-      });
+      addLeftSeparator();
+      CodeSearch codeSearch = pCodeSearch_.get();
+      addLeftWidget(codeSearch.getSearchWidget());
    }
    
    public void addProjectTools(SessionInfo sessionInfo)
-   {
-      // code search
-      manageCodeSearch(sessionInfo.isIndexingEnabled());
-      
+   { 
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);
       addRightWidget(projectMenu.getToolbarButton());
    }
    
-   private void manageCodeSearch(boolean enabled)
-   {
-      // if our current enabled state matches the passed value then bail
-      boolean isEnabled = searchWidget_ != null;
-      if (enabled == isEnabled)
-         return;
-      
-      // manage go to file command
-      commands_.goToFileFunction().setVisible(enabled);
-   
-      // manage seach widget
-      if (enabled)
-      {
-         searchWidgetSeparator_ = addLeftSeparator();
-         CodeSearch codeSearch = pCodeSearch_.get();
-         searchWidget_ = codeSearch.getSearchWidget();
-         addLeftWidget(searchWidget_);
-      }
-      else
-      {
-         removeLeftWidget(searchWidgetSeparator_);
-         searchWidgetSeparator_ = null;
-         removeLeftWidget(searchWidget_);
-         searchWidget_ = null;
-      } 
-   }
-
    @Override
    public int getHeight()
    {
@@ -150,9 +110,6 @@ public class GlobalToolbar extends Toolbar
    }
      
    private final Commands commands_;
-   
-   private Widget searchWidgetSeparator_;
-   private Widget searchWidget_;
    private final Provider<CodeSearch> pCodeSearch_;
 
    

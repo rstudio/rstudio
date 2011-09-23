@@ -22,8 +22,6 @@ namespace session {
 namespace modules {
 namespace code_search {
 
-bool enabled();
-
 core::Error initialize();
    
 } // namespace code_search

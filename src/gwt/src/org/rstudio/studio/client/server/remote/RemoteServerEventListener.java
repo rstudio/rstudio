@@ -116,7 +116,6 @@ class RemoteServerEventListener
       public static final String OpenProjectError = "open_project_error";
       public static final String VcsRefresh = "vcs_refresh";
       public static final String AskPass = "ask_pass";
-      public static final String CodeIndexingStatusChanged = "code_indexing_status_changed";
       public static final String ConsoleProcessOutput = "console_process_output";
       public static final String ConsoleProcessExit = "console_process_exit";
 
@@ -655,11 +654,6 @@ class RemoteServerEventListener
             AskPassEvent.Data data = event.getData();
             eventBus.fireEvent(new AskPassEvent(data.getHandle(),
                                                 data.getPrompt()));
-         }
-         else if (type.equals(ClientEvent.CodeIndexingStatusChanged))
-         {
-            boolean enabled = event.<Bool>getData().getValue(); 
-            eventBus.fireEvent(new CodeIndexingStatusChangedEvent(enabled));
          }
          else if (type.equals(ClientEvent.ConsoleProcessOutput))
          {
