@@ -62,6 +62,11 @@ namespace source_control {
 
 namespace {
 
+// git bin dir which we detect at startup (this has already been
+// transformed into the system path encoding). note that if the git bin
+// is already in the path then this will be empty
+std::string s_gitBinDir;
+
 enum PatchMode
 {
    PatchModeWorking = 0,
@@ -1509,7 +1514,7 @@ Error discoverGitBinDir(FilePath* pPath)
                       ERROR_LOCATION);
 }
 
-Error addGitBinDirToPath()
+Error detectAndSaveGitBinDir()
 {
    if (isGitExeOnPath())
       return Success();
@@ -1519,11 +1524,16 @@ Error addGitBinDirToPath()
    if (error)
       return error;
 
-   system::setenv("PATH", system::getenv("PATH") + ";" +
-                  string_utils::utf8ToSystem(path.absolutePath()));
+   // save it
+   s_gitBinDir = string_utils::utf8ToSystem(path.absolutePath());
+
+   // TODO: for now we just set it here, once we move to setting the
+   // path correctly for child processes we can eliminate this
+   system::setenv("PATH", system::getenv("PATH") + ";" + s_gitBinDir);
 
    return Success();
 }
+
 
 #endif
 
@@ -1550,7 +1560,7 @@ core::Error initialize()
    else if (!GitVCSImpl::detectGitDir(workingDir).empty())
    {
 #ifdef _WIN32
-      error = addGitBinDirToPath();
+      error = detectAndSaveGitBinDir();
       if (error)
       {
          // Git could not be found
