@@ -31,5 +31,5 @@ public interface FindRequest extends RequestContext {
   /**
    * Use the implicit lookup in passing EntityProxy types to service methods.
    */
-  Request<EntityProxy> find(EntityProxyId<?> proxy);
+  <P extends EntityProxy> Request<P> find(EntityProxyId<P> proxyId);
 }
