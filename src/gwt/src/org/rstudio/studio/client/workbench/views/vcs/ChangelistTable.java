@@ -262,6 +262,9 @@ public class ChangelistTable extends Composite
       table_.setPageSize(items.size());
       dataProvider_.getList().clear();
       dataProvider_.getList().addAll(items);
+      ColumnSortEvent.fire(table_,
+                           table_.getColumnSortList());
+
    }
 
    public ArrayList<StatusAndPath> getSelectedItems()
