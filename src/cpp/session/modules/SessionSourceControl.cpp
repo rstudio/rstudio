@@ -1544,6 +1544,70 @@ void onShutdown(bool)
    s_pidsToTerminate_.clear();
 }
 
+Error addFilesToGitIgnore(const FilePath& gitIgnoreFile,
+                          const std::vector<std::string>& filesToIgnore,
+                          bool addExtraNewline)
+{
+   if (filesToIgnore.empty())
+      return Success();
+
+   boost::shared_ptr<std::ostream> ptrOs;
+   Error error = gitIgnoreFile.open_w(&ptrOs, false);
+   if (error)
+      return error;
+
+   ptrOs->seekp(0, std::ios::end);
+   if (ptrOs->good())
+   {
+      if (addExtraNewline)
+         *ptrOs << std::endl;
+
+      BOOST_FOREACH(const std::string& line, filesToIgnore)
+      {
+         *ptrOs << line << std::endl;
+      }
+
+      ptrOs->flush();
+   }
+
+   return Success();
+}
+
+Error augmentGitIgnore(const FilePath& gitIgnoreFile)
+{
+   // Add stuff to .gitignore
+   std::vector<std::string> filesToIgnore;
+   if (!gitIgnoreFile.exists())
+   {
+      // If no .gitignore exists, add this stuff
+      filesToIgnore.push_back(".Rproj.user");
+      filesToIgnore.push_back(".Rhistory");
+      filesToIgnore.push_back(".RData");
+      return addFilesToGitIgnore(gitIgnoreFile, filesToIgnore, false);
+   }
+   else
+   {
+      // If .gitignore exists, add .Rproj.user unless it's already there
+
+      std::string strIgnore;
+      Error error = core::readStringFromFile(gitIgnoreFile, &strIgnore);
+      if (error)
+         return error;
+
+      if (boost::regex_search(strIgnore, boost::regex("^\\.Rproj\\.user$")))
+         return Success();
+
+      bool addExtraNewline = strIgnore.size() > 0
+                             && strIgnore[strIgnore.size() - 1] != '\n';
+
+      std::vector<std::string> filesToIgnore;
+      filesToIgnore.push_back(".Rproj.user");
+      return addFilesToGitIgnore(gitIgnoreFile,
+                                 filesToIgnore,
+                                 addExtraNewline);
+   }
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -1571,6 +1635,11 @@ core::Error initialize()
 #else
       s_pVcsImpl_.reset(new GitVCSImpl(GitVCSImpl::detectGitDir(workingDir)));
 #endif
+
+      FilePath gitIgnore = s_pVcsImpl_->root().childPath(".gitignore");
+      error = augmentGitIgnore(gitIgnore);
+      if (error)
+         LOG_ERROR(error);
    }
    else if (workingDir.childPath(".svn").isDirectory())
       s_pVcsImpl_.reset(new SubversionVCSImpl(workingDir));
