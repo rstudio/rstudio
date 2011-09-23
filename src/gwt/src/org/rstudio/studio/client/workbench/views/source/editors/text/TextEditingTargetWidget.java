@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -73,7 +74,9 @@ public class TextEditingTargetWidget
       Toolbar toolbar = new Toolbar();
       
       toolbar.addLeftWidget(commands_.sourceNavigateBack().createToolbarButton());
-      toolbar.addLeftWidget(commands_.sourceNavigateForward().createToolbarButton());
+      Widget forwardButton = commands_.sourceNavigateForward().createToolbarButton();
+      forwardButton.getElement().getStyle().setMarginLeft(-6, Unit.PX);
+      toolbar.addLeftWidget(forwardButton);
       toolbar.addLeftSeparator();
       
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
