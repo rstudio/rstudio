@@ -45,8 +45,6 @@
 
 #include "SessionSource.hpp"
 
-// TODO: hookup back (stack/jump/gotofile/enable/disable)
-
 using namespace core ;
 
 namespace session {  
@@ -253,6 +251,13 @@ public:
          }
 
       }
+   }
+
+   void clear()
+   {
+      indexing_ = false;
+      indexingQueue_ = std::queue<core::system::FileChangeEvent>();
+      entries_.clear();
    }
 
 private:
@@ -694,6 +699,9 @@ void onFileMonitorDisabled()
 {
    ClientEvent event(client_events::kCodeIndexingStatusChanged, false);
    module_context::enqueClientEvent(event);
+
+   // clear the index so we don't ever get stale results
+   s_projectIndex.clear();
 }
 
    
