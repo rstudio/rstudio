@@ -16,9 +16,11 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.TimeBufferedCommand;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeNavigationTarget;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.RFileItem;
@@ -31,9 +33,11 @@ import com.google.inject.Inject;
 public class CodeSearchOracle extends SuggestOracle
 {
    @Inject
-   public CodeSearchOracle(CodeSearchServerOperations server)
+   public CodeSearchOracle(CodeSearchServerOperations server,
+                           WorkbenchContext workbenchContext)
    {
       server_ = server;
+      fsContext_ = workbenchContext.getActiveProjectDir();
    }
    
    
@@ -184,9 +188,12 @@ public class CodeSearchOracle extends SuggestOracle
                // src results
                ArrayList<RSourceItem> srcResults = 
                                     response.getRSourceItems().toArrayList();
-               for (int i = 0; i<srcResults.size(); i++) 
-                  suggestions.add(new CodeSearchSuggestion(srcResults.get(i)));     
-               
+               for (int i = 0; i<srcResults.size(); i++)
+               {
+                  suggestions.add(
+                     new CodeSearchSuggestion(srcResults.get(i), fsContext_));    
+               }
+                  
                // cache suggestions
                cacheSuggestions(request_, 
                                 suggestions,
@@ -227,6 +234,7 @@ public class CodeSearchOracle extends SuggestOracle
    private final Invalidation searchInvalidation_ = new Invalidation();
    
    private final CodeSearchServerOperations server_ ;
+   private final FileSystemItem fsContext_;
    private final CodeSearchCommand codeSearch_ = new CodeSearchCommand();
    
    private final ArrayList<SearchResult> resultCache_ = 

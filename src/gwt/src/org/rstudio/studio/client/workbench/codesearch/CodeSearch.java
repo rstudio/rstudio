@@ -21,7 +21,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeNavigationTarget;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 
@@ -67,7 +66,6 @@ public class CodeSearch
    
    @Inject
    public CodeSearch(Display display, 
-                     final Session session, 
                      final FileTypeRegistry fileTypeRegistry,
                      final EventBus eventBus)
    {
@@ -85,17 +83,9 @@ public class CodeSearch
             CodeNavigationTarget target = 
                display_.getSearchOracle().navigationTargetFromSuggestion(
                                                 event.getSelectedItem());
-            
-            // get the src file path
-            String srcFile = target.getFile();
-            
-            // if we are in a project then this path is project relative
-            SessionInfo sessionInfo = session.getSessionInfo();
-            FileSystemItem projDir = sessionInfo.getActiveProjectDir(); 
-            if (projDir != null)
-               srcFile = projDir.completePath(srcFile);
-            
+              
             // create full file path and position
+            String srcFile = target.getFile();
             final FileSystemItem srcItem = FileSystemItem.createFile(srcFile);
             final FilePosition pos = target.getPosition();  
             

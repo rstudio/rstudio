@@ -106,7 +106,7 @@ public class ProjectOptionsDialog extends ModalDialog<RProjectConfig>
       sourceEditingLabel.addStyleName(RESOURCES.styles().sourceEditingHeader());
       mainPanel.add(sourceEditingLabel);
       
-      enableCodeIndexing_ = new CheckBox("Enable R code indexing", false);
+      enableCodeIndexing_ = new CheckBox("Index R source files (for code search/navigation)", false);
       enableCodeIndexing_.setValue(initialSettings_.getEnableCodeIndexing());
       enableCodeIndexing_.addStyleName(RESOURCES.styles().enableCodeIndexing());
       mainPanel.add(enableCodeIndexing_);

@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.codesearch;
 
 import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeNavigationTarget;
@@ -28,8 +29,7 @@ class CodeSearchSuggestion implements Suggestion
 {
    public CodeSearchSuggestion(RFileItem fileItem)
    {
-      navigationTarget_ = new CodeNavigationTarget(
-                                    fileItem.getProjectRelativePath());
+      navigationTarget_ = new CodeNavigationTarget(fileItem.getPath());
       matchedString_ = fileItem.getFilename();
             
       // compute display string
@@ -42,7 +42,7 @@ class CodeSearchSuggestion implements Suggestion
                                            null);   
    }
    
-   public CodeSearchSuggestion(RSourceItem sourceItem)
+   public CodeSearchSuggestion(RSourceItem sourceItem, FileSystemItem fsContext)
    {
       // save result
       navigationTarget_ = CodeNavigationTarget.fromRSourceItem(sourceItem);
@@ -54,10 +54,27 @@ class CodeSearchSuggestion implements Suggestion
          image = RES.method();
       else if (sourceItem.getType() == RSourceItem.CLASS)
          image = RES.cls();
+      
+      // adjust context for parent context
+      String context = sourceItem.getContext();
+      if (fsContext != null)
+      {   
+         String fsContextPath = fsContext.getPath();
+         if (!fsContextPath.endsWith("/"))
+            fsContextPath = fsContextPath + "/";
+         
+         if (context.startsWith(fsContextPath) &&
+             (context.length() > fsContextPath.length()))
+         {
+            context = context.substring(fsContextPath.length());
+         }
+      }
+      
+      // create display string
       displayString_ = createDisplayString(image, 
                                            RES.styles().itemImage(),
                                            sourceItem.getFunctionName(),
-                                           sourceItem.getContext());
+                                           context);
    }
    
    public String getMatchedString()

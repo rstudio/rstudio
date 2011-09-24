@@ -26,8 +26,8 @@ public class RFileItem extends JavaScriptObject
       return this.filename;
    }-*/;
    
-   // project-relative directory
-   public final native String getProjectRelativePath() /*-{
+  
+   public final native String getPath() /*-{
       return this.path;
    }-*/;
    
