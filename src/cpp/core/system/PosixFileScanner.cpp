@@ -101,7 +101,9 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
       int res = ::lstat(path.c_str(), &st);
       if (res == -1)
       {
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+         Error error = systemError(errno, ERROR_LOCATION);
+         error.addProperty("path", path);
+         LOG_ERROR(error);
          continue;
       }
 
