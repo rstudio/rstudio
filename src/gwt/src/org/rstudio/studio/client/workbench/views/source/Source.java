@@ -426,11 +426,14 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onError(ServerError error)
                {
-                  // make sure error dialog is shown
-                  super.onError(error);
-
+                  // if we have a result callback then allow it to 
+                  // handle the error first
                   if (resultCallback != null)
-                     resultCallback.onFailure(error);
+                     if (resultCallback.onFailure(error))
+                        return;
+                  
+                  // delegate to super to show dialog
+                  super.onError(error);
                }
             });
    }
@@ -1002,8 +1005,13 @@ public class Source implements InsertSourceHandler,
                {
                   dismissProgress.execute();
                   Debug.logError(error);
+                  
+                  // if we have a result callback then give it a chance
+                  // to handle the error first
                   if (resultCallback != null)
-                     resultCallback.onFailure(error);
+                     if (resultCallback.onFailure(error))
+                        return;
+                  
                   globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
                                              "Error while opening file",
                                              error.getUserMessage());
@@ -1324,7 +1332,7 @@ public class Source implements InsertSourceHandler,
    }
    
    private void attemptSourceNavigation(final SourceNavigation navigation,
-                                        AppCommand retryCommand)
+                                        final AppCommand retryCommand)
    {
       // see if we can navigate by id
       String docId = navigation.getDocumentId();
@@ -1372,9 +1380,16 @@ public class Source implements InsertSourceHandler,
                      }
 
                      @Override
-                     public void onFailure(ServerError info)
+                     public boolean onFailure(ServerError info)
                      {
+                        // lift suspend
                         suspendSourceNavigationAdding_ = false;
+                        
+                        // try next item in history
+                        retryCommand.execute();
+                        
+                        // return true indicating we handled this error
+                        return true;
                      }
                   });
       } 

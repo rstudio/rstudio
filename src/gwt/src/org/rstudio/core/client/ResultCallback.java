@@ -19,7 +19,7 @@ package org.rstudio.core.client;
 public abstract class ResultCallback<TSuccess, TFailure>
 {
    public void onSuccess(TSuccess result) {}
-   public void onFailure(TFailure info) {}
+   public boolean onFailure(TFailure info) { return false; }
 
    public static <TSuccess, TFailure>
    ResultCallback<TSuccess, TFailure> create(final CommandWithArg<TSuccess> cmd)
