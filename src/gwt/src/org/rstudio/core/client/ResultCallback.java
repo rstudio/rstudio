@@ -16,15 +16,15 @@ package org.rstudio.core.client;
  * Provides a generic interface for handling success and/or failure of an
  * operation, especially an asynchronous one.
  */
-public abstract class ResultCallback<TSuccess>
+public abstract class ResultCallback<TSuccess, TFailure>
 {
    public void onSuccess(TSuccess result) {}
-   public void onFailure() {}
+   public void onFailure(TFailure info) {}
 
-   public static <TSuccess>
-   ResultCallback<TSuccess> create(final CommandWithArg<TSuccess> cmd)
+   public static <TSuccess, TFailure>
+   ResultCallback<TSuccess, TFailure> create(final CommandWithArg<TSuccess> cmd)
    {
-      return new ResultCallback<TSuccess>()
+      return new ResultCallback<TSuccess, TFailure>()
       {
          @Override
          public void onSuccess(TSuccess result)
