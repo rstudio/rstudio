@@ -20,18 +20,5 @@ public abstract class ResultCallback<TSuccess, TFailure>
 {
    public void onSuccess(TSuccess result) {}
    public void onFailure(TFailure info) {}
-
-   public static <TSuccess, TFailure>
-   ResultCallback<TSuccess, TFailure> create(final CommandWithArg<TSuccess> cmd)
-   {
-      return new ResultCallback<TSuccess, TFailure>()
-      {
-         @Override
-         public void onSuccess(TSuccess result)
-         {
-            if (cmd != null)
-               cmd.execute(result);
-         }
-      };
-   }
+   public void onCancelled() {}
 }
