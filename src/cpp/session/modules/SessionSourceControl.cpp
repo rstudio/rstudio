@@ -235,7 +235,7 @@ protected:
 namespace {
 
 boost::scoped_ptr<VCSImpl> s_pVcsImpl_;
-std::vector<int> s_pidsToTerminate_;
+std::vector<PidType> s_pidsToTerminate_;
 
 ShellCommand git()
 {

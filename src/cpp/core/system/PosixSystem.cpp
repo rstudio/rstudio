@@ -617,7 +617,7 @@ void abort()
 	::abort();
 }
 
-Error terminateProcess(pid_t pid)
+Error terminateProcess(PidType pid)
 {
    if (::kill(pid, SIGTERM))
       return systemError(errno, ERROR_LOCATION);

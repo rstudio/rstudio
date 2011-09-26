@@ -15,10 +15,13 @@
 
 #include <boost/format.hpp>
 
-#include "RGraphicsHandler.hpp"
-
 #include <core/system/System.hpp>
 #include <core/StringUtils.hpp>
+
+#undef TRUE
+#undef FALSE
+
+#include "RGraphicsHandler.hpp"
 
 #include <Rembedded.h>
 

@@ -619,7 +619,7 @@ Error copyMetafileToClipboard(const FilePath& path)
    return Success();
 }
 
-Error terminateProcess(pid_t pid)
+Error terminateProcess(PidType pid)
 {
    HANDLE hProc = ::OpenProcess(PROCESS_TERMINATE, false, pid);
    if (!hProc)

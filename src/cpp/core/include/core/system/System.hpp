@@ -14,6 +14,14 @@
 #ifndef CORE_SYSTEM_SYSTEM_HPP
 #define CORE_SYSTEM_SYSTEM_HPP
 
+
+#if defined(_WIN32)
+#include <windef.h>
+typedef DWORD PidType;
+#else  // UNIX
+typedef pid_t PidType;
+#endif
+
 #include <string>
 #include <vector>
 #include <map>
@@ -41,9 +49,6 @@ enum LogLevel
    kLogLevelDebug = 3
 };
 
-#ifdef _WIN32
-#include <sys/types.h>
-#endif
 
 #ifndef _WIN32
 Error closeAllFileDescriptors();
@@ -225,7 +230,7 @@ void fixupExecutablePath(FilePath* pExePath);
 
 void abort();
 
-Error terminateProcess(pid_t pid);
+Error terminateProcess(PidType pid);
    
 } // namespace system
 } // namespace core 
