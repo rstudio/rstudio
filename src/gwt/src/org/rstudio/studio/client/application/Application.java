@@ -161,6 +161,13 @@ public class Application implements ApplicationEventHandlers,
    {
       showToolbar(false, true);
    }
+   
+   @Handler
+   public void onGoToFileFunction()
+   {
+      view_.performGoToFunction();
+   }
+   
     
    public void onUnauthorized(UnauthorizedEvent event)
    {

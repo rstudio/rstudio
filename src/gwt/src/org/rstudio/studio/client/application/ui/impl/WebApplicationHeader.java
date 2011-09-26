@@ -215,6 +215,16 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       }
    }
    
+   public boolean isToolbarVisible()
+   {
+      return !projectMenuButton_.isVisible();
+   }
+   
+   public void focusGoToFunction()
+   {
+      toolbar_.focusGoToFunction();
+   }
+   
    private void showProjectMenu(boolean show)
    {
       projectMenuSeparator_.setVisible(show);

@@ -15,6 +15,8 @@ package org.rstudio.studio.client.application.ui;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -26,6 +28,7 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 
 
@@ -92,7 +95,8 @@ public class GlobalToolbar extends Toolbar
       
       addLeftSeparator();
       CodeSearch codeSearch = pCodeSearch_.get();
-      addLeftWidget(codeSearch.getSearchWidget());
+      searchWidget_ = codeSearch.getSearchWidget();
+      addLeftWidget(searchWidget_);
    }
    
    public void addProjectTools(SessionInfo sessionInfo)
@@ -108,9 +112,15 @@ public class GlobalToolbar extends Toolbar
    {
       return 27;
    }
+   
+   public void focusGoToFunction()
+   {
+      FocusHelper.setFocusDeferred((CanFocus)searchWidget_);
+   }
      
    private final Commands commands_;
    private final Provider<CodeSearch> pCodeSearch_;
+   private final Widget searchWidget_;
 
    
   

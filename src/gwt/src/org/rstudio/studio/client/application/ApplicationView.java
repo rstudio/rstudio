@@ -30,6 +30,9 @@ public interface ApplicationView
    // toolbar
    void showToolbar(boolean showToolbar);
    
+   // go to function
+   void performGoToFunction();
+   
    // application exit states
    void showApplicationQuit();
    void showApplicationSuicide(String reason);

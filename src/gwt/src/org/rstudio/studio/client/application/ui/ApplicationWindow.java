@@ -21,12 +21,15 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
+import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchDialog;
 
 @Singleton
 public class ApplicationWindow extends Composite 
@@ -36,9 +39,12 @@ public class ApplicationWindow extends Composite
 {
    @Inject
    public ApplicationWindow(ApplicationHeader applicationHeader,
-                            GlobalDisplay globalDisplay)
+                            GlobalDisplay globalDisplay,
+                            Provider<CodeSearch> pCodeSearch)
    {
       globalDisplay_ = globalDisplay;
+      pCodeSearch_ = pCodeSearch;
+      
       // occupy full client area of the window
       Window.enableScrolling(false);
       Window.setMargin("0px");
@@ -66,6 +72,18 @@ public class ApplicationWindow extends Composite
       applicationPanel_.forceLayout();  
    }
    
+   public void performGoToFunction()
+   {
+      if (applicationHeader_.isToolbarVisible())
+      {
+         applicationHeader_.focusGoToFunction();
+      }
+      else
+      {
+         new CodeSearchDialog(pCodeSearch_).showModal();  
+      }
+   }
+      
    public void showApplicationAgreement(String title,
                                         String contents,
                                         Operation doNotAcceptOperation,
@@ -273,4 +291,5 @@ public class ApplicationWindow extends Composite
    private WarningBar warningBar_;
    private int workbenchBottom_ = COMPONENT_SPACING;
    private final GlobalDisplay globalDisplay_;
+   private final Provider<CodeSearch> pCodeSearch_;
 }

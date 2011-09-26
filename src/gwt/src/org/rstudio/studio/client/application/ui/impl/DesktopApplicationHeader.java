@@ -121,6 +121,16 @@ public class DesktopApplicationHeader implements ApplicationHeader
    {
       toolbar_.setVisible(showToolbar);
    }
+   
+   public boolean isToolbarVisible()
+   {
+      return toolbar_.isVisible();
+   }
+   
+   public void focusGoToFunction()
+   {
+      toolbar_.focusGoToFunction();
+   }
 
    @Handler
    void onUndoDummy()
