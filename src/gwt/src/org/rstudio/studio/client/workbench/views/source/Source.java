@@ -917,7 +917,8 @@ public class Source implements InsertSourceHandler,
 
       if (file.getLength() > target.getFileSizeLimit())
       {
-         resultCallback.onFailure(null);
+         if (resultCallback != null)
+            resultCallback.onFailure(null);
          showFileTooLargeWarning(file, target.getFileSizeLimit());
       }
       else if (file.getLength() > target.getLargeFileSize())
