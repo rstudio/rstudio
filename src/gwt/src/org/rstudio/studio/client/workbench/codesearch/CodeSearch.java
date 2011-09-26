@@ -32,6 +32,8 @@ import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -48,6 +50,7 @@ public class CodeSearch
    {
       String getCueText();
       void onCompleted();
+      void onCancel();
    }
    
    
@@ -103,6 +106,17 @@ public class CodeSearch
                   fileTypeRegistry.editFile(srcItem, pos);
                }
             });
+         }
+      });
+      
+      searchDisplay.addCloseHandler(new CloseHandler<SearchDisplay>() {
+         @Override
+         public void onClose(CloseEvent<SearchDisplay> event)
+         {
+            display_.getSearchDisplay().clear();
+            
+            if (observer_ != null)
+              observer_.onCancel();
          }
       });
      

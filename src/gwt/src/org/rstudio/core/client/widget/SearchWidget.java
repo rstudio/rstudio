@@ -16,6 +16,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -26,7 +28,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
-
 
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -99,7 +100,7 @@ public class SearchWidget extends Composite implements SearchDisplay
 
       suggestBox_.setStylePrimaryName(styles.searchBox());
       suggestBox_.setAutoSelectEnabled(false) ;
-      suggestBox_.addKeyDownHandler(new KeyDownHandler() {
+      addKeyDownHandler(new KeyDownHandler() {
          public void onKeyDown(KeyDownEvent event)
          {
             switch (event.getNativeKeyCode())
@@ -116,14 +117,25 @@ public class SearchWidget extends Composite implements SearchDisplay
             case KeyCodes.KEY_ESCAPE:
                
                event.preventDefault();
+               event.stopPropagation();
                
+               // defer the handling of ESC so that it doesn't end up
+               // inside other UI (the editor) if/when the parent search
+               // ui is dismissed
                Scheduler.get().scheduleDeferred(new ScheduledCommand() {
 
                   @Override
                   public void execute()
                   {
-                     getSuggestionDisplay().hideSuggestions();
-                     setText("", true);
+                     if (getSuggestionDisplay().isSuggestionListShowing())
+                     {  
+                        getSuggestionDisplay().hideSuggestions();
+                        setText("", true);
+                     }
+                     else
+                     {
+                        CloseEvent.fire(SearchWidget.this, SearchWidget.this);
+                     }
                   }   
                });
                    
@@ -209,6 +221,12 @@ public class SearchWidget extends Composite implements SearchDisplay
                            SelectionHandler<SuggestOracle.Suggestion> handler)
    {
       return suggestBox_.addSelectionHandler(handler);
+   }
+   
+   public HandlerRegistration addCloseHandler(
+                                          CloseHandler<SearchDisplay> handler)
+   {
+      return addHandler(handler, CloseEvent.getType());
    }
    
    @Override

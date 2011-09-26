@@ -18,7 +18,6 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -82,24 +81,23 @@ public class CodeSearchDialog extends ModalDialogBase
    }
    
    @Override
-   protected void onEscapeKeyDown(Event.NativePreviewEvent event)
+   public void onCompleted()
    {
-      // close dialog on ESC -- delay so that the ESC key doesn't 
-      // end up in the editor
+      closeDialog();  
+   }
+   
+   @Override
+   public void onCancel()
+   {
+      // delay to prevent ESC key from ever getting into the editor
       Scheduler.get().scheduleDeferred(new ScheduledCommand() {
          @Override
          public void execute()
          {
-            closeDialog();
-         }
+            closeDialog(); 
+         }      
       });
-     
-   }
-   
-   @Override
-   public void onCompleted()
-   {
-      closeDialog();  
+    
    }
    
    @Override

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.FocusContext;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -95,6 +96,26 @@ public class GlobalToolbar extends Toolbar
       
       addLeftSeparator();
       CodeSearch codeSearch = pCodeSearch_.get();
+      codeSearch.setObserver(new CodeSearch.Observer() {     
+         @Override
+         public void onCancel()
+         {
+            codeSearchFocusContext_.restore();     
+         }
+         
+         @Override
+         public void onCompleted()
+         {   
+            codeSearchFocusContext_.clear();
+         }
+         
+         @Override
+         public String getCueText()
+         {
+            return null;
+         }
+      });
+      
       searchWidget_ = codeSearch.getSearchWidget();
       addLeftWidget(searchWidget_);
    }
@@ -115,13 +136,13 @@ public class GlobalToolbar extends Toolbar
    
    public void focusGoToFunction()
    {
+      codeSearchFocusContext_.record();
       FocusHelper.setFocusDeferred((CanFocus)searchWidget_);
    }
      
    private final Commands commands_;
    private final Provider<CodeSearch> pCodeSearch_;
    private final Widget searchWidget_;
+   private final FocusContext codeSearchFocusContext_ = new FocusContext();
 
-   
-  
 }

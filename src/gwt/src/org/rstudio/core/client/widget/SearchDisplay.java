@@ -18,6 +18,7 @@ import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.event.dom.client.HasBlurHandlers;
 import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
+import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.user.client.ui.HasText;
@@ -27,6 +28,7 @@ public interface SearchDisplay extends
                               HasValueChangeHandlers<String>,
                               HasSelectionCommitHandlers<String>,
                               HasSelectionHandlers<SuggestOracle.Suggestion>,
+                              HasCloseHandlers<SearchDisplay>,
                               HasFocusHandlers,
                               HasBlurHandlers,
                               HasText,
