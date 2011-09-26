@@ -1352,32 +1352,10 @@ public class Source implements InsertSourceHandler,
             }
          }
       }
-      
-      // otherwise we need to re-open the file
-      else if (navigation.getPath() != null)
+      else
       {
-         suspendSourceNavigationAdding_ = true;
-         openFile(FileSystemItem.createFile(navigation.getPath()),
-                  new ResultCallback<EditingTarget>() {
-                     public void onSuccess(EditingTarget target)
-                     {
-                        try
-                        {
-                           target.restorePosition(navigation.getPosition());
-                        }
-                        finally
-                        {
-                           suspendSourceNavigationAdding_ = false;
-                        }
-                     }
-
-                     @Override
-                     public void onFailure()
-                     {
-                        suspendSourceNavigationAdding_ = false;
-                     }
-                  });
-      } 
+         retryCommand.execute();
+      }
    }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
