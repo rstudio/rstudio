@@ -78,12 +78,14 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="sourceNavigateBack"/>
          <cmd refid="sourceNavigateForward"/>
          <separator/>
-         <cmd refid="jumpToFunction"/>
          <cmd refid="goToFunctionDefinition"/>
+         <cmd refid="jumpToFunction"/>
          <separator/>
          <cmd refid="extractFunction"/>
          <cmd refid="commentUncomment"/>
          <cmd refid="reindent"/>
+         <separator/>
+         <cmd refid="complete"/>
          <separator/>
          <menu label="Run Code">
             <cmd refid="executeCode"/>
