@@ -406,7 +406,7 @@ public class Source implements InsertSourceHandler,
    }
 
    private void newDoc(EditableFileType fileType,
-                       final ResultCallback<EditingTarget> resultCallback)
+                       final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       ensureVisible(true);
       server_.newDocument(
@@ -430,7 +430,7 @@ public class Source implements InsertSourceHandler,
                   super.onError(error);
 
                   if (resultCallback != null)
-                     resultCallback.onFailure();
+                     resultCallback.onFailure(error);
                }
             });
    }
@@ -876,7 +876,7 @@ public class Source implements InsertSourceHandler,
                          final CommandWithArg<EditingTarget> executeOnSuccess)
    {
       openFile(file, fileType,
-               ResultCallback.<EditingTarget>create(executeOnSuccess));
+               ResultCallback.<EditingTarget, ServerError>create(executeOnSuccess));
    }
 
    // top-level wrapper for opening files. takes care of:
@@ -888,7 +888,7 @@ public class Source implements InsertSourceHandler,
    //    via the call to the lower level openFile method
    private void openFile(final FileSystemItem file,
                          final TextFileType fileType,
-                         final ResultCallback<EditingTarget> resultCallback)
+                         final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       ensureVisible(true);
 
@@ -918,7 +918,7 @@ public class Source implements InsertSourceHandler,
       if (file.getLength() > target.getFileSizeLimit())
       {
          if (resultCallback != null)
-            resultCallback.onFailure();
+            resultCallback.onFailure(null);
          showFileTooLargeWarning(file, target.getFileSizeLimit());
       }
       else if (file.getLength() > target.getLargeFileSize())
@@ -933,7 +933,7 @@ public class Source implements InsertSourceHandler,
             {
                // user (wisely) cancelled
                if (resultCallback != null)
-                  resultCallback.onFailure();
+                  resultCallback.onFailure(null);
             }
          });
       }
@@ -946,7 +946,7 @@ public class Source implements InsertSourceHandler,
    // variation of top-level file opening wrapper which automatically 
    // deduces the file type
    private void openFile(FileSystemItem file,
-                         ResultCallback<EditingTarget> callback)
+                         ResultCallback<EditingTarget, ServerError> callback)
    {
       TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);
       openFile(file, fileType, callback);
@@ -986,7 +986,7 @@ public class Source implements InsertSourceHandler,
    private void openFileFromServer(
          final FileSystemItem file,
          final TextFileType fileType,
-         final ResultCallback<EditingTarget> resultCallback)
+         final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       final Command dismissProgress = globalDisplay_.showProgress(
                                                          "Opening file...");
@@ -1003,7 +1003,7 @@ public class Source implements InsertSourceHandler,
                   dismissProgress.execute();
                   Debug.logError(error);
                   if (resultCallback != null)
-                     resultCallback.onFailure();
+                     resultCallback.onFailure(error);
                   globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
                                              "Error while opening file",
                                              error.getUserMessage());
@@ -1115,7 +1115,7 @@ public class Source implements InsertSourceHandler,
       else
       {
          newDoc(FileTypeRegistry.R,
-                new ResultCallback<EditingTarget>()
+                new ResultCallback<EditingTarget, ServerError>()
          {
             public void onSuccess(EditingTarget arg)
             {
@@ -1358,7 +1358,7 @@ public class Source implements InsertSourceHandler,
       {
          suspendSourceNavigationAdding_ = true;
          openFile(FileSystemItem.createFile(navigation.getPath()),
-                  new ResultCallback<EditingTarget>() {
+                  new ResultCallback<EditingTarget, ServerError>() {
                      public void onSuccess(EditingTarget target)
                      {
                         try
@@ -1372,7 +1372,7 @@ public class Source implements InsertSourceHandler,
                      }
 
                      @Override
-                     public void onFailure()
+                     public void onFailure(ServerError info)
                      {
                         suspendSourceNavigationAdding_ = false;
                      }
