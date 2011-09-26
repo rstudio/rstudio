@@ -13,4 +13,4 @@
 #
 #
 
-$(dirname $0)/rpostback pdfviewer $1 
+$(dirname $0)/../rpostback pdfviewer $1

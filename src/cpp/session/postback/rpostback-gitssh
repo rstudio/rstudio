@@ -15,7 +15,7 @@
 
 set -e
 
-SSH_AGENT_SCRIPT=`($(dirname $0)/rpostback gitssh) 2> /dev/null`
+SSH_AGENT_SCRIPT=`($(dirname $0)/../rpostback gitssh) 2> /dev/null`
 eval "$SSH_AGENT_SCRIPT" &> /dev/null
 
 unamestr=`uname`

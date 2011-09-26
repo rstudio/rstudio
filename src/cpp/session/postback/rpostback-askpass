@@ -13,4 +13,4 @@
 #
 #
 
-$(dirname $0)/rpostback askpass
+$(dirname $0)/../rpostback askpass

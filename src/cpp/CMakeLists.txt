@@ -211,9 +211,13 @@ else()
    endif()
 
    add_subdirectory(session/postback)
-   configure_file(session/postback/rpostback-pdfviewer session/postback)
-   configure_file(session/postback/rpostback-gitssh session/postback)
-   configure_file(session/postback/rpostback-askpass session/postback)
+   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}session/postback/postback)
+   configure_file(session/postback/rpostback-pdfviewer
+                  session/postback/postback/rpostback-pdfviewer)
+   configure_file(session/postback/rpostback-gitssh
+                  session/postback/postback/rpostback-gitssh )
+   configure_file(session/postback/rpostback-askpass
+                  session/postback/postback/rpostback-askpass)
 
 endif()
 
