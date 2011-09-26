@@ -150,6 +150,9 @@ public class Shell implements ConsoleInputHandler,
                                           null) ;
       addKeyDownPreviewHandler(completionManager) ;
       addKeyPressPreviewHandler(completionManager) ;
+      
+      // fake keyboard shortcut for completion
+      commands.complete().setShortcut(new KeyboardShortcut(KeyCodes.KEY_TAB));
 
       addKeyDownPreviewHandler(new HistoryCompletionManager(
             view_.getInputEditorDisplay(), server));
@@ -200,6 +203,12 @@ public class Shell implements ConsoleInputHandler,
    public Display getDisplay()
    {
       return view_ ;
+   }
+   
+   @Handler
+   void onComplete()
+   {
+      // fake command which allows us to advertise the keyboard shortcut
    }
 
    @Handler
