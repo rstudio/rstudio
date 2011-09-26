@@ -18,15 +18,9 @@
 
 #include <core/Error.hpp>
 
-#if defined(_WIN32)
-#include <windef.h>
-#include <winnt.h>
-typedef SID    UidType;
-typedef SID    GidType;
-#else  // UNIX
+// typdefs (in case we need indirection for porting)
 typedef uid_t  UidType;
 typedef gid_t  GidType;
-#endif
 
 namespace server {
 namespace util {

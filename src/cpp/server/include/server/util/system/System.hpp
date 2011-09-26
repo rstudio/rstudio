@@ -18,16 +18,11 @@
 
 #include <core/system/System.hpp>
 
-#if defined(_WIN32)
-#include <windef.h>
-#include <winnt.h>
-typedef HANDLE PidType;
-typedef SIZE_T RLimitType;
-#else  // UNIX
+// typedefs (in case we need indirection on these for porting)
 #include <sys/resource.h>
 typedef pid_t PidType;
 typedef rlim_t RLimitType;
-#endif
+
 
 namespace core {
    class Error;
