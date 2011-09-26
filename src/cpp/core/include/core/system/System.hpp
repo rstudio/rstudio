@@ -41,6 +41,10 @@ enum LogLevel
    kLogLevelDebug = 3
 };
 
+#ifdef _WIN32
+#include <sys/types.h>
+#endif
+
 #ifndef _WIN32
 Error closeAllFileDescriptors();
 Error closeNonStdFileDescriptors();
