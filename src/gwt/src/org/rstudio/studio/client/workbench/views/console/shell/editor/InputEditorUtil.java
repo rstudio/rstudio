@@ -66,7 +66,7 @@ public class InputEditorUtil
          line = editor.getText();
          pos = editor.getSelection().getStart().getPosition();
          // Move pos to the right until we get to a break
-         for (; pos < line.length() && Character.isLetterOrDigit(line.charAt(pos)); pos++)
+         for (; pos < line.length() && isRIdentifierChar(line.charAt(pos)); pos++)
          {
          }
       }
@@ -77,6 +77,11 @@ public class InputEditorUtil
       }
       
       return new InputEditorLineWithCursorPosition(line, pos);
+   }
+   
+   private static boolean isRIdentifierChar(char ch)
+   {
+      return Character.isLetterOrDigit(ch) || ch == '.' || ch == '_';
    }
 
    private static String lastYanked;
