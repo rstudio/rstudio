@@ -210,14 +210,18 @@ else()
 
    endif()
 
-   add_subdirectory(session/postback)
-   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}session/postback/postback)
-   configure_file(session/postback/rpostback-pdfviewer
-                  session/postback/postback/rpostback-pdfviewer)
-   configure_file(session/postback/rpostback-gitssh
-                  session/postback/postback/rpostback-gitssh )
-   configure_file(session/postback/rpostback-askpass
-                  session/postback/postback/rpostback-askpass)
+   # configure postback scripts for development mode (but not for win64
+   # otherwise they get copied as part of the install)
+   if(NOT RSTUDIO_SESSION_WIN64)
+      add_subdirectory(session/postback)
+      file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}session/postback/postback)
+      configure_file(session/postback/rpostback-pdfviewer
+                     session/postback/postback/rpostback-pdfviewer)
+      configure_file(session/postback/rpostback-gitssh
+                     session/postback/postback/rpostback-gitssh )
+      configure_file(session/postback/rpostback-askpass
+                     session/postback/postback/rpostback-askpass)
+   endif()
 
 endif()
 
