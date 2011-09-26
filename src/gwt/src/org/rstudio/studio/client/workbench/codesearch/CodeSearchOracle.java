@@ -37,7 +37,7 @@ public class CodeSearchOracle extends SuggestOracle
                            WorkbenchContext workbenchContext)
    {
       server_ = server;
-      fsContext_ = workbenchContext.getActiveProjectDir();
+      workbenchContext_ = workbenchContext;
    }
    
    
@@ -186,12 +186,13 @@ public class CodeSearchOracle extends SuggestOracle
                
                
                // src results
+               FileSystemItem context = workbenchContext_.getActiveProjectDir();
                ArrayList<RSourceItem> srcResults = 
                                     response.getRSourceItems().toArrayList();
                for (int i = 0; i<srcResults.size(); i++)
                {
                   suggestions.add(
-                     new CodeSearchSuggestion(srcResults.get(i), fsContext_));    
+                     new CodeSearchSuggestion(srcResults.get(i), context));    
                }
                   
                // cache suggestions
@@ -234,7 +235,7 @@ public class CodeSearchOracle extends SuggestOracle
    private final Invalidation searchInvalidation_ = new Invalidation();
    
    private final CodeSearchServerOperations server_ ;
-   private final FileSystemItem fsContext_;
+   private final WorkbenchContext workbenchContext_;
    private final CodeSearchCommand codeSearch_ = new CodeSearchCommand();
    
    private final ArrayList<SearchResult> resultCache_ = 
