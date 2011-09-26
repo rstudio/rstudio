@@ -815,21 +815,28 @@ public class Source implements InsertSourceHandler,
                      new CommandWithArg<EditingTarget>() {
 
                @Override
-               public void execute(EditingTarget target)
+               public void execute(final EditingTarget target)
                {
-                  FilePosition position = event.getPosition();
+                  final FilePosition position = event.getPosition();
                   if (position != null)
                   {
                      // if we had a previous editing target then ask it
                      // to record its navigation position
                      if (previousTarget != null)
                         previousTarget.recordCurrentNavigationPosition();
-                     
-                     // now navigate to the new position
-                     target.navigateToPosition(
-                           SourcePosition.create(position.getLine() - 1,
-                                                 position.getColumn() - 1),
-                           false);
+
+                     Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                     {
+                        @Override
+                        public void execute()
+                        {
+                           // now navigate to the new position
+                           target.navigateToPosition(
+                                 SourcePosition.create(position.getLine() - 1,
+                                                       position.getColumn() - 1),
+                                 false);
+                        }
+                     });
                   }
                }
 
@@ -1365,16 +1372,23 @@ public class Source implements InsertSourceHandler,
          openFile(file,
                   fileType,
                   new ResultCallback<EditingTarget, ServerError>() {
-                     public void onSuccess(EditingTarget target)
+                     public void onSuccess(final EditingTarget target)
                      {
-                        try
+                        Scheduler.get().scheduleDeferred(new ScheduledCommand()
                         {
-                           target.restorePosition(navigation.getPosition());
-                        }
-                        finally
-                        {
-                           suspendSourceNavigationAdding_ = false;
-                        }
+                           @Override
+                           public void execute()
+                           {
+                              try
+                              {
+                                 target.restorePosition(navigation.getPosition());
+                              }
+                              finally
+                              {
+                                 suspendSourceNavigationAdding_ = false;
+                              }
+                           }
+                        });
                      }
 
                      @Override
