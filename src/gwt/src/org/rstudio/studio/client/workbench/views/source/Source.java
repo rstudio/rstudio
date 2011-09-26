@@ -426,6 +426,9 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onError(ServerError error)
                {
+                  // make sure error dialog is shown
+                  super.onError(error);
+
                   if (resultCallback != null)
                      resultCallback.onFailure(error);
                }
