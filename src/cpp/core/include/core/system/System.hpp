@@ -19,6 +19,7 @@
 #include <windef.h>
 typedef DWORD PidType;
 #else  // UNIX
+#include <sys/types.h>
 typedef pid_t PidType;
 #endif
 
