@@ -35,6 +35,8 @@ typedef pid_t PidType;
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 
+#include <core/system/Types.hpp>
+
 namespace core {
 
 class FileInfo;
@@ -194,9 +196,6 @@ FilePath userHomePath(std::string envOverride = std::string());
 FilePath userSettingsPath(const FilePath& userHomeDirectory,
                           const std::string& appName);
 bool currentUserIsPrivilleged(unsigned int minimumUserId);
-   
-typedef std::pair<std::string,std::string> Option;
-typedef std::vector<Option> Options;
 
 // log
 void log(LogLevel level, const std::string& message) ;

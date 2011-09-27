@@ -17,10 +17,13 @@
 
 #include <vector>
 
+#include <boost/optional.hpp>
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+
+#include <core/system/Types.hpp>
 
 namespace core {
 
@@ -42,6 +45,12 @@ struct ProcessOptions
    {
    }
 
+   // environment variables to set for the child process
+   // if you want to simply merge in some additional environment
+   // variables you can use the helper functions in Environment.hpp
+   // to derive the desired environment
+   boost::optional<Options> environment;
+
    // terminate should also terminate all children owned by the process
    // NOTE: currently only supported on posix -- in the posix case this
    // results in a call to ::setpgid(0,0) to create a new process group
@@ -51,12 +60,12 @@ struct ProcessOptions
    // CreateJobObject/CREATE_BREAKAWAY_FROM_JOB to get the same effect
    bool terminateChildren;
 
+   // Calls ::setsid after fork (NOTE: no effect on Windows)
+   bool detachSession;
+
    // function to run within the child process immediately after the fork
    // NOTE: only supported on posix as there is no fork on Win32
    boost::function<void()> onAfterFork;
-
-   // Calls ::setsid after fork (NOTE: no effect on Windows)
-   bool detachSession;
 };
 
 // Struct for returning output and exit status from a process

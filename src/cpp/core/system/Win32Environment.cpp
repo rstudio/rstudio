@@ -25,6 +25,12 @@
 namespace core {
 namespace system {
 
+
+Options environment()
+{
+   return Options();
+}
+
 // Value returned is UTF-8 encoded
 std::string getenv(const std::string& name)
 {

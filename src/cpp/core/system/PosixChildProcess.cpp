@@ -314,9 +314,28 @@ Error ChildProcess::run()
       args.push_back(exe_);
       args.insert(args.end(), args_.begin(), args_.end());
       using core::system::ProcessArgs;
-
       ProcessArgs* pProcessArgs = new ProcessArgs(args);
-      ::execv(exe_.c_str(), pProcessArgs->args()) ;
+
+      if (options_.environment)
+      {
+         // build env (on heap, see comment above)
+         std::vector<std::string> env;
+         const Options& options = options_.environment.get();
+         for (Options::const_iterator
+                  it = options.begin(); it != options.end(); ++it)
+         {
+            env.push_back(it->first + "=" + it->second);
+         }
+         ProcessArgs* pEnvironment = new ProcessArgs(env);
+
+         // execute
+         ::execve(exe_.c_str(), pProcessArgs->args(), pEnvironment->args());
+      }
+      else
+      {
+         // execute
+         ::execv(exe_.c_str(), pProcessArgs->args()) ;
+      }
 
       // in the normal case control should never return from execv (it starts
       // anew at main of the process pointed to by path). therefore, if we get
