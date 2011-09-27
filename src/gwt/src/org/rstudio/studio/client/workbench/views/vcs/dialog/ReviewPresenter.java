@@ -420,11 +420,11 @@ public class ReviewPresenter implements IsWidget
          if ((item.getStatus().charAt(0) == ' ' || item.getStatus().charAt(0) == '?')
              && view_.getStagedCheckBox().getValue())
          {
-            view_.getUnstagedCheckBox().setValue(true, false);
+            view_.getUnstagedCheckBox().setValue(true, true);
          }
          else if (item.getStatus().charAt(1) == ' ' && view_.getUnstagedCheckBox().getValue())
          {
-            view_.getStagedCheckBox().setValue(true, false);
+            view_.getStagedCheckBox().setValue(true, true);
          }
       }
 
