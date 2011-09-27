@@ -22,6 +22,7 @@
 #include <boost/bind.hpp>
 
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #include "DesktopRVersion.hpp"
 

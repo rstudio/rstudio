@@ -17,6 +17,7 @@
 #include <QtAlgorithms>
 
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/RegistryKey.hpp>
 
 #include "DesktopChooseRHome.hpp"

@@ -20,6 +20,7 @@
 #include <QDesktopServices>
 
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #include "DesktopDetectRHome.hpp"
 #include "DesktopRVersion.hpp"
