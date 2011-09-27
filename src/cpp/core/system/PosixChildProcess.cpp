@@ -257,21 +257,28 @@ Error ChildProcess::run()
       // strange error conditions related to global c++ objects being
       // torn down in a non-standard sequence).
 
-      if (options_.detachSession)
-         ::setsid();
-
       // check for an onAfterFork function
        if (options_.onAfterFork)
           options_.onAfterFork();
 
-      // if options.terminateChildren is requested then obtain a new process
-      // group (using our own process id). this enables terminate to
-      // specify -pid to kill which will kill this process and all of its
-      // children. note that another side-effect is that this process
-      // will not automatically die with its parent, so the parent
-      // may want to kill all children from the processSupervisor on exit
-      if (options_.terminateChildren)
+      // If options.detachSession is requested then separate
+      if (options_.detachSession)
       {
+         if (::setsid() == -1)
+         {
+            LOG_ERROR(systemError(errno, ERROR_LOCATION));
+         }
+      }
+      else if (options_.terminateChildren)
+      {
+         // No need to call ::setpgid(0,0) if ::setsid() was already called
+
+         // if options.terminateChildren is requested then obtain a new process
+         // group (using our own process id). this enables terminate to
+         // specify -pid to kill which will kill this process and all of its
+         // children. note that another side-effect is that this process
+         // will not automatically die with its parent, so the parent
+         // may want to kill all children from the processSupervisor on exit
          if (::setpgid(0,0) == -1)
          {
             LOG_ERROR(systemError(errno, ERROR_LOCATION));
