@@ -11,6 +11,9 @@
  *
  */
 
+// http://msdn.microsoft.com/en-us/library/windows/desktop/ms683187(v=vs.85).aspx
+// http://msdn.microsoft.com/en-us/library/windows/desktop/ms682009(v=vs.85).aspx
+
 #include <core/system/Environment.hpp>
 
 #include <windows.h>
