@@ -53,6 +53,8 @@ public class VCS extends BasePresenter implements IsWidget
    {
       void setItems(ArrayList<StatusAndPath> items);
       ArrayList<String> getSelectedPaths();
+
+      void showProgress();
    }
 
    @Inject
@@ -75,6 +77,7 @@ public class VCS extends BasePresenter implements IsWidget
 
       commandBinder.bind(commands, this);
 
+      view_.setProgress(true);
       vcsState_.addVcsRefreshHandler(new VcsRefreshHandler()
       {
          @Override
@@ -178,6 +181,7 @@ public class VCS extends BasePresenter implements IsWidget
    @Handler
    void onVcsRefresh()
    {
+      view_.showProgress();
       vcsState_.refresh();
    }
 

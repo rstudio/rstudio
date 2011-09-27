@@ -83,6 +83,7 @@ public class VCSPane extends WorkbenchPane implements Display
    @Override
    public void setItems(ArrayList<StatusAndPath> items)
    {
+      this.setProgress(false);
       table_.setItems(items);
    }
 
@@ -90,6 +91,12 @@ public class VCSPane extends WorkbenchPane implements Display
    public ArrayList<String> getSelectedPaths()
    {
       return table_.getSelectedPaths();
+   }
+
+   @Override
+   public void showProgress()
+   {
+      this.setProgress(true);
    }
 
    private final Commands commands_;
