@@ -60,6 +60,12 @@ void unsetenv(const std::string& name, Options* pEnvironment);
 void addToPath(const std::string& filePath, Options* pEnvironment);
 
 
+/****************************************************************
+   Utility functions
+*****************************************************************/
+
+bool parseEnvVar(const std::string envVar, Option* pEnvVar);
+
 } // namespace system
 } // namespace core
 

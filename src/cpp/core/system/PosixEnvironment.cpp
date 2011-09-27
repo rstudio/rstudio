@@ -25,16 +25,9 @@ Options environment()
    Options options;
    for (char **env = environ; *env; ++env)
    {
-      std::string envVar(*env);
-      std::string::size_type pos = envVar.find("=") ;
-      if ( pos != std::string::npos )
-      {
-         std::string key = envVar.substr(0, pos) ;
-         std::string value;
-         if ( (pos + 1) < envVar.size() )
-            value = envVar.substr(pos + 1) ;
-         options.push_back(std::make_pair(key,value));
-      }
+      Option envVar;
+      if (parseEnvVar(std::string(*env), &envVar))
+         options.push_back(envVar);
    }
 
    return options;

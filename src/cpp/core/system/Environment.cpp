@@ -72,6 +72,23 @@ void addToPath(const std::string& filePath, Options* pEnvironment)
    setenv("PATH", path, pEnvironment);
 }
 
+bool parseEnvVar(const std::string envVar, Option* pEnvVar)
+{
+   std::string::size_type pos = envVar.find("=") ;
+   if ( pos != std::string::npos )
+   {
+      std::string key = envVar.substr(0, pos) ;
+      std::string value;
+      if ( (pos + 1) < envVar.size() )
+         value = envVar.substr(pos + 1) ;
+      *pEnvVar = std::make_pair(key,value);
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
 
 } // namespace system
 } // namespace core
