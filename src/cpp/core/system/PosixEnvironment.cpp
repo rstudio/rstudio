@@ -15,10 +15,21 @@
 
 #include <stdlib.h>
 
+#include <boost/algorithm/string/predicate.hpp>
+
 extern char **environ;
 
 namespace core {
 namespace system {
+
+namespace impl {
+
+bool optionIsNamed(const Option& option, const std::string& name)
+{
+   return boost::algorithm::equals(option.first, name);
+}
+
+} // namespace impl
 
 Options environment()
 {

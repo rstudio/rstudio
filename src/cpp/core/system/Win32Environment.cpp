@@ -11,8 +11,6 @@
  *
  */
 
-// http://msdn.microsoft.com/en-us/library/windows/desktop/ms683187(v=vs.85).aspx
-// http://msdn.microsoft.com/en-us/library/windows/desktop/ms682009(v=vs.85).aspx
 
 #include <core/system/Environment.hpp>
 
@@ -20,15 +18,63 @@
 
 #include <vector>
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/StringUtils.hpp>
 
 namespace core {
 namespace system {
 
+namespace impl {
+
+bool optionIsNamed(const Option& option, const std::string& name)
+{
+   return boost::algorithm::iequals(option.first, name);
+}
+
+} // namespace impl
+
 
 Options environment()
 {
-   return Options();
+   // environment variables to return
+   Options env;
+
+   // get all environment strings (as unicode)
+   LPWSTR lpEnv = ::GetEnvironmentStringsW();
+   if (lpEnv == NULL)
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return env;
+   }
+
+   // iterate over them
+   LPWSTR lpszEnvVar = NULL;
+   for (lpszEnvVar = lpEnv; *lpszEnvVar; lpszEnvVar++)
+   {
+      // get the variable
+      std::wstring envVarWide;
+      while (*lpszEnvVar)
+      {
+         wchar_t ch = *lpszEnvVar;
+         envVarWide.append(1, ch);
+         lpszEnvVar++;
+      }
+
+      // convert to utf8 and parse
+      Option envVar;
+      if (parseEnvVar(string_utils::wideToUtf8(envVarWide), &envVar))
+         env.push_back(envVar);
+   }
+
+
+   // free environment strings
+   if (!::FreeEnvironmentStringsW(lpEnv))
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+
+
+   // return environment
+   return env;
 }
 
 // Value returned is UTF-8 encoded

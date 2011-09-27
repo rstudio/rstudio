@@ -23,11 +23,6 @@ namespace system {
 typedef std::pair<std::string,std::string> Option;
 typedef std::vector<Option> Options;
 
-inline bool optionIsNamed(const Option& option, const std::string& name)
-{
-   return option.first == name;
-}
-
 } // namespace system
 } // namespace stypes
 

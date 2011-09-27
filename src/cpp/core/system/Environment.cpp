@@ -26,13 +26,20 @@
 namespace core {
 namespace system {
 
+namespace impl {
+
+// platform-specific name matching (Win32 is case-insensitive)
+bool optionIsNamed(const Option& option, const std::string& name);
+
+} // namespace impl
+
 // get an environment variable within an Options structure
-std::string getenv(const std::string& name, const Options& environment)
+std::string getenv(const Options& environment, const std::string& name)
 {
    Options::const_iterator it = std::find_if(
                                  environment.begin(),
                                  environment.end(),
-                                 boost::bind(optionIsNamed, _1, name));
+                                 boost::bind(impl::optionIsNamed, _1, name));
 
    if (it != environment.end())
       return it->second;
@@ -42,14 +49,14 @@ std::string getenv(const std::string& name, const Options& environment)
 
 // set an environment variable within an Options structure (replaces
 // any existing value)
-void setenv(const std::string& name,
-            const std::string& value,
-            Options* pEnvironment)
+void setenv(Options* pEnvironment,
+            const std::string& name,
+            const std::string& value)
 {
    Options::iterator it = std::find_if(
                                  pEnvironment->begin(),
                                  pEnvironment->end(),
-                                 boost::bind(optionIsNamed, _1, name));
+                                 boost::bind(impl::optionIsNamed, _1, name));
    if (it != pEnvironment->end())
       *it = std::make_pair(name, value);
    else
@@ -57,19 +64,22 @@ void setenv(const std::string& name,
 }
 
 // remove an enviroment variable from an Options structure
-void unsetenv(const std::string& name, Options* pEnvironment)
+void unsetenv(Options* pEnvironment, const std::string& name)
 {
    pEnvironment->erase(std::remove_if(pEnvironment->begin(),
                                       pEnvironment->end(),
-                                      boost::bind(optionIsNamed, _1, name)));
+                                      boost::bind(impl::optionIsNamed,
+                                                  _1,
+                                                  name)));
 }
 
 // add to the PATH within an Options struture
-void addToPath(const std::string& filePath, Options* pEnvironment)
+void addToPath(Options* pEnvironment,
+               const std::string& filePath)
 {
-   std::string path = getenv("PATH", *pEnvironment);
+   std::string path = getenv(*pEnvironment, "PATH");
    path = path + kPathSeparator + filePath;
-   setenv("PATH", path, pEnvironment);
+   setenv(pEnvironment, "PATH", path);
 }
 
 bool parseEnvVar(const std::string envVar, Option* pEnvVar)

@@ -21,6 +21,9 @@
 namespace core {
 namespace system {
 
+// NOTE: all environment variables are UTF8-encoded
+
+
 /****************************************************************
    Direct manipulation of global environment
 *****************************************************************/
@@ -38,7 +41,7 @@ void unsetenv(const std::string& name);
 Options environment();
 
 // get an environment variable within an Options structure
-std::string getenv(const std::string& name, const Options& environment);
+std::string getenv(const Options& environment, const std::string& name);
 
 
 /****************************************************************
@@ -49,15 +52,17 @@ std::string getenv(const std::string& name, const Options& environment);
 
 // set an environment variable within an Options structure (replaces
 // any existing value)
-void setenv(const std::string& name,
-            const std::string& value,
-            Options* pEnvironment);
+void setenv(Options* pEnvironment,
+            const std::string& name,
+            const std::string& value);
 
 // remove an enviroment variable from an Options structure
-void unsetenv(const std::string& name, Options* pEnvironment);
+void unsetenv(Options* pEnvironment,
+              const std::string& name);
 
 // add to the PATH within an Options struture
-void addToPath(const std::string& filePath, Options* pEnvironment);
+void addToPath(Options* pEnvironment,
+               const std::string& filePath);
 
 
 /****************************************************************

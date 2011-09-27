@@ -21,6 +21,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/StringUtils.hpp>
 
 #include "CriticalSection.hpp"
 
@@ -347,6 +348,28 @@ Error ChildProcess::run()
    }
    cmdLine.push_back('\0');
 
+   // specify custom environment if requested
+   DWORD dwFlags = 0;
+   LPVOID lpEnv = NULL;
+   std::vector<wchar_t> envBlock;
+   if (options_.environment)
+   {
+      const Options& env = options_.environment.get();
+      BOOST_FOREACH(const Option& envVar, env)
+      {
+         std::wstring key = string_utils::utf8ToWide(envVar.first);
+         std::wstring value = string_utils::utf8ToWide(envVar.second);
+         std::copy(key.begin(), key.end(), std::back_inserter(envBlock));
+         envBlock.push_back(L'=');
+         std::copy(value.begin(), value.end(), std::back_inserter(envBlock));
+         envBlock.push_back(L'\0');
+      }
+      envBlock.push_back(L'\0');
+
+      dwFlags |= CREATE_UNICODE_ENVIRONMENT;
+      lpEnv = &envBlock[0];
+   }
+
    // Start the child process.
    PROCESS_INFORMATION pi;
    ::ZeroMemory( &pi, sizeof(PROCESS_INFORMATION));
@@ -356,8 +379,8 @@ Error ChildProcess::run()
      NULL,            // Process handle not inheritable
      NULL,            // Thread handle not inheritable
      TRUE,            // Set handle inheritance to TRUE
-     0,               // No creation flags
-     NULL,            // Use parent's environment block
+     dwFlags,         // Creation flags
+     lpEnv,           // Environment block
      NULL,            // Use parent's starting directory
      &si,             // Pointer to STARTUPINFO structure
      &pi );   // Pointer to PROCESS_INFORMATION structure
