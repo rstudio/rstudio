@@ -269,7 +269,13 @@ std::vector<PidType> s_pidsToTerminate_;
 
 ShellCommand git()
 {
-   return ShellCommand("git");
+   if (!s_gitBinDir.empty())
+   {
+      FilePath fullPath = FilePath(s_gitBinDir).childPath("git");
+      return ShellCommand(fullPath.absolutePath());
+   }
+   else
+      return ShellCommand("git");
 }
 
 ShellCommand svn()
