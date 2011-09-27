@@ -63,17 +63,39 @@ namespace source_control {
 
 namespace {
 
+// git bin dir which we detect at startup. note that if the git bin
+// is already in the path then this will be empty
+std::string s_gitBinDir;
+
 core::system::ProcessOptions procOptions()
 {
    core::system::ProcessOptions options;
+
+   // detach the session so there is no terminal
    options.detachSession = true;
+
+   // get current environment for modification prior to passing to child
+   core::system::Options childEnv = core::system::environment();
+
+   // add git bin dir to PATH if necessary
+   if (!s_gitBinDir.empty())
+      core::system::addToPath(&childEnv, s_gitBinDir);
+
+   // add postback directory to PATH
+   FilePath postbackDir = session::options().rpostbackPath().parent();
+   core::system::addToPath(&childEnv, postbackDir.absolutePath());
+
+   // on windows set HOME to USERPROFILE
+#ifdef _WIN32
+   std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
+   core::system::setenv(&childEnv, "HOME", userProfile);
+#endif
+
+   // set custom environment
+   options.environment = childEnv;
+
    return options;
 }
-
-// git bin dir which we detect at startup (this has already been
-// transformed into the system path encoding). note that if the git bin
-// is already in the path then this will be empty
-std::string s_gitBinDir;
 
 enum PatchMode
 {
@@ -1536,11 +1558,7 @@ Error detectAndSaveGitBinDir()
       return error;
 
    // save it
-   s_gitBinDir = string_utils::utf8ToSystem(path.absolutePath());
-
-   // TODO: for now we just set it here, once we move to setting the
-   // path correctly for child processes we can eliminate this
-   system::setenv("PATH", system::getenv("PATH") + ";" + s_gitBinDir);
+   s_gitBinDir = path.absolutePath();
 
    return Success();
 }
