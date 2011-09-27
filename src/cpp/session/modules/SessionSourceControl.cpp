@@ -1238,7 +1238,7 @@ void postbackGitSSH(const std::string& argument,
 
    // Use "ssh-add -l" to see if ssh-agent is running
    ProcessResult result;
-   error = runCommand(shell_utils::sendAllOutputToNull("ssh-add -l"),
+   error = runCommand(shell_utils::sendStdErrToNull("ssh-add -l"),
                       procOptions(), &result);
    if (error)
    {
@@ -1264,7 +1264,6 @@ void postbackGitSSH(const std::string& argument,
       startSshAgent = false;
       std::string keyPathSys =
             core::string_utils::utf8ToSystem(toBashPath(key.absolutePath()));
-core::system::setenv("KEYPATH", result.stdOut);
       runSshAdd = result.stdOut.find(keyPathSys) == std::string::npos;
    }
    else

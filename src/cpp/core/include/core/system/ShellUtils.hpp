@@ -32,6 +32,7 @@ std::string join_or(const std::string& command1, const std::string& command2);
 
 std::string sendStdErrToStdOut(const std::string& command);
 std::string sendAllOutputToNull(const std::string& command);
+std::string sendStdErrToNull(const std::string& command);
 std::string sendNullToStdIn(const std::string& command);
 
 class ShellCommand
