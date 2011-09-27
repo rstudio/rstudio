@@ -141,7 +141,7 @@ QString Options::fixedWidthFont() const
    QStringList fontList;
    fontList <<
 #ifdef Q_WS_X11
-           QString::fromAscii("UbuntuBeta Mono") <<
+           QString::fromAscii("Ubuntu Mono") <<
 #endif
            QString::fromAscii("Monospace") << QString::fromAscii("Droid Sans Mono") << QString::fromAscii("DejaVu Sans Mono") << // Linux
            QString::fromAscii("Monaco") <<                      // Mac

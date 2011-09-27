@@ -88,7 +88,7 @@ public class BrowseCap
    private static final boolean getFixedUbuntuMono()
    {
       return isLinux() &&
-             ThemeFonts.getFixedWidthFont().equals("\"UbuntuBeta Mono\"");
+             ThemeFonts.getFixedWidthFont().equals("\"Ubuntu Mono\"");
    }
 
    private static final boolean FIXED_UBUNTU_MONO = getFixedUbuntuMono();
