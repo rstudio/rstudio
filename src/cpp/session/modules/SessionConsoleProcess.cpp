@@ -28,6 +28,15 @@ namespace console_process {
 namespace {
    typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
    ProcTable s_procs;
+
+   core::system::ProcessOptions procOptions()
+   {
+      core::system::ProcessOptions options;
+#ifdef __linux__
+      options.onAfterFork = &::setsid;
+#endif
+      return options;
+   }
 } // anonymous namespace
 
 ConsoleProcess::ConsoleProcess(const std::string& command,
@@ -133,7 +142,8 @@ Error procInit(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   boost::shared_ptr<ConsoleProcess> ptrProc = ConsoleProcess::create(command);
+   boost::shared_ptr<ConsoleProcess> ptrProc = ConsoleProcess::create(
+                                                       command, procOptions());
    pResponse->setResult(ptrProc->handle());
    return Success();
 }
@@ -179,9 +189,9 @@ Error procInterrupt(const json::JsonRpcRequest& request,
 
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string &command,
+      core::system::ProcessOptions options,
       const boost::function<void()>& onExit)
 {
-   core::system::ProcessOptions options;
    options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
          new ConsoleProcess(command, options, onExit));

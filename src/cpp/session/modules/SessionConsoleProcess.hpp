@@ -35,6 +35,7 @@ private:
 public:
    static boost::shared_ptr<ConsoleProcess> create(
          const std::string& command,
+         core::system::ProcessOptions options,
          const boost::function<void()>& onExit=boost::function<void()>());
 
    virtual ~ConsoleProcess() {}
