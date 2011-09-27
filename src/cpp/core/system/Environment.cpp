@@ -51,6 +51,7 @@ std::string getenv(const Options& environment, const std::string& name)
 // any existing value)
 void setenv(Options* pEnvironment,
             const std::string& name,
+
             const std::string& value)
 {
    Options::iterator it = std::find_if(
@@ -70,7 +71,8 @@ void unsetenv(Options* pEnvironment, const std::string& name)
                                       pEnvironment->end(),
                                       boost::bind(impl::optionIsNamed,
                                                   _1,
-                                                  name)));
+                                                  name)),
+                       pEnvironment->end());
 }
 
 // add to the PATH within an Options struture
