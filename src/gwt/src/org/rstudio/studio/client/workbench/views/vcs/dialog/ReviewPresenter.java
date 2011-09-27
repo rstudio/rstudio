@@ -34,6 +34,8 @@ import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
@@ -45,6 +47,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
+import org.rstudio.studio.client.workbench.views.vcs.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.events.*;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent.Action;
@@ -354,18 +357,27 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onClick(ClickEvent event)
          {
-            server_.vcsCommitGit(view_.getCommitMessage().getText(),
-                                 view_.getCommitIsAmend().getValue(),
-                                 false,
-                                 new SimpleRequestCallback<Void>()
-                                 {
-                                    @Override
-                                    public void onResponseReceived(Void resp)
-                                    {
-                                       super.onResponseReceived(resp);
-                                       view_.getCommitMessage().setText("");
-                                    }
-                                 });
+            server_.vcsCommitGit(
+                  view_.getCommitMessage().getText(),
+                  view_.getCommitIsAmend().getValue(),
+                  false,
+                  new SimpleRequestCallback<ConsoleProcess>()
+                  {
+                     @Override
+                     public void onResponseReceived(ConsoleProcess proc)
+                     {
+                        proc.addProcessExitHandler(new ProcessExitEvent.Handler()
+                        {
+                           @Override
+                           public void onProcessExit(ProcessExitEvent event)
+                           {
+                              if (event.getExitCode() == 0)
+                                 view_.getCommitMessage().setText("");
+                           }
+                        });
+                        new ConsoleProgressDialog("Commit", proc).showModal();
+                     }
+                  });
          }
       });
    }

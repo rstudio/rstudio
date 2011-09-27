@@ -1273,21 +1273,23 @@ public class RemoteServer implements Server
 
    @Override
    public void vcsCheckout(String id,
-                           ServerRequestCallback<Void> requestCallback)
+                           ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_CHECKOUT, id, requestCallback);
+      sendRequest(RPC_SCOPE, VCS_CHECKOUT, id,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
    public void vcsCommitGit(String message,
                             boolean amend,
                             boolean signOff,
-                            ServerRequestCallback<Void> requestCallback)
+                            ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(message));
       params.set(1, JSONBoolean.getInstance(amend));
       params.set(2, JSONBoolean.getInstance(signOff));
-      sendRequest(RPC_SCOPE, VCS_COMMIT_GIT, params, requestCallback);
+      sendRequest(RPC_SCOPE, VCS_COMMIT_GIT, params,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
    private class ConsoleProcessCallbackAdapter

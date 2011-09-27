@@ -59,12 +59,13 @@ public interface VCSServerOperations
 
    void vcsListBranches(ServerRequestCallback<BranchesInfo> requestCallback);
 
-   void vcsCheckout(String id, ServerRequestCallback<Void> requestCallback);
+   void vcsCheckout(String id,
+                    ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void vcsCommitGit(String message,
                      boolean amend,
                      boolean signOff,
-                     ServerRequestCallback<Void> requestCallback);
+                     ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void vcsDiffFile(String path,
                     PatchMode patchMode,

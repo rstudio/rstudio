@@ -19,6 +19,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.Void;
@@ -61,8 +62,17 @@ public class BranchToolbarButton extends ToolbarButton
                   @Override
                   public void execute()
                   {
-                     server.vcsCheckout(branch,
-                                        new SimpleRequestCallback<Void>());
+                     server.vcsCheckout(
+                           branch,
+                           new SimpleRequestCallback<ConsoleProcess>()
+                           {
+                              @Override
+                              public void onResponseReceived(ConsoleProcess proc)
+                              {
+                                 new ConsoleProgressDialog("Checkout " + branch,
+                                                           proc).showModal();
+                              }
+                           });
                   }
                }));
             }

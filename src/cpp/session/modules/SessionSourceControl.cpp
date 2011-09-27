@@ -185,7 +185,7 @@ public:
    }
 
    virtual core::Error checkout(const std::string& id,
-                                std::string* pStdErr)
+                                std::string* pHandle)
    {
       return Success();
    }
@@ -275,6 +275,14 @@ ShellCommand git()
 ShellCommand svn()
 {
    return ShellCommand("svn");
+}
+
+void afterCommit(const FilePath& tempFile)
+{
+   Error removeError = tempFile.remove();
+   if (removeError)
+      LOG_ERROR(removeError);
+   enqueueRefreshEvent();
 }
 
 } // anonymous namespace
@@ -468,12 +476,19 @@ public:
    }
 
    core::Error checkout(const std::string& id,
-                        std::string* pStdErr)
+                        std::string* pHandle)
    {
-      return runCommand(git() << "checkout" << id << "--");
+      boost::shared_ptr<ConsoleProcess> ptrProc =
+            console_process::ConsoleProcess::create(git() << "checkout"
+                                                    << id << "--",
+                                                    procOptions(),
+                                                    &enqueueRefreshEvent);
+      *pHandle = ptrProc->handle();
+      return Success();
    }
 
-   core::Error commit(const std::string& message, bool amend, bool signOff)
+   core::Error commit(const std::string& message, bool amend, bool signOff,
+                      std::string* pHandle)
    {
       FilePath tempFile = module_context::tempFile("gitmsg", "txt");
       boost::shared_ptr<std::ostream> pStream;
@@ -492,15 +507,13 @@ public:
       if (signOff)
          command << "--signoff";
 
-      std::string stdErr;
-      error = doSimpleCmd(command, &stdErr);
+      boost::shared_ptr<ConsoleProcess> ptrProc =
+            console_process::ConsoleProcess::create(
+                  command, procOptions(),
+                  boost::bind(afterCommit, tempFile));
 
-      // clean up commit message temp file
-      Error removeError = tempFile.remove();
-      if (removeError)
-         LOG_ERROR(removeError);
-
-      return error;
+      *pHandle = ptrProc->handle();
+      return Success();
    }
 
    core::Error push(std::string* pHandle)
@@ -925,10 +938,12 @@ Error vcsCheckout(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   std::string stdErr;
-   error = s_pVcsImpl_->checkout(id, &stdErr);
+   std::string handle;
+   error = s_pVcsImpl_->checkout(id, &handle);
    if (error)
       return error;
+
+   pResponse->setResult(handle);
 
    return Success();
 }
@@ -977,9 +992,12 @@ Error vcsCommitGit(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   error = pGit->commit(commitMsg, amend, signOff);
+   std::string handle;
+   error = pGit->commit(commitMsg, amend, signOff, &handle);
    if (error)
       return error;
+
+   pResponse->setResult(handle);
 
    return Success();
 }
