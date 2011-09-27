@@ -51,7 +51,6 @@ std::string getenv(const Options& environment, const std::string& name)
 // any existing value)
 void setenv(Options* pEnvironment,
             const std::string& name,
-
             const std::string& value)
 {
    Options::iterator it = std::find_if(
