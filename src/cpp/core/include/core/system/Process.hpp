@@ -38,7 +38,7 @@ namespace system {
 struct ProcessOptions
 {
    ProcessOptions()
-      : terminateChildren(false)
+      : terminateChildren(false), detachSession(false)
    {
    }
 
@@ -54,6 +54,9 @@ struct ProcessOptions
    // function to run within the child process immediately after the fork
    // NOTE: only supported on posix as there is no fork on Win32
    boost::function<void()> onAfterFork;
+
+   // Calls ::setsid after fork (NOTE: no effect on Windows)
+   bool detachSession;
 };
 
 // Struct for returning output and exit status from a process

@@ -32,9 +32,7 @@ namespace {
    core::system::ProcessOptions procOptions()
    {
       core::system::ProcessOptions options;
-#ifdef __linux__
-      options.onAfterFork = &::setsid;
-#endif
+      options.detachSession = true;
       return options;
    }
 } // anonymous namespace

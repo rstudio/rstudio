@@ -15,7 +15,9 @@
 
 #include <fcntl.h>
 #include <signal.h>
+#include <unistd.h>
 #include <sys/wait.h>
+#include <sys/types.h>
 
 #include <boost/bind.hpp>
 
@@ -254,6 +256,9 @@ Error ChildProcess::run()
       // and continue rather than calling ::exit (we do this to avoid
       // strange error conditions related to global c++ objects being
       // torn down in a non-standard sequence).
+
+      if (options_.detachSession)
+         ::setsid();
 
       // check for an onAfterFork function
        if (options_.onAfterFork)
