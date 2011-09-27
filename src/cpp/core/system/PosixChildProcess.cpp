@@ -267,6 +267,7 @@ Error ChildProcess::run()
          if (::setsid() == -1)
          {
             LOG_ERROR(systemError(errno, ERROR_LOCATION));
+            // intentionally fail forward (see note above)
          }
       }
       else if (options_.terminateChildren)
