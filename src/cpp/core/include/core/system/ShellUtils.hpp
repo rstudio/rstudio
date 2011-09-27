@@ -15,16 +15,16 @@
 #define CORE_SHELL_UTILS_HPP
 
 #include <string>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
-
-using namespace core;
+#include <vector>
 
 namespace core {
+
+class FilePath;
+
 namespace shell_utils {
 
 std::string escape(const std::string& arg);
-std::string escape(const core::FilePath& path);
+std::string escape(const FilePath& path);
 
 std::string join(const std::string& command1, const std::string& command2);
 std::string join_and(const std::string& command1, const std::string& command2);

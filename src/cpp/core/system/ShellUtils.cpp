@@ -13,6 +13,8 @@
 
 #include <core/system/ShellUtils.hpp>
 
+#include <core/FilePath.hpp>
+
 namespace core {
 namespace shell_utils {
 
