@@ -1704,7 +1704,8 @@ core::Error initialize()
                                                       &gitSshCmd);
       if (error)
          return error;
-      core::system::setenv("GIT_SSH", toBashPath(gitSshCmd));
+      BOOST_ASSERT(boost::algorithm::ends_with(gitSshCmd, "rpostback-gitssh"));
+      core::system::setenv("GIT_SSH", "rpostback-gitssh");
    }
 
    if (interceptAskPass)
@@ -1715,9 +1716,9 @@ core::Error initialize()
                                                       &sshAskCmd);
       if (error)
          return error;
-      sshAskCmd = toBashPath(sshAskCmd);
-      core::system::setenv("SSH_ASKPASS", sshAskCmd);
-      core::system::setenv("GIT_ASKPASS", sshAskCmd);
+      BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));
+      core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
+      core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
    }
 
    // install rpc methods
