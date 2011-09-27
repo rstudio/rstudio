@@ -34,6 +34,7 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/Environment.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Scope.hpp>

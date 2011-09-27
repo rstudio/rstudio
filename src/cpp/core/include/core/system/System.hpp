@@ -188,12 +188,6 @@ core::Error handleSignal(SignalType signal, void (*handler)(int));
 core::Error ignoreSignal(SignalType signal);   
 core::Error useDefaultSignalHandler(SignalType signal);
 
-   
-// environment
-std::string getenv(const std::string& name);
-void setenv(const std::string& name, const std::string& value);   
-void unsetenv(const std::string& name);
-
 // user info
 std::string username();
 FilePath userHomePath(std::string envOverride = std::string());

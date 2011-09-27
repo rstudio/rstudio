@@ -27,6 +27,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 #include <core/r_util/RProjectFile.hpp>
 
 #include "DesktopApplicationLaunch.hpp"

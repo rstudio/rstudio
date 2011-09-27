@@ -16,6 +16,7 @@
 #include <QNetworkReply>
 #include <QTemporaryFile>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 #include "DesktopSecondaryWindow.hpp"
 #include "DesktopDownloadHelper.hpp"
 #include "DesktopOptions.hpp"

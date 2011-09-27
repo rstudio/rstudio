@@ -21,6 +21,7 @@
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 #include <core/SafeConvert.hpp>
 
 using namespace core;

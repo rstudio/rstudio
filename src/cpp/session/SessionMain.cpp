@@ -49,6 +49,7 @@
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/FileMonitor.hpp>
 #include <core/text/TemplateFilter.hpp>

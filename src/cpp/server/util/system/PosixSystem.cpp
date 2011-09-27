@@ -26,6 +26,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <core/system/ProcessArgs.hpp>
+#include <core/system/Environment.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>

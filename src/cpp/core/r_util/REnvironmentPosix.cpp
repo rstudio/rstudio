@@ -24,6 +24,7 @@
 #include <core/ConfigUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/Environment.hpp>
 
 namespace core {
 namespace r_util {

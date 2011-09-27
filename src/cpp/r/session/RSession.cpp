@@ -25,6 +25,7 @@
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>

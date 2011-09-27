@@ -16,6 +16,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #include <r/RErrorCategory.hpp>
 

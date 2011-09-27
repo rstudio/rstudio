@@ -25,6 +25,7 @@
 #include <core/SafeConvert.hpp>
 
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>

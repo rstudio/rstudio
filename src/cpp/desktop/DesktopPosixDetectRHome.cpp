@@ -24,6 +24,7 @@
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 #include <core/r_util/REnvironment.hpp>
 
 #include "DesktopUtils.hpp"

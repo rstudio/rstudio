@@ -48,6 +48,7 @@
 #include <core/StderrLogWriter.hpp>
 
 #include <core/system/ProcessArgs.hpp>
+#include <core/system/Environment.hpp>
 
 #include "config.h"
 
@@ -363,25 +364,6 @@ Error useDefaultSignalHandler(SignalType signal)
    {
       return Success();
    }
-}
-   
-std::string getenv(const std::string& name)
-{
-   char * value = ::getenv(name.c_str());
-   if (value)
-      return std::string(value);
-   else
-      return std::string();
-}
-   
-void setenv(const std::string& name, const std::string& value)
-{
-   ::setenv(name.c_str(), value.c_str(), 1);
-}
-
-void unsetenv(const std::string& name)
-{
-	::unsetenv(name.c_str());
 }
 
 std::string username()

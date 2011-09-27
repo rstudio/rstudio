@@ -20,6 +20,7 @@
 #include <core/ProgramOptions.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
