@@ -29,6 +29,7 @@ class CodeSearchSuggestion implements Suggestion
 {
    public CodeSearchSuggestion(RFileItem fileItem)
    {
+      isFileTarget_ = true;
       navigationTarget_ = new CodeNavigationTarget(fileItem.getPath());
       matchedString_ = fileItem.getFilename();
             
@@ -44,7 +45,7 @@ class CodeSearchSuggestion implements Suggestion
    
    public CodeSearchSuggestion(RSourceItem sourceItem, FileSystemItem fsContext)
    {
-      // save result
+      isFileTarget_ = false;
       navigationTarget_ = CodeNavigationTarget.fromRSourceItem(sourceItem);
       matchedString_ = sourceItem.getFunctionName();
       
@@ -87,6 +88,17 @@ class CodeSearchSuggestion implements Suggestion
    {
       return displayString_;
    }
+   
+   public void setFileDisplayString(String file, String displayString)
+   {
+      // compute display string
+      ImageResource image =  fileTypeRegistry_.getIconForFilename(file);
+      displayString_ = createDisplayString(image,
+                                           RES.styles().fileImage(),
+                                           displayString,
+                                           null);   
+      
+   }
 
    @Override
    public String getReplacementString()
@@ -97,6 +109,11 @@ class CodeSearchSuggestion implements Suggestion
    public CodeNavigationTarget getNavigationTarget()
    {
       return navigationTarget_;
+   }
+   
+   public boolean isFileTarget()
+   {
+      return isFileTarget_;
    }
    
    private String createDisplayString(ImageResource image, 
@@ -117,9 +134,10 @@ class CodeSearchSuggestion implements Suggestion
    }
    
    
+   private final boolean isFileTarget_;
    private final CodeNavigationTarget navigationTarget_ ;
    private final String matchedString_;
-   private final String displayString_;
+   private String displayString_;
    private static final FileTypeRegistry fileTypeRegistry_ =
                               RStudioGinjector.INSTANCE.getFileTypeRegistry();
    private static final CodeSearchResources RES = CodeSearchResources.INSTANCE;

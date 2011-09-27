@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.codesearch;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -91,11 +92,13 @@ public class CodeSearchOracle extends SuggestOracle
                      suggestions.add(sugg);
                }
             }
+            
+            
 
-            // cache suggestions. note that this adds an item to the end
-            // of the resultCache_ (which we are currently iterating over)
-            // not a big deal because we are about to return out of the loop
-            cacheSuggestions(request, suggestions, false);
+            // process and cache suggestions. note that this adds an item to
+            // the end of the resultCache_ (which we are currently iterating
+            // over) no biggie because we are about to return from the loop
+            suggestions = processSuggestions(request, suggestions, false);
             
             // return suggestions
             callback.onSuggestionsReady(request, new Response(suggestions));
@@ -195,10 +198,10 @@ public class CodeSearchOracle extends SuggestOracle
                      new CodeSearchSuggestion(srcResults.get(i), context));    
                }
                   
-               // cache suggestions
-               cacheSuggestions(request_, 
-                                suggestions,
-                                response.getMoreAvailable());
+               // process suggestions (disambiguate paths & cache)
+              suggestions = processSuggestions(request_, 
+                                               suggestions,
+                                               response.getMoreAvailable());
                
                // return suggestions
                if (!invalidationToken_.isInvalid())
@@ -217,19 +220,40 @@ public class CodeSearchOracle extends SuggestOracle
    };
    
    
-   private void cacheSuggestions(Request request, 
-                                 ArrayList<CodeSearchSuggestion> suggestions,
-                                 boolean moreAvailable)
+   private ArrayList<CodeSearchSuggestion> processSuggestions(
+                                   Request request, 
+                                   ArrayList<CodeSearchSuggestion> suggestions,
+                                   boolean moreAvailable)
    {
+      // get file paths for file targets (which are always at the beginning)
+      ArrayList<String> filePaths = new ArrayList<String>();
+      for(CodeSearchSuggestion suggestion : suggestions)
+      {
+         if (!suggestion.isFileTarget())
+            break;
+         
+         filePaths.add(suggestion.getNavigationTarget().getFile());
+      }
+      
+      // disambiguate them
+      ArrayList<String> displayLabels = DuplicateHelper.getPathLabels(filePaths,
+                                                                      true);
+      ArrayList<CodeSearchSuggestion> newSuggestions =
+                            new ArrayList<CodeSearchSuggestion>(suggestions);
+      for (int i=0; i<displayLabels.size(); i++)
+         newSuggestions.get(i).setFileDisplayString(filePaths.get(i),
+                                                    displayLabels.get(i));
+      
       // cache the suggestions (up to 15 active result sets cached)
       // NOTE: the cache is cleared on gain focus, lost focus, and 
       // the search term reverting back to empty)
       if (resultCache_.size() > 15)
          resultCache_.remove(0);
-      
       resultCache_.add(new SearchResult(request.getQuery(), 
-                                        suggestions, 
+                                        newSuggestions, 
                                         moreAvailable));
+      
+      return newSuggestions;
    }
    
    private final Invalidation searchInvalidation_ = new Invalidation();
