@@ -14,7 +14,8 @@
 #include <core/system/Environment.hpp>
 
 #include <stdlib.h>
-#include <unistd.h>
+
+extern char **environ;
 
 namespace core {
 namespace system {

@@ -25,6 +25,7 @@
 #include <core/FileSerializer.hpp>
 
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
