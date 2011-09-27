@@ -62,6 +62,15 @@ namespace source_control {
 
 namespace {
 
+core::system::ProcessOptions procOptions()
+{
+   core::system::ProcessOptions options;
+#ifdef __linux__
+   options.onAfterFork = &::setsid;
+#endif
+   return options;
+}
+
 // git bin dir which we detect at startup (this has already been
 // transformed into the system path encoding). note that if the git bin
 // is already in the path then this will be empty
@@ -187,7 +196,7 @@ public:
 
       core::system::ProcessResult result;
       Error error = core::system::runCommand(cmd,
-                                             core::system::ProcessOptions(),
+                                             procOptions(),
                                              &result);
       if (error)
          return error;
@@ -260,7 +269,7 @@ public:
 
       core::system::ProcessResult result;
       Error error = core::system::runCommand(command,
-                                             core::system::ProcessOptions(),
+                                             procOptions(),
                                              &result);
       if (error)
          return FilePath();
@@ -477,6 +486,7 @@ public:
    {
       boost::shared_ptr<ConsoleProcess> ptrProc =
             console_process::ConsoleProcess::create(git() << "push",
+                                                    procOptions(),
                                                     &enqueueRefreshEvent);
 
       *pHandle = ptrProc->handle();
@@ -487,6 +497,7 @@ public:
    {
       boost::shared_ptr<ConsoleProcess> ptrProc =
             console_process::ConsoleProcess::create(git() << "pull",
+                                                    procOptions(),
                                                     &enqueueRefreshEvent);
 
       *pHandle = ptrProc->handle();
@@ -1102,6 +1113,7 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
 
    boost::shared_ptr<ConsoleProcess> ptrProc =
          console_process::ConsoleProcess::create(command,
+                                                 procOptions(),
                                                  &enqueueRefreshEvent);
 
    pResponse->setResult(ptrProc->handle());
@@ -1229,7 +1241,7 @@ void postbackGitSSH(const std::string& argument,
    // Use "ssh-add -l" to see if ssh-agent is running
    ProcessResult result;
    error = runCommand(shell_utils::sendAllOutputToNull("ssh-add -l"),
-                      ProcessOptions(), &result);
+                      procOptions(), &result);
    if (error)
    {
       // We couldn't even launch ssh-add. Seems unlikely we'll be able to
@@ -1254,6 +1266,7 @@ void postbackGitSSH(const std::string& argument,
       startSshAgent = false;
       std::string keyPathSys =
             core::string_utils::utf8ToSystem(toBashPath(key.absolutePath()));
+core::system::setenv("KEYPATH", result.stdOut);
       runSshAdd = result.stdOut.find(keyPathSys) == std::string::npos;
    }
    else
@@ -1269,7 +1282,7 @@ void postbackGitSSH(const std::string& argument,
    if (startSshAgent)
    {
       // Start ssh-agent using bash-style output
-      error = runCommand("ssh-agent -s", ProcessOptions(), &result);
+      error = runCommand("ssh-agent -s", procOptions(), &result);
       if (error)
       {
          // Failed to start ssh-agent, give up.
@@ -1321,7 +1334,7 @@ void postbackGitSSH(const std::string& argument,
       cmd << string_utils::utf8ToSystem(toBashPath(key.absolutePath()));
       module_context::processSupervisor().runCommand(
             shell_utils::sendAllOutputToNull(shell_utils::sendNullToStdIn(cmd)),
-            "", ProcessOptions(),
+            "", procOptions(),
             boost::bind(postbackGitSSH_onSSHAddComplete,
                         cont,
                         output.str(),
@@ -1656,18 +1669,13 @@ core::Error initialize()
    }
    else
    {
-#ifdef __APPLE__
-      // Default behavior on Mac desktop works great
-      interceptSsh = false;
-      interceptAskPass = false;
-#elif defined(_WIN32)
+#ifdef _WIN32
       // Windows probably unlikely to have either ssh-agent or askpass
       interceptSsh = true;
       interceptAskPass = true;
 #else
-      // Everything fine on Linux except we need to detach the console
-      // using setsid
-      interceptSsh = true;
+      // Everything fine on Mac and Linux
+      interceptSsh = false;
       interceptAskPass = false;
 #endif
    }
