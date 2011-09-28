@@ -2159,8 +2159,15 @@ void waitForMethodInitFunction(const ClientEvent& initEvent,
 {
    module_context::enqueClientEvent(initEvent);
 
-   if (reissuePrompt)
+   if (s_rProcessingInput)
+   {
+      ClientEvent busyEvent(client_events::kBusy, true);
+      module_context::enqueClientEvent(busyEvent);
+   }
+   else if (reissuePrompt)
+   {
       reissueLastConsolePrompt();
+   }
 }
 
 bool registeredWaitForMethod(const std::string& method,
