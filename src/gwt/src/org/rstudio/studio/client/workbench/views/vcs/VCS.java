@@ -53,8 +53,9 @@ public class VCS extends BasePresenter implements IsWidget
    {
       void setItems(ArrayList<StatusAndPath> items);
       ArrayList<String> getSelectedPaths();
+      ArrayList<StatusAndPath> getSelectedStatusAndPaths();
 
-      void showProgress();
+      void onRefreshBegin();
    }
 
    @Inject
@@ -77,7 +78,6 @@ public class VCS extends BasePresenter implements IsWidget
 
       commandBinder.bind(commands, this);
 
-      view_.setProgress(true);
       vcsState_.addVcsRefreshHandler(new VcsRefreshHandler()
       {
          @Override
@@ -136,7 +136,9 @@ public class VCS extends BasePresenter implements IsWidget
 
    private void showReviewPane(boolean showHistory)
    {
-      VCSPopup.show(pReviewPresenter_.get(),
+      ReviewPresenter rpres = pReviewPresenter_.get();
+      rpres.setSelectedPaths(view_.getSelectedStatusAndPaths());
+      VCSPopup.show(rpres,
                     pHistoryPresenter_.get(),
                     showHistory);
    }
@@ -181,7 +183,7 @@ public class VCS extends BasePresenter implements IsWidget
    @Handler
    void onVcsRefresh()
    {
-      view_.showProgress();
+      view_.onRefreshBegin();
       vcsState_.refresh();
    }
 

@@ -37,24 +37,36 @@ public class ProgressPanel extends Composite
    
    public void beginProgressOperation(int delayMs)
    {
+      clearTimer();
       progressImage_.setVisible(false);
-      progressOperationPending_ = true ;
-      
-      Timer timer = new Timer() {
+
+      timer_ = new Timer() {
          public void run() {
-            if (progressOperationPending_)
-               progressImage_.setVisible(true);  
+            if (timer_ != this)
+               return; // This should never happen, but, just in case
+
+            progressImage_.setVisible(true);
          }
       };
-      timer.schedule(delayMs);
+      timer_.schedule(delayMs);
    }
-   
+
    public void endProgressOperation()
    {
-      progressOperationPending_ = false ;
+      clearTimer();
       progressImage_.setVisible(false);
    }
-   
+
+   private void clearTimer()
+   {
+      if (timer_ != null)
+      {
+         timer_.cancel();
+         timer_ = null;
+      }
+   }
+
    private final Image progressImage_ ;
    private boolean progressOperationPending_ = false ;
+   private Timer timer_;
 }

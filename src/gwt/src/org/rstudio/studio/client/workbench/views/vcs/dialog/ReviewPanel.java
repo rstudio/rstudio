@@ -34,6 +34,7 @@ import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
@@ -197,7 +198,7 @@ public class ReviewPanel extends Composite implements Display
    public ReviewPanel(ChangelistTablePresenter changelist,
                       LineTableView diffPane,
                       ConsoleBarFramePanel consoleBarFramePanel,
-                      Commands commands,
+                      final Commands commands,
                       FileTypeRegistry fileTypeRegistry,
                       BranchToolbarButton branchToolbarButton)
    {
@@ -247,7 +248,14 @@ public class ReviewPanel extends Composite implements Display
 
       topToolbar_.addRightWidget(new ToolbarButton(
             "Refresh", commands.vcsRefresh().getImageResource(),
-            commands.vcsRefresh()));
+            new ClickHandler() {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  changelist_.showProgress();
+                  commands.vcsRefresh();
+               }
+            }));
 
       topToolbar_.addRightSeparator();
 
@@ -403,6 +411,12 @@ public class ReviewPanel extends Composite implements Display
    public ArrayList<String> getSelectedPaths()
    {
       return changelist_.getSelectedPaths();
+   }
+
+   @Override
+   public void setSelectedStatusAndPaths(ArrayList<StatusAndPath> selectedPaths)
+   {
+      changelist_.setSelectedStatusAndPaths(selectedPaths);
    }
 
    @Override

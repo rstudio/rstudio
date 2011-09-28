@@ -12,9 +12,11 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs;
 
-import com.google.gwt.cell.client.*;
+import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -27,10 +29,12 @@ import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.*;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.cellview.TriStateCheckboxCell;
+import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageHandler;
@@ -163,7 +167,39 @@ public class ChangelistTable extends Composite
 
       table_.setSize("100%", "auto");
 
-      initWidget(new ScrollPanel(table_));
+      layout_ = new LayoutPanel();
+      ScrollPanel scrollPanel = new ScrollPanel(table_);
+      layout_.add(scrollPanel);
+      layout_.setWidgetTopBottom(scrollPanel, 0, Unit.PX, 0, Unit.PX);
+      layout_.setWidgetLeftRight(scrollPanel, 0, Unit.PX, 0, Unit.PX);
+      progressPanel_ = new ProgressPanel();
+      progressPanel_.getElement().getStyle().setBackgroundColor("white");
+      layout_.add(progressPanel_);
+      layout_.setWidgetTopBottom(progressPanel_, 0, Unit.PX, 0, Unit.PX);
+      layout_.setWidgetLeftRight(progressPanel_, 0, Unit.PX, 0, Unit.PX);
+
+      setProgress(true);
+
+      initWidget(layout_);
+   }
+
+   public void showProgress()
+   {
+      setProgress(true);
+   }
+
+   protected void setProgress(boolean showProgress)
+   {
+      if (showProgress)
+      {
+         layout_.setWidgetVisible(progressPanel_, true);
+         progressPanel_.beginProgressOperation(300);
+      }
+      else
+      {
+         layout_.setWidgetVisible(progressPanel_, false);
+         progressPanel_.endProgressOperation();
+      }
    }
 
    private void configureTable()
@@ -259,6 +295,7 @@ public class ChangelistTable extends Composite
 
    public void setItems(ArrayList<StatusAndPath> items)
    {
+      setProgress(false);
       table_.setPageSize(items.size());
       dataProvider_.getList().clear();
       dataProvider_.getList().addAll(items);
@@ -291,6 +328,12 @@ public class ChangelistTable extends Composite
             results.add(item.getPath());
       }
       return results;
+   }
+
+   public void setSelectedStatusAndPaths(ArrayList<StatusAndPath> selectedPaths)
+   {
+      for (StatusAndPath path : selectedPaths)
+         selectionModel_.setSelected(path, true);
    }
 
    public ArrayList<String> getSelectedDiscardablePaths()
@@ -326,9 +369,20 @@ public class ChangelistTable extends Composite
       return table_.getColumnSortList().hashCode();
    }
 
+   public ArrayList<StatusAndPath> getSelectedStatusAndPaths()
+   {
+      ArrayList<StatusAndPath> results = new ArrayList<StatusAndPath>();
+      for (StatusAndPath path : dataProvider_.getList())
+         if (table_.getSelectionModel().isSelected(path))
+            results.add(path);
+      return results;
+   }
+
    private final CellTable<StatusAndPath> table_;
    private final MultiSelectionModel<StatusAndPath> selectionModel_;
    private final ColumnSortEvent.ListHandler<StatusAndPath> sortHandler_;
    private final ListDataProvider<StatusAndPath> dataProvider_;
+   private final ProgressPanel progressPanel_;
+   private LayoutPanel layout_;
    private static final CellTableResources resources_ = GWT.<CellTableResources>create(CellTableResources.class);
 }

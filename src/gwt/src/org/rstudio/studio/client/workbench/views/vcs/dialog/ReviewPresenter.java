@@ -61,6 +61,7 @@ public class ReviewPresenter implements IsWidget
    {
       ArrayList<String> getSelectedPaths();
       ArrayList<String> getSelectedDiscardablePaths();
+      void setSelectedStatusAndPaths(ArrayList<StatusAndPath> selectedPaths);
 
       HasValue<Boolean> getStagedCheckBox();
       HasValue<Boolean> getUnstagedCheckBox();
@@ -486,6 +487,11 @@ public class ReviewPresenter implements IsWidget
             h.onSwitchView(new SwitchViewEvent());
          }
       });
+   }
+
+   public void setSelectedPaths(ArrayList<StatusAndPath> selectedPaths)
+   {
+      view_.setSelectedStatusAndPaths(selectedPaths);
    }
 
    private final Invalidation diffInvalidation_ = new Invalidation();
