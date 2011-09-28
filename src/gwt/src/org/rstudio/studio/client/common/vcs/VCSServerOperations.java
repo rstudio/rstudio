@@ -94,6 +94,6 @@ public interface VCSServerOperations
 
    void vcsPull(ServerRequestCallback<ConsoleProcess> requestCallback);
 
-   void askpassReturn(String handle, String value,
-                      ServerRequestCallback<Void> requestCallback);
+   void askpassCompleted(String value,
+                         ServerRequestCallback<Void> requestCallback);
 }

@@ -1391,58 +1391,39 @@ void postbackGitSSH(const std::string& argument,
    }
 }
 
-typedef std::map<std::string, module_context::PostbackHandlerContinuation>
-      AskPassContinuations;
-AskPassContinuations  s_askpassContinuations;
 
-void postbackSSHAskPass(const std::string& command,
+module_context::WaitForMethodFunction s_waitForAskPass;
+
+void postbackSSHAskPass(const std::string&,
                         const module_context::PostbackHandlerContinuation& cont)
 {
-   std::string handle = core::system::generateUuid();
-
-   s_askpassContinuations.insert(std::make_pair(handle, cont));
-
-   json::Object payload;
-   payload["handle"] = handle;
-   payload["prompt"] = std::string("Enter passphrase:");
-   module_context::enqueClientEvent(
-         ClientEvent(client_events::kAskPass, payload));
-   // TODO: Need to do something to simulate initEvent
-}
-
-// Called by the client after user has given a passphrase (or cancelled)
-Error askpassReturn(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
-{
-   std::string handle;
-   json::Value value;
-   Error error = json::readParams(request.params, &handle, &value);
-   if (error)
-      return error;
-
-   int retcode;
+   // default to failure unless we successfully receive a passphrase
+   int retcode = EXIT_FAILURE;
    std::string passphrase;
-   if (json::isType<std::string>(value))
+
+   // wait for method
+   core::json::JsonRpcRequest request;
+   if (s_waitForAskPass(&request))
    {
-      retcode = EXIT_SUCCESS;
-      passphrase = value.get_value<std::string>();
-   }
-   else
-   {
-      retcode = EXIT_FAILURE;
+      json::Value value;
+      Error error = json::readParams(request.params, &value);
+      if (!error)
+      {
+         if (json::isType<std::string>(value))
+         {
+            retcode = EXIT_SUCCESS;
+            passphrase = value.get_value<std::string>();
+         }
+      }
+      else
+      {
+         LOG_ERROR(error);
+      }
    }
 
-   AskPassContinuations::iterator pos = s_askpassContinuations.find(handle);
-   if (pos != s_askpassContinuations.end())
-   {
-      pos->second(retcode, passphrase);
-      return Success();
-   }
-
-   LOG_ERROR_MESSAGE("Unknown askpass handle " + handle);
-   return Success();
+   // satisfy continuation
+   cont(retcode, passphrase);
 }
-
 
 #ifdef _WIN32
 
@@ -1734,12 +1715,27 @@ core::Error initialize()
 
    if (interceptAskPass)
    {
+      // register postback handler
       std::string sshAskCmd;
       error = module_context::registerPostbackHandler("askpass",
                                                       postbackSSHAskPass,
                                                       &sshAskCmd);
       if (error)
          return error;
+
+      // register waitForMethod handler. we pass 'true' for the reissuePrompt
+      // parameter because passphrase prompting does not occur in reponse
+      // to the REPL loop so after a client init we need to remind the
+      // client that they are still in a REPL state waiting for input
+      json::Object payload;
+      payload["prompt"] = std::string("Enter passphrase:");
+      ClientEvent askPassEvent(client_events::kAskPass, payload);
+      s_waitForAskPass = module_context::registerWaitForMethod(
+                                                   "askpass_completed",
+                                                   askPassEvent,
+                                                   true);
+
+      // setup environment
       BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));
       core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
       core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
@@ -1766,8 +1762,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_apply_patch", vcsApplyPatch))
       (bind(registerRpcMethod, "vcs_history", vcsHistory))
       (bind(registerRpcMethod, "vcs_execute_command", vcsExecuteCommand))
-      (bind(registerRpcMethod, "vcs_show", vcsShow))
-      (bind(registerRpcMethod, "askpass_return", askpassReturn));
+      (bind(registerRpcMethod, "vcs_show", vcsShow));
    error = initBlock.execute();
    if (error)
       return error;

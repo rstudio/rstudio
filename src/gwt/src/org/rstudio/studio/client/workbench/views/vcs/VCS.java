@@ -103,8 +103,7 @@ public class VCS extends BasePresenter implements IsWidget
                                          ProgressIndicator indicator)
                      {
                         indicator.onCompleted();
-                        server_.askpassReturn(
-                              e.getHandle(),
+                        server_.askpassCompleted(
                               input,
                               new VoidServerRequestCallback(indicator));
                      }
@@ -114,8 +113,9 @@ public class VCS extends BasePresenter implements IsWidget
                      @Override
                      public void execute()
                      {
-                        server_.askpassReturn(e.getHandle(), null,
-                                              new SimpleRequestCallback<Void>());
+                        server_.askpassCompleted(
+                                           null,
+                                           new SimpleRequestCallback<Void>());
                      }
                   });
          }

@@ -128,6 +128,12 @@ std::vector<module_context::RBrowseUrlHandler> s_rBrowseUrlHandlers;
 // R browseFile handlers
 std::vector<module_context::RBrowseFileHandler> s_rBrowseFileHandlers;
 
+// names of waitForMethod handlers (used to screen out of bkgnd processing)
+std::vector<std::string> s_waitForMethodNames;
+
+// last prompt we issued
+std::string s_lastPrompt;
+
 // have we fully initialized? used by rConsoleRead and clientInit to
 // tweak their behavior when the process is first starting
 bool s_sessionInitialized = false;
@@ -574,6 +580,16 @@ bool isJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
                                         "/rpc/");
 }
 
+bool isWaitForMethodUri(const std::string& uri)
+{
+   BOOST_FOREACH(const std::string& methodName, s_waitForMethodNames)
+   {
+      if (isMethod(uri, methodName))
+         return true;
+   }
+
+   return false;
+}
 
 bool parseAndValidateJsonRpcConnection(
          boost::shared_ptr<HttpConnection> ptrConnection,
@@ -791,13 +807,8 @@ void polledEventHandler()
 
       // if the uri is empty or if it one of our special waitForMethod calls
       // then bails so that the waitForMethod logic can handle it
-      if (nextConnectionUri.empty() ||
-          isMethod(nextConnectionUri, kLocatorCompleted) ||
-          isMethod(nextConnectionUri, kEditCompleted) ||
-          isMethod(nextConnectionUri, kChooseFileCompleted))
-      {
+      if (nextConnectionUri.empty() || isWaitForMethodUri(nextConnectionUri))
          return;
-      }
 
       // attempt to deque a connection and handle it. for now we just handle
       // a single connection at a time (we'll be called back again if processing
@@ -1201,6 +1212,11 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    // save state we need to reference later
    s_rSessionResumed = rInitInfo.resumed;
    
+   // record built-in waitForMethod handlers
+   s_waitForMethodNames.push_back(kLocatorCompleted);
+   s_waitForMethodNames.push_back(kEditCompleted);
+   s_waitForMethodNames.push_back(kChooseFileCompleted);
+
    // execute core initialization functions
    using boost::bind;
    using namespace core::system;
@@ -1328,6 +1344,9 @@ void rDeferredInit()
    
 void consolePrompt(const std::string& prompt, bool addToHistory)
 {
+   // save the last prompt (for re-issuing)
+   s_lastPrompt = prompt;
+
    // enque the event
    json::Object data ;
    data["prompt"] = prompt ;
@@ -1339,6 +1358,11 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    
    // allow modules to detect changes after execution of previous REPL
    detectChanges(module_context::ChangeSourceREPL);   
+}
+
+void reissueLastConsolePrompt()
+{
+   consolePrompt(s_lastPrompt, false);
 }
 
 bool rConsoleRead(const std::string& prompt,
@@ -2127,6 +2151,47 @@ void syncRSaveAction()
    r::session::setSaveAction(saveWorkspaceOption());
 }
 
+
+namespace {
+
+void waitForMethodInitFunction(const ClientEvent& initEvent,
+                               bool reissuePrompt)
+{
+   module_context::enqueClientEvent(initEvent);
+
+   if (reissuePrompt)
+      reissueLastConsolePrompt();
+}
+
+bool registeredWaitForMethod(const std::string& method,
+                             const ClientEvent& event,
+                             bool reissuePrompt,
+                             core::json::JsonRpcRequest* pRequest)
+{
+   // enque the event which notifies the client we want input
+   module_context::enqueClientEvent(event);
+
+   // compose initFunction
+   boost::function<void()> initFunction =
+     boost::bind(waitForMethodInitFunction, event, reissuePrompt);
+
+   // wait for method
+   return waitForMethod(method, initFunction, disallowSuspend, pRequest);
+}
+
+} // anonymous namepace
+
+WaitForMethodFunction registerWaitForMethod(const std::string& methodName,
+                                            const ClientEvent& event,
+                                            bool reissuePrompt)
+{
+   s_waitForMethodNames.push_back(methodName);
+   return boost::bind(registeredWaitForMethod,
+                        methodName,
+                        event,
+                        reissuePrompt,
+                        _1);
+}
 
 } // namespace module_context
 } // namespace session

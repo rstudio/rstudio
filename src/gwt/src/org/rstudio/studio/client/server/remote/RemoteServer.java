@@ -1330,16 +1330,14 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void askpassReturn(String handle,
-                             String value,
-                             ServerRequestCallback<Void> requestCallback)
+   public void askpassCompleted(String value,
+                                ServerRequestCallback<Void> requestCallback)
    {
       // TODO: Sending private key passphrase, potentially over unencrypted HTTP
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(handle));
-      params.set(1, value == null ? JSONNull.getInstance()
+      params.set(0, value == null ? JSONNull.getInstance()
                                   : new JSONString(value));
-      sendRequest(RPC_SCOPE, ASKPASS_RETURN, params, requestCallback);
+      sendRequest(RPC_SCOPE, ASKPASS_COMPLETED, params, requestCallback);
    }
 
    @Override
@@ -1880,7 +1878,7 @@ public class RemoteServer implements Server
    private static final String VCS_COMMIT_GIT = "vcs_commit_git";
    private static final String VCS_PUSH = "vcs_push";
    private static final String VCS_PULL = "vcs_pull";
-   private static final String ASKPASS_RETURN = "askpass_return";
+   private static final String ASKPASS_COMPLETED = "askpass_completed";
    private static final String VCS_DIFF_FILE = "vcs_diff_file";
    private static final String VCS_APPLY_PATCH = "vcs_apply_patch";
    private static final String VCS_HISTORY = "vcs_history";

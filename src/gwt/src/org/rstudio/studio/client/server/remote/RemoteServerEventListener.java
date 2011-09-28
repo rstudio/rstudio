@@ -652,8 +652,7 @@ class RemoteServerEventListener
          else if (type.equals(ClientEvent.AskPass))
          {
             AskPassEvent.Data data = event.getData();
-            eventBus.fireEvent(new AskPassEvent(data.getHandle(),
-                                                data.getPrompt()));
+            eventBus.fireEvent(new AskPassEvent(data.getPrompt()));
          }
          else if (type.equals(ClientEvent.ConsoleProcessOutput))
          {
