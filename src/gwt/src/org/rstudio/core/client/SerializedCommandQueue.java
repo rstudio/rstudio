@@ -30,21 +30,33 @@ public class SerializedCommandQueue
 
    public void addCommand(SerializedCommand command)
    {
+      addCommand(command, true);
+   }
+
+   public void addCommand(SerializedCommand command, boolean run)
+   {
       if (command != null)
          commands_.add(command);
       log("addCommand");
-      run();
+      if (run)
+         run();
    }
 
    public void addPriorityCommand(SerializedCommand command)
    {
+      addPriorityCommand(command, true);
+   }
+
+   public void addPriorityCommand(SerializedCommand command, boolean run)
+   {
       if (command != null)
          commands_.add(0, command);
       log("addPriorityCommand");
-      run();
+      if (run)
+         run();
    }
 
-   private void run()
+   public void run()
    {
       if (running_)
       {

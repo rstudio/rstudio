@@ -55,7 +55,7 @@ public class VCS extends BasePresenter implements IsWidget
    {
       void setItems(ArrayList<StatusAndPath> items);
       ArrayList<String> getSelectedPaths();
-      ArrayList<StatusAndPath> getSelectedStatusAndPaths();
+      ArrayList<StatusAndPath> getSelectedItems();
       int getSelectedItemCount();
 
       void onRefreshBegin();
@@ -160,7 +160,7 @@ public class VCS extends BasePresenter implements IsWidget
    private void showReviewPane(boolean showHistory)
    {
       ReviewPresenter rpres = pReviewPresenter_.get();
-      rpres.setSelectedPaths(view_.getSelectedStatusAndPaths());
+      rpres.setSelectedPaths(view_.getSelectedItems());
       VCSPopup.show(rpres,
                     pHistoryPresenter_.get(),
                     showHistory);

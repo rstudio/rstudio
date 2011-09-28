@@ -522,6 +522,22 @@ public:
       return Success();
    }
 
+   core::Error clone(const std::string& url,
+                     const FilePath& path,
+                     std::string* pHandle)
+   {
+
+      std::string cmd = shell_utils::join_and(
+            ShellCommand("cd") << path,
+            git() << "clone" << "--progress" << url);
+
+      boost::shared_ptr<ConsoleProcess> ptrProc =
+            console_process::ConsoleProcess::create(cmd, procOptions());
+
+      *pHandle = ptrProc->handle();
+      return Success();
+   }
+
    core::Error push(std::string* pHandle)
    {
       boost::shared_ptr<ConsoleProcess> ptrProc =
@@ -1000,6 +1016,29 @@ Error vcsCommitGit(const json::JsonRpcRequest& request,
 
    std::string handle;
    error = pGit->commit(commitMsg, amend, signOff, &handle);
+   if (error)
+      return error;
+
+   pResponse->setResult(handle);
+
+   return Success();
+}
+
+Error vcsClone(const json::JsonRpcRequest& request,
+               json::JsonRpcResponse* pResponse)
+{
+   GitVCSImpl git(options().userHomePath());
+
+   std::string url;
+   std::string path;
+   Error error = json::readParams(request.params, &url, &path);
+   if (error)
+      return error;
+
+   FilePath parentPath = module_context::resolveAliasedPath(path);
+
+   std::string handle;
+   error = git.clone(url, parentPath, &handle);
    if (error)
       return error;
 
@@ -1756,6 +1795,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_checkout", vcsCheckout))
       (bind(registerRpcMethod, "vcs_full_status", vcsFullStatus))
       (bind(registerRpcMethod, "vcs_commit_git", vcsCommitGit))
+      (bind(registerRpcMethod, "vcs_clone", vcsClone))
       (bind(registerRpcMethod, "vcs_push", vcsPush))
       (bind(registerRpcMethod, "vcs_pull", vcsPull))
       (bind(registerRpcMethod, "vcs_diff_file", vcsDiffFile))

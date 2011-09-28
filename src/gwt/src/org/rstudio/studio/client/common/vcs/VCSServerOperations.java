@@ -90,6 +90,10 @@ public interface VCSServerOperations
    void vcsShow(String rev,
                 ServerRequestCallback<String> requestCallback);
 
+   void vcsClone(String repoUrl,
+                 String parentPath,
+                 ServerRequestCallback<ConsoleProcess> requestCallback);
+
    void vcsPush(ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void vcsPull(ServerRequestCallback<ConsoleProcess> requestCallback);

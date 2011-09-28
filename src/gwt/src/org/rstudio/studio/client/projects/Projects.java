@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.projects;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.SerializedCommand;
+import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -24,6 +26,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectFileHandler;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
@@ -51,6 +55,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import org.rstudio.studio.client.workbench.views.vcs.ConsoleProgressDialog;
 
 @Singleton
 public class Projects implements OpenProjectFileHandler,
@@ -129,64 +134,8 @@ public class Projects implements OpenProjectFileHandler,
                @Override
                public void execute(final Result newProject, 
                                    final ProgressIndicator indicator)
-               {      
-                  // create project command which can be invoked from 
-                  // multiple contexts
-                  final Command createProjCmd = new Command() {
-                     @Override
-                     public void execute()
-                     {
-                        // TODO Auto-generated method stub
-                        indicator.onProgress("Creating project...");
-                        
-                        server_.createProject(
-                           newProject.getProjectFile(),
-                           new VoidServerRequestCallback(indicator) 
-                           {
-                              @Override 
-                              public void onSuccess()
-                              {
-                                 applicationQuit_.performQuit(
-                                                 saveChanges, 
-                                                 newProject.getProjectFile());
-                              } 
-                           });
-                     }
-                     
-                  };
-                  
-                  
-                  // update default project location pref if necessary
-                  if (newProject.getNewDefaultProjectLocation() != null)
-                  {
-                     indicator.onProgress("Saving default project location...");
-                     
-                     pUIPrefs_.get().defaultProjectLocation().setGlobalValue(
-                                    newProject.getNewDefaultProjectLocation());
-                     
-                     // call the server -- in all cases continue on with
-                     // creating the project (swallow errors updating the pref)
-                     server_.setUiPrefs(
-                          session_.getSessionInfo().getUiPrefs(), 
-                          new ServerRequestCallback<Void>() {
-                             @Override
-                             public void onResponseReceived(Void response)
-                             {
-                                createProjCmd.execute();
-                             }
-                             
-                             @Override
-                             public void onError(ServerError error)
-                             {
-                                Debug.log(error.getUserMessage());
-                                createProjCmd.execute();
-                             }
-                          });
-                  }
-                  else
-                  {
-                     createProjCmd.execute();
-                  }  
+               {
+                  createNewProject(newProject, indicator, saveChanges);
                }
    
             });
@@ -194,10 +143,144 @@ public class Projects implements OpenProjectFileHandler,
          }
       });
    }
-   
-  
-    
-   
+
+   private void createNewProject(final Result newProject,
+                                 final ProgressIndicator indicator,
+                                 final boolean saveChanges)
+   {
+      // This gets a little crazy. We have several pieces of asynchronous logic
+      // that each may or may not need to be executed, depending on the type
+      // of project being created and on whether the previous pieces of logic
+      // succeed. Plus we have this ProgressIndicator that needs to be fed
+      // properly.
+
+
+      // Here's the command queue that will hold the various operations.
+      final SerializedCommandQueue createProjectCmds =
+                                                  new SerializedCommandQueue();
+
+      // WARNING: When calling addCommand, BE SURE TO PASS FALSE as the second
+      // argument, to delay running of the commands until they are all
+      // scheduled.
+
+      // First, attempt to update the default project location pref
+      createProjectCmds.addCommand(new SerializedCommand()
+      {
+         @Override
+         public void onExecute(final Command continuation)
+         {
+            // update default project location pref if necessary
+            if (newProject.getNewDefaultProjectLocation() != null)
+            {
+               indicator.onProgress("Saving default project location...");
+
+               pUIPrefs_.get().defaultProjectLocation().setGlobalValue(
+                     newProject.getNewDefaultProjectLocation());
+
+               // call the server -- in all cases continue on with
+               // creating the project (swallow errors updating the pref)
+               server_.setUiPrefs(
+                     session_.getSessionInfo().getUiPrefs(),
+                     new VoidServerRequestCallback(indicator) {
+                        @Override
+                        public void onResponseReceived(Void response)
+                        {
+                           continuation.execute();
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                           continuation.execute();
+                        }
+                     });
+            }
+            else
+            {
+               continuation.execute();
+            }
+         }
+      }, false);
+
+      // Next, if necessary, clone the git repo
+      if (newProject.getGitRepoUrl() != null)
+      {
+         createProjectCmds.addCommand(new SerializedCommand()
+         {
+            @Override
+            public void onExecute(final Command continuation)
+            {
+               server_.vcsClone(
+                     newProject.getGitRepoUrl(),
+                     newProject.getNewDefaultProjectLocation(),
+                     new ServerRequestCallback<ConsoleProcess>() {
+                        @Override
+                        public void onResponseReceived(ConsoleProcess proc)
+                        {
+                           proc.addProcessExitHandler(new ProcessExitEvent.Handler()
+                           {
+                              @Override
+                              public void onProcessExit(ProcessExitEvent event)
+                              {
+                                 if (event.getExitCode() == 0)
+                                    continuation.execute();
+                              }
+                           });
+                           new ConsoleProgressDialog("Clone Repository", proc).showModal();
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                           indicator.onError(error.getUserMessage());
+                        }
+                     });
+            }
+         }, false);
+      }
+
+      // Next, create the project file
+      createProjectCmds.addCommand(new SerializedCommand()
+      {
+         @Override
+         public void onExecute(final Command continuation)
+         {
+            indicator.onProgress("Creating project...");
+
+            server_.createProject(
+                  newProject.getProjectFile(),
+                  new VoidServerRequestCallback(indicator)
+                  {
+                     @Override
+                     public void onSuccess()
+                     {
+                        applicationQuit_.performQuit(
+                              saveChanges,
+                              newProject.getProjectFile());
+                        continuation.execute();
+                     }
+                  });
+         }
+      }, false);
+
+      // If we get here, dismiss the progress indicator
+      createProjectCmds.addCommand(new SerializedCommand()
+      {
+         @Override
+         public void onExecute(Command continuation)
+         {
+            indicator.onCompleted();
+            continuation.execute();
+         }
+      }, false);
+
+      // Now set it all in motion!
+      createProjectCmds.run();
+   }
+
+
    @Handler
    public void onOpenProject()
    {

@@ -95,9 +95,9 @@ public class VCSPane extends WorkbenchPane implements Display
    }
 
    @Override
-   public ArrayList<StatusAndPath> getSelectedStatusAndPaths()
+   public ArrayList<StatusAndPath> getSelectedItems()
    {
-      return table_.getSelectedStatusAndPaths();
+      return table_.getSelectedItems();
    }
 
    @Override

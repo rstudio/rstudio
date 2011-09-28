@@ -1323,6 +1323,18 @@ public class RemoteServer implements Server
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
+   @Override
+   public void vcsClone(String repoUrl,
+                        String parentPath,
+                        ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(repoUrl));
+      params.set(1, new JSONString(parentPath));
+      sendRequest(RPC_SCOPE, VCS_CLONE, params,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+
    public void vcsPull(ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       sendRequest(RPC_SCOPE, VCS_PULL,
@@ -1876,6 +1888,7 @@ public class RemoteServer implements Server
    private static final String VCS_LIST_BRANCHES = "vcs_list_branches";
    private static final String VCS_CHECKOUT = "vcs_checkout";
    private static final String VCS_COMMIT_GIT = "vcs_commit_git";
+   private static final String VCS_CLONE = "vcs_clone";
    private static final String VCS_PUSH = "vcs_push";
    private static final String VCS_PULL = "vcs_pull";
    private static final String ASKPASS_COMPLETED = "askpass_completed";

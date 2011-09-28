@@ -18,6 +18,7 @@ import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.layout.FadeInAnimation;
 import org.rstudio.core.client.layout.FadeOutAnimation;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -123,7 +124,13 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
          String dir = existingRepoDestDir_.getText().trim();
          if (url.length() > 0 && dir.length() > 0)
          {
-            return new Result(null, dir, url);
+            String repo = guessGitRepoDir(url);
+            if (repo.length() == 0)
+               return null;
+
+            String repoDir = FileSystemItem.createDir(dir).completePath(repo);
+            String projFile = projFileFromDir(repoDir);
+            return new Result(projFile, dir, url);
          }
          else
          {
@@ -173,6 +180,16 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
                      "Error",
                      "You must specify a git repository URL and existing " +
                      "directory to create the new project within.");
+            }
+            else if (guessGitRepoDir(txtRepoUrl_.getText().trim()).length() == 0)
+            {
+               globalDisplay_.showMessage(
+                     MessageDialog.WARNING,
+                     "Error",
+                     "Could not guess the git repository directory name from " +
+                     "the git repository URL. Please clone the repository " +
+                     "manually, and then create a new RStudio project within " +
+                     "it.");
             }
          }
          
@@ -335,6 +352,36 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
             }
          }).run(300);
       }
+   }
+
+   private static String guessGitRepoDir(String url)
+   {
+      /*
+       * Strip trailing spaces, slashes and /.git
+       */
+      while (url.endsWith("/") || url.endsWith(" ") || url.endsWith("\t"))
+         url = url.substring(0, url.length() - 1);
+      if (url.endsWith("/.git"))
+      {
+         url = url.substring(0, url.length() - 5);
+         while (url.endsWith("/"))
+            url = url.substring(0, url.length() - 1);
+      }
+
+      /*
+       * Find last component, but be prepared that repo could have
+       * the form  "remote.example.com:foo.git", i.e. no slash
+       * in the directory part.
+       */
+      url = url.replaceFirst(".*[:/]", ""); // greedy
+
+      /*
+       * Strip .{bundle,git}.
+       */
+      url = url.replaceAll(".(bundle|git)$", "");
+      url = url.replaceAll("[\u0000-\u0020]+", " ");
+      url = url.trim();
+      return url;
    }
    
    static interface Styles extends CssResource

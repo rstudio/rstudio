@@ -376,15 +376,6 @@ public class ChangelistTable extends Composite
       return table_.getColumnSortList().hashCode();
    }
 
-   public ArrayList<StatusAndPath> getSelectedStatusAndPaths()
-   {
-      ArrayList<StatusAndPath> results = new ArrayList<StatusAndPath>();
-      for (StatusAndPath path : dataProvider_.getList())
-         if (table_.getSelectionModel().isSelected(path))
-            results.add(path);
-      return results;
-   }
-
    private final CellTable<StatusAndPath> table_;
    private final MultiSelectionModel<StatusAndPath> selectionModel_;
    private final ColumnSortEvent.ListHandler<StatusAndPath> sortHandler_;

@@ -32,12 +32,12 @@ std::string escape(const core::FilePath &path)
 
 std::string join(const std::string& command1, const std::string& command2)
 {
-   return "(" + command1 + "); (" + command2 + ")";
+   return command1 + "; " + command2;
 }
 
 std::string join_and(const std::string& command1, const std::string& command2)
 {
-   return "(" + command1 + ") && (" + command2 + ")";
+   return command1 + " && " + command2;
 }
 
 std::string join_or(const std::string& command1, const std::string& command2)
