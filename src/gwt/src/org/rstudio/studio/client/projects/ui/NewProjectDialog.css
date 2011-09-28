@@ -1,9 +1,9 @@
 
 
 .mainWidget {
-  padding-top: 7px;
-  padding-bottom: 16px;
-  width: 380px;
+   padding-bottom: 16px;
+   width: 380px;
+   height: 220px;
 }
 
 .newProjectLocationPanel {
@@ -20,5 +20,6 @@
 }
 
 .projectTypeRadioButton {
-  
+   display: block;
+   margin-top: 8px;
 }

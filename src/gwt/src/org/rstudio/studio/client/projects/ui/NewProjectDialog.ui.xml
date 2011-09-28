@@ -1,0 +1,42 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:w='urn:import:org.rstudio.core.client.widget'>
+
+   <ui:with field="res" type="org.rstudio.studio.client.projects.ui.NewProjectDialog.Resources"/>
+
+   <g:VerticalPanel styleName="{res.styles.mainWidget}">
+      <g:VerticalPanel>
+         <g:RadioButton ui:field="newDirButton_" name="Type"
+                        text="Create a new empty project"
+                        styleName="{res.styles.projectTypeRadioButton}"
+                        checked="true"/>
+         <g:VerticalPanel ui:field="newDirControls_"
+                          styleName="{res.styles.newProjectLocationPanel}">
+            <g:Label ui:field="lblNewProjectName_" text="Project directory name:"/>
+            <g:TextBox ui:field="txtProjectName_" styleName="{res.styles.projectNameTextBox}"/>
+            <w:DirectoryChooserTextBox ui:field="newProjectParent_"/>
+         </g:VerticalPanel>
+
+         <g:RadioButton ui:field="existingDirButton_" name="Type"
+                        text="Create a project based on an existing working directory"
+                        styleName="{res.styles.projectTypeRadioButton}"/>
+         <g:VerticalPanel ui:field="existingDirControls_"
+                          styleName="{res.styles.newProjectLocationPanel}"
+                          visible="false">
+            <w:DirectoryChooserTextBox ui:field="existingProjectDir_"/>
+         </g:VerticalPanel>
+
+         <g:RadioButton ui:field="existingRepoButton_" name="Type"
+                        text="Create a project by cloning a git repository"
+                        styleName="{res.styles.projectTypeRadioButton}"/>
+         <g:VerticalPanel ui:field="existingRepoControls_"
+                          styleName="{res.styles.newProjectLocationPanel}"
+                          visible="false">
+            <g:Label ui:field="lblRepoUrl" text="Git repository URL:"/>
+            <g:TextBox ui:field="txtRepoUrl_" styleName="{res.styles.projectNameTextBox}"/>
+            <w:DirectoryChooserTextBox ui:field="existingRepoDestDir_"/>
+         </g:VerticalPanel>
+      </g:VerticalPanel>
+   </g:VerticalPanel>
+   
+</ui:UiBinder>

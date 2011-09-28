@@ -12,7 +12,13 @@
  */
 package org.rstudio.studio.client.projects.ui;
 
+import com.google.gwt.animation.client.Animation;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.layout.FadeInAnimation;
+import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -34,15 +40,19 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.ArrayList;
+
 public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
 {
    public class Result
    {
       public Result(String projectFile, 
-                    String newDefaultProjectLocation)
+                    String newDefaultProjectLocation,
+                    String gitRepoUrl)
       {
          projectFile_ = projectFile;
          newDefaultProjectLocation_ = newDefaultProjectLocation;
+         gitRepoUrl_ = gitRepoUrl;
       }
       
       public String getProjectFile()
@@ -54,9 +64,15 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
       {
          return newDefaultProjectLocation_;
       }
-      
-      private String projectFile_;
-      private String newDefaultProjectLocation_;
+
+      public String getGitRepoUrl()
+      {
+         return gitRepoUrl_;
+      }
+
+      private final String projectFile_;
+      private final String newDefaultProjectLocation_;
+      private final String gitRepoUrl_;
    }
    
    
@@ -87,7 +103,32 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
             String newDefaultLocation = null;
             if (!dir.equals(defaultNewProjectLocation_))
                newDefaultLocation = dir;
-            return new Result(projFile, newDefaultLocation);
+            return new Result(projFile, newDefaultLocation, null);
+         }
+         else
+         {
+            return null;
+         }
+      }
+      else if (existingDirButton_.getValue())
+      {
+         String dir = existingProjectDir_.getText();
+         if (dir.length() > 0)
+         {
+            return new Result(projFileFromDir(dir), null, null);
+         }
+         else
+         {
+            return null;
+         }
+      }
+      else if (existingRepoButton_.getValue())
+      {
+         String url = txtRepoUrl_.getText().trim();
+         String dir = existingRepoDestDir_.getText().trim();
+         if (url.length() > 0 && dir.length() > 0)
+         {
+            return new Result(null, dir, url);
          }
          else
          {
@@ -96,15 +137,7 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
       }
       else
       {
-         String dir = existingProjectDir_.getText();
-         if (dir.length() > 0)
-         {
-            return new Result(projFileFromDir(dir), null);
-         }
-         else
-         {
-            return null;
-         }
+         return null;
       }
    }
    
@@ -124,7 +157,7 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
                      txtProjectName_);
             }
          }
-         else
+         else if (existingDirButton_.getValue())
          {
             if (existingProjectDir_.getText().trim().length() == 0)
             {
@@ -134,6 +167,18 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
                      "You must specify an existing working directory to " +
                      "create the new project within.");
             }      
+         }
+         else if (existingRepoButton_.getValue())
+         {
+            if (txtRepoUrl_.getText().trim().length() == 0
+                  || existingRepoDestDir_.getText().trim().length() == 0)
+            {
+               globalDisplay_.showMessage(
+                     MessageDialog.WARNING,
+                     "Error",
+                     "You must specify a git repository URL and existing " +
+                     "directory to create the new project within.");
+            }
          }
          
          return false;
@@ -145,86 +190,84 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
          
    }
 
+   interface Binder extends UiBinder<VerticalPanel, NewProjectDialog> {}
+
    @Override
    protected Widget createMainWidget()
    {
-      Styles styles = RESOURCES.styles();
-      
-      VerticalPanel verticalPanel = new VerticalPanel();
-      verticalPanel.addStyleName(styles.mainWidget());
-      
-      newDirButton_ = new RadioButton(
-            "Type", 
-            "Create a new empty project");
-      newDirButton_.addStyleName(styles.projectTypeRadioButton());
-      newDirButton_.setValue(true);
-      newDirButton_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+      // project dir
+      newProjectParent_ = new DirectoryChooserTextBox("Create in:",
+                                                      txtProjectName_);
+      newProjectParent_.setText(defaultNewProjectLocation_.getPath());
+
+      existingProjectDir_ = new DirectoryChooserTextBox("Directory:", null);
+
+      existingRepoDestDir_ = new DirectoryChooserTextBox("Create in:",
+                                                         txtRepoUrl_);
+      existingRepoDestDir_.setText(defaultNewProjectLocation_.getPath());
+
+      VerticalPanel verticalPanel =
+            GWT.<Binder>create(Binder.class).createAndBindUi(this);
+
+      // Comment out the next line to show git repo option
+      existingRepoButton_.setVisible(false);
+
+      newDirButton_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             manageEnabled();
-            
+
             if (event.getValue())
-               txtProjectName_.setFocus(true);
+               postAnimationCallback_ = new Command()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     txtProjectName_.setFocus(true);
+                  }
+               };
          }
       });
-     
-      verticalPanel.add(newDirButton_); 
-      
-      VerticalPanel emptyLocationPanel = new VerticalPanel();
-      emptyLocationPanel.addStyleName(styles.newProjectLocationPanel());
-      
-      // project name
-      lblNewProjectName_ = new Label("Project directory name:");
-      emptyLocationPanel.add(lblNewProjectName_);
-      txtProjectName_ = new TextBox();
-      txtProjectName_.addStyleName(styles.projectNameTextBox());
-      emptyLocationPanel.add(txtProjectName_); 
-      
-      // project dir
-      newProjectParent_ = new DirectoryChooserTextBox("Create in:", 
-                                                      txtProjectName_);
-      newProjectParent_.setText(defaultNewProjectLocation_.getPath());
-      
-      emptyLocationPanel.add(newProjectParent_);
-      
-      verticalPanel.add(emptyLocationPanel);
-      
-      verticalPanel.add(new HTML("<br/>"));
-      
-      existingDirButton_ = new RadioButton(
-            "Type",
-            "Create a project based on an existing working directory");
-      existingDirButton_.addStyleName(styles.projectTypeRadioButton());
+
       existingDirButton_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             manageEnabled();
-            
-            if (event.getValue() && existingProjectDir_.getText().length() == 0)
-            {
-               Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+            if (event.getValue())
+               postAnimationCallback_ = new Command()
+               {
                   @Override
                   public void execute()
                   {
-                     existingProjectDir_.click();     
-                  }       
-               });          
-            }
+                     existingProjectDir_.focusButton();
+                  }
+               };
          }
-         
       });
-     
-      verticalPanel.add(existingDirButton_);
-      
-      VerticalPanel existingLocationPanel = new VerticalPanel();
-      existingLocationPanel.addStyleName(styles.newProjectLocationPanel());
-      
-      existingProjectDir_ = new DirectoryChooserTextBox("Directory:", null);
-      existingLocationPanel.add(existingProjectDir_);
-      verticalPanel.add(existingLocationPanel);
-      
+
+      existingRepoButton_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            manageEnabled();
+
+            if (event.getValue())
+               postAnimationCallback_ = new Command()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     txtRepoUrl_.setFocus(true);
+                  }
+               };
+         }
+      });
+
       manageEnabled();
       
       return verticalPanel;
@@ -246,11 +289,57 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
    private void manageEnabled()
    {
       boolean createNewDir = newDirButton_.getValue();
+      boolean existingDir = existingDirButton_.getValue();
+      boolean existingRepo = existingRepoButton_.getValue();
       
       txtProjectName_.setEnabled(createNewDir);
       newProjectParent_.setEnabled(createNewDir);
-      existingProjectDir_.setEnabled(!createNewDir);
-      
+
+      existingProjectDir_.setEnabled(existingDir);
+
+      txtRepoUrl_.setEnabled(existingRepo);
+      existingRepoDestDir_.setEnabled(existingRepo);
+
+
+      Widget widgetToHide =
+            newDirControls_.isVisible() ? newDirControls_ :
+            existingDirControls_.isVisible() ? existingDirControls_ :
+            existingRepoControls_.isVisible() ? existingRepoControls_ :
+            null;
+      Widget widgetToShow =
+            createNewDir ? newDirControls_ :
+            existingDir ? existingDirControls_ :
+            existingRepo ? existingRepoControls_ :
+            null;
+      if (widgetToHide != widgetToShow)
+      {
+         ArrayList<Widget> fadeOut = new ArrayList<Widget>();
+         if (widgetToHide != null)
+            fadeOut.add(widgetToHide);
+         final ArrayList<Widget> fadeIn = new ArrayList<Widget>();
+         if (widgetToShow != null)
+            fadeIn.add(widgetToShow);
+
+         new FadeOutAnimation(fadeOut, new Command()
+         {
+            @Override
+            public void execute()
+            {
+               new FadeInAnimation(fadeIn, 1.0, new Command()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     if (postAnimationCallback_ != null)
+                     {
+                        postAnimationCallback_.execute();
+                        postAnimationCallback_ = null;
+                     }
+                  }
+               }).run(300);
+            }
+         }).run(300);
+      }
    }
    
    static interface Styles extends CssResource
@@ -276,11 +365,33 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
    private final GlobalDisplay globalDisplay_;
    
    private final FileSystemItem defaultNewProjectLocation_;
-   
-   private RadioButton newDirButton_;
-   private RadioButton existingDirButton_;
-   private Label lblNewProjectName_;
-   private TextBox txtProjectName_;
-   private TextBoxWithButton newProjectParent_;
-   private TextBoxWithButton existingProjectDir_;
+
+   private Command postAnimationCallback_;
+
+   @UiField
+   RadioButton newDirButton_;
+   @UiField
+   RadioButton existingDirButton_;
+   @UiField
+   Label lblNewProjectName_;
+   @UiField
+   TextBox txtProjectName_;
+   @UiField(provided = true)
+   DirectoryChooserTextBox newProjectParent_;
+   @UiField(provided = true)
+   DirectoryChooserTextBox existingProjectDir_;
+   @UiField
+   VerticalPanel newDirControls_;
+   @UiField
+   VerticalPanel existingDirControls_;
+   @UiField
+   RadioButton existingRepoButton_;
+   @UiField
+   VerticalPanel existingRepoControls_;
+   @UiField(provided = true)
+   DirectoryChooserTextBox existingRepoDestDir_;
+   @UiField
+   Label lblRepoUrl;
+   @UiField
+   TextBox txtRepoUrl_;
 }

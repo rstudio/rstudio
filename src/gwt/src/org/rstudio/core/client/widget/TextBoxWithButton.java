@@ -50,6 +50,10 @@ public class TextBoxWithButton extends Composite
       return themedButton_.addClickHandler(handler);
    }
    
+   public void focusButton()
+   {
+      themedButton_.setFocus(true);
+   }
 
    public void setText(String text)
    {
