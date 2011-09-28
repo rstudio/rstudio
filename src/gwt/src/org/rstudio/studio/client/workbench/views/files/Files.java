@@ -25,19 +25,16 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperation;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserHandler;
-import org.rstudio.studio.client.server.ServerDataSource;
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -558,25 +555,26 @@ public class Files
       if  (selectedFiles.size() == 0)
          return ;
 
-      // confirm delete then execute it
+      String noun = selectedFiles.size() == 1 ? "file" : "files";
       globalDisplay_.showYesNoMessage(
-                        GlobalDisplay.MSG_QUESTION,
-                        "Confirm Revert",
-                        "Are you sure you want to revert the selected files?",
-                        new ProgressOperation() {
-                           public void execute(final ProgressIndicator progress)
-                           {
-                              progress.onProgress("Reverting files...");
-
-                              ArrayList<String> paths = new ArrayList<String>();
-                              for (FileSystemItem file : selectedFiles)
-                                 paths.add(file.getPath());
-                              server_.vcsRevert(
-                                    paths,
-                                    new VoidServerRequestCallback(progress));
-                           }
-                        },
-                       true);
+            GlobalDisplay.MSG_WARNING,
+            "Revert Changes",
+            "Changes to the selected " + noun + " will be lost, including " +
+            "staged changes.\n\nAre you sure you want to continue?",
+            new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  ArrayList<String> paths = new ArrayList<String>();
+                  for (FileSystemItem file : selectedFiles)
+                     paths.add(file.getPath());
+                  server_.vcsRevert(
+                        paths,
+                        new SimpleRequestCallback<Void>());
+               }
+            },
+            false);
    }
 
    @Handler

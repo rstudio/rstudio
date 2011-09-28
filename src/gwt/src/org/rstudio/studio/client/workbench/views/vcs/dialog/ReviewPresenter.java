@@ -32,7 +32,9 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
@@ -168,10 +170,12 @@ public class ReviewPresenter implements IsWidget
                           final EventBus events,
                           final VcsState vcsState,
                           final Commands commands,
-                          final Session session)
+                          final Session session,
+                          final GlobalDisplay globalDisplay)
    {
       server_ = server;
       view_ = view;
+      globalDisplay_ = globalDisplay;
 
       vcsState.addVcsRefreshHandler(new VcsRefreshHandler()
       {
@@ -221,13 +225,26 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onClick(ClickEvent event)
          {
-            ArrayList<String> selectedPaths = view_.getSelectedDiscardablePaths();
+            final ArrayList<String> selectedPaths =
+                                          view_.getSelectedDiscardablePaths();
 
-            if (selectedPaths.size() > 0)
-            {
-               server_.vcsDiscard(selectedPaths,
-                                  new SimpleRequestCallback<Void>());
-            }
+            if (selectedPaths.size() == 0)
+               return;
+
+            String noun = selectedPaths.size() == 1 ? "file" : "files";
+            globalDisplay.showYesNoMessage(
+                  GlobalDisplay.MSG_WARNING,
+                  "Discard Files",
+                  "Unstaged changes to the selected " + noun + " will be " +
+                  "lost.\n\nAre you sure you want to continue?",
+                  new Operation() {
+                     @Override
+                     public void execute() {
+                        server_.vcsDiscard(selectedPaths,
+                                           new SimpleRequestCallback<Void>());
+                     }
+                  },
+                  false);
          }
       });
 
@@ -240,15 +257,31 @@ public class ReviewPresenter implements IsWidget
                @Override
                public void onResponseReceived(JsArray<StatusAndPath> response)
                {
-                  super.onResponseReceived(response);
-
-                  ArrayList<String> paths = new ArrayList<String>();
+                  final ArrayList<String> paths = new ArrayList<String>();
                   for (int i = 0; i < response.length(); i++)
                      if (response.get(i).isDiscardable())
                         paths.add(response.get(i).getPath());
 
                   if (paths.size() > 0)
-                     server_.vcsDiscard(paths, new SimpleRequestCallback<Void>());
+                  {
+
+                     globalDisplay.showYesNoMessage(
+                           GlobalDisplay.MSG_WARNING,
+                           "Discard Files",
+                           "All unstaged changes will be lost.\n\nAre you " +
+                           "sure you want to continue?",
+                           new Operation()
+                           {
+                              @Override
+                              public void execute()
+                              {
+                                 server_.vcsDiscard(
+                                       paths,
+                                       new SimpleRequestCallback<Void>());
+                              }
+                           },
+                           false);
+                  }
                }
             });
          }
@@ -497,6 +530,7 @@ public class ReviewPresenter implements IsWidget
    private final Invalidation diffInvalidation_ = new Invalidation();
    private final VCSServerOperations server_;
    private final Display view_;
+   private final GlobalDisplay globalDisplay_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
    private static final String MODULE_VCS = "vcs";
    private static final String KEY_CONTEXT_LINES = "context_lines";

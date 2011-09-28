@@ -12,7 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -99,9 +101,21 @@ public class VCSPane extends WorkbenchPane implements Display
    }
 
    @Override
+   public int getSelectedItemCount()
+   {
+      return table_.getSelectedItems().size();
+   }
+
+   @Override
    public void onRefreshBegin()
    {
       table_.showProgress();
+   }
+
+   @Override
+   public HandlerRegistration addSelectionChangeHandler(Handler handler)
+   {
+      return table_.addSelectionChangeHandler(handler);
    }
 
    private final Commands commands_;

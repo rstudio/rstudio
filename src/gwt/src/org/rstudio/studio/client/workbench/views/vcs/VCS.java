@@ -13,8 +13,10 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.command.CommandBinder;
@@ -54,8 +56,12 @@ public class VCS extends BasePresenter implements IsWidget
       void setItems(ArrayList<StatusAndPath> items);
       ArrayList<String> getSelectedPaths();
       ArrayList<StatusAndPath> getSelectedStatusAndPaths();
+      int getSelectedItemCount();
 
       void onRefreshBegin();
+
+      HandlerRegistration addSelectionChangeHandler(
+                                          SelectionChangeEvent.Handler handler);
    }
 
    @Inject
@@ -74,7 +80,9 @@ public class VCS extends BasePresenter implements IsWidget
       pReviewPresenter_ = pReviewPresenter;
       pHistoryPresenter_ = pHistoryPresenter;
       server_ = server;
+      commands_ = commands;
       vcsState_ = vcsState;
+      globalDisplay_ = globalDisplay;
 
       commandBinder.bind(commands, this);
 
@@ -120,6 +128,21 @@ public class VCS extends BasePresenter implements IsWidget
                   });
          }
       });
+
+      view_.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
+         @Override
+         public void onSelectionChange(SelectionChangeEvent event)
+         {
+            manageCommands();
+         }
+      });
+      manageCommands();
+   }
+
+   private void manageCommands()
+   {
+      boolean anySelected = view_.getSelectedItemCount() > 0;
+      commands_.vcsRevert().setEnabled(anySelected);
    }
 
    @Override
@@ -167,11 +190,27 @@ public class VCS extends BasePresenter implements IsWidget
    @Handler
    void onVcsRevert()
    {
-      ArrayList<String> paths = view_.getSelectedPaths();
+      final ArrayList<String> paths = view_.getSelectedPaths();
       if (paths.size() == 0)
          return;
 
-      server_.vcsRevert(paths, new SimpleRequestCallback<Void>("Revert Changes"));
+      String noun = paths.size() == 1 ? "file" : "files";
+      globalDisplay_.showYesNoMessage(
+            GlobalDisplay.MSG_WARNING,
+            "Revert Changes",
+            "Changes to the selected " + noun + " will be lost, including " +
+            "staged changes.\n\nAre you sure you want to continue?",
+            new Operation()
+            {
+               @Override
+               public void execute()
+               {
+                  server_.vcsRevert(
+                        paths,
+                        new SimpleRequestCallback<Void>("Revert Changes"));
+               }
+            },
+            false);
    }
 
    @Handler
@@ -230,5 +269,7 @@ public class VCS extends BasePresenter implements IsWidget
    private final Provider<ReviewPresenter> pReviewPresenter_;
    private final Provider<HistoryPresenter> pHistoryPresenter_;
    private final VCSServerOperations server_;
+   private final Commands commands_;
    private final VcsState vcsState_;
+   private final GlobalDisplay globalDisplay_;
 }
