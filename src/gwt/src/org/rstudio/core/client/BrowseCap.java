@@ -94,7 +94,7 @@ public class BrowseCap
       }
       else
       {
-         return true;
+         return false;
       }
    }
 
