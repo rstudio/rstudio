@@ -22,7 +22,6 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;

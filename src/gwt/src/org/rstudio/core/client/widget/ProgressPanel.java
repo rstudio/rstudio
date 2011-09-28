@@ -67,6 +67,5 @@ public class ProgressPanel extends Composite
    }
 
    private final Image progressImage_ ;
-   private boolean progressOperationPending_ = false ;
    private Timer timer_;
 }
