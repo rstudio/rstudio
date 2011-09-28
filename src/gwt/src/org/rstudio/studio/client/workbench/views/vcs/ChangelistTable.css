@@ -1,7 +1,7 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 
-@def selectionBorderWidth 2px;
+@def selectionBorderWidth 1px;
 
 
 span.status {
@@ -140,11 +140,17 @@ span.status img:first-child {
 
 
 .cellTableKeyboardSelectedRow {
-  background: #ffc;
 }
 
 .cellTableKeyboardSelectedRowCell {
-  border: selectionBorderWidth solid #ffc;
+   border-top: 1px dotted gray !important;
+   border-bottom: 1px dotted gray !important;
+}
+.cellTableKeyboardSelectedRowCell:first-child {
+   border-left: 1px dotted gray;
+}
+.cellTableKeyboardSelectedRowCell:first-child + td + td {
+   border-right: 1px dotted gray;
 }
 
 .cellTableSelectedRow {
