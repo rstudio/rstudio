@@ -173,6 +173,39 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
       }
    }
 
+   private class SwitchableSelectionModel<T> extends MultiSelectionModel<T>
+   {
+      private SwitchableSelectionModel()
+      {
+      }
+
+      private SwitchableSelectionModel(ProvidesKey<T> keyProvider)
+      {
+         super(keyProvider);
+      }
+
+      @Override
+      public void setSelected(T object, boolean selected)
+      {
+         if (!enabled_)
+            return;
+
+         super.setSelected(object, selected);
+      }
+
+      public boolean isEnabled()
+      {
+         return enabled_;
+      }
+
+      public void setEnabled(boolean enabled)
+      {
+         this.enabled_ = enabled;
+      }
+
+      private boolean enabled_ = true;
+   }
+
    public LineTableView()
    {
       this(GWT.<LineTableResources>create(LineTableResources.class));
@@ -263,7 +296,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
          }
       });
 
-      selectionModel_ = new MultiSelectionModel<ChunkOrLine>(new ProvidesKey<ChunkOrLine>()
+      selectionModel_ = new SwitchableSelectionModel<ChunkOrLine>(new ProvidesKey<ChunkOrLine>()
       {
          @Override
          public Object getKey(ChunkOrLine item)
@@ -306,6 +339,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
    public void setShowActions(boolean showActions)
    {
       showActions_ = showActions;
+      selectionModel_.setEnabled(showActions);
    }
 
    @Override
@@ -412,7 +446,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
 
    private boolean showActions_ = true;
    private ArrayList<ChunkOrLine> lines_;
-   private MultiSelectionModel<ChunkOrLine> selectionModel_;
+   private SwitchableSelectionModel<ChunkOrLine> selectionModel_;
    private HashSet<Integer> startRows_ = new HashSet<Integer>();
    private HashSet<Integer> endRows_ = new HashSet<Integer>();
    private static final LineTableResources RES = GWT.create(LineTableResources.class);

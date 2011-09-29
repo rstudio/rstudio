@@ -29,6 +29,8 @@ public class LineTablePresenter
       ArrayList<Line> getSelectedLines();
       ArrayList<Line> getAllLines();
 
+      void setShowActions(boolean showActions);
+
       HandlerRegistration addDiffChunkActionHandler(DiffChunkActionHandler handler);
       HandlerRegistration addDiffLineActionHandler(DiffLineActionHandler handler);
 

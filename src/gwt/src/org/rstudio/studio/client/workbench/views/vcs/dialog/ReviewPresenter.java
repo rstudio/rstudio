@@ -106,10 +106,23 @@ public class ReviewPresenter implements IsWidget
       public void onClick(ClickEvent event)
       {
          ArrayList<Line> selectedLines = view_.getLineTableDisplay().getSelectedLines();
-         if (selectedLines.size() == 0)
-            selectedLines = view_.getLineTableDisplay().getAllLines();
+         if (selectedLines.size() != 0)
+         {
+            applyPatch(activeChunks_, selectedLines, reverse_, patchMode_);
+         }
+         else
+         {
+            ArrayList<String> paths = view_.getSelectedPaths();
 
-         applyPatch(activeChunks_, selectedLines, reverse_, patchMode_);
+            if (patchMode_ == PatchMode.Stage && !reverse_)
+               server_.vcsStage(paths, new SimpleRequestCallback<Void>("Stage"));
+            else if (patchMode_ == PatchMode.Stage && reverse_)
+               server_.vcsUnstage(paths, new SimpleRequestCallback<Void>("Unstage"));
+            else if (patchMode_ == PatchMode.Working && reverse_)
+               server_.vcsDiscard(paths, new SimpleRequestCallback<Void>("Discard"));
+            else
+               throw new RuntimeException("Unknown patchMode and reverse combo");
+         }
       }
 
       private final PatchMode patchMode_;
@@ -443,7 +456,7 @@ public class ReviewPresenter implements IsWidget
    {
       view_.getLineTableDisplay().clear();
       view_.setFilename("");
-      ArrayList<String> paths = view_.getChangelistTable().getSelectedPaths();
+      final ArrayList<StatusAndPath> paths = view_.getChangelistTable().getSelectedItems();
       if (paths.size() != 1)
          return;
 
@@ -461,7 +474,7 @@ public class ReviewPresenter implements IsWidget
          }
       }
 
-      view_.setFilename(paths.get(0));
+      view_.setFilename(paths.get(0).getPath());
 
       diffInvalidation_.invalidate();
       final Token token = diffInvalidation_.getInvalidationToken();
@@ -470,7 +483,7 @@ public class ReviewPresenter implements IsWidget
                                   ? PatchMode.Stage
                                   : PatchMode.Working;
       server_.vcsDiffFile(
-            paths.get(0),
+            paths.get(0).getPath(),
             patchMode,
             view_.getContextLines().getValue(),
             new SimpleRequestCallback<String>("Diff Error")
@@ -496,6 +509,8 @@ public class ReviewPresenter implements IsWidget
                         allLines.add(new ChunkOrLine(line));
                   }
 
+                  view_.getLineTableDisplay().setShowActions(
+                        paths.get(0).isFineGrainedActionable());
                   view_.getLineTableDisplay().setData(allLines, patchMode);
                   view_.getGutter().setValue(allLines);
                }

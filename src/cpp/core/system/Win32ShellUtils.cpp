@@ -68,5 +68,14 @@ std::string sendNullToStdIn(const std::string& command)
    return "(" + command + ") < NUL";
 }
 
+namespace {
+FilePath s_devnull("NUL");
+} // namespace
+
+const FilePath& devnull()
+{
+   return s_devnull;
+}
+
 }
 }
