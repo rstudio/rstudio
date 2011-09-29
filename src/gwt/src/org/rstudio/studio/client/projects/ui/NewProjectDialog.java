@@ -18,6 +18,7 @@ import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.layout.FadeInAnimation;
 import org.rstudio.core.client.layout.FadeOutAnimation;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
