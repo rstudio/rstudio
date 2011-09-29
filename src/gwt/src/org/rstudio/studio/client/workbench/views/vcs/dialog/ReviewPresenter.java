@@ -175,7 +175,6 @@ public class ReviewPresenter implements IsWidget
    {
       server_ = server;
       view_ = view;
-      globalDisplay_ = globalDisplay;
 
       vcsState.addVcsRefreshHandler(new VcsRefreshHandler()
       {
@@ -530,7 +529,6 @@ public class ReviewPresenter implements IsWidget
    private final Invalidation diffInvalidation_ = new Invalidation();
    private final VCSServerOperations server_;
    private final Display view_;
-   private final GlobalDisplay globalDisplay_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
    private static final String MODULE_VCS = "vcs";
    private static final String KEY_CONTEXT_LINES = "context_lines";
