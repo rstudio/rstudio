@@ -253,7 +253,7 @@ public class ReviewPanel extends Composite implements Display
                public void onClick(ClickEvent event)
                {
                   changelist_.showProgress();
-                  commands.vcsRefresh();
+                  commands.vcsRefresh().execute();
                }
             }));
 
