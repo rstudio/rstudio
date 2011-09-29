@@ -123,14 +123,10 @@ core::Error executeAsync(const core::json::JsonRpcFunction& function,
 //   (a) enque the passed event
 //   (b) wait for the specified methodName to be returned from the client
 //   (c) automatically re-issue the event after a client-init
-//   (d) if requested, automatically re-prompt after client-init (this
-//       is useful for situations where the blocking state is NOT origined
-//       inside the REPL loop -- e.g. for interactions with ssh)
 //
 typedef boost::function<bool(core::json::JsonRpcRequest*)> WaitForMethodFunction;
 WaitForMethodFunction registerWaitForMethod(const std::string& methodName,
-                                            const ClientEvent& event,
-                                            bool reissuePrompt = false);
+                                            const ClientEvent& event);
 
 namespace {
 

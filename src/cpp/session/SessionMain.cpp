@@ -2154,8 +2154,7 @@ void syncRSaveAction()
 
 namespace {
 
-void waitForMethodInitFunction(const ClientEvent& initEvent,
-                               bool reissuePrompt)
+void waitForMethodInitFunction(const ClientEvent& initEvent)
 {
    module_context::enqueClientEvent(initEvent);
 
@@ -2164,7 +2163,7 @@ void waitForMethodInitFunction(const ClientEvent& initEvent,
       ClientEvent busyEvent(client_events::kBusy, true);
       module_context::enqueClientEvent(busyEvent);
    }
-   else if (reissuePrompt)
+   else
    {
       reissueLastConsolePrompt();
    }
@@ -2172,32 +2171,25 @@ void waitForMethodInitFunction(const ClientEvent& initEvent,
 
 bool registeredWaitForMethod(const std::string& method,
                              const ClientEvent& event,
-                             bool reissuePrompt,
                              core::json::JsonRpcRequest* pRequest)
 {
    // enque the event which notifies the client we want input
    module_context::enqueClientEvent(event);
 
-   // compose initFunction
-   boost::function<void()> initFunction =
-     boost::bind(waitForMethodInitFunction, event, reissuePrompt);
-
    // wait for method
-   return waitForMethod(method, initFunction, disallowSuspend, pRequest);
+   return waitForMethod(method,
+                        boost::bind(waitForMethodInitFunction, event),
+                        disallowSuspend,
+                        pRequest);
 }
 
 } // anonymous namepace
 
 WaitForMethodFunction registerWaitForMethod(const std::string& methodName,
-                                            const ClientEvent& event,
-                                            bool reissuePrompt)
+                                            const ClientEvent& event)
 {
    s_waitForMethodNames.push_back(methodName);
-   return boost::bind(registeredWaitForMethod,
-                        methodName,
-                        event,
-                        reissuePrompt,
-                        _1);
+   return boost::bind(registeredWaitForMethod, methodName, event, _1);
 }
 
 } // namespace module_context

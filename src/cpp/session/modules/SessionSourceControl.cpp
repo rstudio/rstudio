@@ -1762,17 +1762,13 @@ core::Error initialize()
       if (error)
          return error;
 
-      // register waitForMethod handler. we pass 'true' for the reissuePrompt
-      // parameter because passphrase prompting does not occur in reponse
-      // to the REPL loop so after a client init we need to remind the
-      // client that they are still in a REPL state waiting for input
+      // register waitForMethod handler
       json::Object payload;
       payload["prompt"] = std::string("Enter passphrase:");
       ClientEvent askPassEvent(client_events::kAskPass, payload);
       s_waitForAskPass = module_context::registerWaitForMethod(
                                                    "askpass_completed",
-                                                   askPassEvent,
-                                                   true);
+                                                   askPassEvent);
 
       // setup environment
       BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));
