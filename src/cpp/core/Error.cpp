@@ -208,14 +208,14 @@ struct ErrorLocation::Impl
    {
    }
    
-   Impl(const char* function, const char* file, int line) 
+   Impl(const char* function, const char* file, long line)
       : function(function), file(file), line(line) 
    {
    }
    
    std::string function ;
    std::string file ;
-   int line ;
+   long line ;
 };
 
 ErrorLocation::ErrorLocation()
@@ -223,7 +223,7 @@ ErrorLocation::ErrorLocation()
 {
 }
 
-ErrorLocation::ErrorLocation(const char* function, const char* file, int line) 
+ErrorLocation::ErrorLocation(const char* function, const char* file, long line)
    : pImpl_(new Impl(function, file, line)) 
 {
 }
@@ -248,7 +248,7 @@ const std::string& ErrorLocation::file() const
    return pImpl_->file ;
 }
 
-int ErrorLocation::line() const 
+long ErrorLocation::line() const
 {
    return pImpl_->line ;
 }

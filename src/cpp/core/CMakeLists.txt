@@ -18,6 +18,7 @@ file(GLOB_RECURSE CORE_HEADER_FILES "*.h*")
 
 # source files
 set (CORE_SOURCE_FILES
+   Assert.cpp
    BoostErrors.cpp
    ConfigUtils.cpp
    DateTime.cpp

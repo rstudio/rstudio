@@ -18,6 +18,9 @@ project (RSTUDIO_CPP)
 # include them here to support cpp only configurations for development)
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeGlobals.txt")
 
+# global directives
+add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
+
 # UNIX specific global directivies
 if(UNIX)
    # cmake modules
