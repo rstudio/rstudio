@@ -23,6 +23,7 @@ public class UnifiedParser
    public UnifiedParser(String data)
    {
       data_ = data;
+      diffIndex_ = 0;
    }
 
    public DiffFileHeader nextFilePair()
@@ -81,9 +82,9 @@ public class UnifiedParser
       int newRowsLeft = newCount;
 
       ArrayList<Line> lines = new ArrayList<Line>();
-      for (int i = 0;
+      for (;
            oldRowsLeft > 0 || newRowsLeft > 0 || nextLineIsComment();
-           i++)
+           diffIndex_++)
       {
          String diffLine = nextLine();
          if (diffLine == null)
@@ -99,7 +100,7 @@ public class UnifiedParser
                                   oldRow++,
                                   newRow++,
                                   diffLine.substring(1),
-                                  i));
+                                  diffIndex_));
                break;
             case '-':
                oldRowsLeft--;
@@ -107,7 +108,7 @@ public class UnifiedParser
                                   oldRow++,
                                   newRow-1,
                                   diffLine.substring(1),
-                                  i));
+                                  diffIndex_));
                break;
             case '+':
                newRowsLeft--;
@@ -115,7 +116,7 @@ public class UnifiedParser
                                   oldRow-1,
                                   newRow++,
                                   diffLine.substring(1),
-                                  i));
+                                  diffIndex_));
                break;
             case '\\':
                // e.g. "\\ No newline at end of file"
@@ -123,7 +124,7 @@ public class UnifiedParser
                                   oldRow-1,
                                   newRow-1,
                                   diffLine.substring(1),
-                                  i));
+                                  diffIndex_));
                break;
             default:
                throw new DiffFormatException("Unexpected leading character");
@@ -171,4 +172,5 @@ public class UnifiedParser
    private int pos_;
    private final Pattern newline_ = Pattern.create("\\r?\\n");
    private final Pattern range_ = Pattern.create("^@@\\s*-([\\d]+)(?:,([\\d]+))?\\s+\\+([\\d]+)(?:,([\\d]+))?\\s*@@( (.*))?$", "m");
+   private int diffIndex_;
 }

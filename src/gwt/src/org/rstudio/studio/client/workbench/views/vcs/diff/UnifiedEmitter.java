@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.diff;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.studio.client.workbench.views.vcs.diff.Line.Type;
 
@@ -223,6 +224,15 @@ public class UnifiedEmitter
          {
             // Now we have a context line (ctx) and a diff line (dff) in hand.
 
+/*
+            Debug.devlogf("DiffIndex: {0}/{1}, {2}-{3}, {4}-{5}",
+                          ctx.getDiffIndex(),
+                          dff.getDiffIndex(),
+                          ctx.getOldLine(),
+                          ctx.getNewLine(),
+                          dff.getOldLine(),
+                          dff.getNewLine());
+*/
             int cmp = ctx.getDiffIndex() - dff.getDiffIndex();
             if (cmp < 0)
                ctxPop(true);
