@@ -4,6 +4,10 @@
    line-height: 1.45;
 }
 
+.windows .normalSize, .macintosh .normalSize td, .macintosh .normalSize pre {
+   line-height: 1.1;
+}
+
 .ubuntu_mono .normalSize, .ubuntu_mono .normalSize td, .ubuntu_mono .normalSize pre {
    line-height: 1.2;
 }
