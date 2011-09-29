@@ -185,15 +185,6 @@ SEXP rs_threadSleep(SEXP secondsSEXP)
    return R_NilValue;
 }
 
-// assert failure
-SEXP rs_assertFailure()
-{
-   module_context::consoleWriteError("Asserting failure\n");
-   BOOST_ASSERT(false);
-   return R_NilValue;
-}
-
-
 // get rstudio version from R
 SEXP rs_rstudioVersion()
 {
@@ -299,13 +290,6 @@ Error initialize()
    methodDef8.fun = (DL_FUNC) rs_ensureFileHidden ;
    methodDef8.numArgs = 1;
    r::routines::addCallMethod(methodDef8);
-
-   // register rs_assertFailure with R
-   R_CallMethodDef methodDef9;
-   methodDef9.name = "rs_assertFailure" ;
-   methodDef9.fun = (DL_FUNC) rs_assertFailure ;
-   methodDef9.numArgs = 0;
-   r::routines::addCallMethod(methodDef9);
    
    // register Sys.sleep() hook to notify modules of sleep (currently
    // used by plots to check for changes on sleep so we can support the
