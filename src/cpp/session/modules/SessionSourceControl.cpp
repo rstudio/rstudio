@@ -1683,6 +1683,29 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 
 } // anonymous namespace
 
+bool isGitInstalled()
+{
+   if (!userSettings().vcsEnabled())
+      return false;
+
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(git() << "--version",
+                                          procOptions(),
+                                          &result);
+   if (error)
+      return false;
+   return result.exitStatus == EXIT_SUCCESS;
+}
+
+bool isSvnInstalled()
+{
+   if (!userSettings().vcsEnabled())
+      return false;
+
+   // TODO
+   return false;
+}
+
 core::Error initialize()
 {
    Error error;

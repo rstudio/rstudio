@@ -21,6 +21,8 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
+import java.util.ArrayList;
+
 public class SessionInfo extends JavaScriptObject
 {
    protected SessionInfo()
@@ -127,6 +129,11 @@ public class SessionInfo extends JavaScriptObject
    public final boolean isVcsEnabled()
    {
       return !StringUtil.isNullOrEmpty(getVcsName());
+   }
+
+   public final String[] getAvailableVCS()
+   {
+      return this.<JsObject>cast().getString("vcs_available", true).split(",");
    }
    
    public final native String getVcsName() /*-{

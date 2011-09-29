@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 
 import com.google.gwt.core.client.GWT;
@@ -36,6 +37,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
 {
@@ -220,8 +222,11 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
       VerticalPanel verticalPanel =
             GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
-      // Comment out the next line to show git repo option
-      existingRepoButton_.setVisible(false);
+      // Hide git if it isn't available on this system
+      String[] vcs = RStudioGinjector.INSTANCE.getSession()
+                                            .getSessionInfo().getAvailableVCS();
+      if (Arrays.asList(vcs).indexOf("git") < 0)
+         existingRepoButton_.setVisible(false);
 
       newDirButton_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {

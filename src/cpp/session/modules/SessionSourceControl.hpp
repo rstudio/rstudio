@@ -79,6 +79,8 @@ VCS activeVCS();
 std::string activeVCSName();
 core::Error status(const core::FilePath& dir, StatusResult* pStatusResult);
 core::Error fileStatus(const core::FilePath& filePath, VCSStatus* pStatus);
+bool isGitInstalled();
+bool isSvnInstalled();
 core::Error initialize();
 
 } // namespace source_control

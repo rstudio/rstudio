@@ -29,6 +29,7 @@
 #include <boost/signals.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 #include <core/Error.hpp>
 #include <core/BoostThread.hpp>
@@ -422,6 +423,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
 
+   std::vector<std::string> vcsAvailable;
+   if (modules::source_control::isGitInstalled())
+      vcsAvailable.push_back("git");
+   if (modules::source_control::isSvnInstalled())
+      vcsAvailable.push_back("svn");
+   sessionInfo["vcs_available"] = boost::algorithm::join(vcsAvailable, ",");
    sessionInfo["vcs"] = modules::source_control::activeVCSName();
 
    // send response  (we always set kEventsPending to false so that the client

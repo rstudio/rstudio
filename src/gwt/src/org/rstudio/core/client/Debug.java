@@ -16,6 +16,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.AttachDetachException;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.server.ServerError;
 
 public class Debug
@@ -102,4 +103,15 @@ public class Debug
       }
    }
 
+   public static void devlogf(String format,
+                              Object... args)
+   {
+      int i = 0;
+      for (Object arg : args)
+      {
+         format = format.replaceFirst(Pattern.escape("{" + (i++) + "}"),
+                                      arg == null ? "NULL" : arg.toString());
+      }
+      devlog(format);
+   }
 }
