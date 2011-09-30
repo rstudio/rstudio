@@ -897,7 +897,8 @@ void suspendIfRequested(const boost::function<bool()>& allowSuspend)
 
 bool canSuspend(const std::string& prompt)
 {
-   return r::session::isSuspendable(prompt);
+   return !module_context::processSupervisor().hasRunningChildren()
+      && r::session::isSuspendable(prompt);
 }
 
 
