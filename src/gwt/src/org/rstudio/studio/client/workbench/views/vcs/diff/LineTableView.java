@@ -33,6 +33,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.views.vcs.diff.Line.Type;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter.Display;
@@ -216,6 +217,8 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
    public LineTableView(final LineTableResources res)
    {
       super(1, res);
+
+      FontSizer.applyNormalFontSize(this);
 
       TextColumn<ChunkOrLine> oldCol = new TextColumn<ChunkOrLine>()
       {
