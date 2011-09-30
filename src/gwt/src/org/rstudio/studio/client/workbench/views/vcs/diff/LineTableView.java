@@ -193,6 +193,7 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
          super.setSelected(object, selected);
       }
 
+      @SuppressWarnings("unused")
       public boolean isEnabled()
       {
          return enabled_;
