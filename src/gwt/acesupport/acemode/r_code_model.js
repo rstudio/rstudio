@@ -559,7 +559,15 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
       }
       else if (delta.action === "removeText")
       {
-         this.$invalidateRow(delta.range.start.row);
+         if (this.$doc.isNewLine(delta.text))
+         {
+            this.$removeRows(delta.range.end.row, 1);
+            this.$invalidateRow(delta.range.start.row);
+         }
+         else
+         {
+            this.$invalidateRow(delta.range.start.row);
+         }
       }
 
       this.$scopes.invalidateFrom(delta.range.start);
