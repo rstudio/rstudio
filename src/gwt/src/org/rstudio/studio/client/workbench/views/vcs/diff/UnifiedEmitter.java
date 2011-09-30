@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.diff;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.studio.client.workbench.views.vcs.diff.Line.Type;
 
