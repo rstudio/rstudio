@@ -30,6 +30,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
       void detach();
    }
    void setFileType(TextFileType fileType);
+   void setFileType(TextFileType fileType, boolean suppressCompletion);
    String getCode();
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code, boolean blockMode);
@@ -53,6 +54,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    // Fix bug 964
    void onActivate();
 
+   void setReadOnly(boolean readOnly);
    void setFontSize(double size);
 
    void onVisibilityChanged(boolean visible);

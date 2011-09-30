@@ -55,7 +55,7 @@ import java.util.HashSet;
 
 public class CodeBrowserEditingTarget implements EditingTarget
 {
-   public static final String PATH = "view::code_browser";
+   public static final String PATH = "code_browser://";
    
    public interface Display extends TextDisplay                                                      
    {

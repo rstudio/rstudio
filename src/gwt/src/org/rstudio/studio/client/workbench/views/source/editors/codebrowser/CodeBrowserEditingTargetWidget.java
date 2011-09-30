@@ -36,7 +36,8 @@ public class CodeBrowserEditingTargetWidget extends Composite
       panel_ = new PanelWithToolbar(createToolbar(),
                                     docDisplay_.asWidget());
       
-      docDisplay_.setFileType(FileTypeRegistry.R); 
+      docDisplay_.setReadOnly(true);
+      docDisplay_.setFileType(FileTypeRegistry.R, true); 
       
       initWidget(panel_);
 
@@ -52,7 +53,7 @@ public class CodeBrowserEditingTargetWidget extends Composite
    @Override
    public void adaptToFileType(TextFileType fileType)
    {
-      docDisplay_.setFileType(fileType); 
+      docDisplay_.setFileType(fileType, true); 
    }
 
 
