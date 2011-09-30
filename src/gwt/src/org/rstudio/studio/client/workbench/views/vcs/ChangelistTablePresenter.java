@@ -36,12 +36,10 @@ public class ChangelistTablePresenter
    @Inject
    public ChangelistTablePresenter(VCSServerOperations server,
                                    ChangelistTable view,
-                                   Session session,
                                    VcsState vcsState)
    {
       server_ = server;
       view_ = view;
-      session_ = session;
       vcsState_ = vcsState;
 
       view_.addStageUnstageHandler(new StageUnstageHandler()
@@ -80,42 +78,6 @@ public class ChangelistTablePresenter
       });
    }
 
-   public void initializeClientState()
-   {
-      new JSObjectStateValue(MODULE_VCS, KEY_SORT_ORDER, ClientState.PERSISTENT,
-                             session_.getSessionInfo().getClientState(),
-                             false) {
-         @Override
-         protected void onInit(JsObject value)
-         {
-            if (value != null)
-            {
-               view_.setSortOrder(value.<JsArray<ColumnSortInfo>>cast());
-               lastHashCode_ = view_.getSortOrderHashCode();
-            }
-         }
-
-         @Override
-         protected JsObject getValue()
-         {
-            return view_.getSortOrder().cast();
-         }
-
-         @Override
-         protected boolean hasChanged()
-         {
-            if (lastHashCode_ != view_.getSortOrderHashCode())
-            {
-               lastHashCode_ = view_.getSortOrderHashCode();
-               return true;
-            }
-            return false;
-         }
-
-         public int lastHashCode_;
-      };
-   }
-
    public ChangelistTable getView()
    {
       return view_;
@@ -123,9 +85,5 @@ public class ChangelistTablePresenter
 
    private final VCSServerOperations server_;
    private final ChangelistTable view_;
-   private final Session session_;
    private final VcsState vcsState_;
-
-   private static final String KEY_SORT_ORDER = "sortOrder";
-   private static final String MODULE_VCS = "vcs";
 }

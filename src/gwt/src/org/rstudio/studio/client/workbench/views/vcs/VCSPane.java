@@ -43,7 +43,6 @@ public class VCSPane extends WorkbenchPane implements Display
       commands_ = commands;
       branchToolbarButton_ = branchToolbarButton;
 
-      changelistTablePresenter.initializeClientState();
       table_ = changelistTablePresenter.getView();
       consoleBarFrame_.setWidget(table_);
    }

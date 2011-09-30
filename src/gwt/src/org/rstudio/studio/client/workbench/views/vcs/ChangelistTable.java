@@ -285,13 +285,32 @@ public class ChangelistTable extends Composite
       pathColumn.setSortable(true);
       sortHandler_.setComparator(pathColumn, new Comparator<StatusAndPath>()
       {
+         private String[] splitDirAndName(String path)
+         {
+            int index = path.lastIndexOf("/");
+            if (index < 0)
+               index = path.lastIndexOf("\\");
+            if (index < 0)
+               return new String[] { "", path };
+            else
+               return new String[] { path.substring(0, index),
+                                     path.substring(index + 1) };
+         }
+
          @Override
          public int compare(StatusAndPath a, StatusAndPath b)
          {
-            return a.getPath().compareToIgnoreCase(b.getPath());
+            String[] splitA = splitDirAndName(a.getPath());
+            String[] splitB = splitDirAndName(b.getPath());
+            int result = splitA[0].compareTo(splitB[0]);
+            if (result == 0)
+               result = splitA[1].compareTo(splitB[1]);
+            return result;
          }
       });
       table_.addColumn(pathColumn, "Path");
+
+      table_.getColumnSortList().push(pathColumn);
    }
 
    public HandlerRegistration addSelectionChangeHandler(
