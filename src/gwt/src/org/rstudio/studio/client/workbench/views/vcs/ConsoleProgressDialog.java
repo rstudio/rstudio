@@ -15,10 +15,16 @@ package org.rstudio.studio.client.workbench.views.vcs;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -44,14 +50,22 @@ public class ConsoleProgressDialog extends ModalDialogBase
       registrations_.add(consoleProcess.addProcessExitHandler(this));
 
       output_ = new PreWidget();
-      output_.setSize("700px", "300px");
-      Style style = output_.getElement().getStyle();
+      output_.getElement().getStyle().setMargin(0, Unit.PX);
+      output_.getElement().getStyle().setFontSize(11, Unit.PX);
+
+      scrollPanel_ = new BottomScrollPanel(output_);
+      scrollPanel_.setSize("640px", "200px");
+
+      Style style = scrollPanel_.getElement().getStyle();
       style.setBackgroundColor("white");
       style.setBorderStyle(BorderStyle.SOLID);
       style.setBorderColor("#BBB");
       style.setBorderWidth(1, Style.Unit.PX);
-      style.setOverflowY(Overflow.AUTO);
-      style.setOverflowX(Overflow.AUTO);
+      style.setMargin(0, Unit.PX);
+      style.setMarginBottom(3, Unit.PX);
+      style.setPadding(4, Unit.PX);
+
+      status_ = new Label("The process is executing...");
 
       button_ = new ThemedButton("Stop", this);
       addOkButton(button_);
@@ -78,13 +92,20 @@ public class ConsoleProgressDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
-      return output_;
+      VerticalPanel vpanel = new VerticalPanel();
+      vpanel.add(scrollPanel_);
+      vpanel.add(status_);
+      return vpanel;
    }
 
    @Override
    public void onConsoleOutput(ConsoleOutputEvent event)
    {
-      output_.appendText(event.getOutput());
+      boolean scrolledToBottom = scrollPanel_.isScrolledToBottom();
+      console_.submit(event.getOutput());
+      output_.setText(console_.toString());
+      if (scrolledToBottom)
+         scrollPanel_.scrollToBottom();
    }
 
    @Override
@@ -92,6 +113,12 @@ public class ConsoleProgressDialog extends ModalDialogBase
    {
       running_ = false;
       button_.setText("Close");
+
+      if (event.getExitCode() == 0)
+         status_.setText("The process executed successfully.");
+      else
+         status_.setText("The process exited with error code " +
+                         event.getExitCode());
    }
 
    @Override
@@ -111,4 +138,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
    private final PreWidget output_;
    private final ThemedButton button_;
    private HandlerRegistrations registrations_;
+   private Label status_;
+   private VirtualConsole console_ = new VirtualConsole();
+   private BottomScrollPanel scrollPanel_;
 }

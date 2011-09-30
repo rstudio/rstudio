@@ -12,6 +12,9 @@
  */
 package org.rstudio.studio.client.projects;
 
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.ui.PopupPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
@@ -215,6 +218,8 @@ public class Projects implements OpenProjectFileHandler,
                      newProject.getGitRepoUrl(),
                      newProject.getNewDefaultProjectLocation(),
                      new ServerRequestCallback<ConsoleProcess>() {
+                        boolean continuationExecuted_ = false;
+
                         @Override
                         public void onResponseReceived(ConsoleProcess proc)
                         {
@@ -224,10 +229,31 @@ public class Projects implements OpenProjectFileHandler,
                               public void onProcessExit(ProcessExitEvent event)
                               {
                                  if (event.getExitCode() == 0)
-                                    continuation.execute();
+                                 {
+                                    if (!continuationExecuted_)
+                                    {
+                                       continuationExecuted_ = true;
+                                       continuation.execute();
+                                    }
+                                 }
                               }
                            });
-                           new ConsoleProgressDialog("Clone Repository", proc).showModal();
+                           ConsoleProgressDialog consoleProgressDialog = new ConsoleProgressDialog(
+                                 "Clone Repository",
+                                 proc);
+                           consoleProgressDialog.addCloseHandler(new CloseHandler<PopupPanel>()
+                           {
+                              @Override
+                              public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
+                              {
+                                 if (!continuationExecuted_)
+                                 {
+                                    continuationExecuted_ = true;
+                                    continuation.execute();
+                                 }
+                              }
+                           });
+                           consoleProgressDialog.showModal();
                         }
 
                         @Override
