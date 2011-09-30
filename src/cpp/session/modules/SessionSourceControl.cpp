@@ -560,21 +560,51 @@ public:
       return Success();
    }
 
-   core::Error diffFile(const FilePath& filePath,
-                        PatchMode mode,
-                        int contextLines,
-                        std::string* pOutput)
+   core::Error doDiffFile(const FilePath& filePath,
+                          const FilePath* pCompareTo,
+                          PatchMode mode,
+                          int contextLines,
+                          std::string* pOutput)
    {
       ShellCommand command = git() << "diff";
       command << "-U" + boost::lexical_cast<std::string>(contextLines);
       if (mode == PatchModeStage)
          command << "--cached";
       command << "--";
+      if (pCompareTo)
+         command << *pCompareTo;
       command << filePath;
 
-      Error error = runCommand(command, pOutput, NULL);
+      return runCommand(command, pOutput, NULL);
+   }
+
+   core::Error diffFile(const FilePath& filePath,
+                        PatchMode mode,
+                        int contextLines,
+                        std::string* pOutput)
+   {
+      Error error = doDiffFile(filePath, NULL, mode, contextLines, pOutput);
       if (error)
          return error;
+
+      if (pOutput->empty())
+      {
+         // detect add case
+         VCSStatus status;
+         error = fileStatus(filePath, &status);
+         if (error)
+            return error;
+         if (status.status() == "??" && mode == PatchModeWorking)
+         {
+            error = doDiffFile(filePath,
+                               &(shell_utils::devnull()),
+                               mode,
+                               contextLines,
+                               pOutput);
+            if (error)
+               return error;
+         }
+      }
 
       return Success();
    }

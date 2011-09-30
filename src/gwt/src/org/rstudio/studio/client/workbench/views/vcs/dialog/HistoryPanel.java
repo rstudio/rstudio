@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -65,9 +66,10 @@ public class HistoryPanel extends Composite implements Display
       topToolbar_.addLeftWidget(switchViewButton_);
       topToolbar_.addLeftWidget(branchToolbarButton);
 
-      topToolbar_.addRightWidget(new ToolbarButton(
+      refreshButton_ = new ToolbarButton(
             "Refresh", commands.vcsRefresh().getImageResource(),
-            commands.vcsRefresh()));
+            (ClickHandler) null);
+      topToolbar_.addRightWidget(refreshButton_);
 
       topToolbar_.addRightSeparator();
 
@@ -107,6 +109,12 @@ public class HistoryPanel extends Composite implements Display
       return commitDetail_;
    }
 
+   @Override
+   public HasClickHandlers getRefreshButton()
+   {
+      return refreshButton_;
+   }
+
    @UiField(provided = true)
    SplitLayoutPanel splitPanel_;
    @UiField
@@ -124,4 +132,6 @@ public class HistoryPanel extends Composite implements Display
    {
       GWT.<Resources>create(Resources.class).styles().ensureInjected();
    }
+
+   private ToolbarButton refreshButton_;
 }

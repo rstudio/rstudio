@@ -35,6 +35,8 @@ std::string sendAllOutputToNull(const std::string& command);
 std::string sendStdErrToNull(const std::string& command);
 std::string sendNullToStdIn(const std::string& command);
 
+const FilePath& devnull();
+
 class ShellCommand
 {
 public:

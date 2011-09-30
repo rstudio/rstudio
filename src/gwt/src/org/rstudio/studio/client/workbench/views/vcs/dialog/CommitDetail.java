@@ -89,7 +89,6 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
             {
                lines.addAll(ChunkOrLine.fromChunk(chunk));
             }
-            view.setShowActions(false);
             view.setData(lines, PatchMode.Stage);
             view.setWidth("100%");
 
