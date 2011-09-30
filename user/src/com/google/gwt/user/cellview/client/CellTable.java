@@ -499,6 +499,7 @@ public class CellTable<T> extends AbstractCellTable<T> {
   private final TableCellElement tbodyLoadingCell;
   private final TableSectionElement tfoot;
   private final TableSectionElement thead;
+  private boolean colGroupEnabled = true;
 
   /**
    * Constructs a table with a default page size of 15.
@@ -576,15 +577,46 @@ public class CellTable<T> extends AbstractCellTable<T> {
    */
   public CellTable(final int pageSize, Resources resources, ProvidesKey<T> keyProvider,
       Widget loadingIndicator) {
+    this(pageSize, resources, keyProvider, loadingIndicator, true, true);
+  }
+  
+  /**
+   * Constructs a table with the specified page size, {@link Resources}, key
+   * provider, and loading indicator.
+   * 
+   * @param pageSize the page size
+   * @param resources the resources to use for this widget
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *          object should act as its own key
+   * @param loadingIndicator the widget to use as a loading indicator, or null
+   *          to disable
+   * @param enableColGroup enable colgroup element. This is used when the table is using fixed
+   *          layout and when column style is added. Ignoring this element will boost rendering
+   *          performance. Note that when colgroup is disabled, {@link #setColumnWidth},
+   *          {@link setTableLayoutFixed} and {@link addColumnStyleName} are no longe supported
+   * @param attachLoadingPanel attaching the table section that contains the empty table widget and
+   *          the loading indicator. Attaching this to the table significantly improve the rendering
+   *          performance in webkit based browsers but also introduces significantly larger latency
+   *          in IE. If the panel is not attached to the table, it won't be displayed. But the user
+   *          can call {@link #getTableLoadingSection} and attach it to other elements outside the
+   *          table element
+   */
+  public CellTable(final int pageSize, Resources resources, ProvidesKey<T> keyProvider,
+      Widget loadingIndicator, boolean enableColGroup, boolean attachLoadingPanel) {
     super(Document.get().createTableElement(), pageSize, new ResourcesAdapter(resources),
         keyProvider);
     this.style = resources.cellTableStyle();
     this.style.ensureInjected();
+    this.colGroupEnabled = enableColGroup;
 
     table = getElement().cast();
     table.setCellSpacing(0);
-    colgroup = Document.get().createColGroupElement();
-    table.appendChild(colgroup);
+    if (enableColGroup) {
+      colgroup = Document.get().createColGroupElement();
+      table.appendChild(colgroup);
+    } else {
+      colgroup = null;
+    }
     thead = table.createTHead();
     // Some browsers create a tbody automatically, others do not.
     if (table.getTBodies().getLength() > 0) {
@@ -593,7 +625,10 @@ public class CellTable<T> extends AbstractCellTable<T> {
       tbody = Document.get().createTBodyElement();
       table.appendChild(tbody);
     }
-    table.appendChild(tbodyLoading = Document.get().createTBodyElement());
+    tbodyLoading = Document.get().createTBodyElement();
+    if (attachLoadingPanel) {
+      table.appendChild(tbodyLoading);
+    }
     tfoot = table.createTFoot();
     setStyleName(resources.cellTableStyle().cellTableWidget());
 
@@ -623,6 +658,7 @@ public class CellTable<T> extends AbstractCellTable<T> {
 
   @Override
   public void addColumnStyleName(int index, String styleName) {
+    assertColumnGroupEnabled("Cannot add column style when colgroup is disabled");
     ensureTableColElement(index).addClassName(styleName);
   }
 
@@ -644,8 +680,18 @@ public class CellTable<T> extends AbstractCellTable<T> {
     return thead.getClientHeight();
   }
 
+  /**
+   * Return the section that display loading indicator and the empty table widget. If
+   * attachLoadingPanel is set to false in the constructor, this section may not be attached
+   * to any element.
+   */
+  public TableSectionElement getTableLoadingSection() {
+    return tbodyLoading;
+  }
+  
   @Override
   public void removeColumnStyleName(int index, String styleName) {
+    assertColumnGroupEnabled("Cannot remove column style when colgroup is disabled");
     if (index >= colgroup.getChildCount()) {
       return;
     }
@@ -664,6 +710,7 @@ public class CellTable<T> extends AbstractCellTable<T> {
    */
   @Override
   public void setColumnWidth(Column<T, ?> column, String width) {
+    assertColumnGroupEnabled("Cannot set column width when colgroup is disabled");
     // Overridden to add JavaDoc comments about fixed layout.
     super.setColumnWidth(column, width);
   }
@@ -729,6 +776,9 @@ public class CellTable<T> extends AbstractCellTable<T> {
    *      Specification</a>
    */
   public void setTableLayoutFixed(boolean isFixed) {
+    if (isFixed && !colGroupEnabled) {
+      throw new IllegalStateException("Cannot set table to fixed layout when colgroup is disabled");
+    }
     if (isFixed) {
       table.getStyle().setTableLayout(TableLayout.FIXED);
     } else {
@@ -754,10 +804,15 @@ public class CellTable<T> extends AbstractCellTable<T> {
 
   @Override
   protected void doSetColumnWidth(int column, String width) {
-    if (width == null) {
-      ensureTableColElement(column).getStyle().clearWidth();
-    } else {
-      ensureTableColElement(column).getStyle().setProperty("width", width);
+    // This is invoked when column width is set (which will throw an exception if colgroup is not
+    // enabled), and refreshColumnWidth/clearColumnWidth. The latter two are no op if setColumnWidth
+    // is not invoked first.
+    if (colGroupEnabled) {
+      if (width == null) {
+        ensureTableColElement(column).getStyle().clearWidth();
+      } else {
+        ensureTableColElement(column).getStyle().setProperty("width", width);
+      }
     }
   }
 
@@ -822,12 +877,24 @@ public class CellTable<T> extends AbstractCellTable<T> {
      * column. Clearing the width would cause it to take up the remaining width
      * in a fixed layout table.
      */
-    int colCount = colgroup.getChildCount();
-    for (int i = getRealColumnCount(); i < colCount; i++) {
-      doSetColumnWidth(i, "0px");
+    if (colGroupEnabled) {
+      int colCount = colgroup.getChildCount();
+      for (int i = getRealColumnCount(); i < colCount; i++) {
+        doSetColumnWidth(i, "0px");
+      }
     }
   }
 
+  /**
+   * Assert if colgroup is enabled, and throw an exception with the supplied message if it's not
+   * enabled.
+   */
+  private void assertColumnGroupEnabled(String message) {
+    if (!colGroupEnabled) {
+      throw new IllegalStateException(message);
+    }
+  }
+  
   /**
    * Get the {@link TableColElement} at the specified index, creating it if
    * necessary.
