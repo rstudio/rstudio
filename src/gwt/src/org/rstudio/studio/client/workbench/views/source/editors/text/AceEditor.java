@@ -794,6 +794,11 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().setPrintMarginColumn(column);
    }
 
+   public void setReadOnly(boolean readOnly)
+   {
+      widget_.getEditor().setReadOnly(readOnly);
+   }
+
    public HandlerRegistration addCursorChangedHandler(final CursorChangedHandler handler)
    {
       return widget_.addCursorChangedHandler(handler);
