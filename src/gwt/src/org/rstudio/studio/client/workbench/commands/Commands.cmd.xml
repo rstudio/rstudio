@@ -294,6 +294,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="firstTab" value="Ctrl+Alt+Shift+Left"/>
       <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
       <shortcut refid="showCodeBrowser" value="Shift+F12" />
+      <shortcut refid="goToLine" value="Cmd+G"/>
       <shortcut refid="previousPlot" value="Cmd+Shift+PageUp" />
       <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
       <shortcut refid="showManipulator" value="Cmd+Shift+M"/>
@@ -455,6 +456,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_First Tab"/>
    <cmd id="lastTab"
         menuLabel="_Last Tab"/>
+   <cmd id="goToLine"
+        menuLabel="Jump to Line..."/>
 
    <cmd id="findReplace"
         menuLabel="_Find and Replace..."/>

@@ -57,6 +57,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
                         String label,
                         String initialValue,
                         boolean usePasswordMask,
+                        boolean numbersOnly,
                         int selectionStart,
                         int selectionLength, String okButtonCaption);
 

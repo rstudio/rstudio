@@ -1308,7 +1308,30 @@ public class TextEditingTarget implements EditingTarget
    {
       statusBar_.getFunction().click();
    }
-   
+
+   @Handler
+   void onGoToLine()
+   {
+      globalDisplay_.promptForInteger(
+            "Jump to Line",
+            "Enter line number:",
+            null,
+            new ProgressOperationWithInput<Integer>()
+            {
+               @Override
+               public void execute(Integer line, ProgressIndicator indicator)
+               {
+                  line = Math.max(1, line);
+                  line = Math.min(docDisplay_.getRowCount(), line);
+
+                  docDisplay_.navigateToPosition(
+                        SourcePosition.create(line-1, 0),
+                        true);
+               }
+            },
+            null);
+   }
+
    @Handler
    void onGoToFunctionDefinition()
    {

@@ -50,6 +50,13 @@ public abstract class MessageDisplay
          ProgressOperationWithInput<String> okOperation,
          Operation cancelOperation);
 
+   public abstract void promptForInteger(
+         String title,
+         String label,
+         Integer initialValue,
+         ProgressOperationWithInput<Integer> okOperation,
+         Operation cancelOperation);
+
    protected abstract DialogBuilder createDialog(int type,
                                                  String caption,
                                                  String message);
