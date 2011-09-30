@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
@@ -74,6 +75,10 @@ import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
@@ -437,10 +442,13 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     JClassType cssResourceSubtype = method.getReturnType().isInterface();
     assert cssResourceSubtype != null;
     CssStylesheet stylesheet = stylesheetMap.get(method);
-       
+    
     // Optimize the stylesheet, recording the class selector obfuscations
     Map<JMethod, String> actualReplacements = optimize(logger, context, method);
     
+    outputCssMapArtifact(logger, context, actualReplacements,
+        cssResourceSubtype.getQualifiedSourceName());
+
     outputAdditionalArtifacts(logger, context, method, actualReplacements,
         cssResourceSubtype, stylesheet);
     
@@ -577,10 +585,54 @@ public class CssResourceGenerator extends AbstractResourceGenerator
    * Output additional artifacts. Does nothing in this baseclass, but is a hook
    * for subclasses to do so.
    */
-  protected void outputAdditionalArtifacts(TreeLogger logger, 
-      ResourceContext context, JMethod method, 
+  protected void outputAdditionalArtifacts(TreeLogger logger,
+      ResourceContext context, JMethod method,
       Map<JMethod, String> actualReplacements, JClassType cssResourceSubtype,
       CssStylesheet stylesheet) throws UnableToCompleteException {
+  }
+
+  /**
+   * Builds a CSV file mapping obfuscated CSS class names to their qualified source name and
+   * outputs it as a private build artifact.
+   */
+  protected void outputCssMapArtifact(TreeLogger logger, ResourceContext context,
+      Map<JMethod, String> actualReplacements, String outputFileName) {
+    String mappingFileName = "cssResource/" + outputFileName + ".cssmap";
+
+    OutputStream os = null;
+    try {
+      os = context.getGeneratorContext().tryCreateResource(logger, mappingFileName);
+    } catch (UnableToCompleteException e) {
+      logger.log(TreeLogger.ERROR, "Could not create resource: " + mappingFileName);
+      return;
+    }
+
+    if (os == null) {
+      logger.log(TreeLogger.ERROR, "Created resource is null: " + mappingFileName);
+      return;
+    }
+
+    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
+    try {
+      for (Map.Entry<JMethod, String> replacement : actualReplacements.entrySet()) {
+        String qualifiedName = replacement.getKey().getEnclosingType().getQualifiedSourceName();
+        String baseName = replacement.getKey().getName();
+        writer.write(qualifiedName.replaceAll("[.$]", "-") + "-" + baseName);
+        writer.write(",");
+        writer.write(replacement.getValue());
+        writer.newLine();
+      }
+      writer.flush();
+      writer.close();
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Error writing artifact: " + mappingFileName);
+    }
+
+    try {
+      context.getGeneratorContext().commitResource(logger, os).setVisibility(Visibility.Private);
+    } catch (UnableToCompleteException e) {
+      logger.log(TreeLogger.ERROR, "Error trying to commit artifact: " + mappingFileName);
+    }
   }
 
   protected void writeGetName(JMethod method, SourceWriter sw) {
