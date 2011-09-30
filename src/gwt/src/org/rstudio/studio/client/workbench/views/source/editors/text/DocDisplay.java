@@ -1,0 +1,83 @@
+package org.rstudio.studio.client.workbench.views.source.editors.text;
+
+import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.model.ChangeTracker;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
+
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.HasFocusHandlers;
+import com.google.gwt.event.dom.client.HasKeyDownHandlers;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.IsWidget;
+
+public interface DocDisplay extends HasValueChangeHandlers<Void>,
+                                    IsWidget,
+                                    HasFocusHandlers,
+                                    HasKeyDownHandlers,
+                                    InputEditorDisplay,
+                                    NavigableSourceEditor
+{
+   public interface AnchoredSelection
+   {
+      String getValue();
+      void apply();
+      void detach();
+   }
+   void setFileType(TextFileType fileType);
+   String getCode();
+   void setCode(String code, boolean preserveCursorPosition);
+   void insertCode(String code, boolean blockMode);
+   void focus();
+   void print();
+   void goToFunctionDefinition();
+   String getSelectionValue();
+   String getCurrentLine();
+   void replaceSelection(String code);
+   boolean moveSelectionToNextLine(boolean skipBlankLines);
+   void reindent();
+   ChangeTracker getChangeTracker();
+
+   String getCode(Position start, Position end);
+   DocDisplay.AnchoredSelection createAnchoredSelection(Position start,
+                                             Position end);
+
+   void fitSelectionToLines(boolean expand);
+   int getSelectionOffset(boolean start);
+
+   // Fix bug 964
+   void onActivate();
+
+   void setFontSize(double size);
+
+   void onVisibilityChanged(boolean visible);
+
+   void setHighlightSelectedLine(boolean on);
+   void setHighlightSelectedWord(boolean on);
+   void setShowLineNumbers(boolean on);
+   void setUseSoftTabs(boolean on);
+   void setUseWrapMode(boolean on);
+   void setTabSize(int tabSize);
+   void setShowPrintMargin(boolean on);
+   void setPrintMarginColumn(int column);
+
+   HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
+   Position getCursorPosition();
+
+   FunctionStart getCurrentFunction();
+   JsArray<FunctionStart> getFunctionTree();
+
+   HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler);
+   JavaScriptObject getCleanStateToken();
+   boolean checkCleanStateToken(JavaScriptObject token);
+
+   Position getSelectionStart();
+   Position getSelectionEnd();
+   int getLength(int row);
+   int getRowCount();
+}

@@ -15,30 +15,59 @@ package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
+
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbar;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 
 public class CodeBrowserEditingTargetWidget extends Composite
    implements CodeBrowserEditingTarget.Display
 {
    public CodeBrowserEditingTargetWidget(Commands commands,
-                                         TextEditingTarget.DocDisplay editor)
+                                         DocDisplay docDisplay)
    {
       commands_ = commands;
       
-      editor_ = editor;
-      editor_.setFileType(FileTypeRegistry.R);
+      docDisplay_ = docDisplay;
       
       panel_ = new PanelWithToolbar(createToolbar(),
-                                    editor_.asWidget());
+                                    docDisplay_.asWidget());
+      
+      docDisplay_.setFileType(FileTypeRegistry.R); 
       
       initWidget(panel_);
 
    }
+   
+   @Override
+   public Widget asWidget()
+   {
+      return this;
+   }
+   
+   
+   @Override
+   public void adaptToFileType(TextFileType fileType)
+   {
+      docDisplay_.setFileType(fileType); 
+   }
 
+
+   @Override
+   public void setFontSize(double size)
+   {
+      docDisplay_.setFontSize(size);
+   }
+   
+   @Override
+   public void onActivate()
+   {
+      docDisplay_.onActivate();
+   }
+   
    private Toolbar createToolbar()
    {
       Toolbar toolbar = new Toolbar();
@@ -47,19 +76,17 @@ public class CodeBrowserEditingTargetWidget extends Composite
       forwardButton.getElement().getStyle().setMarginLeft(-6, Unit.PX);
       toolbar.addLeftWidget(forwardButton);
       toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton());
   
       return toolbar;
    }
 
 
-   public Widget asWidget()
-   {
-      return this;
-   }
 
    private final PanelWithToolbar panel_;
    private final Commands commands_;
-   private final TextEditingTarget.DocDisplay editor_;
-
+   private final DocDisplay docDisplay_;
+   
+  
   
 }

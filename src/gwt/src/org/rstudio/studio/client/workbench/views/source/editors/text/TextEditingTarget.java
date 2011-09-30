@@ -53,23 +53,21 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
@@ -90,86 +88,17 @@ public class TextEditingTarget implements EditingTarget
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
 
-   public interface Display extends HasEnsureVisibleHandlers
+   public interface Display extends TextDisplay, HasEnsureVisibleHandlers
    {
-
-      void adaptToFileType(TextFileType fileType);
       HasValue<Boolean> getSourceOnSave();
       void ensureVisible();
       void showWarningBar(String warning);
       void hideWarningBar();
       void showFindReplace();
-      void onActivate();
-      void setFontSize(double size);
+    
       StatusBar getStatusBar();
 
       boolean isAttached();
-   }
-
-   public interface DocDisplay extends HasValueChangeHandlers<Void>,
-                                       IsWidget,
-                                       HasFocusHandlers,
-                                       HasKeyDownHandlers,
-                                       InputEditorDisplay,
-                                       NavigableSourceEditor
-   {
-      public interface AnchoredSelection
-      {
-         String getValue();
-         void apply();
-         void detach();
-      }
-      void setFileType(TextFileType fileType);
-      String getCode();
-      void setCode(String code, boolean preserveCursorPosition);
-      void insertCode(String code, boolean blockMode);
-      void focus();
-      void print();
-      void goToFunctionDefinition();
-      String getSelectionValue();
-      String getCurrentLine();
-      void replaceSelection(String code);
-      boolean moveSelectionToNextLine(boolean skipBlankLines);
-      void reindent();
-      ChangeTracker getChangeTracker();
-
-      String getCode(Position start, Position end);
-      AnchoredSelection createAnchoredSelection(Position start,
-                                                Position end);
-
-      void fitSelectionToLines(boolean expand);
-      int getSelectionOffset(boolean start);
-
-      // Fix bug 964
-      void onActivate();
-
-      void setFontSize(double size);
-
-      void onVisibilityChanged(boolean visible);
-
-      void setHighlightSelectedLine(boolean on);
-      void setHighlightSelectedWord(boolean on);
-      void setShowLineNumbers(boolean on);
-      void setUseSoftTabs(boolean on);
-      void setUseWrapMode(boolean on);
-      void setTabSize(int tabSize);
-      void setShowPrintMargin(boolean on);
-      void setPrintMarginColumn(int column);
-
-      HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
-      Position getCursorPosition();
-    
-      FunctionStart getCurrentFunction();
-      JsArray<FunctionStart> getFunctionTree();
-
-      HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler);
-      JavaScriptObject getCleanStateToken();
-      boolean checkCleanStateToken(JavaScriptObject token);
-
-      Position getSelectionStart();
-      Position getSelectionEnd();
-      int getLength(int row);
-      int getRowCount();
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -275,23 +204,11 @@ public class TextEditingTarget implements EditingTarget
       dirtyState_ = new DirtyState(docDisplay_, false);
       prefs_ = prefs;
       
-      
-      releaseOnDismiss_.add(docDisplay_.addRecordNavigationPositionHandler(
-        new RecordNavigationPositionHandler() {
-          @Override
-          public void onRecordNavigationPosition(
-                                     RecordNavigationPositionEvent event)
-          {
-             events_.fireEvent(new SourceNavigationEvent(
-                                           SourceNavigation.create(
-                                                 getId(), 
-                                                 getPath(), 
-                                                 event.getPosition())));
-            
-          }           
-       }));
-      
-      
+      addRecordNavigationPositionHandler(releaseOnDismiss_, 
+                                         docDisplay_, 
+                                         events_, 
+                                         this);
+       
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
       {
          public void onKeyDown(KeyDownEvent event)
@@ -441,7 +358,7 @@ public class TextEditingTarget implements EditingTarget
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       docDisplay_.setCode(document.getContents(), false);
 
-      registerPrefs();
+      registerPrefs(releaseOnDismiss_, prefs_, docDisplay_);
 
       // Initialize sourceOnSave, and keep it in sync
       view_.getSourceOnSave().setValue(document.sourceOnSave(), false);
@@ -512,16 +429,8 @@ public class TextEditingTarget implements EditingTarget
          });
       }
 
-      releaseOnDismiss_.add(events_.addHandler(
-            ChangeFontSizeEvent.TYPE,
-            new ChangeFontSizeHandler()
-            {
-               public void onChangeFontSize(ChangeFontSizeEvent event)
-               {
-                  view_.setFontSize(event.getFontSize());
-               }
-            }));
-      view_.setFontSize(fontSizeManager_.getSize());
+      syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
+     
 
       final String rTypeId = FileTypeRegistry.R.getTypeId();
       releaseOnDismiss_.add(prefs_.softWrapRFiles().addValueChangeHandler(
@@ -716,46 +625,7 @@ public class TextEditingTarget implements EditingTarget
                }
             });
    }
-
-   private void registerPrefs()
-   {
-      releaseOnDismiss_.add(prefs_.highlightSelectedLine().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay_.setHighlightSelectedLine(arg);
-               }}));
-      releaseOnDismiss_.add(prefs_.highlightSelectedWord().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay_.setHighlightSelectedWord(arg);
-               }}));
-      releaseOnDismiss_.add(prefs_.showLineNumbers().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay_.setShowLineNumbers(arg);
-               }}));
-      releaseOnDismiss_.add(prefs_.useSpacesForTab().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay_.setUseSoftTabs(arg);
-               }}));
-      releaseOnDismiss_.add(prefs_.numSpacesForTab().bind(
-            new CommandWithArg<Integer>() {
-               public void execute(Integer arg) {
-                  docDisplay_.setTabSize(arg);
-               }}));
-      releaseOnDismiss_.add(prefs_.showMargin().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay_.setShowPrintMargin(arg);
-               }}));
-      releaseOnDismiss_.add(prefs_.printMarginColumn().bind(
-            new CommandWithArg<Integer>() {
-               public void execute(Integer arg) {
-                  docDisplay_.setPrintMarginColumn(arg);
-               }}));
-   }
-
+   
    private String getNameFromDocument(SourceDocument document,
                                       Provider<String> defaultNameProvider)
    {
@@ -1799,7 +1669,107 @@ public class TextEditingTarget implements EditingTarget
       Position pos = func.getPreamble();
       return SourcePosition.create(pos.getRow(), pos.getColumn());
    }
+   
+   
+   // these methods are public static so that other editing targets which
+   // display source code (but don't inherit from TextEditingTarget) can share
+   // their implementation
+   
+   public static void registerPrefs(
+                     ArrayList<HandlerRegistration> releaseOnDismiss,
+                     UIPrefs prefs,
+                     final DocDisplay docDisplay)
+   {
+      releaseOnDismiss.add(prefs.highlightSelectedLine().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setHighlightSelectedLine(arg);
+               }}));
+      releaseOnDismiss.add(prefs.highlightSelectedWord().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setHighlightSelectedWord(arg);
+               }}));
+      releaseOnDismiss.add(prefs.showLineNumbers().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setShowLineNumbers(arg);
+               }}));
+      releaseOnDismiss.add(prefs.useSpacesForTab().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setUseSoftTabs(arg);
+               }}));
+      releaseOnDismiss.add(prefs.numSpacesForTab().bind(
+            new CommandWithArg<Integer>() {
+               public void execute(Integer arg) {
+                  docDisplay.setTabSize(arg);
+               }}));
+      releaseOnDismiss.add(prefs.showMargin().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setShowPrintMargin(arg);
+               }}));
+      releaseOnDismiss.add(prefs.printMarginColumn().bind(
+            new CommandWithArg<Integer>() {
+               public void execute(Integer arg) {
+                  docDisplay.setPrintMarginColumn(arg);
+               }}));
+   }
+   
+   public static void syncFontSize(
+                              ArrayList<HandlerRegistration> releaseOnDismiss,
+                              EventBus events,
+                              final TextDisplay view,
+                              FontSizeManager fontSizeManager)
+   {
+      releaseOnDismiss.add(events.addHandler(
+            ChangeFontSizeEvent.TYPE,
+            new ChangeFontSizeHandler()
+            {
+               public void onChangeFontSize(ChangeFontSizeEvent event)
+               {
+                  view.setFontSize(event.getFontSize());
+               }
+            }));
+      view.setFontSize(fontSizeManager.getSize());
 
+   }
+   
+   public static void onPrintSourceDoc(final DocDisplay docDisplay)
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         public void execute()
+         {
+            docDisplay.print();
+         }
+      });
+   }
+   
+   public static void addRecordNavigationPositionHandler(
+                  ArrayList<HandlerRegistration> releaseOnDismiss,
+                  DocDisplay docDisplay,
+                  final EventBus events,
+                  final EditingTarget target)
+   {
+      releaseOnDismiss.add(docDisplay.addRecordNavigationPositionHandler(
+            new RecordNavigationPositionHandler() {
+              @Override
+              public void onRecordNavigationPosition(
+                                         RecordNavigationPositionEvent event)
+              {
+                 events.fireEvent(new SourceNavigationEvent(
+                                               SourceNavigation.create(
+                                                   target.getId(), 
+                                                   target.getPath(), 
+                                                   event.getPosition())));
+                        
+                
+              }           
+           }));
+   }
+   
    private StatusBar statusBar_;
    private TextFileType[] statusBarFileTypes_;
    private DocDisplay docDisplay_;

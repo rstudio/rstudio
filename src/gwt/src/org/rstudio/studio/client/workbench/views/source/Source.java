@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
+import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
@@ -1362,7 +1363,13 @@ public class Source implements InsertSourceHandler,
          }
       }
       
-      // otherwise we need to re-open the file
+      // check for code browser navigation
+      else if (CodeBrowserEditingTarget.PATH.equals(navigation.getPath()))
+      {
+         // TODO: implement navigation to code browser
+      }
+      
+      // check for file path navigation
       else if (navigation.getPath() != null)
       {
          FileSystemItem file = FileSystemItem.createFile(navigation.getPath());

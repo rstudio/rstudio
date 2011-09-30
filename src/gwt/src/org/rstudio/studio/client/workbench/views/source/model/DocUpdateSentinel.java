@@ -33,7 +33,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveHandler;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 
 import java.util.HashMap;
 import java.util.Map;
