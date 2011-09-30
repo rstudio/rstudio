@@ -32,7 +32,7 @@
          <g:VerticalPanel ui:field="existingRepoControls_"
                           styleName="{res.styles.newProjectLocationPanel}"
                           visible="false">
-            <g:Label ui:field="lblRepoUrl" text="Git repository URL:"/>
+            <g:Label ui:field="lblRepoUrl" text="Git repository URL/location:"/>
             <g:TextBox ui:field="txtRepoUrl_" styleName="{res.styles.projectNameTextBox}"/>
             <w:DirectoryChooserTextBox ui:field="existingRepoDestDir_"/>
          </g:VerticalPanel>
