@@ -198,9 +198,10 @@ else()
 
    endif()
 
-   # add this after desktop and server so it is not included in fixup_bundle
-   # processing which we do in destkop
+   # add this after desktop so it is not included in fixup_bundle
+   # processing which we do in desktop
    add_subdirectory(session)
+
 
    # add server subprojects if we aren't building in desktop only mode
    if(RSTUDIO_SERVER)
@@ -211,19 +212,6 @@ else()
       configure_file(conf/rserver-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rserver-dev.conf)
       configure_file(conf/rsession-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf)
 
-   endif()
-
-   # configure postback scripts for development mode (but not for win64
-   # otherwise they get copied as part of the install)
-   if(NOT RSTUDIO_SESSION_WIN64)
-      add_subdirectory(session/postback)
-      file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}session/postback/postback)
-      configure_file(session/postback/rpostback-pdfviewer
-                     session/postback/postback/rpostback-pdfviewer)
-      configure_file(session/postback/rpostback-gitssh
-                     session/postback/postback/rpostback-gitssh )
-      configure_file(session/postback/rpostback-askpass
-                     session/postback/postback/rpostback-askpass)
    endif()
 
 endif()

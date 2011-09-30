@@ -188,6 +188,10 @@ install(TARGETS rsession DESTINATION ${RSTUDIO_INSTALL_BIN})
 
 # include resources, R scripts and 64bit binaries if this isn't a session 64bit build
 if (NOT RSTUDIO_SESSION_WIN64)
+
+   # postback
+   add_subdirectory(postback)
+
    # Resources
    install(FILES resources/R.css
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
