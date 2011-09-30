@@ -24,6 +24,7 @@ public class DesktopTextInput implements TextInput
                              String label,
                              String initialValue,
                              boolean usePasswordMask,
+                             boolean numbersOnly,
                              int selectionStart,
                              int selectionLength,
                              String okButtonCaption,
@@ -34,6 +35,7 @@ public class DesktopTextInput implements TextInput
                                                        label,
                                                        initialValue,
                                                        usePasswordMask,
+                                                       numbersOnly,
                                                        selectionStart,
                                                        selectionLength,
                                                        okButtonCaption);

@@ -106,6 +106,7 @@ public class TextFileType extends EditableFileType
       results.add(commands.saveSourceDocAs());
       results.add(commands.saveSourceDocWithEncoding());
       results.add(commands.printSourceDoc());
+      results.add(commands.goToLine());
       if (canExecuteCode())
       {
          results.add(commands.executeCode());

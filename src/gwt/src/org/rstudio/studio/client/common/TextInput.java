@@ -21,6 +21,7 @@ public interface TextInput
                              String label,
                              String initialValue,
                              boolean usePasswordMask,
+                             boolean numbersOnly,
                              int selectionStart,
                              int selectionLength,
                              String okButtonCaption,

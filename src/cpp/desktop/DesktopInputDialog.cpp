@@ -74,3 +74,11 @@ void InputDialog::setEchoMode(QLineEdit::EchoMode mode)
 {
    ui->lineEdit->setEchoMode(mode);
 }
+
+void InputDialog::setNumbersOnly(bool numbersOnly)
+{
+   if (numbersOnly)
+      ui->lineEdit->setInputMask(QString::fromAscii("D99999999"));
+   else
+      ui->lineEdit->setInputMask(QString());
+}

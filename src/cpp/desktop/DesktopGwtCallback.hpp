@@ -85,6 +85,7 @@ public slots:
                          QString caption,
                          QString defaultValue,
                          bool usePasswordMask,
+                         bool numbersOnly,
                          int selectionStart,
                          int selectionLength);
 

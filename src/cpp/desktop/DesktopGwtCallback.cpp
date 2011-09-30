@@ -462,6 +462,7 @@ QVariant GwtCallback::promptForText(QString title,
                                    QString caption,
                                    QString defaultValue,
                                    bool usePasswordMask,
+                                   bool numbersOnly,
                                    int selectionStart,
                                    int selectionLength)
 {
@@ -470,6 +471,8 @@ QVariant GwtCallback::promptForText(QString title,
    dialog.setCaption(caption);
    if (usePasswordMask)
       dialog.setEchoMode(QLineEdit::Password);
+   if (numbersOnly)
+      dialog.setNumbersOnly(true);
    if (!defaultValue.isEmpty())
    {
       dialog.setTextValue(defaultValue);

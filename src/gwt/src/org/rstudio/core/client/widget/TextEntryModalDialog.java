@@ -20,6 +20,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
                                String caption,
                                String defaultValue,
                                boolean usePasswordMask,
+                               boolean numbersOnly,
                                int selectionIndex,
                                int selectionLength, String okButtonCaption,
                                int width,
@@ -27,10 +28,13 @@ public class TextEntryModalDialog extends ModalDialog<String>
                                Operation cancelOperation)
    {
       super(title, okOperation, cancelOperation);
+      numbersOnly_ = numbersOnly;
       selectionIndex_ = selectionIndex;
       selectionLength_ = selectionLength;
       width_ = width;
-      textBox_ = usePasswordMask ? new PasswordTextBox() : new TextBox();
+      textBox_ = usePasswordMask ? new PasswordTextBox() :
+                 numbersOnly ? new NumericTextBox() :
+                 new TextBox();
       textBox_.setWidth("100%");
       captionLabel_ = new Label(caption);
       
@@ -90,16 +94,35 @@ public class TextEntryModalDialog extends ModalDialog<String>
          textBox_.setFocus(true);
          return false;
       }
-      else
+
+      if (numbersOnly_)
       {
-         return true ;
+         setText(getText().trim());
+         try
+         {
+            Integer.parseInt(getText());
+         }
+         catch (NumberFormatException nfe)
+         {
+            MessageDialog dialog = new MessageDialog(MessageDialog.ERROR,
+                                                     "Error",
+                                                     "Not a valid number.");
+            dialog.addButton("OK", (Operation)null, true, true);
+            dialog.showModal();
+            textBox_.setFocus(true);
+            textBox_.selectAll();
+            return false;
+         }
       }
+
+      return true ;
    }
 
 
    private int width_;
    private Label captionLabel_;
    private TextBox textBox_;
+   private final boolean numbersOnly_;
    private final int selectionIndex_;
    private final int selectionLength_;
 }

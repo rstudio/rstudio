@@ -120,6 +120,7 @@ public abstract class
    public abstract AppCommand nextTab();
    public abstract AppCommand firstTab();
    public abstract AppCommand lastTab();
+   public abstract AppCommand goToLine();
 
    // History
    public abstract AppCommand historySendToSource();

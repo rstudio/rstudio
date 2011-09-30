@@ -58,7 +58,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                              final OperationWithInput<String> operation)
    {
       ((TextInput)GWT.create(TextInput.class)).promptForText(
-            title, label, initialValue, false, -1, -1, null,
+            title, label, initialValue, false, false, -1, -1, null,
             new ProgressOperationWithInput<String>()
             {
                public void execute(String input, ProgressIndicator indicator)
@@ -77,7 +77,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                              ProgressOperationWithInput<String> operation)
    {
       ((TextInput)GWT.create(TextInput.class)).promptForText(
-            title, label, initialValue, false, -1, -1, null, operation, null);
+            title, label, initialValue, false, false, -1, -1, null, operation, null);
    }
 
    @Override
@@ -93,6 +93,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
             title,
             label,
             initialValue,
+            false,
             false,
             selectionOffset,
             selectionLength,
@@ -113,10 +114,39 @@ public class DefaultGlobalDisplay extends GlobalDisplay
             label,
             initialValue,
             true,
+            false,
             -1,
             -1,
             null,
             okOperation,
+            cancelOperation);
+   }
+
+   @Override
+   public void promptForInteger(String title,
+                                String label,
+                                Integer initialValue,
+                                final ProgressOperationWithInput<Integer> okOperation,
+                                Operation cancelOperation)
+   {
+      ((TextInput)GWT.create(TextInput.class)).promptForText(
+            title,
+            label,
+            initialValue == null ? "" : initialValue.toString(),
+            false,
+            true,
+            -1,
+            -1,
+            null,
+            new ProgressOperationWithInput<String>()
+            {
+               @Override
+               public void execute(String input, ProgressIndicator indicator)
+               {
+                  int value = Integer.parseInt(input);
+                  okOperation.execute(value, indicator);
+               }
+            },
             cancelOperation);
    }
 
