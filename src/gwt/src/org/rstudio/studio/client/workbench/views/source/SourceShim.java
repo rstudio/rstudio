@@ -75,6 +75,8 @@ public class SourceShim extends Composite
       public abstract void onSourceNavigateBack();
       @Handler
       public abstract void onSourceNavigateForward();
+      @Handler
+      public abstract void onShowCodeBrowser();
 
       @Override
       protected void preInstantiationHook(Command continuation)

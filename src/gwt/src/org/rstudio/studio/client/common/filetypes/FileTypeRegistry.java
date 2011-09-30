@@ -68,6 +68,7 @@ public class FileTypeRegistry
    
    public static final DataFrameType DATAFRAME = new DataFrameType();
    public static final UrlContentType URLCONTENT = new UrlContentType();
+   public static final CodeBrowserType CODEBROWSER = new CodeBrowserType();
 
    public static final BrowserType BROWSER = new BrowserType();
    

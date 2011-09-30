@@ -17,6 +17,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.common.filetypes.*;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
@@ -35,12 +36,14 @@ public interface EditingTargetSource
       public Impl(FileTypeRegistry registry,
                   Provider<TextEditingTarget> pTextEditingTarget,
                   Provider<DataEditingTarget> pDataEditingTarget,
-                  Provider<UrlContentEditingTarget> pUrlContentEditingTarget)
+                  Provider<UrlContentEditingTarget> pUrlContentEditingTarget,
+                  Provider<CodeBrowserEditingTarget> pCodeBrowserEditingTarget)
       {
          registry_ = registry;
          pTextEditingTarget_ = pTextEditingTarget;
          pDataEditingTarget_ = pDataEditingTarget;
          pUrlContentEditingTarget_ = pUrlContentEditingTarget;
+         pCodeBrowserEditingTarget_ = pCodeBrowserEditingTarget;
       }
 
       public EditingTarget getEditingTarget(FileType type)
@@ -51,6 +54,8 @@ public interface EditingTargetSource
             return pDataEditingTarget_.get();
          else if (type instanceof UrlContentType)
             return pUrlContentEditingTarget_.get();
+         else if (type instanceof CodeBrowserType)
+            return pCodeBrowserEditingTarget_.get();
          else
             return null;
       }
@@ -78,5 +83,6 @@ public interface EditingTargetSource
       private final Provider<TextEditingTarget> pTextEditingTarget_;
       private final Provider<DataEditingTarget> pDataEditingTarget_;
       private final Provider<UrlContentEditingTarget> pUrlContentEditingTarget_;
+      private final Provider<CodeBrowserEditingTarget> pCodeBrowserEditingTarget_;
    }
 }

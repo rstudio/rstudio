@@ -68,6 +68,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.*;
+import org.rstudio.studio.client.workbench.views.source.model.CodeBrowserContents;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -88,6 +89,7 @@ public class Source implements InsertSourceHandler,
                              FileEditHandler,
                              ShowContentHandler,
                              ShowDataHandler,
+                             CodeBrowserNavigationHandler,
                              BeforeShowHandler
 {
    public interface Display extends IsWidget,
@@ -228,6 +230,8 @@ public class Source implements InsertSourceHandler,
                   });
          }
       });
+      
+      events.addHandler(CodeBrowserNavigationEvent.TYPE, this);
 
       events.addHandler(FileTypeChangedEvent.TYPE, new FileTypeChangedHandler()
       {
@@ -1412,6 +1416,38 @@ public class Source implements InsertSourceHandler,
                      }
                   });
       } 
+   }
+   
+   @Handler
+   public void onShowCodeBrowser()
+   {
+      events_.fireEvent(new CodeBrowserNavigationEvent());
+   }
+   
+   @Override
+   public void onCodeBrowserNavigation(CodeBrowserNavigationEvent event)
+   {
+      ensureVisible(true);
+      
+      for (int i = 0; i < editors_.size(); i++)
+      {
+         String path = editors_.get(i).getPath();
+         if (CodeBrowserEditingTarget.PATH.equals(path))
+         {
+            view_.selectTab(i);
+            return;
+         }
+      }
+
+      server_.newDocument(
+            FileTypeRegistry.CODEBROWSER.getTypeId(),
+            CodeBrowserContents.create("x = 1 + 2\n").<JsObject>cast(),
+            new SimpleRequestCallback<SourceDocument>("R Code Browser") {
+               public void onResponseReceived(SourceDocument response)
+               {
+                  addTab(response);
+               }
+            });  
    }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();

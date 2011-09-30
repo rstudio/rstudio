@@ -35,6 +35,7 @@ public class CodeBrowserEditingTargetWidget extends Composite
       
       panel_ = new PanelWithToolbar(createToolbar(),
                                     docDisplay_.asWidget());
+      panel_.setSize("100%", "100%");
       
       docDisplay_.setReadOnly(true);
       docDisplay_.setFileType(FileTypeRegistry.R, true); 
