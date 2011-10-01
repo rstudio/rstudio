@@ -194,7 +194,7 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
          {
-            updateDiff(false);
+            updateDiff(true);
          }
       });
 
