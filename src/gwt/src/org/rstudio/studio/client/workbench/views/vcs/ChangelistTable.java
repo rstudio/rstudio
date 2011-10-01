@@ -34,6 +34,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.*;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.cellview.TriStateCheckboxCell;
+import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageEvent;
@@ -141,17 +142,9 @@ public class ChangelistTable extends Composite
       }
    }
 
-   private class StatusCellTable extends CellTable<StatusAndPath>
-   {
-      private StatusCellTable(int pageSize, Resources resources)
-      {
-         super(pageSize, resources);
-      }
-   }
-
    public ChangelistTable()
    {
-      table_ = new StatusCellTable(100, resources_);
+      table_ = new MultiSelectCellTable<StatusAndPath>(100, resources_);
 
       dataProvider_ = new ListDataProvider<StatusAndPath>();
       sortHandler_ = new ColumnSortEvent.ListHandler<StatusAndPath>(
@@ -395,7 +388,7 @@ public class ChangelistTable extends Composite
       return table_.getColumnSortList().hashCode();
    }
 
-   private final CellTable<StatusAndPath> table_;
+   private final MultiSelectCellTable<StatusAndPath> table_;
    private final MultiSelectionModel<StatusAndPath> selectionModel_;
    private final ColumnSortEvent.ListHandler<StatusAndPath> sortHandler_;
    private final ListDataProvider<StatusAndPath> dataProvider_;

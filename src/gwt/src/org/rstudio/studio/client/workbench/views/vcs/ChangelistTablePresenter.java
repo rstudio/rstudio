@@ -14,15 +14,10 @@ package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
-import org.rstudio.core.client.cellview.ColumnSortInfo;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.model.ClientState;
-import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageHandler;
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;

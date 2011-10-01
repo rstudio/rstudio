@@ -14,6 +14,7 @@ span.status img:first-child {
 .cellTableWidget {
    font-size: 9pt;
    background-color: white;
+   outline: none;
 }
 
 .cellTableFirstColumn {
