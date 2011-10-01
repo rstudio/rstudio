@@ -12,20 +12,14 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Node;
-import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 
 public class MultiSelectCellTable<T> extends CellTable<T>
       implements HasKeyDownHandlers
@@ -106,6 +100,7 @@ public class MultiSelectCellTable<T> extends CellTable<T>
       return true;
    }
 
+   @SuppressWarnings("rawtypes")
    private void clearSelection()
    {
       if (getSelectionModel() instanceof MultiSelectionModel)
