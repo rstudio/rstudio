@@ -19,6 +19,7 @@ import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbar;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 
 public class UrlContentEditingTargetWidget extends Composite
    implements UrlContentEditingTarget.Display
@@ -39,9 +40,8 @@ public class UrlContentEditingTargetWidget extends Composite
 
    private Toolbar createToolbar()
    {
-      Toolbar toolbar = new Toolbar(new Widget[] {
-            commands_.popoutDoc().createToolbarButton()
-      }, null);
+      Toolbar toolbar = new EditingTargetToolbar(commands_);
+      toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());  
       return toolbar;
    }
 

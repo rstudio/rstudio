@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -21,6 +20,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbar;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 
 public class CodeBrowserEditingTargetWidget extends Composite
@@ -72,12 +72,7 @@ public class CodeBrowserEditingTargetWidget extends Composite
    
    private Toolbar createToolbar()
    {
-      Toolbar toolbar = new Toolbar();
-      toolbar.addLeftWidget(commands_.sourceNavigateBack().createToolbarButton());
-      Widget forwardButton = commands_.sourceNavigateForward().createToolbarButton();
-      forwardButton.getElement().getStyle().setMarginLeft(-6, Unit.PX);
-      toolbar.addLeftWidget(forwardButton);
-      toolbar.addLeftSeparator();
+      Toolbar toolbar = new EditingTargetToolbar(commands_);
       toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton());
   
       return toolbar;

@@ -19,6 +19,8 @@ import java.util.HashMap;
 
 public class DataItem extends JavaScriptObject
 {
+   public static String URI_PREFIX = "data://";
+   
    protected DataItem()
    {
    }
@@ -39,7 +41,7 @@ public class DataItem extends JavaScriptObject
 
    public final String getURI()
    {
-      return "data://" + getTitle();
+      return URI_PREFIX + getTitle();
    }
    
    public native final String getTitle() /*-{

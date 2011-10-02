@@ -46,6 +46,12 @@ public class SourceNavigation extends JavaScriptObject
    
    public final boolean isEqualTo(SourceNavigation other)
    {
+      return isAtSameRowAs(other) &&
+             (getPosition().getColumn() == other.getPosition().getColumn());
+   }
+   
+   public final boolean isAtSameRowAs(SourceNavigation other)
+   {
       if (other == null)
       {
          return false;
@@ -53,8 +59,13 @@ public class SourceNavigation extends JavaScriptObject
       else
       {
          return getDocumentId().equals(other.getDocumentId()) &&
-                getPosition().getRow() == other.getPosition().getRow() &&
-                getPosition().getColumn() == other.getPosition().getColumn();
+                (getPosition().getRow() == other.getPosition().getRow());
       }
+   }
+   
+   public final String toDebugString()
+   {
+      return getPath() != null ? getPath() : getDocumentId() + " (" +
+             getPosition().getRow() + ", " + getPosition().getColumn() + ")";
    }
 }

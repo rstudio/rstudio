@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -37,6 +36,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbar;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplace;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
@@ -70,14 +70,8 @@ public class TextEditingTargetWidget
 
    private Toolbar createToolbar()
    {
-      Toolbar toolbar = new Toolbar();
-      
-      toolbar.addLeftWidget(commands_.sourceNavigateBack().createToolbarButton());
-      Widget forwardButton = commands_.sourceNavigateForward().createToolbarButton();
-      forwardButton.getElement().getStyle().setMarginLeft(-6, Unit.PX);
-      toolbar.addLeftWidget(forwardButton);
-      toolbar.addLeftSeparator();
-      
+      Toolbar toolbar = new EditingTargetToolbar(commands_);
+       
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       toolbar.addLeftWidget(sourceOnSave_);
 

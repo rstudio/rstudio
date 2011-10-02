@@ -17,11 +17,13 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.*;
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbar;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 
@@ -107,13 +109,10 @@ public class DataEditingTargetWidget extends Composite
             false);
       description.addStyleName(styles.description());
 
-      Toolbar toolbar = new Toolbar(
-            new Widget[] {
-                  commands_.popoutDoc().createToolbarButton()
-            },
-            new Widget[] {
-                  description
-            });
+      Toolbar toolbar = new EditingTargetToolbar(commands_);
+      toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
+      toolbar.addRightWidget(description);
+      
       return toolbar;
    }
 

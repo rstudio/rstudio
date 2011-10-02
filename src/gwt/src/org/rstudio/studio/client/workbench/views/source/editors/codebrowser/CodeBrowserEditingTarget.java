@@ -53,6 +53,11 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+// TODO: make sure that back and forward into code browser retains
+// the cursor position
+
+// TODO: implement navigation to CodeBrowser in Source.attemptNavigation
+
 public class CodeBrowserEditingTarget implements EditingTarget
 {
    public static final String PATH = "code_browser://";
@@ -178,6 +183,10 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public void onActivate()
    {
+      // IMPORTANT NOTE: most of this logic is duplicated in 
+      // TextEditingTarget (no straightforward way to create a
+      // re-usable implementation) so changes here need to be synced
+      
       if (commandReg_ != null)
       {
          Debug.log("Warning: onActivate called twice without intervening onDeactivate");
@@ -192,6 +201,10 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public void onDeactivate()
    {
+      // IMPORTANT NOTE: most of this logic is duplicated in 
+      // TextEditingTarget (no straightforward way to create a
+      // re-usable implementation) so changes here need to be synced
+      
       commandReg_.removeHandler();
       commandReg_ = null;
       

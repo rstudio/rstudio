@@ -14,6 +14,8 @@ package org.rstudio.studio.client.workbench.views.source.model;
 
 import java.util.LinkedList;
 
+import org.rstudio.core.client.Debug;
+
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -39,7 +41,7 @@ public class SourceNavigationHistory
          history_.removeLast();
       
       // screen out duplicates
-      if (history_.size() == 0 || !history_.getLast().isEqualTo(navigation))
+      if ( (history_.size() == 0) || !history_.getLast().isAtSameRowAs(navigation))
       {         
          // implement capacity restriction
          if (history_.size() == maxItems_)
@@ -77,7 +79,18 @@ public class SourceNavigationHistory
          return null;
       
       SourceNavigation navigation = history_.get(currentLocation_--);
+      
+      // if we have only one more item in the stack and it matches
+      // this one then clear the history
+      if (isBackEnabled() && 
+          (history_.size() == 1) &&
+          navigation.isAtSameRowAs(history_.get(currentLocation_)))
+      {
+         clear();
+      }
+      
       fireChangeEvent();
+      
       return navigation;
         
    }
@@ -104,6 +117,14 @@ public class SourceNavigationHistory
      
    }
  
+   @SuppressWarnings("unused")
+   private void debugPrintCurrentHistory()
+   {
+      Debug.log("HISTORY (location=" + currentLocation_ + ")");
+      for (int i=0; i<history_.size(); i++)
+         Debug.log(history_.get(i).toDebugString());
+      Debug.log("");
+   }
   
    private final int maxItems_;
    private LinkedList<SourceNavigation> history_;

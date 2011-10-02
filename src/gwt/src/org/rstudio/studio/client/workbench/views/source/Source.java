@@ -277,11 +277,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void onChange(ChangeEvent event)
          {
-            commands_.sourceNavigateBack().setEnabled(
-                  sourceNavigationHistory_.isBackEnabled());
-
-            commands_.sourceNavigateForward().setEnabled(
-                  sourceNavigationHistory_.isForwardEnabled());
+            manageSourceNavigationCommands();
          }
       });
 
@@ -1269,7 +1265,10 @@ public class Source implements InsertSourceHandler,
                             activeEditor_.dirtyState().getValue() == true;
       commands_.saveSourceDoc().setEnabled(saveEnabled);
       manageSaveAllCommand();
-
+      
+      // manage source navigation
+      manageSourceNavigationCommands();
+      
       activeCommands_ = newCommands;
 
       assert verifyNoUnsupportedCommands(newCommands)
@@ -1351,7 +1350,8 @@ public class Source implements InsertSourceHandler,
          if ( (target == activeEditor_) && 
                target.isAtSourceRow(navigation.getPosition()))
          {
-            retryCommand.execute();
+            if (retryCommand.isEnabled())
+               retryCommand.execute();
          }
          else
          {
@@ -1369,13 +1369,15 @@ public class Source implements InsertSourceHandler,
       }
       
       // check for code browser navigation
-      else if (CodeBrowserEditingTarget.PATH.equals(navigation.getPath()))
+      else if ((navigation.getPath() != null) &&
+               navigation.getPath().equals(CodeBrowserEditingTarget.PATH))
       {
          // TODO: implement navigation to code browser
       }
       
       // check for file path navigation
-      else if (navigation.getPath() != null)
+      else if ((navigation.getPath() != null) && 
+               !navigation.getPath().startsWith(DataItem.URI_PREFIX))
       {
          FileSystemItem file = FileSystemItem.createFile(navigation.getPath());
          TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);
@@ -1407,7 +1409,8 @@ public class Source implements InsertSourceHandler,
                      public void onFailure(ServerError info)
                      {
                         suspendSourceNavigationAdding_ = false;
-                        retryCommand.execute();
+                        if (retryCommand.isEnabled())
+                           retryCommand.execute();
                      }
                      
                      @Override
@@ -1417,6 +1420,21 @@ public class Source implements InsertSourceHandler,
                      }
                   });
       } 
+      else
+      {
+         // couldn't navigate to this item, retry
+         if (retryCommand.isEnabled())
+            retryCommand.execute();
+      }
+   }
+   
+   private void manageSourceNavigationCommands()
+   {   
+      commands_.sourceNavigateBack().setEnabled(
+            sourceNavigationHistory_.isBackEnabled());
+
+      commands_.sourceNavigateForward().setEnabled(
+            sourceNavigationHistory_.isForwardEnabled());  
    }
    
    @Handler

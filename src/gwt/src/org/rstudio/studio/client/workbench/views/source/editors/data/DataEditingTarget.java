@@ -17,6 +17,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
@@ -35,9 +36,10 @@ public class DataEditingTarget extends UrlContentEditingTarget
    @Inject
    public DataEditingTarget(SourceServerOperations server,
                             Commands commands,
-                            GlobalDisplay globalDisplay)
+                            GlobalDisplay globalDisplay,
+                            EventBus events)
    {
-      super(server, commands, globalDisplay);
+      super(server, commands, globalDisplay, events);
    }
 
    @Override

@@ -683,6 +683,10 @@ public class TextEditingTarget implements EditingTarget
 
    public void onActivate()
    {
+      // IMPORTANT NOTE: most of this logic is duplicated in 
+      // CodeBrowserEditingTarget (no straightforward way to create a
+      // re-usable implementation) so changes here need to be synced
+      
       // If we're already hooked up for some reason, unhook. 
       // This shouldn't happen though.
       if (commandHandlerReg_ != null)
@@ -712,6 +716,10 @@ public class TextEditingTarget implements EditingTarget
 
    public void onDeactivate()
    {
+      // IMPORTANT NOTE: most of this logic is duplicated in 
+      // CodeBrowserEditingTarget (no straightforward way to create a
+      // re-usable implementation) so changes here need to be synced
+      
       externalEditCheckInvalidation_.invalidate();
 
       commandHandlerReg_.removeHandler();
