@@ -58,6 +58,16 @@ import java.util.HashSet;
 
 // TODO: implement navigation to CodeBrowser in Source.attemptNavigation
 
+// TODO: when implementing the SourceDatabase side of the codebrowser
+// editing target (and if we choose to write back to the Doc) we need to
+// make sure the source_database is cogizent of the fact that it can 
+// receive path arguments that are not actually file paths. we may actually
+// need another source_database property indicating whether this represents
+// an on-disk file or a url/data-frame/code-browser (this has been working
+// to date because non-file back docs never call put). Note that we currently
+// write (but never read) a durable properties entry for untitled docs with
+// no path -- we should also clean this up
+
 public class CodeBrowserEditingTarget implements EditingTarget
 {
    public static final String PATH = "code_browser://";
