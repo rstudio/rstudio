@@ -21,6 +21,7 @@ public class VCSStrategyGit extends VCSStrategy
    {
       switch (status.charAt(1))
       {
+         case '?':
          case 'A':
             return VCSStatusIcons.INSTANCE.greendot();
          case 'M':
