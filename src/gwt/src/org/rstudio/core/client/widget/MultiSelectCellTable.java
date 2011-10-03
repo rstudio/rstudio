@@ -115,8 +115,6 @@ public class MultiSelectCellTable<T> extends CellTable<T>
          // TODO: Handle home/end, pageup/pagedown
          case KeyCodes.KEY_UP:
          case KeyCodes.KEY_DOWN:
-            if (getVisibleItemCount() == 0)
-               return;
             event.preventDefault();
             event.stopPropagation();
 
@@ -129,40 +127,9 @@ public class MultiSelectCellTable<T> extends CellTable<T>
                   return;
             }
 
-            int min = getVisibleItemCount();
-            int max = -1;
+            moveSelection(event.getNativeKeyCode() == KeyCodes.KEY_UP,
+                          modifiers == KeyboardShortcut.SHIFT);
 
-            for (int i = 0; i < getVisibleItemCount(); i++)
-            {
-               if (getSelectionModel().isSelected(getVisibleItem(i)))
-               {
-                  max = i;
-                  if (min > i)
-                     min = i;
-               }
-            }
-
-            switch (event.getNativeKeyCode())
-            {
-               case KeyCodes.KEY_UP:
-               {
-                  int row = Math.max(0, min - 1);
-                  if (modifiers != KeyboardShortcut.SHIFT)
-                     clearSelection();
-                  getSelectionModel().setSelected(getVisibleItem(row), true);
-                  // TODO: scroll into view
-                  break;
-               }
-               case KeyCodes.KEY_DOWN:
-               {
-                  int row = Math.min(getVisibleItemCount()-1, max + 1);
-                  if (modifiers != KeyboardShortcut.SHIFT)
-                     clearSelection();
-                  getSelectionModel().setSelected(getVisibleItem(row), true);
-                  // TODO: scroll into view
-                  break;
-               }
-            }
             break;
       }
 
@@ -172,5 +139,41 @@ public class MultiSelectCellTable<T> extends CellTable<T>
    public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
    {
       return addDomHandler(handler, KeyDownEvent.getType());
+   }
+
+   public void moveSelection(boolean up, boolean extend)
+   {
+      if (getVisibleItemCount() == 0)
+         return;
+
+      int min = getVisibleItemCount();
+      int max = -1;
+
+      for (int i = 0; i < getVisibleItemCount(); i++)
+      {
+         if (getSelectionModel().isSelected(getVisibleItem(i)))
+         {
+            max = i;
+            if (min > i)
+               min = i;
+         }
+      }
+
+      if (up)
+      {
+         int row = Math.max(0, min - 1);
+         if (!extend)
+            clearSelection();
+         getSelectionModel().setSelected(getVisibleItem(row), true);
+         // TODO: scroll into view
+      }
+      else
+      {
+         int row = Math.min(getVisibleItemCount()-1, max + 1);
+         if (!extend)
+            clearSelection();
+         getSelectionModel().setSelected(getVisibleItem(row), true);
+         // TODO: scroll into view
+      }
    }
 }
