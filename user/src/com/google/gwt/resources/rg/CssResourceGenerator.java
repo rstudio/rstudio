@@ -445,9 +445,8 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     
     // Optimize the stylesheet, recording the class selector obfuscations
     Map<JMethod, String> actualReplacements = optimize(logger, context, method);
-    
-    outputCssMapArtifact(logger, context, actualReplacements,
-        cssResourceSubtype.getQualifiedSourceName());
+
+    outputCssMapArtifact(logger, context, method, actualReplacements);
 
     outputAdditionalArtifacts(logger, context, method, actualReplacements,
         cssResourceSubtype, stylesheet);
@@ -595,20 +594,26 @@ public class CssResourceGenerator extends AbstractResourceGenerator
    * Builds a CSV file mapping obfuscated CSS class names to their qualified source name and
    * outputs it as a private build artifact.
    */
-  protected void outputCssMapArtifact(TreeLogger logger, ResourceContext context,
-      Map<JMethod, String> actualReplacements, String outputFileName) {
-    String mappingFileName = "cssResource/" + outputFileName + ".cssmap";
+  protected void outputCssMapArtifact(TreeLogger logger, ResourceContext context, JMethod method,
+      Map<JMethod, String> actualReplacements) {
+    // There may be several css resources that have the same css resource subtype (e.g. CssResource)
+    // so the qualified accessor method name is used for the unique output file name.
+    JClassType bundleType = method.getEnclosingType();
+
+    String qualifiedMethodName = bundleType.getQualifiedSourceName() + "." + method.getName();
+
+    String mappingFileName = "cssResource/" + qualifiedMethodName + ".cssmap";
 
     OutputStream os = null;
     try {
       os = context.getGeneratorContext().tryCreateResource(logger, mappingFileName);
     } catch (UnableToCompleteException e) {
-      logger.log(TreeLogger.ERROR, "Could not create resource: " + mappingFileName);
+      logger.log(TreeLogger.WARN, "Could not create resource: " + mappingFileName);
       return;
     }
 
     if (os == null) {
-      logger.log(TreeLogger.ERROR, "Created resource is null: " + mappingFileName);
+      logger.log(TreeLogger.WARN, "Created resource is null: " + mappingFileName);
       return;
     }
 
@@ -625,13 +630,13 @@ public class CssResourceGenerator extends AbstractResourceGenerator
       writer.flush();
       writer.close();
     } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Error writing artifact: " + mappingFileName);
+      logger.log(TreeLogger.WARN, "Error writing artifact: " + mappingFileName);
     }
 
     try {
       context.getGeneratorContext().commitResource(logger, os).setVisibility(Visibility.Private);
     } catch (UnableToCompleteException e) {
-      logger.log(TreeLogger.ERROR, "Error trying to commit artifact: " + mappingFileName);
+      logger.log(TreeLogger.WARN, "Error trying to commit artifact: " + mappingFileName);
     }
   }
 
