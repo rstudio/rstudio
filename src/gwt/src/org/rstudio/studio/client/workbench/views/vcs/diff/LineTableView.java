@@ -34,6 +34,7 @@ import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.views.vcs.diff.Line.Type;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter.Display;
@@ -46,7 +47,7 @@ import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionHandle
 import java.util.ArrayList;
 import java.util.HashSet;
 
-public class LineTableView extends CellTable<ChunkOrLine> implements Display
+public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements Display
 {
    public interface LineTableResources extends CellTable.Resources
    {
@@ -397,6 +398,17 @@ public class LineTableView extends CellTable<ChunkOrLine> implements Display
 
          suppressNextStart = isChunk;
       }
+   }
+
+   @Override
+   protected boolean canSelectVisibleRow(int visibleRow)
+   {
+      if (visibleRow < 0 || visibleRow >= lines_.size())
+         return false;
+
+      Line line = lines_.get(visibleRow).getLine();
+      return line != null && (line.getType() == Type.Insertion
+                              || line.getType() == Type.Deletion);
    }
 
    @Override

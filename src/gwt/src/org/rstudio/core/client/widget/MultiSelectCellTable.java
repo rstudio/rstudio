@@ -162,6 +162,9 @@ public class MultiSelectCellTable<T> extends CellTable<T>
       if (up)
       {
          int row = Math.max(0, min - 1);
+         if (!canSelectVisibleRow(row))
+            row = min;
+
          if (!extend)
             clearSelection();
          getSelectionModel().setSelected(getVisibleItem(row), true);
@@ -170,10 +173,18 @@ public class MultiSelectCellTable<T> extends CellTable<T>
       else
       {
          int row = Math.min(getVisibleItemCount()-1, max + 1);
+         if (!canSelectVisibleRow(row))
+            row = max;
+
          if (!extend)
             clearSelection();
          getSelectionModel().setSelected(getVisibleItem(row), true);
          // TODO: scroll into view
       }
+   }
+
+   protected boolean canSelectVisibleRow(int visibleRow)
+   {
+      return true;
    }
 }

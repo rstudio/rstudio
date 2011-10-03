@@ -194,7 +194,7 @@
 
 .cellTableSelectedRow {
   /* CHANGE: use same selected background color as History table */
-  background: rgb(146, 193, 240) !important;
+  background: #CCC !important;
   /* color: white; */
   height: auto;
   overflow: auto;
@@ -202,7 +202,14 @@
 
 .cellTableSelectedRowCell {
   /* CHANGE: use same selected background color as History table */
-   background: rgb(146, 193, 240) !important;
+  background: #CCC !important;
+}
+
+.cellTableWidget:focus .cellTableSelectedRow {
+  background: rgb(146, 193, 240) !important;
+}
+.cellTableWidget:focus .cellTableSelectedRowCell {
+  background: rgb(146, 193, 240) !important;
 }
 
 /**
