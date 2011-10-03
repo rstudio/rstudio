@@ -54,18 +54,12 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-// TODO: crashing while we have vcs open and doing builds in rdesktop
-//  need to run with traceback enabled
-
 // TODO: joe on reflow ace call to fix issues
 
 // TODO: token guessing must include explicit namespace qualifiers
 
 // TODO: go to function definition inside code browser editing target
 //       (no completion manager)
-
-// TODO: make sure that back and forward into code browser retains
-// the cursor position
 
 // TODO: implement navigation to CodeBrowser in Source.attemptNavigation
 

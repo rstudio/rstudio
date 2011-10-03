@@ -800,12 +800,7 @@ public class Source implements InsertSourceHandler,
    }
    
    public void onOpenSourceFile(final OpenSourceFileEvent event)
-   {
-      // save a reference to the currently active editing target (so we 
-      // can ask it to record its navigation position if we need to 
-      // jump away from it)
-      final EditingTarget previousTarget = activeEditor_;
-      
+   { 
       final CommandWithArg<FileSystemItem> action = new CommandWithArg<FileSystemItem>()
       {
          @Override
@@ -821,11 +816,6 @@ public class Source implements InsertSourceHandler,
                   final FilePosition position = event.getPosition();
                   if (position != null)
                   {
-                     // if we had a previous editing target then ask it
-                     // to record its navigation position
-                     if (previousTarget != null)
-                        previousTarget.recordCurrentNavigationPosition();
-
                      Scheduler.get().scheduleDeferred(new ScheduledCommand()
                      {
                         @Override
@@ -1446,7 +1436,7 @@ public class Source implements InsertSourceHandler,
    public void onCodeBrowserNavigation(final CodeBrowserNavigationEvent event)
    {
       ensureVisible(true);
-       
+         
       // see if there is an existing target to use
       for (int i = 0; i < editors_.size(); i++)
       {

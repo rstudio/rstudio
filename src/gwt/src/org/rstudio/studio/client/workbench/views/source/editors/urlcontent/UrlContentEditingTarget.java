@@ -141,11 +141,8 @@ public class UrlContentEditingTarget implements EditingTarget
       commandReg_.removeHandler();
       commandReg_ = null;
       
-      events_.fireEvent(new SourceNavigationEvent(
-                                 SourceNavigation.create(
-                                 getId(), 
-                                 getPath(), 
-                                 SourcePosition.create(0, 0))));
+      recordCurrentNavigationPosition();
+     
    }
 
    @Override
@@ -156,6 +153,11 @@ public class UrlContentEditingTarget implements EditingTarget
    @Override
    public void recordCurrentNavigationPosition()
    {
+      events_.fireEvent(new SourceNavigationEvent(
+            SourceNavigation.create(
+            getId(), 
+            getPath(), 
+            SourcePosition.create(0, 0))));
    }
    
    @Override
