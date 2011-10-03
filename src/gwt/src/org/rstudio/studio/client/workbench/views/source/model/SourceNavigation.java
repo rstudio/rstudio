@@ -65,7 +65,7 @@ public class SourceNavigation extends JavaScriptObject
    
    public final String toDebugString()
    {
-      return getPath() != null ? getPath() : getDocumentId() + " (" +
+      return (getPath() != null ? getPath() : getDocumentId()) + " (" +
              getPosition().getRow() + ", " + getPosition().getColumn() + ")";
    }
 }

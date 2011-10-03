@@ -55,12 +55,12 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-// TODO: joe on reflow ace call to fix issues
-
 // TODO: token guessing must include explicit namespace qualifiers
 
 // TODO: go to function definition inside code browser editing target
-//       (no completion manager)
+//       (no completion manager). we need a simple completion manager
+//       which can do internal searches as well as run the appropriate
+//       external queries (based on the search path of the package)
 
 // TODO: consider replacing two spaces with one at the beginning of line
 
