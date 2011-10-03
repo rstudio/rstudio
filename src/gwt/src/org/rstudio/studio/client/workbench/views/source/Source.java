@@ -371,7 +371,6 @@ public class Source implements InsertSourceHandler,
 
    public void onShowData(ShowDataEvent event)
    {
-      ensureVisible(true);
       DataItem data = event.getData();
 
       for (int i = 0; i < editors_.size(); i++)
@@ -381,11 +380,13 @@ public class Source implements InsertSourceHandler,
          {
             ((DataEditingTarget)editors_.get(i)).updateData(data);
 
+            ensureVisible(false);
             view_.selectTab(i);
             return;
          }
       }
 
+      ensureVisible(true);
       server_.newDocument(
             FileTypeRegistry.DATAFRAME.getTypeId(),
             (JsObject) data.cast(),
@@ -1361,7 +1362,10 @@ public class Source implements InsertSourceHandler,
       else if ((navigation.getPath() != null) &&
                navigation.getPath().equals(CodeBrowserEditingTarget.PATH))
       {
-         // TODO: implement navigation to code browser
+         activateCodeBrowser(
+            new SourceNavigationResultCallback<CodeBrowserEditingTarget>(
+                                                      navigation.getPosition(),
+                                                      retryCommand));
       }
       
       // check for file path navigation
@@ -1371,43 +1375,12 @@ public class Source implements InsertSourceHandler,
          FileSystemItem file = FileSystemItem.createFile(navigation.getPath());
          TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);
          
-         suspendSourceNavigationAdding_ = true;
+         // open the file and restore the position
          openFile(file,
                   fileType,
-                  new ResultCallback<EditingTarget, ServerError>() {
-                     public void onSuccess(final EditingTarget target)
-                     {
-                        Scheduler.get().scheduleDeferred(new ScheduledCommand()
-                        {
-                           @Override
-                           public void execute()
-                           {
-                              try
-                              {
-                                 target.restorePosition(navigation.getPosition());
-                              }
-                              finally
-                              {
-                                 suspendSourceNavigationAdding_ = false;
-                              }
-                           }
-                        });
-                     }
-
-                     @Override
-                     public void onFailure(ServerError info)
-                     {
-                        suspendSourceNavigationAdding_ = false;
-                        if (retryCommand.isEnabled())
-                           retryCommand.execute();
-                     }
-                     
-                     @Override
-                     public void onCancelled()
-                     {
-                        suspendSourceNavigationAdding_ = false;
-                     }
-                  });
+                  new SourceNavigationResultCallback<EditingTarget>(
+                                                   navigation.getPosition(),
+                                                   retryCommand));
       } 
       else
       {
@@ -1435,8 +1408,19 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onCodeBrowserNavigation(final CodeBrowserNavigationEvent event)
    {
-      ensureVisible(true);
-         
+      activateCodeBrowser(new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
+         @Override
+         public void onSuccess(CodeBrowserEditingTarget target)
+         {
+            if (event.getFunction() != null)
+               target.showFunction(event.getFunction());
+         }
+      });
+   }
+     
+   private void activateCodeBrowser(
+         final ResultCallback<CodeBrowserEditingTarget,ServerError> callback)
+   {
       // see if there is an existing target to use
       for (int i = 0; i < editors_.size(); i++)
       {
@@ -1444,16 +1428,13 @@ public class Source implements InsertSourceHandler,
          if (CodeBrowserEditingTarget.PATH.equals(path))
          {
             // select it
+            ensureVisible(false);
             view_.selectTab(i);
             
-            // push code in if we have it
-            if (event.getFunction() != null)
-            {
-               CodeBrowserEditingTarget editingTarget = 
-                                    (CodeBrowserEditingTarget)editors_.get(i);
-               editingTarget.showFunction(event.getFunction());
-            }
+            // callback
+            callback.onSuccess( (CodeBrowserEditingTarget)editors_.get(i));
             
+            // satisfied request
             return;
          }
       }
@@ -1462,16 +1443,75 @@ public class Source implements InsertSourceHandler,
       newDoc(FileTypeRegistry.CODEBROWSER,
              new ResultCallback<EditingTarget, ServerError>()
              {
+               @Override
                public void onSuccess(EditingTarget arg)
                {
-                  if (event.getFunction() != null)
-                  {
-                     CodeBrowserEditingTarget editingTarget = 
-                                                (CodeBrowserEditingTarget)arg;
-                     editingTarget.showFunction(event.getFunction());
-                  }
+                  callback.onSuccess( (CodeBrowserEditingTarget)arg);
                }
+               
+               @Override
+               public void onFailure(ServerError error)
+               {
+                  callback.onFailure(error);
+               }
+               
+               @Override
+               public void onCancelled()
+               {
+                  callback.onCancelled();
+               }
+               
             });
+   }
+   
+   
+   private class SourceNavigationResultCallback<T extends EditingTarget> 
+                        extends ResultCallback<T,ServerError>
+   {
+      public SourceNavigationResultCallback(SourcePosition restorePosition,
+                                            AppCommand retryCommand)
+      {
+         suspendSourceNavigationAdding_ = true;
+         restorePosition_ = restorePosition;
+         retryCommand_ = retryCommand;
+      }
+      
+      @Override
+      public void onSuccess(final T target)
+      {
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               try
+               {
+                  target.restorePosition(restorePosition_);
+               }
+               finally
+               {
+                  suspendSourceNavigationAdding_ = false;
+               }
+            }
+         });
+      }
+
+      @Override
+      public void onFailure(ServerError info)
+      {
+         suspendSourceNavigationAdding_ = false;
+         if (retryCommand_.isEnabled())
+            retryCommand_.execute();
+      }
+      
+      @Override
+      public void onCancelled()
+      {
+         suspendSourceNavigationAdding_ = false;
+      }
+      
+      private final SourcePosition restorePosition_;
+      private final AppCommand retryCommand_;
    }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();

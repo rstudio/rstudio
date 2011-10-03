@@ -34,6 +34,7 @@ import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
@@ -61,7 +62,10 @@ import java.util.HashSet;
 // TODO: go to function definition inside code browser editing target
 //       (no completion manager)
 
-// TODO: implement navigation to CodeBrowser in Source.attemptNavigation
+// TODO: consider replacing two spaces with one at the beginning of line
+
+// TODO: consider showing cached code and then doing a check on the server
+//       (simillar to checkForExternalEdit)
 
 // TODO: when implementing the SourceDatabase side of the codebrowser
 // editing target (and if we choose to write back to the Doc) we need to
@@ -139,6 +143,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    
    public void showFunction(SearchPathFunctionDefinition functionDef)
    {
+      currentFunction_ = functionDef;
       view_.showFunction(functionDef);
    }
    
@@ -179,6 +184,22 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       return PATH;
    }
+   
+   @Override
+   public String getContext()
+   {
+      if (currentFunction_ != null)
+      {
+         return currentFunction_.getNamespace() + ":::" + 
+                currentFunction_.getName();
+      }
+      else
+      {
+         return "";
+      }
+   }
+   
+   
 
    @Override
    public ImageResource getIcon()
@@ -259,22 +280,35 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
-   public void navigateToPosition(SourcePosition position, 
-                                  boolean recordCurrent)
+   public void navigateToPosition(final SourcePosition position, 
+                                  final boolean recordCurrent)
    {
-      docDisplay_.navigateToPosition(position, recordCurrent);
+      ensureContext(position.getContext(), new Command() {
+         @Override
+         public void execute()
+         {
+            docDisplay_.navigateToPosition(position, recordCurrent);
+         }
+      });
    }
    
    @Override
-   public void restorePosition(SourcePosition position)
+   public void restorePosition(final SourcePosition position)
    {
-      docDisplay_.restorePosition(position);
+      ensureContext(position.getContext(), new Command() {
+         @Override
+         public void execute()
+         {
+            docDisplay_.restorePosition(position);
+         }
+      }); 
    }
    
    @Override
    public boolean isAtSourceRow(SourcePosition position)
    {
-      return docDisplay_.isAtSourceRow(position);
+      return getContext().equals(position.getContext()) &&
+             docDisplay_.isAtSourceRow(position);
    }
    
    
@@ -366,13 +400,43 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       return (CodeBrowserContents)doc_.getProperties().cast();
    }
+   
+   private void ensureContext(String context, final Command onRestored)
+   {
+      if (!context.equals(getContext()))
+      {
+         // get namespace and function
+         String[] contextElements = context.split(":::");
+         if (contextElements.length != 2)
+            return;
+         String namespace = contextElements[0];
+         String name = contextElements[1];
+         
+         server_.getSearchPathFunctionDefinition(
+               name, 
+               namespace, 
+               new SimpleRequestCallback<SearchPathFunctionDefinition>(
+                        "Error Reading Function Definition") {
+                  @Override
+                  public void onResponseReceived(
+                                    SearchPathFunctionDefinition functionDef)
+                  {
+                     showFunction(functionDef);
+                     onRestored.execute();
+                  }
+         });
+      }
+      else
+      {
+         onRestored.execute();
+      }
+   }
 
    private SourceDocument doc_;
  
    private final Value<Boolean> dirtyState_ = new Value<Boolean>(false);
    private ArrayList<HandlerRegistration> releaseOnDismiss_ =
          new ArrayList<HandlerRegistration>();
-   @SuppressWarnings("unused")
    private final CodeSearchServerOperations server_;
    private final Commands commands_;
    private final EventBus events_;
@@ -384,6 +448,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private HandlerRegistration commandReg_;
    
    private DocDisplay docDisplay_;
+   
+   private SearchPathFunctionDefinition currentFunction_ = null;
 
    private static final MyBinder binder_ = GWT.create(MyBinder.class);
 

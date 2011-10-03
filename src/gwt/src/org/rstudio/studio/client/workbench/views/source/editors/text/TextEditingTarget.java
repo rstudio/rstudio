@@ -1011,6 +1011,11 @@ public class TextEditingTarget implements EditingTarget
    {
       return docUpdateSentinel_.getPath();
    }
+   
+   public String getContext()
+   {
+      return null;
+   }
 
    public ImageResource getIcon()
    {
@@ -1789,14 +1794,16 @@ public class TextEditingTarget implements EditingTarget
               @Override
               public void onRecordNavigationPosition(
                                          RecordNavigationPositionEvent event)
-              {
+              {   
+                 SourcePosition pos = SourcePosition.create(
+                                        target.getContext(),
+                                        event.getPosition().getRow(),
+                                        event.getPosition().getColumn());
                  events.fireEvent(new SourceNavigationEvent(
                                                SourceNavigation.create(
                                                    target.getId(), 
                                                    target.getPath(), 
-                                                   event.getPosition())));
-                        
-                
+                                                   pos))); 
               }           
            }));
    }

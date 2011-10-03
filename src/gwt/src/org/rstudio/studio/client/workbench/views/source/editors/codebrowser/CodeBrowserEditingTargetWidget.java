@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -73,7 +74,7 @@ public class CodeBrowserEditingTargetWidget extends Composite
    
    public void showFunction(SearchPathFunctionDefinition functionDef)
    {
-      docDisplay_.setCode(functionDef.getCode(), false);   
+      docDisplay_.setCode(StringUtil.notNull(functionDef.getCode()), false);   
    }
    
    private Toolbar createToolbar()

@@ -18,8 +18,24 @@ public class SourcePosition extends JavaScriptObject
 {
    protected SourcePosition() {}
 
-   public static native SourcePosition create(int row, int column) /*-{
-      return {row: row, column: column};
+   public static native SourcePosition create(int row, 
+                                              int column) /*-{
+      return {context: null, row: row, column: column};
+   }-*/;
+
+   public static native SourcePosition create(String context, 
+                                              int row, 
+                                              int column) /*-{
+      return {context: context, row: row, column: column};
+   }-*/;
+   
+   /*
+    * NOTE: optional context for editors that have multiple internal
+    * contexts with independent rows & columns (e.g. code browser)
+    * this will be null for some implmentations including TextEditingTarget
+    */
+   public native final String getContext() /*-{
+      return this.context;
    }-*/;
 
    public native final int getRow() /*-{

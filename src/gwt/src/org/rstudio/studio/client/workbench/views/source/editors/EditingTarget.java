@@ -43,6 +43,7 @@ public interface EditingTarget extends IsWidget,
    HasValue<String> getName();
    String getTitle();
    String getPath();
+   String getContext();
    ImageResource getIcon();
    String getTabTooltip();
 

@@ -90,6 +90,11 @@ public class UrlContentEditingTarget implements EditingTarget
    {
       return null;
    }
+   
+   public String getContext()
+   {
+      return null;
+   }
 
    public ImageResource getIcon()
    {
