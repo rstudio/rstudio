@@ -121,6 +121,7 @@ public class CodeBrowserEditingTargetWidget extends Composite
                          }
                          else if (def.getNamespace() != null)
                          {
+                            docDisplay.recordCurrentNavigationPosition();
                             eventBus.fireEvent(new CodeBrowserNavigationEvent(
                                                                          def));        
                          }

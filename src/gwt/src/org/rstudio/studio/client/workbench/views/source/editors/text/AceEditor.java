@@ -905,12 +905,15 @@ public class AceEditor implements DocDisplay,
       setCursorPosition(position);
 
       // skip whitespace if necessary
-      int curRow = getSession().getSelection().getCursor().getRow();
-      String line = getSession().getLine(curRow);
-      int funStart = line.indexOf(line.trim());
-      Position pos = Position.create(curRow, funStart);
-      setCursorPosition(pos);
-
+      if (srcPosition.getColumn() == 0)
+      {
+         int curRow = getSession().getSelection().getCursor().getRow();
+         String line = getSession().getLine(curRow);
+         int funStart = line.indexOf(line.trim());
+         position = Position.create(curRow, funStart);
+         setCursorPosition(position);
+      }
+      
       // scroll if necessary
       moveCursorNearTop();
       
@@ -920,7 +923,7 @@ public class AceEditor implements DocDisplay,
       // add to navigation history if requested and our current mode
       // supports history navigation
       if (addToHistory)
-         fireRecordNavigationPosition(pos);
+         fireRecordNavigationPosition(position);
    }
    
    private void fireRecordNavigationPosition(Position pos)

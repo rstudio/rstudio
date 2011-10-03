@@ -55,18 +55,18 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-// TODO: token guessing must include explicit namespace qualifiers
+// TODO: token guessing must include explicit namespace qualifiers. when
+//       we have one we need to do our search w/o inherit
 
 // TODO: navigation to internally defined functions within function
 //       printouts
 
-// TODO: back and forward doesn't work with nested code browser 
-//       navigations.
+// TODO: onResize or equivalent doesn't seem to be called for CodeBrowser
 
 // TODO: consider replacing two spaces with one at the beginning of line
 
 // TODO: consider showing cached code and then doing a check on the server
-//       (simillar to checkForExternalEdit)
+//       (similar to checkForExternalEdit)
 
 // TODO: test with non-package namespaces/environments
 
