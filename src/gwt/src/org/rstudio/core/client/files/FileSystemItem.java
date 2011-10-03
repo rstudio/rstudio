@@ -17,7 +17,6 @@ import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.common.vcs.VCSStatus;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 
 import java.util.Date;
