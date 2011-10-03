@@ -156,7 +156,7 @@ span.status img:first-child {
 
 .cellTableSelectedRow {
   /* CHANGE: use same selected background color as History table */
-  background: rgb(146, 193, 240);
+  background: #CCC;
   /* color: white; */
   height: auto;
   overflow: auto;
@@ -164,7 +164,14 @@ span.status img:first-child {
 
 .cellTableSelectedRowCell {
   /* CHANGE: use same selected background color as History table */
-  border: selectionBorderWidth solid rgb(146, 193, 240);
+  border: selectionBorderWidth solid #CCC;
+}
+
+.cellTableWidget:focus .cellTableSelectedRow {
+  background: rgb(146, 193, 240);
+}
+.cellTableWidget:focus .cellTableSelectedRowCell {
+  border-color: rgb(146, 193, 240);
 }
 
 /**

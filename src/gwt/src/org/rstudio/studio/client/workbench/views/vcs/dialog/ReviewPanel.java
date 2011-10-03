@@ -211,6 +211,7 @@ public class ReviewPanel extends Composite implements Display
 
       changelist_ = changelist.getView();
       lines_ = diffPane;
+      lines_.getElement().setTabIndex(-1);
 
       Widget widget = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       consoleBarFramePanel.setWidget(widget);
