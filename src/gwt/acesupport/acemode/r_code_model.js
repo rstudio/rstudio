@@ -490,6 +490,12 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
             }
          }
       }
+      else if (prevToken
+                  && prevToken.token.type === "keyword"
+                  && (prevToken.token.value === "repeat" || prevToken.token.value === "else"))
+      {
+         return this.$getIndent(this.$getLine(prevToken.row));
+      }
 
       return this.$getIndent(lastRow);
    };
