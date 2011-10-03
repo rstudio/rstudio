@@ -754,6 +754,9 @@ json::Object createFunctionDefinition(const std::string& name,
    // did we get some lines back?
    if (lines.size() > 0)
    {
+      // ammend the first line with the function name
+      lines[0] = name + " <- " + lines[0];
+
       // append the lines to the code and set it
       std::string code;
       BOOST_FOREACH(const std::string& line, lines)
@@ -854,9 +857,10 @@ Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
                                json::JsonRpcResponse* pResponse)
 {
    // read params
-   std::string name;
+   std::string line;
+   int pos;
    json::Value fromWhereJSON;
-   Error error = json::readParams(request.params, &name, &fromWhereJSON);
+   Error error = json::readParams(request.params, &line, &pos, &fromWhereJSON);
    if (error)
       return error;
 
@@ -864,15 +868,23 @@ Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
    std::string fromWhere = fromWhereJSON.is_null() ? "" :
                                                      fromWhereJSON.get_str();
 
+   // call into R to determine the token
+   std::string token;
+   error = r::exec::RFunction(".rs.guessToken", line, pos).call(&token);
+   if (error)
+      return error;
+
    // find the function
    std::string namespaceName;
-   if (findFunction(name, fromWhere, &namespaceName))
+   if (findFunction(token, fromWhere, &namespaceName))
    {
-      pResponse->setResult(createFunctionDefinition(name, namespaceName));
+      pResponse->setResult(createFunctionDefinition(token, namespaceName));
    }
    else
    {
-      pResponse->setResult(json::Value());
+      json::Object funDefName;
+      funDefName["name"] = token;
+      pResponse->setResult(funDefName);
    }
 
    return Success();

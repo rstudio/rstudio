@@ -36,10 +36,10 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -57,15 +57,22 @@ import java.util.HashSet;
 
 // TODO: token guessing must include explicit namespace qualifiers
 
-// TODO: go to function definition inside code browser editing target
-//       (no completion manager). we need a simple completion manager
-//       which can do internal searches as well as run the appropriate
-//       external queries (based on the search path of the package)
+// TODO: navigation to internally defined functions within function
+//       printouts
+
+// TODO: back and forward doesn't work with nested code browser 
+//       navigations.
 
 // TODO: consider replacing two spaces with one at the beginning of line
 
 // TODO: consider showing cached code and then doing a check on the server
 //       (simillar to checkForExternalEdit)
+
+// TODO: test with non-package namespaces/environments
+
+// TODO: do lookups from within packages respect the actual package 
+//       search path (and find symbols that aren't on the global 
+//       search path?
 
 // TODO: when implementing the SourceDatabase side of the codebrowser
 // editing target (and if we choose to write back to the Doc) we need to
@@ -90,7 +97,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {}
 
    @Inject
-   public CodeBrowserEditingTarget(CodeSearchServerOperations server,
+   public CodeBrowserEditingTarget(CodeToolsServerOperations server,
                                    Commands commands,
                                    EventBus events,
                                    UIPrefs prefs,
@@ -119,7 +126,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
                           Provider<String> defaultNameProvider)
    {
       doc_ = document;
-      view_ = new CodeBrowserEditingTargetWidget(commands_, docDisplay_);
+      view_ = new CodeBrowserEditingTargetWidget(commands_,
+                                                 globalDisplay_,
+                                                 events_,
+                                                 server_, 
+                                                 docDisplay_);
       
       docDisplay_.setCode("", false);
 
@@ -437,10 +448,9 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private final Value<Boolean> dirtyState_ = new Value<Boolean>(false);
    private ArrayList<HandlerRegistration> releaseOnDismiss_ =
          new ArrayList<HandlerRegistration>();
-   private final CodeSearchServerOperations server_;
+   private final CodeToolsServerOperations server_;
    private final Commands commands_;
    private final EventBus events_;
-   @SuppressWarnings("unused")
    private final GlobalDisplay globalDisplay_;
    private final UIPrefs prefs_;
    private final FontSizeManager fontSizeManager_;

@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
@@ -43,6 +44,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    }
    void setFileType(TextFileType fileType);
    void setFileType(TextFileType fileType, boolean suppressCompletion);
+   void setFileType(TextFileType fileType, CompletionManager completionManager);
    String getCode();
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code, boolean blockMode);

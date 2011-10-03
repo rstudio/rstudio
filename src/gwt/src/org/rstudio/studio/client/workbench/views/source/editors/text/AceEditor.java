@@ -272,22 +272,40 @@ public class AceEditor implements DocDisplay,
       updateLanguage(suppressCompletion);
    }
    
+   public void setFileType(TextFileType fileType, 
+                           CompletionManager completionManager)
+   {
+      fileType_ = fileType;
+      updateLanguage(completionManager);
+   }
+   
    private void updateLanguage(boolean suppressCompletion)
    {
       if (fileType_ == null)
          return;
 
+      CompletionManager completionManager = null;
       if (!suppressCompletion && fileType_.getEditorLanguage().useRCompletion())
       {
-         completionManager_ = new RCompletionManager(this,
+         completionManager = new RCompletionManager(this,
                                                      this,
                                                      new CompletionPopupPanel(),
                                                      server_,
                                                      new Filter());
       }
       else
-         completionManager_ = new NullCompletionManager();
-
+         completionManager = new NullCompletionManager();
+      
+      updateLanguage(completionManager);
+   }
+   
+   private void updateLanguage(CompletionManager completionManager)
+   {
+      if (fileType_ == null)
+         return;
+      
+      completionManager_ = completionManager;
+      
       widget_.getEditor().setKeyboardHandler(
             new AceCompletionAdapter(completionManager_).getKeyboardHandler());
 
@@ -295,6 +313,7 @@ public class AceEditor implements DocDisplay,
             fileType_.getEditorLanguage().getParserName(),
             Desktop.isDesktop() && Desktop.getFrame().suppressSyntaxHighlighting());
       getSession().setUseWrapMode(fileType_.getWordWrap());
+      
    }
 
    public String getCode()

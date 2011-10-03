@@ -280,13 +280,15 @@ public class RemoteServer implements Server
    }
    
    public void findFunctionInSearchPath(
-         String name,
+         String line, 
+         int pos,
          String fromWhere,
          ServerRequestCallback<SearchPathFunctionDefinition> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(name));
-      params.set(1, fromWhere != null ? new JSONString(fromWhere) :
+      params.set(0, new JSONString(line));
+      params.set(1, new JSONNumber(pos));
+      params.set(2, fromWhere != null ? new JSONString(fromWhere) :
                                         JSONNull.getInstance());
       sendRequest(RPC_SCOPE, 
                   FIND_FUNCTION_IN_SEARCH_PATH, 

@@ -53,12 +53,22 @@ public interface CodeSearchServerOperations
      * if fromWhere is null). 
      */
     void findFunctionInSearchPath(
-         String name,
+         String line, 
+         int pos,
          String fromWhere,
          ServerRequestCallback<SearchPathFunctionDefinition> requestCallback);
     
     /*
-     * Get the function identified by the following name/namespace
+     * Get the function identified by the following name/namespace.
+     * SearchPathFunctionDefinition will be as follows on return:
+     *     - getName       -- the parsed token from line/pos or null if no
+     *                        token could be parsed
+     *                        
+     *     - getNamespace  -- if the name was found in a namespace on the
+     *                        search path then this is the namespace, else null
+     *                        
+     *     - getCode       -- printed variation of the function if it was
+     *                        found within a namespace                   
      */
     void getSearchPathFunctionDefinition(
          String name,
