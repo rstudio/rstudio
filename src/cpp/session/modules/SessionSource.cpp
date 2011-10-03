@@ -310,11 +310,7 @@ Error saveDocumentCore(const std::string& contents,
          FileChangeEvent changeEvent(newFile ? FileChangeEvent::FileAdded :
                                                FileChangeEvent::FileModified,
                                      FileInfo(fullDocPath));
-         source_control::VCSStatus vcsStatus;
-         error = source_control::fileStatus(fullDocPath, &vcsStatus);
-         if (error)
-            LOG_ERROR(error);
-         module_context::enqueFileChangedEvent(changeEvent, vcsStatus.status());
+         module_context::enqueFileChangedEvent(changeEvent);
       }
    }
 

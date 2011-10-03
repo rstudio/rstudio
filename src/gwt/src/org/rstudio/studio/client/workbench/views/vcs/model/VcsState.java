@@ -19,17 +19,25 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.common.vcs.VCSStatus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
+import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
+import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent.Reason;
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
 
 @Singleton
@@ -38,27 +46,60 @@ public class VcsState
    @Inject
    public VcsState(VCSServerOperations server,
                    EventBus eventBus,
-                   GlobalDisplay globalDisplay)
+                   GlobalDisplay globalDisplay,
+                   final Session session)
    {
       server_ = server;
       eventBus_ = eventBus;
       globalDisplay_ = globalDisplay;
-      eventBus_.addHandler(VcsRefreshEvent.TYPE, new VcsRefreshHandler()
+      final HandlerRegistrations registrations = new HandlerRegistrations();
+      registrations.add(eventBus_.addHandler(VcsRefreshEvent.TYPE, new VcsRefreshHandler()
       {
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
          {
+            if (!session.getSessionInfo().isVcsEnabled())
+               registrations.removeHandler();
+
             refresh(false);
          }
-      });
-      eventBus_.addHandler(FileChangeEvent.TYPE, new FileChangeHandler()
+      }));
+      registrations.add(eventBus_.addHandler(FileChangeEvent.TYPE, new FileChangeHandler()
       {
          @Override
          public void onFileChange(FileChangeEvent event)
          {
-            refresh(false);
+            if (!session.getSessionInfo().isVcsEnabled())
+               registrations.removeHandler();
+
+            FileChange fileChange = event.getFileChange();
+            FileSystemItem file = fileChange.getFile();
+            StatusAndPath status = file.getVCSStatus();
+            if (status_ != null)
+            {
+               for (int i = 0; i < status_.length(); i++)
+               {
+                  if (status.getRawPath().equals(status_.get(i).getRawPath()))
+                  {
+                     if (StringUtil.notNull(status.getStatus()).trim().length() == 0)
+                        DomUtils.splice(status_, i, 1);
+                     else
+                        status_.set(i, status);
+                     handlers_.fireEvent(new VcsRefreshEvent(Reason.FileChange));
+                     return;
+                  }
+               }
+
+               if (status.getStatus().trim().length() != 0)
+               {
+                  status_.push(status);
+                  handlers_.fireEvent(new VcsRefreshEvent(Reason.FileChange));
+                  return;
+               }
+            }
          }
-      });
+      }));
+
 
       refresh(false);
    }
@@ -82,7 +123,7 @@ public class VcsState
             VcsRefreshEvent.TYPE, handler);
 
       if (branches_ != null)
-         handler.onVcsRefresh(new VcsRefreshEvent());
+         handler.onVcsRefresh(new VcsRefreshEvent(Reason.VcsOperation));
 
       return hreg;
    }
@@ -102,7 +143,7 @@ public class VcsState
       refresh(true);
    }
 
-   private void refresh(final boolean showError)
+   public void refresh(final boolean showError)
    {
       server_.vcsListBranches(new ServerRequestCallback<BranchesInfo>()
       {
@@ -118,7 +159,7 @@ public class VcsState
                {
                   status_ = response;
 
-                  handlers_.fireEvent(new VcsRefreshEvent());
+                  handlers_.fireEvent(new VcsRefreshEvent(Reason.VcsOperation));
                }
 
                @Override

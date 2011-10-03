@@ -65,10 +65,10 @@ public class DomUtils
       element.scrollTop = element.scrollHeight;
    }-*/;
 
-   public static JsArrayString splice(JsArrayString array,
-                                      int index,
-                                      int howMany,
-                                      String... elements)
+   public static JavaScriptObject splice(JavaScriptObject array,
+                                         int index,
+                                         int howMany,
+                                         String... elements)
    {
       JsArrayMixed args = JavaScriptObject.createArray().cast();
       args.push(index);
@@ -78,7 +78,7 @@ public class DomUtils
       return spliceInternal(array, args);
    }
 
-   private static native JsArrayString spliceInternal(JsArrayString array,
+   private static native JsArrayString spliceInternal(JavaScriptObject array,
                                                       JsArrayMixed args) /*-{
       return Array.prototype.splice.apply(array, args);
    }-*/;

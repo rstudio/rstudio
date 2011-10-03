@@ -16,6 +16,7 @@
 
 #include <map>
 #include <core/FilePath.hpp>
+#include <core/json/Json.hpp>
 
 namespace core {
    class Error;
@@ -79,6 +80,9 @@ VCS activeVCS();
 std::string activeVCSName();
 core::Error status(const core::FilePath& dir, StatusResult* pStatusResult);
 core::Error fileStatus(const core::FilePath& filePath, VCSStatus* pStatus);
+core::Error statusToJson(const core::FilePath& path,
+                         const VCSStatus& status,
+                         core::json::Object* pObject);
 bool isGitInstalled();
 bool isSvnInstalled();
 core::Error initialize();

@@ -16,10 +16,20 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class VcsRefreshEvent extends GwtEvent<VcsRefreshHandler>
 {
+   public enum Reason { NA, FileChange, VcsOperation }
+
+   private final Reason reason_;
+
    public static final Type<VcsRefreshHandler> TYPE = new Type<VcsRefreshHandler>();
 
-   public VcsRefreshEvent()
+   public VcsRefreshEvent(Reason reason)
    {
+      reason_ = reason;
+   }
+
+   public Reason getReason()
+   {
+      return reason_;
    }
 
    @Override

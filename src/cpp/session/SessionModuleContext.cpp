@@ -612,26 +612,44 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    }
 }
 
+namespace {
 // enque file changed event
 void enqueFileChangedEvent(const core::system::FileChangeEvent& event,
-                           const std::string& vcsStatus)
+                           const modules::source_control::VCSStatus& vcsStatus)
 {
    // create file change object
    json::Object fileChange ;
    fileChange["type"] = event.type();
    json::Object fileSystemItem = createFileSystemItem(event.fileInfo());
-   fileSystemItem["vcs_status"] = vcsStatus;
+   json::Object vcsObj;
+   Error error = modules::source_control::statusToJson(
+         FilePath(event.fileInfo().absolutePath()), vcsStatus, &vcsObj);
+   if (error)
+      LOG_ERROR(error);
+   fileSystemItem["vcs_status"] = vcsObj;
    fileChange["file"] = fileSystemItem;
 
    // enque it
    ClientEvent clientEvent(client_events::kFileChanged, fileChange);
    module_context::enqueClientEvent(clientEvent);
 }
+} // namespace
 
+void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
+{
+   modules::source_control::VCSStatus vcsStatus;
+   Error error = modules::source_control::fileStatus(
+         FilePath(event.fileInfo().absolutePath()), &vcsStatus);
+   if (error)
+      LOG_ERROR(error);
+   enqueFileChangedEvent(event, vcsStatus);
+}
 
 void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
                             const std::vector<core::system::FileChangeEvent>& events)
 {
+   using modules::source_control::VCSStatus;
+
    if (events.empty())
       return;
 
@@ -658,8 +676,8 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
    BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
    {
       core::FilePath filePath(event.fileInfo().absolutePath());
-      std::string vcsStatus = statusResult.getStatus(filePath).status();
-      module_context::enqueFileChangedEvent(event, vcsStatus);
+      VCSStatus vcsStatus = statusResult.getStatus(filePath);
+      enqueFileChangedEvent(event, vcsStatus);
    }
 }
 

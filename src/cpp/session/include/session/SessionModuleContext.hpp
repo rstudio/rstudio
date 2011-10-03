@@ -247,8 +247,7 @@ bool isDirectoryMonitored(const core::FilePath& directory);
 bool fileListingFilter(const core::FileInfo& fileInfo);
 
 // enque file changed events
-void enqueFileChangedEvent(const core::system::FileChangeEvent& event,
-                           const std::string& vcsStatus);
+void enqueFileChangedEvent(const core::system::FileChangeEvent& event);
 void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
                             const std::vector<core::system::FileChangeEvent>& events);
 

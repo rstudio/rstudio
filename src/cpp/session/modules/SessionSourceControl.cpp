@@ -1017,10 +1017,9 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
       VCSStatus status = it->status;
       FilePath path = it->path;
       json::Object obj;
-      obj["status"] = status.status();
-      obj["path"] = path.relativePath(s_pVcsImpl_->root());
-      obj["raw_path"] = path.absolutePath();
-      obj["discardable"] = status.status()[1] != ' ' && status.status()[1] != '?';
+      error = statusToJson(path, status, &obj);
+      if (error)
+         return error;
       result.push_back(obj);
    }
 
@@ -1734,6 +1733,18 @@ bool isSvnInstalled()
 
    // TODO
    return false;
+}
+
+Error statusToJson(const core::FilePath &path,
+                   const VCSStatus &status,
+                   core::json::Object *pObject)
+{
+   json::Object& obj = *pObject;
+   obj["status"] = status.status();
+   obj["path"] = path.relativePath(s_pVcsImpl_->root());
+   obj["raw_path"] = path.absolutePath();
+   obj["discardable"] = status.status()[1] != ' ' && status.status()[1] != '?';
+   return Success();
 }
 
 core::Error initialize()

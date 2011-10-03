@@ -64,6 +64,7 @@ import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.vcs.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
+import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent.Reason;
 import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceObjectRemovedEvent;
 import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceRefreshEvent;
@@ -647,7 +648,7 @@ class RemoteServerEventListener
          }
          else if (type.equals(ClientEvent.VcsRefresh))
          {
-            eventBus.fireEvent(new VcsRefreshEvent());
+            eventBus.fireEvent(new VcsRefreshEvent(Reason.NA));
          }
          else if (type.equals(ClientEvent.AskPass))
          {

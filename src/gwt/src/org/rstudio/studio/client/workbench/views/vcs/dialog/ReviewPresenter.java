@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -31,6 +33,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.ValueSink;
+import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -48,11 +51,14 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
+import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.events.*;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent.Action;
+import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent.Reason;
 import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;
 
 import java.util.ArrayList;
@@ -189,14 +195,40 @@ public class ReviewPresenter implements IsWidget
       server_ = server;
       view_ = view;
 
-      vcsState.addVcsRefreshHandler(new VcsRefreshHandler()
+      vcsState.bindRefreshHandler(view.asWidget(), new VcsRefreshHandler()
       {
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
          {
-            updateDiff(true);
+            if (event.getReason() == Reason.VcsOperation)
+               updateDiff(true);
          }
       });
+
+      new WidgetHandlerRegistration(view.asWidget())
+      {
+         @Override
+         protected HandlerRegistration doRegister()
+         {
+            return events.addHandler(FileChangeEvent.TYPE, new FileChangeHandler()
+            {
+               @Override
+               public void onFileChange(FileChangeEvent event)
+               {
+                  ArrayList<StatusAndPath> paths = view_.getChangelistTable()
+                        .getSelectedItems();
+                  if (paths.size() != 1)
+                     return;
+
+                  StatusAndPath vcsStatus = event.getFileChange().getFile().getVCSStatus();
+                  if (paths.get(0).getRawPath().equals(vcsStatus.getRawPath()))
+                  {
+                     vcsState.refresh(false);
+                  }
+               }
+            });
+         }
+      };
 
       // Ensure that we're fresh
       vcsState.refresh();

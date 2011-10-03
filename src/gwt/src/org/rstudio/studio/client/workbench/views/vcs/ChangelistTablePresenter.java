@@ -59,7 +59,7 @@ public class ChangelistTablePresenter
          }
       });
 
-      vcsState_.addVcsRefreshHandler(new VcsRefreshHandler()
+      vcsState_.bindRefreshHandler(view_, new VcsRefreshHandler()
       {
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)

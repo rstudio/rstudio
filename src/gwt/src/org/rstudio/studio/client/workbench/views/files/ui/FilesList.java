@@ -26,6 +26,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.vcs.VCSStatus;
 import org.rstudio.studio.client.common.vcs.VCSStrategy;
 import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
@@ -169,7 +170,7 @@ public class FilesList extends Composite
             public ImageResource getValue(FileSystemItem object)
             {
                return VCSStrategy.getCurrentStrategy().getSimpleIconForStatus(
-                     object.getVCSStatus());
+                     new VCSStatus(object.getVCSStatus().getStatus()));
             }
          };
       iconColumn.setSortable(true);
@@ -182,7 +183,8 @@ public class FilesList extends Composite
          @Override
          public int doCompare(FileSystemItem a, FileSystemItem b)
          {
-            return a.getVCSStatus().compareTo(b.getVCSStatus());
+            return a.getVCSStatus().getStatus().compareTo(
+                  b.getVCSStatus().getStatus());
          }
       });
 

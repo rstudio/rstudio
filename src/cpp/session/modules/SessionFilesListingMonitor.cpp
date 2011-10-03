@@ -154,7 +154,11 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
       {
          source_control::VCSStatus status = vcsStatus.getStatus(filePath);
          core::json::Object fileObject = module_context::createFileSystemItem(filePath);
-         fileObject["vcs_status"] = status.status();
+         json::Object vcsObj;
+         error = modules::source_control::statusToJson(filePath, status, &vcsObj);
+         if (error)
+            LOG_ERROR(error);
+         fileObject["vcs_status"] = vcsObj;
          pJsonFiles->push_back(fileObject) ;
       }
    }

@@ -16,6 +16,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSStatus;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 
@@ -274,14 +275,9 @@ public class FileSystemItem extends JavaScriptObject
       return this.lastModified;
    }-*/;
 
-   private final native String getVCSStatusNative() /*-{
+   public final native StatusAndPath getVCSStatus() /*-{
       return this.vcs_status;
    }-*/;
-
-   public final VCSStatus getVCSStatus()
-   {
-      return new VCSStatus(getVCSStatusNative());
-   }
 
    // NOTE: should be synced with mime type database in FilePath.cpp
    private final static HashMap<String,String> MIME_TYPES = 
