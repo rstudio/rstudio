@@ -28,6 +28,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -36,8 +37,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.WorkbenchContext;
-import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinitionLocation;
+import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -45,6 +45,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.ArrayList;
@@ -111,11 +112,12 @@ public class RCompletionManager implements CompletionManager
    
    @Inject
    public void initialize(GlobalDisplay globalDisplay,
-                          WorkbenchContext workbenchContext,
-                          FileTypeRegistry fileTypeRegistry)
+                          FileTypeRegistry fileTypeRegistry,
+                          EventBus eventBus)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
+      eventBus_ = eventBus;
    }
 
    public void close()
@@ -124,7 +126,7 @@ public class RCompletionManager implements CompletionManager
    }
    
    public void goToFunctionDefinition()
-   { 
+   {   
       // determine current line and cursor position
       InputEditorLineWithCursorPosition lineWithPos = 
                       InputEditorUtil.getLineWithCursorPosition(input_);
@@ -135,18 +137,18 @@ public class RCompletionManager implements CompletionManager
       final GlobalProgressDelayer progress = new GlobalProgressDelayer(
             globalDisplay_, 1000, "Searching for function definition...");
       
-      server_.getFunctionDefinitionLocation(
+      server_.getFunctionDefinition(
          lineWithPos.getLine(),
          lineWithPos.getPosition(), 
-         new ServerRequestCallback<FunctionDefinitionLocation>() {
+         new ServerRequestCallback<FunctionDefinition>() {
             @Override
-            public void onResponseReceived(FunctionDefinitionLocation loc)
+            public void onResponseReceived(FunctionDefinition def)
             {
                 // dismiss progress
                 progress.dismiss();
                     
                 // if we got a hit
-                if (loc.getFunctionName() != null)
+                if (def.getFunctionName() != null)
                 {   
                    // search locally if a function navigator was provided
                    if (navigableSourceEditor_ != null)
@@ -154,7 +156,7 @@ public class RCompletionManager implements CompletionManager
                       // try to search for the function locally
                       SourcePosition position = 
                          navigableSourceEditor_.findFunctionPositionFromCursor(
-                                                         loc.getFunctionName());
+                                                         def.getFunctionName());
                       if (position != null)
                       {
                          navigableSourceEditor_.navigateToPosition(position, 
@@ -167,10 +169,19 @@ public class RCompletionManager implements CompletionManager
                    // if we didn't satisfy the request using a function
                    // navigator and we got a file back from the server then
                    // navigate to the file/loc
-                   if (loc.getFile() != null)
+                   if (def.getFile() != null)
                    {  
-                      fileTypeRegistry_.editFile(loc.getFile(), 
-                                                 loc.getPosition());
+                      fileTypeRegistry_.editFile(def.getFile(), 
+                                                 def.getPosition());
+                   }
+                   
+                   // if we didn't get a file back see if we got a 
+                   // search path definition
+                   else if (def.getSearchPathFunctionDefinition() != null)
+                   {
+                      eventBus_.fireEvent(new CodeBrowserNavigationEvent(
+                                     def.getSearchPathFunctionDefinition()));
+                      
                    }
                }
             }
@@ -551,6 +562,7 @@ public class RCompletionManager implements CompletionManager
    
    private GlobalDisplay globalDisplay_;
    private FileTypeRegistry fileTypeRegistry_;
+   private EventBus eventBus_;
       
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_ ;

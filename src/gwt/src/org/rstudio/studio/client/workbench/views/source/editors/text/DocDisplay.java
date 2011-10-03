@@ -62,7 +62,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    void fitSelectionToLines(boolean expand);
    int getSelectionOffset(boolean start);
-
+   
    // Fix bug 964
    void onActivate();
 
@@ -82,6 +82,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
    Position getCursorPosition();
+   void setCursorPosition(Position position);
 
    FunctionStart getCurrentFunction();
    JsArray<FunctionStart> getFunctionTree();

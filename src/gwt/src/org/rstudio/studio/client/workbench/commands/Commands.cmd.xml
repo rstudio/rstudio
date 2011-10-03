@@ -265,7 +265,6 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="executeToCurrentLine" value="Cmd+Shift+B"/>
       <shortcut refid="executeFromCurrentLine" value="Cmd+Shift+E"/>
       <shortcut refid="executeCurrentFunction" value="Cmd+Shift+F"/>
-      <shortcut refid="goToFunctionDefinition" value="F2"/>
       <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
       <shortcut refid="sourceNavigateForward" value="Cmd+F10"/>
       <shortcut refid="sourceFile" value="Cmd+Shift+O"/>

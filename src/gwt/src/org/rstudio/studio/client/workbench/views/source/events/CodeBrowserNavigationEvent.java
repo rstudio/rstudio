@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
+
 import com.google.gwt.event.shared.GwtEvent;
 
 public class CodeBrowserNavigationEvent extends GwtEvent<CodeBrowserNavigationHandler>
@@ -21,8 +23,18 @@ public class CodeBrowserNavigationEvent extends GwtEvent<CodeBrowserNavigationHa
    
    public CodeBrowserNavigationEvent()
    {
+      this(null);
    }
    
+   public CodeBrowserNavigationEvent(SearchPathFunctionDefinition function)
+   {
+      function_ = function;
+   }
+   
+   public SearchPathFunctionDefinition getFunction()
+   {
+      return function_;
+   }
    
    @Override
    protected void dispatch(CodeBrowserNavigationHandler handler)
@@ -36,5 +48,7 @@ public class CodeBrowserNavigationEvent extends GwtEvent<CodeBrowserNavigationHa
       return TYPE;
    }
 
+   
+   final SearchPathFunctionDefinition function_;
 }
 

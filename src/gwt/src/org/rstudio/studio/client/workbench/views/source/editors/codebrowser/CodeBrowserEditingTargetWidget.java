@@ -18,6 +18,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
@@ -68,6 +69,11 @@ public class CodeBrowserEditingTargetWidget extends Composite
    public void onActivate()
    {
       docDisplay_.onActivate();
+   }
+   
+   public void showFunction(SearchPathFunctionDefinition functionDef)
+   {
+      docDisplay_.setCode(functionDef.getCode(), false);   
    }
    
    private Toolbar createToolbar()

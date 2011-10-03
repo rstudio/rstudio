@@ -46,7 +46,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.remote.RemoteServerEventListener.ClientEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
-import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinitionLocation;
+import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
+import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -264,16 +265,46 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SEARCH_CODE, params, requestCallback);
    }
    
-   public void getFunctionDefinitionLocation(
+   public void getFunctionDefinition(
          String line, 
          int pos,
-         ServerRequestCallback<FunctionDefinitionLocation> requestCallback)
+         ServerRequestCallback<FunctionDefinition> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(line));
       params.set(1, new JSONNumber(pos));
       sendRequest(RPC_SCOPE, 
-                  GET_FUNCTION_DEFINITION_LOCATION, 
+                  GET_FUNCTION_DEFINITION, 
+                  params, 
+                  requestCallback);
+   }
+   
+   public void findFunctionInSearchPath(
+         String name,
+         String fromWhere,
+         ServerRequestCallback<SearchPathFunctionDefinition> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(name));
+      params.set(1, fromWhere != null ? new JSONString(fromWhere) :
+                                        JSONNull.getInstance());
+      sendRequest(RPC_SCOPE, 
+                  FIND_FUNCTION_IN_SEARCH_PATH, 
+                  params, 
+                  requestCallback);
+   }
+
+
+   public void getSearchPathFunctionDefinition(
+         String name,
+         String namespace,
+         ServerRequestCallback<SearchPathFunctionDefinition> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(name));
+      params.set(1, new JSONString(namespace));
+      sendRequest(RPC_SCOPE, 
+                  GET_SEARCH_PATH_FUNCTION_DEFINITION, 
                   params, 
                   requestCallback);
    }
@@ -1779,7 +1810,9 @@ public class RemoteServer implements Server
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";
    private static final String SEARCH_CODE = "search_code";
-   private static final String GET_FUNCTION_DEFINITION_LOCATION = "get_function_definition_location";
+   private static final String GET_SEARCH_PATH_FUNCTION_DEFINITION = "get_search_path_function_definition";
+   private static final String GET_FUNCTION_DEFINITION = "get_function_definition";
+   private static final String FIND_FUNCTION_IN_SEARCH_PATH = "find_function_in_search_path";
    
    private static final String CONSOLE_INPUT = "console_input";
    private static final String RESET_CONSOLE_ACTIONS = "reset_console_actions";

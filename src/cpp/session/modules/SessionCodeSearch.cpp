@@ -714,8 +714,62 @@ Error searchCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error getFunctionDefinitionLocation(const json::JsonRpcRequest& request,
-                                    json::JsonRpcResponse* pResponse)
+bool findFunction(const std::string& token,
+                  const std::string& fromWhere,
+                  std::string* pNamespaceName)
+{
+   r::exec::RFunction func(".rs.findFunctionOnSearchPath", token, fromWhere);
+   Error error = func.call(pNamespaceName);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   else if (pNamespaceName->empty())
+   {
+      return false;
+   }
+   else
+   {
+      return true;
+   }
+}
+
+
+json::Object createFunctionDefinition(const std::string& name,
+                                      const std::string& namespaceName)
+{
+   // basic metadata
+   json::Object funDef;
+   funDef["name"] = name;
+   funDef["namespace"] = namespaceName;
+
+   // generate code by printing function
+   std::vector<std::string> lines;
+   r::exec::RFunction printFunc(".rs.printFunction", name, namespaceName);
+   Error error = printFunc.call(&lines);
+   if (error)
+      LOG_ERROR(error);
+
+   // did we get some lines back?
+   if (lines.size() > 0)
+   {
+      // append the lines to the code and set it
+      std::string code;
+      BOOST_FOREACH(const std::string& line, lines)
+      {
+         code.append(line);
+         code.append("\n");
+      }
+      funDef["code"] = code;
+   }
+
+   return funDef;
+}
+
+
+Error getFunctionDefinition(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
 {
    // read params
    std::string line;
@@ -747,6 +801,7 @@ Error getFunctionDefinitionLocation(const json::JsonRpcRequest& request,
          findGlobalFunctionInSourceDatabase(token, &sourceItem, &contexts) ||
          s_projectIndex.findGlobalFunction(token, contexts, &sourceItem);
 
+      // found the file
       if (found)
       {
          // return full path to file
@@ -760,10 +815,65 @@ Error getFunctionDefinitionLocation(const json::JsonRpcRequest& request,
          posJson["column"] = sourceItem.column();
          defJson["position"] = posJson;
       }
+      // didn't find the file, check the search path
+      else
+      {
+         // find the function
+         std::string namespaceName;
+         if (findFunction(token, "", &namespaceName))
+         {
+            defJson["search_path_definition"] =
+                              createFunctionDefinition(token, namespaceName);
+         }
+      }
    }
 
    // set result
    pResponse->setResult(defJson);
+
+   return Success();
+}
+
+
+Error getSearchPathFunctionDefinition(const json::JsonRpcRequest& request,
+                                      json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string name;
+   std::string namespaceName;
+   Error error = json::readParams(request.params, &name, &namespaceName);
+   if (error)
+      return error;
+
+   // return result
+   pResponse->setResult(createFunctionDefinition(name, namespaceName));
+   return Success();
+}
+
+Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string name;
+   json::Value fromWhereJSON;
+   Error error = json::readParams(request.params, &name, &fromWhereJSON);
+   if (error)
+      return error;
+
+   // handle fromWhere NULL case
+   std::string fromWhere = fromWhereJSON.is_null() ? "" :
+                                                     fromWhereJSON.get_str();
+
+   // find the function
+   std::string namespaceName;
+   if (findFunction(name, fromWhere, &namespaceName))
+   {
+      pResponse->setResult(createFunctionDefinition(name, namespaceName));
+   }
+   else
+   {
+      pResponse->setResult(json::Value());
+   }
 
    return Success();
 }
@@ -806,7 +916,9 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "search_code", searchCode))
-      (bind(registerRpcMethod, "get_function_definition_location", getFunctionDefinitionLocation));
+      (bind(registerRpcMethod, "get_function_definition", getFunctionDefinition))
+      (bind(registerRpcMethod, "get_search_path_function_definition", getSearchPathFunctionDefinition))
+      (bind(registerRpcMethod, "find_function_in_search_path", findFunctionInSearchPath));
 
    return initBlock.execute();
 }

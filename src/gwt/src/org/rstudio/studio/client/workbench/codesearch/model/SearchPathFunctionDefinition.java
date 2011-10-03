@@ -1,5 +1,5 @@
 /*
- * FunctionDefinitionLocation.java
+ * SearchPathFunctionDefinition.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -12,27 +12,25 @@
  */
 package org.rstudio.studio.client.workbench.codesearch.model;
 
-import org.rstudio.core.client.FilePosition;
-import org.rstudio.core.client.files.FileSystemItem;
-
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class FunctionDefinitionLocation extends JavaScriptObject
-{
-   protected FunctionDefinitionLocation()
-   {
-      
-   }
 
-   public final native String getFunctionName() /*-{
-      return this.function_name;
-   }-*/;
-  
-   public final native FileSystemItem getFile() /*-{
-      return this.file;
+public class SearchPathFunctionDefinition extends JavaScriptObject
+{
+   protected SearchPathFunctionDefinition()
+   {
+   }
+   
+   public final native String getName() /*-{
+      return this.name;
    }-*/;
    
-   public final native FilePosition getPosition()/*-{
-      return this.position;
+   public final native String getNamespace() /*-{
+      return this.namespace;
    }-*/;
+   
+   public final native String getCode() /*-{
+      return this.code;
+   }-*/;
+   
 }

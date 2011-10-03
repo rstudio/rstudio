@@ -39,6 +39,7 @@ import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
+import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
@@ -52,6 +53,16 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+
+// TODO: crashing while we have vcs open and doing builds in rdesktop
+//  need to run with traceback enabled
+
+// TODO: joe on reflow ace call to fix issues
+
+// TODO: token guessing must include explicit namespace qualifiers
+
+// TODO: go to function definition inside code browser editing target
+//       (no completion manager)
 
 // TODO: make sure that back and forward into code browser retains
 // the cursor position
@@ -74,6 +85,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    
    public interface Display extends TextDisplay                                                      
    {
+      void showFunction(SearchPathFunctionDefinition functionDef);
    }
 
    interface MyBinder extends CommandBinder<Commands, CodeBrowserEditingTarget>
@@ -111,7 +123,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       doc_ = document;
       view_ = new CodeBrowserEditingTargetWidget(commands_, docDisplay_);
       
-      docDisplay_.setCode(getContents().getCode(), false);
+      docDisplay_.setCode("", false);
 
       TextEditingTarget.registerPrefs(releaseOnDismiss_, prefs_, docDisplay_);
       
@@ -131,11 +143,23 @@ public class CodeBrowserEditingTarget implements EditingTarget
       ));
    }
    
+   public void showFunction(SearchPathFunctionDefinition functionDef)
+   {
+      view_.showFunction(functionDef);
+   }
+   
+   
    @Handler
    void onPrintSourceDoc()
    {
       TextEditingTarget.onPrintSourceDoc(docDisplay_);
    }
+   
+   @Handler
+   void onGoToFunctionDefinition()
+   {
+      docDisplay_.goToFunctionDefinition();
+   } 
 
 
    @Override
@@ -343,6 +367,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       assert false : "Not implemented";
    }
 
+   @SuppressWarnings("unused")
    private CodeBrowserContents getContents()
    {
       return (CodeBrowserContents)doc_.getProperties().cast();

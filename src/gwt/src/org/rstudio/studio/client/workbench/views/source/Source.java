@@ -68,7 +68,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.*;
-import org.rstudio.studio.client.workbench.views.source.model.CodeBrowserContents;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -1442,31 +1441,47 @@ public class Source implements InsertSourceHandler,
    {
       events_.fireEvent(new CodeBrowserNavigationEvent());
    }
-   
+    
    @Override
-   public void onCodeBrowserNavigation(CodeBrowserNavigationEvent event)
+   public void onCodeBrowserNavigation(final CodeBrowserNavigationEvent event)
    {
       ensureVisible(true);
-      
+       
+      // see if there is an existing target to use
       for (int i = 0; i < editors_.size(); i++)
       {
          String path = editors_.get(i).getPath();
          if (CodeBrowserEditingTarget.PATH.equals(path))
          {
+            // select it
             view_.selectTab(i);
+            
+            // push code in if we have it
+            if (event.getFunction() != null)
+            {
+               CodeBrowserEditingTarget editingTarget = 
+                                    (CodeBrowserEditingTarget)editors_.get(i);
+               editingTarget.showFunction(event.getFunction());
+            }
+            
             return;
          }
       }
 
-      server_.newDocument(
-            FileTypeRegistry.CODEBROWSER.getTypeId(),
-            CodeBrowserContents.create("x = 1 + 2\n").<JsObject>cast(),
-            new SimpleRequestCallback<SourceDocument>("R Code Browser") {
-               public void onResponseReceived(SourceDocument response)
+      // create a new one
+      newDoc(FileTypeRegistry.CODEBROWSER,
+             new ResultCallback<EditingTarget, ServerError>()
+             {
+               public void onSuccess(EditingTarget arg)
                {
-                  addTab(response);
+                  if (event.getFunction() != null)
+                  {
+                     CodeBrowserEditingTarget editingTarget = 
+                                                (CodeBrowserEditingTarget)arg;
+                     editingTarget.showFunction(event.getFunction());
+                  }
                }
-            });  
+            });
    }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();

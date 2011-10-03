@@ -30,6 +30,57 @@
    utils:::.guessTokenFromLine()
 })
 
+.rs.addFunction("findFunctionOnSearchPath", function(name, fromWhere)
+{
+   if (!identical(fromWhere, ""))
+   {
+      if ( ! (fromWhere %in% search()) )
+         return ("")
+
+      where = as.environment(fromWhere)
+   }
+   else
+   {
+      where = globalenv()
+   }
+
+   envList <- methods:::findFunction(name, where = where)
+   if (length(envList) > 0)
+   {
+      env <- envList[[1]]
+      if (identical(env, baseenv()))
+      {
+         return ("package:base")
+      }
+      else
+      {
+         envName = attr(envList[[1]], "name")
+         if (!is.null(envName))
+            return (envName)
+         else
+            return ("")
+      }
+   }
+   else
+   {
+      return ("")
+   }
+})
+
+
+.rs.addFunction("printFunction", function(name, namespaceName)
+{
+   func = get(name,
+              envir = as.environment(namespaceName),
+              mode = "function",
+              inherits = FALSE)
+
+   deparse(func,
+           width.cutoff = 59,
+           control = c("keepInteger", "keepNA"))
+})
+
+
 utils:::rc.settings(files=T)
 .rs.addJsonRpcHandler("get_completions", function(line, cursorPos)
 {
