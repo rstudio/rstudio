@@ -293,13 +293,7 @@ public final class Impl {
     // Note: this must NEVER be called nested in a $entry() call.
     // This method is call from a "setTimeout": entryDepth should be set to 0.
     if (GWT.isScript() && entryDepth != 0) {
-      int oldDepth = entryDepth;
       entryDepth = 0;
-      if (GWT.getUncaughtExceptionHandler() != null) {
-        // Report the problem.
-        GWT.getUncaughtExceptionHandler().onUncaughtException(
-            new IllegalStateException("Invalid entryDepth value " + oldDepth));
-      }
     }
     watchdogEntryDepthTimerId = -1;  // Timer has run.
   }
