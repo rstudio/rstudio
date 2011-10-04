@@ -397,6 +397,34 @@ public class DomUtils
       }
    }-*/;
 
+   // Forked from com.google.gwt.dom.client.Element.scrollIntoView()
+   public static native void scrollIntoViewVert(Element elem) /*-{
+     var top = elem.offsetTop;
+     var height = elem.offsetHeight;
+
+     if (elem.parentNode != elem.offsetParent) {
+       top -= elem.parentNode.offsetTop;
+     }
+
+     var cur = elem.parentNode;
+     while (cur && (cur.nodeType == 1)) {
+       if (top < cur.scrollTop) {
+         cur.scrollTop = top;
+       }
+       if (top + height > cur.scrollTop + cur.clientHeight) {
+         cur.scrollTop = (top + height) - cur.clientHeight;
+       }
+
+       var offsetTop = cur.offsetTop;
+       if (cur.parentNode != cur.offsetParent) {
+         offsetTop -= cur.parentNode.offsetTop;
+       }
+
+       top += offsetTop - cur.scrollTop;
+       cur = cur.parentNode;
+     }
+   }-*/;
+
    public static Point getRelativePosition(Element container,
                                                   Element child)
    {

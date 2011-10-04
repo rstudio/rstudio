@@ -23,6 +23,7 @@ import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.ElementEx;
 
 public class MultiSelectCellTable<T> extends CellTable<T>
       implements HasKeyDownHandlers, HasClickHandlers
@@ -171,7 +172,7 @@ public class MultiSelectCellTable<T> extends CellTable<T>
          if (!extend)
             clearSelection();
          getSelectionModel().setSelected(getVisibleItem(row), true);
-         ensureRowVisible(row);
+         ensureRowVisible(row, true);
       }
       else
       {
@@ -182,16 +183,20 @@ public class MultiSelectCellTable<T> extends CellTable<T>
          if (!extend)
             clearSelection();
          getSelectionModel().setSelected(getVisibleItem(row), true);
-         ensureRowVisible(row);
+         ensureRowVisible(row, false);
       }
    }
 
-   private void ensureRowVisible(int row)
+   private void ensureRowVisible(int row, boolean alignWithTop)
    {
-      if (row == 0)
-         (getElement().<TableElement>cast()).getRows().getItem(0).scrollIntoView();
+      Element el;
+      if (row == 0 && alignWithTop)
+         el = (getElement().<TableElement>cast()).getRows().getItem(0);
       else
-         getRowElement(row).scrollIntoView();
+         el = getRowElement(row);
+
+      if (el != null)
+         DomUtils.scrollIntoViewVert(el);
    }
 
    protected boolean canSelectVisibleRow(int visibleRow)
