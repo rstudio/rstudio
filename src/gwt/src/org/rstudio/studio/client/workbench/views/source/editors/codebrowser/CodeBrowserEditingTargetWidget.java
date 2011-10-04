@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.StringUtil;
@@ -40,7 +41,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
-public class CodeBrowserEditingTargetWidget extends Composite
+public class CodeBrowserEditingTargetWidget extends ResizeComposite
    implements CodeBrowserEditingTarget.Display
 {
    public CodeBrowserEditingTargetWidget(Commands commands,
