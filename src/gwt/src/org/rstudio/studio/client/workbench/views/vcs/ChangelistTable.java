@@ -17,9 +17,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -47,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 public class ChangelistTable extends Composite
+   implements HasKeyDownHandlers, HasClickHandlers
 {
    public interface CellTableResources extends CellTable.Resources
    {
@@ -181,36 +180,24 @@ public class ChangelistTable extends Composite
       layout_.setWidgetTopBottom(progressPanel_, 0, Unit.PX, 0, Unit.PX);
       layout_.setWidgetLeftRight(progressPanel_, 0, Unit.PX, 0, Unit.PX);
 
-      table_.addKeyDownHandler(new KeyDownHandler()
-      {
-         @Override
-         public void onKeyDown(KeyDownEvent event)
-         {
-            // Space toggles the staged/unstaged state of the current selection.
-            // Enter does the same plus moves the selection down.
-
-            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER
-                  || event.getNativeKeyCode() == ' ')
-            {
-               ArrayList<StatusAndPath> items = getSelectedItems();
-               if (items.size() > 0)
-               {
-                  boolean unstage = !items.get(0).isDiscardable();
-                  fireEvent(new StageUnstageEvent(unstage, items));
-
-                  if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER
-                      && items.size() == 1)
-                  {
-                     table_.moveSelection(false, false);
-                  }
-               }
-            }
-         }
-      });
-
       setProgress(true);
 
       initWidget(layout_);
+   }
+
+   public void toggleStaged(boolean moveSelection)
+   {
+      ArrayList<StatusAndPath> items = getSelectedItems();
+      if (items.size() > 0)
+      {
+         boolean unstage = !items.get(0).isDiscardable();
+         fireEvent(new StageUnstageEvent(unstage, items));
+
+         if (moveSelection && items.size() == 1)
+         {
+            table_.moveSelection(false, false);
+         }
+      }
    }
 
    public void showProgress()
@@ -416,6 +403,18 @@ public class ChangelistTable extends Composite
    public int getSortOrderHashCode()
    {
       return table_.getColumnSortList().hashCode();
+   }
+
+   @Override
+   public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
+   {
+      return table_.addKeyDownHandler(handler);
+   }
+
+   @Override
+   public HandlerRegistration addClickHandler(ClickHandler handler)
+   {
+      return table_.addClickHandler(handler);
    }
 
    private final MultiSelectCellTable<StatusAndPath> table_;

@@ -15,9 +15,7 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -35,6 +33,7 @@ import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -248,6 +247,36 @@ public class ReviewPresenter implements IsWidget
          public void onSelectionChange(SelectionChangeEvent event)
          {
             updateDiff(true);
+         }
+      });
+      view_.getChangelistTable().addKeyDownHandler(new KeyDownHandler()
+      {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            // Space toggles the staged/unstaged state of the current selection.
+            // Enter does the same plus moves the selection down.
+
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER
+                  || event.getNativeKeyCode() == ' ')
+            {
+               view_.getChangelistTable().toggleStaged(
+                     event.getNativeKeyCode() == KeyCodes.KEY_ENTER);
+            }
+         }
+      });
+      view_.getChangelistTable().addClickHandler(new ClickHandler()
+      {
+         private DoubleClickState dblClick = new DoubleClickState();
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            if (dblClick.checkForDoubleClick(event.getNativeEvent()))
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               view_.getChangelistTable().toggleStaged(false);
+            }
          }
       });
 

@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -21,6 +22,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -28,6 +32,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.Void;
@@ -62,6 +67,8 @@ public class VCS extends BasePresenter implements IsWidget
 
       HandlerRegistration addSelectionChangeHandler(
                                           SelectionChangeEvent.Handler handler);
+
+      ChangelistTable getChangelistTable();
    }
 
    @Inject
@@ -73,7 +80,8 @@ public class VCS extends BasePresenter implements IsWidget
               Binder commandBinder,
               VcsState vcsState,
               EventBus events,
-              final GlobalDisplay globalDisplay)
+              final GlobalDisplay globalDisplay,
+              final FileTypeRegistry fileTypeRegistry)
    {
       super(view);
       view_ = view;
@@ -83,6 +91,7 @@ public class VCS extends BasePresenter implements IsWidget
       commands_ = commands;
       vcsState_ = vcsState;
       globalDisplay_ = globalDisplay;
+      fileTypeRegistry_ = fileTypeRegistry;
 
       commandBinder.bind(commands, this);
 
@@ -129,6 +138,46 @@ public class VCS extends BasePresenter implements IsWidget
          }
       });
 
+      view_.getChangelistTable().addKeyDownHandler(new KeyDownHandler()
+      {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+            if (mod != KeyboardShortcut.NONE)
+               return;
+
+            if (event.getNativeKeyCode() == ' ')
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               view_.getChangelistTable().toggleStaged(false);
+            }
+            else if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+
+               openSelectedFile();
+            }
+         }
+      });
+      view_.getChangelistTable().addClickHandler(new ClickHandler()
+      {
+         private DoubleClickState dblClick = new DoubleClickState();
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            if (dblClick.checkForDoubleClick(event.getNativeEvent()))
+            {
+               event.preventDefault();
+               event.stopPropagation();
+
+               openSelectedFile();
+            }
+         }
+      });
+
       view_.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
          @Override
          public void onSelectionChange(SelectionChangeEvent event)
@@ -137,6 +186,19 @@ public class VCS extends BasePresenter implements IsWidget
          }
       });
       manageCommands();
+   }
+
+   private void openSelectedFile()
+   {
+      if (view_.getSelectedItemCount() == 0)
+         return;
+
+      ArrayList<StatusAndPath> items = view_.getSelectedItems();
+      for (StatusAndPath item : items)
+      {
+         fileTypeRegistry_.openFile(FileSystemItem.createFile(
+               item.getRawPath()));
+      }
    }
 
    private void manageCommands()
@@ -272,4 +334,5 @@ public class VCS extends BasePresenter implements IsWidget
    private final Commands commands_;
    private final VcsState vcsState_;
    private final GlobalDisplay globalDisplay_;
+   private final FileTypeRegistry fileTypeRegistry_;
 }

@@ -117,6 +117,12 @@ public class VCSPane extends WorkbenchPane implements Display
       return table_.addSelectionChangeHandler(handler);
    }
 
+   @Override
+   public ChangelistTable getChangelistTable()
+   {
+      return table_;
+   }
+
    private final Commands commands_;
    private final BranchToolbarButton branchToolbarButton_;
    private ChangelistTable table_;
