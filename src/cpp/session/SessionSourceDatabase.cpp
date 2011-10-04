@@ -451,10 +451,13 @@ Error put(boost::shared_ptr<SourceDocument> pDoc)
    if (error)
       return error ;
 
-   // write properties to durable storage
-   error = putProperties(pDoc->path(), pDoc->properties());
-   if (error)
-      LOG_ERROR(error);
+   // write properties to durable storage (if there is a path)
+   if (!pDoc->path().empty())
+   {
+      error = putProperties(pDoc->path(), pDoc->properties());
+      if (error)
+         LOG_ERROR(error);
+   }
 
    return Success();
 }
