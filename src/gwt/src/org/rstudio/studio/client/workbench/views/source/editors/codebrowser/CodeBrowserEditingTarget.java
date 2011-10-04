@@ -36,10 +36,10 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
-import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -51,8 +51,10 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.model.CodeBrowserContents;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 // TODO: token guessing must include explicit namespace qualifiers. when
@@ -60,10 +62,6 @@ import java.util.HashSet;
 
 // TODO: navigation to internally defined functions within function
 //       printouts
-
-
-// TODO: consider showing cached code and then doing a check on the server
-//       (similar to checkForExternalEdit)
 
 // TODO: what happens if returning to a function and is no longer
 //       on the search path?
@@ -88,7 +86,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {}
 
    @Inject
-   public CodeBrowserEditingTarget(CodeToolsServerOperations server,
+   public CodeBrowserEditingTarget(SourceServerOperations server,
                                    Commands commands,
                                    EventBus events,
                                    UIPrefs prefs,
@@ -123,8 +121,6 @@ public class CodeBrowserEditingTarget implements EditingTarget
                                                  server_, 
                                                  docDisplay_);
       
-      docDisplay_.setCode("", false);
-
       TextEditingTarget.registerPrefs(releaseOnDismiss_, prefs_, docDisplay_);
       
       TextEditingTarget.syncFontSize(releaseOnDismiss_, 
@@ -141,13 +137,52 @@ public class CodeBrowserEditingTarget implements EditingTarget
                }
             }
       ));
+    
+      
+      // if we have contents then set them
+      CodeBrowserContents contents = getContents();
+      if (contents.getContext().length() > 0)
+      {
+         ensureContext(contents.getContext(), new Command() {
+            @Override
+            public void execute()
+            {
+            }
+         });
+      }
+      else
+      {
+         docDisplay_.setCode("", false);
+      }
+      
    }
    
    public void showFunction(SearchPathFunctionDefinition functionDef)
    {
+      // set the current function
       currentFunction_ = functionDef;
       view_.showFunction(functionDef);
       view_.scrollToLeft();
+      
+      // update document properties if necessary
+      final CodeBrowserContents contents = 
+                        CodeBrowserContents.create(getContext());
+      if (!contents.equalTo(getContents()))
+      {
+         HashMap<String, String> props = new HashMap<String, String>();
+         contents.fillProperties(props);
+         server_.modifyDocumentProperties(
+               doc_.getId(),
+               props,
+               new SimpleRequestCallback<Void>("Error")
+               {
+                  @Override
+                  public void onResponseReceived(Void response)
+                  {
+                     contents.fillProperties(doc_.getProperties()); 
+                  }
+               });
+      }
    }
    
    
@@ -384,7 +419,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Override
-   public HandlerRegistration addCloseHandler(CloseHandler<Void> handler)
+   public HandlerRegistration addCloseHandler(CloseHandler<java.lang.Void> handler)
    {
       return new HandlerRegistration()
       {
@@ -400,10 +435,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
       assert false : "Not implemented";
    }
 
-   @SuppressWarnings("unused")
    private CodeBrowserContents getContents()
    {
-      return (CodeBrowserContents)doc_.getProperties().cast();
+      if (doc_.getProperties().keys().length() > 0)
+         return (CodeBrowserContents)doc_.getProperties().cast();
+      else
+         return CodeBrowserContents.create("");
    }
    
    private void ensureContext(String context, final Command onRestored)
@@ -442,7 +479,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private final Value<Boolean> dirtyState_ = new Value<Boolean>(false);
    private ArrayList<HandlerRegistration> releaseOnDismiss_ =
          new ArrayList<HandlerRegistration>();
-   private final CodeToolsServerOperations server_;
+   private final SourceServerOperations server_;
    private final Commands commands_;
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;

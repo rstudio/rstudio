@@ -12,6 +12,10 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import java.util.HashMap;
+
+import org.rstudio.core.client.js.JsObject;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class CodeBrowserContents extends JavaScriptObject
@@ -20,14 +24,30 @@ public class CodeBrowserContents extends JavaScriptObject
    {
    }
 
-   public static final native CodeBrowserContents create(String code) /*-{
+   public static final native CodeBrowserContents create(String context) /*-{
       var contents = new Object();
-      contents.code = code;
+      contents.context = context;
       return contents ;
    }-*/;
    
    
-   public native final String getCode() /*-{
-      return this.code;
+   public native final String getContext() /*-{
+      return this.context;
    }-*/;
+   
+   public final boolean equalTo(CodeBrowserContents other)
+   {
+      return getContext().equals(other.getContext());
+   }
+   
+   
+   public final void fillProperties(HashMap<String, String> properties)
+   {
+      properties.put("context", getContext());
+   }
+
+   public final void fillProperties(JsObject properties)
+   {
+      properties.setString("context", getContext());
+   }
 }
