@@ -21,8 +21,9 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -192,7 +193,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    public void showFunction(SearchPathFunctionDefinition functionDef)
    {
       currentFunctionNamespace_ = functionDef.getNamespace();
-      docDisplay_.setCode(StringUtil.notNull(functionDef.getCode()), false);  
+      docDisplay_.setCode(formatCode(functionDef.getCode()), false);  
       contextLabel_.setCurrentFunction(functionDef);
    }
    
@@ -222,6 +223,40 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
     
   
       return toolbar;
+   }
+   
+   private String formatCode(String code)
+   {
+      // deal with null
+      if (code == null)
+         return "";
+      
+      // create regex pattern used to find leading space
+      Pattern pattern = Pattern.create("^(    )+");
+      
+      // split into lines
+      StringBuilder newCode = new StringBuilder();
+      String[] lines = code.split("\n");
+      for (int i=0; i<lines.length; i++)
+      {
+         String line = lines[i];
+         
+         Match match = pattern.match(line, 0);
+         if (match != null && match.getIndex() == 0)
+         {
+            int indents = match.getValue().length() / 4;
+            StringBuilder newLine = new StringBuilder();
+            for (int j=0; j<indents; j++)
+               newLine.append("\t");
+            newLine.append(line.trim());
+            line = newLine.toString();
+         }
+           
+         newCode.append(line);
+         newCode.append("\n");
+      }
+      
+      return newCode.toString();
    }
    
    public static void ensureStylesInjected()

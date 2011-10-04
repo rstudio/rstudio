@@ -57,8 +57,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-//TODO: search/replace 4 chars using ^(    )+  then divide by 4 and 
-//      put the indent 
+// TODO: make sure we are handling newlines correctly (including on windows)
 
 // TODO: why can't we navigate to stuff on .GlobalEnv
 
