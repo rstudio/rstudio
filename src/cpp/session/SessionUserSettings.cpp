@@ -303,7 +303,7 @@ void UserSettings::setBioconductorMirror(
 
 bool UserSettings::vcsEnabled() const
 {
-   return settings_.getBool("vcsEnabled", false);
+   return settings_.getBool("vcsEnabled", true);
 }
 
 bool UserSettings::alwaysSaveHistory() const
