@@ -12,9 +12,12 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
@@ -168,7 +171,7 @@ public class MultiSelectCellTable<T> extends CellTable<T>
          if (!extend)
             clearSelection();
          getSelectionModel().setSelected(getVisibleItem(row), true);
-         // TODO: scroll into view
+         ensureRowVisible(row);
       }
       else
       {
@@ -179,8 +182,16 @@ public class MultiSelectCellTable<T> extends CellTable<T>
          if (!extend)
             clearSelection();
          getSelectionModel().setSelected(getVisibleItem(row), true);
-         // TODO: scroll into view
+         ensureRowVisible(row);
       }
+   }
+
+   private void ensureRowVisible(int row)
+   {
+      if (row == 0)
+         (getElement().<TableElement>cast()).getRows().getItem(0).scrollIntoView();
+      else
+         getRowElement(row).scrollIntoView();
    }
 
    protected boolean canSelectVisibleRow(int visibleRow)
