@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -199,7 +201,16 @@ public class ReviewPresenter implements IsWidget
          public void onVcsRefresh(VcsRefreshEvent event)
          {
             if (event.getReason() == Reason.VcsOperation)
-               updateDiff(true);
+            {
+               Scheduler.get().scheduleDeferred(new ScheduledCommand()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     updateDiff(true);
+                  }
+               });
+            }
          }
       });
 
