@@ -57,7 +57,6 @@ public abstract class
    public abstract AppCommand commentUncomment();
    public abstract AppCommand reindent();
    public abstract AppCommand setWorkingDirToActiveDoc();
-   public abstract AppCommand showCodeBrowser();
    
    // Projects
    public abstract AppCommand newProject();

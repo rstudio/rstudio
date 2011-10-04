@@ -21,11 +21,6 @@ public class CodeBrowserNavigationEvent extends GwtEvent<CodeBrowserNavigationHa
    public static final GwtEvent.Type<CodeBrowserNavigationHandler> TYPE =
       new GwtEvent.Type<CodeBrowserNavigationHandler>();
    
-   public CodeBrowserNavigationEvent()
-   {
-      this(null);
-   }
-   
    public CodeBrowserNavigationEvent(SearchPathFunctionDefinition function)
    {
       function_ = function;

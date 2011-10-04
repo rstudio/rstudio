@@ -1399,11 +1399,6 @@ public class Source implements InsertSourceHandler,
             sourceNavigationHistory_.isForwardEnabled());  
    }
    
-   @Handler
-   public void onShowCodeBrowser()
-   {
-      events_.fireEvent(new CodeBrowserNavigationEvent());
-   }
     
    @Override
    public void onCodeBrowserNavigation(final CodeBrowserNavigationEvent event)
@@ -1412,8 +1407,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void onSuccess(CodeBrowserEditingTarget target)
          {
-            if (event.getFunction() != null)
-               target.showFunction(event.getFunction());
+            target.showFunction(event.getFunction());
          }
       });
    }
