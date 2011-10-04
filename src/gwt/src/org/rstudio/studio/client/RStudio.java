@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialo
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotResources;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
+import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTargetWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
@@ -159,6 +160,7 @@ public class RStudio implements EntryPoint
       LineTableView.ensureStylesInjected();
       ProjectOptionsDialog.ensureStylesInjected();
       NewProjectDialog.ensureStylesInjected();
+      CodeBrowserEditingTargetWidget.ensureStylesInjected();
 
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

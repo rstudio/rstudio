@@ -12,8 +12,12 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -188,7 +192,8 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    public void showFunction(SearchPathFunctionDefinition functionDef)
    {
       currentFunctionNamespace_ = functionDef.getNamespace();
-      docDisplay_.setCode(StringUtil.notNull(functionDef.getCode()), false);   
+      docDisplay_.setCode(StringUtil.notNull(functionDef.getCode()), false);  
+      contextLabel_.setCurrentFunction(functionDef);
    }
    
    @Override
@@ -206,18 +211,45 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    private Toolbar createToolbar()
    {
       Toolbar toolbar = new EditingTargetToolbar(commands_);
-      toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.goToFunctionDefinition().createToolbarButton());
+      toolbar.addLeftWidget(
+            contextLabel_ = new CodeBrowserContextLabel(RES.styles()));
+      
+      
+      Label readOnlyLabel = new Label("(Read-only)");
+      readOnlyLabel.addStyleName(RES.styles().readOnly());
+      toolbar.addRightWidget(readOnlyLabel);
+      
+    
   
       return toolbar;
    }
+   
+   public static void ensureStylesInjected()
+   {
+      RES.styles().ensureInjected();
+   }
 
+   interface Resources extends ClientBundle
+   {
+      @Source("CodeBrowserEditingTargetWidget.css")
+      Styles styles();
 
+   }
+
+   interface Styles extends CssResource
+   {
+      String functionName();
+      String functionNamespace();
+      String readOnly();
+   }
+   
+   static Resources RES = GWT.create(Resources.class);
 
    private final PanelWithToolbar panel_;
+   private CodeBrowserContextLabel contextLabel_;
    private final Commands commands_;
    private final DocDisplay docDisplay_;
    private String currentFunctionNamespace_ = null;
+  
    
 }
