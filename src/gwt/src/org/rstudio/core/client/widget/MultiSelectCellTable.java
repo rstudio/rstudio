@@ -17,13 +17,11 @@ import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.ElementEx;
 
 public class MultiSelectCellTable<T> extends CellTable<T>
       implements HasKeyDownHandlers, HasClickHandlers
