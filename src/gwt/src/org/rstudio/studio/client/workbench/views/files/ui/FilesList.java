@@ -169,8 +169,11 @@ public class FilesList extends Composite
             @Override
             public ImageResource getValue(FileSystemItem object)
             {
+               String status = object.getVCSStatus() == null
+                               ? null
+                               : object.getVCSStatus().getStatus();
                return VCSStrategy.getCurrentStrategy().getSimpleIconForStatus(
-                     new VCSStatus(object.getVCSStatus().getStatus()));
+                     new VCSStatus(status));
             }
          };
       iconColumn.setSortable(true);
