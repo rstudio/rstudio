@@ -305,6 +305,8 @@ public class ReviewPanel extends Composite implements Display
       });
 
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
+
+      FontSizer.applyNormalFontSize(commitMessage_);
    }
 
    @Override
