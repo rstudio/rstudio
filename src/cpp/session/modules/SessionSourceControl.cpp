@@ -649,12 +649,6 @@ public:
    {
       std::vector<std::string> outLines;
 
-      std::vector<std::string> args;
-      args.push_back("log");
-      args.push_back("--pretty=raw");
-      args.push_back("--abbrev-commit");
-      args.push_back("--abbrev=8");
-
       ShellCommand cmd = git() << "log";
       cmd << "--pretty=raw" << "--abbrev-commit" << "--abbrev=8";
       if (maxentries >= 0)
