@@ -127,6 +127,8 @@ public class ReviewPresenter implements IsWidget
                server_.vcsDiscard(paths, new SimpleRequestCallback<Void>("Discard"));
             else
                throw new RuntimeException("Unknown patchMode and reverse combo");
+
+            view_.getChangelistTable().moveSelectionDown();
          }
       }
 

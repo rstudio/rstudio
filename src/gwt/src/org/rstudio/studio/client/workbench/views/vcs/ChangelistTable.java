@@ -193,11 +193,19 @@ public class ChangelistTable extends Composite
          boolean unstage = !items.get(0).isDiscardable();
          fireEvent(new StageUnstageEvent(unstage, items));
 
-         if (moveSelection && items.size() == 1)
+         if (moveSelection)
+         {
+            moveSelectionDown();
+         }
+      }
+   }
+
+   public void moveSelectionDown()
+   {
+      if (getSelectedItems().size() == 1)
          {
             table_.moveSelection(false, false);
          }
-      }
    }
 
    public void showProgress()
