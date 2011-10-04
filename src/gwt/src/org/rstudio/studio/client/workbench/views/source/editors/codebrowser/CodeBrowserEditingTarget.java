@@ -57,24 +57,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-// TODO: display the currently browsed function
+// TODO: why can't we navigate to stuff on .GlobalEnv
+
+// TODO: navigation to internally defined functions within function printouts
+
+// TODO: what happens if return to a function and is no longer on search path
 
 // TODO: something more like scrollCursor into view than moveCursorToTop?
 
 // TODO: token guessing must include explicit namespace qualifiers. when
 //       we have one we need to do our search w/o inherit
 
-// TODO: navigation to internally defined functions within function
-//       printouts
-
-// TODO: what happens if returning to a function and is no longer
-//       on the search path?
-
-// TODO: test with non-package namespaces/environments
-
 // TODO: do lookups from within packages respect the actual package 
 //       search path (and find symbols that aren't on the global 
-//       search path?
+//       search path)?
+
+// TODO: is there provision in R to do a search FROM a given function def?
 
 public class CodeBrowserEditingTarget implements EditingTarget
 {
