@@ -57,14 +57,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-
 // TODO: why can't we navigate to stuff on .GlobalEnv
 
 // TODO: navigation to internally defined functions within function printouts
 
-// TODO: what happens if return to a function and is no longer on search path
+// TODO: file a bug for horizontal scrolling position
 
-// TODO: something more like scrollCursor into view than moveCursorToTop?
+// TODO: search/replace 4 chars using ^(    )+  then divide by 4 and 
+//       put the indent
+
+// TODO: what happens if return to a function and is no longer on search path
 
 // TODO: token guessing must include explicit namespace qualifiers. when
 //       we have one we need to do our search w/o inherit

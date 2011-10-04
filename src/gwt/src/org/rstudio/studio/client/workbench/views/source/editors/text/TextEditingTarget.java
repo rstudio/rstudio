@@ -1785,7 +1785,7 @@ public class TextEditingTarget implements EditingTarget
    
    public static void addRecordNavigationPositionHandler(
                   ArrayList<HandlerRegistration> releaseOnDismiss,
-                  DocDisplay docDisplay,
+                  final DocDisplay docDisplay,
                   final EventBus events,
                   final EditingTarget target)
    {
@@ -1798,7 +1798,8 @@ public class TextEditingTarget implements EditingTarget
                  SourcePosition pos = SourcePosition.create(
                                         target.getContext(),
                                         event.getPosition().getRow(),
-                                        event.getPosition().getColumn());
+                                        event.getPosition().getColumn(),
+                                        docDisplay.getScrollTop());
                  events.fireEvent(new SourceNavigationEvent(
                                                SourceNavigation.create(
                                                    target.getId(), 

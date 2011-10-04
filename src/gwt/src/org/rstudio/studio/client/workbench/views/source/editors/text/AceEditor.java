@@ -364,10 +364,20 @@ public class AceEditor implements DocDisplay,
          ed.getSession().getSelection().moveCursorTo(0, 0, false);
       }
    }
+   
+   public int getScrollLeft()
+   {
+      return widget_.getEditor().getRenderer().getScrollLeft();
+   }
 
    public void scrollToX(int x)
    {
       widget_.getEditor().getRenderer().scrollToX(x);
+   }
+   
+   public int getScrollTop()
+   {
+      return widget_.getEditor().getRenderer().getScrollTop();
    }
    
    public void scrollToY(int y)
@@ -925,8 +935,11 @@ public class AceEditor implements DocDisplay,
          setCursorPosition(position);
       }
       
-      // scroll if necessary
-      moveCursorNearTop();
+      // scroll as necessary
+      if (srcPosition.getScrollPosition() != -1)
+         scrollToY(srcPosition.getScrollPosition());
+      else
+         moveCursorNearTop();
       
       // set focus
       focus();

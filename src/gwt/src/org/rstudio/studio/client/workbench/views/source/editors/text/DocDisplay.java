@@ -86,7 +86,10 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Position getCursorPosition();
    void setCursorPosition(Position position);
 
+   int getScrollLeft();
    void scrollToX(int x);
+   
+   int getScrollTop();
    void scrollToY(int y);
    
    FunctionStart getCurrentFunction();

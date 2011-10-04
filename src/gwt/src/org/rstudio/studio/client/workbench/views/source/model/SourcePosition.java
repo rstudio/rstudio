@@ -20,19 +20,20 @@ public class SourcePosition extends JavaScriptObject
 
    public static native SourcePosition create(int row, 
                                               int column) /*-{
-      return {context: null, row: row, column: column};
+      return {context: null, row: row, column: column, scroll_position: -1};
    }-*/;
 
    public static native SourcePosition create(String context, 
                                               int row, 
-                                              int column) /*-{
-      return {context: context, row: row, column: column};
+                                              int column,
+                                              int scrollPosition) /*-{
+      return {context: context, row: row, column: column, scroll_position: scrollPosition};
    }-*/;
    
    /*
     * NOTE: optional context for editors that have multiple internal
     * contexts with independent rows & columns (e.g. code browser)
-    * this will be null for some implmentations including TextEditingTarget
+    * this will be null for some implementations including TextEditingTarget
     */
    public native final String getContext() /*-{
       return this.context;
@@ -44,5 +45,13 @@ public class SourcePosition extends JavaScriptObject
 
    public native final int getColumn() /*-{
       return this.column;
+   }-*/;
+   
+   /*
+    * NOTE: optional scroll position -- can be -1 to indicate no 
+    * scroll position recorded
+    */
+   public native final int getScrollPosition() /*-{
+      return this.scroll_position;
    }-*/;
 }
