@@ -74,6 +74,13 @@ public class VcsState
             FileChange fileChange = event.getFileChange();
             FileSystemItem file = fileChange.getFile();
             StatusAndPath status = file.getVCSStatus();
+
+            if (file.getName().equalsIgnoreCase(".gitignore"))
+            {
+               refresh(false);
+               return;
+            }
+
             if (status_ != null)
             {
                for (int i = 0; i < status_.length(); i++)
