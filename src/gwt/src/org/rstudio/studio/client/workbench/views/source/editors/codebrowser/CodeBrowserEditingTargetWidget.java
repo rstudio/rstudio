@@ -13,7 +13,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -191,7 +191,17 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       docDisplay_.setCode(StringUtil.notNull(functionDef.getCode()), false);   
    }
    
-   
+   @Override
+   public void scrollToLeft()
+   {
+      new Timer() {
+         @Override
+         public void run()
+         {
+            docDisplay_.scrollToX(0); 
+         }
+      }.schedule(100);
+   }
    
    private Toolbar createToolbar()
    {

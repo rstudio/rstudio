@@ -61,9 +61,6 @@ import java.util.HashSet;
 // TODO: navigation to internally defined functions within function
 //       printouts
 
-// TODO: onResize or equivalent doesn't seem to be called for CodeBrowser
-
-// TODO: consider replacing two spaces with one at the beginning of line
 
 // TODO: consider showing cached code and then doing a check on the server
 //       (similar to checkForExternalEdit)
@@ -91,6 +88,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public interface Display extends TextDisplay                                                      
    {
       void showFunction(SearchPathFunctionDefinition functionDef);
+      void scrollToLeft();
    }
 
    interface MyBinder extends CommandBinder<Commands, CodeBrowserEditingTarget>
@@ -156,6 +154,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       currentFunction_ = functionDef;
       view_.showFunction(functionDef);
+      view_.scrollToLeft();
    }
    
    
@@ -299,6 +298,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
          public void execute()
          {
             docDisplay_.navigateToPosition(position, recordCurrent);
+            view_.scrollToLeft();
          }
       });
    }
@@ -311,6 +311,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
          public void execute()
          {
             docDisplay_.restorePosition(position);
+            view_.scrollToLeft();
          }
       }); 
    }

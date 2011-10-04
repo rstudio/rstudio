@@ -86,6 +86,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Position getCursorPosition();
    void setCursorPosition(Position position);
 
+   void scrollToX(int x);
+   void scrollToY(int y);
+   
    FunctionStart getCurrentFunction();
    JsArray<FunctionStart> getFunctionTree();
 

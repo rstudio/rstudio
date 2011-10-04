@@ -365,6 +365,17 @@ public class AceEditor implements DocDisplay,
       }
    }
 
+   public void scrollToX(int x)
+   {
+      widget_.getEditor().getRenderer().scrollToX(x);
+   }
+   
+   public void scrollToY(int y)
+   {
+      widget_.getEditor().getRenderer().scrollToY(y);
+   }
+   
+   
    public void insertCode(String code, boolean blockMode)
    {
       // TODO: implement block mode
