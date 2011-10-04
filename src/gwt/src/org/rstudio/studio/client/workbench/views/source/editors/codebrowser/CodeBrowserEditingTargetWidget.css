@@ -1,6 +1,6 @@
 
 .functionName {
-	margin-right: 5px;
+   margin-right: 5px;
 }
 
 .functionNamespace {
@@ -9,6 +9,6 @@
 }
 
 .readOnly {
-	margin-right: 7px;
-	color: #888;
+   margin-right: 7px;
+   color: #888;
 }
