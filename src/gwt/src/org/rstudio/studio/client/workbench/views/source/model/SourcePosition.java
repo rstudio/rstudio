@@ -54,4 +54,17 @@ public class SourcePosition extends JavaScriptObject
    public native final int getScrollPosition() /*-{
       return this.scroll_position;
    }-*/;
+   
+   public final boolean isSameRowAs(SourcePosition other) 
+   {
+      if (getContext() == null && other.getContext() == null)
+         return true;
+      else if (getContext() == null && other.getContext() != null)
+         return false;
+      else if (other.getContext() == null && getContext() != null)
+         return false;
+      else
+         return other.getContext().equals(getContext()) &&
+                (other.getRow() == getRow());
+   }
 }

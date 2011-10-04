@@ -59,7 +59,7 @@ public class SourceNavigation extends JavaScriptObject
       else
       {
          return getDocumentId().equals(other.getDocumentId()) &&
-                (getPosition().getRow() == other.getPosition().getRow());
+                getPosition().isSameRowAs(other.getPosition());
       }
    }
    
