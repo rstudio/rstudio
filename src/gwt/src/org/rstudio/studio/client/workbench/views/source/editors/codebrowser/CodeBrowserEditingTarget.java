@@ -57,6 +57,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+// TODO: display the currently browsed function
+
+// TODO: something more like scrollCursor into view than moveCursorToTop?
+
 // TODO: token guessing must include explicit namespace qualifiers. when
 //       we have one we need to do our search w/o inherit
 
@@ -208,7 +212,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public HasValue<String> getName()
    {
-      return new Value<String>("Code Browser");
+      return new Value<String>("Source Viewer");
    }
    
    @Override
@@ -242,13 +246,13 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public ImageResource getIcon()
    {
-      return FileIconResources.INSTANCE.iconRdoc();
+      return FileIconResources.INSTANCE.iconSourceViewer();
    }
 
    @Override
    public String getTabTooltip()
    {
-      return "R Code Browser";
+      return "R Source Viewer";
    }
 
    @Override
