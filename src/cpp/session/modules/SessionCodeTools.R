@@ -52,6 +52,10 @@
       {
          return ("package:base")
       }
+      else if (identical(env, globalenv()))
+      {
+         return(".GlobalEnv")
+      }
       else
       {
          envName = attr(envList[[1]], "name")

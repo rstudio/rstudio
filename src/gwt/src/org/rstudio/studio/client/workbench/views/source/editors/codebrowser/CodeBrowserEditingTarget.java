@@ -57,10 +57,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-// TODO: make sure we are handling newlines correctly (including on windows)
-
-// TODO: why can't we navigate to stuff on .GlobalEnv
-
 // TODO: navigation to internally defined functions within function printouts
 
 // TODO: what happens if return to a function and is no longer on search path
