@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -242,31 +243,26 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       // levels of indentation and then 2 spaces for subsequent levels. we
       // will therefore match the user's preference for the first 4 levels
       // and then use 2 spaces thereafter.
-      Pattern pattern = Pattern.create("^(    )+");
-      
-      // split into lines
-      StringBuilder newCode = new StringBuilder();
-      String[] lines = code.split("\n");
-      for (int i=0; i<lines.length; i++)
+      Pattern pattern = Pattern.create("^(    ){1,4}");
+      code = pattern.replaceAll(code, new ReplaceOperation()
       {
-         String line = lines[i];
-         
-         Match match = pattern.match(line, 0);
-         if (match != null && match.getIndex() == 0)
+         @Override
+         public String replace(Match m)
          {
-            int indents = match.getValue().length() / 4;
-            StringBuilder newLine = new StringBuilder();
-            for (int j=0; j<indents; j++)
-               newLine.append("\t");
-            newLine.append(line.trim());
-            line = newLine.toString();
+            return m.getValue().replace("    ", "\t");
          }
-           
-         newCode.append(line);
-         newCode.append("\n");
-      }
-      
-      return newCode.toString();
+      });
+      Pattern pattern2 = Pattern.create("^\t{4}(  )+");
+      code = pattern2.replaceAll(code, new ReplaceOperation()
+      {
+         @Override
+         public String replace(Match m)
+         {
+            return m.getValue().replace("  ", "\t");
+         }
+      });
+
+      return code;
    }
    
    public static void ensureStylesInjected()
