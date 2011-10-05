@@ -80,6 +80,11 @@
       return (NULL)
 })
 
+.rs.addFunction("getPackageFunction", function(name, packageName)
+{
+   eval(parse(text=paste(packageName, ":::", name, sep="")))
+})
+
 .rs.addFunction("deparseFunction", function(func, useSource)
 {
    control <- c("keepInteger", "keepNA")
