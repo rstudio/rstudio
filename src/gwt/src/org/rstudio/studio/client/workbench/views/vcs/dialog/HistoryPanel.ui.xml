@@ -16,8 +16,8 @@
                </g:SimplePanel>
             </g:north>
             <g:center>
-               <g:ScrollPanel>
-                  <vcs_dialog:CommitListTable ui:field="commitTable_" />
+               <g:ScrollPanel styleName="{res.styles.commitTableScrollPanel}">
+                  <vcs_dialog:CommitListTable ui:field="commitTable_" width="100%" />
                </g:ScrollPanel>
             </g:center>
          </g:DockLayoutPanel>

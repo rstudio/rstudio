@@ -45,6 +45,7 @@ public class HistoryPanel extends Composite implements Display
    public interface Styles extends SharedStyles
    {
       String commitDetail();
+      String commitTableScrollPanel();
    }
 
    interface Binder extends UiBinder<Widget, HistoryPanel>

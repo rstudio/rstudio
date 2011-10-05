@@ -6,3 +6,7 @@
 .commitDetail {
    border: 12px solid transparent;
 }
+
+.commitTableScrollPanel {
+   background-color: white;
+}
