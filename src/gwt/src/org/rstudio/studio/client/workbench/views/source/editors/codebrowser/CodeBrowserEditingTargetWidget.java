@@ -232,6 +232,11 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          return "";
       
       // create regex pattern used to find leading space
+      // NOTE: the 4 spaces comes from the implementation of printtab2buff
+      // in deparse.c -- it is hard-coded to use 4 spaces for the first 4 
+      // levels of indentation and then 2 spaces for subsequent levels. we
+      // will therefore match the user's preference for the first 4 levels
+      // and then use 2 spaces thereafter.
       Pattern pattern = Pattern.create("^(    )+");
       
       // split into lines
