@@ -27,6 +27,9 @@
 #include <r/RExec.hpp>
 #include <r/RErrorCategory.hpp>
 
+// from Defn.h
+extern "C" SEXP R_SrcrefSymbol;
+
 // clean out global definitions of TRUE and FALSE so we can
 // use the Rboolean variations of them
 #undef TRUE
@@ -172,6 +175,12 @@ bool isDataFrame(SEXP object)
    return Rf_isFrame(object);
 }
 
+bool isNull(SEXP object)
+{
+   return Rf_isNull(object) == TRUE;
+}
+
+
 SEXP getNames(SEXP sexp)
 {
    return Rf_getAttrib(sexp, R_NamesSymbol);
@@ -192,6 +201,16 @@ Error getNames(SEXP sexp, std::vector<std::string>* pNames)
       pNames->push_back(Rf_translateChar(STRING_ELT(namesSEXP, i)) );
    
    return Success();
+}
+
+SEXP getAttrib(SEXP object, SEXP attrib)
+{
+   return Rf_getAttrib(object, attrib);
+}
+
+SEXP getSrcAttrib(SEXP object)
+{
+   return getAttrib(object, R_SrcrefSymbol);
 }
 
 Error extract(SEXP valueSEXP, int* pInt)

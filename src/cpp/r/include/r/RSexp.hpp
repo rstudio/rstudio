@@ -68,6 +68,8 @@ bool isLanguage(SEXP object);
 bool isMatrix(SEXP object);
 bool isDataFrame(SEXP object);   
      
+bool isNull(SEXP object);
+
 // type coercions
 std::string asString(SEXP object);
 std::string safeAsString(SEXP object, 
@@ -75,6 +77,9 @@ std::string safeAsString(SEXP object,
 int asInteger(SEXP object);
 double asReal(SEXP object);
 bool asLogical(SEXP object);
+
+SEXP getAttrib(SEXP object, SEXP attrib);
+SEXP getSrcAttrib(SEXP object);
 
 // extract c++ type from R SEXP
 core::Error extract(SEXP valueSEXP, int* pInt);

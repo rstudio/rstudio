@@ -70,6 +70,11 @@ import java.util.HashSet;
 
 // TODO: is there provision in R to do a search FROM a given function def?
 
+// TODO: if a function is in global env then it can't be retreived
+//       at startup from Source Viewer (b/c/ global env not yet loaded).
+//       or, was it because we didn't preserve global env? either way
+//       the failure of 'get' should write to the console/log
+
 public class CodeBrowserEditingTarget implements EditingTarget
 {
    public static final String PATH = "code_browser://";

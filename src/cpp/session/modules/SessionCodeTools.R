@@ -71,18 +71,23 @@
    }
 })
 
-
-.rs.addFunction("printFunction", function(name, namespaceName)
+.rs.addFunction("getFunction", function(name, namespaceName)
 {
    func = get(name,
               envir = as.environment(namespaceName),
               mode = "function",
               inherits = FALSE)
-
-   deparse(func,
-           width.cutoff = 59,
-           control = c("keepInteger", "keepNA"))
 })
+
+.rs.addFunction("deparseFunction", function(func, useSource)
+{
+   control <- c("keepInteger", "keepNA")
+   if (useSource)
+     control <- append(control, "useSource")
+
+   deparse(func, width.cutoff = 59, control = control)
+})
+
 
 
 utils:::rc.settings(files=T)

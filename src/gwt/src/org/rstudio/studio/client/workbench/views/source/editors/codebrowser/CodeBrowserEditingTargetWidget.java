@@ -193,7 +193,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    public void showFunction(SearchPathFunctionDefinition functionDef)
    {
       currentFunctionNamespace_ = functionDef.getNamespace();
-      docDisplay_.setCode(formatCode(functionDef.getCode()), false);  
+      docDisplay_.setCode(formatCode(functionDef), false);  
       contextLabel_.setCurrentFunction(functionDef);
    }
    
@@ -225,11 +225,16 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       return toolbar;
    }
    
-   private String formatCode(String code)
+   private String formatCode(SearchPathFunctionDefinition functionDef)
    {
       // deal with null
+      String code = functionDef.getCode();
       if (code == null)
          return "";
+      
+      // if this is from a source ref then leave it alone
+      if (functionDef.isCodeFromSrcAttrib())
+         return code;
       
       // create regex pattern used to find leading space
       // NOTE: the 4 spaces comes from the implementation of printtab2buff

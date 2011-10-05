@@ -744,12 +744,32 @@ json::Object createFunctionDefinition(const std::string& name,
    funDef["name"] = name;
    funDef["namespace"] = namespaceName;
 
-   // generate code by printing function
+   // function source code
+   bool hasSrcAttrib = false;
    std::vector<std::string> lines;
-   r::exec::RFunction printFunc(".rs.printFunction", name, namespaceName);
-   Error error = printFunc.call(&lines);
-   if (error)
+
+   // get the function
+   r::sexp::Protect rProtect;
+   SEXP functionSEXP;
+   r::exec::RFunction getFunc(".rs.getFunction", name, namespaceName);
+   Error error = getFunc.call(&functionSEXP, &rProtect);
+   if (!error)
+   {
+      // does it have a src attrib?
+      hasSrcAttrib = !r::sexp::isNull(r::sexp::getSrcAttrib(functionSEXP));
+
+      // get the code
+      r::exec::RFunction deparseFunc(".rs.deparseFunction",
+                                     functionSEXP,
+                                     hasSrcAttrib);
+      Error error = deparseFunc.call(&lines);
+      if (error)
+         LOG_ERROR(error);
+   }
+   else
+   {
       LOG_ERROR(error);
+   }
 
    // did we get some lines back?
    if (lines.size() > 0)
@@ -765,6 +785,7 @@ json::Object createFunctionDefinition(const std::string& name,
          code.append("\n");
       }
       funDef["code"] = code;
+      funDef["from_src_attrib"] = hasSrcAttrib;
    }
 
    return funDef;
