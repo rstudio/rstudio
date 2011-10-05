@@ -73,10 +73,11 @@
 
 .rs.addFunction("getFunction", function(name, namespaceName)
 {
-   func = get(name,
-              envir = as.environment(namespaceName),
-              mode = "function",
-              inherits = FALSE)
+   env <- as.environment(namespaceName)
+   if (exists(name, env, mode="function", inherits=FALSE))
+      get(name, env, mode = "function", inherits = FALSE)
+   else
+      return (NULL)
 })
 
 .rs.addFunction("deparseFunction", function(func, useSource)

@@ -755,16 +755,20 @@ json::Object createFunctionDefinition(const std::string& name,
    Error error = getFunc.call(&functionSEXP, &rProtect);
    if (!error)
    {
-      // does it have a src attrib?
-      hasSrcAttrib = !r::sexp::isNull(r::sexp::getSrcAttrib(functionSEXP));
+      // did we get a function
+      if (!r::sexp::isNull(functionSEXP))
+      {
+         // does it have a src attrib?
+         hasSrcAttrib = !r::sexp::isNull(r::sexp::getSrcAttrib(functionSEXP));
 
-      // get the code
-      r::exec::RFunction deparseFunc(".rs.deparseFunction",
-                                     functionSEXP,
+         // get the code
+         r::exec::RFunction deparseFunc(".rs.deparseFunction",
+                                        functionSEXP,
                                      hasSrcAttrib);
-      Error error = deparseFunc.call(&lines);
-      if (error)
-         LOG_ERROR(error);
+         Error error = deparseFunc.call(&lines);
+         if (error)
+            LOG_ERROR(error);
+      }
    }
    else
    {
@@ -786,6 +790,13 @@ json::Object createFunctionDefinition(const std::string& name,
       }
       funDef["code"] = code;
       funDef["from_src_attrib"] = hasSrcAttrib;
+   }
+   else
+   {
+      boost::format fmt("\n# ERROR: Defintion of function '%1%' not found in "
+                        "namespace '%2%'");
+      funDef["code"] = boost::str(fmt % name % namespaceName);
+      funDef["from_src_attrib"] = false;
    }
 
    return funDef;

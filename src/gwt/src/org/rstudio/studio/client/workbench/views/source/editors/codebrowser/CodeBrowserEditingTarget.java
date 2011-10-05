@@ -59,8 +59,6 @@ import java.util.HashSet;
 
 // TODO: navigation to internally defined functions within function printouts
 
-// TODO: what happens if return to a function and is no longer on search path
-
 // TODO: token guessing must include explicit namespace qualifiers. when
 //       we have one we need to do our search w/o inherit
 
@@ -69,11 +67,6 @@ import java.util.HashSet;
 //       search path)?
 
 // TODO: is there provision in R to do a search FROM a given function def?
-
-// TODO: if a function is in global env then it can't be retreived
-//       at startup from Source Viewer (b/c/ global env not yet loaded).
-//       or, was it because we didn't preserve global env? either way
-//       the failure of 'get' should write to the console/log
 
 public class CodeBrowserEditingTarget implements EditingTarget
 {
