@@ -73,11 +73,18 @@
 
 .rs.addFunction("getFunction", function(name, namespaceName)
 {
-   env <- as.environment(namespaceName)
-   if (exists(name, env, mode="function", inherits=FALSE))
-      get(name, env, mode = "function", inherits = FALSE)
+   if (namespaceName %in% search())
+   {
+      env <- as.environment(namespaceName)
+      if (exists(name, env, mode="function", inherits=FALSE))
+         get(name, env, mode = "function", inherits = FALSE)
+      else
+         return (NULL)
+   }
    else
+   {
       return (NULL)
+   }
 })
 
 .rs.addFunction("getPackageFunction", function(name, packageName)

@@ -21,6 +21,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
+#include <boost/regex.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Error.hpp>
@@ -793,8 +794,8 @@ json::Object createFunctionDefinition(const std::string& name,
    }
    else
    {
-      boost::format fmt("\n# ERROR: Defintion of function '%1%' not found in "
-                        "namespace '%2%'");
+      boost::format fmt("\n# ERROR: Defintion of function '%1%' not found\n"
+                        "# in '%2%' (is the package loaded?)");
       funDef["code"] = boost::str(fmt % name % namespaceName);
       funDef["from_src_attrib"] = false;
    }
@@ -802,6 +803,37 @@ json::Object createFunctionDefinition(const std::string& name,
    return funDef;
 }
 
+struct FunctionToken
+{
+   std::string package;
+   std::string name;
+};
+
+Error guessFunctionToken(const std::string& line,
+                         int pos,
+                         FunctionToken* pToken)
+{
+   // call into R to determine the token
+   std::string token;
+   Error error = r::exec::RFunction(".rs.guessToken", line, pos).call(&token);
+   if (error)
+      return error;
+
+   // see if it has a namespace qualifier
+   boost::regex pattern("^([^:]+):{2,3}([^:]+)$");
+   boost::smatch match;
+   if (boost::regex_search(token, match, pattern))
+   {
+      pToken->package = match[1];
+      pToken->name = match[2];
+   }
+   else
+   {
+      pToken->name = token;
+   }
+
+   return Success();
+}
 
 Error getFunctionDefinition(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
@@ -814,8 +846,8 @@ Error getFunctionDefinition(const json::JsonRpcRequest& request,
       return error;
 
    // call into R to determine the token
-   std::string token;
-   error = r::exec::RFunction(".rs.guessToken", line, pos).call(&token);
+   FunctionToken token;
+   error = guessFunctionToken(line, pos, &token);
    if (error)
       return error;
 
@@ -823,18 +855,28 @@ Error getFunctionDefinition(const json::JsonRpcRequest& request,
    json::Object defJson;
    defJson["function_name"] = json::Value();
 
-   // if we got a token then search the code
-   if (!token.empty())
+   // if there was a package then we go straight to the search path
+   if (!token.package.empty())
+   {
+      defJson["function_name"] = token.name;
+      defJson["search_path_definition"] =
+                           createFunctionDefinition(
+                                                 token.name,
+                                                 "package:" + token.package);
+   }
+
+   // if we got a name token then search the code
+   else if (!token.name.empty())
    {
       // discovered a token so we have at least a function name to return
-      defJson["function_name"] = token;
+      defJson["function_name"] = token.name;
 
       // find in source database then in project index
       std::set<std::string> contexts;
       r_util::RSourceItem sourceItem;
       bool found =
-         findGlobalFunctionInSourceDatabase(token, &sourceItem, &contexts) ||
-         s_projectIndex.findGlobalFunction(token, contexts, &sourceItem);
+         findGlobalFunctionInSourceDatabase(token.name, &sourceItem, &contexts) ||
+         s_projectIndex.findGlobalFunction(token.name, contexts, &sourceItem);
 
       // found the file
       if (found)
@@ -855,10 +897,11 @@ Error getFunctionDefinition(const json::JsonRpcRequest& request,
       {
          // find the function
          std::string namespaceName;
-         if (findFunction(token, "", &namespaceName))
+         if (findFunction(token.name, "", &namespaceName))
          {
             defJson["search_path_definition"] =
-                              createFunctionDefinition(token, namespaceName);
+                              createFunctionDefinition(token.name,
+                                                       namespaceName);
          }
       }
    }
@@ -900,22 +943,30 @@ Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
    std::string fromWhere = fromWhereJSON.is_null() ? "" :
                                                      fromWhereJSON.get_str();
 
+
    // call into R to determine the token
-   std::string token;
-   error = r::exec::RFunction(".rs.guessToken", line, pos).call(&token);
+   FunctionToken token;
+   error = guessFunctionToken(line, pos, &token);
    if (error)
       return error;
 
-   // find the function
+   // lookup the namespace if we need to
    std::string namespaceName;
-   if (findFunction(token, fromWhere, &namespaceName))
+   if (token.package.empty())
+      findFunction(token.name, fromWhere, &namespaceName);
+   else
+      namespaceName = "package:" + token.package;
+
+   // return either just the name or the full function
+   if (!namespaceName.empty())
    {
-      pResponse->setResult(createFunctionDefinition(token, namespaceName));
+      pResponse->setResult(createFunctionDefinition(token.name,
+                                                    namespaceName));
    }
    else
    {
       json::Object funDefName;
-      funDefName["name"] = token;
+      funDefName["name"] = token.name;
       pResponse->setResult(funDefName);
    }
 

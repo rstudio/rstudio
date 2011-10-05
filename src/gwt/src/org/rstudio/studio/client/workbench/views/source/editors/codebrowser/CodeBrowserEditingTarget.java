@@ -57,10 +57,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-// TODO: token guessing must include explicit namespace qualifiers. when
-//       we have one we need to do our search w/o inherit
-
-
 public class CodeBrowserEditingTarget implements EditingTarget
 {
    public static final String PATH = "code_browser://";
