@@ -633,6 +633,10 @@ public class ReviewPresenter implements IsWidget
       view_.setSelectedStatusAndPaths(selectedPaths);
    }
 
+   public void onShow()
+   {
+   }
+
    private final Invalidation diffInvalidation_ = new Invalidation();
    private final VCSServerOperations server_;
    private final Display view_;
