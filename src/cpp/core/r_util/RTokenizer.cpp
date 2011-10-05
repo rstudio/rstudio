@@ -22,18 +22,6 @@
 #include <core/StringUtils.hpp>
 
 
-// TODO: implement file monitoring
-
-// TODO: some type of cap on number of files or directories? (or just
-// have searches be really slow for that case?)
-
-// TODO: once we have file monitoring the source database will only
-//       need to track indexes for dirty files
-
-// TODO: consider further optimization of only generating source
-//       indexes on-demand for the src db
-
-
 namespace core {
 namespace r_util {
 
