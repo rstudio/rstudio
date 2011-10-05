@@ -71,16 +71,9 @@
                </g:FlowPanel>
             </g:north>
             <g:center>
-               <g:LayoutPanel>
-                  <g:layer left="0" right="8px" top="0" bottom="0">
-                     <g:ScrollPanel styleName="{res.styles.whitebg}" width="100%" height="100%">
-                        <vcs_diff:LineTableView ui:field="lines_" width="100%"/>
-                     </g:ScrollPanel>
-                  </g:layer>
-                  <g:layer right="0" width="8px" top="16px" bottom="16px">
-                     <vcs_diff:NavGutter ui:field="gutter_" width="100%" height="100%"/>
-                  </g:layer>
-               </g:LayoutPanel>
+               <g:ScrollPanel styleName="{res.styles.whitebg}" width="100%" height="100%">
+                  <vcs_diff:LineTableView ui:field="lines_" width="100%"/>
+               </g:ScrollPanel>
             </g:center>
          </g:DockLayoutPanel>
       </g:center>

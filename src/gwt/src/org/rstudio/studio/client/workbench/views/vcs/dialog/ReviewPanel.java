@@ -43,7 +43,6 @@ import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarFramePane
 import org.rstudio.studio.client.workbench.views.vcs.diff.ChunkOrLine;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
-import org.rstudio.studio.client.workbench.views.vcs.diff.NavGutter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter.Display;
 
 import java.util.ArrayList;
@@ -453,12 +452,6 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Override
-   public ValueSink<ArrayList<ChunkOrLine>> getGutter()
-   {
-      return gutter_;
-   }
-
-   @Override
    public HasValue<Integer> getContextLines()
    {
       return listBoxAdapter_;
@@ -478,8 +471,6 @@ public class ReviewPanel extends Composite implements Display
    RadioButton unstagedCheckBox_;
    @UiField(provided = true)
    LineTableView lines_;
-   @UiField
-   NavGutter gutter_;
    @UiField
    ListBox contextLines_;
    @UiField

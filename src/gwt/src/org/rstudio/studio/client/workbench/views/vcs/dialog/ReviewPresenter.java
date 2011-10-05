@@ -72,7 +72,6 @@ public class ReviewPresenter implements IsWidget
 
       HasValue<Boolean> getStagedCheckBox();
       HasValue<Boolean> getUnstagedCheckBox();
-      ValueSink<ArrayList<ChunkOrLine>> getGutter();
       LineTablePresenter.Display getLineTableDisplay();
       ChangelistTable getChangelistTable();
       HasValue<Integer> getContextLines();
@@ -584,7 +583,6 @@ public class ReviewPresenter implements IsWidget
                   view_.getLineTableDisplay().setShowActions(
                         paths.get(0).isFineGrainedActionable());
                   view_.getLineTableDisplay().setData(allLines, patchMode);
-                  view_.getGutter().setValue(allLines);
                }
             });
    }
