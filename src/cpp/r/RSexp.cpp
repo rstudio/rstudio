@@ -27,8 +27,6 @@
 #include <r/RExec.hpp>
 #include <r/RErrorCategory.hpp>
 
-// from Defn.h
-extern "C" SEXP R_SrcrefSymbol;
 
 // clean out global definitions of TRUE and FALSE so we can
 // use the Rboolean variations of them
@@ -210,7 +208,7 @@ SEXP getAttrib(SEXP object, SEXP attrib)
 
 SEXP getSrcAttrib(SEXP object)
 {
-   return getAttrib(object, R_SrcrefSymbol);
+   return R_NilValue;
 }
 
 Error extract(SEXP valueSEXP, int* pInt)
