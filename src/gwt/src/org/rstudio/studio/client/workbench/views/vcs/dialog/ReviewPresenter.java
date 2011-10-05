@@ -94,6 +94,7 @@ public class ReviewPresenter implements IsWidget
       void setDiscardButtonLabel(String label);
       void setUnstageButtonLabel(String label);
 
+      String getFilename();
       void setFilename(String filename);
    }
 
@@ -525,27 +526,35 @@ public class ReviewPresenter implements IsWidget
 
    private void updateDiff(boolean allowModeSwitch)
    {
-      view_.getLineTableDisplay().clear();
-      view_.setFilename("");
       final ArrayList<StatusAndPath> paths = view_.getChangelistTable().getSelectedItems();
       if (paths.size() != 1)
+      {
+         clearDiff();
          return;
+      }
+
+      final StatusAndPath item = paths.get(0);
 
       if (allowModeSwitch)
       {
-         StatusAndPath item = view_.getChangelistTable().getSelectedItems().get(0);
          if ((item.getStatus().charAt(0) == ' ' || item.getStatus().charAt(0) == '?')
              && view_.getStagedCheckBox().getValue())
          {
+            clearDiff();
             view_.getUnstagedCheckBox().setValue(true, true);
          }
          else if (item.getStatus().charAt(1) == ' ' && view_.getUnstagedCheckBox().getValue())
          {
+            clearDiff();
             view_.getStagedCheckBox().setValue(true, true);
          }
       }
 
-      view_.setFilename(paths.get(0).getPath());
+      if (!item.getPath().equals(view_.getFilename()))
+      {
+         clearDiff();
+         view_.setFilename(item.getPath());
+      }
 
       diffInvalidation_.invalidate();
       final Token token = diffInvalidation_.getInvalidationToken();
@@ -554,7 +563,7 @@ public class ReviewPresenter implements IsWidget
                                   ? PatchMode.Stage
                                   : PatchMode.Working;
       server_.vcsDiffFile(
-            paths.get(0).getPath(),
+            item.getPath(),
             patchMode,
             view_.getContextLines().getValue(),
             new SimpleRequestCallback<String>("Diff Error")
@@ -564,6 +573,11 @@ public class ReviewPresenter implements IsWidget
                {
                   if (token.isInvalid())
                      return;
+
+                  // Use lastResponse_ to prevent unnecessary flicker
+                  if (response.equals(lastResponse_))
+                     return;
+                  lastResponse_ = response;
 
                   UnifiedParser parser = new UnifiedParser(response);
                   parser.nextFilePair();
@@ -581,10 +595,18 @@ public class ReviewPresenter implements IsWidget
                   }
 
                   view_.getLineTableDisplay().setShowActions(
-                        paths.get(0).isFineGrainedActionable());
+                        item.isFineGrainedActionable());
                   view_.getLineTableDisplay().setData(allLines, patchMode);
                }
+
             });
+   }
+
+   private void clearDiff()
+   {
+      lastResponse_ = null;
+      view_.getLineTableDisplay().clear();
+      view_.setFilename("");
    }
 
    @Override
@@ -615,6 +637,7 @@ public class ReviewPresenter implements IsWidget
    private final VCSServerOperations server_;
    private final Display view_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
+   private String lastResponse_;
    private static final String MODULE_VCS = "vcs";
    private static final String KEY_CONTEXT_LINES = "context_lines";
 }

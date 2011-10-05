@@ -30,7 +30,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -40,10 +39,9 @@ import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarFramePanel;
-import org.rstudio.studio.client.workbench.views.vcs.diff.ChunkOrLine;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter.Display;
 
 import java.util.ArrayList;
 
@@ -372,6 +370,12 @@ public class ReviewPanel extends Composite implements Display
    public void setUnstageButtonLabel(String label)
    {
       unstageAllButton_.setText(label);
+   }
+
+   @Override
+   public String getFilename()
+   {
+      return filenameLabel_.getText();
    }
 
    @Override
