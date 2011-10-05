@@ -20,6 +20,7 @@ import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -94,7 +95,7 @@ public class ReviewPresenter implements IsWidget
       void setUnstageButtonLabel(String label);
    }
 
-   private class ApplyPatchClickHandler implements ClickHandler
+   private class ApplyPatchClickHandler implements ClickHandler, Command
    {
       public ApplyPatchClickHandler(PatchMode patchMode,
                                     boolean reverse)
@@ -105,6 +106,12 @@ public class ReviewPresenter implements IsWidget
 
       @Override
       public void onClick(ClickEvent event)
+      {
+         execute();
+      }
+
+      @Override
+      public void execute()
       {
          ArrayList<Line> selectedLines = view_.getLineTableDisplay().getSelectedLines();
          if (selectedLines.size() != 0)
@@ -404,8 +411,25 @@ public class ReviewPresenter implements IsWidget
 
       view_.getStageAllButton().addClickHandler(
             new ApplyPatchClickHandler(PatchMode.Stage, false));
-      view_.getDiscardAllButton().addClickHandler(
-            new ApplyPatchClickHandler(PatchMode.Working, true));
+      view_.getDiscardAllButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            globalDisplay.showYesNoMessage(
+                  GlobalDisplay.MSG_WARNING,
+                  "Discard All",
+                  "All unstaged changes in this file will be " +
+                  "lost.\n\nAre you sure you want to continue?",
+                  new Operation() {
+                     @Override
+                     public void execute() {
+                        new ApplyPatchClickHandler(PatchMode.Working, true).execute();
+                     }
+                  },
+                  false);
+         }
+      });
       view_.getUnstageAllButton().addClickHandler(
             new ApplyPatchClickHandler(PatchMode.Stage, true));
       view_.getStagedCheckBox().addValueChangeHandler(
