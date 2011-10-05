@@ -30,7 +30,6 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
-import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.DoubleClickState;
@@ -93,9 +92,6 @@ public class ReviewPresenter implements IsWidget
       void setStageButtonLabel(String label);
       void setDiscardButtonLabel(String label);
       void setUnstageButtonLabel(String label);
-
-      String getFilename();
-      void setFilename(String filename);
    }
 
    private class ApplyPatchClickHandler implements ClickHandler
@@ -550,10 +546,10 @@ public class ReviewPresenter implements IsWidget
          }
       }
 
-      if (!item.getPath().equals(view_.getFilename()))
+      if (!item.getPath().equals(currentFilename_))
       {
          clearDiff();
-         view_.setFilename(item.getPath());
+         currentFilename_ = item.getPath();
       }
 
       diffInvalidation_.invalidate();
@@ -575,9 +571,9 @@ public class ReviewPresenter implements IsWidget
                      return;
 
                   // Use lastResponse_ to prevent unnecessary flicker
-                  if (response.equals(lastResponse_))
+                  if (response.equals(currentResponse_))
                      return;
-                  lastResponse_ = response;
+                  currentResponse_ = response;
 
                   UnifiedParser parser = new UnifiedParser(response);
                   parser.nextFilePair();
@@ -604,9 +600,9 @@ public class ReviewPresenter implements IsWidget
 
    private void clearDiff()
    {
-      lastResponse_ = null;
+      currentResponse_ = null;
+      currentFilename_ = null;
       view_.getLineTableDisplay().clear();
-      view_.setFilename("");
    }
 
    @Override
@@ -641,7 +637,8 @@ public class ReviewPresenter implements IsWidget
    private final VCSServerOperations server_;
    private final Display view_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
-   private String lastResponse_;
+   private String currentResponse_;
+   private String currentFilename_;
    private static final String MODULE_VCS = "vcs";
    private static final String KEY_CONTEXT_LINES = "context_lines";
 }

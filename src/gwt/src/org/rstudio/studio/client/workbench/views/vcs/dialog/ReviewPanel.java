@@ -95,12 +95,6 @@ public class ReviewPanel extends Composite implements Display
       String commitButton();
 
       String splitPanelCommit();
-
-      String filenameLabel();
-
-      String fileInfoWrapper();
-
-      String fileIcon();
    }
 
    private static class ClickCommand implements HasClickHandlers, Command
@@ -214,9 +208,6 @@ public class ReviewPanel extends Composite implements Display
       consoleBarFramePanel.setWidget(widget);
 
       initWidget(consoleBarFramePanel);
-
-      fileIcon_.setResource(RES.blankFileIcon());
-      fileIcon_.addStyleName(RES.styles().fileIcon());
 
       topToolbar_.addStyleName(RES.styles().toolbar());
 
@@ -373,29 +364,6 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Override
-   public String getFilename()
-   {
-      return filenameLabel_.getText();
-   }
-
-   @Override
-   public void setFilename(String filename)
-   {
-      if (StringUtil.isNullOrEmpty(filename))
-      {
-         filenameLabel_.setText("");
-         fileIcon_.setResource(RES.blankFileIcon());
-      }
-      else
-      {
-         filenameLabel_.setText(filename);
-         ImageResource icon = fileTypeRegistry_.getIconForFile(
-               FileSystemItem.createFile(filename));
-         fileIcon_.setResource(icon);
-      }
-   }
-
-   @Override
    public HasText getCommitMessage()
    {
       return commitMessage_;
@@ -481,10 +449,6 @@ public class ReviewPanel extends Composite implements Display
    Toolbar topToolbar_;
    @UiField
    Toolbar diffToolbar_;
-   @UiField
-   Image fileIcon_;
-   @UiField
-   Label filenameLabel_;
    @UiField
    TextArea commitMessage_;
    @UiField

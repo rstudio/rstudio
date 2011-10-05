@@ -43,11 +43,6 @@
          <g:DockLayoutPanel>
             <g:north size="28">
                <g:FlowPanel styleName="{res.styles.toolbarWrapper}">
-                  <g:FlowPanel styleName="{res.styles.fileInfoWrapper}">
-                     <g:Image ui:field="fileIcon_" styleName="{res.styles.fileIcon}"/>
-                     <g:Label ui:field="filenameLabel_" styleName="{res.styles.filenameLabel}"/>
-                  </g:FlowPanel>
-                  <rs_widget:Toolbar ui:field="diffToolbar_"/>
                   <g:FlowPanel styleName="{res.styles.diffViewOptions}">
                      <g:Label text="Show" styleName="{res.styles.stagedLabel}"/>
                      <g:RadioButton ui:field="stagedCheckBox_"
@@ -68,6 +63,7 @@
                         <g:item value="-1">All lines</g:item>
                      </g:ListBox>
                   </g:FlowPanel>
+                  <rs_widget:Toolbar ui:field="diffToolbar_"/>
                </g:FlowPanel>
             </g:north>
             <g:center>
