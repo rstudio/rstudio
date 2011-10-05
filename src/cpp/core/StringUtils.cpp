@@ -234,6 +234,15 @@ std::string jsonLiteralUnescape(const std::string& str)
    return value.get_str();
 }
 
+std::string filterControlChars(const std::string& str)
+{
+   // Delete control chars, which can cause errors in JSON parsing (especially
+   // \0003)
+   return boost::regex_replace(str,
+                               boost::regex("[\\0000-\\0010\\0016-\\0037]+"),
+                               "");
+}
+
 namespace {
 
 std::vector<bool> initLookupTable(wchar_t ranges[][2], size_t rangeCount)

@@ -1186,10 +1186,10 @@ Error vcsHistory(const json::JsonRpcRequest& request,
         it++)
    {
       ids.push_back(it->id);
-      authors.push_back(it->author);
-      parents.push_back(it->parent);
-      subjects.push_back(it->subject);
-      descriptions.push_back(it->description);
+      authors.push_back(string_utils::filterControlChars(it->author));
+      parents.push_back(string_utils::filterControlChars(it->parent));
+      subjects.push_back(string_utils::filterControlChars(it->subject));
+      descriptions.push_back(string_utils::filterControlChars(it->description));
       dates.push_back(static_cast<double>(it->date));
    }
 
@@ -1237,6 +1237,7 @@ Error vcsShow(const json::JsonRpcRequest& request,
 
    std::string output;
    s_pVcsImpl_->show(rev, &output);
+   output = string_utils::filterControlChars(output);
    pResponse->setResult(output);
 
    return Success();

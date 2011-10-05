@@ -42,6 +42,8 @@ std::string jsonLiteralUnescape(const std::string& str);
 
 void convertLineEndings(std::string* str, LineEnding type);
 
+std::string filterControlChars(const std::string& str);
+
 template<typename T>
 T hashStable(const std::string& str)
 {
