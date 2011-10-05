@@ -57,8 +57,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-// TODO: navigation to internally defined functions within function printouts
-
 // TODO: token guessing must include explicit namespace qualifiers. when
 //       we have one we need to do our search w/o inherit
 
