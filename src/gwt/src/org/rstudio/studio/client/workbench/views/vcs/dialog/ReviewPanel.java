@@ -30,7 +30,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -40,11 +39,9 @@ import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarFramePanel;
-import org.rstudio.studio.client.workbench.views.vcs.diff.ChunkOrLine;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
-import org.rstudio.studio.client.workbench.views.vcs.diff.NavGutter;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter.Display;
 
 import java.util.ArrayList;
 
@@ -98,12 +95,6 @@ public class ReviewPanel extends Composite implements Display
       String commitButton();
 
       String splitPanelCommit();
-
-      String filenameLabel();
-
-      String fileInfoWrapper();
-
-      String fileIcon();
    }
 
    private static class ClickCommand implements HasClickHandlers, Command
@@ -217,9 +208,6 @@ public class ReviewPanel extends Composite implements Display
       consoleBarFramePanel.setWidget(widget);
 
       initWidget(consoleBarFramePanel);
-
-      fileIcon_.setResource(RES.blankFileIcon());
-      fileIcon_.addStyleName(RES.styles().fileIcon());
 
       topToolbar_.addStyleName(RES.styles().toolbar());
 
@@ -376,23 +364,6 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Override
-   public void setFilename(String filename)
-   {
-      if (StringUtil.isNullOrEmpty(filename))
-      {
-         filenameLabel_.setText("");
-         fileIcon_.setResource(RES.blankFileIcon());
-      }
-      else
-      {
-         filenameLabel_.setText(filename);
-         ImageResource icon = fileTypeRegistry_.getIconForFile(
-               FileSystemItem.createFile(filename));
-         fileIcon_.setResource(icon);
-      }
-   }
-
-   @Override
    public HasText getCommitMessage()
    {
       return commitMessage_;
@@ -453,12 +424,6 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Override
-   public ValueSink<ArrayList<ChunkOrLine>> getGutter()
-   {
-      return gutter_;
-   }
-
-   @Override
    public HasValue<Integer> getContextLines()
    {
       return listBoxAdapter_;
@@ -479,17 +444,11 @@ public class ReviewPanel extends Composite implements Display
    @UiField(provided = true)
    LineTableView lines_;
    @UiField
-   NavGutter gutter_;
-   @UiField
    ListBox contextLines_;
    @UiField
    Toolbar topToolbar_;
    @UiField
    Toolbar diffToolbar_;
-   @UiField
-   Image fileIcon_;
-   @UiField
-   Label filenameLabel_;
    @UiField
    TextArea commitMessage_;
    @UiField

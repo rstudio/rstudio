@@ -20,6 +20,7 @@ import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -30,7 +31,6 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
-import org.rstudio.core.client.ValueSink;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.DoubleClickState;
@@ -72,7 +72,6 @@ public class ReviewPresenter implements IsWidget
 
       HasValue<Boolean> getStagedCheckBox();
       HasValue<Boolean> getUnstagedCheckBox();
-      ValueSink<ArrayList<ChunkOrLine>> getGutter();
       LineTablePresenter.Display getLineTableDisplay();
       ChangelistTable getChangelistTable();
       HasValue<Integer> getContextLines();
@@ -94,11 +93,9 @@ public class ReviewPresenter implements IsWidget
       void setStageButtonLabel(String label);
       void setDiscardButtonLabel(String label);
       void setUnstageButtonLabel(String label);
-
-      void setFilename(String filename);
    }
 
-   private class ApplyPatchClickHandler implements ClickHandler
+   private class ApplyPatchClickHandler implements ClickHandler, Command
    {
       public ApplyPatchClickHandler(PatchMode patchMode,
                                     boolean reverse)
@@ -109,6 +106,12 @@ public class ReviewPresenter implements IsWidget
 
       @Override
       public void onClick(ClickEvent event)
+      {
+         execute();
+      }
+
+      @Override
+      public void execute()
       {
          ArrayList<Line> selectedLines = view_.getLineTableDisplay().getSelectedLines();
          if (selectedLines.size() != 0)
@@ -408,8 +411,25 @@ public class ReviewPresenter implements IsWidget
 
       view_.getStageAllButton().addClickHandler(
             new ApplyPatchClickHandler(PatchMode.Stage, false));
-      view_.getDiscardAllButton().addClickHandler(
-            new ApplyPatchClickHandler(PatchMode.Working, true));
+      view_.getDiscardAllButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            globalDisplay.showYesNoMessage(
+                  GlobalDisplay.MSG_WARNING,
+                  "Discard All",
+                  "All unstaged changes in this file will be " +
+                  "lost.\n\nAre you sure you want to continue?",
+                  new Operation() {
+                     @Override
+                     public void execute() {
+                        new ApplyPatchClickHandler(PatchMode.Working, true).execute();
+                     }
+                  },
+                  false);
+         }
+      });
       view_.getUnstageAllButton().addClickHandler(
             new ApplyPatchClickHandler(PatchMode.Stage, true));
       view_.getStagedCheckBox().addValueChangeHandler(
@@ -526,27 +546,35 @@ public class ReviewPresenter implements IsWidget
 
    private void updateDiff(boolean allowModeSwitch)
    {
-      view_.getLineTableDisplay().clear();
-      view_.setFilename("");
       final ArrayList<StatusAndPath> paths = view_.getChangelistTable().getSelectedItems();
       if (paths.size() != 1)
+      {
+         clearDiff();
          return;
+      }
+
+      final StatusAndPath item = paths.get(0);
 
       if (allowModeSwitch)
       {
-         StatusAndPath item = view_.getChangelistTable().getSelectedItems().get(0);
          if ((item.getStatus().charAt(0) == ' ' || item.getStatus().charAt(0) == '?')
              && view_.getStagedCheckBox().getValue())
          {
+            clearDiff();
             view_.getUnstagedCheckBox().setValue(true, true);
          }
          else if (item.getStatus().charAt(1) == ' ' && view_.getUnstagedCheckBox().getValue())
          {
+            clearDiff();
             view_.getStagedCheckBox().setValue(true, true);
          }
       }
 
-      view_.setFilename(paths.get(0).getPath());
+      if (!item.getPath().equals(currentFilename_))
+      {
+         clearDiff();
+         currentFilename_ = item.getPath();
+      }
 
       diffInvalidation_.invalidate();
       final Token token = diffInvalidation_.getInvalidationToken();
@@ -555,7 +583,7 @@ public class ReviewPresenter implements IsWidget
                                   ? PatchMode.Stage
                                   : PatchMode.Working;
       server_.vcsDiffFile(
-            paths.get(0).getPath(),
+            item.getPath(),
             patchMode,
             view_.getContextLines().getValue(),
             new SimpleRequestCallback<String>("Diff Error")
@@ -565,6 +593,11 @@ public class ReviewPresenter implements IsWidget
                {
                   if (token.isInvalid())
                      return;
+
+                  // Use lastResponse_ to prevent unnecessary flicker
+                  if (response.equals(currentResponse_))
+                     return;
+                  currentResponse_ = response;
 
                   UnifiedParser parser = new UnifiedParser(response);
                   parser.nextFilePair();
@@ -582,11 +615,18 @@ public class ReviewPresenter implements IsWidget
                   }
 
                   view_.getLineTableDisplay().setShowActions(
-                        paths.get(0).isFineGrainedActionable());
+                        item.isFineGrainedActionable());
                   view_.getLineTableDisplay().setData(allLines, patchMode);
-                  view_.getGutter().setValue(allLines);
                }
+
             });
+   }
+
+   private void clearDiff()
+   {
+      currentResponse_ = null;
+      currentFilename_ = null;
+      view_.getLineTableDisplay().clear();
    }
 
    @Override
@@ -613,10 +653,16 @@ public class ReviewPresenter implements IsWidget
       view_.setSelectedStatusAndPaths(selectedPaths);
    }
 
+   public void onShow()
+   {
+   }
+
    private final Invalidation diffInvalidation_ = new Invalidation();
    private final VCSServerOperations server_;
    private final Display view_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
+   private String currentResponse_;
+   private String currentFilename_;
    private static final String MODULE_VCS = "vcs";
    private static final String KEY_CONTEXT_LINES = "context_lines";
 }

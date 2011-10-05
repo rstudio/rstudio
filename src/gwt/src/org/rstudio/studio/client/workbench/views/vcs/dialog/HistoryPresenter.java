@@ -15,6 +15,8 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.event.logical.shared.AttachEvent.Handler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -80,23 +82,23 @@ public class HistoryPresenter
 
             final Token token = invalidation_.getInvalidationToken();
 
-            server_.vcsShow(commitInfo.getId(), new SimpleRequestCallback<String>()
-            {
-               @Override
-               public void onResponseReceived(String response)
-               {
-                  super.onResponseReceived(response);
-                  if (token.isInvalid())
-                     return;
+            server_.vcsShow(commitInfo.getId(),
+                            new SimpleRequestCallback<String>()
+                            {
+                               @Override
+                               public void onResponseReceived(String response)
+                               {
+                                  super.onResponseReceived(response);
+                                  if (token.isInvalid())
+                                     return;
 
-                  UnifiedParser parser = new UnifiedParser(response);
-                  view_.getCommitDetail().setDetails(parser);
-               }
-            });
+                                  UnifiedParser parser = new UnifiedParser(
+                                        response);
+                                  view_.getCommitDetail().setDetails(parser);
+                               }
+                            });
          }
       });
-
-      refreshHistory();
 
       view_.getRefreshButton().addClickHandler(new ClickHandler()
       {
@@ -139,6 +141,11 @@ public class HistoryPresenter
    public Widget asWidget()
    {
       return view_.asWidget();
+   }
+
+   public void onShow()
+   {
+      refreshHistory();
    }
 
    private final VCSServerOperations server_;

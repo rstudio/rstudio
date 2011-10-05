@@ -16,6 +16,7 @@ import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -43,6 +44,8 @@ import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageHandler;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ChangelistTable extends Composite
    implements HasKeyDownHandlers, HasClickHandlers
@@ -74,6 +77,50 @@ public class ChangelistTable extends Composite
    protected interface Style extends CellTable.Style
    {
       String status();
+   }
+
+   /**
+    * The whole point of this subclass is to force CellTable to update its
+    * cellIsEditing private member more often. This is to work around a bug
+    * where the ChangelistTable can get into a state where mouse clicks don't
+    * change the selection, because TriStateCheckboxCell gets a mouseover event
+    * but not a matching mouseout.
+    */
+   protected static class NotEditingTextCell extends TextCell
+   {
+      public NotEditingTextCell()
+      {
+         super();
+         init();
+      }
+
+      public NotEditingTextCell(SafeHtmlRenderer<String> renderer)
+      {
+         super(renderer);
+         init();
+      }
+
+      private void init()
+      {
+         Set<String> inheritedEvents = getConsumedEvents();
+         if (inheritedEvents != null)
+            consumedEvents_.addAll(inheritedEvents);
+         consumedEvents_.add("mouseover");
+      }
+
+      @Override
+      public Set<String> getConsumedEvents()
+      {
+         return consumedEvents_;
+      }
+
+      @Override
+      public boolean isEditing(Context context, Element parent, String value)
+      {
+         return false;
+      }
+
+      private Set<String> consumedEvents_ = new HashSet<String>();
    }
 
    private class StatusRenderer implements SafeHtmlRenderer<String>
@@ -271,7 +318,7 @@ public class ChangelistTable extends Composite
 
 
       Column<StatusAndPath, String> statusColumn = new Column<StatusAndPath, String>(
-            new TextCell(new StatusRenderer()))
+            new NotEditingTextCell(new StatusRenderer()))
       {
          @Override
          public String getValue(StatusAndPath object)
@@ -292,7 +339,8 @@ public class ChangelistTable extends Composite
          }
       });
 
-      TextColumn<StatusAndPath> pathColumn = new TextColumn<StatusAndPath>()
+      Column<StatusAndPath, String> pathColumn = new Column<StatusAndPath, String>(
+            new NotEditingTextCell())
       {
          @Override
          public String getValue(StatusAndPath object)

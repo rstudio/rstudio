@@ -52,17 +52,16 @@
 }
 
 .diffToolbar {
-   float: left;
+   float: right;
    width: auto;
 }
 
 .diffViewOptions {
    position: absolute;
-   right: 6px;
+   left: 6px;
    top: 2px;
    bottom: 2px;
    width: auto;
-   text-align: right;
 }
 
 .commitMessage {
@@ -82,27 +81,4 @@
 .commitButton {
    float: right;
    margin-right: -1px;
-}
-
-.filenameLabel {
-   display: inline;
-   position: relative;
-   top: 3px;
-   font-size: 11px;
-   font-weight: bold;
-   color: #353d4a;
-   margin-right: 30px;
-}
-
-.fileInfoWrapper {
-   float: left;
-   margin-left: 6px;
-}
-
-.fileIcon {
-   float: left;
-   display: block;
-   position: relative;
-   top: 2px;
-   margin-right: 3px;
 }

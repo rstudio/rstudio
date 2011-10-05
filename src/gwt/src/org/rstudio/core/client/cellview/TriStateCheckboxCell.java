@@ -27,6 +27,11 @@ import com.google.gwt.view.client.SelectionModel;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * WARNING: If you use this, take a look at ChangelistTable.NotEditingTextCell,
+ * which was necessary to get the table out of a state where cellIsEditing is
+ * stuck on true due to this cell getting mouseover but not mouseout.
+ */
 public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
 {
    interface Resources extends ClientBundle
@@ -95,6 +100,8 @@ public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
          }
          else if ("mouseout".equals(event.getType()))
          {
+            // WARNING!!!! Sometimes we get mouseover without a corresponding
+            // mouseout!! See comment at top of this class!
             mouseInCheckbox_ = false;
          }
       }
