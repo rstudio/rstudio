@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.vcs.model;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
@@ -60,7 +62,20 @@ public class VcsState
             if (!session.getSessionInfo().isVcsEnabled())
                registrations.removeHandler();
 
-            refresh(false);
+            // Sometimes on commit, the subsequent request contains outdated
+            // status (i.e. as if the commit had not happened yet). No idea
+            // right now what is causing this.
+            // TODO: Figure it out. Request log: http://cl.ly/130g1H1X0o3j0v2s2I09
+            Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+            {
+               @Override
+               public boolean execute()
+               {
+                  refresh(false);
+
+                  return false;
+               }
+            }, 200);
          }
       }));
       registrations.add(eventBus_.addHandler(FileChangeEvent.TYPE, new FileChangeHandler()
