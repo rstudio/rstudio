@@ -111,10 +111,7 @@ public class CssOutputTestCase extends TestCase {
   }
 
   public void testOutputCssMapArtifactReturnNullOutputString() throws UnableToCompleteException {
-    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
-    builder.expectWarn(
-        "Created resource is null: cssResource/com.test.Bundle.cssMethod.cssmap", null);
-    UnitTestTreeLogger testLogger =  builder.createLogger();
+    UnitTestTreeLogger testLogger = new UnitTestTreeLogger.Builder().createLogger();
     ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
     Map<JMethod, String> testMap = new HashMap<JMethod, String>();
     OutputStream mockOutputStream = EasyMock.createMock(OutputStream.class);

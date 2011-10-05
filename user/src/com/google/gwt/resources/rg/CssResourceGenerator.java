@@ -613,7 +613,8 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     }
 
     if (os == null) {
-      logger.log(TreeLogger.WARN, "Created resource is null: " + mappingFileName);
+      // If the returned OutputStream is null, that typically means the resource already exists.
+      // No need to write it out again.
       return;
     }
 
