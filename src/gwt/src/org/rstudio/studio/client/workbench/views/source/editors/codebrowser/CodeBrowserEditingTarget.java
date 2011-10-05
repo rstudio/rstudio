@@ -62,11 +62,6 @@ import java.util.HashSet;
 // TODO: token guessing must include explicit namespace qualifiers. when
 //       we have one we need to do our search w/o inherit
 
-// TODO: do lookups from within packages respect the actual package 
-//       search path (and find symbols that aren't on the global 
-//       search path)?
-
-// TODO: is there provision in R to do a search FROM a given function def?
 
 public class CodeBrowserEditingTarget implements EditingTarget
 {
