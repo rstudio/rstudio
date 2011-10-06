@@ -384,6 +384,37 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     String widget();
   }
 
+  /**
+   * Interface that this class's subclass may implement to get notified with table section change
+   * event. During rendering, a faster method based on swaping the entire section will be used iff
+   * <li> it's in IE - since all other optimizations have been turned off
+   * <li> the table implements TableSectionChangeHandler interface
+   * When a section is being replaced by another table with the new table html, the methods in this
+   * interface will be invoked with the changed section. The table should update its internal
+   * references to the sections properly so that when {@link #getTableBodyElement},
+   * {@link #getTableHeadElement}, or {@link #getTableFootElement} are called, the correct section
+   * will be returned.
+   */
+  protected interface TableSectionChangeHandler {
+    /**
+     * Notify that a table body section has been changed.
+     * @param newTBody the new body section
+     */
+    void onTableBodyChange(TableSectionElement newTBody);
+
+    /**
+     * Notify that a table body section has been changed.
+     * @param newTFoot the new foot section
+     */
+    void onTableFootChange(TableSectionElement newTFoot);
+    
+    /**
+     * Notify that a table head section has been changed.
+     * @param newTHead the new head section
+     */
+    void onTableHeadChange(TableSectionElement newTHead);
+  }
+  
   interface Template extends SafeHtmlTemplates {
     @SafeHtmlTemplates.Template("<div style=\"outline:none;\">{0}</div>")
     SafeHtml div(SafeHtml contents);
@@ -647,7 +678,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   private static class ImplTrident extends Impl {
 
     /**
-     * Detaching a tbody in IE throws an error.
+     * A different optimization is used in IE.
      */
     @Override
     protected void detachSectionElement(TableSectionElement section) {
@@ -661,12 +692,24 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
 
     /**
-     * IE doesn't support innerHTML on tbody, nor does it support removing or
-     * replacing a tbody. The only solution is to remove and replace the rows
-     * themselves.
+     * Instead of replacing each TR element, swaping out the entire section is much faster. If
+     * the table has a sectionChangeHandler, this method will be used.
      */
     @Override
     protected void replaceAllRowsImpl(AbstractCellTable<?> table, TableSectionElement section,
+        SafeHtml html) {
+      if (table instanceof TableSectionChangeHandler) {
+        replaceTableSection(table, section, html);
+      } else {
+        replaceAllRowsImplLegacy(table, section, html);
+      }
+    }
+    
+    /**
+     * This method is used for legacy AbstractCellTable that's not a
+     * {@link TableSectionChangeHandler}.
+     */
+    protected void replaceAllRowsImplLegacy(AbstractCellTable<?> table, TableSectionElement section,
         SafeHtml html) {
       // Remove all children.
       Element child = section.getFirstChildElement();
@@ -683,6 +726,30 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
         Element next = child.getNextSiblingElement();
         section.appendChild(child);
         child = next;
+      }
+    }
+    
+    /**
+     * Render html into a table section. This is achieved by first setting the html in a DIV
+     * element, and then swap the table section with the corresponding element in the DIV. This
+     * method is used in IE since the normal optimizations are not feasible.
+     * 
+     * @param table the {@link AbstractCellTable}
+     * @param section the {@link TableSectionElement} to replace
+     * @param html the html of a table section element containing the rows
+     */
+    private void replaceTableSection(AbstractCellTable<?> table, TableSectionElement section,
+        SafeHtml html) {
+      String sectionName = section.getTagName().toLowerCase();
+      TableSectionElement newSection = convertToSectionElement(table, sectionName, html);
+      TableElement tableElement = table.getElement().cast();
+      tableElement.replaceChild(newSection, section);
+      if ("tbody".equals(sectionName)) {
+        ((TableSectionChangeHandler) table).onTableBodyChange(newSection);
+      } else if ("thead".equals(sectionName)) {
+        ((TableSectionChangeHandler) table).onTableHeadChange(newSection);
+      } else if ("tfoot".equals(sectionName)) {
+        ((TableSectionChangeHandler) table).onTableFootChange(newSection);
       }
     }
   }

@@ -84,7 +84,8 @@ import java.util.Set;
  * 
  * @param <T> the data type of each row
  */
-public class CellTable<T> extends AbstractCellTable<T> {
+public class CellTable<T> extends AbstractCellTable<T> implements
+    AbstractCellTable.TableSectionChangeHandler {
 
   /**
    * Resources that match the GWT standard style theme.
@@ -494,11 +495,11 @@ public class CellTable<T> extends AbstractCellTable<T> {
 
   private final Style style;
   private final TableElement table;
-  private final TableSectionElement tbody;
+  private TableSectionElement tbody;
   private final TableSectionElement tbodyLoading;
   private final TableCellElement tbodyLoadingCell;
-  private final TableSectionElement tfoot;
-  private final TableSectionElement thead;
+  private TableSectionElement tfoot;
+  private TableSectionElement thead;
   private boolean colGroupEnabled = true;
 
   /**
@@ -689,6 +690,21 @@ public class CellTable<T> extends AbstractCellTable<T> {
     return tbodyLoading;
   }
   
+  @Override
+  public void onTableBodyChange(TableSectionElement newTBody) {
+    tbody = newTBody;
+  }
+
+  @Override
+  public void onTableFootChange(TableSectionElement newTFoot) {
+    tfoot = newTFoot;
+  }
+
+  @Override
+  public void onTableHeadChange(TableSectionElement newTHead) {
+    thead = newTHead;
+  }
+
   @Override
   public void removeColumnStyleName(int index, String styleName) {
     assertColumnGroupEnabled("Cannot remove column style when colgroup is disabled");

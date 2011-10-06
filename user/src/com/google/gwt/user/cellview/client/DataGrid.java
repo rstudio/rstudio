@@ -78,7 +78,8 @@ import com.google.gwt.view.client.ProvidesKey;
  * 
  * @param <T> the data type of each row
  */
-public class DataGrid<T> extends AbstractCellTable<T> implements RequiresResize {
+public class DataGrid<T> extends AbstractCellTable<T> implements RequiresResize,
+    AbstractCellTable.TableSectionChangeHandler {
 
   /**
    * A ClientBundle that provides images for this widget.
@@ -704,6 +705,21 @@ public class DataGrid<T> extends AbstractCellTable<T> implements RequiresResize 
   @Override
   public void onResize() {
     headerPanel.onResize();
+  }
+
+  @Override
+  public void onTableBodyChange(TableSectionElement newTBody) {
+    tableData.section = newTBody;
+  }
+
+  @Override  
+  public void onTableFootChange(TableSectionElement newTFoot) {
+    tableFooter.section = newTFoot;
+  }
+
+  @Override
+  public void onTableHeadChange(TableSectionElement newTHead) {
+    tableHeader.section = newTHead;
   }
 
   @Override
