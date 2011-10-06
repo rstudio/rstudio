@@ -176,7 +176,7 @@ public abstract class AbstractUiBinderWriterTest extends TestCase {
     writer =
         new UiBinderWriter(aClass, "foo", "", types, logger, fieldManager, messages,
             DesignTimeUtilsStub.EMPTY, uiBinderCtx, true, true, BINDER_URI);
-    parser = new UiBinderParser(writer, messages, fieldManager, types, null, BINDER_URI);
+    parser = new UiBinderParser(writer, messages, fieldManager, types, null, BINDER_URI, new UiBinderContext());
     designTime.rememberPathForElements(doc);
   }
 }

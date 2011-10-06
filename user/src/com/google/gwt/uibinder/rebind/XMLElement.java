@@ -25,6 +25,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.attributeparsers.AttributeParser;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
+import com.google.gwt.uibinder.elementparsers.SimpleInterpeter;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
@@ -69,18 +70,6 @@ public class XMLElement {
    */
   public interface PostProcessingInterpreter<T> extends Interpreter<T> {
     String postProcess(String consumedText) throws UnableToCompleteException;
-  }
-
-  private static class NoBrainInterpeter<T> implements Interpreter<T> {
-    private final T rtn;
-
-    public NoBrainInterpeter(T rtn) {
-      this.rtn = rtn;
-    }
-
-    public T interpretElement(XMLElement elem) {
-      return rtn;
-    }
   }
 
   /**
@@ -217,7 +206,7 @@ public class XMLElement {
    * @throws UnableToCompleteException if it isn't
    */
   public void assertNoText() throws UnableToCompleteException {
-    NoBrainInterpeter<String> nullInterpreter = new NoBrainInterpeter<String>(null);
+    SimpleInterpeter<String> nullInterpreter = new SimpleInterpeter<String>(null);
     String s = consumeInnerTextEscapedAsHtmlStringLiteral(nullInterpreter);
     if (!"".equals(s)) {
       logger.die(this, "Unexpected text in element: \"%s\"", s);
@@ -823,7 +812,7 @@ public class XMLElement {
 
   private Iterable<XMLElement> consumeChildElementsNoEmptyCheck() {
     try {
-      Iterable<XMLElement> rtn = consumeChildElements(new NoBrainInterpeter<Boolean>(true));
+      Iterable<XMLElement> rtn = consumeChildElements(new SimpleInterpeter<Boolean>(true));
       return rtn;
     } catch (UnableToCompleteException e) {
       throw new RuntimeException("Impossible exception", e);

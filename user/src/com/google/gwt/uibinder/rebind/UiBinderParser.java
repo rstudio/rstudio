@@ -27,6 +27,8 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+import com.google.gwt.uibinder.elementparsers.BeanParser;
+import com.google.gwt.uibinder.elementparsers.SimpleInterpeter;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
@@ -105,15 +107,17 @@ public class UiBinderParser {
 
   private final JClassType dataResourceType;
   private final String binderUri;
+  private final UiBinderContext uiBinderContext;
 
   public UiBinderParser(UiBinderWriter writer, MessagesWriter messagesWriter,
       FieldManager fieldManager, TypeOracle oracle,
-      ImplicitClientBundle bundleClass, String binderUri) {
+      ImplicitClientBundle bundleClass, String binderUri, UiBinderContext uiBinderContext) {
     this.writer = writer;
     this.oracle = oracle;
     this.messagesWriter = messagesWriter;
     this.fieldManager = fieldManager;
     this.bundleClass = bundleClass;
+    this.uiBinderContext = uiBinderContext;
     this.cssResourceType = oracle.findType(CssResource.class.getCanonicalName());
     this.imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
     this.dataResourceType = oracle.findType(DataResource.class.getCanonicalName());
@@ -318,6 +322,22 @@ public class UiBinderParser {
       fieldManager.registerField(FieldWriterType.IMPORTED, resourceType, resourceName);
     } else {
       writer.die(elem, "Could not infer type for field %s.", resourceName);
+    }
+
+    // process ui:attributes child for property setting 
+    boolean attributesChildFound = false;
+    // Use consumeChildElements(Interpreter) so no assertEmpty check is performed
+    for (XMLElement child : elem.consumeChildElements(new SimpleInterpeter<Boolean>(true))) {
+      if (attributesChildFound) {
+        writer.die(child, "<ui:with> can only contain a single <ui:attributes> child Element.");
+      }
+      attributesChildFound = true;
+
+      if (!elem.getNamespaceUri().equals(child.getNamespaceUri()) || !"attributes".equals(child.getLocalName())) {
+        writer.die(child, "Found unknown child element.");
+      }
+
+      new BeanParser(uiBinderContext).parse(child, resourceName, resourceType, writer);
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,22 @@
 package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.uibinder.rebind.XMLElement;
+import com.google.gwt.uibinder.rebind.XMLElement.Interpreter;
 
 /**
- * An no-op interpreter.
- * @param <T> The type of null to return
+ * A simple {@link Interpreter} that returns a given value to every 
+ * request.
+ * 
+ * @param <T>
  */
-public final class NullInterpreter<T> implements XMLElement.Interpreter<T> {
+public class SimpleInterpeter<T> implements Interpreter<T> {
+  private final T rtn;
+
+  public SimpleInterpeter(T rtn) {
+    this.rtn = rtn;
+  }
+
   public T interpretElement(XMLElement elem) {
-    return null;
+    return rtn;
   }
 }

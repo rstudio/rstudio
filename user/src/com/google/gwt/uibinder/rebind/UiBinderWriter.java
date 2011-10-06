@@ -1378,8 +1378,8 @@ public class UiBinderWriter implements Statements {
 
     // Allow GWT.create() to init the field, the default behavior
 
-    String rootField =
-        new UiBinderParser(this, messages, fieldManager, oracle, bundleClass, binderUri).parse(elem);
+    String rootField = new UiBinderParser(this, messages, fieldManager, oracle, bundleClass,
+            binderUri, uiBinderCtx).parse(elem);
 
     fieldManager.validate();
 

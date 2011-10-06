@@ -23,7 +23,6 @@ import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
-import com.google.gwt.uibinder.elementparsers.NullInterpreter;
 import com.google.gwt.uibinder.test.UiJavaResources;
 
 import junit.framework.TestCase;

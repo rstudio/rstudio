@@ -276,7 +276,7 @@ public class UiBinderParserUiWithTest extends TestCase {
     writer =
         new UiBinderWriter(aClass, "foo", "", types, logger, fieldManager, null,
             DesignTimeUtilsStub.EMPTY, new UiBinderContext(), true, true, "");
-    parser = new UiBinderParser(writer, null, fieldManager, types, null, "");
+    parser = new UiBinderParser(writer, null, fieldManager, types, null, "", new UiBinderContext());
     designTime.rememberPathForElements(doc);
     UiBinderParser.Resource.WITH.create(parser, elm);
   }
