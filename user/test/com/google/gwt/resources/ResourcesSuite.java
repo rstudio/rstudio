@@ -17,13 +17,13 @@ package com.google.gwt.resources;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.resources.client.CSSResourceTest;
+import com.google.gwt.resources.client.DataResourceDoNotEmbedTest;
+import com.google.gwt.resources.client.DataResourceMimeTypeTest;
 import com.google.gwt.resources.client.ExternalTextResourceJsonpTest;
 import com.google.gwt.resources.client.ExternalTextResourceTest;
 import com.google.gwt.resources.client.ImageResourceNoInliningTest;
 import com.google.gwt.resources.client.ImageResourceTest;
 import com.google.gwt.resources.client.NestedBundleTest;
-import com.google.gwt.resources.client.DataResourceDoNotEmbedTest;
-import com.google.gwt.resources.client.DataResourceMimeTypeTest;
 import com.google.gwt.resources.client.TextResourceTest;
 import com.google.gwt.resources.css.CssExternalTest;
 import com.google.gwt.resources.css.CssNodeClonerTest;
@@ -33,7 +33,6 @@ import com.google.gwt.resources.css.ExtractClassNamesVisitorTest;
 import com.google.gwt.resources.css.UnknownAtRuleTest;
 import com.google.gwt.resources.ext.ResourceGeneratorUtilTest;
 import com.google.gwt.resources.rg.CssClassNamesTestCase;
-import com.google.gwt.resources.rg.CssOutputTestCase;
 
 import junit.framework.Test;
 
@@ -47,7 +46,6 @@ public class ResourcesSuite {
     suite.addTestSuite(CssClassNamesTestCase.class);
     suite.addTestSuite(CssExternalTest.class);
     suite.addTestSuite(CssNodeClonerTest.class);
-    suite.addTestSuite(CssOutputTestCase.class);
     suite.addTestSuite(CssReorderTest.class);
     suite.addTestSuite(CSSResourceTest.class);
     suite.addTestSuite(CssRtlTest.class);
