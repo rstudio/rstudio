@@ -46,6 +46,12 @@
 
 #include "SessionSource.hpp"
 
+// TODO: resolution of hidden internal functions (do we miss because
+// findFunction doesn't find it -- perhaps if findFunction fails we
+// need to still use def namespace
+
+// TODO: what happens when "fromWhere" is .GlobalEnv
+
 using namespace core ;
 
 namespace session {  
@@ -770,11 +776,25 @@ json::Object createFunctionDefinition(const std::string& name,
    bool fromSrcAttrib = false;
    std::vector<std::string> lines;
 
-   // get the function
+   // get the function -- if it within a package namespace then do special
+   // handling to make sure we can find hidden functions as well
    r::sexp::Protect rProtect;
    SEXP functionSEXP;
-   r::exec::RFunction getFunc(".rs.getFunction", name, namespaceName);
-   Error error = getFunc.call(&functionSEXP, &rProtect);
+   Error error;
+   std::string pkgPrefix("package:");
+   std::string::size_type pkgPrefixPos = namespaceName.find(pkgPrefix);
+   if (pkgPrefixPos == 0 && namespaceName.length() > pkgPrefix.length())
+   {
+      std::string pkgName = namespaceName.substr(pkgPrefix.length());
+      r::exec::RFunction getFunc(".rs.getPackageFunction", name, pkgName);
+      error = getFunc.call(&functionSEXP, &rProtect);
+   }
+   else
+   {
+      r::exec::RFunction getFunc(".rs.getFunction", name, namespaceName);
+      error = getFunc.call(&functionSEXP, &rProtect);
+   }
+
    if (!error)
    {
       // did we get a function
@@ -821,6 +841,12 @@ struct FunctionToken
    std::string package;
    std::string name;
 };
+
+
+json::Object createFunctionDefinition(const FunctionToken& token)
+{
+   return createFunctionDefinition(token.name, "package:" + token.package);
+}
 
 Error guessFunctionToken(const std::string& line,
                          int pos,
@@ -872,10 +898,7 @@ Error getFunctionDefinition(const json::JsonRpcRequest& request,
    if (!token.package.empty())
    {
       defJson["function_name"] = token.name;
-      defJson["search_path_definition"] =
-                           createFunctionDefinition(
-                                                 token.name,
-                                                 "package:" + token.package);
+      defJson["search_path_definition"] = createFunctionDefinition(token);
    }
 
    // if we got a name token then search the code
