@@ -50,8 +50,6 @@
 
 // TODO: cleanup/refactor for SessionCodeSearch?
 
-// TODO: inject spaces not tabs if pref is spaces for tab? (printing)
-
 using namespace core ;
 
 namespace session {  

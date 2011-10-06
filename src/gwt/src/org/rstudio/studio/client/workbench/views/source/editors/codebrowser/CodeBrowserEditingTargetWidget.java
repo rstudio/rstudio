@@ -38,6 +38,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
@@ -53,10 +54,12 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    public CodeBrowserEditingTargetWidget(Commands commands,
                                          final GlobalDisplay globalDisplay,
                                          final EventBus eventBus,
+                                         final UIPrefs uiPrefs,
                                          final CodeToolsServerOperations server,
                                          final DocDisplay docDisplay)
    {
       commands_ = commands;
+      uiPrefs_ = uiPrefs;
       
       docDisplay_ = docDisplay;
       
@@ -239,17 +242,29 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       if (functionDef.isCodeFromSrcAttrib())
          return code;
       
+      // determine the replacement text based on the user's current
+      // editing preferences
+      String replaceText = "\t";
+      if (uiPrefs_.useSpacesForTab().getValue())
+      {
+         StringBuilder replaceBuilder = new StringBuilder();
+         for (int i=0; i<uiPrefs_.numSpacesForTab().getValue(); i++)
+            replaceBuilder.append(' ');
+         replaceText = replaceBuilder.toString();
+      }
+      
       // create regex pattern used to find leading space
       // NOTE: the 4 spaces comes from the implementation of printtab2buff
       // in deparse.c -- it is hard-coded to use 4 spaces for the first 4 
       // levels of indentation and then 2 spaces for subsequent levels.
+      final String replaceWith = replaceText;
       Pattern pattern = Pattern.create("^(    ){1,4}");
       code = pattern.replaceAll(code, new ReplaceOperation()
       {
          @Override
          public String replace(Match m)
          {
-            return m.getValue().replace("    ", "\t");
+            return m.getValue().replace("    ", replaceWith);
          }
       });
       Pattern pattern2 = Pattern.create("^\t{4}(  )+");
@@ -258,7 +273,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          @Override
          public String replace(Match m)
          {
-            return m.getValue().replace("  ", "\t");
+            return m.getValue().replace("  ",  replaceWith);
          }
       });
 
@@ -289,6 +304,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    private final PanelWithToolbar panel_;
    private CodeBrowserContextLabel contextLabel_;
    private final Commands commands_;
+   private final UIPrefs uiPrefs_;
    private final DocDisplay docDisplay_;
    private String currentFunctionNamespace_ = null;
   
