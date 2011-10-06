@@ -18,6 +18,7 @@
 <!-- will inherit this module automatically.                                -->
 <module>
   <inherits name="com.google.gwt.user.User"/>
+  <inherits name="com.google.gwt.junit.JUnit3"/>
 
   <super-source path="translatable"/>
 
