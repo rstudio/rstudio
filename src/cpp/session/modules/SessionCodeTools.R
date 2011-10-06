@@ -73,23 +73,16 @@
 
 .rs.addFunction("getFunction", function(name, namespaceName)
 {
-   if (namespaceName %in% search())
-   {
-      env <- as.environment(namespaceName)
-      if (exists(name, env, mode="function", inherits=FALSE))
-         get(name, env, mode = "function", inherits = FALSE)
-      else
-         return (NULL)
-   }
-   else
-   {
-      return (NULL)
-   }
+   tryCatch(eval(parse(text = name),
+                 envir = as.environment(namespaceName),
+                 enclos = NULL),
+            error = function(e) NULL)
 })
 
 .rs.addFunction("getPackageFunction", function(name, packageName)
 {
-   eval(parse(text=paste(packageName, ":::", name, sep="")))
+   tryCatch(eval(parse(text=paste(packageName, ":::", name, sep=""))),
+            error = function(e) NULL)
 })
 
 .rs.addFunction("functionHasSrcRef", function(func)

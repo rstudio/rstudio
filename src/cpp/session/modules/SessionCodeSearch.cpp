@@ -46,11 +46,12 @@
 
 #include "SessionSource.hpp"
 
-// TODO: resolution of hidden internal functions (do we miss because
-// findFunction doesn't find it -- perhaps if findFunction fails we
-// need to still use def namespace
+// TODO: change lookup so that we do an eval from the source env
+// (that way e.g. tools:rstudio won't see the global env and packages
+// will respect their NAMESPACE rules
 
 // TODO: what happens when "fromWhere" is .GlobalEnv
+
 
 using namespace core ;
 
@@ -721,12 +722,55 @@ Error searchCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
-bool findFunction(const std::string& token,
+
+bool namespaceIsPackage(const std::string& namespaceName,
+                        std::string* pPackage)
+{
+   if (namespaceName.empty())
+      return false;
+
+   std::string pkgPrefix("package:");
+   std::string::size_type pkgPrefixPos = namespaceName.find(pkgPrefix);
+   if (pkgPrefixPos == 0 && namespaceName.length() > pkgPrefix.length())
+   {
+      *pPackage = namespaceName.substr(pkgPrefix.length());
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+bool findFunction(const std::string& name,
                   const std::string& fromWhere,
                   std::string* pNamespaceName)
 {
-   r::exec::RFunction func(".rs.findFunctionOnSearchPath", token, fromWhere);
-   Error error = func.call(pNamespaceName);
+   // if fromWhere is a package name then we should first directly
+   // search that package (so that we can find hidden functions)
+   Error error;
+   std::string pkgName;
+   pNamespaceName->clear();
+   if (namespaceIsPackage(fromWhere, &pkgName))
+   {
+      r::sexp::Protect rProtect;
+      SEXP functionSEXP = R_NilValue;
+      r::exec::RFunction func(".rs.getPackageFunction", name, pkgName);
+      error = func.call(&functionSEXP, &rProtect);
+      if (!error && !r::sexp::isNull(functionSEXP))
+         *pNamespaceName = fromWhere;
+   }
+
+   // if we haven't found it yet
+   if (pNamespaceName->empty())
+   {
+      r::exec::RFunction func(".rs.findFunctionOnSearchPath",
+                              name,
+                              fromWhere);
+      error = func.call(pNamespaceName);
+   }
+
+   // log error and return appropriate status
    if (error)
    {
       LOG_ERROR(error);
@@ -779,13 +823,11 @@ json::Object createFunctionDefinition(const std::string& name,
    // get the function -- if it within a package namespace then do special
    // handling to make sure we can find hidden functions as well
    r::sexp::Protect rProtect;
-   SEXP functionSEXP;
+   SEXP functionSEXP = R_NilValue;
    Error error;
-   std::string pkgPrefix("package:");
-   std::string::size_type pkgPrefixPos = namespaceName.find(pkgPrefix);
-   if (pkgPrefixPos == 0 && namespaceName.length() > pkgPrefix.length())
+   std::string pkgName;
+   if (namespaceIsPackage(namespaceName, &pkgName))
    {
-      std::string pkgName = namespaceName.substr(pkgPrefix.length());
       r::exec::RFunction getFunc(".rs.getPackageFunction", name, pkgName);
       error = getFunc.call(&functionSEXP, &rProtect);
    }
@@ -828,7 +870,7 @@ json::Object createFunctionDefinition(const std::string& name,
    else
    {
       boost::format fmt("\n# ERROR: Defintion of function '%1%' not found\n"
-                        "# in '%2%' (is the package loaded?)");
+                        "# in namespace '%2%'");
       funDef["code"] = boost::str(fmt % name % namespaceName);
       funDef["from_src_attrib"] = false;
    }
@@ -988,10 +1030,10 @@ Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
 
    // lookup the namespace if we need to
    std::string namespaceName;
-   if (token.package.empty())
-      findFunction(token.name, fromWhere, &namespaceName);
+   if (!token.package.empty())
+       namespaceName = "package:" + token.package;
    else
-      namespaceName = "package:" + token.package;
+      findFunction(token.name, fromWhere, &namespaceName);
 
    // return either just the name or the full function
    if (!namespaceName.empty())
