@@ -46,10 +46,6 @@
 
 #include "SessionSource.hpp"
 
-// TODO: disable code completion command in code viewer
-
-// TODO: cleanup/refactor for SessionCodeSearch?
-
 using namespace core ;
 
 namespace session {  
