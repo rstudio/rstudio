@@ -48,11 +48,13 @@ public class FindReplace
 
    public FindReplace(AceEditor editor,
                       Display display,
-                      GlobalDisplay globalDisplay)
+                      GlobalDisplay globalDisplay,
+                      boolean showingReplace)
    {
       editor_ = editor;
       display_ = display;
       globalDisplay_ = globalDisplay;
+      errorCaption_ = showingReplace ? "Find/Replace" : "Find";
       
       HasValue<Boolean> caseSensitive = display_.getCaseSensitive();
       caseSensitive.setValue(defaultCaseSensitive_);
@@ -144,7 +146,7 @@ public class FindReplace
       if (range == null)
       {
          globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
-                                    "Find/Replace",
+                                    errorCaption_,
                                     "No more occurrences.");
          return false;
       }
@@ -227,7 +229,7 @@ public class FindReplace
          editor_.replaceCode(result.toString());
       }
       globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
-                                 "Find/Replace",
+                                 errorCaption_,
                                  occurrences + " occurrences replaced.");
    }
 
@@ -281,6 +283,7 @@ public class FindReplace
    private final AceEditor editor_;
    private final Display display_;
    private final GlobalDisplay globalDisplay_;
+   private final String errorCaption_;
    
    private static boolean defaultCaseSensitive_ = false;
    private static boolean defaultRegex_ = false;

@@ -30,7 +30,6 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.core.client.widget.WarningBar;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -38,7 +37,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
-import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplace;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
@@ -58,6 +56,32 @@ public class TextEditingTargetWidget
       editor_ = editor;
       sourceOnSave_ = new CheckBox("Source on Save");
       statusBar_ = new StatusBarWidget();
+      
+      findReplace_ = new TextEditingTargetFindReplace(
+         new TextEditingTargetFindReplace.Container()
+         {  
+            @Override
+            public AceEditor getEditor()
+            {
+               return (AceEditor)editor_;
+            }
+            
+            @Override
+            public void insertFindReplace(FindReplaceBar findReplaceBar)
+            {
+               panel_.insertNorth(findReplaceBar,
+                                  findReplaceBar.getHeight(),
+                                  warningBar_);
+               
+            }
+            
+            @Override
+            public void removeFindReplace(FindReplaceBar findReplaceBar)
+            {
+               panel_.remove(findReplaceBar);
+            } 
+         });
+      
       panel_ = new PanelWithToolbar(createToolbar(),
                                     editor.asWidget(),
                                     statusBar_);
@@ -76,7 +100,7 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(sourceOnSave_);
 
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(createFindReplaceButton());
+      toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
       toolbar.addLeftWidget(createCodeTransformMenuButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.compilePDF().createToolbarButton());
@@ -127,26 +151,6 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(sourceMenuButton_);      
             
       return toolbar;
-   }
-
-   private Widget createFindReplaceButton()
-   {
-      if (findReplaceBar_ == null)
-      {
-         findReplaceButton_ = new ToolbarButton(
-               FindReplaceBar.getFindIcon(),
-               new ClickHandler() {
-                  public void onClick(ClickEvent event)
-                  {
-                     if (findReplaceBar_ == null)
-                        showFindReplace();
-                     else
-                        hideFindReplace();
-                  }
-               });
-         findReplaceButton_.setTitle("Find/Replace");
-      }
-      return findReplaceButton_;
    }
 
    private Widget createCodeTransformMenuButton()
@@ -206,37 +210,7 @@ public class TextEditingTargetWidget
 
    public void showFindReplace()
    {
-      if (findReplaceBar_ == null)
-      {
-         findReplaceBar_ = new FindReplaceBar();
-         new FindReplace((AceEditor)editor_,
-                         findReplaceBar_,
-                         RStudioGinjector.INSTANCE.getGlobalDisplay());
-         panel_.insertNorth(findReplaceBar_,
-                            findReplaceBar_.getHeight(),
-                            warningBar_);
-         findReplaceBar_.getCloseButton().addClickHandler(new ClickHandler()
-         {
-            public void onClick(ClickEvent event)
-            {
-               hideFindReplace();
-            }
-         });
-
-         findReplaceButton_.setLeftImage(FindReplaceBar.getFindLatchedIcon());
-      }
-      findReplaceBar_.focusFindField(true);
-   }
-
-   private void hideFindReplace()
-   {
-      if (findReplaceBar_ != null)
-      {
-         panel_.remove(findReplaceBar_);
-         findReplaceBar_ = null;
-         findReplaceButton_.setLeftImage(FindReplaceBar.getFindIcon());
-      }
-      editor_.focus();
+      findReplace_.showFindReplace();
    }
 
    public void onActivate()
@@ -270,8 +244,7 @@ public class TextEditingTargetWidget
    private CheckBox sourceOnSave_;
    private PanelWithToolbar panel_;
    private WarningBar warningBar_;
-   private FindReplaceBar findReplaceBar_;
-   private ToolbarButton findReplaceButton_;
+   private final TextEditingTargetFindReplace findReplace_;
    private ToolbarButton codeTransform_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;

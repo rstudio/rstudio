@@ -44,7 +44,10 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetFindReplace;
+import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
@@ -62,6 +65,32 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       uiPrefs_ = uiPrefs;
       
       docDisplay_ = docDisplay;
+      
+      findReplace_ = new TextEditingTargetFindReplace(
+         new TextEditingTargetFindReplace.Container() {
+
+            @Override
+            public AceEditor getEditor()
+            {
+               return (AceEditor)docDisplay_;
+            }
+
+            @Override
+            public void insertFindReplace(FindReplaceBar findReplaceBar)
+            {
+               panel_.insertNorth(findReplaceBar,
+                                  findReplaceBar.getHeight(),
+                                  null);
+            }
+
+            @Override
+            public void removeFindReplace(FindReplaceBar findReplaceBar)
+            {
+               panel_.remove(findReplaceBar);
+            }
+           
+         },
+         false); // don't show replace UI
       
       panel_ = new PanelWithToolbar(createToolbar(),
                                     docDisplay_.asWidget());
@@ -203,6 +232,12 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    }
    
    @Override
+   public void showFind()
+   {
+      findReplace_.showFindReplace();
+   }
+   
+   @Override
    public void scrollToLeft()
    {
       new Timer() {
@@ -223,6 +258,11 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       toolbar.addLeftSeparator();
       
       toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton());
+      
+      toolbar.addLeftSeparator();
+      
+      toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
+      toolbar.addLeftWidget(commands_.goToFunctionDefinition().createToolbarButton());
       
       Label readOnlyLabel = new Label("(Read-only)");
       readOnlyLabel.addStyleName(RES.styles().readOnly());
@@ -306,6 +346,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
    private final DocDisplay docDisplay_;
+   private final TextEditingTargetFindReplace findReplace_;
    private String currentFunctionNamespace_ = null;
   
    

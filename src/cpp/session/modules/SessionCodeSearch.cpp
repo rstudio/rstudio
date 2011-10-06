@@ -46,7 +46,7 @@
 
 #include "SessionSource.hpp"
 
-// TODO: add find support?
+// TODO: disable code completion command in code viewer
 
 // TODO: cleanup/refactor for SessionCodeSearch?
 

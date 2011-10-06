@@ -13,6 +13,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -25,10 +28,12 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -64,6 +69,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public interface Display extends TextDisplay                                                      
    {
       void showFunction(SearchPathFunctionDefinition functionDef);
+      void showFind();
       void scrollToLeft();
    }
 
@@ -91,6 +97,23 @@ public class CodeBrowserEditingTarget implements EditingTarget
                                                            docDisplay_, 
                                                            events_, 
                                                            this);
+      
+      docDisplay_.addKeyDownHandler(new KeyDownHandler()
+      {
+         public void onKeyDown(KeyDownEvent event)
+         {
+            NativeEvent ne = event.getNativeEvent();
+            int mod = KeyboardShortcut.getModifierValue(ne);
+            if ((mod == KeyboardShortcut.META || 
+                (mod == KeyboardShortcut.CTRL && !BrowseCap.hasMetaKey()))
+                && ne.getKeyCode() == 'F')
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               commands_.find().execute();
+            }
+         }
+      });
    }
    
    @Override
@@ -184,6 +207,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
       docDisplay_.goToFunctionDefinition();
    } 
 
+   @Handler
+   void onFind()
+   {
+      view_.showFind();
+   }
 
    @Override
    public String getId()
@@ -242,6 +270,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       HashSet<AppCommand> commands = new HashSet<AppCommand>();
       commands.add(commands_.printSourceDoc());
+      commands.add(commands_.find());
       commands.add(commands_.goToFunctionDefinition());
       return commands;
    }

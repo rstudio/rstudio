@@ -47,7 +47,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       String closeButton();
    }
 
-   public FindReplaceBar()
+   public FindReplaceBar(boolean showReplace)
    {
       Shelf shelf = new Shelf();
       shelf.setWidth("100%");
@@ -122,6 +122,13 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
             }
          }
       });
+      
+      if (!showReplace)
+      {
+         txtReplace_.setVisible(false);
+         btnReplace_.setVisible(false);
+         btnReplaceAll_.setVisible(false);
+      }
 
       initWidget(shelf);
 

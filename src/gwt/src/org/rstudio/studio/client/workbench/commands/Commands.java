@@ -52,6 +52,7 @@ public abstract class
    public abstract AppCommand activateSource();
    public abstract AppCommand printSourceDoc();
    public abstract AppCommand popoutDoc();
+   public abstract AppCommand find();
    public abstract AppCommand findReplace();
    public abstract AppCommand extractFunction();
    public abstract AppCommand commentUncomment();
