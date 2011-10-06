@@ -46,15 +46,6 @@
 
 #include "SessionSource.hpp"
 
-// TODO: change lookup so that we do an eval from the source env
-// (that way e.g. tools:rstudio won't see the global env and packages
-// will respect their NAMESPACE rules
-
-// TODO: what happens when "fromWhere" is .GlobalEnv
-
-// TODO: focus source after console navigation
-
-
 using namespace core ;
 
 namespace session {  

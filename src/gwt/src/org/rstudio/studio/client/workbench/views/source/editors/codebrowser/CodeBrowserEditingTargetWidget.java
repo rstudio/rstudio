@@ -194,7 +194,8 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    public void showFunction(SearchPathFunctionDefinition functionDef)
    {
       currentFunctionNamespace_ = functionDef.getNamespace();
-      docDisplay_.setCode(formatCode(functionDef), false);  
+      docDisplay_.setCode(formatCode(functionDef), false); 
+      docDisplay_.focus();
       contextLabel_.setCurrentFunction(functionDef);
    }
    
