@@ -737,6 +737,27 @@ bool findFunction(const std::string& token,
 }
 
 
+void getFunctionSource(SEXP functionSEXP,
+                       std::vector<std::string>* pLines,
+                       bool* pFromSrcAttrib)
+{
+   // check if the function has a "srcref" attribute
+   *pFromSrcAttrib = false;
+   r::exec::RFunction getSrcRefFunc(".rs.functionHasSrcRef", functionSEXP);
+   Error error = getSrcRefFunc.call(pFromSrcAttrib);
+   if (error)
+      LOG_ERROR(error);
+
+   // deparse
+   r::exec::RFunction deparseFunc(".rs.deparseFunction");
+   deparseFunc.addParam(functionSEXP);
+   deparseFunc.addParam(*pFromSrcAttrib);
+   error = deparseFunc.call(pLines);
+   if (error)
+      LOG_ERROR(error);
+}
+
+
 json::Object createFunctionDefinition(const std::string& name,
                                       const std::string& namespaceName)
 {
@@ -746,7 +767,7 @@ json::Object createFunctionDefinition(const std::string& name,
    funDef["namespace"] = namespaceName;
 
    // function source code
-   bool hasSrcAttrib = false;
+   bool fromSrcAttrib = false;
    std::vector<std::string> lines;
 
    // get the function
@@ -759,16 +780,8 @@ json::Object createFunctionDefinition(const std::string& name,
       // did we get a function
       if (!r::sexp::isNull(functionSEXP))
       {
-         // does it have a src attrib?
-         hasSrcAttrib = !r::sexp::isNull(r::sexp::getSrcAttrib(functionSEXP));
-
-         // get the code
-         r::exec::RFunction deparseFunc(".rs.deparseFunction",
-                                        functionSEXP,
-                                     hasSrcAttrib);
-         Error error = deparseFunc.call(&lines);
-         if (error)
-            LOG_ERROR(error);
+         // get the function source
+         getFunctionSource(functionSEXP, &lines, &fromSrcAttrib);
       }
    }
    else
@@ -790,7 +803,7 @@ json::Object createFunctionDefinition(const std::string& name,
          code.append("\n");
       }
       funDef["code"] = code;
-      funDef["from_src_attrib"] = hasSrcAttrib;
+      funDef["from_src_attrib"] = fromSrcAttrib;
    }
    else
    {

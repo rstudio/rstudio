@@ -92,6 +92,11 @@
    eval(parse(text=paste(packageName, ":::", name, sep="")))
 })
 
+.rs.addFunction("functionHasSrcRef", function(func)
+{
+   return (!is.null(attr(func, "srcref")))
+})
+
 .rs.addFunction("deparseFunction", function(func, useSource)
 {
    control <- c("keepInteger", "keepNA")

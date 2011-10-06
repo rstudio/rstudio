@@ -206,10 +206,6 @@ SEXP getAttrib(SEXP object, SEXP attrib)
    return Rf_getAttrib(object, attrib);
 }
 
-SEXP getSrcAttrib(SEXP object)
-{
-   return R_NilValue;
-}
 
 Error extract(SEXP valueSEXP, int* pInt)
 {
