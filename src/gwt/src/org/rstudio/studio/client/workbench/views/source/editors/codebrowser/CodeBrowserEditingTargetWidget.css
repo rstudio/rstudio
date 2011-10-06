@@ -1,10 +1,11 @@
 
 .functionName {
-   margin-right: 5px;
+   margin-right: 7px;
 }
 
 .functionNamespace {
 	color: #888;
+	margin-right: 7px;
 }
 
 .readOnly {

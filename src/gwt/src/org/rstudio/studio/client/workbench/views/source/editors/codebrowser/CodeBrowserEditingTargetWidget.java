@@ -214,16 +214,17 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    private Toolbar createToolbar()
    {
       Toolbar toolbar = new EditingTargetToolbar(commands_);
+      
       toolbar.addLeftWidget(
             contextLabel_ = new CodeBrowserContextLabel(RES.styles()));
+      toolbar.addLeftSeparator();
       
+      toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton());
       
       Label readOnlyLabel = new Label("(Read-only)");
       readOnlyLabel.addStyleName(RES.styles().readOnly());
       toolbar.addRightWidget(readOnlyLabel);
-      
     
-  
       return toolbar;
    }
    
