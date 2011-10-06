@@ -29,8 +29,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -463,6 +461,7 @@ public class ReviewPanel extends Composite implements Display
    private ToolbarButton unstageAllButton_;
    private ClickCommand discardSelectedFiles_;
    private ClickCommand discardAllFiles_;
+   @SuppressWarnings("unused")
    private final FileTypeRegistry fileTypeRegistry_;
    private LeftRightToggleButton switchViewButton_;
 
