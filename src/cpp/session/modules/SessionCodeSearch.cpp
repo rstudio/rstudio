@@ -52,6 +52,8 @@
 
 // TODO: what happens when "fromWhere" is .GlobalEnv
 
+// TODO: focus source after console navigation
+
 
 using namespace core ;
 
@@ -764,7 +766,7 @@ bool findFunction(const std::string& name,
    // if we haven't found it yet
    if (pNamespaceName->empty())
    {
-      r::exec::RFunction func(".rs.findFunctionOnSearchPath",
+      r::exec::RFunction func(".rs.findFunctionNamespace",
                               name,
                               fromWhere);
       error = func.call(pNamespaceName);

@@ -30,7 +30,7 @@
    utils:::.guessTokenFromLine()
 })
 
-.rs.addFunction("findFunctionOnSearchPath", function(name, fromWhere)
+.rs.addFunction("findFunctionNamespace", function(name, fromWhere)
 {
    if (!identical(fromWhere, ""))
    {
