@@ -257,10 +257,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
             contextLabel_ = new CodeBrowserContextLabel(RES.styles()));
       toolbar.addLeftSeparator();
       
-      toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton());
-      
-      toolbar.addLeftSeparator();
-      
+      toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton());  
       toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
       toolbar.addLeftWidget(commands_.goToFunctionDefinition().createToolbarButton());
       
