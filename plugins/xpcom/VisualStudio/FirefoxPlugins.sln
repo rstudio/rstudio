@@ -1,6 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ff70-xpcom", "ff70-xpcom.vcxproj", "{58AE040D-01CC-4E4A-AE98-BEDE56480AE9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ff60-xpcom", "ff60-xpcom.vcxproj", "{58AE040D-01CC-4E4A-AE98-BEDE56480AE9}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ff50-xpcom", "ff50-xpcom.vcxproj", "{58AE040D-01CC-4E4A-AE98-BEDE56480AE9}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ff40-xpcom", "ff40-xpcom.vcxproj", "{6BF0C2CE-CB0C-421B-A67C-1E448371D24D}"
