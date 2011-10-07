@@ -1,4 +1,4 @@
-@external windows, macintosh, linux, ubuntu_mono;
+@external windows, macintosh, linux, ubuntu_mono, ubuntu_mono_firefox;
 
 .macintosh .normalSize, .macintosh .normalSize td, .macintosh .normalSize pre {
    line-height: 1.45;
@@ -10,6 +10,10 @@
 
 .ubuntu_mono .normalSize, .ubuntu_mono .normalSize td, .ubuntu_mono .normalSize pre {
    line-height: 1.2;
+}
+
+.ubuntu_mono_firefox .normalSize, .ubuntu_mono_firefox .normalSize td, .ubuntu_mono_firefox .normalSize pre {
+   line-height: 1.1;
 }
 
 .normalSize, .normalSize td, .normalSize pre {

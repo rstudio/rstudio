@@ -13,6 +13,7 @@
 package org.rstudio.core.client;
 
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.widget.FontDetector;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -23,8 +24,14 @@ public class BrowseCap
    {
       if (hasMetaKey())
          return -1;
+  
       else if (FIXED_UBUNTU_MONO)
-         return 0.4;
+      {
+         if (isFirefox())
+            return 1;
+         else
+            return 0.4;
+      }
       else
          return 0;
    }
@@ -65,6 +72,11 @@ public class BrowseCap
    {
       return isUserAgent("chrome");
    }
+      
+   public static boolean isFirefox()
+   {
+      return isUserAgent("firefox");
+   }
    
    private static native final boolean isUserAgent(String uaTest) /*-{
       var ua = navigator.userAgent.toLowerCase();
@@ -89,22 +101,34 @@ public class BrowseCap
    {
       if (isLinux())
       {
-         String fixedWidthFont =  ThemeFonts.getFixedWidthFont();
-         return (StringUtil.notNull(fixedWidthFont).equals("\"Ubuntu Mono\""));
+         // get fixed width font
+         String fixedWidthFont = ThemeFonts.getFixedWidthFont();
+         
+         // in desktop mode we'll get an exact match whereas in web mode
+         // we'll get a list of fonts so we need to do an additional probe
+         return (StringUtil.notNull(fixedWidthFont).equals("\"Ubuntu Mono\"") ||
+                 FontDetector.isFontSupported("Ubuntu Mono"));
       }
       else
       {
          return false;
       }
    }
+   
 
    private static final boolean FIXED_UBUNTU_MONO = getFixedUbuntuMono();
-
+   
    static
    {
       Document.get().getBody().addClassName(OPERATING_SYSTEM);
 
       if (FIXED_UBUNTU_MONO)
+      {
          Document.get().getBody().addClassName("ubuntu_mono");
+         
+         if (isFirefox())
+            Document.get().getBody().addClassName("ubuntu_mono_firefox");
+      }
+
    }
 }
