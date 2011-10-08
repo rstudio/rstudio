@@ -15,67 +15,74 @@ package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.Debug;
 
+import com.google.gwt.canvas.client.Canvas;
+import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
+
 public class FontDetector
 {
    public static boolean isFontSupported(String fontName)
    {
+      SimplePanel panel = null;
       try
       {
-         return isFontSupportedNative(fontName);
+         // default font name as a reference point
+         final String defaultFontName = "Arial";
+         if (defaultFontName.equals(fontName))
+            return true;
+         
+         // make sure canvas is supported
+         if (!Canvas.isSupported())
+            return false;
+               
+         // add a temporary div to the dom
+         panel = new SimplePanel();
+         panel.setHeight("200px");
+         panel.getElement().getStyle().setVisibility(Visibility.HIDDEN);
+         panel.getElement().getStyle().setOverflow(Overflow.SCROLL);
+         RootPanel.get().add(panel, -2000, -2000);
+      
+         // add a canvas element to the div and get the 2d drawing context
+         final Canvas canvas = Canvas.createIfSupported();
+         canvas.setWidth("512px");
+         canvas.setHeight("64px");
+         canvas.getElement().getStyle().setLeft(400, Unit.PX);
+         canvas.getElement().getStyle().setBackgroundColor("#ffe");
+         panel.add(canvas);
+         final Context2d ctx = canvas.getContext2d();
+         ctx.setFillStyle("#000000");
+         
+         // closure to generate a hash for a font
+         class HashGenerator { 
+            public String getHash(String fontName)
+            {
+               ctx.setFont("57px " + fontName + ", " + defaultFontName);
+               int width = canvas.getOffsetWidth();
+               int height = canvas.getOffsetHeight();
+               ctx.clearRect(0, 0, width, height);
+               ctx.fillText("TheQuickBrownFox", 2, 50);
+               return canvas.toDataUrl();
+            }};
+         
+         // get hashes and compare them
+         HashGenerator hashGenerator = new HashGenerator();
+         String defaultHash = hashGenerator.getHash(defaultFontName);
+         String fontHash = hashGenerator.getHash(fontName);
+         return !defaultHash.equals(fontHash);
       }
       catch(Exception ex)
       {
          Debug.log(ex.toString());
          return false;
       }
+      finally
+      {
+         if (panel != null)
+            RootPanel.get().remove(panel);
+      }
    }
-   
-   private static native boolean isFontSupportedNative(String fontName) /*-{
-      
-      // alias doc and body
-      var doc = $wnd.document;
-      var body = doc.getElementsByTagName("BODY")[0];
-      
-      // default font is used as a reference size
-      var defaultFontName = "Arial";
-      if (fontName == defaultFontName)
-         return true;
-     
-      // temporary content element which we write into 
-      var content = doc.createElement("div");
-      content.id = "content";
-      content.setAttribute("style", 
-                              "height: 200px; " + 
-                              "visibility: hidden; " +
-                              "overflow: scroll");
-      body.appendChild(content);
-
-      // load canvas element and get 2d drawing context
-      var canvas = doc.createElement("canvas");
-      canvas.width = 512;
-      canvas.height = 64;
-      canvas.setAttribute("style", "background: #ffe;  left: 400px");
-      content.appendChild(canvas);
-      content.appendChild(doc.createElement("br"));
-      var ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#000000";
-      
-      // function to generate a rendered content hash for a given font
-      function getHash(font) {
-         ctx.font = "57px " + font + ", " + defaultFontName;
-         ctx.clearRect(0, 0, canvas.width, canvas.height);
-         ctx.fillText("TheQuickBrownFox", 2, 50);
-         return canvas.toDataURL();
-      } 
-     
-      // generate hashes
-      var defaultFontHash = getHash(defaultFontName);
-      var fontHash = getHash(fontName);
-      
-      // remove temporary element
-      body.removeChild(content);
-    
-      // return result
-      return fontHash != defaultFontHash;
-   }-*/;
 }
