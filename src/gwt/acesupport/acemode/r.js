@@ -44,6 +44,16 @@ define("mode/r", function(require, exports, module)
 
    (function()
    {
+      this.$complements = {
+               "(": ")",
+               "[": "]",
+               '"': '"',
+               "'": "'",
+               "{": "}"
+            };
+      this.$reOpen = /^[(["'{]$/;
+      this.$reClose = /^[)\]"'}]$/;
+
       this.getNextLineIndent = function(state, line, tab, tabSize, row)
       {
          return this.$rCodeModel.getNextLineIndent(row, line, state, tab, tabSize);

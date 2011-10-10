@@ -23,14 +23,13 @@ define("mode/auto_brace_insert", function(require, exports, module)
    (function()
    {
       this.$complements = {
-               "(": ")",
-               "[": "]",
-               '"': '"',
-               "'": "'",
-               "{": "}"
-            };
-      this.$reOpen = /^[(["'{]$/;
-      this.$reClose = /^[)\]"'}]$/;
+         "(": ")",
+         "[": "]",
+         '"': '"',
+         "{": "}"
+      };
+      this.$reOpen = /^[(["{]$/;
+      this.$reClose = /^[)\]"}]$/;
 
       // reStop is the set of characters before which we allow ourselves to
       // automatically insert a closing paren. If any other character
