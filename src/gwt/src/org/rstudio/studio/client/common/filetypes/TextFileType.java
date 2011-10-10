@@ -134,6 +134,7 @@ public class TextFileType extends EditableFileType
       }
       results.add(commands.findReplace());
       results.add(commands.setWorkingDirToActiveDoc());
+      results.add(commands.debugForceTopsToZero());
       return results;
    }
 

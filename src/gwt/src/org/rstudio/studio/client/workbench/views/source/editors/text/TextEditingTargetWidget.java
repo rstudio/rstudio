@@ -228,6 +228,12 @@ public class TextEditingTargetWidget
       return statusBar_;
    }
 
+   @Override
+   public void debug_forceTopsToZero()
+   {
+      editor_.debug_forceTopsToZero();
+   }
+
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);

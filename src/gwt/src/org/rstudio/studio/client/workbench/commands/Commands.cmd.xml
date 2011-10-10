@@ -229,6 +229,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="showLogFiles"/>
             <cmd refid="updateCredentials"/>
             <cmd refid="showRequestLog"/>
+            <separator/>
+            <cmd refid="debugForceTopsToZero"/>
             <!--
             <cmd refid="raiseException"/>
 -           <cmd refid="raiseException2"/>
@@ -761,6 +763,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Request Log"/>
    <cmd id="logFocusedElement"
         menuLabel="Log focused element"/>
+   <cmd id="debugForceTopsToZero"
+        menuLabel="Reset editor top value"/>
 
    <cmd id="quitSession"
         menuLabel="_Quit R..."/>

@@ -103,4 +103,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Position getSelectionEnd();
    int getLength(int row);
    int getRowCount();
+
+   void debug_forceTopsToZero();
 }

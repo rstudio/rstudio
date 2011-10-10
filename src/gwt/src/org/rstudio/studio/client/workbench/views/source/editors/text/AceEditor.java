@@ -513,6 +513,12 @@ public class AceEditor implements DocDisplay,
       return getSession().getDocument().getLength();
    }
 
+   @Override
+   public void debug_forceTopsToZero()
+   {
+      widget_.getEditor().getRenderer().debug_forceTopsToZero();
+   }
+
    public void setSelection(InputEditorSelection selection)
    {
       AceInputEditorPosition start = (AceInputEditorPosition)selection.getStart();

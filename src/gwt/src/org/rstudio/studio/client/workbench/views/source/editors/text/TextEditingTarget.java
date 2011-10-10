@@ -99,6 +99,8 @@ public class TextEditingTarget implements EditingTarget
       StatusBar getStatusBar();
 
       boolean isAttached();
+
+      void debug_forceTopsToZero();
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -1025,6 +1027,12 @@ public class TextEditingTarget implements EditingTarget
    public String getTabTooltip()
    {
       return getPath();
+   }
+
+   @Handler
+   void onDebugForceTopsToZero()
+   {
+      view_.debug_forceTopsToZero();
    }
 
    @Handler

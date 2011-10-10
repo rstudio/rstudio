@@ -187,6 +187,7 @@ public abstract class
    public abstract AppCommand helpKeyboardShortcuts();
    public abstract AppCommand showRequestLog();
    public abstract AppCommand logFocusedElement();
+   public abstract AppCommand debugForceTopsToZero();
 
    // Application
    public abstract AppCommand quitSession();
