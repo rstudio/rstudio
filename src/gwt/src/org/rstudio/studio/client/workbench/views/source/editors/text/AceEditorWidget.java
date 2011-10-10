@@ -31,7 +31,9 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 
@@ -77,9 +79,9 @@ public class AceEditorWidget extends Composite
       AceEditorNative.addEventListener(
                   editor_,
                   "undo",
-                  new Command()
+                  new CommandWithArg<Void>()
                   {
-                     public void execute()
+                     public void execute(Void arg)
                      {
                         fireEvent(new UndoRedoEvent(false));
                      }
@@ -87,14 +89,14 @@ public class AceEditorWidget extends Composite
       AceEditorNative.addEventListener(
                   editor_,
                   "redo",
-                  new Command()
+                  new CommandWithArg<Void>()
                   {
-                     public void execute()
+                     public void execute(Void arg)
                      {
                         fireEvent(new UndoRedoEvent(true));
                      }
                   });
-      AceEditorNative.addStringEventListener(
+      AceEditorNative.addEventListener(
                   editor_,
                   "paste",
                   new CommandWithArg<String>()
@@ -102,6 +104,17 @@ public class AceEditorWidget extends Composite
                      public void execute(String text)
                      {
                         fireEvent(new PasteEvent(text));
+                     }
+                  });
+      AceEditorNative.addEventListener(
+                  editor_,
+                  "mousedown",
+                  new CommandWithArg<AceMouseEventNative>()
+                  {
+                     @Override
+                     public void execute(AceMouseEventNative event)
+                     {
+                        fireEvent(new AceClickEvent(event));
                      }
                   });
    }
@@ -232,6 +245,11 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addPasteHandler(PasteEvent.Handler handler)
    {
       return addHandler(handler, PasteEvent.TYPE);
+   }
+
+   public HandlerRegistration addAceClickHandler(AceClickEvent.Handler handler)
+   {
+      return addHandler(handler, AceClickEvent.TYPE);
    }
 
    public void forceResize()

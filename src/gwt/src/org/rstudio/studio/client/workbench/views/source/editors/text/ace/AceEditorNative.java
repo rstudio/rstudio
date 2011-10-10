@@ -122,9 +122,10 @@ public class AceEditorNative extends JavaScriptObject {
       return loader.loadEditor(container);
    }-*/;
 
-   public static HandlerRegistration addEventListener(JavaScriptObject target,
-                                                      String event,
-                                                      Command command)
+   public static <T> HandlerRegistration addEventListener(
+         JavaScriptObject target,
+         String event,
+         CommandWithArg<T> command)
    {
       final JavaScriptObject functor = addEventListenerInternal(target,
                                                                 event,
@@ -138,41 +139,10 @@ public class AceEditorNative extends JavaScriptObject {
       };
    }
 
-   private static native JavaScriptObject addEventListenerInternal(
+   private static native <T> JavaScriptObject addEventListenerInternal(
          JavaScriptObject target,
          String eventName,
-         Command command) /*-{
-      var callback = $entry(function() {
-         command.@com.google.gwt.user.client.Command::execute()();
-      });
-
-      target.addEventListener(eventName, callback);
-      return function() {
-         target.removeEventListener(eventName, callback);
-      };
-   }-*/;
-
-   public static HandlerRegistration addStringEventListener(
-         JavaScriptObject target,
-         String event,
-         CommandWithArg<String> command)
-   {
-      final JavaScriptObject functor = addStringEventListenerInternal(target,
-                                                                      event,
-                                                                      command);
-      return new HandlerRegistration()
-      {
-         public void removeHandler()
-         {
-            invokeFunctor(functor);
-         }
-      };
-   }
-
-   private static native JavaScriptObject addStringEventListenerInternal(
-         JavaScriptObject target,
-         String eventName,
-         CommandWithArg<String> command) /*-{
+         CommandWithArg<T> command) /*-{
       var callback = $entry(function(arg) {
          command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(arg);
       });
