@@ -543,6 +543,7 @@ public class ReviewPresenter implements IsWidget
       emitter.addDiffs(lines);
       String patch = emitter.createPatch();
 
+      softModeSwitch_ = true;
       server_.vcsApplyPatch(patch, patchMode, new SimpleRequestCallback<Void>());
    }
 
@@ -559,17 +560,36 @@ public class ReviewPresenter implements IsWidget
 
       if (allowModeSwitch)
       {
-         boolean staged = item.getStatus().charAt(0) != ' ' &&
-                          item.getStatus().charAt(1) == ' ';
-         HasValue<Boolean> checkbox = staged ?
-                                      view_.getStagedCheckBox() :
-                                      view_.getUnstagedCheckBox();
-         if (!checkbox.getValue())
+         if (!softModeSwitch_)
          {
-            clearDiff();
-            checkbox.setValue(true, true);
+            boolean staged = item.getStatus().charAt(0) != ' ' &&
+                             item.getStatus().charAt(1) == ' ';
+            HasValue<Boolean> checkbox = staged ?
+                                         view_.getStagedCheckBox() :
+                                         view_.getUnstagedCheckBox();
+            if (!checkbox.getValue())
+            {
+               clearDiff();
+               checkbox.setValue(true, true);
+            }
+         }
+         else
+         {
+            if (view_.getStagedCheckBox().getValue()
+                && (item.getStatus().charAt(0) == ' ' || item.getStatus().charAt(0) == '?'))
+            {
+               clearDiff();
+               view_.getUnstagedCheckBox().setValue(true, true);
+            }
+            else if (view_.getUnstagedCheckBox().getValue()
+                     && item.getStatus().charAt(1) == ' ')
+            {
+               clearDiff();
+               view_.getStagedCheckBox().setValue(true, true);
+            }
          }
       }
+      softModeSwitch_ = false;
 
       if (!item.getPath().equals(currentFilename_))
       {
@@ -625,6 +645,7 @@ public class ReviewPresenter implements IsWidget
 
    private void clearDiff()
    {
+      softModeSwitch_ = false;
       currentResponse_ = null;
       currentFilename_ = null;
       view_.getLineTableDisplay().clear();
@@ -664,6 +685,9 @@ public class ReviewPresenter implements IsWidget
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
    private String currentResponse_;
    private String currentFilename_;
+   // Hack to prevent us flipping to unstaged view when a line is unstaged
+   // from staged view
+   private boolean softModeSwitch_;
    private static final String MODULE_VCS = "vcs";
    private static final String KEY_CONTEXT_LINES = "context_lines";
 }
