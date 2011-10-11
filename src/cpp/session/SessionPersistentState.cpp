@@ -27,7 +27,6 @@ namespace session {
 namespace {
 const char * const kActiveClientId = "active-client-id";
 const char * const kAbend = "abend";
-const char * const kNextSessionProject = "next-session-project";
 }
    
 PersistentState& persistentState()
@@ -69,15 +68,4 @@ void PersistentState::setAbend(bool abend)
    settings_.set(kAbend, abend); 
 }
 
-std::string PersistentState::nextSessionProject() const
-{
-   return settings_.get(kNextSessionProject);
-}
-
-void PersistentState::setNextSessionProject(
-                        const std::string& nextSessionProject)
-{
-   settings_.set(kNextSessionProject, nextSessionProject);
-}
-   
 } // namespace session

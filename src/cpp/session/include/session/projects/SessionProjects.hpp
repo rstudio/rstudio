@@ -24,6 +24,7 @@
 
 #include <core/FileInfo.hpp>
 #include <core/FilePath.hpp>
+#include <core/Settings.hpp>
 
 #include <core/system/FileMonitor.hpp>
 #include <core/system/FileChangeEvent.hpp>
@@ -63,7 +64,17 @@ public:
    core::Error initialize();
 
 public:
+   // these functions can be called even when there is no project
    bool hasProject() const { return !file_.empty(); }
+
+   // next session project path -- low level value used by suspend
+   // and switch-to-project
+   std::string nextSessionProject() const;
+   void setNextSessionProject(const std::string& nextSessionProject);
+
+   // last project path -- used to implement restore last project user setting
+   core::FilePath lastProjectPath() const;
+   void setLastProjectPath(const core::FilePath& lastProjectPath);
 
    const core::FilePath& file() const { return file_; }
    const core::FilePath& directory() const { return directory_; }

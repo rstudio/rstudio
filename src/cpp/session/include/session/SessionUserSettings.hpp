@@ -83,9 +83,6 @@ public:
    bool alwaysRestoreLastProject() const;
    void setAlwaysRestoreLastProject(bool alwaysRestore);
 
-   core::FilePath lastProjectPath() const;
-   void setLastProjectPath(const core::FilePath& lastProjectPath);
-
    int saveAction() const;
    void setSaveAction(int saveAction);
 

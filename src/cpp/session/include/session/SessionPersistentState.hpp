@@ -45,10 +45,6 @@ public:
    bool hadAbend();
    void setAbend(bool abend);
 
-   // next session project path
-   std::string nextSessionProject() const;
-   void setNextSessionProject(const std::string& nextSessionProject);
-
    // get underlying settings
    core::Settings& settings() { return settings_; }
 

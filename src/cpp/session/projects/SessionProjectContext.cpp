@@ -16,6 +16,7 @@
 #include <map>
 
 #include <boost/format.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/r_util/RProjectFile.hpp>
@@ -202,6 +203,82 @@ Error ProjectContext::initialize()
    }
 
    return Success();
+}
+
+
+namespace {
+const char * const kNextSessionProject = "next-session-project";
+const char * const kLastProjectPath = "last-project-path";
+
+FilePath settingsPath()
+{
+   FilePath settingsPath = module_context::userScratchPath().complete(
+                                                                  "projects_settings");
+   Error error = settingsPath.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+
+   return settingsPath;
+}
+
+std::string readSetting(const char * const settingName)
+{
+   FilePath readPath = settingsPath().complete(settingName);
+   if (readPath.exists())
+   {
+      std::string value;
+      Error error = core::readStringFromFile(readPath, &value);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return std::string();
+      }
+      boost::algorithm::trim(value);
+      return value;
+   }
+   else
+   {
+      return std::string();
+   }
+}
+
+void writeSetting(const char * const settingName, const std::string& value)
+{
+   FilePath writePath = settingsPath().complete(settingName);
+   Error error = core::writeStringToFile(writePath, value);
+   if (error)
+      LOG_ERROR(error);
+}
+
+} // anonymous namespace
+
+std::string ProjectContext::nextSessionProject() const
+{
+   return readSetting(kNextSessionProject);
+}
+
+void ProjectContext::setNextSessionProject(
+                           const std::string& nextSessionProject)
+{
+   writeSetting(kNextSessionProject, nextSessionProject);
+}
+
+
+FilePath ProjectContext::lastProjectPath() const
+{
+   std::string path = readSetting(kLastProjectPath);
+   if (!path.empty())
+      return FilePath(path);
+   else
+      return FilePath();
+}
+
+void ProjectContext::setLastProjectPath(const FilePath& lastProjectPath)
+{
+   if (!lastProjectPath.empty())
+      writeSetting(kLastProjectPath, lastProjectPath.absolutePath());
+   else
+      writeSetting(kLastProjectPath, "");
 }
 
 

@@ -44,7 +44,7 @@ void onSuspend(Settings*)
    // on resume. we read this back in initalize (rather than in
    // the onResume handler) becuase we need it very early in the
    // processes lifetime and onResume happens too late
-   persistentState().setNextSessionProject(
+   s_projectContext.setNextSessionProject(
                               s_projectContext.file().absolutePath());
 }
 
@@ -139,13 +139,14 @@ void startup()
    // see if there is a project path hard-wired for the next session
    // (this would be used for a switch to project or for the resuming of
    // a suspended session)
-   std::string nextSessionProject = persistentState().nextSessionProject();
+   std::string nextSessionProject = s_projectContext.nextSessionProject();
+   FilePath lastProjectPath = s_projectContext.lastProjectPath();
 
    // check for next session project path (see above for comment)
    if (!nextSessionProject.empty())
    {
       // reset next session project path so its a one shot deal
-      persistentState().setNextSessionProject("");
+      s_projectContext.setNextSessionProject("");
 
       // clear any initial context settings which may be leftover
       // by a re-instatiation of rsession by desktop
@@ -181,17 +182,17 @@ void startup()
    // had an abend on our last session -- this might have been a
    // result of something in the project)
    else if (userSettings().alwaysRestoreLastProject() &&
-            !userSettings().lastProjectPath().empty() &&
+            !lastProjectPath.empty() &&
             !session::persistentState().hadAbend())
    {
 
       // get last project path
-      projectFilePath = userSettings().lastProjectPath();
+      projectFilePath = lastProjectPath;
 
       // reset it to empty so that we only attempt to load the "lastProject"
       // a single time (this will be reset to the path below after we
       // clear the s_projectContext.initialize)
-      userSettings().setLastProjectPath(FilePath());
+      s_projectContext.setLastProjectPath(FilePath());
    }
 
    // else no active project for this session
@@ -222,9 +223,12 @@ void startup()
          module_context::enqueClientEvent(event);
       }
    }
+}
 
-   // save the active project path for the next session (may be empty)
-   userSettings().setLastProjectPath(s_projectContext.file());
+void onShutdown(bool terminatedNormally)
+{
+   if (terminatedNormally)
+      s_projectContext.setLastProjectPath(s_projectContext.file());
 }
 
 Error initialize()
@@ -233,6 +237,9 @@ Error initialize()
    Error error = s_projectContext.initialize();
    if (error)
       return error;
+
+   // subscribe to shutdown for setting lastProjectPath
+   module_context::events().onShutdown.connect(onShutdown);
 
    using boost::bind;
    using namespace module_context;

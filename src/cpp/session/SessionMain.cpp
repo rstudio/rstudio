@@ -684,7 +684,10 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 
             // note switch to project
             if (!switchToProject.empty())
-               persistentState().setNextSessionProject(switchToProject);
+            {
+               session::projects::projectContext().setNextSessionProject(
+                                                                  switchToProject);
+            }
 
             // acknowledge request & quit session
             ptrConnection->sendJsonRpcResponse();
@@ -1693,7 +1696,8 @@ void rResumed()
 void rQuit()
 {   
    // enque a quit event
-   bool switchProjects = !persistentState().nextSessionProject().empty();
+   bool switchProjects =
+         !session::projects::projectContext().nextSessionProject().empty();
    ClientEvent quitEvent(kQuit, switchProjects);
    session::clientEventQueue().add(quitEvent);
 }
