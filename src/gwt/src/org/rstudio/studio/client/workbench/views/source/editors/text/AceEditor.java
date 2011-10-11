@@ -32,6 +32,8 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
@@ -236,6 +238,32 @@ public class AceEditor implements DocDisplay,
             });
          }
       });
+      
+      // handle click events
+      addAceClickHandler(new AceClickEvent.Handler()
+      {    
+         @Override
+         public void onClick(AceClickEvent event)
+         {    
+            // check for Cmd/Ctrl
+            NativeEvent nativeEvt = event.getNativeEvent();
+            boolean cmdClick = BrowseCap.hasMetaKey() ? nativeEvt.getMetaKey() :
+                                                        nativeEvt.getCtrlKey();
+            if (cmdClick)
+            {     
+               // eat the event so ace doesn't do anything with it
+               event.preventDefault();
+               event.stopPropagation();
+               
+               // set the cursor position
+               setCursorPosition(event.getDocumentPosition());
+               
+               // go to function definition
+               completionManager_.goToFunctionDefinition();
+            }
+         }
+      });
+      
    }
 
    private void indentPastedRange(Range range)
@@ -289,10 +317,10 @@ public class AceEditor implements DocDisplay,
       if (!suppressCompletion && fileType_.getEditorLanguage().useRCompletion())
       {
          completionManager = new RCompletionManager(this,
-                                                     this,
-                                                     new CompletionPopupPanel(),
-                                                     server_,
-                                                     new Filter());
+                                                    this,
+                                                    new CompletionPopupPanel(),
+                                                    server_,
+                                                    new Filter());
       }
       else
          completionManager = new NullCompletionManager();

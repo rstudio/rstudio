@@ -21,7 +21,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -48,7 +47,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToo
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetFindReplace;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -102,30 +100,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       panel_.setSize("100%", "100%");
       
       docDisplay_.setReadOnly(true);
-      
-      // handle click events
-      docDisplay_.addAceClickHandler(new AceClickEvent.Handler()
-      {    
-         @Override
-         public void onClick(AceClickEvent event)
-         {            
-            // check for Cmd/Ctrl
-            NativeEvent nativeEvt = event.getNativeEvent();
-            boolean cmdClick = BrowseCap.hasMetaKey() ? nativeEvt.getMetaKey() :
-                                                        nativeEvt.getCtrlKey();
-            if (cmdClick)
-            {
-               int row = event.getDocumentPosition().getRow();
-               String line = docDisplay_.getLine(row);
-               int col = event.getDocumentPosition().getColumn();
-               
-               navigateToFunction(new InputEditorLineWithCursorPosition(line, 
-                                                                        col));
-            }
-         }
-      });
-      
-      
+       
       // setup custom completion manager for executing F1 and F2 actions
       docDisplay_.setFileType(FileTypeRegistry.R, new CompletionManager() {
 
