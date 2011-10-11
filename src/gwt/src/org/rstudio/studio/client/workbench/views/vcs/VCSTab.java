@@ -12,10 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs;
 
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
-import org.rstudio.core.client.ExternalJavaScriptLoader;
-import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
@@ -24,19 +21,6 @@ public class VCSTab extends DelayLoadWorkbenchTab<VCS>
 {
    public abstract static class VCSShim extends DelayLoadTabShim<VCS, VCSTab>
    {
-      @Override
-      protected void preInstantiationHook(final Command continuation)
-      {
-         new ExternalJavaScriptLoader("js/encrypt.min.js").addCallback(
-               new Callback()
-               {
-                  @Override
-                  public void onLoaded()
-                  {
-                     continuation.execute();
-                  }
-               });
-      }
    }
 
    @Inject
