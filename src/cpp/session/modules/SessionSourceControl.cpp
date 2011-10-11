@@ -1478,6 +1478,7 @@ void postbackSSHAskPass(const std::string&,
             passphrase = value.get_value<std::string>();
             retcode = EXIT_SUCCESS;
 
+#ifndef _WIN32
             if (options().programMode() == kSessionProgramModeServer)
             {
                // In server mode, passphrases are encrypted
@@ -1491,6 +1492,7 @@ void postbackSSHAskPass(const std::string&,
                   LOG_ERROR(error);
                }
             }
+#endif
          }
       }
       else

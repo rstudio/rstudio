@@ -1260,7 +1260,9 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::agreement::initialize)
       (modules::console::initialize)
       (modules::console_process::initialize)
+#ifndef _WIN32
       (modules::crypto::initialize)
+#endif
       (modules::diff::initialize)
       (modules::files::initialize)
       (modules::workspace::initialize)
@@ -2346,12 +2348,14 @@ int main (int argc, char * const argv[])
          return sessionExitFailure(error, ERROR_LOCATION);
       }
 
+#ifndef _WIN32
       if (serverMode)
       {
          Error error = core::system::crypto::rsaInit();
          if (error)
             LOG_ERROR(error);
       }
+#endif
 
       // start the file monitor
       core::system::file_monitor::initialize();
