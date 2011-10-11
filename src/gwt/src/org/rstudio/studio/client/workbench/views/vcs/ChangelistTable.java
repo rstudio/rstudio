@@ -236,7 +236,7 @@ public class ChangelistTable extends Composite
       ArrayList<StatusAndPath> items = getSelectedItems();
       if (items.size() > 0)
       {
-         boolean unstage = !items.get(0).isDiscardable();
+         boolean unstage = items.get(0).getStatus().charAt(1) == ' ';
          fireEvent(new StageUnstageEvent(unstage, items));
 
          if (moveSelection)

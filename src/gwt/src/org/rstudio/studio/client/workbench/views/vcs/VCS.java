@@ -78,7 +78,7 @@ public class VCS extends BasePresenter implements IsWidget
               Provider<ReviewPresenter> pReviewPresenter,
               Provider<HistoryPresenter> pHistoryPresenter,
               VCSServerOperations server,
-              Commands commands,
+              final Commands commands,
               Binder commandBinder,
               VcsState vcsState,
               EventBus events,
@@ -103,6 +103,9 @@ public class VCS extends BasePresenter implements IsWidget
          public void onVcsRefresh(VcsRefreshEvent event)
          {
             refresh();
+            boolean hasRemote = vcsState_.hasRemote();
+            commands.vcsPull().setEnabled(hasRemote);
+            commands.vcsPush().setEnabled(hasRemote);
          }
       });
 

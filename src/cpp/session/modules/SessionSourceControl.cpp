@@ -179,8 +179,7 @@ public:
    }
 
    virtual core::Error listBranches(std::vector<std::string>* pBranches,
-                                    boost::optional<size_t>* pActiveBranchIndex,
-                                    std::string* pStdErr)
+                                    boost::optional<size_t>* pActiveBranchIndex)
    {
       return Success();
    }
@@ -188,6 +187,12 @@ public:
    virtual core::Error checkout(const std::string& id,
                                 std::string* pHandle)
    {
+      return Success();
+   }
+
+   virtual core::Error hasRemote(bool* pHasRemote)
+   {
+      *pHasRemote = false;
       return Success();
    }
 
@@ -459,8 +464,7 @@ public:
    }
 
    core::Error listBranches(std::vector<std::string>* pBranches,
-                            boost::optional<size_t>* pActiveBranchIndex,
-                            std::string* pStdErr)
+                            boost::optional<size_t>* pActiveBranchIndex)
    {
       std::vector<std::string> lines;
 
@@ -736,6 +740,56 @@ public:
       return runCommand(git() << "show" << "--pretty=oneline" << "-M" << rev,
                         pOutput, NULL);
    }
+
+   virtual core::Error hasRemote(bool *pHasRemote)
+   {
+      std::vector<std::string> branches;
+      boost::optional<size_t> index;
+      Error error = listBranches(&branches, &index);
+      if (error)
+         return error;
+
+      if (!index)
+      {
+         *pHasRemote = false;
+         return Success();
+      }
+
+      std::string branch = branches.at(*index);
+      if (branch == "(no branch)")
+      {
+         *pHasRemote = false;
+         return Success();
+      }
+
+      core::system::ProcessResult result;
+      error = core::system::runCommand(
+            git() << "config" << "--get" <<
+               "branch." + branch + ".remote",
+            procOptions(),
+            &result);
+      if (error)
+         return error;
+      if (result.exitStatus != EXIT_SUCCESS)
+      {
+         *pHasRemote = false;
+         return Success();
+      }
+      error = core::system::runCommand(
+            git() << "config" << "--get" <<
+               "branch." + branch + ".merge",
+            procOptions(),
+            &result);
+      if (error)
+         return error;
+      if (result.exitStatus != EXIT_SUCCESS)
+      {
+         *pHasRemote = false;
+         return Success();
+      }
+      *pHasRemote = true;
+      return Success();
+   }
 };
 
 class SubversionVCSImpl : public VCSImpl
@@ -953,8 +1007,7 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
 {
    std::vector<std::string> branches;
    boost::optional<size_t> activeIndex;
-   std::string stdErr;
-   Error error = s_pVcsImpl_->listBranches(&branches, &activeIndex, &stdErr);
+   Error error = s_pVcsImpl_->listBranches(&branches, &activeIndex);
    if (error)
       return error;
 
@@ -1017,6 +1070,33 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
          return error;
       result.push_back(obj);
    }
+
+   pResponse->setResult(result);
+
+   return Success();
+}
+
+Error vcsAllStatus(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   json::Object result;
+   json::JsonRpcResponse tmp;
+
+   Error error = vcsFullStatus(request, &tmp);
+   if (error)
+      return error;
+   result["status"] = tmp.result();
+
+   error = vcsListBranches(request, &tmp);
+   if (error)
+      return error;
+   result["branches"] = tmp.result();
+
+   bool hasRemote;
+   error = s_pVcsImpl_->hasRemote(&hasRemote);
+   if (error)
+      return error;
+   result["has_remote"] = hasRemote;
 
    pResponse->setResult(result);
 
@@ -1866,6 +1946,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_list_branches", vcsListBranches))
       (bind(registerRpcMethod, "vcs_checkout", vcsCheckout))
       (bind(registerRpcMethod, "vcs_full_status", vcsFullStatus))
+      (bind(registerRpcMethod, "vcs_all_status", vcsAllStatus))
       (bind(registerRpcMethod, "vcs_commit_git", vcsCommitGit))
       (bind(registerRpcMethod, "vcs_clone", vcsClone))
       (bind(registerRpcMethod, "vcs_push", vcsPush))

@@ -654,6 +654,11 @@ public:
    {
       setField(kRpcResult, result);
    }
+
+   json::Value result()
+   {
+      return response_[kRpcResult];
+   }
    
    void setError(const core::Error& error);
    

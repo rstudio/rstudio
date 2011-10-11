@@ -55,6 +55,9 @@ public interface VCSServerOperations extends CryptoServerOperations
    void vcsUnstage(ArrayList<String> paths,
                    ServerRequestCallback<Void> requestCallback);
 
+   void vcsAllStatus(
+         ServerRequestCallback<AllStatus> requestCallback);
+
    void vcsFullStatus(
          ServerRequestCallback<JsArray<StatusAndPath>> requestCallback);
 

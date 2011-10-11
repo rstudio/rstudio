@@ -28,6 +28,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.vcs.AllStatus;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
@@ -159,6 +160,11 @@ public class VcsState
       return branches_;
    }
 
+   public boolean hasRemote()
+   {
+      return hasRemote_;
+   }
+
    public void refresh()
    {
       refresh(true);
@@ -166,32 +172,15 @@ public class VcsState
 
    public void refresh(final boolean showError)
    {
-      server_.vcsListBranches(new ServerRequestCallback<BranchesInfo>()
+      server_.vcsAllStatus(new ServerRequestCallback<AllStatus>()
       {
          @Override
-         public void onResponseReceived(BranchesInfo response)
+         public void onResponseReceived(AllStatus response)
          {
-            branches_ = response;
-
-            server_.vcsFullStatus(new ServerRequestCallback<JsArray<StatusAndPath>>()
-            {
-               @Override
-               public void onResponseReceived(JsArray<StatusAndPath> response)
-               {
-                  status_ = response;
-
-                  handlers_.fireEvent(new VcsRefreshEvent(Reason.VcsOperation));
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-                  if (showError)
-                     globalDisplay_.showErrorMessage("Error",
-                                                     error.getUserMessage());
-               }
-            });
+            status_ = response.getStatus();
+            branches_ = response.getBranches();
+            hasRemote_ = response.hasRemote();
+            handlers_.fireEvent(new VcsRefreshEvent(Reason.VcsOperation));
          }
 
          @Override
@@ -208,6 +197,7 @@ public class VcsState
    private final HandlerManager handlers_ = new HandlerManager(this);
    private JsArray<StatusAndPath> status_;
    private BranchesInfo branches_;
+   private boolean hasRemote_;
    private final VCSServerOperations server_;
    private final EventBus eventBus_;
    private final GlobalDisplay globalDisplay_;

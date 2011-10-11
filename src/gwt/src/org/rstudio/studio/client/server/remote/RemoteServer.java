@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.vcs.AllStatus;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
@@ -1293,6 +1294,12 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void vcsAllStatus(ServerRequestCallback<AllStatus> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, VCS_ALL_STATUS, requestCallback);
+   }
+
+   @Override
    public void vcsFullStatus(ServerRequestCallback<JsArray<StatusAndPath>> requestCallback)
    {
       sendRequest(RPC_SCOPE, VCS_FULL_STATUS, requestCallback);
@@ -1936,6 +1943,7 @@ public class RemoteServer implements Server
    private static final String VCS_REVERT = "vcs_revert";
    private static final String VCS_STAGE = "vcs_stage";
    private static final String VCS_UNSTAGE = "vcs_unstage";
+   private static final String VCS_ALL_STATUS = "vcs_all_status";
    private static final String VCS_FULL_STATUS = "vcs_full_status";
    private static final String VCS_LIST_BRANCHES = "vcs_list_branches";
    private static final String VCS_CHECKOUT = "vcs_checkout";
