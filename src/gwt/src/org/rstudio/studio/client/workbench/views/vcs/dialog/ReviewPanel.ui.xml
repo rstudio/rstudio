@@ -67,7 +67,7 @@
                </g:FlowPanel>
             </g:north>
             <g:center>
-               <g:ScrollPanel styleName="{res.styles.whitebg}" width="100%" height="100%">
+               <g:ScrollPanel ui:field="diffScroll_" styleName="{res.styles.whitebg}" width="100%" height="100%">
                   <vcs_diff:LineTableView ui:field="lines_" width="100%"/>
                </g:ScrollPanel>
             </g:center>

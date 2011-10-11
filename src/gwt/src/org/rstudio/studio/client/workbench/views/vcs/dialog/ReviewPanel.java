@@ -32,12 +32,14 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarFramePanel;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter.Display;
+import org.rstudio.studio.client.workbench.views.vcs.diff.ChunkOrLine;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
 
@@ -362,6 +364,18 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Override
+   public void setData(ArrayList<ChunkOrLine> lines, PatchMode patchMode)
+   {
+      int vscroll = diffScroll_.getVerticalScrollPosition();
+      int hscroll = diffScroll_.getHorizontalScrollPosition();
+
+      getLineTableDisplay().setData(lines, patchMode);
+
+      diffScroll_.setVerticalScrollPosition(vscroll);
+      diffScroll_.setHorizontalScrollPosition(hscroll);
+   }
+
+   @Override
    public HasText getCommitMessage()
    {
       return commitMessage_;
@@ -451,6 +465,8 @@ public class ReviewPanel extends Composite implements Display
    TextArea commitMessage_;
    @UiField
    CheckBox commitIsAmend_;
+   @UiField
+   ScrollPanel diffScroll_;
 
    private ListBoxAdapter listBoxAdapter_;
 

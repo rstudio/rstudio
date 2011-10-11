@@ -93,6 +93,8 @@ public class ReviewPresenter implements IsWidget
       void setStageButtonLabel(String label);
       void setDiscardButtonLabel(String label);
       void setUnstageButtonLabel(String label);
+
+      void setData(ArrayList<ChunkOrLine> lines, PatchMode patchMode);
    }
 
    private class ApplyPatchClickHandler implements ClickHandler, Command
@@ -615,7 +617,7 @@ public class ReviewPresenter implements IsWidget
 
                   view_.getLineTableDisplay().setShowActions(
                         item.isFineGrainedActionable());
-                  view_.getLineTableDisplay().setData(allLines, patchMode);
+                  view_.setData(allLines, patchMode);
                }
 
             });
