@@ -1378,11 +1378,10 @@ public class RemoteServer implements Server
    public void askpassCompleted(String value,
                                 ServerRequestCallback<Void> requestCallback)
    {
-      // TODO: Sending private key passphrase, potentially over unencrypted HTTP
       JSONArray params = new JSONArray();
       params.set(0, value == null ? JSONNull.getInstance()
                                   : new JSONString(value));
-      sendRequest(RPC_SCOPE, ASKPASS_COMPLETED, params, requestCallback);
+      sendRequest(RPC_SCOPE, ASKPASS_COMPLETED, params, true, requestCallback);
    }
 
    @Override
@@ -1459,7 +1458,8 @@ public class RemoteServer implements Server
       params.set(0, new JSONNumber(lastEventId));
       return sendRequest(EVENTS_SCOPE, 
                          "get_events", 
-                         params, 
+                         params,
+                         false,
                          requestCallback,
                          retryHandler);
    }
@@ -1537,6 +1537,15 @@ public class RemoteServer implements Server
                                 final JSONArray params,
                                 final ServerRequestCallback<T> requestCallback)
    {
+      sendRequest(scope, method, params, false, requestCallback);
+   }
+
+   private <T> void sendRequest(final String scope,
+                                final String method,
+                                final JSONArray params,
+                                final boolean redactLog,
+                                final ServerRequestCallback<T> requestCallback)
+   {
       // retry handler (make the same call with the same params. ensure that
       // only one retry occurs by passing null as the retryHandler)
       RetryHandler retryHandler = new RetryHandler() {
@@ -1545,7 +1554,7 @@ public class RemoteServer implements Server
          {
             // retry one time (passing null as last param ensures there
             // is no retry handler installed)
-            sendRequest(scope, method, params, requestCallback, null);    
+            sendRequest(scope, method, params, redactLog, requestCallback, null);
          }   
 
          public void onError(ServerError error)
@@ -1556,7 +1565,7 @@ public class RemoteServer implements Server
       };
       
       // submit request (retry same request up to one time)
-      sendRequest(scope, method, params, requestCallback, retryHandler);
+      sendRequest(scope, method, params, redactLog, requestCallback, retryHandler);
    }
     
    
@@ -1564,6 +1573,7 @@ public class RemoteServer implements Server
                               String scope, 
                               String method, 
                               JSONArray params,
+                              boolean redactLog,
                               final ServerRequestCallback<T> requestCallback,
                               final RetryHandler retryHandler)
    {   
@@ -1579,6 +1589,7 @@ public class RemoteServer implements Server
                                              method, 
                                              params, 
                                              null,
+                                             redactLog,
                                              clientId_,
                                              clientVersion_);
       

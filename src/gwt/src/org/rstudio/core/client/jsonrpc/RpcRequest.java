@@ -34,6 +34,7 @@ public class RpcRequest
                      String method, 
                      JSONArray params, 
                      JSONObject kwparams,
+                     boolean redactLog,
                      String clientId,
                      double clientVersion)
    {
@@ -41,6 +42,7 @@ public class RpcRequest
       method_ = method;
       params_ = params ;
       kwparams_ = kwparams;
+      redactLog_ = redactLog;
       if (clientId != null)
          clientId_ = new JSONString(clientId);
       else
@@ -83,7 +85,9 @@ public class RpcRequest
          if (TRACE)
             Debug.log("Request: " + requestString) ;
 
-         requestLogEntry_ = RequestLog.log(requestId, requestString);
+         requestLogEntry_ = RequestLog.log(requestId,
+                                           redactLog_ ? "[REDACTED]"
+                                                      : requestString);
 
          request_ = builder.sendRequest(requestString, new RequestCallback() {
             
@@ -189,6 +193,7 @@ public class RpcRequest
    final private String method_ ;
    final private JSONArray params_ ;
    final private JSONObject kwparams_;
+   private final boolean redactLog_;
    final private JSONString clientId_;
    final private JSONNumber clientVersion_;
    private Request request_ = null;

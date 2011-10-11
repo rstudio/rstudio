@@ -80,6 +80,9 @@ public class RequestLogEntry
 
    public String getRequestMethodName()
    {
+      if (requestData_.equals("[REDACTED]"))
+         return requestData_;
+
       Pattern p = Pattern.create("\\\"method\\\":\\s*\\\"([^\"]+)\\\"");
       Match match = p.match(requestData_, 0);
       if (match == null)
