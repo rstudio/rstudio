@@ -513,6 +513,11 @@ public class AceEditor implements DocDisplay,
    {
       return getSession().getDocument().getLength();
    }
+   
+   public String getLine(int row)
+   {
+      return getSession().getLine(row);
+   }
 
    @Override
    public void debug_forceTopsToZero()

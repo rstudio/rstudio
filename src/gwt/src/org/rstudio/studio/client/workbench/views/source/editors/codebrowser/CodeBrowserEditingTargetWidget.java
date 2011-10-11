@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -47,12 +48,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToo
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetFindReplace;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 public class CodeBrowserEditingTargetWidget extends ResizeComposite
-   implements CodeBrowserEditingTarget.Display
+                              implements CodeBrowserEditingTarget.Display
 {
    public CodeBrowserEditingTargetWidget(Commands commands,
                                          final GlobalDisplay globalDisplay,
@@ -63,6 +65,9 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    {
       commands_ = commands;
       uiPrefs_ = uiPrefs;
+      globalDisplay_ = globalDisplay;
+      eventBus_ = eventBus;
+      server_ = server;
       
       docDisplay_ = docDisplay;
       
@@ -98,6 +103,29 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       
       docDisplay_.setReadOnly(true);
       
+      // handle click events
+      docDisplay_.addAceClickHandler(new AceClickEvent.Handler()
+      {    
+         @Override
+         public void onClick(AceClickEvent event)
+         {            
+            // check for Cmd/Ctrl
+            NativeEvent nativeEvt = event.getNativeEvent();
+            boolean cmdClick = BrowseCap.hasMetaKey() ? nativeEvt.getMetaKey() :
+                                                        nativeEvt.getCtrlKey();
+            if (cmdClick)
+            {
+               int row = event.getDocumentPosition().getRow();
+               String line = docDisplay_.getLine(row);
+               int col = event.getDocumentPosition().getColumn();
+               
+               navigateToFunction(new InputEditorLineWithCursorPosition(line, 
+                                                                        col));
+            }
+         }
+      });
+      
+      
       // setup custom completion manager for executing F1 and F2 actions
       docDisplay_.setFileType(FileTypeRegistry.R, new CompletionManager() {
 
@@ -132,51 +160,8 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
             InputEditorLineWithCursorPosition lineWithPos = 
                       InputEditorUtil.getLineWithCursorPosition(docDisplay);
              
-            // delayed progress indicator
-            final GlobalProgressDelayer progress = new GlobalProgressDelayer(
-                  globalDisplay, 1000, "Searching for function definition...");
-            
-            server.findFunctionInSearchPath(
-               lineWithPos.getLine(),
-               lineWithPos.getPosition(), 
-               currentFunctionNamespace_,
-               new ServerRequestCallback<SearchPathFunctionDefinition>() {
-                  @Override
-                  public void onResponseReceived(SearchPathFunctionDefinition def)
-                  {
-                      // dismiss progress
-                      progress.dismiss();
-                          
-                      // if we got a hit
-                      if (def.getName() != null)
-                      {         
-                         // try to search for the function locally
-                         SourcePosition position = 
-                            docDisplay.findFunctionPositionFromCursor(
-                                                      def.getName());
-                         if (position != null)
-                         {
-                            docDisplay.navigateToPosition(position, true);
-                         }
-                         else if (def.getNamespace() != null)
-                         {
-                            docDisplay.recordCurrentNavigationPosition();
-                            eventBus.fireEvent(new CodeBrowserNavigationEvent(
-                                                                         def));        
-                         }
-                     }
-                  }
-
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     progress.dismiss();
-                     
-                     globalDisplay.showErrorMessage("Error Searching for Function",
-                                                     error.getUserMessage());
-                  }
-               });
-            
+            // navigate to the function at this position (if any)
+            navigateToFunction(lineWithPos);  
          }
 
          @Override
@@ -195,7 +180,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       initWidget(panel_);
 
    }
-   
+    
    @Override
    public Widget asWidget()
    {
@@ -247,6 +232,57 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
             docDisplay_.scrollToX(0); 
          }
       }.schedule(100);
+   }
+   
+   private void navigateToFunction(
+         InputEditorLineWithCursorPosition lineWithPos)
+   {
+      // delayed progress indicator
+      final GlobalProgressDelayer progress = new GlobalProgressDelayer(
+            globalDisplay_, 1000, "Searching for function definition...");
+
+      server_.findFunctionInSearchPath(
+            lineWithPos.getLine(),
+            lineWithPos.getPosition(), 
+            currentFunctionNamespace_,
+            new ServerRequestCallback<SearchPathFunctionDefinition>() {
+               @Override
+               public void onResponseReceived(SearchPathFunctionDefinition def)
+               {
+                  // dismiss progress
+                  progress.dismiss();
+
+                  // if we got a hit
+                  if (def.getName() != null)
+                  {         
+                     // try to search for the function locally
+                     SourcePosition position = 
+                           docDisplay_.findFunctionPositionFromCursor(
+                                 def.getName());
+                     if (position != null)
+                     {
+                        docDisplay_.navigateToPosition(position, true);
+                     }
+                     else if (def.getNamespace() != null)
+                     {
+                        docDisplay_.recordCurrentNavigationPosition();
+                        eventBus_.fireEvent(new CodeBrowserNavigationEvent(
+                              def));        
+                     }
+                  }
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  progress.dismiss();
+
+                  globalDisplay_.showErrorMessage(
+                                          "Error Searching for Function",
+                                          error.getUserMessage());
+               }
+            });
+
    }
    
    private Toolbar createToolbar()
@@ -340,11 +376,12 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
 
    private final PanelWithToolbar panel_;
    private CodeBrowserContextLabel contextLabel_;
+   private final CodeToolsServerOperations server_;
+   private final GlobalDisplay globalDisplay_;
+   private final EventBus eventBus_;
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
    private final DocDisplay docDisplay_;
    private final TextEditingTargetFindReplace findReplace_;
    private String currentFunctionNamespace_ = null;
-  
-   
 }

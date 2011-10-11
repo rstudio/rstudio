@@ -18,6 +18,7 @@ import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 
@@ -82,6 +83,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setShowPrintMargin(boolean on);
    void setPrintMarginColumn(int column);
 
+   HandlerRegistration addAceClickHandler(Handler handler);
+   
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
    Position getCursorPosition();
    void setCursorPosition(Position position);
@@ -104,5 +107,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    int getLength(int row);
    int getRowCount();
 
+   String getLine(int row);
+   
    void debug_forceTopsToZero();
 }
