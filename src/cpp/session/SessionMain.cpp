@@ -1319,19 +1319,14 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    if (session::options().programMode() == kSessionProgramModeDesktop)
       registerGwtHandlers();
 
-   // enque abend warning event if necessary. this is done for server
-   // mode only because in desktop mode we don't get a callback
-   // indicating that R is exiting
-   if (session::options().programMode() == kSessionProgramModeServer)
+   // enque abend warning event if necessary.
+   using namespace session::client_events;
+   if (session::persistentState().hadAbend())
    {
-      using namespace session::client_events;
-      if (session::persistentState().hadAbend())
-      {
-         LOG_ERROR_MESSAGE("session hadabend");
+      LOG_ERROR_MESSAGE("session hadabend");
 
-         ClientEvent abendWarningEvent(kAbendWarning);
-         session::clientEventQueue().add(abendWarningEvent);
-      }
+      ClientEvent abendWarningEvent(kAbendWarning);
+      session::clientEventQueue().add(abendWarningEvent);
    }
 
    if (s_printCharsetWarning)
@@ -2384,14 +2379,14 @@ int main (int argc, char * const argv[])
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION) ;
 
+      // startup projects -- must be after userSettings is initialized
+      // but before persistentState and setting working directory
+      projects::startup();
+
       // initialize persistent state
       error = session::persistentState().initialize();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION) ;
-
-      // startup projects -- must be after userSettings & persistentState are
-      // initialized must be before setting working directory
-      projects::startup();
 
       // set working directory
       FilePath workingDir = getInitialWorkingDirectory();

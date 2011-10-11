@@ -29,7 +29,7 @@ PersistentState& persistentState();
 class PersistentState : boost::noncopyable
 {
 private:
-   PersistentState() {}
+   PersistentState() : serverMode_(false) {}
    friend PersistentState& persistentState();
    
 public:
@@ -49,6 +49,8 @@ public:
    core::Settings& settings() { return settings_; }
 
 private:
+   bool serverMode_;
+   std::string desktopClientId_;
    core::Settings settings_;
 };
    

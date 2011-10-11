@@ -22,7 +22,6 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
-#include <session/SessionPersistentState.hpp>
 
 #include <r/session/RSessionUtils.hpp>
 
@@ -178,12 +177,9 @@ void startup()
       projectFilePath = FilePath();
    }
 
-   // check for restore based last project (but surpress this if we
-   // had an abend on our last session -- this might have been a
-   // result of something in the project)
+   // check for restore last project
    else if (userSettings().alwaysRestoreLastProject() &&
-            !lastProjectPath.empty() &&
-            !session::persistentState().hadAbend())
+            !lastProjectPath.empty())
    {
 
       // get last project path

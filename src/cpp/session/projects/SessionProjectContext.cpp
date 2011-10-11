@@ -98,10 +98,10 @@ Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
 
 // NOTE: this function is called very early in the process lifetime (from
 // session::projects::startup) so can only have limited dependencies.
-// specifically, it can rely on userSettings() and persistentState() being
-// available, but cannot definitely NOT rely on calling into R. For
-// initialization related tasks that need to run after R is available use
-// the implementation of the initialize method (below)
+// specifically, it can rely on userSettings() being available, but can
+// definitely NOT rely on calling into R. For initialization related tasks
+// that need to run after R is available use the implementation of the
+// initialize method (below)
 Error ProjectContext::startup(const FilePath& projectFile,
                               std::string* pUserErrMsg)
 {
@@ -213,7 +213,7 @@ const char * const kLastProjectPath = "last-project-path";
 FilePath settingsPath()
 {
    FilePath settingsPath = module_context::userScratchPath().complete(
-                                                                  "projects_settings");
+                                                        "projects_settings");
    Error error = settingsPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
