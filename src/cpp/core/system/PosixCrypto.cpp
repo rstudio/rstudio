@@ -12,7 +12,7 @@
  */
 
 
-#include <server/util/system/Crypto.hpp>
+#include <core/system/Crypto.hpp>
 
 #include <fcntl.h>
 
@@ -33,8 +33,7 @@
 
 using namespace core;
 
-namespace server {
-namespace util {
+namespace core {
 namespace system {
 namespace crypto {
 
@@ -310,6 +309,5 @@ core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlain
                       
 } // namespace crypto
 } // namespace system
-} // namespace util
-} // namespace server
+} // namespace core
 

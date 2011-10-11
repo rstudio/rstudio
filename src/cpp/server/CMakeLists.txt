@@ -92,20 +92,15 @@ check_function_exists(setresuid HAVE_SETRESUID)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
-# require openssl (for crypto)
-find_package(OpenSSL REQUIRED QUIET)
-
 # required on Fedora for AppArmor-related code to compile
 if(NOT APPLE)
    find_library(DL_LIBRARIES dl)
 endif()
 
 # include directories and libraries
-set(SERVER_SYSTEM_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIRS})
-set(SERVER_SYSTEM_LIBRARIES ${OPENSSL_LIBRARIES} ${DL_LIBRARIES})
+set(SERVER_SYSTEM_LIBRARIES ${DL_LIBRARIES})
 
 set(SERVER_SOURCE_FILES ${SERVER_SOURCE_FILES}
-   util/system/PosixCrypto.cpp
    util/system/PosixSystem.cpp
    util/system/PosixUser.cpp
 )

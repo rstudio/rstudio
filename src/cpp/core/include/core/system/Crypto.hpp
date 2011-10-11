@@ -11,16 +11,15 @@
  *
  */
 
-#ifndef SERVER_UTIL_SYSTEM_CRYPTO_HPP
-#define SERVER_UTIL_SYSTEM_CRYPTO_HPP
+#ifndef CORE_SYSTEM_CRYPTO_HPP
+#define CORE_SYSTEM_CRYPTO_HPP
 
 #include <string>
 #include <vector>
 
 #include <core/Error.hpp>
 
-namespace server {
-namespace util {
+namespace core {
 namespace system {
 namespace crypto {
       
@@ -53,8 +52,7 @@ core::Error rsaPrivateDecrypt(const std::string& pCipherText, std::string* pPlai
          
 } // namespace crypto
 } // namespace system
-} // namespace util
-} // namespace server
+} // namespace core
 
-#endif // SERVER_UTIL_SYSTEM_CRYPTO_HPP
+#endif // CORE_SYSTEM_CRYPTO_HPP
 

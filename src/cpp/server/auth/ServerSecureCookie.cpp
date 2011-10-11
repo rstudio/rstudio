@@ -30,11 +30,11 @@
 #include <core/http/Response.hpp>
 #include <core/http/Util.hpp>
 
+#include <core/system/Crypto.hpp>
 #include <core/system/System.hpp>
 #include <core/system/FileMode.hpp>
 
 #include <server/util/system/System.hpp>
-#include <server/util/system/Crypto.hpp>
 
 namespace server {
 namespace auth {
@@ -63,12 +63,12 @@ Error base64HMAC(const std::string& value,
 
    // compute hmac for the message
    std::vector<unsigned char> hmac;
-   Error error = util::system::crypto::HMAC_SHA1(message, cookieKey, &hmac);
+   Error error = core::system::crypto::HMAC_SHA1(message, cookieKey, &hmac);
    if (error)
       return error;
 
    // base 64 encode it
-   return util::system::crypto::base64Encode(hmac, pHMAC);
+   return core::system::crypto::base64Encode(hmac, pHMAC);
 }
 
 http::Cookie createSecureCookie(

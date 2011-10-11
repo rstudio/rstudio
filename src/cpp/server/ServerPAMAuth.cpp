@@ -15,6 +15,7 @@
 
 #include <core/Error.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/Crypto.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -22,7 +23,6 @@
 #include <core/http/AsyncUriHandler.hpp>
 #include <core/text/TemplateFilter.hpp>
 
-#include <server/util/system/Crypto.hpp>
 #include <server/util/system/System.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
@@ -213,7 +213,7 @@ void publicKey(const http::Request&,
                http::Response* pResponse)
 {
    std::string exp, mod;
-   util::system::crypto::rsaPublicKey(&exp, &mod);
+   core::system::crypto::rsaPublicKey(&exp, &mod);
    pResponse->setNoCacheHeaders();
    pResponse->setBody(exp + ":" + mod);
    pResponse->setContentType("text/plain");
@@ -229,7 +229,7 @@ void doSignIn(const http::Request& request,
    std::string encryptedValue = request.formFieldValue("v");
    bool persist = request.formFieldValue("persist") == "1";
    std::string plainText;
-   Error error = util::system::crypto::rsaPrivateDecrypt(encryptedValue,
+   Error error = core::system::crypto::rsaPrivateDecrypt(encryptedValue,
                                                          &plainText);
    if (error)
    {
@@ -321,7 +321,7 @@ Error initialize()
    uri_handlers::addBlocking(kPublicKey, publicKey);
 
    // initialize crypto
-   return util::system::crypto::rsaInit();
+   return core::system::crypto::rsaInit();
 }
 
 

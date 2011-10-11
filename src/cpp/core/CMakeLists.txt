@@ -96,13 +96,19 @@ if (UNIX)
       find_library(CORE_SERVICES_LIBRARY NAMES CoreServices)
    endif()
 
+   # require openssl (for crypto)
+   find_package(OpenSSL REQUIRED QUIET)
+
    # include directories and libraries
    set (CORE_SYSTEM_LIBRARIES
       ${PTHREAD_LIBRARIES}
       ${UUID_LIBRARIES}
       ${ZLIB_LIBRARIES}
       ${CORE_SERVICES_LIBRARY}
+      ${OPENSSL_LIBRARIES}
    )
+
+   set(CORE_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIRS})
 
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
@@ -110,6 +116,7 @@ if (UNIX)
       PosixStringUtils.cpp
       r_util/REnvironmentPosix.cpp
       SyslogLogWriter.cpp
+      system/PosixCrypto.cpp
       system/PosixEnvironment.cpp
       system/PosixFileScanner.cpp
       system/PosixParentProcessMonitor.cpp
@@ -153,7 +160,7 @@ else()
 endif()
 
 # define include dirs
-set(CORE_INCLUDE_DIRS include)
+set(CORE_INCLUDE_DIRS ${CORE_INCLUDE_DIRS} include)
 
 # search for core addins
 if(RSTUDIO_ADDINS_PATH)

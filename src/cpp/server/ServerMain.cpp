@@ -22,6 +22,7 @@
 #include <core/text/TemplateFilter.hpp>
 
 #include <core/system/System.hpp>
+#include <core/system/Crypto.hpp>
 
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
@@ -33,7 +34,6 @@
 #include <session/SessionConstants.hpp>
 
 #include <server/util/system/System.hpp>
-#include <server/util/system/Crypto.hpp>
 
 #include <server/auth/ServerAuthHandler.hpp>
 #include <server/auth/ServerValidateUser.hpp>
@@ -323,7 +323,7 @@ int main(int argc, char * const argv[])
          return core::system::exitFailure(error, ERROR_LOCATION);
 
       // initialize crypto utils
-      util::system::crypto::initialize();
+      core::system::crypto::initialize();
 
       // initialize secure cookie module
       error = auth::secure_cookie::initialize();

@@ -63,6 +63,7 @@ set (SESSION_SOURCE_FILES
 if(UNIX)
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
       http/SessionPosixHttpConnectionListener.cpp
+      modules/SessionCrypto.cpp
    )
 else()
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
