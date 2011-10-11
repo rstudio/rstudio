@@ -118,21 +118,18 @@ private:
 class History : boost::noncopyable
 {
 private:
-   History() : entryCacheValid_(false) {}
+   History() : entryCacheLastWriteTime_(-1) {}
    friend History& historyArchive();
    
 public:
    
    Error add(const std::string& command)
    {
-      // invalidiate the entry cache -- obviously we could maintain the entry 
-      // cache in memory however the OS will do this as well so better to free 
-      // it on the assumption that an add operation means the user has resumed
-      // their work and isn't going to actively query the history again 
-      // for a while
+      // reset the cache (since this write will invalidate the current one,
+      // no sense in keeping our cache around in memory)
       entries_.clear();
-      entryCacheValid_ = false;
-            
+      entryCacheLastWriteTime_ = -1;
+
       // write the entry to the file
       std::ostringstream ostrEntry ;
       double currentTime = core::date_time::millisecondsSinceEpoch();
@@ -140,74 +137,54 @@ public:
       ostrEntry << std::endl;
       return appendToFile(historyDatabaseFilePath(), ostrEntry.str());
    }
-   
-   std::vector<HistoryEntry>::const_iterator begin() const
+
+   const std::vector<HistoryEntry>& entries() const
    {
-      return entries().begin();
+      // calculate path to history db
+      FilePath historyDBPath = historyDatabaseFilePath();
+
+      // if the file doesn't exist then clear the collection
+      if (!historyDBPath.exists())
+      {
+         entries_.clear();
+      }
+
+      // otherwise check for divergent lastWriteTime and read the file
+      // if our internal list isn't up to date
+      else if (historyDBPath.lastWriteTime() != entryCacheLastWriteTime_)
+      {
+         entries_.clear();
+         Error error = readCollectionFromFile<std::vector<HistoryEntry> >(
+                                                      historyDBPath,
+                                                      &entries_,
+                                                      HistoryEntryReader());
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
+         else
+         {
+            entryCacheLastWriteTime_ = historyDBPath.lastWriteTime();
+         }
+
+      }
+      
+      // return entries
+      return entries_;
    }
-   
-   std::vector<HistoryEntry>::const_iterator end() const
-   {
-      return entries().end();
-   }
-   
-   std::vector<HistoryEntry>::const_reverse_iterator rbegin() const
-   {
-      return entries().rbegin();
-   }
-   
-   std::vector<HistoryEntry>::const_reverse_iterator rend() const
-   {
-      return entries().rend();
-   }
-   
-   int size() const 
-   {
-      return entries().size();
-   }
-   
+
    static void migrateRhistoryIfNecessary()
    {
-      // if the history database doesn't exist see if we can migrate the 
+      // if the history database doesn't exist see if we can migrate the
       // old .Rhistory file
       FilePath historyDBPath = historyDatabaseFilePath();
       if (!historyDBPath.exists())
          attemptRhistoryMigration() ;
    }
-   
 
+   
 private:
-   
-   const std::vector<HistoryEntry>& entries() const
-   {
-      if (!entryCacheValid_)
-      {
-         // read history file if it exists
-         FilePath historyDBPath = historyDatabaseFilePath();
-         if (historyDBPath.exists())
-         {
-            Error error = readCollectionFromFile<std::vector<HistoryEntry> >(
-                                                         historyDBPath,
-                                                         &entries_,
-                                                         HistoryEntryReader());
-            if (error)
-            {
-               LOG_ERROR(error);
-            }
-            else
-            {
-               entryCacheValid_ = true;
-            }
-         }
-         else
-         {
-            entryCacheValid_ = true; // doesn't exist so empty cache is valid
-         }
-      }
-      
-      return entries_;
-   }
-   
+
    static void writeEntry(double timestamp, 
                           const std::string& command, 
                           std::ostream* pOS) 
@@ -242,7 +219,7 @@ private:
    
    
 private:
-   mutable bool entryCacheValid_;
+   mutable std::time_t entryCacheLastWriteTime_;
    mutable std::vector<HistoryEntry> entries_;
 };
    
@@ -256,8 +233,11 @@ Error setJsonResultFromHistory(int startIndex,
                                int endIndex,
                                json::JsonRpcResponse* pResponse)
 {
+   // get all entries
+   const std::vector<HistoryEntry>& allEntries = historyArchive().entries();
+
    // validate indexes
-   int historySize = historyArchive().size();
+   int historySize = allEntries.size();
    if ( (startIndex < 0)               ||
         (startIndex > historySize)     ||
         (endIndex < 0)                 ||
@@ -268,9 +248,8 @@ Error setJsonResultFromHistory(int startIndex,
    
    // return the entries
    std::vector<HistoryEntry> entries;
-   const History& hist = historyArchive();
-   std::copy(hist.begin() + startIndex,
-             hist.begin() + endIndex,
+   std::copy(allEntries.begin() + startIndex,
+             allEntries.begin() + endIndex,
              std::back_inserter(entries));
    json::Object entriesJson;
    historyEntriesAsJson(entries, &entriesJson);
@@ -423,7 +402,7 @@ Error getHistoryArchiveItems(const json::JsonRpcRequest& request,
       return error;
    
    // truncate indexes if necessary
-   int historySize = historyArchive().size();
+   int historySize = historyArchive().entries().size();
    startIndex = std::min(startIndex, historySize);
    endIndex = std::min(endIndex, historySize);
    
@@ -448,11 +427,11 @@ Error searchHistoryArchive(const json::JsonRpcRequest& request,
    std::copy(tok.begin(), tok.end(), std::back_inserter(searchTerms));
    
    // examine the items in the history for matches
+   const std::vector<HistoryEntry>& allEntries =  historyArchive().entries();
    std::vector<HistoryEntry> matchingEntries;
-   const History& hist = historyArchive();
    for (std::vector<HistoryEntry>::const_reverse_iterator 
-            it = hist.rbegin();
-            it != hist.rend();
+            it = allEntries.rbegin();
+            it != allEntries.rend();
             ++it)
    {
       // check limit
@@ -488,11 +467,11 @@ Error searchHistoryArchiveByPrefix(const json::JsonRpcRequest& request,
    boost::algorithm::trim(prefix);
    
    // examine the items in the history for matches
+   const std::vector<HistoryEntry>& allEntries = historyArchive().entries();
    std::vector<HistoryEntry> matchingEntries;
-   const History& hist = historyArchive();
    for (std::vector<HistoryEntry>::const_reverse_iterator 
-        it = hist.rbegin();
-        it != hist.rend();
+        it = allEntries.rbegin();
+        it != allEntries.rend();
         ++it)
    {
       // check limit
