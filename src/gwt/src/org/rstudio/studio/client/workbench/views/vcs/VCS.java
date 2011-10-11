@@ -20,6 +20,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -28,10 +31,12 @@ import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
@@ -117,12 +122,21 @@ public class VCS extends BasePresenter implements IsWidget
                   {
                      @Override
                      public void execute(String input,
-                                         ProgressIndicator indicator)
+                                         final ProgressIndicator indicator)
                      {
-                        indicator.onCompleted();
-                        server_.askpassCompleted(
+                        RSAEncrypt.encrypt_ServerOnly(
+                              server_,
                               input,
-                              new VoidServerRequestCallback(indicator));
+                              new CommandWithArg<String>()
+                              {
+                                 @Override
+                                 public void execute(String encrypted)
+                                 {
+                                    server_.askpassCompleted(
+                                          encrypted,
+                                          new VoidServerRequestCallback(indicator));
+                                 }
+                              });
                      }
                   },
                   new Operation()

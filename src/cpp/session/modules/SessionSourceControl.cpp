@@ -31,6 +31,7 @@
 #include <boost/regex.hpp>
 
 #include <core/json/JsonRpc.hpp>
+#include <core/system/Crypto.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Process.hpp>
@@ -1474,8 +1475,22 @@ void postbackSSHAskPass(const std::string&,
       {
          if (json::isType<std::string>(value))
          {
-            retcode = EXIT_SUCCESS;
             passphrase = value.get_value<std::string>();
+            retcode = EXIT_SUCCESS;
+
+            if (options().programMode() == kSessionProgramModeServer)
+            {
+               // In server mode, passphrases are encrypted
+
+               error = core::system::crypto::rsaPrivateDecrypt(passphrase,
+                                                               &passphrase);
+               if (error)
+               {
+                  passphrase.clear();
+                  retcode = EXIT_FAILURE;
+                  LOG_ERROR(error);
+               }
+            }
          }
       }
       else

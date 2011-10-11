@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
@@ -49,7 +50,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    VCSServerOperations,
                                                    PrefsServerOperations,
                                                    ProjectsServerOperations,
-                                                   CodeSearchServerOperations
+                                                   CodeSearchServerOperations,
+                                                   CryptoServerOperations
 {   
    void onWorkbenchReady();
    

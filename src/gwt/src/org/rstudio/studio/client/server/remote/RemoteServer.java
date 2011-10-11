@@ -1435,6 +1435,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, VCS_SHOW, rev, requestCallback);
    }
 
+   @Override
+   public void getPublicKey(ServerRequestCallback<PublicKeyInfo> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_PUBLIC_KEY, requestCallback);
+   }
+
    // package-visible methods for peer classes RemoteServerAuth and
    // RemoveServerEventListener
 
@@ -1932,6 +1938,8 @@ public class RemoteServer implements Server
    private static final String VCS_HISTORY = "vcs_history";
    private static final String VCS_EXECUTE_COMMAND = "vcs_execute_command";
    private static final String VCS_SHOW = "vcs_show";
+
+   private static final String GET_PUBLIC_KEY = "get_public_key";
 
    private static final String LOG = "log";
 

@@ -49,6 +49,7 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
+#include <core/system/Crypto.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
@@ -85,6 +86,7 @@
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionConsoleProcess.hpp"
+#include "modules/SessionCrypto.hpp"
 #include "modules/SessionDiff.hpp"
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionWorkspace.hpp"
@@ -1258,6 +1260,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::agreement::initialize)
       (modules::console::initialize)
       (modules::console_process::initialize)
+      (modules::crypto::initialize)
       (modules::diff::initialize)
       (modules::files::initialize)
       (modules::workspace::initialize)
@@ -2341,6 +2344,13 @@ int main (int argc, char * const argv[])
          Error error = systemError(boost::system::errc::permission_denied,
                                    ERROR_LOCATION);
          return sessionExitFailure(error, ERROR_LOCATION);
+      }
+
+      if (serverMode)
+      {
+         Error error = core::system::crypto::rsaInit();
+         if (error)
+            LOG_ERROR(error);
       }
 
       // start the file monitor
