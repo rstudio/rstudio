@@ -345,8 +345,15 @@ Error initialize()
          return error;
    }
 
-   // initialize graphics device
-   FilePath graphicsPath = s_options.scopedScratchPath.complete(kGraphicsPath);
+   // initialize graphics device -- use a stable directory for server mode
+   // and temp directory for desktop mode (so that we can support multiple
+   // concurrent processes using the same project)
+   FilePath graphicsPath;
+   if (s_options.serverMode)
+      graphicsPath = s_options.scopedScratchPath.complete(kGraphicsPath);
+   else
+      graphicsPath = r::session::utils::tempDir();
+
    error = graphics::device::initialize(graphicsPath,
                                         s_callbacks.locator);
    if (error) 
