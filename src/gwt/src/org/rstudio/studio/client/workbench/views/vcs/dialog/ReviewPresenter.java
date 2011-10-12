@@ -233,7 +233,10 @@ public class ReviewPresenter implements IsWidget
                   ArrayList<StatusAndPath> paths = view_.getChangelistTable()
                         .getSelectedItems();
                   if (paths.size() != 1)
+                  {
+                     clearDiff();
                      return;
+                  }
 
                   StatusAndPath vcsStatus = event.getFileChange().getFile().getVCSStatus();
                   if (paths.get(0).getRawPath().equals(vcsStatus.getRawPath()))
