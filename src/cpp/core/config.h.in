@@ -16,3 +16,4 @@
 #cmakedefine HAVE_SO_PEERCRED
 #cmakedefine HAVE_GETPEEREID
 #cmakedefine HAVE_PROCSELF
+#cmakedefine RSTUDIO_SERVER

@@ -1268,7 +1268,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::agreement::initialize)
       (modules::console::initialize)
       (modules::console_process::initialize)
-#ifndef _WIN32
+#ifdef RSTUDIO_SERVER
       (modules::crypto::initialize)
 #endif
       (modules::diff::initialize)
@@ -2352,7 +2352,7 @@ int main (int argc, char * const argv[])
          return sessionExitFailure(error, ERROR_LOCATION);
       }
 
-#ifndef _WIN32
+#ifdef RSTUDIO_SERVER
       if (serverMode)
       {
          Error error = core::system::crypto::rsaInit();

@@ -49,6 +49,8 @@
 
 // TODO: git fetch doesn't work due to path differences between bash and cmd
 // TODO: Discover/configure git bin dir, and add it to the path (needed to find ssh)
+#include "config.h"
+
 // TODO: It's actually pretty easy to look in an id_rsa file and see if it's encrypted,
 //       use that to see if we even need to do ssh-agent stuff at all
 // TODO: We could use the "right" ssh key if we wanted to, by reading ~/.ssh/config:
@@ -1599,7 +1601,7 @@ void postbackSSHAskPass(const std::string&,
             passphrase = value.get_value<std::string>();
             retcode = EXIT_SUCCESS;
 
-#ifndef _WIN32
+#ifdef RSTUDIO_SERVER
             if (options().programMode() == kSessionProgramModeServer)
             {
                // In server mode, passphrases are encrypted
