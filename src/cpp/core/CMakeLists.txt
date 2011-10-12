@@ -120,7 +120,6 @@ if (UNIX)
       PosixStringUtils.cpp
       r_util/REnvironmentPosix.cpp
       SyslogLogWriter.cpp
-      system/PosixCrypto.cpp
       system/PosixEnvironment.cpp
       system/PosixFileScanner.cpp
       system/PosixParentProcessMonitor.cpp
@@ -130,6 +129,12 @@ if (UNIX)
       system/PosixUser.cpp
       system/PosixChildProcess.cpp
    )
+
+   if(RSTUDIO_SERVER)
+      set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
+         system/PosixCrypto.cpp
+      )
+   endif()
 
    if(APPLE)
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
