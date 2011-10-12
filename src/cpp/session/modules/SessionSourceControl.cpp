@@ -543,10 +543,83 @@ public:
       return Success();
    }
 
+   Error currentBranch(std::string* pBranch)
+   {
+      std::vector<std::string> branches;
+      boost::optional<size_t> index;
+      Error error = listBranches(&branches, &index);
+      if (error)
+         return error;
+      if (!index)
+      {
+         pBranch->clear();
+         return Success();
+      }
+
+      *pBranch = branches.at(*index);
+      if (*pBranch == "(no branch)")
+      {
+         pBranch->clear();
+      }
+      return Success();
+   }
+\
+   bool remoteMerge(const std::string& branch,
+                    std::string* pRemote,
+                    std::string* pMerge)
+   {
+      core::system::ProcessResult result;
+      Error error = core::system::runCommand(
+            git() << "config" << "--get" <<
+               "branch." + branch + ".remote",
+            procOptions(),
+            &result);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return false;
+      }
+      if (result.exitStatus != EXIT_SUCCESS)
+         return false;
+      *pRemote = result.stdOut;
+      boost::algorithm::trim(*pRemote);
+
+      core::system::ProcessResult result2;
+      error = core::system::runCommand(
+            git() << "config" << "--get" <<
+               "branch." + branch + ".merge",
+            procOptions(),
+            &result2);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return false;
+      }
+      if (result2.exitStatus != EXIT_SUCCESS)
+         return false;
+      *pMerge = result2.stdOut;
+      boost::algorithm::trim(*pMerge);
+
+      return true;
+   }
+
    core::Error push(std::string* pHandle)
    {
+      std::string branch;
+      Error error = currentBranch(&branch);
+      if (error)
+         return error;
+
+      ShellCommand cmd = git() << "push";
+
+      std::string remote, merge;
+      if (remoteMerge(branch, &remote, &merge))
+      {
+         cmd << remote << merge;
+      }
+
       boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::ConsoleProcess::create(git() << "push",
+            console_process::ConsoleProcess::create(cmd,
                                                     procOptions(),
                                                     &enqueueRefreshEvent);
 
@@ -743,51 +816,19 @@ public:
 
    virtual core::Error hasRemote(bool *pHasRemote)
    {
-      std::vector<std::string> branches;
-      boost::optional<size_t> index;
-      Error error = listBranches(&branches, &index);
+      std::string branch;
+      Error error = currentBranch(&branch);
       if (error)
          return error;
 
-      if (!index)
-      {
-         *pHasRemote = false;
-         return Success();
-      }
-
-      std::string branch = branches.at(*index);
-      if (branch == "(no branch)")
+      if (branch.empty())
       {
          *pHasRemote = false;
          return Success();
       }
 
-      core::system::ProcessResult result;
-      error = core::system::runCommand(
-            git() << "config" << "--get" <<
-               "branch." + branch + ".remote",
-            procOptions(),
-            &result);
-      if (error)
-         return error;
-      if (result.exitStatus != EXIT_SUCCESS)
-      {
-         *pHasRemote = false;
-         return Success();
-      }
-      error = core::system::runCommand(
-            git() << "config" << "--get" <<
-               "branch." + branch + ".merge",
-            procOptions(),
-            &result);
-      if (error)
-         return error;
-      if (result.exitStatus != EXIT_SUCCESS)
-      {
-         *pHasRemote = false;
-         return Success();
-      }
-      *pHasRemote = true;
+      std::string remote, merge;
+      *pHasRemote = remoteMerge(branch, &remote, &merge);
       return Success();
    }
 };
