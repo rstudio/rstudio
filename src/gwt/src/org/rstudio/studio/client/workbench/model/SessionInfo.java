@@ -100,6 +100,10 @@ public class SessionInfo extends JavaScriptObject
       return this.source_documents;
    }-*/;
    
+   public final native JsObject getLists() /*-{
+      return this.lists;
+   }-*/;
+
    public final native boolean hasAgreement() /*-{
       return this.hasAgreement;
    }-*/;

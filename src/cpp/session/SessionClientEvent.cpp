@@ -68,7 +68,7 @@ const int kVcsRefresh = 41;
 const int kAskPass = 42;
 const int kConsoleProcessOutput = 43;
 const int kConsoleProcessExit = 44;
-
+const int kListChanged = 45;
 }   
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -172,6 +172,8 @@ std::string ClientEvent::typeName() const
          return "console_process_output";
       case client_events::kConsoleProcessExit:
          return "console_process_exit";
+      case client_events::kListChanged:
+         return "list_changed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

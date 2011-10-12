@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.jsonrpc.RpcRequest;
 import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
@@ -119,6 +120,7 @@ class RemoteServerEventListener
       public static final String AskPass = "ask_pass";
       public static final String ConsoleProcessOutput = "console_process_output";
       public static final String ConsoleProcessExit = "console_process_exit";
+      public static final String ListChanged = "list_changed";
 
       protected ClientEvent()
       {
@@ -667,6 +669,10 @@ class RemoteServerEventListener
             ServerProcessExitEvent.Data data = event.getData();
             eventBus.fireEvent(new ServerProcessExitEvent(data.getHandle(),
                                                           data.getExitCode()));
+         }
+         else if (type.equals(ClientEvent.ListChanged))
+         {
+            eventBus.fireEvent(new ListChangedEvent(event.<JsObject>getData()));
          }
          else if (type.equals(ClientEvent.Quit))
          {

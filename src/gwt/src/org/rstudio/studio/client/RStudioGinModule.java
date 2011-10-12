@@ -36,6 +36,7 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
@@ -110,6 +111,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Session.class).in(Singleton.class) ;
       bind(Projects.class).in(Singleton.class);
       bind(WorkbenchContext.class).asEagerSingleton();
+      bind(WorkbenchListManager.class).asEagerSingleton();
       bind(ApplicationQuit.class).asEagerSingleton();
       bind(ClientStateUpdater.class).asEagerSingleton();
       bind(Commands.class).in(Singleton.class);

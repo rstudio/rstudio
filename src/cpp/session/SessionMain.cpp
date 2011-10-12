@@ -101,6 +101,7 @@
 #include "modules/SessionTeX.hpp"
 #include "modules/SessionHistory.hpp"
 #include "modules/SessionLimits.hpp"
+#include "modules/SessionLists.hpp"
 #include "modules/SessionContentUrls.hpp"
 
 #include <session/projects/SessionProjects.hpp>
@@ -432,6 +433,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
       vcsAvailable.push_back("svn");
    sessionInfo["vcs_available"] = boost::algorithm::join(vcsAvailable, ",");
    sessionInfo["vcs"] = modules::source_control::activeVCSName();
+
+   // contents of all lists
+   sessionInfo["lists"] = modules::lists::allListsAsJson();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
@@ -1257,6 +1261,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (source_database::initialize)
    
       // modules with c++ implementations
+      (modules::lists::initialize)
       (modules::path::initialize)
       (modules::content_urls::initialize)
       (modules::limits::initialize)
