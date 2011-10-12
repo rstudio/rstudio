@@ -64,8 +64,12 @@ set (SESSION_SOURCE_FILES
 if(UNIX)
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
       http/SessionPosixHttpConnectionListener.cpp
-      modules/SessionCrypto.cpp
    )
+   if(RSTUDIO_SERVER)
+      set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
+         modules/SessionCrypto.cpp
+      )
+   endif()
 else()
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
       http/SessionWin32HttpConnectionListener.cpp
