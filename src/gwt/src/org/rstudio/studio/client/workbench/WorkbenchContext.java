@@ -12,10 +12,14 @@
  */
 package org.rstudio.studio.client.workbench;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 
@@ -27,8 +31,11 @@ public class WorkbenchContext
 {
 
    @Inject
-   public WorkbenchContext(Session session, EventBus eventBus)
+   public WorkbenchContext(PrefsServerOperations server,
+                           Session session, 
+                           EventBus eventBus)
    {
+      server_ = server;
       session_ = session;
       
       // track current working dir
@@ -111,8 +118,24 @@ public class WorkbenchContext
       return sessionInfo != null && sessionInfo.getActiveProjectFile() != null;
    }
    
+   
+   
+   public void updateUIPrefs()
+   {
+      server_.setUiPrefs(
+         session_.getSessionInfo().getUiPrefs(),
+         new VoidServerRequestCallback() {
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+   }
+   
    FileSystemItem currentWorkingDir_ = FileSystemItem.home();
    FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
    FileSystemItem activeProjectDir_ = null;
    Session session_;
+   private final PrefsServerOperations server_;
 }

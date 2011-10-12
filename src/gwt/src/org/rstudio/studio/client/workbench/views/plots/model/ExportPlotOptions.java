@@ -20,6 +20,11 @@ public class ExportPlotOptions extends JavaScriptObject
    {   
    }
    
+   public static final ExportPlotOptions createDefault()
+   {
+      return create(550, 450, false, "PNG", false, false);
+   }
+   
    public static final native ExportPlotOptions create(int width, 
                                                        int height,
                                                        boolean keepRatio,

@@ -18,6 +18,8 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
+import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 
 @Singleton
 public class UIPrefs extends Prefs
@@ -115,5 +117,16 @@ public class UIPrefs extends Prefs
    public PrefValue<Boolean> sourceWithEcho()
    {
       return bool("source_with_echo", false);
+   }
+   
+   public PrefValue<ExportPlotOptions> exportPlotOptions()
+   {
+      return object("export_plot_options", ExportPlotOptions.createDefault());
+   }
+   
+   public PrefValue<SavePlotAsPdfOptions> savePlotAsPdfOptions()
+   {
+      return object("save_plot_as_pdf_options",
+                    SavePlotAsPdfOptions.createDefault());
    }
 }

@@ -20,6 +20,11 @@ public class SavePlotAsPdfOptions extends JavaScriptObject
    {   
    }
    
+   public static final SavePlotAsPdfOptions createDefault()
+   {
+      return SavePlotAsPdfOptions.create(8.5, 11);
+   }
+   
    public static final SavePlotAsPdfOptions create(double width, double height)
    {
       return create(width, height, true, false);

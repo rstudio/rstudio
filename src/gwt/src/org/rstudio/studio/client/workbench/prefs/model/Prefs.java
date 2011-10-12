@@ -228,6 +228,11 @@ public abstract class Prefs
       {
          super(name, null);
       }
+      
+      private ObjectValue(String name, T defaultValue)
+      {
+         super(name, defaultValue);
+      }
 
       @Override
       public T doGetValue(JsObject root)
@@ -307,6 +312,20 @@ public abstract class Prefs
       }
       return val;
    }
+   
+   @SuppressWarnings({ "unchecked" })
+   protected <T extends JavaScriptObject> PrefValue<T> object(String name, 
+                                                              T defaultValue)
+   {
+      PrefValue<T> val = (PrefValue<T>) values_.get(name);
+      if (val == null)
+      {
+         val = new ObjectValue<T>(name, defaultValue);
+         values_.put(name, val);
+      }
+      return val;
+   }
+
 
    private final JsObject globalRoot_;
    private final JsObject projectRoot_;

@@ -23,11 +23,11 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.HasCustomizableToolbar;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -42,9 +42,9 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
@@ -89,6 +89,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    public Plots(final Display view,
                 GlobalDisplay globalDisplay,
                 WorkbenchContext workbenchContext,
+                Provider<UIPrefs> uiPrefs,
                 Commands commands,
                 final PlotsServerOperations server,
                 Session session)
@@ -97,6 +98,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       view_ = view;
       globalDisplay_ = globalDisplay;
       workbenchContext_ = workbenchContext;
+      uiPrefs_ = uiPrefs;
       server_ = server;
       session_ = session;
       exportPlot_ = GWT.create(ExportPlot.class);
@@ -141,76 +143,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                
             }   
          }
-         );
-            
-      // export plot options
-      new JSObjectStateValue("plotspane", "exportPlotOptions", ClientState.PERSISTENT,
-            session.getSessionInfo().getClientState(), false)
-      {
-         @Override
-         protected void onInit(JsObject value)
-         {
-            if (value != null)
-               exportPlotOptions_ = value.cast();
-            lastKnownState_ = exportPlotOptions_;
-         }
-
-         @Override
-         protected JsObject getValue()
-         {
-            return exportPlotOptions_.cast();
-         }
-
-         @Override
-         protected boolean hasChanged()
-         {
-            if (!ExportPlotOptions.areEqual(lastKnownState_, 
-                                            exportPlotOptions_))
-            {
-               lastKnownState_ = exportPlotOptions_;
-               return true;
-            }
-
-            return false;
-         }
-
-         private ExportPlotOptions lastKnownState_;
-      };
-   
-   
-   // save plot as pdf options
-   new JSObjectStateValue("plotspane", "savePlotAsPdfOptions", ClientState.PERSISTENT,
-         session.getSessionInfo().getClientState(), false)
-   {
-      @Override
-      protected void onInit(JsObject value)
-      {
-         if (value != null)
-            savePlotAsPdfOptions_ = value.cast();
-         lastKnownState_ = savePlotAsPdfOptions_;
-      }
-
-      @Override
-      protected JsObject getValue()
-      {
-         return savePlotAsPdfOptions_.cast();
-      }
-
-      @Override
-      protected boolean hasChanged()
-      {
-         if (!SavePlotAsPdfOptions.areEqual(lastKnownState_, 
-                                            savePlotAsPdfOptions_))
-         {
-            lastKnownState_ = savePlotAsPdfOptions_;
-            return true;
-         }
-
-         return false;
-      }
-
-      private SavePlotAsPdfOptions lastKnownState_;
-   };
+      );
 }
    
    public void onPlotsChanged(PlotsChangedEvent event)
@@ -345,7 +278,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                exportPlot_.savePlotAsImage(globalDisplay_,
                      server_, 
                      context, 
-                     exportPlotOptions_, 
+                     uiPrefs_.get().exportPlotOptions().getValue(), 
                      saveExportOptionsOperation_);  
             }
 
@@ -379,21 +312,28 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             {
                indicator.onCompleted();
 
+               final PrefValue<SavePlotAsPdfOptions> currentOptions = 
+                                        uiPrefs_.get().savePlotAsPdfOptions();
+               
                exportPlot_.savePlotAsPdf(
                  globalDisplay_,
                  server_, 
                  session_.getSessionInfo(),
                  defaultDir,
                  stem,
-                 savePlotAsPdfOptions_, 
-                     new OperationWithInput<SavePlotAsPdfOptions>() {
-                        @Override
-                        public void execute(SavePlotAsPdfOptions options)
-                        {
-                           savePlotAsPdfOptions_ = options;
-                           session_.persistClientState();
-                        }
-                    
+                 currentOptions.getValue(), 
+                 new OperationWithInput<SavePlotAsPdfOptions>() {
+                    @Override
+                    public void execute(SavePlotAsPdfOptions options)
+                    {
+                       if (!SavePlotAsPdfOptions.areEqual(
+                                                options,
+                                                currentOptions.getValue()))
+                       {
+                          currentOptions.setGlobalValue(options);
+                          workbenchContext_.updateUIPrefs();      
+                       }
+                    }    
                  }) ;  
             }
 
@@ -411,9 +351,10 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    {
       view_.bringToFront();
       
-      exportPlot_.copyPlotToClipboard(server_, 
-                                      exportPlotOptions_,
-                                      saveExportOptionsOperation_);    
+      exportPlot_.copyPlotToClipboard(
+                              server_, 
+                              uiPrefs_.get().exportPlotOptions().getValue(),
+                              saveExportOptionsOperation_);    
    }
    
    private OperationWithInput<ExportPlotOptions> saveExportOptionsOperation_ =
@@ -421,8 +362,14 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       {
          public void execute(ExportPlotOptions options)
          {
-            exportPlotOptions_ = options;
-            session_.persistClientState();
+            UIPrefs uiPrefs = uiPrefs_.get();
+            if (!ExportPlotOptions.areEqual(
+                            options,
+                            uiPrefs.exportPlotOptions().getValue()))
+            {
+               uiPrefs.exportPlotOptions().setGlobalValue(options);
+               workbenchContext_.updateUIPrefs();
+            }
          }
       };
    
@@ -583,20 +530,13 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final PlotsServerOperations server_;
    private final WorkbenchContext workbenchContext_;
    private final Session session_;
+   private final Provider<UIPrefs> uiPrefs_;
    private final Locator locator_;
    private final ManipulatorManager manipulatorManager_;
    
    // export plot impl
    private final ExportPlot exportPlot_ ;
    
-   // default export options
-   private ExportPlotOptions exportPlotOptions_ = 
-      ExportPlotOptions.create(550, 450, false, "PNG", false, false);
-   
-   // default save as pdf options
-   private SavePlotAsPdfOptions savePlotAsPdfOptions_ = 
-                           SavePlotAsPdfOptions.create(8.5, 11, true, false);
-  
    // size of most recently rendered plot
    Size plotSize_ = null;
 }
