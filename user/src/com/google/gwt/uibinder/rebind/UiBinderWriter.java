@@ -982,8 +982,9 @@ public class UiBinderWriter implements Statements {
    * @param type the type of the field
    * @param args arguments to the constructor call
    */
-  public void setFieldInitializerAsConstructor(String fieldName, JClassType type, String... args) {
-    setFieldInitializer(fieldName, formatCode("new %s(%s)", type.getQualifiedSourceName(),
+  public void setFieldInitializerAsConstructor(String fieldName, String... args) {
+    JClassType assignableType = fieldManager.lookup(fieldName).getAssignableType();
+    setFieldInitializer(fieldName, formatCode("new %s(%s)", assignableType.getQualifiedSourceName(),
         asCommaSeparatedList(args)));
   }
 

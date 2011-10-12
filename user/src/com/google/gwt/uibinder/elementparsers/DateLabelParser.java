@@ -48,7 +48,7 @@ public class DateLabelParser implements ElementParser {
         String timeZone = (supportsTimeZone ? consumeTimeZone(elem, writer)
             : null);
 
-        writer.setFieldInitializerAsConstructor(fieldName, type, makeArgs(
+        writer.setFieldInitializerAsConstructor(fieldName, makeArgs(
             format, timeZone));
       } else if (supportsTimeZone && hasTimeZone(elem)) {
         writer.die(elem, NO_TIMEZONE_WITHOUT_SPECIFIED_FORMAT);

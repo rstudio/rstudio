@@ -34,8 +34,7 @@ public class MenuItemParser implements ElementParser {
     // Use special initializer for standard MenuItem,
     // custom subclass should have default constructor.
     if (MenuItem.class.getName().equals(type.getQualifiedSourceName())) {
-      writer.setFieldInitializerAsConstructor(fieldName,
-          writer.getOracle().findType(MenuItem.class.getName()), "\"\"",
+      writer.setFieldInitializerAsConstructor(fieldName, "\"\"",
           "(com.google.gwt.user.client.Command) null");
     }
 

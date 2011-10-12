@@ -58,7 +58,7 @@ public class NumberLabelParser implements ElementParser {
       String format = consumeFormat(elem, writer);
 
       if (format != null) {
-        writer.setFieldInitializerAsConstructor(fieldName, type, format);
+        writer.setFieldInitializerAsConstructor(fieldName, format);
       }
     }
   }

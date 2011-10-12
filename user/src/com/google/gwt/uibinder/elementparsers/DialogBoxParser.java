@@ -133,12 +133,9 @@ public class DialogBoxParser implements ElementParser {
         String fieldElement = writer.parseElementToField(customCaption);
 
         writer.setFieldInitializerAsConstructor(fieldName,
-            writer.getOracle().findType(DialogBox.class.getCanonicalName()),
             autoHide, modal, fieldElement);
       } else {
-        writer.setFieldInitializerAsConstructor(fieldName,
-          writer.getOracle().findType(DialogBox.class.getCanonicalName()),
-          autoHide, modal);
+        writer.setFieldInitializerAsConstructor(fieldName, autoHide, modal);
       }
     }
   }

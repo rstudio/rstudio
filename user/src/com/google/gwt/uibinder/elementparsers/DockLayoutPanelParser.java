@@ -22,14 +22,13 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Parses {@link DockLayoutPanel} widgets.
+ * Parses {@link com.google.gwt.user.client.ui.DockLayoutPanel} widgets.
  * 
  * TODO(jgw): The code that explicitly excludes SplitLayoutPanel in a fairly
  * awkward way could be greatly simplified if we hoisted the "dock-ness" into an
@@ -71,8 +70,7 @@ public class DockLayoutPanelParser implements ElementParser {
       String unit = elem.consumeAttributeWithDefault("unit",
           String.format("%s.%s", unitEnumType.getQualifiedSourceName(), "PX"),
           unitEnumType);
-      writer.setFieldInitializerAsConstructor(fieldName,
-          writer.getOracle().findType(DockLayoutPanel.class.getName()), unit);
+      writer.setFieldInitializerAsConstructor(fieldName, unit);
     }
 
     CenterChild center = null;

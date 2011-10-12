@@ -21,10 +21,9 @@ import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
-import com.google.gwt.user.client.ui.StackLayoutPanel;
 
 /**
- * Parses {@link StackLayoutPanel} widgets.
+ * Parses {@link com.google.gwt.user.client.ui.StackLayoutPanel} widgets.
  */
 public class StackLayoutPanelParser implements ElementParser {
   private static class Children {
@@ -46,8 +45,7 @@ public class StackLayoutPanelParser implements ElementParser {
         String.format("%s.%s", unitEnumType.getQualifiedSourceName(), "PX"),
         unitEnumType);
 
-    writer.setFieldInitializerAsConstructor(fieldName,
-        writer.getOracle().findType(StackLayoutPanel.class.getName()), unit);
+    writer.setFieldInitializerAsConstructor(fieldName, unit);
 
     // Parse children.
     for (XMLElement stackElem : panelElem.consumeChildElements()) {

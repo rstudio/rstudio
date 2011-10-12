@@ -192,7 +192,7 @@ public class BeanParser implements ElementParser {
         }
         writer.setFieldInitializer(fieldName, initializer);
       } else { // Annotated Constructor
-        writer.setFieldInitializerAsConstructor(fieldName, type, args);
+        writer.setFieldInitializerAsConstructor(fieldName, args);
       }
     }
 

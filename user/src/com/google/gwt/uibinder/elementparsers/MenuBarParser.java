@@ -36,8 +36,7 @@ public class MenuBarParser implements ElementParser {
     if (MenuBar.class.getName().equals(type.getQualifiedSourceName())) {
       if (elem.hasAttribute("vertical")) {
         String vertical = elem.consumeBooleanAttribute("vertical");
-        writer.setFieldInitializerAsConstructor(fieldName,
-            writer.getOracle().findType(MenuBar.class.getName()), vertical);
+        writer.setFieldInitializerAsConstructor(fieldName, vertical);
       }
     }
 

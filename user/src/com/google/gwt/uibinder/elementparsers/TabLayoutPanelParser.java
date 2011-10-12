@@ -21,10 +21,9 @@ import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
-import com.google.gwt.user.client.ui.TabLayoutPanel;
 
 /**
- * Parses {@link TabLayoutPanel} widgets.
+ * Parses {@link com.google.gwt.user.client.ui.TabLayoutPanel} widgets.
  */
 public class TabLayoutPanelParser implements ElementParser {
 
@@ -50,8 +49,7 @@ public class TabLayoutPanelParser implements ElementParser {
         String.format("%s.%s", unitEnumType.getQualifiedSourceName(), "PX"),
         unitEnumType);
 
-    writer.setFieldInitializerAsConstructor(fieldName,
-        writer.getOracle().findType(TabLayoutPanel.class.getName()), size, unit);
+    writer.setFieldInitializerAsConstructor(fieldName, size, unit);
 
     // Parse children.
     for (XMLElement tabElem : panelElem.consumeChildElements()) {

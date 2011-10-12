@@ -35,7 +35,7 @@ public class ImageParser implements ElementParser {
     if (hasImageResourceConstructor(writer.getOracle(), type)) {
       String resource = elem.consumeImageResourceAttribute("resource");
       if (null != resource) {
-        writer.setFieldInitializerAsConstructor(fieldName, type, resource);
+        writer.setFieldInitializerAsConstructor(fieldName, resource);
       }
     }
   }
