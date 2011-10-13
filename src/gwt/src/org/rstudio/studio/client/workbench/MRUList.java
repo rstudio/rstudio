@@ -12,33 +12,27 @@
  */
 package org.rstudio.studio.client.workbench;
 
-import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.CommandHandler;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.ClientState;
-import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.events.ListChangedEvent;
+import org.rstudio.studio.client.workbench.events.ListChangedHandler;
 
 import java.util.*;
 
 public class MRUList
 {
-   public MRUList(Commands commands,
-                  Session session,
-                  String clientStateGroup,
+   public MRUList(WorkbenchList mruList,
                   AppCommand[] mruCmds,
                   AppCommand clearCommand,
                   boolean includeExt,
                   OperationWithInput<String> operation)
    {
-      commands_ = commands;
-      session_ = session;
+      clearCommand_ = clearCommand;
+      mruList_ = mruList;
       mruCmds_ = mruCmds;
       includeExt_ = includeExt;
       operation_ = operation;
@@ -47,52 +41,24 @@ public class MRUList
       for (int i = 0; i < mruCmds_.length; i++)
          bindCommand(i);
       
-      clearCommand.addHandler(new CommandHandler()
+      clearCommand_.addHandler(new CommandHandler()
       {
          public void onCommand(AppCommand command)
          {
             clear();
          }
       });
-
-      new JSObjectStateValue(clientStateGroup, "entries", ClientState.PERSISTENT,
-                             session.getSessionInfo().getClientState(),
-                             false) {
+      
+      
+      mruList_.addListChangedHandler(new ListChangedHandler() {
          @Override
-         protected void onInit(JsObject value)
+         public void onListChanged(ListChangedEvent event)
          {
-            if (value != null)
-            {
-               JsArrayString array = value.cast();
-               for (int i = 0; i < array.length(); i++)
-               {
-                  mruEntries_.add(array.get(i));
-               }
-            }
-            updateCommands(false);
-            dirty_ = false;
+            mruEntries_.clear();
+            mruEntries_.addAll(event.getList());
+            updateCommands();
          }
-
-         @Override
-         protected JsObject getValue()
-         {
-            JsArrayString value = JsArrayString.createArray().cast();
-            for (String entry : mruEntries_)
-               value.push(entry);
-            return value.cast();
-         }
-
-         @Override
-         protected boolean hasChanged()
-         {
-            if (dirty_)
-            {
-               dirty_ = false;
-               return true;
-            }
-            return false;
-         }
-      };
+      });
    }
 
    private void bindCommand(final int i)
@@ -111,29 +77,25 @@ public class MRUList
    {
       assert entry.indexOf("\n") < 0;
       
-      mruEntries_.remove(entry);
-      mruEntries_.add(0, entry);
-      updateCommands(true);
+      mruList_.prepend(entry);
    }
 
    public void remove(String entry)
    {
-      mruEntries_.remove(entry);
-      updateCommands(true);
+      mruList_.remove(entry);
    }
 
    public void clear()
    {
-      mruEntries_.clear();
-      updateCommands(true);
+      mruList_.clear();
    }
 
-   private void updateCommands(boolean persistClientState)
+   private void updateCommands()
    {
       while (mruEntries_.size() > mruCmds_.length)
          mruEntries_.remove(mruEntries_.size() - 1);
 
-      commands_.clearRecentFiles().setEnabled(mruEntries_.size() > 0);
+      clearCommand_.setEnabled(mruEntries_.size() > 0);
 
       // optionally transform paths
       ArrayList<String> entries = new ArrayList<String>();
@@ -156,10 +118,6 @@ public class MRUList
             mruCmds_[i].setDesc(mruEntries_.get(i));
          }
       }
-      dirty_ = true;
-
-      if (persistClientState)
-         session_.persistClientState();
    }
 
    
@@ -168,11 +126,10 @@ public class MRUList
       return entryPath;
    }
 
-   private boolean dirty_;
-   private AppCommand[] mruCmds_;
-   private final Commands commands_;
-   private final Session session_;
-   private final boolean includeExt_;
    private final ArrayList<String> mruEntries_ = new ArrayList<String>();
+   private final AppCommand[] mruCmds_;
+   private final AppCommand clearCommand_;
+   private final WorkbenchList mruList_;
+   private final boolean includeExt_;
    private final OperationWithInput<String> operation_;
 }

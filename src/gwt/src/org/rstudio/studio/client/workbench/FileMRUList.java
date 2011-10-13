@@ -19,7 +19,6 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -30,13 +29,11 @@ public class FileMRUList extends MRUList
 {
    @Inject 
    public FileMRUList(Commands commands,
+                      WorkbenchListManager listManager,
                       final FileTypeRegistry fileTypeRegistry,
-                      Session session,
                       final FilesServerOperations server)
    {
-      super(commands, 
-            session, 
-            "mru",
+      super(listManager.getFileMruList(), 
             new AppCommand[] {
                   commands.mru0(),
                   commands.mru1(),

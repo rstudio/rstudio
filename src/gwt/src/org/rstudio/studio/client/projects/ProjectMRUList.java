@@ -18,8 +18,8 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.workbench.MRUList;
+import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -29,12 +29,10 @@ public class ProjectMRUList extends MRUList
 {
    @Inject 
    public ProjectMRUList(Commands commands, 
-                         Session session,
+                         WorkbenchListManager listManager,
                          final EventBus eventBus)
    {
-      super(commands, 
-            session, 
-            "project-mru",
+      super(listManager.getProjectMruList(),
             new AppCommand[] {
                   commands.projectMru0(),
                   commands.projectMru1(),
