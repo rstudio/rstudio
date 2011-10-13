@@ -350,9 +350,14 @@ Error initialize()
    // concurrent processes using the same project)
    FilePath graphicsPath;
    if (s_options.serverMode)
+   {
       graphicsPath = s_options.scopedScratchPath.complete(kGraphicsPath);
+   }
    else
-      graphicsPath = r::session::utils::tempDir();
+   {
+      graphicsPath = r::session::utils::tempDir().complete(
+                              "rs-graphics-" + core::system::generateUuid());
+   }
 
    error = graphics::device::initialize(graphicsPath,
                                         s_callbacks.locator);
