@@ -325,9 +325,15 @@ public class RemoteServer implements Server
 
    @Override
    public void processInit(String command,
+                           String caption,
+                           boolean dialog,
                            ServerRequestCallback<String> requestCallback)
    {
-      sendRequest(RPC_SCOPE, PROCESS_INIT, command, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(command));
+      params.set(1, new JSONString(caption));
+      params.set(2, JSONBoolean.getInstance(dialog));
+      sendRequest(RPC_SCOPE, PROCESS_INIT, params, requestCallback);
    }
 
    public void processStart(String handle,
@@ -341,6 +347,13 @@ public class RemoteServer implements Server
                                 ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, PROCESS_INTERRUPT, handle, requestCallback);
+   }
+
+   @Override
+   public void processReap(String handle,
+                           ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, PROCESS_REAP, handle, requestCallback);
    }
 
    @Override
@@ -1920,6 +1933,7 @@ public class RemoteServer implements Server
    private static final String PROCESS_INIT = "process_init";
    private static final String PROCESS_START = "process_start";
    private static final String PROCESS_INTERRUPT = "process_interrupt";
+   private static final String PROCESS_REAP = "process_reap";
    private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
 
    private static final String LIST_OBJECTS = "list_objects";

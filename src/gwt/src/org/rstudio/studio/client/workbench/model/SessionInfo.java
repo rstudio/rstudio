@@ -19,6 +19,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public class SessionInfo extends JavaScriptObject
@@ -172,6 +173,9 @@ public class SessionInfo extends JavaScriptObject
       if (!this.project_ui_prefs)
          this.project_ui_prefs = {};
       return this.project_ui_prefs;
-   }-*/;   
-}
+   }-*/;
 
+   public final native JsArray<ConsoleProcessInfo> getConsoleProcesses() /*-{
+      return this.console_processes;
+   }-*/;
+}

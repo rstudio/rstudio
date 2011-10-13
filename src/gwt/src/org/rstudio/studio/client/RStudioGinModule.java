@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.DefaultGlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
@@ -115,6 +116,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(WorkbenchListManager.class).asEagerSingleton();
       bind(ApplicationQuit.class).asEagerSingleton();
       bind(ClientStateUpdater.class).asEagerSingleton();
+      bind(ConsoleProcessFactory.class).asEagerSingleton();
       bind(Commands.class).in(Singleton.class);
       bind(DefaultCRANMirror.class).in(Singleton.class);
       bind(ConsoleDispatcher.class).in(Singleton.class);

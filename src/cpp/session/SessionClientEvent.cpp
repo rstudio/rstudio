@@ -69,6 +69,7 @@ const int kAskPass = 42;
 const int kConsoleProcessOutput = 43;
 const int kConsoleProcessExit = 44;
 const int kListChanged = 45;
+const int kConsoleProcessCreated = 46;
 }   
 
 void ClientEvent::init(int type, const json::Value& data)

@@ -26,6 +26,7 @@ namespace modules {
 namespace console_process {
 
 namespace {
+   const size_t OUTPUT_BUFFER_SIZE = 8192;
    typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
    ProcTable s_procs;
 
@@ -39,11 +40,31 @@ namespace {
 
 ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
+                               const std::string& caption,
+                               bool dialog,
                                const boost::function<void()>& onExit)
-   : command_(command), options_(options), started_(false),
-     interrupt_(false), onExit_(onExit)
+   : command_(command), options_(options), caption_(caption), dialog_(dialog),
+     started_(false), interrupt_(false), outputBuffer_(OUTPUT_BUFFER_SIZE),
+     onExit_(onExit)
 {
    handle_ = core::system::generateUuid(false);
+
+   // When we retrieve from outputBuffer, we only want complete lines. Add a
+   // dummy \n so we can tell the first line is a complete line.
+   outputBuffer_.push_back('\n');
+}
+
+std::string ConsoleProcess::bufferedOutput() const
+{
+   boost::circular_buffer<char>::const_iterator pos =
+         std::find(outputBuffer_.begin(), outputBuffer_.end(), '\n');
+
+   std::string result;
+   if (pos != outputBuffer_.end())
+      pos++;
+   std::copy(pos, outputBuffer_.end(), std::back_inserter(result));
+   // Will be empty if the buffer was overflowed by a single line
+   return result;
 }
 
 Error ConsoleProcess::start()
@@ -83,8 +104,11 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 }
 
 void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
-                                     const std::string& output)
+                              const std::string& output)
 {
+   std::copy(output.begin(), output.end(),
+             std::back_inserter(outputBuffer_));
+
    json::Object data;
    data["handle"] = handle_;
    data["error"] = false;
@@ -106,25 +130,39 @@ void ConsoleProcess::onStderr(core::system::ProcessOperations& ops,
 
 void ConsoleProcess::onExit(int exitCode)
 {
+   exitCode_.reset(exitCode);
+
    json::Object data;
    data["handle"] = handle_;
    data["exitCode"] = exitCode;
    module_context::enqueClientEvent(
          ClientEvent(client_events::kConsoleProcessExit, data));
 
-   s_procs.erase(handle_);
-
    if (onExit_)
       onExit_();
+}
+
+core::json::Object ConsoleProcess::toJson() const
+{
+   json::Object result;
+   result["handle"] = handle_;
+   result["caption"] = caption_;
+   result["dialog"] = dialog_;
+   result["buffered_output"] = bufferedOutput();
+   if (exitCode_)
+      result["exit_code"] = *exitCode_;
+   else
+      result["exit_code"] = json::Value();
+   return result;
 }
 
 core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
 {
    core::system::ProcessCallbacks cb;
-   cb.onContinue = boost::bind(&ConsoleProcess::onContinue, this, _1);
-   cb.onStdout = boost::bind(&ConsoleProcess::onStdout, this, _1, _2);
-   cb.onStderr = boost::bind(&ConsoleProcess::onStderr, this, _1, _2);
-   cb.onExit = boost::bind(&ConsoleProcess::onExit, this, _1);
+   cb.onContinue = boost::bind(&ConsoleProcess::onContinue, ConsoleProcess::shared_from_this(), _1);
+   cb.onStdout = boost::bind(&ConsoleProcess::onStdout, ConsoleProcess::shared_from_this(), _1, _2);
+   cb.onStderr = boost::bind(&ConsoleProcess::onStderr, ConsoleProcess::shared_from_this(), _1, _2);
+   cb.onExit = boost::bind(&ConsoleProcess::onExit, ConsoleProcess::shared_from_this(), _1);
    return cb;
 }
 
@@ -135,13 +173,17 @@ core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
 Error procInit(const json::JsonRpcRequest& request,
                json::JsonRpcResponse* pResponse)
 {
-   std::string command;
-   Error error = json::readParams(request.params, &command);
+   std::string command, caption;
+   bool dialog;
+   Error error = json::readParams(request.params, &command, &caption, &dialog);
    if (error)
       return error;
 
    boost::shared_ptr<ConsoleProcess> ptrProc = ConsoleProcess::create(
-                                                       command, procOptions());
+                                                       command,
+                                                       procOptions(),
+                                                       caption,
+                                                       dialog);
    pResponse->setResult(ptrProc->handle());
    return Success();
 }
@@ -185,16 +227,42 @@ Error procInterrupt(const json::JsonRpcRequest& request,
    }
 }
 
+Error procReap(const json::JsonRpcRequest& request,
+               json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   Error error = json::readParams(request.params, &handle);
+   if (error)
+      return error;
+
+   if (!s_procs.erase(handle))
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         ERROR_LOCATION);
+   }
+   else
+   {
+      return Success();
+   }
+}
+
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string &command,
       core::system::ProcessOptions options,
+      const std::string& caption,
+      bool dialog,
       const boost::function<void()>& onExit)
 {
    options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
-         new ConsoleProcess(command, options, onExit));
+         new ConsoleProcess(command, options, caption, dialog, onExit));
    s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
+}
+
+const std::map<std::string, boost::shared_ptr<ConsoleProcess> >& processes()
+{
+   return s_procs;
 }
 
 Error initialize()
@@ -206,7 +274,8 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "process_prepare", procInit))
       (bind(registerRpcMethod, "process_start", procStart))
-      (bind(registerRpcMethod, "process_interrupt", procInterrupt));
+      (bind(registerRpcMethod, "process_interrupt", procInterrupt))
+      (bind(registerRpcMethod, "process_reap", procReap));
 
    return initBlock.execute();
 }
