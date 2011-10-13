@@ -23,8 +23,11 @@ import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ProcessExitEvent;
+import org.rstudio.studio.client.common.console.ProcessExitEvent.Handler;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
 public class ConsoleBarPresenter
 {
@@ -115,7 +118,7 @@ public class ConsoleBarPresenter
       server_.vcsExecuteCommand(command, new SimpleRequestCallback<ConsoleProcess>()
       {
          @Override
-         public void onResponseReceived(ConsoleProcess response)
+         public void onResponseReceived(final ConsoleProcess response)
          {
             response.addConsoleOutputHandler(new ConsoleOutputEvent.Handler()
             {
@@ -123,6 +126,15 @@ public class ConsoleBarPresenter
                public void onConsoleOutput(ConsoleOutputEvent event)
                {
                   outputView_.addOutput(event.getOutput());
+               }
+            });
+
+            response.addProcessExitHandler(new Handler()
+            {
+               @Override
+               public void onProcessExit(ProcessExitEvent event)
+               {
+                  response.reap(new VoidServerRequestCallback());
                }
             });
 
