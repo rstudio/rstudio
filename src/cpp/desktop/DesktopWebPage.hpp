@@ -28,6 +28,9 @@ public:
 
    void setBaseUrl(const QUrl& baseUrl);
 
+public slots:
+   bool shouldInterruptJavaScript();
+
 protected:
    void javaScriptConsoleMessage(const QString& message, int lineNumber, const QString& sourceID);
    QString userAgentForUrl(const QUrl &url) const;
