@@ -37,5 +37,5 @@ public @interface NonTckTest {
    * property {@value} is set to true the {@link TckTestSuiteWrapper} will not
    * run the tests annotated {@link Failing}.
    */
-  String EXCLUDE = "com.google.gwt.sample.validationtck.util.NotTckTest.exclude";
+  String EXCLUDE = "com.google.gwt.sample.validationtck.util.NonTckTest.exclude";
 }

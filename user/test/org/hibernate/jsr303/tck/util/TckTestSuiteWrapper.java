@@ -56,11 +56,12 @@ public class TckTestSuiteWrapper extends GWTTestSuite {
   private static final Predicate<Method> EXCLUDE_NON_TCK_TEST = createHasProperty(NonTckTest.EXCLUDE);
 
   @SuppressWarnings("unchecked")
-  private static final Predicate<Method> METHOD_FILTER = and(
-      or(INCLUDE_NOT_SUPPORTED, not(HAS_NOT_SUPPORTED)),
-      or(INCLUDE_TEST_NOT_COMPATIBLE, not(HAS_TEST_NOT_COMPATIBLE)),
-      not(and(EXCLUDE_NON_TCK_TEST, HAS_NON_TCK_TEST)),
-      or(INCLUDE_FAILING, not(HAS_FAILING))
+  private static final Predicate<Method> METHOD_FILTER = 
+      and(
+         or(INCLUDE_NOT_SUPPORTED, not(HAS_NOT_SUPPORTED)),
+         or(INCLUDE_TEST_NOT_COMPATIBLE, not(HAS_TEST_NOT_COMPATIBLE)),
+         or(INCLUDE_FAILING, not(HAS_FAILING)),
+         not(and(EXCLUDE_NON_TCK_TEST, HAS_NON_TCK_TEST))
       );
 
   public static Predicate<Method> createHasAnnotationPredicate(
@@ -75,9 +76,9 @@ public class TckTestSuiteWrapper extends GWTTestSuite {
 
   private static <T> Predicate<T> createHasProperty(final String property) {
     return new Predicate<T>() {
-      public boolean apply(T arg0) {
-        String include = System.getProperty(property);
-        return Boolean.parseBoolean(include);
+      public boolean apply(T notUsed) {
+        String value = System.getProperty(property);
+        return Boolean.parseBoolean(value);
       }
     };
   }
