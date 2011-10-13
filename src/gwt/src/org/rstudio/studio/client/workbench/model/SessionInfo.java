@@ -100,7 +100,7 @@ public class SessionInfo extends JavaScriptObject
       return this.source_documents;
    }-*/;
    
-   public final native JsObject getLists() /*-{
+   public final native WorkbenchLists getLists() /*-{
       return this.lists;
    }-*/;
 
