@@ -1447,6 +1447,56 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_PUBLIC_KEY, requestCallback);
    }
 
+   @Override
+   public void listGet(String listName, 
+                       ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, LIST_GET, listName, requestCallback);
+   }
+
+   @Override
+   public void listPrependItem(String listName,
+                               String value,
+                               ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  LIST_PREPEND_ITEM, 
+                  listName, 
+                  value, 
+                  requestCallback);
+   }
+
+   @Override
+   public void listAppendItem(String listName,
+                              String value,
+                              ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  LIST_APPEND_ITEM, 
+                  listName, 
+                  value, 
+                  requestCallback);
+   }
+
+   @Override
+   public void listRemoveItem(String listName,
+                              String value,
+                              ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  LIST_REMOVE_ITEM, 
+                  listName, 
+                  value, 
+                  requestCallback);  
+   }
+
+   @Override
+   public void listClear(String listName,
+                         ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, LIST_CLEAR, listName, requestCallback);
+   }
+   
    // package-visible methods for peer classes RemoteServerAuth and
    // RemoveServerEventListener
 
@@ -1523,6 +1573,25 @@ public class RemoteServer implements Server
       
       sendRequest(scope, method, params, requestCallback);
    }
+   
+   private <T> void sendRequest(String scope, 
+                                String method, 
+                                String param1,
+                                String param2,
+                                ServerRequestCallback<T> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+
+      // pass JSONNull if the string is null
+      params.set(0, param1 != null ? new JSONString(param1) : 
+                                    JSONNull.getInstance());
+      params.set(1, param2 != null ? new JSONString(param2) : 
+                                    JSONNull.getInstance());
+      
+
+      sendRequest(scope, method, params, requestCallback);
+   }
+
    
    private <T> void sendRequest(String scope, 
                                 String method, 
@@ -1959,7 +2028,13 @@ public class RemoteServer implements Server
    private static final String VCS_SHOW = "vcs_show";
 
    private static final String GET_PUBLIC_KEY = "get_public_key";
-
+   
+   private static final String LIST_GET = "list_get";
+   private static final String LIST_PREPEND_ITEM = "list_prepend_item";
+   private static final String LIST_APPEND_ITEM = "list_append_item";
+   private static final String LIST_REMOVE_ITEM = "list_remove_item";
+   private static final String LIST_CLEAR = "list_clear";
+   
    private static final String LOG = "log";
 
 

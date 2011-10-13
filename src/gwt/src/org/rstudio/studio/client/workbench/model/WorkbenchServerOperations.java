@@ -51,7 +51,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    PrefsServerOperations,
                                                    ProjectsServerOperations,
                                                    CodeSearchServerOperations,
-                                                   CryptoServerOperations
+                                                   CryptoServerOperations,
+                                                   WorkbenchListsServerOperations
 {   
    void onWorkbenchReady();
    
