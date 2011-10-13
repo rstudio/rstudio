@@ -187,20 +187,18 @@ Error listInsertItem(bool prepend,
 {
    // get params and other context
    std::string name, value;
-   bool enforceUnique;
    std::list<std::string> list;
    std::size_t maxSize;
    Error error = getListNameAndContents(request, &name, &list);
    if (error)
       return error;
-   error = json::readParams(request.params, &name, &value, &enforceUnique);
+   error = json::readParam(request.params, 1, &value);
    if (error)
       return error;
    maxSize = listSize(name.c_str());
 
-   // remove any existing item if requested
-   if (enforceUnique)
-      list.remove(value);
+   // remove any existing item with this value
+   list.remove(value);
 
    // enforce size constraints
    while (list.size() >= maxSize)

@@ -15,7 +15,6 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 
-// TODO: consider enforceUnique being the default and convert to set?
 
 public class WorkbenchListManager implements SessionInitHandler,
                                              ListChangedHandler
