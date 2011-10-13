@@ -49,10 +49,6 @@ void MenuCallback::beginMenu(QString label)
       menuStack_.top()->addMenu(pMenu);
 
    menuStack_.push(pMenu);
-   menuActions_[pMenu] = QList<QAction*>();
-
-   connect(pMenu, SIGNAL(aboutToShow()),
-           this, SLOT(aboutToShowMenu()));
 }
 
 void MenuCallback::addCommand(QString commandId,
@@ -79,16 +75,16 @@ void MenuCallback::addCommand(QString commandId,
    pAction->setData(commandId);
    pAction->setToolTip(tooltip);
 
-   menuActions_[menuStack_.first()].append(pAction);
+   MenuActionBinder* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
+   connect(pBinder, SIGNAL(manageCommand(QString,QAction*)),
+           this, SIGNAL(manageCommand(QString,QAction*)));
 }
 
 void MenuCallback::actionInvoked()
 {
    QAction* action = qobject_cast<QAction*>(sender());
    QString commandId = action->data().toString();
-   manageCommand(commandId, action);
-   if (action->isEnabled())
-      commandInvoked(commandId);
+   commandInvoked(commandId);
 }
 
 void MenuCallback::addSeparator()
@@ -107,19 +103,25 @@ void MenuCallback::endMainMenu()
    menuBarCompleted(pMainMenu_);
 }
 
-void MenuCallback::aboutToShowMenu()
+MenuActionBinder::MenuActionBinder(QMenu* pMenu, QAction* pAction) : QObject(pAction)
 {
-   QMenu* menu = qobject_cast<QMenu*>(sender());
-   if (menuActions_.contains(menu))
-   {
-      QList<QAction*> list = menuActions_[menu];
-      for (int i = 0; i < list.size(); i++)
-      {
-         QAction* action = list.at(i);
-         QString commandId = action->data().toString();
-         manageCommand(commandId, action);
-      }
-   }
+   connect(pMenu, SIGNAL(aboutToShow()), this, SLOT(onShowMenu()));
+   connect(pMenu, SIGNAL(aboutToHide()), this, SLOT(onHideMenu()));
+   pAction_ = pAction;
+   keySequence_ = pAction->shortcut();
+   pAction->setShortcut(QKeySequence());
+}
+
+void MenuActionBinder::onShowMenu()
+{
+   QString commandId = pAction_->data().toString();
+   manageCommand(commandId, pAction_);
+   pAction_->setShortcut(keySequence_);
+}
+
+void MenuActionBinder::onHideMenu()
+{
+   pAction_->setShortcut(QKeySequence());
 }
 
 WindowMenu::WindowMenu(QWidget *parent) : QMenu(QString::fromUtf8("&Window"), parent)

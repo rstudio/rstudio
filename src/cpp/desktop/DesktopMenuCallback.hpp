@@ -42,8 +42,6 @@ public slots:
     void endMainMenu();
     void actionInvoked();
 
-    void aboutToShowMenu();
-
 signals:
     void menuBarCompleted(QMenuBar* menuBar);
     void manageCommand(QString commandId, QAction* action);
@@ -52,7 +50,35 @@ signals:
 private:
     QMenuBar* pMainMenu_;
     QStack<QMenu*> menuStack_;
-    QHash<QMenu*, QList<QAction*> > menuActions_;
+};
+
+/* Previously, in desktop mode, many keyboard shortcuts were handled by Qt,
+ * by way of the keyboard shortcuts being added to QAction objects which
+ * appear on menus. This is problematic because the keyboard shortcut handling
+ * is thus not managed using the same code as web mode; most seriously, when
+ * modal dialogs are shown, the keyboard shortcuts still work.
+ *
+ * Rather than try to keep the QActions in sync with commands, which seems
+ * like it would be very chatty, this class ensures the QActions don't have
+ * shortcuts assigned to them--except while their menus are showing. It also
+ * ensures that commands are "managed" right before they are shown.
+ */
+class MenuActionBinder : public QObject
+{
+   Q_OBJECT
+public:
+   MenuActionBinder(QMenu* pMenu, QAction* action);
+
+public slots:
+   void onShowMenu();
+   void onHideMenu();
+
+signals:
+   void manageCommand(QString commandId, QAction* action);
+
+private:
+   QAction* pAction_;
+   QKeySequence keySequence_;
 };
 
 class WindowMenu : public QMenu
