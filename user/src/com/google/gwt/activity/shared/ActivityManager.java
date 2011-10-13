@@ -91,18 +91,6 @@ public class ActivityManager implements PlaceChangeEvent.Handler, PlaceChangeReq
   }
 
   /**
-   * Returns an event bus which is in use by the currently running activity.
-   * <p>
-   * Any handlers attached to the returned event bus will be de-registered when
-   * the current activity is stopped.
-   *
-   * @return the event bus used by the current activity
-   */
-  public EventBus getActiveEventBus() {
-    return stopperedEventBus;
-  }
-
-  /**
    * Deactivate the current activity, find the next one from our ActivityMapper,
    * and start it.
    * <p>
