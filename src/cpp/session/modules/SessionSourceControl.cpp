@@ -47,8 +47,6 @@
 
 #include "SessionConsoleProcess.hpp"
 
-// TODO: git fetch doesn't work due to path differences between bash and cmd
-// TODO: Discover/configure git bin dir, and add it to the path (needed to find ssh)
 #include "config.h"
 
 // TODO: It's actually pretty easy to look in an id_rsa file and see if it's encrypted,
@@ -495,6 +493,8 @@ public:
             console_process::ConsoleProcess::create(git() << "checkout"
                                                     << id << "--",
                                                     procOptions(),
+                                                    "Checkout",
+                                                    true,
                                                     &enqueueRefreshEvent);
       *pHandle = ptrProc->handle();
       return Success();
@@ -522,7 +522,7 @@ public:
 
       boost::shared_ptr<ConsoleProcess> ptrProc =
             console_process::ConsoleProcess::create(
-                  command, procOptions(),
+                  command, procOptions(), "Commit", true,
                   boost::bind(afterCommit, tempFile));
 
       *pHandle = ptrProc->handle();
@@ -539,7 +539,10 @@ public:
             git() << "clone" << "--progress" << url);
 
       boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::ConsoleProcess::create(cmd, procOptions());
+            console_process::ConsoleProcess::create(cmd,
+                                                    procOptions(),
+                                                    "Clone",
+                                                    true);
 
       *pHandle = ptrProc->handle();
       return Success();
@@ -623,6 +626,8 @@ public:
       boost::shared_ptr<ConsoleProcess> ptrProc =
             console_process::ConsoleProcess::create(cmd,
                                                     procOptions(),
+                                                    "Push",
+                                                    true,
                                                     &enqueueRefreshEvent);
 
       *pHandle = ptrProc->handle();
@@ -634,6 +639,8 @@ public:
       boost::shared_ptr<ConsoleProcess> ptrProc =
             console_process::ConsoleProcess::create(git() << "pull",
                                                     procOptions(),
+                                                    "Pull",
+                                                    true,
                                                     &enqueueRefreshEvent);
 
       *pHandle = ptrProc->handle();
@@ -1345,6 +1352,8 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
    boost::shared_ptr<ConsoleProcess> ptrProc =
          console_process::ConsoleProcess::create(command,
                                                  procOptions(),
+                                                 "",
+                                                 false,
                                                  &enqueueRefreshEvent);
 
    pResponse->setResult(ptrProc->handle());

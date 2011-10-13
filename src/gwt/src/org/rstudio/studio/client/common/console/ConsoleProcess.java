@@ -12,17 +12,24 @@
  */
 package org.rstudio.studio.client.common.console;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
+import org.rstudio.studio.client.workbench.views.vcs.ConsoleProgressDialog;
 
 public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                        ProcessExitEvent.HasHandlers
@@ -32,10 +39,62 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
    {
       @Inject
       public ConsoleProcessFactory(ConsoleServerOperations server,
-                                   EventBus eventBus)
+                                   EventBus eventBus,
+                                   final Session session)
       {
          server_ = server;
          eventBus_ = eventBus;
+
+         eventBus_.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
+         {
+            @Override
+            public void onSessionInit(SessionInitEvent sie)
+            {
+               JsArray<ConsoleProcessInfo> procs =
+                     session.getSessionInfo().getConsoleProcesses();
+
+               for (int i = 0; i < procs.length(); i++)
+               {
+                  final ConsoleProcessInfo proc = procs.get(i);
+
+                  connectToProcess(
+                        proc.getHandle(),
+                        new ServerRequestCallback<ConsoleProcess>()
+                        {
+                           @Override
+                           public void onResponseReceived(
+                                 final ConsoleProcess cproc)
+                           {
+                              if (proc.isDialog())
+                              {
+                                 new ConsoleProgressDialog(
+                                       proc.getCaption(),
+                                       cproc,
+                                       proc.getBufferedOutput(),
+                                       proc.getExitCode()).showModal();
+                              }
+                              else
+                              {
+                                 cproc.addProcessExitHandler(new ProcessExitEvent.Handler()
+                                 {
+                                    @Override
+                                    public void onProcessExit(ProcessExitEvent event)
+                                    {
+                                       cproc.reap(new VoidServerRequestCallback());
+                                    }
+                                 });
+                              }
+                           }
+
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.logError(error);
+                           }
+                        });
+               }
+            }
+         });
       }
 
       /**
@@ -47,9 +106,12 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
        */
       public void allocNewProcess(
             String command,
+            String caption,
+            boolean dialog,
             final ServerRequestCallback<ConsoleProcess> requestCallback)
       {
-         server_.processInit(command, new ServerRequestCallback<String>()
+         server_.processInit(command, caption, dialog,
+                             new ServerRequestCallback<String>()
          {
             @Override
             public void onResponseReceived(String response)
@@ -130,6 +192,11 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
    public void interrupt(ServerRequestCallback<Void> requestCallback)
    {
       server_.processInterrupt(handle_, requestCallback);
+   }
+
+   public void reap(ServerRequestCallback<Void> requestCallback)
+   {
+      server_.processReap(handle_, requestCallback);
    }
 
    @Override

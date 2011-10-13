@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.server;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.ProgressIndicator;
 
 public class VoidServerRequestCallback extends ServerRequestCallback<Void>
@@ -36,6 +37,8 @@ public class VoidServerRequestCallback extends ServerRequestCallback<Void>
    
    public void onError(ServerError error)
    {
+      Debug.logError(error);
+
       if (progress_ != null)
          progress_.onError(error.getUserMessage());
       

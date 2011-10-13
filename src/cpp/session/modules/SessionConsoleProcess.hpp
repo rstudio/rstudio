@@ -13,8 +13,13 @@
 #ifndef SESSION_CONSOLE_PROCESS_HPP
 #define SESSION_CONSOLE_PROCESS_HPP
 
+#include <boost/circular_buffer.hpp>
+#include <boost/enable_shared_from_this.hpp>
+
 #include <core/system/Process.hpp>
 #include <core/Log.hpp>
+
+#include <core/json/Json.hpp>
 
 namespace core {
    class Error;
@@ -24,23 +29,29 @@ namespace session {
 namespace modules {
 namespace console_process {
 
-class ConsoleProcess : boost::noncopyable
+class ConsoleProcess : boost::noncopyable,
+                       public boost::enable_shared_from_this<ConsoleProcess>
 {
 private:
    ConsoleProcess(
          const std::string& command,
          const core::system::ProcessOptions& options,
+         const std::string& caption,
+         bool dialog,
          const boost::function<void()>& onExit);
 
 public:
    static boost::shared_ptr<ConsoleProcess> create(
          const std::string& command,
          core::system::ProcessOptions options,
+         const std::string& caption,
+         bool dialog,
          const boost::function<void()>& onExit=boost::function<void()>());
 
    virtual ~ConsoleProcess() {}
 
    std::string handle() const { return handle_; }
+   std::string bufferedOutput() const;
 
    core::Error start();
    void enqueueInput(const std::string& input);
@@ -55,10 +66,15 @@ public:
                  const std::string& output);
    void onExit(int exitCode);
 
+   core::json::Object toJson() const;
+
 private:
    // Command and options that will be used when start() is called
    std::string command_;
    core::system::ProcessOptions options_;
+
+   std::string caption_;
+   bool dialog_;
 
    // The handle that the client can use to refer to this process
    std::string handle_;
@@ -71,9 +87,16 @@ private:
    // Pending writes to stdin
    std::string inputQueue_;
 
+   // Buffer output in case client disconnects/reconnects and needs
+   // to recover some history
+   boost::circular_buffer<char> outputBuffer_;
+
+   boost::optional<int> exitCode_;
+
    boost::function<void()> onExit_;
 };
 
+const std::map<std::string, boost::shared_ptr<ConsoleProcess> >& processes();
 core::Error initialize();
 
 } // namespace console_process

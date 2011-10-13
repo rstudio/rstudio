@@ -30,6 +30,8 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
    void resetConsoleActions(ServerRequestCallback<Void> requestCallback);
 
    void processInit(String command,
+                    String caption,
+                    boolean dialog,
                     ServerRequestCallback<String> requestCallback);
 
    void processStart(String handle,
@@ -37,6 +39,9 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
 
    void processInterrupt(String handle,
                          ServerRequestCallback<Void> requestCallback);
+
+   void processReap(String handle,
+                    ServerRequestCallback<Void> requestCallback);
 
    void processWriteStdin(String handle,
                           String input,

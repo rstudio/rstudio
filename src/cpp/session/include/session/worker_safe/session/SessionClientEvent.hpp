@@ -68,6 +68,7 @@ extern const int kAskPass;
 extern const int kConsoleProcessOutput;
 extern const int kConsoleProcessExit;
 extern const int kListChanged;
+extern const int kConsoleProcessCreated;
 }
    
 class ClientEvent

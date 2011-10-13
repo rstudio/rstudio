@@ -655,7 +655,7 @@ public:
       setField(kRpcResult, result);
    }
 
-   json::Value result()
+   json::Value& result()
    {
       return response_[kRpcResult];
    }
