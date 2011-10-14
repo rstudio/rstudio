@@ -55,19 +55,28 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   /**
+   * Equivalent to {@link #createJavaScriptException(ClassLoader,Object,String)
+   * createJavaScriptException(cl, exception, "")}.
+   */
+  protected static RuntimeException createJavaScriptException(ClassLoader cl,
+      Object exception) {
+    return createJavaScriptException(cl, exception, "");
+  }
+
+  /**
    * Create a JavaScriptException object. This must be done reflectively, since
    * this class will have been loaded from a ClassLoader other than the
    * session's thread.
    */
   protected static RuntimeException createJavaScriptException(ClassLoader cl,
-      Object exception) {
+      Object exception, String message) {
     Exception caught;
     try {
       Class<?> javaScriptExceptionClass = Class.forName(
           "com.google.gwt.core.client.JavaScriptException", true, cl);
       Constructor<?> ctor = javaScriptExceptionClass.getDeclaredConstructor(
-          Object.class);
-      return (RuntimeException) ctor.newInstance(new Object[] {exception});
+          Object.class, String.class);
+      return (RuntimeException) ctor.newInstance(new Object[] {exception, message});
     } catch (InstantiationException e) {
       caught = e;
     } catch (IllegalAccessException e) {

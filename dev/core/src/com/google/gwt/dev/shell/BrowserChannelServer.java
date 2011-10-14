@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -241,8 +242,8 @@ public class BrowserChannelServer extends BrowserChannel
           // JSException
           exceptionValue = returnValue.getValue().toString();
         }
-        RuntimeException exception = ModuleSpace.createJavaScriptException(
-            ccl, exceptionValue);
+        RuntimeException exception = ModuleSpace.createJavaScriptException(ccl,
+            exceptionValue, methodName + "(" + Arrays.toString(args) + ")");
         // reset the stack trace to here to minimize GWT infrastructure in
         // the stack trace
         exception.fillInStackTrace();

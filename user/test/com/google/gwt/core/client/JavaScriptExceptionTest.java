@@ -62,10 +62,10 @@ public class JavaScriptExceptionTest extends GWTTestCase {
       fail();
     } catch (JavaScriptException e) {
       assertEquals("myName", e.getName());
-      assertEquals("myDescription", e.getDescription());
+      assertDescription(e, "myDescription");
       assertSame(jso, e.getException());
       assertTrue(e.getMessage().contains("myName"));
-      assertTrue(e.getMessage().contains("myDescription"));
+      assertTrue(e.getMessage().contains(e.getDescription()));
       if (extraPropertiesShouldBePresent) {
         assertTrue(
             "message does not contain 'extraField', but should: "
@@ -115,7 +115,7 @@ public class JavaScriptExceptionTest extends GWTTestCase {
       assertSame(e, t);
     }
   }
-  
+
   @WithProperties({
     @Property(name = "compiler.stackMode", value = "emulated")
   })
@@ -142,7 +142,7 @@ public class JavaScriptExceptionTest extends GWTTestCase {
      */
     assertJsoProperties(GWT.isScript());
   }
-
+  
   @WithProperties({
     @Property(name = "compiler.stackMode", value = "strip")
   })
@@ -163,7 +163,7 @@ public class JavaScriptExceptionTest extends GWTTestCase {
       fail();
     } catch (JavaScriptException e) {
       assertEquals("null", e.getName());
-      assertEquals("null", e.getDescription());
+      assertDescription(e, "null");
       assertEquals(null, e.getException());
       assertTrue(e.getMessage().contains("null"));
     }
@@ -181,10 +181,10 @@ public class JavaScriptExceptionTest extends GWTTestCase {
       fail();
     } catch (JavaScriptException e) {
       assertEquals(o.getClass().getName(), e.getName());
-      assertEquals("myLameObject", e.getDescription());
+      assertDescription(e, "myLameObject");
       assertEquals(null, e.getException());
       assertTrue(e.getMessage().contains(o.getClass().getName()));
-      assertTrue(e.getMessage().contains("myLameObject"));
+      assertTrue(e.getMessage().contains(e.getDescription()));
     }
   }
 
@@ -194,9 +194,20 @@ public class JavaScriptExceptionTest extends GWTTestCase {
       fail();
     } catch (JavaScriptException e) {
       assertEquals("String", e.getName());
-      assertEquals("foobarbaz", e.getDescription());
+      assertDescription(e, "foobarbaz");
       assertEquals(null, e.getException());
-      assertTrue(e.getMessage().contains("foobarbaz"));
+      assertTrue(e.getMessage().contains(e.getDescription()));
     }
+  }
+
+  private void assertDescription(JavaScriptException e, String description) {
+    if (!GWT.isScript()) {
+      assertTrue("Should start with method name",
+          e.getDescription().startsWith(
+              "@com.google.gwt.core.client.JavaScriptExceptionTest::"
+                  + "throwNative(Ljava/lang/Object;)"));
+    }
+    assertTrue("Should end with " + description,
+        e.getDescription().endsWith(description));
   }
 }

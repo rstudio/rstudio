@@ -45,23 +45,23 @@ import com.google.gwt.core.client.impl.StackTraceCreator;
  */
 public final class JavaScriptException extends RuntimeException {
 
-  private static String getDescription(Object e) {
+  private static String getExceptionDescription(Object e) {
     if (e instanceof JavaScriptObject) {
-      return getDescription0((JavaScriptObject) e);
+      return getExceptionDescription0((JavaScriptObject) e);
     } else {
       return e + "";
     }
   }
 
-  private static native String getDescription0(JavaScriptObject e) /*-{
+  private static native String getExceptionDescription0(JavaScriptObject e) /*-{
     return (e == null) ? null : e.message;
   }-*/;
 
-  private static String getName(Object e) {
+  private static String getExceptionName(Object e) {
     if (e == null) {
       return "null";
     } else if (e instanceof JavaScriptObject) {
-      return getName0((JavaScriptObject) e);
+      return getExceptionName0((JavaScriptObject) e);
     } else if (e instanceof String) {
       return "String";
     } else {
@@ -69,11 +69,11 @@ public final class JavaScriptException extends RuntimeException {
     }
   }
 
-  private static native String getName0(JavaScriptObject e) /*-{
+  private static native String getExceptionName0(JavaScriptObject e) /*-{
     return (e == null) ? null : e.name;
   }-*/;
 
-  private static String getProperties(Object e) {
+  private static String getExceptionProperties(Object e) {
     return (GWT.isScript() && e instanceof JavaScriptObject)
         ? StackTraceCreator.getProperties((JavaScriptObject) e) : "";
   }
@@ -82,7 +82,7 @@ public final class JavaScriptException extends RuntimeException {
    * The original description of the JavaScript exception this class wraps,
    * initialized as <code>e.message</code>.
    */
-  private String description;
+  private String description = "";
 
   /**
    * The underlying exception this class wraps.
@@ -104,7 +104,18 @@ public final class JavaScriptException extends RuntimeException {
    * @param e the object caught in JavaScript that triggered the exception
    */
   public JavaScriptException(Object e) {
+    this(e, "");
+  }
+
+  /**
+   * @param e the object caught in JavaScript that triggered the exception
+   * @param description to include in getMessage(), e.g. at the top of a stack
+   *          trace
+   */
+  public JavaScriptException(Object e, String description) {
     this.e = e;
+    this.description = description;
+
     /*
      * In Development Mode, JavaScriptExceptions are created exactly when the
      * native method returns and their stack traces are fixed-up by the
@@ -117,7 +128,7 @@ public final class JavaScriptException extends RuntimeException {
       StackTraceCreator.createStackTrace(this);
     }
   }
-
+  
   public JavaScriptException(String name, String description) {
     this.message = "JavaScript " + name + " exception: " + description;
     this.name = name;
@@ -176,9 +187,9 @@ public final class JavaScriptException extends RuntimeException {
   }
 
   private void init() {
-    name = getName(e);
-    description = getDescription(e);
-    message = "(" + name + "): " + description + getProperties(e);
+    name = getExceptionName(e);
+    description = description + ": " + getExceptionDescription(e);
+    message = "(" + name + ") " + getExceptionProperties(e) + description;
   }
 
 }
