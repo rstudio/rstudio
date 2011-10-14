@@ -20,6 +20,7 @@ import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 
@@ -132,6 +133,21 @@ public class MultiSelectCellTable<T> extends CellTable<T>
             moveSelection(event.getNativeKeyCode() == KeyCodes.KEY_UP,
                           modifiers == KeyboardShortcut.SHIFT);
 
+            break;
+         case 'A':
+            if (modifiers == (BrowseCap.hasMetaKey() ? KeyboardShortcut.META
+                                                     : KeyboardShortcut.CTRL))
+            {
+               if (getSelectionModel() instanceof MultiSelectionModel)
+               {
+                  event.preventDefault();
+                  event.stopPropagation();
+
+                  MultiSelectionModel<T> model = (MultiSelectionModel<T>)getSelectionModel();
+                  for (T item : getVisibleItems())
+                     model.setSelected(item, true);
+               }
+            }
             break;
       }
 
