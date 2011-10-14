@@ -105,7 +105,7 @@ import java.util.List;
  */
 @SuppressWarnings("deprecation")
 public class SuggestBox extends Composite implements HasText, HasFocus,
-    HasAnimation, SourcesClickEvents, SourcesChangeEvents,
+    HasAnimation, HasEnabled, SourcesClickEvents, SourcesChangeEvents,
     SourcesKeyboardEvents, FiresSuggestionEvents, HasAllKeyHandlers,
     HasValue<String>, HasSelectionHandlers<Suggestion>,
     IsEditor<LeafValueEditor<String>> {
@@ -567,15 +567,6 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       setFocusOnHoverEnabled(false);
     }
 
-    public void doSelectedItemAction() {
-      // In order to perform the action of the item that is currently
-      // selected, the menu must be showing.
-      MenuItem selectedItem = getSelectedItem();
-      if (selectedItem != null) {
-        doItemAction(selectedItem, true, false);
-      }
-    }
-
     public int getNumItems() {
       return getItems().size();
     }
@@ -618,7 +609,6 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    */
   private static class SuggestionMenuItem extends MenuItem {
 
-    @SuppressWarnings("hiding")
     private static final String STYLENAME_DEFAULT = "item";
 
     private Suggestion suggestion;
@@ -679,6 +669,10 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   private final TextBoxBase box;
   private final Callback callback = new Callback() {
     public void onSuggestionsReady(Request request, Response response) {
+      // If disabled while request was in-flight, drop it
+      if (!isEnabled()) {
+        return;
+      }
       display.setMoreSuggestions(response.hasMoreSuggestions(), 
           response.getMoreSuggestionsCount());
       display.showSuggestions(SuggestBox.this, response.getSuggestions(),
@@ -923,6 +917,15 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
+   * Gets whether this widget is enabled.
+   * 
+   * @return <code>true</code> if the widget is enabled
+   */
+  public boolean isEnabled() {
+    return box.isEnabled();
+  }
+
+  /**
    * Check if the {@link DefaultSuggestionDisplay} is showing. Note that this
    * method only has a meaningful return value when the
    * {@link DefaultSuggestionDisplay} is used.
@@ -1010,6 +1013,19 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    */
   public void setAutoSelectEnabled(boolean selectsFirstItem) {
     this.selectsFirstItem = selectsFirstItem;
+  }
+
+  /**
+   * Sets whether this widget is enabled.
+   * 
+   * @param enabled <code>true</code> to enable the widget, <code>false</code>
+   *          to disable it
+   */
+  public void setEnabled(boolean enabled) {
+    box.setEnabled(enabled);
+    if (!enabled) {
+      display.hideSuggestions();
+    }
   }
 
   public void setFocus(boolean focused) {

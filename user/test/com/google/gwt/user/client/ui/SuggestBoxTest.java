@@ -17,8 +17,10 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionCallback;
+import com.google.gwt.user.client.ui.SuggestOracle.Response;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
 import java.util.ArrayList;
@@ -30,6 +32,20 @@ import java.util.List;
  * Tests for {@link SuggestBoxTest}.
  */
 public class SuggestBoxTest extends WidgetTestBase {
+
+  /**
+   * A SuggestOracle used for testing.
+   */
+  private static class TestOracle extends SuggestOracle {
+    private Request request;
+    private Callback callback;
+
+    @Override
+    public void requestSuggestions(Request request, Callback callback) {
+      this.request = request;
+      this.callback = callback;
+    }
+  }
 
   /**
    * A SuggestionDisplay used for testing.
@@ -192,6 +208,58 @@ public class SuggestBoxTest extends WidgetTestBase {
 
     // Hides it for real this time.
     box.hideSuggestionList();
+    assertFalse(display.isSuggestionListShowing());
+  }
+
+  public void testEnabled() {
+    SuggestBox box = createSuggestBox();
+    TestSuggestionDisplay display = (TestSuggestionDisplay) box.getSuggestionDisplay();
+    assertFalse(display.isSuggestionListShowing());
+
+    // Adds suggest box with suggestion showing
+    RootPanel.get().add(box);
+    box.setText("t");
+    box.showSuggestionList();
+    assertTrue(display.isSuggestionListShowing());
+
+    // When the box is disabled
+    box.setEnabled(false);
+
+    // The suggestion list was hidden and the inner text box disabled
+    assertFalse(display.isSuggestionListShowing());
+    assertFalse(box.getTextBox().isEnabled());
+
+    // When the box is re-enabled
+    box.setEnabled(true);
+
+    // The box is re-enabled, but the suggestion list not re-shown
+    assertTrue(box.getTextBox().isEnabled());
+    assertFalse(display.isSuggestionListShowing());
+  }
+
+  public void testDisabledIgnoresLateResponses() {
+    TestOracle oracle = new TestOracle();
+    SuggestBox box = new SuggestBox(oracle, new TextBox(), new TestSuggestionDisplay());
+    TestSuggestionDisplay display = (TestSuggestionDisplay) box.getSuggestionDisplay();
+    assertFalse(display.isSuggestionListShowing());
+
+    // Adds suggest box with suggestion showing
+    RootPanel.get().add(box);
+    box.setText("t");
+    box.showSuggestionList();
+
+    // Waiting for response
+    assertFalse(display.isSuggestionListShowing());
+
+    // The box becomes disabled
+    box.setEnabled(false);
+
+    // Response comes back after that
+    Collection<MultiWordSuggestion> suggestions = new ArrayList<MultiWordSuggestion>();
+    suggestions.add(new MultiWordSuggestion("one", "one"));
+    oracle.callback.onSuggestionsReady(oracle.request, new Response(suggestions));
+
+    // The suggestion list stays hidden
     assertFalse(display.isSuggestionListShowing());
   }
 
