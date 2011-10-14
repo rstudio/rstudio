@@ -228,10 +228,12 @@ public class ReviewPanel extends Composite implements Display
             commands.vcsRevert().getImageResource(),
             (ClickHandler) null));
 
+/*
       topToolbar_.addLeftSeparator();
 
       ignoreButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Ignore", RES.ignore(), (ClickHandler) null));
+*/
 
       topToolbar_.addRightWidget(new ToolbarButton(
             "Refresh", commands.vcsRefresh().getImageResource(),
