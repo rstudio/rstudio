@@ -139,6 +139,37 @@ public class ActivityManagerTest extends TestCase {
   private ActivityManager manager = new ActivityManager(
       myMap, eventBus);
 
+  public void testActiveEventBus() {
+    final AsyncActivity asyncActivity1 = new AsyncActivity(new MyView());
+    final AsyncActivity asyncActivity2 = new AsyncActivity(new MyView());
+
+    ActivityMapper map = new ActivityMapper() {
+      public Activity getActivity(Place place) {
+        if (place.equals(place1)) {
+          return asyncActivity1;
+        }
+        if (place.equals(place2)) {
+          return asyncActivity2;
+        }
+
+        return null;
+      }
+    };
+
+    manager = new ActivityManager(map, eventBus);
+    manager.setDisplay(realDisplay);
+
+    eventBus.fireEvent(new PlaceChangeEvent(place1));
+    com.google.web.bindery.event.shared.EventBus activeEventBus =
+        manager.getActiveEventBus();
+ 
+    activeEventBus.addHandler(Event.TYPE, new Handler());
+    assertEquals(1, eventBus.getCount(Event.TYPE));
+
+    eventBus.fireEvent(new PlaceChangeEvent(place2));
+    assertEquals(0, eventBus.getCount(Event.TYPE));
+  }
+  
   public void testAsyncDispatch() {
     final AsyncActivity asyncActivity1 = new AsyncActivity(new MyView());
     final AsyncActivity asyncActivity2 = new AsyncActivity(new MyView());
