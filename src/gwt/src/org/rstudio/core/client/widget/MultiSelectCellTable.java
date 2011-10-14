@@ -20,6 +20,7 @@ import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
+import com.google.gwt.view.client.SingleSelectionModel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
@@ -110,7 +111,6 @@ public class MultiSelectCellTable<T> extends CellTable<T>
          ((MultiSelectionModel)getSelectionModel()).clear();
    }
 
-   @SuppressWarnings("unchecked")
    private void handleKeyDown(KeyDownEvent event)
    {
       int modifiers = KeyboardShortcut.getModifierValue(event.getNativeEvent());
@@ -144,9 +144,8 @@ public class MultiSelectCellTable<T> extends CellTable<T>
                   event.preventDefault();
                   event.stopPropagation();
 
-                  MultiSelectionModel<T> model = (MultiSelectionModel<T>)getSelectionModel();
                   for (T item : getVisibleItems())
-                     model.setSelected(item, true);
+                     getSelectionModel().setSelected(item, true);
                }
             }
             break;
