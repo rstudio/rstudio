@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
@@ -77,9 +76,9 @@ public class ReviewPresenter implements IsWidget
       HasValue<Integer> getContextLines();
 
       HasClickHandlers getSwitchViewButton();
-      HasClickHandlers getStageAllFilesButton();
-      HasClickHandlers getDiscardSelectedFiles();
-      HasClickHandlers getDiscardAllFiles();
+      HasClickHandlers getStageFilesButton();
+      HasClickHandlers getRevertFilesButton();
+      void setFilesCommandsEnabled(boolean enabled);
       HasClickHandlers getIgnoreButton();
       HasClickHandlers getStageAllButton();
       HasClickHandlers getDiscardAllButton();
@@ -194,12 +193,12 @@ public class ReviewPresenter implements IsWidget
                           Display view,
                           final EventBus events,
                           final VcsState vcsState,
-                          final Commands commands,
                           final Session session,
                           final GlobalDisplay globalDisplay)
    {
       server_ = server;
       view_ = view;
+      globalDisplay_ = globalDisplay;
 
       vcsState.bindRefreshHandler(view.asWidget(), new VcsRefreshHandler()
       {
@@ -256,6 +255,7 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onSelectionChange(SelectionChangeEvent event)
          {
+            view_.setFilesCommandsEnabled(view_.getSelectedPaths().size() > 0);
             updateDiff(true);
          }
       });
@@ -290,92 +290,43 @@ public class ReviewPresenter implements IsWidget
          }
       });
 
-      view_.getStageAllFilesButton().addClickHandler(new ClickHandler()
+      view_.getStageFilesButton().addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
-            server_.vcsFullStatus(new SimpleRequestCallback<JsArray<StatusAndPath>>()
-            {
-               @Override
-               public void onResponseReceived(JsArray<StatusAndPath> response)
-               {
-                  super.onResponseReceived(response);
-
-                  ArrayList<String> paths = new ArrayList<String>();
-                  for (int i = 0; i < response.length(); i++)
-                     paths.add(response.get(i).getPath());
-
-                  server_.vcsStage(paths, new SimpleRequestCallback<Void>());
-               }
-            });
+            ArrayList<String> paths = view_.getSelectedPaths();
+            if (paths.size() == 0)
+               return;
+            server_.vcsStage(paths, new SimpleRequestCallback<Void>());
          }
       });
 
-      view_.getDiscardSelectedFiles().addClickHandler(new ClickHandler()
+      view_.getRevertFilesButton().addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
-            final ArrayList<String> selectedPaths =
-                                          view_.getSelectedDiscardablePaths();
-
-            if (selectedPaths.size() == 0)
+            final ArrayList<String> paths = view_.getSelectedPaths();
+            if (paths.size() == 0)
                return;
-
-            String noun = selectedPaths.size() == 1 ? "file" : "files";
-            globalDisplay.showYesNoMessage(
+            String noun = paths.size() == 1 ? "file" : "files";
+            globalDisplay_.showYesNoMessage(
                   GlobalDisplay.MSG_WARNING,
-                  "Discard Files",
-                  "Unstaged changes to the selected " + noun + " will be " +
-                  "lost.\n\nAre you sure you want to continue?",
-                  new Operation() {
+                  "Revert Changes",
+                  "Changes to the selected " + noun + " will be lost, including " +
+                  "staged changes.\n\nAre you sure you want to continue?",
+                  new Operation()
+                  {
                      @Override
-                     public void execute() {
-                        server_.vcsDiscard(selectedPaths,
-                                           new SimpleRequestCallback<Void>());
+                     public void execute()
+                     {
+                        server_.vcsRevert(
+                              paths,
+                              new SimpleRequestCallback<Void>("Revert Changes"));
                      }
                   },
                   false);
-         }
-      });
-
-      view_.getDiscardAllFiles().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            server_.vcsFullStatus(new SimpleRequestCallback<JsArray<StatusAndPath>>() {
-               @Override
-               public void onResponseReceived(JsArray<StatusAndPath> response)
-               {
-                  final ArrayList<String> paths = new ArrayList<String>();
-                  for (int i = 0; i < response.length(); i++)
-                     if (response.get(i).isDiscardable())
-                        paths.add(response.get(i).getPath());
-
-                  if (paths.size() > 0)
-                  {
-
-                     globalDisplay.showYesNoMessage(
-                           GlobalDisplay.MSG_WARNING,
-                           "Discard Files",
-                           "All unstaged changes will be lost.\n\nAre you " +
-                           "sure you want to continue?",
-                           new Operation()
-                           {
-                              @Override
-                              public void execute()
-                              {
-                                 server_.vcsDiscard(
-                                       paths,
-                                       new SimpleRequestCallback<Void>());
-                              }
-                           },
-                           false);
-                  }
-               }
-            });
          }
       });
 
@@ -685,6 +636,7 @@ public class ReviewPresenter implements IsWidget
    private final Invalidation diffInvalidation_ = new Invalidation();
    private final VCSServerOperations server_;
    private final Display view_;
+   private final GlobalDisplay globalDisplay_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
    private String currentResponse_;
    private String currentFilename_;

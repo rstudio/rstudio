@@ -216,19 +216,17 @@ public class ReviewPanel extends Composite implements Display
 
       topToolbar_.addLeftWidget(branchToolbarButton);
 
-      stageAllFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
-            "Stage All Files", RES.stageAllFiles(), (ClickHandler) null));
+      stageFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
+            "Stage",
+            RES.stage(),
+            (ClickHandler) null));
 
       topToolbar_.addLeftSeparator();
 
-      ToolbarPopupMenu discardMenu = new ToolbarPopupMenu();
-      discardSelectedFiles_ = new ClickCommand();
-      discardAllFiles_ = new ClickCommand();
-      discardMenu.addItem(new MenuItem("Discard Selected",
-                                       discardSelectedFiles_));
-      discardMenu.addItem(new MenuItem("Discard All Files", discardAllFiles_));
-      topToolbar_.addLeftWidget(new ToolbarButton(
-            "Discard", RES.discard(), discardMenu));
+      revertFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
+            "Revert",
+            commands.vcsRevert().getImageResource(),
+            (ClickHandler) null));
 
       topToolbar_.addLeftSeparator();
 
@@ -304,21 +302,22 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Override
-   public HasClickHandlers getStageAllFilesButton()
+   public HasClickHandlers getStageFilesButton()
    {
-      return stageAllFilesButton_;
+      return stageFilesButton_;
    }
 
    @Override
-   public HasClickHandlers getDiscardSelectedFiles()
+   public HasClickHandlers getRevertFilesButton()
    {
-      return discardSelectedFiles_;
+      return revertFilesButton_;
    }
 
    @Override
-   public HasClickHandlers getDiscardAllFiles()
+   public void setFilesCommandsEnabled(boolean enabled)
    {
-      return discardAllFiles_;
+      stageFilesButton_.setEnabled(enabled);
+      revertFilesButton_.setEnabled(enabled);
    }
 
    @Override
@@ -470,13 +469,12 @@ public class ReviewPanel extends Composite implements Display
 
    private ListBoxAdapter listBoxAdapter_;
 
-   private ToolbarButton stageAllFilesButton_;
+   private ToolbarButton stageFilesButton_;
+   private ToolbarButton revertFilesButton_;
    private ToolbarButton ignoreButton_;
    private ToolbarButton stageAllButton_;
    private ToolbarButton discardAllButton_;
    private ToolbarButton unstageAllButton_;
-   private ClickCommand discardSelectedFiles_;
-   private ClickCommand discardAllFiles_;
    @SuppressWarnings("unused")
    private final FileTypeRegistry fileTypeRegistry_;
    private LeftRightToggleButton switchViewButton_;
