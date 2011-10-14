@@ -97,6 +97,7 @@ public class ReviewPanel extends Composite implements Display
       String splitPanelCommit();
    }
 
+   @SuppressWarnings("unused")
    private static class ClickCommand implements HasClickHandlers, Command
    {
       @Override

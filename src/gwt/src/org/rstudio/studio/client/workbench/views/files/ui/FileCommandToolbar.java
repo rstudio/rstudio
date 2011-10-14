@@ -13,7 +13,6 @@
 package org.rstudio.studio.client.workbench.views.files.ui;
 
 import com.google.inject.Inject;
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
