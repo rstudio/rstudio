@@ -461,7 +461,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   @Override
   protected void maybeOutputPropertyMap(TreeLogger logger, LinkerContext context,
       ArtifactSet toReturn) {
-    if (!shouldOutputPropertyMap(context) || permutationsUtil.getPermutationsMap() == null
+    if (permutationsUtil.getPermutationsMap() == null
         || permutationsUtil.getPermutationsMap().isEmpty()) {
       return;
     }
@@ -495,10 +495,6 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
 
   protected boolean shouldInstallCode(LinkerContext context) {
     return true;
-  }
-
-  protected boolean shouldOutputPropertyMap(LinkerContext context) {
-    return false;
   }
 
   /**
