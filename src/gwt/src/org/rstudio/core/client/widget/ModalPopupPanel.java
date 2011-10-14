@@ -37,9 +37,13 @@ public class ModalPopupPanel extends PopupPanel
    {
       if (closeOnEscape_ &&
           event.getTypeInt() == Event.ONKEYDOWN &&
-            event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
+          event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE &&
+          ModalDialogTracker.isTopMost(this))
       {
          close();
+         event.cancel();
+         event.getNativeEvent().preventDefault();
+         event.getNativeEvent().stopPropagation();
       }
       super.onPreviewNativeEvent(event);
    }
@@ -62,11 +66,15 @@ public class ModalPopupPanel extends PopupPanel
       if (shortcutDisableHandle_ != null)
          shortcutDisableHandle_.close();
       shortcutDisableHandle_ = ShortcutManager.INSTANCE.disable();
+
+      ModalDialogTracker.onShow(this);
    }
 
    @Override
    protected void onUnload()
    {
+      ModalDialogTracker.onHide(this);
+
       if (shortcutDisableHandle_ != null)
          shortcutDisableHandle_.close();
       shortcutDisableHandle_ = null;

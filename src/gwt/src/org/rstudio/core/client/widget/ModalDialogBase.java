@@ -96,7 +96,7 @@ public abstract class ModalDialogBase extends DialogBox
    protected void onLoad()
    {
       super.onLoad();
-      allActiveDialogs_.add(this);
+      ModalDialogTracker.onShow(this);
       if (shortcutDisableHandle_ != null)
          shortcutDisableHandle_.close();
       shortcutDisableHandle_ = ShortcutManager.INSTANCE.disable();
@@ -112,8 +112,7 @@ public abstract class ModalDialogBase extends DialogBox
          shortcutDisableHandle_.close();
       shortcutDisableHandle_ = null;
 
-      boolean removed = allActiveDialogs_.remove(this);
-      assert removed;
+      ModalDialogTracker.onHide(this);
       
       super.onUnload();
    }
@@ -376,7 +375,7 @@ public abstract class ModalDialogBase extends DialogBox
    @Override
    public void onPreviewNativeEvent(Event.NativePreviewEvent event)
    {
-      if (allActiveDialogs_.get(allActiveDialogs_.size() - 1) != this)
+      if (!ModalDialogTracker.isTopMost(this))
          return;
 
       if (event.getTypeInt() == Event.ONKEYDOWN)
@@ -434,9 +433,6 @@ public abstract class ModalDialogBase extends DialogBox
    }
 
    private Handle shortcutDisableHandle_;
-
-   private static final ArrayList<ModalDialogBase> allActiveDialogs_ =
-                                               new ArrayList<ModalDialogBase>();
 
    private boolean escapeDisabled_;
    private SimplePanel containerPanel_;
