@@ -13,6 +13,9 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.PopupPanel;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
@@ -20,10 +23,31 @@ import org.rstudio.core.client.dom.DomUtils;
 
 public class ModalPopupPanel extends PopupPanel
 {
-   public ModalPopupPanel(boolean autoHide, boolean modal)
+   public ModalPopupPanel(boolean autoHide,
+                          boolean modal,
+                          boolean closeOnEscape)
    {
       super(autoHide, modal);
+      closeOnEscape_ = closeOnEscape;
       setGlassEnabled(true);
+   }
+
+   @Override
+   protected void onPreviewNativeEvent(NativePreviewEvent event)
+   {
+      if (closeOnEscape_ &&
+          event.getTypeInt() == Event.ONKEYDOWN &&
+            event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
+      {
+         close();
+      }
+      super.onPreviewNativeEvent(event);
+   }
+
+   public void close()
+   {
+      hide();
+      removeFromParent();
    }
 
    @Override
@@ -55,4 +79,5 @@ public class ModalPopupPanel extends PopupPanel
 
    private Handle shortcutDisableHandle_;
    private Element originallyFocused_;
+   private final boolean closeOnEscape_;
 }

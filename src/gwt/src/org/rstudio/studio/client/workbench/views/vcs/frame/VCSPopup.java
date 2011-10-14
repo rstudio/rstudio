@@ -130,7 +130,7 @@ public class VCSPopup
          }
       });
 
-      PopupPanel popup = new ModalPopupPanel(false, false);
+      ModalPopupPanel popup = new ModalPopupPanel(false, false, true);
       Resources res = GWT.<Resources>create(Resources.class);
       NineUpBorder border = new NineUpBorder(
             res,
@@ -158,7 +158,7 @@ public class VCSPopup
       popup.center();
    }
 
-   private static void addCloseButton(final PopupPanel popupPanel,
+   private static void addCloseButton(final ModalPopupPanel popupPanel,
                                       NineUpBorder border)
    {
       Resources res = GWT.create(Resources.class);
@@ -169,8 +169,7 @@ public class VCSPopup
          @Override
          public void onClick(ClickEvent event)
          {
-            popupPanel.hide();
-            popupPanel.removeFromParent();
+            popupPanel.close();
          }
       });
 
