@@ -140,12 +140,13 @@ QString Options::fixedWidthFont() const
    // in the History pane).
    QStringList fontList;
    fontList <<
-#ifdef Q_WS_X11
-           QString::fromAscii("Ubuntu Mono") <<
-#endif
-           QString::fromAscii("Monospace") << QString::fromAscii("Droid Sans Mono") << QString::fromAscii("DejaVu Sans Mono") << // Linux
-           QString::fromAscii("Monaco") <<                      // Mac
+#if defined(Q_WS_MACX)
+           QString::fromAscii("Monaco")
+#elif defined (Q_WS_X11)
+           QString::fromAscii("Ubuntu Mono") << QString::fromAscii("Monospace") << QString::fromAscii("Droid Sans Mono") << QString::fromAscii("DejaVu Sans Mono")
+#else
            QString::fromAscii("Lucida Console") << QString::fromAscii("Consolas")   // Windows;
+#endif
            ;
    return QString::fromAscii("\"") +
          findFirstMatchingFont(fontList, QString::fromAscii("monospace")) +

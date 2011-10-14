@@ -60,9 +60,12 @@ public class ThemeFonts
 
       public String getFixedWidthFont()
       {
-          return
-            ((BrowseCap.isLinux()) ? "\"Ubuntu Mono\", Monospace, " : "") +
-            "\"Droid Sans Mono\", \"DejaVu Sans Mono\", Monaco, Consolas, \"Lucida Console\", monospace";
+         if (BrowseCap.isMacintosh())
+            return "Monaco, monospace";
+         else if (BrowseCap.isLinux())
+            return "\"Ubuntu Mono\", Monospace, \"Droid Sans Mono\", \"DejaVu Sans Mono\", monospace";
+         else
+            return "Consolas, \"Lucida Console\", monospace";
       }
    }
 }

@@ -60,6 +60,11 @@ public class BrowseCap
 
    public static boolean hasMetaKey()
    {
+      return isMacintosh();
+   }
+   
+   public static boolean isMacintosh()
+   {
       return OPERATING_SYSTEM.equals("macintosh");
    }
 
