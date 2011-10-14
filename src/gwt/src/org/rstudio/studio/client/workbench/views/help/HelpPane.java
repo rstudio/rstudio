@@ -67,10 +67,7 @@ public class HelpPane extends WorkbenchPane
       searchProvider_ = searchProvider ;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
-
-      MenuItem add = commands.addToHelpFavorites().createMenuItem(false);
-      favorites_ = new ToolbarLinkMenu(999999, false, new MenuItem[] { add }, null) ;
-      
+    
       MenuItem clear = commands.clearHelpHistory().createMenuItem(false);
       history_ = new ToolbarLinkMenu(12, true, null, new MenuItem[] { clear }) ;
 
@@ -78,7 +75,6 @@ public class HelpPane extends WorkbenchPane
       {
          public void onResize(ResizeEvent event)
          {
-            favorites_.getMenu().hide();
             history_.getMenu().hide();
          }
       });
@@ -215,8 +211,6 @@ public class HelpPane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.helpHome().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.printHelp().createToolbarButton());
-      //toolbar.addLeftWidget(createFavoritesMenu());
-      //toolbar.addLeftWidget(createHistoryMenu());
       toolbar.addLeftWidget(commands_.helpPopout().createToolbarButton());
       
       toolbar.addLeftSeparator();
@@ -392,11 +386,7 @@ public class HelpPane extends WorkbenchPane
       return addHandler(handler, HelpNavigateEvent.TYPE) ;
    }
    
-   public LinkMenu getFavorites()
-   {
-      return favorites_ ;
-   }
-
+ 
    public LinkMenu getHistory()
    {
       return history_ ;
@@ -430,8 +420,7 @@ public class HelpPane extends WorkbenchPane
 
    private final VirtualHistory navStack_ = new VirtualHistory() ;
    private final ToolbarLinkMenu history_ ;
-   private final ToolbarLinkMenu favorites_ ;
-
+ 
    private Label title_ ;
    private Frame frame_ ;
    private final Provider<HelpSearch> searchProvider_ ;

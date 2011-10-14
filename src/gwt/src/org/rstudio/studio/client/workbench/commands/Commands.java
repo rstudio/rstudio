@@ -174,7 +174,6 @@ public abstract class
    public abstract AppCommand helpForward();
    public abstract AppCommand helpHome();
    public abstract AppCommand printHelp();
-   public abstract AppCommand addToHelpFavorites();
    public abstract AppCommand clearHelpHistory();
    public abstract AppCommand helpPopout();
    public abstract AppCommand refreshHelp();

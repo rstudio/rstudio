@@ -19,7 +19,6 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -49,7 +48,6 @@ public class Help extends BasePresenter implements ShowHelpHandler
       void refresh() ;
       
       LinkMenu getHistory() ;
-      LinkMenu getFavorites() ;
 
       /**
        * Returns true if this Help pane has ever been navigated. 
@@ -70,13 +68,11 @@ public class Help extends BasePresenter implements ShowHelpHandler
    public Help(Display view,
                HelpServerOperations server,
                Commands commands,
-               Binder binder,
-               GlobalDisplay globalDisplay)
+               Binder binder)
    {
       super(view);
       server_ = server ;
       view_ = view;
-      globalDisplay_ = globalDisplay;
 
       binder.bind(commands, this);
 
@@ -98,11 +94,9 @@ public class Help extends BasePresenter implements ShowHelpHandler
             view_.showHelp(event.getSelectedItem()) ;
          }
       } ;
-      view_.getFavorites().addSelectionHandler(navigator) ;
       view_.getHistory().addSelectionHandler(navigator) ;
 
       loadHistory() ;
-      //loadFavorites() ;
    }
 
    // Home handled by Shim for activation from main menu context
@@ -111,7 +105,6 @@ public class Help extends BasePresenter implements ShowHelpHandler
    @Handler public void onHelpBack() { view_.back(); }
    @Handler public void onHelpForward() { view_.forward(); }
    @Handler public void onPrintHelp() { view_.print(); }
-   @Handler public void onAddToHelpFavorites() { addToFavorites(); }
    @Handler public void onHelpPopout() { view_.popout(); }
    @Handler public void onRefreshHelp() { view_.refresh(); }
    @Handler
@@ -172,33 +165,6 @@ public class Help extends BasePresenter implements ShowHelpHandler
       }) ;
    }
 
-   @SuppressWarnings("unused")
-   private void loadFavorites()
-   {
-      server_.getHelpLinks(HelpServerOperations.FAVORITES,
-                           new ServerRequestCallback<LinksList>() {
-         @Override
-         public void onError(ServerError error)
-         {
-            globalDisplay_.showErrorMessage("Error Loading Favorites",
-                                            error.getUserMessage());
-            Debug.logError(error); ;
-         }
-         
-         @Override
-         public void onResponseReceived(LinksList linksList)
-         {
-            if (linksList != null)
-            {
-               LinkMenu history = view_.getFavorites() ;
-               ArrayList<Link> links = linksList.getLinks() ;
-               for (Link link : links)
-                  history.addLink(link) ;
-            }
-         }
-      }) ;
-   }
-
    private void home()
    {
       String url = "help/doc/html/index.html" ;
@@ -218,23 +184,8 @@ public class Help extends BasePresenter implements ShowHelpHandler
                               view_.getHistory().getLinks()) ;
       }
    }
-   
-   private void persistFavorites()
-   {
-      server_.setHelpLinks(HelpServerOperations.FAVORITES, 
-                           view_.getFavorites().getLinks()) ;
-   }
-
-   private void addToFavorites()
-   {
-      Link link = new Link(view_.getUrl(), view_.getDocTitle()) ;
-      view_.getFavorites().removeLink(link) ;
-      view_.getFavorites().addLink(link) ;
-      persistFavorites() ;
-   }
 
    private Display view_ ;
    private HelpServerOperations server_ ;
    private boolean historyInitialized_ ;
-   private GlobalDisplay globalDisplay_;
 }

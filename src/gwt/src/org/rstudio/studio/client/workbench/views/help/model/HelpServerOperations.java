@@ -21,7 +21,6 @@ import java.util.ArrayList;
 public interface HelpServerOperations 
 {
    public static final String HISTORY = "history" ;
-   public static final String FAVORITES = "favorites" ;
    
    public class LinksList extends JavaScriptObject
    {
