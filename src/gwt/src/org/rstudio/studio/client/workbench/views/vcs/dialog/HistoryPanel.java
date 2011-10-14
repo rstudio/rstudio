@@ -46,6 +46,12 @@ public class HistoryPanel extends Composite implements Display
    {
       String commitDetail();
       String commitTableScrollPanel();
+
+      String ref();
+      String head();
+      String branch();
+      String remote();
+      String tag();
    }
 
    interface Binder extends UiBinder<Widget, HistoryPanel>
@@ -55,9 +61,11 @@ public class HistoryPanel extends Composite implements Display
    public HistoryPanel(BranchToolbarButton branchToolbarButton,
                        Commands commands)
    {
-      splitPanel_ = new SplitLayoutPanel(4);
-      initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
       Styles styles = GWT.<Resources>create(Resources.class).styles();
+      commitTable_ = new CommitListTable(styles);
+      splitPanel_ = new SplitLayoutPanel(4);
+
+      initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
       commitDetail_.setScrollPanel(detailScrollPanel_);
 
@@ -120,7 +128,7 @@ public class HistoryPanel extends Composite implements Display
    SplitLayoutPanel splitPanel_;
    @UiField
    Toolbar topToolbar_;
-   @UiField
+   @UiField(provided = true)
    CommitListTable commitTable_;
    @UiField
    CommitDetail commitDetail_;

@@ -112,6 +112,8 @@ struct CommitInfo
    std::string description;
    std::string parent;
    boost::int64_t date; // millis since epoch, UTC
+   std::vector<std::string> refs;
+   std::vector<std::string> tags;
 };
 
 void enqueueRefreshEvent()
@@ -730,6 +732,33 @@ public:
       return doSimpleCmd(cmd, pStdErr);
    }
 
+   void parseCommitValue(const std::string& value,
+                         CommitInfo* pCommitInfo)
+   {
+      static boost::regex commitRegex("^([a-z0-9]+)(\\s+\\((.*)\\))?");
+      boost::smatch smatch;
+      if (boost::regex_match(value, smatch, commitRegex))
+      {
+         pCommitInfo->id = smatch[1];
+         std::vector<std::string> refs;
+         boost::algorithm::split(refs,
+                                 static_cast<const std::string>(smatch[3]),
+                                 boost::algorithm::is_any_of(","));
+         BOOST_FOREACH(std::string ref, refs)
+         {
+            boost::algorithm::trim(ref);
+            if (boost::algorithm::starts_with(ref, "tag: "))
+               pCommitInfo->tags.push_back(ref.substr(5));
+            else if (!boost::algorithm::starts_with(ref, "refs/bisect/"))
+               pCommitInfo->refs.push_back(ref);
+         }
+      }
+      else
+      {
+         pCommitInfo->id = value;
+      }
+   }
+
    core::Error log(const std::string& rev,
                    int maxentries,
                    std::vector<CommitInfo>* pOutput)
@@ -737,7 +766,8 @@ public:
       std::vector<std::string> outLines;
 
       ShellCommand cmd = git() << "log";
-      cmd << "--pretty=raw" << "--abbrev-commit" << "--abbrev=8";
+      cmd << "--pretty=raw" << "--abbrev-commit" << "--abbrev=8"
+            << "--decorate=full";
       if (maxentries >= 0)
          cmd << "-" + boost::lexical_cast<std::string>(maxentries);
       if (!rev.empty())
@@ -767,8 +797,7 @@ public:
                   pOutput->push_back(currentCommit);
 
                currentCommit = CommitInfo();
-
-               currentCommit.id = value;
+               parseCommitValue(value, &currentCommit);
             }
             else if (key == "author" || key == "committer")
             {
@@ -1311,6 +1340,8 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    json::Array subjects;
    json::Array dates;
    json::Array descriptions;
+   json::Array refs;
+   json::Array tags;
 
    for (std::vector<CommitInfo>::const_iterator it = commits.begin();
         it != commits.end();
@@ -1322,6 +1353,14 @@ Error vcsHistory(const json::JsonRpcRequest& request,
       subjects.push_back(string_utils::filterControlChars(it->subject));
       descriptions.push_back(string_utils::filterControlChars(it->description));
       dates.push_back(static_cast<double>(it->date));
+
+      json::Array theseRefs;
+      std::copy(it->refs.begin(), it->refs.end(), std::back_inserter(theseRefs));
+      refs.push_back(theseRefs);
+
+      json::Array theseTags;
+      std::copy(it->tags.begin(), it->tags.end(), std::back_inserter(theseTags));
+      tags.push_back(theseTags);
    }
 
    json::Object result;
@@ -1331,6 +1370,8 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    result["subject"] = subjects;
    result["description"] = descriptions;
    result["date"] = dates;
+   result["refs"] = refs;
+   result["tags"] = tags;
 
    pResponse->setResult(result);
 

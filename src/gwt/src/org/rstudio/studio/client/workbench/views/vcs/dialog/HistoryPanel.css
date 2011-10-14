@@ -10,3 +10,32 @@
 .commitTableScrollPanel {
    background-color: white;
 }
+
+.ref, .tag {
+   font-size: 80%;
+   border-radius: 8px;
+   background-color: green;
+   padding: 0 6px;
+   margin-right: 4px;
+}
+
+.head {
+   background-color: rgb(146, 193, 240);
+   border-color: rgb(146, 193, 240);
+}
+
+.branch {
+   background-color: purple;
+   border-color: purple;
+   color: white;
+}
+
+.remote {
+   background-color: pink;
+   border-color: pink;
+}
+
+.tag {
+   font-weight: normal;
+   background-color: #FFA;
+}

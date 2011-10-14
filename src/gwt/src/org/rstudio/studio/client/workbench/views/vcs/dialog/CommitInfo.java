@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 import java.util.Date;
 
@@ -47,5 +48,13 @@ public class CommitInfo extends JavaScriptObject
 
    public native final double getDateRaw() /*-{
       return this.date;
+   }-*/;
+
+   public native final JsArrayString getRefs() /*-{
+      return this.refs || [];
+   }-*/;
+
+   public native final JsArrayString getTags() /*-{
+      return this.tags || [];
    }-*/;
 }
