@@ -1,5 +1,5 @@
 /*
- * WarningBarMessage.java
+ * WorkbenchLists.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
