@@ -110,6 +110,7 @@ public class MultiSelectCellTable<T> extends CellTable<T>
          ((MultiSelectionModel)getSelectionModel()).clear();
    }
 
+   @SuppressWarnings("unchecked")
    private void handleKeyDown(KeyDownEvent event)
    {
       int modifiers = KeyboardShortcut.getModifierValue(event.getNativeEvent());

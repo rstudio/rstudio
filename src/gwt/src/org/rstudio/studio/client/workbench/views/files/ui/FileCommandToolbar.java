@@ -46,24 +46,6 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addItem(commands.setAsWorkingDir().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands.showFolder().createMenuItem(false));
-      if (session.getSessionInfo().isVcsEnabled())
-      {
-         moreMenu.addSeparator();
-
-         AppCommand[] vcsCommands = {
-               commands.vcsAddFiles(),
-               commands.vcsRemoveFiles(),
-               commands.vcsRevertFiles()
-         };
-
-         for (AppCommand cmd : vcsCommands)
-         {
-            cmd.setMenuLabel(
-                  "[" + session.getSessionInfo().getVcsName() + "] " +
-                  cmd.getMenuLabel(false));
-            moreMenu.addItem(cmd.createMenuItem(false));
-         }
-      }
 
       ToolbarButton moreButton = new ToolbarButton("More",
                                                   icons.more_actions(),

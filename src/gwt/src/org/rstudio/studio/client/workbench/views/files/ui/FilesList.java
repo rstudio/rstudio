@@ -27,7 +27,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.VCSStatus;
-import org.rstudio.studio.client.common.vcs.VCSStrategy;
 import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 
@@ -82,8 +81,6 @@ public class FilesList extends Composite
       addSelectionColumn();
       addIconColumn(fileTypeRegistry);
       nameColumn_ = addNameColumn();
-      if (RStudioGinjector.INSTANCE.getSession().getSessionInfo().isVcsEnabled())
-         addVcsStatusColumn();
       sizeColumn_ = addSizeColumn();
       modifiedColumn_ = addModifiedColumn();
       
@@ -158,39 +155,6 @@ public class FilesList extends Composite
          }
       });
       
-      return iconColumn;
-   }
-   
-   private Column<FileSystemItem, ImageResource> addVcsStatusColumn()
-   {
-      Column<FileSystemItem, ImageResource> iconColumn =
-         new Column<FileSystemItem, ImageResource>(new ImageResourceCell()) {
-
-            @Override
-            public ImageResource getValue(FileSystemItem object)
-            {
-               String status = object.getVCSStatus() == null
-                               ? null
-                               : object.getVCSStatus().getStatus();
-               return VCSStrategy.getCurrentStrategy().getSimpleIconForStatus(
-                     new VCSStatus(status));
-            }
-         };
-      iconColumn.setSortable(true);
-      iconColumn.setHorizontalAlignment(Column.ALIGN_CENTER);
-      filesCellTable_.addColumn(iconColumn,
-                                SafeHtmlUtils.fromSafeConstant("<br/>"));
-      filesCellTable_.setColumnWidth(iconColumn, 20, Unit.PX);
-
-      sortHandler_.setComparator(iconColumn, new FilesListComparator() {
-         @Override
-         public int doCompare(FileSystemItem a, FileSystemItem b)
-         {
-            return a.getVCSStatus().getStatus().compareTo(
-                  b.getVCSStatus().getStatus());
-         }
-      });
-
       return iconColumn;
    }
 
