@@ -28,7 +28,8 @@ import javax.validation.ConstraintValidatorContext;
  */
 public class SizeValidatorForMap extends AbstractSizeValidator<Map<?, ?>> {
 
-  public boolean isValid(Map<?, ?> value, ConstraintValidatorContext context) {
+  public final boolean isValid(Map<?, ?> value,
+      ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }

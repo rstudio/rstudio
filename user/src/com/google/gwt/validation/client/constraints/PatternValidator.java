@@ -32,10 +32,11 @@ import javax.validation.constraints.Pattern.Flag;
  * Note this implementation uses {@link RegExp} which differs from
  * {@link java.util.regex.Pattern}.
  */
-public class PatternValidator implements ConstraintValidator<Pattern, String> {
+public class PatternValidator implements
+    ConstraintValidator<Pattern, String> {
   private RegExp pattern;
 
-  public void initialize(Pattern annotation) {
+  public final void initialize(Pattern annotation) {
     Pattern.Flag flags[] = annotation.flags();
     String flagString = "";
     for (Pattern.Flag flag : flags) {
@@ -44,7 +45,7 @@ public class PatternValidator implements ConstraintValidator<Pattern, String> {
     pattern = RegExp.compile(annotation.regexp(), flagString);
   }
 
-  public boolean isValid(String value, ConstraintValidatorContext context) {
+  public final boolean isValid(String value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }
@@ -56,7 +57,7 @@ public class PatternValidator implements ConstraintValidator<Pattern, String> {
     return match.getGroup(0).length() == value.length();
   }
 
-  private String toString(Flag flag) {
+  private final String toString(Flag flag) {
     String value;
     switch (flag) {
       case CASE_INSENSITIVE:

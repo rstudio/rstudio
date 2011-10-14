@@ -26,7 +26,7 @@ import javax.validation.ConstraintValidatorContext;
  */
 public class MinValidatorForNumber extends AbstractMinValidator<Number> {
 
-  public boolean isValid(Number value, ConstraintValidatorContext context) {
+  public final boolean isValid(Number value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }

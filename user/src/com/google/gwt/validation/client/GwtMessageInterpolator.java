@@ -25,7 +25,7 @@ import java.util.Locale;
  * <p>
  * Simple GWT {@link javax.validation.MessageInterpolator}.
  */
-public class GwtMessageInterpolator extends BaseMessageInterpolator {
+public final class GwtMessageInterpolator extends BaseMessageInterpolator {
   // This class only has the parts the need to overridden for GWT
 
   /**
@@ -40,8 +40,8 @@ public class GwtMessageInterpolator extends BaseMessageInterpolator {
 
   /**
    * Creates a {@link javax.validation.MessageInterpolator MessageInterpolator}
-   * using the supplie{@link UserValidationMessagesResolver}.
-   *
+   * using the supplied{@link UserValidationMessagesResolver}.
+   * 
    * @param userValidationMessagesResolver
    */
   public GwtMessageInterpolator(

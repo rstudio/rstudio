@@ -28,7 +28,7 @@ import javax.validation.spi.ConfigurationState;
  * <p>
  * Base GWT implementation of {@link ConfigurationState}.
  */
-public abstract class BaseConfigurationState implements ConfigurationState {
+abstract class BaseConfigurationState implements ConfigurationState {
 
   public ConstraintValidatorFactory getConstraintValidatorFactory() {
     // TODO(nchalko) implement.

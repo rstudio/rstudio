@@ -25,12 +25,13 @@ import javax.validation.constraints.NotNull;
  * <p>
  * {@link NotNull} constraint validator implementation.
  */
-public class NotNullValidator implements ConstraintValidator<NotNull, Object> {
+public class NotNullValidator implements
+    ConstraintValidator<NotNull, Object> {
 
-  public void initialize(NotNull constraintAnnotation) {
+  public final void initialize(NotNull constraintAnnotation) {
   }
 
-  public boolean isValid(Object value, ConstraintValidatorContext context) {
+  public final boolean isValid(Object value, ConstraintValidatorContext context) {
     return value != null;
   }
 }

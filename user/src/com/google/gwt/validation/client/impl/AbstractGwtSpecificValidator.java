@@ -15,8 +15,6 @@
  */
 package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.BaseMessageInterpolator.ContextImpl;
-
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
@@ -151,7 +149,8 @@ public abstract class AbstractGwtSpecificValidator<G> implements
       ConstraintDescriptorImpl<A> constraintDescriptor,
       MessageAndPath messageAndPath) {
     MessageInterpolator messageInterpolator = context.getMessageInterpolator();
-    ContextImpl messageContext = new ContextImpl(constraintDescriptor, value);
+    com.google.gwt.validation.client.impl.MessageInterpolatorContextImpl messageContext = new MessageInterpolatorContextImpl(
+        constraintDescriptor, value);
     String message = messageInterpolator.interpolate(
         messageAndPath.getMessage(), messageContext);
     ConstraintViolation<T> violation = ConstraintViolationImpl.<T> builder() //

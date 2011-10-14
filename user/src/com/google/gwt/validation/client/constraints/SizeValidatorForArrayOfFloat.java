@@ -27,7 +27,7 @@ import javax.validation.ConstraintValidatorContext;
 public class SizeValidatorForArrayOfFloat extends
     AbstractSizeValidator<float[]> {
 
-  public boolean isValid(float[] value, ConstraintValidatorContext context) {
+  public final boolean isValid(float[] value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }

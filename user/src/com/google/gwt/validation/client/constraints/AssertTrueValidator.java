@@ -28,10 +28,10 @@ import javax.validation.constraints.AssertTrue;
 public class AssertTrueValidator implements
     ConstraintValidator<AssertTrue, Boolean> {
 
-  public void initialize(AssertTrue constraintAnnotation) {
+  public final void initialize(AssertTrue constraintAnnotation) {
   }
 
-  public boolean isValid(Boolean value, ConstraintValidatorContext context) {
+  public final boolean isValid(Boolean value, ConstraintValidatorContext context) {
     return value == null || value.booleanValue();
   }
 

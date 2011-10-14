@@ -25,7 +25,7 @@ import javax.validation.Path.Node;
  * <p>
  * An immutable GWT safe implementation of {@link Node}.
  */
-class NodeImpl implements Node, Serializable {
+final class NodeImpl implements Node, Serializable {
 
   private static final long serialVersionUID = 1L;
   public static final Node ROOT_NODE = new NodeImpl(null, null, null, false);

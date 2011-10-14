@@ -23,7 +23,6 @@ import com.google.gwt.regexp.shared.RegExp;
 import java.util.Map;
 
 import javax.validation.MessageInterpolator;
-import javax.validation.metadata.ConstraintDescriptor;
 
 /**
  * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
@@ -31,29 +30,7 @@ import javax.validation.metadata.ConstraintDescriptor;
  * <p>
  * Base GWT {@link MessageInterpolator}.
  */
-public abstract class BaseMessageInterpolator implements MessageInterpolator {
-
-  /**
-   * Implementation of {@link Context}.
-   */
-  public static final class ContextImpl implements Context {
-
-    private final ConstraintDescriptor<?> constraintDescriptor;
-    private final Object value;
-
-    public ContextImpl(ConstraintDescriptor<?> constraintDescriptor, Object value) {
-      this.constraintDescriptor = constraintDescriptor;
-      this.value = value;
-    }
-
-    public ConstraintDescriptor<?> getConstraintDescriptor() {
-      return constraintDescriptor;
-    }
-
-    public Object getValidatedValue() {
-      return value;
-    }
-  }
+abstract class BaseMessageInterpolator implements MessageInterpolator {
 
   // local version because guava is not included.
   private static interface Function<F, T> {

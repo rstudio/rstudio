@@ -28,7 +28,7 @@ import javax.validation.Path;
  * <p>
  * An immutable GWT safe implementation of {@link Path}.
  */
-public class PathImpl implements Path, Serializable {
+public final class PathImpl implements Path, Serializable {
 
   private static final long serialVersionUID = 1L;
 

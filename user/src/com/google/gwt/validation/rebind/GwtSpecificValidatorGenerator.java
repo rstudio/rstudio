@@ -32,7 +32,7 @@ import com.google.gwt.validation.client.impl.GwtSpecificValidator;
  * <p>
  * This class is thread safe.
  */
-public class GwtSpecificValidatorGenerator extends Generator {
+public final class GwtSpecificValidatorGenerator extends Generator {
 
   @Override
   public String generate(TreeLogger logger, GeneratorContext context,

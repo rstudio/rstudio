@@ -42,7 +42,7 @@ import javax.validation.ConstraintValidatorFactory;
  * {@link com.google.gwt.core.client.GWT;#create(Class)} instead. Using this
  * class throws a {@link UnsupportedOperationException}.
  */
-public class GwtConstraintValidatorFactory implements
+public final class GwtConstraintValidatorFactory implements
     ConstraintValidatorFactory {
 
   /**

@@ -27,12 +27,13 @@ import javax.validation.constraints.Past;
  * <p>
  * {@link Past} constraint validator implementation for a {@link java.util.Date}.
  */
-public class PastValidatorForDate implements ConstraintValidator<Past, Date> {
+public class PastValidatorForDate implements
+    ConstraintValidator<Past, Date> {
 
-  public void initialize(Past constraintAnnotation) {
+  public final void initialize(Past constraintAnnotation) {
   }
 
-  public boolean isValid(Date value, ConstraintValidatorContext context) {
+  public final boolean isValid(Date value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }

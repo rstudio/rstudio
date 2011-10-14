@@ -17,6 +17,7 @@ package com.google.gwt.validation.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
+import com.google.gwt.validation.client.impl.GwtValidatorContext;
 
 import javax.validation.ConstraintValidatorFactory;
 import javax.validation.MessageInterpolator;

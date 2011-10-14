@@ -35,7 +35,7 @@ import javax.validation.metadata.ConstraintDescriptor;
  * @param <T> the type of the root bean.
  * 
  */
-public class GwtValidationContext<T> {
+public final class GwtValidationContext<T> {
 
   private final BeanDescriptor beanDescriptor;
   private PathImpl path = new PathImpl();

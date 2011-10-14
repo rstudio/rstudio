@@ -29,7 +29,7 @@ import javax.validation.metadata.ConstraintDescriptor;
  * 
  * @param <T> the type of bean validated.
  */
-public class ConstraintViolationImpl<T> implements ConstraintViolation<T>,
+public final class ConstraintViolationImpl<T> implements ConstraintViolation<T>,
     Serializable {
 
   /**

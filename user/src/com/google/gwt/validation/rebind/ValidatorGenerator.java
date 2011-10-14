@@ -32,7 +32,7 @@ import com.google.gwt.validation.client.GwtValidation;
  * {@link com.google.gwt.validation.client.GwtValidation} annotation. See
  * {@link com.google.gwt.validation.client.GwtValidation} for usage.
  */
-public class ValidatorGenerator extends Generator {
+public final class ValidatorGenerator extends Generator {
 
   @Override
   public String generate(TreeLogger logger, GeneratorContext context,

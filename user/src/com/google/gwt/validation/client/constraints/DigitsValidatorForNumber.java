@@ -27,9 +27,10 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.Digits} constraint validator
  * implementation for a {@link Number}.
  */
-public class DigitsValidatorForNumber extends AbstractDigitsValidator<Number> {
+public class DigitsValidatorForNumber extends
+    AbstractDigitsValidator<Number> {
 
-  public boolean isValid(Number value, ConstraintValidatorContext context) {
+  public final boolean isValid(Number value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     } else if (value instanceof BigDecimal) {

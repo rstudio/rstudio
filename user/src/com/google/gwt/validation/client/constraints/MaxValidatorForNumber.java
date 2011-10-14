@@ -26,7 +26,7 @@ import javax.validation.ConstraintValidatorContext;
  */
 public class MaxValidatorForNumber extends AbstractMaxValidator<Number> {
 
-  public boolean isValid(Number value, ConstraintValidatorContext context) {
+  public final boolean isValid(Number value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }

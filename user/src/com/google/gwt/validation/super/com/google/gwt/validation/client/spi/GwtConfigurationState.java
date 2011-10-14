@@ -20,7 +20,7 @@ import java.util.Set;
 /**
  * Only the GWT incompatible parts.
  */
-public class GwtConfigurationState extends BaseConfigurationState {
+public final class GwtConfigurationState extends BaseConfigurationState {
 
   public Set<String> getMappingStreams() {
     throw new UnsupportedOperationException(

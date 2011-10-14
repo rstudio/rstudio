@@ -26,7 +26,7 @@ import javax.validation.spi.BootstrapState;
  * <p>
  * GWT {@link BootstrapState}.
  */
-public class GwtBootStrapState implements BootstrapState {
+public final class GwtBootStrapState implements BootstrapState {
 
   public ValidationProviderResolver getDefaultValidationProviderResolver() {
     return GWT.create(ValidationProviderResolver.class);

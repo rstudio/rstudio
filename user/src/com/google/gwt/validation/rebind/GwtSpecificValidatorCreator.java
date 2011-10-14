@@ -81,7 +81,7 @@ import javax.validation.metadata.PropertyDescriptor;
  * <p>
  * This class is not thread safe.
  */
-public class GwtSpecificValidatorCreator extends AbstractCreator {
+public final class GwtSpecificValidatorCreator extends AbstractCreator {
   private static enum Stage {
     OBJECT, PROPERTY, VALUE
   }

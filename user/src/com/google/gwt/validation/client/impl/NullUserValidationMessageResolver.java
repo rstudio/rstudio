@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client;
+package com.google.gwt.validation.client.impl;
+
+import com.google.gwt.validation.client.UserValidationMessagesResolver;
 
 /**
  * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
@@ -21,7 +23,7 @@ package com.google.gwt.validation.client;
  * <p>
  * Always resolves message keys to null.
  */
-public class NullUserValidationMessageResolver implements
+public final class NullUserValidationMessageResolver implements
     UserValidationMessagesResolver {
 
   public String get(String key) {

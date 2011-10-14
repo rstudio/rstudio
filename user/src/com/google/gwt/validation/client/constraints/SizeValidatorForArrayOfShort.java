@@ -27,7 +27,7 @@ import javax.validation.ConstraintValidatorContext;
 public class SizeValidatorForArrayOfShort extends
     AbstractSizeValidator<short[]> {
 
-  public boolean isValid(short[] value, ConstraintValidatorContext context) {
+  public final boolean isValid(short[] value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }

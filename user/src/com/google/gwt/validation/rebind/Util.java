@@ -35,7 +35,7 @@ import java.util.Set;
  * <p>
  * Static utilities for the validation rebind package.
  */
-class Util {
+final class Util {
 
   /**
    * Creates a Predicate that returns false if source contains an associated

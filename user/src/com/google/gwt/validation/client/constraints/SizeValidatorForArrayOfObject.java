@@ -27,7 +27,8 @@ import javax.validation.ConstraintValidatorContext;
 public class SizeValidatorForArrayOfObject extends
     AbstractSizeValidator<Object[]> {
 
-  public boolean isValid(Object[] value, ConstraintValidatorContext context) {
+  public final boolean isValid(Object[] value,
+      ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }

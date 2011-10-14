@@ -17,8 +17,8 @@ package com.google.gwt.validation;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.validation.client.BaseMessageInterpolatorTest;
-import com.google.gwt.validation.client.GwtValidatorContextTest;
 import com.google.gwt.validation.client.SimpleSampleTest;
+import com.google.gwt.validation.client.impl.GwtValidatorContextTest;
 
 import junit.framework.Test;
 

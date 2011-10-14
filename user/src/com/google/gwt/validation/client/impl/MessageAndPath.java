@@ -25,7 +25,7 @@ import javax.validation.Path;
  * <p>
  * Used to build a {@link javax.validation.ConstraintViolation}
  */
-public class MessageAndPath {
+public final class MessageAndPath {
 
   private final String message;
   private final Path path;

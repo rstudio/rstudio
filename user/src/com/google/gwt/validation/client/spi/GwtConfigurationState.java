@@ -24,7 +24,7 @@ import java.util.Set;
  * <p>
  * Only the GWT incompatible parts.
  */
-public class GwtConfigurationState extends BaseConfigurationState {
+public final class GwtConfigurationState extends BaseConfigurationState {
 
   public Set<InputStream> getMappingStreams() {
     throw new UnsupportedOperationException(

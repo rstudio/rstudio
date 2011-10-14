@@ -24,9 +24,10 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.Size} constraint validator implementation
  * for a array of {@code byte}s.
  */
-public class SizeValidatorForArrayOfByte extends AbstractSizeValidator<byte[]> {
+public class SizeValidatorForArrayOfByte extends
+    AbstractSizeValidator<byte[]> {
 
-  public boolean isValid(byte[] value, ConstraintValidatorContext context) {
+  public final boolean isValid(byte[] value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }

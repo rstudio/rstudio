@@ -26,7 +26,7 @@ import javax.validation.ConstraintValidatorContext;
  */
 public class SizeValidatorForString extends AbstractSizeValidator<String> {
 
-  public boolean isValid(String value, ConstraintValidatorContext context) {
+  public final boolean isValid(String value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }

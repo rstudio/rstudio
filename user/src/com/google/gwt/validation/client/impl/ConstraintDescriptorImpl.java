@@ -34,7 +34,7 @@ import javax.validation.metadata.ConstraintDescriptor;
  * 
  * @param <T> the constraint annotation to describe.
  */
-public class ConstraintDescriptorImpl<T extends Annotation> implements
+public final class ConstraintDescriptorImpl<T extends Annotation> implements
     ConstraintDescriptor<T> {
 
   /**

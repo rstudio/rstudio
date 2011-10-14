@@ -28,7 +28,7 @@ import javax.validation.metadata.PropertyDescriptor;
  * production code.
  * <p>
  */
-public class PropertyDescriptorImpl implements PropertyDescriptor {
+public final class PropertyDescriptorImpl implements PropertyDescriptor {
 
   private boolean cascaded;
   private Set<ConstraintDescriptor<?>> descriptors = new HashSet<ConstraintDescriptor<?>>();

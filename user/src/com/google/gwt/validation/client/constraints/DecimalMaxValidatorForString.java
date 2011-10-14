@@ -29,7 +29,7 @@ import javax.validation.ConstraintValidatorContext;
 public class DecimalMaxValidatorForString extends
     AbstractDecimalMaxValidator<String> {
 
-  public boolean isValid(String value, ConstraintValidatorContext context) {
+  public final boolean isValid(String value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }

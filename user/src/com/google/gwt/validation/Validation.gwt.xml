@@ -40,7 +40,7 @@
     class="com.google.gwt.validation.client.GwtValidationProviderResolver">
     <when-type-is class="javax.validation.ValidationProviderResolver" />
   </replace-with>
-  <replace-with class="com.google.gwt.validation.client.NullUserValidationMessageResolver">
+  <replace-with class="com.google.gwt.validation.client.impl.NullUserValidationMessageResolver">
     <!-- User can override this to have Custom messages -->
     <when-type-is class="com.google.gwt.validation.client.UserValidationMessagesResolver" />
   </replace-with>

@@ -30,7 +30,7 @@ import javax.validation.ConstraintValidatorContext;
 public class DecimalMaxValidatorForNumber extends
     AbstractDecimalMaxValidator<Number> {
 
-  public boolean isValid(Number value, ConstraintValidatorContext context) {
+  public final boolean isValid(Number value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }

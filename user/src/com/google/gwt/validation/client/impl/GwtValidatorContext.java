@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client;
+package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.impl.AbstractGwtValidator;
+import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
 
 import javax.validation.ConstraintValidatorFactory;
 import javax.validation.MessageInterpolator;
@@ -29,7 +29,7 @@ import javax.validation.ValidatorContext;
  * <p>
  * GWT {@link ValidatorContext}.
  */
-class GwtValidatorContext implements ValidatorContext {
+public final class GwtValidatorContext implements ValidatorContext {
 
   private final AbstractGwtValidatorFactory validatorFactory;
 
@@ -41,7 +41,7 @@ class GwtValidatorContext implements ValidatorContext {
   private MessageInterpolator messageInterpolator = null;
   private TraversableResolver traversableResolver = null;
 
-  GwtValidatorContext(AbstractGwtValidatorFactory validatorFactory) {
+  public GwtValidatorContext(AbstractGwtValidatorFactory validatorFactory) {
     this.validatorFactory = validatorFactory;
 
     factoryConstraintValidatorfactory = validatorFactory

@@ -16,8 +16,8 @@
 package com.google.gwt.validation.client.spi;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.validation.client.BaseGwtConfiguration;
-import com.google.gwt.validation.client.GwtConfiguration;
+import com.google.gwt.validation.client.impl.BaseGwtConfiguration;
+import com.google.gwt.validation.client.impl.GwtConfiguration;
 
 import javax.validation.Configuration;
 import javax.validation.ValidatorFactory;
@@ -31,7 +31,7 @@ import javax.validation.spi.ValidationProvider;
  * <p>
  * GWT {@link ValidationProvider}.
  */
-public class GwtValidationProvider implements
+public final class GwtValidationProvider implements
     ValidationProvider<BaseGwtConfiguration> {
 
   public ValidatorFactory buildValidatorFactory(

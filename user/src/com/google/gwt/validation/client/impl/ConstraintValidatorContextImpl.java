@@ -37,7 +37,8 @@ import javax.validation.metadata.ConstraintDescriptor;
  * @param <A> the constraint being validated
  * @param <T> the type of object being validated
  */
-public class ConstraintValidatorContextImpl<A extends Annotation, T> implements
+public final class ConstraintValidatorContextImpl<A extends Annotation, T>
+    implements
     ConstraintValidatorContext {
 
   /**

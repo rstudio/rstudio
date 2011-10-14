@@ -26,7 +26,7 @@ import javax.validation.MessageInterpolator.Context;
  * <p>
  * Simple GWT {@link javax.validation.MessageInterpolator}.
  */
-public class GwtMessageInterpolator extends BaseMessageInterpolator {
+public final class GwtMessageInterpolator extends BaseMessageInterpolator {
   // This class only has the parts the need to overridden for GWT
 
   /**

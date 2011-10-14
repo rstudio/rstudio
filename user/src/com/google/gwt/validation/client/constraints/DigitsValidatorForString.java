@@ -26,9 +26,10 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.Digits} constraint validator
  * implementation for a {@link String}.
  */
-public class DigitsValidatorForString extends AbstractDigitsValidator<String> {
+public class DigitsValidatorForString extends
+    AbstractDigitsValidator<String> {
 
-  public boolean isValid(String value, ConstraintValidatorContext context) {
+  public final boolean isValid(String value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }

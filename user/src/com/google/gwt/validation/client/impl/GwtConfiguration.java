@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client;
+package com.google.gwt.validation.client.impl;
 
 import com.google.gwt.validation.client.spi.GwtValidationProvider;
 
@@ -28,7 +28,7 @@ import javax.validation.spi.BootstrapState;
  * Extends {@link BaseGwtConfiguration} with just the parts that are not GWT
  * compatible.
  */
-public class GwtConfiguration extends BaseGwtConfiguration {
+public final class GwtConfiguration extends BaseGwtConfiguration {
 
   public GwtConfiguration(GwtValidationProvider gwtValidationProvider,
       BootstrapState state) {

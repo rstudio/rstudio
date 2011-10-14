@@ -31,10 +31,10 @@ import javax.validation.constraints.Future;
 public class FutureValidatorForDate implements
     ConstraintValidator<Future, Date> {
 
-  public void initialize(Future constraintAnnotation) {
+  public final void initialize(Future constraintAnnotation) {
   }
 
-  public boolean isValid(Date value, ConstraintValidatorContext context) {
+  public final boolean isValid(Date value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
     }

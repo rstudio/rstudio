@@ -27,7 +27,7 @@ import javax.validation.TraversableResolver;
  * <p>
  * GWT {@link TraversableResolver}.
  */
-public class GwtTraversableResolver implements TraversableResolver {
+public final class GwtTraversableResolver implements TraversableResolver {
 
   public boolean isCascadable(Object traversableObject,
       Node traversableProperty, Class<?> rootBeanType,
