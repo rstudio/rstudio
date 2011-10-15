@@ -13,15 +13,12 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.cell.client.AbstractSafeHtmlCell;
-import com.google.gwt.cell.client.Cell;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
@@ -39,28 +36,6 @@ import java.util.ArrayList;
 public class CommitListTable extends CellTable<CommitInfo>
       implements CommitListDisplay
 {
-   private class SubjectColumn extends Column<CommitInfo, CommitInfo>
-   {
-      private SubjectColumn()
-      {
-         super(new AbstractSafeHtmlCell<CommitInfo>(new SubjectRenderer()) {
-            @Override
-            protected void render(Context context,
-                                  SafeHtml data,
-                                  SafeHtmlBuilder sb)
-            {
-               if (data != null)
-                  sb.append(data);
-            }
-         });
-      }
-
-      @Override
-      public CommitInfo getValue(CommitInfo object)
-      {
-         return object;
-      }
-   }
    private class SubjectRenderer implements SafeHtmlRenderer<CommitInfo>
    {
       @Override
