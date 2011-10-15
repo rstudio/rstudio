@@ -18,8 +18,10 @@ import java.util.ArrayList;
 
 public class HandlerRegistrations implements HandlerRegistration
 {
-   public HandlerRegistrations()
+   public HandlerRegistrations(HandlerRegistration... registrations)
    {
+      for (HandlerRegistration reg : registrations)
+         add(reg);
    }
 
    public void add(HandlerRegistration reg)

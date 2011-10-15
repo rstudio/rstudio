@@ -26,6 +26,8 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.diff.*;
@@ -39,6 +41,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
 
    public CommitDetail()
    {
+      fileTypeRegistry_ = RStudioGinjector.INSTANCE.getFileTypeRegistry();
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
    }
 
@@ -97,7 +100,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
             diffFrame.setWidth("100%");
             detailPanel_.add(diffFrame);
 
-            Anchor tocAnchor = new Anchor(fileHeader.getDescription());
+            CommitTocRow tocAnchor = new CommitTocRow(fileHeader.getDescription());
             tocAnchor.addClickHandler(new ClickHandler()
             {
                @Override
@@ -146,4 +149,5 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    @UiField
    VerticalPanel tocPanel_;
    private ScrollPanel container_;
+   private FileTypeRegistry fileTypeRegistry_;
 }

@@ -1,0 +1,25 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+   <ui:style>
+      .outer {}
+      .outer img {
+         position: relative;
+         top: 4px;
+         margin-right: 4px;
+         cursor: pointer;
+      }
+      .outer a {
+         text-decoration: none;
+      }
+      .outer a:hover {
+         text-decoration: underline;
+      }
+   </ui:style>
+
+   <g:FlowPanel styleName="{style.outer}">
+      <g:Image ui:field="icon_"/>
+      <g:Anchor ui:field="anchor_"/>
+   </g:FlowPanel>
+
+</ui:UiBinder>
