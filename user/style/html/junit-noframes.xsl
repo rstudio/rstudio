@@ -267,6 +267,7 @@
         <xsl:variable name="timeCount" select="sum(testsuite/@time)"/>
         <xsl:variable name="passedCount" select="($testExecutedCount - $failureCount - $errorCount)"/>
         <xsl:variable name="successRate" select="($passedCount) div $testCount"/>
+        <xsl:variable name="coveredCount" select="$testExecutedCount + $markedNotSupported + $markedTestNotCompatible"/>
         <h3>
           <xsl:value-of select="$passedCount" /> <xsl:text> of </xsl:text>
           <xsl:value-of select="$testCount"/> <xsl:text> (</xsl:text>
@@ -279,10 +280,18 @@
     </h3>
 
     <xsl:if test="($failureCount + $errorCount) != ($markedFailing)">
-      <p style="color:red"><strong>WARINING</strong> expected Failures + Errors to match the
+      <p style="color:red"><strong>WARNING</strong> expected Failures + Errors to match the
       <xsl:value-of select="$markedFailing" />
       test marked @Failing</p>
     </xsl:if>
+      <xsl:if test="($rawTestCount) != ($coveredCount)">
+      <p style="color:red"><strong>WARNING</strong> only
+      <xsl:value-of select="$coveredCount" /> of
+      <xsl:value-of select="$rawTestCount"/> (<xsl:call-template name="display-percent">
+         <xsl:with-param name="value" select="$coveredCount div $rawTestCount"/>
+      </xsl:call-template>) TCK Tests Covered.</p>
+    </xsl:if>
+
         <table class="details" border="0" cellpadding="5" cellspacing="2" width="95%">
         <tr valign="top">
             <th>Tests</th>
