@@ -437,17 +437,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // contents of all lists
    sessionInfo["lists"] = modules::lists::allListsAsJson();
 
-   typedef std::map<std::string, boost::shared_ptr<session::modules::console_process::ConsoleProcess> >
-         ProcMap;
-   const ProcMap& procs = session::modules::console_process::processes();
-   json::Array procInfos;
-   for (ProcMap::const_iterator it = procs.begin();
-        it != procs.end();
-        it++)
-   {
-      procInfos.push_back(it->second->toJson());
-   }
-   sessionInfo["console_processes"] = procInfos;
+   sessionInfo["console_processes"] =
+         session::modules::console_process::processesAsJson();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

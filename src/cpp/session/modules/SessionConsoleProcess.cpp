@@ -16,6 +16,7 @@
 #include <core/system/Process.hpp>
 #include <core/Exec.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/Settings.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -37,6 +38,15 @@ namespace {
       return options;
    }
 } // anonymous namespace
+
+ConsoleProcess::ConsoleProcess()
+   : dialog_(false), started_(true), interrupt_(false),
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
+{
+   // When we retrieve from outputBuffer, we only want complete lines. Add a
+   // dummy \n so we can tell the first line is a complete line.
+   outputBuffer_.push_back('\n');
+}
 
 ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
@@ -156,6 +166,26 @@ core::json::Object ConsoleProcess::toJson() const
    return result;
 }
 
+boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
+                                             core::json::Object &obj)
+{
+   boost::shared_ptr<ConsoleProcess> pProc(new ConsoleProcess);
+   pProc->handle_ = obj["handle"].get_str();
+   pProc->caption_ = obj["caption"].get_str();
+   pProc->dialog_ = obj["dialog"].get_bool();
+   std::string bufferedOutput = obj["buffered_output"].get_str();
+   std::cerr << bufferedOutput << std::endl;
+   std::copy(bufferedOutput.begin(), bufferedOutput.end(),
+             std::back_inserter(pProc->outputBuffer_));
+   json::Value exitCode = obj["exit_code"];
+   if (exitCode.is_null())
+      pProc->exitCode_.reset();
+   else
+      pProc->exitCode_.reset(exitCode.get_int());
+
+   return pProc;
+}
+
 core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
 {
    core::system::ProcessCallbacks cb;
@@ -260,16 +290,63 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
    return ptrProc;
 }
 
-const std::map<std::string, boost::shared_ptr<ConsoleProcess> >& processes()
+core::json::Array processesAsJson()
 {
-   return s_procs;
+   json::Array procInfos;
+   for (ProcTable::const_iterator it = s_procs.begin();
+        it != s_procs.end();
+        it++)
+   {
+      procInfos.push_back(it->second->toJson());
+   }
+   return procInfos;
+}
+
+void onSuspend(core::Settings* pSettings)
+{
+   json::Array array;
+   for (ProcTable::const_iterator it = s_procs.begin();
+        it != s_procs.end();
+        it++)
+   {
+      array.push_back(it->second->toJson());
+   }
+
+   std::ostringstream ostr;
+   json::write(array, ostr);
+   pSettings->set("console_procs", ostr.str());
+}
+
+void onResume(const core::Settings& settings)
+{
+   std::string strVal = settings.get("console_procs");
+   if (strVal.empty())
+      return;
+
+   json::Value value;
+   if (!json::parse(strVal, &value))
+      return;
+
+   json::Array procs = value.get_array();
+   for (json::Array::iterator it = procs.begin();
+        it != procs.end();
+        it++)
+   {
+      boost::shared_ptr<ConsoleProcess> proc =
+                                    ConsoleProcess::fromJson(it->get_obj());
+      s_procs[proc->handle()] = proc;
+   }
 }
 
 Error initialize()
 {
-   // install rpc methods
    using boost::bind;
    using namespace module_context;
+
+   // add suspend/resume handler
+   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+
+   // install rpc methods
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "process_prepare", procInit))

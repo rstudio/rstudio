@@ -33,6 +33,10 @@ class ConsoleProcess : boost::noncopyable,
                        public boost::enable_shared_from_this<ConsoleProcess>
 {
 private:
+   // This constructor is only for resurrecting orphaned processes (i.e. for
+   // suspend/resume scenarios)
+   ConsoleProcess();
+
    ConsoleProcess(
          const std::string& command,
          const core::system::ProcessOptions& options,
@@ -68,6 +72,9 @@ public:
 
    core::json::Object toJson() const;
 
+   static boost::shared_ptr<ConsoleProcess> fromJson(
+                                              core::json::Object& obj);
+
 private:
    // Command and options that will be used when start() is called
    std::string command_;
@@ -96,7 +103,7 @@ private:
    boost::function<void()> onExit_;
 };
 
-const std::map<std::string, boost::shared_ptr<ConsoleProcess> >& processes();
+core::json::Array processesAsJson();
 core::Error initialize();
 
 } // namespace console_process
