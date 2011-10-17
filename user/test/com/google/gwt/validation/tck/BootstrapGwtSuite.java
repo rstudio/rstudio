@@ -21,6 +21,9 @@ import org.hibernate.jsr303.tck.tests.bootstrap.ConfigurationGwtTest;
 import org.hibernate.jsr303.tck.tests.bootstrap.CustomMessageInterpolatorGwtTest;
 import org.hibernate.jsr303.tck.tests.bootstrap.ValidationProviderGwtTest;
 import org.hibernate.jsr303.tck.tests.bootstrap.ValidationProviderResolverGwtTest;
+import org.hibernate.jsr303.tck.tests.bootstrap.customprovider.BootstrapCustomProviderDefinedInServiceFileGwtTest;
+import org.hibernate.jsr303.tck.tests.bootstrap.customprovider.BootstrapCustomProviderDefinedInValidationXmlGwtTest;
+import org.hibernate.jsr303.tck.tests.bootstrap.customprovider.BootstrapUnknownCustomProviderGwtTest;
 import org.hibernate.jsr303.tck.util.TckTestSuiteWrapper;
 
 /**
@@ -34,6 +37,11 @@ public class BootstrapGwtSuite {
     suite.addTestSuite(CustomMessageInterpolatorGwtTest.class);
     suite.addTestSuite(ValidationProviderGwtTest.class);
     suite.addTestSuite(ValidationProviderResolverGwtTest.class);
+    suite
+        .addTestSuite(BootstrapCustomProviderDefinedInServiceFileGwtTest.class);
+    suite
+        .addTestSuite(BootstrapCustomProviderDefinedInValidationXmlGwtTest.class);
+    suite.addTestSuite(BootstrapUnknownCustomProviderGwtTest.class);
     return suite;
   }
 }

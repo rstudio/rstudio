@@ -261,7 +261,7 @@
           grep -r \@Test org/hibernate/jsr303/tck/tests/| grep -v "enabled = false"  | wc -l
         -->
         <xsl:variable name="testCount" select="($rawTestCount - $markedNotSupported - $markedTestNotCompatible)"/>
-        <xsl:variable name="testExecutedCount" select="sum(testsuite/@tests)"/>
+        <xsl:variable name="testExecutedCount" select="sum(testsuite/@tests) - $markedNonTckTest"/>
         <xsl:variable name="errorCount" select="sum(testsuite/@errors)"/>
         <xsl:variable name="failureCount" select="sum(testsuite/@failures)"/>
         <xsl:variable name="timeCount" select="sum(testsuite/@time)"/>

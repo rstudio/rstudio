@@ -853,7 +853,7 @@
           excludes="${gwt.tck.testcase.dev.excludes}" />
       <gwt.junit test.name="test.dev.htmlunit"
           test.args="${test.args} -standardsMode "
-          test.jvmargs="-ea -Dcom.google.gwt.sample.validationtck.util.Failing.include=true  -Dcom.google.gwt.sample.validationtck.util.NonTckTest.exclude=true"
+          test.jvmargs="-ea -Dcom.google.gwt.sample.validationtck.util.Failing.include=true"     
           test.out="${junit.out}/tck-dev-htmlunit"
           test.cases="tck.dev.htmlunit.tests"
           haltonfailure="false"
