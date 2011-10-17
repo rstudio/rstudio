@@ -12,39 +12,11 @@
  */
 package org.rstudio.studio.client.workbench.views.help.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
-import java.util.ArrayList;
-
-public interface HelpServerOperations 
+public interface HelpServerOperations
 {
-   public static final String HISTORY = "history" ;
-   
-   public class LinksList extends JavaScriptObject
-   {
-      protected LinksList()
-      {
-      }
-      
-      public final ArrayList<Link> getLinks()
-      {
-         ArrayList<Link> results = new ArrayList<Link>() ;
-         for (int i = 0; i < getUrls().length(); i++)
-            results.add(new Link(getUrls().get(i), getTitles().get(i))) ;
-         return results ;
-      }
-      
-      private final native JsArrayString getUrls() /*-{
-         return this.url ;
-      }-*/;
-      
-      private final native JsArrayString getTitles() /*-{
-         return this.title ;
-      }-*/;
-   }
-
    void suggestTopics(String prefix,
                       ServerRequestCallback<JsArrayString> requestCallback);
 
@@ -59,8 +31,4 @@ public interface HelpServerOperations
 
    void search(String query, 
                ServerRequestCallback<JsArrayString> requestCallback) ;
-   
-   void getHelpLinks(String setName, ServerRequestCallback<LinksList> requestCallback) ;
-
-   void setHelpLinks(String setName, ArrayList<Link> links) ;
 }

@@ -16,16 +16,6 @@
    .Call("rs_enqueClientEvent", type, data)
 })
 
-.rs.addFunction("scratchPath", function()
-{
-   .Call("rs_scratchPath")
-})
-
-.rs.addFunction("scopedScratchPath", function()
-{
-   .Call("rs_scopedScratchPath")
-})
-
 .rs.addFunction("showErrorMessage", function(title, message)
 {
    .Call("rs_showErrorMessage", title, message)

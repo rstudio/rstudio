@@ -16,20 +16,24 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.inject.Inject;
-import org.rstudio.core.client.Debug;
+
+import org.rstudio.core.client.CsvReader;
+import org.rstudio.core.client.CsvWriter;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchList;
+import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ListChangedEvent;
+import org.rstudio.studio.client.workbench.events.ListChangedHandler;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.help.events.*;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
-import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations.LinksList;
 import org.rstudio.studio.client.workbench.views.help.model.Link;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class Help extends BasePresenter implements ShowHelpHandler
 {
@@ -67,11 +71,13 @@ public class Help extends BasePresenter implements ShowHelpHandler
    @Inject
    public Help(Display view,
                HelpServerOperations server,
+               WorkbenchListManager listManager,
                Commands commands,
                Binder binder)
    {
       super(view);
       server_ = server ;
+      helpHistoryList_ = listManager.getHelpHistoryList();
       view_ = view;
 
       binder.bind(commands, this);
@@ -81,11 +87,12 @@ public class Help extends BasePresenter implements ShowHelpHandler
          {
             if (!historyInitialized_)
                return;
-            LinkMenu history = view_.getHistory() ;
-            Link link = new Link(event.getUrl(), event.getTitle()) ;
-            history.removeLink(link) ;
-            history.addLink(link) ;
-            persistHistory() ;
+            
+            CsvWriter csvWriter = new CsvWriter();
+            csvWriter.writeValue(event.getUrl());
+            csvWriter.writeValue(event.getTitle());
+            helpHistoryList_.append(csvWriter.getValue());
+
          }
       }) ;
       SelectionHandler<String> navigator = new SelectionHandler<String>() {
@@ -96,7 +103,51 @@ public class Help extends BasePresenter implements ShowHelpHandler
       } ;
       view_.getHistory().addSelectionHandler(navigator) ;
 
-      loadHistory() ;
+      // initialize help history
+      helpHistoryList_.addListChangedHandler(new ListChangedHandler() {
+         @Override
+         public void onListChanged(ListChangedEvent event)
+         {
+            // clear existing
+            final LinkMenu history = view_.getHistory() ;
+            history.clearLinks();
+            
+            // intialize from the list
+            ArrayList<String> list = event.getList();
+            for (int i=0; i<list.size(); i++)
+            {
+               // parse the two fields out
+               CsvReader csvReader = new CsvReader(list.get(i));
+               Iterator<String[]> it = csvReader.iterator();
+               if (!it.hasNext())
+                  continue;
+               String[] fields = it.next();
+               if (fields.length != 2)
+                  continue;
+            
+               // add the link
+               Link link = new Link(fields[0], fields[1]);
+               history.addLink(link);
+            }
+            
+            // one time init
+            if (!historyInitialized_)
+            {
+               // mark us initialized
+               historyInitialized_ = true ;
+               
+               if (!view_.navigated())
+               {
+                  ArrayList<Link> links = history.getLinks();
+                  if (links.size() > 0)
+                     view_.showHelp(links.get(0).getUrl());
+                  else
+                     home();
+               }    
+            }
+         }  
+      });
+      
    }
 
    // Home handled by Shim for activation from main menu context
@@ -110,59 +161,16 @@ public class Help extends BasePresenter implements ShowHelpHandler
    @Handler
    public void onClearHelpHistory()
    {
-      Link current = null;
-      ArrayList<Link> links = view_.getHistory().getLinks();
-      if (links.size() > 0)
-         current = links.get(0);
-      view_.getHistory().clearLinks() ;
-      if (current != null)
-         view_.getHistory().addLink(current);
-      persistHistory() ;
+      if (!historyInitialized_)
+         return;
+      
+      helpHistoryList_.clear();
    }
 
    public void onShowHelp(ShowHelpEvent event)
    {
       view_.showHelp(server_.getApplicationURL(event.getTopicUrl()));
       view_.bringToFront();
-   }
-
-   private void loadHistory()
-   {
-      server_.getHelpLinks(HelpServerOperations.HISTORY,
-                           new ServerRequestCallback<LinksList>() {
-         @Override
-         public void onError(ServerError error)
-         {
-            // Probably not worth displaying an error to the user for this.
-            Debug.logError(error); ;
-         }
-         
-         @Override
-         public void onResponseReceived(LinksList linksList)
-         {
-            if (linksList != null)
-            {
-               LinkMenu history = view_.getHistory() ;
-               ArrayList<Link> links = linksList.getLinks() ;
-               for (int i = links.size() - 1; i >= 0; i--)
-               {
-                  if (!history.containsLink(links.get(i)))
-                     history.addLink(links.get(i)) ;
-               }
-
-               // Restore the most recent link, but only if we haven't
-               // already been navigated
-               if (!view_.navigated() && links.size() > 0)
-               {
-                  view_.showHelp(links.get(0).getUrl());
-               }
-            }
-            historyInitialized_ = true ;
-
-            if (!view_.navigated())
-               home();
-         }
-      }) ;
    }
 
    private void home()
@@ -175,17 +183,9 @@ public class Help extends BasePresenter implements ShowHelpHandler
    {
       return view_ ;
    }
-   
-   private void persistHistory()
-   {
-      if (historyInitialized_)
-      {
-         server_.setHelpLinks(HelpServerOperations.HISTORY,
-                              view_.getHistory().getLinks()) ;
-      }
-   }
 
    private Display view_ ;
    private HelpServerOperations server_ ;
+   private WorkbenchList helpHistoryList_;
    private boolean historyInitialized_ ;
 }

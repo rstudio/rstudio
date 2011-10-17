@@ -136,22 +136,6 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
    return R_NilValue ;
 }
 
-// get scratch path from R
-SEXP rs_scratchPath()
-{
-   FilePath scratchPath = module_context::userScratchPath();
-   r::sexp::Protect rProtect;
-   return r::sexp::create(scratchPath.absolutePath(), &rProtect);
-}
-
-// get scoped scratch path from R
-SEXP rs_scopedScratchPath()
-{
-   FilePath scopedScratchPath = module_context::scopedScratchPath();
-   r::sexp::Protect rProtect;
-   return r::sexp::create(scopedScratchPath.absolutePath(), &rProtect);
-}
-
 // show error message from R
 SEXP rs_showErrorMessage(SEXP titleSEXP, SEXP messageSEXP)
 {
@@ -234,21 +218,7 @@ Error initialize()
    methodDef.fun = (DL_FUNC) rs_enqueClientEvent ;
    methodDef.numArgs = 2;
    r::routines::addCallMethod(methodDef);
-   
-   // register rs_scratchPath with R
-   R_CallMethodDef methodDef2 ; 
-   methodDef2.name = "rs_scratchPath" ;
-   methodDef2.fun = (DL_FUNC) rs_scratchPath ;
-   methodDef2.numArgs = 0;
-   r::routines::addCallMethod(methodDef2);
-
-   // register rs_scopedScratchPath with R
-   R_CallMethodDef methodDefScopedScratchPath ;
-   methodDefScopedScratchPath.name = "rs_scopedScratchPath" ;
-   methodDefScopedScratchPath.fun = (DL_FUNC) rs_scopedScratchPath ;
-   methodDefScopedScratchPath.numArgs = 0;
-   r::routines::addCallMethod(methodDefScopedScratchPath);
-   
+      
    // register rs_showErrorMessage with R 
    R_CallMethodDef methodDef3 ;
    methodDef3.name = "rs_showErrorMessage" ;

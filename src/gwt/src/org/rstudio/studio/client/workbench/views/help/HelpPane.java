@@ -14,6 +14,7 @@
 package org.rstudio.studio.client.workbench.views.help;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -333,12 +334,29 @@ public class HelpPane extends WorkbenchPane
       setLocation(url);
       navigated_ = true;
    }
-   
-   private void setLocation(String url)
+     
+   private void setLocation(final String url)
    {
-      if (getIFrameEx() != null)
-         getIFrameEx().getContentWindow().replaceLocationHref(url) ;
-      frame_.setUrl(url);
+      RepeatingCommand navigateCommand = new RepeatingCommand() {
+         @Override
+         public boolean execute()
+         {
+            if (getIFrameEx() != null && 
+                  getIFrameEx().getContentWindow() != null)
+            {
+               getIFrameEx().getContentWindow().replaceLocationHref(url);
+               frame_.setUrl(url);
+               return false;
+            }
+            else
+            {
+               return true;
+            }
+         }
+      };
+
+      if (navigateCommand.execute())
+         Scheduler.get().scheduleFixedDelay(navigateCommand, 100);      
    }
    
    public void refresh()

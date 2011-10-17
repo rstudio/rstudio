@@ -138,31 +138,3 @@ suppressMessages(tools::startDynamicHelp())
             sep = "")
    }
 })
-
-.rs.addJsonRpcHandler("get_help_links", function(name)
-{
-   if (name != "history" && name != "favorites")
-      return ()
-   
-   historyFile = file.path(.rs.scopedScratchPath(), paste(name, ".csv", sep=""))
-   if (!file.exists(historyFile))
-      return ()
-   
-   history = utils::read.csv(historyFile)
-   list(url=as.character(history$url), title=as.character(history$title))
-})
-
-# NOTE: It is extremely wasteful for us to send the entire help history
-# every time a navigate/clear occurs. Would be much better to send a 
-# notification of the navigate only, but that requires doing deduplication
-# on the server.
-
-.rs.addJsonRpcHandler("set_help_links", function(name, history.urls, history.titles)
-{
-   if (name != "history" && name != "favorites")
-      return ()
-   
-   historyFile = file.path(.rs.scopedScratchPath(), paste(name, ".csv", sep=""))
-   df = data.frame(url=as.character(history.urls), title=as.character(history.titles))
-   utils::write.csv(df, file=historyFile)
-})

@@ -56,7 +56,6 @@ import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
-import org.rstudio.studio.client.workbench.views.help.model.Link;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
@@ -617,36 +616,6 @@ public class RemoteServer implements Server
                   requestCallback) ;
    }
    
-   public void getHelpLinks(String setName, 
-                            ServerRequestCallback<LinksList> requestCallback)
-   {
-      sendRequest(RPC_SCOPE,
-                  GET_HELP_LINKS,
-                  setName,
-                  requestCallback) ;
-   }
-   
-   public void setHelpLinks(String setName, ArrayList<Link> links)
-   {
-      JSONArray urls = new JSONArray() ;
-      JSONArray titles = new JSONArray() ;
-      for (int i = 0; i < links.size(); i++)
-      {
-         urls.set(i, new JSONString(links.get(i).getUrl())) ;
-         titles.set(i, new JSONString(links.get(i).getTitle())) ;
-      }
-      
-      JSONArray params = new JSONArray() ;
-      params.set(0, new JSONString(setName)) ;
-      params.set(1, urls) ;
-      params.set(2, titles) ;
-      
-      sendRequest(RPC_SCOPE,
-                  SET_HELP_LINKS,
-                  params,
-                  null) ;
-   }
-
    @Override
    public void stat(String path,
                     ServerRequestCallback<FileSystemItem> requestCallback)
@@ -1961,8 +1930,6 @@ public class RemoteServer implements Server
    private static final String GET_HELP = "get_help";
    private static final String SHOW_HELP_TOPIC = "show_help_topic" ;
    private static final String SEARCH = "search" ;
-   private static final String GET_HELP_LINKS = "get_help_links" ;
-   private static final String SET_HELP_LINKS = "set_help_links" ;
 
    private static final String STAT = "stat";
    private static final String LIST_FILES = "list_files";
