@@ -39,6 +39,9 @@ const char * const kFileMru = "file_mru";
 const char * const kProjectMru = "project_mru";
 const char * const kHelpHistory = "help_history";
 
+// path to lists dir
+FilePath s_listsPath;
+
 // registered lists
 typedef std::map<std::string, std::size_t> Lists;
 Lists s_lists;
@@ -53,14 +56,10 @@ std::size_t listSize(const char* const name)
       return -1;
 }
 
-FilePath listsFilePath()
-{
-   return module_context::userScratchPath().complete("synced/lists");
-}
 
 FilePath listPath(const std::string& name)
 {
-   return listsFilePath().complete(name);
+   return s_listsPath.complete(name);
 }
 
 template <typename T>
@@ -113,9 +112,25 @@ json::Array listToJson(const std::list<std::string>& list)
    return jsonArray;
 }
 
-void fireListChanged(const std::string& name,
-                     const std::list<std::string>& list)
+void onListsFileChanged(const core::system::FileChangeEvent& fileChange)
 {
+   // ignore if deleted
+   if (fileChange.type() == core::system::FileChangeEvent::FileRemoved)
+      return;
+
+   // get the name of the list
+   FilePath filePath(fileChange.fileInfo().absolutePath());
+   std::string name = filePath.filename();
+
+   // read it
+   std::list<std::string> list;
+   Error error = readList(name, &list);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
    json::Object eventJson;
    eventJson["name"] = name;
    eventJson["list"] = listToJson(list);
@@ -123,19 +138,6 @@ void fireListChanged(const std::string& name,
    ClientEvent event(client_events::kListChanged, eventJson);
    module_context::enqueClientEvent(event);
 }
-
-
-Error updateList(const std::string& name, const std::list<std::string>& list)
-{
-   Error error = writeList(name, list);
-   if (error)
-      return error;
-
-   fireListChanged(name, list);
-
-   return Success();
-}
-
 
 bool isListNameValid(const std::string& name)
 {
@@ -216,7 +218,7 @@ Error listInsertItem(bool prepend,
       list.push_back(value);
 
    // update the list
-   return updateList(name, list);
+   return writeList(name, list);
 }
 
 
@@ -252,7 +254,7 @@ Error listRemoveItem(const json::JsonRpcRequest& request,
    list.remove(value);
 
    // update the list
-   return updateList(name, list);
+   return writeList(name, list);
 }
 
 Error listClear(const json::JsonRpcRequest& request,
@@ -265,7 +267,7 @@ Error listClear(const json::JsonRpcRequest& request,
       return error;
 
    // write empty list
-   return updateList(name, std::list<std::string>());
+   return writeList(name, std::list<std::string>());
 }
 
 } // anonymous namespace
@@ -294,11 +296,15 @@ Error initialize()
    s_lists[kProjectMru] = 10;
    s_lists[kHelpHistory] = 15;
 
+   // monitor the lists directory
+   s_listsPath = module_context::registerMonitoredUserScratchDir(
+                                                      "lists",
+                                                      onListsFileChanged);
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(&FilePath::ensureDirectory, listsFilePath()))
       (bind(registerRpcMethod, "list_get", listGet))
       (bind(registerRpcMethod, "list_prepend_item", listPrependItem))
       (bind(registerRpcMethod, "list_append_item", listAppendItem))

@@ -210,6 +210,87 @@ SEXP sysSleepHook(SEXP call, SEXP op, SEXP args, SEXP rho)
    
 } // anonymous namespace
 
+
+// register a scratch path which is monitored
+
+namespace {
+
+typedef std::map<FilePath,OnFileChange> MonitoredScratchPaths;
+MonitoredScratchPaths s_monitoredScratchPaths;
+
+FilePath monitoredParentPath()
+{
+   FilePath monitoredPath = userScratchPath().complete("monitored");
+   Error error = monitoredPath.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+   return monitoredPath;
+}
+
+bool monitoredScratchFilter(const FileInfo& fileInfo)
+{
+   return true;
+}
+
+void onMonitoringError(const Error& error)
+{
+   LOG_ERROR(error);
+}
+
+void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
+{
+   BOOST_FOREACH(const core::system::FileChangeEvent& fileChange, changes)
+   {
+      FilePath changedFilePath(fileChange.fileInfo().absolutePath());
+      for (MonitoredScratchPaths::const_iterator
+               it = s_monitoredScratchPaths.begin();
+               it != s_monitoredScratchPaths.end();
+               ++it)
+      {
+         if (changedFilePath.isWithin(it->first))
+         {
+            it->second(fileChange);
+            break;
+         }
+      }
+
+   }
+}
+
+void initializeMonitoredUserScratchDir()
+{
+   // setup callbacks and register
+   core::system::file_monitor::Callbacks cb;
+   cb.onMonitoringError = onMonitoringError;
+   cb.onFilesChanged = onFilesChanged;
+   core::system::file_monitor::registerMonitor(
+                                    monitoredParentPath(),
+                                    true,
+                                    monitoredScratchFilter,
+                                    cb);
+}
+
+
+} // anonymous namespace
+
+FilePath registerMonitoredUserScratchDir(const std::string& dirName,
+                                         const OnFileChange& onFileChange)
+{
+   // create the subdir
+   FilePath dirPath = monitoredParentPath().complete(dirName);
+   Error error = dirPath.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+
+   // register the path
+   s_monitoredScratchPaths[dirPath] = onFileChange;
+
+   // return it
+   return dirPath;
+}
+
+
+
 Error initialize()
 {
    // register rs_enqueClientEvent with R 
@@ -270,6 +351,9 @@ Error initialize()
                                               &s_originalSysSleepFunction);
    if (error)
       return error;
+
+   // initialize monitored scratch dir
+   initializeMonitoredUserScratchDir();
 
    // source the ModuleTools.R file
    FilePath modulesPath = session::options().modulesRSourcePath();
@@ -650,6 +734,7 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
       enqueFileChangedEvent(event, vcsStatus);
    }
 }
+
 
 // NOTE: we used to call explicitly back into r::session to write output
 // and errors however the fact that these functions are called from

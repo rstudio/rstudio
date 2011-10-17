@@ -251,6 +251,12 @@ void enqueFileChangedEvent(const core::system::FileChangeEvent& event);
 void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
                             const std::vector<core::system::FileChangeEvent>& events);
 
+
+// register a scratch path which is monitored.
+typedef boost::function<void(const core::system::FileChangeEvent&)> OnFileChange;
+core::FilePath registerMonitoredUserScratchDir(const std::string& dirName,
+                                               const OnFileChange& onFileChange);
+
 // write output to the console (convenience wrapper for enquing a 
 // kConsoleWriteOutput event)
 void consoleWriteOutput(const std::string& output);   
