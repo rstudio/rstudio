@@ -169,7 +169,7 @@ core::json::Object ConsoleProcess::toJson() const
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
                                              core::json::Object &obj)
 {
-   boost::shared_ptr<ConsoleProcess> pProc(new ConsoleProcess);
+   boost::shared_ptr<ConsoleProcess> pProc(new ConsoleProcess());
    pProc->handle_ = obj["handle"].get_str();
    pProc->caption_ = obj["caption"].get_str();
    pProc->dialog_ = obj["dialog"].get_bool();
