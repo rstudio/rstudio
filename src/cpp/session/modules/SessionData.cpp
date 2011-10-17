@@ -187,7 +187,7 @@ SEXP dataViewerHook(SEXP call, SEXP op, SEXP args, SEXP rho)
          "  <head>\n"
          "     <title>%1%</title>\n"
          "     <meta charset=\"utf-8\"/>\n"
-         "     <link rel=\"stylesheet\" type=\"text/css\" href=\"../css/data.css\"/>\n"
+         "     <link rel=\"stylesheet\" type=\"text/css\" href=\"css/data.css\"/>\n"
          "  </head>\n"
          "  <body>\n");
       std::string html = boost::str(headerFmt % title);
