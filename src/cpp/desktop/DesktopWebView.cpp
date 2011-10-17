@@ -139,13 +139,33 @@ void WebView::mouseWheelTimerFired()
    }
    QWheelEvent event = mouseWheelEvents_.last();
    mouseWheelEvents_.clear();
-   QWheelEvent totalEvent(event.pos(),
-                          event.globalPos(),
-                          totalDelta,
-                          event.buttons(),
-                          event.modifiers(),
-                          event.orientation());
-   this->QWebView::wheelEvent(&totalEvent);
+
+   while (totalDelta != 0)
+   {
+      // If the absolute delta value exceeds 5000, Ace editor
+      // goes into a super fine granularity mode that we need
+      // to avoid
+      const int MAX_ABS_DELTA_VALUE = 5000;
+
+      int thisDelta = totalDelta;
+      if (thisDelta > MAX_ABS_DELTA_VALUE)
+      {
+         thisDelta = MAX_ABS_DELTA_VALUE;
+      }
+      else if (thisDelta < -MAX_ABS_DELTA_VALUE)
+      {
+         thisDelta = -MAX_ABS_DELTA_VALUE;
+      }
+      totalDelta -= thisDelta;
+
+      QWheelEvent totalEvent(event.pos(),
+                             event.globalPos(),
+                             thisDelta,
+                             event.buttons(),
+                             event.modifiers(),
+                             event.orientation());
+      this->QWebView::wheelEvent(&totalEvent);
+   }
 }
 
 void WebView::downloadRequested(const QNetworkRequest& request)
