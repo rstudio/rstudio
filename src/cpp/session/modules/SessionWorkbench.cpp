@@ -11,6 +11,18 @@
  *
  */
 
+
+// TODO: implement the rest of the client-side pref change comparators
+
+// TODO: fall back to file system scanning if monitoring fails
+
+// TODO: when doing a set (from here or from inside userSettings) should
+// we NOT hit the runtime backing for settings (allowing that the file
+// monitor will force us to do so again shortly)
+
+// TODO: if we allow multiple instances per project then must deal
+//       with project ui prefs
+
 #include "SessionWorkbench.hpp"
 
 #include <algorithm>
@@ -317,10 +329,24 @@ SEXP capabilitiesX11Hook(SEXP call, SEXP op, SEXP args, SEXP rho)
    return r::sexp::create(false, &rProtect);
 }
 
+void onUserSettingsChanged()
+{
+   // sync underlying R save action
+   module_context::syncRSaveAction();
+
+   // fire event notifying the client that uiPrefs changed
+   ClientEvent event(client_events::kUiPrefsChanged,
+                     userSettings().uiPrefs());
+   module_context::enqueClientEvent(event);
+}
+
 } // anonymous namespace
    
 Error initialize()
 {
+   // register for change notifications on user settings
+   userSettings().onChanged.connect(onUserSettingsChanged);
+
    // register postback handler for viewPDF (server-only)
    if (session::options().programMode() == kSessionProgramModeServer)
    {

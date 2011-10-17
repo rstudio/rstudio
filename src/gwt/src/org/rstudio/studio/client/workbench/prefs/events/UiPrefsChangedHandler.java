@@ -1,5 +1,5 @@
 /*
- * UIPrefs.java
+ * UiPrefsChangedHandler.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,20 +10,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.prefs.model;
+package org.rstudio.studio.client.workbench.prefs.events;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import com.google.gwt.event.shared.EventHandler;
 
-import org.rstudio.studio.client.workbench.model.Session;
-
-@Singleton
-public class UIPrefs extends UIPrefsAccessor
+public interface UiPrefsChangedHandler extends EventHandler
 {
-   @Inject
-   public UIPrefs(Session session)
-   {
-      super(session.getSessionInfo().getUiPrefs(),
-            session.getSessionInfo().getProjectUIPrefs());
-   }
+   void onUiPrefsChanged(UiPrefsChangedEvent e);
 }

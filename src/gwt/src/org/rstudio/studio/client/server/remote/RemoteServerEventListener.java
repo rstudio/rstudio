@@ -39,6 +39,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
+import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsolePrompt;
@@ -121,6 +122,7 @@ class RemoteServerEventListener
       public static final String ConsoleProcessOutput = "console_process_output";
       public static final String ConsoleProcessExit = "console_process_exit";
       public static final String ListChanged = "list_changed";
+      public static final String UiPrefsChanged = "ui_prefs_changed";
 
       protected ClientEvent()
       {
@@ -673,6 +675,11 @@ class RemoteServerEventListener
          else if (type.equals(ClientEvent.ListChanged))
          {
             eventBus.fireEvent(new ListChangedEvent(event.<JsObject>getData()));
+         }
+         else if (type.equals(ClientEvent.UiPrefsChanged))
+         {
+            JsObject uiPrefs = event.getData();
+            eventBus.fireEvent(new UiPrefsChangedEvent(uiPrefs));
          }
          else if (type.equals(ClientEvent.Quit))
          {

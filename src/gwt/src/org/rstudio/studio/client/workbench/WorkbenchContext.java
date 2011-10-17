@@ -14,29 +14,37 @@ package org.rstudio.studio.client.workbench;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class WorkbenchContext 
+public class WorkbenchContext implements UiPrefsChangedHandler
 {
 
    @Inject
    public WorkbenchContext(PrefsServerOperations server,
                            Session session, 
-                           EventBus eventBus)
+                           EventBus eventBus,
+                           Provider<UIPrefs> uiPrefs)
    {
       server_ = server;
       session_ = session;
+      uiPrefs_ = uiPrefs;
       
       // track current working dir
       currentWorkingDir_ = FileSystemItem.home();
@@ -50,6 +58,8 @@ public class WorkbenchContext
             defaultFileDialogDir_ = FileSystemItem.createDir(event.getPath());;
          }      
       }); 
+      
+      eventBus.addHandler(UiPrefsChangedEvent.TYPE, this);
    }
    
   
@@ -133,9 +143,38 @@ public class WorkbenchContext
          });
    }
    
+   @Override
+   public void onUiPrefsChanged(UiPrefsChangedEvent e)
+   {      
+      // get references to new and existing UI prefs
+      UIPrefs uiPrefs = uiPrefs_.get();
+      UIPrefsAccessor newUiPrefs = new UIPrefsAccessor(
+                                                e.getUIPrefs(), 
+                                                JsObject.createJsObject());
+      
+      // show line numbers
+      if (newUiPrefs.showLineNumbers().getGlobalValue() != 
+          uiPrefs.showLineNumbers().getGlobalValue())
+      {
+         uiPrefs.showLineNumbers().setGlobalValue(
+                              newUiPrefs.showLineNumbers().getGlobalValue());
+      }
+      
+      
+      // theme
+      if (newUiPrefs.theme().getGlobalValue() != 
+          uiPrefs.theme().getGlobalValue())
+      {
+         uiPrefs.theme().setGlobalValue(newUiPrefs.theme().getGlobalValue());
+      }
+   }
+   
+   
    FileSystemItem currentWorkingDir_ = FileSystemItem.home();
    FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
    FileSystemItem activeProjectDir_ = null;
    Session session_;
    private final PrefsServerOperations server_;
+   private final Provider<UIPrefs> uiPrefs_;
+   
 }

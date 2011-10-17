@@ -83,10 +83,23 @@ UserSettings& userSettings()
    
 Error UserSettings::initialize()
 {
-   FilePath scratchPath = session::options().userScratchPath();
-   FilePath settingsPath = scratchPath.complete("user-settings");
+   // calculate settings file path
+   FilePath settingsDir = module_context::registerMonitoredUserScratchDir(
+              "user-settings",
+              boost::bind(&UserSettings::onSettingsFileChanged, this, _1));
+   settingsFilePath_ = settingsDir.complete("user-settings");
 
-   Error error = settings_.initialize(settingsPath);
+   // if it doesn't exist see if we can migrate an old user settings
+   if (!settingsFilePath_.exists())
+   {
+      FilePath oldSettingsPath =
+            module_context::userScratchPath().complete("user-settings");
+      if (oldSettingsPath.exists())
+         oldSettingsPath.move(settingsFilePath_);
+   }
+
+   // read the settings
+   Error error = settings_.initialize(settingsFilePath_);
    if (error)
       return error;
 
@@ -96,6 +109,44 @@ Error UserSettings::initialize()
 
    return Success();
 }
+
+void UserSettings::onSettingsFileChanged(
+                     const core::system::FileChangeEvent& changeEvent)
+{
+   // ensure this is for our target file
+   if (settingsFilePath_.absolutePath() !=
+       changeEvent.fileInfo().absolutePath())
+   {
+      return;
+   }
+
+   // re-read the settings from disk
+   Error error = settings_.initialize(settingsFilePath_);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // update prefs cache
+   updatePrefsCache(uiPrefs());
+
+   // set underlying R repos options
+   std::string cranMirrorURL = cranMirror().url;
+   if (!cranMirrorURL.empty())
+      setCRANReposOption(cranMirrorURL);
+   std::string bioconductorMirrorURL = settings_.get(kBioconductorMirrorUrl);
+   if (!bioconductorMirrorURL.empty())
+      setBioconductorReposOption(bioconductorMirrorURL);
+
+   // update remove dups in underlying R session
+   using namespace r::session;
+   consoleHistory().setRemoveDuplicates(removeHistoryDuplicates());
+
+   // fire event so others can react appropriately
+   onChanged();
+}
+
 
 std::string UserSettings::contextId() const
 {

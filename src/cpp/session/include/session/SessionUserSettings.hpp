@@ -18,11 +18,14 @@
 
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/signal.hpp>
 
 #include <core/Settings.hpp>
 #include <core/FilePath.hpp>
 
 #include <core/json/Json.hpp>
+
+#include <core/system/FileChangeEvent.hpp>
 
 namespace session {
 
@@ -49,7 +52,10 @@ class UserSettings : boost::noncopyable
 private:
    UserSettings() {}
    friend UserSettings& userSettings();
-   
+
+public:
+   boost::signal<void()> onChanged;
+
 public:
    // COPYING: boost::noncopyable
    
@@ -107,11 +113,14 @@ public:
    bool vcsEnabled() const;
 
 private:
+
+   void onSettingsFileChanged(
+                        const core::system::FileChangeEvent& changeEvent);
+
    core::FilePath getWorkingDirectoryValue(const std::string& key) const;
    void setWorkingDirectoryValue(const std::string& key,
                                  const core::FilePath& filePath) ;
 
-   void updatePrefsCache() const;
    void updatePrefsCache(const core::json::Object& uiPrefs) const;
 
    template <typename T>
@@ -124,6 +133,7 @@ private:
    }
 
 private:
+   core::FilePath settingsFilePath_;
    core::Settings settings_;
 
    // cached prefs values

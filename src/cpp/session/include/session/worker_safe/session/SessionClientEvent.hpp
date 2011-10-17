@@ -69,6 +69,7 @@ extern const int kConsoleProcessOutput;
 extern const int kConsoleProcessExit;
 extern const int kListChanged;
 extern const int kConsoleProcessCreated;
+extern const int kUiPrefsChanged;
 }
    
 class ClientEvent
