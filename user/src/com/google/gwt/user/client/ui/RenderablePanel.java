@@ -15,8 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.dom.builder.shared.HtmlDivBuilder;
-import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
+import com.google.gwt.dom.builder.shared.HtmlElementBuilder;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -189,18 +188,12 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
 
   @Override
   public SafeHtml render(RenderableStamper stamper) {
-    String styleName = getStyleName();
+    HtmlElementBuilder builder = PotentialElement.createBuilderFor(getElement());
+    stamper.stamp(builder);
+    builder.html(getInnerHtml()).end();
 
-    HtmlDivBuilder divBuilder = HtmlBuilderFactory.get()
-        .createDivBuilder();
-    if (styleName != null) {
-      divBuilder.className(styleName);
-      styleName = null;
-    }
-    stamper.stamp(divBuilder);
-    divBuilder.html(getInnerHtml()).end();
-
-    return divBuilder.asSafeHtml();
+    SafeHtml returnValue = builder.asSafeHtml();
+    return returnValue;
   }
 
   @Override
@@ -236,6 +229,8 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
    * that may have been added to the panel.
    */
   private void buildAndInitDivContainer() {
+    // TODO(rdcastro): Use the same technique as in render() above.
+
     // Build the div that'll container the panel's HTML.
     Element element = Document.get().createDivElement();
     element.setInnerHTML(getInnerHtml().asString());
