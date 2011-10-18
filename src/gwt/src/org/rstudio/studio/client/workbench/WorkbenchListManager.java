@@ -15,9 +15,7 @@ package org.rstudio.studio.client.workbench;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.events.ListChangedHandler;
