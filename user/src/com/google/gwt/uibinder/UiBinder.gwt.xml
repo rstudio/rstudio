@@ -27,11 +27,11 @@
   <define-configuration-property name="UiBinder.useSafeHtmlTemplates" is-multi-valued="false"/>
   <set-configuration-property name="UiBinder.useSafeHtmlTemplates" value="true"/>
 
-  <!-- UiBinder can be configured to use a new strategy that enables a faster
-       rendering mode and make some widgets lazily created. This is still experimental
-       but should be the default option in a soon future. -->
+  <!-- Set this property to false to revert to the old code gen strategy, 
+    and lose features like support for LazyPanel and forward references. This 
+    property will soon disappear. -->
   <define-configuration-property name="UiBinder.useLazyWidgetBuilders" is-multi-valued="false"/>
-  <set-configuration-property name="UiBinder.useLazyWidgetBuilders" value="false"/>
+  <set-configuration-property name="UiBinder.useLazyWidgetBuilders" value="true"/>
 
   <generate-with class="com.google.gwt.uibinder.rebind.UiBinderGenerator">
     <when-type-assignable class="com.google.gwt.uibinder.client.UiRenderer"/>
