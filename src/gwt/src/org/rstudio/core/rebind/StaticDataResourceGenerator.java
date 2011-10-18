@@ -61,6 +61,12 @@ public final class StaticDataResourceGenerator extends AbstractResourceGenerator
     sw.outdent();
     sw.println("}");
 
+    sw.println("public com.google.gwt.safehtml.shared.SafeUri getSafeUri() {");
+    sw.indent();
+    sw.println("return new org.rstudio.core.client.SafeUriStringImpl(" + outputUrlExpression + ");");
+    sw.outdent();
+    sw.println("}");
+
     sw.println("public String getName() {");
     sw.indent();
     sw.println("return \"" + method.getName() + "\";");

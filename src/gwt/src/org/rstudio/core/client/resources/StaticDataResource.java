@@ -19,9 +19,4 @@ import org.rstudio.core.rebind.StaticDataResourceGenerator;
 @ResourceGeneratorType(StaticDataResourceGenerator.class)
 public interface StaticDataResource extends DataResource
 {
-   /**
-    * Retrieves a URL by which the contents of the resource can be obtained. This
-    * will be an absolute URL.
-    */
-   String getUrl();
 }

@@ -16,3 +16,4 @@ rstudio.Rproj
 .RData
 .Rprofile
 /src/gwt/bin.test/
+/src/gwt/gwt-unitCache/

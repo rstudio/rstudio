@@ -216,22 +216,6 @@ public class WorkspaceObjectTable
       table_.getColumnFormatter().setWidth(0, "25%") ;
       table_.getColumnFormatter().setWidth(1, "75%") ;
 
-      /*
-      table_.addMouseMoveHandler(new MouseMoveHandler()
-      {
-         public void onMouseMove(MouseMoveEvent event)
-         {
-            showActionsOnRow(table_.getRowForEvent(event.getNativeEvent()));
-         }
-      });
-      table_.addMouseOutHandler(new MouseOutHandler()
-      {
-         public void onMouseOut(MouseOutEvent event)
-         {
-            hideActions();
-         }
-      });
-      */
       table_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -266,27 +250,6 @@ public class WorkspaceObjectTable
       scrollPanel_ = new ScrollPanel(table_);
       
       rowManager_ = new RowManager() ;
-
-      actions_.addSelectionHandler(new SelectionHandler<Integer>()
-      {
-         public void onSelection(SelectionEvent<Integer> e)
-         {
-            TableCellElement cell = actions_.getCurrentParentCell();
-            if (cell == null)
-               return;
-            int row = ((TableRowElement)cell.getParentElement()).getRowIndex();
-            String name = rowManager_.getObjectNameForIndex(row);
-            int value = e.getSelectedItem().intValue();
-            if (value == WorkspaceValueActions.FIX)
-            {
-               observer_.editObject(name);
-            }
-            else if (value == WorkspaceValueActions.RM)
-            {
-               observer_.removeObject(name);
-            }
-         }
-      });
    }
 
    public Object getView()
@@ -369,37 +332,10 @@ public class WorkspaceObjectTable
       observer_ = observer;
    }
 
-   public void showActionsOnRow(int row)
-   {
-      if (row < 0)
-      {
-         hideActions();
-         return;
-      }
-
-      TableRowElement rowEl = table_.getRowElement(row);
-      if (rowEl.getClassName().contains(ThemeResources.INSTANCE.themeStyles().workspaceSectionHead()))
-      {
-         hideActions();
-         return;
-      }
-      
-      NodeList<TableCellElement> cells = rowEl.getCells();
-      TableCellElement cellEl = cells.getItem(cells.getLength() - 1);
-      actions_.attachToCell(cellEl);
-   }
-
-   private void hideActions()
-   {
-      actions_.detach();
-   }
-
    private boolean isData(String type)
    {
       return "data.frame".equals(type) || "matrix".equals(type);
    }
-
-   private final WorkspaceValueActions actions_ = new WorkspaceValueActions();
 
    private RowManager rowManager_ ;
    private final HandlerManager handlerManager_ = new HandlerManager(null);

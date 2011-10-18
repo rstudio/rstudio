@@ -74,7 +74,7 @@ public class ConsoleBarView extends Composite
 
       LayoutPanel outer = new LayoutPanel();
       outer.getElement().getStyle().setBackgroundImage(
-            "url(" + res_.barTile().getURL() + ")");
+            "url(" + res_.barTile().getSafeUri().asString() + ")");
       outer.getElement().getStyle().setProperty("backgroundRepeat", "repeat-x");
       outer.add(border);
       outer.setWidgetTopHeight(border, 3, Unit.PX, 18, Unit.PX);

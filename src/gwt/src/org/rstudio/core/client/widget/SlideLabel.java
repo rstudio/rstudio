@@ -133,7 +133,7 @@ public class SlideLabel extends Widget
    {
       setElement(binder.createAndBindUi(this));
       if (showProgressSpinner)
-         progress_.setSrc(CoreResources.INSTANCE.progress_gray_as_data().getUrl());
+         progress_.setSrc(CoreResources.INSTANCE.progress_gray_as_data().getSafeUri().asString());
       else
          progress_.getStyle().setDisplay(Style.Display.NONE);
       curtain_.getStyle().setHeight(0, Style.Unit.PX);
