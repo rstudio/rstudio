@@ -188,7 +188,7 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
 
   @Override
   public SafeHtml render(RenderableStamper stamper) {
-    HtmlElementBuilder builder = PotentialElement.createBuilderFor(getElement());
+    HtmlElementBuilder builder = PotentialElement.createHtmlBuilderFor(getElement());
     stamper.stamp(builder);
     builder.html(getInnerHtml()).end();
 
@@ -229,18 +229,8 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
    * that may have been added to the panel.
    */
   private void buildAndInitDivContainer() {
-    // TODO(rdcastro): Use the same technique as in render() above.
-
-    // Build the div that'll container the panel's HTML.
-    Element element = Document.get().createDivElement();
-    element.setInnerHTML(getInnerHtml().asString());
-
-    // TODO(rdcastro): Implement something like
-    // element.mergeFrom(getElement());
-    String styleName = getStyleName();
-    if (styleName != null) {
-      element.setClassName(styleName);
-    }
+    Element element = PotentialElement.createDomBuilderFor(getElement())
+        .html(getInnerHtml()).finish();
 
     setElement(element);
 
