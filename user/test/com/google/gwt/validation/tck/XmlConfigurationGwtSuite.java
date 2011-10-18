@@ -53,7 +53,6 @@ public class XmlConfigurationGwtSuite {
     suite
         .addTestSuite(TraversableResolverSpecifiedInValidationXmlGwtTest.class);
     suite.addTestSuite(XmlConfigurationGwtTest.class);
-
     return suite;
   }
 }

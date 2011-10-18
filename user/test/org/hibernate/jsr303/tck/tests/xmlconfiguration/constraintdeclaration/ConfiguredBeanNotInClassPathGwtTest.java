@@ -22,12 +22,11 @@ import org.hibernate.jsr303.tck.util.client.NotSupported;
 import org.hibernate.jsr303.tck.util.client.NotSupported.Reason;
 
 /**
- * Wraps {@link ConfigurationViaXmlAndAnnotationsTest}.
+ * Wraps {@link ConfiguredBeanNotInClassPathTest}.
  */
-public class ConfigurationViaXmlAndAnnotationsGwtTest extends
+public class ConfiguredBeanNotInClassPathGwtTest extends
     GWTTestCase {
-
-  ConfigurationViaXmlAndAnnotationsTest d = new ConfigurationViaXmlAndAnnotationsTest();
+  ConfiguredBeanNotInClassPathTest d = new ConfiguredBeanNotInClassPathTest();
 
   @Override
   public String getModuleName() {
@@ -35,12 +34,7 @@ public class ConfigurationViaXmlAndAnnotationsGwtTest extends
   }
 
   @NotSupported(reason = Reason.XML)
-  public void testDefaultGroupDefinitionDefinedInEntityApplies() {
-    fail("XML configuration is not supported");
-  }
-
-  @NotSupported(reason = Reason.XML)
-  public void testEntityConfiguredViaAnnotationsAndXml() {
+  public void testExceptionIsThrownForUnknownBeanNameInXml() {
     fail("XML configuration is not supported");
   }
 

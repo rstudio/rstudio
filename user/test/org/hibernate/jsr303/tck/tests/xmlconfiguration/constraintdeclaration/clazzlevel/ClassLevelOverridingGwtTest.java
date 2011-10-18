@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.hibernate.jsr303.tck.tests.xmlconfiguration.constraintdeclaration;
+package org.hibernate.jsr303.tck.tests.xmlconfiguration.constraintdeclaration.clazzlevel;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -22,12 +22,11 @@ import org.hibernate.jsr303.tck.util.client.NotSupported;
 import org.hibernate.jsr303.tck.util.client.NotSupported.Reason;
 
 /**
- * Wraps {@link ConfigurationViaXmlAndAnnotationsTest}.
+ * Wraps {@link ClassLevelOverridingTest}.
  */
-public class ConfigurationViaXmlAndAnnotationsGwtTest extends
+public class ClassLevelOverridingGwtTest extends
     GWTTestCase {
-
-  ConfigurationViaXmlAndAnnotationsTest d = new ConfigurationViaXmlAndAnnotationsTest();
+  ClassLevelOverridingTest d = new ClassLevelOverridingTest();
 
   @Override
   public String getModuleName() {
@@ -35,14 +34,20 @@ public class ConfigurationViaXmlAndAnnotationsGwtTest extends
   }
 
   @NotSupported(reason = Reason.XML)
-  public void testDefaultGroupDefinitionDefinedInEntityApplies() {
+  public void testClassLevelAnnotationsApplied() {
     fail("XML configuration is not supported");
   }
 
   @NotSupported(reason = Reason.XML)
-  public void testEntityConfiguredViaAnnotationsAndXml() {
+  public void testIgnoreAnnotationsFromEnclosingBeanIsApplied() {
     fail("XML configuration is not supported");
   }
+
+  @NotSupported(reason = Reason.XML)
+ public void testIgnoreClassLevelAnnotations() {
+  fail("XML configuration is not supported");
+ }
+
 
   @NonTckTest
   public void testThereMustBeOnePassingTest() {

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.hibernate.jsr303.tck.tests.xmlconfiguration.constraintdeclaration;
+package org.hibernate.jsr303.tck.tests.xmlconfiguration.constraintdeclaration.fieldlevel;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -22,12 +22,11 @@ import org.hibernate.jsr303.tck.util.client.NotSupported;
 import org.hibernate.jsr303.tck.util.client.NotSupported.Reason;
 
 /**
- * Wraps {@link ConfigurationViaXmlAndAnnotationsTest}.
+ * Wraps {@link IncludeFieldLevelAnnotationsDueToBeanDefaultsTest}.
  */
-public class ConfigurationViaXmlAndAnnotationsGwtTest extends
+public class IncludeFieldLevelAnnotationsDueToBeanDefaultsGwtTest extends
     GWTTestCase {
-
-  ConfigurationViaXmlAndAnnotationsTest d = new ConfigurationViaXmlAndAnnotationsTest();
+  IncludeFieldLevelAnnotationsDueToBeanDefaultsTest d = new IncludeFieldLevelAnnotationsDueToBeanDefaultsTest();
 
   @Override
   public String getModuleName() {
@@ -35,12 +34,7 @@ public class ConfigurationViaXmlAndAnnotationsGwtTest extends
   }
 
   @NotSupported(reason = Reason.XML)
-  public void testDefaultGroupDefinitionDefinedInEntityApplies() {
-    fail("XML configuration is not supported");
-  }
-
-  @NotSupported(reason = Reason.XML)
-  public void testEntityConfiguredViaAnnotationsAndXml() {
+  public void testAnnotationsIncluded() {
     fail("XML configuration is not supported");
   }
 

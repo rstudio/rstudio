@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.hibernate.jsr303.tck.tests.xmlconfiguration.constraintdeclaration;
+package org.hibernate.jsr303.tck.tests.xmlconfiguration.constraintdeclaration.propertylevel;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -22,29 +22,23 @@ import org.hibernate.jsr303.tck.util.client.NotSupported;
 import org.hibernate.jsr303.tck.util.client.NotSupported.Reason;
 
 /**
- * Wraps {@link ConfigurationViaXmlAndAnnotationsTest}.
+ * Wraps {@link WrongPropertyNameTest}.
  */
-public class ConfigurationViaXmlAndAnnotationsGwtTest extends
+public class WrongPropertyNameGwtTest extends
     GWTTestCase {
-
-  ConfigurationViaXmlAndAnnotationsTest d = new ConfigurationViaXmlAndAnnotationsTest();
+  WrongPropertyNameTest d = new WrongPropertyNameTest();
 
   @Override
   public String getModuleName() {
     return null;
   }
 
-  @NotSupported(reason = Reason.XML)
-  public void testDefaultGroupDefinitionDefinedInEntityApplies() {
-    fail("XML configuration is not supported");
-  }
-
-  @NotSupported(reason = Reason.XML)
-  public void testEntityConfiguredViaAnnotationsAndXml() {
-    fail("XML configuration is not supported");
-  }
-
   @NonTckTest
   public void testThereMustBeOnePassingTest() {
+  }
+
+  @NotSupported(reason = Reason.XML)
+  public void testWrongPropertyNameThrowsException() {
+    fail("XML configuration is not supported");
   }
 }

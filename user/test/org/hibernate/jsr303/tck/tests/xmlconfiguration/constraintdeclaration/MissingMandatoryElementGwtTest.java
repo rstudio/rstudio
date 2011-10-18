@@ -22,12 +22,11 @@ import org.hibernate.jsr303.tck.util.client.NotSupported;
 import org.hibernate.jsr303.tck.util.client.NotSupported.Reason;
 
 /**
- * Wraps {@link ConfigurationViaXmlAndAnnotationsTest}.
+ * Wraps {@link MissingMandatoryElementTest}.
  */
-public class ConfigurationViaXmlAndAnnotationsGwtTest extends
+public class MissingMandatoryElementGwtTest extends
     GWTTestCase {
-
-  ConfigurationViaXmlAndAnnotationsTest d = new ConfigurationViaXmlAndAnnotationsTest();
+  MissingMandatoryElementTest d = new MissingMandatoryElementTest();
 
   @Override
   public String getModuleName() {
@@ -35,12 +34,7 @@ public class ConfigurationViaXmlAndAnnotationsGwtTest extends
   }
 
   @NotSupported(reason = Reason.XML)
-  public void testDefaultGroupDefinitionDefinedInEntityApplies() {
-    fail("XML configuration is not supported");
-  }
-
-  @NotSupported(reason = Reason.XML)
-  public void testEntityConfiguredViaAnnotationsAndXml() {
+  public void testMissingMandatoryElementInConstraintDeclaration() {
     fail("XML configuration is not supported");
   }
 
