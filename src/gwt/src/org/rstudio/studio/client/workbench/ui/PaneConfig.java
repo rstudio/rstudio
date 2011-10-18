@@ -120,7 +120,13 @@ public class PaneConfig extends JavaScriptObject
                     copy(getTabSet1()),
                     copy(getTabSet2()));
    }
-
+   
+   public final native boolean isEqualTo(PaneConfig other)  /*-{
+      return this.panes.toString() == other.panes.toString() &&
+             this.tabSet1.toString() == other.tabSet1.toString() &&
+             this.tabSet2.toString() == other.tabSet2.toString();
+   }-*/;
+  
    private boolean sameElements(JsArrayString a, String[] b)
    {
       if (a.length() != b.length)

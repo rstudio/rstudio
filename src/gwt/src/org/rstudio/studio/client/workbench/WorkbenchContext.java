@@ -25,6 +25,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
+import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -145,19 +147,92 @@ public class WorkbenchContext implements UiPrefsChangedHandler
                                                 JsObject.createJsObject());
       
       // show line numbers
-      if (newUiPrefs.showLineNumbers().getGlobalValue() != 
-          uiPrefs.showLineNumbers().getGlobalValue())
-      {
-         uiPrefs.showLineNumbers().setGlobalValue(
+      uiPrefs.showLineNumbers().setGlobalValue(
                               newUiPrefs.showLineNumbers().getGlobalValue());
+      
+      // highlight selected word
+      uiPrefs.highlightSelectedWord().setGlobalValue(
+                        newUiPrefs.highlightSelectedWord().getGlobalValue());
+      
+      // highlight selected line
+      uiPrefs.highlightSelectedLine().setGlobalValue(
+                       newUiPrefs.highlightSelectedLine().getGlobalValue());
+    
+      // pane config
+      if (!newUiPrefs.paneConfig().getGlobalValue().isEqualTo(
+                              uiPrefs.paneConfig().getGlobalValue()))
+      {
+         uiPrefs.paneConfig().setGlobalValue(
+                           newUiPrefs.paneConfig().getGlobalValue());
       }
       
+      // use spaces for tab
+      uiPrefs.useSpacesForTab().setGlobalValue(
+                       newUiPrefs.useSpacesForTab().getGlobalValue());
+        
+      // num spacers for tab
+      uiPrefs.numSpacesForTab().setGlobalValue(
+            newUiPrefs.numSpacesForTab().getGlobalValue());
+
+      // show margin
+      uiPrefs.showMargin().setGlobalValue(
+                              newUiPrefs.showMargin().getGlobalValue());
       
+      // print margin column
+      uiPrefs.printMarginColumn().setGlobalValue(
+                              newUiPrefs.printMarginColumn().getGlobalValue());
+   
+      // insert matching
+      uiPrefs.insertMatching().setGlobalValue(
+                              newUiPrefs.insertMatching().getGlobalValue());
+   
+      // soft wrap R files
+      uiPrefs.softWrapRFiles().setGlobalValue(
+                              newUiPrefs.softWrapRFiles().getGlobalValue());
+      
+      // syntax color console
+      uiPrefs.syntaxColorConsole().setGlobalValue(
+                              newUiPrefs.syntaxColorConsole().getGlobalValue());
+   
+      // font size
+      uiPrefs.fontSize().setGlobalValue(newUiPrefs.fontSize().getGlobalValue());
+   
       // theme
-      if (newUiPrefs.theme().getGlobalValue() != 
-          uiPrefs.theme().getGlobalValue())
+      uiPrefs.theme().setGlobalValue(newUiPrefs.theme().getGlobalValue());
+   
+      // default encoding
+      uiPrefs.defaultEncoding().setGlobalValue(
+                              newUiPrefs.defaultEncoding().getGlobalValue());
+      
+      // default project location
+      uiPrefs.defaultProjectLocation().setGlobalValue(
+                        newUiPrefs.defaultProjectLocation().getGlobalValue());
+   
+      // toolbar visible
+      uiPrefs.toolbarVisible().setGlobalValue(
+                              newUiPrefs.toolbarVisible().getGlobalValue());
+      
+      // source with echo
+      uiPrefs.sourceWithEcho().setGlobalValue(
+                              newUiPrefs.sourceWithEcho().getGlobalValue());
+      
+      
+      // export plot options
+      if (!ExportPlotOptions.areEqual(
+            newUiPrefs.exportPlotOptions().getGlobalValue(),
+            uiPrefs.exportPlotOptions().getGlobalValue()))
       {
-         uiPrefs.theme().setGlobalValue(newUiPrefs.theme().getGlobalValue());
+         uiPrefs.exportPlotOptions().setGlobalValue(
+                           newUiPrefs.exportPlotOptions().getGlobalValue());
+      }
+      
+      // save plot as pdf options
+      if (!SavePlotAsPdfOptions.areEqual(
+            newUiPrefs.savePlotAsPdfOptions().getGlobalValue(),
+            uiPrefs.savePlotAsPdfOptions().getGlobalValue()))
+      {
+         uiPrefs.savePlotAsPdfOptions().setGlobalValue(
+                           newUiPrefs.savePlotAsPdfOptions().getGlobalValue());
       }
    }
    

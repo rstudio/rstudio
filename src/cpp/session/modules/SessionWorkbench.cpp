@@ -11,9 +11,6 @@
  *
  */
 
-
-// TODO: implement the rest of the client-side pref change comparators
-
 // TODO: fall back to file system scanning if monitoring fails
 
 // TODO: when doing a set (from here or from inside userSettings) should
@@ -25,6 +22,8 @@
 
 // TODO: if we allow multiple instances per project then must deal
 //       with project ui prefs
+
+// TODO: subscribe to toolbarVisible changed
 
 #include "SessionWorkbench.hpp"
 
