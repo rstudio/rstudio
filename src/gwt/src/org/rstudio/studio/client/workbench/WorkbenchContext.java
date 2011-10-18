@@ -134,13 +134,7 @@ public class WorkbenchContext implements UiPrefsChangedHandler
    {
       server_.setUiPrefs(
          session_.getSessionInfo().getUiPrefs(),
-         new VoidServerRequestCallback() {
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
-            }
-         });
+         new VoidServerRequestCallback());
    }
    
    @Override

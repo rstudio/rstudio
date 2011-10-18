@@ -194,7 +194,7 @@ public class Projects implements OpenProjectFileHandler,
                         @Override
                         public void onError(ServerError error)
                         {
-                           Debug.logError(error);
+                           super.onError(error);
                            continuation.execute();
                         }
                      });

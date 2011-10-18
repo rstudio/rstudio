@@ -145,15 +145,8 @@ public class WorkbenchListManager
       }
       
       // for now we have a no-op stub for server request callbacks
-      // save for logging errors
       private class ListRequestCallback extends VoidServerRequestCallback
       {
-         @Override
-         public void onError(ServerError error)
-         {
-            super.onError(error);
-            Debug.log(error.toString());
-         }
       }
       
       private final String name_;

@@ -413,6 +413,7 @@ public class Shell implements ConsoleInputHandler,
                      @Override
                      public void onError(ServerError error)
                      {
+                        super.onError(error);
                         globalDisplay_.showErrorMessage(
                               "Error Interrupting Server",
                               error.getUserMessage());
