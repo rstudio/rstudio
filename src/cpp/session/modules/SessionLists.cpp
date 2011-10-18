@@ -118,6 +118,10 @@ void onListsFileChanged(const core::system::FileChangeEvent& fileChange)
    if (fileChange.type() == core::system::FileChangeEvent::FileRemoved)
       return;
 
+   // ignore if it is the lists directory
+   if (fileChange.fileInfo().absolutePath() == s_listsPath.absolutePath())
+      return;
+
    // get the name of the list
    FilePath filePath(fileChange.fileInfo().absolutePath());
    std::string name = filePath.filename();
