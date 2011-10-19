@@ -1148,7 +1148,7 @@ public class AceEditor implements DocDisplay,
    private TextFileType fileType_;
 
    private static final ExternalJavaScriptLoader aceLoader_ =
-         new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getUrl());
+         new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader aceSupportLoader_ =
-         new ExternalJavaScriptLoader(AceResources.INSTANCE.acesupportjs().getUrl());
+         new ExternalJavaScriptLoader(AceResources.INSTANCE.acesupportjs().getSafeUri().asString());
 }

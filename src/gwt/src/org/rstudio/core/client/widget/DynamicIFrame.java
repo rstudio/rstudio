@@ -31,7 +31,7 @@ public abstract class DynamicIFrame extends Frame
    public DynamicIFrame()
    {
       Resources res = GWT.create(Resources.class);
-      setUrl(res.dynamicFrame().getUrl());
+      setUrl(res.dynamicFrame().getSafeUri().asString());
       attachCallback();
    }
 
