@@ -23,6 +23,7 @@ import org.hibernate.jsr303.tck.tests.validation.ValidateCompileTest;
 import org.hibernate.jsr303.tck.tests.validation.ValidateGwtTest;
 import org.hibernate.jsr303.tck.tests.validation.ValidatePropertyGwtTest;
 import org.hibernate.jsr303.tck.tests.validation.ValidateValueGwtTest;
+import org.hibernate.jsr303.tck.tests.validation.ValidateWithGroupsGwtTest;
 import org.hibernate.jsr303.tck.tests.validation.ValidationGwtTest;
 import org.hibernate.jsr303.tck.util.TckTestSuiteWrapper;
 
@@ -39,6 +40,7 @@ public class ValidationGwtSuite {
     suite.addTestSuite(ValidateCompileTest.class);
     suite.addTestSuite(ValidatePropertyGwtTest.class);
     suite.addTestSuite(ValidateValueGwtTest.class);
+    suite.addTestSuite(ValidateWithGroupsGwtTest.class);
     suite.addTestSuite(ValidationGwtTest.class);
     return suite;
   }
