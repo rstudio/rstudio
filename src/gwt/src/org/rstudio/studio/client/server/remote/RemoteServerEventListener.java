@@ -123,6 +123,7 @@ class RemoteServerEventListener
       public static final String ConsoleProcessExit = "console_process_exit";
       public static final String ListChanged = "list_changed";
       public static final String UiPrefsChanged = "ui_prefs_changed";
+      public static final String HandleUnsavedChanges = "handle_unsaved_changes";
 
       protected ClientEvent()
       {
@@ -680,6 +681,10 @@ class RemoteServerEventListener
          {
             JsObject uiPrefs = event.getData();
             eventBus.fireEvent(new UiPrefsChangedEvent(uiPrefs));
+         }
+         else if (type.equals(ClientEvent.HandleUnsavedChanges))
+         {
+            eventBus.fireEvent(new HandleUnsavedChangesEvent());
          }
          else if (type.equals(ClientEvent.Quit))
          {

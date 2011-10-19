@@ -164,6 +164,7 @@ const char * const kConsoleInput = "console_input" ;
 const char * const kEditCompleted = "edit_completed";
 const char * const kChooseFileCompleted = "choose_file_completed";
 const char * const kLocatorCompleted = "locator_completed";
+const char * const kHandleUnsavedChangesCompleted = "handle_unsaved_changes_completed";
 const char * const kQuitSession = "quit_session" ;   
 const char * const kInterrupt = "interrupt";
 
@@ -1074,6 +1075,11 @@ bool waitForMethod(const std::string& method,
                         pRequest);
 }
 
+// forward declare convenience wait for method init function which
+// enques the specified event and then issues either the last console
+// prompt or a busy event
+void waitForMethodInitFunction(const ClientEvent& initEvent);
+
 void addToConsoleInputBuffer(const r::session::RConsoleInput& consoleInput)
 {
    if (consoleInput.cancel || consoleInput.text.find('\n') == std::string::npos)
@@ -1236,6 +1242,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    s_waitForMethodNames.push_back(kLocatorCompleted);
    s_waitForMethodNames.push_back(kEditCompleted);
    s_waitForMethodNames.push_back(kChooseFileCompleted);
+   s_waitForMethodNames.push_back(kHandleUnsavedChangesCompleted);
 
    // execute core initialization functions
    using boost::bind;
@@ -1695,7 +1702,32 @@ void rResumed()
 {
    module_context::onResumed(persistentState().settings());
 }
-      
+
+bool rHandleUnsavedChanges()
+{
+   // enque the event
+   ClientEvent event(client_events::kHandleUnsavedChanges);
+   module_context::enqueClientEvent(event);
+
+   // wait for method
+   json::JsonRpcRequest request;
+   bool succeeded = waitForMethod(
+                        kHandleUnsavedChangesCompleted,
+                        boost::bind(waitForMethodInitFunction, event),
+                        disallowSuspend,
+                        &request);
+
+   if (!succeeded)
+      return false;
+
+   // read response and return it
+   bool handled = false;
+   Error error = json::readParam(request.params, 0, &handled);
+   if (error)
+      LOG_ERROR(error);
+   return handled;
+}
+
 void rQuit()
 {   
    // enque a quit event
@@ -2007,6 +2039,22 @@ FilePath getStartupEnvironmentFilePath()
       return rEnvironmentDir().complete(".RData");
 }
 
+void waitForMethodInitFunction(const ClientEvent& initEvent)
+{
+   module_context::enqueClientEvent(initEvent);
+
+   if (s_rProcessingInput)
+   {
+      ClientEvent busyEvent(client_events::kBusy, true);
+      module_context::enqueClientEvent(busyEvent);
+   }
+   else
+   {
+      reissueLastConsolePrompt();
+   }
+}
+
+
 } // anonymous namespace
 
 
@@ -2173,21 +2221,6 @@ void syncRSaveAction()
 
 
 namespace {
-
-void waitForMethodInitFunction(const ClientEvent& initEvent)
-{
-   module_context::enqueClientEvent(initEvent);
-
-   if (s_rProcessingInput)
-   {
-      ClientEvent busyEvent(client_events::kBusy, true);
-      module_context::enqueClientEvent(busyEvent);
-   }
-   else
-   {
-      reissueLastConsolePrompt();
-   }
-}
 
 bool registeredWaitForMethod(const std::string& method,
                              const ClientEvent& event,
@@ -2474,6 +2507,7 @@ int main (int argc, char * const argv[])
       rCallbacks.deferredInit = rDeferredInit;
       rCallbacks.suspended = rSuspended;
       rCallbacks.resumed = rResumed;
+      rCallbacks.handleUnsavedChanges = rHandleUnsavedChanges;
       rCallbacks.quit = rQuit;
       rCallbacks.suicide = rSuicide;
       rCallbacks.cleanup = rCleanup ;

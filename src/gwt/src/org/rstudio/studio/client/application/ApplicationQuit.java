@@ -24,6 +24,8 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
+import org.rstudio.studio.client.application.events.HandleUnsavedChangesHandler;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -34,6 +36,7 @@ import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
@@ -46,8 +49,13 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+// TODO: do the propmpting on the client for unsaved changes
+
+// TODO: is there a way to save the round trip if the user quit via the UI?
+
 @Singleton
-public class ApplicationQuit implements SaveActionChangedHandler
+public class ApplicationQuit implements SaveActionChangedHandler,
+                                        HandleUnsavedChangesHandler
 {
    public interface Binder extends CommandBinder<Commands, ApplicationQuit> {}
    
@@ -72,6 +80,7 @@ public class ApplicationQuit implements SaveActionChangedHandler
       
       // subscribe to events
       eventBus.addHandler(SaveActionChangedEvent.TYPE, this);   
+      eventBus.addHandler(HandleUnsavedChangesEvent.TYPE, this);
    }
    
   
@@ -187,6 +196,15 @@ public class ApplicationQuit implements SaveActionChangedHandler
    {
       saveAction_ = event.getAction();
    }
+   
+   @Override
+   public void onHandleUnsavedChanges(HandleUnsavedChangesEvent event)
+   {
+      server_.handleUnsavedChangesCompleted(
+                              true, 
+                              new VoidServerRequestCallback());
+   }
+      
      
    @Handler
    public void onQuitSession()

@@ -172,6 +172,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SUSPEND_SESSION, requestCallback);
    }
    
+
+   public void handleUnsavedChangesCompleted(
+                            boolean handled,
+                            ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  HANDLE_UNSAVED_CHANGES_COMPLETED, 
+                  handled, 
+                  requestCallback);
+   }
+   
    public void quitSession(boolean saveWorkspace, 
                            String switchToProject,
                            ServerRequestCallback<Void> requestCallback)
@@ -1520,7 +1531,6 @@ public class RemoteServer implements Server
       sendRequest(scope, method, new JSONArray(), requestCallback);
    }
 
-   @SuppressWarnings("unused")
    private <T> void sendRequest(String scope, 
                                 String method, 
                                 boolean param,
@@ -1878,6 +1888,7 @@ public class RemoteServer implements Server
    private static final String CLIENT_INIT = "client_init";
    private static final String ACCEPT_AGREEMENT = "accept_agreement";
    private static final String SUSPEND_SESSION = "suspend_session";
+   private static final String HANDLE_UNSAVED_CHANGES_COMPLETED = "handle_unsaved_changes_completed";
    private static final String QUIT_SESSION = "quit_session";
    
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
@@ -1967,8 +1978,7 @@ public class RemoteServer implements Server
    private static final String IGNORE_EXTERNAL_EDIT = "ignore_external_edit";
    private static final String CLOSE_DOCUMENT = "close_document";
    private static final String CLOSE_ALL_DOCUMENTS = "close_all_documents";
-   private static final String SET_SOURCE_DOCUMENT_ON_SAVE
-         = "set_source_document_on_save";
+   private static final String SET_SOURCE_DOCUMENT_ON_SAVE = "set_source_document_on_save";
    private static final String SAVE_ACTIVE_DOCUMENT = "save_active_document";
    private static final String MODIFY_DOCUMENT_PROPERTIES = "modify_document_properties";
    private static final String REVERT_DOCUMENT = "revert_document";

@@ -41,6 +41,11 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    // suspend the current session
    void suspendSession(ServerRequestCallback<Void> requestCallback) ;
 
+   // handle unsaved changes completed
+   void handleUnsavedChangesCompleted(
+                        boolean handled,
+                        ServerRequestCallback<Void> requestCallback);
+   
    // quit the current session
    void quitSession(boolean saveWorkspace, 
                     String switchToProjectPath,

@@ -124,6 +124,7 @@ struct RCallbacks
    boost::function<void()> deferredInit;
    boost::function<void()> suspended;
    boost::function<void()> resumed;
+   boost::function<bool()> handleUnsavedChanges;
    boost::function<void()> quit;
    boost::function<void(const std::string&)> suicide;
    boost::function<void(bool)> cleanup;

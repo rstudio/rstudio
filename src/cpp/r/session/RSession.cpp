@@ -319,9 +319,12 @@ const int kSerializationActionSuspendSession = 3;
 const int kSerializationActionResumeSession = 4;
 const int kSerializationActionCompleted = 5;
 
-// forward declare win32QuitHook so we can register it
+// forward declare quit hooks so we can register them
 #ifdef _WIN32
 SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho);
+#else
+CCODE s_originalPosixQuitFunction;
+SEXP posixQuitHook(SEXP call, SEXP op, SEXP args, SEXP rho);
 #endif
 
 // one-time per session initialization
@@ -454,6 +457,10 @@ Error initialize()
    error = r::function_hook::registerReplaceHook("quit", win32QuitHook, NULL);
    if (error)
       return error;
+#else
+   error = r::function_hook::registerReplaceHook("quit",
+                                                 posixQuitHook,
+                                                 &s_originalPosixQuitFunction);
 #endif
 
 
@@ -1055,6 +1062,9 @@ extern "C" Rboolean R_Interactive;/* TRUE during interactive use*/
 #define _(String) String
 SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+   if (!s_callbacks.handleUnsavedChanges())
+      r::exec::error("User cancelled quit operation");
+
    const char *tmp;
    SA_TYPE ask=SA_DEFAULT;
    int status, runLast;
@@ -1097,6 +1107,14 @@ SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
 
    exit(0);
    /*NOTREACHED*/
+}
+#else
+SEXP posixQuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+   if (!s_callbacks.handleUnsavedChanges())
+      r::exec::error("User cancelled quit operation");
+
+   return s_originalPosixQuitFunction(call, op, args, rho);
 }
 #endif
 
