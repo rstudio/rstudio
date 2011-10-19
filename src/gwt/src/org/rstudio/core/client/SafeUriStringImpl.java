@@ -33,7 +33,6 @@ public class SafeUriStringImpl implements SafeUri
       return value_.hashCode();
    }
 
-   @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
    @Override
    public boolean equals(Object o)
    {
