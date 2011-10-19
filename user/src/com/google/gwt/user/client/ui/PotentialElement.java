@@ -16,11 +16,9 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.builder.client.DomBuilderFactory;
-import com.google.gwt.dom.builder.shared.ElementBuilder;
-import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
-import com.google.gwt.dom.builder.shared.HtmlElementBuilder;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.builder.shared.HtmlElementBuilder;
+import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
 
 /**
  * EXPERIMENTAL and subject to change. Do not use this in production code.
@@ -73,22 +71,6 @@ public class PotentialElement extends Element {
   }-*/;
 
   /**
-   * Creates an {@link ElementBuilder} instance inheriting all attributes
-   * set for the given PotentialElement.
-   *
-   * @param potentialElement assumed to be a PotentialElement, used as basis for
-   *     the builder
-   * @return a propertly configured {@link ElementBuilder} instance
-   */
-  public static ElementBuilder createDomBuilderFor(Element potentialElement) {
-    PotentialElement el = PotentialElement.as(potentialElement);
-    ElementBuilder builder = DomBuilderFactory.get().trustedCreate(
-        el.getTagName());
-    el.mergeInto(builder);
-    return builder;
-  }
-
-  /**
    * Creates an {@link HtmlElementBuilder} instance inheriting all attributes
    * set for the given PotentialElement.
    *
@@ -96,7 +78,7 @@ public class PotentialElement extends Element {
    *     the builder
    * @return a propertly configured {@link HtmlElementBuilder} instance
    */
-  public static HtmlElementBuilder createHtmlBuilderFor(Element potentialElement) {
+  public static HtmlElementBuilder createBuilderFor(Element potentialElement) {
     PotentialElement el = PotentialElement.as(potentialElement);
     HtmlElementBuilder builder = HtmlBuilderFactory.get().trustedCreate(
         el.getTagName());
@@ -182,7 +164,7 @@ public class PotentialElement extends Element {
    * prototype. Do this by severing the __proto__ link, allowing us to iterate
    * only on the fields set in this specific instance.
    */
-  private native void mergeInto(ElementBuilder builder) /*-{
+  private native void mergeInto(HtmlElementBuilder builder) /*-{
     var savedProto = this.__proto__;
     var tagName = this.tagName;
     var gwtResolve = this.__gwt_resolve;
