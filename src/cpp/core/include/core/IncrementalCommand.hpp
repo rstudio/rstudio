@@ -15,25 +15,18 @@
 #ifndef CORE_INCREMENTAL_COMMAND_HPP
 #define CORE_INCREMENTAL_COMMAND_HPP
 
-#include <boost/utility.hpp>
-#include <boost/function.hpp>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <core/ScheduledCommand.hpp>
 
 namespace core {
 
-// NOTE: execute function should return true if it has more work to do
-// or false to indicate all work is completed
-
-class IncrementalCommand : boost::noncopyable
+class IncrementalCommand : public ScheduledCommand
 {
 public:
    IncrementalCommand(
          const boost::posix_time::time_duration& incrementalDuration,
          const boost::function<bool()>& execute)
-      : incrementalDuration_(incrementalDuration),
-        execute_(execute),
-        finished_(false)
+      : ScheduledCommand(execute), incrementalDuration_(incrementalDuration)
    {
    }
 
@@ -41,9 +34,7 @@ public:
          const boost::posix_time::time_duration& initialDuration,
          const boost::posix_time::time_duration& incrementalDuration,
          const boost::function<bool()>& execute)
-      : incrementalDuration_(incrementalDuration),
-        execute_(execute),
-        finished_(false)
+      : ScheduledCommand(execute), incrementalDuration_(incrementalDuration)
    {
       executeUntil(now() + initialDuration);
    }
@@ -53,12 +44,10 @@ public:
    // COPYING: boost::noncopyable
 
 public:
-   void execute()
+   virtual void execute()
    {
       executeUntil(now() + incrementalDuration_);
    }
-
-   bool finished() const { return finished_; }
 
 private:
    void executeUntil(const boost::posix_time::ptime& time)
@@ -67,15 +56,8 @@ private:
          finished_ = !execute_();
    }
 
-   static boost::posix_time::ptime now()
-   {
-      return boost::posix_time::microsec_clock::universal_time();
-   }
-
 private:
    const boost::posix_time::time_duration incrementalDuration_;
-   const boost::function<bool()> execute_;
-   bool finished_;
 };
 
 

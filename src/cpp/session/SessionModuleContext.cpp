@@ -28,7 +28,10 @@
 #include <core/Settings.hpp>
 #include <core/DateTime.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/system/FileScanner.hpp>
 #include <core/IncrementalCommand.hpp>
+#include <core/PeriodicCommand.hpp>
+#include <core/collection/Tree.hpp>
 
 #include <core/http/Util.hpp>
 
@@ -217,6 +220,7 @@ namespace {
 
 typedef std::map<FilePath,OnFileChange> MonitoredScratchPaths;
 MonitoredScratchPaths s_monitoredScratchPaths;
+bool s_monitorByScanning = false;
 
 FilePath monitoredParentPath()
 {
@@ -232,10 +236,6 @@ bool monitoredScratchFilter(const FileInfo& fileInfo)
    return true;
 }
 
-void onMonitoringError(const Error& error)
-{
-   LOG_ERROR(error);
-}
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
 {
@@ -257,10 +257,63 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
    }
 }
 
+boost::shared_ptr<tree<FileInfo> > monitoredPathTree()
+{
+   boost::shared_ptr<tree<FileInfo> > pMonitoredTree(new tree<FileInfo>());
+   core::system::FileScannerOptions options;
+   options.recursive = true;
+   options.filter = monitoredScratchFilter;
+   Error scanError = scanFiles(FileInfo(monitoredParentPath()),
+                               options,
+                               pMonitoredTree.get());
+   if (scanError)
+      LOG_ERROR(scanError);
+
+   return pMonitoredTree;
+}
+
+bool scanForMonitoredPathChanges(boost::shared_ptr<tree<FileInfo> > pPrevTree)
+{
+   // check for changes
+   std::vector<core::system::FileChangeEvent> changes;
+   boost::shared_ptr<tree<FileInfo> > pCurrentTree = monitoredPathTree();
+   core::system::collectFileChangeEvents(pPrevTree->begin(),
+                                         pPrevTree->end(),
+                                         pCurrentTree->begin(),
+                                         pCurrentTree->end(),
+                                         &changes);
+
+   // fire events
+   onFilesChanged(changes);
+
+   // reset the tree
+   *pPrevTree = *pCurrentTree;
+
+   // scan again after interval
+   return true;
+}
+
+void onMonitoringError(const Error& error)
+{
+   // log the error
+   LOG_ERROR(error);
+
+   // fallback to periodically scanning for changes
+   if (!s_monitorByScanning)
+   {
+      s_monitorByScanning = true;
+      module_context::schedulePeriodicWork(
+         boost::posix_time::seconds(3),
+         boost::bind(scanForMonitoredPathChanges, monitoredPathTree()),
+         true);
+   }
+}
+
 void initializeMonitoredUserScratchDir()
 {
    // setup callbacks and register
    core::system::file_monitor::Callbacks cb;
+   cb.onRegistrationError = onMonitoringError;
    cb.onMonitoringError = onMonitoringError;
    cb.onFilesChanged = onFilesChanged;
    core::system::file_monitor::registerMonitor(
@@ -432,33 +485,33 @@ void onResumed(const Settings& persistentState)
 
 namespace {
 
-typedef std::vector<boost::shared_ptr<IncrementalCommand> >
-                                                      IncrementalCommands;
-IncrementalCommands s_incrementalCommands;
-IncrementalCommands s_idleIncrementalCommands;
+typedef std::vector<boost::shared_ptr<ScheduledCommand> >
+                                                      ScheduledCommands;
+ScheduledCommands s_scheduledCommands;
+ScheduledCommands s_idleScheduledCommands;
 
-void addIncrementalCommand(boost::shared_ptr<IncrementalCommand> pCommand,
-                           bool idleOnly)
+void addScheduledCommand(boost::shared_ptr<ScheduledCommand> pCommand,
+                         bool idleOnly)
 {
    if (idleOnly)
-      s_idleIncrementalCommands.push_back(pCommand);
+      s_idleScheduledCommands.push_back(pCommand);
    else
-      s_incrementalCommands.push_back(pCommand);
+      s_scheduledCommands.push_back(pCommand);
 }
 
-void executeIncrementalCommands(IncrementalCommands* pCommands)
+void executeScheduledCommands(ScheduledCommands* pCommands)
 {
    // execute all commands
    std::for_each(pCommands->begin(),
                  pCommands->end(),
-                 boost::bind(&IncrementalCommand::execute, _1));
+                 boost::bind(&ScheduledCommand::execute, _1));
 
    // remove any commands which are finished
    pCommands->erase(
                  std::remove_if(
                     pCommands->begin(),
                     pCommands->end(),
-                    boost::bind(&IncrementalCommand::finished, _1)),
+                    boost::bind(&ScheduledCommand::finished, _1)),
                  pCommands->end());
 }
 
@@ -470,7 +523,7 @@ void scheduleIncrementalWork(
          const boost::function<bool()>& execute,
          bool idleOnly)
 {
-   addIncrementalCommand(boost::shared_ptr<IncrementalCommand>(
+   addScheduledCommand(boost::shared_ptr<ScheduledCommand>(
                            new IncrementalCommand(incrementalDuration,
                                                   execute)),
                          idleOnly);
@@ -482,24 +535,22 @@ void scheduleIncrementalWork(
          const boost::function<bool()>& execute,
          bool idleOnly)
 {
-   addIncrementalCommand(boost::shared_ptr<IncrementalCommand>(
+   addScheduledCommand(boost::shared_ptr<ScheduledCommand>(
                            new IncrementalCommand(initialDuration,
                                                   incrementalDuration,
                                                   execute)),
-                         idleOnly);
+                           idleOnly);
 }
 
 
-void scheduleIncrementalCommand(
-                  boost::shared_ptr<core::IncrementalCommand> pCommand,
-                  bool idleOnly)
+void schedulePeriodicWork(const boost::posix_time::time_duration& period,
+                          const boost::function<bool()> &execute,
+                          bool idleOnly)
 {
-   if (idleOnly)
-      s_idleIncrementalCommands.push_back(pCommand);
-   else
-      s_incrementalCommands.push_back(pCommand);
+   addScheduledCommand(boost::shared_ptr<ScheduledCommand>(
+                           new PeriodicCommand(period, execute)),
+                       idleOnly);
 }
-
 
 void onBackgroundProcessing(bool isIdle)
 {
@@ -513,9 +564,9 @@ void onBackgroundProcessing(bool isIdle)
    events().onBackgroundProcessing(isIdle);
 
    // execute incremental commands
-   executeIncrementalCommands(&s_incrementalCommands);
+   executeScheduledCommands(&s_scheduledCommands);
    if (isIdle)
-      executeIncrementalCommands(&s_idleIncrementalCommands);
+      executeScheduledCommands(&s_idleScheduledCommands);
 }
 
 Error readAndDecodeFile(const FilePath& filePath,

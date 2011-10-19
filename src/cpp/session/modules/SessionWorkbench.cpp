@@ -11,14 +11,6 @@
  *
  */
 
-// TODO: fall back to file system scanning if monitoring fails
-
-// TODO: ensure we only generate one userSettings::onChanged per OK
-// in the settings dialog (check on all platforms -- mac looks good)
-
-// TODO: if we allow multiple instances per project then must deal
-//       with project ui prefs
-
 
 #include "SessionWorkbench.hpp"
 

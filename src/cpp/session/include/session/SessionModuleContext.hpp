@@ -228,6 +228,15 @@ void scheduleIncrementalWork(
          bool idleOnly = true);
 
 
+// schedule work to done every time the specified period elapses.
+// if the execute function returns true then the worker will be called
+// again after the specified period. pass idleOnly = true to restrict
+// periodic work to idle time.
+void schedulePeriodicWork(const boost::posix_time::time_duration& period,
+                          const boost::function<bool()> &execute,
+                          bool idleOnly = true);
+
+
 core::Error readAndDecodeFile(const core::FilePath& filePath,
                               const std::string& encoding,
                               bool allowSubstChars,
