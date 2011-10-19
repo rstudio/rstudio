@@ -78,7 +78,7 @@ public class AceThemes
    private void addTheme(String name, StaticDataResource resource)
    {
       themes_.add(name);
-      themesByName_.put(name, resource.getUrl());
+      themesByName_.put(name, resource.getSafeUri().asString());
    }
 
    private void applyTheme(String themeName)

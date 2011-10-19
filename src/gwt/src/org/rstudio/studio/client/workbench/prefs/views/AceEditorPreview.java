@@ -68,12 +68,12 @@ public class AceEditorPreview extends DynamicIFrame
       FontSizer.injectStylesIntoDocument(doc);
       FontSizer.applyNormalFontSize(div);
 
-      new ExternalJavaScriptLoader(doc, AceResources.INSTANCE.acejs().getUrl())
+      new ExternalJavaScriptLoader(doc, AceResources.INSTANCE.acejs().getSafeUri().asString())
             .addCallback(new Callback()
       {
          public void onLoaded()
          {
-            new ExternalJavaScriptLoader(doc, AceResources.INSTANCE.acesupportjs().getUrl())
+            new ExternalJavaScriptLoader(doc, AceResources.INSTANCE.acesupportjs().getSafeUri().asString())
                   .addCallback(new Callback()
                   {
                      public void onLoaded()
