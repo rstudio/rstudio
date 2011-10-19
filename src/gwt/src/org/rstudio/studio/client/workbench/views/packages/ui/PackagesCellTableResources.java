@@ -22,10 +22,10 @@ public interface PackagesCellTableResources extends CellTable.Resources
    static PackagesCellTableResources INSTANCE = 
       (PackagesCellTableResources)GWT.create(PackagesCellTableResources.class) ;
 
-   interface Style extends CellTable.Style
+   interface PackagesCellTableStyle extends CellTable.Style
    {
    }
   
    @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "PackagesCellTableStyle.css"})
-   Style cellTableStyle();
+   PackagesCellTableStyle cellTableStyle();
 }

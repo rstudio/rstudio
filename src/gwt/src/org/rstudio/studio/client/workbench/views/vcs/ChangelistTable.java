@@ -50,7 +50,7 @@ import java.util.Set;
 public class ChangelistTable extends Composite
    implements HasKeyDownHandlers, HasClickHandlers
 {
-   public interface CellTableResources extends CellTable.Resources
+   public interface ChangelistTableCellTableResources extends CellTable.Resources
    {
       ImageResource statusAdded();
       ImageResource statusDeleted();
@@ -70,11 +70,12 @@ public class ChangelistTable extends Composite
       ImageResource cellTableSortDescending();
 
       @Override
-      @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "ChangelistTable.css"})
-      Style cellTableStyle();
+      @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS,
+               "ChangelistTableCellTableStyle.css"})
+      ChangelistTableCellTableStyle cellTableStyle();
    }
 
-   protected interface Style extends CellTable.Style
+   protected interface ChangelistTableCellTableStyle extends CellTable.Style
    {
       String status();
    }
@@ -479,5 +480,5 @@ public class ChangelistTable extends Composite
    private final ListDataProvider<StatusAndPath> dataProvider_;
    private final ProgressPanel progressPanel_;
    private LayoutPanel layout_;
-   private static final CellTableResources resources_ = GWT.<CellTableResources>create(CellTableResources.class);
+   private static final ChangelistTableCellTableResources resources_ = GWT.<ChangelistTableCellTableResources>create(ChangelistTableCellTableResources.class);
 }

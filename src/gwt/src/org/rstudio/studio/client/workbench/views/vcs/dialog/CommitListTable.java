@@ -27,7 +27,7 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.js.JsUtil;
-import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
+import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable.ChangelistTableCellTableResources;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPanel.Styles;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitListDisplay;
 
@@ -85,7 +85,7 @@ public class CommitListTable extends CellTable<CommitInfo>
    public CommitListTable(HistoryPanel.Styles styles)
    {
       super(100,
-            GWT.<Resources>create(ChangelistTable.CellTableResources.class));
+            GWT.<Resources>create(ChangelistTableCellTableResources.class));
       styles_ = styles;
 
       TextColumn<CommitInfo> idCol = new TextColumn<CommitInfo>()

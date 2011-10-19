@@ -21,10 +21,10 @@ public interface UnsavedChangesCellTableResources extends CellTable.Resources
    static UnsavedChangesCellTableResources INSTANCE = 
       (UnsavedChangesCellTableResources)GWT.create(UnsavedChangesCellTableResources.class) ;
 
-   interface Style extends CellTable.Style
+   interface UnsavedChangesCellTableStyle extends CellTable.Style
    {
    }
   
    @Source("UnsavedChangesCellTableStyle.css")
-   Style cellTableStyle();
+   UnsavedChangesCellTableStyle cellTableStyle();
 }

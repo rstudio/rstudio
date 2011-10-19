@@ -35,10 +35,10 @@ public interface FilesListCellTableResources extends CellTable.Resources
    @ImageOptions(flipRtl = true)
    ImageResource cellTableSortDescending();
    
-   interface Style extends CellTable.Style
+   interface FilesListCellTableStyle extends CellTable.Style
    {
    }
    
    @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "FilesListCellTableStyle.css"})
-   Style cellTableStyle();
+   FilesListCellTableStyle cellTableStyle();
 }

@@ -50,14 +50,14 @@ import java.util.HashSet;
 
 public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements Display
 {
-   public interface LineTableResources extends CellTable.Resources
+   public interface LineTableViewCellTableResources extends CellTable.Resources
    {
-      @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "cellTableStyle.css"})
-      TableStyle cellTableStyle();
+      @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS,
+               "LineTableViewCellTableStyle.css"})
+      LineTableViewCellTableStyle cellTableStyle();
    }
 
-   @ImportedWithPrefix("linetable")
-   public interface TableStyle extends CellTable.Style
+   public interface LineTableViewCellTableStyle extends CellTable.Style
    {
       String header();
       String same();
@@ -212,11 +212,11 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
 
    public LineTableView()
    {
-      this(GWT.<LineTableResources>create(LineTableResources.class));
+      this(GWT.<LineTableViewCellTableResources>create(LineTableViewCellTableResources.class));
    }
 
    @Inject
-   public LineTableView(final LineTableResources res)
+   public LineTableView(final LineTableViewCellTableResources res)
    {
       super(1, res);
 
@@ -466,5 +466,5 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
    private SwitchableSelectionModel<ChunkOrLine> selectionModel_;
    private HashSet<Integer> startRows_ = new HashSet<Integer>();
    private HashSet<Integer> endRows_ = new HashSet<Integer>();
-   private static final LineTableResources RES = GWT.create(LineTableResources.class);
+   private static final LineTableViewCellTableResources RES = GWT.create(LineTableViewCellTableResources.class);
 }
