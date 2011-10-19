@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.packages.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.CellTable;
+import org.rstudio.core.client.theme.RStudioCellTableStyle;
 
 public interface PackagesCellTableResources extends CellTable.Resources 
 {
@@ -25,6 +26,6 @@ public interface PackagesCellTableResources extends CellTable.Resources
    {
    }
   
-   @Source("PackagesCellTableStyle.css")
+   @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "PackagesCellTableStyle.css"})
    Style cellTableStyle();
 }

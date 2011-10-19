@@ -1,43 +1,7 @@
-
-/* Based on:
-http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/google/gwt/user/cellview/client/CellTable.css
-*/
-
-
 @def selectionBorderWidth 2px;
-.cellTableWidget {
-  
-}
-
-.cellTableFirstColumn {
-}
-
-
-.cellTableLastColumn {
-  
-}
-
-.cellTableFooter {
-}
-
-.cellTableHeader {
-  border-bottom: 1px solid #d6dadc;  
-  border-right: 1px solid #d6dadc;
-  border-top: 1px solid white;
-  border-left: 1px solid white;
-  padding: 1px 2px;
-  text-align: left;
-  font-weight: normal;
-  font-size: 11px;
-  color: #3c474d;
-  background-color: #eeeff1;
-  overflow: hidden;
-  cursor: default;
-}
 
 .cellTableCell {
-  padding: 0px 1px;
-  overflow: hidden;
+  padding: 0 1px;
 }
 
 .cellTableCell input[type=checkbox] {
@@ -45,36 +9,8 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
    margin-bottom: 0;
 }
 
-
-.cellTableFirstColumnFooter {
-  
-}
-
-.cellTableFirstColumnHeader {
- 
-}
-
-.cellTableLastColumnFooter {
-  
-}
-
 .cellTableLastColumnHeader {
   border-right: none;
-}
-
-.cellTableSortableHeader {
-  cursor: pointer;
-}
-
-.cellTableSortableHeader:hover {
-}
-
-.cellTableSortedHeaderAscending {
-
-}
-
-.cellTableSortedHeaderDescending {
-
 }
 
 .cellTableEvenRow, .cellTableOddRow, .cellTableHoveredRow, .cellTableSelectedRow, .cellTableKeyboardSelectedRow {
@@ -86,8 +22,3 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
   border: selectionBorderWidth solid #ffffff;
   color: #606060;
 }
-
-.cellTableLoading {
-  margin: 30px;
-}
-

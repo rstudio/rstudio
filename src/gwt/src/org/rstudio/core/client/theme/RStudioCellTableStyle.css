@@ -1,0 +1,164 @@
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+
+@def selectionBorderWidth 1px;
+
+
+.cellTableWidget {
+   font-size: 9pt;
+   background-color: white;
+   outline: none;
+}
+
+.cellTableFirstColumn {
+}
+
+.cellTableLastColumn {
+
+}
+
+.cellTableFooter {
+  border-top: 1px solid #BBB;
+  padding: 3px 4px;
+  text-align: left;
+  overflow: hidden;
+  cursor: default;
+}
+
+.cellTableHeader {
+  border-bottom: 1px solid #d6dadc;
+  border-right: 1px solid #d6dadc;
+  border-top: 1px solid white;
+  border-left: 1px solid white;
+  padding: 1px 2px;
+  text-align: left;
+  font-weight: normal;
+  font-size: 11px;
+  color: #3c474d;
+  background-color: #eeeff1;
+  overflow: hidden;
+  cursor: default;
+}
+
+.cellTableCell {
+  /* CHANGE: use less padding (originally was 15px) */
+  padding: 2px 4px;
+  overflow: hidden;
+
+  /* CHANGE: use default cursor rather than pointer/caret */
+  cursor: default;
+
+}
+
+.cellTableCell:first-child {
+   padding: 0 4px;
+}
+.cellTableCell:first-child+.cellTableCell {
+   padding: 0 4px;
+}
+
+.cellTableFirstColumnFooter {
+
+}
+
+.cellTableFirstColumnHeader {
+
+}
+
+.cellTableLastColumnFooter {
+
+}
+
+.cellTableLastColumnHeader {
+
+}
+
+.cellTableSortableHeader {
+  cursor: pointer;
+}
+
+.cellTableSortableHeader:hover {
+  color: #6c6b6b;
+}
+
+.cellTableSortedHeaderAscending {
+
+}
+
+.cellTableSortedHeaderDescending {
+
+}
+
+.cellTableEvenRow {
+  /*background: #ffffff;*/
+}
+
+.cellTableEvenRowCell {
+  border: selectionBorderWidth solid #ffffff;
+}
+
+.cellTableOddRow {
+  /*background-color: #eef4fb;*/
+}
+
+.cellTableOddRowCell {
+  /*border: selectionBorderWidth solid #eef4fb;*/
+  border: selectionBorderWidth solid #ffffff;
+}
+
+.cellTableHoveredRow {
+  /* CHANGE: Disable hover effects */
+  /* background: #eee; */
+}
+
+.cellTableHoveredRowCell {
+  /* CHANGE: Disable hover effects */
+  /* border: selectionBorderWidth solid #eee; */
+}
+
+
+.cellTableKeyboardSelectedRow {
+}
+
+.cellTableKeyboardSelectedRowCell {
+   border-top: 1px dotted gray !important;
+   border-bottom: 1px dotted gray !important;
+}
+.cellTableKeyboardSelectedRowCell:first-child {
+   border-left: 1px dotted gray;
+}
+.cellTableKeyboardSelectedRowCell:first-child + td + td {
+   border-right: 1px dotted gray;
+}
+
+.cellTableSelectedRow {
+  /* CHANGE: use same selected background color as History table */
+  background: #CCC;
+  /* color: white; */
+  height: auto;
+  overflow: auto;
+}
+
+.cellTableSelectedRowCell {
+  /* CHANGE: use same selected background color as History table */
+  border: selectionBorderWidth solid #CCC;
+}
+
+.cellTableWidget:focus .cellTableSelectedRow {
+  background: rgb(146, 193, 240);
+}
+.cellTableWidget:focus .cellTableSelectedRowCell {
+  border-color: rgb(146, 193, 240);
+}
+
+/**
+ * The keyboard selected cell is visible over selection.
+ */
+.cellTableKeyboardSelectedCell {
+  border: selectionBorderWidth solid transparent;
+}
+
+.cellTableLoading {
+  margin: 30px;
+}
+

@@ -78,108 +78,9 @@
    border-right-color: transparent;
 }
 
-.cellTableFirstColumn {
-}
-
-.cellTableLastColumn {
-}
-
-.cellTableFooter {
- /* CHANGE: more conservative/elegant style */
-  border-top: 1px solid #BBB;
-  padding: 3px 4px;
-  text-align: left;
-  overflow: hidden;
-  cursor: default;
-}
-
-.cellTableHeader {
-  /* CHANGE: more conservative/elegant style */
-  border-bottom: 1px solid #BBB;
-  padding: 3px 4px;
-  text-align: left;
-  font-weight: normal;
-  background-color: #F3F4F4;
-  overflow: hidden;
-  cursor: default;
-}
-
 .cellTableCell {
-  /* CHANGE: use less padding (originally was 15px) */
   padding: 0 8px;
-  overflow: hidden;
-
-  /* CHANGE: use default cursor rather than pointer/caret */
-  cursor: default;
-
 }
-
-.cellTableCell input[type=checkbox] {
-   margin-top: 0;
-   margin-bottom: 0;
-}
-
-
-.cellTableFirstColumnFooter {
-
-}
-
-.cellTableFirstColumnHeader {
-
-}
-
-.cellTableLastColumnFooter {
-
-}
-
-.cellTableLastColumnHeader {
-
-}
-
-.cellTableSortableHeader {
-  cursor: pointer;
-}
-
-.cellTableSortableHeader:hover {
-  color: #6c6b6b;
-}
-
-.cellTableSortedHeaderAscending {
-
-}
-
-.cellTableSortedHeaderDescending {
-
-}
-
-.cellTableEvenRow {
-}
-
-.cellTableEvenRowCell {
-}
-
-.cellTableOddRow {
-}
-
-.cellTableOddRowCell {
-}
-
-.cellTableHoveredRow {
-  /* CHANGE: Disable hover effects */
-  /* background: #eee; */
-}
-
-.cellTableHoveredRowCell {
-  /* CHANGE: Disable hover effects */
-  /* border: selectionBorderWidth solid #eee; */
-}
-
-
-/*
-.cellTableKeyboardSelectedRow {
-  background: #ffc;
-}
-*/
 
 .cellTableWidget > tbody > tr > td {
   border: selectionBorderWidth solid transparent;
@@ -188,20 +89,13 @@
   border: selectionBorderWidth dotted #888;
 }
 
-
-.cellTableKeyboardSelectedRowCell {
-}
-
 .cellTableSelectedRow {
-  /* CHANGE: use same selected background color as History table */
   background: #CCC !important;
-  /* color: white; */
   height: auto;
   overflow: auto;
 }
 
 .cellTableSelectedRowCell {
-  /* CHANGE: use same selected background color as History table */
   background: #CCC !important;
 }
 
@@ -210,16 +104,6 @@
 }
 .cellTableWidget:focus .cellTableSelectedRowCell {
   background: rgb(146, 193, 240) !important;
-}
-
-/**
- * The keyboard selected cell is visible over selection.
- */
-.cellTableKeyboardSelectedCell {
-}
-
-.cellTableLoading {
-  margin: 30px;
 }
 
 .lineActions {

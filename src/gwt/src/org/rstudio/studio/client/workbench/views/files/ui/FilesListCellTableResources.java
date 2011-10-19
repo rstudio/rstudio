@@ -17,6 +17,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.user.cellview.client.CellTable;
+import org.rstudio.core.client.theme.RStudioCellTableStyle;
 
 public interface FilesListCellTableResources extends CellTable.Resources 
 {
@@ -38,6 +39,6 @@ public interface FilesListCellTableResources extends CellTable.Resources
    {
    }
    
-   @Source("FilesListCellTableStyle.css")
+   @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "FilesListCellTableStyle.css"})
    Style cellTableStyle();
 }

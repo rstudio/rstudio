@@ -33,6 +33,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
+import org.rstudio.core.client.theme.RStudioCellTableStyle;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
@@ -51,7 +52,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
 {
    public interface LineTableResources extends CellTable.Resources
    {
-      @Source("cellTableStyle.css")
+      @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "cellTableStyle.css"})
       TableStyle cellTableStyle();
    }
 

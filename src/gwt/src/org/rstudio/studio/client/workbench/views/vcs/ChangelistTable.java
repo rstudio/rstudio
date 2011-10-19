@@ -35,6 +35,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.*;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.cellview.TriStateCheckboxCell;
+import org.rstudio.core.client.theme.RStudioCellTableStyle;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -69,7 +70,7 @@ public class ChangelistTable extends Composite
       ImageResource cellTableSortDescending();
 
       @Override
-      @Source("ChangelistTable.css")
+      @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "ChangelistTable.css"})
       Style cellTableStyle();
    }
 
