@@ -698,12 +698,17 @@ public class Source implements InsertSourceHandler,
       
    }
    
+   private boolean isUnsavedFileBackedTarget(EditingTarget target)
+   {
+      return target.dirtyState().getValue() && (target.getPath() != null);
+   }
+   
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges()
    {
       ArrayList<UnsavedChangesTarget> targets = 
                                        new ArrayList<UnsavedChangesTarget>();
       for (EditingTarget target : editors_)
-         if (target.dirtyState().getValue())
+         if (isUnsavedFileBackedTarget(target))
             targets.add(target);
       
       return targets;
@@ -737,7 +742,7 @@ public class Source implements InsertSourceHandler,
       // collect up unsaved targets
       ArrayList<EditingTarget> unsavedTargets =  new ArrayList<EditingTarget>();
       for (EditingTarget target : editors_)
-         if (target.dirtyState().getValue())
+         if (isUnsavedFileBackedTarget(target))
             unsavedTargets.add(target);
       
       // revert all of them

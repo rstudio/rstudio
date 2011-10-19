@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.application;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
@@ -20,6 +22,7 @@ import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
@@ -35,6 +38,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 import com.google.gwt.resources.client.ImageResource;
@@ -71,8 +75,7 @@ public class ApplicationQuit implements SaveActionChangedHandler
    }
    
   
-   // does whatever prompting is required before quit and then returns a 
-   // command which can be executed to actually implement the quit
+   // notification that we are ready to quit
    public interface QuitContext
    {
       void onReadyToQuit(boolean saveChanges);
@@ -80,15 +83,21 @@ public class ApplicationQuit implements SaveActionChangedHandler
    
    public void prepareForQuit(String caption,
                               final QuitContext quitContext)
-   {
-      // prompt only for unsaved environment (see below for an implementation
-      // of unsaved prompting that also includes edited source documents -- 
-      // note this implementation predated the quitContext.onReadyToQuit idiom
-      // so if re-introduced would need to use that mechanism rather than
-      // invoking a QuitOperation or QuitCommand directly.
+   {   
+      // see what the unsaved changes situation is and prompt accordingly
+      final int saveAction = saveAction_.getAction();
+      ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
+                                             sourceShim_.getUnsavedChanges();
       
-      if (saveAction_.getAction() == SaveAction.SAVEASK)
+      // no unsaved changes at all
+      if (saveAction != SaveAction.SAVEASK && unsavedSourceDocs.size() == 0)
       {
+         quitContext.onReadyToQuit(saveAction_.getAction() == SaveAction.SAVE);
+      }
+      
+      // just an unsaved environment
+      else if (unsavedSourceDocs.size() == 0) 
+      {        
          // confirm quit and do it
          String prompt = "Save workspace image to " + 
                          workbenchContext_.getREnvironmentPath() + "?";
@@ -112,61 +121,20 @@ public class ApplicationQuit implements SaveActionChangedHandler
                "Don't Save",
                true);        
       }
-      else
-      {
-         quitContext.onReadyToQuit(saveAction_.getAction() == SaveAction.SAVE);
-      }
-      
-      
-      /* 
-       * NOTE: This is the implementation of unsaved change prompting for
-       * edited files. This could be restored for either optional prompting
-       * or required prompting. Note however if we do use this in preference
-       * to the above then we should do a careful review of the 
-       * Source.handleUnsavedChangesBefore exit method to make sure that 
-       * the exit sequence behaves sanely. We also would need to implement
-       * the unsaved change prompting for the q() code path (note we could
-       * choose not to do this if the unsaved change prompting was optional).
-       * We also need to make this interface work with the prepareForQuit
-       * interface above (used by projects). this would just entail returing
-       * the quitCommand to the prepareForQuit caller rather than executing
-       * the quit directly
-       * 
-      // see what the unsaved changes situation is and prompt accordingly
-      final int saveAction = saveAction_.getAction();
-      ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
-                                          sourceShim_.getUnsavedChanges();
-      
-      // no unsaved changes at all
-      if (saveAction != SaveAction.SAVEASK && unsavedSourceDocs.size() == 0)
-      {
-         new QuitCommand(saveAction == SaveAction.SAVE).execute();
-      }
-      
-      // just an unsaved environment
-      else if (unsavedSourceDocs.size() == 0) 
-      {    
-         // confirm quit and do it
-         String prompt = "Save workspace image to " + 
-                         workbenchContext_.getREnvironmentPath() + "?";
-         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-                                         "Quit R Session",
-                                         prompt,
-                                         true,
-                                         new QuitOperation(true),
-                                         new QuitOperation(false),
-                                         "Save",
-                                         "Don't Save",
-                                         true);   
-      }
       
       // a single unsaved document
       else if (saveAction != SaveAction.SAVEASK && 
                unsavedSourceDocs.size() == 1)
       {
-         QuitCommand quitCommand = 
-                  new QuitCommand(saveAction == SaveAction.SAVE);
-         sourceShim_.saveWithPrompt(unsavedSourceDocs.get(0), quitCommand);
+         sourceShim_.saveWithPrompt(unsavedSourceDocs.get(0), new Command() {
+            @Override
+            public void execute()
+            {
+               quitContext.onReadyToQuit(
+                              saveAction_.getAction() == SaveAction.SAVE);
+               
+            }   
+         });
       }
       
       // multiple save targets
@@ -177,8 +145,8 @@ public class ApplicationQuit implements SaveActionChangedHandler
          if (saveAction == SaveAction.SAVEASK)
             unsaved.add(globalEnvTarget_);
          unsaved.addAll(unsavedSourceDocs);
-         UnsavedChangesDialog dlg = new UnsavedChangesDialog(
-            "Quit R Session",
+         new UnsavedChangesDialog(
+            caption,
             unsaved,
             new OperationWithInput<ArrayList<UnsavedChangesTarget>>() {
 
@@ -186,21 +154,27 @@ public class ApplicationQuit implements SaveActionChangedHandler
                public void execute(ArrayList<UnsavedChangesTarget> saveTargets)
                {
                   // remote global env target from list (if specified) and 
-                  // create the appropriate quit command
+                  // compute the saveChanges value
                   boolean saveGlobalEnv = saveAction == SaveAction.SAVE;
                   if (saveAction == SaveAction.SAVEASK)
                      saveGlobalEnv = saveTargets.remove(globalEnvTarget_);
-                  QuitCommand quitCommand = new QuitCommand(saveGlobalEnv);
+                  final boolean saveChanges = saveGlobalEnv;
                   
                   // save specified documents and then quit
-                  sourceShim_.handleUnsavedChangesBeforeExit(saveTargets,
-                                                             quitCommand);
+                  sourceShim_.handleUnsavedChangesBeforeExit(
+                        saveTargets,                                     
+                        new Command() {
+                           @Override
+                           public void execute()
+                           {
+                              quitContext.onReadyToQuit(saveChanges);
+                           }
+                        });
                }
                
-            });
-         dlg.showModal();
+            }).showModal();
       }
-      */
+      
    }
    
    public void performQuit(boolean saveChanges, String switchToProject)
@@ -225,8 +199,6 @@ public class ApplicationQuit implements SaveActionChangedHandler
       });
    }
    
-   
-   @SuppressWarnings("unused")
    private UnsavedChangesTarget globalEnvTarget_ = new UnsavedChangesTarget()
    {
       @Override
@@ -347,7 +319,6 @@ public class ApplicationQuit implements SaveActionChangedHandler
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final WorkbenchContext workbenchContext_;
-   @SuppressWarnings("unused")
    private final SourceShim sourceShim_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();
