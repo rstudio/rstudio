@@ -21,6 +21,8 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.UmbrellaException;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
@@ -153,13 +155,13 @@ public class Application implements ApplicationEventHandlers,
    @Handler
    public void onShowToolbar()
    {
-      showToolbar(true, true);
+      setToolbarPref(true);
    }
    
    @Handler
    public void onHideToolbar()
    {
-      showToolbar(false, true);
+      setToolbarPref(false);
    }
    
    @Handler
@@ -561,12 +563,30 @@ public class Application implements ApplicationEventHandlers,
       
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)
-      showToolbar( uiPrefs_.get().toolbarVisible().getValue(), false);
+      showToolbar( uiPrefs_.get().toolbarVisible().getValue());
+      
+      // sync to changes in the toolbar visibility state
+      uiPrefs_.get().toolbarVisible().addValueChangeHandler(
+                                          new ValueChangeHandler<Boolean>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            showToolbar(event.getValue());
+         }
+      });
       
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
    }
    
-   private void showToolbar(boolean showToolbar, boolean updatePref)
+   private void setToolbarPref(boolean showToolbar)
+   {
+      uiPrefs_.get().toolbarVisible().setGlobalValue(showToolbar);
+      server_.setUiPrefs(
+               session_.getSessionInfo().getUiPrefs(), 
+               new SimpleRequestCallback<Void>("Error Saving Preference"));
+   }
+   
+   private void showToolbar(boolean showToolbar)
    {
       // show or hide the toolbar
       view_.showToolbar(showToolbar);
@@ -574,15 +594,6 @@ public class Application implements ApplicationEventHandlers,
       // manage commands
       commands_.showToolbar().setVisible(!showToolbar);
       commands_.hideToolbar().setVisible(showToolbar);
-      
-      // update prefs
-      if (updatePref)
-      {
-         uiPrefs_.get().toolbarVisible().setGlobalValue(showToolbar);
-         server_.setUiPrefs(
-                  session_.getSessionInfo().getUiPrefs(), 
-                  new SimpleRequestCallback<Void>("Error Saving Preference"));
-      }
    }
       
    private void cleanupWorkbench()

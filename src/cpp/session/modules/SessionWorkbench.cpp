@@ -13,17 +13,12 @@
 
 // TODO: fall back to file system scanning if monitoring fails
 
-// TODO: when doing a set (from here or from inside userSettings) should
-// we NOT hit the runtime backing for settings (allowing that the file
-// monitor will force us to do so again shortly)
-
 // TODO: ensure we only generate one userSettings::onChanged per OK
 // in the settings dialog (check on all platforms -- mac looks good)
 
 // TODO: if we allow multiple instances per project then must deal
 //       with project ui prefs
 
-// TODO: subscribe to toolbarVisible changed
 
 #include "SessionWorkbench.hpp"
 
