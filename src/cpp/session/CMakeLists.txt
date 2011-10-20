@@ -29,6 +29,7 @@ set (SESSION_SOURCE_FILES
    SessionPersistentState.cpp
    SessionPostback.cpp
    SessionSourceDatabase.cpp
+   SessionSourceDatabaseSupervisor.cpp
    SessionUserSettings.cpp
    SessionWorkerContext.cpp
    http/SessionHttpConnectionQueue.cpp
