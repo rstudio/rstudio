@@ -49,7 +49,10 @@ public:
    double created() const { return created_; }
    bool sourceOnSave() const { return sourceOnSave_; }
    const core::json::Object& properties() const { return properties_; }
-   std::string getProperty(const std::string& name);
+   std::string getProperty(const std::string& name) const;
+
+   // is this an untitled document?
+   bool isUntitled() const;
 
    // set contents from string
    void setContents(const std::string& contents);
@@ -95,6 +98,8 @@ public:
 
    core::Error readFromJson(core::json::Object* pDocJson);
    void writeToJson(core::json::Object* pDocJson) const;
+
+   core::Error writeToFile(const core::FilePath& filePath) const;
 
 private:
    void editProperty(const core::json::Object::value_type& property);

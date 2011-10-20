@@ -24,7 +24,7 @@ namespace interprocess {
 const boost::system::error_category& interprocess_category() ;
 
 class interprocess_exception ;
-boost::system::error_code ec_from_e4xception(const interprocess_exception& e) ;
+boost::system::error_code ec_from_exception(const interprocess_exception& e) ;
 
 } // namespace interprocess
 

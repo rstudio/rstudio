@@ -14,13 +14,18 @@
 #ifndef SESSION_SOURCE_DATABASE_SUPERVISOR_HPP
 #define SESSION_SOURCE_DATABASE_SUPERVISOR_HPP
 
+namespace core {
+   class Error;
+   class FilePath;
+}
 
 namespace session {
 namespace source_database {
 namespace supervisor {
 
+core::Error attachToSourceDatabase(core::FilePath* pSessionDir);
 
-
+core::Error detachFromSourceDatabase(const core::FilePath& sessionDir);
 
 } // namespace supervisor
 } // namespace source_database

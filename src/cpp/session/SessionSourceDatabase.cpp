@@ -166,11 +166,12 @@ SourceDocument::SourceDocument(const std::string& type)
 }
    
 
-std::string SourceDocument::getProperty(const std::string& name)
+std::string SourceDocument::getProperty(const std::string& name) const
 {
-   if (properties_.find(name) != properties_.end())
+   json::Object::const_iterator it = properties_.find(name);
+   if (it != properties_.end())
    {
-      json::Value valueJson = properties_[name];
+      json::Value valueJson = it->second;
       if (json::isType<std::string>(valueJson))
          return valueJson.get_str();
       else
@@ -180,6 +181,11 @@ std::string SourceDocument::getProperty(const std::string& name)
    {
       return "";
    }
+}
+
+bool SourceDocument::isUntitled() const
+{
+   return path().empty() && !getProperty("tempName").empty();
 }
 
 // set contents from string
@@ -344,6 +350,18 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["encoding"] = encoding_;
 }
 
+Error SourceDocument::writeToFile(const FilePath& filePath) const
+{
+   // get json representation
+   json::Object jsonDoc ;
+   writeToJson(&jsonDoc);
+   std::ostringstream ostr ;
+   json::writeFormatted(jsonDoc, ostr);
+
+   // write to file
+   return writeStringToFile(filePath, ostr.str());
+}
+
 void SourceDocument::editProperty(const json::Object::value_type& property)
 {
    if (property.second.is_null())
@@ -409,6 +427,8 @@ bool isSourceDocument(const FilePath& filePath)
       return false;
    else if (filePath.filename() == ".DS_Store")
       return false;
+   else if (filePath.filename() == "lock_file")
+      return false;
    else
       return true;
 }
@@ -438,16 +458,10 @@ Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
 }
    
 Error put(boost::shared_ptr<SourceDocument> pDoc)
-{
-   // get json representation
-   json::Object jsonDoc ;
-   pDoc->writeToJson(&jsonDoc);
-   std::ostringstream ostr ;
-   json::writeFormatted(jsonDoc, ostr);
-   
+{   
    // write to file
    FilePath filePath = source_database::path().complete(pDoc->id());
-   Error error = writeStringToFile(filePath, ostr.str());
+   Error error = pDoc->writeToFile(filePath);
    if (error)
       return error ;
 
