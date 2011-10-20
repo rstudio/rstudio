@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -142,97 +143,127 @@ public class WorkbenchContext implements UiPrefsChangedHandler
    {      
       // get references to new and existing UI prefs
       UIPrefs uiPrefs = uiPrefs_.get();
-      UIPrefsAccessor newUiPrefs = new UIPrefsAccessor(
-                                                e.getUIPrefs(), 
-                                                JsObject.createJsObject());
       
-      // show line numbers
-      uiPrefs.showLineNumbers().setGlobalValue(
-                              newUiPrefs.showLineNumbers().getGlobalValue());
-      
-      // highlight selected word
-      uiPrefs.highlightSelectedWord().setGlobalValue(
-                        newUiPrefs.highlightSelectedWord().getGlobalValue());
-      
-      // highlight selected line
-      uiPrefs.highlightSelectedLine().setGlobalValue(
-                       newUiPrefs.highlightSelectedLine().getGlobalValue());
-    
-      // pane config
-      if (!newUiPrefs.paneConfig().getGlobalValue().isEqualTo(
-                              uiPrefs.paneConfig().getGlobalValue()))
+      if (e.getType().equals(UiPrefsChangedEvent.GLOBAL_TYPE))
       {
-         uiPrefs.paneConfig().setGlobalValue(
-                           newUiPrefs.paneConfig().getGlobalValue());
-      }
-      
-      // use spaces for tab
-      uiPrefs.useSpacesForTab().setGlobalValue(
-                       newUiPrefs.useSpacesForTab().getGlobalValue());
-        
-      // num spacers for tab
-      uiPrefs.numSpacesForTab().setGlobalValue(
-            newUiPrefs.numSpacesForTab().getGlobalValue());
-
-      // show margin
-      uiPrefs.showMargin().setGlobalValue(
-                              newUiPrefs.showMargin().getGlobalValue());
-      
-      // print margin column
-      uiPrefs.printMarginColumn().setGlobalValue(
+         // get prefs accessor
+         UIPrefsAccessor newUiPrefs = new UIPrefsAccessor(
+                                                   e.getUIPrefs(), 
+                                                   JsObject.createJsObject());
+         
+         // show line numbers
+         uiPrefs.showLineNumbers().setGlobalValue(
+                                 newUiPrefs.showLineNumbers().getGlobalValue());
+         
+         // highlight selected word
+         uiPrefs.highlightSelectedWord().setGlobalValue(
+                           newUiPrefs.highlightSelectedWord().getGlobalValue());
+         
+         // highlight selected line
+         uiPrefs.highlightSelectedLine().setGlobalValue(
+                          newUiPrefs.highlightSelectedLine().getGlobalValue());
+       
+         // pane config
+         if (!newUiPrefs.paneConfig().getGlobalValue().isEqualTo(
+                                 uiPrefs.paneConfig().getGlobalValue()))
+         {
+            uiPrefs.paneConfig().setGlobalValue(
+                              newUiPrefs.paneConfig().getGlobalValue());
+         }
+         
+         // use spaces for tab
+         uiPrefs.useSpacesForTab().setGlobalValue(
+                          newUiPrefs.useSpacesForTab().getGlobalValue());
+           
+         // num spacers for tab
+         uiPrefs.numSpacesForTab().setGlobalValue(
+               newUiPrefs.numSpacesForTab().getGlobalValue());
+   
+         // show margin
+         uiPrefs.showMargin().setGlobalValue(
+                                 newUiPrefs.showMargin().getGlobalValue());
+         
+         // print margin column
+         uiPrefs.printMarginColumn().setGlobalValue(
                               newUiPrefs.printMarginColumn().getGlobalValue());
-   
-      // insert matching
-      uiPrefs.insertMatching().setGlobalValue(
-                              newUiPrefs.insertMatching().getGlobalValue());
-   
-      // soft wrap R files
-      uiPrefs.softWrapRFiles().setGlobalValue(
-                              newUiPrefs.softWrapRFiles().getGlobalValue());
       
-      // syntax color console
-      uiPrefs.syntaxColorConsole().setGlobalValue(
-                              newUiPrefs.syntaxColorConsole().getGlobalValue());
-   
-      // font size
-      uiPrefs.fontSize().setGlobalValue(newUiPrefs.fontSize().getGlobalValue());
-   
-      // theme
-      uiPrefs.theme().setGlobalValue(newUiPrefs.theme().getGlobalValue());
-   
-      // default encoding
-      uiPrefs.defaultEncoding().setGlobalValue(
-                              newUiPrefs.defaultEncoding().getGlobalValue());
+         // insert matching
+         uiPrefs.insertMatching().setGlobalValue(
+                                 newUiPrefs.insertMatching().getGlobalValue());
       
-      // default project location
-      uiPrefs.defaultProjectLocation().setGlobalValue(
+         // soft wrap R files
+         uiPrefs.softWrapRFiles().setGlobalValue(
+                                 newUiPrefs.softWrapRFiles().getGlobalValue());
+         
+         // syntax color console
+         uiPrefs.syntaxColorConsole().setGlobalValue(
+                             newUiPrefs.syntaxColorConsole().getGlobalValue());
+      
+         // font size
+         uiPrefs.fontSize().setGlobalValue(
+                             newUiPrefs.fontSize().getGlobalValue());
+      
+         // theme
+         uiPrefs.theme().setGlobalValue(newUiPrefs.theme().getGlobalValue());
+      
+         // default encoding
+         uiPrefs.defaultEncoding().setGlobalValue(
+                                 newUiPrefs.defaultEncoding().getGlobalValue());
+         
+         // default project location
+         uiPrefs.defaultProjectLocation().setGlobalValue(
                         newUiPrefs.defaultProjectLocation().getGlobalValue());
-   
-      // toolbar visible
-      uiPrefs.toolbarVisible().setGlobalValue(
-                              newUiPrefs.toolbarVisible().getGlobalValue());
       
-      // source with echo
-      uiPrefs.sourceWithEcho().setGlobalValue(
-                              newUiPrefs.sourceWithEcho().getGlobalValue());
-      
-      
-      // export plot options
-      if (!ExportPlotOptions.areEqual(
-            newUiPrefs.exportPlotOptions().getGlobalValue(),
-            uiPrefs.exportPlotOptions().getGlobalValue()))
-      {
-         uiPrefs.exportPlotOptions().setGlobalValue(
-                           newUiPrefs.exportPlotOptions().getGlobalValue());
+         // toolbar visible
+         uiPrefs.toolbarVisible().setGlobalValue(
+                                 newUiPrefs.toolbarVisible().getGlobalValue());
+         
+         // source with echo
+         uiPrefs.sourceWithEcho().setGlobalValue(
+                                 newUiPrefs.sourceWithEcho().getGlobalValue());
+         
+         
+         // export plot options
+         if (!ExportPlotOptions.areEqual(
+               newUiPrefs.exportPlotOptions().getGlobalValue(),
+               uiPrefs.exportPlotOptions().getGlobalValue()))
+         {
+            uiPrefs.exportPlotOptions().setGlobalValue(
+                              newUiPrefs.exportPlotOptions().getGlobalValue());
+         }
+         
+         // save plot as pdf options
+         if (!SavePlotAsPdfOptions.areEqual(
+               newUiPrefs.savePlotAsPdfOptions().getGlobalValue(),
+               uiPrefs.savePlotAsPdfOptions().getGlobalValue()))
+         {
+            uiPrefs.savePlotAsPdfOptions().setGlobalValue(
+                         newUiPrefs.savePlotAsPdfOptions().getGlobalValue());
+         }
       }
-      
-      // save plot as pdf options
-      if (!SavePlotAsPdfOptions.areEqual(
-            newUiPrefs.savePlotAsPdfOptions().getGlobalValue(),
-            uiPrefs.savePlotAsPdfOptions().getGlobalValue()))
+      else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {
-         uiPrefs.savePlotAsPdfOptions().setGlobalValue(
-                           newUiPrefs.savePlotAsPdfOptions().getGlobalValue());
+         // get prefs accessor
+         UIPrefsAccessor newUiPrefs = new UIPrefsAccessor(
+                                                   JsObject.createJsObject(),
+                                                   e.getUIPrefs());
+         
+         // use spaces for tab
+         uiPrefs.useSpacesForTab().setProjectValue(
+                          newUiPrefs.useSpacesForTab().getValue());
+           
+         // num spacers for tab
+         uiPrefs.numSpacesForTab().setProjectValue(
+               newUiPrefs.numSpacesForTab().getValue());
+   
+         // default encoding
+         uiPrefs.defaultEncoding().setProjectValue(
+                                 newUiPrefs.defaultEncoding().getValue());
+ 
+      }
+      else
+      {
+         Debug.log("Unexpected uiPrefs type: " + e.getType());
       }
    }
    

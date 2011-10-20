@@ -679,8 +679,8 @@ class RemoteServerEventListener
          }
          else if (type.equals(ClientEvent.UiPrefsChanged))
          {
-            JsObject uiPrefs = event.getData();
-            eventBus.fireEvent(new UiPrefsChangedEvent(uiPrefs));
+            UiPrefsChangedEvent.Data data = event.getData();
+            eventBus.fireEvent(new UiPrefsChangedEvent(data));
          }
          else if (type.equals(ClientEvent.HandleUnsavedChanges))
          {

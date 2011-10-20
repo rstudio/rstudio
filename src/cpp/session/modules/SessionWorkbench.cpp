@@ -324,8 +324,10 @@ void onUserSettingsChanged()
    module_context::syncRSaveAction();
 
    // fire event notifying the client that uiPrefs changed
-   ClientEvent event(client_events::kUiPrefsChanged,
-                     userSettings().uiPrefs());
+   json::Object dataJson;
+   dataJson["type"] = "global";
+   dataJson["prefs"] = userSettings().uiPrefs();
+   ClientEvent event(client_events::kUiPrefsChanged, dataJson);
    module_context::enqueClientEvent(event);
 }
 

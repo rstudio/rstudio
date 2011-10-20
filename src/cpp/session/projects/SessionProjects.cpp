@@ -90,6 +90,15 @@ Error readProjectConfig(const json::JsonRpcRequest& request,
    return Success();
 }
 
+void setProjectConfig(const r_util::RProjectConfig& config)
+{
+   // set it
+   s_projectContext.setConfig(config);
+
+   // sync underlying R setting
+   module_context::syncRSaveAction();
+}
+
 Error writeProjectConfig(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
@@ -114,12 +123,65 @@ Error writeProjectConfig(const json::JsonRpcRequest& request,
       return error;
 
    // set it
-   s_projectContext.setConfig(config);
-
-   // sync underlying R setting
-   module_context::syncRSaveAction();
+   setProjectConfig(config);
 
    return Success();
+}
+
+
+void onShutdown(bool terminatedNormally)
+{
+   if (terminatedNormally)
+      s_projectContext.setLastProjectPath(s_projectContext.file());
+}
+
+void syncProjectFileChanges()
+{
+   // read project file config
+   bool providedDefaults;
+   std::string userErrMsg;
+   r_util::RProjectConfig config;
+   Error error = r_util::readProjectFile(s_projectContext.file(),
+                                         ProjectContext::defaultConfig(),
+                                         &config,
+                                         &providedDefaults,
+                                         &userErrMsg);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // set config
+   setProjectConfig(config);
+
+   // fire event to client
+   json::Object dataJson;
+   dataJson["type"] = "project";
+   dataJson["prefs"] = s_projectContext.uiPrefs();
+   ClientEvent event(client_events::kUiPrefsChanged, dataJson);
+   module_context::enqueClientEvent(event);
+}
+
+void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
+   {
+      // if the project file changed then sync its changes
+      if (event.fileInfo().absolutePath() ==
+          s_projectContext.file().absolutePath())
+      {
+         syncProjectFileChanges();
+         break;
+      }
+   }
+}
+
+void onMonitoringDisabled()
+{
+   // NOTE: if monitoring is disabled then we can't sync changes to the
+   // project file -- we could poll for this however since it is only
+   // a conveninece to have these synced we don't do this
 }
 
 
@@ -221,18 +283,18 @@ void startup()
    }
 }
 
-void onShutdown(bool terminatedNormally)
-{
-   if (terminatedNormally)
-      s_projectContext.setLastProjectPath(s_projectContext.file());
-}
-
 Error initialize()
 {
    // call project-context initialize
    Error error = s_projectContext.initialize();
    if (error)
       return error;
+
+   // subscribe to file_monitor for project file changes
+   projects::FileMonitorCallbacks cb;
+   cb.onFilesChanged = onFilesChanged;
+   cb.onMonitoringDisabled = onMonitoringDisabled;
+   s_projectContext.subscribeToFileMonitor("", cb);
 
    // subscribe to shutdown for setting lastProjectPath
    module_context::events().onShutdown.connect(onShutdown);

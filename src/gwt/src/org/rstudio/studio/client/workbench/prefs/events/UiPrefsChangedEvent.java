@@ -14,20 +14,44 @@ package org.rstudio.studio.client.workbench.prefs.events;
 
 import org.rstudio.core.client.js.JsObject;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class UiPrefsChangedEvent extends GwtEvent<UiPrefsChangedHandler>
 {
+   public static final String GLOBAL_TYPE = "global";
+   public static final String PROJECT_TYPE = "project";
+   
+   public static class Data extends JavaScriptObject
+   {
+      protected Data()
+      {
+      }
+      
+      public final native String getType() /*-{
+         return this.type;
+      }-*/;
+      
+      public final native JsObject getPrefs() /*-{
+         return this.prefs;
+      }-*/;
+   }
+   
    public static final Type<UiPrefsChangedHandler> TYPE = new Type<UiPrefsChangedHandler>();
 
-   public UiPrefsChangedEvent(JsObject uiPrefs)
+   public UiPrefsChangedEvent(Data data)
    {
-      uiPrefs_ = uiPrefs;
+      data_ = data;
    }
 
+   public String getType()
+   {
+      return data_.getType();
+   }
+   
    public JsObject getUIPrefs()
    {
-      return uiPrefs_;
+      return data_.getPrefs();
    }
 
    @Override
@@ -42,5 +66,5 @@ public class UiPrefsChangedEvent extends GwtEvent<UiPrefsChangedHandler>
       handler.onUiPrefsChanged(this);
    }
 
-   private final JsObject uiPrefs_;
+   private final Data data_;
 }
