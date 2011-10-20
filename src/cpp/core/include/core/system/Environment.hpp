@@ -38,7 +38,7 @@ void unsetenv(const std::string& name);
 *****************************************************************/
 
 // get a copy of all current environment variables
-Options environment();
+void environment(Options* pEnvironment);
 
 // get an environment variable within an Options structure
 std::string getenv(const Options& environment, const std::string& name);

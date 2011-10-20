@@ -31,17 +31,14 @@ bool optionIsNamed(const Option& option, const std::string& name)
 
 } // namespace impl
 
-Options environment()
+void environment(Options* pEnvironment)
 {
-   Options options;
    for (char **env = environ; *env; ++env)
    {
       Option envVar;
       if (parseEnvVar(std::string(*env), &envVar))
-         options.push_back(envVar);
+         pEnvironment->push_back(envVar);
    }
-
-   return options;
 }
 
 std::string getenv(const std::string& name)

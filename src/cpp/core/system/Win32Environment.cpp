@@ -35,11 +35,8 @@ bool optionIsNamed(const Option& option, const std::string& name)
 } // namespace impl
 
 
-Options environment()
+void environment(Options* pEnvironment)
 {
-   // environment variables to return
-   Options env;
-
    // get all environment strings (as unicode)
    LPWSTR lpEnv = ::GetEnvironmentStringsW();
    if (lpEnv == NULL)
@@ -64,17 +61,13 @@ Options environment()
       // convert to utf8 and parse
       Option envVar;
       if (parseEnvVar(string_utils::wideToUtf8(envVarWide), &envVar))
-         env.push_back(envVar);
+         pEnvironment->push_back(envVar);
    }
 
 
    // free environment strings
    if (!::FreeEnvironmentStringsW(lpEnv))
       LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
-
-
-   // return environment
-   return env;
 }
 
 // Value returned is UTF-8 encoded

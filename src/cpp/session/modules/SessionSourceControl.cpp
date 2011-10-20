@@ -76,7 +76,8 @@ core::system::ProcessOptions procOptions()
    options.detachSession = true;
 
    // get current environment for modification prior to passing to child
-   core::system::Options childEnv = core::system::environment();
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
 
    // add git bin dir to PATH if necessary
    if (!s_gitBinDir.empty())
