@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
@@ -91,17 +92,17 @@ public class DockLayoutPanelParser implements ElementParser {
         writer.die(elem, "%s must contain a widget, but found %s", child,
             widget);
       }
-      String widgetName = writer.parseElementToField(widget);
+      FieldWriter widgetField = writer.parseElementToField(widget);
 
       if (child.getLocalName().equals("center")) {
         if (center != null) {
           writer.die(elem, "Only one <%s:center> is allowed", elem.getPrefix());
         }
-        center = new CenterChild(child, widgetName);
+        center = new CenterChild(child, widgetField.getNextReference());
       } else {
         String size = child.consumeRequiredDoubleAttribute("size");
         writer.addStatement("%s.%s(%s, %s);", fieldName, addMethodName(child),
-            widgetName, size);
+            widgetField.getNextReference(), size);
       }
     }
 

@@ -905,37 +905,13 @@ public class UiBinderWriter implements Statements {
 
   /**
    * Parses the object associated with the specified element, and returns the
-   * name of the field (possibly private) that will hold it. The element is
-   * likely to make recursive calls back to this method to have its children
-   * parsed.
-   * 
-   * @param elem the xml element to be parsed
-   * @return the name of the field containing the parsed widget
-   */
-  public String parseElementToField(XMLElement elem) throws UnableToCompleteException {
-    /**
-     * TODO(hermes,rjrjr,rdcastro): seems bad we have to run
-     * parseElementToFieldWriter(), get the field writer and then call
-     * fieldManager.convertFieldToGetter().
-     * 
-     * Can't we move convertFieldToGetter() to FieldWriter?
-     * 
-     * The current answer is no because convertFieldToGetter() might be called
-     * before a given FieldWriter is actually created.
-     */
-    FieldWriter field = parseElementToFieldWriter(elem);
-    return fieldManager.convertFieldToGetter(field.getName());
-  }
-
-  /**
-   * Parses the object associated with the specified element, and returns the
    * field writer that will hold it. The element is likely to make recursive
    * calls back to this method to have its children parsed.
    * 
    * @param elem the xml element to be parsed
    * @return the field holder just created
    */
-  public FieldWriter parseElementToFieldWriter(XMLElement elem) throws UnableToCompleteException {
+  public FieldWriter parseElementToField(XMLElement elem) throws UnableToCompleteException {
     if (elementParsers.isEmpty()) {
       registerParsers();
     }
@@ -1379,7 +1355,7 @@ public class UiBinderWriter implements Statements {
 
     // Allow GWT.create() to init the field, the default behavior
 
-    String rootField = new UiBinderParser(this, messages, fieldManager, oracle, bundleClass,
+    FieldWriter rootField = new UiBinderParser(this, messages, fieldManager, oracle, bundleClass,
             binderUri, uiBinderCtx).parse(elem);
 
     fieldManager.validate();
@@ -1661,7 +1637,7 @@ public class UiBinderWriter implements Statements {
   /**
    * Writes the UiBinder's source.
    */
-  private void writeBinder(IndentedWriter w, String rootField) throws UnableToCompleteException {
+  private void writeBinder(IndentedWriter w, FieldWriter rootField) throws UnableToCompleteException {
     writePackage(w);
 
     writeImports(w);
@@ -1699,7 +1675,7 @@ public class UiBinderWriter implements Statements {
 
     writeCssInjectors(w);
 
-    w.write("return %s;", rootField);
+    w.write("return %s;", rootField.getNextReference());
     w.outdent();
     w.write("}");
 
@@ -1711,7 +1687,7 @@ public class UiBinderWriter implements Statements {
   /**
    * Writes a different optimized UiBinder's source for the renderable strategy.
    */
-  private void writeBinderForRenderableStrategy(IndentedWriter w, String rootField)
+  private void writeBinderForRenderableStrategy(IndentedWriter w, FieldWriter rootField)
       throws UnableToCompleteException {
     writePackage(w);
 
@@ -1736,7 +1712,7 @@ public class UiBinderWriter implements Statements {
     designTime.writeAttributes(this);
     w.newline();
 
-    w.write("return new Widgets(owner).%s;", rootField);
+    w.write("return new Widgets(owner).%s;", rootField.getNextReference());
     w.outdent();
     w.write("}");
 
@@ -1914,7 +1890,7 @@ public class UiBinderWriter implements Statements {
   /**
    * Writes the UiRenderer's source for the renderable strategy.
    */
-  private void writeRenderer(IndentedWriter w, String rootField) throws UnableToCompleteException {
+  private void writeRenderer(IndentedWriter w, FieldWriter rootField) throws UnableToCompleteException {
     validateRendererGetters(baseClass);
     validateRenderParameters(baseClass);
     JMethod[] eventMethods = findEventMethods(baseClass);
@@ -1956,9 +1932,7 @@ public class UiBinderWriter implements Statements {
     fieldManager.initializeWidgetsInnerClass(w, getOwnerClass());
     w.newline();
 
-    // TODO(rchandia) Find a better way to get the root field name
-    String rootFieldName = rootField.substring(4, rootField.length() - 2);
-    String safeHtml = fieldManager.lookup(rootFieldName).getSafeHtml();
+    String safeHtml = rootField.getSafeHtml();
 
     // TODO(rchandia) it should be possible to add the attribute when parsing
     // the UiBinder file
@@ -1972,9 +1946,9 @@ public class UiBinderWriter implements Statements {
 
     fieldManager.writeFieldDefinitions(w, getOracle(), getOwnerClass(), getDesignTime());
 
-    writeRendererGetters(w, baseClass, rootFieldName);
+    writeRendererGetters(w, baseClass, rootField.getName());
 
-    writeRendererEventMethods(w, eventMethods, rootFieldName);
+    writeRendererEventMethods(w, eventMethods, rootField.getName());
 
     // Close class
     w.outdent();

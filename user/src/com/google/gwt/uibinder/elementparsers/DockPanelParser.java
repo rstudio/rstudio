@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -68,11 +69,12 @@ public class DockPanelParser implements ElementParser {
 
       // And they can only have a single child widget.
       XMLElement widget = child.consumeSingleChildElement();
-      String childFieldName = writer.parseElementToField(widget);
-      writer.addStatement("%1$s.add(%2$s, %3$s);", fieldName, childFieldName, translated);
+      FieldWriter childField = writer.parseElementToField(widget);
+      writer.addStatement("%1$s.add(%2$s, %3$s);", fieldName,
+          childField.getNextReference(), translated);
 
       // Parse the CellPanel-specific attributes on the Dock element.
-      CellPanelParser.parseCellAttributes(child, fieldName, childFieldName, writer);
+      CellPanelParser.parseCellAttributes(child, fieldName, childField, writer);
     }
   }
 }

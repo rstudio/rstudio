@@ -118,6 +118,13 @@ public interface FieldWriter {
    * Get the name of the field.
    */
   String getName();
+  
+  /**
+   * Returns the expression that to evaluate to get the contents of this field.
+   * Keeps a reference count, so if the field is to be used more than once it is
+   * important to call this method each time.
+   */
+  String getNextReference();
 
   /**
    * Returns the qualified source name of this type.

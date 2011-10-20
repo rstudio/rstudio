@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -43,15 +44,18 @@ public class HasTreeItemsParser implements ElementParser {
 
       // TreeItem+
       if (itemType.isAssignableFrom(childType)) {
-        String childFieldName = writer.parseElementToField(child);
-        writer.addStatement("%1$s.addItem(%2$s);", fieldName, childFieldName);
+        FieldWriter childField = writer.parseElementToField(child);
+        writer.addStatement("%1$s.addItem(%2$s);", fieldName,
+            childField.getNextReference());
         continue;
       }
 
       // Widget+ or IsWidget+
-      if (widgetType.isAssignableFrom(childType) || isWidgetType.isAssignableFrom(childType)) {
-        String childFieldName = writer.parseElementToField(child);
-        writer.addStatement("%1$s.addItem(%2$s);", fieldName, childFieldName);
+      if (widgetType.isAssignableFrom(childType)
+          || isWidgetType.isAssignableFrom(childType)) {
+        FieldWriter childField = writer.parseElementToField(child);
+        writer.addStatement("%1$s.addItem(%2$s);", fieldName,
+            childField.getNextReference());
         continue;
       }
 

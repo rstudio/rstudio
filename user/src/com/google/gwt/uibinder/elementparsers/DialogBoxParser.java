@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.user.client.ui.DialogBox;
@@ -35,7 +36,7 @@ public class DialogBoxParser implements ElementParser {
       UiBinderWriter writer) throws UnableToCompleteException {
 
     String caption = null;
-    String body = null;
+    FieldWriter body = null;
     XMLElement customCaption = null;
 
     String prefix = elem.getPrefix();
@@ -60,7 +61,7 @@ public class DialogBoxParser implements ElementParser {
       } else {
         if (body != null) {
           writer.die(elem, "May have only one widget, but found %s and %s",
-              body, child);
+              body.getName(), child);
         }
         if (!writer.isWidgetElement(child)) {
           writer.die(elem, "Found non-widget %s", child);
@@ -81,7 +82,7 @@ public class DialogBoxParser implements ElementParser {
           writer.declareTemplateCall(caption, fieldName));
     }
     if (body != null) {
-      writer.addStatement("%s.setWidget(%s);", fieldName, body);
+      writer.addStatement("%s.setWidget(%s);", fieldName, body.getNextReference());
     }
   }
 
@@ -130,10 +131,10 @@ public class DialogBoxParser implements ElementParser {
               customCaption.getPrefix(), CUSTOM_CAPTION,
               Caption.class.getCanonicalName());
         }
-        String fieldElement = writer.parseElementToField(customCaption);
+        FieldWriter fieldElement = writer.parseElementToField(customCaption);
 
         writer.setFieldInitializerAsConstructor(fieldName,
-            autoHide, modal, fieldElement);
+            autoHide, modal, fieldElement.getNextReference());
       } else {
         writer.setFieldInitializerAsConstructor(fieldName, autoHide, modal);
       }

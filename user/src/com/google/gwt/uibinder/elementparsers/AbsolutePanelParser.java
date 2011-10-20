@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -40,16 +41,16 @@ public class AbsolutePanelParser implements ElementParser {
         String top = child.consumeRequiredIntAttribute("top");
         // Add child widget.
         XMLElement widgetElem = child.consumeSingleChildElement();
-        String widgetFieldName = writer.parseElementToField(widgetElem);
+        FieldWriter widgetField = writer.parseElementToField(widgetElem);
         writer.addStatement("%1$s.add(%2$s, %3$s, %4$s);", fieldName,
-            widgetFieldName, left, top);
+            widgetField.getNextReference(), left, top);
         continue;
       }
 
       // Parse Widget.
       if (writer.isWidgetElement(child)) {
-        String widgetFieldName = writer.parseElementToField(child);
-        writer.addStatement("%1$s.add(%2$s);", fieldName, widgetFieldName);
+        FieldWriter widgetFieldName = writer.parseElementToField(child);
+        writer.addStatement("%1$s.add(%2$s);", fieldName, widgetFieldName.getNextReference());
         continue;
       }
 

@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -43,7 +44,7 @@ public class TabPanelParser implements ElementParser {
 
       // Get the single required child widget.
       String tabHTML = null;
-      String childFieldName = null;
+      FieldWriter childField = null;
       for (XMLElement tabChild : tabElem.consumeChildElements()) {
         if (tabChild.getLocalName().equals(TAG_TABHTML)) {
           if (tabCaption != null || tabHTML != null) {
@@ -55,25 +56,26 @@ public class TabPanelParser implements ElementParser {
               writer, fieldName);
           tabHTML = tabChild.consumeInnerHtml(interpreter);
         } else {
-          if (childFieldName != null) {
+          if (childField != null) {
             writer.die(tabChild, "May only have a single child widget");
           }
           if (!writer.isWidgetElement(tabChild)) {
             writer.die(tabChild, "Must be a widget");
           }
-          childFieldName = writer.parseElementToField(tabChild);
+          childField = writer.parseElementToField(tabChild);
         }
       }
 
-      if (childFieldName == null) {
+      if (childField == null) {
         writer.die(tabElem, "Must have a child widget");
       }
       if (tabHTML != null) {
         writer.addStatement("%1$s.add(%2$s, %3$s, true);", fieldName,
-            childFieldName, writer.declareTemplateCall(tabHTML, fieldName));
+            childField.getNextReference(),
+            writer.declareTemplateCall(tabHTML, fieldName));
       } else if (tabCaption != null) {
-        writer.addStatement("%1$s.add(%2$s, %3$s);", fieldName, childFieldName,
-            tabCaption);
+        writer.addStatement("%1$s.add(%2$s, %3$s);", fieldName,
+            childField.getNextReference(), tabCaption);
       } else {
         writer.die(tabElem,
             "Requires either a \"text\" attribute or <%1$s:%2$s>",

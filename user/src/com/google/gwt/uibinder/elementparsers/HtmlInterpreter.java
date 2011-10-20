@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLAttribute;
 import com.google.gwt.uibinder.rebind.XMLElement;
@@ -124,8 +125,8 @@ public class HtmlInterpreter implements XMLElement.Interpreter<String> {
 
   public String interpretElement(XMLElement elem) throws UnableToCompleteException {
     if (writer.useLazyWidgetBuilders() && writer.isElementAssignableTo(elem, SafeHtml.class)) {
-      String childFieldName = writer.parseElementToField(elem);
-      return writer.tokenForSafeHtmlExpression(elem, childFieldName);
+      FieldWriter childField = writer.parseElementToField(elem);
+      return writer.tokenForSafeHtmlExpression(elem, childField.getNextReference());
     }
     if (writer.isImportedElement(elem)) {
       writer.die(elem, "Not allowed in an HTML context");

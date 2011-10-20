@@ -54,7 +54,7 @@ public class FieldWriterOfExistingTypeTest extends TestCase {
   public void testNullType() throws Exception {
     control.replay();
     try {
-      FieldWriter field = new FieldWriterOfExistingType(
+      FieldWriter field = new FieldWriterOfExistingType(null,
           FieldWriterType.DEFAULT, null, FIELD_NAME, MortalLogger.NULL);
       fail("Expected exception not thrown.");
     } catch (IllegalArgumentException e) {
@@ -76,7 +76,7 @@ public class FieldWriterOfExistingTypeTest extends TestCase {
     expect(rawType.getQualifiedSourceName()).andReturn(QUALIFIED_SOURCE_NAME);
 
     control.replay();
-    FieldWriter field = new FieldWriterOfExistingType(
+    FieldWriter field = new FieldWriterOfExistingType(null,
         FieldWriterType.DEFAULT, type, FIELD_NAME, MortalLogger.NULL);
 
     assertSame(rawType, field.getAssignableType());
@@ -94,7 +94,7 @@ public class FieldWriterOfExistingTypeTest extends TestCase {
     expect(type.getQualifiedSourceName()).andReturn(QUALIFIED_SOURCE_NAME);
 
     control.replay();
-    FieldWriter field = new FieldWriterOfExistingType(
+    FieldWriter field = new FieldWriterOfExistingType(null,
         FieldWriterType.DEFAULT, type, FIELD_NAME, MortalLogger.NULL);
 
     assertSame(type, field.getAssignableType());

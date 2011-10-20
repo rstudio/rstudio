@@ -59,7 +59,7 @@ public class FieldWriterOfGeneratedCssResourceTest extends TestCase {
         MortalLogger.NULL, Collections.<JClassType> emptySet());
 
     FieldWriterOfGeneratedCssResource f = new FieldWriterOfGeneratedCssResource(
-        stringType, css, MortalLogger.NULL);
+        null, stringType, css, MortalLogger.NULL);
 
     assertEquals(stringType, f.getReturnType(new String[] {
         "fieldName", "ableBaker"}, new MonitoredLogger(MortalLogger.NULL)));
@@ -75,7 +75,7 @@ public class FieldWriterOfGeneratedCssResourceTest extends TestCase {
         MortalLogger.NULL, Collections.<JClassType> emptySet());
 
     FieldWriterOfGeneratedCssResource f = new FieldWriterOfGeneratedCssResource(
-        stringType, css, MortalLogger.NULL);
+        null, stringType, css, MortalLogger.NULL);
 
     assertEquals(stringType, f.getReturnType(new String[] {
         "fieldName", "able-baker"}, new MonitoredLogger(MortalLogger.NULL)));

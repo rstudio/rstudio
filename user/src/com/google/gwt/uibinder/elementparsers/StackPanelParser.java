@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -42,11 +43,13 @@ public class StackPanelParser implements ElementParser {
         stackItemLabel = child.consumeRawAttribute(variableAttributeName);
       }
 
-      String childFieldName = writer.parseElementToField(child);
+      FieldWriter childField = writer.parseElementToField(child);
       if (stackItemLabel == null) {
-        writer.addStatement("%1$s.add(%2$s);", fieldName, childFieldName);
+        writer.addStatement("%1$s.add(%2$s);", fieldName,
+            childField.getNextReference());
       } else {
-        writer.addStatement("%1$s.add(%2$s, \"%3$s\");", fieldName, childFieldName, stackItemLabel);
+        writer.addStatement("%1$s.add(%2$s, \"%3$s\");", fieldName,
+            childField.getNextReference(), stackItemLabel);
       }
     }
   }

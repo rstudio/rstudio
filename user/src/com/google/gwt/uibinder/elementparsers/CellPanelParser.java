@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
@@ -41,8 +42,8 @@ public class CellPanelParser implements ElementParser {
    * 
    * @throws UnableToCompleteException
    */
-  static void parseCellAttributes(XMLElement cellElem, String fieldName,
-      String childFieldName, UiBinderWriter writer)
+  protected static void parseCellAttributes(XMLElement cellElem, String fieldName,
+      FieldWriter childField, UiBinderWriter writer)
       throws UnableToCompleteException {
     JClassType hAlignConstantType = writer.getOracle().findType(
         HorizontalAlignmentConstant.class.getCanonicalName());
@@ -53,26 +54,26 @@ public class CellPanelParser implements ElementParser {
     if (cellElem.hasAttribute(HALIGN_ATTR)) {
       String value = cellElem.consumeAttribute(HALIGN_ATTR, hAlignConstantType);
       writer.addStatement("%1$s.setCellHorizontalAlignment(%2$s, %3$s);",
-          fieldName, childFieldName, value);
+          fieldName, childField.getNextReference(), value);
     }
 
     if (cellElem.hasAttribute(VALIGN_ATTR)) {
       String value = cellElem.consumeAttribute(VALIGN_ATTR, vAlignConstantType);
       writer.addStatement("%1$s.setCellVerticalAlignment(%2$s, %3$s);",
-          fieldName, childFieldName, value);
+          fieldName, childField.getNextReference(), value);
     }
 
     // Parse width and height attributes.
     if (cellElem.hasAttribute(WIDTH_ATTR)) {
       String value = cellElem.consumeStringAttribute(WIDTH_ATTR);
       writer.addStatement("%1$s.setCellWidth(%2$s, %3$s);", fieldName,
-          childFieldName, value);
+          childField.getNextReference(), value);
     }
 
     if (cellElem.hasAttribute(HEIGHT_ATTR)) {
       String value = cellElem.consumeStringAttribute(HEIGHT_ATTR);
       writer.addStatement("%1$s.setCellHeight(%2$s, %3$s);", fieldName,
-          childFieldName, value);
+          childField.getNextReference(), value);
     }
   }
 
@@ -86,19 +87,19 @@ public class CellPanelParser implements ElementParser {
           && localTagNameIsCell(tagName)) {
         // It's a cell element, so parse its single child as a widget.
         XMLElement widget = child.consumeSingleChildElement();
-        String childFieldName = writer.parseElementToField(widget);
-        writer.addStatement("%1$s.add(%2$s);", fieldName, childFieldName);
+        FieldWriter childField = writer.parseElementToField(widget);
+        writer.addStatement("%1$s.add(%2$s);", fieldName, childField.getNextReference());
 
         // Parse the cell tag's alignment & size attributes.
-        parseCellAttributes(child, fieldName, childFieldName, writer);
+        parseCellAttributes(child, fieldName, childField, writer);
       } else {
         if (!writer.isWidgetElement(child)) {
           writer.die(elem, "Expected a widget or <%s:%s>, found %s",
               elem.getPrefix(), CELL_TAG.toLowerCase(), child);
         }
         // It's just a normal child, so parse it as a widget.
-        String childFieldName = writer.parseElementToField(child);
-        writer.addStatement("%1$s.add(%2$s);", fieldName, childFieldName);
+        FieldWriter childField = writer.parseElementToField(child);
+        writer.addStatement("%1$s.add(%2$s);", fieldName, childField.getNextReference());
       }
     }
   }

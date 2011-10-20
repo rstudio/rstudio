@@ -49,6 +49,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
     return "attachRecord" + nextAttachVar++;
   }
 
+  private final FieldManager manager;
   private final Set<FieldWriter> needs = new LinkedHashSet<FieldWriter>();
   private final List<String> statements = new ArrayList<String>();
   private final List<String> attachStatements = new ArrayList<String>();
@@ -62,10 +63,12 @@ abstract class AbstractFieldWriter implements FieldWriter {
   private final FieldWriterType fieldType;
   private String html;
 
-  public AbstractFieldWriter(String name, FieldWriterType fieldType, MortalLogger logger) {
+  public AbstractFieldWriter(FieldManager manager, FieldWriterType fieldType,
+      String name, MortalLogger logger) {
     if (name == null) {
       throw new RuntimeException("name cannot be null");
     }
+    this.manager = manager;
     this.name = name;
     this.logger = logger;
     this.buildPrecedence = 1;
@@ -108,6 +111,11 @@ abstract class AbstractFieldWriter implements FieldWriter {
   @Override
   public String getName() {
     return name;
+  }
+
+  @Override
+  public String getNextReference() {
+    return manager.convertFieldToGetter(name);
   }
 
   public JType getReturnType(String[] path, MonitoredLogger logger) {

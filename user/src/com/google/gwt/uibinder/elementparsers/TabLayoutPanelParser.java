@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -69,7 +70,7 @@ public class TabLayoutPanelParser implements ElementParser {
       if (!writer.isWidgetElement(children.body)) {
         writer.die(children.body, "Must be a widget");
       }
-      String childFieldName = writer.parseElementToField(children.body);
+      FieldWriter childField = writer.parseElementToField(children.body);
 
       // Parse the header.
       if (children.header != null) {
@@ -77,7 +78,8 @@ public class TabLayoutPanelParser implements ElementParser {
             writer, fieldName);
         String html = children.header.consumeInnerHtml(htmlInt);
         writer.addStatement("%s.add(%s, %s, true);", fieldName,
-            childFieldName, writer.declareTemplateCall(html, fieldName));
+            childField.getNextReference(),
+            writer.declareTemplateCall(html, fieldName));
       } else if (children.customHeader != null) {
         XMLElement headerElement = children.customHeader.consumeSingleChildElement();
 
@@ -85,9 +87,9 @@ public class TabLayoutPanelParser implements ElementParser {
           writer.die(headerElement, "Is not a widget");
         }
 
-        String headerField = writer.parseElementToField(headerElement);
-        writer.addStatement("%s.add(%s, %s);", fieldName, childFieldName,
-            headerField);
+        FieldWriter headerField = writer.parseElementToField(headerElement);
+        writer.addStatement("%s.add(%s, %s);", fieldName,
+            childField.getNextReference(), headerField.getNextReference());
       } else {
         // Neither a header or customHeader.
         writer.die(tabElem, "Requires either a <%1$s:%2$s> or <%1$s:%3$s>",

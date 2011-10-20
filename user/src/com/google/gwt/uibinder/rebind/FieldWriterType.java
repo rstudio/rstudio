@@ -19,7 +19,7 @@ package com.google.gwt.uibinder.rebind;
 /**
  * A simple enum holding all FieldWriter types.
  */
-enum FieldWriterType {
+public enum FieldWriterType {
 
   GENERATED_BUNDLE(6),
   GENERATED_CSS(5),

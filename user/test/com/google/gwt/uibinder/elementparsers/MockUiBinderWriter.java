@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.uibinder.rebind.DesignTimeUtilsStub;
 import com.google.gwt.uibinder.rebind.FieldManager;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.rebind.UiBinderContext;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
@@ -54,7 +55,8 @@ class MockUiBinderWriter extends UiBinderWriter {
   }
 
   @Override
-  public String parseElementToField(XMLElement elem) {
-    return elem.consumeOpeningTag();
+  public FieldWriter parseElementToField(XMLElement elem) {
+    final String tag = elem.consumeOpeningTag();
+    return new MockFieldWriter(tag);
   }
 }

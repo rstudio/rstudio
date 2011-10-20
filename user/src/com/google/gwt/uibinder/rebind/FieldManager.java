@@ -208,7 +208,7 @@ public class FieldManager {
    */
   public FieldWriter registerField(FieldWriterType fieldWriterType,
       JClassType fieldType, String fieldName) throws UnableToCompleteException {
-    FieldWriter field = new FieldWriterOfExistingType(
+    FieldWriter field = new FieldWriterOfExistingType(this,
         fieldWriterType, fieldType, fieldName, logger);
     return registerField(fieldName, field);
   }
@@ -241,7 +241,7 @@ public class FieldManager {
    */
   public FieldWriter registerFieldForGeneratedCssResource(
       ImplicitCssResource cssResource) throws UnableToCompleteException {
-    FieldWriter field = new FieldWriterOfGeneratedCssResource(
+    FieldWriter field = new FieldWriterOfGeneratedCssResource(this,
         typeOracle.findType(String.class.getCanonicalName()), cssResource, logger);
     return registerField(cssResource.getName(), field);
   }
@@ -262,7 +262,7 @@ public class FieldManager {
     if (ownerField == null) {
       throw new RuntimeException("Cannot register a null owner field for LazyDomElement.");
     }
-    FieldWriter field = new FieldWriterOfLazyDomElement(
+    FieldWriter field = new FieldWriterOfLazyDomElement(this,
         templateFieldType, ownerField, logger);
     return registerField(ownerField.getName(), field);
   }
@@ -290,7 +290,7 @@ public class FieldManager {
   public FieldWriter registerFieldOfGeneratedType(JClassType assignableType,
       String typePackage, String typeName, String fieldName)
       throws UnableToCompleteException {
-    FieldWriter field = new FieldWriterOfGeneratedType(assignableType,
+    FieldWriter field = new FieldWriterOfGeneratedType(this, assignableType,
         typePackage, typeName, fieldName, logger);
     return registerField(fieldName, field);
   }

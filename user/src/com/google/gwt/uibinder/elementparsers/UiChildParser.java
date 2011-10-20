@@ -168,7 +168,7 @@ public class UiChildParser implements ElementParser {
       XMLElement toAdd) throws UnableToCompleteException {
     JParameter[] params = method.getParameters();
     String[] args = new String[params.length];
-    args[0] = writer.parseElementToField(toAdd);
+    args[0] = writer.parseElementToField(toAdd).getNextReference();
 
     // First parameter is the child widget
     for (int index = 1; index < params.length; index++) {

@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.XMLElement.Interpreter;
@@ -42,7 +43,7 @@ public class MenuItemParser implements ElementParser {
         MenuBar.class.getCanonicalName());
 
     class MenuBarInterpreter implements Interpreter<Boolean> {
-      String menuBarField = null;
+      FieldWriter menuBarField = null;
 
       public Boolean interpretElement(XMLElement child)
           throws UnableToCompleteException {
@@ -67,7 +68,8 @@ public class MenuItemParser implements ElementParser {
     elem.consumeChildElements(interpreter);
 
     if (interpreter.menuBarField != null) {
-      writer.genPropertySet(fieldName, "subMenu", interpreter.menuBarField);
+      writer.genPropertySet(fieldName, "subMenu",
+          interpreter.menuBarField.getNextReference());
     }
   }
 }

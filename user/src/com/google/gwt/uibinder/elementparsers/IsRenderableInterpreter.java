@@ -47,7 +47,7 @@ class IsRenderableInterpreter implements XMLElement.Interpreter<String> {
     String stamper = uiWriter.declareRenderableStamper();
     FieldManager fieldManager = uiWriter.getFieldManager();
     FieldWriter fieldWriter = fieldManager.require(fieldName);
-    FieldWriter childFieldWriter = uiWriter.parseElementToFieldWriter(elem);
+    FieldWriter childFieldWriter = uiWriter.parseElementToField(elem);
 
     fieldWriter.addAttachStatement(
         "%s.claimElement(%s.findStampedElement());",

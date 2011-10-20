@@ -67,7 +67,7 @@ public class FieldWriterOfLazyDomElementTest extends TestCase {
 
     control.replay();
     try {
-      FieldWriter field = new FieldWriterOfLazyDomElement(
+      FieldWriter field = new FieldWriterOfLazyDomElement(null, 
           templateFieldType, ownerField, MortalLogger.NULL);
       fail("Expected exception not thrown.");
     } catch (UnableToCompleteException utce) {
@@ -100,7 +100,7 @@ public class FieldWriterOfLazyDomElementTest extends TestCase {
 
     control.replay();
     try {
-      FieldWriter field = new FieldWriterOfLazyDomElement(
+      FieldWriter field = new FieldWriterOfLazyDomElement(null,
           templateFieldType, ownerField, MortalLogger.NULL);
       fail("Expected exception not thrown.");
     } catch (UnableToCompleteException utce) {
@@ -125,7 +125,8 @@ public class FieldWriterOfLazyDomElementTest extends TestCase {
     expect(arg.getQualifiedSourceName()).andReturn(ARG_QUALIFIED_SOURCE_NAME);
 
     control.replay();
-    FieldWriter field = new FieldWriterOfLazyDomElement(templateFieldType, ownerField, MortalLogger.NULL);
+    FieldWriter field = new FieldWriterOfLazyDomElement(null,
+        templateFieldType, ownerField, MortalLogger.NULL);
     assertSame(parameterClass, field.getAssignableType());
     assertSame(parameterClass, field.getInstantiableType());
     assertEquals(QUALIFIED_SOURCE_NAME + "<" + ARG_QUALIFIED_SOURCE_NAME + ">",

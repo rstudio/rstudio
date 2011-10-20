@@ -35,9 +35,9 @@ public class FieldWriterOfLazyDomElement extends AbstractFieldWriter {
    */
   private final JClassType parameterType;
 
-  public FieldWriterOfLazyDomElement(JClassType templateFieldType,
+  public FieldWriterOfLazyDomElement(FieldManager manager, JClassType templateFieldType,
       OwnerField ownerField, MortalLogger logger) throws UnableToCompleteException {
-    super(ownerField.getName(), FieldWriterType.DEFAULT, logger);
+    super(manager, FieldWriterType.DEFAULT, ownerField.getName(), logger);
 
     // ownerFieldType null means LazyDomElement is not parameterized.
     this.ownerFieldType = ownerField.getRawType().isParameterized();

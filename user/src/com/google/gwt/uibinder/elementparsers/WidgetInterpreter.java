@@ -85,7 +85,7 @@ class WidgetInterpreter implements XMLElement.Interpreter<String> {
     String idHolder = uiWriter.declareDomIdHolder(null);
     uiWriter.ensureCurrentFieldAttached();
 
-    FieldWriter childFieldWriter = uiWriter.parseElementToFieldWriter(elem);
+    FieldWriter childFieldWriter = uiWriter.parseElementToField(elem);
     String elementPointer = idHolder + "Element";
     uiWriter.addInitStatement(
         "com.google.gwt.user.client.Element %s = " +

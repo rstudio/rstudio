@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -172,8 +173,9 @@ public class GridParser implements ElementParser {
         newColumn = new CellContent(tagName, html, styleName);
       }
       if (tagName.equals(CUSTOMCELL_TAG)) {
-        newColumn = new CellContent(tagName,
-            writer.parseElementToField(cell.consumeSingleChildElement()), styleName);
+        FieldWriter field = writer.parseElementToField(cell.consumeSingleChildElement());
+        newColumn = new CellContent(tagName, field.getNextReference(),
+            styleName);
       }
       row.addColumn(newColumn);
     }

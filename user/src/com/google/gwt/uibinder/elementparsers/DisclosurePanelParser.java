@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -46,8 +47,8 @@ public class DisclosurePanelParser implements ElementParser {
         writer.die(children.body, "Must be a widget");
       }
 
-      String bodyField = writer.parseElementToField(children.body);
-      writer.addStatement("%s.add(%s);", panelField, bodyField);
+      FieldWriter bodyField = writer.parseElementToField(children.body);
+      writer.addStatement("%s.add(%s);", panelField, bodyField.getNextReference());
     }
 
     if (children.customHeader != null) {
@@ -57,8 +58,8 @@ public class DisclosurePanelParser implements ElementParser {
         writer.die(headerElement, "Must be a widget");
       }
 
-      String headerField = writer.parseElementToField(headerElement);
-      writer.addStatement("%s.setHeader(%s);", panelField, headerField);
+      FieldWriter headerField = writer.parseElementToField(headerElement);
+      writer.addStatement("%s.setHeader(%s);", panelField, headerField.getNextReference());
     }
 
     if (children.header != null) {

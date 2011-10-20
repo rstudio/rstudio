@@ -33,9 +33,9 @@ class FieldWriterOfGeneratedCssResource extends AbstractFieldWriter {
   private final ImplicitCssResource css;
   private final JType stringType;
 
-  public FieldWriterOfGeneratedCssResource(JType stringType,
+  public FieldWriterOfGeneratedCssResource(FieldManager manager, JType stringType,
       ImplicitCssResource css, MortalLogger logger) {
-    super(css.getName(), FieldWriterType.GENERATED_CSS, logger);
+    super(manager, FieldWriterType.GENERATED_CSS, css.getName(), logger);
     this.stringType = stringType;
     this.css = css;
   }

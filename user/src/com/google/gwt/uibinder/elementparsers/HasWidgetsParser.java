@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -35,8 +36,9 @@ public class HasWidgetsParser implements ElementParser {
       if (!writer.isWidgetElement(child)) {
         writer.die(child, "Expecting only widgets in %s", elem);
       }
-      String childFieldName = writer.parseElementToField(child);
-      writer.addStatement("%1$s.add(%2$s);", fieldName, childFieldName);
+      FieldWriter childField = writer.parseElementToField(child);
+      writer.addStatement("%1$s.add(%2$s);", fieldName,
+          childField.getNextReference());
     }
   }
 }

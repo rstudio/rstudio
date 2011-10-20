@@ -26,9 +26,9 @@ class FieldWriterOfExistingType extends AbstractFieldWriter {
   final JClassType type;
   final MortalLogger logger;
 
-  FieldWriterOfExistingType(FieldWriterType fieldType,
+  FieldWriterOfExistingType(FieldManager manager, FieldWriterType fieldType,
       JClassType type, String name, MortalLogger logger) {
-    super(name, fieldType, logger);
+    super(manager, fieldType, name, logger);
     this.logger = logger;
     if (type == null) {
       throw new IllegalArgumentException("type cannot be null");

@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -43,8 +44,8 @@ public class LayoutPanelParser implements ElementParser {
       }
 
       // Get the child widget element.
-      String childFieldName = writer.parseElementToField(layerElem.consumeSingleChildElement());
-      writer.addStatement("%1$s.add(%2$s);", fieldName, childFieldName);
+      FieldWriter childField = writer.parseElementToField(layerElem.consumeSingleChildElement());
+      writer.addStatement("%1$s.add(%2$s);", fieldName, childField.getNextReference());
 
       // Parse the horizontal layout constraints.
       String left = layerElem.consumeLengthAttribute("left");
@@ -59,17 +60,17 @@ public class LayoutPanelParser implements ElementParser {
           if (width != null) {
             writer.die(layerElem, ERR_TOO_MANY, "horizontal");
           }
-          generateConstraint(fieldName, childFieldName, "LeftRight", left,
+          generateConstraint(fieldName, childField.getNextReference(), "LeftRight", left,
               right, writer);
         } else if (width != null) {
-          generateConstraint(fieldName, childFieldName, "LeftWidth", left,
+          generateConstraint(fieldName, childField.getNextReference(), "LeftWidth", left,
               width, writer);
         } else {
           writer.die(layerElem, ERR_PAIRING, "left", "right", "width");
         }
       } else if (right != null) {
         if (width != null) {
-          generateConstraint(fieldName, childFieldName, "RightWidth", right,
+          generateConstraint(fieldName, childField.getNextReference(), "RightWidth", right,
               width, writer);
         } else {
           writer.die(layerElem, ERR_PAIRING, "right", "left", "width");
@@ -89,17 +90,17 @@ public class LayoutPanelParser implements ElementParser {
           if (height != null) {
             writer.die(layerElem, ERR_TOO_MANY, "vertical");
           }
-          generateConstraint(fieldName, childFieldName, "TopBottom", top,
+          generateConstraint(fieldName, childField.getNextReference(), "TopBottom", top,
               bottom, writer);
         } else if (height != null) {
-          generateConstraint(fieldName, childFieldName, "TopHeight", top,
+          generateConstraint(fieldName, childField.getNextReference(), "TopHeight", top,
               height, writer);
         } else {
           writer.die(layerElem, ERR_PAIRING, "top", "bottom", "height");
         }
       } else if (bottom != null) {
         if (height != null) {
-          generateConstraint(fieldName, childFieldName, "BottomHeight", bottom,
+          generateConstraint(fieldName, childField.getNextReference(), "BottomHeight", bottom,
               height, writer);
         } else {
           writer.die(layerElem, ERR_PAIRING, "bottom", "top", "height");

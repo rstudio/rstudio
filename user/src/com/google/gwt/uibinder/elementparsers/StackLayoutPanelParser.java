@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -65,7 +66,7 @@ public class StackLayoutPanelParser implements ElementParser {
       if (!writer.isWidgetElement(children.body)) {
         writer.die(children.body, "Must be a widget");
       }
-      String childFieldName = writer.parseElementToField(children.body);
+      FieldWriter childField = writer.parseElementToField(children.body);
 
       // Parse the header.
       if (children.header != null) {
@@ -74,7 +75,7 @@ public class StackLayoutPanelParser implements ElementParser {
         String size = children.header.consumeRequiredDoubleAttribute("size");
         String html = children.header.consumeInnerHtml(htmlInt);
         writer.addStatement("%s.add(%s, %s, true, %s);", fieldName,
-            childFieldName, writer.declareTemplateCall(html, fieldName), size);
+            childField.getNextReference(), writer.declareTemplateCall(html, fieldName), size);
       } else if (children.customHeader != null) {
         XMLElement headerElement = children.customHeader.consumeSingleChildElement();
         String size = children.customHeader.consumeRequiredDoubleAttribute("size");
@@ -82,9 +83,9 @@ public class StackLayoutPanelParser implements ElementParser {
           writer.die(headerElement, "Is not a widget");
         }
 
-        String headerField = writer.parseElementToField(headerElement);
-        writer.addStatement("%s.add(%s, %s, %s);", fieldName, childFieldName,
-            headerField, size);
+        FieldWriter headerField = writer.parseElementToField(headerElement);
+        writer.addStatement("%s.add(%s, %s, %s);", fieldName, childField.getNextReference(),
+            headerField.getNextReference(), size);
       } else {
         // Neither a header or customHeader.
         writer.die(stackElem, "Requires either a <%1$s:%2$s> or <%1$s:%3$s>",

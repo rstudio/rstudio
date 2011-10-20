@@ -128,7 +128,7 @@ public class UiBinderParser {
    * Parses the root UiBinder element, and kicks off the parsing of the rest of
    * the document.
    */
-  public String parse(XMLElement elem) throws UnableToCompleteException {
+  public FieldWriter parse(XMLElement elem) throws UnableToCompleteException {
     if (!writer.isBinderElement(elem)) {
       writer.die(elem, "Bad prefix on <%s:%s>? The root element must be in "
           + "xml namespace \"%s\" (usually with prefix \"ui:\"), "

@@ -121,7 +121,7 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
 
     for (String idHolder : idToWidgetElement.keySet()) {
       XMLElement childElem = idToWidgetElement.get(idHolder);
-      FieldWriter childFieldWriter = uiWriter.parseElementToFieldWriter(childElem);
+      FieldWriter childFieldWriter = uiWriter.parseElementToField(childElem);
 
       genSetWidgetTextCall(idHolder, childFieldWriter.getName());
 
