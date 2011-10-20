@@ -19,7 +19,14 @@ import com.google.gwt.event.dom.client.ClickHandler;
 public abstract class ModalDialog<T> extends ModalDialogBase
 {
    public ModalDialog(String caption, 
-                      final OperationWithInput<T> operation)
+                      OperationWithInput<T> operation)
+   {
+      this(caption, operation, null);
+   }
+   
+   public ModalDialog(String caption, 
+                      final OperationWithInput<T> operation,
+                      Operation cancelOperation)
    {
       super();
     
@@ -36,7 +43,7 @@ public abstract class ModalDialog<T> extends ModalDialogBase
          }
       });
       
-      commonInit(caption, okButton, null);
+      commonInit(caption, okButton, cancelOperation);
    }
 
    protected void onSuccess()

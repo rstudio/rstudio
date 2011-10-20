@@ -76,7 +76,7 @@ public interface EditingTarget extends IsWidget,
    /**
     * Save the document, always prompting if the file is dirty
     */
-   void saveWithPrompt(Command onCompleted);
+   void saveWithPrompt(Command onCompleted, Command onCancelled);
    
    /**
     * Revert any changes

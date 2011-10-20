@@ -754,7 +754,7 @@ public class TextEditingTarget implements EditingTarget
       };
        
       if (dirtyState_.getValue())
-         saveWithPrompt(closeCommand);
+         saveWithPrompt(closeCommand, null);
       else
          closeCommand.execute();
 
@@ -767,7 +767,7 @@ public class TextEditingTarget implements EditingTarget
                                              onCompleted));
    }
    
-   public void saveWithPrompt(final Command command)
+   public void saveWithPrompt(final Command command, final Command onCancelled)
    {
       view_.ensureVisible();
       
@@ -783,7 +783,9 @@ public class TextEditingTarget implements EditingTarget
                       new Operation() {
                          public void execute() { command.execute(); }
                       },
-                      null,
+                      new Operation() {
+                         public void execute() { onCancelled.execute(); }
+                      },
                       "Save",
                       "Don't Save",
                       true);   

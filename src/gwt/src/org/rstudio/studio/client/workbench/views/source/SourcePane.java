@@ -243,9 +243,13 @@ public class SourcePane extends Composite implements Display,
    public void showUnsavedChangesDialog(
          String title,
          ArrayList<UnsavedChangesTarget> dirtyTargets,
-         OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation)
+         OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation,
+         Command onCancelled)
    {
-      new UnsavedChangesDialog(title, dirtyTargets, saveOperation).showModal();
+      new UnsavedChangesDialog(title, 
+                               dirtyTargets,
+                               saveOperation,
+                               onCancelled).showModal();
    }
 
    private void setOverflowVisible(boolean visible)

@@ -393,7 +393,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
-   public void saveWithPrompt(Command onCompleted)
+   public void saveWithPrompt(Command onCompleted, Command onCancelled)
    {
       onCompleted.execute();
    }

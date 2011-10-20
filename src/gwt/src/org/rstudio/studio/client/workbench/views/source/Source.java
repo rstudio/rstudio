@@ -117,7 +117,8 @@ public class Source implements InsertSourceHandler,
       void showUnsavedChangesDialog(
             String title,
             ArrayList<UnsavedChangesTarget> dirtyTargets,
-            OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation);
+            OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation,
+            Command onCancelled);
 
       void ensureVisible();
 
@@ -580,7 +581,8 @@ public class Source implements InsertSourceHandler,
    private void saveEditingTargetsWithPrompt(
                                        String title,
                                        ArrayList<EditingTarget> editingTargets,
-                                       final Command onCompleted)
+                                       final Command onCompleted,
+                                       final Command onCancelled)
    {
       // execute on completed right away if the list is empty
       if (editingTargets.size() ==  0)
@@ -591,7 +593,7 @@ public class Source implements InsertSourceHandler,
       // if there is just one thing dirty then go straight to the save dialog
       else if (editingTargets.size() == 1)
       {
-         editingTargets.get(0).saveWithPrompt(onCompleted);
+         editingTargets.get(0).saveWithPrompt(onCompleted, onCancelled);
       }
       
       // otherwise use the multi save changes dialog
@@ -613,7 +615,8 @@ public class Source implements InsertSourceHandler,
                {
                   saveChanges(targets, onCompleted);
                }
-            }); 
+            },
+            onCancelled); 
       }
    }
    
@@ -694,7 +697,8 @@ public class Source implements InsertSourceHandler,
       // save targets
       saveEditingTargetsWithPrompt("Close All",
                                    dirtyTargets, 
-                                   closeAllTabsCommand);
+                                   closeAllTabsCommand,
+                                   null);
       
    }
    
@@ -714,11 +718,13 @@ public class Source implements InsertSourceHandler,
       return targets;
    }
    
-   public void saveWithPrompt(UnsavedChangesTarget target, Command onCompleted)
+   public void saveWithPrompt(UnsavedChangesTarget target, 
+                              Command onCompleted,
+                              Command onCancelled)
    {
       EditingTarget editingTarget = getEditingTargetForId(target.getId());
       if (editingTarget != null)
-         editingTarget.saveWithPrompt(onCompleted);
+         editingTarget.saveWithPrompt(onCompleted, onCancelled);
    }
    
    public void handleUnsavedChangesBeforeExit(

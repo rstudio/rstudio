@@ -49,10 +49,6 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-// TODO: do the propmpting on the client for unsaved changes
-
-// TODO: is there a way to save the round trip if the user quit via the UI?
-
 @Singleton
 public class ApplicationQuit implements SaveActionChangedHandler,
                                         HandleUnsavedChangesHandler
@@ -101,7 +97,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       // no unsaved changes at all
       if (saveAction != SaveAction.SAVEASK && unsavedSourceDocs.size() == 0)
       {
-         quitContext.onReadyToQuit(saveAction_.getAction() == SaveAction.SAVE);
+         quitContext.onReadyToQuit(saveAction == SaveAction.SAVE);
       }
       
       // just an unsaved environment
@@ -135,15 +131,15 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       else if (saveAction != SaveAction.SAVEASK && 
                unsavedSourceDocs.size() == 1)
       {
-         sourceShim_.saveWithPrompt(unsavedSourceDocs.get(0), new Command() {
-            @Override
-            public void execute()
-            {
-               quitContext.onReadyToQuit(
-                              saveAction_.getAction() == SaveAction.SAVE);
-               
-            }   
-         });
+         sourceShim_.saveWithPrompt(
+           unsavedSourceDocs.get(0), 
+           sourceShim_.revertUnsavedChangesBeforeExitCommand(new Command() {
+               @Override
+               public void execute()
+               {
+                  quitContext.onReadyToQuit(saveAction == SaveAction.SAVE);
+               }}),
+           null);
       }
       
       // multiple save targets
@@ -181,7 +177,12 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                         });
                }
                
-            }).showModal();
+            },
+            
+            // no cancel operation
+            null
+            
+            ).showModal();
       }
       
    }
@@ -200,9 +201,59 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    @Override
    public void onHandleUnsavedChanges(HandleUnsavedChangesEvent event)
    {
-      server_.handleUnsavedChangesCompleted(
-                              true, 
-                              new VoidServerRequestCallback());
+      // command which will be used to callback the server
+      class HandleUnsavedCommand implements Command
+      {
+         public HandleUnsavedCommand(boolean handled)
+         {
+            handled_ = handled;
+         }
+         
+         @Override
+         public void execute()
+         {
+            server_.handleUnsavedChangesCompleted(
+                                          handled_, 
+                                          new VoidServerRequestCallback());  
+         }
+         
+         private final boolean handled_;
+      };
+      
+      // get unsaved source docs
+      ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
+                                          sourceShim_.getUnsavedChanges();
+      
+      if (unsavedSourceDocs.size() == 1)
+      {
+         sourceShim_.saveWithPrompt(
+               unsavedSourceDocs.get(0), 
+               sourceShim_.revertUnsavedChangesBeforeExitCommand(
+                                             new HandleUnsavedCommand(true)),
+               new HandleUnsavedCommand(false));
+      }
+      else if (unsavedSourceDocs.size() > 1)
+      {
+         new UnsavedChangesDialog(
+               "Quit R Session",
+               unsavedSourceDocs,
+               new OperationWithInput<ArrayList<UnsavedChangesTarget>>() {
+                  @Override
+                  public void execute(ArrayList<UnsavedChangesTarget> targets)
+                  {
+                     // save specified documents and then quit
+                     sourceShim_.handleUnsavedChangesBeforeExit(
+                           targets,
+                           new HandleUnsavedCommand(true));
+                  }
+                },
+                new HandleUnsavedCommand(false)
+         ).showModal();
+      }
+      else
+      {
+         new HandleUnsavedCommand(true).execute();
+      }
    }
       
      

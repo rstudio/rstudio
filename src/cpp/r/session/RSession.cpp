@@ -24,6 +24,7 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
+#include <core/Scope.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include <core/FileSerializer.hpp>
@@ -96,6 +97,10 @@ bool s_initialized = false;
 
 // are in the middle of servicing a suspend request?
 bool s_suspended = false;
+
+// is any quit we receive interactive (i.e. from the invocation of the
+// q() function by user)
+bool s_quitIsInteractive = true;
 
 // temporarily suppress output
 bool s_suppressOuput = false;
@@ -1062,8 +1067,11 @@ extern "C" Rboolean R_Interactive;/* TRUE during interactive use*/
 #define _(String) String
 SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-   if (!s_callbacks.handleUnsavedChanges())
-      r::exec::error("User cancelled quit operation");
+   if (s_quitIsInteractive)
+   {
+      if (!s_callbacks.handleUnsavedChanges())
+         r::exec::error("User cancelled quit operation");
+   }
 
    const char *tmp;
    SA_TYPE ask=SA_DEFAULT;
@@ -1111,8 +1119,11 @@ SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
 #else
 SEXP posixQuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-   if (!s_callbacks.handleUnsavedChanges())
-      r::exec::error("User cancelled quit operation");
+   if (s_quitIsInteractive)
+   {
+      if (!s_callbacks.handleUnsavedChanges())
+         r::exec::error("User cancelled quit operation");
+   }
 
    return s_originalPosixQuitFunction(call, op, args, rho);
 }
@@ -1342,7 +1353,12 @@ bool browserContextActive()
 }
    
 void quit(bool saveWorkspace)
-{   
+{
+   // denote this as a non-interactive quit (so we don't need to
+   // prompt for unsaved changes)
+   s_quitIsInteractive = false;
+   core::scope::SetOnExit<bool> resetOnExit(&s_quitIsInteractive, true);
+
    // invoke quit
    std::string save = saveWorkspace ? "yes" : "no";
    Error error = r::exec::RFunction("q", save, 0, true).call();

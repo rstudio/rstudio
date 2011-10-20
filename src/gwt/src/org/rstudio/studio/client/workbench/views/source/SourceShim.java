@@ -180,10 +180,34 @@ public class SourceShim extends Composite
          return new ArrayList<UnsavedChangesTarget>();
    }
    
-   public void saveWithPrompt(UnsavedChangesTarget target, Command onCompleted)
+   public void saveWithPrompt(UnsavedChangesTarget target, 
+                               Command onCompleted,
+                               Command onCancelled)
    {
       if (source_ != null)
-         source_.saveWithPrompt(target, onCompleted);
+      {
+         source_.saveWithPrompt(target, onCompleted, onCancelled);
+      }
+      else
+      {
+         onCompleted.execute();
+      }
+   }
+   
+   public Command revertUnsavedChangesBeforeExitCommand(
+                                               final Command onCompleted)
+   {
+      return new Command()
+      {
+         @Override
+         public void execute()
+         {
+            handleUnsavedChangesBeforeExit(
+                                 new ArrayList<UnsavedChangesTarget>(),
+                                 onCompleted);  
+         }
+         
+      };
    }
    
    public void handleUnsavedChangesBeforeExit(
@@ -191,7 +215,13 @@ public class SourceShim extends Composite
                         Command onCompleted)
    {
       if (source_ != null)
+      {
          source_.handleUnsavedChangesBeforeExit(saveTargets, onCompleted);
+      }
+      else
+      {
+         onCompleted.execute();
+      }
    }
    
    void setSource(Source source)

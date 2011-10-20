@@ -16,6 +16,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
@@ -34,6 +35,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.IdentityColumn;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -49,9 +51,18 @@ public class UnsavedChangesDialog extends ModalDialog<ArrayList<UnsavedChangesTa
    public UnsavedChangesDialog(
          String title,
          ArrayList<UnsavedChangesTarget> dirtyTargets,
-         final OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation)
+         final OperationWithInput<ArrayList<UnsavedChangesTarget>> saveOperation,
+         final Command onCancelled)
    {
-      super(title, saveOperation);
+      super(title, 
+            saveOperation, 
+            onCancelled != null ? new Operation() {
+                                    @Override
+                                    public void execute()
+                                    {
+                                       onCancelled.execute();
+                                    }} :
+                                  null);
       targets_ = dirtyTargets;
       
       setOkButtonCaption("Save Selected");

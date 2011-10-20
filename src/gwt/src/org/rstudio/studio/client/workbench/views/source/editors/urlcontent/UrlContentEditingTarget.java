@@ -222,7 +222,7 @@ public class UrlContentEditingTarget implements EditingTarget
       onCompleted.execute();
    }
    
-   public void saveWithPrompt(Command onCompleted)
+   public void saveWithPrompt(Command onCompleted, Command onCancelled)
    {
       onCompleted.execute();
    }
