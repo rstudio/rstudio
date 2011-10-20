@@ -42,7 +42,7 @@ void environment(Options* pEnvironment)
    if (lpEnv == NULL)
    {
       LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
-      return env;
+      return;
    }
 
    // iterate over them
