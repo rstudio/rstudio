@@ -1,5 +1,6 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:v='urn:import:com.google.gwt.user.cellview.client'
              xmlns:vcs='urn:import:org.rstudio.studio.client.workbench.views.vcs'
              xmlns:vcs_diff='urn:import:org.rstudio.studio.client.workbench.views.vcs.diff'
              xmlns:vcs_dialog='urn:import:org.rstudio.studio.client.workbench.views.vcs.dialog'
@@ -20,6 +21,11 @@
                   <vcs_dialog:CommitListTable ui:field="commitTable_" width="100%" />
                </g:ScrollPanel>
             </g:center>
+            <g:south size="28">
+               <g:FlowPanel>
+                  <v:SimplePager ui:field="pager_"/>
+               </g:FlowPanel>
+            </g:south>
          </g:DockLayoutPanel>
       </g:north>
       <g:center>

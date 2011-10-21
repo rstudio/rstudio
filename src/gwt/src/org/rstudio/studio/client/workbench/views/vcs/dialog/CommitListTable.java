@@ -145,7 +145,7 @@ public class CommitListTable extends CellTable<CommitInfo>
 
    public void setData(ArrayList<CommitInfo> commits)
    {
-      setPageSize(commits.size());
+      setPageSize(100);
       setRowData(commits);
    }
 

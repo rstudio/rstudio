@@ -18,10 +18,14 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.cellview.client.SimplePager;
+import com.google.gwt.user.cellview.client.SimplePager.Resources;
+import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.LeftRightToggleButton;
 import org.rstudio.core.client.widget.Toolbar;
@@ -64,6 +68,10 @@ public class HistoryPanel extends Composite implements Display
       Styles styles = GWT.<Resources>create(Resources.class).styles();
       commitTable_ = new CommitListTable(styles);
       splitPanel_ = new SplitLayoutPanel(4);
+      pager_ = new SimplePager(
+            TextLocation.CENTER,
+            GWT.<SimplePager.Resources>create(SimplePager.Resources.class),
+            true, 500, true);
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
@@ -91,6 +99,9 @@ public class HistoryPanel extends Composite implements Display
       topToolbar_.addRightWidget(new ToolbarButton(
             "Push", commands.vcsPush().getImageResource(),
             commands.vcsPush()));
+
+      pager_.setPageSize(100);
+      pager_.setDisplay(commitTable_);
 
    }
 
@@ -124,6 +135,12 @@ public class HistoryPanel extends Composite implements Display
       return refreshButton_;
    }
 
+   @Override
+   public HasData<CommitInfo> getDataDisplay()
+   {
+      return commitTable_;
+   }
+
    @UiField(provided = true)
    SplitLayoutPanel splitPanel_;
    @UiField
@@ -134,6 +151,8 @@ public class HistoryPanel extends Composite implements Display
    CommitDetail commitDetail_;
    @UiField
    ScrollPanel detailScrollPanel_;
+   @UiField(provided = true)
+   SimplePager pager_;
 
    private LeftRightToggleButton switchViewButton_;
 

@@ -220,6 +220,13 @@ public:
                           std::string* pOutput,
                           std::string* pStdErr)
    {
+      return runCommand(command.string(), pOutput, pStdErr);
+   }
+
+   core::Error runCommand(const std::string& command,
+                          std::string* pOutput,
+                          std::string* pStdErr)
+   {
       std::string cmd = shell_utils::join(
             ShellCommand(std::string("cd")) << root_,
             command);
@@ -255,9 +262,17 @@ public:
    }
 
    virtual core::Error log(const std::string& rev,
+                           int skip,
                            int maxentries,
                            std::vector<CommitInfo>* pOutput)
    {
+      return Success();
+   }
+
+   virtual core::Error logLength(const std::string& rev,
+                                 int* pLength)
+   {
+      *pLength = 0;
       return Success();
    }
 
@@ -281,7 +296,7 @@ ShellCommand git()
    if (!s_gitBinDir.empty())
    {
       FilePath fullPath = FilePath(s_gitBinDir).childPath("git");
-      return ShellCommand(fullPath.absolutePath());
+      return ShellCommand(fullPath);
    }
    else
       return ShellCommand("git");
@@ -760,7 +775,34 @@ public:
       }
    }
 
+   core::Error logLength(const std::string &rev, int *pLength)
+   {
+      ShellCommand cmd = git() << "log";
+      cmd << "--pretty=oneline";
+      if (!rev.empty())
+         cmd << rev;
+
+      ShellCommand wcCmd("wc");
+      if (!s_gitBinDir.empty())
+      {
+         FilePath fullPath = FilePath(s_gitBinDir).childPath("wc");
+         wcCmd = ShellCommand(fullPath);
+      }
+      wcCmd << "-l";
+
+      std::string output;
+      Error error = runCommand(shell_utils::pipe(cmd, wcCmd),
+                               &output, NULL);
+      if (error)
+         return error;
+
+      boost::algorithm::trim(output);
+      *pLength = safe_convert::stringTo<int>(output, 0);
+      return Success();
+   }
+
    core::Error log(const std::string& rev,
+                   int skip,
                    int maxentries,
                    std::vector<CommitInfo>* pOutput)
    {
@@ -769,8 +811,10 @@ public:
       ShellCommand cmd = git() << "log";
       cmd << "--pretty=raw" << "--abbrev-commit" << "--abbrev=8"
             << "--decorate=full";
+      if (skip > 0)
+         cmd << "--skip=" + boost::lexical_cast<std::string>(skip);
       if (maxentries >= 0)
-         cmd << "-" + boost::lexical_cast<std::string>(maxentries);
+         cmd << "--max-count=" + boost::lexical_cast<std::string>(maxentries);
       if (!rev.empty())
          cmd << rev;
 
@@ -1321,17 +1365,37 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsHistoryCount(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
+{
+   std::string rev;
+   Error error = json::readParams(request.params, &rev);
+   if (error)
+      return error;
+
+   int count;
+   error = s_pVcsImpl_->logLength(rev, &count);
+   if (error)
+      return error;
+
+   json::Object result;
+   result["count"] = count;
+   pResponse->setResult(result);
+
+   return Success();
+}
+
 Error vcsHistory(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    std::string rev;
-   int maxentries;
-   Error error = json::readParams(request.params, &rev, &maxentries);
+   int skip, maxentries;
+   Error error = json::readParams(request.params, &rev, &skip, &maxentries);
    if (error)
       return error;
 
    std::vector<CommitInfo> commits;
-   error = s_pVcsImpl_->log(rev, maxentries, &commits);
+   error = s_pVcsImpl_->log(rev, skip, maxentries, &commits);
    if (error)
       return error;
 
@@ -2047,6 +2111,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_pull", vcsPull))
       (bind(registerRpcMethod, "vcs_diff_file", vcsDiffFile))
       (bind(registerRpcMethod, "vcs_apply_patch", vcsApplyPatch))
+      (bind(registerRpcMethod, "vcs_history_count", vcsHistoryCount))
       (bind(registerRpcMethod, "vcs_history", vcsHistory))
       (bind(registerRpcMethod, "vcs_execute_command", vcsExecuteCommand))
       (bind(registerRpcMethod, "vcs_show", vcsShow));

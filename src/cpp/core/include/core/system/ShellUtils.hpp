@@ -17,9 +17,10 @@
 #include <string>
 #include <vector>
 
-namespace core {
+#include <core/FilePath.hpp>
+#include <core/StringUtils.hpp>
 
-class FilePath;
+namespace core {
 
 namespace shell_utils {
 
@@ -29,6 +30,8 @@ std::string escape(const FilePath& path);
 std::string join(const std::string& command1, const std::string& command2);
 std::string join_and(const std::string& command1, const std::string& command2);
 std::string join_or(const std::string& command1, const std::string& command2);
+
+std::string pipe(const std::string& command1, const std::string& command2);
 
 std::string sendStdErrToStdOut(const std::string& command);
 std::string sendAllOutputToNull(const std::string& command);
@@ -40,6 +43,11 @@ const FilePath& devnull();
 class ShellCommand
 {
 public:
+   explicit ShellCommand(const core::FilePath& filePath)
+   {
+      output_ = core::string_utils::utf8ToSystem(filePath.absolutePath());
+   }
+
    explicit ShellCommand(const std::string& program)
    {
       output_ = program;

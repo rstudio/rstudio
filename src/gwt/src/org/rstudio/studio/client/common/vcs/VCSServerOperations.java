@@ -18,6 +18,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 
 import java.util.ArrayList;
@@ -79,11 +80,14 @@ public interface VCSServerOperations extends CryptoServerOperations
    void vcsApplyPatch(String patch, PatchMode mode,
                       ServerRequestCallback<Void> requestCallback);
 
+   void vcsHistoryCount(String spec,
+                        ServerRequestCallback<CommitCount> requestCallback);
    /**
     * @param spec Revision list or description. "" for default.
     * @param maxentries Limit the number of entries returned. -1 for no limit.
     */
    void vcsHistory(String spec,
+                   int skip,
                    int maxentries,
                    ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback);
 

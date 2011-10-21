@@ -66,6 +66,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListRe
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.PublishPdfResult;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 import org.rstudio.studio.client.workbench.views.workspace.model.*;
 
@@ -1408,14 +1409,22 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, VCS_APPLY_PATCH, params, requestCallback);
    }
 
+   public void vcsHistoryCount(String spec,
+                               ServerRequestCallback<CommitCount> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, VCS_HISTORY_COUNT, spec, requestCallback);
+   }
+
    @Override
    public void vcsHistory(String spec,
+                          int skip,
                           int maxentries,
                           ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(spec));
-      params.set(1, new JSONNumber(maxentries));
+      params.set(1, new JSONNumber(skip));
+      params.set(2, new JSONNumber(maxentries));
       sendRequest(RPC_SCOPE, VCS_HISTORY, params, requestCallback);
    }
 
@@ -2014,6 +2023,7 @@ public class RemoteServer implements Server
    private static final String ASKPASS_COMPLETED = "askpass_completed";
    private static final String VCS_DIFF_FILE = "vcs_diff_file";
    private static final String VCS_APPLY_PATCH = "vcs_apply_patch";
+   private static final String VCS_HISTORY_COUNT = "vcs_history_count";
    private static final String VCS_HISTORY = "vcs_history";
    private static final String VCS_EXECUTE_COMMAND = "vcs_execute_command";
    private static final String VCS_SHOW = "vcs_show";

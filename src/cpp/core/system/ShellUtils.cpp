@@ -18,6 +18,11 @@
 namespace core {
 namespace shell_utils {
 
+std::string pipe(const std::string& command1, const std::string& command2)
+{
+   return command1 + " | " + command2;
+}
+
 ShellCommand& ShellCommand::operator<<(const std::string& arg)
 {
    output_.push_back(' ');

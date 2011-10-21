@@ -18,6 +18,7 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Invalidation;
@@ -41,6 +42,8 @@ public class HistoryPresenter
       CommitDetailDisplay getCommitDetail();
 
       HasClickHandlers getRefreshButton();
+
+      HasData<CommitInfo> getDataDisplay();
    }
 
    public interface CommitListDisplay
@@ -60,10 +63,12 @@ public class HistoryPresenter
 
    @Inject
    public HistoryPresenter(VCSServerOperations server,
-                           final Display view)
+                           final Display view,
+                           HistoryAsyncDataProvider provider)
    {
       server_ = server;
       view_ = view;
+      provider_ = provider;
 
       view_.getCommitList().addSelectionChangeHandler(new SelectionChangeEvent.Handler()
       {
@@ -110,16 +115,8 @@ public class HistoryPresenter
 
    private void refreshHistory()
    {
-      server_.vcsHistory("",
-                         -1,
-                         new SimpleRequestCallback<RpcObjectList<CommitInfo>>()
-      {
-         @Override
-         public void onResponseReceived(RpcObjectList<CommitInfo> response)
-         {
-            view_.setData(response.toArrayList());
-         }
-      });
+      provider_.refreshCount();
+      provider_.onRangeChanged(view_.getDataDisplay());
    }
 
    public HandlerRegistration addSwitchViewHandler(
@@ -143,10 +140,17 @@ public class HistoryPresenter
 
    public void onShow()
    {
-      refreshHistory();
+      if (!initialized_)
+      {
+         initialized_ = true;
+         provider_.addDataDisplay(view_.getDataDisplay());
+         provider_.refreshCount();
+      }
    }
 
    private final VCSServerOperations server_;
    private final Display view_;
+   private final HistoryAsyncDataProvider provider_;
    private final Invalidation invalidation_ = new Invalidation();
+   private boolean initialized_;
 }
