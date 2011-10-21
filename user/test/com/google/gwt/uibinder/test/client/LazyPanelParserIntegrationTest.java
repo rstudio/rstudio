@@ -18,19 +18,30 @@ package com.google.gwt.uibinder.test.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.LazyPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Integration test for CellPanelParser parsing with the lazy widget builder.
+ * Tests SafeUri parsing with the lazy widget builder.
  */
-public class CellPanelParserIntegrationTest extends GWTTestCase {
+public class LazyPanelParserIntegrationTest extends GWTTestCase {
   static class Renderable extends Composite {
     interface Binder extends UiBinder<Widget, Renderable> {
     }
 
     private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField LazyPanel generated;
+    final @UiField(provided = true) LazyPanel provided = new LazyPanel() {
+      @Override
+      protected Widget createWidget() {
+        return new Label();
+      }
+    };
 
     public Renderable() {
       initWidget(BINDER.createAndBindUi(this));

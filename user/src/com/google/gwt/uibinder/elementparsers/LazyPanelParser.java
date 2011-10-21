@@ -37,6 +37,10 @@ public class LazyPanelParser implements ElementParser {
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
 
+    if (writer.getOwnerClass().getUiField(fieldName).isProvided()) {
+      return;
+    }
+
     if (!writer.useLazyWidgetBuilders()) {
       writer.die("LazyPanel only works with UiBinder.useLazyWidgetBuilders enabled.");
     }
