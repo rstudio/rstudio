@@ -25,7 +25,7 @@ namespace supervisor {
 
 core::Error attachToSourceDatabase(core::FilePath* pSessionDir);
 
-core::Error detachFromSourceDatabase(const core::FilePath& sessionDir);
+core::Error detachFromSourceDatabase();
 
 } // namespace supervisor
 } // namespace source_database

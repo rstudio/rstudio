@@ -39,6 +39,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include "SessionSourceDatabaseSupervisor.hpp"
+
 // NOTE: if a file is deleted then its properties database entry is not
 // deleted. this has two implications:
 //
@@ -65,7 +67,8 @@ struct PropertiesDatabase
 
 Error getPropertiesDatabase(PropertiesDatabase* pDatabase)
 {
-   pDatabase->path = path().complete("properties");
+   pDatabase->path = module_context::scopedScratchPath().complete(
+                                          "source_database_v2/properties");
    Error error = pDatabase->path.ensureDirectory();
    if (error)
       return error;
@@ -380,9 +383,15 @@ bool sortByCreated(const boost::shared_ptr<SourceDocument>& pDoc1,
    return pDoc1->created() < pDoc2->created();
 }
 
+namespace {
+
+FilePath s_sourceDBPath;
+
+} // anonymous namespace
+
 FilePath path()
 {
-   return module_context::scopedScratchPath().complete("source_database");
+   return s_sourceDBPath;
 }
    
 Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc)
@@ -498,10 +507,24 @@ Error removeAll()
    return Success();
 }
 
+namespace {
+
+void onShutdown(bool)
+{
+   Error error = supervisor::detachFromSourceDatabase();
+   if (error)
+      LOG_ERROR(error);
+}
+
+} // anonymous namespace
+
 Error initialize()
 {
-   // make sure the source database exists
-   return source_database::path().ensureDirectory();
+   // signup for the shutdown event
+   module_context::events().onShutdown.connect(onShutdown);
+
+   // provision a source database directory
+   return supervisor::attachToSourceDatabase(&s_sourceDBPath);
 }
 
 } // namespace source_database

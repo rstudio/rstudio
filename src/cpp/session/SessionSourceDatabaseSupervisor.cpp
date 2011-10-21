@@ -194,7 +194,7 @@ FilePath generateSessionDirPath()
 bool isNotSessionDir(const FilePath& filePath)
 {
    return !filePath.isDirectory() || !boost::algorithm::starts_with(
-                                                filePath.absolutePath(),
+                                                filePath.filename(),
                                                 kSessionDirPrefix);
 }
 
@@ -208,7 +208,8 @@ Error enumerateSessionDirs(std::vector<FilePath>* pSessionDirs)
    // clean out non session dirs
    pSessionDirs->erase(std::remove_if(pSessionDirs->begin(),
                                       pSessionDirs->end(),
-                                      isNotSessionDir));
+                                      isNotSessionDir),
+                       pSessionDirs->end());
 
    // return success
    return Success();
@@ -250,6 +251,16 @@ Error createSessionDir(FilePath* pSessionDir)
 
 Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
 {
+   // move properties (if any) into new source database root
+   FilePath propsPath = oldSourceDatabaseRoot().complete("properties");
+   if (propsPath.exists())
+   {
+      FilePath newPropsPath = sourceDatabaseRoot().complete("properties");
+      Error error = propsPath.move(newPropsPath);
+      if (error)
+         LOG_ERROR(error);
+   }
+
    // move the old source database into a new dir
    *pSessionDir = generateSessionDirPath();
    Error error = oldSourceDatabaseRoot().move(*pSessionDir);
@@ -360,6 +371,10 @@ Error attachToSourceDatabase(FilePath* pSessionDir)
 
 Error detachFromSourceDatabase()
 {
+   // confirm that we are attached
+   if (s_sessionDir.empty())
+      return core::pathNotFoundError(ERROR_LOCATION);
+
    // list all current source docs
    std::vector<boost::shared_ptr<SourceDocument> > sourceDocs;
    Error error = source_database::list(&sourceDocs);
