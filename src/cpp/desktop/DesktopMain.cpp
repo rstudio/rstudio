@@ -15,7 +15,18 @@
 
 // TODO: make sure file assocs still open in existing (.R)
 
-// TODO: open -a RStudio on the Mac
+//  - Mac: yes (binds to any running instance)
+
+//  - Windows/Ubuntu:
+//             only when first instances was opened with assoc
+//             (sendMessage has side effect of becoming server).
+//             after this it appears to use a stack of most recently opened
+
+// TODO: windows: access denied to removing the session src database
+
+// TODO: open project in new window command
+
+// TODO: open -a RStudio on the Mac (test on other system)
 
 #include <QtGui>
 #include <QtWebKit>
