@@ -407,11 +407,14 @@ public class Projects implements OpenProjectFileHandler,
    @Override
    public void onOpenProjectFile(final OpenProjectFileEvent event)
    {
-      // no-op for current project
+      // project options for current project
       FileSystemItem projFile = event.getFile();
       if (projFile.getPath().equals(
                   session_.getSessionInfo().getActiveProjectFile()))
+      {
+         onProjectOptions();
          return;
+      }
       
       // prompt to confirm
       String projectPath = projFile.getParentPathString();

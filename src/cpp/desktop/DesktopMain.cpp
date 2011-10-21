@@ -13,14 +13,9 @@
 
 // TODO: test on other platforms
 
+// TODO: make sure file assocs still open in existing (.R)
+
 // TODO: open -a RStudio on the Mac
-
-// TODO: no longer possible for projects to come in through file
-// associations. nix that codepath
-
-// TODO: click on project self should open options
-
-// TODO: consider whether .Rdata should also not re-activate existing
 
 #include <QtGui>
 #include <QtWebKit>

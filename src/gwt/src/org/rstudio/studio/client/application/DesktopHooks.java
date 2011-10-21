@@ -122,18 +122,15 @@ public class DesktopHooks
       if (file.isDirectory())
          return;
       
-      // special handling for open an Rproject on top of an 
-      // an existing session
+      // this used to be possible but shouldn't be anymore
+      // (since we screen out .rproj from calling sendMessage
+      // within DesktopMain.cpp
       if (file.getExtension().equalsIgnoreCase(".rproj"))
-      {
-         events_.fireEvent(new OpenProjectFileEvent(file));
-      }
-      else
-      {
-         // open the file. pass false for second param to prevent
-         // the default handler (the browser) from taking it
-         fileTypeRegistry_.openFile(file, false);
-      }
+         return;
+      
+      // open the file. pass false for second param to prevent
+      // the default handler (the browser) from taking it
+      fileTypeRegistry_.openFile(file, false);
    }
    
    void quitR()
