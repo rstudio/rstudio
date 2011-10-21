@@ -13,8 +13,14 @@
 
 #include "DesktopPosixApplication.hpp"
 
+#include <core/FilePath.hpp>
 
+#include <QProcess>
 #include <QFileOpenEvent>
+
+#include "DesktopOptions.hpp"
+
+using namespace core;
 
 namespace desktop {
 
@@ -37,7 +43,29 @@ bool PosixApplication::event(QEvent* pEvent)
       {
          // otherwise we are already running so this is an apple event
          // targeted at opening a file in an existing instance
-         openFileRequest(filename);
+
+         // if this is a project then re-post the request back to
+         // another instance using the command line (this is to
+         // circumvent the fact that the first RStudio application
+         // launched on OSX gets all of the apple events). note that
+         // we don't make this code conditional for __APPLE__ because
+         // we'd need the same logic if other platforms started posting
+         // FileOpen back to existing instances (e.g. via DDE)
+
+         FilePath filePath(filename.toUtf8().constData());
+         if (filePath.exists() && filePath.extensionLowerCase() == ".rproj")
+         {
+            // launch the new instance
+            QStringList args;
+            args.append(filename);
+            QString exePath = QString::fromUtf8(
+               desktop::options().executablePath().absolutePath().c_str());
+            QProcess::startDetached(exePath, args);
+         }
+         else
+         {
+            openFileRequest(filename);
+         }
       }
 
       return true;
@@ -47,6 +75,5 @@ bool PosixApplication::event(QEvent* pEvent)
       return QtSingleApplication::event(pEvent);
    }
 }
-
 
 } // namespace desktop

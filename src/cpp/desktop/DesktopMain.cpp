@@ -11,6 +11,21 @@
  *
  */
 
+// TODO: test on other platforms
+
+// TODO: open -a RStudio on the Mac
+
+// TODO: file-system project double-click doesn't activate new one
+//       (this is because it is sending the message to the other?).
+//       I think we have a change for this -- must activate explicitly!
+
+// TODO: no longer possible for projects to come in through file
+// associations. nix that codepath
+
+// TODO: click on project self should open options
+
+// TODO: consider whether .Rdata should also not re-activate existing
+
 #include <QtGui>
 #include <QtWebKit>
 
@@ -172,6 +187,15 @@ QString verifyAndNormalizeFilename(QString filename)
       return QString();
 }
 
+bool isNonProjectFilename(QString filename)
+{
+   if (filename.isNull() || filename.isEmpty())
+      return false;
+
+   FilePath filePath(filename.toUtf8().constData());
+   return filePath.exists() && filePath.extensionLowerCase() != ".rproj";
+}
+
 bool dummy(const FileInfo& file)
 {
    return true;
@@ -212,15 +236,26 @@ int main(int argc, char* argv[])
       pApp->processEvents();
       filename = verifyAndNormalizeFilename(
                               pAppLaunch->startupOpenFileRequest());
-#else
-      // get filename from command line arguments
-      if (pApp->arguments().size() > 1)
-         filename = verifyAndNormalizeFilename(pApp->arguments().last());
 #endif
+      // allow all platforms (including OSX) to check the command line.
+      // we include OSX because the way Qt handles apple events is to
+      // re-route them to the first instance to register for events. in
+      // this case (for projects) we use this to initiate a launch
+      // of the application with the project filename on the command line
+      if (filename.isEmpty())
+      {
+         // get filename from command line arguments
+         if (pApp->arguments().size() > 1)
+            filename = verifyAndNormalizeFilename(pApp->arguments().last());
+      }
 
-      // try to activate existing instance...exit if we do
-      if (pAppLaunch->sendMessage(filename))
-         return 0;
+      // if we have a filename and it is NOT a project file then see
+      // if we can open it within an existing instance
+      if (isNonProjectFilename(filename))
+      {
+         if (pAppLaunch->sendMessage(filename))
+            return 0;
+      }
 
       pApp->setAttribute(Qt::AA_MacDontSwapCtrlAndMeta);
 

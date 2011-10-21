@@ -190,6 +190,18 @@ void Options::setPreferR64(bool preferR64)
 }
 #endif
 
+FilePath Options::executablePath() const
+{
+   if (executablePath_.empty())
+   {
+      Error error = core::system::executablePath(QApplication::argc(),
+                                                 QApplication::argv(),
+                                                 &executablePath_);
+      if (error)
+         LOG_ERROR(error);
+   }
+   return executablePath_;
+}
 
 FilePath Options::supportingFilePath() const
 {

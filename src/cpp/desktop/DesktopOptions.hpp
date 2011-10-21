@@ -53,6 +53,7 @@ public:
    void setPreferR64(bool preferR64);
 #endif
 
+   core::FilePath executablePath() const;
    core::FilePath supportingFilePath() const;
 
    QStringList ignoredUpdateVersions() const;
@@ -72,6 +73,7 @@ private:
    friend Options& options();
 
    QSettings settings_;
+   mutable core::FilePath executablePath_;
    mutable core::FilePath supportingFilePath_;
    mutable QString portNumber_;
 };
