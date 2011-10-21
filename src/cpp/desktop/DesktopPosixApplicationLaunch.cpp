@@ -62,6 +62,13 @@ void ApplicationLaunch::setActivationWindow(QWidget* pWindow)
    app()->setActivationWindow(pWindow, true);
 }
 
+
+void ApplicationLaunch::activateWindow()
+{
+   app()->activateWindow();
+}
+
+
 bool ApplicationLaunch::sendMessage(QString filename)
 {
    return app()->sendMessage(filename);

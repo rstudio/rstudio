@@ -46,6 +46,16 @@ UINT wmGetMainWindowHandle()
    return msg;
 }
 
+void activate(HWND hWnd)
+{
+   HWND hwndPopup = ::GetLastActivePopup(hWnd);
+   if (::IsWindow(hwndPopup))
+      hWnd = hwndPopup;
+   ::SetForegroundWindow(hWnd);
+   if (::IsIconic(hWnd))
+      ::ShowWindow(hWnd, SW_RESTORE);
+}
+
 } // anonymous namespace
 
 ApplicationLaunch::ApplicationLaunch() :
@@ -70,6 +80,11 @@ void ApplicationLaunch::init(QString,
 void ApplicationLaunch::setActivationWindow(QWidget* pWindow)
 {
    pMainWindow_ = pWindow;
+}
+
+void ApplicationLaunch::activateWindow()
+{
+   activate(winId());
 }
 
 QString ApplicationLaunch::startupOpenFileRequest() const

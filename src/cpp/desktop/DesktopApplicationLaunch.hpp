@@ -33,6 +33,8 @@ public:
 
    void setActivationWindow(QWidget* pWindow);
 
+   void activateWindow();
+
    QString startupOpenFileRequest() const;
 
 protected:

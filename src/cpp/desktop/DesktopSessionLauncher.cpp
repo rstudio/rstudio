@@ -114,6 +114,7 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
 
 
    pMainWindow_->show();
+   pAppLaunch->activateWindow();
    pMainWindow_->loadUrl(url);
 
    return Success();

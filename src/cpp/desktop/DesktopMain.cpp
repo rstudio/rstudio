@@ -15,10 +15,6 @@
 
 // TODO: open -a RStudio on the Mac
 
-// TODO: file-system project double-click doesn't activate new one
-//       (this is because it is sending the message to the other?).
-//       I think we have a change for this -- must activate explicitly!
-
 // TODO: no longer possible for projects to come in through file
 // associations. nix that codepath
 
