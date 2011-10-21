@@ -173,6 +173,7 @@ Error releaseLock()
    try
    {
       s_sessionDirLock.unlock();
+      s_sessionDirLock = file_lock();
       return Success();
    }
    catch(interprocess_exception& e)
@@ -183,6 +184,24 @@ Error releaseLock()
    }
 
    return Success();
+}
+
+Error removeSessionDir(const FilePath& sessionDir)
+{
+   // first remove children
+   std::vector<FilePath> children;
+   Error error = sessionDir.children(&children);
+   if (error)
+      LOG_ERROR(error);
+   BOOST_FOREACH(const FilePath& filePath, children)
+   {
+      error = filePath.remove();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // then remove dir
+   return sessionDir.remove();
 }
 
 FilePath generateSessionDirPath()
@@ -421,7 +440,7 @@ Error detachFromSourceDatabase()
       LOG_ERROR(error);
 
    // remove the session directory
-   return s_sessionDir.remove();
+   return removeSessionDir(s_sessionDir);
 }
 
 

@@ -35,6 +35,8 @@ public:
 
    void activateWindow();
 
+   void attemptToRegisterPeer();
+
    QString startupOpenFileRequest() const;
 
 protected:

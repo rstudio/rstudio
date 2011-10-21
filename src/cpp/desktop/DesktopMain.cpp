@@ -11,22 +11,11 @@
  *
  */
 
-// TODO: test on other platforms
-
-// TODO: make sure file assocs still open in existing (.R)
-
-//  - Mac: yes (binds to any running instance)
-
-//  - Windows/Ubuntu:
-//             only when first instances was opened with assoc
-//             (sendMessage has side effect of becoming server).
-//             after this it appears to use a stack of most recently opened
-
-// TODO: windows: access denied to removing the session src database
-
 // TODO: open project in new window command
 
-// TODO: open -a RStudio on the Mac (test on other system)
+// TODO: open -a RStudio on the Mac (reboot / test on other system)
+
+// TODO: periodic crashing when switching projects on ubuntu (enable cores)
 
 #include <QtGui>
 #include <QtWebKit>
@@ -257,6 +246,11 @@ int main(int argc, char* argv[])
       {
          if (pAppLaunch->sendMessage(filename))
             return 0;
+      }
+      else
+      {
+         // try to register ourselves as a peer for others
+         pAppLaunch->attemptToRegisterPeer();
       }
 
       pApp->setAttribute(Qt::AA_MacDontSwapCtrlAndMeta);
