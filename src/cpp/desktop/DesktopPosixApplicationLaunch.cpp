@@ -68,6 +68,12 @@ void ApplicationLaunch::activateWindow()
    app()->activateWindow();
 }
 
+void ApplicationLaunch::attemptToRegisterPeer()
+{
+   // side-effect of is running is to try to register ourselves as a peer
+   app()->isRunning();
+}
+
 
 bool ApplicationLaunch::sendMessage(QString filename)
 {

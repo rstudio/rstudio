@@ -17,14 +17,19 @@
 
 //  - Mac: yes (binds to any running instance)
 
+//  - Ubuntu: only the first app instance run can bind to the open file
+
 //  - Windows/Ubuntu:
 //             only when first instances was opened with assoc
 //             (sendMessage has side effect of becoming server).
 //             after this it appears to use a stack of most recently opened
 
 // TODO: windows: access denied to removing the session src database
+//                (likely due to not closing the lockfile)
 
 // TODO: open project in new window command
+
+// TODO: test crash recovery on all platforms
 
 // TODO: open -a RStudio on the Mac (test on other system)
 
@@ -257,6 +262,11 @@ int main(int argc, char* argv[])
       {
          if (pAppLaunch->sendMessage(filename))
             return 0;
+      }
+      else
+      {
+         // try to register ourselves as a peer for others
+         pAppLaunch->attemptToRegisterPeer();
       }
 
       pApp->setAttribute(Qt::AA_MacDontSwapCtrlAndMeta);

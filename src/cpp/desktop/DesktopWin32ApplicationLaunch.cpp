@@ -118,6 +118,13 @@ bool acquireLock()
 
 } // anonymous namespace
 
+
+void ApplicationLaunch::attemptToRegisterPeer()
+{
+   acquireLock();
+}
+
+
 bool ApplicationLaunch::sendMessage(QString filename)
 {
    if (acquireLock())
