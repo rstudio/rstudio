@@ -11,27 +11,11 @@
  *
  */
 
-// TODO: test on other platforms
-
-// TODO: make sure file assocs still open in existing (.R)
-
-//  - Mac: yes (binds to any running instance)
-
-//  - Ubuntu: only the first app instance run can bind to the open file
-
-//  - Windows/Ubuntu:
-//             only when first instances was opened with assoc
-//             (sendMessage has side effect of becoming server).
-//             after this it appears to use a stack of most recently opened
-
-// TODO: windows: access denied to removing the session src database
-//                (likely due to not closing the lockfile)
-
 // TODO: open project in new window command
 
-// TODO: test crash recovery on all platforms
+// TODO: open -a RStudio on the Mac (reboot / test on other system)
 
-// TODO: open -a RStudio on the Mac (test on other system)
+// TODO: periodic crashing when switching projects on ubuntu (enable cores)
 
 #include <QtGui>
 #include <QtWebKit>
