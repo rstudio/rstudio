@@ -676,4 +676,10 @@ bool GwtCallback::collectPendingSwitchToProjectRequest()
    }
 }
 
+void GwtCallback::openProjectInNewWindow(QString projectFilePath)
+{
+   launchProjectInNewInstance(resolveAliasedPath(projectFilePath));
+}
+
+
 } // namespace desktop

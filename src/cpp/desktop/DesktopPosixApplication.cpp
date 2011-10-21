@@ -19,6 +19,7 @@
 #include <QFileOpenEvent>
 
 #include "DesktopOptions.hpp"
+#include "DesktopUtils.hpp"
 
 using namespace core;
 
@@ -55,12 +56,7 @@ bool PosixApplication::event(QEvent* pEvent)
          FilePath filePath(filename.toUtf8().constData());
          if (filePath.exists() && filePath.extensionLowerCase() == ".rproj")
          {
-            // launch the new instance
-            QStringList args;
-            args.append(filename);
-            QString exePath = QString::fromUtf8(
-               desktop::options().executablePath().absolutePath().c_str());
-            QProcess::startDetached(exePath, args);
+            launchProjectInNewInstance(filename);
          }
          else
          {

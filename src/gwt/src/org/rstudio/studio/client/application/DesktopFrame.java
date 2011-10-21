@@ -73,4 +73,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void cleanClipboard();
    
    void setSwitchToProjectPending(boolean switchPending);
+   
+   void openProjectInNewWindow(String projectFilePath);
 }

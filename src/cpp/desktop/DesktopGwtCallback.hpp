@@ -98,6 +98,8 @@ public slots:
 
    void setSwitchToProjectPending(bool switchPending);
 
+   void openProjectInNewWindow(QString projectFilePath);
+
 private:
    void doAction(QKeySequence::StandardKey key);
    QWebView* webView();

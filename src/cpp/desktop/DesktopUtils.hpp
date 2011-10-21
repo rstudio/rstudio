@@ -34,6 +34,8 @@ void showWarning(QWidget *parent, const QString &title, const QString& text);
 
 void showInfo(QWidget* parent, const QString& title, const QString& text);
 
+void launchProjectInNewInstance(QString projectFilename);
+
 } // namespace desktop
 
 #endif // DESKTOP_UTILS_HPP

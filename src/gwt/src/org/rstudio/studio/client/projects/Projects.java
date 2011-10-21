@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -90,7 +91,7 @@ public class Projects implements OpenProjectFileHandler,
       pUIPrefs_ = pUIPrefs;
       
       binder.bind(commands, this);
-      
+       
       eventBus.addHandler(OpenProjectErrorEvent.TYPE, this);
       eventBus.addHandler(SwitchToProjectEvent.TYPE, this);
       eventBus.addHandler(OpenProjectFileEvent.TYPE, this);
@@ -108,7 +109,11 @@ public class Projects implements OpenProjectFileHandler,
             boolean hasProject = activeProjectFile != null;
             commands.closeProject().setEnabled(hasProject);
             commands.projectOptions().setEnabled(hasProject);
-              
+            
+            // disable the open project in new window command in web mode
+            if (!Desktop.isDesktop())
+               commands.openProjectInNewWindow().remove();
+            
             // maintain mru
             if (hasProject)
                mruList.add(activeProjectFile);
@@ -316,13 +321,7 @@ public class Projects implements OpenProjectFileHandler,
                                       new ApplicationQuit.QuitContext() {
          public void onReadyToQuit(final boolean saveChanges)
          {
-            // choose project file
-            fileDialogs_.openFile(
-               "Open Project", 
-               fsContext_, 
-               FileSystemItem.createDir(
-                     pUIPrefs_.get().defaultProjectLocation().getValue()),
-               "R Projects (*.Rproj)",
+            showOpenProjectDialog(
                new ProgressOperationWithInput<FileSystemItem>() 
                {
                   @Override
@@ -336,13 +335,37 @@ public class Projects implements OpenProjectFileHandler,
                      
                      // perform quit
                      applicationQuit_.performQuit(saveChanges, input.getPath());
-                  }
-                  
+                  }   
                });
             
          }
       }); 
    }
+   
+   @Handler
+   public void onOpenProjectInNewWindow()
+   {
+      showOpenProjectDialog(
+         new ProgressOperationWithInput<FileSystemItem>() 
+         {
+            @Override
+            public void execute(final FileSystemItem input,
+                                ProgressIndicator indicator)
+            {
+               indicator.onCompleted();
+               
+               if (input == null)
+                  return;
+               
+               // call the desktop to open the project (since it is
+               // a conventional foreground gui application it has
+               // less chance of running afowl of desktop app creation
+               // & activation restrictions)
+               Desktop.getFrame().openProjectInNewWindow(input.getPath());
+            }   
+         });
+   }
+   
    
    
    @Handler
@@ -459,6 +482,19 @@ public class Projects implements OpenProjectFileHandler,
          {
             applicationQuit_.performQuit(saveChanges, projectFilePath);
          }}); 
+   }
+   
+   private void showOpenProjectDialog(
+                  ProgressOperationWithInput<FileSystemItem> onCompleted)
+   {
+      // choose project file
+      fileDialogs_.openFile(
+         "Open Project", 
+         fsContext_, 
+         FileSystemItem.createDir(
+               pUIPrefs_.get().defaultProjectLocation().getValue()),
+         "R Projects (*.Rproj)",
+         onCompleted);  
    }
    
    private final Provider<ProjectMRUList> pMRUList_;

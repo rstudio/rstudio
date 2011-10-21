@@ -13,7 +13,10 @@
 
 #include "DesktopUtils.hpp"
 
+#include <QProcess>
 #include <QPushButton>
+
+#include "DesktopOptions.hpp"
 
 namespace desktop {
 
@@ -79,6 +82,16 @@ void showWarning(QWidget *parent, const QString &title, const QString& text)
 void showInfo(QWidget* parent, const QString& title, const QString& text)
 {
    showMessageBox(QMessageBox::Information, parent, title, text);
+}
+
+void launchProjectInNewInstance(QString projectFilename)
+{
+   // launch the new instance
+   QStringList args;
+   args.append(projectFilename);
+   QString exePath = QString::fromUtf8(
+      desktop::options().executablePath().absolutePath().c_str());
+   QProcess::startDetached(exePath, args);
 }
 
 

@@ -62,6 +62,7 @@ public abstract class
    // Projects
    public abstract AppCommand newProject();
    public abstract AppCommand openProject();
+   public abstract AppCommand openProjectInNewWindow();
    public abstract AppCommand projectMru0();
    public abstract AppCommand projectMru1();
    public abstract AppCommand projectMru2();
