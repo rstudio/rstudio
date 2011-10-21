@@ -1,5 +1,5 @@
 /*
- * ServerOfflineHandler.java
+ * HandleUnsavedChangesHandler.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
