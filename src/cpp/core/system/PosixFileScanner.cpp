@@ -16,6 +16,8 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+#include <boost/foreach.hpp>
+
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
@@ -35,6 +37,42 @@ int entryFilter(const struct dirent *entry)
       return 0;
    else
       return 1;
+}
+
+// wrapper for scandir api
+Error scanDir(const std::string& dirPath, std::vector<std::string>* pNames)
+{
+   // read directory contents into namelist
+   struct dirent **namelist;
+   int entries = ::scandir(dirPath.c_str(),
+                           &namelist,
+                           entryFilter,
+                           ::alphasort);
+   if (entries == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", dirPath);
+      return error;
+   }
+
+   // extract the namelist then free it
+   for(int i=0; i<entries; i++)
+   {
+      // get the name (then free it)
+      std::string name(namelist[i]->d_name,
+#ifdef __APPLE__
+                       namelist[i]->d_namlen);
+#else
+                       namelist[i]->d_reclen);
+#endif
+      ::free(namelist[i]);
+
+      // add to the vector
+      pNames->push_back(name);
+   }
+   ::free(namelist);
+
+   return Success();
 }
 
 } // anonymous namespace
@@ -62,38 +100,15 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    }
 
    // read directory contents
-   struct dirent **namelist;
-   int entries = ::scandir(fromNode->absolutePath().c_str(),
-                           &namelist,
-                           entryFilter,
-                           ::alphasort);
-   if (entries == -1)
-   {
-      Error error = systemError(boost::system::errc::no_such_file_or_directory,
-                                ERROR_LOCATION);
-      error.addProperty("path", fromNode->absolutePath());
+   std::vector<std::string> names;
+   Error error = scanDir(fromNode->absolutePath(), &names);
+   if (error)
       return error;
-   }
 
-   // iterate over entries
-   for(int i=0; i<entries; i++)
+   // iterate over the names
+   BOOST_FOREACH(const std::string& name, names)
    {
-      // yield every 10 entries if requested
-      if (options.yield)
-      {
-         if (i % 10 == 0)
-            boost::this_thread::yield();
-      }
-
-      // get the entry (then free it) and compute the path
-      dirent entry = *namelist[i];
-      ::free(namelist[i]);
-      std::string name(entry.d_name,
-#ifdef __APPLE__
-                       entry.d_namlen);
-#else
-                       entry.d_reclen);
-#endif
+      // compute the path
       std::string path = rootPath.childPath(name).absolutePath();
 
       // get the attributes
@@ -154,9 +169,6 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
          }
       }
    }
-
-   // free the namelist
-   ::free(namelist);
 
    // return success
    return Success();
