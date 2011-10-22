@@ -30,8 +30,8 @@ if(RSTUDIO_SERVER)
   set(RPM_POSTINST postinst.sh.in)
   set(RPM_POSTRM postrm.sh.in)
 
-  # depend on psmisc (for killall)
-  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, ")
+  # server-specific dependencies
+  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libssl0.9.8, libapparmor1, ")
   set(RSTUDIO_RPM_DEPENDS "psmisc, ")
 
 elseif(RSTUDIO_DESKTOP)
