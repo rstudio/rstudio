@@ -26,6 +26,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
 #include <boost/function.hpp>
+#include <boost/lambda/lambda.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/regex.hpp>
@@ -264,12 +265,14 @@ public:
    virtual core::Error log(const std::string& rev,
                            int skip,
                            int maxentries,
+                           const std::string& filterText,
                            std::vector<CommitInfo>* pOutput)
    {
       return Success();
    }
 
    virtual core::Error logLength(const std::string& rev,
+                                 const std::string& filterText,
                                  int* pLength)
    {
       *pLength = 0;
@@ -313,6 +316,34 @@ void afterCommit(const FilePath& tempFile)
    if (removeError)
       LOG_ERROR(removeError);
    enqueueRefreshEvent();
+}
+
+bool commitIsMatch(const std::vector<std::string>& patterns,
+                   const CommitInfo& commit)
+{
+   BOOST_FOREACH(std::string pattern, patterns)
+   {
+      if (!boost::algorithm::ifind_first(commit.author, pattern)
+          && !boost::algorithm::ifind_first(commit.description, pattern)
+          && !boost::algorithm::ifind_first(commit.id, pattern))
+      {
+         return false;
+      }
+   }
+
+   return true;
+}
+
+boost::function<bool(CommitInfo)> createFilterPredicate(
+      const std::string& filter)
+{
+   if (filter.empty())
+      return boost::lambda::constant(true);
+
+   std::vector<std::string> results;
+   boost::algorithm::split(results, filter,
+                           boost::algorithm::is_any_of(" \t\r\n"));
+   return boost::bind(commitIsMatch, results, _1);
 }
 
 } // anonymous namespace
@@ -775,60 +806,93 @@ public:
       }
    }
 
-   core::Error logLength(const std::string &rev, int *pLength)
+   core::Error logLength(const std::string &rev,
+                         const std::string &filterText,
+                         int *pLength)
    {
-      ShellCommand cmd = git() << "log";
-      cmd << "--pretty=oneline";
-      if (!rev.empty())
-         cmd << rev;
-
-      ShellCommand wcCmd("wc");
-      if (!s_gitBinDir.empty())
+      if (filterText.empty())
       {
-         FilePath fullPath = FilePath(s_gitBinDir).childPath("wc");
-         wcCmd = ShellCommand(fullPath);
+         ShellCommand cmd = git() << "log";
+         cmd << "--pretty=oneline";
+         if (!rev.empty())
+            cmd << rev;
+
+         ShellCommand wcCmd("wc");
+         if (!s_gitBinDir.empty())
+         {
+            FilePath fullPath = FilePath(s_gitBinDir).childPath("wc");
+            wcCmd = ShellCommand(fullPath);
+         }
+         wcCmd << "-l";
+
+         std::string output;
+         Error error = runCommand(shell_utils::pipe(cmd, wcCmd),
+                                  &output, NULL);
+         if (error)
+            return error;
+
+         boost::algorithm::trim(output);
+         *pLength = safe_convert::stringTo<int>(output, 0);
+         return Success();
       }
-      wcCmd << "-l";
-
-      std::string output;
-      Error error = runCommand(shell_utils::pipe(cmd, wcCmd),
-                               &output, NULL);
-      if (error)
-         return error;
-
-      boost::algorithm::trim(output);
-      *pLength = safe_convert::stringTo<int>(output, 0);
-      return Success();
+      else
+      {
+         std::vector<CommitInfo> output;
+         Error error = log(rev, 0, -1, filterText, &output);
+         if (error)
+            return error;
+         *pLength = output.size();
+         return Success();
+      }
    }
 
    core::Error log(const std::string& rev,
                    int skip,
                    int maxentries,
+                   const std::string& filterText,
                    std::vector<CommitInfo>* pOutput)
    {
       std::vector<std::string> outLines;
 
       ShellCommand cmd = git() << "log";
-      cmd << "--pretty=raw" << "--abbrev-commit" << "--abbrev=8"
-            << "--decorate=full";
-      if (skip > 0)
-         cmd << "--skip=" + boost::lexical_cast<std::string>(skip);
-      if (maxentries >= 0)
-         cmd << "--max-count=" + boost::lexical_cast<std::string>(maxentries);
+      cmd << "--pretty=raw" << "--decorate=full";
+
+      if (filterText.empty())
+      {
+         // This is a way more efficient way to implement skip and maxentries
+         // if we know that all commits are included.
+         if (skip > 0)
+         {
+            cmd << "--skip=" + boost::lexical_cast<std::string>(skip);
+            skip = 0;
+         }
+         if (maxentries >= 0)
+         {
+            cmd << "--max-count=" + boost::lexical_cast<std::string>(maxentries);
+            maxentries = -1;
+         }
+      }
+
       if (!rev.empty())
          cmd << rev;
+
+      if (maxentries < 0)
+         maxentries = std::numeric_limits<int>::max();
 
       Error error = runCommand(cmd, &outLines);
       if (error)
          return error;
 
+      boost::function<bool(CommitInfo)> filter = createFilterPredicate(filterText);
+
       boost::regex kvregex("^(\\w+) (.*)$");
       boost::regex authTimeRegex("^(.*?) (\\d+) ([+\\-]?\\d+)$");
 
+      int skipped = 0;
       CommitInfo currentCommit;
 
       for (std::vector<std::string>::const_iterator it = outLines.begin();
-           it != outLines.end();
+           it != outLines.end() && pOutput->size() < static_cast<size_t>(maxentries);
            it++)
       {
          boost::smatch smatch;
@@ -838,8 +902,13 @@ public:
             std::string value = smatch[2];
             if (key == "commit")
             {
-               if (!currentCommit.id.empty())
-                  pOutput->push_back(currentCommit);
+               if (!currentCommit.id.empty() && filter(currentCommit))
+               {
+                  if (skipped < skip)
+                     skipped++;
+                  else
+                     pOutput->push_back(currentCommit);
+               }
 
                currentCommit = CommitInfo();
                parseCommitValue(value, &currentCommit);
@@ -884,8 +953,15 @@ public:
          }
       }
 
-      if (!currentCommit.id.empty())
-         pOutput->push_back(currentCommit);
+      if (pOutput->size() < static_cast<size_t>(maxentries)
+          && !currentCommit.id.empty()
+          && filter(currentCommit))
+      {
+         if (skipped < skip)
+            skipped++;
+         else
+            pOutput->push_back(currentCommit);
+      }
 
       return Success();
    }
@@ -1368,13 +1444,15 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
 Error vcsHistoryCount(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
-   std::string rev;
-   Error error = json::readParams(request.params, &rev);
+   std::string rev, filterText;
+   Error error = json::readParams(request.params, &rev, &filterText);
    if (error)
       return error;
 
+   boost::algorithm::trim(filterText);
+
    int count;
-   error = s_pVcsImpl_->logLength(rev, &count);
+   error = s_pVcsImpl_->logLength(rev, filterText, &count);
    if (error)
       return error;
 
@@ -1388,14 +1466,17 @@ Error vcsHistoryCount(const json::JsonRpcRequest& request,
 Error vcsHistory(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
-   std::string rev;
+   std::string rev, filterText;
    int skip, maxentries;
-   Error error = json::readParams(request.params, &rev, &skip, &maxentries);
+   Error error = json::readParams(request.params, &rev, &skip, &maxentries,
+                                  &filterText);
    if (error)
       return error;
 
+   boost::algorithm::trim(filterText);
+
    std::vector<CommitInfo> commits;
-   error = s_pVcsImpl_->log(rev, skip, maxentries, &commits);
+   error = s_pVcsImpl_->log(rev, skip, maxentries, filterText, &commits);
    if (error)
       return error;
 
@@ -1412,7 +1493,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
         it != commits.end();
         it++)
    {
-      ids.push_back(it->id);
+      ids.push_back(it->id.substr(0, 8));
       authors.push_back(string_utils::filterControlChars(it->author));
       parents.push_back(string_utils::filterControlChars(it->parent));
       subjects.push_back(string_utils::filterControlChars(it->subject));

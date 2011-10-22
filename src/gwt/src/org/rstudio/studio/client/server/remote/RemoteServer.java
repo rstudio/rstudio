@@ -1410,21 +1410,27 @@ public class RemoteServer implements Server
    }
 
    public void vcsHistoryCount(String spec,
+                               String filterText,
                                ServerRequestCallback<CommitCount> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_HISTORY_COUNT, spec, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(spec));
+      params.set(1, new JSONString(filterText));
+      sendRequest(RPC_SCOPE, VCS_HISTORY_COUNT, params, requestCallback);
    }
 
    @Override
    public void vcsHistory(String spec,
                           int skip,
                           int maxentries,
+                          String filter,
                           ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(spec));
       params.set(1, new JSONNumber(skip));
       params.set(2, new JSONNumber(maxentries));
+      params.set(3, new JSONString(StringUtil.notNull(filter)));
       sendRequest(RPC_SCOPE, VCS_HISTORY, params, requestCallback);
    }
 

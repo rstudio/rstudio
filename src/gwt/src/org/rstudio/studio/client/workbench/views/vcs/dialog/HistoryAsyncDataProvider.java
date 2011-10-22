@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
+import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
@@ -19,6 +20,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -29,13 +31,19 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    public HistoryAsyncDataProvider(VCSServerOperations server)
    {
       server_ = server;
+      filterText_ = new Value<String>("");
 
       refreshCount();
    }
 
+   public void setFilter(HasValue<String> filter)
+   {
+      filterText_ = filter;
+   }
+
    public void refreshCount()
    {
-      server_.vcsHistoryCount("", new ServerRequestCallback<CommitCount>()
+      server_.vcsHistoryCount("", filterText_.getValue(), new ServerRequestCallback<CommitCount>()
       {
          @Override
          public void onResponseReceived(CommitCount response)
@@ -56,7 +64,7 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    {
       final Range rng = display.getVisibleRange();
       server_.vcsHistory(
-            "", rng.getStart(), rng.getLength(),
+            "", rng.getStart(), rng.getLength(), filterText_.getValue(),
             new SimpleRequestCallback<RpcObjectList<CommitInfo>>("Error Fetching History")
             {
                @Override
@@ -69,4 +77,5 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    }
 
    private final VCSServerOperations server_;
+   private HasValue<String> filterText_;
 }

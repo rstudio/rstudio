@@ -334,7 +334,7 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> booleanValueChangeEvent)
          {
-            server_.vcsHistory("", 0, 1, new ServerRequestCallback<RpcObjectList<CommitInfo>>() {
+            server_.vcsHistory("", 0, 1, null, new ServerRequestCallback<RpcObjectList<CommitInfo>>() {
                @Override
                public void onResponseReceived(RpcObjectList<CommitInfo> response)
                {

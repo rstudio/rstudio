@@ -21,15 +21,10 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.cellview.client.SimplePager.Resources;
 import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.SplitLayoutPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
-import org.rstudio.core.client.widget.LeftRightToggleButton;
-import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
@@ -82,6 +77,13 @@ public class HistoryPanel extends Composite implements Display
       switchViewButton_ = new LeftRightToggleButton("Changes", "History", false);
       topToolbar_.addLeftWidget(switchViewButton_);
       topToolbar_.addLeftWidget(branchToolbarButton);
+
+
+      filterText_ = new SearchWidget(new MultiWordSuggestOracle(),
+                                     new TextBoxWithCue("Search"),
+                                     null, false);
+      topToolbar_.addRightWidget(filterText_);
+      topToolbar_.addRightSeparator();
 
       refreshButton_ = new ToolbarButton(
             "Refresh", commands.vcsRefresh().getImageResource(),
@@ -141,6 +143,12 @@ public class HistoryPanel extends Composite implements Display
       return commitTable_;
    }
 
+   @Override
+   public HasValue<String> getFilterTextBox()
+   {
+      return filterText_;
+   }
+
    @UiField(provided = true)
    SplitLayoutPanel splitPanel_;
    @UiField
@@ -153,6 +161,8 @@ public class HistoryPanel extends Composite implements Display
    ScrollPanel detailScrollPanel_;
    @UiField(provided = true)
    SimplePager pager_;
+
+   SearchWidget filterText_;
 
    private LeftRightToggleButton switchViewButton_;
 

@@ -80,7 +80,7 @@ public interface VCSServerOperations extends CryptoServerOperations
    void vcsApplyPatch(String patch, PatchMode mode,
                       ServerRequestCallback<Void> requestCallback);
 
-   void vcsHistoryCount(String spec,
+   void vcsHistoryCount(String spec, String filter,
                         ServerRequestCallback<CommitCount> requestCallback);
    /**
     * @param spec Revision list or description. "" for default.
@@ -89,6 +89,7 @@ public interface VCSServerOperations extends CryptoServerOperations
    void vcsHistory(String spec,
                    int skip,
                    int maxentries,
+                   String filter,
                    ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback);
 
    void vcsExecuteCommand(

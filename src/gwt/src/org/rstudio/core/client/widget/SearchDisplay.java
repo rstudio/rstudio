@@ -12,20 +12,19 @@
  */
 package org.rstudio.core.client.widget;
 
-import org.rstudio.core.client.events.HasSelectionCommitHandlers;
-import com.google.gwt.user.client.ui.SuggestOracle;
-
 import com.google.gwt.event.dom.client.HasBlurHandlers;
 import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
+import com.google.gwt.user.client.ui.SuggestOracle;
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 
-public interface SearchDisplay extends 
-                              HasValueChangeHandlers<String>,
+public interface SearchDisplay extends
+                              HasValue<String>,
                               HasSelectionCommitHandlers<String>,
                               HasSelectionHandlers<SuggestOracle.Suggestion>,
                               HasCloseHandlers<SearchDisplay>,

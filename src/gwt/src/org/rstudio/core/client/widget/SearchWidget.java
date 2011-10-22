@@ -88,6 +88,14 @@ public class SearchWidget extends Composite implements SearchDisplay
                        TextBoxBase textBox, 
                        SuggestionDisplay suggestDisplay)
    {
+      this(oracle, textBox, suggestDisplay, true);
+   }
+
+   public SearchWidget(SuggestOracle oracle,
+                       TextBoxBase textBox,
+                       SuggestionDisplay suggestDisplay,
+                       boolean continuousSearch)
+   {
       if (suggestDisplay != null)
          suggestBox_ = new FocusSuggestBox(oracle, textBox, suggestDisplay);
       else 
@@ -144,19 +152,22 @@ public class SearchWidget extends Composite implements SearchDisplay
          }
       }) ;
 
-      // Unlike SuggestBox's ValueChangeEvent impl, we want the
-      // event to fire as soon as the value changes
-      suggestBox_.addKeyUpHandler(new KeyUpHandler() {
-         public void onKeyUp(KeyUpEvent event)
-         {
-            String value = suggestBox_.getText();
-            if (!value.equals(lastValueSent_))
+      if (continuousSearch)
+      {
+         // Unlike SuggestBox's ValueChangeEvent impl, we want the
+         // event to fire as soon as the value changes
+         suggestBox_.addKeyUpHandler(new KeyUpHandler() {
+            public void onKeyUp(KeyUpEvent event)
             {
-               updateLastValue(value);
-               ValueChangeEvent.fire(SearchWidget.this, value);
+               String value = suggestBox_.getText();
+               if (!value.equals(lastValueSent_))
+               {
+                  updateLastValue(value);
+                  ValueChangeEvent.fire(SearchWidget.this, value);
+               }
             }
-         }
-      });
+         });
+      }
       suggestBox_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
          public void onValueChange(ValueChangeEvent<String> evt)
@@ -251,6 +262,24 @@ public class SearchWidget extends Composite implements SearchDisplay
       suggestBox_.setValue(text, fireEvents);
    }
    
+   @Override
+   public String getValue()
+   {
+      return suggestBox_.getValue();
+   }
+
+   @Override
+   public void setValue(String value)
+   {
+      suggestBox_.setValue(value);
+   }
+
+   @Override
+   public void setValue(String value, boolean fireEvents)
+   {
+      suggestBox_.setValue(value, fireEvents);
+   }
+
    public void setIcon(ImageResource image)
    {
       icon_.setResource(image);

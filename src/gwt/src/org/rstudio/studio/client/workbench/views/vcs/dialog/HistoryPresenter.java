@@ -15,7 +15,10 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasData;
@@ -44,6 +47,8 @@ public class HistoryPresenter
       HasClickHandlers getRefreshButton();
 
       HasData<CommitInfo> getDataDisplay();
+
+      HasValue<String> getFilterTextBox();
    }
 
    public interface CommitListDisplay
@@ -107,6 +112,16 @@ public class HistoryPresenter
       {
          @Override
          public void onClick(ClickEvent event)
+         {
+            refreshHistory();
+         }
+      });
+
+      provider_.setFilter(view_.getFilterTextBox());
+      view_.getFilterTextBox().addValueChangeHandler(new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent)
          {
             refreshHistory();
          }
