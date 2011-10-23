@@ -345,31 +345,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       usernameLabel.setText(sessionInfo.getUserIdentity());
       headerBarCommandsPanel_.add(usernameLabel);
       headerBarCommandsPanel_.add(createCommandSeparator());
-      
-      // help link
-      Widget docsLink = createCommandLink("Docs", new ClickHandler() {
-         public void onClick(ClickEvent event)
-         {
-            String customDocsURL = sessionInfo.docsURL();
-            if (customDocsURL.length() > 0)
-               globalDisplay_.openWindow(customDocsURL);
-            else
-               globalDisplay_.openRStudioLink("docs");
-         }
-      });
-      headerBarCommandsPanel_.add(docsLink);
-      headerBarCommandsPanel_.add(createCommandSeparator());
-      
-      // support link
-      Widget supportLink = createCommandLink("Support", new ClickHandler() {
-         public void onClick(ClickEvent event)
-         {
-            globalDisplay_.openRStudioLink("support");
-         }
-      });
-      headerBarCommandsPanel_.add(supportLink);
-      headerBarCommandsPanel_.add(createCommandSeparator());
-       
+          
       // signout link 
       Widget signoutLink = createCommandLink("Sign Out", new ClickHandler() {
          public void onClick(ClickEvent event)
