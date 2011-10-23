@@ -60,6 +60,7 @@ public interface ThemeStyles extends CssResource
    String globalToolbar();
    String desktopGlobalToolbar();
    String webGlobalToolbar();
+   String webHeaderBarCommandsProjectMenu();
    String toolbarButton();
    String noLabel();
    String toolbarButtonPushed();

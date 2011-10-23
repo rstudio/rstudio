@@ -31,6 +31,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.*;
 import org.rstudio.core.client.command.impl.WebMenuCallback;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialogLabel;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -170,11 +171,10 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
             toolbar_.addProjectTools(sessionInfo);
             
             // add project tools to main menu
-            projectMenuSeparator_ = createCommandSeparator();
             projectMenuButton_ = 
                new ProjectPopupMenu(sessionInfo, commands).getToolbarButton();
-            projectMenuButton_.getElement().getStyle().setMarginTop(1, Unit.PX);
-            headerBarPanel_.add(projectMenuSeparator_);
+            projectMenuButton_.addStyleName(
+                       ThemeStyles.INSTANCE.webHeaderBarCommandsProjectMenu());
             headerBarPanel_.add(projectMenuButton_);
             showProjectMenu(!toolbar_.isVisible());     
          }
@@ -227,7 +227,6 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    
    private void showProjectMenu(boolean show)
    {
-      projectMenuSeparator_.setVisible(show);
       projectMenuButton_.setVisible(show);
    }
    
@@ -403,7 +402,6 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    private Image logoSmall_;
    private HorizontalPanel headerBarPanel_;
    private HorizontalPanel headerBarCommandsPanel_;
-   private Widget projectMenuSeparator_;
    private ToolbarButton projectMenuButton_;
    private AppMenuBar mainMenu_;
    private GlobalToolbar toolbar_;
