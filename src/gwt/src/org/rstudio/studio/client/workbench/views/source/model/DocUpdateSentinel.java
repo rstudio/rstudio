@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveHandler;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -91,6 +92,7 @@ public class DocUpdateSentinel
       sourceDoc_ = sourceDoc;
       progress_ = progress;
       dirtyState_ = dirtyState;
+      eventBus_ = events;
       changeTracker_ = docDisplay.getChangeTracker();
 
       bufferedCommand_ = new TimeBufferedCommand(2000)
@@ -370,6 +372,9 @@ public class DocUpdateSentinel
                public void onResponseReceived(Void response)
                {
                   sourceDoc_.setSourceOnSave(shouldSourceOnSave);
+                  
+                  eventBus_.fireEvent(new SourceOnSaveChangedEvent());
+                  
                   if (progress != null)
                      progress.onCompleted();
                }
@@ -504,6 +509,7 @@ public class DocUpdateSentinel
    private SourceDocument sourceDoc_;
    private final ProgressIndicator progress_;
    private final DirtyState dirtyState_;
+   private final EventBus eventBus_;
    private final TimeBufferedCommand bufferedCommand_;
    private final HandlerRegistration closeHandlerReg_;
    private HandlerRegistration lastChanceSaveHandlerReg_;

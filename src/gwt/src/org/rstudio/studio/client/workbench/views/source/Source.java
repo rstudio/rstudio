@@ -67,6 +67,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
@@ -242,6 +244,15 @@ public class Source implements InsertSourceHandler,
          public void onFileTypeChanged(FileTypeChangedEvent event)
          {
             manageCommands();
+         }
+      });
+      
+      events.addHandler(SourceOnSaveChangedEvent.TYPE, 
+                        new SourceOnSaveChangedHandler() {
+         @Override
+         public void onSourceOnSaveChanged(SourceOnSaveChangedEvent event)
+         {
+            manageSaveCommands();
          }
       });
 
@@ -1265,10 +1276,7 @@ public class Source implements InsertSourceHandler,
       commands_.setWorkingDirToActiveDoc().setVisible(true);
       
       // manage save and save all
-      boolean saveEnabled = activeEditor_ != null &&
-                            activeEditor_.dirtyState().getValue() == true;
-      commands_.saveSourceDoc().setEnabled(saveEnabled);
-      manageSaveAllCommand();
+      manageSaveCommands();
       
       // manage source navigation
       manageSourceNavigationCommands();
@@ -1279,12 +1287,21 @@ public class Source implements InsertSourceHandler,
             : "Unsupported commands detected (please add to Source.dynamicCommands_)";
    }
    
+   private void manageSaveCommands()
+   {
+      boolean saveEnabled = (activeEditor_ != null) &&
+            activeEditor_.isSaveCommandActive();
+      commands_.saveSourceDoc().setEnabled(saveEnabled);
+      manageSaveAllCommand();
+   }
+   
+   
    private void manageSaveAllCommand()
    {      
       // if one document is dirty then we are enabled
       for (EditingTarget target : editors_)
       {
-         if (target.dirtyState().getValue())
+         if (target.isSaveCommandActive())
          {
             commands_.saveAllSourceDocs().setEnabled(true);
             return;

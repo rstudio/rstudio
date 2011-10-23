@@ -387,6 +387,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
+   public boolean isSaveCommandActive()
+   {
+      return dirtyState().getValue();
+   }
+   
+   @Override
    public void save(Command onCompleted)
    {
       onCompleted.execute();

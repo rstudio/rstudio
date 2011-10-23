@@ -990,6 +990,20 @@ public class TextEditingTarget implements EditingTarget
    {
       return dirtyState_;
    }
+   
+   @Override
+   public boolean isSaveCommandActive()
+   {
+      return 
+         // standard check of dirty state   
+         (dirtyState().getValue() == true) ||
+         
+         // empty untitled document (allow for immediate save)
+         ((getPath() == null) && docDisplay_.getCode().isEmpty()) ||
+         
+         // source on save is active 
+         (fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave());
+   }
 
    public Widget asWidget()
    {

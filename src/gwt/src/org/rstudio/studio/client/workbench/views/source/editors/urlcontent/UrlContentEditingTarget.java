@@ -217,6 +217,12 @@ public class UrlContentEditingTarget implements EditingTarget
       return dirtyState_;
    }
    
+   @Override
+   public boolean isSaveCommandActive()
+   {
+      return dirtyState().getValue();
+   }
+   
    public void save(Command onCompleted)
    {
       onCompleted.execute();
