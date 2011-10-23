@@ -26,7 +26,6 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
-import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.workbench.views.vcs.diff.UnifiedParser;
