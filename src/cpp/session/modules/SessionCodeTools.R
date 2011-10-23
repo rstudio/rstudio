@@ -99,7 +99,29 @@
    deparse(func, width.cutoff = 59, control = control)
 })
 
+.rs.addFunction("getS3MethodsForFunction", function(func)
+{
+  as.character(suppressWarnings(methods(func)))
+})
 
+# NOTE: see also getAnywhere for getting namespace & function
+
+# NOTE: should use getAnywhere above rather than findFunction
+# whenever searching for S3 methods (but perhaps not for others).
+# perhaps must try getS3Method first to confirm is an S3 method
+
+.rs.addFunction("getS3Method", function(name, class)
+{
+  getS3method(name, class, optional = TRUE)
+})
+
+#NOTE: can use where to restrict the search
+
+.rs.addFunction("getS4MethodsForFunction", function(func)
+{
+  as.data.frame(findMethodSignatures(
+                methods = findMethods(func)))
+})
 
 utils:::rc.settings(files=T)
 .rs.addJsonRpcHandler("get_completions", function(line, cursorPos)
