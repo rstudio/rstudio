@@ -62,6 +62,7 @@ git merge \
     origin/bugfix/selected-word-colors2 \
     origin/patch/scroll-granularity \
     origin/patch/escape-characters2 \
+    origin/bugfix/no-paste-event-on-indent \
 
 
 make clean

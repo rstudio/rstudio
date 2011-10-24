@@ -26,24 +26,14 @@ public class RFileType extends TextFileType
              String label,
              EditorLanguage editorLanguage,
              String defaultExtension,
-             ImageResource defaultIcon,
-             boolean canSourceOnSave,
-             boolean canExecuteCode,
-             boolean canExecuteAllCode,
-             boolean canExecuteToCurrentLine,
-             boolean canCompilePDF)
+             ImageResource defaultIcon)
    {
       super(id,
             label,
             editorLanguage,
             defaultExtension,
             defaultIcon,
-            false,
-            canSourceOnSave,
-            canExecuteCode,
-            canExecuteAllCode,
-            canExecuteToCurrentLine,
-            canCompilePDF);
+            false, true, true, true, true, false, true);
    }
 
    @Override

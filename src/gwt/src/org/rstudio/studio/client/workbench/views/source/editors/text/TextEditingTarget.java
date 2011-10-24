@@ -784,7 +784,10 @@ public class TextEditingTarget implements EditingTarget
                          public void execute() { command.execute(); }
                       },
                       new Operation() {
-                         public void execute() { onCancelled.execute(); }
+                         public void execute() {
+                            if (onCancelled != null)
+                              onCancelled.execute();
+                         }
                       },
                       "Save",
                       "Don't Save",

@@ -268,6 +268,9 @@ public class AceEditor implements DocDisplay,
 
    private void indentPastedRange(Range range)
    {
+      if (!fileType_.canAutoIndent())
+         return;
+
       String firstLinePrefix = getSession().getTextRange(
             Range.fromPoints(Position.create(range.getStart().getRow(), 0),
                              range.getStart()));

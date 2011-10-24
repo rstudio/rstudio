@@ -36,6 +36,7 @@ public class Selection extends JavaScriptObject
                                          int column,
                                          boolean preventUpdateDesiredColumn) /*-{
       this.moveCursorTo(row, column, preventUpdateDesiredColumn);
+      this.setSelectionAnchor(row, column);
    }-*/;
 
    public native final boolean isEmpty() /*-{

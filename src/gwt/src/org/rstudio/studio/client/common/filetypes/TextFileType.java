@@ -36,7 +36,8 @@ public class TextFileType extends EditableFileType
                 boolean canExecuteCode,
                 boolean canExecuteAllCode,
                 boolean canExecuteToCurrentLine,
-                boolean canCompilePDF)
+                boolean canCompilePDF,
+                boolean canAutoIndent)
    {
       super(id, label, defaultIcon);
       editorLanguage_ = editorLanguage;
@@ -47,6 +48,7 @@ public class TextFileType extends EditableFileType
       canExecuteAllCode_ = canExecuteAllCode;
       canExecuteToCurrentLine_ = canExecuteToCurrentLine;
       canCompilePDF_ = canCompilePDF;
+      canAutoIndent_ = canAutoIndent;
    }
 
    @Override
@@ -96,6 +98,11 @@ public class TextFileType extends EditableFileType
    public boolean canCompilePDF()
    {
       return canCompilePDF_;
+   }
+
+   public boolean canAutoIndent()
+   {
+      return canAutoIndent_;
    }
 
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
@@ -150,5 +157,6 @@ public class TextFileType extends EditableFileType
    private final boolean canExecuteAllCode_;
    private final boolean canExecuteToCurrentLine_;
    private final boolean canCompilePDF_;
+   private final boolean canAutoIndent_;
    private final String defaultExtension_;
 }
