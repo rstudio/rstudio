@@ -2078,8 +2078,19 @@ Error statusToJson(const core::FilePath &path,
    return Success();
 }
 
+void onSuspend(core::Settings*)
+{
+}
+
+void onResume(const core::Settings&)
+{
+   enqueueRefreshEvent();
+}
+
 core::Error initialize()
 {
+   using namespace session::module_context;
+
    Error error;
 
    module_context::events().onShutdown.connect(onShutdown);
@@ -2170,6 +2181,9 @@ core::Error initialize()
       core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
       core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
    }
+
+   // add suspend/resume handler
+   addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    // install rpc methods
    using boost::bind;
