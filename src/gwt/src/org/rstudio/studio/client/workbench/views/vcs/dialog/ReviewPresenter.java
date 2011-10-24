@@ -320,6 +320,8 @@ public class ReviewPresenter implements IsWidget
                      @Override
                      public void execute()
                      {
+                        view_.getChangelistTable().selectNextUnselectedItem();
+
                         server_.vcsRevert(
                               paths,
                               new SimpleRequestCallback<Void>("Revert Changes"));

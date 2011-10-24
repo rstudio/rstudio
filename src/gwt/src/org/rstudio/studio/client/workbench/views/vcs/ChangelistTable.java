@@ -425,6 +425,7 @@ public class ChangelistTable extends Composite
 
    public void setSelectedStatusAndPaths(ArrayList<StatusAndPath> selectedPaths)
    {
+      selectionModel_.clear();
       for (StatusAndPath path : selectedPaths)
          selectionModel_.setSelected(path, true);
    }
@@ -440,6 +441,23 @@ public class ChangelistTable extends Composite
             results.add(item.getPath());
       }
       return results;
+   }
+
+   public void selectNextUnselectedItem()
+   {
+      boolean selectNext = false;
+      for (StatusAndPath path : table_.getVisibleItems())
+      {
+         if (selectionModel_.isSelected(path))
+            selectNext = true;
+         else if (selectNext)
+         {
+            ArrayList<StatusAndPath> selection = new ArrayList<StatusAndPath>();
+            selection.add(path);
+            setSelectedStatusAndPaths(selection);
+            return;
+         }
+      }
    }
 
    public HandlerRegistration addStageUnstageHandler(StageUnstageHandler handler)
