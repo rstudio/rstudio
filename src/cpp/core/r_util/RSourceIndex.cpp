@@ -69,9 +69,9 @@ RSourceIndex::RSourceIndex(const std::string& context,
    std::wstring parentAssignOp(L"<<-");
    for (std::size_t i=0; i<rTokens.size(); i++)
    {
-      // initial name and type are nil
+      // initial name, qualifer, and type are nil
       RSourceItem::Type type = RSourceItem::None;
-      std::wstring name;
+      std::wstring name, qualifier;
       std::size_t tokenOffset = -1;
 
       // alias the token
@@ -191,6 +191,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
       // add to index
       items_.push_back(RSourceItem(type,
                                    string_utils::wideToUtf8(name),
+                                   string_utils::wideToUtf8(qualifier),
                                    braceLevel,
                                    line,
                                    column));

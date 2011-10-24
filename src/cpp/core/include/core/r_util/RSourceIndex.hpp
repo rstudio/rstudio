@@ -50,26 +50,13 @@ public:
 
    RSourceItem(int type,
                const std::string& name,
+               const std::string& qualifier,
                int braceLevel,
                std::size_t line,
                std::size_t column)
       : type_(type),
         name_(name),
-        braceLevel_(braceLevel),
-        line_(line),
-        column_(column)
-   {
-   }
-
-   RSourceItem(const std::string& context,
-               int type,
-               const std::string& name,
-               int braceLevel,
-               std::size_t line,
-               std::size_t column)
-      : context_(context),
-        type_(type),
-        name_(name),
+        qualifier_(qualifier),
         braceLevel_(braceLevel),
         line_(line),
         column_(column)
@@ -80,10 +67,30 @@ public:
 
    // COPYING: via compiler (copyable members)
 
+private:
+   RSourceItem(const std::string& context,
+               int type,
+               const std::string& name,
+               const std::string& qualifier,
+               int braceLevel,
+               std::size_t line,
+               std::size_t column)
+      : context_(context),
+        type_(type),
+        name_(name),
+        qualifier_(qualifier),
+        braceLevel_(braceLevel),
+        line_(line),
+        column_(column)
+   {
+   }
+
+public:
    // accessors
    int type() const { return type_; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
+   const std::string& qualifier() const { return qualifier_; }
    const int braceLevel() const { return braceLevel_; }
    int line() const { return core::safe_convert::numberTo<int>(line_,0); }
    int column() const { return core::safe_convert::numberTo<int>(column_,0); }
@@ -115,13 +122,20 @@ public:
 
    RSourceItem withContext(const std::string& context) const
    {
-      return RSourceItem(context, type_, name_, braceLevel_, line_, column_);
+      return RSourceItem(context,
+                         type_,
+                         name_,
+                         qualifier_,
+                         braceLevel_,
+                         line_,
+                         column_);
    }
 
 private:
    std::string context_;
    int type_;
    std::string name_;
+   std::string qualifier_;
    int braceLevel_;
    std::size_t line_;
    std::size_t column_;

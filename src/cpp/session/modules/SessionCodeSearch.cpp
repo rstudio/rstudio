@@ -701,6 +701,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    json::Object src;
    src["type"] = toJsonArray<int>(items, &r_util::RSourceItem::type);
    src["name"] = toJsonArray<std::string>(items, &r_util::RSourceItem::name);
+   src["qualifier"] = toJsonArray<std::string>(items, &r_util::RSourceItem::qualifier);
    src["context"] = toJsonArray<std::string>(items, &r_util::RSourceItem::context);
    src["line"] = toJsonArray<int>(items, &r_util::RSourceItem::line);
    src["column"] = toJsonArray<int>(items, &r_util::RSourceItem::column);

@@ -34,6 +34,11 @@ public class RSourceItem extends JavaScriptObject
       return this.name;
    }-*/;
 
+   // optional qualifier (currently used for signature of methods but could
+   // be used for other type-specific qualifers as well)
+   public final native String getFunctionQualifier() /*-{
+      return this.qualifier;
+   }-*/;
 
    // project-relative filename
    public final native String getContext() /*-{
