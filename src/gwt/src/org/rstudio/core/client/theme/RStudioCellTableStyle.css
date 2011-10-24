@@ -47,7 +47,8 @@
 
   /* CHANGE: use default cursor rather than pointer/caret */
   cursor: default;
-
+  border: none;
+  outline: none;
 }
 
 .cellTableCell:first-child {
@@ -94,7 +95,6 @@
 }
 
 .cellTableEvenRowCell {
-  border: selectionBorderWidth solid #ffffff;
 }
 
 .cellTableOddRow {
@@ -102,8 +102,6 @@
 }
 
 .cellTableOddRowCell {
-  /*border: selectionBorderWidth solid #eef4fb;*/
-  border: selectionBorderWidth solid #ffffff;
 }
 
 .cellTableHoveredRow {
@@ -112,8 +110,6 @@
 }
 
 .cellTableHoveredRowCell {
-  /* CHANGE: Disable hover effects */
-  /* border: selectionBorderWidth solid #eee; */
 }
 
 
@@ -121,14 +117,6 @@
 }
 
 .cellTableKeyboardSelectedRowCell {
-   border-top: 1px dotted gray !important;
-   border-bottom: 1px dotted gray !important;
-}
-.cellTableKeyboardSelectedRowCell:first-child {
-   border-left: 1px dotted gray;
-}
-.cellTableKeyboardSelectedRowCell:first-child + td + td {
-   border-right: 1px dotted gray;
 }
 
 .cellTableSelectedRow {
@@ -140,22 +128,13 @@
 }
 
 .cellTableSelectedRowCell {
-  /* CHANGE: use same selected background color as History table */
-  border: selectionBorderWidth solid #CCC;
 }
 
 .cellTableWidget:focus .cellTableSelectedRow {
   background: rgb(146, 193, 240);
 }
-.cellTableWidget:focus .cellTableSelectedRowCell {
-  border-color: rgb(146, 193, 240);
-}
 
-/**
- * The keyboard selected cell is visible over selection.
- */
 .cellTableKeyboardSelectedCell {
-  border: selectionBorderWidth solid transparent;
 }
 
 .cellTableLoading {
