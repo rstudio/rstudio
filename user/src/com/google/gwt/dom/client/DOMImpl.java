@@ -268,6 +268,13 @@ abstract class DOMImpl {
     return parent;
   }-*/;
 
+  public native Element getPreviousSiblingElement(Element elem) /*-{
+    var sib = elem.previousSibling;
+    while (sib && sib.nodeType != 1)
+      sib = sib.previousSibling;
+    return sib;
+  }-*/;
+
   public int getScrollLeft(Document doc) {
     return doc.getViewportElement().getScrollLeft();
   }

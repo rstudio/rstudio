@@ -16,13 +16,13 @@
 package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 
 /**
  * Element tests (many stolen from DOMTest).
@@ -52,7 +52,7 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * firstChildElement, nextSiblingElement.
+   * firstChildElement, nextSiblingElement, previousSiblingElement.
    */
   public void testChildElements() {
     Document doc = Document.get();
@@ -67,8 +67,13 @@ public class ElementTest extends GWTTestCase {
 
     Element fc = parent.getFirstChildElement();
     Element ns = fc.getNextSiblingElement();
+    Element ps = ns.getPreviousSiblingElement();
     assertEquals(div0, fc);
     assertEquals(div1, ns);
+    assertEquals(div0, ps);
+
+    assertNull(fc.getPreviousSiblingElement());
+    assertNull(ns.getNextSiblingElement());
   }
 
   /**
@@ -201,7 +206,8 @@ public class ElementTest extends GWTTestCase {
     elem.getStyle().setPropertyPx("width", width);
     elem.getStyle().setPropertyPx("height", height);
 
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         int absLeft = left + margin;
         int absTop = top + margin;

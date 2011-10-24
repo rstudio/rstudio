@@ -345,6 +345,14 @@ public class Element extends Node {
    }-*/;
 
   /**
+   * The element immediately preceeding this element. If there is no such
+   * element, this returns null.
+   */
+  public final Element getPreviousSiblingElement() {
+    return DOMImpl.impl.getPreviousSiblingElement(this);
+  }
+
+  /**
    * Gets a boolean property from this element.
    * 
    * @param name the name of the property to be retrieved
