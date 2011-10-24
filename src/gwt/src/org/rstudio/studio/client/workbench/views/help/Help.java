@@ -89,7 +89,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
                return;
             
             CsvWriter csvWriter = new CsvWriter();
-            csvWriter.writeValue(event.getUrl());
+            csvWriter.writeValue(getApplicationRelativeHelpUrl(event.getUrl()));
             csvWriter.writeValue(event.getTitle());
             helpHistoryList_.append(csvWriter.getValue());
 
@@ -98,7 +98,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
       SelectionHandler<String> navigator = new SelectionHandler<String>() {
          public void onSelection(SelectionEvent<String> event)
          {
-            view_.showHelp(event.getSelectedItem()) ;
+            showHelp(event.getSelectedItem()) ;
          }
       } ;
       view_.getHistory().addSelectionHandler(navigator) ;
@@ -140,7 +140,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
                {
                   ArrayList<Link> links = history.getLinks();
                   if (links.size() > 0)
-                     view_.showHelp(links.get(0).getUrl());
+                     showHelp(links.get(0).getUrl());
                   else
                      home();
                }    
@@ -169,19 +169,32 @@ public class Help extends BasePresenter implements ShowHelpHandler
 
    public void onShowHelp(ShowHelpEvent event)
    {
-      view_.showHelp(server_.getApplicationURL(event.getTopicUrl()));
+      showHelp(event.getTopicUrl());
       view_.bringToFront();
    }
 
    private void home()
    {
-      String url = "help/doc/html/index.html" ;
-      view_.showHelp(server_.getApplicationURL(url));
+      showHelp("help/doc/html/index.html");
    }
    
    public Display getDisplay()
    {
       return view_ ;
+   }
+   
+   private void showHelp(String topicUrl)
+   {
+      view_.showHelp(server_.getApplicationURL(topicUrl));
+   }
+   
+   private String getApplicationRelativeHelpUrl(String helpUrl)
+   {
+      String appUrl = server_.getApplicationURL("");
+      if (helpUrl.startsWith(appUrl) && !helpUrl.equals(appUrl))
+         return helpUrl.substring(appUrl.length());
+      else
+         return helpUrl;
    }
 
    private Display view_ ;

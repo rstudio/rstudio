@@ -37,7 +37,7 @@ namespace {
 // list names
 const char * const kFileMru = "file_mru";
 const char * const kProjectMru = "project_mru";
-const char * const kHelpHistory = "help_history";
+const char * const kHelpHistory = "help_history_links";
 
 // path to lists dir
 FilePath s_listsPath;

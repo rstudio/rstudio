@@ -161,6 +161,6 @@ public class WorkbenchListManager
    
    private static final String FILE_MRU = "file_mru";
    private static final String PROJECT_MRU = "project_mru";
-   private static final String HELP_HISTORY = "help_history";
+   private static final String HELP_HISTORY = "help_history_links";
    
 }
