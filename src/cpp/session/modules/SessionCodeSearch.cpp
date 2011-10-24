@@ -650,6 +650,33 @@ json::Array toJsonArray(
    return col;
 }
 
+
+json::Array signatureToJson(const std::vector<r_util::RS4MethodParam>& sig)
+{
+   json::Array sigJson;
+   BOOST_FOREACH(const r_util::RS4MethodParam& param, sig)
+   {
+      json::Object paramJson;
+      paramJson["name"] = param.name();
+      paramJson["type"] = param.type();
+      sigJson.push_back(paramJson);
+   }
+   return sigJson;
+}
+
+json::Array signaturesToJsonArray(
+                        const std::vector<r_util::RSourceItem> &items)
+{
+   json::Array sigCol;
+   std::transform(items.begin(),
+                  items.end(),
+                  std::back_inserter(sigCol),
+                  boost::bind(
+                        signatureToJson,
+                        boost::bind(&r_util::RSourceItem::signature, _1)));
+   return sigCol;
+}
+
 bool compareItems(const r_util::RSourceItem& i1, const r_util::RSourceItem& i2)
 {
    return i1.name() < i2.name();
@@ -701,7 +728,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    json::Object src;
    src["type"] = toJsonArray<int>(items, &r_util::RSourceItem::type);
    src["name"] = toJsonArray<std::string>(items, &r_util::RSourceItem::name);
-   src["qualifier"] = toJsonArray<std::string>(items, &r_util::RSourceItem::qualifier);
+   src["signature"] = signaturesToJsonArray(items);
    src["context"] = toJsonArray<std::string>(items, &r_util::RSourceItem::context);
    src["line"] = toJsonArray<int>(items, &r_util::RSourceItem::line);
    src["column"] = toJsonArray<int>(items, &r_util::RSourceItem::column);

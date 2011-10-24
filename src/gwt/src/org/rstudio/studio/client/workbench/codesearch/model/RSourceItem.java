@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.codesearch.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 
 public class RSourceItem extends JavaScriptObject
@@ -34,10 +35,8 @@ public class RSourceItem extends JavaScriptObject
       return this.name;
    }-*/;
 
-   // optional qualifier (currently used for signature of methods but could
-   // be used for other type-specific qualifers as well)
-   public final native String getFunctionQualifier() /*-{
-      return this.qualifier;
+   public final native JsArray<RS4MethodParam> getSignature() /*-{
+      return this.signature;
    }-*/;
 
    // project-relative filename

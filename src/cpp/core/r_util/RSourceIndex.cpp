@@ -34,6 +34,22 @@ std::wstring removeQuoteDelims(const std::wstring& input)
       return std::wstring();
 }
 
+ void parseSignature(RTokens::const_iterator begin,
+                     RTokens::const_iterator end,
+                     std::vector<RS4MethodParam>* pSignature)
+{
+   // the signature parameter of the setMethod function can take any
+   // of the following forms
+   //
+   // setMethod("plot", signature(x="track", y="missing")
+   // setMethod("plot", "track"
+   // setMethod("plot", c("track", "missing")
+   //
+
+
+}
+
+
 }  // anonymous namespace
 
 RSourceIndex::RSourceIndex(const std::string& context,
@@ -71,8 +87,10 @@ RSourceIndex::RSourceIndex(const std::string& context,
    {
       // initial name, qualifer, and type are nil
       RSourceItem::Type type = RSourceItem::None;
-      std::wstring name, qualifier;
+      std::wstring name;
       std::size_t tokenOffset = -1;
+      bool isSetMethod = false;
+      std::vector<RS4MethodParam> signature;
 
       // alias the token
       const RToken& token = rTokens.at(i);
@@ -100,9 +118,13 @@ RSourceIndex::RSourceIndex(const std::string& context,
       {
          RSourceItem::Type setType = RSourceItem::None;
 
-         if (token.contentEquals(setMethod) ||
-             token.contentEquals(setGeneric) ||
-             token.contentEquals(setGroupGeneric))
+         if (token.contentEquals(setMethod))
+         {
+            isSetMethod = true;
+            setType = RSourceItem::Method;
+         }
+         else if (token.contentEquals(setGeneric) ||
+                  token.contentEquals(setGroupGeneric))
          {
             setType = RSourceItem::Method;
          }
@@ -116,19 +138,28 @@ RSourceIndex::RSourceIndex(const std::string& context,
             continue;
          }
 
-         // make sure there are at least two more tokens
-         if ( (i + 2) >= rTokens.size())
+         // make sure there are at least 4 more tokens
+         if ( (i + 3) >= rTokens.size())
             continue;
 
-         // there needs to be two more tokens, one an lparen and one a string
+         // check for the rest of the token sequene for a valid call to set*
          if ( (rTokens.at(i+1).type() != RToken::LPAREN) ||
-              (rTokens.at(i+2).type() != RToken::STRING))
+              (rTokens.at(i+2).type() != RToken::STRING) ||
+              (rTokens.at(i+3).type() != RToken::COMMA))
             continue;
 
          // found a class or method definition (will find location below)
          type = setType;
          name = removeQuoteDelims(rTokens.at(i+2).content());
          tokenOffset = token.offset();
+
+         // if this was a setMethod then try to lookahead for the signature
+         if (isSetMethod)
+         {
+            parseSignature(rTokens.begin() + (i+4),
+                           rTokens.end(),
+                           &signature);
+         }
       }
 
       // is this a function?
@@ -191,13 +222,12 @@ RSourceIndex::RSourceIndex(const std::string& context,
       // add to index
       items_.push_back(RSourceItem(type,
                                    string_utils::wideToUtf8(name),
-                                   string_utils::wideToUtf8(qualifier),
+                                   signature,
                                    braceLevel,
                                    line,
                                    column));
    }
 }
-
 
 } // namespace r_util
 } // namespace core 

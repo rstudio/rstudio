@@ -29,8 +29,34 @@
 #include <core/StringUtils.hpp>
 #include <core/RegexUtils.hpp>
 
+#include <core/r_util/RTokenizer.hpp>
+
 namespace core {
 namespace r_util {
+
+class RS4MethodParam
+{
+public:
+   RS4MethodParam(const std::string& name, const std::string& type)
+      : name_(name), type_(type)
+   {
+   }
+
+   explicit RS4MethodParam(const std::string& type)
+      : name_(), type_(type)
+   {
+   }
+
+   // COPYING: via compiler / concrete-type
+
+   const std::string& name() const { return name_; }
+   const std::string& type() const { return type_; }
+
+private:
+   std::string name_;
+   std::string type_;
+};
+
 
 class RSourceItem
 {
@@ -50,13 +76,13 @@ public:
 
    RSourceItem(int type,
                const std::string& name,
-               const std::string& qualifier,
+               const std::vector<RS4MethodParam>& signature,
                int braceLevel,
                std::size_t line,
                std::size_t column)
       : type_(type),
         name_(name),
-        qualifier_(qualifier),
+        signature_(signature),
         braceLevel_(braceLevel),
         line_(line),
         column_(column)
@@ -71,14 +97,14 @@ private:
    RSourceItem(const std::string& context,
                int type,
                const std::string& name,
-               const std::string& qualifier,
+               const std::vector<RS4MethodParam>& signature,
                int braceLevel,
                std::size_t line,
                std::size_t column)
       : context_(context),
         type_(type),
         name_(name),
-        qualifier_(qualifier),
+        signature_(signature),
         braceLevel_(braceLevel),
         line_(line),
         column_(column)
@@ -90,7 +116,7 @@ public:
    int type() const { return type_; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
-   const std::string& qualifier() const { return qualifier_; }
+   const std::vector<RS4MethodParam>& signature() const { return signature_; }
    const int braceLevel() const { return braceLevel_; }
    int line() const { return core::safe_convert::numberTo<int>(line_,0); }
    int column() const { return core::safe_convert::numberTo<int>(column_,0); }
@@ -125,7 +151,7 @@ public:
       return RSourceItem(context,
                          type_,
                          name_,
-                         qualifier_,
+                         signature_,
                          braceLevel_,
                          line_,
                          column_);
@@ -135,7 +161,7 @@ private:
    std::string context_;
    int type_;
    std::string name_;
-   std::string qualifier_;
+   std::vector<RS4MethodParam> signature_;
    int braceLevel_;
    std::size_t line_;
    std::size_t column_;

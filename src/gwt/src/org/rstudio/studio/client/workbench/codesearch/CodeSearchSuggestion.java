@@ -18,9 +18,11 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeNavigationTarget;
 import org.rstudio.studio.client.workbench.codesearch.model.RFileItem;
+import org.rstudio.studio.client.workbench.codesearch.model.RS4MethodParam;
 import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
@@ -40,6 +42,7 @@ class CodeSearchSuggestion implements Suggestion
       displayString_ = createDisplayString(image,
                                            RES.styles().fileImage(),
                                            fileItem.getFilename(),
+                                           null,
                                            null);   
    }
    
@@ -75,6 +78,7 @@ class CodeSearchSuggestion implements Suggestion
       displayString_ = createDisplayString(image, 
                                            RES.styles().itemImage(),
                                            sourceItem.getFunctionName(),
+                                           sourceItem.getSignature(),
                                            context);
    }
    
@@ -96,6 +100,7 @@ class CodeSearchSuggestion implements Suggestion
       displayString_ = createDisplayString(image,
                                            RES.styles().fileImage(),
                                            displayString,
+                                           null,
                                            null);   
       
    }
@@ -119,6 +124,7 @@ class CodeSearchSuggestion implements Suggestion
    private String createDisplayString(ImageResource image, 
                                       String imageStyle,
                                       String name, 
+                                      JsArray<RS4MethodParam> signature,
                                       String context)
    {    
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
