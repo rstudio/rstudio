@@ -6610,7 +6610,7 @@ var Editor =function(renderer, session) {
                 indentString = lang.stringRepeat(" ", count);
             } else
                 indentString = "\t";
-            return this.onTextInput(indentString);
+            return this.onTextInput(indentString, true);
         }
     };
 
