@@ -34,10 +34,56 @@ std::wstring removeQuoteDelims(const std::wstring& input)
       return std::wstring();
 }
 
- void parseSignature(RTokens::const_iterator begin,
-                     RTokens::const_iterator end,
-                     std::vector<RS4MethodParam>* pSignature)
+std::string contentAsUtf8(const RToken& token)
 {
+   return string_utils::wideToUtf8(removeQuoteDelims(token.content()));
+}
+
+void parseSignatureFunction(RTokens::const_iterator begin,
+                            RTokens::const_iterator end,
+                            std::vector<RS4MethodParam>* pSignature)
+{
+   while (begin != end && begin->type() == RToken::ID)
+   {
+
+
+   }
+}
+
+void parseSignatureCharacterVector(RTokens::const_iterator begin,
+                                   RTokens::const_iterator end,
+                                   std::vector<RS4MethodParam>* pSignature)
+{
+   while (begin != end && begin->type() == RToken::STRING)
+   {
+      // get the type string
+      pSignature->push_back(RS4MethodParam(contentAsUtf8(*begin)));
+
+      // advance
+      begin++;
+
+      // if end then terminate
+      if (begin == end)
+         break;
+
+      // if not a comma then terminate
+      else if (begin->type() != RToken::COMMA)
+         break;
+
+      // otherwise advance
+      else
+         begin++;
+   }
+}
+
+void parseSignature(RTokens::const_iterator begin,
+                    RTokens::const_iterator end,
+                    std::vector<RS4MethodParam>* pSignature)
+{
+   // this code isn't live yet
+   return;
+
+   /*
    // the signature parameter of the setMethod function can take any
    // of the following forms
    //
@@ -46,7 +92,26 @@ std::wstring removeQuoteDelims(const std::wstring& input)
    // setMethod("plot", c("track", "missing")
    //
 
+   if (begin == end)
+      return;
 
+   if (begin->type() == RToken::ID)
+   {
+      // call to signature function
+      if (begin->contentEquals(std::wstring(L"signature")))
+         parseSignatureFunction(begin+1, end, pSignature);
+
+      // simple list of types
+      else if (begin->contentEquals(std::wstring(L"c")))
+         parseSignatureCharacterVector(begin+1, end, pSignature);
+   }
+
+   // single quoted string
+   else if (begin->type() == RToken::STRING)
+   {
+      pSignature->push_back(RS4MethodParam(contentAsUtf8(*begin)));
+   }
+   */
 }
 
 
