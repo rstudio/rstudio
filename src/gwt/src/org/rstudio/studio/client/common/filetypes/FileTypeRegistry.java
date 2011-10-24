@@ -33,30 +33,29 @@ public class FileTypeRegistry
          new TextFileType("text", "Text File", EditorLanguage.LANG_PLAIN, "",
                           ICONS.iconText(),
                           true,
-                          false, false, false, false, false);
+                          false, false, false, false, false, false);
 
    public static final TextFileType R =
          new RFileType("r_source", "R Script", EditorLanguage.LANG_R, ".R",
-                       ICONS.iconRdoc(),
-                       true, true, true, true, false);
+                       ICONS.iconRdoc());
 
    public static final TextFileType RD =
       new TextFileType("r_doc", "R Documentation", EditorLanguage.LANG_RDOC, ".Rd",
                        ICONS.iconRd(),
                        true,
-                       false, false, false, false, false);
+                       false, false, false, false, false, false);
 
    public static final TextFileType SWEAVE =
          new TextFileType("sweave", "Sweave Document", EditorLanguage.LANG_SWEAVE, ".Rnw",
                           ICONS.iconRsweave(),
                           true,
-                          false, true, true, false, true);
+                          false, true, true, false, true, false);
 
    public static final TextFileType TEX =
          new TextFileType("tex", "TeX Document", EditorLanguage.LANG_TEX, ".tex",
                           ICONS.iconTex(),
                           true,
-                          false, false, false, false, true);
+                          false, false, false, false, true, false);
    
    public static final PlainTextFileType RHISTORY =
       new PlainTextFileType("r_history", "R History", ".Rhistory",
