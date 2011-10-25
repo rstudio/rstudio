@@ -37,9 +37,9 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 
-public class CodeBrowserContextLabel extends Composite
+public class CodeBrowserContextWidget extends Composite
 {
-   public CodeBrowserContextLabel(CodeBrowserEditingTargetWidget.Styles styles)
+   public CodeBrowserContextWidget(CodeBrowserEditingTargetWidget.Styles styles)
    {
       HorizontalPanel panel = new HorizontalPanel();
       

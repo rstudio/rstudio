@@ -191,7 +191,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       currentFunctionNamespace_ = functionDef.getNamespace();
       docDisplay_.setCode(formatCode(functionDef), false); 
       docDisplay_.focus();
-      contextLabel_.setCurrentFunction(functionDef);
+      context_.setCurrentFunction(functionDef);
    }
    
    @Override
@@ -283,7 +283,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       SecondaryToolbar toolbar = new SecondaryToolbar();
       
       toolbar.addLeftWidget(
-            contextLabel_ = new CodeBrowserContextLabel(RES.styles())); 
+            context_ = new CodeBrowserContextWidget(RES.styles())); 
       
       return toolbar;
    }
@@ -362,7 +362,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    static Resources RES = GWT.create(Resources.class);
 
    private final PanelWithToolbars panel_;
-   private CodeBrowserContextLabel contextLabel_;
+   private CodeBrowserContextWidget context_;
    private final CodeToolsServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
