@@ -34,19 +34,157 @@ std::wstring removeQuoteDelims(const std::wstring& input)
       return std::wstring();
 }
 
- void parseSignature(RTokens::const_iterator begin,
-                     RTokens::const_iterator end,
-                     std::vector<RS4MethodParam>* pSignature)
+std::string contentAsUtf8(const RToken& token)
+{
+   if (token.type() == RToken::STRING)
+      return string_utils::wideToUtf8(removeQuoteDelims(token.content()));
+   else
+      return string_utils::wideToUtf8(token.content());
+}
+
+bool isTokenType(RTokens::const_iterator begin,
+                 RTokens::const_iterator end,
+                 const wchar_t type)
+{
+   return begin != end && begin->type() == type;
+}
+
+bool advancePastNextToken(
+         RTokens::const_iterator* pBegin,
+         RTokens::const_iterator end,
+         const boost::function<bool(const RToken&)>& tokenCondition)
+{
+   // alias and advance past current token
+   RTokens::const_iterator& begin = *pBegin;
+   begin++;
+
+   // check for end
+   if (begin == end)
+   {
+      return false;
+   }
+
+   // check for condition
+   else if (!tokenCondition(*begin))
+   {
+      return false;
+   }
+
+   // advance and return true
+   else
+   {
+      begin++;
+      return true;
+   }
+}
+
+bool advancePastNextToken(RTokens::const_iterator* pBegin,
+                          RTokens::const_iterator end,
+                          const wchar_t type)
+{
+   return advancePastNextToken(pBegin,
+                               end,
+                               boost::bind(&RToken::isType, _1, type));
+}
+
+bool advancePastNextOperatorToken(RTokens::const_iterator* pBegin,
+                                  RTokens::const_iterator end,
+                                  const std::wstring& op)
+{
+   return advancePastNextToken(pBegin,
+                               end,
+                               boost::bind(&RToken::isOperator, _1, op));
+}
+
+// statics for signature parsing comparisons
+const std::wstring kOpEquals(L"=");
+const std::wstring kSignatureSymbol(L"signature");
+const std::wstring kCSymbol(L"c");
+
+void parseSignatureFunction(RTokens::const_iterator begin,
+                            RTokens::const_iterator end,
+                            std::vector<RS4MethodParam>* pSignature)
+{
+   // advance to args
+   if (!advancePastNextToken(&begin, end, RToken::LPAREN))
+      return;
+
+   // pick off args
+   while (isTokenType(begin, end, RToken::ID))
+   {
+      // get the name
+      std::string name = contentAsUtf8(*begin);
+
+      // advance and check for equals
+      if (!advancePastNextOperatorToken(&begin, end, kOpEquals))
+         break;
+
+      // check for string
+      if (isTokenType(begin, end, RToken::STRING))
+      {
+         // get type and add to signature
+         std::string type = contentAsUtf8(*begin);
+         pSignature->push_back(RS4MethodParam(name, type));
+
+         // advance past comma to next argument
+         if (!advancePastNextToken(&begin, end, RToken::COMMA))
+            break;
+      }
+      else
+      {
+         break;
+      }
+   }
+}
+
+void parseSignatureCharacterVector(RTokens::const_iterator begin,
+                                   RTokens::const_iterator end,
+                                   std::vector<RS4MethodParam>* pSignature)
+{
+   // advance to args
+   if (!advancePastNextToken(&begin, end, RToken::LPAREN))
+      return;
+
+   // pick off args
+   while (isTokenType(begin, end, RToken::STRING))
+   {
+      // get the type string
+      pSignature->push_back(RS4MethodParam(contentAsUtf8(*begin)));
+
+      // advance past comma to next argument
+      if (!advancePastNextToken(&begin, end, RToken::COMMA))
+         break;
+   }
+}
+
+void parseSignature(RTokens::const_iterator begin,
+                    RTokens::const_iterator end,
+                    std::vector<RS4MethodParam>* pSignature)
 {
    // the signature parameter of the setMethod function can take any
    // of the following forms
    //
    // setMethod("plot", signature(x="track", y="missing")
-   // setMethod("plot", "track"
    // setMethod("plot", c("track", "missing")
+   // setMethod("plot", "track"
    //
 
+   if (isTokenType(begin, end, RToken::ID))
+   {
+      // call to signature function
+      if (begin->contentEquals(kSignatureSymbol))
+         parseSignatureFunction(begin, end, pSignature);
 
+      // simple list of types
+      else if (begin->contentEquals(kCSymbol))
+         parseSignatureCharacterVector(begin, end, pSignature);
+   }
+
+   // a solitary quoted string (one element character vector)
+   else if (isTokenType(begin, end, RToken::STRING))
+   {
+      pSignature->push_back(RS4MethodParam(contentAsUtf8(*begin)));
+   }
 }
 
 
