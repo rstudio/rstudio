@@ -320,6 +320,8 @@ public class ReviewPresenter implements IsWidget
                      @Override
                      public void execute()
                      {
+                        view_.getChangelistTable().selectNextUnselectedItem();
+
                         server_.vcsRevert(
                               paths,
                               new SimpleRequestCallback<Void>("Revert Changes"));
@@ -371,10 +373,13 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onClick(ClickEvent event)
          {
+            String which = view_.getLineTableDisplay().getSelectedLines().size() == 0
+                           ? "All unstaged"
+                           : "The selected";
             globalDisplay.showYesNoMessage(
                   GlobalDisplay.MSG_WARNING,
                   "Discard All",
-                  "All unstaged changes in this file will be " +
+                  which + " changes in this file will be " +
                   "lost.\n\nAre you sure you want to continue?",
                   new Operation() {
                      @Override
