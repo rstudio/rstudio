@@ -30,6 +30,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.*;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
@@ -94,14 +95,6 @@ public class ConsoleProgressDialog extends ModalDialogBase
 
       output_ = new PreWidget();
       output_.getElement().getStyle().setMargin(4, Unit.PX);
-      output_.getElement().getStyle().setFontSize(11, Unit.PX);
-
-      if (!StringUtil.isNullOrEmpty(initialOutput))
-      {
-         console_.submit(initialOutput);
-         output_.setText(console_.toString());
-      }
-
       scrollPanel_ = new BottomScrollPanel(output_);
 
       progressAnim_ = new Image(resources_.progress().getSafeUri());
@@ -110,12 +103,16 @@ public class ConsoleProgressDialog extends ModalDialogBase
 
       label_.setText(title);
 
+      if (!StringUtil.isNullOrEmpty(initialOutput))
+      {
+         console_.submit(initialOutput);
+         output_.setText(console_.toString());
+      }
+
       Style style = scrollPanel_.getElement().getStyle();
-      style.setBackgroundColor("white");
-      style.setBorderStyle(BorderStyle.SOLID);
-      style.setBorderColor("#BBB");
-      style.setBorderWidth(1, Style.Unit.PX);
-      style.setMargin(0, Unit.PX);
+      double skewFactor = (12 + BrowseCap.getFontSkew()) / 12.0;
+      style.setWidth((int)(skewFactor * 660), Unit.PX);
+      style.setFontSize(12 + BrowseCap.getFontSkew(), Unit.PX);
 
       stopButton_.addClickHandler(this);
       stopButton_.fillWidth();
