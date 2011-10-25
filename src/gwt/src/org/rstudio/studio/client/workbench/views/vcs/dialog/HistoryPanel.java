@@ -80,7 +80,7 @@ public class HistoryPanel extends Composite implements Display
 
       filterText_ = new SearchWidget(new MultiWordSuggestOracle(),
                                      new TextBoxWithCue("Search"),
-                                     null, false);
+                                     null);
       topToolbar_.addRightWidget(filterText_);
       topToolbar_.addRightSeparator();
 

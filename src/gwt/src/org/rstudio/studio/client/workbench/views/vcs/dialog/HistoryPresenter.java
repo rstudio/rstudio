@@ -26,6 +26,7 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
+import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.workbench.views.vcs.diff.UnifiedParser;
@@ -122,7 +123,7 @@ public class HistoryPresenter
          @Override
          public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent)
          {
-            refreshHistory();
+            refreshHistoryCommand_.nudge();
          }
       });
    }
@@ -161,6 +162,15 @@ public class HistoryPresenter
          provider_.refreshCount();
       }
    }
+
+   private final TimeBufferedCommand refreshHistoryCommand_ = new TimeBufferedCommand(1000)
+   {
+      @Override
+      protected void performAction(boolean shouldSchedulePassive)
+      {
+         refreshHistory();
+      }
+   };
 
    private final VCSServerOperations server_;
    private final Display view_;
