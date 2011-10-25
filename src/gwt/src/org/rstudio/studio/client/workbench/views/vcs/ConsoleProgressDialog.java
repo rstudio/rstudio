@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ClientBundle;
@@ -26,10 +27,13 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
@@ -151,6 +155,23 @@ public class ConsoleProgressDialog extends ModalDialogBase
    {
       super.onUnload();
       registrations_.removeHandler();
+   }
+
+   @Override
+   public void onPreviewNativeEvent(NativePreviewEvent event)
+   {
+      if (event.getTypeInt() == Event.ONKEYDOWN)
+      {
+         if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE &&
+             KeyboardShortcut.getModifierValue(event.getNativeEvent()) == KeyboardShortcut.NONE)
+         {
+            stopButton_.click();
+            event.cancel();
+            return;
+         }
+      }
+
+      super.onPreviewNativeEvent(event);
    }
 
    @Override
