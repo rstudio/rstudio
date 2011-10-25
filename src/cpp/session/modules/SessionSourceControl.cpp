@@ -542,7 +542,7 @@ public:
             console_process::ConsoleProcess::create(git() << "checkout"
                                                     << id << "--",
                                                     procOptions(),
-                                                    "Checkout",
+                                                    "Git Checkout",
                                                     true,
                                                     &enqueueRefreshEvent);
       *pHandle = ptrProc->handle();
@@ -571,7 +571,7 @@ public:
 
       boost::shared_ptr<ConsoleProcess> ptrProc =
             console_process::ConsoleProcess::create(
-                  command, procOptions(), "Commit", true,
+                  command, procOptions(), "Git Commit", true,
                   boost::bind(afterCommit, tempFile));
 
       *pHandle = ptrProc->handle();
@@ -590,7 +590,7 @@ public:
       boost::shared_ptr<ConsoleProcess> ptrProc =
             console_process::ConsoleProcess::create(cmd,
                                                     procOptions(),
-                                                    "Clone",
+                                                    "Git Clone",
                                                     true);
 
       *pHandle = ptrProc->handle();
@@ -675,7 +675,7 @@ public:
       boost::shared_ptr<ConsoleProcess> ptrProc =
             console_process::ConsoleProcess::create(cmd,
                                                     procOptions(),
-                                                    "Push",
+                                                    "Git Push",
                                                     true,
                                                     &enqueueRefreshEvent);
 
@@ -688,7 +688,7 @@ public:
       boost::shared_ptr<ConsoleProcess> ptrProc =
             console_process::ConsoleProcess::create(git() << "pull",
                                                     procOptions(),
-                                                    "Pull",
+                                                    "Git Pull",
                                                     true,
                                                     &enqueueRefreshEvent);
 
@@ -1539,7 +1539,7 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
    boost::shared_ptr<ConsoleProcess> ptrProc =
          console_process::ConsoleProcess::create(command,
                                                  procOptions(),
-                                                 "",
+                                                 command,
                                                  false,
                                                  &enqueueRefreshEvent);
 

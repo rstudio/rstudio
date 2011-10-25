@@ -10,6 +10,7 @@
 @sprite .buttonLeft {
    gwt-image: 'smallButtonLeft';
    min-width: value('smallButtonLeft.getWidth', 'px');
+   width: value('smallButtonLeft.getWidth', 'px');
 }
 @sprite .buttonCenter {
    gwt-image: 'smallButtonTile';
@@ -18,6 +19,7 @@
 @sprite .buttonRight {
    gwt-image: 'smallButtonRight';
    min-width: value('smallButtonRight.getWidth', 'px');
+   width: value('smallButtonRight.getWidth', 'px');
 }
 
 .buttonContent {
