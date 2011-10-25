@@ -12,9 +12,15 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
-// TODO: implement menu lookup/switching (optimize?)
+// TODO: implement menu lookup/switching. probably want to do this by 
+//       asking our context to "switch methods" and then to call getS3method
+//       on the server
 
-// TODO: refactor into correct widgets
+// TODO: context restoration has to be "method savvy". this may mean
+//       calling getAnywhere rather than findFunction? not sure, definitely
+//       give this some thought
+
+// TODO: refactor into correct layering
 
 // TODO: automatically show foo.default for generic method (do this carefully!)
 
