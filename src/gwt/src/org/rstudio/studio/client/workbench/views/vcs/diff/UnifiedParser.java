@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.diff;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.workbench.views.vcs.diff.Line.Type;
