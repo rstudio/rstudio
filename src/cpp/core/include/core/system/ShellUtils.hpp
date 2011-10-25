@@ -17,6 +17,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/regex.hpp>
+
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
@@ -50,7 +52,11 @@ public:
 
    explicit ShellCommand(const std::string& program)
    {
-      output_ = program;
+      boost::regex simpleCommand("^[a-zA-Z]+$");
+      if (boost::regex_match(program, simpleCommand))
+         output_ = program;
+      else
+         output_ = escape(program);
    }
 
    ShellCommand& operator<<(const std::string& arg);
