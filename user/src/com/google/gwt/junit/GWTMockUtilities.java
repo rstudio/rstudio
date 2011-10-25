@@ -26,6 +26,8 @@ import java.lang.reflect.Method;
  * other UIObjects.
  */
 public class GWTMockUtilities {
+  
+  private static GWTDummyBridge dummyBridge;
 
   /**
    * Replace the normal GWT.create() behavior with a method that returns null
@@ -66,12 +68,24 @@ public class GWTMockUtilities {
    * </pre>
    */
   public static void disarm() {
-    GWTBridge bridge = new GWTDummyBridge();
-    setGwtBridge(bridge);
+    dummyBridge = new GWTDummyBridge();
+    setGwtBridge(dummyBridge);
   }
 
   public static void restore() {
     setGwtBridge(null);
+    dummyBridge = null;
+  }
+  
+  /**
+   * After {@see #disarm()} replaces the normal GWT.create(), this method
+   * enables Messages to be faked out. The fake instance creation is delegated
+   * to {@see FakeMessagesMaker}.  
+   */
+  public static void returnMockMessages() {
+    if (dummyBridge != null) {
+      dummyBridge.enableMockMessages();
+    }
   }
 
   /**

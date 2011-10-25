@@ -17,6 +17,7 @@ package com.google.gwt.junit;
 
 import com.google.gwt.core.client.GWTBridge;
 import com.google.gwt.dev.About;
+import com.google.gwt.i18n.client.Messages;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,12 +30,26 @@ import java.util.logging.Logger;
 class GWTDummyBridge extends GWTBridge {
   private static final Logger logger = Logger.getLogger(GWTDummyBridge.class.getName());
 
+  private boolean fakeMessages = false;
+  
   /**
    * Returns null.
    */
   @Override
   public <T> T create(Class<?> classLiteral) {
-    return null;
+    if (fakeMessages && (classLiteral != null ) && Messages.class.isAssignableFrom(classLiteral)) {
+      return (T) FakeMessagesMaker.create((Class<? extends Messages>) classLiteral);
+    } else {
+      return null;
+    }
+  }
+  
+  /**
+   * Makes the create() method return mock/fake Messages, when the specified
+   * class is assignable to Messages.
+   */
+  public void enableMockMessages() {
+    fakeMessages = true;
   }
 
   /**

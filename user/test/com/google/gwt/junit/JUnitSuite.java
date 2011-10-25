@@ -41,6 +41,7 @@ public class JUnitSuite {
     suite.addTestSuite(CompileStrategyTest.class);
 
     suite.addTestSuite(FakeMessagesMakerTest.class);
+    suite.addTestSuite(GWTMockUtilitiesTest.class);
     suite.addTestSuite(JUnitMessageQueueTest.class);
     suite.addTestSuite(GWTTestCaseNoClientTest.class);
 
