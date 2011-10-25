@@ -31,6 +31,10 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.workbench.views.vcs.diff.UnifiedParser;
 import org.rstudio.studio.client.workbench.views.vcs.events.SwitchViewEvent;
+import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
+import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent.Reason;
+import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
+import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;
 
 import java.util.ArrayList;
 
@@ -69,7 +73,8 @@ public class HistoryPresenter
    @Inject
    public HistoryPresenter(VCSServerOperations server,
                            final Display view,
-                           HistoryAsyncDataProvider provider)
+                           HistoryAsyncDataProvider provider,
+                           VcsState vcsState)
    {
       server_ = server;
       view_ = view;
@@ -124,6 +129,16 @@ public class HistoryPresenter
          public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent)
          {
             refreshHistoryCommand_.nudge();
+         }
+      });
+
+      vcsState.bindRefreshHandler(view.asWidget(), new VcsRefreshHandler()
+      {
+         @Override
+         public void onVcsRefresh(VcsRefreshEvent event)
+         {
+            if (event.getReason() == Reason.VcsOperation)
+               refreshHistory();
          }
       });
    }
