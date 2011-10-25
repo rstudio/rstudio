@@ -27,13 +27,14 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable.ChangelistTableCellTableResources;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPanel.Styles;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitListDisplay;
 
 import java.util.ArrayList;
 
-public class CommitListTable extends CellTable<CommitInfo>
+public class CommitListTable extends MultiSelectCellTable<CommitInfo>
       implements CommitListDisplay
 {
    private class SubjectRenderer implements SafeHtmlRenderer<CommitInfo>
