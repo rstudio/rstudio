@@ -129,7 +129,26 @@ class CodeSearchSuggestion implements Suggestion
    {    
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
       SafeHtmlUtil.appendImage(sb, imageStyle, image);
-      SafeHtmlUtil.appendSpan(sb, RES.styles().itemName(), name);      
+      SafeHtmlUtil.appendSpan(sb, RES.styles().itemName(), name);    
+      
+      // check for signature
+      if (signature != null && signature.length() > 0)
+      {
+         StringBuilder sigBuilder = new StringBuilder();
+         sigBuilder.append("{");
+         for (int i=0; i<signature.length(); i++)
+         {
+            if (i>0)
+               sigBuilder.append(", ");
+            sigBuilder.append(signature.get(i).getType());
+         }
+         sigBuilder.append("}");
+         SafeHtmlUtil.appendSpan(sb, 
+                                 RES.styles().itemName(), 
+                                 sigBuilder.toString());
+      }
+      
+      // check for context
       if (context != null)
       {
          SafeHtmlUtil.appendSpan(sb, 
