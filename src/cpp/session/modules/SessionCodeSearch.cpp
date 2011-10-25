@@ -828,6 +828,29 @@ void getFunctionSource(SEXP functionSEXP,
       LOG_ERROR(error);
 }
 
+void getFunctionS3Methods(const std::string& name, json::Array* pMethods)
+{
+   // first find the base name of the function
+   std::string baseName = name;
+   std::size_t periodLoc = name.find('.');
+   if (periodLoc != std::string::npos && periodLoc > 0)
+      baseName = name.substr(0, periodLoc);
+
+   // lookup S3 methods for that base name
+   std::vector<std::string> methods;
+   r::exec::RFunction rfunc(".rs.getS3MethodsForFunction", baseName);
+   Error error = rfunc.call(&methods);
+   if (error)
+      LOG_ERROR(error);
+
+   // provide them to the caller
+   std::transform(methods.begin(),
+                  methods.end(),
+                  std::back_inserter(*pMethods),
+                  boost::bind(json::toJsonString, _1));
+
+}
+
 
 json::Object createFunctionDefinition(const std::string& name,
                                       const std::string& namespaceName)
@@ -865,6 +888,11 @@ json::Object createFunctionDefinition(const std::string& name,
       {
          // get the function source
          getFunctionSource(functionSEXP, &lines, &fromSrcAttrib);
+
+         // see if the function has any S3 methods
+         json::Array s3MethodsJson;
+         getFunctionS3Methods(name, &s3MethodsJson);
+         funDef["s3methods"] = s3MethodsJson;
       }
    }
    else

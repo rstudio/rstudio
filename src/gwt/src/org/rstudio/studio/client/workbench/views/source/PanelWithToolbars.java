@@ -1,5 +1,5 @@
 /*
- * PanelWithToolbar.java
+ * PanelWithToolbars.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -19,21 +19,33 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.IsWidgetWithHeight;
 
-public class PanelWithToolbar extends ResizeComposite
+public class PanelWithToolbars extends ResizeComposite
 {
-   public PanelWithToolbar(Toolbar toolbar, Widget mainWidget)
+   public PanelWithToolbars(Toolbar toolbar, Widget mainWidget)
    {
       this(toolbar, mainWidget, null);
    }
 
-   public PanelWithToolbar(Toolbar toolbar,
-                           Widget mainWidget,
-                           IsWidgetWithHeight statusBar)
+   public PanelWithToolbars(Toolbar toolbar,
+                            Widget mainWidget,
+                            IsWidgetWithHeight statusBar)
+   {
+      this(toolbar, null, mainWidget, statusBar);
+   }
+   
+   public PanelWithToolbars(Toolbar toolbar,
+                            Toolbar secondaryToolbar,
+                            Widget mainWidget,
+                            IsWidgetWithHeight statusBar)
    {
       mainWidget_ = mainWidget;
 
       panel_ = new DockLayoutPanel(Unit.PX);
       panel_.addNorth(toolbar, toolbar.getHeight());
+      
+      if (secondaryToolbar != null)
+         panel_.addNorth(secondaryToolbar, secondaryToolbar.getHeight());
+      
       if (statusBar != null)
          panel_.addSouth(statusBar.asWidget(), statusBar.getHeight());
 

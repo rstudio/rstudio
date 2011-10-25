@@ -1,4 +1,13 @@
 
+.captionLabel {
+   font-weight: bold;
+   color: #494949;
+}
+
+.menuElement {
+   cursor: default;
+}
+
 .functionName {
    margin-left: 7px;
    margin-right: 7px;
@@ -6,7 +15,12 @@
 
 .functionNamespace {
    color: #888;
-   margin-right: 13px;
+}
+
+.dropDownImage {
+   margin-left: 6px;
+   margin-right: 8px;
+   margin-bottom: 2px;
 }
 
 .readOnly {

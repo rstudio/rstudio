@@ -34,7 +34,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.source.PanelWithToolbar;
+import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
@@ -82,7 +82,7 @@ public class TextEditingTargetWidget
             } 
          });
       
-      panel_ = new PanelWithToolbar(createToolbar(),
+      panel_ = new PanelWithToolbars(createToolbar(),
                                     editor.asWidget(),
                                     statusBar_);
       adaptToFileType(fileType);
@@ -248,7 +248,7 @@ public class TextEditingTargetWidget
    private final UIPrefs uiPrefs_;
    private final DocDisplay editor_;
    private CheckBox sourceOnSave_;
-   private PanelWithToolbar panel_;
+   private PanelWithToolbars panel_;
    private WarningBar warningBar_;
    private final TextEditingTargetFindReplace findReplace_;
    private ToolbarButton codeTransform_;

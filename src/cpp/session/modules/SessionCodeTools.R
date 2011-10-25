@@ -101,7 +101,8 @@
 
 .rs.addFunction("getS3MethodsForFunction", function(func)
 {
-  as.character(suppressWarnings(methods(func)))
+  tryCatch(as.character(suppressWarnings(methods(func))),
+           error = function(e) character())
 })
 
 # NOTE: see also getAnywhere for getting namespace & function
