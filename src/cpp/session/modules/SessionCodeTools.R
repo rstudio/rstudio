@@ -105,17 +105,8 @@
            error = function(e) character())
 })
 
-# NOTE: see also getAnywhere for getting namespace & function
 
-# NOTE: should use getAnywhere above rather than findFunction
-# whenever searching for S3 methods (but perhaps not for others).
-# perhaps must try getS3Method first to confirm is an S3 method
-
-.rs.addFunction("getS3Method", function(name, class)
-{
-  getS3method(name, class, optional = TRUE)
-})
-
+#NOTE: use isGeneric first to screen the search
 #NOTE: can use where to restrict the search
 
 .rs.addFunction("getS4MethodsForFunction", function(func)

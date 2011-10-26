@@ -927,6 +927,56 @@ json::Object createFunctionDefinition(const std::string& name,
    return funDef;
 }
 
+json::Value createS3MethodDefinition(const std::string& name)
+{
+   // first call getAnywhere to see if we can find a definition
+   r::sexp::Protect rProtect;
+   SEXP getAnywhereSEXP;
+   r::exec::RFunction getAnywhereFunc("utils:::getAnywhere", name);
+   Error error = getAnywhereFunc.call(&getAnywhereSEXP, &rProtect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Value();
+   }
+
+   // access the "where" element
+   std::vector<std::string> whereList;
+   error = r::sexp::getNamedListElement(getAnywhereSEXP, "where", &whereList);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Value();
+   }
+
+   // find an element beginning with "package:" or "namespace:"
+   std::string packagePrefix = "package:";
+   std::string namespacePrefix = "namespace:";
+   std::string namespaceName;
+   BOOST_FOREACH(const std::string& where, whereList)
+   {
+      if (boost::algorithm::starts_with(where, packagePrefix))
+      {
+         namespaceName = where;
+         break;
+      }
+
+      if (boost::algorithm::starts_with(where, namespacePrefix) &&
+          (where.length() > namespacePrefix.length()))
+      {
+         namespaceName = "package:" +
+                         where.substr(namespacePrefix.length());
+         break;
+      }
+   }
+
+   // if we found one then go through standard route, else return null
+   if (!namespaceName.empty())
+      return createFunctionDefinition(name, namespaceName);
+   else
+      return json::Value();
+}
+
 struct FunctionToken
 {
    std::string package;
@@ -1055,6 +1105,20 @@ Error getSearchPathFunctionDefinition(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getS3MethodDefinition(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string name;
+   Error error = json::readParam(request.params, 0, &name);
+   if (error)
+      return error;
+
+   // return result
+   pResponse->setResult(createS3MethodDefinition(name));
+   return Success();
+}
+
 Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
                                json::JsonRpcResponse* pResponse)
 {
@@ -1140,6 +1204,7 @@ Error initialize()
       (bind(registerRpcMethod, "search_code", searchCode))
       (bind(registerRpcMethod, "get_function_definition", getFunctionDefinition))
       (bind(registerRpcMethod, "get_search_path_function_definition", getSearchPathFunctionDefinition))
+      (bind(registerRpcMethod, "get_s3_method_definition", getS3MethodDefinition))
       (bind(registerRpcMethod, "find_function_in_search_path", findFunctionInSearchPath));
 
    return initBlock.execute();

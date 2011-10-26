@@ -14,6 +14,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Timer;
@@ -191,7 +193,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       currentFunctionNamespace_ = functionDef.getNamespace();
       docDisplay_.setCode(formatCode(functionDef), false); 
       docDisplay_.focus();
-      context_.setCurrentFunction(functionDef);
+      contextWidget_.setCurrentFunction(functionDef);
    }
    
    @Override
@@ -215,52 +217,65 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    private void navigateToFunction(
          InputEditorLineWithCursorPosition lineWithPos)
    {
-      // delayed progress indicator
-      final GlobalProgressDelayer progress = new GlobalProgressDelayer(
-            globalDisplay_, 1000, "Searching for function definition...");
-
       server_.findFunctionInSearchPath(
             lineWithPos.getLine(),
             lineWithPos.getPosition(), 
             currentFunctionNamespace_,
-            new ServerRequestCallback<SearchPathFunctionDefinition>() {
-               @Override
-               public void onResponseReceived(SearchPathFunctionDefinition def)
-               {
-                  // dismiss progress
-                  progress.dismiss();
+            new FunctionSearchRequestCallback(true));
+   }
+   
+   private class FunctionSearchRequestCallback
+                    extends ServerRequestCallback<SearchPathFunctionDefinition>
+   {
+      public FunctionSearchRequestCallback(boolean searchLocally)
+      {
+         searchLocally_ = searchLocally;
+         
+         // delayed progress indicator
+         progress_ = new GlobalProgressDelayer(
+               globalDisplay_, 1000, "Searching for function definition...");
 
-                  // if we got a hit
-                  if (def.getName() != null)
-                  {         
-                     // try to search for the function locally
-                     SourcePosition position = 
-                           docDisplay_.findFunctionPositionFromCursor(
-                                 def.getName());
-                     if (position != null)
-                     {
-                        docDisplay_.navigateToPosition(position, true);
-                     }
-                     else if (def.getNamespace() != null)
-                     {
-                        docDisplay_.recordCurrentNavigationPosition();
-                        eventBus_.fireEvent(new CodeBrowserNavigationEvent(
-                              def));        
-                     }
-                  }
-               }
+      }
+      
+      @Override
+      public void onResponseReceived(SearchPathFunctionDefinition def)
+      {
+         // dismiss progress
+         progress_.dismiss();
 
-               @Override
-               public void onError(ServerError error)
-               {
-                  progress.dismiss();
+         // if we got a hit
+         if (def != null && def.getName() != null)
+         {         
+            // try to search for the function locally
+            SourcePosition position = searchLocally_ ?
+                  docDisplay_.findFunctionPositionFromCursor(def.getName()) : 
+                  null;
+                  
+            if (position != null)
+            {
+               docDisplay_.navigateToPosition(position, true);
+            }
+            else if (def.getNamespace() != null)
+            {
+               docDisplay_.recordCurrentNavigationPosition();
+               eventBus_.fireEvent(new CodeBrowserNavigationEvent(
+                     def));        
+            }
+         }
+      }
 
-                  globalDisplay_.showErrorMessage(
-                                          "Error Searching for Function",
-                                          error.getUserMessage());
-               }
-            });
+      @Override
+      public void onError(ServerError error)
+      {
+         progress_.dismiss();
 
+         globalDisplay_.showErrorMessage(
+                                 "Error Searching for Function",
+                                 error.getUserMessage());
+      }
+      
+      private final boolean searchLocally_;
+      private final GlobalProgressDelayer progress_;
    }
    
    private Toolbar createToolbar()
@@ -282,9 +297,19 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    {
       SecondaryToolbar toolbar = new SecondaryToolbar();
       
-      toolbar.addLeftWidget(
-            context_ = new CodeBrowserContextWidget(RES.styles())); 
-      
+      contextWidget_ = new CodeBrowserContextWidget(RES.styles());
+      contextWidget_.addSelectionHandler(new SelectionHandler<String> () {
+         @Override
+         public void onSelection(SelectionEvent<String> event)
+         {
+            server_.getS3MethodDefinition(
+                              event.getSelectedItem(),
+                              new FunctionSearchRequestCallback(false));
+         }
+         
+      });
+      toolbar.addLeftWidget(contextWidget_);
+         
       return toolbar;
    }
    
@@ -356,13 +381,13 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       String functionName();
       String functionNamespace();
       String dropDownImage();
-      String readOnly();
+      String readOnly(); 
    }
    
    static Resources RES = GWT.create(Resources.class);
 
    private final PanelWithToolbars panel_;
-   private CodeBrowserContextWidget context_;
+   private CodeBrowserContextWidget contextWidget_;
    private final CodeToolsServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
