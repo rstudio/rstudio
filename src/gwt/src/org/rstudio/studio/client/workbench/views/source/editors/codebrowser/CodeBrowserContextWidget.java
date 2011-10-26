@@ -12,6 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
+// TODO: functions can have both S4 and S3 methods (e.g. print) so 
+//       we need to look for both
+
 // TODO: confirm the perf stuff only happens in hosted mode
 
 // TODO: we seem to be able to get methods in unloaded packages via methods and 
