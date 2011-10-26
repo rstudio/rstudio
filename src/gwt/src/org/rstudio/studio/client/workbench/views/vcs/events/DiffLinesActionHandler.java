@@ -1,5 +1,5 @@
 /*
- * DiffLineActionHandler.java
+ * DiffLinesActionHandler.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -14,7 +14,7 @@ package org.rstudio.studio.client.workbench.views.vcs.events;
 
 import com.google.gwt.event.shared.EventHandler;
 
-public interface DiffLineActionHandler extends EventHandler
+public interface DiffLinesActionHandler extends EventHandler
 {
-   void onDiffLineAction(DiffLineActionEvent event);
+   void onDiffLinesAction(DiffLinesActionEvent event);
 }

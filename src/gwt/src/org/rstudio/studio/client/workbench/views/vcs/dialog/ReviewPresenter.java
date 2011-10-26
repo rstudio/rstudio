@@ -140,7 +140,7 @@ public class ReviewPresenter implements IsWidget
    }
 
    private class ApplyPatchHandler implements DiffChunkActionHandler,
-                                              DiffLineActionHandler
+                                              DiffLinesActionHandler
    {
       @Override
       public void onDiffChunkAction(DiffChunkActionEvent event)
@@ -151,10 +151,9 @@ public class ReviewPresenter implements IsWidget
       }
 
       @Override
-      public void onDiffLineAction(DiffLineActionEvent event)
+      public void onDiffLinesAction(DiffLinesActionEvent event)
       {
-         ArrayList<Line> lines = new ArrayList<Line>();
-         lines.add(event.getLine());
+         ArrayList<Line> lines = view_.getLineTableDisplay().getSelectedLines();
          doPatch(event.getAction(), lines, activeChunks_);
       }
 

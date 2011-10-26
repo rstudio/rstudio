@@ -107,7 +107,7 @@
 }
 
 .lineActions {
-   display: none;
+   display: block;
 }
 
 .stageMode .actions a[data-action='Stage'],
@@ -117,10 +117,6 @@
 
 .workingMode .actions a[data-action='Unstage'] {
    display: none;
-}
-
-.cellTableWidget tr:hover .lineActions {
-   display: block;
 }
 
 .chunkActions {
