@@ -176,11 +176,11 @@ public class VCS extends BasePresenter implements IsWidget
             }
          }
       });
-      view_.getChangelistTable().addClickHandler(new ClickHandler()
+      view_.getChangelistTable().addMouseDownHandler(new MouseDownHandler()
       {
          private DoubleClickState dblClick = new DoubleClickState();
          @Override
-         public void onClick(ClickEvent event)
+         public void onMouseDown(MouseDownEvent event)
          {
             if (dblClick.checkForDoubleClick(event.getNativeEvent()))
             {

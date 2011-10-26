@@ -25,7 +25,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 
 public class MultiSelectCellTable<T> extends CellTable<T>
-      implements HasKeyDownHandlers, HasClickHandlers
+      implements HasKeyDownHandlers, HasClickHandlers, HasMouseDownHandlers
 {
    public MultiSelectCellTable()
    {
@@ -221,5 +221,11 @@ public class MultiSelectCellTable<T> extends CellTable<T>
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
       return addDomHandler(handler, ClickEvent.getType());
+   }
+
+   @Override
+   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
+   {
+      return addDomHandler(handler, MouseDownEvent.getType());
    }
 }
