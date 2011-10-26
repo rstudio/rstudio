@@ -2096,8 +2096,9 @@ void onResume(const core::Settings&)
 
 bool tryGit(const FilePath& workingDir)
 {
+   Error error;
 #ifdef _WIN32
-   Error error = detectAndSaveGitBinDir();
+   error = detectAndSaveGitBinDir();
    if (error)
       return false; // no Git install detected
 #endif
