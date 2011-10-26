@@ -34,10 +34,10 @@ public class SearchPathFunctionDefinition extends JavaScriptObject
       return this.code;
    }-*/;
    
-   public final native JsArrayString getS3Methods() /*-{
-      return this.s3methods;
+   public final native JsArrayString getMethods() /*-{
+      return this.methods;
    }-*/;
-   
+    
    public final native boolean isCodeFromSrcAttrib() /*-{
       return this.from_src_attrib;
    }-*/;

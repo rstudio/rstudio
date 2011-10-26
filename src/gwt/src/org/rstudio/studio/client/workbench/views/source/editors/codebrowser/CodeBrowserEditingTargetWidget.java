@@ -302,7 +302,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          @Override
          public void onSelection(SelectionEvent<String> event)
          {
-            server_.getS3MethodDefinition(
+            server_.getMethodDefinition(
                               event.getSelectedItem(),
                               new FunctionSearchRequestCallback(false));
          }

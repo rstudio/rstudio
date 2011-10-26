@@ -323,11 +323,11 @@ public class RemoteServer implements Server
                   requestCallback);
    }
    
-   public void getS3MethodDefinition(
+   public void getMethodDefinition(
          String name,
          ServerRequestCallback<SearchPathFunctionDefinition> requestCallback)
    {
-      sendRequest(RPC_SCOPE, GET_S3_METHOD_DEFINITION, name, requestCallback);
+      sendRequest(RPC_SCOPE, GET_METHOD_DEFINITION, name, requestCallback);
    }
 
    public void consoleInput(String consoleInput,
@@ -1921,7 +1921,7 @@ public class RemoteServer implements Server
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";
    private static final String SEARCH_CODE = "search_code";
    private static final String GET_SEARCH_PATH_FUNCTION_DEFINITION = "get_search_path_function_definition";
-   private static final String GET_S3_METHOD_DEFINITION = "get_s3_method_definition";
+   private static final String GET_METHOD_DEFINITION = "get_method_definition";
    private static final String GET_FUNCTION_DEFINITION = "get_function_definition";
    private static final String FIND_FUNCTION_IN_SEARCH_PATH = "find_function_in_search_path";
    

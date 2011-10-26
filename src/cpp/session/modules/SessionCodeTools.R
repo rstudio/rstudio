@@ -106,13 +106,40 @@
 })
 
 
-#NOTE: use isGeneric first to screen the search
-#NOTE: can use where to restrict the search
-
+# Return a list of S4 methods formatted as  functionName {className, className}
+# NOTE: should call isGeneric prior to calling this (it will yield an error
+# for functions that aren't generic)
 .rs.addFunction("getS4MethodsForFunction", function(func)
 {
-  as.data.frame(findMethodSignatures(
-                methods = findMethods(func)))
+  sigs <- findMethodSignatures(methods = findMethods(func))
+  apply(sigs, 
+        1, 
+        function(sig)
+        {
+           paste(func, 
+                 " {", 
+                 paste(sig, collapse=", "),
+                 "}",
+                 sep="",
+                 collapse = "")
+        })
+})
+
+.rs.addFunction("getS4MethodNamespaceName", function(method)
+{
+  env <- environment(method)
+  if (identical(env, baseenv()))
+    return ("package:base")
+  else if (identical(env, globalenv()))
+    return (".GlobalEnv")
+  else
+  {
+    envName <- environmentName(env)
+    if (envName %in% search())
+      return (envName)
+    else
+      paste("package:", envName, sep="")
+  }
 })
 
 utils:::rc.settings(files=T)

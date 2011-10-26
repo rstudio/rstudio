@@ -83,10 +83,10 @@ public interface CodeSearchServerOperations
          ServerRequestCallback<SearchPathFunctionDefinition> requestCallback);
     
     /*
-     * Get a function which is known to be an S3 method. returns null
-     * if no such S3 method could be located
+     * Get a function which is known to be an S3 or S4 method. returns null
+     * if no such method could be located
      */
-    void getS3MethodDefinition(
+    void getMethodDefinition(
          String name,
          ServerRequestCallback<SearchPathFunctionDefinition> requestCallback);
 }

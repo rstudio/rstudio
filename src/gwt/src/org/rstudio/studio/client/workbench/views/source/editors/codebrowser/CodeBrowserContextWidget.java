@@ -12,10 +12,14 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
-// TODO: was is methods(print) taking so long in the console?
+// TODO: confirm the perf stuff only happens in hosted mode
 
-// TODO: timeSeries F2 doesn't yield anyting (because is method?)
+// TODO: we seem to be able to get methods in unloaded packages via methods and 
+//       getS4MethodsForFunction -- are there performance implications of this?
 
+// TODO: timeSeries F2 doesn't yield anything (because is method?)
+
+// TODO: find source defintion of method first (does it work at all now?)
 
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
@@ -59,10 +63,11 @@ public class CodeBrowserContextWidget extends Composite
             if (dropDownImage_.isVisible())
             {
                CodeBrowserPopupMenu menu = new CodeBrowserPopupMenu();
-               final JsArrayString s3Methods = functionDef_.getS3Methods();
-               for (int i=0; i < s3Methods.length(); i++)
+               
+               JsArrayString methods = functionDef_.getMethods();
+               for (int i=0; i < methods.length(); i++)
                {
-                  final String method = s3Methods.get(i);
+                  final String method = methods.get(i);
                   MenuItem mi = new MenuItem(method, new Command() {
                      @Override
                      public void execute()
@@ -123,11 +128,8 @@ public class CodeBrowserContextWidget extends Composite
       
       nameLabel_.setText(functionDef.getName());
       namespaceLabel_.setText("(" + functionDef.getNamespace() + ")");
-      
-      JsArrayString s3Methods = functionDef.getS3Methods();
-      boolean hasMethods = s3Methods.length() > 0;
-      
-      if (hasMethods)
+           
+      if (functionDef.getMethods().length() > 0)
       {
          captionLabel_.setText("Method:");
          dropDownImage_.setVisible(true);
