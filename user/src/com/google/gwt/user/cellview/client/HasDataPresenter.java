@@ -1163,7 +1163,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
          * or we will have a null selection event while we wait for asynchronous
          * data to load.
          */
-        if (newKey != null && !newKey.equals(oldKey)) {
+        if (newKey != null) {
           // Check both values for selection before setting selection, or the
           // selection model may resolve state early.
           boolean oldValueWasSelected =
@@ -1171,15 +1171,20 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
           boolean newValueWasSelected =
               (newValue == null) ? false : selectionModel.isSelected(newValue);
 
-          // Deselect the old value.
-          if (oldValueWasSelected) {
-            selectionModel.setSelected(oldValue, false);
-          }
-
-          // Select the new value.
-          pending.selectedValue = newValue;
-          if (newValue != null && !newValueWasSelected) {
-            selectionModel.setSelected(newValue, true);
+          if (!newKey.equals(oldKey)) {
+            // Deselect the old value.
+            if (oldValueWasSelected) {
+              selectionModel.setSelected(oldValue, false);
+            }
+  
+            // Select the new value.
+            pending.selectedValue = newValue;
+            if (newValue != null && !newValueWasSelected) {
+              selectionModel.setSelected(newValue, true);
+            }
+          } else if (!newValueWasSelected) {
+            // The value was programmatically deselected.
+            pending.selectedValue = null;
           }
         }
       }

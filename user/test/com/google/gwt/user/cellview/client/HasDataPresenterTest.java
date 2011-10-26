@@ -630,6 +630,41 @@ public class HasDataPresenterTest extends GWTTestCase {
   }
 
   /**
+   * Test that programmatically deselecting a row works.
+   */
+  public void testSetKeyboardSelectedRowBoundWithDeselect() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView, view, 10, null);
+    presenter.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
+    presenter.setVisibleRange(new Range(0, 10));
+    populatePresenter(presenter);
+    presenter.flush();
+
+    // Add a selection model.
+    MockSingleSelectionModel<String> model = new MockSingleSelectionModel<String>(null);
+    presenter.setSelectionModel(model);
+    presenter.flush();
+    assertEquals(null, model.getSelectedObject());
+
+    // Select an item.
+    presenter.setKeyboardSelectedRow(1, false, false);
+    presenter.flush();
+    assertTrue(model.isSelected("test 1"));
+
+    // Deselect the item.
+    model.setSelected("test 1", false);
+    assertFalse(model.isSelected("test 1"));
+    presenter.flush();
+    assertEquals(1, presenter.getKeyboardSelectedRow());
+
+    // Reselect the item.
+    presenter.setKeyboardSelectedRow(1, false, false);
+    presenter.flush();
+    assertTrue(model.isSelected("test 1"));
+  }
+
+  /**
    * Test that we only get one selection event when keyboard selection changes.
    */
   public void testSetKeyboardSelectedRowFiresOneSelectionEvent() {
