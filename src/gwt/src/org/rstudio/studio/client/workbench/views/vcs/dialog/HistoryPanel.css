@@ -20,22 +20,17 @@
 }
 
 .head {
-   background-color: rgb(146, 193, 240);
-   border-color: rgb(146, 193, 240);
+   background-color: rgb(182, 231, 231);
 }
 
 .branch {
-   background-color: purple;
-   border-color: purple;
-   color: white;
+   background-color: rgb(206, 182, 251);
 }
 
 .remote {
-   background-color: pink;
-   border-color: pink;
+   background-color: rgb(213, 218, 255);
 }
 
 .tag {
-   font-weight: normal;
-   background-color: #FFA;
+   background-color: rgb(255, 229, 170);
 }
