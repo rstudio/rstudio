@@ -22,7 +22,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.source.PanelWithToolbar;
+import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
@@ -91,7 +91,7 @@ public class DataEditingTargetWidget extends Composite
          mainWidget = dockPanel;
       }
 
-      PanelWithToolbar panel = new PanelWithToolbar(createToolbar(dataItem,
+      PanelWithToolbars panel = new PanelWithToolbars(createToolbar(dataItem,
                                                                   styles),
                                                     mainWidget);
 

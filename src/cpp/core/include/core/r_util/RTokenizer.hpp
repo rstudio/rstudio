@@ -109,6 +109,11 @@ public:
               std::equal(begin_, end_, op.begin());
    }
 
+   bool isType(wchar_t type) const
+   {
+      return type_ == type;
+   }
+
    // allow direct use in conditional statements (nullability)
    typedef void (*unspecified_bool_type)();
    static void unspecified_bool_true() {}

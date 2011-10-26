@@ -18,12 +18,13 @@
 #include <boost/foreach.hpp>
 #include <boost/scope_exit.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/interprocess/sync/file_lock.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/FileLock.hpp>
 #include <core/BoostErrors.hpp>
+
 
 #include <core/system/System.hpp>
 
@@ -68,123 +69,8 @@ FilePath sessionLockFilePath(const FilePath& sessionDir)
    return sessionDir.complete("lock_file");
 }
 
-// session dir name and lock (initialized by attachToSourceDatabase)
-FilePath s_sessionDir;
-boost::interprocess::file_lock s_sessionDirLock;
-
-
-bool isLocked(const FilePath& sessionDir)
-{
-   using namespace boost::interprocess;
-
-   // if the lock file doesn't exist then it's not locked
-   FilePath lockFilePath = sessionLockFilePath(sessionDir);
-   if (!lockFilePath.exists())
-      return false;
-
-   // check if it is locked
-   try
-   {
-      file_lock lock(lockFilePath.absolutePath().c_str());
-
-      if (lock.try_lock())
-      {
-         lock.unlock();
-         return false;
-      }
-      else
-      {
-         return true;
-      }
-   }
-   catch(boost::interprocess::interprocess_exception& e)
-   {
-      Error error(boost::interprocess::ec_from_exception(e), ERROR_LOCATION);
-      error.addProperty("session-dir", sessionDir);
-      LOG_ERROR(error);
-      return false;
-   }
-}
-
-Error acquireLock(const FilePath& sessionDir)
-{
-   using namespace boost::interprocess;
-
-   // make sure the lock file exists
-   FilePath lockFilePath = sessionLockFilePath(sessionDir);
-   if (!lockFilePath.exists())
-   {
-      Error error = core::writeStringToFile(lockFilePath, "");
-      if (error)
-         return error;
-   }
-
-   // try to acquire the session dir lock
-   try
-   {
-      file_lock lock(lockFilePath.absolutePath().c_str());
-
-      if (lock.try_lock())
-      {
-         // set module level statics
-         s_sessionDir = sessionDir;
-         s_sessionDirLock.swap(lock);
-
-         return Success();
-      }
-      else
-      {
-         return systemError(boost::system::errc::no_lock_available,
-                            ERROR_LOCATION);
-      }
-   }
-   catch(interprocess_exception& e)
-   {
-      Error error(ec_from_exception(e), ERROR_LOCATION);
-      error.addProperty("session-dir", sessionDir);
-      return error;
-   }
-
-   return Success();
-}
-
-Error releaseLock()
-{
-   using namespace boost::interprocess;
-
-   // make sure the lock file exists
-   FilePath lockFilePath = sessionLockFilePath(s_sessionDir);
-   if (!lockFilePath.exists())
-   {
-      return systemError(boost::system::errc::no_lock_available,
-                         ERROR_LOCATION);
-   }
-
-   // always cleanup the lock file on exit
-   BOOST_SCOPE_EXIT( (&lockFilePath) )
-   {
-      Error error = lockFilePath.remove();
-      if (error)
-         LOG_ERROR(error);
-   }
-   BOOST_SCOPE_EXIT_END
-
-   // try to unlock it
-   try
-   {
-      s_sessionDirLock.unlock();
-      s_sessionDirLock = file_lock();
-      return Success();
-   }
-   catch(interprocess_exception& e)
-   {
-      Error error(ec_from_exception(e), ERROR_LOCATION);
-      error.addProperty("session-dir", s_sessionDir);
-      return error;
-   }
-
-   return Success();
-}
+// session dir lock (initialized by attachToSourceDatabase)
+FileLock s_sessionDirLock;
 
 Error removeSessionDir(const FilePath& sessionDir)
 {
@@ -265,7 +151,7 @@ Error createSessionDir(FilePath* pSessionDir)
    if (error)
       return error;
 
-   return acquireLock(*pSessionDir);
+   return s_sessionDirLock.acquire(sessionLockFilePath(*pSessionDir));
 }
 
 Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
@@ -292,7 +178,7 @@ Error createSessionDirFromOldSourceDatabase(FilePath* pSessionDir)
       return error;
 
    // acquire the lock
-   return acquireLock(*pSessionDir);
+   return s_sessionDirLock.acquire(sessionLockFilePath(*pSessionDir));
 }
 
 Error createSessionDirFromPersistent(FilePath* pSessionDir)
@@ -319,9 +205,10 @@ bool reclaimOrphanedSession(const std::vector<FilePath>& sessionDirs,
 {
    BOOST_FOREACH(const FilePath& sessionDir, sessionDirs)
    {
-      if (!isLocked(sessionDir))
+      FilePath lockFilePath = sessionLockFilePath(sessionDir);
+      if (!FileLock::isLocked(lockFilePath))
       {
-         Error error = acquireLock(sessionDir);
+         Error error = s_sessionDirLock.acquire(lockFilePath);
          if (!error)
          {
             *pSessionDir = sessionDir;
@@ -341,7 +228,8 @@ bool noLockedSessionsExist(const std::vector<FilePath>& sessionDirs)
 {
    BOOST_FOREACH(const FilePath& sessionDir, sessionDirs)
    {
-      if (isLocked(sessionDir))
+      FilePath lockFilePath = sessionLockFilePath(sessionDir);
+      if (FileLock::isLocked(lockFilePath))
          return false;
    }
 
@@ -391,7 +279,7 @@ Error attachToSourceDatabase(FilePath* pSessionDir)
 Error detachFromSourceDatabase()
 {
    // confirm that we are attached
-   if (s_sessionDir.empty())
+   if (s_sessionDirLock.lockFilePath().empty())
       return core::pathNotFoundError(ERROR_LOCATION);
 
    // list all current source docs
@@ -434,13 +322,16 @@ Error detachFromSourceDatabase()
       }
    }
 
+   // record session dir (parent of lock file)
+   FilePath sessionDir = s_sessionDirLock.lockFilePath().parent();
+
    // give up our lock
-   error = releaseLock();
+   error = s_sessionDirLock.release();
    if (error)
       LOG_ERROR(error);
 
    // remove the session directory
-   return removeSessionDir(s_sessionDir);
+   return removeSessionDir(sessionDir);
 }
 
 

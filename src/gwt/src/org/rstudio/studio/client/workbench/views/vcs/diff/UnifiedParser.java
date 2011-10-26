@@ -55,6 +55,10 @@ public class UnifiedParser
 
    public DiffChunk nextChunk()
    {
+      String nextLine = peekLine();
+      if (nextLine != null && nextLine.startsWith("diff "))
+         return null;
+
       String line;
       while (null != (line = nextLine()) && !(line.startsWith("@@ ") || line.startsWith("--- ")))
       {
@@ -146,6 +150,24 @@ public class UnifiedParser
    private boolean nextLineIsComment()
    {
       return !isEOL() && data_.charAt(pos_) == '\\';
+   }
+
+   private String peekLine()
+   {
+      if (isEOL())
+         return null;
+
+      Match match = newline_.match(data_, pos_);
+      if (match == null)
+      {
+         int pos = pos_;
+         return data_.substring(pos);
+      }
+      else
+      {
+         String value = data_.substring(pos_, match.getIndex());
+         return value;
+      }
    }
 
    private String nextLine()

@@ -317,7 +317,7 @@ public class VCS extends BasePresenter implements IsWidget
          @Override
          public void onResponseReceived(ConsoleProcess proc)
          {
-            new ConsoleProgressDialog("Pull", proc).showModal();
+            new ConsoleProgressDialog("Git Pull", proc).showModal();
          }
       });
    }
@@ -329,7 +329,7 @@ public class VCS extends BasePresenter implements IsWidget
          @Override
          public void onResponseReceived(ConsoleProcess proc)
          {
-            new ConsoleProgressDialog("Push", proc).showModal();
+            new ConsoleProgressDialog("Git Push", proc).showModal();
          }
       });
    }

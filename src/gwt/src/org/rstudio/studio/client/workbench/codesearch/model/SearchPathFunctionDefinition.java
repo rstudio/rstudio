@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.codesearch.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 
 public class SearchPathFunctionDefinition extends JavaScriptObject
@@ -31,6 +32,10 @@ public class SearchPathFunctionDefinition extends JavaScriptObject
    
    public final native String getCode() /*-{
       return this.code;
+   }-*/;
+   
+   public final native JsArrayString getS3Methods() /*-{
+      return this.s3methods;
    }-*/;
    
    public final native boolean isCodeFromSrcAttrib() /*-{

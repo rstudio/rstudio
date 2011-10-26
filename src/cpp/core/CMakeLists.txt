@@ -25,6 +25,7 @@ set (CORE_SOURCE_FILES
    Error.cpp 
    Exec.cpp
    FileInfo.cpp 
+   FileLock.cpp
    FileLogWriter.cpp
    FilePath.cpp
    FileSerializer.cpp

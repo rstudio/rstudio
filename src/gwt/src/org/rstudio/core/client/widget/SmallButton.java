@@ -16,6 +16,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -100,6 +101,11 @@ public class SmallButton extends FocusWidget
          content_.setInnerText(text);
    }
 
+   public void fillWidth()
+   {
+      table_.setWidth("100%");
+   }
+
    public void click()
    {
       ((ButtonElement)getElement().cast()).click();
@@ -107,4 +113,6 @@ public class SmallButton extends FocusWidget
 
    @UiField
    DivElement content_;
+   @UiField
+   TableElement table_;
 }

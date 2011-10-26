@@ -19,7 +19,6 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.SimplePager;
-import com.google.gwt.user.cellview.client.SimplePager.Resources;
 import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.HasData;
@@ -81,7 +80,7 @@ public class HistoryPanel extends Composite implements Display
 
       filterText_ = new SearchWidget(new MultiWordSuggestOracle(),
                                      new TextBoxWithCue("Search"),
-                                     null, false);
+                                     null);
       topToolbar_.addRightWidget(filterText_);
       topToolbar_.addRightSeparator();
 

@@ -25,6 +25,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
+import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -42,7 +43,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
-import org.rstudio.studio.client.workbench.views.source.PanelWithToolbar;
+import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -95,8 +96,10 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          },
          false); // don't show replace UI
       
-      panel_ = new PanelWithToolbar(createToolbar(),
-                                    docDisplay_.asWidget());
+      panel_ = new PanelWithToolbars(createToolbar(),
+                                     createSecondaryToolbar(),
+                                     docDisplay_.asWidget(),
+                                     null);
       panel_.setSize("100%", "100%");
       
       docDisplay_.setReadOnly(true);
@@ -188,7 +191,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       currentFunctionNamespace_ = functionDef.getNamespace();
       docDisplay_.setCode(formatCode(functionDef), false); 
       docDisplay_.focus();
-      contextLabel_.setCurrentFunction(functionDef);
+      context_.setCurrentFunction(functionDef);
    }
    
    @Override
@@ -264,10 +267,6 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    {
       Toolbar toolbar = new EditingTargetToolbar(commands_);
       
-      toolbar.addLeftWidget(
-            contextLabel_ = new CodeBrowserContextLabel(RES.styles()));
-      toolbar.addLeftSeparator();
-      
       toolbar.addLeftWidget(commands_.printSourceDoc().createToolbarButton());  
       toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
       toolbar.addLeftWidget(commands_.goToFunctionDefinition().createToolbarButton());
@@ -276,6 +275,16 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       readOnlyLabel.addStyleName(RES.styles().readOnly());
       toolbar.addRightWidget(readOnlyLabel);
     
+      return toolbar;
+   }
+   
+   private Toolbar createSecondaryToolbar()
+   {
+      SecondaryToolbar toolbar = new SecondaryToolbar();
+      
+      toolbar.addLeftWidget(
+            context_ = new CodeBrowserContextWidget(RES.styles())); 
+      
       return toolbar;
    }
    
@@ -342,15 +351,18 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
 
    interface Styles extends CssResource
    {
+      String captionLabel();
+      String menuElement();
       String functionName();
       String functionNamespace();
+      String dropDownImage();
       String readOnly();
    }
    
    static Resources RES = GWT.create(Resources.class);
 
-   private final PanelWithToolbar panel_;
-   private CodeBrowserContextLabel contextLabel_;
+   private final PanelWithToolbars panel_;
+   private CodeBrowserContextWidget context_;
    private final CodeToolsServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
