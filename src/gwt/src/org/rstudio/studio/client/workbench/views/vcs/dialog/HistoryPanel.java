@@ -16,9 +16,11 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.SimplePager;
+import com.google.gwt.user.cellview.client.SimplePager.Resources;
 import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.HasData;
@@ -38,6 +40,49 @@ public class HistoryPanel extends Composite implements Display
    {
       @Source("HistoryPanel.css")
       Styles styles();
+   }
+
+   interface SimplePagerResources extends SimplePager.Resources
+   {
+      @Override
+      @Source("images/PageForwardButton.png")
+      ImageResource simplePagerFastForward();
+
+      @Override
+      @Source("images/PageForwardButtonDisabled.png")
+      ImageResource simplePagerFastForwardDisabled();
+
+      @Override
+      @Source("images/PageFirstButton.png")
+      ImageResource simplePagerFirstPage();
+
+      @Override
+      @Source("images/PageFirstButtonDisabled.png")
+      ImageResource simplePagerFirstPageDisabled();
+
+      @Override
+      @Source("images/PageLastButton.png")
+      ImageResource simplePagerLastPage();
+
+      @Override
+      @Source("images/PageLastButtonDisabled.png")
+      ImageResource simplePagerLastPageDisabled();
+
+      @Override
+      @Source("images/PageNextButton.png")
+      ImageResource simplePagerNextPage();
+
+      @Override
+      @Source("images/PageNextButtonDisabled.png")
+      ImageResource simplePagerNextPageDisabled();
+
+      @Override
+      @Source("images/PagePreviousButton.png")
+      ImageResource simplePagerPreviousPage();
+
+      @Override
+      @Source("images/PagePreviousButtonDisabled.png")
+      ImageResource simplePagerPreviousPageDisabled();
    }
 
    public interface Styles extends SharedStyles
@@ -64,7 +109,7 @@ public class HistoryPanel extends Composite implements Display
       splitPanel_ = new SplitLayoutPanel(4);
       pager_ = new SimplePager(
             TextLocation.CENTER,
-            GWT.<SimplePager.Resources>create(SimplePager.Resources.class),
+            GWT.<SimplePagerResources>create(SimplePagerResources.class),
             true, 500, true);
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
