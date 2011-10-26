@@ -47,7 +47,7 @@ class ShellCommand
 public:
    explicit ShellCommand(const core::FilePath& filePath)
    {
-      output_ = core::string_utils::utf8ToSystem(filePath.absolutePath());
+      output_ = escape(string_utils::utf8ToSystem(filePath.absolutePath()));
    }
 
    explicit ShellCommand(const std::string& program)

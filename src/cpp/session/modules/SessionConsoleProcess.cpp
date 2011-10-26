@@ -174,7 +174,6 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    pProc->caption_ = obj["caption"].get_str();
    pProc->dialog_ = obj["dialog"].get_bool();
    std::string bufferedOutput = obj["buffered_output"].get_str();
-   std::cerr << bufferedOutput << std::endl;
    std::copy(bufferedOutput.begin(), bufferedOutput.end(),
              std::back_inserter(pProc->outputBuffer_));
    json::Value exitCode = obj["exit_code"];

@@ -20,14 +20,15 @@ import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
+import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.theme.RStudioCellTableStyle;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
-import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable.ChangelistTableCellTableResources;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPanel.Styles;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitListDisplay;
 
@@ -36,6 +37,17 @@ import java.util.ArrayList;
 public class CommitListTable extends MultiSelectCellTable<CommitInfo>
       implements CommitListDisplay
 {
+   interface Resources extends CellTable.Resources
+   {
+      @Override
+      @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "CommitListTableCellTableStyle.css"})
+      Style cellTableStyle();
+   }
+
+   interface CommitListTableCellTableStyle extends CellTable.Style
+   {
+   }
+
    private class SubjectRenderer implements SafeHtmlRenderer<CommitInfo>
    {
       @Override
@@ -85,7 +97,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
    public CommitListTable(HistoryPanel.Styles styles)
    {
       super(100,
-            GWT.<Resources>create(ChangelistTableCellTableResources.class));
+            GWT.<Resources>create(Resources.class));
       styles_ = styles;
 
       TextColumn<CommitInfo> idCol = new TextColumn<CommitInfo>()

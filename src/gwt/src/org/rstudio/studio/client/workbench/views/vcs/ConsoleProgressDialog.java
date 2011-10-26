@@ -98,6 +98,8 @@ public class ConsoleProgressDialog extends ModalDialogBase
 
       progressAnim_ = new Image(resources_.progress().getSafeUri());
 
+      stopButton_ = new ThemedButton("Stop", this);
+
       centralWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
       label_.setText(title);
@@ -112,9 +114,6 @@ public class ConsoleProgressDialog extends ModalDialogBase
       double skewFactor = (12 + BrowseCap.getFontSkew()) / 12.0;
       style.setWidth((int)(skewFactor * 660), Unit.PX);
       style.setFontSize(12 + BrowseCap.getFontSkew(), Unit.PX);
-
-      stopButton_.addClickHandler(this);
-      stopButton_.fillWidth();
 
       consoleProcess.start(new SimpleRequestCallback<Void>()
       {
@@ -156,14 +155,23 @@ public class ConsoleProgressDialog extends ModalDialogBase
    @Override
    public void onPreviewNativeEvent(NativePreviewEvent event)
    {
-      if (event.getTypeInt() == Event.ONKEYDOWN)
+      if (event.getTypeInt() == Event.ONKEYDOWN
+          && KeyboardShortcut.getModifierValue(event.getNativeEvent()) == KeyboardShortcut.NONE)
       {
-         if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE &&
-             KeyboardShortcut.getModifierValue(event.getNativeEvent()) == KeyboardShortcut.NONE)
+         if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
          {
             stopButton_.click();
             event.cancel();
             return;
+         }
+         else if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER)
+         {
+            if (!running_)
+            {
+               stopButton_.click();
+               event.cancel();
+               return;
+            }
          }
       }
 
@@ -195,6 +203,7 @@ public class ConsoleProgressDialog extends ModalDialogBase
    {
       running_ = false;
       stopButton_.setText("Close");
+      stopButton_.setDefault(true);
       progressAnim_.getElement().getStyle().setVisibility(Visibility.HIDDEN);
 
       // TODO: Show warning if exitCode != 0
@@ -242,8 +251,8 @@ public class ConsoleProgressDialog extends ModalDialogBase
    Image progressAnim_;
    @UiField
    Label label_;
-   @UiField
-   SmallButton stopButton_;
+   @UiField(provided = true)
+   ThemedButton stopButton_;
    private Widget centralWidget_;
 
    private static final Resources resources_ = GWT.<Resources>create(Resources.class);
