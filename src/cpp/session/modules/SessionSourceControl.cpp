@@ -224,6 +224,13 @@ public:
       return runCommand(command.string(), pOutput, pStdErr);
    }
 
+   std::string wrapWithCd(const ShellCommand& command)
+   {
+      return shell_utils::join(
+               ShellCommand("cd") << root_,
+               command);
+   }
+
    core::Error runCommand(const std::string& command,
                           std::string* pOutput,
                           std::string* pStdErr)
@@ -539,8 +546,8 @@ public:
                         std::string* pHandle)
    {
       boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::ConsoleProcess::create(git() << "checkout"
-                                                    << id << "--",
+            console_process::ConsoleProcess::create(wrapWithCd(git() << "checkout"
+                                                               << id << "--"),
                                                     procOptions(),
                                                     "Git Checkout",
                                                     true,
@@ -571,7 +578,7 @@ public:
 
       boost::shared_ptr<ConsoleProcess> ptrProc =
             console_process::ConsoleProcess::create(
-                  command, procOptions(), "Git Commit", true,
+                  wrapWithCd(command), procOptions(), "Git Commit", true,
                   boost::bind(afterCommit, tempFile));
 
       *pHandle = ptrProc->handle();
@@ -640,8 +647,8 @@ public:
 
       core::system::ProcessResult result2;
       error = core::system::runCommand(
-            git() << "config" << "--get" <<
-               "branch." + branch + ".merge",
+            wrapWithCd(git() << "config" << "--get" <<
+               "branch." + branch + ".merge"),
             procOptions(),
             &result2);
       if (error)
@@ -673,7 +680,7 @@ public:
       }
 
       boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::ConsoleProcess::create(cmd,
+            console_process::ConsoleProcess::create(wrapWithCd(cmd),
                                                     procOptions(),
                                                     "Git Push",
                                                     true,
@@ -686,7 +693,7 @@ public:
    core::Error pull(std::string* pHandle)
    {
       boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::ConsoleProcess::create(git() << "pull",
+            console_process::ConsoleProcess::create(wrapWithCd(git() << "pull"),
                                                     procOptions(),
                                                     "Git Pull",
                                                     true,
@@ -2087,6 +2094,28 @@ void onResume(const core::Settings&)
    enqueueRefreshEvent();
 }
 
+bool tryGit(const FilePath& workingDir)
+{
+#ifdef _WIN32
+   Error error = detectAndSaveGitBinDir();
+   if (error)
+      return false; // no Git install detected
+#endif
+
+   FilePath gitDir = GitVCSImpl::detectGitDir(workingDir);
+   if (gitDir.empty())
+      return false;
+
+   s_pVcsImpl_.reset(new GitVCSImpl(GitVCSImpl::detectGitDir(workingDir)));
+
+   FilePath gitIgnore = s_pVcsImpl_->root().childPath(".gitignore");
+   error = augmentGitIgnore(gitIgnore);
+   if (error)
+      LOG_ERROR(error);
+
+   return true;
+}
+
 core::Error initialize()
 {
    using namespace session::module_context;
@@ -2100,25 +2129,9 @@ core::Error initialize()
       s_pVcsImpl_.reset(new VCSImpl(workingDir));
    else if (workingDir.empty())
       s_pVcsImpl_.reset(new VCSImpl(workingDir));
-   else if (!GitVCSImpl::detectGitDir(workingDir).empty())
+   else if (tryGit(workingDir))
    {
-#ifdef _WIN32
-      error = detectAndSaveGitBinDir();
-      if (error)
-      {
-         // Git could not be found
-         s_pVcsImpl_.reset(new VCSImpl(workingDir));
-      }
-      else
-         s_pVcsImpl_.reset(new GitVCSImpl(GitVCSImpl::detectGitDir(workingDir)));
-#else
-      s_pVcsImpl_.reset(new GitVCSImpl(GitVCSImpl::detectGitDir(workingDir)));
-#endif
-
-      FilePath gitIgnore = s_pVcsImpl_->root().childPath(".gitignore");
-      error = augmentGitIgnore(gitIgnore);
-      if (error)
-         LOG_ERROR(error);
+      // Tntentionally blank. tryGit() has side effects.
    }
    else if (workingDir.childPath(".svn").isDirectory())
       s_pVcsImpl_.reset(new SubversionVCSImpl(workingDir));
