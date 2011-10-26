@@ -21,6 +21,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.cellview.client.SimplePager.Resources;
+import com.google.gwt.user.cellview.client.SimplePager.Style;
 import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.HasData;
@@ -83,6 +84,16 @@ public class HistoryPanel extends Composite implements Display
       @Override
       @Source("images/PagePreviousButtonDisabled.png")
       ImageResource simplePagerPreviousPageDisabled();
+
+      @Override
+      @Source({"com/google/gwt/user/cellview/client/SimplePager.css",
+              "SimplePagerStyle.css"})
+      SimplePagerStyle simplePagerStyle();
+   }
+
+   interface SimplePagerStyle extends SimplePager.Style
+   {
+
    }
 
    public interface Styles extends SharedStyles
@@ -111,6 +122,7 @@ public class HistoryPanel extends Composite implements Display
             TextLocation.CENTER,
             GWT.<SimplePagerResources>create(SimplePagerResources.class),
             true, 500, true);
+      pager_.getElement().setAttribute("align", "center");
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
