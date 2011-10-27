@@ -1,8 +1,3 @@
-
-@url WIZARDPAGESELECTOR wizardPageSelectorBackground;
-@url WIZARDPAGESELECTORFIRST wizardPageSelectorBackgroundFirst;
-@url WIZARDPAGESELECTORLAST wizardPageSelectorBackgroundLast;
-
 .mainWidget {
    width: 510px;
    height: 300px;
@@ -27,19 +22,17 @@
    
 }
 
-.wizardPageSelectorItem {
+@sprite .wizardPageSelectorItem {
    width: 100%;
-   height: 80px;
-   background: WIZARDPAGESELECTOR repeat-x;
+   gwt-image: 'wizardPageSelectorBackground';
 }
 
-.wizardPageSelectorItemFirst {
-   background: WIZARDPAGESELECTORFIRST repeat-x;
+@sprite .wizardPageSelectorItemFirst {
+   gwt-image: 'wizardPageSelectorBackgroundFirst';
 }
 
-.wizardPageSelectorItemLast {
-   background: WIZARDPAGESELECTORLAST repeat-x;
-   height: 82px;
+@sprite .wizardPageSelectorItemLast {
+   gwt-image: 'wizardPageSelectorBackgroundLast';
 }
 
 

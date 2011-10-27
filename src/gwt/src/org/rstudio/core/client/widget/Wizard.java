@@ -3,6 +3,7 @@ package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 
@@ -11,12 +12,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 public class Wizard<I,T> extends ModalDialog<T>
 {
@@ -57,7 +52,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       mainWidget.add(bodyPanel_);
      
       // page selection panel
-      pageSelectorPanel_ = new VerticalPanel();
+      pageSelectorPanel_ = new FlowPanel();
       pageSelectorPanel_.addStyleName(styles.wizardPageSelector());
       pageSelectorPanel_.setSize("100%", "100%");
       for (int i=0; i<pages_.size(); i++)
@@ -78,11 +73,10 @@ public class Wizard<I,T> extends ModalDialog<T>
       bodyPanel_.setWidgetVisible(pageSelectorPanel_, true);
     
       // add pages and make them invisible
-      for (int i=0; i<pages_.size(); i++)
+      for (WizardPage<I, T> page : pages_)
       {
-         WizardPage<I,T> page = pages_.get(i);
          page.setSize("100%", "100%");
-         
+
          bodyPanel_.add(page);
          bodyPanel_.setWidgetTopBottom(page, 0, Unit.PX, 0, Unit.PX);
          bodyPanel_.setWidgetLeftRight(page, 0, Unit.PX, 0, Unit.PX);
@@ -213,7 +207,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    private final String subCaption_;
    
    private LayoutPanel bodyPanel_;
-   private VerticalPanel pageSelectorPanel_;
+   private FlowPanel pageSelectorPanel_;
    
    private boolean isAnimating_ = false;
   
