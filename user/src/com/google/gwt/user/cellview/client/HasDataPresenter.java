@@ -1056,7 +1056,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
    * Resolve the pending state and push updates to the view.
    * 
    * @param modifiedRows the modified rows that need to be updated, or null if
-   *          none. The modified rows may be mutated.
+   *        none. The modified rows may be mutated.
    * @return true if the state changed, false if not
    */
   private boolean resolvePendingState(JsArrayInteger modifiedRows) {
@@ -1247,24 +1247,6 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
       throw e;
     }
 
-    /*
-     * We called methods in user code that could modify the view, so early exit
-     * if there is a new pending state waiting to be resolved.
-     */
-    if (pendingState != null) {
-      isResolvingState = false;
-      // Do not reset pendingStateLoop, or we will not detect the infinite loop.
-
-      /*
-       * Try to resolve state again. If we are successful, then the modified
-       * rows will be redrawn. If we are not successful, then we still need to
-       * redraw the modified rows.
-       */
-      if (resolvePendingState(modifiedRows)) {
-        return true;
-      }
-    }
-
     // Add the replaced ranges as modified rows.
     boolean replacedEmptyRange = false;
     for (Range replacedRange : pending.replacedRanges) {
@@ -1283,6 +1265,32 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
     if (modifiedRows.length() > 0 && keyboardRowChanged) {
       modifiedRows.push(oldState.getKeyboardSelectedRow());
       modifiedRows.push(pending.keyboardSelectedRow);
+    }
+
+    /*
+     * We called methods in user code that could modify the view, so early exit
+     * if there is a new pending state waiting to be resolved.
+     */
+    if (pendingState != null) {
+      isResolvingState = false;
+      // Do not reset pendingStateLoop, or we will not detect the infinite loop.
+
+      /*
+       * Add the keyboard selected rows to the modified rows so they can be
+       * re-rendered in the new state. These rows may already be added, but
+       * modifiedRows can contain duplicates.
+       */
+      modifiedRows.push(oldState.getKeyboardSelectedRow());
+      modifiedRows.push(pending.keyboardSelectedRow);
+
+      /*
+       * Try to resolve state again. If we are successful, then the modified
+       * rows will be redrawn. If we are not successful, then we still need to
+       * redraw the modified rows.
+       */
+      if (resolvePendingState(modifiedRows)) {
+        return true;
+      }
     }
 
     // Calculate the modified ranges.
