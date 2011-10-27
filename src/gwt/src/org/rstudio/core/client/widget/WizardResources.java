@@ -26,9 +26,15 @@ public interface WizardResources extends ClientBundle
    ImageResource wizardBackButton();
    ImageResource wizardDisclosureArrow();
    
-   @Source("wizardListInnerShadow.png")
-   DataResource wizardListInnerShadow();
    
+   @Source("wizardPageSelectorBackground.png")
+   DataResource wizardPageSelectorBackground();
+   
+   @Source("wizardPageSelectorBackgroundFirst.png")
+   DataResource wizardPageSelectorBackgroundFirst();
+   
+   @Source("wizardPageSelectorBackgroundLast.png")
+   DataResource wizardPageSelectorBackgroundLast();
    
    
    static WizardResources INSTANCE = 

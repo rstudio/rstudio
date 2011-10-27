@@ -1,5 +1,7 @@
 
-@url WIZARDLISTINNERSHADOW wizardListInnerShadow;
+@url WIZARDPAGESELECTOR wizardPageSelectorBackground;
+@url WIZARDPAGESELECTORFIRST wizardPageSelectorBackgroundFirst;
+@url WIZARDPAGESELECTORLAST wizardPageSelectorBackgroundLast;
 
 .mainWidget {
    width: 510px;
