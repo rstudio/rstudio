@@ -831,15 +831,9 @@ void getFunctionSource(SEXP functionSEXP,
 
 void getFunctionS3Methods(const std::string& methodName, json::Array* pMethods)
 {
-   // first find the base name of the function
-   std::string baseName = methodName;
-   std::size_t periodLoc = methodName.find('.');
-   if (periodLoc != std::string::npos && periodLoc > 0)
-      baseName = methodName.substr(0, periodLoc);
-
    // lookup S3 methods for that base name
    std::vector<std::string> methods;
-   r::exec::RFunction rfunc(".rs.getS3MethodsForFunction", baseName);
+   r::exec::RFunction rfunc(".rs.getS3MethodsForFunction", methodName);
    Error error = rfunc.call(&methods);
    if (error)
       LOG_ERROR(error);
@@ -938,6 +932,26 @@ json::Object createErrorFunctionDefinition(const std::string& name,
    return funDef;
 }
 
+std::string baseMethodName(const std::string& name)
+{
+   // strip type qualifiers for S4 methods
+   FunctionInfo functionInfo(name);
+   if (functionInfo.isS4Method())
+   {
+      return functionInfo.methodName();
+   }
+   // strip content after the '.' for S3 methods
+   else
+   {
+      // first find the base name of the function
+      std::string baseName = name;
+      std::size_t periodLoc = baseName.find('.');
+      if (periodLoc != std::string::npos && periodLoc > 0)
+         baseName = baseName.substr(0, periodLoc);
+      return baseName;
+   }
+}
+
 json::Object createFunctionDefinition(const std::string& name,
                                       const std::string& namespaceName,
                                       SEXP functionSEXP)
@@ -965,11 +979,8 @@ json::Object createFunctionDefinition(const std::string& name,
       funDef["code"] = code;
       funDef["from_src_attrib"] = fromSrcAttrib;
 
-      // methods (first strip type qualifiers)
-      FunctionInfo functionInfo(name);
-      std::string methodName = functionInfo.isS4Method() ?
-                                       functionInfo.methodName() :
-                                       functionInfo.name();
+      // methods
+      std::string methodName = baseMethodName(name);
       json::Array methodsJson;
       getFunctionS4Methods(methodName, &methodsJson);
       getFunctionS3Methods(methodName, &methodsJson);
