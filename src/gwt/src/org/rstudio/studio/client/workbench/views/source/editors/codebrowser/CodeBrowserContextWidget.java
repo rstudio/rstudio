@@ -12,9 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
-// TODO: we seem to be able to get methods in unloaded packages via methods and 
-//       getS4MethodsForFunction -- are there performance implications of this?
-
 // TODO: timeSeries F2 doesn't yield anything (because is method?)
 
 // TODO: find source defintion of method first (does it work at all now?)
