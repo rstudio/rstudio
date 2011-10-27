@@ -58,7 +58,8 @@ bool isGlobalFunctionNamed(const r_util::RSourceItem& sourceItem,
                            const std::string& name)
 {
    return sourceItem.braceLevel() == 0 &&
-          sourceItem.type() == r_util::RSourceItem::Function &&
+          (sourceItem.type() == r_util::RSourceItem::Function ||
+           sourceItem.type() == r_util::RSourceItem::Method) &&
           sourceItem.name() == name;
 }
 
