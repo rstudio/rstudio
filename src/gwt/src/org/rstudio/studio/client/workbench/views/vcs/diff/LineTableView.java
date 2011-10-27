@@ -164,7 +164,6 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
       {
          sb.append(SafeHtmlUtil.createOpenTag(
                "div",
-               "style", "float: right",
                "class", RES.cellTableStyle().actions() + " " + className));
          renderActionButton(sb, Action.Unstage, labelSuffix);
          renderActionButton(sb, Action.Stage, labelSuffix);
