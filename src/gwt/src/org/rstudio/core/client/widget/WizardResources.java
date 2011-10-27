@@ -6,6 +6,8 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.ImageResource.ImageOptions;
+import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 
 public interface WizardResources extends ClientBundle
 {
@@ -29,14 +31,14 @@ public interface WizardResources extends ClientBundle
    ImageResource wizardDisclosureArrow();
    
    
-   @Source("wizardPageSelectorBackground.png")
-   DataResource wizardPageSelectorBackground();
+   @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+   ImageResource wizardPageSelectorBackground();
    
-   @Source("wizardPageSelectorBackgroundFirst.png")
-   DataResource wizardPageSelectorBackgroundFirst();
+   @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+   ImageResource wizardPageSelectorBackgroundFirst();
    
-   @Source("wizardPageSelectorBackgroundLast.png")
-   DataResource wizardPageSelectorBackgroundLast();
+   @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+   ImageResource wizardPageSelectorBackgroundLast();
    
    
    static WizardResources INSTANCE = 

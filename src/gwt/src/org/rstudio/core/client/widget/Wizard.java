@@ -16,6 +16,7 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+
 public class Wizard<I,T> extends ModalDialog<T>
 {
    public Wizard(String caption, 
@@ -56,7 +57,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       mainWidget.add(bodyPanel_);
      
       // page selection panel
-      pageSelectorPanel_ = new VerticalPanel();
+      pageSelectorPanel_ = new FlowPanel();
       pageSelectorPanel_.addStyleName(styles.wizardPageSelector());
       pageSelectorPanel_.setSize("100%", "100%");
       for (int i=0; i<pages_.size(); i++)
@@ -226,7 +227,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    private final String subCaption_;
    
    private LayoutPanel bodyPanel_;
-   private VerticalPanel pageSelectorPanel_;
+   private FlowPanel pageSelectorPanel_;
    
    private boolean isAnimating_ = false;
   
