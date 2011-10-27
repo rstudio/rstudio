@@ -1,0 +1,24 @@
+.button {
+   position: relative;
+   top: 1px;
+   border: none;
+   outline: none;
+   padding: 0;
+   margin: 0 0 0 4px;
+   background-color: transparent;
+   height: value('buttonLeft.getHeight', 'px');
+}
+
+@sprite .left {
+   gwt-image: 'buttonLeft';
+}
+
+@sprite .button .center {
+   gwt-image: 'buttonTile';
+   padding-top: 1px;
+   font-size: 9px !important;
+}
+
+@sprite .right {
+   gwt-image: 'buttonRight';
+}

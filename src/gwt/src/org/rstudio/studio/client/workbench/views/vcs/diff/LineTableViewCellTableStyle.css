@@ -106,27 +106,22 @@
   background: rgb(146, 193, 240) !important;
 }
 
-.lineActions {
-   display: block;
-}
-
-.stageMode .actions a[data-action='Stage'],
-.stageMode .actions a[data-action='Discard'] {
+.stageMode .actions button[data-action='Stage'],
+.stageMode .actions button[data-action='Discard'] {
    display: none;
 }
 
-.workingMode .actions a[data-action='Unstage'] {
+.workingMode .actions button[data-action='Unstage'] {
    display: none;
 }
 
 .chunkActions {
 }
 
-.actions {
-   font-family: proportionalFont;
-   font-size: 10px;
+.lineActions {
 }
 
-.actions a {
-   margin-left: 8px;
+.actions {
+   font-family: proportionalFont;
+   line-height: 0;
 }
