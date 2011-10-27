@@ -4,7 +4,6 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 
 public abstract class WizardPage<I,T> extends Composite
-                                      implements WizardPageInfo
 {
    public WizardPage(String title, String subTitle, ImageResource image)
    {
@@ -13,19 +12,16 @@ public abstract class WizardPage<I,T> extends Composite
       image_ = image;
    }
    
-   @Override
    public String getTitle()
    {
       return title_;
    }
    
-   @Override
    public String getSubTitle()
    {
       return subTitle_;
    }
    
-   @Override
    public ImageResource getImage()
    {
       return image_;

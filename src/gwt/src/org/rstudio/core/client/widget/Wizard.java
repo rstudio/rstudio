@@ -3,7 +3,14 @@ package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.dom.DomUtils;
+
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.layout.client.Layout.AnimationCallback;
+import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -46,6 +53,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       // main body panel for transitions
       bodyPanel_ = new LayoutPanel();
       bodyPanel_.addStyleName(styles.wizardBodyPanel());
+      bodyPanel_.getElement().getStyle().setProperty("overflowX", "hidden");
       mainWidget.add(bodyPanel_);
      
       // page selection panel
@@ -100,10 +108,63 @@ public class Wizard<I,T> extends ModalDialog<T>
       return true;
    }
    
+   private void animate(final Widget from, final Widget to, boolean rightToLeft) 
+   {
+      // protect against multiple calls
+      if (isAnimating_)
+         return;
+       
+      bodyPanel_.setWidgetVisible(to, true);
+
+      int width = getOffsetWidth();
+
+      bodyPanel_.setWidgetLeftWidth(from,
+                                    0, Unit.PX,
+                                    width, Unit.PX);
+      bodyPanel_.setWidgetLeftWidth(to,
+                                    rightToLeft ? width : -width, Unit.PX,
+                                    width, Unit.PX);
+      bodyPanel_.forceLayout();
+
+      bodyPanel_.setWidgetLeftWidth(from,
+                                    rightToLeft ? -width : width, Unit.PX,
+                                    width, Unit.PX);
+      bodyPanel_.setWidgetLeftWidth(to,
+                                    0, Unit.PX,
+                                    width, Unit.PX);
+      
+      isAnimating_ = true;
+     
+      bodyPanel_.animate(300, new AnimationCallback()
+      {
+         @Override
+         public void onAnimationComplete()
+         {
+            bodyPanel_.setWidgetVisible(from, false);
+          
+            bodyPanel_.setWidgetLeftRight(to, 0, Unit.PX, 0, Unit.PX);
+            bodyPanel_.forceLayout();
+             
+            /*
+            if (focus)
+            {
+               DomUtils.setActive(toFocus.getFocusTarget());
+               toFocus.getFocusTarget().removeClassName(styles_.inboundFocus());
+            }
+            */
+            
+            isAnimating_ = false;
+         }
+         @Override
+         public void onLayout(Layer layer, double progress)
+         {
+         }
+      });
+   }
    
    private class PageSelectorItem extends Composite
    {
-      PageSelectorItem(WizardPageInfo pageInfo)
+      PageSelectorItem(final WizardPage<I,T> page)
       {
          WizardResources res = WizardResources.INSTANCE;
          WizardResources.Styles styles = res.styles();
@@ -111,7 +172,7 @@ public class Wizard<I,T> extends ModalDialog<T>
          LayoutPanel layoutPanel = new LayoutPanel();
          layoutPanel.addStyleName(styles.wizardPageSelectorItem());
          
-         Image image = new Image(pageInfo.getImage());
+         Image image = new Image(page.getImage());
          layoutPanel.add(image);
          layoutPanel.setWidgetLeftWidth(image, 
                                         10, Unit.PX, 
@@ -133,6 +194,15 @@ public class Wizard<I,T> extends ModalDialog<T>
                                         40-(arrowImage.getHeight()/2), Unit.PX,
                                         arrowImage.getHeight(), Unit.PX);
          
+         
+         layoutPanel.addDomHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event)
+            {
+               animate(pageSelectorPanel_, page, true);
+                
+            }
+         }, ClickEvent.getType());
        
          
          initWidget(layoutPanel);
@@ -144,6 +214,8 @@ public class Wizard<I,T> extends ModalDialog<T>
    
    private LayoutPanel bodyPanel_;
    private VerticalPanel pageSelectorPanel_;
+   
+   private boolean isAnimating_ = false;
   
    private ArrayList<WizardPage<I,T>> pages_ = new ArrayList<WizardPage<I,T>>();
 
