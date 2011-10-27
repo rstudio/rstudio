@@ -828,13 +828,13 @@ void getFunctionSource(SEXP functionSEXP,
       LOG_ERROR(error);
 }
 
-void getFunctionS3Methods(const std::string& name, json::Array* pMethods)
+void getFunctionS3Methods(const std::string& methodName, json::Array* pMethods)
 {
    // first find the base name of the function
-   std::string baseName = name;
-   std::size_t periodLoc = name.find('.');
+   std::string baseName = methodName;
+   std::size_t periodLoc = methodName.find('.');
    if (periodLoc != std::string::npos && periodLoc > 0)
-      baseName = name.substr(0, periodLoc);
+      baseName = methodName.substr(0, periodLoc);
 
    // lookup S3 methods for that base name
    std::vector<std::string> methods;
@@ -896,14 +896,8 @@ private:
 };
 
 
-void getFunctionS4Methods(const std::string& name, json::Array* pMethods)
+void getFunctionS4Methods(const std::string& methodName, json::Array* pMethods)
 {
-   // strip type qualifiers
-   FunctionInfo functionInfo(name);
-   std::string methodName = functionInfo.isS4Method() ?
-                                    functionInfo.methodName() :
-                                    functionInfo.name();
-
    // check if the function isGeneric
    bool generic = false;
    Error error = r::exec::RFunction("methods:::isGeneric", methodName).call(
@@ -970,11 +964,14 @@ json::Object createFunctionDefinition(const std::string& name,
       funDef["code"] = code;
       funDef["from_src_attrib"] = fromSrcAttrib;
 
-      // methods
+      // methods (first strip type qualifiers)
+      FunctionInfo functionInfo(name);
+      std::string methodName = functionInfo.isS4Method() ?
+                                       functionInfo.methodName() :
+                                       functionInfo.name();
       json::Array methodsJson;
-      getFunctionS4Methods(name, &methodsJson);
-      if (methodsJson.size() == 0)
-         getFunctionS3Methods(name, &methodsJson);
+      getFunctionS4Methods(methodName, &methodsJson);
+      getFunctionS3Methods(methodName, &methodsJson);
       funDef["methods"] = methodsJson;
 
       return funDef;
