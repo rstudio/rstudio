@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -104,13 +105,35 @@ public class Wizard<I,T> extends ModalDialog<T>
    {
       PageSelectorItem(WizardPageInfo pageInfo)
       {
-         WizardResources.Styles styles = WizardResources.INSTANCE.styles();
+         WizardResources res = WizardResources.INSTANCE;
+         WizardResources.Styles styles = res.styles();
          
          LayoutPanel layoutPanel = new LayoutPanel();
          layoutPanel.addStyleName(styles.wizardPageSelectorItem());
          
-         Label label =  new Label(pageInfo.getTitle());
-         layoutPanel.add(label);
+         Image image = new Image(pageInfo.getImage());
+         layoutPanel.add(image);
+         layoutPanel.setWidgetLeftWidth(image, 
+                                        10, Unit.PX, 
+                                        image.getWidth(), Unit.PX);
+         layoutPanel.setWidgetTopHeight(image, 
+                                        40-(image.getHeight()/2), Unit.PX, 
+                                        image.getHeight(), Unit.PX);
+         
+        
+         
+         
+         Image arrowImage = new Image(res.wizardDisclosureArrow());
+         layoutPanel.add(arrowImage);
+         layoutPanel.setWidgetRightWidth(arrowImage, 
+                                         10, Unit.PX, 
+                                         arrowImage.getWidth(), 
+                                         Unit.PX);
+         layoutPanel.setWidgetTopHeight(arrowImage,
+                                        40-(arrowImage.getHeight()/2), Unit.PX,
+                                        arrowImage.getHeight(), Unit.PX);
+         
+       
          
          initWidget(layoutPanel);
       }
