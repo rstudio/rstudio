@@ -123,4 +123,8 @@
 
 .actions {
    font-family: proportionalFont;
+   float: right;
+   height: 16px;
+   padding: 1px 0 0 0;
+   overflow: visible;
 }
