@@ -376,8 +376,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
   static final int PAGE_INCREMENT = 30;
 
   /**
-   * The maximum number of times we can try to {@link #resolvePendingState()}
-   * before we assume there is an infinite loop.
+   * The maximum number of times we can try to
+   * {@link #resolvePendingState(JsArrayInteger)} before we assume there is an
+   * infinite loop.
    */
   private static final int LOOP_MAXIMUM = 10;
 
@@ -429,9 +430,10 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
   private ScheduledCommand pendingStateCommand;
 
   /**
-   * A counter used to detect infinite loops in {@link #resolvePendingState()}.
-   * An infinite loop can occur if user code, such as reading the
-   * {@link SelectionModel}, causes the table to have a pending state.
+   * A counter used to detect infinite loops in
+   * {@link #resolvePendingState(JsArrayInteger)}. An infinite loop can occur if
+   * user code, such as reading the {@link SelectionModel}, causes the table to
+   * have a pending state.
    */
   private int pendingStateLoop = 0;
 
@@ -513,15 +515,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
    * Flush pending changes to the view.
    */
   public void flush() {
-    /*
-     * resolvePendingState can exit early user code applied more pending state,
-     * so we need to loop until we are sure that the pending state is clear. If
-     * the user calls this method while resolving pending state, then do not
-     * attempt to resolve pending state again.
-     */
-    while (pendingStateCommand != null && !isResolvingState) {
-      resolvePendingState();
-    }
+    resolvePendingState(null);
   }
 
   /**
@@ -987,7 +981,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
       public void execute() {
         // Verify that this command was the last one scheduled.
         if (pendingStateCommand == this) {
-          resolvePendingState();
+          resolvePendingState(null);
         }
       }
     };
@@ -1060,14 +1054,28 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
 
   /**
    * Resolve the pending state and push updates to the view.
+   * 
+   * @param modifiedRows the modified rows that need to be updated, or null if
+   *          none. The modified rows may be mutated.
+   * @return true if the state changed, false if not
    */
-  private void resolvePendingState() {
+  private boolean resolvePendingState(JsArrayInteger modifiedRows) {
     pendingStateCommand = null;
+
+    /*
+     * We are already resolving state. New changes will be flushed after the
+     * current flush is finished.
+     */
+    if (isResolvingState) {
+      return false;
+    }
+    isResolvingState = true;
 
     // Early exit if there is no pending state.
     if (pendingState == null) {
+      isResolvingState = false;
       pendingStateLoop = 0;
-      return;
+      return false;
     }
 
     /*
@@ -1076,6 +1084,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
      */
     pendingStateLoop++;
     if (pendingStateLoop > LOOP_MAXIMUM) {
+      isResolvingState = false;
       pendingStateLoop = 0; // Let user code handle exception and try again.
       throw new IllegalStateException(
           "A possible infinite loop has been detected in a Cell Widget. This "
@@ -1085,16 +1094,13 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
     }
 
     /*
-     * Check for conflicting state resolution code. This can happen if the
-     * View's render methods modify the view and flush the pending state.
+     * Swap the states in case user code triggers more changes, which will
+     * create a new pendingState.
      */
-    if (isResolvingState) {
-      throw new IllegalStateException(
-          "The Cell Widget is attempting to render itself within the render "
-              + "loop. This usually happens when your render code modifies the "
-              + "state of the Cell Widget then accesses data or elements " + "within the Widget.");
-    }
-    isResolvingState = true;
+    State<T> oldState = state;
+    PendingState<T> pending = pendingState;
+    state = pendingState;
+    pendingState = null;
 
     /*
      * Keep track of the absolute indexes of modified rows.
@@ -1102,11 +1108,11 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
      * Use a native array to avoid dynamic casts associated with emulated Java
      * Collections.
      */
-    JsArrayInteger modifiedRows = JavaScriptObject.createArray().cast();
+    if (modifiedRows == null) {
+      modifiedRows = JavaScriptObject.createArray().cast();
+    }
 
     // Get the values used for calculations.
-    State<T> oldState = state;
-    PendingState<T> pending = pendingState;
     int pageStart = pending.getPageStart();
     int pageSize = pending.getPageSize();
     int pageEnd = pageStart + pageSize;
@@ -1115,7 +1121,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
     /*
      * Resolve keyboard selection. If the row value still exists, use its index.
      * If the row value exists in multiple places, use the closest index. If the
-     * row value not longer exists, use the current index.
+     * row value no longer exists, use the current index.
      */
     pending.keyboardSelectedRow =
         Math.max(0, Math.min(pending.keyboardSelectedRow, rowDataCount - 1));
@@ -1145,10 +1151,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
     }
 
     /*
-     * Update the SelectionModel based on the keyboard selected value. This must
-     * happen before we read the selection state. We only bind to selection
-     * after the user has interacted with the widget at least once. This
-     * prevents values from being selected by default.
+     * Update the SelectionModel based on the keyboard selected value. We only
+     * bind to selection after the user has interacted with the widget at least
+     * once. This prevents values from being selected by default.
      */
     try {
       if (KeyboardSelectionPolicy.BOUND_TO_SELECTION == keyboardSelectionPolicy
@@ -1176,7 +1181,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
             if (oldValueWasSelected) {
               selectionModel.setSelected(oldValue, false);
             }
-  
+
             // Select the new value.
             pending.selectedValue = newValue;
             if (newValue != null && !newValueWasSelected) {
@@ -1187,10 +1192,17 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
             pending.selectedValue = null;
           }
         }
+
+        // User code may have created a new pending state, so we need to
+        // propagate this new selected value.
+        if (pendingState != null) {
+          pendingState.selectedValue = pending.selectedValue;
+        }
       }
     } catch (RuntimeException e) {
       // Unlock the rendering loop if the user SelectionModel throw an error.
       isResolvingState = false;
+      pendingStateLoop = 0;
       throw e;
     }
 
@@ -1206,37 +1218,52 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
      * longer have a SelectionModel but had selected rows, we still need to
      * update the rows.
      */
-    for (int i = pageStart; i < pageStart + rowDataCount; i++) {
-      // Check the new selection state.
-      T rowValue = pending.getRowDataValue(i - pageStart);
-      boolean isSelected =
-          (rowValue != null && selectionModel != null && selectionModel.isSelected(rowValue));
+    try {
+      for (int i = pageStart; i < pageStart + rowDataCount; i++) {
+        // Check the new selection state.
+        T rowValue = pending.getRowDataValue(i - pageStart);
+        boolean isSelected =
+            (rowValue != null && selectionModel != null && selectionModel.isSelected(rowValue));
 
-      // Compare to the old selection state.
-      boolean wasSelected = oldState.isRowSelected(i);
-      if (isSelected) {
-        pending.selectedRows.add(i);
-        if (!wasSelected) {
+        // Compare to the old selection state.
+        boolean wasSelected = oldState.isRowSelected(i);
+        if (isSelected) {
+          pending.selectedRows.add(i);
+          if (pendingState != null) {
+            // Propagate changes if user code created a new pending state.
+            pendingState.selectedRows.add(i);
+          }
+          if (!wasSelected) {
+            modifiedRows.push(i);
+          }
+        } else if (wasSelected) {
           modifiedRows.push(i);
         }
-      } else if (wasSelected) {
-        modifiedRows.push(i);
       }
+    } catch (RuntimeException e) {
+      // Unlock the rendering loop if the user SelectionModel throw an error.
+      isResolvingState = false;
+      pendingStateLoop = 0;
+      throw e;
     }
 
     /*
      * We called methods in user code that could modify the view, so early exit
      * if there is a new pending state waiting to be resolved.
      */
-    if (pendingStateCommand != null) {
+    if (pendingState != null) {
       isResolvingState = false;
-      return;
-    }
-    pendingStateLoop = 0;
+      // Do not reset pendingStateLoop, or we will not detect the infinite loop.
 
-    // Swap the states.
-    state = pendingState;
-    pendingState = null;
+      /*
+       * Try to resolve state again. If we are successful, then the modified
+       * rows will be redrawn. If we are not successful, then we still need to
+       * redraw the modified rows.
+       */
+      if (resolvePendingState(modifiedRows)) {
+        return true;
+      }
+    }
 
     // Add the replaced ranges as modified rows.
     boolean replacedEmptyRange = false;
@@ -1358,6 +1385,11 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
        */
       isResolvingState = false;
     }
+
+    // If any new state exists, resolve it now. If there is no new state, reset
+    // the pendingStateLoop.
+    resolvePendingState(null);
+    return true;
   }
 
   /**
