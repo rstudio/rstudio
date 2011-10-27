@@ -24,6 +24,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.projects.model.NewProjectResult;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -39,44 +40,12 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
-{
-   public class Result
-   {
-      public Result(String projectFile, 
-                    String newDefaultProjectLocation,
-                    String gitRepoUrl)
-      {
-         projectFile_ = projectFile;
-         newDefaultProjectLocation_ = newDefaultProjectLocation;
-         gitRepoUrl_ = gitRepoUrl;
-      }
-      
-      public String getProjectFile()
-      {
-         return projectFile_;
-      }
-      
-      public String getNewDefaultProjectLocation()
-      {
-         return newDefaultProjectLocation_;
-      }
-
-      public String getGitRepoUrl()
-      {
-         return gitRepoUrl_;
-      }
-
-      private final String projectFile_;
-      private final String newDefaultProjectLocation_;
-      private final String gitRepoUrl_;
-   }
-   
-   
+public class NewProjectDialog extends ModalDialog<NewProjectResult>
+{   
    public NewProjectDialog(
          GlobalDisplay globalDisplay,
          FileSystemItem defaultNewProjectLocation,
-         ProgressOperationWithInput<NewProjectDialog.Result> operation)
+         ProgressOperationWithInput<NewProjectResult> operation)
    {
       super("New Project", operation);
       
@@ -87,7 +56,7 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
    }
    
    @Override
-   protected NewProjectDialog.Result collectInput()
+   protected NewProjectResult collectInput()
    {
       if (newDirButton_.getValue())
       {
@@ -100,7 +69,7 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
             String newDefaultLocation = null;
             if (!dir.equals(defaultNewProjectLocation_))
                newDefaultLocation = dir;
-            return new Result(projFile, newDefaultLocation, null);
+            return new NewProjectResult(projFile, newDefaultLocation, null);
          }
          else
          {
@@ -112,7 +81,7 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
          String dir = existingProjectDir_.getText();
          if (dir.length() > 0)
          {
-            return new Result(projFileFromDir(dir), null, null);
+            return new NewProjectResult(projFileFromDir(dir), null, null);
          }
          else
          {
@@ -131,7 +100,7 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
 
             String repoDir = FileSystemItem.createDir(dir).completePath(repo);
             String projFile = projFileFromDir(repoDir);
-            return new Result(projFile, dir, url);
+            return new NewProjectResult(projFile, dir, url);
          }
          else
          {
@@ -145,7 +114,7 @@ public class NewProjectDialog extends ModalDialog<NewProjectDialog.Result>
    }
    
    @Override
-   protected boolean validate(NewProjectDialog.Result input)
+   protected boolean validate(NewProjectResult input)
    {
       if (input == null)
       {

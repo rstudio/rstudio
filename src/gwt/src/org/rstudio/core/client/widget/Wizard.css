@@ -1,0 +1,42 @@
+
+@url WIZARDLISTINNERSHADOW wizardListInnerShadow;
+
+.mainWidget {
+   width: 510px;
+   height: 300px;
+}
+
+.headerLabel {
+   font-size: 1.1em;
+   font-weight: bold;
+   margin-left: 5px;
+   margin-top: 8px;
+}
+
+.wizardBodyPanel {
+   width: 533px; 
+   height: 243px;
+   margin-top: 20px;
+   margin-left: -10px;
+   margin-right: -13px;
+}
+
+.wizardPageSelector {
+   
+}
+
+.wizardPageSelectorItem {
+   width: 100%;
+   height: 80px;
+   background: white;
+   border: 1px solid #eeeff2;	
+   border-top: none;
+   border-left: none;
+   border-right: none;
+}
+
+
+.wizardPageSelectorItem:hover {
+   background: #DAE7F6;	
+}
+
