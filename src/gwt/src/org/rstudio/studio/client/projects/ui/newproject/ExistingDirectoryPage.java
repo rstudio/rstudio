@@ -11,7 +11,7 @@ public class ExistingDirectoryPage extends WizardPage<FileSystemItem,NewProjectR
    public ExistingDirectoryPage()
    {
       super("Existing Directory", 
-            "Attach a projec to an existing working directory",
+            "Associate a project with an existing working directory",
             NewProjectResources.INSTANCE.existingDirectoryIcon());
       
       

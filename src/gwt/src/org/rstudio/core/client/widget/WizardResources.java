@@ -13,6 +13,8 @@ public interface WizardResources extends ClientBundle
    {
       String mainWidget();
       String headerLabel();
+      String topHeaderLabel();
+      String subcaptionLabel();
       String wizardBodyPanel();
       String wizardPageSelector();
       String wizardPageSelectorItem();

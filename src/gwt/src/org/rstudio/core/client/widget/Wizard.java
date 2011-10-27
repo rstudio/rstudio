@@ -3,15 +3,13 @@ package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.dom.DomUtils;
-
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -48,6 +46,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       
       Label subCaptionLabel = new Label(subCaption_);
       subCaptionLabel.addStyleName(styles.headerLabel());
+      subCaptionLabel.addStyleName(styles.topHeaderLabel());
       mainWidget.add(subCaptionLabel);
       
       // main body panel for transitions
@@ -182,12 +181,26 @@ public class Wizard<I,T> extends ModalDialog<T>
                                         image.getHeight(), Unit.PX);
          
         
+         FlowPanel captionPanel = new FlowPanel();
+         Label titleLabel = new Label(page.getTitle());
+         titleLabel.addStyleName(styles.headerLabel());
+         captionPanel.add(titleLabel);
+         Label subTitleLabel = new Label(page.getSubTitle());
+         subTitleLabel.addStyleName(styles.subcaptionLabel());
+         captionPanel.add(subTitleLabel);
+         layoutPanel.add(captionPanel);
+         layoutPanel.setWidgetLeftWidth(captionPanel,
+                                        10 + image.getWidth() + 12, Unit.PX,
+                                        450, Unit.PX);
+         layoutPanel.setWidgetTopHeight(captionPanel,
+                                        19, Unit.PX, 
+                                        55, Unit.PX);
          
          
          Image arrowImage = new Image(res.wizardDisclosureArrow());
          layoutPanel.add(arrowImage);
          layoutPanel.setWidgetRightWidth(arrowImage, 
-                                         10, Unit.PX, 
+                                         20, Unit.PX, 
                                          arrowImage.getWidth(), 
                                          Unit.PX);
          layoutPanel.setWidgetTopHeight(arrowImage,

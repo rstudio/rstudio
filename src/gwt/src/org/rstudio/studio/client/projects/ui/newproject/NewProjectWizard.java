@@ -15,7 +15,7 @@ public class NewProjectWizard extends Wizard<FileSystemItem,NewProjectResult>
          ProgressOperationWithInput<NewProjectResult> operation)
    {
       super("New Project", 
-            "Create a Project from:", 
+            "Create project from:", 
             defaultNewProjectLocation, 
             operation);
       
