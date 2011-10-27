@@ -94,44 +94,32 @@ public class LineActionButtonRenderer
 
    public void render(SafeHtmlBuilder builder, String text, String action)
    {
-      builder.append(SafeHtmlUtil.createOpenTag(
-            "button",
-            "type", "button",
-            "class", resources_.styles().button(),
-            "data-action", action));
       {
          builder.append(SafeHtmlUtil.createOpenTag(
-               "table",
-               "border", "0",
-               "cellpadding", "0",
-               "cellspacing", "0"));
+               "div",
+               "class", resources_.styles().button(),
+               "data-action", action));
          {
-            builder.appendHtmlConstant("<tr>");
-            {
                builder.append(SafeHtmlUtil.createOpenTag(
-                     "td",
+                     "div",
                      "class", resources_.styles().left()));
-               builder.appendHtmlConstant("</td>");
+               builder.appendHtmlConstant("<br/></div>");
 
                builder.append(SafeHtmlUtil.createOpenTag(
-                     "td",
-                     "class", resources_.styles().center(),
-                     "valign", "top"));
+                     "div",
+                     "class", resources_.styles().center()));
                {
                   builder.appendEscaped(text);
                }
-               builder.appendHtmlConstant("</td>");
+               builder.appendHtmlConstant("</div>");
 
                builder.append(SafeHtmlUtil.createOpenTag(
-                     "td",
+                     "div",
                      "class", resources_.styles().right()));
-               builder.appendHtmlConstant("</td>");
-            }
-            builder.appendHtmlConstant("</tr>");
+               builder.appendHtmlConstant("<br/></div>");
          }
-         builder.appendHtmlConstant("</table>");
+         builder.appendHtmlConstant("</div>");
       }
-      builder.appendHtmlConstant("</a>");
    }
 
    private final Resources resources_;

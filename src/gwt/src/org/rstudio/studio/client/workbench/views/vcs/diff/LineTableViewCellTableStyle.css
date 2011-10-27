@@ -106,12 +106,12 @@
   background: rgb(146, 193, 240) !important;
 }
 
-.stageMode .actions button[data-action='Stage'],
-.stageMode .actions button[data-action='Discard'] {
+.stageMode .actions div[data-action='Stage'],
+.stageMode .actions div[data-action='Discard'] {
    display: none;
 }
 
-.workingMode .actions button[data-action='Unstage'] {
+.workingMode .actions div[data-action='Unstage'] {
    display: none;
 }
 
@@ -123,5 +123,4 @@
 
 .actions {
    font-family: proportionalFont;
-   line-height: 0;
 }
