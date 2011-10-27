@@ -11,7 +11,7 @@ import org.rstudio.core.client.SafeHtmlUtil;
 
 public class LineActionButtonRenderer
 {
-   interface Resources extends ClientBundle
+   interface Resources
    {
       ImageResource buttonLeft();
 
@@ -20,7 +20,6 @@ public class LineActionButtonRenderer
 
       ImageResource buttonRight();
 
-      @Source("LineActionButton.css")
       Styles styles();
    }
 
@@ -32,7 +31,7 @@ public class LineActionButtonRenderer
       String right();
    }
 
-   interface BlueResources extends Resources
+   interface BlueResources extends Resources, ClientBundle
    {
       @Override
       @Source("images/SmallBlueButtonLeft.png")
@@ -54,7 +53,7 @@ public class LineActionButtonRenderer
    interface BlueStyles extends Styles
    {}
 
-   interface GrayResources extends Resources
+   interface GrayResources extends Resources, ClientBundle
    {
       @Override
       @Source("images/SmallGrayButtonLeft.png")
