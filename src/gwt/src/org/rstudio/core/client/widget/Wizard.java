@@ -3,9 +3,6 @@ package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.dom.DomUtils;
-
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
@@ -52,27 +49,35 @@ public class Wizard<I,T> extends ModalDialog<T>
      
       // page selection panel
       pageSelectorPanel_ = new VerticalPanel();
-      pageSelectorPanel_.getElement().setTabIndex(-1);
       pageSelectorPanel_.addStyleName(styles.wizardPageSelector());
       pageSelectorPanel_.setSize("100%", "100%");
       for (int i=0; i<pages_.size(); i++)
-         pageSelectorPanel_.add(new PageSelectorItem(pages_.get(i)));
+      {
+         PageSelectorItem pageSelector = new PageSelectorItem(pages_.get(i));
+         
+         if (i==0)
+            pageSelector.addStyleName(styles.wizardPageSelectorItemFirst());
+         
+         if (i == (pages_.size() -1))
+            pageSelector.addStyleName(styles.wizardPageSelectorItemLast());
+         
+         pageSelectorPanel_.add(pageSelector);
+      }
       bodyPanel_.add(pageSelectorPanel_);
       bodyPanel_.setWidgetTopBottom(pageSelectorPanel_, 0, Unit.PX, 0, Unit.PX);
       bodyPanel_.setWidgetLeftRight(pageSelectorPanel_, 0, Unit.PX, 0, Unit.PX);
-      setVisible(pageSelectorPanel_, pageSelectorPanel_.getElement(), true);
+      bodyPanel_.setWidgetVisible(pageSelectorPanel_, true);
     
       // add pages and make them invisible
       for (int i=0; i<pages_.size(); i++)
       {
          WizardPage<I,T> page = pages_.get(i);
          page.setSize("100%", "100%");
-         page.getFocusElement().setTabIndex(0);
          
          bodyPanel_.add(page);
          bodyPanel_.setWidgetTopBottom(page, 0, Unit.PX, 0, Unit.PX);
          bodyPanel_.setWidgetLeftRight(page, 0, Unit.PX, 0, Unit.PX);
-         setVisible(page, page.getFocusElement(), false);
+         bodyPanel_.setWidgetVisible(page, false);
       }
       
      
@@ -94,31 +99,6 @@ public class Wizard<I,T> extends ModalDialog<T>
       return true;
    }
    
-   private void setVisible(Widget widget,
-                           Element focusTarget,
-                           boolean visible)
-   {
-      if (visible)
-      {
-         if (focusTarget.getTabIndex() != 0)
-         {
-            focusTarget.setTabIndex(0);
-            bodyPanel_.setWidgetLeftRight(widget, 0, Unit.PX, 0, Unit.PX);
-         }
-      }
-      else
-      {
-         if (focusTarget.getTabIndex() != -1)
-         {
-            focusTarget.setTabIndex(-1);
-            if (DomUtils.hasFocus(focusTarget))
-               focusTarget.blur();
-            bodyPanel_.setWidgetLeftRight(widget, -5000, Unit.PX, 5000, Unit.PX);
-         }
-      }
-      bodyPanel_.forceLayout();
-   }
-
    
    private class PageSelectorItem extends Composite
    {

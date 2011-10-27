@@ -1,7 +1,6 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.Composite;
 
 public abstract class WizardPage<I,T> extends Composite
@@ -30,11 +29,6 @@ public abstract class WizardPage<I,T> extends Composite
    public ImageResource getImage()
    {
       return image_;
-   }
-   
-   protected Element getFocusElement()
-   {
-      return getElement();
    }
  
    abstract protected void initialize(I initData);
