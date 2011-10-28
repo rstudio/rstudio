@@ -149,7 +149,11 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
          }
       };
       addColumn(dateCol, "Date");
-      setColumnWidth(dateCol, "120px");
+
+      setColumnWidth(idCol, "100px");
+      setColumnWidth(subjectCol, "67%");
+      setColumnWidth(authorCol, "33%");
+      setColumnWidth(dateCol, "100px");
 
       selectionModel_ = new SingleSelectionModel<CommitInfo>();
       setSelectionModel(selectionModel_);

@@ -33,6 +33,7 @@ import org.rstudio.core.client.widget.ResizeGripper;
 import org.rstudio.core.client.widget.SlideLabel;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
+import org.rstudio.core.client.widget.WizardResources;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
@@ -163,7 +164,8 @@ public class RStudio implements EntryPoint
       ProjectOptionsDialog.ensureStylesInjected();
       NewProjectDialog.ensureStylesInjected();
       CodeBrowserEditingTargetWidget.ensureStylesInjected();
-
+      WizardResources.INSTANCE.styles().ensureInjected();
+     
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
 

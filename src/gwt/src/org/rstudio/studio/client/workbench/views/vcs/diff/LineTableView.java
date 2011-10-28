@@ -30,7 +30,6 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
@@ -165,7 +164,6 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
       {
          sb.append(SafeHtmlUtil.createOpenTag(
                "div",
-               "style", "float: right",
                "class", RES.cellTableStyle().actions() + " " + className));
          renderActionButton(sb, Action.Unstage, labelSuffix);
          renderActionButton(sb, Action.Stage, labelSuffix);

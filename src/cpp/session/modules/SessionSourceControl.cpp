@@ -795,16 +795,19 @@ public:
       {
          pCommitInfo->id = smatch[1];
          std::vector<std::string> refs;
-         boost::algorithm::split(refs,
-                                 static_cast<const std::string>(smatch[3]),
-                                 boost::algorithm::is_any_of(","));
-         BOOST_FOREACH(std::string ref, refs)
+         if (smatch[3].matched)
          {
-            boost::algorithm::trim(ref);
-            if (boost::algorithm::starts_with(ref, "tag: "))
-               pCommitInfo->tags.push_back(ref.substr(5));
-            else if (!boost::algorithm::starts_with(ref, "refs/bisect/"))
-               pCommitInfo->refs.push_back(ref);
+            boost::algorithm::split(refs,
+                                    static_cast<const std::string>(smatch[3]),
+                                    boost::algorithm::is_any_of(","));
+            BOOST_FOREACH(std::string ref, refs)
+            {
+               boost::algorithm::trim(ref);
+               if (boost::algorithm::starts_with(ref, "tag: "))
+                  pCommitInfo->tags.push_back(ref.substr(5));
+               else if (!boost::algorithm::starts_with(ref, "refs/bisect/"))
+                  pCommitInfo->refs.push_back(ref);
+            }
          }
       }
       else
