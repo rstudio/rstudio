@@ -8,6 +8,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -70,14 +71,16 @@ public class Wizard<I,T> extends ModalDialog<T>
                                       kCaptionHeight, Unit.PX);
       
       // second page back button
-      backButton_ = new Image(res.wizardBackButton());
+      ImageResource bkImg = res.wizardBackButton();
+      backButton_ = new Label("Back");
+      backButton_.addStyleName(styles.wizardBackButton());
       headerPanel_.add(backButton_);
       headerPanel_.setWidgetLeftWidth(backButton_,
                                       kTopMargin - 2, Unit.PX, 
-                                      backButton_.getWidth(), Unit.PX);
+                                      bkImg.getWidth(), Unit.PX);
       headerPanel_.setWidgetTopHeight(backButton_,
-                                      kTopMargin, Unit.PX,
-                                      backButton_.getHeight(), Unit.PX);
+                                      kTopMargin - 2, Unit.PX,
+                                      bkImg.getHeight(), Unit.PX);
       backButton_.setVisible(false);
       backButton_.addClickHandler(new ClickHandler()
       {
@@ -333,7 +336,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    
    private LayoutPanel headerPanel_;
    private Label subCaptionLabel_;
-   private Image backButton_;
+   private Label backButton_;
    private Label pageCaptionLabel_;
    
    

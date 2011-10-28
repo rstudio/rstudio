@@ -22,6 +22,7 @@ public interface WizardResources extends ClientBundle
       String wizardPageSelectorItemFirst();
       String wizardPageSelectorItemLast();
       String wizardPageBackground();
+      String wizardBackButton();
    }
    
    @Source("Wizard.css")

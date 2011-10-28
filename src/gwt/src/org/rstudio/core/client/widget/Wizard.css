@@ -32,6 +32,15 @@
    
 }
 
+@sprite .wizardBackButton {
+   gwt-image: 'wizardBackButton';
+   border: none;
+   font-weight: bold;
+   cursor: pointer;
+   padding-left: 26px;
+   padding-top: 6px;
+}
+
 @sprite .wizardPageSelectorItem {
    width: 100%;
    gwt-image: 'wizardPageSelectorBackground';
