@@ -5,6 +5,7 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 public class VersionControlPage extends WizardPage<FileSystemItem,NewProjectResult>
 {
@@ -12,18 +13,25 @@ public class VersionControlPage extends WizardPage<FileSystemItem,NewProjectResu
    {
       super("Version Control", 
             "Checkout a project from a version control repository",
-            NewProjectResources.INSTANCE.projectFromRepositoryIcon());
+            "Create Project from Version Control",
+            NewProjectResources.INSTANCE.projectFromRepositoryIcon(),
+            NewProjectResources.INSTANCE.projectFromRepositoryIconLarge());
       
       
-      Label label = new Label("Version Control");
-      initWidget(label);
+     
    }
 
 
    @Override
+   protected Widget createWidget()
+   {
+      return new Label("Version Control");
+      
+   }
+   
+   @Override 
    protected void initialize(FileSystemItem initData)
    {
-      // TODO Auto-generated method stub
       
    }
 
@@ -39,6 +47,14 @@ public class VersionControlPage extends WizardPage<FileSystemItem,NewProjectResu
    {
       
       return true;
+   }
+
+
+   @Override
+   public void focus()
+   {
+      // TODO Auto-generated method stub
+      
    }
 
 }

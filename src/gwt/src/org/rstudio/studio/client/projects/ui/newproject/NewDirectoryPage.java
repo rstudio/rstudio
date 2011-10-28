@@ -5,6 +5,7 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 public class NewDirectoryPage extends WizardPage<FileSystemItem,NewProjectResult>
 {
@@ -12,20 +13,25 @@ public class NewDirectoryPage extends WizardPage<FileSystemItem,NewProjectResult
    {
       super("New Directory", 
             "Start a project in a brand new working directory",
-            NewProjectResources.INSTANCE.newProjectDirectoryIcon());
+            "Create Project in New Directory",
+            NewProjectResources.INSTANCE.newProjectDirectoryIcon(),
+            NewProjectResources.INSTANCE.newProjectDirectoryIconLarge());
       
-      
-      Label label = new Label("New Directory");
-      initWidget(label);
+  
    }
 
    @Override
+   protected Widget createWidget()
+   {
+      return new Label("New Directory");
+   }
+   
+   @Override 
    protected void initialize(FileSystemItem initData)
    {
-      // TODO Auto-generated method stub
       
    }
-
+   
    @Override
    protected NewProjectResult collectInput()
    {
@@ -38,6 +44,13 @@ public class NewDirectoryPage extends WizardPage<FileSystemItem,NewProjectResult
    {
       
       return true;
+   }
+
+   @Override
+   public void focus()
+   {
+      // TODO Auto-generated method stub
+      
    }
 
 }

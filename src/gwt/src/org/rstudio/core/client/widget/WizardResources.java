@@ -14,13 +14,14 @@ public interface WizardResources extends ClientBundle
    {
       String mainWidget();
       String headerLabel();
-      String topHeaderLabel();
+      String headerPanel();
       String subcaptionLabel();
       String wizardBodyPanel();
       String wizardPageSelector();
       String wizardPageSelectorItem();
       String wizardPageSelectorItemFirst();
       String wizardPageSelectorItemLast();
+      String wizardPage();
    }
    
    @Source("Wizard.css")
@@ -38,7 +39,6 @@ public interface WizardResources extends ClientBundle
    
    @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
    ImageResource wizardPageSelectorBackgroundLast();
-   
    
    static WizardResources INSTANCE = 
                         (WizardResources)GWT.create(WizardResources.class);

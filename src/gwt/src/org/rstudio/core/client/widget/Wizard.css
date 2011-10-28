@@ -9,6 +9,11 @@
    cursor: default;
 }
 
+.headerPanel {
+   width: 400px;
+   height: 42px;	
+}
+
 .subcaptionLabel {
    font-size: 0.95em;
    color: #606060;
@@ -16,15 +21,9 @@
    cursor: default;
 }
 
-.topHeaderLabel {
-   margin-left: 5px;
-   margin-top: 8px;
-}
-
 .wizardBodyPanel {
    width: 533px; 
    height: 244px;
-   margin-top: 20px;
    margin-left: -10px;
    margin-right: -13px;
 }
@@ -46,8 +45,10 @@
    gwt-image: 'wizardPageSelectorBackgroundLast';
 }
 
-
 .wizardPageSelectorItem:hover {
    background: #DAE7F6;	
 }
 
+.wizardPage {
+
+}

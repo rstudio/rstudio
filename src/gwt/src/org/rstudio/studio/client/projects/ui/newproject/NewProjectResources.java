@@ -11,6 +11,9 @@ public interface NewProjectResources extends ClientBundle
                   (NewProjectResources)GWT.create(NewProjectResources.class);
    
    ImageResource newProjectDirectoryIcon();
+   ImageResource newProjectDirectoryIconLarge();
    ImageResource existingDirectoryIcon();
+   ImageResource existingDirectoryIconLarge();
    ImageResource projectFromRepositoryIcon();
+   ImageResource projectFromRepositoryIconLarge();
 }
