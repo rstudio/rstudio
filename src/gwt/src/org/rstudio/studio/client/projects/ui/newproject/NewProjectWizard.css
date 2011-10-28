@@ -1,11 +1,14 @@
 
+.wizardWidget {
+   margin-left: 2px;
+}
 
 .wizardTextEntryLabel {
    margin-bottom: 2px;
 }
 
 .wizardTextEntry {
-   width: 298px;
+   width: 296px;
 }
 
 .wizardSpacer {

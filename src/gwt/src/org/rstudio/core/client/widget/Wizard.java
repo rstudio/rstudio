@@ -57,7 +57,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       final int kLeftMargin = 8;
       final int kCaptionWidth = 400;
       final int kCaptionHeight = 30;
-      final int kPageUILeftMargin = 120;
+      final int kPageUILeftMargin = 123;
       
       // first page caption
       subCaptionLabel_ = new Label(subCaption_);

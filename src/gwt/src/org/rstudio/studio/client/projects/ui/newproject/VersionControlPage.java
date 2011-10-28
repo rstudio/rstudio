@@ -5,7 +5,6 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -25,22 +24,22 @@ public class VersionControlPage extends NewProjectWizardPage
 
 
    @Override
-   protected void addWidgets(FlowPanel panel)
+   protected void onAddWidgets()
    { 
       NewProjectResources.Styles styles = NewProjectResources.INSTANCE.styles();
       
       Label dirNameLabel = new Label("Git Repository URL/Location:");
       dirNameLabel.addStyleName(styles.wizardTextEntryLabel());
-      panel.add(dirNameLabel);
+      addWidget(dirNameLabel);
       txtRepoUrl_ = new TextBox();
       txtRepoUrl_.addStyleName(styles.wizardTextEntry());
-      panel.add(txtRepoUrl_);
+      addWidget(txtRepoUrl_);
       
-      addSpacer(panel);
+      addSpacer();
      
       existingRepoDestDir_ = new DirectoryChooserTextBox(
             "Clone project into subdirectory of:", txtRepoUrl_);
-      panel.add(existingRepoDestDir_);
+      addWidget(existingRepoDestDir_);
    }
    
    @Override 

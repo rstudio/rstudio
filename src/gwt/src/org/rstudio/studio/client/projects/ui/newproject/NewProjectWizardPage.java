@@ -27,15 +27,17 @@ public abstract class NewProjectWizardPage
    @Override
    protected Widget createWidget()
    {
-      FlowPanel flowPanel = new FlowPanel();
-      flowPanel.setWidth("100%");
+      flowPanel_ = new FlowPanel();
+      flowPanel_.setWidth("100%");
       
-      addWidgets(flowPanel);
+      onAddWidgets();
       
-      return flowPanel;
+      return flowPanel_;
    }
    
-   protected abstract void addWidgets(FlowPanel panel);
+   protected abstract void onAddWidgets();
+   
+   
    
    @Override 
    protected void initialize(FileSystemItem defaultNewProjectLocation)
@@ -43,13 +45,18 @@ public abstract class NewProjectWizardPage
       defaultNewProjectLocation_ = defaultNewProjectLocation;
    }
    
+   protected void addWidget(Widget widget)
+   {
+      widget.addStyleName(NewProjectResources.INSTANCE.styles().wizardWidget());
+      flowPanel_.add(widget);
+   }
    
-   protected void addSpacer(FlowPanel panel)
+   protected void addSpacer()
    {
       Label spacerLabel = new Label();
       spacerLabel.addStyleName(
                      NewProjectResources.INSTANCE.styles().wizardSpacer());
-      panel.add(spacerLabel);
+      flowPanel_.add(spacerLabel);
    }
    
    protected String projFileFromDir(String dir)
@@ -63,4 +70,6 @@ public abstract class NewProjectWizardPage
    
    protected final GlobalDisplay globalDisplay_ = 
                            RStudioGinjector.INSTANCE.getGlobalDisplay();
+   
+   private FlowPanel flowPanel_;
 }

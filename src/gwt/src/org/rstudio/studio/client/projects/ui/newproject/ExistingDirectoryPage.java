@@ -5,7 +5,6 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 
-import com.google.gwt.user.client.ui.FlowPanel;
 
 
 public class ExistingDirectoryPage extends NewProjectWizardPage
@@ -22,13 +21,13 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
    }
 
    @Override
-   protected void addWidgets(FlowPanel panel)
+   protected void onAddWidgets()
    {
    
       existingProjectDir_ = new DirectoryChooserTextBox(
             "Project working directory:", null);
 
-      panel.add(existingProjectDir_);
+      addWidget(existingProjectDir_);
       
    }
    
