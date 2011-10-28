@@ -75,8 +75,7 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
    @Override
    public void focus()
    {
-      if (existingProjectDir_.getText().isEmpty())
-         existingProjectDir_.click();
+      existingProjectDir_.focusButton();
    }
 
    
