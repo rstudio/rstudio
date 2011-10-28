@@ -17,6 +17,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -39,6 +40,8 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
 
    public CommitDetail()
    {
+      sizeWarning_ = new SizeWarningWidget("commit");
+      sizeWarning_.setVisible(false);
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
    }
 
@@ -129,6 +132,26 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
       labelParent_.setText(commit_.getParent());
    }
 
+   public void showSizeWarning(long sizeInBytes)
+   {
+      tocPanel_.setVisible(false);
+      detailPanel_.setVisible(false);
+      sizeWarning_.setSize(sizeInBytes);
+      sizeWarning_.setVisible(true);
+   }
+
+   public void hideSizeWarning()
+   {
+      tocPanel_.setVisible(true);
+      detailPanel_.setVisible(true);
+      sizeWarning_.setVisible(false);
+   }
+
+   public HasClickHandlers getOverrideSizeWarningButton()
+   {
+      return sizeWarning_;
+   }
+
    private final Invalidation invalidation_ = new Invalidation();
    private CommitInfo commit_;
    @UiField
@@ -145,5 +168,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    VerticalPanel detailPanel_;
    @UiField
    VerticalPanel tocPanel_;
+   @UiField(provided = true)
+   SizeWarningWidget sizeWarning_;
    private ScrollPanel container_;
 }

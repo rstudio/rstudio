@@ -13,7 +13,9 @@
 
 package org.rstudio.studio.client.server;
 
-public interface ServerError 
+import com.google.gwt.json.client.JSONValue;
+
+public interface ServerError
 {
    // method succeeded
    public static final int SUCCESS = 0 ;
@@ -47,4 +49,7 @@ public interface ServerError
    
    // message to display to the end-user
    String getUserMessage();
+
+   JSONValue getClientInfo();
+
 }

@@ -65,6 +65,8 @@ namespace source_control {
 
 namespace {
 
+const size_t WARN_SIZE = 200 * 1024;
+
 // git bin dir which we detect at startup. note that if the git bin
 // is already in the path then this will be empty
 std::string s_gitBinDir;
@@ -1401,10 +1403,12 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
    std::string path;
    int mode;
    int contextLines;
+   bool noSizeWarning;
    Error error = json::readParams(request.params,
                                   &path,
                                   &mode,
-                                  &contextLines);
+                                  &contextLines,
+                                  &noSizeWarning);
    if (error)
       return error;
 
@@ -1419,7 +1423,17 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   pResponse->setResult(output);
+   if (!noSizeWarning && output.size() > WARN_SIZE)
+   {
+      error = systemError(boost::system::errc::file_too_large,
+                          ERROR_LOCATION);
+      pResponse->setError(error,
+                          json::Value(static_cast<uint64_t>(output.size())));
+   }
+   else
+   {
+      pResponse->setResult(output);
+   }
    return Success();
 }
 
@@ -1561,15 +1575,26 @@ Error vcsShow(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
    std::string rev;
-   Error error = json::readParams(request.params, &rev);
+   bool noSizeWarning;
+   Error error = json::readParams(request.params, &rev, &noSizeWarning);
    if (error)
       return error;
 
    std::string output;
    s_pVcsImpl_->show(rev, &output);
    output = string_utils::filterControlChars(output);
-   pResponse->setResult(output);
 
+   if (!noSizeWarning && output.size() > WARN_SIZE)
+   {
+      error = systemError(boost::system::errc::file_too_large,
+                          ERROR_LOCATION);
+      pResponse->setError(error,
+                          json::Value(static_cast<uint64_t>(output.size())));
+   }
+   else
+   {
+      pResponse->setResult(output);
+   }
    return Success();
 }
 

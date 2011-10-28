@@ -205,6 +205,8 @@ public class ReviewPanel extends Composite implements Display
       lines_ = diffPane;
       lines_.getElement().setTabIndex(-1);
 
+      overrideSizeWarning_ = new SizeWarningWidget("diff");
+
       Widget widget = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       consoleBarFramePanel.setWidget(widget);
 
@@ -443,6 +445,25 @@ public class ReviewPanel extends Composite implements Display
       return listBoxAdapter_;
    }
 
+   @Override
+   public HasClickHandlers getOverrideSizeWarningButton()
+   {
+      return overrideSizeWarning_;
+   }
+
+   @Override
+   public void showSizeWarning(long sizeInBytes)
+   {
+      overrideSizeWarning_.setSize(sizeInBytes);
+      diffScroll_.setWidget(overrideSizeWarning_);
+   }
+
+   @Override
+   public void hideSizeWarning()
+   {
+      diffScroll_.setWidget(lines_);
+   }
+
    @UiField(provided = true)
    SplitLayoutPanel splitPanel_;
    @UiField(provided = true)
@@ -481,6 +502,8 @@ public class ReviewPanel extends Composite implements Display
    @SuppressWarnings("unused")
    private final FileTypeRegistry fileTypeRegistry_;
    private LeftRightToggleButton switchViewButton_;
+
+   private SizeWarningWidget overrideSizeWarning_;
 
    private static final Resources RES = GWT.create(Resources.class);
    static {

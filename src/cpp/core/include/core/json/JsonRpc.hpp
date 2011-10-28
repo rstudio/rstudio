@@ -661,7 +661,9 @@ public:
    }
    
    void setError(const core::Error& error);
-   
+
+   void setError(const core::Error& error, const json::Value& clientInfo);
+
    void setError(const boost::system::error_code& ec);
 
    void setAsyncHandle(const std::string& handle);

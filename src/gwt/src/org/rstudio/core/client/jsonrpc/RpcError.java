@@ -14,6 +14,8 @@
 package org.rstudio.core.client.jsonrpc;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONValue;
 
 public class RpcError extends JavaScriptObject 
 { 
@@ -72,6 +74,11 @@ public class RpcError extends JavaScriptObject
       return this.error;
    }-*/;
  
+   public final JSONValue getClientInfo()
+   {
+      return new JSONObject(this).get("client_info");
+   }
+
    public final String getEndUserMessage()
    {
       RpcUnderlyingError underlyingError = getError();

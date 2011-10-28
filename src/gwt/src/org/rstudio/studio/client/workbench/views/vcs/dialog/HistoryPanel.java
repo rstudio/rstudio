@@ -24,6 +24,7 @@ import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
@@ -186,6 +187,12 @@ public class HistoryPanel extends Composite implements Display
    }
 
    @Override
+   public HasClickHandlers getOverrideSizeWarningButton()
+   {
+      return commitDetail_.getOverrideSizeWarningButton();
+   }
+
+   @Override
    public HasClickHandlers getRefreshButton()
    {
       return refreshButton_;
@@ -201,6 +208,18 @@ public class HistoryPanel extends Composite implements Display
    public HasValue<String> getFilterTextBox()
    {
       return filterText_;
+   }
+
+   @Override
+   public void showSizeWarning(long sizeInBytes)
+   {
+      commitDetail_.showSizeWarning(sizeInBytes);
+   }
+
+   @Override
+   public void hideSizeWarning()
+   {
+      commitDetail_.hideSizeWarning();
    }
 
    @UiField(provided = true)

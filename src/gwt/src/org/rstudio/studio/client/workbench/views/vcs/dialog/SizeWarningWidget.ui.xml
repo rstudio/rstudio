@@ -1,0 +1,44 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:w='urn:import:org.rstudio.core.client.widget'>
+
+   <ui:style>
+      .warning {
+         margin-top: 50px;
+      }
+      .label {
+         margin: 0 auto 12px auto;
+      }
+      .buttonCell {
+         padding-top: 12px;
+      }
+      .labelCell {
+         padding-top: 4px;
+      }
+   </ui:style>
+   <ui:with field="messageDialogImages"
+            type="org.rstudio.core.client.widget.images.MessageDialogImages"/>
+
+   <g:HTMLPanel styleName="{style.warning}">
+      <table class="{style.label}" cellspacing="8" cellpadding="0" align="center">
+         <tr>
+            <td valign="top">
+               <g:Image resource='{messageDialogImages.dialog_warning}'/>
+            </td>
+            <td valign="top" class="{style.labelCell}">
+               <strong>This <span ui:field="subject_"/> is extremely large
+                  (<span ui:field="size_"/>) and may<br/>
+                  cause RStudio to slow down or even hang.</strong>
+               <br/><br/>
+               Are you sure you want to continue?
+            </td>
+         </tr>
+         <tr>
+            <td colspan="2" align="center" class="{style.buttonCell}">
+               <w:ThemedButton ui:field="showDiffButton_"/>
+            </td>
+         </tr>
+      </table>
+   </g:HTMLPanel>
+
+</ui:UiBinder>

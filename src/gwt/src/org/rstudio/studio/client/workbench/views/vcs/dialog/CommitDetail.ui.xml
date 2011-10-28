@@ -1,5 +1,6 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:hist='urn:import:org.rstudio.studio.client.workbench.views.vcs.dialog'>
 
    <ui:style>
       .summary td:first-child {
@@ -50,6 +51,7 @@
             <td><g:Label ui:field="labelParent_" /></td>
          </tr>
       </table>
+      <hist:SizeWarningWidget ui:field="sizeWarning_"/>
       <g:VerticalPanel ui:field="tocPanel_" styleName="{style.toc}" />
       <g:VerticalPanel ui:field="detailPanel_" styleName="{style.detailPanel}" />
    </g:HTMLPanel>

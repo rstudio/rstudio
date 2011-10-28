@@ -1396,12 +1396,14 @@ public class RemoteServer implements Server
    public void vcsDiffFile(String path,
                            PatchMode mode,
                            int contextLines,
+                           boolean noSizeWarning,
                            ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
       params.set(1, new JSONNumber(mode.getValue()));
       params.set(2, new JSONNumber(contextLines));
+      params.set(3, JSONBoolean.getInstance(noSizeWarning));
       sendRequest(RPC_SCOPE, VCS_DIFF_FILE, params, requestCallback);
    }
 
@@ -1451,9 +1453,14 @@ public class RemoteServer implements Server
 
    @Override
    public void vcsShow(String rev,
+                       boolean noSizeWarning,
                        ServerRequestCallback<String> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_SHOW, rev, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(rev));
+      params.set(1, JSONBoolean.getInstance(noSizeWarning));
+
+      sendRequest(RPC_SCOPE, VCS_SHOW, params, requestCallback);
    }
 
    @Override

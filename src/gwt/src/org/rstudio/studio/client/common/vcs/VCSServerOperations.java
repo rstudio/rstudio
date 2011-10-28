@@ -75,6 +75,7 @@ public interface VCSServerOperations extends CryptoServerOperations
    void vcsDiffFile(String path,
                     PatchMode patchMode,
                     int contextLines,
+                    boolean noSizeWarning,
                     ServerRequestCallback<String> requestCallback);
 
    void vcsApplyPatch(String patch, PatchMode mode,
@@ -97,6 +98,7 @@ public interface VCSServerOperations extends CryptoServerOperations
          ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void vcsShow(String rev,
+                boolean noSizeWarning,
                 ServerRequestCallback<String> requestCallback);
 
    void vcsClone(String repoUrl,

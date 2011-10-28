@@ -167,9 +167,8 @@ void JsonRpcResponse::write(std::ostream& os) const
    json::write(response_, os);
 }
    
-   
-void JsonRpcResponse::setError(const Error& error)
-{   
+void JsonRpcResponse::setError(const Error& error, const json::Value& clientInfo)
+{
    // remove result
    response_.erase(kRpcResult);
    response_.erase(kRpcAsyncHandle);
@@ -194,10 +193,19 @@ void JsonRpcResponse::setError(const Error& error)
       std::string errorMessage = ec.message();
       executionError["message"] = errorMessage;
       jsonError["error"] = executionError;
-      
+      if (!clientInfo.is_null())
+      {
+         jsonError["client_info"] = clientInfo;
+      }
+
       // set error
       setField(kRpcError, jsonError);
    }      
+}
+   
+void JsonRpcResponse::setError(const Error& error)
+{   
+   setError(error, json::Value());
 }
    
 void JsonRpcResponse::setError(const boost::system::error_code& ec)

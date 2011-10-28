@@ -18,6 +18,7 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -29,6 +30,7 @@ import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.vcs.diff.UnifiedParser;
 import org.rstudio.studio.client.workbench.views.vcs.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
@@ -48,11 +50,16 @@ public class HistoryPresenter
       CommitListDisplay getCommitList();
       CommitDetailDisplay getCommitDetail();
 
+      HasClickHandlers getOverrideSizeWarningButton();
+
       HasClickHandlers getRefreshButton();
 
       HasData<CommitInfo> getDataDisplay();
 
       HasValue<String> getFilterTextBox();
+
+      void showSizeWarning(long sizeInBytes);
+      void hideSizeWarning();
    }
 
    public interface CommitListDisplay
@@ -85,32 +92,9 @@ public class HistoryPresenter
          @Override
          public void onSelectionChange(SelectionChangeEvent event)
          {
-            CommitInfo commitInfo = view_.getCommitList().getSelectedCommit();
-            view_.getCommitDetail().setSelectedCommit(commitInfo);
-            view_.getCommitDetail().clearDetails();
-            invalidation_.invalidate();
-
-            if (commitInfo == null)
-               return;
-
-            final Token token = invalidation_.getInvalidationToken();
-
-            server_.vcsShow(commitInfo.getId(),
-                            new SimpleRequestCallback<String>()
-                            {
-                               @Override
-                               public void onResponseReceived(String response)
-                               {
-                                  super.onResponseReceived(response);
-                                  if (token.isInvalid())
-                                     return;
-
-                                  UnifiedParser parser = new UnifiedParser(
-                                        response);
-                                  view_.getCommitDetail().setDetails(parser);
-                               }
-                            });
+            showCommitDetail(false);
          }
+
       });
 
       view_.getRefreshButton().addClickHandler(new ClickHandler()
@@ -119,6 +103,15 @@ public class HistoryPresenter
          public void onClick(ClickEvent event)
          {
             refreshHistory();
+         }
+      });
+
+      view_.getOverrideSizeWarningButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            showCommitDetail(true);
          }
       });
 
@@ -141,6 +134,49 @@ public class HistoryPresenter
                refreshHistory();
          }
       });
+   }
+
+   private void showCommitDetail(boolean noSizeWarning)
+   {
+      view_.hideSizeWarning();
+
+      CommitInfo commitInfo = view_.getCommitList().getSelectedCommit();
+      view_.getCommitDetail().setSelectedCommit(commitInfo);
+      view_.getCommitDetail().clearDetails();
+      invalidation_.invalidate();
+
+      if (commitInfo == null)
+         return;
+
+      final Token token = invalidation_.getInvalidationToken();
+
+      server_.vcsShow(
+            commitInfo.getId(),
+            noSizeWarning,
+            new SimpleRequestCallback<String>()
+            {
+               @Override
+               public void onResponseReceived(String response)
+               {
+                  super.onResponseReceived(response);
+                  if (token.isInvalid())
+                     return;
+
+                  UnifiedParser parser = new UnifiedParser(
+                        response);
+                  view_.getCommitDetail().setDetails(parser);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  JSONNumber size = error.getClientInfo().isNumber();
+                  if (size != null)
+                     view_.showSizeWarning((long) size.doubleValue());
+                  else
+                     super.onError(error);
+               }
+            });
    }
 
    private void refreshHistory()

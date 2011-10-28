@@ -19,6 +19,7 @@ import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HasValue;
@@ -93,6 +94,10 @@ public class ReviewPresenter implements IsWidget
       void setUnstageButtonLabel(String label);
 
       void setData(ArrayList<ChunkOrLine> lines, PatchMode patchMode);
+
+      HasClickHandlers getOverrideSizeWarningButton();
+      void showSizeWarning(long sizeInBytes);
+      void hideSizeWarning();
    }
 
    private class ApplyPatchClickHandler implements ClickHandler, Command
@@ -253,6 +258,7 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onSelectionChange(SelectionChangeEvent event)
          {
+            overrideSizeWarning_ = false;
             view_.setFilesCommandsEnabled(view_.getSelectedPaths().size() > 0);
             updateDiff(true);
          }
@@ -477,6 +483,16 @@ public class ReviewPresenter implements IsWidget
                   });
          }
       });
+
+      view_.getOverrideSizeWarningButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            overrideSizeWarning_ = true;
+            updateDiff(false);
+         }
+      });
    }
 
    private void applyPatch(ArrayList<DiffChunk> chunks,
@@ -506,6 +522,8 @@ public class ReviewPresenter implements IsWidget
 
    private void updateDiff(boolean allowModeSwitch)
    {
+      view_.hideSizeWarning();
+
       final ArrayList<StatusAndPath> paths = view_.getChangelistTable().getSelectedItems();
       if (paths.size() != 1)
       {
@@ -564,6 +582,7 @@ public class ReviewPresenter implements IsWidget
             item.getPath(),
             patchMode,
             view_.getContextLines().getValue(),
+            overrideSizeWarning_,
             new SimpleRequestCallback<String>("Diff Error")
             {
                @Override
@@ -597,6 +616,15 @@ public class ReviewPresenter implements IsWidget
                   view_.setData(allLines, patchMode);
                }
 
+               @Override
+               public void onError(ServerError error)
+               {
+                  JSONNumber size = error.getClientInfo().isNumber();
+                  if (size != null)
+                     view_.showSizeWarning((long) size.doubleValue());
+                  else
+                     super.onError(error);
+               }
             });
    }
 
@@ -648,4 +676,6 @@ public class ReviewPresenter implements IsWidget
    private boolean softModeSwitch_;
    private static final String MODULE_VCS = "vcs";
    private static final String KEY_CONTEXT_LINES = "context_lines";
+
+   private boolean overrideSizeWarning_ = false;
 }
