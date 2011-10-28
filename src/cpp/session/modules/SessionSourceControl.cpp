@@ -569,6 +569,24 @@ public:
          return error;
 
       *pStream << message;
+
+      FilePath gitDir = root_.childPath(".git");
+      if (gitDir.childPath("MERGE_HEAD").exists())
+      {
+         FilePath mergeMsg = gitDir.childPath("MERGE_MSG");
+         if (mergeMsg.exists())
+         {
+            std::string mergeMsgStr;
+            error = core::readStringFromFile(mergeMsg, &mergeMsgStr);
+            if (!error)
+            {
+               if (!message.empty())
+                  *pStream << std::endl << std::endl;
+               *pStream << mergeMsgStr;
+            }
+         }
+      }
+
       pStream->flush();
       pStream.reset();  // release file handle
 
