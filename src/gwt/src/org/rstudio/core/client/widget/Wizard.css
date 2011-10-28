@@ -4,7 +4,7 @@
 }
 
 .headerLabel {
-   font-size: 1.1em;
+   font-size: 14px;
    font-weight: bold;
    cursor: default;
 }
@@ -15,7 +15,7 @@
 }
 
 .subcaptionLabel {
-   font-size: 0.95em;
+   font-size: 12px;
    color: #606060;
    margin-top: 3px;
    cursor: default;
