@@ -5,10 +5,9 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 public class NewDirectoryPage extends NewProjectWizardPage
 {
@@ -24,20 +23,25 @@ public class NewDirectoryPage extends NewProjectWizardPage
    }
 
    @Override
-   protected Widget createWidget()
+   protected void addWidgets(FlowPanel panel)
    {
-      VerticalPanel panel = new VerticalPanel();
-      Label dirNameLabel = new Label("Project directory name:");
+      NewProjectResources.Styles styles = NewProjectResources.INSTANCE.styles();
+      
+      // dir name
+      Label dirNameLabel = new Label("New project directory name:");
+      dirNameLabel.addStyleName(styles.wizardTextEntryLabel());
       panel.add(dirNameLabel);
       txtProjectName_ = new TextBox();
+      txtProjectName_.addStyleName(styles.wizardTextEntry());
       panel.add(txtProjectName_);
       
-      // project dir
-      newProjectParent_ = new DirectoryChooserTextBox("Create in:",
-                                                      txtProjectName_);
-      panel.add(newProjectParent_);
+      addSpacer(panel);
       
-      return panel;
+      // project dir
+      newProjectParent_ = new DirectoryChooserTextBox(
+            "Create project as subdirectory of:", txtProjectName_);
+      panel.add(newProjectParent_);
+
    }
    
    @Override 

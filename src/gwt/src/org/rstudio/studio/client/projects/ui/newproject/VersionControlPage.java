@@ -5,10 +5,9 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 public class VersionControlPage extends NewProjectWizardPage
 {
@@ -26,20 +25,22 @@ public class VersionControlPage extends NewProjectWizardPage
 
 
    @Override
-   protected Widget createWidget()
-   {
-      VerticalPanel panel = new VerticalPanel();
+   protected void addWidgets(FlowPanel panel)
+   { 
+      NewProjectResources.Styles styles = NewProjectResources.INSTANCE.styles();
       
-      Label dirNameLabel = new Label("Git repository URL/location:");
+      Label dirNameLabel = new Label("Git Repository URL/Location:");
+      dirNameLabel.addStyleName(styles.wizardTextEntryLabel());
       panel.add(dirNameLabel);
       txtRepoUrl_ = new TextBox();
+      txtRepoUrl_.addStyleName(styles.wizardTextEntry());
       panel.add(txtRepoUrl_);
       
-      existingRepoDestDir_ = new DirectoryChooserTextBox("Create in:",
-                                                         txtRepoUrl_);
+      addSpacer(panel);
+     
+      existingRepoDestDir_ = new DirectoryChooserTextBox(
+            "Clone project into subdirectory of:", txtRepoUrl_);
       panel.add(existingRepoDestDir_);
-      
-      return panel;
    }
    
    @Override 

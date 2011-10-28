@@ -7,6 +7,9 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 public abstract class NewProjectWizardPage 
                      extends WizardPage<FileSystemItem,NewProjectResult>
@@ -21,6 +24,18 @@ public abstract class NewProjectWizardPage
       
    }
    
+   @Override
+   protected Widget createWidget()
+   {
+      FlowPanel flowPanel = new FlowPanel();
+      flowPanel.setWidth("100%");
+      
+      addWidgets(flowPanel);
+      
+      return flowPanel;
+   }
+   
+   protected abstract void addWidgets(FlowPanel panel);
    
    @Override 
    protected void initialize(FileSystemItem defaultNewProjectLocation)
@@ -29,7 +44,13 @@ public abstract class NewProjectWizardPage
    }
    
    
-   
+   protected void addSpacer(FlowPanel panel)
+   {
+      Label spacerLabel = new Label();
+      spacerLabel.addStyleName(
+                     NewProjectResources.INSTANCE.styles().wizardSpacer());
+      panel.add(spacerLabel);
+   }
    
    protected String projFileFromDir(String dir)
    {

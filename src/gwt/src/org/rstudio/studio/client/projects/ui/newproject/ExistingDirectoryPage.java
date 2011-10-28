@@ -5,8 +5,8 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.FlowPanel;
+
 
 public class ExistingDirectoryPage extends NewProjectWizardPage
 {
@@ -22,15 +22,14 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
    }
 
    @Override
-   protected Widget createWidget()
+   protected void addWidgets(FlowPanel panel)
    {
-      VerticalPanel panel = new VerticalPanel();
-      
-      existingProjectDir_ = new DirectoryChooserTextBox("Directory:", null);
+   
+      existingProjectDir_ = new DirectoryChooserTextBox(
+            "Project working directory:", null);
 
       panel.add(existingProjectDir_);
       
-      return panel;
    }
    
    @Override 
@@ -76,8 +75,8 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
    @Override
    public void focus()
    {
-      existingProjectDir_.focusButton();
-      
+      if (existingProjectDir_.getText().isEmpty())
+         existingProjectDir_.click();
    }
 
    
