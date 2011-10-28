@@ -169,7 +169,6 @@ public class Projects implements OpenProjectFileHandler,
          public void onReadyToQuit(final boolean saveChanges)
          {
             NewProjectWizard wiz = new NewProjectWizard(
-              globalDisplay_,
               FileSystemItem.createDir(
                        pUIPrefs_.get().defaultProjectLocation().getValue()),
               new ProgressOperationWithInput<NewProjectResult>() {
@@ -257,6 +256,8 @@ public class Projects implements OpenProjectFileHandler,
             @Override
             public void onExecute(final Command continuation)
             {
+               indicator.onProgress("Cloning git repoistory...");
+               
                server_.vcsClone(
                      newProject.getGitRepoUrl(),
                      newProject.getNewDefaultProjectLocation(),

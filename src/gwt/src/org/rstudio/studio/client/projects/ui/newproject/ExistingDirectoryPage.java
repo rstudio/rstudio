@@ -1,19 +1,20 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ExistingDirectoryPage extends WizardPage<FileSystemItem,NewProjectResult>
+public class ExistingDirectoryPage extends NewProjectWizardPage
 {
    public ExistingDirectoryPage()
    {
       super("Existing Directory", 
             "Associate a project with an existing working directory",
-            "Create Project in Existing Directory",
+            "Create Project from Existing Directory",
             NewProjectResources.INSTANCE.existingDirectoryIcon(),
             NewProjectResources.INSTANCE.existingDirectoryIconLarge());
       
@@ -23,35 +24,62 @@ public class ExistingDirectoryPage extends WizardPage<FileSystemItem,NewProjectR
    @Override
    protected Widget createWidget()
    {
-      return new Label("Existing Directory");
+      VerticalPanel panel = new VerticalPanel();
       
+      existingProjectDir_ = new DirectoryChooserTextBox("Directory:", null);
+
+      panel.add(existingProjectDir_);
+      
+      return panel;
    }
    
    @Override 
-   protected void initialize(FileSystemItem initData)
+   protected void initialize(FileSystemItem defaultNewProjectLocation)
    {
-      
+      super.initialize(defaultNewProjectLocation);
    }
 
    @Override
    protected NewProjectResult collectInput()
    {
-      // TODO Auto-generated method stub
-      return null;
+      String dir = existingProjectDir_.getText();
+      if (dir.length() > 0)
+      {
+         return new NewProjectResult(projFileFromDir(dir), null, null);
+      }
+      else
+      {
+         return null;
+      }
    }
 
    @Override
    protected boolean validate(NewProjectResult input)
    {
+      if (input == null)
+      {
+         globalDisplay_.showMessage(
+               MessageDialog.WARNING,
+               "Error", 
+               "You must specify an existing working directory to " +
+               "create the new project within.");
+         
+         return false;
+      }
+      else
+      {
+         return true;
+      }
       
-      return true;
    }
 
    @Override
    public void focus()
    {
-      // TODO Auto-generated method stub
+      existingProjectDir_.focusButton();
       
    }
 
+   
+   private DirectoryChooserTextBox existingProjectDir_;
 }

@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.model;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -132,6 +133,12 @@ public class SessionInfo extends JavaScriptObject
    public final boolean isVcsEnabled()
    {
       return !StringUtil.isNullOrEmpty(getVcsName());
+   }
+   
+   public final boolean isVcsAvailable()
+   {
+      String[] availableVcs = getAvailableVCS();
+      return availableVcs.length > 0 && availableVcs[0].length() > 0;
    }
 
    public final String[] getAvailableVCS()

@@ -39,7 +39,7 @@ public abstract class WizardPage<I,T> extends Composite implements CanFocus
   
       layoutPanel.add(pageWidget);
       layoutPanel.setWidgetLeftRight(pageWidget,
-                                     130, Unit.PX, 
+                                     133, Unit.PX, 
                                      15, Unit.PX);
       layoutPanel.setWidgetTopBottom(pageWidget, 
                                      10, Unit.PX, 

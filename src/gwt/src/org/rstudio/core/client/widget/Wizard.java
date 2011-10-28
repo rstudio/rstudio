@@ -26,6 +26,7 @@ public class Wizard<I,T> extends ModalDialog<T>
                  final ProgressOperationWithInput<T> operation)
    {
       super(caption, operation);
+      initialData_ = initialData;
       subCaption_ = subCaption;
       
       setOkButtonCaption("Create Project");
@@ -138,6 +139,8 @@ public class Wizard<I,T> extends ModalDialog<T>
          bodyPanel_.setWidgetTopBottom(page, 0, Unit.PX, 0, Unit.PX);
          bodyPanel_.setWidgetLeftRight(page, 0, Unit.PX, 0, Unit.PX);
          bodyPanel_.setWidgetVisible(page, false);
+         
+         page.initialize(initialData_);
       }
       
      
@@ -157,7 +160,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    @Override
    protected boolean validate(T input)
    {
-      if (activePage_ != null && input != null)
+      if (activePage_ != null)
          return activePage_.validate(input);
       else
          return false;
@@ -324,7 +327,8 @@ public class Wizard<I,T> extends ModalDialog<T>
       }
    }
    
-    
+   private final I initialData_; 
+   
    private final String subCaption_;
    
    private LayoutPanel headerPanel_;
