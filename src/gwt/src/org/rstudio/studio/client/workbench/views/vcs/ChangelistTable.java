@@ -48,7 +48,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ChangelistTable extends Composite
-   implements HasKeyDownHandlers, HasClickHandlers
+   implements HasKeyDownHandlers, HasClickHandlers, HasMouseDownHandlers
 {
    public interface ChangelistTableCellTableResources extends CellTable.Resources
    {
@@ -490,6 +490,12 @@ public class ChangelistTable extends Composite
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
       return table_.addClickHandler(handler);
+   }
+
+   @Override
+   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
+   {
+      return table_.addMouseDownHandler(handler);
    }
 
    private final MultiSelectCellTable<StatusAndPath> table_;

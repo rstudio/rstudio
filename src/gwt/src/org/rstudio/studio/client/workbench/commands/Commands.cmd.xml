@@ -34,7 +34,7 @@ well as menu structures (for main menu and popup menus).
          </menu>
          <separator/>
          <cmd refid="openSourceDoc"/>
-         <menu label="Open _Recent">
+         <menu label="_Recent Files">
             <cmd refid="mru0"/>
             <cmd refid="mru1"/>
             <cmd refid="mru2"/>
@@ -137,8 +137,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="openProject"/>
          <cmd refid="openProjectInNewWindow"/>
-         <separator/>
-         <menu label="Open _Recent">
+         <menu label="_Recent Projects">
             <cmd refid="projectMru0"/>
             <cmd refid="projectMru1"/>
             <cmd refid="projectMru2"/>

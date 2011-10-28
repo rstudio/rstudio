@@ -28,6 +28,7 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -41,8 +42,8 @@ import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter.Dis
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionEvent.Action;
 import org.rstudio.studio.client.workbench.views.vcs.events.DiffChunkActionHandler;
-import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionEvent;
-import org.rstudio.studio.client.workbench.views.vcs.events.DiffLineActionHandler;
+import org.rstudio.studio.client.workbench.views.vcs.events.DiffLinesActionEvent;
+import org.rstudio.studio.client.workbench.views.vcs.events.DiffLinesActionHandler;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -79,7 +80,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
    {
       public LineContentCell()
       {
-         super("click");
+         super("mousedown");
       }
 
       @Override
@@ -89,7 +90,9 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
                                  NativeEvent event,
                                  ValueUpdater<ChunkOrLine> chunkOrLineValueUpdater)
       {
-         if ("click".equals(event.getType()) && parent.isOrHasChild(event.getEventTarget().<Node>cast()))
+         if ("mousedown".equals(event.getType())
+             && event.getButton() == NativeEvent.BUTTON_LEFT
+             && parent.isOrHasChild(event.getEventTarget().<Node>cast()))
          {
             Element el = (Element) DomUtils.findNodeUpwards(
                   event.getEventTarget().<Node>cast(),
@@ -100,7 +103,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
                      public boolean test(Node n)
                      {
                         return n.getNodeType() == Node.ELEMENT_NODE &&
-                               ((Element) n).getTagName().equalsIgnoreCase("a");
+                               ((Element) n).hasAttribute("data-action");
                      }
                   });
 
@@ -114,7 +117,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
                if (value.getChunk() != null)
                   fireEvent(new DiffChunkActionEvent(action, value.getChunk()));
                else
-                  fireEvent(new DiffLineActionEvent(action, value.getLine()));
+                  fireEvent(new DiffLinesActionEvent(action));
             }
          }
 
@@ -131,10 +134,17 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
          if (value.getLine() != null)
          {
             sb.appendEscaped(value.getLine().getText());
-            if (showActions_ && value.getLine().getType() != Line.Type.Same)
-               renderActionButtons(sb,
-                                   RES.cellTableStyle().lineActions(),
-                                   " line");
+            if (showActions_
+                && value.getLine().getType() != Line.Type.Same
+                && value == firstSelectedLine_)
+            {
+               renderActionButtons(
+                     sb,
+                     RES.cellTableStyle().lineActions(),
+                     selectionModel_.getSelectedSet().size() > 1
+                     ? " selection"
+                     : " line");
+            }
          }
          else
          {
@@ -154,7 +164,6 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
       {
          sb.append(SafeHtmlUtil.createOpenTag(
                "div",
-               "style", "float: right",
                "class", RES.cellTableStyle().actions() + " " + className));
          renderActionButton(sb, Action.Unstage, labelSuffix);
          renderActionButton(sb, Action.Stage, labelSuffix);
@@ -166,12 +175,16 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
                                       Action action,
                                       String labelSuffix)
       {
-         sb.append(SafeHtmlUtil.createOpenTag(
-               "a",
-               "href", "javascript:void",
-               "data-action", action.name()));
-         sb.appendEscaped(action.name() + labelSuffix);
-         sb.appendHtmlConstant("</a>");
+         if (action == Action.Stage)
+         {
+            blueButtonRenderer_.render(
+                  sb, action.name() + labelSuffix, action.name());
+         }
+         else
+         {
+            grayButtonRenderer_.render(
+                  sb, action.name() + labelSuffix, action.name());
+         }
       }
    }
 
@@ -324,9 +337,47 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
                super.setSelected(object, selected);
          }
       };
+      selectionModel_.addSelectionChangeHandler(new Handler()
+      {
+         @Override
+         public void onSelectionChange(SelectionChangeEvent event)
+         {
+            ChunkOrLine newFirstSelectedLine = null;
+            for (ChunkOrLine value : selectionModel_.getSelectedSet())
+            {
+               if (value.getLine() != null &&
+                   (newFirstSelectedLine == null || newFirstSelectedLine.getLine().compareTo(value.getLine()) > 0))
+               {
+                  newFirstSelectedLine = value;
+               }
+            }
+
+            if (newFirstSelectedLine != null)
+               refreshValue(newFirstSelectedLine);
+            if (firstSelectedLine_ != newFirstSelectedLine)
+            {
+               if (firstSelectedLine_ != null)
+                  refreshValue(firstSelectedLine_);
+            }
+
+            firstSelectedLine_ = newFirstSelectedLine;
+         }
+      });
       setSelectionModel(selectionModel_);
 
       setData(new ArrayList<ChunkOrLine>(), PatchMode.Working);
+   }
+
+   private void refreshValue(ChunkOrLine value)
+   {
+      int index = lines_.indexOf(value);
+      if (index >= 0)
+      {
+         ArrayList<ChunkOrLine> list = new ArrayList<ChunkOrLine>();
+         list.add(value);
+         setRowData(index, list);
+      }
+
    }
 
    private String intToString(Integer value)
@@ -365,6 +416,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
       lines_ = diffData;
       setPageSize(diffData.size());
       selectionModel_.clear();
+      firstSelectedLine_ = null;
       setRowData(diffData);
 
       startRows_.clear();
@@ -444,9 +496,9 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
    }
 
    @Override
-   public HandlerRegistration addDiffLineActionHandler(DiffLineActionHandler handler)
+   public HandlerRegistration addDiffLineActionHandler(DiffLinesActionHandler handler)
    {
-      return addHandler(handler, DiffLineActionEvent.TYPE);
+      return addHandler(handler, DiffLinesActionEvent.TYPE);
    }
 
    @Override
@@ -465,5 +517,9 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
    private SwitchableSelectionModel<ChunkOrLine> selectionModel_;
    private HashSet<Integer> startRows_ = new HashSet<Integer>();
    private HashSet<Integer> endRows_ = new HashSet<Integer>();
+   // Keep explicit track of the first selected line so we can render it differently
+   private ChunkOrLine firstSelectedLine_;
    private static final LineTableViewCellTableResources RES = GWT.create(LineTableViewCellTableResources.class);
+   private static final LineActionButtonRenderer blueButtonRenderer_ = LineActionButtonRenderer.createBlue();
+   private static final LineActionButtonRenderer grayButtonRenderer_ = LineActionButtonRenderer.createGray();
 }

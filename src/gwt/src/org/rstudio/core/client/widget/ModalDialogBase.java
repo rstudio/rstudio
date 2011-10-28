@@ -186,6 +186,11 @@ public abstract class ModalDialogBase extends DialogBox
       okButton_.setEnabled(enabled);
    }
    
+   protected void setOkButtonVisible(boolean visible)
+   {
+      okButton_.setVisible(visible);
+   }
+   
    protected void enableCancelButton(boolean enabled)
    {
       cancelButton_.setEnabled(enabled);

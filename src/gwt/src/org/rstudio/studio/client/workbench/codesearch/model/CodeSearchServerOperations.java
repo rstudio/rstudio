@@ -50,7 +50,16 @@ public interface CodeSearchServerOperations
     /* 
      * Find the passed function in the search path (searching starting
      * at the environment specified by fromWhere, or the global env
-     * if fromWhere is null). 
+     * if fromWhere is null). SearchPathFunctionDefinition will be as 
+     * follows on return:
+     *     - getName       -- the parsed token from line/pos or null if no
+     *                        token could be parsed
+     *                        
+     *     - getNamespace  -- if the name was found in a namespace on the
+     *                        search path then this is the namespace, else null
+     *                        
+     *     - getCode       -- printed variation of the function if it was
+     *                        found within a namespace                   
      */
     void findFunctionInSearchPath(
          String line, 
@@ -61,17 +70,23 @@ public interface CodeSearchServerOperations
     /*
      * Get the function identified by the following name/namespace.
      * SearchPathFunctionDefinition will be as follows on return:
-     *     - getName       -- the parsed token from line/pos or null if no
-     *                        token could be parsed
+     *     - getName       -- the passed name
      *                        
-     *     - getNamespace  -- if the name was found in a namespace on the
-     *                        search path then this is the namespace, else null
+     *     - getNamespace  -- the passed namespace
      *                        
-     *     - getCode       -- printed variation of the function if it was
-     *                        found within a namespace                   
+     *     - getCode       -- printed variation of the function (or error
+     *                        message if it wasn't found      
      */
     void getSearchPathFunctionDefinition(
          String name,
          String namespace,
+         ServerRequestCallback<SearchPathFunctionDefinition> requestCallback);
+    
+    /*
+     * Get a function which is known to be an S3 or S4 method. returns null
+     * if no such method could be located
+     */
+    void getMethodDefinition(
+         String name,
          ServerRequestCallback<SearchPathFunctionDefinition> requestCallback);
 }

@@ -32,6 +32,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 class CompletionList<TItem> extends Composite 
@@ -102,6 +103,8 @@ class CompletionList<TItem> extends Composite
       grid.addClickHandler(new GridMouseHandler()) ;
       grid.addMouseMoveHandler(new GridMouseHandler()) ;
       grid.setStylePrimaryName(styles_.completionGrid()) ;
+      
+      FontSizer.applyNormalFontSize(grid);
 
       scrollPanel_ = new ScrollPanel() ;
       scrollPanel_.getElement().getStyle().setProperty("overflowX", "hidden");

@@ -58,7 +58,8 @@ bool isGlobalFunctionNamed(const r_util::RSourceItem& sourceItem,
                            const std::string& name)
 {
    return sourceItem.braceLevel() == 0 &&
-          sourceItem.type() == r_util::RSourceItem::Function &&
+          (sourceItem.type() == r_util::RSourceItem::Function ||
+           sourceItem.type() == r_util::RSourceItem::Method) &&
           sourceItem.name() == name;
 }
 
@@ -828,17 +829,11 @@ void getFunctionSource(SEXP functionSEXP,
       LOG_ERROR(error);
 }
 
-void getFunctionS3Methods(const std::string& name, json::Array* pMethods)
+void getFunctionS3Methods(const std::string& methodName, json::Array* pMethods)
 {
-   // first find the base name of the function
-   std::string baseName = name;
-   std::size_t periodLoc = name.find('.');
-   if (periodLoc != std::string::npos && periodLoc > 0)
-      baseName = name.substr(0, periodLoc);
-
    // lookup S3 methods for that base name
    std::vector<std::string> methods;
-   r::exec::RFunction rfunc(".rs.getS3MethodsForFunction", baseName);
+   r::exec::RFunction rfunc(".rs.getS3MethodsForFunction", methodName);
    Error error = rfunc.call(&methods);
    if (error)
       LOG_ERROR(error);
@@ -852,8 +847,114 @@ void getFunctionS3Methods(const std::string& name, json::Array* pMethods)
 }
 
 
+std::string trimToken(const std::string& token)
+{
+   return boost::algorithm::trim_copy(token);
+}
+
+class FunctionInfo
+{
+public:
+   explicit FunctionInfo(const std::string& name)
+      : name_(name)
+   {
+      boost::regex pattern("^([^{]+)\\{([^}]+)\\}$");
+      boost::smatch match;
+      if (boost::regex_search(name_, match, pattern))
+      {
+         // read method name
+         methodName_ = match[1];
+         boost::algorithm::trim(methodName_);
+
+         // read , separated fields
+         std::string types = match[2];
+         using namespace boost ;
+         char_separator<char> comma(",");
+         tokenizer<char_separator<char> > typeTokens(types, comma);
+         std::transform(typeTokens.begin(),
+                        typeTokens.end(),
+                        std::back_inserter(paramTypes_),
+                        trimToken);
+      }
+   }
+
+   bool isS4Method() const { return !methodName_.empty(); }
+
+   const std::string& name() const { return name_; }
+   const std::string& methodName() const { return methodName_; }
+   const std::vector<std::string>& paramTypes() const { return paramTypes_; }
+
+private:
+   std::string name_;
+   std::string methodName_;
+   std::vector<std::string> paramTypes_;
+};
+
+
+void getFunctionS4Methods(const std::string& methodName, json::Array* pMethods)
+{
+   // check if the function isGeneric
+   bool generic = false;
+   Error error = r::exec::RFunction("methods:::isGeneric", methodName).call(
+                                                                     &generic);
+   if (error)
+      LOG_ERROR(error);
+
+   if (generic)
+   {
+      std::vector<std::string> methods;
+      r::exec::RFunction rFunc(".rs.getS4MethodsForFunction", methodName);
+      error = rFunc.call(&methods);
+      if (error)
+         LOG_ERROR(error);
+
+      // provide them to the caller
+      std::transform(methods.begin(),
+                     methods.end(),
+                     std::back_inserter(*pMethods),
+                     boost::bind(json::toJsonString, _1));
+   }
+}
+
+
+json::Object createErrorFunctionDefinition(const std::string& name,
+                                           const std::string& namespaceName)
+{
+   json::Object funDef;
+   funDef["name"] = name;
+   funDef["namespace"] = namespaceName;
+   funDef["methods"] = json::Array();
+   boost::format fmt("\n# ERROR: Defintion of function '%1%' not found\n"
+                     "# in namespace '%2%'");
+   funDef["code"] = boost::str(fmt % name % namespaceName);
+   funDef["from_src_attrib"] = false;
+
+   return funDef;
+}
+
+std::string baseMethodName(const std::string& name)
+{
+   // strip type qualifiers for S4 methods
+   FunctionInfo functionInfo(name);
+   if (functionInfo.isS4Method())
+   {
+      return functionInfo.methodName();
+   }
+   // strip content after the '.' for S3 methods
+   else
+   {
+      // first find the base name of the function
+      std::string baseName = name;
+      std::size_t periodLoc = baseName.find('.');
+      if (periodLoc != std::string::npos && periodLoc > 0)
+         baseName = baseName.substr(0, periodLoc);
+      return baseName;
+   }
+}
+
 json::Object createFunctionDefinition(const std::string& name,
-                                      const std::string& namespaceName)
+                                      const std::string& namespaceName,
+                                      SEXP functionSEXP)
 {
    // basic metadata
    json::Object funDef;
@@ -863,49 +964,11 @@ json::Object createFunctionDefinition(const std::string& name,
    // function source code
    bool fromSrcAttrib = false;
    std::vector<std::string> lines;
-
-   // get the function -- if it within a package namespace then do special
-   // handling to make sure we can find hidden functions as well
-   r::sexp::Protect rProtect;
-   SEXP functionSEXP = R_NilValue;
-   Error error;
-   std::string pkgName;
-   if (namespaceIsPackage(namespaceName, &pkgName))
-   {
-      r::exec::RFunction getFunc(".rs.getPackageFunction", name, pkgName);
-      error = getFunc.call(&functionSEXP, &rProtect);
-   }
-   else
-   {
-      r::exec::RFunction getFunc(".rs.getFunction", name, namespaceName);
-      error = getFunc.call(&functionSEXP, &rProtect);
-   }
-
-   if (!error)
-   {
-      // did we get a function
-      if (!r::sexp::isNull(functionSEXP))
-      {
-         // get the function source
-         getFunctionSource(functionSEXP, &lines, &fromSrcAttrib);
-
-         // see if the function has any S3 methods
-         json::Array s3MethodsJson;
-         getFunctionS3Methods(name, &s3MethodsJson);
-         funDef["s3methods"] = s3MethodsJson;
-      }
-   }
-   else
-   {
-      LOG_ERROR(error);
-   }
+   getFunctionSource(functionSEXP, &lines, &fromSrcAttrib);
 
    // did we get some lines back?
    if (lines.size() > 0)
    {
-      // ammend the first line with the function name
-      lines[0] = name + " <- " + lines[0];
-
       // append the lines to the code and set it
       std::string code;
       BOOST_FOREACH(const std::string& line, lines)
@@ -915,17 +978,166 @@ json::Object createFunctionDefinition(const std::string& name,
       }
       funDef["code"] = code;
       funDef["from_src_attrib"] = fromSrcAttrib;
+
+      // methods
+      std::string methodName = baseMethodName(name);
+      json::Array methodsJson;
+      getFunctionS4Methods(methodName, &methodsJson);
+      getFunctionS3Methods(methodName, &methodsJson);
+      funDef["methods"] = methodsJson;
+
+      return funDef;
    }
    else
    {
-      boost::format fmt("\n# ERROR: Defintion of function '%1%' not found\n"
-                        "# in namespace '%2%'");
-      funDef["code"] = boost::str(fmt % name % namespaceName);
-      funDef["from_src_attrib"] = false;
+      return createErrorFunctionDefinition(name, namespaceName);
+   }
+}
+
+Error getS4Method(const FunctionInfo& functionInfo,
+                  std::string* pNamespaceName,
+                  SEXP* pFunctionSEXP,
+                  r::sexp::Protect* pProtect)
+{
+   // get the method
+   r::exec::RFunction rFunc("methods:::getMethod");
+   rFunc.addParam(functionInfo.methodName());
+   rFunc.addParam(functionInfo.paramTypes());
+   Error error = rFunc.call(pFunctionSEXP, pProtect);
+   if (error)
+      return error;
+
+   // get the namespace
+   r::exec::RFunction rNsFunc(".rs.getS4MethodNamespaceName", *pFunctionSEXP);
+   return rNsFunc.call(pNamespaceName);
+}
+
+json::Object createFunctionDefinition(const std::string& name,
+                                      const std::string& namespaceName)
+{
+   // stuff we are trying to find
+   std::string functionNamespace = namespaceName;
+   r::sexp::Protect rProtect;
+   SEXP functionSEXP = R_NilValue;
+   Error error;
+
+   // what type of function are we looking for?
+   FunctionInfo functionInfo(name);
+   if (functionInfo.isS4Method())
+   {
+      // check for S4 method definition
+      error = getS4Method(functionInfo,
+                          &functionNamespace,
+                          &functionSEXP,
+                          &rProtect);
+   }
+   else
+   {
+      // get the function -- if it within a package namespace then do special
+      // handling to make sure we can find hidden functions as well
+      std::string pkgName;
+      if (namespaceIsPackage(functionNamespace, &pkgName))
+      {
+         r::exec::RFunction getFunc(".rs.getPackageFunction", name, pkgName);
+         error = getFunc.call(&functionSEXP, &rProtect);
+      }
+      else
+      {
+         r::exec::RFunction getFunc(".rs.getFunction", name, functionNamespace);
+         error = getFunc.call(&functionSEXP, &rProtect);
+      }
    }
 
-   return funDef;
+   // check find status and return appropriate definiton
+   if (!error)
+   {
+      if (!r::sexp::isNull(functionSEXP))
+         return createFunctionDefinition(name, functionNamespace, functionSEXP);
+      else
+         return createErrorFunctionDefinition(name, functionNamespace);
+   }
+   else
+   {
+      LOG_ERROR(error);
+      return createErrorFunctionDefinition(name, functionNamespace);
+   }
+
 }
+
+json::Value createS3MethodDefinition(const std::string& name)
+{
+   // first call getAnywhere to see if we can find a definition
+   r::sexp::Protect rProtect;
+   SEXP getAnywhereSEXP;
+   r::exec::RFunction getAnywhereFunc("utils:::getAnywhere", name);
+   Error error = getAnywhereFunc.call(&getAnywhereSEXP, &rProtect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Value();
+   }
+
+   // access the "where" element
+   std::vector<std::string> whereList;
+   error = r::sexp::getNamedListElement(getAnywhereSEXP, "where", &whereList);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Value();
+   }
+
+   // find an element beginning with "package:" or "namespace:"
+   std::string packagePrefix = "package:";
+   std::string namespacePrefix = "namespace:";
+   std::string namespaceName;
+   BOOST_FOREACH(const std::string& where, whereList)
+   {
+      if (boost::algorithm::starts_with(where, packagePrefix))
+      {
+         namespaceName = where;
+         break;
+      }
+
+      if (boost::algorithm::starts_with(where, namespacePrefix) &&
+          (where.length() > namespacePrefix.length()))
+      {
+         namespaceName = "package:" +
+                         where.substr(namespacePrefix.length());
+         break;
+      }
+   }
+
+   // if we found one then go through standard route, else return null
+   if (!namespaceName.empty())
+      return createFunctionDefinition(name, namespaceName);
+   else
+      return json::Value();
+}
+
+
+json::Value createS4MethodDefinition(const FunctionInfo& functionInfo)
+{
+   // lookup the method
+   std::string functionNamespace ;
+   r::sexp::Protect rProtect;
+   SEXP functionSEXP = R_NilValue;
+   Error error = getS4Method(functionInfo,
+                             &functionNamespace,
+                             &functionSEXP,
+                             &rProtect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Value();
+   }
+   else
+   {
+      return createFunctionDefinition(functionInfo.name(),
+                                      functionNamespace,
+                                      functionSEXP);
+   }
+}
+
 
 struct FunctionToken
 {
@@ -1055,6 +1267,25 @@ Error getSearchPathFunctionDefinition(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getMethodDefinition(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string name;
+   Error error = json::readParam(request.params, 0, &name);
+   if (error)
+      return error;
+
+   // return result (distinguish between S3 and S4 methods)
+   FunctionInfo functionInfo(name);
+   if (functionInfo.isS4Method())
+      pResponse->setResult(createS4MethodDefinition(functionInfo));
+   else
+      pResponse->setResult(createS3MethodDefinition(name));
+
+   return Success();
+}
+
 Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
                                json::JsonRpcResponse* pResponse)
 {
@@ -1140,6 +1371,7 @@ Error initialize()
       (bind(registerRpcMethod, "search_code", searchCode))
       (bind(registerRpcMethod, "get_function_definition", getFunctionDefinition))
       (bind(registerRpcMethod, "get_search_path_function_definition", getSearchPathFunctionDefinition))
+      (bind(registerRpcMethod, "get_method_definition", getMethodDefinition))
       (bind(registerRpcMethod, "find_function_in_search_path", findFunctionInSearchPath));
 
    return initBlock.execute();

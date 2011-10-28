@@ -140,7 +140,7 @@ public class ReviewPresenter implements IsWidget
    }
 
    private class ApplyPatchHandler implements DiffChunkActionHandler,
-                                              DiffLineActionHandler
+                                              DiffLinesActionHandler
    {
       @Override
       public void onDiffChunkAction(DiffChunkActionEvent event)
@@ -151,10 +151,9 @@ public class ReviewPresenter implements IsWidget
       }
 
       @Override
-      public void onDiffLineAction(DiffLineActionEvent event)
+      public void onDiffLinesAction(DiffLinesActionEvent event)
       {
-         ArrayList<Line> lines = new ArrayList<Line>();
-         lines.add(event.getLine());
+         ArrayList<Line> lines = view_.getLineTableDisplay().getSelectedLines();
          doPatch(event.getAction(), lines, activeChunks_);
       }
 
@@ -267,18 +266,18 @@ public class ReviewPresenter implements IsWidget
             // Enter does the same plus moves the selection down.
 
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER
-                  || event.getNativeKeyCode() == ' ')
+                || event.getNativeKeyCode() == ' ')
             {
                view_.getChangelistTable().toggleStaged(
                      event.getNativeKeyCode() == KeyCodes.KEY_ENTER);
             }
          }
       });
-      view_.getChangelistTable().addClickHandler(new ClickHandler()
+      view_.getChangelistTable().addMouseDownHandler(new MouseDownHandler()
       {
          private DoubleClickState dblClick = new DoubleClickState();
          @Override
-         public void onClick(ClickEvent event)
+         public void onMouseDown(MouseDownEvent event)
          {
             if (dblClick.checkForDoubleClick(event.getNativeEvent()))
             {

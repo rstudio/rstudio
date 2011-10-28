@@ -62,8 +62,8 @@
                         <g:item value="50">50 line</g:item>
                         <g:item value="-1">All lines</g:item>
                      </g:ListBox>
+                     <rs_widget:Toolbar ui:field="diffToolbar_"/>
                   </g:FlowPanel>
-                  <rs_widget:Toolbar ui:field="diffToolbar_"/>
                </g:FlowPanel>
             </g:north>
             <g:center>

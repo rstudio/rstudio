@@ -1,0 +1,53 @@
+.mainWidget {
+   width: 510px;
+   height: 300px;
+}
+
+.headerLabel {
+   font-size: 1.1em;
+   font-weight: bold;
+   cursor: default;
+}
+
+.subcaptionLabel {
+   font-size: 0.95em;
+   color: #606060;
+   margin-top: 3px;
+   cursor: default;
+}
+
+.topHeaderLabel {
+   margin-left: 5px;
+   margin-top: 8px;
+}
+
+.wizardBodyPanel {
+   width: 533px; 
+   height: 244px;
+   margin-top: 20px;
+   margin-left: -10px;
+   margin-right: -13px;
+}
+
+.wizardPageSelector {
+   
+}
+
+@sprite .wizardPageSelectorItem {
+   width: 100%;
+   gwt-image: 'wizardPageSelectorBackground';
+}
+
+@sprite .wizardPageSelectorItemFirst {
+   gwt-image: 'wizardPageSelectorBackgroundFirst';
+}
+
+@sprite .wizardPageSelectorItemLast {
+   gwt-image: 'wizardPageSelectorBackgroundLast';
+}
+
+
+.wizardPageSelectorItem:hover {
+   background: #DAE7F6;	
+}
+

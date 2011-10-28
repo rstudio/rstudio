@@ -91,8 +91,6 @@
 
 .cellTableSelectedRow {
   background: #CCC !important;
-  height: auto;
-  overflow: auto;
 }
 
 .cellTableSelectedRowCell {
@@ -106,31 +104,26 @@
   background: rgb(146, 193, 240) !important;
 }
 
-.lineActions {
+.stageMode .actions div[data-action='Stage'],
+.stageMode .actions div[data-action='Discard'] {
    display: none;
 }
 
-.stageMode .actions a[data-action='Stage'],
-.stageMode .actions a[data-action='Discard'] {
+.workingMode .actions div[data-action='Unstage'] {
    display: none;
-}
-
-.workingMode .actions a[data-action='Unstage'] {
-   display: none;
-}
-
-.cellTableWidget tr:hover .lineActions {
-   display: block;
 }
 
 .chunkActions {
 }
 
-.actions {
-   font-family: proportionalFont;
-   font-size: 10px;
+.lineActions {
 }
 
-.actions a {
-   margin-left: 8px;
+.actions {
+   font-family: proportionalFont;
+   float: right;
+   height: 16px;
+   padding: 1px 0 0 0;
+   margin-bottom: -5px; /* Prevent selected line from changing height on Ubuntu */
+   overflow: visible;
 }

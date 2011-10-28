@@ -105,23 +105,41 @@
            error = function(e) character())
 })
 
-# NOTE: see also getAnywhere for getting namespace & function
 
-# NOTE: should use getAnywhere above rather than findFunction
-# whenever searching for S3 methods (but perhaps not for others).
-# perhaps must try getS3Method first to confirm is an S3 method
-
-.rs.addFunction("getS3Method", function(name, class)
-{
-  getS3method(name, class, optional = TRUE)
-})
-
-#NOTE: can use where to restrict the search
-
+# Return a list of S4 methods formatted as  functionName {className, className}
+# NOTE: should call isGeneric prior to calling this (it will yield an error
+# for functions that aren't generic)
 .rs.addFunction("getS4MethodsForFunction", function(func)
 {
-  as.data.frame(findMethodSignatures(
-                methods = findMethods(func)))
+  sigs <- findMethodSignatures(methods = findMethods(func))
+  apply(sigs, 
+        1, 
+        function(sig)
+        {
+           paste(func, 
+                 " {", 
+                 paste(sig, collapse=", "),
+                 "}",
+                 sep="",
+                 collapse = "")
+        })
+})
+
+.rs.addFunction("getS4MethodNamespaceName", function(method)
+{
+  env <- environment(method)
+  if (identical(env, baseenv()))
+    return ("package:base")
+  else if (identical(env, globalenv()))
+    return (".GlobalEnv")
+  else
+  {
+    envName <- environmentName(env)
+    if (envName %in% search())
+      return (envName)
+    else
+      paste("package:", envName, sep="")
+  }
 })
 
 utils:::rc.settings(files=T)

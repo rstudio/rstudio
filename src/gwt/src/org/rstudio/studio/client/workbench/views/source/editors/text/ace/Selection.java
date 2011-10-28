@@ -60,6 +60,8 @@ public class Selection extends JavaScriptObject
 
    public native final void moveCursorFileEnd() /*-{
       this.moveCursorFileEnd();
+      var cursor = this.getCursor();
+      this.setSelectionAnchor(cursor.row, cursor.column);
    }-*/;
 
    private native void onCursorChange(Command command) /*-{

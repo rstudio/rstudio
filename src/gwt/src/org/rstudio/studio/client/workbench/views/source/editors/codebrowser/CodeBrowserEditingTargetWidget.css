@@ -10,16 +10,15 @@
 
 .functionName {
    margin-left: 7px;
-   margin-right: 7px;
+   padding-right: 7px;
 }
 
 .functionNamespace {
    color: #888;
+   padding-right: 6px;
 }
 
 .dropDownImage {
-   margin-left: 6px;
-   margin-right: 8px;
    margin-bottom: 2px;
 }
 

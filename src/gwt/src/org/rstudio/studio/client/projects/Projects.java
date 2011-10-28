@@ -38,11 +38,12 @@ import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorHandler;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
+import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.ui.NewProjectDialog;
-import org.rstudio.studio.client.projects.ui.NewProjectDialog.Result;
 import org.rstudio.studio.client.projects.ui.ProjectOptionsDialog;
+import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -125,6 +126,9 @@ public class Projects implements OpenProjectFileHandler,
    @Handler
    public void onNewProject()
    {
+      //showNewProjectWizard();
+      
+      
       // first resolve the quit context (potentially saving edited documents
       // and determining whether to save the R environment on exit)
       applicationQuit_.prepareForQuit("Save Current Workspace",
@@ -137,10 +141,10 @@ public class Projects implements OpenProjectFileHandler,
               globalDisplay_,
               FileSystemItem.createDir(
                        pUIPrefs_.get().defaultProjectLocation().getValue()),
-              new ProgressOperationWithInput<NewProjectDialog.Result>() {
+              new ProgressOperationWithInput<NewProjectResult>() {
 
                @Override
-               public void execute(final Result newProject, 
+               public void execute(final NewProjectResult newProject, 
                                    final ProgressIndicator indicator)
                {
                   createNewProject(newProject, indicator, saveChanges);
@@ -150,9 +154,43 @@ public class Projects implements OpenProjectFileHandler,
             dlg.showModal();
          }
       });
+      
    }
+   
 
-   private void createNewProject(final Result newProject,
+   private void showNewProjectWizard()
+   {
+      // first resolve the quit context (potentially saving edited documents
+      // and determining whether to save the R environment on exit)
+      applicationQuit_.prepareForQuit("Save Current Workspace",
+                                      new ApplicationQuit.QuitContext() {
+     
+         @Override
+         public void onReadyToQuit(final boolean saveChanges)
+         {
+            NewProjectWizard wiz = new NewProjectWizard(
+              globalDisplay_,
+              FileSystemItem.createDir(
+                       pUIPrefs_.get().defaultProjectLocation().getValue()),
+              new ProgressOperationWithInput<NewProjectResult>() {
+
+               @Override
+               public void execute(final NewProjectResult newProject, 
+                                   final ProgressIndicator indicator)
+               {
+                  createNewProject(newProject, indicator, saveChanges);
+               }
+   
+            });
+            wiz.showModal();
+         }
+      });
+   }
+   
+   
+   
+
+   private void createNewProject(final NewProjectResult newProject,
                                  final ProgressIndicator indicator,
                                  final boolean saveChanges)
    {
