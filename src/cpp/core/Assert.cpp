@@ -47,6 +47,29 @@ void assertion_failed(char const * expr,
 
 }
 
+void assertion_failed_msg(char const * expr,
+                          char const * msg,
+                          char const * function,
+                          char const * file,
+                          long line)
+{
+   // derive location
+   ErrorLocation location(function, file, line);
+
+   // always log the failure
+   std::string message = "ASSERTION FAILED: " + std::string(expr) +
+                         " - " + std::string(msg);
+   core::log::logWarningMessage(message, location);
+
+#ifndef NDEBUG
+#ifdef _WIN32
+   DebugBreak();
+#else
+   ::raise(SIGTRAP);
+#endif
+#endif
+}
+
 } // namespace boost
 
 
