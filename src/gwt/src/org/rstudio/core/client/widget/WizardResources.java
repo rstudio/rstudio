@@ -21,7 +21,7 @@ public interface WizardResources extends ClientBundle
       String wizardPageSelectorItem();
       String wizardPageSelectorItemFirst();
       String wizardPageSelectorItemLast();
-      String wizardPage();
+      String wizardPageBackground();
    }
    
    @Source("Wizard.css")
@@ -39,6 +39,9 @@ public interface WizardResources extends ClientBundle
    
    @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
    ImageResource wizardPageSelectorBackgroundLast();
+   
+   @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+   ImageResource wizardPageBackground();
    
    static WizardResources INSTANCE = 
                         (WizardResources)GWT.create(WizardResources.class);

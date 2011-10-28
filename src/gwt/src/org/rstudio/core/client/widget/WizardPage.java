@@ -36,7 +36,7 @@ public abstract class WizardPage<I,T> extends Composite implements CanFocus
       
       
       Widget pageWidget = createWidget();
-      pageWidget.addStyleName(styles.wizardPage());
+  
       layoutPanel.add(pageWidget);
       layoutPanel.setWidgetLeftRight(pageWidget,
                                      130, Unit.PX, 
@@ -47,9 +47,7 @@ public abstract class WizardPage<I,T> extends Composite implements CanFocus
       
       
       initWidget(layoutPanel);
-      
-      
-      
+      addStyleName(styles.wizardPageBackground());      
    }
    
    public String getTitle()

@@ -49,6 +49,7 @@
    background: #DAE7F6;	
 }
 
-.wizardPage {
-
+@sprite .wizardPageBackground {
+   gwt-image: 'wizardPageBackground'	
 }
+
