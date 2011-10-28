@@ -1,0 +1,9 @@
+.cellTableWidget {
+   table-layout: fixed;
+   width: 100%;
+}
+.cellTableWidget td {
+   white-space: pre;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
