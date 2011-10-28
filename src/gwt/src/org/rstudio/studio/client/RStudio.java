@@ -41,7 +41,6 @@ import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.impl.BrowserFence;
-import org.rstudio.studio.client.projects.ui.NewProjectDialog;
 import org.rstudio.studio.client.projects.ui.ProjectOptionsDialog;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
@@ -163,7 +162,6 @@ public class RStudio implements EntryPoint
       ResizeGripper.ensureStylesInjected();
       LineTableView.ensureStylesInjected();
       ProjectOptionsDialog.ensureStylesInjected();
-      NewProjectDialog.ensureStylesInjected();
       CodeBrowserEditingTargetWidget.ensureStylesInjected();
       WizardResources.INSTANCE.styles().ensureInjected();
       NewProjectResources.INSTANCE.styles().ensureInjected();
