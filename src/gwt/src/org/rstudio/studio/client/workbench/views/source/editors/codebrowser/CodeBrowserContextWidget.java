@@ -12,10 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
-// TODO: timeSeries F2 doesn't yield anything (because is method?)
-
-// TODO: find source defintion of method first (does it work at all now?)
-
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
