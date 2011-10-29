@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.choosefile;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -25,6 +27,7 @@ import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEve
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileHandler;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
 
+@Singleton
 public class ChooseFile implements ChooseFileHandler
 {
    @Inject

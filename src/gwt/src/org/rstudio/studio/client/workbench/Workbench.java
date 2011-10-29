@@ -32,6 +32,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
+import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 
 public class Workbench implements BusyHandler,
@@ -54,7 +55,8 @@ public class Workbench implements BusyHandler,
                     Server server,
                     RemoteFileSystemContext fsContext,
                     FileDialogs fileDialogs,
-                    ConsoleDispatcher consoleDispatcher)
+                    ConsoleDispatcher consoleDispatcher,
+                    ChooseFile chooseFile)
    {
       view_ = view;
       workbenchContext_ = workbenchContext;
