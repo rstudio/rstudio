@@ -389,9 +389,14 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       float heightRatio = bounds.height / ((float)currentPlotSize.height);
       float ratio = Math.min(widthRatio, heightRatio);
 
+      // constrain initial width to between 300 and 1,200 pixels
       int width = Math.max(300, (int) (ratio * currentPlotSize.width));
+      width = Math.min(1200, width);
+      
+      // constrain initial height to between 300 and 900 pixels
       int height = Math.max(300, (int) (ratio * currentPlotSize.height));
-
+      height = Math.min(900, height);
+      
       // compose url string
       String url = server_.getGraphicsUrl("plot_zoom?" +
                                           "width=" + width + "&" +

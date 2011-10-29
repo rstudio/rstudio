@@ -467,7 +467,7 @@ void handleZoomPngRequest(const http::Request& request,
 
    // get the width and height parameters
    int width, height;
-   if (!extractSizeParams(request, 100, 3000, &width, &height, pResponse))
+   if (!extractSizeParams(request, 100, 5000, &width, &height, pResponse))
      return ;
 
    // generate the file
@@ -498,7 +498,7 @@ void handlePngRequest(const http::Request& request,
 {
    // get the width and height parameters
    int width, height;
-   if (!extractSizeParams(request, 100, 2000, &width, &height, pResponse))
+   if (!extractSizeParams(request, 100, 5000, &width, &height, pResponse))
       return ;
 
    // generate the image
