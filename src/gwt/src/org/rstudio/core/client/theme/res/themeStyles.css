@@ -23,6 +23,7 @@
 @external windowframe, windowframe-maximized, windowframe-exclusive;
 
 @external windows, macintosh, linux;
+@external ubuntu_mono;
 
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
@@ -710,6 +711,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    font-family: proportionalFont;
    font-size: 11px !important;
    white-space: nowrap;
+}
+
+.ubuntu_mono .toolbarButtonLabel {
+   margin-top: 2px;
 }
 
 .globalToolbar {

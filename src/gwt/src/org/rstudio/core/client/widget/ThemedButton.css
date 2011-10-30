@@ -1,3 +1,5 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+
 @external gwt-Button-DialogAction, gwt-Button-DialogActionLeft,
           gwt-Button-DefaultDialogAction;
 
@@ -62,6 +64,7 @@
 .buttonContent {
    text-align: center;
    font-size: 12px;
+   font-family: proportionalFont;
 }
 
 button.gwt-Button-DefaultDialogAction .buttonLeft {
