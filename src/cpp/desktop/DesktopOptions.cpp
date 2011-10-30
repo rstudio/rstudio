@@ -121,6 +121,7 @@ QString Options::proportionalFont() const
            QString::fromAscii("Helvetica");
 #else
    fontList <<
+           QString::fromAscii("Ubuntu") << // Ubuntu
            QString::fromAscii("Lucida Sans") << QString::fromAscii("DejaVu Sans") <<  // Linux
            QString::fromAscii("Lucida Grande") <<          // Mac
            QString::fromAscii("Segoe UI") << QString::fromAscii("Verdana") <<  // Windows

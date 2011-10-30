@@ -61,6 +61,7 @@
 
 .buttonContent {
    text-align: center;
+   font-size: 12px;
 }
 
 button.gwt-Button-DefaultDialogAction .buttonLeft {

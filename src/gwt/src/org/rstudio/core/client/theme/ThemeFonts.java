@@ -55,7 +55,8 @@ public class ThemeFonts
    {
       public String getProportionalFont()
       {
-         return "\"Lucida Sans\", \"DejaVu Sans\", \"Lucida Grande\", \"Segoe UI\", Verdana, Helvetica, sans-serif"; 
+         String font = BrowseCap.hasUbuntuFonts() ? "Ubuntu, " : "";
+         return font + "\"Lucida Sans\", \"DejaVu Sans\", \"Lucida Grande\", \"Segoe UI\", Verdana, Helvetica, sans-serif"; 
       }
 
       public String getFixedWidthFont()

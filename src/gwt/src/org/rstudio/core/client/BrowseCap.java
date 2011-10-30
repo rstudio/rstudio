@@ -73,6 +73,11 @@ public class BrowseCap
       return OPERATING_SYSTEM.equals("linux");
    }
    
+   public static boolean hasUbuntuFonts()
+   {
+      return FIXED_UBUNTU_MONO;
+   }
+   
    public static boolean isChrome()
    {
       return isUserAgent("chrome");
