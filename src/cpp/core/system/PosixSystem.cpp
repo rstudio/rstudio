@@ -481,10 +481,17 @@ void closeStdFileDescriptors()
 
 void attachStdFileDescriptorsToDevNull()
 {
-   int fd0, fd1, fd2;
-   fd0 = ::open("/dev/null", O_RDWR);
-   fd1 = ::dup(fd0);
-   fd2 = ::dup(fd0);
+   int fd0 = ::open("/dev/null", O_RDWR);
+   if (fd0 == -1)
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+
+   int fd1 = ::dup(fd0);
+   if (fd1 == -1)
+       LOG_ERROR(systemError(errno, ERROR_LOCATION));
+
+   int fd2 = ::dup(fd0);
+   if (fd2 == -1)
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
 }
 
 void setStandardStreamsToDevNull()

@@ -46,10 +46,11 @@ void exitHandler()
 {
    // Signal normal termination to all child processes
    // that may be waiting
-   size_t written ;
    for (size_t i = 0; i < s_writeOnExit.size(); i++)
    {
-      written = ::write(s_writeOnExit.at(i), "done", 4);
+      // write to child (don't bother with checking error as there may
+      // be one in the case that the child is already gone)
+      ::write(s_writeOnExit.at(i), "done", 4);
    }
 }
 

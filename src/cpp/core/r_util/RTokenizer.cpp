@@ -161,8 +161,6 @@ RToken RTokenizer::matchStringLiteral()
    std::wstring::const_iterator start = pos_ ;
    wchar_t quot = eat() ;
 
-   bool wellFormed = false ;
-
    while (!eol())
    {
       eatUntil(tokenPatterns().UNTIL_END_QUOTE);
@@ -173,7 +171,7 @@ RToken RTokenizer::matchStringLiteral()
       wchar_t c = eat() ;
       if (c == quot)
       {
-         wellFormed = true ;
+         // NOTE: this is where we used to set wellFormed = true
          break ;
       }
 
