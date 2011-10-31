@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -27,8 +28,15 @@ import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+import org.rstudio.core.client.WidgetHandlerRegistration;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -298,6 +306,74 @@ public class ReviewPanel extends Composite implements Display
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
 
       FontSizer.applyNormalFontSize(commitMessage_);
+
+      new WidgetHandlerRegistration(this)
+      {
+         @Override
+         protected HandlerRegistration doRegister()
+         {
+            return Event.addNativePreviewHandler(new NativePreviewHandler()
+            {
+               @Override
+               public void onPreviewNativeEvent(NativePreviewEvent event)
+               {
+                  NativeEvent nativeEvent = event.getNativeEvent();
+                  if (event.getTypeInt() == Event.ONKEYDOWN
+                      && KeyboardShortcut.getModifierValue(nativeEvent) == KeyboardShortcut.CTRL)
+                  {
+                     switch (nativeEvent.getKeyCode())
+                     {
+                        case KeyCodes.KEY_DOWN:
+                           nativeEvent.preventDefault();
+                           scrollBy(diffScroll_, getLineScroll(diffScroll_), 0);
+                           break;
+                        case KeyCodes.KEY_UP:
+                           nativeEvent.preventDefault();
+                           scrollBy(diffScroll_, -getLineScroll(diffScroll_), 0);
+                           break;
+                        case KeyCodes.KEY_PAGEDOWN:
+                           nativeEvent.preventDefault();
+                           scrollBy(diffScroll_, getPageScroll(diffScroll_), 0);
+                           break;
+                        case KeyCodes.KEY_PAGEUP:
+                           nativeEvent.preventDefault();
+                           scrollBy(diffScroll_, -getPageScroll(diffScroll_), 0);
+                           break;
+                     }
+                  }
+               }
+            });
+         }
+      };
+   }
+
+   private void scrollBy(ScrollPanel scrollPanel, int vscroll, int hscroll)
+   {
+      if (vscroll != 0)
+      {
+         scrollPanel.setVerticalScrollPosition(
+               Math.max(0, scrollPanel.getVerticalScrollPosition() + vscroll));
+      }
+
+      if (hscroll != 0)
+      {
+         scrollPanel.setHorizontalScrollPosition(
+               Math.max(0, scrollPanel.getHorizontalScrollPosition() + hscroll));
+      }
+   }
+
+   private int getLineScroll(ScrollPanel panel)
+   {
+      return 30;
+   }
+
+   private int getPageScroll(ScrollPanel panel)
+   {
+      // Return slightly less than the client height (so there's overlap between
+      // one screen and the next) but never less than the line scoll height.
+      return Math.max(
+            getLineScroll(panel),
+            panel.getElement().getClientHeight() - getLineScroll(panel));
    }
 
    @Override
