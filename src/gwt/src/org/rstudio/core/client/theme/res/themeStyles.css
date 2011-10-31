@@ -713,8 +713,12 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    white-space: nowrap;
 }
 
-.ubuntu_mono .toolbarButtonLabel {
+/* nudge toolbar text up for the Ubuntu font under Chrome */
+@if rstudio.desktop false {
+@if user.agent safari { .ubuntu_mono .toolbarButtonLabel {
    margin-top: 2px;
+   }
+}
 }
 
 .globalToolbar {
