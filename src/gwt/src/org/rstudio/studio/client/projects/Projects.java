@@ -233,11 +233,14 @@ public class Projects implements OpenProjectFileHandler,
                      newProject.getGitRepoUrl(),
                      newProject.getNewDefaultProjectLocation(),
                      new ServerRequestCallback<ConsoleProcess>() {
-                        boolean continuationExecuted_ = false;
-
                         @Override
                         public void onResponseReceived(ConsoleProcess proc)
                         {
+                           final ConsoleProgressDialog consoleProgressDialog = new ConsoleProgressDialog(
+                                 "Clone Repository",
+                                 proc);
+                           consoleProgressDialog.showModal();
+           
                            proc.addProcessExitHandler(new ProcessExitEvent.Handler()
                            {
                               @Override
@@ -245,30 +248,15 @@ public class Projects implements OpenProjectFileHandler,
                               {
                                  if (event.getExitCode() == 0)
                                  {
-                                    if (!continuationExecuted_)
-                                    {
-                                       continuationExecuted_ = true;
-                                       continuation.execute();
-                                    }
-                                 }
-                              }
-                           });
-                           ConsoleProgressDialog consoleProgressDialog = new ConsoleProgressDialog(
-                                 "Clone Repository",
-                                 proc);
-                           consoleProgressDialog.addCloseHandler(new CloseHandler<PopupPanel>()
-                           {
-                              @Override
-                              public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
-                              {
-                                 if (!continuationExecuted_)
-                                 {
-                                    continuationExecuted_ = true;
+                                    consoleProgressDialog.hide();
                                     continuation.execute();
                                  }
+                                 else
+                                 {
+                                    indicator.onCompleted();
+                                 }
                               }
-                           });
-                           consoleProgressDialog.showModal();
+                           }); 
                         }
 
                         @Override
