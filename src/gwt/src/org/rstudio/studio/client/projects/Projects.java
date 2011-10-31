@@ -125,44 +125,45 @@ public class Projects implements OpenProjectFileHandler,
    @Handler
    public void onNewProject()
    {
-      // first resolve the quit context (potentially saving edited documents
-      // and determining whether to save the R environment on exit)
-      applicationQuit_.prepareForQuit("Save Current Workspace",
-                                      new ApplicationQuit.QuitContext() {
-     
-         @Override
-         public void onReadyToQuit(final boolean saveChanges)
-         {
-            NewProjectWizard wiz = new NewProjectWizard(
-              FileSystemItem.createDir(
-                       pUIPrefs_.get().defaultProjectLocation().getValue()),
-              new ProgressOperationWithInput<NewProjectResult>() {
+      NewProjectWizard wiz = new NewProjectWizard(
+            FileSystemItem.createDir(
+                     pUIPrefs_.get().defaultProjectLocation().getValue()),
+            new ProgressOperationWithInput<NewProjectResult>() {
 
-               @Override
-               public void execute(final NewProjectResult newProject, 
-                                   final ProgressIndicator indicator)
-               {
-                  createNewProject(newProject, indicator, saveChanges);
-               }
-   
-            });
-            wiz.showModal();
-         }
-      }); 
+             @Override
+             public void execute(final NewProjectResult newProject, 
+                                 final ProgressIndicator indicator)
+             {
+                indicator.onCompleted();
+                
+                applicationQuit_.prepareForQuit("Save Current Workspace",
+                   new ApplicationQuit.QuitContext() {
+                     @Override
+                     public void onReadyToQuit(boolean saveChanges)
+                     {
+                        createNewProject(newProject, saveChanges);
+                     }  
+                });        
+             }
+          });
+          wiz.showModal();
    }
    
 
    private void createNewProject(final NewProjectResult newProject,
-                                 final ProgressIndicator indicator,
                                  final boolean saveChanges)
    {
+    
+      
       // This gets a little crazy. We have several pieces of asynchronous logic
       // that each may or may not need to be executed, depending on the type
       // of project being created and on whether the previous pieces of logic
       // succeed. Plus we have this ProgressIndicator that needs to be fed
       // properly.
 
-
+      final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
+                                                      "Error Creating Project");
+      
       // Here's the command queue that will hold the various operations.
       final SerializedCommandQueue createProjectCmds =
                                                   new SerializedCommandQueue();
