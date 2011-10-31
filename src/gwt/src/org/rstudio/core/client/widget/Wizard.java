@@ -167,7 +167,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    protected T collectInput()
    {
       if (activePage_ != null)
-         return activePage_.collectInput();
+         return ammendInput(activePage_.collectInput());
       else
          return null;
    }
@@ -180,6 +180,22 @@ public class Wizard<I,T> extends ModalDialog<T>
       else
          return false;
    }
+   
+   protected void onPageActivated(WizardPage<I,T> page)
+   {
+      
+   }
+   
+   protected void onSelectorActivated()
+   {
+      
+   }
+   
+   protected T ammendInput(T input)
+   {
+      return input;
+   }
+ 
    
    private void animate(final Widget from, 
                         final Widget to, 
@@ -251,6 +267,9 @@ public class Wizard<I,T> extends ModalDialog<T>
             // make ok button visible
             setOkButtonVisible(true);
             
+            // call subclass
+            onPageActivated(page);
+            
             // set focus
             FocusHelper.setFocusDeferred(page);
          }
@@ -274,6 +293,9 @@ public class Wizard<I,T> extends ModalDialog<T>
             
             // make ok button invisible
             setOkButtonVisible(false);
+            
+            // call subclass
+            onSelectorActivated();
             
             // set focus
             pageSelectorPanel_.getElement().focus();

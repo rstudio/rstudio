@@ -136,14 +136,21 @@ public class Projects implements OpenProjectFileHandler,
              {
                 indicator.onCompleted();
                 
-                applicationQuit_.prepareForQuit("Save Current Workspace",
-                   new ApplicationQuit.QuitContext() {
-                     @Override
-                     public void onReadyToQuit(boolean saveChanges)
-                     {
-                        createNewProject(newProject, saveChanges);
-                     }  
-                });        
+                if (newProject.getOpenInNewWindow())
+                {
+                   createNewProject(newProject, false);
+                }
+                else
+                {
+                   applicationQuit_.prepareForQuit("Save Current Workspace",
+                      new ApplicationQuit.QuitContext() {
+                        @Override
+                        public void onReadyToQuit(boolean saveChanges)
+                        {
+                           createNewProject(newProject, saveChanges);
+                        }  
+                   });
+                }
              }
           });
           wiz.showModal();
@@ -290,9 +297,18 @@ public class Projects implements OpenProjectFileHandler,
                      @Override
                      public void onSuccess()
                      {
-                        applicationQuit_.performQuit(
-                              saveChanges,
-                              newProject.getProjectFile());
+                        if (newProject.getOpenInNewWindow())
+                        {
+                           Desktop.getFrame().openProjectInNewWindow(
+                                             newProject.getProjectFile());
+                        }
+                        else
+                        {
+                           applicationQuit_.performQuit(
+                                 saveChanges,
+                                 newProject.getProjectFile());
+                        }
+                        
                         continuation.execute();
                      }
                   });
