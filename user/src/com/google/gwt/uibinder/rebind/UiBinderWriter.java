@@ -1006,7 +1006,7 @@ public class UiBinderWriter implements Statements {
    */
   public String tokenForSafeUriExpression(XMLElement source, String expression) {
     if (!useSafeHtmlTemplates) {
-      return tokenForStringExpression(source, expression + ".asString()");
+      return tokenForStringExpression(source, expression);
     }
 
     htmlTemplates.noteUri(expression);
