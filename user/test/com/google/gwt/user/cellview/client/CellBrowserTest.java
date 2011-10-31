@@ -20,6 +20,8 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.CellBrowser.BrowserCellList;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.view.client.ListDataProvider;
+import com.google.gwt.view.client.SelectionModel;
+import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
 
 /**
@@ -33,6 +35,17 @@ public class CellBrowserTest extends AbstractCellTreeTestBase {
    */
   protected class MixedTreeViewModel implements TreeViewModel {
 
+    private final SelectionModel<Object> selectionModel;
+
+    public MixedTreeViewModel() {
+      this(null);
+    }
+
+    public MixedTreeViewModel(SelectionModel<Object> selectionModel) {
+      this.selectionModel = selectionModel;
+    }
+
+    @Override
     public <T> NodeInfo<?> getNodeInfo(T value) {
       if (value == null) {
         // Get the children of root, which are Integers.
@@ -40,15 +53,20 @@ public class CellBrowserTest extends AbstractCellTreeTestBase {
         for (int i = 0; i < 10; i++) {
           provider.getList().add(new Integer(i));
         }
-        return new DefaultNodeInfo<Number>(provider, new NumberCell());
+        return new DefaultNodeInfo<Number>(provider, new NumberCell(), selectionModel, null);
       } else if (value instanceof Integer && !isLeaf(value)) {
         // Get the children of odd Integers, which are Strings.
         ListDataProvider<String> provider = new ListDataProvider<String>();
-        return new DefaultNodeInfo<String>(provider, new TextCell());
+        for (int i = 0; i < 10; i++) {
+          char c = (char) ('a' + i);
+          provider.getList().add("" + c);
+        }
+        return new DefaultNodeInfo<String>(provider, new TextCell(), selectionModel, null);
       }
       throw new IllegalArgumentException("Unexpected value: " + value);
     }
 
+    @Override
     public boolean isLeaf(Object value) {
       if (value == null) {
         // Root value is null.
@@ -56,6 +74,8 @@ public class CellBrowserTest extends AbstractCellTreeTestBase {
       } else if (value instanceof Integer) {
         // Odd integers are leaf nodes
         return ((Integer) value % 2) != 0;
+      } else if (value instanceof String) {
+        return true;
       }
       return false;
     }
@@ -63,6 +83,57 @@ public class CellBrowserTest extends AbstractCellTreeTestBase {
 
   public CellBrowserTest() {
     super(true);
+  }
+
+  /**
+   * Test that the CellBrowser correctly updates a shared SelectionModel if it
+   * is bound to selection.
+   */
+  public void testBoundToSharedSelectionModel() {
+    SingleSelectionModel<Object> selectionModel = new SingleSelectionModel<Object>();
+    CellBrowser browser = new CellBrowser(new MixedTreeViewModel(selectionModel), null);
+    browser.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
+
+    // Select a leaf.
+    browser.treeNodes.get(0).getDisplay().getPresenter().setKeyboardSelectedRow(1, true, false);
+    browser.treeNodes.get(0).getDisplay().getPresenter().flush();
+    assertTrue(selectionModel.isSelected(1));
+
+    // Select another leaf.
+    browser.treeNodes.get(0).getDisplay().getPresenter().setKeyboardSelectedRow(3, true, false);
+    browser.treeNodes.get(0).getDisplay().getPresenter().flush();
+    assertTrue(selectionModel.isSelected(3));
+
+    // Select a non-leaf.
+    browser.treeNodes.get(0).getDisplay().getPresenter().setKeyboardSelectedRow(2, true, false);
+    browser.treeNodes.get(0).getDisplay().getPresenter().flush();
+    assertTrue(selectionModel.isSelected(2));
+
+    // Select a leaf in the child list.
+    browser.treeNodes.get(1).getDisplay().getPresenter().setKeyboardSelectedRow(5, true, false);
+    browser.treeNodes.get(1).getDisplay().getPresenter().flush();
+    assertTrue(selectionModel.isSelected("f"));
+
+    // Verify that flushing the selection model doesn't change the selection
+    // back to the parent list.
+    browser.treeNodes.get(0).getDisplay().getPresenter().flush();
+    assertTrue(selectionModel.isSelected("f"));
+
+    // Verify that redrawing the parent list doesn't change the selection back
+    // to the parent list.
+    browser.treeNodes.get(0).getDisplay().redraw();
+    browser.treeNodes.get(0).getDisplay().getPresenter().flush();
+    assertTrue(selectionModel.isSelected("f"));
+
+    // Select a non-leaf in the parent.
+    browser.treeNodes.get(0).getDisplay().getPresenter().setKeyboardSelectedRow(4, true, false);
+    browser.treeNodes.get(0).getDisplay().getPresenter().flush();
+    assertTrue(selectionModel.isSelected(4));
+
+    // isSelected() triggers the final SelectionChangeEvent. Verify the end
+    // state is still correct.
+    browser.treeNodes.get(0).getDisplay().getPresenter().flush();
+    assertTrue(selectionModel.isSelected(4));
   }
 
   /**
@@ -128,8 +199,7 @@ public class CellBrowserTest extends AbstractCellTreeTestBase {
 
     // Bind keyboard selection to the selection model.
     browser.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
-    assertEquals(KeyboardSelectionPolicy.BOUND_TO_SELECTION,
-        browser.getKeyboardSelectionPolicy());
+    assertEquals(KeyboardSelectionPolicy.BOUND_TO_SELECTION, browser.getKeyboardSelectionPolicy());
 
     // Select an item at depth 0. Nothing should be selected at depth 1.
     BrowserCellList<?> list0 = browser.treeNodes.get(0).getDisplay();
@@ -154,19 +224,16 @@ public class CellBrowserTest extends AbstractCellTreeTestBase {
 
     // Disable keyboard selection.
     browser.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
-    assertEquals(KeyboardSelectionPolicy.DISABLED,
-        browser.getKeyboardSelectionPolicy());
+    assertEquals(KeyboardSelectionPolicy.DISABLED, browser.getKeyboardSelectionPolicy());
 
     // Verify that keyboard selection is enabled in the lists.
     BrowserCellList<?> list = browser.treeNodes.get(0).getDisplay();
-    assertEquals(KeyboardSelectionPolicy.ENABLED,
-        list.getKeyboardSelectionPolicy());
+    assertEquals(KeyboardSelectionPolicy.ENABLED, list.getKeyboardSelectionPolicy());
     assertTrue(list.isKeyboardNavigationSuppressed());
   }
 
   @Override
-  protected <T> CellBrowser createAbstractCellTree(TreeViewModel model,
-      T rootValue) {
+  protected <T> CellBrowser createAbstractCellTree(TreeViewModel model, T rootValue) {
     CellBrowser browser = new CellBrowser(model, rootValue);
     browser.setHeight("500px");
     return browser;

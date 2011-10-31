@@ -1056,7 +1056,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
    * Resolve the pending state and push updates to the view.
    * 
    * @param modifiedRows the modified rows that need to be updated, or null if
-   *        none. The modified rows may be mutated.
+   *          none. The modified rows may be mutated.
    * @return true if the state changed, false if not
    */
   private boolean resolvePendingState(JsArrayInteger modifiedRows) {
@@ -1098,7 +1098,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
      * create a new pendingState.
      */
     State<T> oldState = state;
-    PendingState<T> pending = pendingState;
+    PendingState<T> newState = pendingState;
     state = pendingState;
     pendingState = null;
 
@@ -1113,40 +1113,40 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
     }
 
     // Get the values used for calculations.
-    int pageStart = pending.getPageStart();
-    int pageSize = pending.getPageSize();
+    int pageStart = newState.getPageStart();
+    int pageSize = newState.getPageSize();
     int pageEnd = pageStart + pageSize;
-    int rowDataCount = pending.getRowDataSize();
+    int rowDataCount = newState.getRowDataSize();
 
     /*
      * Resolve keyboard selection. If the row value still exists, use its index.
      * If the row value exists in multiple places, use the closest index. If the
      * row value no longer exists, use the current index.
      */
-    pending.keyboardSelectedRow =
-        Math.max(0, Math.min(pending.keyboardSelectedRow, rowDataCount - 1));
+    newState.keyboardSelectedRow =
+        Math.max(0, Math.min(newState.keyboardSelectedRow, rowDataCount - 1));
     if (KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy) {
       // Clear the keyboard selected state.
-      pending.keyboardSelectedRow = 0;
-      pending.keyboardSelectedRowValue = null;
-    } else if (pending.keyboardSelectedRowChanged) {
+      newState.keyboardSelectedRow = 0;
+      newState.keyboardSelectedRowValue = null;
+    } else if (newState.keyboardSelectedRowChanged) {
       // Choose the row value based on the index.
-      pending.keyboardSelectedRowValue =
-          rowDataCount > 0 ? pending.getRowDataValue(pending.keyboardSelectedRow) : null;
-    } else if (pending.keyboardSelectedRowValue != null) {
+      newState.keyboardSelectedRowValue =
+          rowDataCount > 0 ? newState.getRowDataValue(newState.keyboardSelectedRow) : null;
+    } else if (newState.keyboardSelectedRowValue != null) {
       // Choose the index based on the row value.
       int bestMatchIndex =
-          findIndexOfBestMatch(pending, pending.keyboardSelectedRowValue,
-              pending.keyboardSelectedRow);
+          findIndexOfBestMatch(newState, newState.keyboardSelectedRowValue,
+              newState.keyboardSelectedRow);
       if (bestMatchIndex >= 0) {
         // A match was found.
-        pending.keyboardSelectedRow = bestMatchIndex;
-        pending.keyboardSelectedRowValue =
-            rowDataCount > 0 ? pending.getRowDataValue(pending.keyboardSelectedRow) : null;
+        newState.keyboardSelectedRow = bestMatchIndex;
+        newState.keyboardSelectedRowValue =
+            rowDataCount > 0 ? newState.getRowDataValue(newState.keyboardSelectedRow) : null;
       } else {
         // No match was found, so reset to 0.
-        pending.keyboardSelectedRow = 0;
-        pending.keyboardSelectedRowValue = null;
+        newState.keyboardSelectedRow = 0;
+        newState.keyboardSelectedRowValue = null;
       }
     }
 
@@ -1157,11 +1157,11 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
      */
     try {
       if (KeyboardSelectionPolicy.BOUND_TO_SELECTION == keyboardSelectionPolicy
-          && selectionModel != null && pending.viewTouched) {
+          && selectionModel != null && newState.viewTouched) {
         T oldValue = oldState.getSelectedValue();
         Object oldKey = getRowValueKey(oldValue);
         T newValue =
-            rowDataCount > 0 ? pending.getRowDataValue(pending.getKeyboardSelectedRow()) : null;
+            rowDataCount > 0 ? newState.getRowDataValue(newState.getKeyboardSelectedRow()) : null;
         Object newKey = getRowValueKey(newValue);
         /*
          * Do not deselect the old value unless we have a new value to select,
@@ -1183,20 +1183,14 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
             }
 
             // Select the new value.
-            pending.selectedValue = newValue;
+            newState.selectedValue = newValue;
             if (newValue != null && !newValueWasSelected) {
               selectionModel.setSelected(newValue, true);
             }
           } else if (!newValueWasSelected) {
             // The value was programmatically deselected.
-            pending.selectedValue = null;
+            newState.selectedValue = null;
           }
-        }
-
-        // User code may have created a new pending state, so we need to
-        // propagate this new selected value.
-        if (pendingState != null) {
-          pendingState.selectedValue = pending.selectedValue;
         }
       }
     } catch (RuntimeException e) {
@@ -1208,9 +1202,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
 
     // If the keyboard row changes, add it to the modified set.
     boolean keyboardRowChanged =
-        pending.keyboardSelectedRowChanged
-            || (oldState.getKeyboardSelectedRow() != pending.keyboardSelectedRow)
-            || (oldState.getKeyboardSelectedRowValue() == null && pending.keyboardSelectedRowValue != null);
+        newState.keyboardSelectedRowChanged
+            || (oldState.getKeyboardSelectedRow() != newState.keyboardSelectedRow)
+            || (oldState.getKeyboardSelectedRowValue() == null && newState.keyboardSelectedRowValue != null);
 
     /*
      * Resolve selection. Check the selection status of all row values in the
@@ -1218,21 +1212,19 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
      * longer have a SelectionModel but had selected rows, we still need to
      * update the rows.
      */
+    Set<Integer> newlySelectedRows = new HashSet<Integer>();
     try {
       for (int i = pageStart; i < pageStart + rowDataCount; i++) {
         // Check the new selection state.
-        T rowValue = pending.getRowDataValue(i - pageStart);
+        T rowValue = newState.getRowDataValue(i - pageStart);
         boolean isSelected =
             (rowValue != null && selectionModel != null && selectionModel.isSelected(rowValue));
 
         // Compare to the old selection state.
         boolean wasSelected = oldState.isRowSelected(i);
         if (isSelected) {
-          pending.selectedRows.add(i);
-          if (pendingState != null) {
-            // Propagate changes if user code created a new pending state.
-            pendingState.selectedRows.add(i);
-          }
+          newState.selectedRows.add(i);
+          newlySelectedRows.add(i);
           if (!wasSelected) {
             modifiedRows.push(i);
           }
@@ -1249,7 +1241,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
 
     // Add the replaced ranges as modified rows.
     boolean replacedEmptyRange = false;
-    for (Range replacedRange : pending.replacedRanges) {
+    for (Range replacedRange : newState.replacedRanges) {
       int start = replacedRange.getStart();
       int length = replacedRange.getLength();
       // If the user set an empty range, pass it through to the view.
@@ -1264,7 +1256,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
     // Add keyboard rows to modified rows if we are going to render anyway.
     if (modifiedRows.length() > 0 && keyboardRowChanged) {
       modifiedRows.push(oldState.getKeyboardSelectedRow());
-      modifiedRows.push(pending.keyboardSelectedRow);
+      modifiedRows.push(newState.keyboardSelectedRow);
     }
 
     /*
@@ -1275,16 +1267,28 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
       isResolvingState = false;
       // Do not reset pendingStateLoop, or we will not detect the infinite loop.
 
+      // Propagate modifications to the temporary pending state into the new
+      // pending state instance.
+      pendingState.selectedValue = newState.selectedValue;
+      pendingState.selectedRows.addAll(newlySelectedRows);
+      if (keyboardRowChanged) {
+        pendingState.keyboardSelectedRowChanged = true;
+      }
+      if (newState.keyboardStealFocus) {
+        pendingState.keyboardStealFocus = true;
+      }
+
       /*
        * Add the keyboard selected rows to the modified rows so they can be
        * re-rendered in the new state. These rows may already be added, but
        * modifiedRows can contain duplicates.
        */
       modifiedRows.push(oldState.getKeyboardSelectedRow());
-      modifiedRows.push(pending.keyboardSelectedRow);
+      modifiedRows.push(newState.keyboardSelectedRow);
 
       /*
-       * Try to resolve state again. If we are successful, then the modified
+       * Make a recursive call to resolve the state again, using the new pending
+       * state that was just created. If we are successful, then the modified
        * rows will be redrawn. If we are not successful, then we still need to
        * redraw the modified rows.
        */
@@ -1308,7 +1312,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
     int oldPageStart = oldState.getPageStart();
     int oldPageSize = oldState.getPageSize();
     int oldRowDataCount = oldState.getRowDataSize();
-    boolean redrawRequired = pending.redrawRequired;
+    boolean redrawRequired = newState.redrawRequired;
     if (pageStart != oldPageStart) {
       // Redraw if pageStart changes.
       redrawRequired = true;
@@ -1344,7 +1348,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
       if (redrawRequired) {
         // Redraw the entire content.
         SafeHtmlBuilder sb = new SafeHtmlBuilder();
-        view.replaceAllChildren(pending.rowData, selectionModel, pending.keyboardStealFocus);
+        view.replaceAllChildren(newState.rowData, selectionModel, newState.keyboardStealFocus);
         view.resetFocus();
       } else if (range0 != null) {
         // Surgically replace specific rows.
@@ -1354,8 +1358,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
           int absStart = range0.getStart();
           int relStart = absStart - pageStart;
           SafeHtmlBuilder sb = new SafeHtmlBuilder();
-          List<T> replaceValues = pending.rowData.subList(relStart, relStart + range0.getLength());
-          view.replaceChildren(replaceValues, relStart, selectionModel, pending.keyboardStealFocus);
+          List<T> replaceValues = newState.rowData.subList(relStart, relStart + range0.getLength());
+          view.replaceChildren(replaceValues, relStart, selectionModel, newState.keyboardStealFocus);
         }
 
         // Replace range1 if it exists.
@@ -1363,8 +1367,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
           int absStart = range1.getStart();
           int relStart = absStart - pageStart;
           SafeHtmlBuilder sb = new SafeHtmlBuilder();
-          List<T> replaceValues = pending.rowData.subList(relStart, relStart + range1.getLength());
-          view.replaceChildren(replaceValues, relStart, selectionModel, pending.keyboardStealFocus);
+          List<T> replaceValues = newState.rowData.subList(relStart, relStart + range1.getLength());
+          view.replaceChildren(replaceValues, relStart, selectionModel, newState.keyboardStealFocus);
         }
 
         view.resetFocus();
@@ -1377,9 +1381,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
         }
 
         // Select the new keyboard row.
-        int newSelectedRow = pending.getKeyboardSelectedRow();
+        int newSelectedRow = newState.getKeyboardSelectedRow();
         if (newSelectedRow >= 0 && newSelectedRow < rowDataCount) {
-          view.setKeyboardSelected(newSelectedRow, true, pending.keyboardStealFocus);
+          view.setKeyboardSelected(newSelectedRow, true, newState.keyboardStealFocus);
         }
       }
     } catch (Error e) {
@@ -1394,8 +1398,12 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
       isResolvingState = false;
     }
 
-    // If any new state exists, resolve it now. If there is no new state, reset
-    // the pendingStateLoop.
+    /*
+     * Make a recursive call to resolve any pending state. We don't expect
+     * pending state here, but its always possible that pushing the changes into
+     * the view could update the presenter. If there is no new state, the
+     * recursive call will reset the pendingStateLoop.
+     */
     resolvePendingState(null);
     return true;
   }
