@@ -311,6 +311,7 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "shtml", "text/html" );
       MIME_TYPES.put( "tsv",   "text/tab-separated-values" );
       MIME_TYPES.put( "tab",   "text/tab-separated-values" );
+      MIME_TYPES.put( "dcf",   "text/debian-control-file" );
       MIME_TYPES.put( "txt",   "text/plain" );
       MIME_TYPES.put( "mml",   "text/mathml" );
      

@@ -381,6 +381,7 @@ MimeType s_mimeTypes[] =
    { "shtml", "text/html" },
    { "tsv",   "text/tab-separated-values" },
    { "tab",   "text/tab-separated-values" },
+   { "dcf",   "text/debian-control-file" },
    { "txt",   "text/plain" },
    { "mml",   "text/mathml" },
   
