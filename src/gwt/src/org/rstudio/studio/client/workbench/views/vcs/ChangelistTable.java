@@ -16,6 +16,8 @@ import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
@@ -400,11 +402,20 @@ public class ChangelistTable extends Composite
       ColumnSortEvent.fire(table_,
                            table_.getColumnSortList());
 
-      if (selectFirstItemByDefault_
-          && table_.getVisibleItemCount() > 0
-          && selectionModel_.getSelectedSet().isEmpty())
+      if (selectFirstItemByDefault_)
       {
-         selectionModel_.setSelected(table_.getVisibleItem(0), true);
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               if (table_.getVisibleItemCount() > 0
+                   && selectionModel_.getSelectedSet().isEmpty())
+               {
+                  selectionModel_.setSelected(table_.getVisibleItem(0), true);
+               }
+            }
+         });
       }
    }
 
