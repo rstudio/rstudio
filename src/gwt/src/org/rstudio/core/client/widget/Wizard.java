@@ -167,7 +167,13 @@ public class Wizard<I,T> extends ModalDialog<T>
    protected T collectInput()
    {
       if (activePage_ != null)
-         return ammendInput(activePage_.collectInput());
+      {
+         T input = activePage_.collectInput();
+         if (input != null)
+            return ammendInput(input);
+         else
+            return null;
+      }
       else
          return null;
    }

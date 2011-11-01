@@ -21,6 +21,8 @@ import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.VcsCloneOptions;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -56,7 +58,6 @@ public class VersionControlPage extends NewProjectWizardPage
       vcsPanel.add(vcsLabel);
       String[] availableVcs = getSessionInfo().getAvailableVCS();
       vcsSelector_ = new ListBox();
-      vcsSelector_.addStyleName(styles.wizardVcsSelector());
       for (int i=0; i<availableVcs.length; i++)
          vcsSelector_.addItem(availableVcs[i]);
       vcsSelector_.setSelectedIndex(0);
@@ -69,17 +70,34 @@ public class VersionControlPage extends NewProjectWizardPage
       urlLabel.addStyleName(styles.wizardTextEntryLabel());
       urlPanel.add(urlLabel);
       txtRepoUrl_ = new TextBox();
+      txtRepoUrl_.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            autoFillCheckoutDir();
+         }
+      });
       txtRepoUrl_.setWidth("100%");
       urlPanel.add(txtRepoUrl_);
       sourcePanel.add(urlPanel, DockPanel.CENTER);
-      
-      
+     
       addWidget(sourcePanel);
       
       addSpacer();
-     
+      
+      
+      Label dirNameLabel = new Label("Checkout directory:");
+      dirNameLabel.addStyleName(styles.wizardTextEntryLabel());
+      addWidget(dirNameLabel);
+      txtDirName_ = new TextBox();
+      txtDirName_.addStyleName(styles.wizardTextEntry());
+      addWidget(txtDirName_);
+      
+      addSpacer();
+    
       existingRepoDestDir_ = new DirectoryChooserTextBox(
-            "Clone project into subdirectory of:", txtRepoUrl_);
+            "Create project as subdirectory of:", txtRepoUrl_);
       addWidget(existingRepoDestDir_);
    }
    
@@ -93,20 +111,19 @@ public class VersionControlPage extends NewProjectWizardPage
    @Override
    protected NewProjectResult collectInput()
    {
+      autoFillCheckoutDir(); 
+      
       String url = txtRepoUrl_.getText().trim();
+      String checkoutDir = txtDirName_.getText().trim();
       String dir = existingRepoDestDir_.getText().trim();
-      if (url.length() > 0 && dir.length() > 0)
+      if (url.length() > 0 && checkoutDir.length() > 0 && dir.length() > 0)
       {
-         String repo = guessGitRepoDir(url);
-         if (repo.length() == 0)
-            return null;
-
-         String repoDir = FileSystemItem.createDir(dir).completePath(repo);
-         String projFile = projFileFromDir(repoDir);
+         String projFile = projFileFromDir(
+               FileSystemItem.createDir(dir).completePath(checkoutDir));
          
          VcsCloneOptions vcsOptions = VcsCloneOptions.create("git", 
                                                              url, 
-                                                             repo, 
+                                                             checkoutDir, 
                                                              dir);
          
          return new NewProjectResult(projFile, dir, vcsOptions);
@@ -132,7 +149,7 @@ public class VersionControlPage extends NewProjectWizardPage
                   "directory to create the new project within.",
                   txtRepoUrl_);
          }
-         else if (guessGitRepoDir(txtRepoUrl_.getText().trim()).length() == 0)
+         else if (txtRepoUrl_.getText().trim().length() == 0)
          {
             globalDisplay_.showMessage(
                   MessageDialog.WARNING,
@@ -158,6 +175,12 @@ public class VersionControlPage extends NewProjectWizardPage
    {
       txtRepoUrl_.setFocus(true);
       
+   }
+   
+   private void autoFillCheckoutDir()
+   {
+      if (txtDirName_.getText().isEmpty())
+         txtDirName_.setText(guessGitRepoDir(txtRepoUrl_.getText())); 
    }
    
    private static String guessGitRepoDir(String url)

@@ -36,7 +36,6 @@ public interface NewProjectResources extends ClientBundle
    static interface Styles extends CssResource
    {
       String wizardWidget();
-      String wizardVcsSelector();
       String wizardTextEntry();
       String wizardTextEntryLabel();
       String wizardSpacer();

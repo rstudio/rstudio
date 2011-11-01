@@ -606,13 +606,14 @@ public:
    }
 
    core::Error clone(const std::string& url,
-                     const FilePath& path,
+                     const std::string dirName,
+                     const FilePath& parentPath,
                      std::string* pHandle)
    {
 
       std::string cmd = shell_utils::join_and(
-            ShellCommand("cd") << path,
-            git() << "clone" << "--progress" << url);
+            ShellCommand("cd") << parentPath,
+            git() << "clone" << "--progress" << url << dirName);
 
       boost::shared_ptr<ConsoleProcess> ptrProc =
             console_process::ConsoleProcess::create(cmd,
@@ -1376,7 +1377,7 @@ Error vcsClone(const json::JsonRpcRequest& request,
    FilePath parentPath = module_context::resolveAliasedPath(parentDir);
 
    std::string handle;
-   error = git.clone(url, parentPath, &handle);
+   error = git.clone(url, dirName, parentPath, &handle);
    if (error)
       return error;
 
