@@ -18,9 +18,15 @@
    margin-bottom: 2px;
 }
 
-.preferencesDialog .nudgeRight {
-   margin-left: 5px;	
+.nudgeRight {
+   margin-left: 2px;
 }
+
+@if user.agent gecko1_8 { .nudgeRight {
+   margin-left: 5px; 
+}
+}
+
 
 .sectionChooser {
    background-color: white;
