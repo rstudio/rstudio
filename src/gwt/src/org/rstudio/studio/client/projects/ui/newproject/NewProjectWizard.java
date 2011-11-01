@@ -16,9 +16,9 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardPage;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.user.client.ui.CheckBox;
 
@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 public class NewProjectWizard extends Wizard<FileSystemItem,NewProjectResult>
 {
    public NewProjectWizard(
+         SessionInfo sessionInfo,
          FileSystemItem defaultNewProjectLocation,
          ProgressOperationWithInput<NewProjectResult> operation)
    {
@@ -45,11 +46,8 @@ public class NewProjectWizard extends Wizard<FileSystemItem,NewProjectResult>
       addPage(new NewDirectoryPage());
       addPage(new ExistingDirectoryPage());
       
-      if (RStudioGinjector.INSTANCE.getSession()
-                                       .getSessionInfo().isVcsAvailable())
-      {
+      if (sessionInfo.isVcsAvailable())
          addPage(new VersionControlPage());
-      }
    }  
    
    @Override

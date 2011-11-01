@@ -12,14 +12,23 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.VcsCloneOptions;
 
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class VersionControlPage extends NewProjectWizardPage
 {
@@ -30,9 +39,6 @@ public class VersionControlPage extends NewProjectWizardPage
             "Create Project from Version Control",
             NewProjectResources.INSTANCE.projectFromRepositoryIcon(),
             NewProjectResources.INSTANCE.projectFromRepositoryIconLarge());
-      
-      
-     
    }
 
 
@@ -41,12 +47,34 @@ public class VersionControlPage extends NewProjectWizardPage
    { 
       NewProjectResources.Styles styles = NewProjectResources.INSTANCE.styles();
       
-      Label dirNameLabel = new Label("Git Repository URL/Location:");
-      dirNameLabel.addStyleName(styles.wizardTextEntryLabel());
-      addWidget(dirNameLabel);
+      DockPanel sourcePanel = new DockPanel();
+      sourcePanel.addStyleName(styles.wizardTextEntry());
+      
+      VerticalPanel vcsPanel = new VerticalPanel();
+      Label vcsLabel = new Label("VCS:");
+      vcsLabel.addStyleName(styles.wizardTextEntryLabel());
+      vcsPanel.add(vcsLabel);
+      String[] availableVcs = getSessionInfo().getAvailableVCS();
+      vcsSelector_ = new ListBox();
+      vcsSelector_.addStyleName(styles.wizardVcsSelector());
+      for (int i=0; i<availableVcs.length; i++)
+         vcsSelector_.addItem(availableVcs[i]);
+      vcsSelector_.setSelectedIndex(0);
+      vcsPanel.add(vcsSelector_);
+      sourcePanel.add(vcsPanel, DockPanel.WEST);
+      
+      VerticalPanel urlPanel = new VerticalPanel();
+      urlPanel.setWidth("100%");
+      Label urlLabel = new Label("Repository URL:");
+      urlLabel.addStyleName(styles.wizardTextEntryLabel());
+      urlPanel.add(urlLabel);
       txtRepoUrl_ = new TextBox();
-      txtRepoUrl_.addStyleName(styles.wizardTextEntry());
-      addWidget(txtRepoUrl_);
+      txtRepoUrl_.setWidth("100%");
+      urlPanel.add(txtRepoUrl_);
+      sourcePanel.add(urlPanel, DockPanel.CENTER);
+      
+      
+      addWidget(sourcePanel);
       
       addSpacer();
      
@@ -161,10 +189,10 @@ public class VersionControlPage extends NewProjectWizardPage
       url = url.trim();
       return url;
    }
-   
-   
-   
+  
+   private ListBox vcsSelector_;
    private TextBox txtRepoUrl_;
+   private TextBox txtDirName_;
    private DirectoryChooserTextBox existingRepoDestDir_;
 
   

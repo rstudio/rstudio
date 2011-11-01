@@ -5,6 +5,7 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -49,6 +50,11 @@ public abstract class NewProjectWizardPage
    {
       widget.addStyleName(NewProjectResources.INSTANCE.styles().wizardWidget());
       flowPanel_.add(widget);
+   }
+   
+   protected SessionInfo getSessionInfo()
+   {
+      return  RStudioGinjector.INSTANCE.getSession().getSessionInfo();
    }
    
    protected void addSpacer()

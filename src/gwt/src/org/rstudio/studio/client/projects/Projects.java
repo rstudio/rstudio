@@ -123,6 +123,7 @@ public class Projects implements OpenProjectFileHandler,
    public void onNewProject()
    {
       NewProjectWizard wiz = new NewProjectWizard(
+            session_.getSessionInfo(),
             FileSystemItem.createDir(
                      pUIPrefs_.get().defaultProjectLocation().getValue()),
             new ProgressOperationWithInput<NewProjectResult>() {
