@@ -14,6 +14,8 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.cell.client.AbstractSafeHtmlCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
@@ -23,6 +25,7 @@ import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
+import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import org.rstudio.core.client.SafeHtmlUtil;
@@ -33,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPanel.Styles;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitListDisplay;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class CommitListTable extends MultiSelectCellTable<CommitInfo>
       implements CommitListDisplay
@@ -157,12 +161,43 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
 
       selectionModel_ = new SingleSelectionModel<CommitInfo>();
       setSelectionModel(selectionModel_);
+
+      addRangeChangeHandler(new RangeChangeEvent.Handler()
+      {
+         @Override
+         public void onRangeChange(RangeChangeEvent event)
+         {
+            if (selectionModel_.getSelectedObject() != null)
+            {
+               selectionModel_.setSelected(selectionModel_.getSelectedObject(),
+                                           false);
+            }
+            maybePreselectFirstRow();
+         }
+      });
    }
 
-   public void setData(ArrayList<CommitInfo> commits)
+   @Override
+   public void setRowData(int start, List<? extends CommitInfo> values)
    {
-      setPageSize(100);
-      setRowData(commits);
+      super.setRowData(start, values);
+      maybePreselectFirstRow();
+   }
+
+   private void maybePreselectFirstRow()
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            if (getVisibleItemCount() > 0
+                && selectionModel_.getSelectedObject() == null)
+            {
+               selectionModel_.setSelected(getVisibleItem(0), true);
+            }
+         }
+      });
    }
 
    public HandlerRegistration addSelectionChangeHandler(SelectionChangeEvent.Handler handler)

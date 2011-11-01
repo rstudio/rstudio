@@ -44,8 +44,6 @@ public class HistoryPresenter
 {
    public interface Display extends IsWidget
    {
-      void setData(ArrayList<CommitInfo> commits);
-
       HasClickHandlers getSwitchViewButton();
       CommitListDisplay getCommitList();
       CommitDetailDisplay getCommitDetail();

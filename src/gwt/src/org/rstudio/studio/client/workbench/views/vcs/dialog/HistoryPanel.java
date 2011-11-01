@@ -162,12 +162,6 @@ public class HistoryPanel extends Composite implements Display
    }
 
    @Override
-   public void setData(ArrayList<CommitInfo> commits)
-   {
-      commitTable_.setData(commits);
-   }
-
-   @Override
    public HasClickHandlers getSwitchViewButton()
    {
       return switchViewButton_;
