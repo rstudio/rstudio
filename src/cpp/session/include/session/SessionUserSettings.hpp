@@ -111,6 +111,10 @@ public:
    void setBioconductorMirror(const BioconductorMirror& bioconductorMirror);
 
    bool vcsEnabled() const;
+   void setVcsEnabled(bool enabled);
+
+   core::FilePath gitBinDir() const;
+   void setGitBinDir(const core::FilePath& gitBinDir);
 
 private:
 

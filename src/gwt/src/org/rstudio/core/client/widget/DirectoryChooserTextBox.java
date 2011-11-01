@@ -23,20 +23,38 @@ import com.google.gwt.user.client.ui.Focusable;
 
 public class DirectoryChooserTextBox extends TextBoxWithButton
 {
-   public DirectoryChooserTextBox(String label, Focusable focusAfter)
+   public DirectoryChooserTextBox(String label, 
+                                  String emptyLabel, 
+                                  Focusable focusAfter)
    {
       this(label, 
+           emptyLabel,
            focusAfter,
            RStudioGinjector.INSTANCE.getFileDialogs(),
            RStudioGinjector.INSTANCE.getRemoteFileSystemContext());
    }
    
+   public DirectoryChooserTextBox(String label, Focusable focusAfter)
+   {
+      this(label, "", focusAfter);
+   }
+   
+   
    public DirectoryChooserTextBox(String label, 
+                                  Focusable focusAfter,
+                                  FileDialogs fileDialogs,
+                                  FileSystemContext fsContext)
+   {
+      this(label, "", focusAfter, fileDialogs, fsContext);
+   }
+   
+   public DirectoryChooserTextBox(String label, 
+                                  String emptyLabel,
                                   final Focusable focusAfter,
                                   final FileDialogs fileDialogs,
                                   final FileSystemContext fsContext)
    {
-      super(label, "Browse...", null);
+      super(label, emptyLabel, "Browse...", null);
       
       addClickHandler(new ClickHandler()
       {

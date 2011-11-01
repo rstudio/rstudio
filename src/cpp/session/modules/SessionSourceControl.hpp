@@ -84,6 +84,10 @@ core::Error statusToJson(const core::FilePath& path,
                          const VCSStatus& status,
                          core::json::Object* pObject);
 bool isGitInstalled();
+
+core::FilePath detectedGitBinDir();
+void onGitBinDirUpdated();
+
 bool isSvnInstalled();
 core::Error initialize();
 

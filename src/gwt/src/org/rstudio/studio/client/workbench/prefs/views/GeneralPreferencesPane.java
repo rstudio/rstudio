@@ -75,13 +75,16 @@ public class GeneralPreferencesPane extends PreferencesPane
          }
       }
 
-      add(tight(new Label("Default working directory (when not in a project):")));
+      Label defaultLabel = new Label("Default working directory (when not in a project):");
+      defaultLabel.addStyleName(res_.styles().nudgeRight());
+      add(tight(defaultLabel));
       add(dirChooser_ = new DirectoryChooserTextBox(null, 
                                                     null,
                                                     fileDialogs_, 
                                                     fsContext_));  
       dirChooser_.addStyleName(res_.styles().spaced());
-      dirChooser_.setWidth("90%");
+      dirChooser_.addStyleName(res_.styles().nudgeRight());
+      dirChooser_.addStyleName(res_.styles().textBoxWithChooser());
 
       saveWorkspace_ = new SelectWidget(
             "Save workspace to .RData on exit:",
@@ -123,7 +126,8 @@ public class GeneralPreferencesPane extends PreferencesPane
                }
             });
       cranMirrorTextBox_.addStyleName(res.styles().spaced());
-      cranMirrorTextBox_.setWidth("90%");
+      cranMirrorTextBox_.addStyleName(res_.styles().nudgeRight());
+      cranMirrorTextBox_.addStyleName(res.styles().textBoxWithChooser());
       cranMirrorTextBox_.setText("");
       add(cranMirrorTextBox_);
       

@@ -30,11 +30,13 @@ public interface PreferencesDialogResources extends ClientBundle
       String indent();
       String paneLayoutTable();
       String tight();
+      String nudgeRight();
       String numericValueWidget();
       String themeChooser();
       String spaced();
       String extraSpaced();
       String encodingChooser();
+      String textBoxWithChooser();
    }
 
    @Source("PreferencesDialog.css")
@@ -46,4 +48,5 @@ public interface PreferencesDialogResources extends ClientBundle
    ImageResource iconR();
    ImageResource iconPackages();
    ImageResource iconProjects();
+   ImageResource iconSourceControl();
 }

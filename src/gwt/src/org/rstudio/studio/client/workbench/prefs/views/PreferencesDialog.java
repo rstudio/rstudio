@@ -47,7 +47,8 @@ public class PreferencesDialog extends ModalDialogBase
                             Provider<GeneralPreferencesPane> pR,
                             EditingPreferencesPane source,
                             AppearancePreferencesPane appearance,
-                            PaneLayoutPreferencesPane paneLayout)
+                            PaneLayoutPreferencesPane paneLayout,
+                            SourceControlPreferencesPane sourceControl)
    {
       super();
 
@@ -82,7 +83,7 @@ public class PreferencesDialog extends ModalDialogBase
       panel_ = new DockLayoutPanel(Unit.PX);
       panel_.setStyleName(res.styles().outer());
       container_ = new FlowPanel();
-      container_.getElement().getStyle().setPaddingLeft(12, Unit.PX);
+      container_.getElement().getStyle().setPaddingLeft(10, Unit.PX);
 
       addStyleName(res.styles().preferencesDialog());
 
@@ -90,7 +91,8 @@ public class PreferencesDialog extends ModalDialogBase
       panes_ = new PreferencesPane[] {pR.get(),
                                       source, 
                                       appearance, 
-                                      paneLayout};
+                                      paneLayout,
+                                      sourceControl};
       
          
       for (final PreferencesPane pane : panes_)

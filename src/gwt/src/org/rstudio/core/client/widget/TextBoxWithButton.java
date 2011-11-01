@@ -22,6 +22,16 @@ public class TextBoxWithButton extends Composite
 {
    public TextBoxWithButton(String label, String action, ClickHandler handler)
    {
+      this(label, "", action, handler);
+   }
+   
+   public TextBoxWithButton(String label, 
+                            String emptyLabel, 
+                            String action, 
+                            ClickHandler handler)
+   {
+      emptyLabel_ = emptyLabel;
+      
       textBox_ = new TextBox();
       textBox_.setWidth("100%");
       textBox_.setReadOnly(true);
@@ -57,12 +67,19 @@ public class TextBoxWithButton extends Composite
 
    public void setText(String text)
    {
-      textBox_.setText(text);
+      if (text.length() > 0)
+         textBox_.setText(text);
+      else
+         textBox_.setText(emptyLabel_);
    }
 
    public String getText()
    {
-      return textBox_.getText();
+      String text = textBox_.getText();
+      if (!text.equals(emptyLabel_))
+         return text;
+      else
+         return "";
    }
 
    public void click()
@@ -83,4 +100,5 @@ public class TextBoxWithButton extends Composite
 
    private TextBox textBox_;
    private ThemedButton themedButton_;
+   private String emptyLabel_;
 }

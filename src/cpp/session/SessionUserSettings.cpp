@@ -341,6 +341,27 @@ bool UserSettings::vcsEnabled() const
    return settings_.getBool("vcsEnabled", true);
 }
 
+void UserSettings::setVcsEnabled(bool enabled)
+{
+   settings_.set("vcsEnabled", enabled);
+}
+
+FilePath UserSettings::gitBinDir() const
+{
+   std::string dir = settings_.get("vcsGitBinDir");
+   if (!dir.empty())
+      return FilePath(dir);
+   else
+      return FilePath();
+}
+
+void UserSettings::setGitBinDir(const FilePath& gitBinDir)
+{
+   settings_.set("vcsGitBinDir", gitBinDir.absolutePath());
+}
+
+
+
 bool UserSettings::alwaysSaveHistory() const
 {
    return settings_.getBool(kAlwaysSaveHistory, true);

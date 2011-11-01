@@ -18,6 +18,10 @@
    margin-bottom: 2px;
 }
 
+.preferencesDialog .nudgeRight {
+   margin-left: 5px;	
+}
+
 .sectionChooser {
    background-color: white;
    border: 1px solid #999;
@@ -30,11 +34,12 @@
 
 .section {
    width: 100%;
-   padding: 7px 0 5px 0;
+   padding: 7px 2px 5px 2px;
 }
 .section * {
    cursor: default;
 }
+
 
 .activeSection {
    background: #D6E9F8;
@@ -51,6 +56,10 @@
 
 .encodingChooser {
    margin-top: 15px;	
+}
+
+.textBoxWithChooser {
+   width: 350px;	
 }
 
 .paneLayoutTable td.paneLayoutTable {

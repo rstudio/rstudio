@@ -90,7 +90,7 @@ public class SectionChooser extends SimplePanel implements
 
    public int getDesiredWidth()
    {
-      return 100;
+      return 102;
    }
 
    private Integer selectedIndex_;

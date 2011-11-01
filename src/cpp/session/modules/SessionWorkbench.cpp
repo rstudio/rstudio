@@ -37,6 +37,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
+#include "SessionSourceControl.hpp"
+
 #include <R_ext/RStartup.h>
 extern "C" SA_TYPE SaveAction;
 
@@ -115,12 +117,14 @@ BioconductorMirror toBioconductorMirror(const json::Object& mirrorJson)
 Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 {
    // read params
-   json::Object generalPrefs, historyPrefs, packagesPrefs, projectsPrefs;
+   json::Object generalPrefs, historyPrefs, packagesPrefs, projectsPrefs,
+                sourceControlPrefs;
    Error error = json::readObjectParam(request.params, 0,
-                                       "general_prefs", &generalPrefs,
-                                       "history_prefs", &historyPrefs,
-                                       "packages_prefs", &packagesPrefs,
-                                       "projects_prefs", &projectsPrefs);
+                              "general_prefs", &generalPrefs,
+                              "history_prefs", &historyPrefs,
+                              "packages_prefs", &packagesPrefs,
+                              "projects_prefs", &projectsPrefs,
+                              "source_control_prefs", &sourceControlPrefs);
    if (error)
       return error;
    json::Object uiPrefs;
@@ -193,6 +197,23 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setAlwaysRestoreLastProject(restoreLastProject);
    userSettings().endUpdate();
 
+   // read and set source control prefs
+   bool vcsEnabled;
+   std::string gitBinDir;
+   error = json::readObject(sourceControlPrefs,
+                            "vcs_enabled", &vcsEnabled,
+                            "git_bin_dir", &gitBinDir);
+   if (error)
+      return error;
+   userSettings().beginUpdate();
+   userSettings().setVcsEnabled(vcsEnabled);
+   FilePath gitBinDirPath(gitBinDir);
+   if (gitBinDirPath == source_control::detectedGitBinDir())
+      userSettings().setGitBinDir(FilePath());
+   else
+      userSettings().setGitBinDir(gitBinDirPath);
+   userSettings().endUpdate();
+
    // set ui prefs
    userSettings().setUiPrefs(uiPrefs);
 
@@ -260,12 +281,21 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    json::Object projectsPrefs;
    projectsPrefs["restore_last_project"] = userSettings().alwaysRestoreLastProject();
 
+   // get source control prefs
+   json::Object sourceControlPrefs;
+   sourceControlPrefs["vcs_enabled"] = userSettings().vcsEnabled();
+   FilePath gitBinDir = userSettings().gitBinDir();
+   if (gitBinDir.empty())
+      gitBinDir = source_control::detectedGitBinDir();
+   sourceControlPrefs["git_bin_dir"] = gitBinDir.absolutePath();
+
    // initialize and set result object
    json::Object result;
    result["general_prefs"] = generalPrefs;
    result["history_prefs"] = historyPrefs;
    result["packages_prefs"] = packagesPrefs;
    result["projects_prefs"] = projectsPrefs;
+   result["source_control_prefs"] = sourceControlPrefs;
 
    pResponse->setResult(result);
 

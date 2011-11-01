@@ -86,6 +86,7 @@ public class EditingPreferencesPane extends PreferencesPane
             }));
       encoding_.setWidth("250px");
       encoding_.addStyleName(res_.styles().encodingChooser());
+      encoding_.addStyleName(res_.styles().nudgeRight());
       setEncoding(prefs.defaultEncoding().getGlobalValue());
    }
 

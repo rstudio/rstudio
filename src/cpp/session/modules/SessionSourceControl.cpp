@@ -42,6 +42,8 @@
 #include <core/Scope.hpp>
 #include <core/StringUtils.hpp>
 
+#include <r/RExec.hpp>
+
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -1902,12 +1904,28 @@ private:
    T* pUnk_;
 };
 
-bool isGitExeOnPath()
+
+bool detectGitExeDirOnPath(FilePath* pPath)
 {
    std::vector<wchar_t> path(MAX_PATH+2);
    wcscpy(&(path[0]), L"git.exe");
-   return ::PathFindOnPathW(&(path[0]), NULL);
+   if (::PathFindOnPathW(&(path[0]), NULL))
+   {
+      *pPath = FilePath(&(path[0])).parent();
+      return true;
+   }
+   else
+   {
+      return false;
+   }
 }
+
+bool isGitExeOnPath()
+{
+   FilePath gitExeDir;
+   return detectGitExeDirOnPath(&gitExeDir);
+}
+
 
 bool detectGitBinDirFromPath(FilePath* pPath)
 {
@@ -2099,6 +2117,21 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
    }
 }
 
+FilePath whichGitExe()
+{
+   std::string whichGit;
+   Error error = r::exec::RFunction("Sys.which", "git").call(&whichGit);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+   else
+   {
+      return FilePath(whichGit);
+   }
+}
+
 } // anonymous namespace
 
 bool isGitInstalled()
@@ -2113,6 +2146,58 @@ bool isGitInstalled()
    if (error)
       return false;
    return result.exitStatus == EXIT_SUCCESS;
+}
+
+FilePath detectedGitBinDir()
+{
+#ifdef _WIN32
+   FilePath path;
+   if (detectGitExeDirOnPath(&path))
+   {
+      return path;
+   }
+   else
+   {
+      Error error = discoverGitBinDir(&path);
+      if (!error)
+      {
+         return path;
+      }
+      else
+      {
+         LOG_ERROR(error);
+         return FilePath();
+      }
+   }
+#else
+   FilePath gitExeFilePath = whichGitExe();
+   if (!gitExeFilePath.empty())
+      return FilePath(gitExeFilePath).parent();
+   else
+      return FilePath();
+#endif
+}
+
+void onUserSettingsChanged()
+{
+   FilePath gitBinDir = userSettings().gitBinDir();
+   if (!gitBinDir.empty())
+   {
+      // if there is an explicit value then set it
+      s_gitBinDir = gitBinDir.absolutePath();
+   }
+   else
+   {
+      // if we are relying on an auto-detected value then scan on windows
+      // and reset to empty on posix
+#ifdef _WIN32
+      Error error = detectAndSaveGitBinDir();
+      if (error)
+         LOG_ERROR(error);
+#else
+      s_gitBinDir = "";
+#endif
+   }
 }
 
 bool isSvnInstalled()
@@ -2147,12 +2232,22 @@ void onResume(const core::Settings&)
 
 bool tryGit(const FilePath& workingDir)
 {
-   Error error;
+   // get the git bin dir from settings if it is there
+   s_gitBinDir = userSettings().gitBinDir().absolutePath();
+
+   // if it wasn't provided in settings then make sure we can detect it
+   if (s_gitBinDir.empty())
+   {
 #ifdef _WIN32
-   error = detectAndSaveGitBinDir();
-   if (error)
-      return false; // no Git install detected
+      Error error = detectAndSaveGitBinDir();
+      if (error)
+         return false; // no Git install detected
+#else
+      FilePath gitExeFilePath = whichGitExe();
+      if (gitExeFilePath.empty())
+         return false; // no Git install detected
 #endif
+   }
 
    FilePath gitDir = GitVCSImpl::detectGitDir(workingDir);
    if (gitDir.empty())
@@ -2161,7 +2256,7 @@ bool tryGit(const FilePath& workingDir)
    s_pVcsImpl_.reset(new GitVCSImpl(GitVCSImpl::detectGitDir(workingDir)));
 
    FilePath gitIgnore = s_pVcsImpl_->root().childPath(".gitignore");
-   error = augmentGitIgnore(gitIgnore);
+   Error error = augmentGitIgnore(gitIgnore);
    if (error)
       LOG_ERROR(error);
 
@@ -2249,6 +2344,9 @@ core::Error initialize()
 
    // add suspend/resume handler
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
+
+   // add settings changed handler
+   userSettings().onChanged.connect(onUserSettingsChanged);
 
    // install rpc methods
    using boost::bind;
