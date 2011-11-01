@@ -215,6 +215,8 @@ public class ReviewPanel extends Composite implements Display
 
       overrideSizeWarning_ = new SizeWarningWidget("diff");
 
+      changelist.setSelectFirstItemByDefault(true);
+
       Widget widget = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       consoleBarFramePanel.setWidget(widget);
 

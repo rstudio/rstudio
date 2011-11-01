@@ -236,7 +236,8 @@ public class VCS extends BasePresenter implements IsWidget
    private void showReviewPane(boolean showHistory)
    {
       ReviewPresenter rpres = pReviewPresenter_.get();
-      rpres.setSelectedPaths(view_.getSelectedItems());
+      if (view_.getSelectedItemCount() > 0)
+         rpres.setSelectedPaths(view_.getSelectedItems());
       VCSPopup.show(rpres,
                     pHistoryPresenter_.get(),
                     showHistory);

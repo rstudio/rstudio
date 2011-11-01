@@ -73,6 +73,11 @@ public class ChangelistTablePresenter
       });
    }
 
+   public void setSelectFirstItemByDefault(boolean selectFirstItemByDefault)
+   {
+      view_.setSelectFirstItemByDefault(selectFirstItemByDefault);
+   }
+
    public ChangelistTable getView()
    {
       return view_;

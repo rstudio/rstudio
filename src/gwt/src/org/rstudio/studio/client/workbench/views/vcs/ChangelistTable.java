@@ -233,6 +233,11 @@ public class ChangelistTable extends Composite
       initWidget(layout_);
    }
 
+   public void setSelectFirstItemByDefault(boolean selectFirstItemByDefault)
+   {
+      selectFirstItemByDefault_ = selectFirstItemByDefault;
+   }
+
    public void toggleStaged(boolean moveSelection)
    {
       ArrayList<StatusAndPath> items = getSelectedItems();
@@ -395,6 +400,12 @@ public class ChangelistTable extends Composite
       ColumnSortEvent.fire(table_,
                            table_.getColumnSortList());
 
+      if (selectFirstItemByDefault_
+          && table_.getVisibleItemCount() > 0
+          && selectionModel_.getSelectedSet().isEmpty())
+      {
+         selectionModel_.setSelected(table_.getVisibleItem(0), true);
+      }
    }
 
    public ArrayList<StatusAndPath> getSelectedItems()
@@ -504,5 +515,6 @@ public class ChangelistTable extends Composite
    private final ListDataProvider<StatusAndPath> dataProvider_;
    private final ProgressPanel progressPanel_;
    private LayoutPanel layout_;
+   private boolean selectFirstItemByDefault_;
    private static final ChangelistTableCellTableResources resources_ = GWT.<ChangelistTableCellTableResources>create(ChangelistTableCellTableResources.class);
 }
