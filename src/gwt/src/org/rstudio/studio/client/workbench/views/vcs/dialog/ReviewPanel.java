@@ -35,8 +35,6 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;

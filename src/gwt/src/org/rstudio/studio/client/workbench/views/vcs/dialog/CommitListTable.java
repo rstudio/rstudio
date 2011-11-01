@@ -35,7 +35,6 @@ import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPanel.Styles;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitListDisplay;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class CommitListTable extends MultiSelectCellTable<CommitInfo>

@@ -31,8 +31,6 @@ import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.Com
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitListDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.Display;
 
-import java.util.ArrayList;
-
 public class HistoryPanel extends Composite implements Display
 {
    public interface Resources extends ClientBundle

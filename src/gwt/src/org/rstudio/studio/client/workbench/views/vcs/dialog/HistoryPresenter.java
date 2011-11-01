@@ -38,8 +38,6 @@ import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent.Reas
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;
 
-import java.util.ArrayList;
-
 public class HistoryPresenter
 {
    public interface Display extends IsWidget
