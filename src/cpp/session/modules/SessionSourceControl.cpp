@@ -1363,13 +1363,17 @@ Error vcsClone(const json::JsonRpcRequest& request,
 {
    GitVCSImpl git(options().userHomePath());
 
+   std::string vcsName;   // ignored for now
    std::string url;
-   std::string path;
-   Error error = json::readParams(request.params, &url, &path);
-   if (error)
-      return error;
+   std::string dirName;   // ignored for now
+   std::string parentDir;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "vcs_name", &vcsName,
+                                       "repo_url", &url,
+                                       "directory_name", &dirName,
+                                       "parent_path", &parentDir);
 
-   FilePath parentPath = module_context::resolveAliasedPath(path);
+   FilePath parentPath = module_context::resolveAliasedPath(parentDir);
 
    std::string handle;
    error = git.clone(url, parentPath, &handle);

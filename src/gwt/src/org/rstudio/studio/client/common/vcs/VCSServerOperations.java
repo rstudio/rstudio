@@ -16,6 +16,7 @@ import com.google.gwt.core.client.JsArray;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
+import org.rstudio.studio.client.projects.model.VcsCloneOptions;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
@@ -101,8 +102,7 @@ public interface VCSServerOperations extends CryptoServerOperations
                 boolean noSizeWarning,
                 ServerRequestCallback<String> requestCallback);
 
-   void vcsClone(String repoUrl,
-                 String parentPath,
+   void vcsClone(VcsCloneOptions options,
                  ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void vcsPush(ServerRequestCallback<ConsoleProcess> requestCallback);

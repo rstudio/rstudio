@@ -16,6 +16,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
+import org.rstudio.studio.client.projects.model.VcsCloneOptions;
 
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
@@ -74,7 +75,13 @@ public class VersionControlPage extends NewProjectWizardPage
 
          String repoDir = FileSystemItem.createDir(dir).completePath(repo);
          String projFile = projFileFromDir(repoDir);
-         return new NewProjectResult(projFile, dir, url);
+         
+         VcsCloneOptions vcsOptions = VcsCloneOptions.create("git", 
+                                                             url, 
+                                                             repo, 
+                                                             dir);
+         
+         return new NewProjectResult(projFile, dir, vcsOptions);
       }
       else
       {

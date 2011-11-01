@@ -216,8 +216,8 @@ public class Projects implements OpenProjectFileHandler,
          }
       }, false);
 
-      // Next, if necessary, clone the git repo
-      if (newProject.getGitRepoUrl() != null)
+      // Next, if necessary, clone a repo
+      if (newProject.getVcsCloneOptions() != null)
       {
          createProjectCmds.addCommand(new SerializedCommand()
          {
@@ -227,8 +227,7 @@ public class Projects implements OpenProjectFileHandler,
                indicator.onProgress("Cloning git repoistory...");
                
                server_.vcsClone(
-                     newProject.getGitRepoUrl(),
-                     newProject.getNewDefaultProjectLocation(),
+                     newProject.getVcsCloneOptions(),
                      new ServerRequestCallback<ConsoleProcess>() {
                         @Override
                         public void onResponseReceived(ConsoleProcess proc)

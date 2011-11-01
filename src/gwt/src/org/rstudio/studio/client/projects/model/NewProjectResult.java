@@ -16,11 +16,11 @@ public class NewProjectResult
 {
    public NewProjectResult(String projectFile, 
                            String newDefaultProjectLocation,
-                           String gitRepoUrl)
+                           VcsCloneOptions vcsCloneOptions)
    {
       projectFile_ = projectFile;
       newDefaultProjectLocation_ = newDefaultProjectLocation;
-      gitRepoUrl_ = gitRepoUrl;
+      vcsCloneOptions_ = vcsCloneOptions;
       openInNewWindow_ = false;
    }
    
@@ -34,9 +34,9 @@ public class NewProjectResult
       return newDefaultProjectLocation_;
    }
 
-   public String getGitRepoUrl()
+   public VcsCloneOptions getVcsCloneOptions()
    {
-      return gitRepoUrl_;
+      return vcsCloneOptions_;
    }
    
    public boolean getOpenInNewWindow()
@@ -51,6 +51,6 @@ public class NewProjectResult
 
    private final String projectFile_;
    private final String newDefaultProjectLocation_;
-   private final String gitRepoUrl_;
+   private final VcsCloneOptions vcsCloneOptions_;
    private boolean openInNewWindow_;
 }

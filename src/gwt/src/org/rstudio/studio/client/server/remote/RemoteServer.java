@@ -40,6 +40,7 @@ import org.rstudio.studio.client.common.vcs.AllStatus;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.VcsCloneOptions;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
@@ -1365,14 +1366,12 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void vcsClone(String repoUrl,
-                        String parentPath,
+   public void vcsClone(VcsCloneOptions options,
                         ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(repoUrl));
-      params.set(1, new JSONString(parentPath));
-      sendRequest(RPC_SCOPE, VCS_CLONE, params,
+      sendRequest(RPC_SCOPE, 
+                  VCS_CLONE, 
+                  options,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
