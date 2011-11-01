@@ -35,6 +35,8 @@ public interface PreferencesDialogResources extends ClientBundle
       String themeChooser();
       String spaced();
       String extraSpaced();
+      String helpImage();
+      String usingVcsHelp();
       String encodingChooser();
       String textBoxWithChooser();
    }

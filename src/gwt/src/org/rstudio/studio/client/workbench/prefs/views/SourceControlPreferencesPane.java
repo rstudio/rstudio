@@ -13,14 +13,21 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SourceControlPrefs;
@@ -29,6 +36,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
 {
    @Inject
    public SourceControlPreferencesPane(PreferencesDialogResources res,
+                                       final GlobalDisplay globalDisplay,
                                        RemoteFileSystemContext fsContext,
                                        FileDialogs fileDialogs)
    {
@@ -37,8 +45,25 @@ public class SourceControlPreferencesPane extends PreferencesPane
 
       chkVcsEnabled_ = new CheckBox(
             "Enable version control interface for RStudio projects");
-      chkVcsEnabled_.addStyleName(res_.styles().extraSpaced());
       add(chkVcsEnabled_);
+      
+      
+      HorizontalPanel helpPanel = new HorizontalPanel();
+      helpPanel.addStyleName(res_.styles().nudgeRight());
+      helpPanel.addStyleName(res_.styles().usingVcsHelp());
+      Image helpImage = new Image(ThemeResources.INSTANCE.help());
+      helpImage.addStyleName(res_.styles().helpImage());
+      helpPanel.add(helpImage);
+      HyperlinkLabel helpLink = new HyperlinkLabel(
+                                       "Using Version Control with RStudio");
+      helpLink.addClickHandler(new ClickHandler() {
+         public void onClick(ClickEvent event)
+         {
+            globalDisplay.openRStudioLink("using_version_control");
+         }  
+      });
+      helpPanel.add(helpLink);
+      add(helpPanel);
       
       Label gitBinDirLabel = new Label("Git bin directory:");
       gitBinDirLabel.addStyleName(res_.styles().nudgeRight());

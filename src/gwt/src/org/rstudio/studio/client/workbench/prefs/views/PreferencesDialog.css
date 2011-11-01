@@ -14,6 +14,15 @@
    margin-bottom: 23px;
 }
 
+.helpImage {
+   margin-right: 4px;
+}
+
+.usingVcsHelp {
+   padding-left: 14px;
+   margin-bottom: 20px;
+}
+
 .preferencesDialog .tight {
    margin-bottom: 2px;
 }
