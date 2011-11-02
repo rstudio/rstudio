@@ -63,6 +63,10 @@ public class WindowEx extends JavaScriptObject
    public final native String getLocationHref() /*-{
       return this.location.href ;
    }-*/;
+   
+   public final native boolean isSecure() /*-{
+      return 'https:' == this.location.protocol;
+   }-*/;
 
    public final native void setLocationHref(String helpURL) /*-{
       this.location.href = helpURL ;
