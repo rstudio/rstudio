@@ -14,14 +14,20 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 
-// TODO: detect scheme / https (WindoxEx.navigator.scheme)
-
-// TODO: upload warning for .ssh directory
 // TODO: auto change filemode for .ssh directory uploads
 
-// TODO: download warning for known key files (id_rsa, id_dsa, identity)
+// TODO: create ssh key UI (auto change filemode). 
 
-// TODO: create ssh key UI (auto change filemode). warning for passphrase
+/*
+ *  identity -t rsa1 
+ *  SSH PRIVATE KEY FILE FORMAT 1.1
+ * 
+ *  identity -t rsa 
+ *  -----BEGIN RSA PRIVATE KEY-----
+ * 
+ *  id_dsa  -t dsa
+ *  -----BEGIN DSA PRIVATE KEY-----
+ */
 
 // TODO: project specific key paths
 
