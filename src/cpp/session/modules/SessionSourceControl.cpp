@@ -1623,6 +1623,34 @@ Error vcsShow(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsSshPublicKey(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   // get public key path
+   std::string aliasedPath;
+   Error error = json::readParam(request.params, 0, &aliasedPath);
+   if (error)
+      return error;
+
+   // unalias it and check for existence
+   FilePath publicKeyPath = module_context::resolveAliasedPath(aliasedPath);
+   if (!publicKeyPath.exists())
+   {
+      return core::fileNotFoundError(publicKeyPath.absolutePath(),
+                                     ERROR_LOCATION);
+   }
+
+   // read the key
+   std::string publicKeyContents;
+   error = core::readStringFromFile(publicKeyPath, &publicKeyContents);
+   if (error)
+      return error;
+
+   pResponse->setResult(publicKeyContents);
+
+   return Success();
+}
+
 std::string toBashPath(const std::string& path)
 {
 #ifdef _WIN32
@@ -2389,7 +2417,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_history_count", vcsHistoryCount))
       (bind(registerRpcMethod, "vcs_history", vcsHistory))
       (bind(registerRpcMethod, "vcs_execute_command", vcsExecuteCommand))
-      (bind(registerRpcMethod, "vcs_show", vcsShow));
+      (bind(registerRpcMethod, "vcs_show", vcsShow))
+      (bind(registerRpcMethod, "vcs_ssh_public_key", vcsSshPublicKey));
    error = initBlock.execute();
    if (error)
       return error;

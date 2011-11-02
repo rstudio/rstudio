@@ -1390,6 +1390,16 @@ public class RemoteServer implements Server
                                   : new JSONString(value));
       sendRequest(RPC_SCOPE, ASKPASS_COMPLETED, params, true, requestCallback);
    }
+   
+   @Override
+   public void vcsSshPublicKey(String privateKeyPath,
+                               ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  VCS_SSH_PUBLIC_KEY, 
+                  privateKeyPath, 
+                  requestCallback);
+   }
 
    @Override
    public void vcsDiffFile(String path,
@@ -2041,6 +2051,7 @@ public class RemoteServer implements Server
    private static final String VCS_PUSH = "vcs_push";
    private static final String VCS_PULL = "vcs_pull";
    private static final String ASKPASS_COMPLETED = "askpass_completed";
+   private static final String VCS_SSH_PUBLIC_KEY = "vcs_ssh_public_key";
    private static final String VCS_DIFF_FILE = "vcs_diff_file";
    private static final String VCS_APPLY_PATCH = "vcs_apply_patch";
    private static final String VCS_HISTORY_COUNT = "vcs_history_count";

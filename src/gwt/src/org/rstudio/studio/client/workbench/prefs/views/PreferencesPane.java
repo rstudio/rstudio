@@ -23,6 +23,7 @@ import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.widget.NumericValueWidget;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
@@ -61,9 +62,19 @@ public abstract class PreferencesPane extends VerticalPanel
          }
       });
    }
+   
+   public void setProgressIndicator(ProgressIndicator progressIndicator)
+   {
+      progressIndicator_ = progressIndicator;
+   }
 
    protected void initializeRPrefs(RPrefs rPrefs)
    {
+   }
+   
+   protected ProgressIndicator getProgressIndicator()
+   {
+      return progressIndicator_;
    }
    
    protected CheckBox checkboxPref(String label,
@@ -127,4 +138,6 @@ public abstract class PreferencesPane extends VerticalPanel
    protected final ArrayList<Command> onApplyCommands_ = new ArrayList<Command>();
    private final PreferencesDialogResources res_ =
          GWT.create(PreferencesDialogResources.class);
+   
+   private ProgressIndicator progressIndicator_;
 }

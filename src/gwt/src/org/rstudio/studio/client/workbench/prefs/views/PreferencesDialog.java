@@ -99,6 +99,7 @@ public class PreferencesDialog extends ModalDialogBase
       {
          sectionChooser.addSection(pane.getIcon(), pane.getName());
          pane.setWidth("100%");
+         pane.setProgressIndicator(progressIndicator_);
          container_.add(pane);
          setPaneVisibility(pane, false);
          pane.addEnsureVisibleHandler(new EnsureVisibleHandler()

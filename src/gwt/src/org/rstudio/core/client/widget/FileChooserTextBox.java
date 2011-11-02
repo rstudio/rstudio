@@ -12,57 +12,39 @@
  */
 package org.rstudio.core.client.widget;
 
-import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.FileDialogs;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Focusable;
 
 public class FileChooserTextBox extends TextBoxWithButton
 {
-   public FileChooserTextBox(String label, 
-                             String emptyLabel, 
-                             Focusable focusAfter)
-   {
-      this(label, 
-           emptyLabel,
-           focusAfter,
-           RStudioGinjector.INSTANCE.getFileDialogs(),
-           RStudioGinjector.INSTANCE.getRemoteFileSystemContext());
-   }
+   
    
    public FileChooserTextBox(String label, Focusable focusAfter)
    {
-      this(label, "", focusAfter);
+      this(label, "", focusAfter, null);
    }
-   
-   
-   public FileChooserTextBox(String label, 
-                                  Focusable focusAfter,
-                                  FileDialogs fileDialogs,
-                                  FileSystemContext fsContext)
-   {
-      this(label, "", focusAfter, fileDialogs, fsContext);
-   }
-   
+  
    public FileChooserTextBox(String label, 
                              String emptyLabel,
                              final Focusable focusAfter,
-                             final FileDialogs fileDialogs,
-                             final FileSystemContext fsContext)
+                             final Command onChosen)
    {
       super(label, emptyLabel, "Browse...", null);
+      
+      
       
       addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
-            fileDialogs.openFile(
+            RStudioGinjector.INSTANCE.getFileDialogs().openFile(
                   "Choose File",
-                  fsContext,
+                  RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
                   FileSystemItem.createFile(getText()),
                   new ProgressOperationWithInput<FileSystemItem>()
                   {
@@ -76,6 +58,8 @@ public class FileChooserTextBox extends TextBoxWithButton
                         indicator.onCompleted();
                         if (focusAfter != null)
                            focusAfter.setFocus(true);
+                        if (onChosen != null)
+                           onChosen.execute();
                      }
                   });
          }

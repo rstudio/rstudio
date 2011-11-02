@@ -1,3 +1,7 @@
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+@external fixedWidthFont;
+
 @external gwt-CheckBox, gwt-RadioButton, gwt-Label;
 
 .preferencesDialog .gwt-CheckBox,
@@ -24,6 +28,15 @@
 
 .viewPublicKeyLink {
    font-size: 11px;	
+}
+
+.viewPublicKeyContent {
+   font-family: fixedWidthFont;
+   font-size: 12px;
+}
+
+.viewPublicKeyLabel {
+   margin-bottom: 7px;	
 }
 
 .sshButtonPanel {

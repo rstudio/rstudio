@@ -711,6 +711,13 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    {
       return true;
    }
+   else if ((options().programMode() == kSessionProgramModeServer) &&
+            filePath.isDirectory() &&
+            filePath.filename() == ".ssh" &&
+            filePath.parent() == module_context::userHomePath())
+   {
+      return true;
+   }
    else
    {
       return !filePath.isHidden();

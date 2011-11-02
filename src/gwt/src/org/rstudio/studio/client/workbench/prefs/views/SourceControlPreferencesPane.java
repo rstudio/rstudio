@@ -17,23 +17,40 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FileChooserTextBox;
+import org.rstudio.core.client.widget.FocusHelper;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.HyperlinkLabel;
+import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SourceControlPrefs;
@@ -43,11 +60,12 @@ public class SourceControlPreferencesPane extends PreferencesPane
    @Inject
    public SourceControlPreferencesPane(PreferencesDialogResources res,
                                        final GlobalDisplay globalDisplay,
+                                       VCSServerOperations server,
                                        RemoteFileSystemContext fsContext,
                                        FileDialogs fileDialogs)
    {
       res_ = res;
-
+      server_ = server;
 
       chkVcsEnabled_ = new CheckBox(
             "Enable version control interface for RStudio projects");
@@ -94,24 +112,31 @@ public class SourceControlPreferencesPane extends PreferencesPane
       */
       
       // ssh key path
-      sshKeyPathChooser_ = new FileChooserTextBox(null,
-                                                  "(Not Found)",
-                                                  null,
-                                                  fileDialogs, 
-                                                  fsContext);
-      HyperlinkLabel publicKeyLink = new HyperlinkLabel("View public key");
-      publicKeyLink.addStyleName(res_.styles().viewPublicKeyLink());
-      publicKeyLink.addClickHandler(new ClickHandler() {
+      sshKeyPathChooser_ = new FileChooserTextBox(
+           null,
+           "(Not Found)",
+           null,
+           new Command() {
+
+            @Override
+            public void execute()
+            {
+               publicKeyLink_.setVisible(true); 
+            }    
+      });
+      
+      publicKeyLink_ = new HyperlinkLabel("View public key");
+      publicKeyLink_.addStyleName(res_.styles().viewPublicKeyLink());
+      publicKeyLink_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {
-            
-            
+            viewPublicKey();
          }    
       });    
       Label sshKeyPathLabel = new Label("SSH key path:");
       addTextBoxChooser(sshKeyPathLabel, 
-                        publicKeyLink, 
+                        publicKeyLink_, 
                         res_.styles().newSection(),
                         sshKeyPathChooser_);
       tight(sshKeyPathChooser_);
@@ -130,20 +155,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
          }
       });
       sshButtonPanel.add(createKeyButton_);
-      
-      uploadKeyButton_ = new SmallButton();
-      uploadKeyButton_.setText("Upload Key...");
-      uploadKeyButton_.addClickHandler(new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            // TODO Auto-generated method stub
-            
-         }
-      });
-      if (!Desktop.isDesktop())
-         sshButtonPanel.add(uploadKeyButton_);
-      
+    
       add(sshButtonPanel);
       
       // hide the ssh UI if we are on linux or mac desktop
@@ -151,7 +163,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
           (BrowseCap.isMacintosh() || BrowseCap.isLinux()))
       {
          sshKeyPathLabel.setVisible(false);
-         publicKeyLink.setVisible(false);
+         publicKeyLink_.setVisible(false);
          sshKeyPathChooser_.setVisible(false);
          sshButtonPanel.setVisible(false);
       }
@@ -160,7 +172,6 @@ public class SourceControlPreferencesPane extends PreferencesPane
       gitBinDirChooser_.setEnabled(false);
       sshKeyPathChooser_.setEnabled(false);
       createKeyButton_.setEnabled(false);
-      uploadKeyButton_.setEnabled(false);
    }
 
    @Override
@@ -173,12 +184,12 @@ public class SourceControlPreferencesPane extends PreferencesPane
       gitBinDirChooser_.setEnabled(true);
       sshKeyPathChooser_.setEnabled(true);
       createKeyButton_.setEnabled(true);
-      uploadKeyButton_.setEnabled(true);
-      
       
       chkVcsEnabled_.setValue(prefs.getVcsEnabled());
       gitBinDirChooser_.setText(prefs.getGitBinDir());
       sshKeyPathChooser_.setText(prefs.getSSHKeyPath());
+      
+      publicKeyLink_.setVisible(prefs.getSSHKeyPath().length() > 0);
       
    }
 
@@ -211,6 +222,44 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                           sshKeyPathChooser_.getText());
       
       rPrefs.setSourceControlPrefs(prefs);
+   }
+   
+   private void viewPublicKey()
+   {
+      final ProgressIndicator indicator = getProgressIndicator();
+      indicator.onProgress("Reading public key...");
+      
+      // compute path to public key
+      FileSystemItem privKey = 
+               FileSystemItem.createFile(sshKeyPathChooser_.getText());
+      FileSystemItem keyDir = privKey.getParentPath();
+      final String keyPath = keyDir.completePath(privKey.getStem() + ".pub");
+      
+      server_.vcsSshPublicKey(keyPath,
+                              new ServerRequestCallback<String> () {
+         
+         @Override
+         public void onResponseReceived(String publicKeyContents)
+         {
+            indicator.onCompleted();
+            
+            // transform contents into displayable form
+            SafeHtmlBuilder htmlBuilder = new SafeHtmlBuilder();
+            SafeHtmlUtil.appendDiv(htmlBuilder,
+                                   res_.styles().viewPublicKeyContent(),
+                                   publicKeyContents);
+            
+            new ShowPublicKeyDialog(publicKeyContents).showModal();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            String msg = "Error attempting to read key '" + keyPath + "' (" +
+                         error.getUserMessage() + ")";
+            indicator.onError(msg);
+         } 
+      }); 
    }
    
    private void addTextBoxChooser(Label captionLabel, 
@@ -249,18 +298,78 @@ public class SourceControlPreferencesPane extends PreferencesPane
       chooser.addStyleName(res_.styles().textBoxWithChooser());
       add(chooser);    
    }
+   
+   private class ShowPublicKeyDialog extends ModalDialogBase
+   {
+      public ShowPublicKeyDialog(String publicKey)
+      {
+         publicKey_ = publicKey;
+         
+         setText("Public Key");
+         
+         setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+         
+         ThemedButton closeButton = new ThemedButton("Close",
+                                                     new ClickHandler() {
+            public void onClick(ClickEvent event) {
+               closeDialog();
+            }
+         });
+         addOkButton(closeButton); 
+      }
+      
+      @Override
+      protected Widget createMainWidget()
+      {
+         VerticalPanel panel = new VerticalPanel();
+         
+         int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
+                                            KeyboardShortcut.CTRL;
+         String cmdText = new KeyboardShortcut(mod, 'C').toString(true);
+         HTML label = new HTML("Press " + cmdText + 
+                               " to copy the key to the clipboard");
+         label.addStyleName(res_.styles().viewPublicKeyLabel());
+         panel.add(label);
+         
+         textArea_ = new TextArea();
+         textArea_.setText(publicKey_);
+         textArea_.addStyleName(res_.styles().viewPublicKeyContent());
+         textArea_.setSize("400px", "250px");
+         textArea_.getElement().setAttribute("spellcheck", "false");
+         FontSizer.applyNormalFontSize(textArea_.getElement());
+         
+         panel.add(textArea_);
+         
+         return panel;
+      }
+      
+      @Override
+      protected void onLoad()
+      {
+         super.onLoad();
+        
+         textArea_.selectAll();
+         FocusHelper.setFocusDeferred(textArea_);
+        
+         
+      }
+      
+      
+      private final String publicKey_;
+      private TextArea textArea_;
+   }
 
    private final PreferencesDialogResources res_;
+   
+   private final VCSServerOperations server_;
+ 
    
    private final CheckBox chkVcsEnabled_;
    
    private TextBoxWithButton gitBinDirChooser_;
    
+   private HyperlinkLabel publicKeyLink_;
    private TextBoxWithButton sshKeyPathChooser_;
    
    private SmallButton createKeyButton_;
-   private SmallButton uploadKeyButton_;
-   
-   
-
 }

@@ -111,4 +111,7 @@ public interface VCSServerOperations extends CryptoServerOperations
 
    void askpassCompleted(String value,
                          ServerRequestCallback<Void> requestCallback);
+   
+   void vcsSshPublicKey(String privateKeyPath,
+                        ServerRequestCallback<String> requestCallback);
 }
