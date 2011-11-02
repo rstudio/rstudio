@@ -84,14 +84,17 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
             if (fileHeader == null)
                return false;
 
-            LineTableView view = new LineTableView();
-            view.setShowActions(false);
+            int filesCompared = 2;
             ArrayList<ChunkOrLine> lines = new ArrayList<ChunkOrLine>();
             DiffChunk chunk;
             while (null != (chunk = unifiedParser.nextChunk()))
             {
+               filesCompared = chunk.getRanges().length;
                lines.addAll(ChunkOrLine.fromChunk(chunk));
             }
+
+            LineTableView view = new LineTableView(filesCompared);
+            view.setShowActions(false);
             view.setData(lines, PatchMode.Stage);
             view.setWidth("100%");
 

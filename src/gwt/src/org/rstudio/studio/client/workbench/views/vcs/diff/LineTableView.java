@@ -65,6 +65,9 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
       String deletion();
       String comment();
 
+      String lineNumber();
+      String lastLineNumber();
+
       String actions();
       String lineActions();
       String chunkActions();
@@ -222,45 +225,51 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
       private boolean enabled_ = true;
    }
 
-   public LineTableView()
+   public LineTableView(int filesCompared)
    {
-      this(GWT.<LineTableViewCellTableResources>create(LineTableViewCellTableResources.class));
+      this(filesCompared,
+           GWT.<LineTableViewCellTableResources>create(LineTableViewCellTableResources.class));
    }
 
    @Inject
    public LineTableView(final LineTableViewCellTableResources res)
    {
+      this(2, res);
+   }
+
+   public LineTableView(int filesCompared,
+                        final LineTableViewCellTableResources res)
+   {
       super(1, res);
 
       FontSizer.applyNormalFontSize(this);
 
-      TextColumn<ChunkOrLine> oldCol = new TextColumn<ChunkOrLine>()
+      for (int i = 0; i < filesCompared; i++)
       {
-         @Override
-         public String getValue(ChunkOrLine object)
-         {
-            Line line = object.getLine();
-            return line == null ? "" :
-                   line.getType() == Type.Insertion ? "" :
-                   line.getType() == Type.Comment ? "" :
-                   intToString(line.getOldLine());
-         }
-      };
-      addColumn(oldCol);
+         final int index = i;
 
-      TextColumn<ChunkOrLine> newCol = new TextColumn<ChunkOrLine>()
-      {
-         @Override
-         public String getValue(ChunkOrLine object)
+         TextColumn<ChunkOrLine> col = new TextColumn<ChunkOrLine>()
          {
-            Line line = object.getLine();
-            return line == null ? "" :
-                   line.getType() == Type.Deletion ? "" :
-                   line.getType() == Type.Comment ? "" :
-                   intToString(line.getNewLine());
-         }
-      };
-      addColumn(newCol);
+            @Override
+            public String getValue(ChunkOrLine object)
+            {
+               Line line = object.getLine();
+               if (line == null)
+                  return "";
+
+               if (!line.getAppliesTo()[index])
+                  return "";
+
+               return intToString(line.getLines()[index]);
+            }
+         };
+         col.setHorizontalAlignment(TextColumn.ALIGN_RIGHT);
+         addColumn(col);
+         setColumnWidth(col, 100, Unit.PX);
+         addColumnStyleName(i, res.cellTableStyle().lineNumber());
+         if (i == filesCompared - 1)
+            addColumnStyleName(i, res.cellTableStyle().lastLineNumber());
+      }
 
       Column<ChunkOrLine, ChunkOrLine> textCol =
             new Column<ChunkOrLine, ChunkOrLine>(new LineContentCell())
@@ -273,8 +282,6 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
             };
       addColumn(textCol);
 
-      setColumnWidth(oldCol, 100, Unit.PX);
-      setColumnWidth(newCol, 100, Unit.PX);
       setColumnWidth(textCol, 100, Unit.PCT);
 
       setRowStyles(new RowStyles<ChunkOrLine>()
@@ -320,14 +327,9 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
          public Object getKey(ChunkOrLine item)
          {
             if (item.getChunk() != null)
-            {
-               DiffChunk chunk = item.getChunk();
-               return chunk.oldRowStart + "," + chunk.oldRowCount + "," +
-                     chunk.newRowStart + "," + chunk.newRowCount;
-            }
-
-            Line line = item.getLine();
-            return line.getOldLine() + "," + line.getNewLine();
+               return item.getChunk().getDiffIndex();
+            else
+               return item.getLine().getDiffIndex();
          }
       }) {
          @Override

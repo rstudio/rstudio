@@ -1002,7 +1002,7 @@ public:
    virtual core::Error show(const std::string& rev,
                             std::string* pOutput)
    {
-      return runCommand(git() << "show" << "--pretty=oneline" << "-M" << rev,
+      return runCommand(git() << "show" << "--pretty=oneline" << "-c" << "-M" << rev,
                         pOutput, NULL);
    }
 

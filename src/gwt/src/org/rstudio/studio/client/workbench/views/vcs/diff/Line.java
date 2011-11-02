@@ -57,8 +57,26 @@ public class Line implements Comparable<Line>
    public Line(Type type, int oldLine, int newLine, String text, int diffIndex)
    {
       type_ = type;
-      oldLine_ = oldLine;
-      newLine_ = newLine;
+      lines_ = new int[] {oldLine, newLine};
+      appliesTo_ = new boolean[]{ true };
+      text_ = text;
+      diffIndex_ = diffIndex;
+   }
+
+   public Line(Type type,
+               boolean[] appliesTo,
+               int[] lines,
+               String text,
+               int diffIndex)
+   {
+      if (lines.length < 2)
+         throw new IllegalArgumentException("Too few lines");
+      if (appliesTo.length != lines.length)
+         throw new IllegalArgumentException("appliesTo had unexpected length");
+
+      type_ = type;
+      appliesTo_ = appliesTo;
+      lines_ = lines;
       text_ = text;
       diffIndex_ = diffIndex;
    }
@@ -70,12 +88,12 @@ public class Line implements Comparable<Line>
 
    public int getOldLine()
    {
-      return oldLine_;
+      return lines_[0];
    }
 
    public int getNewLine()
    {
-      return newLine_;
+      return lines_[1];
    }
 
    public String getText()
@@ -90,9 +108,12 @@ public class Line implements Comparable<Line>
 
    public Line reverse()
    {
+      if (appliesTo_.length > 1)
+         throw new UnsupportedOperationException("Can't reverse combined diff");
+
       return new Line(type_.getInverse(),
-                      newLine_,
-                      oldLine_,
+                      lines_[1],
+                      lines_[0],
                       text_,
                       diffIndex_);
    }
@@ -106,7 +127,7 @@ public class Line implements Comparable<Line>
    @Override
    public int hashCode()
    {
-      return (type_.getValue() + "/" + oldLine_ + ":" + newLine_).hashCode();
+      return diffIndex_;
    }
 
    @Override
@@ -123,9 +144,19 @@ public class Line implements Comparable<Line>
       return rlines;
    }
 
+   public int[] getLines()
+   {
+      return lines_;
+   }
+
+   public boolean[] getAppliesTo()
+   {
+      return appliesTo_;
+   }
+
    private final Type type_;
-   private final int oldLine_;
-   private final int newLine_;
+   private final int[] lines_;
+   private final boolean[] appliesTo_;
    private final String text_;
    private final int diffIndex_;
 }

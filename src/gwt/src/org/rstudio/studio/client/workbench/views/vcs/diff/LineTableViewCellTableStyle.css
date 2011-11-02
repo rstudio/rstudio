@@ -54,28 +54,22 @@
    color: #777;
 }
 
-/* First column */
-.cellTableWidget > tbody > tr > td:first-child {
-   text-align: right;
+.cellTableWidget > .lineNumber {
+   background-color: #F0F0F0;
    border-right-color: #D9D9D9 !important;
 }
-.cellTableWidget > tbody > tr.same > td:first-child {
+.cellTableWidget > tbody > tr .lineNumber.lastLineNumber {
+   border-right-color: #BBB !important;
+}
+.cellTableWidget > tbody > tr.same .lineNumber {
    background-color: #F0F0F0;
 }
-.cellTableWidget > tbody > tr.header > td:first-child {
+.cellTableWidget > tbody > tr.header .lineNumber {
    border-right-color: transparent;
 }
 
-/* Second column */
-.cellTableWidget > tbody > tr > td:first-child + td {
+.cellTableWidget > tbody > tr > td:first-child {
    text-align: right;
-   border-right-color: #BBB;
-}
-.cellTableWidget > tbody > tr.same > td:first-child + td {
-   background-color: #F0F0F0;
-}
-.cellTableWidget > tbody > tr.header > td:first-child + td {
-   border-right-color: transparent;
 }
 
 .cellTableCell {
@@ -84,9 +78,7 @@
 
 .cellTableWidget > tbody > tr > td {
   border: selectionBorderWidth solid transparent;
-}
-.cellTableWidget > tbody > tr.cellTableKeyboardSelectedRow > td:first-child + td + td {
-  border: selectionBorderWidth dotted #888;
+   border-right-color: #D9D9D9 !important;
 }
 
 .cellTableSelectedRow {

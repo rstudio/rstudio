@@ -51,7 +51,7 @@ public class UnifiedEmitter
 
    public void addContext(DiffChunk chunk)
    {
-      contextLines_.addAll(chunk.diffLines);
+      contextLines_.addAll(chunk.getLines());
    }
 
    public void addDiffs(ArrayList<Line> lines)
@@ -81,7 +81,7 @@ public class UnifiedEmitter
 
          p.append(EOL);
 
-         for (Line line : chunk.diffLines)
+         for (Line line : chunk.getLines())
          {
             switch (line.getType())
             {
@@ -102,16 +102,27 @@ public class UnifiedEmitter
    public static String createChunkString(DiffChunk chunk)
    {
       StringBuilder sb = new StringBuilder();
+
       // Write chunk header: @@ -A,B +C,D @@
-      sb.append("@@ -");
-      sb.append(chunk.oldRowStart);
-      sb.append(',');
-      sb.append(chunk.oldRowCount);
-      sb.append(" +");
-      sb.append(chunk.newRowStart);
-      sb.append(',');
-      sb.append(chunk.newRowCount);
-      sb.append(" @@");
+
+      Range[] ranges = chunk.getRanges();
+      for (int i = 0; i < ranges.length; i++)
+         sb.append('@');
+
+      for (int i = 0; i < ranges.length - 1; i++)
+      {
+         sb.append(" -").append(ranges[i].startRow);
+         sb.append(',').append(ranges[i].rowCount);
+      }
+      sb.append(" +").append(ranges[ranges.length-1].startRow);
+      sb.append(",").append(ranges[ranges.length-1].rowCount);
+
+      sb.append(' ');
+      for (int i = 0; i < ranges.length; i++)
+         sb.append('@');
+
+      sb.append(chunk.getLineText());
+
       return sb.toString();
    }
 
@@ -162,12 +173,18 @@ public class UnifiedEmitter
    {
       Line first = sublist.get(0);
       Line last = sublist.get(sublist.size() - 1);
-      return new DiffChunk(first.getOldLine(),
-                           1 + last.getOldLine() - first.getOldLine(),
-                           first.getNewLine(),
-                           1 + last.getNewLine() - first.getNewLine(),
+
+      int[] firstLines = first.getLines();
+      int[] lastLines = last.getLines();
+
+      Range[] ranges = new Range[firstLines.length];
+      for (int i = 0; i < firstLines.length; i++)
+         ranges[i] = new Range(firstLines[i], 1 + lastLines[i] - firstLines[i]);
+
+      return new DiffChunk(ranges,
                            "",
-                           new ArrayList<Line>(sublist));
+                           new ArrayList<Line>(sublist),
+                           -1);
    }
 
    private static void prepareList(ArrayList<Line> lines, Type typeToRemove)

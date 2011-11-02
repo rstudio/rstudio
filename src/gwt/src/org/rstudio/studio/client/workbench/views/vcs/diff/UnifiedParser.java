@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.diff;
 
+import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.workbench.views.vcs.diff.Line.Type;
@@ -60,7 +61,7 @@ public class UnifiedParser
          return null;
 
       String line;
-      while (null != (line = nextLine()) && !(line.startsWith("@@ ") || line.startsWith("--- ")))
+      while (null != (line = nextLine()) && !(line.startsWith("@@") || line.startsWith("--- ")))
       {
       }
 
@@ -70,129 +71,235 @@ public class UnifiedParser
       if (line.startsWith("--- "))
          return null;
 
-      Match match = range_.match(line, 0);
-      if (match == null)
+
+      ChunkHeaderInfo chunkHeaderInfo = new ChunkHeaderParser(line).parse();
+      if (chunkHeaderInfo == null)
          throw new DiffFormatException("Malformed chunk header");
 
-      final int oldRowStart = Integer.parseInt(match.getGroup(1));
-      final int oldCount = match.hasGroup(2) ? Integer.parseInt(match.getGroup(2)) : 1;
-      final int newRowStart = Integer.parseInt(match.getGroup(3));
-      final int newCount = match.hasGroup(4) ? Integer.parseInt(match.getGroup(4)) : 1;
-      final String text = match.getGroup(6);
+      int chunkDiffIndex = diffIndex_++;
 
-      int oldRow = oldRowStart;
-      int oldRowsLeft = oldCount;
-      int newRow = newRowStart;
-      int newRowsLeft = newCount;
+      Range[] ranges = chunkHeaderInfo.ranges;
+      int[] counts = new int[ranges.length];
+      int[] positions = new int[ranges.length];
+      boolean[] MASK_NONE = new boolean[ranges.length];
+      boolean[] MASK_ALL = new boolean[ranges.length];
+      for (int i = 0; i < ranges.length; i++)
+      {
+         counts[i] = ranges[i].rowCount;
+         positions[i] = ranges[i].startRow-1;
+         MASK_ALL[i] = true;
+      }
+      int columns = ranges.length - 1;
+
+      boolean[] mask = new boolean[ranges.length];
 
       ArrayList<Line> lines = new ArrayList<Line>();
       for (;
-           oldRowsLeft > 0 || newRowsLeft > 0 || nextLineIsComment();
+           !isEmpty(counts) || nextLineIsComment();
            diffIndex_++)
       {
          String diffLine = nextLine();
          if (diffLine == null)
             throw new DiffFormatException("Diff ended prematurely");
-         if (diffLine.length() == 0)
-            throw new DiffFormatException("Unexpected blank line");
-         switch (diffLine.charAt(0))
+         if (diffLine.length() < columns)
+            throw new DiffFormatException("Unexpected line format");
+
+         int directive = ' ';
+         for (int i = 0; i < columns; i++)
+         {
+            mask[i] = diffLine.charAt(i) != ' ';
+            if (mask[i])
+            {
+               if (directive == ' ')
+                  directive = diffLine.charAt(i);
+               else if (directive != diffLine.charAt(i))
+                  throw new DiffFormatException("Conflicting directives");
+            }
+         }
+
+         switch (directive)
          {
             case ' ':
-               oldRowsLeft--;
-               newRowsLeft--;
+               // All positions increase by one (including new)
+
+               addToSelected(positions, MASK_ALL, +1);
+               addToSelected(counts, MASK_ALL, -1);
                lines.add(new Line(Type.Same,
-                                  oldRow++,
-                                  newRow++,
-                                  diffLine.substring(1),
+                                  MASK_ALL,
+                                  clone(positions),
+                                  diffLine.substring(columns),
                                   diffIndex_));
                break;
             case '-':
-               oldRowsLeft--;
+               // Masked positions increase by one
+
+               addToSelected(positions, mask, +1);
+               addToSelected(counts, mask, -1);
                lines.add(new Line(Type.Deletion,
-                                  oldRow++,
-                                  newRow-1,
-                                  diffLine.substring(1),
+                                  clone(mask),
+                                  clone(positions),
+                                  diffLine.substring(columns),
                                   diffIndex_));
                break;
             case '+':
-               newRowsLeft--;
+               // Unmasked positions increase by one (including new)
+
+               addToUnselected(positions, mask, +1);
+               addToUnselected(counts, mask, -1);
                lines.add(new Line(Type.Insertion,
-                                  oldRow-1,
-                                  newRow++,
-                                  diffLine.substring(1),
+                                  complement(mask),
+                                  clone(positions),
+                                  diffLine.substring(columns),
                                   diffIndex_));
                break;
             case '\\':
+               // No positions move??
+
                // e.g. "\\ No newline at end of file"
                lines.add(new Line(Type.Comment,
-                                  oldRow-1,
-                                  newRow-1,
-                                  diffLine.substring(1),
+                                  MASK_NONE,
+                                  clone(positions),
+                                  diffLine.substring(columns),
                                   diffIndex_));
                break;
             default:
                throw new DiffFormatException("Unexpected leading character");
          }
-
-         if (oldRowsLeft < 0 || newRowsLeft < 0)
-            throw new DiffFormatException("Diff ended prematurely");
       }
 
-      return new DiffChunk(oldRowStart, oldCount, newRowStart, newCount,
-                           text, lines);
+      if (!isZero(counts))
+         throw new DiffFormatException("Diff didn't match header ranges");
+
+      return new DiffChunk(ranges, chunkHeaderInfo.extraInfo, lines, chunkDiffIndex);
    }
 
-   private boolean isEOL()
+   private boolean[] complement(boolean[] array)
+   {
+      boolean[] newArray = new boolean[array.length];
+      for (int i = 0; i < array.length; i++)
+         newArray[i] = !array[i];
+      return newArray;
+   }
+
+   private int[] clone(int[] array)
+   {
+      int[] newArray = new int[array.length];
+      System.arraycopy(array, 0, newArray, 0, array.length);
+      return newArray;
+   }
+
+   private boolean[] clone(boolean[] array)
+   {
+      boolean[] newArray = new boolean[array.length];
+      System.arraycopy(array, 0, newArray, 0, array.length);
+      return newArray;
+   }
+
+   private void addToSelected(int[] array, boolean[] mask, int value)
+   {
+      for (int i = 0; i < mask.length; i++)
+      {
+         if (mask[i])
+            array[i] += value;
+      }
+   }
+
+   private void addToUnselected(int[] array, boolean[] mask, int value)
+   {
+      for (int i = 0; i < mask.length; i++)
+      {
+         if (!mask[i])
+            array[i] += value;
+      }
+   }
+
+   private boolean isEmpty(int[] array)
+   {
+      for (int i : array)
+      {
+         if (i > 0)
+            return false;
+      }
+      return true;
+   }
+
+   private boolean isZero(int[] array)
+   {
+      for (int i : array)
+      {
+         if (i != 0)
+            return false;
+      }
+      return true;
+   }
+
+   private boolean isEOD()
    {
       return pos_ >= data_.length();
    }
 
    private boolean nextLineIsComment()
    {
-      return !isEOL() && data_.charAt(pos_) == '\\';
+      return !isEOD() && data_.charAt(pos_) == '\\';
    }
 
    private String peekLine()
    {
-      if (isEOL())
-         return null;
-
-      Match match = newline_.match(data_, pos_);
-      if (match == null)
-      {
-         int pos = pos_;
-         return data_.substring(pos);
-      }
-      else
-      {
-         String value = data_.substring(pos_, match.getIndex());
-         return value;
-      }
+      return nextLine(true);
    }
 
    private String nextLine()
    {
-      if (isEOL())
+      return nextLine(false);
+   }
+
+   private String nextLine(boolean peek)
+   {
+      if (isEOD())
          return null;
 
-      Match match = newline_.match(data_, pos_);
-      if (match == null)
+      int head = pos_;
+      // i will point to the tail (exclusive) of the string to be returned
+      int i = data_.indexOf('\n', head);
+      // length will indicate how far past i we should set pos_ to (unless peek)
+      int length;
+
+      if (i == -1)
       {
-         int pos = pos_;
-         pos_ = data_.length();
-         return data_.substring(pos);
+         i = data_.length();
+         length = 0;
+      }
+      else if (i > 0 && data_.charAt(i-1) == '\r')
+      {
+         i--;
+         length = 2;
       }
       else
       {
-         String value = data_.substring(pos_, match.getIndex());
-         pos_ = match.getIndex() + match.getValue().length();
-         return value;
+         length = 1;
       }
+
+      if (!peek)
+         pos_ = i + length;
+
+      return data_.substring(head, i);
    }
 
    private final String data_;
    private int pos_;
-   private final Pattern newline_ = Pattern.create("\\r?\\n");
-   private final Pattern range_ = Pattern.create("^@@\\s*-([\\d]+)(?:,([\\d]+))?\\s+\\+([\\d]+)(?:,([\\d]+))?\\s*@@( (.*))?$", "m");
    private int diffIndex_;
+}
+
+
+class ChunkHeaderInfo
+{
+   ChunkHeaderInfo(Range[] ranges,
+                   String extraInfo)
+   {
+      this.ranges = ranges;
+      this.extraInfo = extraInfo;
+   }
+
+   public Range[] ranges;
+   public String extraInfo;
 }

@@ -152,7 +152,7 @@ public class ReviewPresenter implements IsWidget
       {
          ArrayList<DiffChunk> chunks = new ArrayList<DiffChunk>();
          chunks.add(event.getDiffChunk());
-         doPatch(event.getAction(), event.getDiffChunk().diffLines, chunks);
+         doPatch(event.getAction(), event.getDiffChunk().getLines(), chunks);
       }
 
       @Override
@@ -607,7 +607,7 @@ public class ReviewPresenter implements IsWidget
                   {
                      activeChunks_.add(chunk);
                      allLines.add(new ChunkOrLine(chunk));
-                     for (Line line : chunk.diffLines)
+                     for (Line line : chunk.getLines())
                         allLines.add(new ChunkOrLine(line));
                   }
 

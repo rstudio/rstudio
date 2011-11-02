@@ -16,33 +16,54 @@ import java.util.ArrayList;
 
 public class DiffChunk
 {
-   public DiffChunk(int oldRowStart,
-                    int oldRowCount,
-                    int newRowStart,
-                    int newRowCount,
+   public DiffChunk(Range[] ranges,
                     String lineText,
-                    ArrayList<Line> diffLines)
+                    ArrayList<Line> diffLines,
+                    int diffIndex)
    {
-      this.oldRowStart = oldRowStart;
-      this.oldRowCount = oldRowCount;
-      this.newRowStart = newRowStart;
-      this.newRowCount = newRowCount;
-      this.lineText = lineText;
-      this.diffLines = diffLines;
+      this.ranges_ = ranges;
+      this.lineText_ = lineText;
+      this.diffLines_ = diffLines;
+      diffIndex_ = diffIndex;
    }
 
    public DiffChunk reverse()
    {
-      return new DiffChunk(newRowStart, newRowCount,
-                           oldRowStart, oldRowCount,
-                           lineText,
-                           Line.reverseLines(diffLines));
+      if (ranges_.length != 2)
+         throw new UnsupportedOperationException(
+               "Can't reverse a combined diff");
+
+      Range[] newRanges = new Range[2];
+      newRanges[0] = ranges_[1];
+      newRanges[1] = ranges_[0];
+
+      return new DiffChunk(newRanges,
+                           lineText_,
+                           Line.reverseLines(diffLines_), diffIndex_);
    }
 
-   public final int oldRowStart;
-   public final int oldRowCount;
-   public final int newRowStart;
-   public final int newRowCount;
-   public final String lineText;
-   public final ArrayList<Line> diffLines;
+   public ArrayList<Line> getLines()
+   {
+      return diffLines_;
+   }
+
+   public Range[] getRanges()
+   {
+      return ranges_;
+   }
+
+   public String getLineText()
+   {
+      return lineText_;
+   }
+
+   public int getDiffIndex()
+   {
+      return diffIndex_;
+   }
+
+   private final String lineText_;
+   private final ArrayList<Line> diffLines_;
+   private final int diffIndex_;
+   private final Range[] ranges_;
 }

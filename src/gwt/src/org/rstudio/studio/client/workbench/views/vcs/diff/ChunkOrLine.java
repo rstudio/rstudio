@@ -20,7 +20,7 @@ public class ChunkOrLine
    {
       ArrayList<ChunkOrLine> list = new ArrayList<ChunkOrLine>();
       list.add(new ChunkOrLine(chunk));
-      for (Line line : chunk.diffLines)
+      for (Line line : chunk.getLines())
          list.add(new ChunkOrLine(line));
       return list;
    }
