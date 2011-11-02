@@ -23,7 +23,7 @@
 }
 
 .usingVcsHelp {
-   padding-left: 14px;
+   margin-top: 30px;
 }
 
 .viewPublicKeyLink {
@@ -45,7 +45,7 @@
 }
 
 .newSection {
-   margin-top: 28px;	
+   margin-top: 25px;	
 }
 
 .preferencesDialog .tight {

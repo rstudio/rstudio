@@ -14,6 +14,17 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 
+// TODO: detect scheme / https (WindoxEx.navigator.scheme)
+
+// TODO: upload warning for .ssh directory
+// TODO: auto change filemode for .ssh directory uploads
+
+// TODO: download warning for known key files (id_rsa, id_dsa, identity)
+
+// TODO: create ssh key UI (auto change filemode). warning for passphrase
+
+// TODO: project specific key paths
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -72,23 +83,6 @@ public class SourceControlPreferencesPane extends PreferencesPane
       add(chkVcsEnabled_);
       
       
-      HorizontalPanel helpPanel = new HorizontalPanel();
-      helpPanel.addStyleName(res_.styles().nudgeRight());
-      helpPanel.addStyleName(res_.styles().usingVcsHelp());
-      Image helpImage = new Image(ThemeResources.INSTANCE.help());
-      helpImage.addStyleName(res_.styles().helpImage());
-      helpPanel.add(helpImage);
-      HyperlinkLabel helpLink = new HyperlinkLabel(
-                                       "Using Version Control with RStudio");
-      helpLink.addClickHandler(new ClickHandler() {
-         public void onClick(ClickEvent event)
-         {
-            globalDisplay.openRStudioLink("using_version_control");
-         }  
-      });
-      helpPanel.add(helpLink);
-      add(helpPanel);
-      
       // git bin dir chooser  
       gitBinDirChooser_ = new DirectoryChooserTextBox(null,
                                                       "(Not Found)",
@@ -97,7 +91,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                                       fsContext);  
       addTextBoxChooser(new Label("Git bin directory:"), 
                         null, 
-                        res_.styles().newSection(), 
+                        null, 
                         gitBinDirChooser_);
         
       /*
@@ -108,7 +102,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                                                fileDialogs, 
                                                                fsContext);
       svnChooser.setText("");
-      addTextBoxChooser("Svn bin directory:", null, null, svnChooser);
+      addTextBoxChooser(new Label("Svn bin directory:"), null, null, svnChooser);
       */
       
       // ssh key path
@@ -167,6 +161,24 @@ public class SourceControlPreferencesPane extends PreferencesPane
          sshKeyPathChooser_.setVisible(false);
          sshButtonPanel.setVisible(false);
       }
+      
+      
+      HorizontalPanel helpPanel = new HorizontalPanel();
+      helpPanel.addStyleName(res_.styles().nudgeRight());
+      helpPanel.addStyleName(res_.styles().usingVcsHelp());
+      Image helpImage = new Image(ThemeResources.INSTANCE.help());
+      helpImage.addStyleName(res_.styles().helpImage());
+      helpPanel.add(helpImage);
+      HyperlinkLabel helpLink = new HyperlinkLabel(
+                                       "Using Version Control with RStudio");
+      helpLink.addClickHandler(new ClickHandler() {
+         public void onClick(ClickEvent event)
+         {
+            globalDisplay.openRStudioLink("using_version_control");
+         }  
+      });
+      helpPanel.add(helpLink);
+      add(helpPanel);
                                       
       chkVcsEnabled_.setEnabled(false);
       gitBinDirChooser_.setEnabled(false);
