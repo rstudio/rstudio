@@ -74,7 +74,14 @@ std::string Line::string() const
 Line GitGraph::addCommit(const std::string& commit,
                          const std::vector<std::string>& parents)
 {
+   // If this commit is a merge (has multiple parents) then we'll want to
+   // insert new columns immediately to the right of the existing column.
+   // If this commit isn't the parent of a previously seen node, then we'll
+   // definitely be adding one or more columns to the right of all the
+   // existing columns.
    Line::iterator insertNewColumnsAt = pendingLine_.end();
+
+   // Counts how many of the parents have been assigned to columns.
    size_t parentsUsed = 0;
 
    for (Line::iterator it = pendingLine_.begin();
@@ -83,9 +90,22 @@ Line GitGraph::addCommit(const std::string& commit,
    {
       if (it->preCommit == commit)
       {
+         // This column was expecting the current commit. We can either
+         // terminate the column here, or, we can take the first parent
+         // and set that as the new commit (postCommit) for this column.
+         // We can only do the latter once, as we want all of the columns
+         // for this commit to converge on one point in the graph.
+
+         // This if clause is what ensures we'll only do this once.
          if (insertNewColumnsAt == pendingLine_.end())
          {
+            // If this is a merge, we'll insert the other branches just
+            // to the right of us.
             insertNewColumnsAt = it + 1;
+
+            // Either assign the first parent to this, or if this is an
+            // unparented commit (e.g. initial commit in a repo) then just
+            // terminate here.
             if (parentsUsed == parents.size())
                it->postCommit = "";
             else
