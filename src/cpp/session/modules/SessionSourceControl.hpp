@@ -88,6 +88,10 @@ bool isGitInstalled();
 core::FilePath detectedGitBinDir();
 void onGitBinDirUpdated();
 
+// path to ssh key (return empty FilePath if the setting doesn't exist
+// or the file doesn't exist)
+core::FilePath verifiedSshKeyPath();
+
 bool isSvnInstalled();
 core::Error initialize();
 

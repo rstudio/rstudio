@@ -1669,7 +1669,7 @@ void postbackGitSSH_onSSHAddComplete(
 bool s_suppressSshAgentStart = false;
 
 // This is a hook that runs whenever git calls into ssh. We prepare
-// ssh-agent and add the ~/.ssh/id_rsa key, which may involve
+// ssh-agent and add the ssh key path, which may involve
 // prompting the user (a complex process which involves $SSH_ASKPASS
 // and rpostback-askpass, and calling into the client to show the
 // passphrase prompt).
@@ -1687,7 +1687,7 @@ void postbackGitSSH(const std::string& argument,
 {
    using namespace core::system;
 
-   FilePath key = getTrueHomeDir().childPath(".ssh/id_rsa");
+   FilePath key = source_control::verifiedSshKeyPath();
    if (!key.exists())
    {
       // No default key, we're not going to know how to call ssh-add. Give up.
@@ -2176,6 +2176,23 @@ FilePath detectedGitBinDir()
    else
       return FilePath();
 #endif
+}
+
+FilePath verifiedSshKeyPath()
+{
+   // if it is provided then resolve aliases, otherwise use default
+   std::string sskKeyPathSetting = userSettings().sshKeyPath();
+   FilePath sshKeyPath;
+   if (!sskKeyPathSetting.empty())
+      sshKeyPath = module_context::resolveAliasedPath(sskKeyPathSetting);
+   else
+      sshKeyPath = getTrueHomeDir().childPath(".ssh/id_rsa");
+
+   // verify existence
+   if (sshKeyPath.exists())
+      return sshKeyPath;
+   else
+      return FilePath();
 }
 
 void onUserSettingsChanged()

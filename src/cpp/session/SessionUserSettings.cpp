@@ -360,7 +360,15 @@ void UserSettings::setGitBinDir(const FilePath& gitBinDir)
    settings_.set("vcsGitBinDir", gitBinDir.absolutePath());
 }
 
+std::string UserSettings::sshKeyPath() const
+{
+   return settings_.get("vcsSshKeyPath");
+}
 
+void UserSettings::setSshKeyPath(const std::string& sshKeyPath)
+{
+   settings_.set("vcsSshKeyPath", sshKeyPath);
+}
 
 bool UserSettings::alwaysSaveHistory() const
 {

@@ -288,6 +288,11 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    if (gitBinDir.empty())
       gitBinDir = source_control::detectedGitBinDir();
    sourceControlPrefs["git_bin_dir"] = gitBinDir.absolutePath();
+   FilePath sshKeyPath = source_control::verifiedSshKeyPath();
+   if (!sshKeyPath.empty())
+      sourceControlPrefs["ssh_key_path"] = module_context::createAliasedPath(sshKeyPath);
+   else
+      sourceControlPrefs["ssh_key_path"] = "";
 
    // initialize and set result object
    json::Object result;

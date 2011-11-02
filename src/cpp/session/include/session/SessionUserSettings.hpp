@@ -116,6 +116,9 @@ public:
    core::FilePath gitBinDir() const;
    void setGitBinDir(const core::FilePath& gitBinDir);
 
+   std::string sshKeyPath() const;
+   void setSshKeyPath(const std::string& sshKeyPath);
+
 private:
 
    void onSettingsFileChanged(
