@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FileChooserTextBox;
@@ -76,7 +77,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                                       null,
                                                       fileDialogs, 
                                                       fsContext);  
-      addTextBoxChooser("Git bin directory:", 
+      addTextBoxChooser(new Label("Git bin directory:"), 
                         null, 
                         res_.styles().newSection(), 
                         gitBinDirChooser_);
@@ -108,7 +109,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
             
          }    
       });    
-      addTextBoxChooser("SSH key path:", 
+      Label sshKeyPathLabel = new Label("SSH key path:");
+      addTextBoxChooser(sshKeyPathLabel, 
                         publicKeyLink, 
                         res_.styles().newSection(),
                         sshKeyPathChooser_);
@@ -144,8 +146,16 @@ public class SourceControlPreferencesPane extends PreferencesPane
       
       add(sshButtonPanel);
       
-      
-                                             
+      // hide the ssh UI if we are on linux or mac desktop
+      if (Desktop.isDesktop() && 
+          (BrowseCap.isMacintosh() || BrowseCap.isLinux()))
+      {
+         sshKeyPathLabel.setVisible(false);
+         publicKeyLink.setVisible(false);
+         sshKeyPathChooser_.setVisible(false);
+         sshButtonPanel.setVisible(false);
+      }
+                                      
       chkVcsEnabled_.setEnabled(false);
       gitBinDirChooser_.setEnabled(false);
       sshKeyPathChooser_.setEnabled(false);
@@ -203,7 +213,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       rPrefs.setSourceControlPrefs(prefs);
    }
    
-   private void addTextBoxChooser(String caption, 
+   private void addTextBoxChooser(Label captionLabel, 
                                   HyperlinkLabel link,
                                   String captionPanelStyle,
                                   TextBoxWithButton chooser)
@@ -216,7 +226,6 @@ public class SourceControlPreferencesPane extends PreferencesPane
       if (captionPanelStyle != null)
          captionPanel.addStyleName(captionPanelStyle);
       
-      Label captionLabel = new Label(caption);
       captionPanel.add(captionLabel);
       captionPanel.setCellHorizontalAlignment(
                                           captionLabel,
