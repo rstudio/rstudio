@@ -20,7 +20,19 @@
 
 .usingVcsHelp {
    padding-left: 14px;
-   margin-bottom: 20px;
+}
+
+.viewPublicKeyLink {
+   font-size: 11px;	
+}
+
+.sshButtonPanel {
+   margin-top: -3px;
+   margin-left: 3px;
+}
+
+.newSection {
+   margin-top: 28px;	
 }
 
 .preferencesDialog .tight {

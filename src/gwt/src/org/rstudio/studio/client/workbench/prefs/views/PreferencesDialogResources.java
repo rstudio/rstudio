@@ -37,6 +37,9 @@ public interface PreferencesDialogResources extends ClientBundle
       String extraSpaced();
       String helpImage();
       String usingVcsHelp();
+      String viewPublicKeyLink();
+      String sshButtonPanel();
+      String newSection();
       String encodingChooser();
       String textBoxWithChooser();
    }

@@ -13,10 +13,12 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -24,8 +26,11 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.HyperlinkLabel;
+import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -65,23 +70,87 @@ public class SourceControlPreferencesPane extends PreferencesPane
       helpPanel.add(helpLink);
       add(helpPanel);
       
-      Label gitBinDirLabel = new Label("Git bin directory:");
-      gitBinDirLabel.addStyleName(res_.styles().nudgeRight());
-      add(tight(gitBinDirLabel));
+      // git bin dir chooser  
+      gitBinDirChooser_ = new DirectoryChooserTextBox(null,
+                                                      "(Not Found)",
+                                                      null,
+                                                      fileDialogs, 
+                                                      fsContext);  
+      addTextBoxChooser("Git bin directory:", 
+                        null, 
+                        res_.styles().newSection(), 
+                        gitBinDirChooser_);
+        
+      /*
+      TextBoxWithButton svnChooser = new DirectoryChooserTextBox(
+                                                               null,
+                                                               "(Not Found)",
+                                                               null,
+                                                               fileDialogs, 
+                                                               fsContext);
+      svnChooser.setText("");
+      addTextBoxChooser("Svn bin directory:", null, null, svnChooser);
+      */
       
-      add(gitBinDirChooser_ = new DirectoryChooserTextBox(null,
-                                                         "(Not Found)",
-                                                          null,
-                                                          fileDialogs, 
-                                                          fsContext));  
-      gitBinDirChooser_.addStyleName(res_.styles().spaced());
-      gitBinDirChooser_.addStyleName(res_.styles().nudgeRight());
-      gitBinDirChooser_.addStyleName(res_.styles().textBoxWithChooser());
+      // ssh key path
+      sshKeyPathChooser_ = new FileChooserTextBox(null,
+                                                  "(Not Found)",
+                                                  null,
+                                                  fileDialogs, 
+                                                  fsContext);
+      HyperlinkLabel publicKeyLink = new HyperlinkLabel("View public key");
+      publicKeyLink.addStyleName(res_.styles().viewPublicKeyLink());
+      publicKeyLink.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            
+            
+         }    
+      });    
+      addTextBoxChooser("SSH key path:", 
+                        publicKeyLink, 
+                        res_.styles().newSection(),
+                        sshKeyPathChooser_);
+      tight(sshKeyPathChooser_);
+      
+      // ssh key path action buttons
+      HorizontalPanel sshButtonPanel = new HorizontalPanel();
+      sshButtonPanel.addStyleName(res_.styles().sshButtonPanel());
+      createKeyButton_ = new SmallButton();
+      createKeyButton_.setText("Create New Key...");
+      createKeyButton_.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            // TODO Auto-generated method stub
+            
+         }
+      });
+      sshButtonPanel.add(createKeyButton_);
+      
+      uploadKeyButton_ = new SmallButton();
+      uploadKeyButton_.setText("Upload Key...");
+      uploadKeyButton_.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            // TODO Auto-generated method stub
+            
+         }
+      });
+      if (!Desktop.isDesktop())
+         sshButtonPanel.add(uploadKeyButton_);
+      
+      add(sshButtonPanel);
       
       
-      
+                                             
       chkVcsEnabled_.setEnabled(false);
       gitBinDirChooser_.setEnabled(false);
+      sshKeyPathChooser_.setEnabled(false);
+      createKeyButton_.setEnabled(false);
+      uploadKeyButton_.setEnabled(false);
    }
 
    @Override
@@ -92,10 +161,14 @@ public class SourceControlPreferencesPane extends PreferencesPane
       
       chkVcsEnabled_.setEnabled(true);
       gitBinDirChooser_.setEnabled(true);
+      sshKeyPathChooser_.setEnabled(true);
+      createKeyButton_.setEnabled(true);
+      uploadKeyButton_.setEnabled(true);
       
       
       chkVcsEnabled_.setValue(prefs.getVcsEnabled());
       gitBinDirChooser_.setText(prefs.getGitBinDir());
+      sshKeyPathChooser_.setText(prefs.getSSHKeyPath());
       
    }
 
@@ -124,9 +197,48 @@ public class SourceControlPreferencesPane extends PreferencesPane
       
       SourceControlPrefs prefs = SourceControlPrefs.create(
                                           chkVcsEnabled_.getValue(),
-                                          gitBinDirChooser_.getText());
+                                          gitBinDirChooser_.getText(),
+                                          sshKeyPathChooser_.getText());
       
       rPrefs.setSourceControlPrefs(prefs);
+   }
+   
+   private void addTextBoxChooser(String caption, 
+                                  HyperlinkLabel link,
+                                  String captionPanelStyle,
+                                  TextBoxWithButton chooser)
+   {
+      String textWidth = "250px";
+      
+      HorizontalPanel captionPanel = new HorizontalPanel();
+      captionPanel.setWidth(textWidth);
+      captionPanel.addStyleName(res_.styles().nudgeRight());
+      if (captionPanelStyle != null)
+         captionPanel.addStyleName(captionPanelStyle);
+      
+      Label captionLabel = new Label(caption);
+      captionPanel.add(captionLabel);
+      captionPanel.setCellHorizontalAlignment(
+                                          captionLabel,
+                                          HasHorizontalAlignment.ALIGN_LEFT);
+      
+      if (link != null)
+      {
+         HorizontalPanel linkPanel = new HorizontalPanel();
+         linkPanel.add(link);
+         captionPanel.add(linkPanel);
+         captionPanel.setCellHorizontalAlignment(
+                                           linkPanel, 
+                                           HasHorizontalAlignment.ALIGN_RIGHT);
+       
+      }
+      
+      add(tight(captionPanel));
+      
+      chooser.setTextWidth(textWidth);
+      chooser.addStyleName(res_.styles().nudgeRight());
+      chooser.addStyleName(res_.styles().textBoxWithChooser());
+      add(chooser);    
    }
 
    private final PreferencesDialogResources res_;
@@ -134,5 +246,12 @@ public class SourceControlPreferencesPane extends PreferencesPane
    private final CheckBox chkVcsEnabled_;
    
    private TextBoxWithButton gitBinDirChooser_;
+   
+   private TextBoxWithButton sshKeyPathChooser_;
+   
+   private SmallButton createKeyButton_;
+   private SmallButton uploadKeyButton_;
+   
+   
 
 }

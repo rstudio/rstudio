@@ -38,18 +38,18 @@ public class TextBoxWithButton extends Composite
 
       themedButton_ = new ThemedButton(action, handler);
 
-      HorizontalPanel inner = new HorizontalPanel();
-      inner.add(textBox_);
-      inner.add(themedButton_);
-      inner.setCellWidth(textBox_, "100%");
-      inner.setWidth("100%");
+      inner_ = new HorizontalPanel();
+      inner_.add(textBox_);
+      inner_.add(themedButton_);
+      inner_.setCellWidth(textBox_, "100%");
+      inner_.setWidth("100%");
 
       FlowPanel outer = new FlowPanel();
       if (label != null)
       {
          outer.add(new Label(label, true));
       }
-      outer.add(inner);
+      outer.add(inner_);
       initWidget(outer);
 
       addStyleName(ThemeResources.INSTANCE.themeStyles().textBoxWithButton());
@@ -81,6 +81,11 @@ public class TextBoxWithButton extends Composite
       else
          return "";
    }
+   
+   public void setTextWidth(String width)
+   {
+      inner_.setCellWidth(textBox_, width);
+   }
 
    public void click()
    {
@@ -98,6 +103,7 @@ public class TextBoxWithButton extends Composite
       themedButton_.setEnabled(enabled);
    }
 
+   private HorizontalPanel inner_;
    private TextBox textBox_;
    private ThemedButton themedButton_;
    private String emptyLabel_;
