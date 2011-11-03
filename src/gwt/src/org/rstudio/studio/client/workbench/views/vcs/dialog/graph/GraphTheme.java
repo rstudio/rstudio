@@ -18,6 +18,26 @@ import java.util.HashMap;
 
 public class GraphTheme
 {
+   public int getColumnWidth()
+   {
+      return 12;
+   }
+
+   public int getRowHeight()
+   {
+      return 24;
+   }
+
+   public double getStrokeWidth()
+   {
+      return 2.0;
+   }
+
+   public double getCircleRadius()
+   {
+      return 3.0;
+   }
+
    public CssColor getColorForId(int id)
    {
       if (!colors_.containsKey(id))

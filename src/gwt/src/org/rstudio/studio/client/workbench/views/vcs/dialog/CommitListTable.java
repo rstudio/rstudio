@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.cell.client.AbstractSafeHtmlCell;
+import com.google.gwt.cell.client.Cell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -34,6 +35,8 @@ import org.rstudio.core.client.theme.RStudioCellTableStyle;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPanel.Styles;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitListDisplay;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.graph.GraphLine;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.graph.GraphTheme;
 
 import java.util.List;
 
@@ -49,6 +52,60 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
 
    interface CommitListTableCellTableStyle extends CellTable.Style
    {
+   }
+
+   private static class CommitColumn extends Column<CommitInfo, CommitInfo>
+   {
+      private static class RenderCell extends AbstractSafeHtmlCell<CommitInfo>
+      {
+         private RenderCell(SafeHtmlRenderer<CommitInfo> commitInfoSafeHtmlRenderer,
+                            String... consumedEvents)
+         {
+            super(commitInfoSafeHtmlRenderer, consumedEvents);
+         }
+
+         @Override
+         protected void render(Context context, SafeHtml data, SafeHtmlBuilder sb)
+         {
+            if (data != null)
+               sb.append(data);
+         }
+      }
+
+      private CommitColumn(SafeHtmlRenderer<CommitInfo> renderer)
+      {
+         super(new RenderCell(renderer));
+      }
+
+      @Override
+      public CommitInfo getValue(CommitInfo object)
+      {
+         return object;
+      }
+   }
+
+   private class GraphRenderer implements SafeHtmlRenderer<CommitInfo>
+   {
+      public GraphRenderer(GraphTheme theme)
+      {
+         theme_ = theme;
+      }
+
+      @Override
+      public SafeHtml render(CommitInfo object)
+      {
+         if (object.getGraph().length() == 0)
+            return null;
+         return new GraphLine(object.getGraph()).render(theme_);
+      }
+
+      @Override
+      public void render(CommitInfo object, SafeHtmlBuilder builder)
+      {
+         builder.append(render(object));
+      }
+
+      private final GraphTheme theme_;
    }
 
    private class SubjectRenderer implements SafeHtmlRenderer<CommitInfo>
@@ -103,6 +160,10 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
             GWT.<Resources>create(Resources.class));
       styles_ = styles;
 
+      graphTheme_ = new GraphTheme();
+      graphCol_ = new CommitColumn(new GraphRenderer(graphTheme_));
+      addColumn(graphCol_, "Graph");
+
       TextColumn<CommitInfo> idCol = new TextColumn<CommitInfo>()
       {
          @Override
@@ -113,23 +174,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
       };
       addColumn(idCol, "SHA");
 
-      Column<CommitInfo, CommitInfo> subjectCol = new Column<CommitInfo, CommitInfo>(new AbstractSafeHtmlCell<CommitInfo>(new SubjectRenderer()) {
-         @Override
-         protected void render(Context context,
-                               SafeHtml data,
-                               SafeHtmlBuilder sb)
-         {
-            if (data != null)
-               sb.append(data);
-         }
-      })
-      {
-         @Override
-         public CommitInfo getValue(CommitInfo object)
-         {
-            return object;
-         }
-      };
+      CommitColumn subjectCol = new CommitColumn(new SubjectRenderer());
       addColumn(subjectCol, "Subject");
 
       TextColumn<CommitInfo> authorCol = new TextColumn<CommitInfo>()
@@ -153,6 +198,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
       };
       addColumn(dateCol, "Date");
 
+      setColumnWidth(graphCol_, "0");
       setColumnWidth(idCol, "100px");
       setColumnWidth(subjectCol, "67%");
       setColumnWidth(authorCol, "33%");
@@ -171,15 +217,40 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
                selectionModel_.setSelected(selectionModel_.getSelectedObject(),
                                            false);
             }
+            updateGraphColumnWidth();
             maybePreselectFirstRow();
          }
       });
+   }
+
+   private void updateGraphColumnWidth()
+   {
+      int cols = 0;
+      for (CommitInfo commit : getVisibleItems())
+      {
+         if (commit.getGraph() != null)
+         {
+            cols = Math.max(
+                  cols, new GraphLine(commit.getGraph()).getColumns().length);
+         }
+      }
+
+      if (cols > 0)
+      {
+         // Looks clipped when only 1 column for some reason. Whatever.
+         cols = Math.max(2, cols);
+
+         setColumnWidth(graphCol_, (cols * graphTheme_.getColumnWidth()) + "px");
+      }
+      else
+         setColumnWidth(graphCol_, "0");
    }
 
    @Override
    public void setRowData(int start, List<? extends CommitInfo> values)
    {
       super.setRowData(start, values);
+      updateGraphColumnWidth();
       maybePreselectFirstRow();
    }
 
@@ -212,4 +283,6 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
 
    private final SingleSelectionModel<CommitInfo> selectionModel_;
    private final Styles styles_;
+   private CommitColumn graphCol_;
+   private GraphTheme graphTheme_;
 }

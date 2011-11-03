@@ -33,23 +33,24 @@ public class GraphLine
       return columns_;
    }
 
-   public SafeHtml render()
+   public SafeHtml render(GraphTheme theme)
    {
-      Canvas canvas = Canvas.createIfSupported();
-      draw(canvas, new GraphTheme(), 12, 24);
+      draw(s_canvas, theme);
       return SafeHtmlUtil.createOpenTag("img",
                                         "style", "display: block",
-                                        "src", canvas.toDataUrl());
+                                        "src", s_canvas.toDataUrl());
    }
 
-   public void draw(Canvas canvas, GraphTheme theme, int colWidth, int height)
+   private void draw(Canvas canvas, GraphTheme theme)
    {
+      int height = theme.getRowHeight();
+      int colWidth = theme.getColumnWidth();
+
       canvas.setCoordinateSpaceHeight(height);
       canvas.setCoordinateSpaceWidth(colWidth * columns_.length);
       Context2d ctx = canvas.getContext2d();
 
-      //ctx.setFillStyle(theme.getBackgroundColor().value());
-      ctx.clearRect(0, 0, colWidth * columns_.length, height);
+      //ctx.clearRect(0, 0, colWidth * columns_.length, height);
 
       ctx.translate(colWidth / 2.0, 0);
 
@@ -66,7 +67,7 @@ public class GraphLine
             endPos++;
 
          ctx.setStrokeStyle(theme.getColorForId(c.id));
-         ctx.setLineWidth(2.0);
+         ctx.setLineWidth(theme.getStrokeWidth());
          ctx.setLineJoin(LineJoin.ROUND);
 
          if (!c.nexus && !c.start && !c.end)
@@ -115,13 +116,13 @@ public class GraphLine
       // draw a circle on the nexus
       ctx.beginPath();
       ctx.arc(nexusColumn * colWidth, height / 2.0,
-              5, 0, Math.PI * 2);
+              theme.getCircleRadius() + theme.getStrokeWidth(), 0, Math.PI * 2);
       ctx.closePath();
       ctx.fill();
 
       ctx.beginPath();
       ctx.arc(nexusColumn * colWidth, height / 2.0,
-              3, 0, Math.PI * 2);
+              theme.getCircleRadius(), 0, Math.PI * 2);
       ctx.closePath();
       ctx.setFillStyle("white");
       ctx.fill();
@@ -129,5 +130,8 @@ public class GraphLine
    }
 
    private GraphColumn[] columns_;
+
+   // Use a static canvas to avoid the overhead of continually recreating them
+   private static final Canvas s_canvas = Canvas.createIfSupported();
 }
 
