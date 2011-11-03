@@ -11,6 +11,9 @@
  *
  */
 
+#include <limits>
+#include <algorithm>
+
 #include <core/GitGraph.hpp>
 
 #include <boost/bind.hpp>
@@ -44,7 +47,7 @@ size_t Line::nexus() const
 {
    Line::const_iterator it = std::find_if(begin(), end(), &isColumnDynamic);
    if (it == end())
-      return SIZE_MAX;
+      return std::numeric_limits<size_t>::max();
    else
       return it - begin();
 }
@@ -140,7 +143,7 @@ Line GitGraph::addCommit(const std::string& commit,
         it++)
    {
       if (it->postCommit.empty())
-         it->endPosition = SIZE_MAX;
+         it->endPosition = std::numeric_limits<size_t>::max();
       else
          it->endPosition = endPos++;
    }
