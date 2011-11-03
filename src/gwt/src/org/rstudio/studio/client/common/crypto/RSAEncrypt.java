@@ -74,6 +74,11 @@ public class RSAEncrypt
          }
       });
    }
+   
+   public static void clearCache()
+   {
+      publicKeyInfo_ = null;
+   }
 
    private static native String encrypt(String value,
                                         String exponent,
