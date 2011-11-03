@@ -252,6 +252,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
    @Override
    protected void onLoad()
    {
+      super.onLoad();
       FocusHelper.setFocusDeferred(txtPassphrase_);
    }
    
