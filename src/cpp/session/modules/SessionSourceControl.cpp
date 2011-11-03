@@ -660,8 +660,8 @@ public:
    {
       core::system::ProcessResult result;
       Error error = core::system::runCommand(
-            git() << "config" << "--get" <<
-               "branch." + branch + ".remote",
+            wrapWithCd(git() << "config" << "--get" <<
+               "branch." + branch + ".remote"),
             procOptions(),
             &result);
       if (error)
