@@ -14,8 +14,6 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 
-// TODO: auto change filemode for .ssh directory uploads
-
 // TODO: create ssh key UI (auto change filemode). 
 
 /*
