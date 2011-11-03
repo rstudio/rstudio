@@ -152,18 +152,26 @@ public class SourceControlPreferencesPane extends PreferencesPane
             
          }
       });
+      // only add the create-key button in server mode
       sshButtonPanel.add(createKeyButton_);
-    
       add(sshButtonPanel);
       
-      // hide the ssh UI if we are on linux or mac desktop
-      if (Desktop.isDesktop() && 
-          (BrowseCap.isMacintosh() || BrowseCap.isLinux()))
+      // manipualte visiblity of ssh ui depending on mode/platform
+      if (Desktop.isDesktop()) 
       {
-         sshKeyPathLabel.setVisible(false);
-         publicKeyLink_.setVisible(false);
-         sshKeyPathChooser_.setVisible(false);
+         // never allow key creation in desktop mode (because the user
+         // has other ways to accomplish this that are better supported
+         // and documented)
          sshButtonPanel.setVisible(false);
+         
+         // wipe out all references to ssh keys on mac & linux desktop
+         // (because we defer entirely to the system in these configurations)
+         if (BrowseCap.isMacintosh() || BrowseCap.isLinux())
+         {
+            sshKeyPathLabel.setVisible(false);
+            publicKeyLink_.setVisible(false);
+            sshKeyPathChooser_.setVisible(false);
+         }
       }
       
       
