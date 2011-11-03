@@ -45,6 +45,7 @@ public class GraphLine
    {
       int height = theme.getRowHeight();
       int colWidth = theme.getColumnWidth();
+      double pad = theme.getVerticalLinePadding();
 
       canvas.setCoordinateSpaceHeight(height);
       canvas.setCoordinateSpaceWidth(colWidth * columns_.length);
@@ -76,9 +77,11 @@ public class GraphLine
 
             ctx.beginPath();
             ctx.moveTo(startPos * colWidth, 0);
+            ctx.lineTo(startPos * colWidth, pad);
             // This next lineTo helps ensure that the shape of the line looks
             // congruous to any specials on the same line
             ctx.lineTo(Math.min(startPos, endPos) * colWidth, height / 2.0);
+            ctx.lineTo(endPos * colWidth, height - pad);
             ctx.lineTo(endPos * colWidth, height);
             ctx.stroke();
          }
@@ -97,6 +100,7 @@ public class GraphLine
                // draw from i to nexusColumn;
                ctx.beginPath();
                ctx.moveTo(startPos * colWidth, 0);
+               ctx.lineTo(startPos * colWidth, pad);
                ctx.lineTo(nexusColumn * colWidth, height / 2.0);
                ctx.stroke();
             }
@@ -106,6 +110,7 @@ public class GraphLine
                // draw from nexusColumn to endPosition
                ctx.beginPath();
                ctx.moveTo(nexusColumn * colWidth, height / 2.0);
+               ctx.lineTo(endPos * colWidth, height - pad);
                ctx.lineTo(endPos * colWidth, height);
                ctx.stroke();
             }

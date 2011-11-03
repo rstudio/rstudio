@@ -56,5 +56,10 @@ public class GraphTheme
       return 60 + (int)(Math.random() * 140);
    }
 
+   public double getVerticalLinePadding()
+   {
+      return 2.0;
+   }
+
    private static HashMap<Integer, CssColor> colors_ = new HashMap<Integer, CssColor>();
 }
