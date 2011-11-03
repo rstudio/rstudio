@@ -33,6 +33,20 @@ public class GraphLine
       return columns_;
    }
 
+   public int getTotalWidth(GraphTheme theme)
+   {
+      int startColumns = 0;
+      int endColumns = 0;
+      for (GraphColumn c : columns_)
+      {
+         if (!c.start)
+            startColumns++;
+         if (!c.end)
+            endColumns++;
+      }
+      return Math.max(startColumns, endColumns) * theme.getColumnWidth();
+   }
+
    public SafeHtml render(GraphTheme theme)
    {
       draw(s_canvas, theme);
@@ -48,7 +62,7 @@ public class GraphLine
       double pad = theme.getVerticalLinePadding();
 
       canvas.setCoordinateSpaceHeight(height);
-      canvas.setCoordinateSpaceWidth(colWidth * columns_.length);
+      canvas.setCoordinateSpaceWidth(colWidth * getTotalWidth(theme));
       Context2d ctx = canvas.getContext2d();
 
       //ctx.clearRect(0, 0, colWidth * columns_.length, height);

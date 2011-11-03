@@ -13,7 +13,6 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.cell.client.AbstractSafeHtmlCell;
-import com.google.gwt.cell.client.Cell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -192,9 +191,11 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
       styles_ = styles;
 
       graphTheme_ = new GraphTheme(styles.graphLineImg());
+      graphCol_ = new CommitColumn(new GraphRenderer(graphTheme_));
+      addColumn(graphCol_);
 
-      CommitColumn subjectCol = new CommitColumn(
-            new GraphAndSubjectRenderer(graphTheme_));
+
+      CommitColumn subjectCol = new CommitColumn(new SubjectRenderer());
       addColumn(subjectCol, "Subject");
 
       TextColumn<CommitInfo> authorCol = new TextColumn<CommitInfo>()
@@ -227,11 +228,11 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
          }
       };
       addColumn(idCol, "SHA");
-
-      setColumnWidth(subjectCol, "70%");
-      setColumnWidth(authorCol, "30%");
-      setColumnWidth(dateCol, "100px");
+      setColumnWidth(graphCol_, "0");
       setColumnWidth(idCol, "100px");
+      setColumnWidth(subjectCol, "67%");
+      setColumnWidth(authorCol, "33%");
+      setColumnWidth(dateCol, "100px");
 
       selectionModel_ = new SingleSelectionModel<CommitInfo>();
       setSelectionModel(selectionModel_);
@@ -246,15 +247,36 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
                selectionModel_.setSelected(selectionModel_.getSelectedObject(),
                                            false);
             }
+            updateGraphColumnWidth();
             maybePreselectFirstRow();
          }
       });
+   }
+
+   private void updateGraphColumnWidth()
+   {
+      int width = 0;
+      for (CommitInfo commit : getVisibleItems())
+      {
+         if (commit.getGraph() != null)
+         {
+            width = Math.max(
+                  width,
+                  new GraphLine(commit.getGraph()).getTotalWidth(graphTheme_));
+         }
+      }
+
+      if (width > 0)
+         setColumnWidth(graphCol_, (width + 12) + "px");
+      else
+         setColumnWidth(graphCol_, "0");
    }
 
    @Override
    public void setRowData(int start, List<? extends CommitInfo> values)
    {
       super.setRowData(start, values);
+      updateGraphColumnWidth();
       maybePreselectFirstRow();
    }
 
@@ -287,5 +309,6 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
 
    private final SingleSelectionModel<CommitInfo> selectionModel_;
    private final Styles styles_;
+   private CommitColumn graphCol_;
    private GraphTheme graphTheme_;
 }
