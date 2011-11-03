@@ -51,8 +51,7 @@ public:
    // results in the most orderly graphs.
    size_t nexus() const;
 
-   // Prints out a string representation of this row for debug
-   // and testing purposes.
+   // Prints out a machine-parsable string representation of this row
    std::string string() const;
 };
 

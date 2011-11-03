@@ -56,17 +56,24 @@ std::string Line::string() const
    for (size_t i = 0; i < size(); i++)
    {
       const Column& c = at(i);
-      if (!sawNexus && isColumnDynamic(c))
+      if (isColumnDynamic(c))
       {
-         sawNexus = true;
-         output.append("*");
+         if (!sawNexus)
+         {
+            sawNexus = true;
+            output.append("*");
+         }
+
+         if (c.preCommit.empty())
+            output.append("+");
+         if (c.postCommit.empty())
+            output.append("-");
       }
-      else if (isColumnTerminating(c))
-      {
-         continue;
-      }
+
       output.append(boost::lexical_cast<std::string>(c.id));
-      output.append(" ");
+
+      if (i < size() - 1)
+         output.append(" ");
    }
    return output;
 }

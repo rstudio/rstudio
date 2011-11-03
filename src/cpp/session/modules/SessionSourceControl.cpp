@@ -39,6 +39,7 @@
 #include <core/system/Environment.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/GitGraph.hpp>
 #include <core/Scope.hpp>
 #include <core/StringUtils.hpp>
 
@@ -120,6 +121,7 @@ struct CommitInfo
    boost::int64_t date; // millis since epoch, UTC
    std::vector<std::string> refs;
    std::vector<std::string> tags;
+   std::string graph;
 };
 
 void enqueueRefreshEvent()
@@ -888,7 +890,10 @@ public:
       std::vector<std::string> outLines;
 
       ShellCommand cmd = git() << "log";
-      cmd << "--pretty=raw" << "--decorate=full";
+      cmd << "--pretty=raw" << "--decorate=full" << "--topo-order";
+
+      ShellCommand revListCmd = git() << "rev-list" << "--topo-order" << "--parents";
+      int revListSkip = skip;
 
       if (filterText.empty())
       {
@@ -903,11 +908,21 @@ public:
          {
             cmd << "--max-count=" + boost::lexical_cast<std::string>(maxentries);
             maxentries = -1;
+
+            revListCmd << "--max-count=" + boost::lexical_cast<std::string>(
+                  (skip < 0 ? 0 : skip) + maxentries);
          }
       }
 
       if (!rev.empty())
+      {
          cmd << rev;
+         revListCmd << rev;
+      }
+      else
+      {
+         revListCmd << "HEAD";
+      }
 
       if (maxentries < 0)
          maxentries = std::numeric_limits<int>::max();
@@ -916,11 +931,39 @@ public:
       if (error)
          return error;
 
+      std::vector<std::string> graphLines;
+      if (filterText.empty())
+      {
+         std::vector<std::string> revOutLines;
+         error = runCommand(revListCmd, &revOutLines);
+         if (error)
+            return error;
+
+         gitgraph::GitGraph graph;
+         for (size_t i = 0; i < revOutLines.size(); i++)
+         {
+            typedef std::vector<std::string> find_vector_type;
+            find_vector_type parents;
+            boost::algorithm::split(parents, revOutLines[i],
+                                    boost::algorithm::is_any_of(" "));
+            if (parents.size() < 1)
+               break;
+
+            std::string commit = parents.front();
+            parents.erase(parents.begin());
+
+            gitgraph::Line line = graph.addCommit(commit, parents);
+            if (revListSkip <= 0 || static_cast<int>(i) >= revListSkip)
+               graphLines.push_back(line.string());
+         }
+      }
+
       boost::function<bool(CommitInfo)> filter = createFilterPredicate(filterText);
 
       boost::regex kvregex("^(\\w+) (.*)$");
       boost::regex authTimeRegex("^(.*?) (\\d+) ([+\\-]?\\d+)$");
 
+      size_t graphLineIndex = 0;
       int skipped = 0;
       CommitInfo currentCommit;
 
@@ -940,7 +983,13 @@ public:
                   if (skipped < skip)
                      skipped++;
                   else
+                  {
+                     if (graphLineIndex < graphLines.size())
+                        currentCommit.graph = graphLines[graphLineIndex];
                      pOutput->push_back(currentCommit);
+                  }
+
+                  graphLineIndex++;
                }
 
                currentCommit = CommitInfo();
@@ -993,7 +1042,12 @@ public:
          if (skipped < skip)
             skipped++;
          else
+         {
+            if (graphLineIndex < graphLines.size())
+               currentCommit.graph = graphLines[graphLineIndex];
             pOutput->push_back(currentCommit);
+         }
+         graphLineIndex++;
       }
 
       return Success();
@@ -1537,6 +1591,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    json::Array descriptions;
    json::Array refs;
    json::Array tags;
+   json::Array graphs;
 
    for (std::vector<CommitInfo>::const_iterator it = commits.begin();
         it != commits.end();
@@ -1548,6 +1603,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
       subjects.push_back(string_utils::filterControlChars(it->subject));
       descriptions.push_back(string_utils::filterControlChars(it->description));
       dates.push_back(static_cast<double>(it->date));
+      graphs.push_back(it->graph);
 
       json::Array theseRefs;
       std::copy(it->refs.begin(), it->refs.end(), std::back_inserter(theseRefs));
@@ -1567,6 +1623,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    result["date"] = dates;
    result["refs"] = refs;
    result["tags"] = tags;
+   result["graph"] = graphs;
 
    pResponse->setResult(result);
 
