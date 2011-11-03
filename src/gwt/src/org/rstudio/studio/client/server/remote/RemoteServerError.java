@@ -13,6 +13,7 @@
 
 package org.rstudio.studio.client.server.remote;
 
+import com.google.gwt.json.client.JSONNull;
 import com.google.gwt.json.client.JSONValue;
 import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.core.client.jsonrpc.RpcUnderlyingError;
@@ -75,7 +76,7 @@ class RemoteServerError implements ServerError
    @Override
    public JSONValue getClientInfo()
    {
-      return clientInfo_;
+      return clientInfo_ == null ? JSONNull.getInstance() : clientInfo_;
    }
 
    private int codeFromRpcErrorCode(int code)
