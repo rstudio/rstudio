@@ -12,8 +12,6 @@
  */
 package org.rstudio.studio.client.common.crypto;
 
-import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.studio.client.application.Desktop;
@@ -23,15 +21,22 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public class RSAEncrypt
 {
+   public interface ResponseCallback
+   {
+      void onSuccess(String encryptedData);
+      void onFailure(ServerError error);
+   }
+   
+   
    public static void encrypt_ServerOnly(
          final CryptoServerOperations server,
          final String input,
-         final CommandWithArg<String> callback)
+         final ResponseCallback callback)
    {
       if (Desktop.isDesktop())
       {
          // Don't encrypt for desktop, Windows can't decrypt it.
-         callback.execute(input);
+         callback.onSuccess(input);
          return;
       }
 
@@ -48,23 +53,23 @@ public class RSAEncrypt
                   public void onResponseReceived(PublicKeyInfo response)
                   {
                      publicKeyInfo_ = response;
-                     callback.execute(encrypt(input,
-                                              publicKeyInfo_.getExponent(),
-                                              publicKeyInfo_.getModulo()));
+                     callback.onSuccess(encrypt(input,
+                                                publicKeyInfo_.getExponent(),
+                                                publicKeyInfo_.getModulo()));
                   }
 
                   @Override
                   public void onError(ServerError error)
                   {
-                     Debug.logError(error);
+                     callback.onFailure(error);
                   }
                });
             }
             else
             {
-               callback.execute(encrypt(input,
-                                        publicKeyInfo_.getExponent(),
-                                        publicKeyInfo_.getModulo()));
+               callback.onSuccess(encrypt(input,
+                                          publicKeyInfo_.getExponent(),
+                                          publicKeyInfo_.getModulo()));
             }
          }
       });

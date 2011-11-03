@@ -134,6 +134,12 @@ public class DocUpdateSentinel
                      public void onProgress(String message)
                      {
                      }
+                     
+                     public void clearProgress()
+                     {
+                        // alternate way to signal completion. safe to quit
+                        token.release();
+                     }
 
                      public void onCompleted()
                      {
@@ -202,6 +208,13 @@ public class DocUpdateSentinel
          {
             if (progress != null)
                progress.onProgress(message);
+         }
+         
+         public void clearProgress()
+         {
+            bufferedCommand_.resume();
+            if (progress != null)
+               progress.clearProgress();
          }
 
          public void onCompleted()

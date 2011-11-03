@@ -62,6 +62,11 @@ public abstract class FileSystemDialog extends ModalDialogBase
             {
                progress.onProgress(message);
             }
+            
+            public void clearProgress()
+            {
+               progress.clearProgress();
+            }
 
             public void onCompleted()
             {
@@ -342,6 +347,11 @@ public abstract class FileSystemDialog extends ModalDialogBase
    public void onProgress(String message)
    {
       progress_.onProgress(message);
+   }
+   
+   public void clearProgress()
+   {
+      progress_.clearProgress();
    }
 
    public void onCompleted()

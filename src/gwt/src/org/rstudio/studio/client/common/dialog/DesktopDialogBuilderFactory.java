@@ -88,6 +88,12 @@ public class DesktopDialogBuilderFactory implements DialogBuilderFactory
                            dismissProgress_.execute();
                         dismissProgress_ = globalDisplay.showProgress(message);
                      }
+                     
+                     public void clearProgress()
+                     {
+                        if (dismissProgress_ != null)
+                           dismissProgress_.execute();
+                     }
 
                      public void onCompleted()
                      {

@@ -38,11 +38,13 @@ public class ShowContentDialog extends ModalDialogBase
       {
          content_ = content;
          styleName_ = ThemeResources.INSTANCE.themeStyles().showFile();
+         isFixedFont_ = false;
       }
       else
       {
          content_ = "<pre>" + content + "</pre>";
          styleName_ = ThemeResources.INSTANCE.themeStyles().showFileFixed();
+         isFixedFont_ = true;
       }
             
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
@@ -67,6 +69,8 @@ public class ShowContentDialog extends ModalDialogBase
      ScrollPanel scrollPanel = new ScrollPanel();  
      scrollPanel.setStylePrimaryName(styleName_);
      HTML htmlContent = new HTML(content_);
+     if (isFixedFont_)
+        FontSizer.applyNormalFontSize(htmlContent);
      scrollPanel.setWidget(htmlContent);
       
      // if we don't have a preferred size then size based on content
@@ -88,6 +92,7 @@ public class ShowContentDialog extends ModalDialogBase
    
    private String content_;
    private String styleName_;
+   private boolean isFixedFont_;
    private Size preferredSize_;
 
 }

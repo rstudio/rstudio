@@ -35,6 +35,10 @@ public class DesktopFileDialogs implements FileDialogs
       public void onProgress(String message)
       {
       }
+      
+      public void clearProgress()
+      { 
+      }
 
       public void onCompleted()
       {

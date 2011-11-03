@@ -13,20 +13,6 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
-
-// TODO: create ssh key UI (auto change filemode). 
-
-/*
- *  identity -t rsa1 
- *  SSH PRIVATE KEY FILE FORMAT 1.1
- * 
- *  identity -t rsa 
- *  -----BEGIN RSA PRIVATE KEY-----
- * 
- *  id_dsa  -t dsa
- *  -----BEGIN DSA PRIVATE KEY-----
- */
-
 // TODO: project specific key paths
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -56,6 +42,7 @@ import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -63,6 +50,7 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.vcs.CreateKeyDialog;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -148,8 +136,14 @@ public class SourceControlPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            // TODO Auto-generated method stub
-            
+            new CreateKeyDialog(server_,
+                                new OperationWithInput<String>() {
+               @Override
+               public void execute(String keyPath)
+               {
+                  sshKeyPathChooser_.setText(keyPath);             
+               }
+            }) /*.showModal() */;    
          }
       });
       // only add the create-key button in server mode

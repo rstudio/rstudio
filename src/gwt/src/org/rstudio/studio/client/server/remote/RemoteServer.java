@@ -38,6 +38,8 @@ import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFac
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.vcs.AllStatus;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
+import org.rstudio.studio.client.common.vcs.CreateKeyOptions;
+import org.rstudio.studio.client.common.vcs.CreateKeyResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.VcsCloneOptions;
@@ -1400,6 +1402,14 @@ public class RemoteServer implements Server
                   privateKeyPath, 
                   requestCallback);
    }
+   
+   @Override
+   public void vcsCreateSshKey(
+                  CreateKeyOptions options,
+                  ServerRequestCallback<CreateKeyResult> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, VCS_CREATE_SSH_KEY, options, requestCallback);
+   }
 
    @Override
    public void vcsDiffFile(String path,
@@ -2052,6 +2062,7 @@ public class RemoteServer implements Server
    private static final String VCS_PULL = "vcs_pull";
    private static final String ASKPASS_COMPLETED = "askpass_completed";
    private static final String VCS_SSH_PUBLIC_KEY = "vcs_ssh_public_key";
+   private static final String VCS_CREATE_SSH_KEY = "vcs_create_ssh_key";
    private static final String VCS_DIFF_FILE = "vcs_diff_file";
    private static final String VCS_APPLY_PATCH = "vcs_apply_patch";
    private static final String VCS_HISTORY_COUNT = "vcs_history_count";

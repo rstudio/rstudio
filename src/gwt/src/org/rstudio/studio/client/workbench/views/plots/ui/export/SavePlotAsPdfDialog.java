@@ -18,7 +18,6 @@ import java.util.List;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialogBase;
-import org.rstudio.core.client.widget.ModalDialogProgressIndicator;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -498,7 +497,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
    private final SavePlotAsPdfOptions options_;
    private final FileSystemItem defaultDirectory_;
    private final String defaultPlotName_;
-   private final ModalDialogProgressIndicator progressIndicator_;
+   private final ProgressIndicator progressIndicator_;
    
    private TextBox fileNameTextBox_;
    private FileSystemItem directory_;

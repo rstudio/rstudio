@@ -17,4 +17,5 @@ public interface ProgressIndicator
    void onProgress(String message);
    void onCompleted();
    void onError(String message);
+   void clearProgress();
 }

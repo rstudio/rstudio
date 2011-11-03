@@ -183,6 +183,11 @@ public class DefaultGlobalDisplay extends GlobalDisplay
             dismissProgress();
             dismissProgress_ = showProgress(message);
          }
+         
+         public void clearProgress()
+         {
+            dismissProgress();
+         }
 
          private void dismissProgress()
          {

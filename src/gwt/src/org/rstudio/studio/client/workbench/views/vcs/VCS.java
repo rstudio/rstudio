@@ -20,7 +20,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -51,8 +52,6 @@ import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;
 
 import java.util.ArrayList;
-
-// TODO: Pull/push results should be shown in a dialog, even on success
 
 public class VCS extends BasePresenter implements IsWidget
 {
@@ -127,14 +126,21 @@ public class VCS extends BasePresenter implements IsWidget
                         RSAEncrypt.encrypt_ServerOnly(
                               server_,
                               input,
-                              new CommandWithArg<String>()
+                              new RSAEncrypt.ResponseCallback()
                               {
                                  @Override
-                                 public void execute(String encrypted)
+                                 public void onSuccess(String encryptedData)
                                  {
                                     server_.askpassCompleted(
-                                          encrypted,
-                                          new VoidServerRequestCallback(indicator));
+                                     encryptedData,
+                                     new VoidServerRequestCallback(indicator));
+                                    
+                                 }
+
+                                 @Override
+                                 public void onFailure(ServerError error)
+                                 {
+                                    Debug.logError(error);
                                  }
                               });
                      }

@@ -13,9 +13,9 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.ModalDialogProgressIndicator;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.Bool;
@@ -154,7 +154,7 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    }
   
    private final GlobalDisplay globalDisplay_;
-   private ModalDialogProgressIndicator progressIndicator_;
+   private ProgressIndicator progressIndicator_;
    private final PlotsServerOperations server_;
    private SavePlotAsTargetEditor saveAsTarget_;
    private CheckBox viewAfterSaveCheckBox_;

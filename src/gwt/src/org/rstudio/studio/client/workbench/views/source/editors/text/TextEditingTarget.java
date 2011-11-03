@@ -118,6 +118,10 @@ public class TextEditingTarget implements EditingTarget
       public void onProgress(String message)
       {
       }
+      
+      public void clearProgress()
+      {
+      }
 
       public void onCompleted()
       {

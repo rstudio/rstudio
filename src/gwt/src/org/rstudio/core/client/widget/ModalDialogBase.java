@@ -263,12 +263,12 @@ public abstract class ModalDialogBase extends DialogBox
       bottomPanel_.setCellHorizontalAlignment(buttonPanel_, alignment);
    }
    
-   protected ModalDialogProgressIndicator addProgressIndicator()
+   protected ProgressIndicator addProgressIndicator()
    {
       return addProgressIndicator(true);
    }
    
-   protected ModalDialogProgressIndicator addProgressIndicator(
+   protected ProgressIndicator addProgressIndicator(
                                               final boolean closeOnCompleted)
    {
       final SlideLabel label = new SlideLabel(true);
@@ -280,7 +280,7 @@ public abstract class ModalDialogBase extends DialogBox
       labelStyle.setTop(-12, Style.Unit.PX);
       getWidget().getElement().getParentElement().appendChild(labelEl);
 
-      return new ModalDialogProgressIndicator()
+      return new ProgressIndicator()
       {
          public void onProgress(String message)
          {
