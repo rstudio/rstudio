@@ -4,11 +4,29 @@
    margin-bottom: 2px;
 }
 
+.keyTypeSelector {
+   width: 70px;
+   margin-right: 12px;	
+}
+
 .mainWidget {
-   width: 300px;
+   width: 350px;
 }
 
 .newSection {
 	margin-top: 10px;
+}
+
+.lastSection {
+   margin-bottom: 40px;
+}
+
+.passphrase {
+   width: 170px;
+   margin-right: 10px;
+}
+
+.passphraseConfirm {
+   width: 165px;
 }
 

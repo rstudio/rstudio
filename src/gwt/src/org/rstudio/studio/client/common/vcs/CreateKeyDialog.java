@@ -1,5 +1,7 @@
 package org.rstudio.studio.client.common.vcs;
 
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -7,27 +9,31 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ShowContentDialog;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 {
-   public CreateKeyDialog(final VCSServerOperations server,
+   public CreateKeyDialog(String defaultSshKeyPath,
+                          final VCSServerOperations server,
                           final OperationWithInput<String> onSuccess)
    {
       super("Create SSH Key", new ProgressOperationWithInput<CreateKeyOptions>() {
@@ -46,8 +52,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
                      CreateKeyOptions options = CreateKeyOptions.create(
                                                             input.getPath(),
                                                             input.getType(),
-                                                            encryptedData,
-                                                            input.getComment());
+                                                            encryptedData);
                      
                      // call server to create the key
                      server.vcsCreateSshKey(
@@ -98,6 +103,8 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
          }
       });
       
+      defaultSshKeyPath_ = FileSystemItem.createDir(defaultSshKeyPath);
+      
       setOkButtonCaption("Create");
    }
    
@@ -122,27 +129,53 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
    @Override
    protected CreateKeyOptions collectInput()
    {
-      return CreateKeyOptions.create("~/.ssh/id_dsa", "dsa", "", "jj");
+      if (getPath().length() == 0)
+         return null;
+      else if (!getPassphrase().equals(getConfirmPassphrase()))
+         return null;
+      else
+         return CreateKeyOptions.create(getPath(), getType(), getPassphrase());
    }
 
    @Override
    protected boolean validate(CreateKeyOptions input)
-   {
-      
-      return true;
+   {    
+      if (input != null)
+      {
+         return true;
+      }
+      else
+      {
+         GlobalDisplay display = RStudioGinjector.INSTANCE.getGlobalDisplay();
+         
+         if (getPath().length() == 0)
+         {
+            display.showErrorMessage(
+                  "Missing Key Path", 
+                  "You must provide a destination path for the key.",
+                  txtName_);
+         }
+         else if (!getPassphrase().equals(getConfirmPassphrase()))
+         {
+            display.showErrorMessage(
+                  "Non-Matching Passphrases", 
+                  "The passphrase and passphrase confirmation do not match.",
+                  txtConfirmPassphrase_);
+         }
+          
+         return false;
+      }
    }
 
    @Override
    protected Widget createMainWidget()
    {
-      
-    
       Styles styles = RESOURCES.styles();
       
       VerticalPanel panel = new VerticalPanel();
       panel.addStyleName(styles.mainWidget());
       
-      DockPanel nameAndTypePanel = new DockPanel();
+      HorizontalPanel nameAndTypePanel = new HorizontalPanel();
       nameAndTypePanel.setWidth("100%");
       
       VerticalPanel typePanel = new VerticalPanel();
@@ -151,6 +184,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       typePanel.add(typeLabel);
    
       typeSelector_ = new ListBox();
+      typeSelector_.addStyleName(styles.keyTypeSelector());
       typeSelector_.addItem(RSA);
       typeSelector_.addItem(DSA);
       typeSelector_.addItem(RSA1);
@@ -162,27 +196,27 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
          {
             String type = getType();
             if (type.equals(RSA))
-               txtName_.setValue("id_rsa");
+               txtName_.setValue(defaultSshKeyPath_.completePath("id_rsa"));
             else if (type.equals(DSA))
-               txtName_.setValue("id_dsa");
+               txtName_.setValue(defaultSshKeyPath_.completePath("id_dsa"));
             else if (type.equals(RSA1))
-               txtName_.setValue("identity"); 
+               txtName_.setValue(defaultSshKeyPath_.completePath("identity")); 
          }
          
       });
       typePanel.add(typeSelector_);
-      nameAndTypePanel.add(typePanel, DockPanel.WEST);
+      nameAndTypePanel.add(typePanel);
       
       VerticalPanel namePanel = new VerticalPanel();
-      namePanel.setWidth("100%");
-      Label nameLabel = new Label("Name:");
+      namePanel.setWidth("270px");
+      Label nameLabel = new Label("Path:");
       nameLabel.addStyleName(styles.entryLabel());
       namePanel.add(nameLabel);
       txtName_ = new TextBox();
-      txtName_.setText("id_rsa");
+      txtName_.setText(defaultSshKeyPath_.completePath("id_rsa"));
       txtName_.setWidth("100%");
       namePanel.add(txtName_);
-      nameAndTypePanel.add(namePanel, DockPanel.CENTER);
+      nameAndTypePanel.add(namePanel);
       
       panel.add(nameAndTypePanel);
       
@@ -193,38 +227,52 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       Label passphraseLabel1 = new Label("Passphrase (optional):");
       passphraseLabel1.addStyleName(styles.entryLabel());
       passphrasePanel1.add(passphraseLabel1);
-      txtPassphrase_ = new TextBox();
+      txtPassphrase_ = new PasswordTextBox();
+      txtPassphrase_.addStyleName(styles.passphrase());
       
       passphrasePanel1.add(txtPassphrase_);
       passphrasePanel.add(passphrasePanel1);
       
       VerticalPanel passphrasePanel2 = new VerticalPanel();
+      passphrasePanel2.addStyleName(styles.lastSection());
       Label passphraseLabel2 = new Label("Confirm:");
       passphraseLabel2.addStyleName(styles.entryLabel());
       passphrasePanel2.add(passphraseLabel2);
-      txtConfirmPassphrase_ = new TextBox();
+      txtConfirmPassphrase_ = new PasswordTextBox();
+      txtConfirmPassphrase_.addStyleName(styles.passphraseConfirm());
       passphrasePanel2.add(txtConfirmPassphrase_);
       passphrasePanel.add(passphrasePanel2);
       
       panel.add(passphrasePanel);
       
-      
-      Label commentLabel = new Label("Comment (optional):");
-      commentLabel.addStyleName(styles.newSection());
-      commentLabel.addStyleName(styles.entryLabel());
-      panel.add(commentLabel);
-      
-      txtComment_ = new TextBox();
-      txtComment_.setWidth("100%");
-      panel.add(txtComment_);
-      
+          
       return panel;
    }
    
+   @Override
+   protected void onLoad()
+   {
+      FocusHelper.setFocusDeferred(txtPassphrase_);
+   }
+   
+   private String getPath()
+   {
+      return txtName_.getText().trim();
+   }
    
    private String getType()
    {
       return typeSelector_.getItemText(typeSelector_.getSelectedIndex());
+   }
+   
+   private String getPassphrase()
+   {
+      return txtPassphrase_.getText().trim();
+   }
+   
+   private String getConfirmPassphrase()
+   {
+      return txtConfirmPassphrase_.getText().trim();
    }
    
    private final String RSA = "rsa";
@@ -234,8 +282,12 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
    static interface Styles extends CssResource
    {
       String entryLabel();
+      String keyTypeSelector();
       String mainWidget();
       String newSection();
+      String lastSection();
+      String passphrase();
+      String passphraseConfirm();
    }
   
    static interface Resources extends ClientBundle
@@ -254,7 +306,6 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
    private TextBox txtName_;
    private TextBox txtPassphrase_;
    private TextBox txtConfirmPassphrase_;
-   private TextBox txtComment_;
    
-
+   private final FileSystemItem defaultSshKeyPath_;
 }

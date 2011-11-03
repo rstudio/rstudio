@@ -20,12 +20,14 @@ public class SourceControlPrefs extends JavaScriptObject
 
    public static final native SourceControlPrefs create(boolean vcsEnabled,
                                                         String gitBinDir,
-                                                        String sshKeyPath) 
+                                                        String sshKeyPath,
+                                                        String defaultSshKeyDir) 
                                                                            /*-{
       var prefs = new Object();
       prefs.vcs_enabled = vcsEnabled;
       prefs.git_bin_dir = gitBinDir;
       prefs.ssh_key_path = sshKeyPath;
+      prefs.default_ssh_key_dir = defaultSshKeyDir;
       return prefs ;
    }-*/;
 
@@ -39,5 +41,9 @@ public class SourceControlPrefs extends JavaScriptObject
    
    public native final String getSSHKeyPath() /*-{
       return this.ssh_key_path;
+   }-*/;
+   
+   public native final String getDefaultSSHKeyDir() /*-{
+      return this.default_ssh_key_dir;
    }-*/;
 }

@@ -136,14 +136,15 @@ public class SourceControlPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            new CreateKeyDialog(server_,
+            new CreateKeyDialog(defaultSshKeyDir_,
+                                server_,
                                 new OperationWithInput<String>() {
                @Override
                public void execute(String keyPath)
                {
                   sshKeyPathChooser_.setText(keyPath);             
                }
-            }) /*.showModal() */;    
+            }).showModal();    
          }
       });
       // only add the create-key button in server mode
@@ -206,6 +207,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       chkVcsEnabled_.setValue(prefs.getVcsEnabled());
       gitBinDirChooser_.setText(prefs.getGitBinDir());
       sshKeyPathChooser_.setText(prefs.getSSHKeyPath());
+      defaultSshKeyDir_ = prefs.getDefaultSSHKeyDir();
       
       publicKeyLink_.setVisible(prefs.getSSHKeyPath().length() > 0);
       
@@ -237,7 +239,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
       SourceControlPrefs prefs = SourceControlPrefs.create(
                                           chkVcsEnabled_.getValue(),
                                           gitBinDirChooser_.getText(),
-                                          sshKeyPathChooser_.getText());
+                                          sshKeyPathChooser_.getText(),
+                                          defaultSshKeyDir_);
       
       rPrefs.setSourceControlPrefs(prefs);
    }
@@ -390,4 +393,6 @@ public class SourceControlPreferencesPane extends PreferencesPane
    private TextBoxWithButton sshKeyPathChooser_;
    
    private SmallButton createKeyButton_;
+   
+   private String defaultSshKeyDir_ = "";
 }

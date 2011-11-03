@@ -1715,12 +1715,11 @@ Error vcsSshPublicKey(const json::JsonRpcRequest& request,
 Error vcsCreateSshKey(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
-   std::string path, type, passphrase, comment;
+   std::string path, type, passphrase;
    Error error = json::readObjectParam(request.params, 0,
                                        "path", &path,
                                        "type", &type,
-                                       "passphrase", &passphrase,
-                                       "comment", &comment);
+                                       "passphrase", &passphrase);
    if (error)
       return error;
 
@@ -1755,11 +1754,7 @@ Error vcsCreateSshKey(const json::JsonRpcRequest& request,
    if (!passphrase.empty())
       cmd << passphrase;
    else
-      cmd << "\"\"";
-
-   // comment (optional)
-   if (!comment.empty())
-      cmd << "-C" << comment;
+      cmd << std::string("");
 
    // path
    cmd << "-f" << sshKeyPath;
@@ -2378,9 +2373,13 @@ FilePath verifiedSshKeyPath()
    std::string sskKeyPathSetting = userSettings().sshKeyPath();
    FilePath sshKeyPath;
    if (!sskKeyPathSetting.empty())
+   {
       sshKeyPath = module_context::resolveAliasedPath(sskKeyPathSetting);
-   else
-      sshKeyPath = getTrueHomeDir().childPath(".ssh/id_rsa");
+      if (!sshKeyPath.exists())
+         sshKeyPath = FilePath();
+   }
+   if (sshKeyPath.empty())
+      sshKeyPath = defaultSshKeyPath().childPath("id_rsa");
 
    // verify existence
    if (sshKeyPath.exists())
@@ -2392,6 +2391,12 @@ FilePath verifiedSshKeyPath()
    {
       return FilePath();
    }
+}
+
+
+FilePath defaultSshKeyPath()
+{
+   return getTrueHomeDir().childPath(".ssh");
 }
 
 void onUserSettingsChanged()

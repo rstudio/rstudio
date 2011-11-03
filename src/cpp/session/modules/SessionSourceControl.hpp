@@ -91,6 +91,8 @@ core::FilePath detectedGitBinDir();
 // or the file doesn't exist)
 core::FilePath verifiedSshKeyPath();
 
+core::FilePath defaultSshKeyPath();
+
 bool isSvnInstalled();
 core::Error initialize();
 

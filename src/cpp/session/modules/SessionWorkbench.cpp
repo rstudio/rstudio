@@ -197,12 +197,15 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().setAlwaysRestoreLastProject(restoreLastProject);
    userSettings().endUpdate();
 
-   // read and set source control prefs
+   // read and set source control prefs (note we purposely don't read
+   // default_ssh_key_dir since that is a read-only prefs provided
+   // by the server to the client
    bool vcsEnabled;
-   std::string gitBinDir;
+   std::string gitBinDir, sshKeyPath;
    error = json::readObject(sourceControlPrefs,
                             "vcs_enabled", &vcsEnabled,
-                            "git_bin_dir", &gitBinDir);
+                            "git_bin_dir", &gitBinDir,
+                            "ssh_key_path", &sshKeyPath);
    if (error)
       return error;
    userSettings().beginUpdate();
@@ -212,6 +215,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
       userSettings().setGitBinDir(FilePath());
    else
       userSettings().setGitBinDir(gitBinDirPath);
+   userSettings().setSshKeyPath(sshKeyPath);
    userSettings().endUpdate();
 
    // set ui prefs
@@ -293,6 +297,8 @@ Error getRPrefs(const json::JsonRpcRequest& request,
       sourceControlPrefs["ssh_key_path"] = module_context::createAliasedPath(sshKeyPath);
    else
       sourceControlPrefs["ssh_key_path"] = "";
+   sourceControlPrefs["default_ssh_key_dir"] =
+       module_context::createAliasedPath(source_control::defaultSshKeyPath());
 
    // initialize and set result object
    json::Object result;
