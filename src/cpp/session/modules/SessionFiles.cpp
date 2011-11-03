@@ -54,12 +54,6 @@
 #include "SessionFilesQuotas.hpp"
 #include "SessionFilesListingMonitor.hpp"
 
-#include "config.h"
-
-#ifdef RSTUDIO_SERVER
-#include <core/system/FileMode.hpp>
-#endif
-
 using namespace core ;
 
 namespace session {
@@ -426,80 +420,6 @@ void handleFilesRequest(const http::Request& request,
    pResponse->setNoCacheHeaders();
    pResponse->setFile(filePath, request);
 }
-
-#ifdef RSTUDIO_SERVER
-void fixupSshKeyPermissionsIfNecessary(const FilePath& filePath)
-{
-   // screen out directories
-   if (filePath.isDirectory())
-      return;
-
-   // well known names
-   std::string filename = filePath.filename();
-   if (filename == "identity" ||
-       filename == "id_rsa" ||
-       filename == "id_dsa")
-   {
-      Error error = changeFileMode(filePath,
-                                   core::system::UserReadWriteMode);
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   // public key files
-   else if (filePath.extensionLowerCase() == ".pub")
-   {
-      Error error = changeFileMode(
-                     filePath,
-                     core::system::UserReadWriteGroupOthersReadMode);
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   // scan contents for known private key headers
-   else
-   {
-      std::string fileContents;
-      Error error = core::readStringFromFile(filePath, &fileContents);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-
-      if (fileContents.find("SSH PRIVATE KEY FILE FORMAT") == 0 ||
-          fileContents.find("-----BEGIN RSA PRIVATE KEY-----") == 0 ||
-          fileContents.find("-----BEGIN DSA PRIVATE KEY-----") == 0)
-      {
-         Error error = changeFileMode(filePath,
-                                      core::system::UserReadWriteMode);
-         if (error)
-            LOG_ERROR(error);
-      }
-   }
-}
-
-// fixup files in the ssh directory to make sure they match what they
-// would be had they been created with ssh-keygen
-void fixupSshFilePermissions(const FilePath& filePath)
-{
-   // scan children for ssh keyfiles which we need to tweak permissions on
-   Error error = filePath.childrenRecursive(
-                  boost::bind(fixupSshKeyPermissionsIfNecessary, _2));
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-}
-#else
-
-void fixupSshFilePermissions(const FilePath& filePath)
-{
-}
-
-#endif
-
    
 const char * const kUploadFilename = "filename";
 const char * const kUploadedTempFile = "uploadedTempFile";
@@ -569,13 +489,6 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
       if (error)
          LOG_ERROR(error);
       
-
-      // if the target directory was the .ssh directory then fixup
-      // file permissions there
-      FilePath sshPath = module_context::userHomePath().complete(".ssh");
-      if (targetDirectoryPath == sshPath)
-         fixupSshFilePermissions(targetDirectoryPath);
-
       // check quota after uploads
       quotas::checkQuotaStatus();
       
