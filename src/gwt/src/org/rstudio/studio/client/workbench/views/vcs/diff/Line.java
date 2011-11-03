@@ -108,7 +108,7 @@ public class Line implements Comparable<Line>
 
    public Line reverse()
    {
-      if (appliesTo_.length > 1)
+      if (appliesTo_.length > 2)
          throw new UnsupportedOperationException("Can't reverse combined diff");
 
       return new Line(type_.getInverse(),
