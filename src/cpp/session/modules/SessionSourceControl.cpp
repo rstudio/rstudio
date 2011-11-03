@@ -894,9 +894,9 @@ public:
       std::vector<std::string> outLines;
 
       ShellCommand cmd = git() << "log";
-      cmd << "--pretty=raw" << "--decorate=full" << "--topo-order";
+      cmd << "--pretty=raw" << "--decorate=full" << "--date-order";
 
-      ShellCommand revListCmd = git() << "rev-list" << "--topo-order" << "--parents";
+      ShellCommand revListCmd = git() << "rev-list" << "--date-order" << "--parents";
       int revListSkip = skip;
 
       if (filterText.empty())
