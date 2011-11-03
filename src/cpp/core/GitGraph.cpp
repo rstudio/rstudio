@@ -136,18 +136,6 @@ Line GitGraph::addCommit(const std::string& commit,
             Column(nextColumnId_++, "", parents[parentsUsed++]));
    }
 
-   // Update end positions.
-   size_t endPos = 0;
-   for (Line::iterator it = pendingLine_.begin();
-        it != pendingLine_.end();
-        it++)
-   {
-      if (it->postCommit.empty())
-         it->endPosition = std::numeric_limits<size_t>::max();
-      else
-         it->endPosition = endPos++;
-   }
-
    // This line is ready. Make a copy of it.
    Line result = pendingLine_;
 

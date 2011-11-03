@@ -37,7 +37,7 @@ public class GraphLine
    {
       draw(s_canvas, theme);
       return SafeHtmlUtil.createOpenTag("img",
-                                        "style", "display: block",
+                                        "class", theme.getImgClassName(),
                                         "src", s_canvas.toDataUrl());
    }
 

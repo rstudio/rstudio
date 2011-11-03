@@ -102,6 +102,8 @@ public class HistoryPanel extends Composite implements Display
       String branch();
       String remote();
       String tag();
+
+      String graphLineImg();
    }
 
    interface Binder extends UiBinder<Widget, HistoryPanel>

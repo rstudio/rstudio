@@ -653,7 +653,7 @@ public:
       }
       return Success();
    }
-\
+
    bool remoteMerge(const std::string& branch,
                     std::string* pRemote,
                     std::string* pMerge)

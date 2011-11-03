@@ -85,5 +85,21 @@ public class SafeHtmlUtil
       builder.append(">");
       return SafeHtmlUtils.fromTrustedString(builder.toString());
    }
+
+   public static SafeHtml createEmpty()
+   {
+      return SafeHtmlUtils.fromSafeConstant("");
+   }
+
+   public static SafeHtml concat(SafeHtml... pieces)
+   {
+      StringBuilder builder = new StringBuilder();
+      for (SafeHtml piece : pieces)
+      {
+         if (piece != null)
+            builder.append(piece.asString());
+      }
+      return SafeHtmlUtils.fromTrustedString(builder.toString());
+   }
 }
 

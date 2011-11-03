@@ -37,8 +37,6 @@ struct Column
    // The commit that the column points to at the end. If the column
    // terminates here the postCommit will be empty
    std::string postCommit;
-
-   size_t endPosition;
 };
 
 // Represents one line of the graph.

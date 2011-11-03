@@ -18,9 +18,14 @@ import java.util.HashMap;
 
 public class GraphTheme
 {
+   public GraphTheme(String className)
+   {
+      className_ = className;
+   }
+
    public int getColumnWidth()
    {
-      return 12;
+      return 10;
    }
 
    public int getRowHeight()
@@ -60,6 +65,13 @@ public class GraphTheme
    {
       return 2.0;
    }
+
+   public String getImgClassName()
+   {
+      return className_;
+   }
+
+   private final String className_;
 
    private static HashMap<Integer, CssColor> colors_ = new HashMap<Integer, CssColor>();
 }

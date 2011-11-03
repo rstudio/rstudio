@@ -34,3 +34,9 @@
 .tag {
    background-color: rgb(255, 229, 170);
 }
+
+.graphLineImg {
+   display: block;
+   float: left;
+   margin-right: 12px;
+}
