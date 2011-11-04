@@ -13,4 +13,5 @@
 #
 #
 
-"$(dirname "$0")/../rpostback" pdfviewer $1
+export POSTBACK_DIR=$( (cd "$0/.." && pwd) )
+"$POSTBACK_DIR/../rpostback" pdfviewer $1
