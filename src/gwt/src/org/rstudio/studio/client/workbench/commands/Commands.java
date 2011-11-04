@@ -167,6 +167,11 @@ public abstract class
    public abstract AppCommand updatePackages();
    public abstract AppCommand activatePackages();
 
+   // Version control
+   public abstract AppCommand versionControlOptions();
+   public abstract AppCommand versionControlHelp();
+   public abstract AppCommand versionControlProjectSetup();
+   
    // Tools
    public abstract AppCommand showOptions();
 

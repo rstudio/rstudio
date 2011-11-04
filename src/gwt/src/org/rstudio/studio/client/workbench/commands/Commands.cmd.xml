@@ -208,6 +208,13 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="installPackage"/>
          <cmd refid="updatePackages"/>
          <separator/>
+         <menu label="Version Control">
+            <cmd refid="versionControlOptions"/>
+            <cmd refid="versionControlHelp"/>
+            <separator/>
+            <cmd refid="versionControlProjectSetup"/>
+         </menu>
+         <separator/>
          <cmd refid="showOptions"/>
       </menu>
 
@@ -718,7 +725,19 @@ well as menu structures (for main menu and popup menus).
    <cmd id="updatePackages"
         menuLabel="Check for Package _Updates..."
         buttonLabel="Check for Updates"
-        desc="Check for package updates" />     
+        desc="Check for package updates" /> 
+        
+   <cmd id="versionControlOptions"
+        menuLabel="_Options..."
+        desc="Configure version control options"/>
+        
+   <cmd id="versionControlHelp"
+        menuLabel="_Using Version Control"
+        desc="Help on using version control with RStudio"/>
+        
+   <cmd id="versionControlProjectSetup"
+        menuLabel="_Project Setup..."
+        desc="Setup version control for the current project"/>
              
    <cmd id="showOptions"
         menuLabel="_Options..."/>

@@ -18,6 +18,7 @@ import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -431,6 +432,14 @@ public class Projects implements OpenProjectFileHandler,
          }});
    }
 
+   @Handler
+   public void onVersionControlProjectSetup()
+   {
+      globalDisplay_.showMessage(MessageDialog.INFO, 
+                                 "Not Yet Implemented", 
+                                 "Not Yet Implemented");
+   }
+   
    @Override
    public void onOpenProjectFile(final OpenProjectFileEvent event)
    {

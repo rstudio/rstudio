@@ -54,6 +54,8 @@ public class PreferencesDialog extends ModalDialogBase
 
       setText("Options");
       
+      sectionChooser_ = sectionChooser;
+      
       ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
          public void onClick(ClickEvent event) 
          {
@@ -138,6 +140,11 @@ public class PreferencesDialog extends ModalDialogBase
       for (PreferencesPane pane : panes_)
          pane.initializeRPrefs(rPrefs);
    }
+   
+   public void activateSourceControl()
+   {
+      sectionChooser_.select(4);
+   }
 
    private void setPaneVisibility(PreferencesPane pane, boolean visible)
    {
@@ -212,4 +219,5 @@ public class PreferencesDialog extends ModalDialogBase
    private final WorkbenchServerOperations server_;
    private final Session session_;
    private final ProgressIndicator progressIndicator_;
+   private final SectionChooser sectionChooser_;
 }

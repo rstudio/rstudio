@@ -40,6 +40,7 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -65,7 +66,8 @@ public class WorkbenchScreen extends Composite
    static MyCommandBinder commandBinder = GWT.create(MyCommandBinder.class);
 
    @Inject
-   public WorkbenchScreen(EventBus eventBus,
+   public WorkbenchScreen(GlobalDisplay globalDisplay,
+                          EventBus eventBus,
                           Session session,
                           Provider<PaneManager> pPaneManager,
                           final Edit.Shim edit,
@@ -74,6 +76,7 @@ public class WorkbenchScreen extends Composite
                           FontSizeManager fontSizeManager,
                           OptionsLoader.Shim optionsLoader)
    {
+      globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       session_ = session;
       edit_ = edit;
@@ -295,6 +298,18 @@ public class WorkbenchScreen extends Composite
       optionsLoader_.showOptions();
    }
    
+   @Handler
+   void onVersionControlOptions()
+   {
+      optionsLoader_.showVersionControlOptions();
+   }
+   
+   @Handler
+   void onVersionControlHelp()
+   {
+      globalDisplay_.openRStudioLink("using_version_control");
+   }
+   
    public Widget asWidget()
    {
       return this;
@@ -304,6 +319,7 @@ public class WorkbenchScreen extends Composite
 
    private WorkbenchMetrics lastMetrics_ = WorkbenchMetrics.create(0,0,0);
    
+   private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final Session session_;
    private final Shim edit_;

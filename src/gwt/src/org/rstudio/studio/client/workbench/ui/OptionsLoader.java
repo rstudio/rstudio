@@ -28,6 +28,7 @@ public class OptionsLoader
    public abstract static class Shim extends AsyncShim<OptionsLoader>
    {
       public abstract void showOptions();
+      public abstract void showVersionControlOptions();
    }
 
 
@@ -43,6 +44,16 @@ public class OptionsLoader
 
    public void showOptions()
    {
+      showOptions(false);
+   }
+   
+   public void showVersionControlOptions()
+   {
+      showOptions(true);
+   }
+   
+   private void showOptions(final boolean activateSourceControl)
+   {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
                                                       "Error Reading Options");
       indicator.onProgress("Reading options...");
@@ -56,6 +67,8 @@ public class OptionsLoader
                indicator.onCompleted();
                PreferencesDialog prefDialog = pPrefDialog_.get();
                prefDialog.initializeRPrefs(rPrefs);
+               if (activateSourceControl)
+                  prefDialog.activateSourceControl();
                prefDialog.showModal();
             }
 
