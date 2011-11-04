@@ -2369,7 +2369,8 @@ void ensureCorrectPermissions(const FilePath& sshKeyPath)
 
 FilePath verifiedSshKeyPath()
 {
-   // if it is provided then resolve aliases, otherwise use default
+   // if there is user override first try that -- if the override is
+   // specified but doesn't exit then advance to auto-resolution logic
    std::string sskKeyPathSetting = userSettings().sshKeyPath();
    FilePath sshKeyPath;
    if (!sskKeyPathSetting.empty())
@@ -2378,11 +2379,27 @@ FilePath verifiedSshKeyPath()
       if (!sshKeyPath.exists())
          sshKeyPath = FilePath();
    }
-   if (sshKeyPath.empty())
-      sshKeyPath = defaultSshKeyPath().childPath("id_rsa");
 
-   // verify existence
-   if (sshKeyPath.exists())
+   // if there isn't a valid user specified default then scan known locations
+   if (sshKeyPath.empty())
+   {
+      FilePath sshKeyPath = defaultSshKeyPath();
+      std::vector<FilePath> candidatePaths;
+      candidatePaths.push_back(sshKeyPath.childPath("id_rsa"));
+      candidatePaths.push_back(sshKeyPath.childPath("id_dsa"));
+      candidatePaths.push_back(sshKeyPath.childPath("identity"));
+      BOOST_FOREACH(const FilePath& path, candidatePaths)
+      {
+         if (path.exists())
+         {
+            sshKeyPath = path;
+            break;
+         }
+      }
+   }
+
+   // ensure permissions if we have a path to return
+   if (!sshKeyPath.empty())
    {
       ensureCorrectPermissions(sshKeyPath);
       return sshKeyPath;
