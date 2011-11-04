@@ -22,7 +22,7 @@ public class GraphLine
 {
    public GraphLine(String value)
    {
-      String[] vals = value.split(" ");
+      String[] vals = value.length() == 0 ? new String[] {} : value.split(" ");
       columns_ = new GraphColumn[vals.length];
       for (int i = 0; i < columns_.length; i++)
          columns_[i] = new GraphColumn(vals[i]);

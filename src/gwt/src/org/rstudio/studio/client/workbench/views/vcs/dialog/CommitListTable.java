@@ -29,6 +29,7 @@ import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.RStudioCellTableStyle;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
@@ -118,12 +119,12 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
       @Override
       public SafeHtml render(CommitInfo object)
       {
-         if (object.getGraph().length() == 0)
-            return SafeHtmlUtil.createEmpty();
          if (lastGraphImg_ != null && object.getGraph().equals(lastGraph_))
             return lastGraphImg_;
 
          lastGraph_ = object.getGraph();
+         if (object.getGraph().length() == 0)
+            return lastGraphImg_ = SafeHtmlUtil.createEmpty();
          return lastGraphImg_ = new GraphLine(object.getGraph()).render(theme_);
       }
 
@@ -258,7 +259,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
       int width = 0;
       for (CommitInfo commit : getVisibleItems())
       {
-         if (commit.getGraph() != null)
+         if (!StringUtil.isNullOrEmpty(commit.getGraph()))
          {
             width = Math.max(
                   width,
