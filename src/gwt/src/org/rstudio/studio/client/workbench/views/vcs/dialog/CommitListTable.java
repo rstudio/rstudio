@@ -84,6 +84,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
       }
    }
 
+   @SuppressWarnings("unused")
    private class GraphAndSubjectRenderer implements SafeHtmlRenderer<CommitInfo>
    {
       private GraphAndSubjectRenderer(GraphTheme theme)
