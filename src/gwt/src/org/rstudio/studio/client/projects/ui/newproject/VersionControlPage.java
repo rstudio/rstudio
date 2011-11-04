@@ -15,12 +15,14 @@ package org.rstudio.studio.client.projects.ui.newproject;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.VcsCloneOptions;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
@@ -43,20 +45,22 @@ public class VersionControlPage extends NewProjectWizardPage
    { 
       NewProjectResources.Styles styles = NewProjectResources.INSTANCE.styles();
       
-      DockPanel sourcePanel = new DockPanel();
+      HorizontalPanel sourcePanel = new HorizontalPanel();
       sourcePanel.addStyleName(styles.wizardTextEntry());
       
-      VerticalPanel vcsPanel = new VerticalPanel();
+      FlowPanel vcsPanel = new FlowPanel();
       Label vcsLabel = new Label("VCS:");
       vcsLabel.addStyleName(styles.wizardTextEntryLabel());
       vcsPanel.add(vcsLabel);
       String[] availableVcs = getSessionInfo().getAvailableVCS();
       vcsSelector_ = new ListBox();
+      if (Desktop.isDesktop())
+         vcsSelector_.addStyleName(styles.vcsSelectorDesktop());
       for (int i=0; i<availableVcs.length; i++)
          vcsSelector_.addItem(availableVcs[i]);
       vcsSelector_.setSelectedIndex(0);
       vcsPanel.add(vcsSelector_);
-      sourcePanel.add(vcsPanel, DockPanel.WEST);
+      sourcePanel.add(vcsPanel);
       
       VerticalPanel urlPanel = new VerticalPanel();
       urlPanel.setWidth("100%");
@@ -74,7 +78,7 @@ public class VersionControlPage extends NewProjectWizardPage
       });
       txtRepoUrl_.setWidth("100%");
       urlPanel.add(txtRepoUrl_);
-      sourcePanel.add(urlPanel, DockPanel.CENTER);
+      sourcePanel.add(urlPanel);
      
       addWidget(sourcePanel);
       

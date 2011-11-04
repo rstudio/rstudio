@@ -14,3 +14,8 @@
 .wizardSpacer {
    height: 12px;	
 }
+
+.vcsSelectorDesktop {
+   margin-top: -2px;
+   margin-left: -2px;
+}
