@@ -100,7 +100,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       // ssh key path
       sshKeyPathChooser_ = new FileChooserTextBox(
            null,
-           "(None Available)",
+           "(Not Found)",
            null,
            new Command() {
 
