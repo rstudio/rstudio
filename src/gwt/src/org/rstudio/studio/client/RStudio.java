@@ -41,9 +41,11 @@ import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.common.vcs.CreateKeyDialog;
+import org.rstudio.studio.client.common.vcs.SshKeyChooser;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.projects.ui.ProjectOptionsDialog;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
+import org.rstudio.studio.client.projects.ui.vcs.ProjectVCSSetupDialog;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
@@ -165,6 +167,8 @@ public class RStudio implements EntryPoint
       ProjectOptionsDialog.ensureStylesInjected();
       CodeBrowserEditingTargetWidget.ensureStylesInjected();
       CreateKeyDialog.ensureStylesInjected();
+      SshKeyChooser.ensureStylesInjected();
+      ProjectVCSSetupDialog.ensureStylesInjected();
       WizardResources.INSTANCE.styles().ensureInjected();
       NewProjectResources.INSTANCE.styles().ensureInjected();
      

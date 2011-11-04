@@ -18,7 +18,6 @@ import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -41,6 +40,7 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.ui.ProjectOptionsDialog;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
+import org.rstudio.studio.client.projects.ui.vcs.ProjectVCSSetupDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -435,9 +435,8 @@ public class Projects implements OpenProjectFileHandler,
    @Handler
    public void onVersionControlProjectSetup()
    {
-      globalDisplay_.showMessage(MessageDialog.INFO, 
-                                 "Not Yet Implemented", 
-                                 "Not Yet Implemented");
+      ProjectVCSSetupDialog dlg = new ProjectVCSSetupDialog(server_, "~/.ssh");
+      dlg.showModal();
    }
    
    @Override
