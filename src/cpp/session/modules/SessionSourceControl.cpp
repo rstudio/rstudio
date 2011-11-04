@@ -2383,11 +2383,11 @@ FilePath verifiedSshKeyPath()
    // if there isn't a valid user specified default then scan known locations
    if (sshKeyPath.empty())
    {
-      FilePath sshKeyPath = defaultSshKeyPath();
+      FilePath sshKeyDir = defaultSshKeyPath();
       std::vector<FilePath> candidatePaths;
-      candidatePaths.push_back(sshKeyPath.childPath("id_rsa"));
-      candidatePaths.push_back(sshKeyPath.childPath("id_dsa"));
-      candidatePaths.push_back(sshKeyPath.childPath("identity"));
+      candidatePaths.push_back(sshKeyDir.childPath("id_rsa"));
+      candidatePaths.push_back(sshKeyDir.childPath("id_dsa"));
+      candidatePaths.push_back(sshKeyDir.childPath("identity"));
       BOOST_FOREACH(const FilePath& path, candidatePaths)
       {
          if (path.exists())
