@@ -26,6 +26,11 @@
    margin-top: 30px;
 }
 
+.usingVcsHelpNoSsh {
+   margin-top: 20px;
+}
+
+
 .viewPublicKeyLink {
    font-size: 11px;	
 }

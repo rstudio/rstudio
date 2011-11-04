@@ -172,7 +172,10 @@ public class SourceControlPreferencesPane extends PreferencesPane
       
       HorizontalPanel helpPanel = new HorizontalPanel();
       helpPanel.addStyleName(res_.styles().nudgeRight());
-      helpPanel.addStyleName(res_.styles().usingVcsHelp());
+      if (sshKeyPathChooser_.isVisible())
+         helpPanel.addStyleName(res_.styles().usingVcsHelp());
+      else
+         helpPanel.addStyleName(res_.styles().usingVcsHelpNoSsh());
       Image helpImage = new Image(ThemeResources.INSTANCE.help());
       helpImage.addStyleName(res_.styles().helpImage());
       helpPanel.add(helpImage);
@@ -209,7 +212,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
       sshKeyPathChooser_.setText(prefs.getSSHKeyPath());
       defaultSshKeyDir_ = prefs.getDefaultSSHKeyDir();
       
-      publicKeyLink_.setVisible(prefs.getSSHKeyPath().length() > 0);
+      publicKeyLink_.setVisible(sshKeyPathChooser_.isVisible() &&
+                                (prefs.getSSHKeyPath().length() > 0));
       
    }
 

@@ -37,6 +37,7 @@ public interface PreferencesDialogResources extends ClientBundle
       String extraSpaced();
       String helpImage();
       String usingVcsHelp();
+      String usingVcsHelpNoSsh();
       String viewPublicKeyLink();
       String viewPublicKeyContent();
       String viewPublicKeyLabel();
