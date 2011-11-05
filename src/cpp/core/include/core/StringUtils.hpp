@@ -44,6 +44,8 @@ void convertLineEndings(std::string* str, LineEnding type);
 
 std::string filterControlChars(const std::string& str);
 
+bool parseVersion(const std::string& str, uint64_t* pVersion);
+
 template<typename T>
 T hashStable(const std::string& str)
 {

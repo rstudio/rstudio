@@ -17,10 +17,13 @@
 #include <ostream>
 
 #include <algorithm>
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/regex.hpp>
 
 #include <core/Log.hpp>
+#include <core/SafeConvert.hpp>
 #include <core/json/Json.hpp>
 
 #ifdef _WIN32
@@ -292,6 +295,29 @@ bool isalnum(wchar_t c)
    if (c > 0xFFFF)
       return false; // This function only supports BMP
    return lookup.at(c);
+}
+
+bool parseVersion(const std::string& str, uint64_t* pVersion)
+{
+   uint64_t version = 0;
+
+   std::vector<std::string> chunks;
+   boost::algorithm::split(chunks, str, boost::algorithm::is_any_of("."));
+
+   if (chunks.empty())
+      return false;
+
+   for (size_t i = 0; i < chunks.size() && i < 4; i++)
+   {
+      uint16_t value = core::safe_convert::stringTo<uint16_t>(
+            chunks[i], std::numeric_limits<uint16_t>::max());
+      if (value == std::numeric_limits<uint16_t>::max())
+         return false;
+      version += static_cast<uint64_t>(value) << ((3-i) * 16);
+   }
+   if (pVersion)
+      *pVersion = version;
+   return true;
 }
 
 } // namespace string_utils

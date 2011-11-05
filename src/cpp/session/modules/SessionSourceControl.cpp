@@ -77,6 +77,10 @@ const size_t WARN_SIZE = 200 * 1024;
 // git bin dir which we detect at startup. note that if the git bin
 // is already in the path then this will be empty
 std::string s_gitBinDir;
+uint64_t s_gitVersion;
+const uint64_t GIT_1_7_2 = ((uint64_t)1 << 48) |
+                           ((uint64_t)7 << 32) |
+                           ((uint64_t)2 << 16);
 
 core::system::ProcessOptions procOptions()
 {
@@ -1060,8 +1064,12 @@ public:
    virtual core::Error show(const std::string& rev,
                             std::string* pOutput)
    {
-      return runCommand(git() << "show" << "--pretty=oneline" << "-c" << "-M" << rev,
-                        pOutput, NULL);
+      ShellCommand cmd = git() << "show" << "--pretty=oneline" << "-M";
+      if (s_gitVersion >= GIT_1_7_2)
+         cmd << "-c";
+      cmd << rev;
+
+      return runCommand(cmd, pOutput, NULL);
    }
 
    virtual core::Error hasRemote(bool *pHasRemote)
@@ -2497,6 +2505,28 @@ bool tryGit(const FilePath& workingDir)
    Error error = augmentGitIgnore(gitIgnore);
    if (error)
       LOG_ERROR(error);
+
+   // Save version
+   s_gitVersion = GIT_1_7_2;
+   core::system::ProcessResult result;
+   error = core::system::runCommand(git() << "--version",
+                                    procOptions(),
+                                    &result);
+   if (error)
+      LOG_ERROR(error);
+   else
+   {
+      if (result.exitStatus == 0)
+      {
+         boost::smatch matches;
+         if (boost::regex_search(result.stdOut,
+                                 matches,
+                                 boost::regex("\\d+(\\.\\d+)+")))
+         {
+            string_utils::parseVersion(matches[0], &s_gitVersion);
+         }
+      }
+   }
 
    return true;
 }
