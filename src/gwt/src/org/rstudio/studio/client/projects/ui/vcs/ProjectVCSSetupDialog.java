@@ -1,5 +1,17 @@
 package org.rstudio.studio.client.projects.ui.vcs;
 
+// TODO: use of addProgressIndicator in ProjectVCSSetupDialog
+
+// TODO: add progress for creating key
+
+// TODO: consider adding upload key control
+
+// TODO: consider overwrite prompting
+
+// TODO: factor prefs into re-usable class for project options
+
+// TODO: Tools -> Version Control: Commit, Push/Pull, History, Project Setup
+
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 
