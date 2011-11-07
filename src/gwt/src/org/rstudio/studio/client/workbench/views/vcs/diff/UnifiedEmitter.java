@@ -111,10 +111,10 @@ public class UnifiedEmitter
 
       for (int i = 0; i < ranges.length - 1; i++)
       {
-         sb.append(" -").append(ranges[i].startRow);
+         sb.append(" -").append(Math.max(1, ranges[i].startRow));
          sb.append(',').append(ranges[i].rowCount);
       }
-      sb.append(" +").append(ranges[ranges.length-1].startRow);
+      sb.append(" +").append(Math.max(1, ranges[ranges.length-1].startRow));
       sb.append(",").append(ranges[ranges.length-1].rowCount);
 
       sb.append(' ');

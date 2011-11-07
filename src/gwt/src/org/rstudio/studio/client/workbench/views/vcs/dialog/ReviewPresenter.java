@@ -89,10 +89,6 @@ public class ReviewPresenter implements IsWidget
 
       HasValue<Boolean> getCommitIsAmend();
 
-      void setStageButtonLabel(String label);
-      void setDiscardButtonLabel(String label);
-      void setUnstageButtonLabel(String label);
-
       void setData(ArrayList<ChunkOrLine> lines, PatchMode patchMode);
 
       HasClickHandlers getOverrideSizeWarningButton();
@@ -118,26 +114,18 @@ public class ReviewPresenter implements IsWidget
       @Override
       public void execute()
       {
-         ArrayList<Line> selectedLines = view_.getLineTableDisplay().getSelectedLines();
-         if (selectedLines.size() != 0)
-         {
-            applyPatch(activeChunks_, selectedLines, reverse_, patchMode_);
-         }
+         ArrayList<String> paths = view_.getSelectedPaths();
+
+         if (patchMode_ == PatchMode.Stage && !reverse_)
+            server_.vcsStage(paths, new SimpleRequestCallback<Void>("Stage"));
+         else if (patchMode_ == PatchMode.Stage && reverse_)
+            server_.vcsUnstage(paths, new SimpleRequestCallback<Void>("Unstage"));
+         else if (patchMode_ == PatchMode.Working && reverse_)
+            server_.vcsDiscard(paths, new SimpleRequestCallback<Void>("Discard"));
          else
-         {
-            ArrayList<String> paths = view_.getSelectedPaths();
+            throw new RuntimeException("Unknown patchMode and reverse combo");
 
-            if (patchMode_ == PatchMode.Stage && !reverse_)
-               server_.vcsStage(paths, new SimpleRequestCallback<Void>("Stage"));
-            else if (patchMode_ == PatchMode.Stage && reverse_)
-               server_.vcsUnstage(paths, new SimpleRequestCallback<Void>("Unstage"));
-            else if (patchMode_ == PatchMode.Working && reverse_)
-               server_.vcsDiscard(paths, new SimpleRequestCallback<Void>("Discard"));
-            else
-               throw new RuntimeException("Unknown patchMode and reverse combo");
-
-            view_.getChangelistTable().moveSelectionDown();
-         }
+         view_.getChangelistTable().moveSelectionDown();
       }
 
       private final PatchMode patchMode_;
@@ -408,26 +396,6 @@ public class ReviewPresenter implements IsWidget
             });
       view_.getLineTableDisplay().addDiffChunkActionHandler(new ApplyPatchHandler());
       view_.getLineTableDisplay().addDiffLineActionHandler(new ApplyPatchHandler());
-
-      view_.getLineTableDisplay().addSelectionChangeHandler(new SelectionChangeEvent.Handler()
-      {
-         @Override
-         public void onSelectionChange(SelectionChangeEvent event)
-         {
-            if (view_.getLineTableDisplay().getSelectedLines().size() > 0)
-            {
-               view_.setUnstageButtonLabel("Unstage Selection");
-               view_.setStageButtonLabel("Stage Selection");
-               view_.setDiscardButtonLabel("Discard Selection");
-            }
-            else
-            {
-               view_.setUnstageButtonLabel("Unstage All");
-               view_.setStageButtonLabel("Stage All");
-               view_.setDiscardButtonLabel("Discard All");
-            }
-         }
-      });
 
       new IntStateValue(MODULE_VCS, KEY_CONTEXT_LINES, ClientState.PERSISTENT,
                         session.getSessionInfo().getClientState())
