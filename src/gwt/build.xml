@@ -145,7 +145,7 @@
             <pathelement location="src"/>
             <path refid="project.class.path"/>
          </classpath>
-         <jvmarg value="-Xmx512M"/>
+         <jvmarg value="-Xmx1024M"/>
          <arg value="-war"/>
          <arg value="www"/>
          <arg value="-noserver"/>
