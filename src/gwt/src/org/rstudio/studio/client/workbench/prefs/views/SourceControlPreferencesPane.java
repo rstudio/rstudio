@@ -81,6 +81,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                          "",  // don't have the default dir yet 
                                          "250px",
                                          getProgressIndicator());   
+      sshKeyChooser_.addStyleName(res_.styles().nudgeRight());
       add(sshKeyChooser_);
      
       
@@ -97,6 +98,10 @@ public class SourceControlPreferencesPane extends PreferencesPane
          if (BrowseCap.isMacintosh() || BrowseCap.isLinux())      
             sshKeyChooser_.setVisible(false);
       }
+      
+      // if the ssh key chooser is visible then mark it as a new section
+      if (sshKeyChooser_.isVisible())
+         sshKeyChooser_.addStyleName(res_.styles().newSection());
       
       
       HorizontalPanel helpPanel = new HorizontalPanel();
