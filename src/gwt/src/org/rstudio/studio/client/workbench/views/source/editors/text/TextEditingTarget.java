@@ -1472,7 +1472,7 @@ public class TextEditingTarget implements EditingTarget
          else
          {
             consoleDispatcher_.executeSourceCommand(getPath(), 
-                                                   "UTF-8", 
+                                                   docUpdateSentinel_.getEncoding(),
                                                    activeCodeIsAscii(), 
                                                    echo);
          }

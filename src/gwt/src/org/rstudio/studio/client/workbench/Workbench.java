@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -32,6 +33,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 
@@ -52,6 +54,7 @@ public class Workbench implements BusyHandler,
                     GlobalDisplay globalDisplay,
                     Commands commands,
                     EventBus eventBus,
+                    Provider<UIPrefs> pPrefs,
                     Server server,
                     RemoteFileSystemContext fsContext,
                     FileDialogs fileDialogs,
@@ -63,6 +66,7 @@ public class Workbench implements BusyHandler,
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       eventBus_ = eventBus;
+      pPrefs_ = pPrefs;
       server_ = server;
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
@@ -239,21 +243,23 @@ public class Workbench implements BusyHandler,
                {
                   if (input == null)
                      return;
-                  
+
                   indicator.onCompleted();
-                  
-                  consoleDispatcher_.executeSourceCommand(input.getPath(), 
-                                                          "UTF-8", 
-                                                          false,
-                                                          false);
-                    
+
+                  consoleDispatcher_.executeSourceCommand(
+                        input.getPath(),
+                        pPrefs_.get().defaultEncoding().getValue(),
+                        false,
+                        false);
+
                   commands_.activateConsole().execute();
                }
             });
    }
-   
+
    private final Server server_;
    private final EventBus eventBus_;
+   private final Provider<UIPrefs> pPrefs_;
    private final WorkbenchMainView view_;
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_;
