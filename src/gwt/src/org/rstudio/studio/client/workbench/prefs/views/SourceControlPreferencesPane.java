@@ -13,19 +13,15 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
-import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -33,6 +29,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.SshKeyChooser;
+import org.rstudio.studio.client.common.vcs.VCSHelpLink;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
@@ -106,25 +103,13 @@ public class SourceControlPreferencesPane extends PreferencesPane
          sshKeyChooser_.addStyleName(res_.styles().newSection());
       
       
-      HorizontalPanel helpPanel = new HorizontalPanel();
-      nudgeRight(helpPanel);
+      VCSHelpLink vcsHelpLink = new VCSHelpLink();
+      nudgeRight(vcsHelpLink);
       if (sshKeyChooser_.isVisible())
-         helpPanel.addStyleName(res_.styles().usingVcsHelp());
+         vcsHelpLink.addStyleName(res_.styles().usingVcsHelp());
       else
-         helpPanel.addStyleName(res_.styles().usingVcsHelpNoSsh());
-      Image helpImage = new Image(ThemeResources.INSTANCE.help());
-      helpImage.addStyleName(res_.styles().helpImage());
-      helpPanel.add(helpImage);
-      HyperlinkLabel helpLink = new HyperlinkLabel(
-                                       "Using Version Control with RStudio");
-      helpLink.addClickHandler(new ClickHandler() {
-         public void onClick(ClickEvent event)
-         {
-            globalDisplay.openRStudioLink("using_version_control");
-         }  
-      });
-      helpPanel.add(helpLink);
-      add(helpPanel);
+         vcsHelpLink.addStyleName(res_.styles().usingVcsHelpNoSsh()); 
+      add(vcsHelpLink);
                                       
       chkVcsEnabled_.setEnabled(false);
       gitBinDirChooser_.setEnabled(false);
