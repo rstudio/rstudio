@@ -22,7 +22,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public abstract class PreferencesDialogBasePane extends VerticalPanel
+public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
 implements HasEnsureVisibleHandlers
 {
    public abstract ImageResource getIcon();
@@ -34,6 +34,11 @@ implements HasEnsureVisibleHandlers
 
    public abstract String getName();
 
+   protected abstract void initialize(T prefs);
+   
+   public abstract void onApply(T prefs);
+   
+   
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);

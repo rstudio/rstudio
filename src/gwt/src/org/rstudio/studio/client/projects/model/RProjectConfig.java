@@ -25,6 +25,12 @@ public class RProjectConfig extends JavaScriptObject
    {
    }
    
+   public native static final RProjectConfig createEmpty() /*-{
+      var config = new Object();
+      config.version = 1.0;
+      return config;
+   }-*/;
+   
    public native static final RProjectConfig create(int restoreWorkspace,
                                                     int saveWorkspace,
                                                     int alwaysSaveHistory,
@@ -52,27 +58,55 @@ public class RProjectConfig extends JavaScriptObject
       return this.restore_workspace;
    }-*/;
    
+   public native final void setRestoreWorkspace(int restoreWorkspace) /*-{
+      this.restore_workspace = restoreWorkspace;
+   }-*/;
+   
    public native final int getSaveWorkspace() /*-{
       return this.save_workspace;
+   }-*/;
+   
+   public native final void setSaveWorkspace(int saveWorkspace) /*-{
+      this.save_workspace = saveWorkspace;
    }-*/;
    
    public native final int getAlwaysSaveHistory() /*-{
       return this.always_save_history;
    }-*/;   
    
+   public native final void setAlwaysSaveHistory(int alwaysSaveHistory) /*-{
+      this.always_save_history = alwaysSaveHistory;
+   }-*/;   
+   
    public native final boolean getEnableCodeIndexing() /*-{
       return this.enable_code_indexing;
    }-*/;  
-
+   
+   public native final void setEnableCodeIndexing(boolean enableCodeIndexing) /*-{
+      this.enable_code_indexing = enableCodeIndexing;
+   }-*/;  
+  
    public native final boolean getUseSpacesForTab() /*-{
       return this.use_spaces_for_tab;
    }-*/;  
+   
+   public native final void setUseSpacesForTab(boolean useSpacesForTab) /*-{
+      this.use_spaces_for_tab = useSpacesForTab;
+   }-*/; 
    
    public native final int getNumSpacesForTab() /*-{
       return this.num_spaces_for_tab;
    }-*/;  
    
+   public native final void setNumSpacesForTab(int numSpacesForTab) /*-{
+      this.num_spaces_for_tab = numSpacesForTab;
+   }-*/;  
+   
    public native final String getEncoding() /*-{
       return this.default_encoding;
+   }-*/;
+   
+   public native final void setEncoding(String defaultEncoding) /*-{
+      this.default_encoding = defaultEncoding;
    }-*/;
 }

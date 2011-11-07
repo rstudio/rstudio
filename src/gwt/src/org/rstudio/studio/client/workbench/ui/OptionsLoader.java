@@ -66,7 +66,7 @@ public class OptionsLoader
             {
                indicator.onCompleted();
                PreferencesDialog prefDialog = pPrefDialog_.get();
-               prefDialog.initializeRPrefs(rPrefs);
+               prefDialog.initialize(rPrefs);
                if (activateSourceControl)
                   prefDialog.activateSourceControl();
                prefDialog.showModal();

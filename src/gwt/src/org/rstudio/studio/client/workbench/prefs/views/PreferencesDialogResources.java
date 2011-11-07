@@ -34,10 +34,5 @@ public interface PreferencesDialogResources extends ClientBundle
    Styles styles();
 
    ImageResource iconAppearance();
-   ImageResource iconEdit();
    ImageResource iconPanes();
-   ImageResource iconR();
-   ImageResource iconPackages();
-   ImageResource iconProjects();
-   ImageResource iconSourceControl();
 }

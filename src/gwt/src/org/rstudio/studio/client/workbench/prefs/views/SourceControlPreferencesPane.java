@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.HyperlinkLabel;
@@ -130,7 +131,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initializeRPrefs(RPrefs rPrefs)
+   protected void initialize(RPrefs rPrefs)
    {
       // source control prefs
       SourceControlPrefs prefs = rPrefs.getSourceControlPrefs();
@@ -147,7 +148,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return res_.iconSourceControl();
+      return PreferencesDialogBaseResources.INSTANCE.iconSourceControl();
    }
 
    @Override

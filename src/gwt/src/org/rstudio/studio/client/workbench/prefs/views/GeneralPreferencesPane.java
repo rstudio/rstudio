@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
+import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -43,12 +44,10 @@ import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 public class GeneralPreferencesPane extends PreferencesPane
 {
    @Inject
-   public GeneralPreferencesPane(PreferencesDialogResources res,
-                                 RemoteFileSystemContext fsContext,
+   public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
                                  FileDialogs fileDialogs,
                                  final DefaultCRANMirror defaultCRANMirror)
    {
-      res_ = res;
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
 
@@ -145,7 +144,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    }
    
    @Override
-   protected void initializeRPrefs(RPrefs rPrefs)
+   protected void initialize(RPrefs rPrefs)
    {
       // general prefs
       GeneralPrefs generalPrefs = rPrefs.getGeneralPrefs();
@@ -201,7 +200,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return res_.iconR();
+      return PreferencesDialogBaseResources.INSTANCE.iconR();
    }
 
    @Override
@@ -255,7 +254,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       return "General";
    }
 
-   private final PreferencesDialogResources res_;
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
    private SelectWidget saveWorkspace_;

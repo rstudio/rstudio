@@ -1,21 +1,17 @@
 
-
-.headerLabel {
-   font-weight: bold;
-   margin-bottom: 3px;	
+.panelContainer {
+   width: 525px;
+   height: 360px;
 }
+
 
 .infoLabel {
    font-style: italic;
-   font-size: 0.9em;	
+   font-size: 0.9em; 
 }
 
 .workspaceGrid {
-   margin-bottom: 10px;	
-}
-
-.sourceEditingHeader {
-   margin-bottom: 10px;	
+   margin-bottom: 10px; 
 }
 
 .enableCodeIndexing {
@@ -23,7 +19,7 @@
 }
 
 .enableCodeIndexing input[type=checkbox] {
-   margin-bottom: 13px;	
+   margin-bottom: 13px; 
 }
 
 .useSpacesForTab {
@@ -31,11 +27,9 @@
 }
 
 .numberOfTabs {
-	margin-top: 5px;
-	margin-left: 25px;
+   margin-top: 5px;
+   margin-left: 25px;
 }
-
-
 
 .encodingChooser {
    margin-top: 13px; 

@@ -14,29 +14,20 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
-import org.rstudio.core.client.prefs.PreferencesDialogBasePane;
+import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
 import java.util.ArrayList;
 
-public abstract class PreferencesPane extends PreferencesDialogBasePane
-{
-   public PreferencesPane()
-   {
-      super();
-      
-   }
- 
+public abstract class PreferencesPane extends PreferencesDialogPaneBase<RPrefs>
+{ 
+   @Override
    public void onApply(RPrefs rPrefs)
    {
       for (Command cmd : onApplyCommands_)
          cmd.execute();
-   }
-   
-   protected void initializeRPrefs(RPrefs rPrefs)
-   {
    }
    
    protected CheckBox checkboxPref(String label,

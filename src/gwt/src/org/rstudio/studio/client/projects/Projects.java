@@ -38,9 +38,8 @@ import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
-import org.rstudio.studio.client.projects.ui.ProjectOptionsDialog;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
-import org.rstudio.studio.client.projects.ui.vcs.ProjectVCSSetupDialog;
+import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -77,6 +76,7 @@ public class Projects implements OpenProjectFileHandler,
                    EventBus eventBus,
                    Binder binder,
                    final Commands commands,
+                   Provider<ProjectPreferencesDialog> pPrefDialog,
                    Provider<UIPrefs> pUIPrefs)
    {
       globalDisplay_ = globalDisplay;
@@ -86,6 +86,7 @@ public class Projects implements OpenProjectFileHandler,
       fileDialogs_ = fileDialogs;
       fsContext_ = fsContext;
       session_ = session;
+      pPrefDialog_ = pPrefDialog;
       pUIPrefs_ = pUIPrefs;
       
       binder.bind(commands, this);
@@ -389,8 +390,19 @@ public class Projects implements OpenProjectFileHandler,
    @Handler
    public void onProjectOptions()
    {
+      showProjectOptions(false);
+   }
+
+   @Handler
+   public void onVersionControlProjectSetup()
+   {
+      showProjectOptions(true);
+   }
+   
+   private void showProjectOptions(final boolean activateSourceControl)
+   {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
-                  "Error Reading Options");
+                                                      "Error Reading Options");
       indicator.onProgress("Reading options...");
 
       server_.readProjectConfig(new SimpleRequestCallback<RProjectConfig>() {
@@ -399,44 +411,13 @@ public class Projects implements OpenProjectFileHandler,
          public void onResponseReceived(RProjectConfig config)
          {
             indicator.onCompleted();
-            ProjectOptionsDialog dlg = new ProjectOptionsDialog(
-               config,
-               server_,
-               new ProgressOperationWithInput<RProjectConfig>() {
-                  @Override
-                  public void execute(final RProjectConfig input,
-                                      ProgressIndicator indicator)
-                  {
-                      indicator.onProgress("Saving options...");
-                      server_.writeProjectConfig(
-                            input, 
-                            new VoidServerRequestCallback(indicator) {
-                               @Override
-                               public void onSuccess()
-                               {
-                                  // update prefs
-                                  UIPrefs prefs = pUIPrefs_.get();
-                                  prefs.useSpacesForTab().setProjectValue(
-                                                 input.getUseSpacesForTab());
-                                  prefs.numSpacesForTab().setProjectValue(
-                                                 input.getNumSpacesForTab());
-                                  prefs.defaultEncoding().setProjectValue(
-                                                 input.getEncoding());
-                                  
-                               }
-                            });
-                  }
-               });
-            dlg.showModal();
-        
-         }});
-   }
 
-   @Handler
-   public void onVersionControlProjectSetup()
-   {
-      ProjectVCSSetupDialog dlg = new ProjectVCSSetupDialog(server_, "~/.ssh");
-      dlg.showModal();
+            ProjectPreferencesDialog dlg = pPrefDialog_.get();
+            dlg.initialize(config);
+            if (activateSourceControl)
+               dlg.activateSourceControl();
+            dlg.showModal(); 
+         }});
    }
    
    @Override
@@ -516,6 +497,7 @@ public class Projects implements OpenProjectFileHandler,
    private final RemoteFileSystemContext fsContext_;
    private final GlobalDisplay globalDisplay_;
    private final Session session_;
+   private final Provider<ProjectPreferencesDialog> pPrefDialog_;
    private final Provider<UIPrefs> pUIPrefs_;
    
    private static final String NONE = "none";

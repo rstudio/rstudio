@@ -35,10 +35,18 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+
+// TODO: consider adding upload key control
+
+// TODO: consider overwrite prompting
+
+// TODO: "Project Setup" shows informational message if no project active
+
+// TODO: Tools -> Version Control: Commit, Push/Pull, History, Project Setup
+
+
 public class SshKeyChooser extends Composite
-{
-   
-   
+{  
    public SshKeyChooser(VCSServerOperations server,
                         String defaultSshKeyDir,
                         String textWidth,

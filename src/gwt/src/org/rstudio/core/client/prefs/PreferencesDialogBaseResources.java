@@ -15,6 +15,7 @@ package org.rstudio.core.client.prefs;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 
 public interface PreferencesDialogBaseResources extends ClientBundle
 {
@@ -36,6 +37,10 @@ public interface PreferencesDialogBaseResources extends ClientBundle
 
    @Source("PreferencesDialogBase.css")
    Styles styles();
+   
+   ImageResource iconEdit();
+   ImageResource iconR();
+   ImageResource iconSourceControl();
    
    static PreferencesDialogBaseResources INSTANCE = (PreferencesDialogBaseResources)GWT.create(PreferencesDialogBaseResources.class) ;
 }

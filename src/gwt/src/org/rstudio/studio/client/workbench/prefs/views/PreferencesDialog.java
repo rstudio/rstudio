@@ -13,15 +13,11 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
-import org.rstudio.core.client.prefs.PreferencesDialogBasePane;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
@@ -29,7 +25,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
-public class PreferencesDialog extends PreferencesDialogBase
+public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
 {
    @Inject
    public PreferencesDialog(WorkbenchServerOperations server,
@@ -51,37 +47,27 @@ public class PreferencesDialog extends PreferencesDialogBase
 
       session_ = session;
       server_ = server;
-      
-      addButton(new ThemedButton("Apply", new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            attemptSaveChanges();
-         }
-      }));
    }
    
-   public void initializeRPrefs(RPrefs rPrefs)
-   {
-      for (PreferencesDialogBasePane pane : getPanes())
-         ((PreferencesPane)pane).initializeRPrefs(rPrefs);
-   }
+
    
    public void activateSourceControl()
    {
       activatePane(4);
    }
+   
+   @Override
+   protected RPrefs createEmptyPrefs()
+   {
+      return RPrefs.createEmpty();
+   }
 
   
    @Override
-   protected void doSaveChanges(final Operation onCompleted,
+   protected void doSaveChanges(final RPrefs rPrefs,
+                                final Operation onCompleted,
                                 final ProgressIndicator progressIndicator)
    {
-      // apply changes
-      RPrefs rPrefs = RPrefs.createEmpty();
-      for (PreferencesDialogBasePane pane : getPanes())
-         ((PreferencesPane)pane).onApply(rPrefs);
-
       // save changes
       server_.setPrefs(
          rPrefs, 
@@ -114,6 +100,6 @@ public class PreferencesDialog extends PreferencesDialogBase
   
    private final WorkbenchServerOperations server_;
    private final Session session_;
-
+  
   
 }

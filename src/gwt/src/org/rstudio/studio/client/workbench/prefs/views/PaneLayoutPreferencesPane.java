@@ -292,6 +292,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    {
       return res_.iconPanes();
    }
+   
+   @Override
+   protected void initialize(RPrefs prefs)
+   {
+   }
 
    @Override
    public void onApply(RPrefs rPrefs)
@@ -370,4 +375,5 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final ModuleList tabSet1ModuleList_;
    private final ModuleList tabSet2ModuleList_;
    private boolean dirty_ = false;
+  
 }

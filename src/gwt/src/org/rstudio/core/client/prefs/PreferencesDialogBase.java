@@ -30,12 +30,11 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 
-
-public abstract class PreferencesDialogBase extends ModalDialogBase
+public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 {
    public PreferencesDialogBase(String caption,
                                 String panelContainerStyle,
-                                PreferencesDialogBasePane[] panes)
+                                PreferencesDialogPaneBase<T>[] panes)
    {
       super();
       setText(caption);
@@ -61,6 +60,14 @@ public abstract class PreferencesDialogBase extends ModalDialogBase
       addOkButton(okButton);
       addCancelButton();
       
+      addButton(new ThemedButton("Apply", new ClickHandler()
+      {
+         public void onClick(ClickEvent event)
+         {
+            attemptSaveChanges();
+         }
+      }));
+      
       progressIndicator_ = addProgressIndicator(false);
       panel_ = new DockLayoutPanel(Unit.PX);
       panel_.setStyleName(panelContainerStyle);
@@ -70,7 +77,7 @@ public abstract class PreferencesDialogBase extends ModalDialogBase
       addStyleName(res.styles().preferencesDialog());
 
        
-      for (final PreferencesDialogBasePane pane : panes_)
+      for (final PreferencesDialogPaneBase<T> pane : panes_)
       {
          sectionChooser_.addSection(pane.getIcon(), pane.getName());
          pane.setWidth("100%");
@@ -108,8 +115,13 @@ public abstract class PreferencesDialogBase extends ModalDialogBase
       sectionChooser_.select(0);
    }
    
-  
-   private void setPaneVisibility(PreferencesDialogBasePane pane, boolean visible)
+   public void initialize(T prefs)
+   {
+      for (PreferencesDialogPaneBase<T> pane : panes_)
+         pane.initialize(prefs);
+   }
+   
+   private void setPaneVisibility(PreferencesDialogPaneBase<T> pane, boolean visible)
    {
       pane.getElement().getStyle().setDisplay(visible
                                               ? Display.BLOCK
@@ -122,11 +134,6 @@ public abstract class PreferencesDialogBase extends ModalDialogBase
       return panel_;
    }
    
-   protected PreferencesDialogBasePane[] getPanes()
-   {
-      return panes_;
-   }
-
    protected void activatePane(int index)
    {
       sectionChooser_.select(index);
@@ -141,26 +148,34 @@ public abstract class PreferencesDialogBase extends ModalDialogBase
    {
       if (validate())
       {
-         progressIndicator_.onProgress("Saving...");
+         // apply changes
+         T prefs = createEmptyPrefs();
+         for (PreferencesDialogPaneBase<T> pane : panes_)
+            pane.onApply(prefs);
          
-         doSaveChanges(onCompleted, progressIndicator_);
+         // perform save
+         progressIndicator_.onProgress("Saving...");
+         doSaveChanges(prefs, onCompleted, progressIndicator_);
       }
    }
    
-   protected abstract void doSaveChanges(Operation onCompleted,
+   protected abstract T createEmptyPrefs();
+   
+   protected abstract void doSaveChanges(T prefs,
+                                         Operation onCompleted,
                                          ProgressIndicator progressIndicator);
    
    
    private boolean validate()
    {
-      for (PreferencesDialogBasePane pane : panes_)
+      for (PreferencesDialogPaneBase<T> pane : panes_)
          if (!pane.validate())
             return false;
       return true;
    }
 
    private DockLayoutPanel panel_;
-   private PreferencesDialogBasePane[] panes_;
+   private PreferencesDialogPaneBase<T>[] panes_;
    private FlowPanel container_;
    private Integer currentIndex_;
    private final ProgressIndicator progressIndicator_;

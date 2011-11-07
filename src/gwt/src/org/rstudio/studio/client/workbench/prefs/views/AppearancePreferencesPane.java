@@ -97,6 +97,11 @@ public class AppearancePreferencesPane extends PreferencesPane
    {
       return res_.iconAppearance();
    }
+   
+   @Override
+   protected void initialize(RPrefs prefs)
+   { 
+   }
 
    @Override
    public void onApply(RPrefs rPrefs)
@@ -149,4 +154,5 @@ public class AppearancePreferencesPane extends PreferencesPane
          "  else \n" +
          "    UseMethod(\"plot\")\n" +
          "}\n";
+
 }
