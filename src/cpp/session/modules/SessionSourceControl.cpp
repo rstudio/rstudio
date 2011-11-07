@@ -824,6 +824,12 @@ public:
                boost::algorithm::trim(ref);
                if (boost::algorithm::starts_with(ref, "tag: "))
                   pCommitInfo->tags.push_back(ref.substr(5));
+               else if (boost::algorithm::starts_with(ref, "refs/tags/"))
+               {
+                  // Sometimes with git 1.7.0 tags appear without the "tags: "
+                  // prefix, e.g. plyr-1.6
+                  pCommitInfo->tags.push_back(ref);
+               }
                else if (!boost::algorithm::starts_with(ref, "refs/bisect/"))
                   pCommitInfo->refs.push_back(ref);
             }
