@@ -35,15 +35,18 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-
-// TODO: consider adding upload key control
-
-// TODO: consider overwrite prompting
-
 // TODO: "Project Setup" shows informational message if no project active
 
-// TODO: Tools -> Version Control: Commit, Push/Pull, History, Project Setup
+// TODO: Do just-in-time access of RSA key (no caching)
 
+// TODO: Project setup -- None/Git, on select git put in UI indicating
+//       that we need to bootstrap via git init (and provide button)
+
+// TODO: Project setup -- show read-only view of origin
+
+// TODO: Project setup -- auth config (shared with New Proj from VC)
+
+// TODO: Project setup -- add help link to project setup
 
 public class SshKeyChooser extends Composite
 {  
