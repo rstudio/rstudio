@@ -23,7 +23,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "Source Control";
+      return "Version Control";
    }
 
    @Override
