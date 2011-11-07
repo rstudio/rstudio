@@ -53,20 +53,14 @@ public class StringInterner {
    * Returns a string equal to the input string, but not always the same.
    */
   public String intern(String original) {
-    int hashCode = original.hashCode();
-    int shardId = (hashCode ^ (hashCode >> SHARD_BITS)) & SHARD_MASK;
+    int shardId = getShardId(original);
     return shards[shardId].intern(original);
   }
 
-  /**
-   * Returns the size of each shard, for testing shard balance.
-   */
-  int[] getShardSizes() {
-    int[] result = new int[SHARD_COUNT];
-    for (int i = 0; i < shards.length; i++) {
-      result[i] = shards[i].map.size();
-    }
-    return result;
+  /* visible for testing */
+  int getShardId(String original) {
+    int hashCode = original.hashCode();
+    return (hashCode ^ (hashCode >> SHARD_BITS)) & SHARD_MASK;
   }
 
   private static class Shard {

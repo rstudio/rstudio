@@ -51,28 +51,33 @@ public class StringInternerTest extends TestCase {
   }
 
   public void testShardsAreSomewhatBalanced() throws Exception {
-    for (int i = 0; i < 1000000; i++) {
-      interner.intern("foo" + i);
+
+    // Simulate adding a million strings. We use the production algorithm to choose the shard,
+    // but increment a counter instead. This avoids the WeakHashMap's nondeterministic
+    // behavior due to garbage collection.
+    int meanShardSize = 1000;
+    int shardSizes[] = new int[StringInterner.SHARD_COUNT];
+    int stringsToAdd = StringInterner.SHARD_COUNT * meanShardSize;
+    for (int i = 0; i < stringsToAdd; i++) {
+      int shardId = interner.getShardId("foo" + i);
+      shardSizes[shardId]++;
     }
 
-    int[] shardSizes = interner.getShardSizes();
-    assertEquals(StringInterner.SHARD_COUNT, shardSizes.length);
+    // Verify that no shards are too big. (A shard that's oversized could create lock contention.)
 
-    int minShardSize = Integer.MAX_VALUE;
+    int expectedMaxShardSize = meanShardSize * 2;
     int maxShardSize = 0;
-    int total = 0;
-    for (int candidate : shardSizes) {
-      minShardSize = Math.min(minShardSize, candidate);
-      maxShardSize = Math.max(maxShardSize, candidate);
-      total += candidate;
+    int tooBigShardCount = 0;
+    for (int shardSize : shardSizes) {
+      maxShardSize = Math.max(maxShardSize, shardSize);
+      if (shardSize > expectedMaxShardSize) {
+        tooBigShardCount++;
+      }
     }
 
-    int meanShardSize = total / shardSizes.length;
-    int expectedMinShardSize = meanShardSize / 5;
-    int expectedMaxShardSize = meanShardSize * 5;
-    if (minShardSize < expectedMinShardSize || maxShardSize > expectedMaxShardSize) {
-      fail("unbalanced shards: [" + minShardSize + "," + maxShardSize + "] not within [" +
-      expectedMinShardSize + ", " + expectedMaxShardSize + "]");
+    if (tooBigShardCount > 0) {
+      fail(tooBigShardCount + " of " + shardSizes.length + " shards are too big (more than " +
+          expectedMaxShardSize + " entries); largest shard has " + maxShardSize + " entries.");
     }
   }
 
