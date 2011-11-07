@@ -94,6 +94,8 @@ public class ReviewPresenter implements IsWidget
       HasClickHandlers getOverrideSizeWarningButton();
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
+
+      void onShow();
    }
 
    private class ApplyPatchClickHandler implements ClickHandler, Command
@@ -632,6 +634,7 @@ public class ReviewPresenter implements IsWidget
 
    public void onShow()
    {
+      view_.onShow();
    }
 
    private final Invalidation diffInvalidation_ = new Invalidation();

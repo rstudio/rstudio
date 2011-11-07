@@ -56,6 +56,8 @@ public class HistoryPresenter
 
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
+
+      void onShow();
    }
 
    public interface CommitListDisplay
@@ -208,6 +210,7 @@ public class HistoryPresenter
          provider_.addDataDisplay(view_.getDataDisplay());
          provider_.refreshCount();
       }
+      view_.onShow();
    }
 
    private final TimeBufferedCommand refreshHistoryCommand_ = new TimeBufferedCommand(1000)

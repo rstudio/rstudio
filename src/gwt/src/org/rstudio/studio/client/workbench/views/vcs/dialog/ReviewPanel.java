@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
@@ -520,6 +522,19 @@ public class ReviewPanel extends Composite implements Display
    public void hideSizeWarning()
    {
       diffScroll_.setWidget(lines_);
+   }
+
+   @Override
+   public void onShow()
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            changelist_.focus();
+         }
+      });
    }
 
    @UiField(provided = true)

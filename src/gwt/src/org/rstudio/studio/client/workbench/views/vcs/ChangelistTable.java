@@ -520,6 +520,11 @@ public class ChangelistTable extends Composite
       return table_.addMouseDownHandler(handler);
    }
 
+   public void focus()
+   {
+      table_.setFocus(true);
+   }
+
    private final MultiSelectCellTable<StatusAndPath> table_;
    private final MultiSelectionModel<StatusAndPath> selectionModel_;
    private final ColumnSortEvent.ListHandler<StatusAndPath> sortHandler_;

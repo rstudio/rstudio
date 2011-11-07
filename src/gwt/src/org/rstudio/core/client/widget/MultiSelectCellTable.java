@@ -73,6 +73,13 @@ public class MultiSelectCellTable<T> extends CellTable<T>
       commonInit();
    }
 
+   @Override
+   public void setFocus(boolean focused)
+   {
+      if (focused)
+         DomUtils.focus(getElement(), false);
+   }
+
    private void commonInit()
    {
       setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
