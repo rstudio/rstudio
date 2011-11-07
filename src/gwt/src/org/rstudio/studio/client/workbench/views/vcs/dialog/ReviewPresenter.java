@@ -477,8 +477,10 @@ public class ReviewPresenter implements IsWidget
          lines = Line.reverseLines(lines);
       }
 
-      UnifiedEmitter emitter = new UnifiedEmitter(
-            view_.getChangelistTable().getSelectedPaths().get(0));
+      String path = view_.getChangelistTable().getSelectedPaths().get(0);
+      if (path.indexOf(" -> ") >= 0)
+         path = path.substring(path.indexOf(" -> ") + " -> ".length());
+      UnifiedEmitter emitter = new UnifiedEmitter(path);
       for (DiffChunk chunk : chunks)
          emitter.addContext(chunk);
       emitter.addDiffs(lines);

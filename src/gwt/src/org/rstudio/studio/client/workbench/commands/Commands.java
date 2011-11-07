@@ -103,8 +103,6 @@ public abstract class
    // VCS
    public abstract AppCommand vcsDiff();
    public abstract AppCommand vcsCommit();
-   public abstract AppCommand vcsStage();
-   public abstract AppCommand vcsUnstage();
    public abstract AppCommand vcsRevert();
    public abstract AppCommand vcsShowHistory();
    public abstract AppCommand vcsRefresh();
