@@ -1,0 +1,64 @@
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+@external fixedWidthFont;
+
+@external gwt-CheckBox, gwt-RadioButton, gwt-Label;
+
+.preferencesDialog .gwt-CheckBox,
+.preferencesDialog .gwt-RadioButton {
+   display: block;
+}
+
+.spaced {
+   margin-bottom: 12px;
+}
+
+.extraSpaced {
+   margin-bottom: 23px;
+}
+
+.preferencesDialog .tight {
+   margin-bottom: 2px;
+}
+
+.nudgeRight {
+   margin-left: 2px;
+}
+
+@if user.agent gecko1_8 { .nudgeRight {
+   margin-left: 5px; 
+}
+}
+
+.sectionChooser {
+   background-color: white;
+   border: 1px solid #999;
+}
+
+.sectionChooserInner {
+   background-color: transparent;
+   width: 100%;
+}
+
+.section {
+   width: 100%;
+   padding: 7px 2px 5px 2px;
+}
+.section * {
+   cursor: default;
+}
+
+
+.activeSection {
+   background: #D6E9F8;
+}
+
+.indent {
+   margin-left: 20px;
+}
+
+.textBoxWithChooser {
+   width: 350px;	
+}
+
+

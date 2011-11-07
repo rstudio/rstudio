@@ -51,6 +51,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
 
       chkVcsEnabled_ = new CheckBox(
             "Enable version control interface for RStudio projects");
+      extraSpaced(chkVcsEnabled_);
       add(chkVcsEnabled_);
       
       
@@ -81,7 +82,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                          "",  // don't have the default dir yet 
                                          "250px",
                                          getProgressIndicator());   
-      sshKeyChooser_.addStyleName(res_.styles().nudgeRight());
+      nudgeRight(sshKeyChooser_);
       add(sshKeyChooser_);
      
       
@@ -105,7 +106,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       
       
       HorizontalPanel helpPanel = new HorizontalPanel();
-      helpPanel.addStyleName(res_.styles().nudgeRight());
+      nudgeRight(helpPanel);
       if (sshKeyChooser_.isVisible())
          helpPanel.addStyleName(res_.styles().usingVcsHelp());
       else
@@ -185,7 +186,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       
       HorizontalPanel captionPanel = new HorizontalPanel();
       captionPanel.setWidth(textWidth);
-      captionPanel.addStyleName(res_.styles().nudgeRight());
+      nudgeRight(captionPanel);
       if (captionPanelStyle != null)
          captionPanel.addStyleName(captionPanelStyle);
       
@@ -208,8 +209,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
       add(tight(captionPanel));
       
       chooser.setTextWidth(textWidth);
-      chooser.addStyleName(res_.styles().nudgeRight());
-      chooser.addStyleName(res_.styles().textBoxWithChooser());
+      nudgeRight(chooser);
+      textBoxWithChooser(chooser);
       add(chooser);    
    }
    

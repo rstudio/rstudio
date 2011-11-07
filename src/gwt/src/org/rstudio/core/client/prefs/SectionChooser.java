@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.prefs.views;
+package org.rstudio.core.client.prefs;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -24,9 +24,8 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.inject.Inject;
 
-public class SectionChooser extends SimplePanel implements
+class SectionChooser extends SimplePanel implements
                                                 HasSelectionHandlers<Integer>
 {
    private class ClickableVerticalPanel extends VerticalPanel
@@ -39,11 +38,8 @@ public class SectionChooser extends SimplePanel implements
       }
    }
 
-   @Inject
-   public SectionChooser(PreferencesDialogResources res)
+   public SectionChooser()
    {
-      res_ = res;
-
       setStyleName(res_.styles().sectionChooser());
       inner_.setStyleName(res_.styles().sectionChooserInner());
       setWidget(inner_);
@@ -94,6 +90,7 @@ public class SectionChooser extends SimplePanel implements
    }
 
    private Integer selectedIndex_;
-   private final PreferencesDialogResources res_;
    private final VerticalPanel inner_ = new VerticalPanel();
+   private static final PreferencesDialogBaseResources res_ = 
+                                    PreferencesDialogBaseResources.INSTANCE;
 }

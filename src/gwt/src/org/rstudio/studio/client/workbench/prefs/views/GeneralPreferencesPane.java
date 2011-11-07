@@ -70,21 +70,21 @@ public class GeneralPreferencesPane extends PreferencesPane
                   });
             rVersion_.setWidth("100%");
             rVersion_.setText(Desktop.getFrame().getRVersion());
-            rVersion_.addStyleName(res_.styles().spaced());
+            spaced(rVersion_);
             add(rVersion_);
          }
       }
 
       Label defaultLabel = new Label("Default working directory (when not in a project):");
-      defaultLabel.addStyleName(res_.styles().nudgeRight());
+      nudgeRight(defaultLabel);
       add(tight(defaultLabel));
       add(dirChooser_ = new DirectoryChooserTextBox(null, 
                                                     null,
                                                     fileDialogs_, 
                                                     fsContext_));  
-      dirChooser_.addStyleName(res_.styles().spaced());
-      dirChooser_.addStyleName(res_.styles().nudgeRight());
-      dirChooser_.addStyleName(res_.styles().textBoxWithChooser());
+      extraSpaced(dirChooser_);
+      nudgeRight(dirChooser_);
+      textBoxWithChooser(dirChooser_);
 
       saveWorkspace_ = new SelectWidget(
             "Save workspace to .RData on exit:",
@@ -96,15 +96,15 @@ public class GeneralPreferencesPane extends PreferencesPane
       add(saveWorkspace_);
       
       add(loadRData_ = new CheckBox("Restore .RData into workspace at startup"));
-   
+      spaced(loadRData_); 
       alwaysSaveHistory_ = new CheckBox(
             "Always save history (even when not saving .RData)");
-      alwaysSaveHistory_.addStyleName(res.styles().extraSpaced());
+      spaced(alwaysSaveHistory_);
       add(alwaysSaveHistory_);
       
       removeHistoryDuplicates_ = new CheckBox(
                                  "Remove duplicate entries in history");
-      removeHistoryDuplicates_.addStyleName(res.styles().extraSpaced());
+      extraSpaced(removeHistoryDuplicates_);
       add(removeHistoryDuplicates_);
 
       cranMirrorTextBox_ = new TextBoxWithButton(
@@ -125,14 +125,14 @@ public class GeneralPreferencesPane extends PreferencesPane
                  
                }
             });
-      cranMirrorTextBox_.addStyleName(res.styles().spaced());
-      cranMirrorTextBox_.addStyleName(res_.styles().nudgeRight());
-      cranMirrorTextBox_.addStyleName(res.styles().textBoxWithChooser());
+      extraSpaced(cranMirrorTextBox_);
+      nudgeRight(cranMirrorTextBox_);
+      textBoxWithChooser(cranMirrorTextBox_);
       cranMirrorTextBox_.setText("");
       add(cranMirrorTextBox_);
       
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
-      restoreLastProject_.addStyleName(res.styles().extraSpaced());
+      extraSpaced(restoreLastProject_);
       add(restoreLastProject_);
         
       saveWorkspace_.setEnabled(false);

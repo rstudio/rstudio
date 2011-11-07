@@ -13,20 +13,12 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Display;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.EnsureVisibleHandler;
-import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.prefs.PreferencesDialogBase;
+import org.rstudio.core.client.prefs.PreferencesDialogBasePane;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -37,39 +29,28 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
-public class PreferencesDialog extends ModalDialogBase
+public class PreferencesDialog extends PreferencesDialogBase
 {
    @Inject
    public PreferencesDialog(WorkbenchServerOperations server,
                             Session session,
                             PreferencesDialogResources res,
-                            final SectionChooser sectionChooser,
                             Provider<GeneralPreferencesPane> pR,
                             EditingPreferencesPane source,
                             AppearancePreferencesPane appearance,
                             PaneLayoutPreferencesPane paneLayout,
                             SourceControlPreferencesPane sourceControl)
    {
-      super();
+      super("Options", 
+            res.styles().panelContainer(),
+            new PreferencesPane[] {pR.get(),
+                                   source, 
+                                   appearance, 
+                                   paneLayout,
+                                   sourceControl}); 
 
-      setText("Options");
-      
-      sectionChooser_ = sectionChooser;
-      
-      ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
-         public void onClick(ClickEvent event) 
-         {
-            attemptSaveChanges(new Operation() {
-               @Override
-               public void execute()
-               {
-                  closeDialog();
-               }
-            });        
-         }
-      });
-      addOkButton(okButton);
-      addCancelButton();
+      session_ = session;
+      server_ = server;
       
       addButton(new ThemedButton("Apply", new ClickHandler()
       {
@@ -78,146 +59,61 @@ public class PreferencesDialog extends ModalDialogBase
             attemptSaveChanges();
          }
       }));
-
-      session_ = session;
-      progressIndicator_ = addProgressIndicator(false);
-      server_ = server;
-      panel_ = new DockLayoutPanel(Unit.PX);
-      panel_.setStyleName(res.styles().outer());
-      container_ = new FlowPanel();
-      container_.getElement().getStyle().setPaddingLeft(10, Unit.PX);
-
-      addStyleName(res.styles().preferencesDialog());
-
-      
-      panes_ = new PreferencesPane[] {pR.get(),
-                                      source, 
-                                      appearance, 
-                                      paneLayout,
-                                      sourceControl};
-      
-         
-      for (final PreferencesPane pane : panes_)
-      {
-         sectionChooser.addSection(pane.getIcon(), pane.getName());
-         pane.setWidth("100%");
-         pane.setProgressIndicator(progressIndicator_);
-         container_.add(pane);
-         setPaneVisibility(pane, false);
-         pane.addEnsureVisibleHandler(new EnsureVisibleHandler()
-         {
-            public void onEnsureVisible(EnsureVisibleEvent event)
-            {
-               sectionChooser.select(container_.getWidgetIndex(pane));
-            }
-         });
-      }
-
-      panel_.addWest(sectionChooser, sectionChooser.getDesiredWidth());
-      panel_.add(container_);
-
-      sectionChooser.addSelectionHandler(new SelectionHandler<Integer>()
-      {
-         public void onSelection(SelectionEvent<Integer> e)
-         {
-            Integer index = e.getSelectedItem();
-
-            if (currentIndex_ != null)
-               setPaneVisibility(panes_[currentIndex_], false);
-
-            currentIndex_ = index;
-
-            if (currentIndex_ != null)
-               setPaneVisibility(panes_[currentIndex_], true);
-         }
-      });
-
-      sectionChooser.select(0);
    }
    
    public void initializeRPrefs(RPrefs rPrefs)
    {
-      for (PreferencesPane pane : panes_)
-         pane.initializeRPrefs(rPrefs);
+      for (PreferencesDialogBasePane pane : getPanes())
+         ((PreferencesPane)pane).initializeRPrefs(rPrefs);
    }
    
    public void activateSourceControl()
    {
-      sectionChooser_.select(4);
+      activatePane(4);
    }
 
-   private void setPaneVisibility(PreferencesPane pane, boolean visible)
-   {
-      pane.getElement().getStyle().setDisplay(visible
-                                              ? Display.BLOCK
-                                              : Display.NONE);
-   }
-
+  
    @Override
-   protected Widget createMainWidget()
+   protected void doSaveChanges(final Operation onCompleted,
+                                final ProgressIndicator progressIndicator)
    {
-      return panel_;
+      // apply changes
+      RPrefs rPrefs = RPrefs.createEmpty();
+      for (PreferencesDialogBasePane pane : getPanes())
+         ((PreferencesPane)pane).onApply(rPrefs);
+
+      // save changes
+      server_.setPrefs(
+         rPrefs, 
+         session_.getSessionInfo().getUiPrefs(),
+         new SimpleRequestCallback<Void>() {
+
+            @Override
+            public void onResponseReceived(Void response)
+            {
+               progressIndicator.onCompleted();
+               if (onCompleted != null)
+                  onCompleted.execute();
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               progressIndicator.onError(error.getUserMessage());
+            }           
+         });  
+      
    }
-
-   private void attemptSaveChanges()
-   {
-      attemptSaveChanges(null);
-   }
-   
-   private void attemptSaveChanges(final Operation onCompleted)
-   {
-      if (validate())
-      {
-         progressIndicator_.onProgress("Saving options...");
-         
-         // apply changes
-         RPrefs rPrefs = RPrefs.createEmpty();
-         for (PreferencesPane pane : panes_)
-            pane.onApply(rPrefs);
-
-         // save changes
-         server_.setPrefs(
-            rPrefs, 
-            session_.getSessionInfo().getUiPrefs(),
-            new SimpleRequestCallback<Void>() {
-
-               @Override
-               public void onResponseReceived(Void response)
-               {
-                  progressIndicator_.onCompleted();
-                  if (onCompleted != null)
-                     onCompleted.execute();
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  progressIndicator_.onError(error.getUserMessage());
-               }           
-            });  
-      }
-   }
-   
-   private boolean validate()
-   {
-      for (PreferencesPane pane : panes_)
-         if (!pane.validate())
-            return false;
-      return true;
-   }
-
+  
    public static void ensureStylesInjected()
    {
       GWT.<PreferencesDialogResources>create(PreferencesDialogResources.class).styles().ensureInjected();
    }
 
 
-   private DockLayoutPanel panel_;
-   private PreferencesPane[] panes_;
-   private FlowPanel container_;
-   private Integer currentIndex_;
+  
    private final WorkbenchServerOperations server_;
    private final Session session_;
-   private final ProgressIndicator progressIndicator_;
-   private final SectionChooser sectionChooser_;
+
+  
 }

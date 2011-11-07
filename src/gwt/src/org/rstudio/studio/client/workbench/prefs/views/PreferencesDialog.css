@@ -1,21 +1,9 @@
-@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
-@external fixedWidthFont;
+@external gwt-CheckBox;
 
-@external gwt-CheckBox, gwt-RadioButton, gwt-Label;
-
-.preferencesDialog .gwt-CheckBox,
-.preferencesDialog .gwt-RadioButton {
-   display: block;
-   margin-bottom: 12px;
-}
-
-.numericValueWidget, .spaced {
-   margin-bottom: 12px;
-}
-
-.extraSpaced {
-   margin-bottom: 23px;
+.panelContainer {
+   width: 550px;
+   height: 420px;
 }
 
 .helpImage {
@@ -34,58 +22,8 @@
    margin-top: 25px;	
 }
 
-.preferencesDialog .tight {
-   margin-bottom: 2px;
-}
-
-.nudgeRight {
-   margin-left: 2px;
-}
-
-@if user.agent gecko1_8 { .nudgeRight {
-   margin-left: 5px; 
-}
-}
-
-
-.sectionChooser {
-   background-color: white;
-   border: 1px solid #999;
-}
-
-.sectionChooserInner {
-   background-color: transparent;
-   width: 100%;
-}
-
-.section {
-   width: 100%;
-   padding: 7px 2px 5px 2px;
-}
-.section * {
-   cursor: default;
-}
-
-
-.activeSection {
-   background: #D6E9F8;
-}
-
-.outer {
-   width: 550px;
-   height: 420px;
-}
-
-.indent {
-   margin-left: 20px;
-}
-
 .encodingChooser {
    margin-top: 15px;	
-}
-
-.textBoxWithChooser {
-   width: 350px;	
 }
 
 .paneLayoutTable td.paneLayoutTable {
@@ -98,6 +36,7 @@
 }
 
 .paneLayoutTable .gwt-CheckBox {
+   display: block;
    margin: 0 0 0 8px;
    max-height: 18px;
    font-size: 11px;
@@ -105,7 +44,7 @@
 
 .paneLayoutTable select {
    width: 195px;
-   margin-bottom: 12px;
+   margin-bottom: 5px;
 }
 
 .themeChooser select {

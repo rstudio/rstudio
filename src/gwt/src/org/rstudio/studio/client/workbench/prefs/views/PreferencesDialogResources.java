@@ -20,27 +20,14 @@ public interface PreferencesDialogResources extends ClientBundle
 {
    public interface Styles extends CssResource
    {
-      String preferencesDialog();
-
-      String sectionChooser();
-      String sectionChooserInner();
-      String section();
-      String activeSection();
-      String outer();
-      String indent();
+      String panelContainer();
       String paneLayoutTable();
-      String tight();
-      String nudgeRight();
-      String numericValueWidget();
       String themeChooser();
-      String spaced();
-      String extraSpaced();
       String helpImage();
       String usingVcsHelp();
       String usingVcsHelpNoSsh();
       String newSection();
       String encodingChooser();
-      String textBoxWithChooser();
    }
 
    @Source("PreferencesDialog.css")

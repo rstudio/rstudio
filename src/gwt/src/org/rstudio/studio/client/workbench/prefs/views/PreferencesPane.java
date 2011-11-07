@@ -12,75 +12,38 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.EnsureVisibleHandler;
-import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.core.client.prefs.PreferencesDialogBasePane;
 import org.rstudio.core.client.widget.NumericValueWidget;
-import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
 import java.util.ArrayList;
 
-public abstract class PreferencesPane extends VerticalPanel
-   implements HasEnsureVisibleHandlers
+public abstract class PreferencesPane extends PreferencesDialogBasePane
 {
-   public abstract ImageResource getIcon();
-
-   public boolean validate()
+   public PreferencesPane()
    {
-      return true;
+      super();
+      
    }
-
+ 
    public void onApply(RPrefs rPrefs)
    {
       for (Command cmd : onApplyCommands_)
          cmd.execute();
    }
    
-   public abstract String getName();
-
-   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
-   {
-      return addHandler(handler, EnsureVisibleEvent.TYPE);
-   }
-
-   public void registerEnsureVisibleHandler(HasEnsureVisibleHandlers widget)
-   {
-      widget.addEnsureVisibleHandler(new EnsureVisibleHandler()
-      {
-         public void onEnsureVisible(EnsureVisibleEvent event)
-         {
-            fireEvent(new EnsureVisibleEvent());
-         }
-      });
-   }
-   
-   public void setProgressIndicator(ProgressIndicator progressIndicator)
-   {
-      progressIndicator_ = progressIndicator;
-   }
-
    protected void initializeRPrefs(RPrefs rPrefs)
    {
-   }
-   
-   protected ProgressIndicator getProgressIndicator()
-   {
-      return progressIndicator_;
    }
    
    protected CheckBox checkboxPref(String label,
                                    final PrefValue<Boolean> prefValue)
    {
       final CheckBox checkBox = new CheckBox(label, false);
+      spaced(checkBox);
       checkBox.setValue(prefValue.getGlobalValue());
       onApplyCommands_.add(new Command()
       {
@@ -92,29 +55,12 @@ public abstract class PreferencesPane extends VerticalPanel
       return checkBox;
    }
 
-   protected Widget indent(Widget widget)
-   {
-      widget.addStyleName(res_.styles().indent());
-      return widget;
-   }
-
-   protected Widget tight(Widget widget)
-   {
-      widget.addStyleName(res_.styles().tight());
-      return widget;
-   }
-
-   protected Widget spaced(Widget widget)
-   {
-      widget.addStyleName(res_.styles().spaced());
-      return widget;
-   }
-
+  
    protected NumericValueWidget numericPref(String label,
                                             final PrefValue<Integer> prefValue)
    {
       final NumericValueWidget widget = new NumericValueWidget(label);
-      widget.addStyleName(res_.styles().numericValueWidget());
+      spaced(widget);
       registerEnsureVisibleHandler(widget);
       widget.setValue(prefValue.getGlobalValue() + "");
       onApplyCommands_.add(new Command()
@@ -136,8 +82,4 @@ public abstract class PreferencesPane extends VerticalPanel
    }
 
    protected final ArrayList<Command> onApplyCommands_ = new ArrayList<Command>();
-   private final PreferencesDialogResources res_ =
-         GWT.create(PreferencesDialogResources.class);
-   
-   private ProgressIndicator progressIndicator_;
 }

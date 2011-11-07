@@ -28,7 +28,7 @@ public class ProjectsPreferencesPane extends PreferencesPane
       res_ = res;
 
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
-      restoreLastProject_.addStyleName(res.styles().extraSpaced());
+      extraSpaced(restoreLastProject_);
       add(restoreLastProject_);
   
       
