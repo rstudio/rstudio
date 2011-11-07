@@ -1,8 +1,6 @@
 package org.rstudio.studio.client.projects.ui.vcs;
 
-// TODO: use of addProgressIndicator in ProjectVCSSetupDialog
-
-// TODO: add progress for creating key
+// TODO: project specific key paths
 
 // TODO: consider adding upload key control
 
@@ -60,19 +58,17 @@ public class ProjectVCSSetupDialog extends ModalDialog<Void>
       VerticalPanel panel = new VerticalPanel();
       panel.addStyleName(RES.styles().mainWidget());
       
-      // TODO: this may not be the correct wat to handle a progress indicator
-      // specifically, is it OK to call addProgressIndicator more than one
-      // time? Perhpas this dialog should inherit from ModalDialogBase?
       
       /*
       SshKeyChooser keyChooser = new SshKeyChooser(server_, 
                                                    defaultSshKeyDir_, 
                                                    "250px",
-                                                   addProgressIndicator(false));
+                                                   null);
      
       
       panel.add(keyChooser);
       */
+     
       
       panel.add(new Label("Under Constsruction"));
       
@@ -98,8 +94,6 @@ public class ProjectVCSSetupDialog extends ModalDialog<Void>
       RES.styles().ensureInjected();
    }
    
-   @SuppressWarnings("unused")
    private final VCSServerOperations server_;
-   @SuppressWarnings("unused")
    private final String defaultSshKeyDir_;
 }

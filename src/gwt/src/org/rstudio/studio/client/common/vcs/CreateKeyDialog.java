@@ -41,6 +41,8 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
          public void execute(final CreateKeyOptions input, 
                              final ProgressIndicator indicator)
          {
+            indicator.onProgress("Creating SSH Key...");
+            
             RSAEncrypt.encrypt_ServerOnly(
                server, 
                input.getPassphrase(), 

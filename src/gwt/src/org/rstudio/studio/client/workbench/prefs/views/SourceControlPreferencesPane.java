@@ -13,47 +13,26 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
-// TODO: project specific key paths
-
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.SafeHtmlUtil;
-import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
-import org.rstudio.core.client.widget.FileChooserTextBox;
-import org.rstudio.core.client.widget.FocusHelper;
-import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.HyperlinkLabel;
-import org.rstudio.core.client.widget.ModalDialogBase;
-import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithButton;
-import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.vcs.CreateKeyDialog;
+import org.rstudio.studio.client.common.vcs.SshKeyChooser;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SourceControlPrefs;
@@ -98,58 +77,12 @@ public class SourceControlPreferencesPane extends PreferencesPane
       */
       
       // ssh key path
-      sshKeyPathChooser_ = new FileChooserTextBox(
-           null,
-           "(Not Found)",
-           null,
-           new Command() {
-
-            @Override
-            public void execute()
-            {
-               publicKeyLink_.setVisible(true); 
-            }    
-      });
-      
-      publicKeyLink_ = new HyperlinkLabel("View public key");
-      publicKeyLink_.addStyleName(res_.styles().viewPublicKeyLink());
-      publicKeyLink_.addClickHandler(new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            viewPublicKey();
-         }    
-      });    
-      Label sshKeyPathLabel = new Label("SSH key path:");
-      addTextBoxChooser(sshKeyPathLabel, 
-                        publicKeyLink_, 
-                        res_.styles().newSection(),
-                        sshKeyPathChooser_);
-      tight(sshKeyPathChooser_);
-      
-      // ssh key path action buttons
-      HorizontalPanel sshButtonPanel = new HorizontalPanel();
-      sshButtonPanel.addStyleName(res_.styles().sshButtonPanel());
-      createKeyButton_ = new SmallButton();
-      createKeyButton_.setText("Create New Key...");
-      createKeyButton_.addClickHandler(new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            new CreateKeyDialog(defaultSshKeyDir_,
-                                server_,
-                                new OperationWithInput<String>() {
-               @Override
-               public void execute(String keyPath)
-               {
-                  sshKeyPathChooser_.setText(keyPath);             
-               }
-            }).showModal();    
-         }
-      });
-      // only add the create-key button in server mode
-      sshButtonPanel.add(createKeyButton_);
-      add(sshButtonPanel);
+      sshKeyChooser_ = new SshKeyChooser(server_, 
+                                         "",  // don't have the default dir yet 
+                                         "250px",
+                                         getProgressIndicator());   
+      add(sshKeyChooser_);
+     
       
       // manipualte visiblity of ssh ui depending on mode/platform
       if (Desktop.isDesktop()) 
@@ -157,22 +90,18 @@ public class SourceControlPreferencesPane extends PreferencesPane
          // never allow key creation in desktop mode (because the user
          // has other ways to accomplish this that are better supported
          // and documented)
-         sshButtonPanel.setVisible(false);
+         sshKeyChooser_.setAllowKeyCreation(false);
          
          // wipe out all references to ssh keys on mac & linux desktop
          // (because we defer entirely to the system in these configurations)
-         if (BrowseCap.isMacintosh() || BrowseCap.isLinux())
-         {
-            sshKeyPathLabel.setVisible(false);
-            publicKeyLink_.setVisible(false);
-            sshKeyPathChooser_.setVisible(false);
-         }
+         if (BrowseCap.isMacintosh() || BrowseCap.isLinux())      
+            sshKeyChooser_.setVisible(false);
       }
       
       
       HorizontalPanel helpPanel = new HorizontalPanel();
       helpPanel.addStyleName(res_.styles().nudgeRight());
-      if (sshKeyPathChooser_.isVisible())
+      if (sshKeyChooser_.isVisible())
          helpPanel.addStyleName(res_.styles().usingVcsHelp());
       else
          helpPanel.addStyleName(res_.styles().usingVcsHelpNoSsh());
@@ -192,8 +121,6 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                       
       chkVcsEnabled_.setEnabled(false);
       gitBinDirChooser_.setEnabled(false);
-      sshKeyPathChooser_.setEnabled(false);
-      createKeyButton_.setEnabled(false);
    }
 
    @Override
@@ -204,17 +131,11 @@ public class SourceControlPreferencesPane extends PreferencesPane
       
       chkVcsEnabled_.setEnabled(true);
       gitBinDirChooser_.setEnabled(true);
-      sshKeyPathChooser_.setEnabled(true);
-      createKeyButton_.setEnabled(true);
       
       chkVcsEnabled_.setValue(prefs.getVcsEnabled());
       gitBinDirChooser_.setText(prefs.getGitBinDir());
-      sshKeyPathChooser_.setText(prefs.getSSHKeyPath());
-      defaultSshKeyDir_ = prefs.getDefaultSSHKeyDir();
-      
-      publicKeyLink_.setVisible(sshKeyPathChooser_.isVisible() &&
-                                (prefs.getSSHKeyPath().length() > 0));
-      
+      sshKeyChooser_.setSshKey(prefs.getSSHKeyPath()); 
+      sshKeyChooser_.setDefaultSskKeyDir(prefs.getDefaultSSHKeyDir());
    }
 
    @Override
@@ -243,49 +164,12 @@ public class SourceControlPreferencesPane extends PreferencesPane
       SourceControlPrefs prefs = SourceControlPrefs.create(
                                           chkVcsEnabled_.getValue(),
                                           gitBinDirChooser_.getText(),
-                                          sshKeyPathChooser_.getText(),
-                                          defaultSshKeyDir_);
+                                          sshKeyChooser_.getSshKey()); 
       
       rPrefs.setSourceControlPrefs(prefs);
    }
    
-   private void viewPublicKey()
-   {
-      final ProgressIndicator indicator = getProgressIndicator();
-      indicator.onProgress("Reading public key...");
-      
-      // compute path to public key
-      FileSystemItem privKey = 
-               FileSystemItem.createFile(sshKeyPathChooser_.getText());
-      FileSystemItem keyDir = privKey.getParentPath();
-      final String keyPath = keyDir.completePath(privKey.getStem() + ".pub");
-      
-      server_.vcsSshPublicKey(keyPath,
-                              new ServerRequestCallback<String> () {
-         
-         @Override
-         public void onResponseReceived(String publicKeyContents)
-         {
-            indicator.onCompleted();
-            
-            // transform contents into displayable form
-            SafeHtmlBuilder htmlBuilder = new SafeHtmlBuilder();
-            SafeHtmlUtil.appendDiv(htmlBuilder,
-                                   res_.styles().viewPublicKeyContent(),
-                                   publicKeyContents);
-            
-            new ShowPublicKeyDialog(publicKeyContents).showModal();
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            String msg = "Error attempting to read key '" + keyPath + "' (" +
-                         error.getUserMessage() + ")";
-            indicator.onError(msg);
-         } 
-      }); 
-   }
+  
    
    private void addTextBoxChooser(Label captionLabel, 
                                   HyperlinkLabel link,
@@ -324,65 +208,6 @@ public class SourceControlPreferencesPane extends PreferencesPane
       add(chooser);    
    }
    
-   private class ShowPublicKeyDialog extends ModalDialogBase
-   {
-      public ShowPublicKeyDialog(String publicKey)
-      {
-         publicKey_ = publicKey;
-         
-         setText("Public Key");
-         
-         setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-         
-         ThemedButton closeButton = new ThemedButton("Close",
-                                                     new ClickHandler() {
-            public void onClick(ClickEvent event) {
-               closeDialog();
-            }
-         });
-         addOkButton(closeButton); 
-      }
-      
-      @Override
-      protected Widget createMainWidget()
-      {
-         VerticalPanel panel = new VerticalPanel();
-         
-         int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
-                                            KeyboardShortcut.CTRL;
-         String cmdText = new KeyboardShortcut(mod, 'C').toString(true);
-         HTML label = new HTML("Press " + cmdText + 
-                               " to copy the key to the clipboard");
-         label.addStyleName(res_.styles().viewPublicKeyLabel());
-         panel.add(label);
-         
-         textArea_ = new TextArea();
-         textArea_.setText(publicKey_);
-         textArea_.addStyleName(res_.styles().viewPublicKeyContent());
-         textArea_.setSize("400px", "250px");
-         textArea_.getElement().setAttribute("spellcheck", "false");
-         FontSizer.applyNormalFontSize(textArea_.getElement());
-         
-         panel.add(textArea_);
-         
-         return panel;
-      }
-      
-      @Override
-      protected void onLoad()
-      {
-         super.onLoad();
-        
-         textArea_.selectAll();
-         FocusHelper.setFocusDeferred(textArea_);
-        
-         
-      }
-      
-      
-      private final String publicKey_;
-      private TextArea textArea_;
-   }
 
    private final PreferencesDialogResources res_;
    
@@ -393,10 +218,5 @@ public class SourceControlPreferencesPane extends PreferencesPane
    
    private TextBoxWithButton gitBinDirChooser_;
    
-   private HyperlinkLabel publicKeyLink_;
-   private TextBoxWithButton sshKeyPathChooser_;
-   
-   private SmallButton createKeyButton_;
-   
-   private String defaultSshKeyDir_ = "";
+   private SshKeyChooser sshKeyChooser_;
 }

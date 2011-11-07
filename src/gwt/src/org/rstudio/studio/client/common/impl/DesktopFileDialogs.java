@@ -18,7 +18,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
@@ -30,27 +30,6 @@ import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperatio
 
 public class DesktopFileDialogs implements FileDialogs
 {
-   private class NullProgress implements ProgressIndicator
-   {
-      public void onProgress(String message)
-      {
-      }
-      
-      public void clearProgress()
-      { 
-      }
-
-      public void onCompleted()
-      {
-      }
-
-      public void onError(String message)
-      {
-         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage("Error",
-                                                                       message);
-      }
-   }
-
    private abstract class FileDialogOperation
    {
       abstract String operation(String caption, String dir);
@@ -88,7 +67,7 @@ public class DesktopFileDialogs implements FileDialogs
                      @Override
                      public void onResponseReceived(FileSystemItem response)
                      {
-                        operation.execute(response, new NullProgress());
+                        operation.execute(response, new NullProgressIndicator());
                      }
 
                      @Override
@@ -96,13 +75,13 @@ public class DesktopFileDialogs implements FileDialogs
                      {
                         globalDisplay_.showErrorMessage("Error",
                                                         error.getUserMessage());
-                        operation.execute(null, new NullProgress());
+                        operation.execute(null, new NullProgressIndicator());
                      }
                   });
                }
                else
                {
-                  operation.execute(item, new NullProgress());
+                  operation.execute(item, new NullProgressIndicator());
                }
             }
          });

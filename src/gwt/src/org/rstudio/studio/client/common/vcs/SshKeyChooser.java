@@ -9,6 +9,7 @@ import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SmallButton;
@@ -39,12 +40,16 @@ public class SshKeyChooser extends Composite
    
    
    public SshKeyChooser(VCSServerOperations server,
-                        final String defaultSshKeyDir,
+                        String defaultSshKeyDir,
                         String textWidth,
                         ProgressIndicator progressIndicator)
    {
       server_ = server;
-      progressIndicator_ = progressIndicator;
+      defaultSshKeyDir_ = defaultSshKeyDir;
+      if (progressIndicator != null)
+         progressIndicator_ = progressIndicator;
+      else
+         progressIndicator_ = new NullProgressIndicator();
       
       FlowPanel panel = new FlowPanel();
            
@@ -101,7 +106,7 @@ public class SshKeyChooser extends Composite
          @Override
          public void onClick(ClickEvent event)
          {
-            new CreateKeyDialog(defaultSshKeyDir,
+            new CreateKeyDialog(defaultSshKeyDir_,
                                 server_,
                                 new OperationWithInput<String>() {
                @Override
@@ -135,6 +140,11 @@ public class SshKeyChooser extends Composite
    public void setAllowKeyCreation(boolean allowKeyCreation)
    {
       createKeyButton_.setVisible(allowKeyCreation);
+   }
+   
+   public void setDefaultSskKeyDir(String defaultSshKeyDir)
+   {
+      defaultSshKeyDir_ = defaultSshKeyDir;
    }
    
    private void viewPublicKey()
@@ -252,6 +262,8 @@ public class SshKeyChooser extends Composite
    {
       RES.styles().ensureInjected();
    }
+   
+   private String defaultSshKeyDir_;
    
    private HyperlinkLabel publicKeyLink_;
    private TextBoxWithButton sshKeyPathChooser_;
