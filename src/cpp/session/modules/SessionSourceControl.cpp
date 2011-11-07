@@ -178,12 +178,6 @@ public:
       return Success();
    }
 
-   virtual core::Error revert(const std::vector<FilePath>& filePaths,
-                              std::string* pStdErr)
-   {
-      return Success();
-   }
-
    virtual core::Error stage(const std::vector<FilePath>& filePaths,
                              std::string* pStdErr)
    {
@@ -471,22 +465,6 @@ public:
             pStdErr);
    }
 
-   core::Error revert(const std::vector<FilePath>& filePaths,
-                      std::string* pStdErr)
-   {
-      Error error = doSimpleCmd(
-            git() << "reset" << "HEAD" << "--" << filePaths,
-            pStdErr);
-      if (error)
-         return error;
-
-      std::vector<std::string> args2;
-      args2.push_back("-f"); // don't fail on unmerged entries
-      return doSimpleCmd(
-            git() << "checkout" << "-f" << "--" << filePaths,
-            pStdErr);
-   }
-
    core::Error stage(const std::vector<FilePath> &filePaths,
                      std::string *pStdErr)
    {
@@ -500,7 +478,15 @@ public:
       {
          std::string status = statusResult.getStatus(path).status();
          if (status.size() < 2)
-            continue;
+         {
+            // In the case of renames, getStatus(path) might not return
+            // anything
+            StatusResult individualStatusResult;
+            this->status(path, &individualStatusResult);
+            status = individualStatusResult.getStatus(path).status();
+            if (status.size() < 2)
+               continue;
+         }
          if (status[1] == 'D')
             filesToRm.push_back(path);
          else if (status[1] != ' ')
@@ -1154,17 +1140,45 @@ FilePath resolveAliasedPath(std::string path)
       return s_pVcsImpl_->root().childPath(path);
 }
 
-std::vector<FilePath> resolveAliasedPaths(json::Array paths)
+bool splitRename(const std::string& path, std::string* pOld, std::string* pNew)
 {
-   std::vector<FilePath> parsedPaths;
-   for (json::Array::iterator it = paths.begin();
+   const std::string RENAME(" -> ");
+
+   size_t index = path.find(RENAME);
+   if (index == path.npos)
+      return false;
+
+   if (pOld)
+      *pOld = std::string(path.begin(), path.begin() + index);
+   if (pNew)
+      *pNew = std::string(path.begin() + index + RENAME.size(), path.end());
+
+   return true;
+}
+
+std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
+                                          bool includeRenameOld = false,
+                                          bool includeRenameNew = true)
+{
+   std::vector<FilePath> results;
+   for (json::Array::const_iterator it = paths.begin();
         it != paths.end();
         it++)
    {
-      json::Value value = *it;
-      parsedPaths.push_back(resolveAliasedPath(value.get_str()));
+      std::string oldPath, newPath;
+      if (splitRename(it->get_str(), &oldPath, &newPath))
+      {
+         if (includeRenameOld)
+            results.push_back(resolveAliasedPath(oldPath));
+         if (includeRenameNew)
+            results.push_back(resolveAliasedPath(newPath));
+      }
+      else
+      {
+         results.push_back(resolveAliasedPath(it->get_str()));
+      }
    }
-   return parsedPaths;
+   return results;
 }
 
 } // anonymous namespace
@@ -1272,7 +1286,14 @@ Error vcsRevert(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pVcsImpl_->revert(resolveAliasedPaths(paths), NULL);
+   error = s_pVcsImpl_->unstage(resolveAliasedPaths(paths, true, true), NULL);
+   if (error)
+      return error;
+   error = s_pVcsImpl_->discard(resolveAliasedPaths(paths, true, false), NULL);
+   if (error)
+      return error;
+
+   return Success();
 }
 
 Error vcsStage(const json::JsonRpcRequest& request,
@@ -1298,7 +1319,7 @@ Error vcsUnstage(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pVcsImpl_->unstage(resolveAliasedPaths(paths), NULL);
+   return s_pVcsImpl_->unstage(resolveAliasedPaths(paths, true, true), NULL);
 }
 
 Error vcsListBranches(const json::JsonRpcRequest& request,
@@ -1505,6 +1526,11 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
 
    if (contextLines < 0)
       contextLines = 999999999;
+
+   if (static_cast<PatchMode>(mode) == PatchModeStage)
+      splitRename(path, &path, NULL);
+   else
+      splitRename(path, NULL, &path);
 
    std::string output;
    error = s_pVcsImpl_->diffFile(resolveAliasedPath(path),

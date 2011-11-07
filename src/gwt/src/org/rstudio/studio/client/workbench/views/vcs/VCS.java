@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -247,27 +248,6 @@ public class VCS extends BasePresenter implements IsWidget
       VCSPopup.show(rpres,
                     pHistoryPresenter_.get(),
                     showHistory);
-   }
-
-   @Handler
-   void onVcsStage()
-   {
-      ArrayList<String> paths = view_.getSelectedPaths();
-      if (paths.size() == 0)
-         return;
-
-      server_.vcsAdd(paths, new SimpleRequestCallback<Void>("Stage Changes"));
-   }
-
-   @Handler
-   void onVcsUnstage()
-   {
-      ArrayList<String> paths = view_.getSelectedPaths();
-      if (paths.size() == 0)
-         return;
-
-      server_.vcsUnstage(paths,
-                         new SimpleRequestCallback<Void>("Unstage Changes"));
    }
 
    @Handler
