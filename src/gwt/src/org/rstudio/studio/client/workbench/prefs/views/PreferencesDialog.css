@@ -30,25 +30,6 @@
    margin-top: 20px;
 }
 
-
-.viewPublicKeyLink {
-   font-size: 11px;	
-}
-
-.viewPublicKeyContent {
-   font-family: fixedWidthFont;
-   font-size: 12px;
-}
-
-.viewPublicKeyLabel {
-   margin-bottom: 7px;	
-}
-
-.sshButtonPanel {
-   margin-top: -3px;
-   margin-left: 3px;
-}
-
 .newSection {
    margin-top: 25px;	
 }
