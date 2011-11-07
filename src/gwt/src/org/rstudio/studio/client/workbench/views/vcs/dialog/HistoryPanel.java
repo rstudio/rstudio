@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.resources.client.ClientBundle;
@@ -24,6 +26,7 @@ import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.HasData;
 import com.google.inject.Inject;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
@@ -213,6 +216,19 @@ public class HistoryPanel extends Composite implements Display
    public void hideSizeWarning()
    {
       commitDetail_.hideSizeWarning();
+   }
+
+   @Override
+   public void onShow()
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            commitTable_.setFocus(true);
+         }
+      });
    }
 
    @UiField(provided = true)
