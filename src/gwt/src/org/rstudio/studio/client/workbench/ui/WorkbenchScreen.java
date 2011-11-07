@@ -297,13 +297,7 @@ public class WorkbenchScreen extends Composite
    {
       optionsLoader_.showOptions();
    }
-   
-   @Handler
-   void onVersionControlOptions()
-   {
-      optionsLoader_.showVersionControlOptions();
-   }
-   
+      
    @Handler
    void onVersionControlHelp()
    {

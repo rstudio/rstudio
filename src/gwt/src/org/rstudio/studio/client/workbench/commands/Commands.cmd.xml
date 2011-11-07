@@ -209,7 +209,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="updatePackages"/>
          <separator/>
          <menu label="Version Control">
-            <cmd refid="versionControlOptions"/>
             <cmd refid="versionControlHelp"/>
             <separator/>
             <cmd refid="versionControlProjectSetup"/>
