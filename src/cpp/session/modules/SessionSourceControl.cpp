@@ -2103,16 +2103,21 @@ void postbackGitSSH(const std::string& argument,
 
 module_context::WaitForMethodFunction s_waitForAskPass;
 
-void postbackSSHAskPass(const std::string&,
+void postbackSSHAskPass(const std::string& prompt,
                         const module_context::PostbackHandlerContinuation& cont)
 {
    // default to failure unless we successfully receive a passphrase
    int retcode = EXIT_FAILURE;
    std::string passphrase;
 
+   json::Object payload;
+   payload["prompt"] = !prompt.empty() ? prompt
+                                       : std::string("Enter passphrase:");
+   ClientEvent askPassEvent(client_events::kAskPass, payload);
+
    // wait for method
    core::json::JsonRpcRequest request;
-   if (s_waitForAskPass(&request))
+   if (s_waitForAskPass(&request, askPassEvent))
    {
       json::Value value;
       Error error = json::readParams(request.params, &value);
@@ -2733,12 +2738,8 @@ core::Error initialize()
          return error;
 
       // register waitForMethod handler
-      json::Object payload;
-      payload["prompt"] = std::string("Enter passphrase:");
-      ClientEvent askPassEvent(client_events::kAskPass, payload);
       s_waitForAskPass = module_context::registerWaitForMethod(
-                                                   "askpass_completed",
-                                                   askPassEvent);
+                                                   "askpass_completed");
 
       // setup environment
       BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));

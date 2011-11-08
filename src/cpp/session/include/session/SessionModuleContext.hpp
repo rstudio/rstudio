@@ -124,9 +124,8 @@ core::Error executeAsync(const core::json::JsonRpcFunction& function,
 //   (b) wait for the specified methodName to be returned from the client
 //   (c) automatically re-issue the event after a client-init
 //
-typedef boost::function<bool(core::json::JsonRpcRequest*)> WaitForMethodFunction;
-WaitForMethodFunction registerWaitForMethod(const std::string& methodName,
-                                            const ClientEvent& event);
+typedef boost::function<bool(core::json::JsonRpcRequest*, const ClientEvent&)> WaitForMethodFunction;
+WaitForMethodFunction registerWaitForMethod(const std::string& methodName);
 
 namespace {
 

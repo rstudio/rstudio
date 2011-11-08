@@ -2240,11 +2240,10 @@ bool registeredWaitForMethod(const std::string& method,
 
 } // anonymous namepace
 
-WaitForMethodFunction registerWaitForMethod(const std::string& methodName,
-                                            const ClientEvent& event)
+WaitForMethodFunction registerWaitForMethod(const std::string& methodName)
 {
    s_waitForMethodNames.push_back(methodName);
-   return boost::bind(registeredWaitForMethod, methodName, event, _1);
+   return boost::bind(registeredWaitForMethod, methodName, _2, _1);
 }
 
 } // namespace module_context
@@ -2410,6 +2409,14 @@ int main (int argc, char * const argv[])
       // detect parent termination
       if (desktopMode)
          core::thread::safeLaunchThread(detectParentTermination);
+
+      // set the rpostback absolute path
+      FilePath rpostback = options.rpostbackPath()
+                           .parent().parent()
+                           .childPath("rpostback");
+      core::system::setenv(
+            "RS_RPOSTBACK_PATH",
+            string_utils::utf8ToSystem(rpostback.absolutePath()));
 
       // ensure that the user scratch path exists
       FilePath userScratchPath = options.userScratchPath();
