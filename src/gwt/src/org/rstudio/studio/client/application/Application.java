@@ -44,7 +44,6 @@ import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
@@ -322,12 +321,6 @@ public class Application implements ApplicationEventHandlers,
          view_.hideSerializationProgress();
          break;
       }
-      
-      // clear the RSAEncrypt cache whenever any type of session serialization
-      // occurs -- we need to make sure that we always clear it when the 
-      // process dies (else the client will be out of sync) so just do it
-      // for all cases here to be on the conservative side
-      RSAEncrypt.clearCache();
    }
    
    private String getSuffix(SessionSerializationEvent event)

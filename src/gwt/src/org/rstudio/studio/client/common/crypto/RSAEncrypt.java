@@ -44,41 +44,28 @@ public class RSAEncrypt
       {
          @Override
          public void onLoaded()
-         {
-            if (publicKeyInfo_ == null)
+         { 
+            server.getPublicKey(new ServerRequestCallback<PublicKeyInfo>()
             {
-               server.getPublicKey(new ServerRequestCallback<PublicKeyInfo>()
+               @Override
+               public void onResponseReceived(PublicKeyInfo response)
                {
-                  @Override
-                  public void onResponseReceived(PublicKeyInfo response)
-                  {
-                     publicKeyInfo_ = response;
-                     callback.onSuccess(encrypt(input,
-                                                publicKeyInfo_.getExponent(),
-                                                publicKeyInfo_.getModulo()));
-                  }
-
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     callback.onFailure(error);
-                  }
-               });
-            }
-            else
-            {
-               callback.onSuccess(encrypt(input,
-                                          publicKeyInfo_.getExponent(),
-                                          publicKeyInfo_.getModulo()));
-            }
+   
+                  callback.onSuccess(encrypt(input,
+                                             response.getExponent(),
+                                             response.getModulo()));
+               }
+   
+               @Override
+               public void onError(ServerError error)
+               {
+                  callback.onFailure(error);
+               }
+            });
          }
       });
    }
    
-   public static void clearCache()
-   {
-      publicKeyInfo_ = null;
-   }
 
    private static native String encrypt(String value,
                                         String exponent,
@@ -88,5 +75,4 @@ public class RSAEncrypt
 
    private static final ExternalJavaScriptLoader loader_ =
          new ExternalJavaScriptLoader("js/encrypt.min.js");
-   private static PublicKeyInfo publicKeyInfo_;
 }
