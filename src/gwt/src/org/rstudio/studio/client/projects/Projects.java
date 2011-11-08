@@ -18,6 +18,7 @@ import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -396,7 +397,21 @@ public class Projects implements OpenProjectFileHandler,
    @Handler
    public void onVersionControlProjectSetup()
    {
-      showProjectOptions(true);
+      // check whether there is a project active
+      if (hasActiveProject())
+      { 
+         showProjectOptions(true);
+      }
+      else
+      {
+         globalDisplay_.showMessage(
+               MessageDialog.INFO, 
+               "No Active Project", 
+               "Version control features can only accesssed from within an " +
+               "RStudio project. Note that if you have an exiting directory " +
+               "under version control you can associate an RStudio project " +
+               "with that directory using the New Project dialog.");
+      }
    }
    
    private void showProjectOptions(final boolean activateSourceControl)
@@ -464,6 +479,11 @@ public class Projects implements OpenProjectFileHandler,
        
       // remove from mru list
       pMRUList_.get().remove(event.getProject());
+   }
+   
+   private boolean hasActiveProject()
+   {
+      return session_.getSessionInfo().getActiveProjectFile() != null;
    }
    
    

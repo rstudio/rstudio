@@ -35,8 +35,6 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-// TODO: "Project Setup" shows informational message if no project active
-
 // TODO: Project setup -- None/Git, on select git put in UI indicating
 //       that we need to bootstrap via git init (and provide button)
 
