@@ -14,4 +14,4 @@
 #
 
 export POSTBACK_DIR=$( (cd "$0/.." && pwd) )
-"$POSTBACK_DIR/../rpostback" askpass
+"$POSTBACK_DIR/../rpostback" askpass "$@"

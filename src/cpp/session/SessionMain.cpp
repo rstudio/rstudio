@@ -2238,11 +2238,10 @@ bool registeredWaitForMethod(const std::string& method,
 
 } // anonymous namepace
 
-WaitForMethodFunction registerWaitForMethod(const std::string& methodName,
-                                            const ClientEvent& event)
+WaitForMethodFunction registerWaitForMethod(const std::string& methodName)
 {
    s_waitForMethodNames.push_back(methodName);
-   return boost::bind(registeredWaitForMethod, methodName, event, _1);
+   return boost::bind(registeredWaitForMethod, methodName, _2, _1);
 }
 
 } // namespace module_context
