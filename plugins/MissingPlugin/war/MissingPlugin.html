@@ -35,7 +35,7 @@
 
           "firefox-old" :
           {
-            "caption" : "Sorry, the GWT Developer Plugin only supports Firefox 3.0 - 6.0 at present",
+            "caption" : "Sorry, the GWT Developer Plugin only supports Firefox 3.0 - 7.0 at present",
             "url" : "http://www.getfirefox.com",
             "supported" : false
           },
@@ -174,7 +174,8 @@
       if (ua.indexOf("rv:1.9") != -1 ||
           ua.indexOf("rv:2.0") != -1 ||
           ua.indexOf("rv:5.0") != -1 ||
-          ua.indexOf("rv:6.0") != -1) {
+          ua.indexOf("rv:6.0") != -1 ||
+          ua.indexOf("rv:7.0") != -1) {
           id = 'firefox';
         } else {
           id = 'firefox-old';
