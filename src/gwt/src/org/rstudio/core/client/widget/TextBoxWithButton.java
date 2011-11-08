@@ -13,6 +13,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 
@@ -58,6 +59,12 @@ public class TextBoxWithButton extends Composite
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
       return themedButton_.addClickHandler(handler);
+   }
+   
+   public HandlerRegistration addValueChangeHandler(
+                                    ValueChangeHandler<String> handler)
+   {
+      return textBox_.addValueChangeHandler(handler);
    }
    
    public void focusButton()

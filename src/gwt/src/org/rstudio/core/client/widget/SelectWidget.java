@@ -14,6 +14,8 @@ package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.theme.res.ThemeResources;
 
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
@@ -87,6 +89,11 @@ public class SelectWidget extends Composite
 
       initWidget(panel);
       addStyleName(ThemeResources.INSTANCE.themeStyles().selectWidget());
+   }
+   
+   public HandlerRegistration addChangeHandler(ChangeHandler handler)
+   {
+      return listBox_.addChangeHandler(handler);
    }
 
    public ListBox getListBox()

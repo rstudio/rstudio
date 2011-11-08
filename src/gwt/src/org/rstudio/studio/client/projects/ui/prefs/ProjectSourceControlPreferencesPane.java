@@ -12,6 +12,8 @@ import org.rstudio.studio.client.projects.model.RProjectVcsOptionsDefault;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 
@@ -32,6 +34,15 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       vcsSelect_ = new SelectWidget("Version control system:", vcsSelections); 
       extraSpaced(vcsSelect_);
       add(vcsSelect_);
+      vcsSelect_.addChangeHandler(new ChangeHandler() {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            manageSshKeyVisibility();
+         }
+         
+      });
+      
       
       sshKeyChooser_ = new SshKeyChooser(
             server, 
@@ -75,13 +86,13 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          setVcsSelection(defaultVcsOptions_.getActiveVcs());
       
       // set override or default
-      if (sshKeyChooser_.isVisible())
-      {
-         if (vcsOptions.getSshKeyPathOverride().length() > 0)
-            sshKeyChooser_.setSshKey(vcsOptions.getSshKeyPathOverride());
-         else
-            sshKeyChooser_.setSshKey(defaultVcsOptions_.getSshKeyPath());
-      }
+      if (vcsOptions.getSshKeyPathOverride().length() > 0)
+         sshKeyChooser_.setSshKey(vcsOptions.getSshKeyPathOverride());
+      else
+         sshKeyChooser_.setSshKey(defaultVcsOptions_.getSshKeyPath());
+      
+      
+      manageSshKeyVisibility();
    }
 
    @Override
@@ -95,8 +106,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       else
          vcsOptions.setActiveVcsOverride("");
       
-      if (sshKeyChooser_.isVisible() && 
-         !sshKeyChooser_.getSshKey().equals(defaultVcsOptions_.getSshKeyPath()))
+      if (!sshKeyChooser_.getSshKey().equals(defaultVcsOptions_.getSshKeyPath()))
       {
          vcsOptions.setSshKeyPathOverride(sshKeyChooser_.getSshKey());
       }
@@ -123,8 +133,12 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       else if (!vcsSelect_.setValue(vcs))
       {
          vcsSelect_.setValue(NONE);
-      }
-         
+      }      
+   }
+   
+   private void manageSshKeyVisibility()
+   {
+      sshKeyChooser_.setVisible(!getVcsSelection().equals("none"));
    }
    
    private SelectWidget vcsSelect_;

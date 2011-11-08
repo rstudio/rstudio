@@ -22,6 +22,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -162,6 +164,12 @@ public class SshKeyChooser extends Composite
    public void setAllowKeyCreation(boolean allowKeyCreation)
    {
       createKeyButton_.setVisible(allowKeyCreation);
+   }
+   
+   public HandlerRegistration addValueChangeHandler(
+                                          ValueChangeHandler<String> handler)
+   {
+      return sshKeyPathChooser_.addValueChangeHandler(handler);
    }
    
    
