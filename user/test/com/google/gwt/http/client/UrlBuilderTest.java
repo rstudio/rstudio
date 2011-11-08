@@ -38,8 +38,25 @@ public class UrlBuilderTest extends GWTTestCase {
     builder.setHost("google.com");
     builder.setPath("path to file");
     builder.setParameter("the key", "the value");
-    assertEquals("http://google.com/path%20to%20file?the%20key=the%20value",
+    assertEquals("http://google.com/path%20to%20file?the+key=the+value",
         builder.buildString());
+
+    builder = new UrlBuilder();
+    builder.setHost("google.com");
+    builder.setPath("path");
+    builder.setHash("hash");
+
+    builder.setParameter("a_b", "a+b");
+    assertEquals("http://google.com/path?a_b=a%2Bb#hash",
+                 builder.buildString());
+
+    builder.setParameter("a_b", "a&b");
+    assertEquals("http://google.com/path?a_b=a%26b#hash",
+                 builder.buildString());
+
+    builder.setParameter("a_b", "a%b");
+    assertEquals("http://google.com/path?a_b=a%25b#hash",
+                 builder.buildString());
   }
 
   public void testBuildStringEntireUrl() {

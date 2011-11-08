@@ -20,6 +20,7 @@ import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.http.client.UrlBuilder;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -120,7 +121,9 @@ public class WindowTest extends GWTTestCase {
         assertEquals(expectedPairs.length, actualPairs.length);
         for (String actualPair : actualPairs) {
           String[] kv = actualPair.split("=");
-          assertEquals(Location.getParameter(kv[0]), kv.length > 1 ? kv[1] : "");
+          assertEquals(Location.getParameter(kv[0]),
+                       // has a URL encoded ':' in a parameter
+                       kv.length > 1 ? URL.decodeQueryString(kv[1]) : "");
         }
       }
       expected = expectedParts[0];

@@ -50,11 +50,11 @@ public class UrlBuilder {
     StringBuilder url = new StringBuilder();
 
     // http://
-    url.append(protocol).append("://");
+    url.append(URL.encode(protocol)).append("://");
 
     // http://www.google.com
     if (host != null) {
-      url.append(host);
+      url.append(URL.encode(host));
     }
 
     // http://www.google.com:80
@@ -64,7 +64,7 @@ public class UrlBuilder {
 
     // http://www.google.com:80/path/to/file.html
     if (path != null && !"".equals(path)) {
-      url.append("/").append(path);
+      url.append("/").append(URL.encode(path));
     }
 
     // Generate the query string.
@@ -72,9 +72,12 @@ public class UrlBuilder {
     char prefix = '?';
     for (Map.Entry<String, String[]> entry : listParamMap.entrySet()) {
       for (String val : entry.getValue()) {
-        url.append(prefix).append(entry.getKey()).append('=');
+        url.append(prefix)
+            .append(URL.encodeQueryString(entry.getKey()))
+            .append('=');
         if (val != null) {
-          url.append(val);
+          // Also encodes +,& etc.
+          url.append(URL.encodeQueryString(val));
         }
         prefix = '&';
       }
@@ -82,10 +85,10 @@ public class UrlBuilder {
 
     // http://www.google.com:80/path/to/file.html?k0=v0&k1=v1#token
     if (hash != null) {
-      url.append("#").append(hash);
+      url.append("#").append(URL.encode(hash));
     }
 
-    return URL.encode(url.toString());
+    return url.toString();
   }
 
   /**
