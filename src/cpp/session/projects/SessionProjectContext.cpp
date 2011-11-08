@@ -416,6 +416,47 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    return defaultConfig;
 }
 
+
+namespace {
+
+const char * const kVcsOverride = "vcsOverride";
+const char * const kSshKeyPathOverride = "sshKeyPathOverride";
+
+} // anonymous namespace
+
+FilePath ProjectContext::vcsOptionsFilePath() const
+{
+   return scratchPath().childPath("vcs_options");
+}
+
+Error ProjectContext::readVcsOptions(RProjectVcsOptions* pOptions) const
+{
+   core::Settings settings;
+   Error error = settings.initialize(vcsOptionsFilePath());
+   if (error)
+      return error;
+
+   pOptions->vcsOverride = settings.get(kVcsOverride);
+   pOptions->sshKeyPathOverride = settings.get(kSshKeyPathOverride);
+
+   return Success();
+}
+
+Error ProjectContext::writeVcsOptions(const RProjectVcsOptions& options) const
+{
+   core::Settings settings;
+   Error error = settings.initialize(vcsOptionsFilePath());
+   if (error)
+      return error;
+
+   settings.beginUpdate();
+   settings.set(kVcsOverride, options.vcsOverride);
+   settings.set(kSshKeyPathOverride, options.sshKeyPathOverride);
+   settings.endUpdate();
+
+   return Success();
+}
+
 } // namespace projects
 } // namesapce session
 

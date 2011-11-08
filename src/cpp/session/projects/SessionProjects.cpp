@@ -83,26 +83,36 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    return configJson;
 }
 
+json::Object projectVcsOptionsJson()
+{
+   RProjectVcsOptions vcsOptions;
+   Error error = s_projectContext.readVcsOptions(&vcsOptions);
+   if (error)
+      LOG_ERROR(error);
+   json::Object vcsOptionsJson;
+   vcsOptionsJson["active_vcs_override"] = vcsOptions.vcsOverride;
+   vcsOptionsJson["ssh_key_path_override"] = vcsOptions.sshKeyPathOverride;
+   return vcsOptionsJson;
+}
+
 Error readProjectOptions(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
    // get project config json
    json::Object configJson = projectConfigJson(s_projectContext.config());
 
-   // get vcs options json
-   json::Object vcsOptionsJson;
-   vcsOptionsJson["active_vcs_override"] = "";
-   vcsOptionsJson["ssh_key_path_override"] = "";
-
    // get vcs options default json
    json::Object vcsOptionsDefaultJson;
-   vcsOptionsDefaultJson["active_vcs"] = "";
-   vcsOptionsDefaultJson["ssh_key_path"] = "";
+   vcsOptionsDefaultJson["active_vcs"] = module_context::detectedVcs(
+                                             s_projectContext.directory());
+   vcsOptionsDefaultJson["ssh_key_path"] =
+     module_context::createAliasedPath(
+                           module_context::verifiedDefaultSshKeyPath());
 
    // create project options json
    json::Object optionsJson;
    optionsJson["config"] = configJson;
-   optionsJson["vcs_options"] = vcsOptionsJson;
+   optionsJson["vcs_options"] = projectVcsOptionsJson();
    optionsJson["vcs_options_default"] = vcsOptionsDefaultJson;
 
    pResponse->setResult(optionsJson);
@@ -146,10 +156,11 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
 
 
    // read the vcs options
-   std::string activeVcsOverride, sshKeyPathOverride;
-   error = json::readObject(vcsOptionsJson,
-                            "active_vcs_override", &activeVcsOverride,
-                            "ssh_key_path_override", &sshKeyPathOverride);
+   RProjectVcsOptions vcsOptions;
+   error = json::readObject(
+         vcsOptionsJson,
+         "active_vcs_override", &(vcsOptions.vcsOverride),
+         "ssh_key_path_override", &(vcsOptions.sshKeyPathOverride));
    if (error)
       return error;
 
@@ -161,7 +172,10 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    // set the config
    setProjectConfig(config);
 
-
+   // write the vcs options
+   error = s_projectContext.writeVcsOptions(vcsOptions);
+   if (error)
+      LOG_ERROR(error);
 
    return Success();
 }

@@ -67,6 +67,11 @@ public class BrowseCap
    {
       return OPERATING_SYSTEM.equals("macintosh");
    }
+   
+   public static boolean isWindows()
+   {
+      return OPERATING_SYSTEM.equals("windows");
+   }
 
    public static boolean isLinux()
    {

@@ -89,11 +89,18 @@ core::FilePath detectedGitBinDir();
 
 // path to ssh key (return empty FilePath if the setting doesn't exist
 // or the file doesn't exist)
-core::FilePath verifiedSshKeyPath();
+core::FilePath verifiedDefaultSshKeyPath();
 
-core::FilePath defaultSshKeyPath();
+// default directory for reading/writing ssh keys
+core::FilePath defaultSshKeyDir();
 
+// check if svn is installed
 bool isSvnInstalled();
+
+// query for what vcs our auto-detection logic indicates for the directory
+std::string detectedVcs(const core::FilePath& workingDir);
+
+
 core::Error initialize();
 
 } // namespace source_control

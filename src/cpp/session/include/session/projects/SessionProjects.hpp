@@ -49,6 +49,13 @@ struct FileMonitorCallbacks
    boost::function<void()> onMonitoringDisabled;
 };
 
+// vcs options
+struct RProjectVcsOptions
+{
+   std::string vcsOverride;
+   std::string sshKeyPathOverride;
+};
+
 class ProjectContext : boost::noncopyable
 {
 public:
@@ -85,6 +92,9 @@ public:
    {
       config_ = config;
    }
+
+   core::Error readVcsOptions(RProjectVcsOptions* pOptions) const;
+   core::Error writeVcsOptions(const RProjectVcsOptions& options) const;
 
    // code which needs to rely on the encoding should call this method
    // rather than getting the encoding off of the config (because the
@@ -126,6 +136,8 @@ private:
    void fileMonitorFilesChanged(
                    const std::vector<core::system::FileChangeEvent>& events);
    void fileMonitorTermination(const core::Error& error);
+
+   core::FilePath vcsOptionsFilePath() const;
 
 private:
    core::FilePath file_;

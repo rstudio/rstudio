@@ -292,13 +292,11 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    if (gitBinDir.empty())
       gitBinDir = source_control::detectedGitBinDir();
    sourceControlPrefs["git_bin_dir"] = gitBinDir.absolutePath();
-   FilePath sshKeyPath = source_control::verifiedSshKeyPath();
+   FilePath sshKeyPath = source_control::verifiedDefaultSshKeyPath();
    if (!sshKeyPath.empty())
       sourceControlPrefs["ssh_key_path"] = module_context::createAliasedPath(sshKeyPath);
    else
       sourceControlPrefs["ssh_key_path"] = "";
-   sourceControlPrefs["default_ssh_key_dir"] =
-       module_context::createAliasedPath(source_control::defaultSshKeyPath());
 
    // initialize and set result object
    json::Object result;

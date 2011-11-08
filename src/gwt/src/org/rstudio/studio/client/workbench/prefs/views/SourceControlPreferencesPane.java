@@ -20,18 +20,17 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.TextBoxWithButton;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.SshKeyChooser;
 import org.rstudio.studio.client.common.vcs.VCSHelpLink;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SourceControlPrefs;
 
@@ -39,6 +38,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
 {
    @Inject
    public SourceControlPreferencesPane(PreferencesDialogResources res,
+                                       Session session,
                                        final GlobalDisplay globalDisplay,
                                        VCSServerOperations server,
                                        RemoteFileSystemContext fsContext,
@@ -76,28 +76,15 @@ public class SourceControlPreferencesPane extends PreferencesPane
       */
       
       // ssh key path
-      sshKeyChooser_ = new SshKeyChooser(server_, 
-                                         "",  // don't have the default dir yet 
-                                         "250px",
-                                         getProgressIndicator());   
+      String keyDir = session.getSessionInfo().getDefaultSSHKeyDir();
+      sshKeyChooser_ = new SshKeyChooser(server_, keyDir, "250px");                               
       nudgeRight(sshKeyChooser_);
       add(sshKeyChooser_);
      
-      
-      // manipualte visiblity of ssh ui depending on mode/platform
-      if (Desktop.isDesktop()) 
-      {
-         // never allow key creation in desktop mode (because the user
-         // has other ways to accomplish this that are better supported
-         // and documented)
-         sshKeyChooser_.setAllowKeyCreation(false);
+      // manipulate visiblity of ssh ui depending on mode/platform
+      if (!SshKeyChooser.isSupportedForCurrentPlatform())
+         sshKeyChooser_.setVisible(false);
          
-         // wipe out all references to ssh keys on mac & linux desktop
-         // (because we defer entirely to the system in these configurations)
-         if (BrowseCap.isMacintosh() || BrowseCap.isLinux())      
-            sshKeyChooser_.setVisible(false);
-      }
-      
       // if the ssh key chooser is visible then mark it as a new section
       if (sshKeyChooser_.isVisible())
          sshKeyChooser_.addStyleName(res_.styles().newSection());
@@ -127,7 +114,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       chkVcsEnabled_.setValue(prefs.getVcsEnabled());
       gitBinDirChooser_.setText(prefs.getGitBinDir());
       sshKeyChooser_.setSshKey(prefs.getSSHKeyPath()); 
-      sshKeyChooser_.setDefaultSskKeyDir(prefs.getDefaultSSHKeyDir());
+      sshKeyChooser_.setProgressIndicator(getProgressIndicator());
    }
 
    @Override

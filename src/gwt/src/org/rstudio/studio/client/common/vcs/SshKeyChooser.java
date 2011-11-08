@@ -15,6 +15,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
@@ -35,28 +36,36 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-// TODO: Project setup -- None/Git, on select git put in UI indicating
-//       that we need to bootstrap via git init (and provide button)
+
+
+// TODO: indicate use of default key in ssh key dialog (Use Default)
 
 // TODO: Project setup -- show read-only view of origin
 
 // TODO: Project setup -- auth config (shared with New Proj from VC)
 
-// TODO: Project setup -- add help link to project setup
+// TODO: Restart RStudio prompt
+// TODO: Project setup -- None/Git, on select git put in UI indicating
+// that we need to bootstrap via git init (and provide button)
+
+
+
 
 public class SshKeyChooser extends Composite
 {  
-   public SshKeyChooser(VCSServerOperations server,
+   public static boolean isSupportedForCurrentPlatform()
+   {
+      return !Desktop.isDesktop() || BrowseCap.isWindows();  
+   }
+   
+   public SshKeyChooser(VCSServerOperations server, 
                         String defaultSshKeyDir,
-                        String textWidth,
-                        ProgressIndicator progressIndicator)
+                        String textWidth)
+                       
    {
       server_ = server;
       defaultSshKeyDir_ = defaultSshKeyDir;
-      if (progressIndicator != null)
-         progressIndicator_ = progressIndicator;
-      else
-         progressIndicator_ = new NullProgressIndicator();
+      progressIndicator_ = new NullProgressIndicator();
       
       FlowPanel panel = new FlowPanel();
            
@@ -124,12 +133,18 @@ public class SshKeyChooser extends Composite
             }).showModal();    
          }
       });
-      // only add the create-key button in server mode
       sshButtonPanel.add(createKeyButton_);
       panel.add(sshButtonPanel);
       
-      
+      // default visibility of create key based on desktop vs. server
+      setAllowKeyCreation(!Desktop.isDesktop());
+     
       initWidget(panel);
+   }
+   
+   public void setProgressIndicator(ProgressIndicator progressIndicator)
+   {
+      progressIndicator_ = progressIndicator;
    }
    
    
@@ -149,10 +164,6 @@ public class SshKeyChooser extends Composite
       createKeyButton_.setVisible(allowKeyCreation);
    }
    
-   public void setDefaultSskKeyDir(String defaultSshKeyDir)
-   {
-      defaultSshKeyDir_ = defaultSshKeyDir;
-   }
    
    private void viewPublicKey()
    {
@@ -277,5 +288,5 @@ public class SshKeyChooser extends Composite
    private SmallButton createKeyButton_;
    
    private final VCSServerOperations server_;
-   private final ProgressIndicator progressIndicator_;
+   private ProgressIndicator progressIndicator_;
 }

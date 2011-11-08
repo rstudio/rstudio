@@ -67,6 +67,21 @@ using namespace core::shell_utils;
 using session::modules::console_process::ConsoleProcess;
 
 namespace session {
+
+namespace module_context {
+
+FilePath verifiedDefaultSshKeyPath()
+{
+   return session::modules::source_control::verifiedDefaultSshKeyPath();
+}
+
+std::string detectedVcs(const FilePath& workingDir)
+{
+   return session::modules::source_control::detectedVcs(workingDir);
+}
+
+} // namespace module_context
+
 namespace modules {
 namespace source_control {
 
@@ -1846,6 +1861,63 @@ FilePath getTrueHomeDir()
 #endif
 }
 
+
+// in RStudio Server mode ensure that there are no group or other permissions
+// set for the ssh key (ssh will fail if there are). we do this automagically
+// in server mode because often users will upload their ssh keys into the
+// .ssh folder (resulting in default permissions) and then still be in an
+// inoperable state. the users could figure out how to do system("chmod ...")
+// but many will probably end up getting stimied before trying that. we don't
+// consider this intrusive because we are resetting the permissions to what
+// they would be if the user called ssh-keygen directory and we can't think
+// of any good reason why you'd want an ssh key with incorrect/inoperable
+// permissions set on it
+void ensureCorrectPermissions(const FilePath& sshKeyPath)
+{
+#ifdef RSTUDIO_SERVER
+   const char * path = sshKeyPath.absolutePath().c_str();
+   struct stat st;
+   if (::stat(path, &st) == -1)
+   {
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      return;
+   }
+
+   // check if there are any permissions for group or other defined. if
+   // there are then remove them
+   mode_t mode = st.st_mode;
+   if (mode & S_IRWXG || mode & S_IRWXO)
+   {
+      mode &= ~S_IRWXG;
+      mode &= ~S_IRWXO;
+      core::system::safePosixCall<int>(boost::bind(::chmod, path, mode),
+                                       ERROR_LOCATION);
+   }
+#endif
+}
+
+
+// get the current active ssh key path -- first checks for a project
+// specific override then falls back to the verified default
+FilePath verifiedSshKeyPath()
+{
+   projects::RProjectVcsOptions vcsOptions;
+   Error error = projects::projectContext().readVcsOptions(&vcsOptions);
+   if (error)
+      LOG_ERROR(error);
+   if (!vcsOptions.sshKeyPathOverride.empty())
+   {
+      FilePath keyPath = module_context::resolveAliasedPath(
+                                             vcsOptions.sshKeyPathOverride);
+      ensureCorrectPermissions(keyPath);
+      return keyPath;
+   }
+   else
+   {
+      return source_control::verifiedDefaultSshKeyPath();
+   }
+}
+
 // This is necessary to hook up the completion of ssh-add (which we
 // must run asynchronously) with the continuation passed into
 // postbackGitSSH. It's important that we pass the output along, as
@@ -1881,7 +1953,7 @@ void postbackGitSSH(const std::string& argument,
 {
    using namespace core::system;
 
-   FilePath key = source_control::verifiedSshKeyPath();
+   FilePath key = verifiedSshKeyPath();
    if (!key.exists())
    {
       // No default key, we're not going to know how to call ssh-add. Give up.
@@ -2372,42 +2444,7 @@ FilePath detectedGitBinDir()
 #endif
 }
 
-// in RStudio Server mode ensure that there are no group or other permissions
-// set for the ssh key (ssh will fail if there are). we do this automagically
-// in server mode because often users will upload their ssh keys into the
-// .ssh folder (resulting in default permissions) and then still be in an
-// inoperable state. the users could figure out how to do system("chmod ...")
-// but many will probably end up getting stimied before trying that. we don't
-// consider this intrusive because we are resetting the permissions to what
-// they would be if the user called ssh-keygen directory and we can't think
-// of any good reason why you'd want an ssh key with incorrect/inoperable
-// permissions set on it
-void ensureCorrectPermissions(const FilePath& sshKeyPath)
-{
-#ifdef RSTUDIO_SERVER
-   const char * path = sshKeyPath.absolutePath().c_str();
-   struct stat st;
-   if (::stat(path, &st) == -1)
-   {
-      LOG_ERROR(systemError(errno, ERROR_LOCATION));
-      return;
-   }
-
-   // check if there are any permissions for group or other defined. if
-   // there are then remove them
-   mode_t mode = st.st_mode;
-   if (mode & S_IRWXG || mode & S_IRWXO)
-   {
-      mode &= ~S_IRWXG;
-      mode &= ~S_IRWXO;
-      core::system::safePosixCall<int>(boost::bind(::chmod, path, mode),
-                                       ERROR_LOCATION);
-   }
-#endif
-}
-
-
-FilePath verifiedSshKeyPath()
+FilePath verifiedDefaultSshKeyPath()
 {
    // if there is user override first try that -- if the override is
    // specified but doesn't exit then advance to auto-resolution logic
@@ -2423,7 +2460,7 @@ FilePath verifiedSshKeyPath()
    // if there isn't a valid user specified default then scan known locations
    if (sshKeyPath.empty())
    {
-      FilePath sshKeyDir = defaultSshKeyPath();
+      FilePath sshKeyDir = defaultSshKeyDir();
       std::vector<FilePath> candidatePaths;
       candidatePaths.push_back(sshKeyDir.childPath("id_rsa"));
       candidatePaths.push_back(sshKeyDir.childPath("id_dsa"));
@@ -2451,7 +2488,7 @@ FilePath verifiedSshKeyPath()
 }
 
 
-FilePath defaultSshKeyPath()
+FilePath defaultSshKeyDir()
 {
    return getTrueHomeDir().childPath(".ssh");
 }
@@ -2506,6 +2543,20 @@ void onSuspend(core::Settings*)
 void onResume(const core::Settings&)
 {
    enqueueRefreshEvent();
+}
+
+
+// called to initialize the s_gitBinDir directory for codepaths
+// which don't ever call tryGit
+void initGitBinDir()
+{
+   s_gitBinDir = userSettings().gitBinDir().absolutePath();
+   if (s_gitBinDir.empty())
+   {
+#ifdef _WIN32
+      detectAndSaveGitBinDir();
+#endif
+   }
 }
 
 bool tryGit(const FilePath& workingDir)
@@ -2563,6 +2614,18 @@ bool tryGit(const FilePath& workingDir)
    return true;
 }
 
+// query for what vcs our auto-detection logic indicates for the directory
+std::string detectedVcs(const FilePath& workingDir)
+{
+   FilePath gitDir = GitVCSImpl::detectGitDir(workingDir);
+   if (!gitDir.empty())
+      return "git";
+   else if (isSvnInstalled() && workingDir.childPath(".svn").isDirectory())
+      return "svn";
+   else
+      return "none";
+}
+
 core::Error initialize()
 {
    using namespace session::module_context;
@@ -2571,14 +2634,55 @@ core::Error initialize()
 
    module_context::events().onShutdown.connect(onShutdown);
 
-   FilePath workingDir = projects::projectContext().directory();
+   const projects::ProjectContext& projContext = projects::projectContext();
+   FilePath workingDir = projContext.directory();
+
+   projects::RProjectVcsOptions vcsOptions;
+   if (projContext.hasProject())
+   {
+      Error vcsError = projContext.readVcsOptions(&vcsOptions);
+      if (vcsError)
+         LOG_ERROR(vcsError);
+   }
+
    if (!userSettings().vcsEnabled())
       s_pVcsImpl_.reset(new VCSImpl(workingDir));
    else if (workingDir.empty())
       s_pVcsImpl_.reset(new VCSImpl(workingDir));
+   else if (vcsOptions.vcsOverride == "none" ||
+            vcsOptions.vcsOverride == "svn")
+   {
+      // make sure we still detect the git bin dir (so isGitInstalled
+      // will work correctly during client_init)
+      initGitBinDir();
+
+      if ((vcsOptions.vcsOverride == "svn") &&
+          isSvnInstalled() &&
+          workingDir.childPath(".svn").isDirectory())
+      {
+         s_pVcsImpl_.reset(new SubversionVCSImpl(workingDir));
+      }
+      else
+      {
+         s_pVcsImpl_.reset(new VCSImpl(workingDir));
+      }
+   }
+   // NOTE: this codepath is here to prevent automatic svn detection
+   // when the user has specified a "git" override
+   else if (vcsOptions.vcsOverride == "git")
+   {
+      if (tryGit(workingDir))
+      {
+         // Intentionally blank. tryGit() has side effects.
+      }
+      else
+      {
+         s_pVcsImpl_.reset(new VCSImpl(workingDir));
+      }
+   }
    else if (tryGit(workingDir))
    {
-      // Tntentionally blank. tryGit() has side effects.
+      // Intentionally blank. tryGit() has side effects.
    }
    else if (workingDir.childPath(".svn").isDirectory())
       s_pVcsImpl_.reset(new SubversionVCSImpl(workingDir));
