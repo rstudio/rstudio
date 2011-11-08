@@ -41,7 +41,7 @@ import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.CreateKeyOptions;
 import org.rstudio.studio.client.common.vcs.CreateKeyResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.VcsCloneOptions;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.Server;
@@ -947,15 +947,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CREATE_PROJECT, projectDirectory, requestCallback);
    }
    
-   public void readProjectConfig(ServerRequestCallback<RProjectConfig> callback)
+   public void readProjectOptions(ServerRequestCallback<RProjectOptions> callback)
    {
-      sendRequest(RPC_SCOPE, READ_PROJECT_CONFIG, callback);
+      sendRequest(RPC_SCOPE, READ_PROJECT_OPTIONS, callback);
    }
    
-   public void writeProjectConfig(RProjectConfig config,
+   public void writeProjectOptions(RProjectOptions options,
                                   ServerRequestCallback<Void> callback)
    {
-      sendRequest(RPC_SCOPE, WRITE_PROJECT_CONFIG, config, callback);
+      sendRequest(RPC_SCOPE, WRITE_PROJECT_OPTIONS, options, callback);
    }
    
    public void newDocument(String filetype,
@@ -2016,8 +2016,8 @@ public class RemoteServer implements Server
    private static final String MANIPULATOR_PLOT_CLICKED = "manipulator_plot_clicked";
 
    private static final String CREATE_PROJECT = "create_project";
-   private static final String READ_PROJECT_CONFIG = "read_project_config";
-   private static final String WRITE_PROJECT_CONFIG = "write_project_config";
+   private static final String READ_PROJECT_OPTIONS = "read_project_options";
+   private static final String WRITE_PROJECT_OPTIONS = "write_project_options";
    
    private static final String NEW_DOCUMENT = "new_document";
    private static final String OPEN_DOCUMENT = "open_document";

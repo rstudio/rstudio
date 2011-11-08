@@ -2,6 +2,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Grid;
@@ -52,19 +53,21 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   protected void initialize(RProjectConfig prefs)
+   protected void initialize(RProjectOptions options)
    {
-     restoreWorkspace_.setSelectedValue(prefs.getRestoreWorkspace());
-     saveWorkspace_.setSelectedValue(prefs.getSaveWorkspace());
-     alwaysSaveHistory_.setSelectedValue(prefs.getAlwaysSaveHistory());
+      RProjectConfig config = options.getConfig();
+      restoreWorkspace_.setSelectedValue(config.getRestoreWorkspace());
+      saveWorkspace_.setSelectedValue(config.getSaveWorkspace());
+      alwaysSaveHistory_.setSelectedValue(config.getAlwaysSaveHistory());
    }
 
    @Override
-   public void onApply(RProjectConfig prefs)
+   public void onApply(RProjectOptions options)
    {
-      prefs.setRestoreWorkspace(restoreWorkspace_.getSelectedValue());
-      prefs.setSaveWorkspace(saveWorkspace_.getSelectedValue());
-      prefs.setAlwaysSaveHistory(alwaysSaveHistory_.getSelectedValue());
+      RProjectConfig config = options.getConfig();
+      config.setRestoreWorkspace(restoreWorkspace_.getSelectedValue());
+      config.setSaveWorkspace(saveWorkspace_.getSelectedValue());
+      config.setAlwaysSaveHistory(alwaysSaveHistory_.getSelectedValue());
    }
    
    private class YesNoAskDefault extends ListBox

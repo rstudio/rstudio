@@ -38,7 +38,7 @@ import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
-import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialog;
 import org.rstudio.studio.client.server.ServerError;
@@ -420,15 +420,15 @@ public class Projects implements OpenProjectFileHandler,
                                                       "Error Reading Options");
       indicator.onProgress("Reading options...");
 
-      server_.readProjectConfig(new SimpleRequestCallback<RProjectConfig>() {
+      server_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
 
          @Override
-         public void onResponseReceived(RProjectConfig config)
+         public void onResponseReceived(RProjectOptions options)
          {
             indicator.onCompleted();
 
             ProjectPreferencesDialog dlg = pPrefDialog_.get();
-            dlg.initialize(config);
+            dlg.initialize(options);
             if (activateSourceControl)
                dlg.activateSourceControl();
             dlg.showModal(); 

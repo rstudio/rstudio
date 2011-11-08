@@ -39,6 +39,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
    {
       super("Options", 
             res.styles().panelContainer(),
+            true,
             new PreferencesPane[] {pR.get(),
                                    source, 
                                    appearance, 

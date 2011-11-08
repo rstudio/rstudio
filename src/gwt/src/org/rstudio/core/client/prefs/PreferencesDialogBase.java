@@ -32,9 +32,10 @@ import org.rstudio.core.client.widget.ThemedButton;
 
 public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 {
-   public PreferencesDialogBase(String caption,
-                                String panelContainerStyle,
-                                PreferencesDialogPaneBase<T>[] panes)
+   protected PreferencesDialogBase(String caption,
+                                   String panelContainerStyle,
+                                   boolean showApplyButton,
+                                   PreferencesDialogPaneBase<T>[] panes)
    {
       super();
       setText(caption);
@@ -60,13 +61,16 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       addOkButton(okButton);
       addCancelButton();
       
-      addButton(new ThemedButton("Apply", new ClickHandler()
+      if (showApplyButton)
       {
-         public void onClick(ClickEvent event)
+         addButton(new ThemedButton("Apply", new ClickHandler()
          {
-            attemptSaveChanges();
-         }
-      }));
+            public void onClick(ClickEvent event)
+            {
+               attemptSaveChanges();
+            }
+         }));
+      }
       
       progressIndicator_ = addProgressIndicator(false);
       panel_ = new DockLayoutPanel(Unit.PX);

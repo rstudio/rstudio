@@ -5,6 +5,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -13,7 +14,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectConfig>
+public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOptions>
 {
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
@@ -24,6 +25,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectConf
    {
       super("Project Options",
             RES.styles().panelContainer(),
+            false,
             new ProjectPreferencesPane[] {general, editing, source});
       
       server_ = server;
@@ -39,20 +41,20 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectConf
    
    
    @Override
-   protected RProjectConfig createEmptyPrefs()
+   protected RProjectOptions createEmptyPrefs()
    {
-      return RProjectConfig.createEmpty();
+      return RProjectOptions.createEmpty();
    }
    
    
    @Override
-   protected void doSaveChanges(final RProjectConfig prefs,
+   protected void doSaveChanges(final RProjectOptions options,
                                 final Operation onCompleted,
                                 final ProgressIndicator indicator)
    {
       
-      server_.writeProjectConfig(
-          prefs, 
+      server_.writeProjectOptions(
+          options, 
           new ServerRequestCallback<Void>() {
              @Override
              public void onResponseReceived(Void response)
@@ -60,13 +62,14 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectConf
                 indicator.onCompleted();
                 
                 // update project ui prefs
+                RProjectConfig config = options.getConfig();
                 UIPrefs uiPrefs = pUIPrefs_.get();
                 uiPrefs.useSpacesForTab().setProjectValue(
-                                           prefs.getUseSpacesForTab());
+                                           config.getUseSpacesForTab());
                 uiPrefs.numSpacesForTab().setProjectValue(
-                                           prefs.getNumSpacesForTab());
+                                           config.getNumSpacesForTab());
                 uiPrefs.defaultEncoding().setProjectValue(
-                                           prefs.getEncoding());   
+                                           config.getEncoding());   
                 
                 if (onCompleted != null)
                    onCompleted.execute();

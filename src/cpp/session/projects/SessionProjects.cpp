@@ -83,10 +83,29 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    return configJson;
 }
 
-Error readProjectConfig(const json::JsonRpcRequest& request,
+Error readProjectOptions(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(projectConfigJson(s_projectContext.config()));
+   // get project config json
+   json::Object configJson = projectConfigJson(s_projectContext.config());
+
+   // get vcs options json
+   json::Object vcsOptionsJson;
+   vcsOptionsJson["active_vcs_override"] = "";
+   vcsOptionsJson["ssh_key_path_override"] = "";
+
+   // get vcs options default json
+   json::Object vcsOptionsDefaultJson;
+   vcsOptionsDefaultJson["active_vcs"] = "";
+   vcsOptionsDefaultJson["ssh_key_path"] = "";
+
+   // create project options json
+   json::Object optionsJson;
+   optionsJson["config"] = configJson;
+   optionsJson["vcs_options"] = vcsOptionsJson;
+   optionsJson["vcs_options_default"] = vcsOptionsDefaultJson;
+
+   pResponse->setResult(optionsJson);
    return Success();
 }
 
@@ -99,13 +118,21 @@ void setProjectConfig(const r_util::RProjectConfig& config)
    module_context::syncRSaveAction();
 }
 
-Error writeProjectConfig(const json::JsonRpcRequest& request,
+Error writeProjectOptions(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
+   // get the project config and vcs options
+   json::Object configJson, vcsOptionsJson;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "config", &configJson,
+                                       "vcs_options", &vcsOptionsJson);
+   if (error)
+      return error;
+
    // read the config
    r_util::RProjectConfig config;
-   Error error = json::readObjectParam(
-                    request.params, 0,
+   error = json::readObject(
+                    configJson,
                     "version", &(config.version),
                     "restore_workspace", &(config.restoreWorkspace),
                     "save_workspace", &(config.saveWorkspace),
@@ -117,13 +144,24 @@ Error writeProjectConfig(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // write it
+
+   // read the vcs options
+   std::string activeVcsOverride, sshKeyPathOverride;
+   error = json::readObject(vcsOptionsJson,
+                            "active_vcs_override", &activeVcsOverride,
+                            "ssh_key_path_override", &sshKeyPathOverride);
+   if (error)
+      return error;
+
+   // write the config
    error = r_util::writeProjectFile(s_projectContext.file(), config);
    if (error)
       return error;
 
-   // set it
+   // set the config
    setProjectConfig(config);
+
+
 
    return Success();
 }
@@ -304,8 +342,8 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "create_project", createProject))
-      (bind(registerRpcMethod, "read_project_config", readProjectConfig))
-      (bind(registerRpcMethod, "write_project_config", writeProjectConfig))
+      (bind(registerRpcMethod, "read_project_options", readProjectOptions))
+      (bind(registerRpcMethod, "write_project_options", writeProjectOptions))
    ;
    return initBlock.execute();
 }

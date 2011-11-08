@@ -22,9 +22,9 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
 {  
    void createProject(String projectDirectory, 
                       ServerRequestCallback<Void> callback);
+    
+   void readProjectOptions(ServerRequestCallback<RProjectOptions> callback);
    
-   void readProjectConfig(ServerRequestCallback<RProjectConfig> callback);
-   
-   void writeProjectConfig(RProjectConfig config,
-                           ServerRequestCallback<Void> callback);
+   void writeProjectOptions(RProjectOptions options,
+                            ServerRequestCallback<Void> callback);
 }

@@ -6,6 +6,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -87,14 +88,14 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   protected void initialize(RProjectConfig prefs)
+   protected void initialize(RProjectOptions options)
    {
-      initialPrefs_ = prefs;
+      initialConfig_ = options.getConfig();
       
-      enableCodeIndexing_.setValue(prefs.getEnableCodeIndexing());
-      chkSpacesForTab_.setValue(prefs.getUseSpacesForTab());
-      numSpacesForTab_.setValue(prefs.getNumSpacesForTab() + "");
-      setEncoding(prefs.getEncoding());
+      enableCodeIndexing_.setValue(initialConfig_.getEnableCodeIndexing());
+      chkSpacesForTab_.setValue(initialConfig_.getUseSpacesForTab());
+      numSpacesForTab_.setValue(initialConfig_.getNumSpacesForTab() + "");
+      setEncoding(initialConfig_.getEncoding());
    }
    
    @Override
@@ -104,12 +105,13 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   public void onApply(RProjectConfig prefs)
+   public void onApply(RProjectOptions options)
    {
-      prefs.setEnableCodeIndexing(enableCodeIndexing_.getValue());
-      prefs.setUseSpacesForTab(chkSpacesForTab_.getValue());
-      prefs.setNumSpacesForTab(getTabWidth());
-      prefs.setEncoding(encodingValue_);
+      RProjectConfig config = options.getConfig();
+      config.setEnableCodeIndexing(enableCodeIndexing_.getValue());
+      config.setUseSpacesForTab(chkSpacesForTab_.getValue());
+      config.setNumSpacesForTab(getTabWidth());
+      config.setEncoding(encodingValue_);
    }
    
    private void setEncoding(String encoding)
@@ -128,7 +130,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       {
          // should never happen since validate would have been called
          // prior to exiting the dialog. revert to original setting
-         return initialPrefs_.getNumSpacesForTab();
+         return initialConfig_.getNumSpacesForTab();
       }
    }
    
@@ -137,6 +139,6 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    private NumericValueWidget numSpacesForTab_;
    private TextBoxWithButton encoding_;
    private String encodingValue_;
-   private RProjectConfig initialPrefs_;
+   private RProjectConfig initialConfig_;
 
 }
