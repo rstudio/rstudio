@@ -15,7 +15,6 @@
 
 set -e
 
-export POSTBACK_DIR=$(dirname "$0")
-SSH_AGENT_SCRIPT=$("$POSTBACK_DIR/../rpostback" gitssh 2> /dev/null)
+SSH_AGENT_SCRIPT=$("$RS_RPOSTBACK_PATH" gitssh 2> /dev/null)
 eval "$SSH_AGENT_SCRIPT" &> /dev/null
 ssh -o StrictHostKeyChecking=no $*

@@ -2408,6 +2408,14 @@ int main (int argc, char * const argv[])
       if (desktopMode)
          core::thread::safeLaunchThread(detectParentTermination);
 
+      // set the rpostback absolute path
+      FilePath rpostback = options.rpostbackPath()
+                           .parent().parent()
+                           .childPath("rpostback");
+      core::system::setenv(
+            "RS_RPOSTBACK_PATH",
+            string_utils::utf8ToSystem(rpostback.absolutePath()));
+
       // ensure that the user scratch path exists
       FilePath userScratchPath = options.userScratchPath();
       Error error = userScratchPath.ensureDirectory();

@@ -15,5 +15,4 @@
 
 set -e
 
-export POSTBACK_DIR=$(dirname "$0")
-"$POSTBACK_DIR/../rpostback" pdfviewer $1
+"$RS_RPOSTBACK_PATH" pdfviewer $1

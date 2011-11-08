@@ -15,5 +15,4 @@
 
 set -e
 
-export POSTBACK_DIR=$(dirname "$0")
-"$POSTBACK_DIR/../rpostback" askpass "$@"
+"$RS_RPOSTBACK_PATH" askpass "$@"
