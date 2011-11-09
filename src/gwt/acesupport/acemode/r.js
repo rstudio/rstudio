@@ -75,6 +75,8 @@ define("mode/r", function(require, exports, module)
                                                                  functionName);
       };
 
+      this.allowAutoInsert = this.smartAllowAutoInsert;
+
       this.checkOutdent = function(state, line, input) {
          if (! /^\s+$/.test(line))
             return false;

@@ -37,6 +37,10 @@ oop.inherits(Mode, TextMode);
    this.getNextLineIndent = function(state, line, tab) {
       return this.$getIndent(line);
    };
+
+   this.allowAutoInsert = function() {
+      return false;
+   };
 }).call(Mode.prototype);
 
 exports.Mode = Mode;

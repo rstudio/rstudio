@@ -499,7 +499,42 @@ var RCodeModel = function(doc, tokenizer, statePattern) {
 
       return this.$getIndent(lastRow);
    };
-   
+
+   /**
+    * If headInclusive, then a token will match if it starts at pos.
+    * If tailInclusive, then a token will match if it ends at pos (meaning
+    *    token.column + token.length == pos.column, and token.row == pos.row
+    * In all cases, a token will match if pos is after the head and before the
+    *    tail.
+    *
+    * If no token is found, null is returned.
+    *
+    * Note that whitespace and comment tokens will never be returned.
+    */
+   this.getTokenForPos = function(pos, headInclusive, tailInclusive)
+   {
+      this.$tokenizeUpToRow(pos.row);
+
+      if (this.$tokens.length <= pos.row)
+         return null;
+      var tokens = this.$tokens[pos.row];
+      for (var i = 0; i < tokens.length; i++)
+      {
+         var token = tokens[i];
+
+         if (headInclusive && pos.column == token.column)
+            return token;
+         if (pos.column <= token.column)
+            return null;
+
+         if (tailInclusive && pos.column == token.column + token.value.length)
+            return token;
+         if (pos.column < token.column + token.value.length)
+            return token;
+      }
+      return null;
+   };
+
    this.$tokenizeUpToRow = function(lastRow)
    {
       // Don't let lastRow be past the end of the document

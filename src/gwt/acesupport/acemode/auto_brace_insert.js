@@ -77,8 +77,10 @@ define("mode/auto_brace_insert", function(require, exports, module)
             });
             var nextChar = session.doc.getTextRange(nextCharRng);
             if (this.$reStop.test(nextChar) || nextChar.length == 0) {
-               session.doc.insert(endPos, this.$complements[text]);
-               session.selection.moveCursorTo(endPos.row, endPos.column, false);
+               if (this.allowAutoInsert(session, endPos, this.$complements[text])) {
+                  session.doc.insert(endPos, this.$complements[text]);
+                  session.selection.moveCursorTo(endPos.row, endPos.column, false);
+               }
             }
          }
          else if (typing && text === "\n") {
@@ -95,6 +97,30 @@ define("mode/auto_brace_insert", function(require, exports, module)
             }
          }
          return endPos;
+      };
+
+      this.allowAutoInsert = function(session, pos, text)
+      {
+         return true;
+      };
+
+      // To enable this, call "this.allowAutoInsert = this.smartAllowAutoInsert"
+      // in the mode subclass
+      this.smartAllowAutoInsert = function(session, pos, text)
+      {
+         if (text !== "'" && text !== '"')
+            return true;
+
+         // Only allow auto-insertion of a quote char if the actual character
+         // that was typed, was the start of a new string token
+
+         if (pos.column == 0)
+            return true;
+
+         var token = this.$rCodeModel.getTokenForPos(pos, false, true);
+         return token &&
+                token.type === 'string' &&
+                token.column === pos.column-1;
       };
 
       this.wrapRemoveLeft = function(editor, __removeLeft)
