@@ -16,6 +16,8 @@
 
 package java.util.logging;
 
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 
 /**
@@ -64,6 +66,10 @@ public class LogManager {
   public Logger getLogger(String name) {
     return loggerList.get(name);
   }
+
+  public Enumeration<String> getLoggerNames() {
+    return Collections.enumeration(loggerList.keySet());
+  }
   
   /**
    *  Helper function to add a logger when we have already determined that it
@@ -99,7 +105,6 @@ public class LogManager {
   /* Not Implemented */
   // public void addPropertyChangeListener(PropertyChangeListener l) {}
   // public void checkAccess() {}
-  // public Enumeration getLoggerNames() {}
   // public String getProperty(String name) {}
   // public void readConfiguration() {}
   // public void readConfiguration(InputStream ins) {}
