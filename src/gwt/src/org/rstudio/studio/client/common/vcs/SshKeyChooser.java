@@ -38,7 +38,6 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-// TODO: Project setup -- show read-only view of origin
 
 // TODO: Project setup -- auth config (shared with New Proj from VC)
 
@@ -92,7 +91,7 @@ public class SshKeyChooser extends Composite
       // chooser
       sshKeyPathChooser_ = new FileChooserTextBox(
            null,
-           "(Not Found)",
+           "(None)",
            null,
            new Command() {
             @Override
