@@ -38,6 +38,16 @@ oop.inherits(Mode, TextMode);
 
 (function() {
 
+   this.$complements = {
+            "(": ")",
+            "[": "]",
+            '"': '"',
+            "'": "'",
+            "{": "}"
+         };
+   this.$reOpen = /^[(["'{]$/;
+   this.$reClose = /^[)\]"'}]$/;
+
    this.getNextLineIndent = function(state, line, tab, tabSize, row)
    {
       return this.$rCodeModel.getNextLineIndent(row, line, state, tab, tabSize);
@@ -52,6 +62,8 @@ oop.inherits(Mode, TextMode);
    {
       return this.$outdent.autoOutdent(doc, row);
    };
+
+   this.allowAutoInsert = this.smartAllowAutoInsert;
 
 }).call(Mode.prototype);
 
