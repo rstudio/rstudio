@@ -13,6 +13,8 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -23,6 +25,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.HyperlinkLabel;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -51,6 +54,18 @@ public class SourceControlPreferencesPane extends PreferencesPane
             "Enable version control interface for RStudio projects");
       extraSpaced(chkVcsEnabled_);
       add(chkVcsEnabled_);
+      chkVcsEnabled_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            manageControlVisibility();
+            
+            globalDisplay.showMessage(
+               MessageDialog.INFO,
+               (event.getValue() ? "Enable" : "Disable") + " Version Control",
+               "You must restart RStudio for this change to take effect.");
+         }
+      });
       
       
       // git bin dir chooser  
@@ -59,7 +74,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                                       null,
                                                       fileDialogs, 
                                                       fsContext);  
-      addTextBoxChooser(new Label("Git bin directory:"), 
+      gitBinDirLabel_ = new Label("Git bin directory:");
+      addTextBoxChooser(gitBinDirLabel_, 
                         null, 
                         null, 
                         gitBinDirChooser_);
@@ -115,6 +131,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
       gitBinDirChooser_.setText(prefs.getGitBinDir());
       sshKeyChooser_.setSshKey(prefs.getSSHKeyPath()); 
       sshKeyChooser_.setProgressIndicator(getProgressIndicator());
+      
+      manageControlVisibility();
    }
 
    @Override
@@ -187,6 +205,15 @@ public class SourceControlPreferencesPane extends PreferencesPane
       add(chooser);    
    }
    
+   private void manageControlVisibility()
+   {
+      boolean vcsEnabled = chkVcsEnabled_.getValue();
+      gitBinDirLabel_.setVisible(vcsEnabled);
+      gitBinDirChooser_.setVisible(vcsEnabled);
+      sshKeyChooser_.setVisible(SshKeyChooser.isSupportedForCurrentPlatform() &&
+                                vcsEnabled);
+   }
+   
 
    private final PreferencesDialogResources res_;
    
@@ -195,6 +222,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    
    private final CheckBox chkVcsEnabled_;
    
+   private Label gitBinDirLabel_;
    private TextBoxWithButton gitBinDirChooser_;
    
    private SshKeyChooser sshKeyChooser_;

@@ -78,6 +78,12 @@ class SectionChooser extends SimplePanel implements
 
       SelectionEvent.fire(this, index);
    }
+   
+   public void hideSection(Integer index)
+   {
+      if (index != null)
+         inner_.getWidget(index).setVisible(false);
+   }
 
    public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> handler)
    {

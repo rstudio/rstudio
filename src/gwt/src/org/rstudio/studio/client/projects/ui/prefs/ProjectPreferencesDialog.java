@@ -9,6 +9,7 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.inject.Inject;
@@ -19,6 +20,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
                                    Provider<UIPrefs> pUIPrefs,
+                                   Session session,
                                    ProjectGeneralPreferencesPane general,
                                    ProjectEditingPreferencesPane editing,
                                    ProjectSourceControlPreferencesPane source)
@@ -31,7 +33,9 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       server_ = server;
       pUIPrefs_ = pUIPrefs;
       
-  
+      if (!session.getSessionInfo().isVcsAvailable())
+         hidePane(2);
+      
    }
    
    public void activateSourceControl()

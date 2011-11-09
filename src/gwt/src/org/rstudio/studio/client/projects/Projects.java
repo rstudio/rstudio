@@ -398,12 +398,8 @@ public class Projects implements OpenProjectFileHandler,
    public void onVersionControlProjectSetup()
    {
       // check whether there is a project active
-      if (hasActiveProject())
+      if (!hasActiveProject())
       { 
-         showProjectOptions(true);
-      }
-      else
-      {
          globalDisplay_.showMessage(
                MessageDialog.INFO, 
                "No Active Project", 
@@ -411,6 +407,15 @@ public class Projects implements OpenProjectFileHandler,
                "RStudio project. Note that if you have an exiting directory " +
                "under version control you can associate an RStudio project " +
                "with that directory using the New Project dialog.");
+        
+      }
+      else if (!session_.getSessionInfo().isVcsAvailable())
+      {
+         // TODO: correct error state for Project Setup and no vcs available
+      }
+      else
+      {
+         showProjectOptions(true);
       }
    }
    

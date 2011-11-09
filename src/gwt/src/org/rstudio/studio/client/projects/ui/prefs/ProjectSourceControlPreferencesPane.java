@@ -23,13 +23,17 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    public ProjectSourceControlPreferencesPane(Session session,
                                               VCSServerOperations server)
    {
+      // populate the vcs selections list
+      String[] vcsSelections = new String[] { NONE };
       SessionInfo sessionInfo = session.getSessionInfo();
-      String[] availableVcs = sessionInfo.getAvailableVCS();
-      String[] vcsSelections = new String[availableVcs.length + 1];
-      vcsSelections[0] = NONE;
-      for (int i=0; i<availableVcs.length; i++)
-         vcsSelections[i+1] = availableVcs[i];
-      
+      if (sessionInfo.isVcsAvailable())
+      {
+         String[] availableVcs = sessionInfo.getAvailableVCS();
+         vcsSelections = new String[availableVcs.length + 1];
+         vcsSelections[0] = NONE;
+         for (int i=0; i<availableVcs.length; i++)
+            vcsSelections[i+1] = availableVcs[i];
+      }
       
       vcsSelect_ = new SelectWidget("Version control system:", vcsSelections); 
       extraSpaced(vcsSelect_);
