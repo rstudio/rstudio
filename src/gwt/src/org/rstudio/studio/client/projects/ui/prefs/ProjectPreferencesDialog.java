@@ -31,11 +31,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
             new ProjectPreferencesPane[] {general, editing, source});
       
       server_ = server;
-      pUIPrefs_ = pUIPrefs;
-      
-      if (!session.getSessionInfo().isVcsAvailable())
-         hidePane(2);
-      
+      pUIPrefs_ = pUIPrefs;  
    }
    
    public void activateSourceControl()

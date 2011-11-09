@@ -409,10 +409,6 @@ public class Projects implements OpenProjectFileHandler,
                "with that directory using the New Project dialog.");
         
       }
-      else if (!session_.getSessionInfo().isVcsAvailable())
-      {
-         // TODO: correct error state for Project Setup and no vcs available
-      }
       else
       {
          showProjectOptions(true);

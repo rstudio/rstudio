@@ -38,12 +38,6 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-// TODO: correct error state for Project Setup and no vcs available
-//       (sync to state check in ProjectPreferencesDialog constructor)
-//       NOTE: the right answer is probably NOT to hide the VCS options
-//       UI as this takes away a discovery mechanism, although if the user
-//       disables VCS globally it is a bit of a bummer that the UI still shows
-
 // TODO: indicate use of default key in ssh key dialog (Use Default)
 
 // TODO: Project setup -- show read-only view of origin
