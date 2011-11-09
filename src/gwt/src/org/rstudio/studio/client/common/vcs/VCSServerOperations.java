@@ -117,4 +117,9 @@ public interface VCSServerOperations extends CryptoServerOperations
    
    void vcsCreateSshKey(CreateKeyOptions options,
                         ServerRequestCallback<CreateKeyResult> requestCallback);
+   
+   
+   void vcsHasRepo(ServerRequestCallback<Boolean> requestCallback);
+   
+   void vcsInitRepo(ServerRequestCallback<Void> requestCallback);
 }

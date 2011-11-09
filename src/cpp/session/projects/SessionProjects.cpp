@@ -128,6 +128,15 @@ void setProjectConfig(const r_util::RProjectConfig& config)
    module_context::syncRSaveAction();
 }
 
+Error rProjectVcsOptionsFromJson(const json::Object& optionsJson,
+                                 RProjectVcsOptions* pOptions)
+{
+   return json::readObject(
+         optionsJson,
+         "active_vcs_override", &(pOptions->vcsOverride),
+         "ssh_key_path_override", &(pOptions->sshKeyPathOverride));
+}
+
 Error writeProjectOptions(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
@@ -157,10 +166,7 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
 
    // read the vcs options
    RProjectVcsOptions vcsOptions;
-   error = json::readObject(
-         vcsOptionsJson,
-         "active_vcs_override", &(vcsOptions.vcsOverride),
-         "ssh_key_path_override", &(vcsOptions.sshKeyPathOverride));
+   error = rProjectVcsOptionsFromJson(vcsOptionsJson, &vcsOptions);
    if (error)
       return error;
 
@@ -171,6 +177,27 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
 
    // set the config
    setProjectConfig(config);
+
+   // write the vcs options
+   error = s_projectContext.writeVcsOptions(vcsOptions);
+   if (error)
+      LOG_ERROR(error);
+
+   return Success();
+}
+
+Error writeProjectVcsOptions(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
+{
+   // read the vcs options
+   json::Object vcsOptionsJson;
+   Error error = json::readParam(request.params, 0, &vcsOptionsJson);
+   if (error)
+      return error;
+   RProjectVcsOptions vcsOptions;
+   error = rProjectVcsOptionsFromJson(vcsOptionsJson, &vcsOptions);
+   if (error)
+      return error;
 
    // write the vcs options
    error = s_projectContext.writeVcsOptions(vcsOptions);
@@ -358,6 +385,7 @@ Error initialize()
       (bind(registerRpcMethod, "create_project", createProject))
       (bind(registerRpcMethod, "read_project_options", readProjectOptions))
       (bind(registerRpcMethod, "write_project_options", writeProjectOptions))
+      (bind(registerRpcMethod, "write_project_vcs_options", writeProjectVcsOptions))
    ;
    return initBlock.execute();
 }

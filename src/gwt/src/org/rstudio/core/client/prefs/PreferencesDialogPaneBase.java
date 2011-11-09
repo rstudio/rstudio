@@ -19,6 +19,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -64,6 +65,7 @@ implements HasEnsureVisibleHandlers
    {
       return progressIndicator_;
    }
+   
 
    protected Widget indent(Widget widget)
    {
@@ -101,7 +103,19 @@ implements HasEnsureVisibleHandlers
       return widget;
    }
    
+   protected void forceClosed(Command onClosed)
+   {
+      dialog_.forceClosed(onClosed);
+   }
+   
+   void setDialog(PreferencesDialogBase<T> dialog)
+   {
+      dialog_ = dialog;
+   }
+   
    private ProgressIndicator progressIndicator_;
    private final PreferencesDialogBaseResources res_ =
                                  PreferencesDialogBaseResources.INSTANCE;
+   
+   private PreferencesDialogBase<T> dialog_;
 }

@@ -2,27 +2,44 @@ package org.rstudio.studio.client.projects.ui.prefs;
 
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.SshKeyChooser;
 import org.rstudio.studio.client.common.vcs.VCSHelpLink;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptionsDefault;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
 {
    @Inject
-   public ProjectSourceControlPreferencesPane(Session session,
+   public ProjectSourceControlPreferencesPane(final Session session,
+                                              GlobalDisplay globalDisplay,
+                                              EventBus eventBus,
                                               VCSServerOperations server)
    {
+      session_ = session;
+      globalDisplay_ = globalDisplay;
+      eventBus_ = eventBus;
+      server_ = server;
+      
       // populate the vcs selections list
       String[] vcsSelections = new String[] { NONE };
       SessionInfo sessionInfo = session.getSessionInfo();
@@ -43,8 +60,18 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          public void onChange(ChangeEvent event)
          {
             manageSshKeyVisibility();
+            
+            if (vcsSelect_.getValue().equals("git"))
+            {
+               confirmGitRepo(new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     promptToRestart(); 
+                  }       
+               });
+            }
          }
-         
       });
       
       
@@ -97,8 +124,6 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          sshKeyChooser_.setSshKey(vcsOptions.getSshKeyPathOverride());
       else
          sshKeyChooser_.setSshKey(defaultVcsOptions_.getSshKeyPath());
-    
-      
       
       manageSshKeyVisibility();
    }
@@ -107,7 +132,11 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    public void onApply(RProjectOptions options)
    {
       RProjectVcsOptions vcsOptions = options.getVcsOptions();
-      
+      setVcsOptions(vcsOptions);
+   }
+   
+   private void setVcsOptions(RProjectVcsOptions vcsOptions)
+   {
       String vcsSelection = getVcsSelection();
       if (!vcsSelection.equals(defaultVcsOptions_.getActiveVcs()))
          vcsOptions.setActiveVcsOverride(vcsSelection);
@@ -142,6 +171,105 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       {
          vcsSelect_.setValue(NONE);
       }      
+      
+      manageSshKeyVisibility();
+   }
+   
+   private void confirmGitRepo(final Command onConfirmed)
+   {
+      final ProgressIndicator indicator = getProgressIndicator();
+      indicator.onProgress("Checking for git repository...");
+      
+      server_.vcsHasRepo(new ServerRequestCallback<Boolean>() {
+
+         @Override
+         public void onResponseReceived(Boolean result)
+         {
+            indicator.onCompleted();
+            
+            if (result)
+            {
+               onConfirmed.execute();
+            }
+            else
+            {
+               globalDisplay_.showYesNoMessage(
+                  MessageDialog.QUESTION, 
+                  "Confirm New Git Repository", 
+                  "Do you want to initialize a new git repository " +
+                  "for this project?", 
+                  false,
+                  new Operation() {
+                     @Override
+                     public void execute()
+                     {
+                        server_.vcsInitRepo(
+                          new VoidServerRequestCallback(indicator) {
+                             @Override
+                             public void onSuccess()
+                             {
+                                onConfirmed.execute();
+                             }
+                             @Override 
+                             public void onFailure()
+                             {
+                                setVcsSelection("none");
+                             }
+                          });
+                        
+                     }
+                  }, 
+                  new Operation() {
+                     @Override
+                     public void execute()
+                     {
+                        setVcsSelection("none");
+                        indicator.onCompleted();
+                     }
+                     
+                  },
+                  true);
+            }
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            setVcsSelection("none");
+            indicator.onError(error.getUserMessage());  
+         }
+         
+      });
+      
+   }
+   
+   private void promptToRestart()
+   {
+      globalDisplay_.showYesNoMessage(
+         MessageDialog.QUESTION,
+         "Confirm Restart RStudio", 
+         "You need to restart RStudio in order to start working with " +
+         "the specified version control system. Do you want to do this now?",
+         new Operation()
+         {
+            @Override
+            public void execute()
+            {
+               forceClosed(new Command() {
+
+                  @Override
+                  public void execute()
+                  {
+                     SwitchToProjectEvent event = new SwitchToProjectEvent(
+                           session_.getSessionInfo().getActiveProjectFile());
+                     eventBus_.fireEvent(event);
+                     
+                  }
+                  
+               });
+            }  
+         },
+         true);
    }
    
    private void manageSshKeyVisibility()
@@ -149,9 +277,14 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       sshKeyChooser_.setVisible(!getVcsSelection().equals("none"));
    }
    
+   private final Session session_;
+   private final GlobalDisplay globalDisplay_;
+   private final EventBus eventBus_;
+   private final VCSServerOperations server_;
+   
    private SelectWidget vcsSelect_;
    private SshKeyChooser sshKeyChooser_;
-   
+  
    private RProjectVcsOptionsDefault defaultVcsOptions_;
    
    private static final String NONE = "(None)";

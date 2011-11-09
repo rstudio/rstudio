@@ -42,11 +42,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 // TODO: Project setup -- auth config (shared with New Proj from VC)
 
-// TODO: Restart RStudio prompt
-// TODO: Project setup -- None/Git, on select git put in UI indicating
-// that we need to bootstrap via git init (and provide button)
-
-
 
 
 public class SshKeyChooser extends Composite

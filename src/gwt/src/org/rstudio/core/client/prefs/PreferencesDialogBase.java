@@ -19,6 +19,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -85,6 +86,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       {
          sectionChooser_.addSection(pane.getIcon(), pane.getName());
          pane.setWidth("100%");
+         pane.setDialog(this);
          pane.setProgressIndicator(progressIndicator_);
          container_.add(pane);
          setPaneVisibility(pane, false);
@@ -174,6 +176,18 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
                                          Operation onCompleted,
                                          ProgressIndicator progressIndicator);
    
+   
+   void forceClosed(final Command onClosed)
+   {
+      attemptSaveChanges(new Operation() {
+         @Override
+         public void execute()
+         {
+            closeDialog();
+            onClosed.execute();
+         }
+      });      
+   }
    
    private boolean validate()
    {

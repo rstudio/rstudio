@@ -42,6 +42,7 @@ import org.rstudio.studio.client.common.vcs.CreateKeyOptions;
 import org.rstudio.studio.client.common.vcs.CreateKeyResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
+import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.VcsCloneOptions;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.Server;
@@ -958,6 +959,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, WRITE_PROJECT_OPTIONS, options, callback);
    }
    
+   public void writeProjectVcsOptions(RProjectVcsOptions options,
+                                      ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, WRITE_PROJECT_VCS_OPTIONS, options, callback);
+   }
+   
    public void newDocument(String filetype,
                            JsObject properties,
                            ServerRequestCallback<SourceDocument> requestCallback)
@@ -1409,6 +1416,18 @@ public class RemoteServer implements Server
                   ServerRequestCallback<CreateKeyResult> requestCallback)
    {
       sendRequest(RPC_SCOPE, VCS_CREATE_SSH_KEY, options, requestCallback);
+   }
+   
+   @Override
+   public void vcsHasRepo(ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, VCS_HAS_REPO, requestCallback);
+   }
+   
+   @Override
+   public void vcsInitRepo(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, VCS_INIT_REPO, requestCallback);
    }
 
    @Override
@@ -2018,6 +2037,7 @@ public class RemoteServer implements Server
    private static final String CREATE_PROJECT = "create_project";
    private static final String READ_PROJECT_OPTIONS = "read_project_options";
    private static final String WRITE_PROJECT_OPTIONS = "write_project_options";
+   private static final String WRITE_PROJECT_VCS_OPTIONS = "write_project_vcs_options";
    
    private static final String NEW_DOCUMENT = "new_document";
    private static final String OPEN_DOCUMENT = "open_document";
@@ -2063,6 +2083,8 @@ public class RemoteServer implements Server
    private static final String ASKPASS_COMPLETED = "askpass_completed";
    private static final String VCS_SSH_PUBLIC_KEY = "vcs_ssh_public_key";
    private static final String VCS_CREATE_SSH_KEY = "vcs_create_ssh_key";
+   private static final String VCS_HAS_REPO = "vcs_has_repo";
+   private static final String VCS_INIT_REPO = "vcs_init_repo";
    private static final String VCS_DIFF_FILE = "vcs_diff_file";
    private static final String VCS_APPLY_PATCH = "vcs_apply_patch";
    private static final String VCS_HISTORY_COUNT = "vcs_history_count";

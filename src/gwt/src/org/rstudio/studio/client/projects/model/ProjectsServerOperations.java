@@ -27,4 +27,7 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
    
    void writeProjectOptions(RProjectOptions options,
                             ServerRequestCallback<Void> callback);
+   
+   void writeProjectVcsOptions(RProjectVcsOptions options,
+                               ServerRequestCallback<Void> callback);
 }

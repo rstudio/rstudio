@@ -1831,6 +1831,46 @@ Error vcsCreateSshKey(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsHasRepo(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
+{
+   FilePath gitDir =
+        GitVCSImpl::detectGitDir(projects::projectContext().directory());
+
+   pResponse->setResult(!gitDir.empty());
+
+   return Success();
+}
+
+
+Error vcsInitRepo(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   // create command
+   std::string cmd = shell_utils::join_and(
+         ShellCommand("cd") << projects::projectContext().directory(),
+         git() << "init");
+
+   // run it
+   core::system::ProcessResult result;
+   Error error = runCommand(cmd,
+                            procOptions(),
+                            &result);
+   if (error)
+      return error;
+
+   // verify success
+   if (result.exitStatus != 0)
+   {
+      LOG_ERROR_MESSAGE("Error creating git repo: " + result.stdErr);
+      return systemError(boost::system::errc::operation_not_permitted,
+                         ERROR_LOCATION);
+   }
+   else
+   {
+      return Success();
+   }
+}
 
 std::string toBashPath(const std::string& path)
 {
@@ -2779,7 +2819,9 @@ core::Error initialize()
       (bind(registerRpcMethod, "vcs_execute_command", vcsExecuteCommand))
       (bind(registerRpcMethod, "vcs_show", vcsShow))
       (bind(registerRpcMethod, "vcs_ssh_public_key", vcsSshPublicKey))
-      (bind(registerRpcMethod, "vcs_create_ssh_key", vcsCreateSshKey));
+      (bind(registerRpcMethod, "vcs_create_ssh_key", vcsCreateSshKey))
+      (bind(registerRpcMethod, "vcs_has_repo", vcsHasRepo))
+      (bind(registerRpcMethod, "vcs_init_repo", vcsInitRepo));
    error = initBlock.execute();
    if (error)
       return error;
