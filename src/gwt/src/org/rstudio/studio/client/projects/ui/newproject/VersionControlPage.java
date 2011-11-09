@@ -19,6 +19,10 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.VcsCloneOptions;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -68,13 +72,22 @@ public class VersionControlPage extends NewProjectWizardPage
       urlLabel.addStyleName(styles.wizardTextEntryLabel());
       urlPanel.add(urlLabel);
       txtRepoUrl_ = new TextBox();
-      txtRepoUrl_.addValueChangeHandler(new ValueChangeHandler<String>() {
-
+      txtRepoUrl_.addKeyPressHandler(new KeyPressHandler() {
          @Override
-         public void onValueChange(ValueChangeEvent<String> event)
+         public void onKeyPress(KeyPressEvent event)
          {
-            autoFillCheckoutDir();
-         }
+            if (suppressDirNameDetection_)
+               return;
+            
+            // delay so the text has a chance to populate
+            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+               @Override
+               public void execute()
+               {
+                  autoFillCheckoutDir();
+               }
+            }); 
+         } 
       });
       txtRepoUrl_.setWidth("100%");
       urlPanel.add(txtRepoUrl_);
@@ -89,6 +102,16 @@ public class VersionControlPage extends NewProjectWizardPage
       dirNameLabel.addStyleName(styles.wizardTextEntryLabel());
       addWidget(dirNameLabel);
       txtDirName_ = new TextBox();
+      txtDirName_.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            if (!event.getValue().equals(guessGitRepoDir()))
+               suppressDirNameDetection_ = true;
+         }
+         
+      });
       txtDirName_.addStyleName(styles.wizardTextEntry());
       addWidget(txtDirName_);
       
@@ -109,7 +132,8 @@ public class VersionControlPage extends NewProjectWizardPage
    @Override
    protected NewProjectResult collectInput()
    {
-      autoFillCheckoutDir(); 
+      if (txtDirName_.getText().trim().length() == 0)
+         autoFillCheckoutDir(); 
       
       String url = txtRepoUrl_.getText().trim();
       String checkoutDir = txtDirName_.getText().trim();
@@ -177,8 +201,12 @@ public class VersionControlPage extends NewProjectWizardPage
    
    private void autoFillCheckoutDir()
    {
-      if (txtDirName_.getText().isEmpty())
-         txtDirName_.setText(guessGitRepoDir(txtRepoUrl_.getText())); 
+      txtDirName_.setText(guessGitRepoDir()); 
+   }
+   
+   private String guessGitRepoDir()
+   {
+      return guessGitRepoDir(txtRepoUrl_.getText().trim());
    }
    
    private static String guessGitRepoDir(String url)
@@ -215,6 +243,7 @@ public class VersionControlPage extends NewProjectWizardPage
    private TextBox txtRepoUrl_;
    private TextBox txtDirName_;
    private DirectoryChooserTextBox existingRepoDestDir_;
+   private boolean suppressDirNameDetection_ = false;
 
   
 
