@@ -90,10 +90,14 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          setVcsSelection(defaultVcsOptions_.getActiveVcs());
       
       // set override or default
+      if (defaultVcsOptions_.getSshKeyPath().length() > 0)
+         sshKeyChooser_.setDefaultSskKey(defaultVcsOptions_.getSshKeyPath());
+      
       if (vcsOptions.getSshKeyPathOverride().length() > 0)
          sshKeyChooser_.setSshKey(vcsOptions.getSshKeyPathOverride());
       else
          sshKeyChooser_.setSshKey(defaultVcsOptions_.getSshKeyPath());
+    
       
       
       manageSshKeyVisibility();

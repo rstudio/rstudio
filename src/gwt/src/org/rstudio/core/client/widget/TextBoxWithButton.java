@@ -72,9 +72,20 @@ public class TextBoxWithButton extends Composite
       themedButton_.setFocus(true);
    }
 
+   // use a special adornment when the displayed key matches an 
+   // arbitrary default value
+   public void setUseDefaultValue(String useDefaultValue)
+   {
+      useDefaultValue_ = useDefaultValue;
+   }
+   
    public void setText(String text)
    {
-      if (text.length() > 0)
+      text_ = text;
+      
+      if (text_.equals(useDefaultValue_))
+         textBox_.setText("[Use Default] " + text);
+      else if (text.length() > 0)
          textBox_.setText(text);
       else
          textBox_.setText(emptyLabel_);
@@ -82,11 +93,7 @@ public class TextBoxWithButton extends Composite
 
    public String getText()
    {
-      String text = textBox_.getText();
-      if (!text.equals(emptyLabel_))
-         return text;
-      else
-         return "";
+      return text_;
    }
    
    public void setTextWidth(String width)
@@ -114,4 +121,6 @@ public class TextBoxWithButton extends Composite
    private TextBox textBox_;
    private ThemedButton themedButton_;
    private String emptyLabel_;
+   private String useDefaultValue_;
+   private String text_ = "";
 }

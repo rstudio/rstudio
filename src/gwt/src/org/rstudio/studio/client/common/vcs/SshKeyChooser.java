@@ -38,8 +38,6 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-// TODO: indicate use of default key in ssh key dialog (Use Default)
-
 // TODO: Project setup -- show read-only view of origin
 
 // TODO: Project setup -- auth config (shared with New Proj from VC)
@@ -147,6 +145,12 @@ public class SshKeyChooser extends Composite
       progressIndicator_ = progressIndicator;
    }
    
+   // use a special adornment when the displayed key matches an 
+   // arbitrary default value
+   public void setDefaultSskKey(String keyPath)
+   {
+      sshKeyPathChooser_.setUseDefaultValue(keyPath);
+   }
    
    public void setSshKey(String keyPath)
    {
