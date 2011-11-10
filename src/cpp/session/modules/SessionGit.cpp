@@ -149,77 +149,64 @@ void enqueueRefreshEvent()
    module_context::enqueClientEvent(ClientEvent(client_events::kVcsRefresh));
 }
 
-class VCSImpl : boost::noncopyable
+class Git;
+
+boost::scoped_ptr<Git> s_pGit_;
+std::vector<PidType> s_pidsToTerminate_;
+
+ShellCommand git()
 {
-public:
-   VCSImpl(FilePath rootDir)
+   if (!s_gitBinDir.empty())
    {
-      root_ = rootDir;
+      FilePath fullPath = FilePath(s_gitBinDir).childPath("git");
+      return ShellCommand(fullPath);
+   }
+   else
+      return ShellCommand("git");
+}
+
+void afterCommit(const FilePath& tempFile)
+{
+   Error removeError = tempFile.remove();
+   if (removeError)
+      LOG_ERROR(removeError);
+   enqueueRefreshEvent();
+}
+
+bool commitIsMatch(const std::vector<std::string>& patterns,
+                   const CommitInfo& commit)
+{
+   BOOST_FOREACH(std::string pattern, patterns)
+   {
+      if (!boost::algorithm::ifind_first(commit.author, pattern)
+          && !boost::algorithm::ifind_first(commit.description, pattern)
+          && !boost::algorithm::ifind_first(commit.id, pattern))
+      {
+         return false;
+      }
    }
 
-   virtual ~VCSImpl()
-   {
-   }
+   return true;
+}
 
-   virtual VCS id() { return VCSNone; }
-   virtual std::string name() { return std::string(); }
-   FilePath root() { return root_; }
+boost::function<bool(CommitInfo)> createFilterPredicate(
+      const std::string& filter)
+{
+   if (filter.empty())
+      return boost::lambda::constant(true);
 
-   virtual core::Error status(const FilePath&,
-                              StatusResult* pStatusResult)
-   {
-      *pStatusResult = StatusResult();
-      return Success();
-   }
+   std::vector<std::string> results;
+   boost::algorithm::split(results, filter,
+                           boost::algorithm::is_any_of(" \t\r\n"));
+   return boost::bind(commitIsMatch, results, _1);
+}
 
-   virtual core::Error add(const std::vector<FilePath>& filePaths,
-                           std::string* pStdErr)
-   {
-      return Success();
-   }
+class Git : public boost::noncopyable
+{
+private:
+   FilePath root_;
 
-   virtual core::Error remove(const std::vector<FilePath>& filePaths,
-                              std::string* pStdErr)
-   {
-      return Success();
-   }
-
-   virtual core::Error discard(const std::vector<FilePath>& filePaths,
-                               std::string* pStdErr)
-   {
-      return Success();
-   }
-
-   virtual core::Error stage(const std::vector<FilePath>& filePaths,
-                             std::string* pStdErr)
-   {
-      return Success();
-   }
-
-   virtual core::Error unstage(const std::vector<FilePath>& filePaths,
-                               std::string* pStdErr)
-   {
-      return Success();
-   }
-
-   virtual core::Error listBranches(std::vector<std::string>* pBranches,
-                                    boost::optional<size_t>* pActiveBranchIndex)
-   {
-      return Success();
-   }
-
-   virtual core::Error checkout(const std::string& id,
-                                std::string* pHandle)
-   {
-      return Success();
-   }
-
-   virtual core::Error hasRemote(bool* pHasRemote)
-   {
-      *pHasRemote = false;
-      return Success();
-   }
-
+protected:
    core::Error runCommand(const ShellCommand& command,
                           std::vector<std::string>* pOutputLines=NULL)
    {
@@ -274,109 +261,6 @@ public:
       return Success();
    }
 
-   virtual core::Error diffFile(const FilePath& filePath,
-                                PatchMode mode,
-                                int contextLines,
-                                std::string* pOutput)
-   {
-      return Success();
-   }
-
-   virtual core::Error applyPatch(const FilePath& patchFile,
-                                  PatchMode patchMode,
-                                  std::string* pStdErr)
-   {
-      return Success();
-   }
-
-   virtual core::Error log(const std::string& rev,
-                           int skip,
-                           int maxentries,
-                           const std::string& filterText,
-                           std::vector<CommitInfo>* pOutput)
-   {
-      return Success();
-   }
-
-   virtual core::Error logLength(const std::string& rev,
-                                 const std::string& filterText,
-                                 int* pLength)
-   {
-      *pLength = 0;
-      return Success();
-   }
-
-   virtual core::Error show(const std::string& rev,
-                            std::string* pOutput)
-   {
-      return Success();
-   }
-
-protected:
-   FilePath root_;
-};
-
-namespace {
-
-boost::scoped_ptr<VCSImpl> s_pVcsImpl_;
-std::vector<PidType> s_pidsToTerminate_;
-
-ShellCommand git()
-{
-   if (!s_gitBinDir.empty())
-   {
-      FilePath fullPath = FilePath(s_gitBinDir).childPath("git");
-      return ShellCommand(fullPath);
-   }
-   else
-      return ShellCommand("git");
-}
-
-ShellCommand svn()
-{
-   return ShellCommand("svn");
-}
-
-void afterCommit(const FilePath& tempFile)
-{
-   Error removeError = tempFile.remove();
-   if (removeError)
-      LOG_ERROR(removeError);
-   enqueueRefreshEvent();
-}
-
-bool commitIsMatch(const std::vector<std::string>& patterns,
-                   const CommitInfo& commit)
-{
-   BOOST_FOREACH(std::string pattern, patterns)
-   {
-      if (!boost::algorithm::ifind_first(commit.author, pattern)
-          && !boost::algorithm::ifind_first(commit.description, pattern)
-          && !boost::algorithm::ifind_first(commit.id, pattern))
-      {
-         return false;
-      }
-   }
-
-   return true;
-}
-
-boost::function<bool(CommitInfo)> createFilterPredicate(
-      const std::string& filter)
-{
-   if (filter.empty())
-      return boost::lambda::constant(true);
-
-   std::vector<std::string> results;
-   boost::algorithm::split(results, filter,
-                           boost::algorithm::is_any_of(" \t\r\n"));
-   return boost::bind(commitIsMatch, results, _1);
-}
-
-} // anonymous namespace
-
-class GitVCSImpl : public VCSImpl
-{
 public:
    static FilePath detectGitDir(FilePath workingDir)
    {
@@ -397,12 +281,18 @@ public:
       return FilePath(boost::algorithm::trim_copy(result.stdOut));
    }
 
-   GitVCSImpl(FilePath repoDir) : VCSImpl(repoDir)
+   Git(FilePath repoDir)
    {
+      root_ = repoDir;
    }
 
    VCS id() { return VCSGit; }
    std::string name() { return "Git"; }
+
+   FilePath root() const
+   {
+      return root_;
+   }
 
    core::Error status(const FilePath& dir, StatusResult* pStatusResult)
    {
@@ -1095,67 +985,12 @@ public:
    }
 };
 
-class SubversionVCSImpl : public VCSImpl
-{
-public:
-   SubversionVCSImpl(FilePath rootDir) : VCSImpl(rootDir)
-   {
-   }
-
-   VCS id() { return VCSSubversion; }
-   std::string name() { return "SVN"; }
-
-   core::Error status(const FilePath& dir, StatusResult* pStatusResult)
-   {
-      using namespace boost;
-
-      std::vector<FileWithStatus> files;
-
-      std::vector<std::string> lines;
-      Error error = runCommand(
-            svn() << "status" << "--non-interactive" << "--depth=immediates"
-                  << "--" << dir,
-            &lines);
-      if (error)
-         return error;
-
-      for (std::vector<std::string>::iterator it = lines.begin();
-           it != lines.end();
-           it++)
-      {
-         std::string line = *it;
-         if (line.length() < 4)
-            continue;
-         FileWithStatus file;
-
-         file.status = line.substr(0, 7);
-
-         std::string filePath = line.substr(8);
-         if (filePath.length() > 1 && filePath[filePath.length() - 1] == '/')
-            filePath = filePath.substr(0, filePath.size() - 1);
-         file.path = FilePath(string_utils::systemToUtf8(filePath));
-         files.push_back(file);
-      }
-
-      *pStatusResult = StatusResult(files);
-
-      return Success();
-   }
-
-   core::Error revert(const std::vector<FilePath>& filePaths,
-                      std::string* pStdErr)
-   {
-      return runCommand(svn() << "revert" << "--" << filePaths,
-                        NULL, pStdErr);
-   }
-};
-
 FilePath resolveAliasedPath(std::string path)
 {
    if (boost::algorithm::starts_with(path, "~/"))
       return module_context::resolveAliasedPath(path);
    else
-      return s_pVcsImpl_->root().childPath(path);
+      return s_pGit_->root().childPath(path);
 }
 
 bool splitRename(const std::string& path, std::string* pOld, std::string* pNew)
@@ -1204,12 +1039,12 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
 
 VCS activeVCS()
 {
-   return s_pVcsImpl_->id();
+   return s_pGit_->id();
 }
 
 std::string activeVCSName()
 {
-   return s_pVcsImpl_->name();
+   return s_pGit_->name();
 }
 
 VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
@@ -1224,7 +1059,7 @@ VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
 
 core::Error status(const FilePath& dir, StatusResult* pStatusResult)
 {
-   return s_pVcsImpl_->status(dir, pStatusResult);
+   return s_pGit_->status(dir, pStatusResult);
 }
 
 Error fileStatus(const FilePath& filePath, VCSStatus* pStatus)
@@ -1265,7 +1100,7 @@ Error vcsAdd(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pVcsImpl_->add(resolveAliasedPaths(paths), NULL);
+   return s_pGit_->add(resolveAliasedPaths(paths), NULL);
 }
 
 Error vcsRemove(const json::JsonRpcRequest& request,
@@ -1278,7 +1113,7 @@ Error vcsRemove(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pVcsImpl_->remove(resolveAliasedPaths(paths), NULL);
+   return s_pGit_->remove(resolveAliasedPaths(paths), NULL);
 }
 
 Error vcsDiscard(const json::JsonRpcRequest& request,
@@ -1291,7 +1126,7 @@ Error vcsDiscard(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pVcsImpl_->discard(resolveAliasedPaths(paths), NULL);
+   return s_pGit_->discard(resolveAliasedPaths(paths), NULL);
 }
 
 Error vcsRevert(const json::JsonRpcRequest& request,
@@ -1304,10 +1139,10 @@ Error vcsRevert(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   error = s_pVcsImpl_->unstage(resolveAliasedPaths(paths, true, true), NULL);
+   error = s_pGit_->unstage(resolveAliasedPaths(paths, true, true), NULL);
    if (error)
       return error;
-   error = s_pVcsImpl_->discard(resolveAliasedPaths(paths, true, false), NULL);
+   error = s_pGit_->discard(resolveAliasedPaths(paths, true, false), NULL);
    if (error)
       return error;
 
@@ -1324,7 +1159,7 @@ Error vcsStage(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pVcsImpl_->stage(resolveAliasedPaths(paths), NULL);
+   return s_pGit_->stage(resolveAliasedPaths(paths), NULL);
 }
 
 Error vcsUnstage(const json::JsonRpcRequest& request,
@@ -1337,7 +1172,7 @@ Error vcsUnstage(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pVcsImpl_->unstage(resolveAliasedPaths(paths, true, true), NULL);
+   return s_pGit_->unstage(resolveAliasedPaths(paths, true, true), NULL);
 }
 
 Error vcsListBranches(const json::JsonRpcRequest& request,
@@ -1345,7 +1180,7 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
 {
    std::vector<std::string> branches;
    boost::optional<size_t> activeIndex;
-   Error error = s_pVcsImpl_->listBranches(&branches, &activeIndex);
+   Error error = s_pGit_->listBranches(&branches, &activeIndex);
    if (error)
       return error;
 
@@ -1377,7 +1212,7 @@ Error vcsCheckout(const json::JsonRpcRequest& request,
       return error;
 
    std::string handle;
-   error = s_pVcsImpl_->checkout(id, &handle);
+   error = s_pGit_->checkout(id, &handle);
    if (error)
       return error;
 
@@ -1390,7 +1225,7 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
                     json::JsonRpcResponse* pResponse)
 {
    StatusResult statusResult;
-   Error error = s_pVcsImpl_->status(s_pVcsImpl_->root(), &statusResult);
+   Error error = s_pGit_->status(s_pGit_->root(), &statusResult);
    if (error)
       return error;
 
@@ -1431,7 +1266,7 @@ Error vcsAllStatus(const json::JsonRpcRequest& request,
    result["branches"] = tmp.result();
 
    bool hasRemote;
-   error = s_pVcsImpl_->hasRemote(&hasRemote);
+   error = s_pGit_->hasRemote(&hasRemote);
    if (error)
       return error;
    result["has_remote"] = hasRemote;
@@ -1446,10 +1281,6 @@ Error vcsCommitGit(const json::JsonRpcRequest& request,
 {
    RefreshOnExit refreshOnExit;
 
-   GitVCSImpl* pGit = dynamic_cast<GitVCSImpl*>(s_pVcsImpl_.get());
-   if (!pGit)
-      return systemError(boost::system::errc::operation_not_supported, ERROR_LOCATION);
-
    std::string commitMsg;
    bool amend, signOff;
    Error error = json::readParams(request.params, &commitMsg, &amend, &signOff);
@@ -1457,7 +1288,7 @@ Error vcsCommitGit(const json::JsonRpcRequest& request,
       return error;
 
    std::string handle;
-   error = pGit->commit(commitMsg, amend, signOff, &handle);
+   error = s_pGit_->commit(commitMsg, amend, signOff, &handle);
    if (error)
       return error;
 
@@ -1469,7 +1300,7 @@ Error vcsCommitGit(const json::JsonRpcRequest& request,
 Error vcsClone(const json::JsonRpcRequest& request,
                json::JsonRpcResponse* pResponse)
 {
-   GitVCSImpl git(options().userHomePath());
+   Git git(options().userHomePath());
 
    std::string vcsName;   // ignored for now
    std::string url;
@@ -1496,12 +1327,8 @@ Error vcsClone(const json::JsonRpcRequest& request,
 Error vcsPush(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
-   GitVCSImpl* pGit = dynamic_cast<GitVCSImpl*>(s_pVcsImpl_.get());
-   if (!pGit)
-      return systemError(boost::system::errc::operation_not_supported, ERROR_LOCATION);
-
    std::string handle;
-   Error error = pGit->push(&handle);
+   Error error = s_pGit_->push(&handle);
    if (error)
       return error;
 
@@ -1513,12 +1340,8 @@ Error vcsPush(const json::JsonRpcRequest& request,
 Error vcsPull(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
-   GitVCSImpl* pGit = dynamic_cast<GitVCSImpl*>(s_pVcsImpl_.get());
-   if (!pGit)
-      return systemError(boost::system::errc::operation_not_supported, ERROR_LOCATION);
-
    std::string handle;
-   Error error = pGit->pull(&handle);
+   Error error = s_pGit_->pull(&handle);
    if (error)
       return error;
 
@@ -1551,7 +1374,7 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
       splitRename(path, NULL, &path);
 
    std::string output;
-   error = s_pVcsImpl_->diffFile(resolveAliasedPath(path),
+   error = s_pGit_->diffFile(resolveAliasedPath(path),
                                  static_cast<PatchMode>(mode),
                                  contextLines,
                                  &output);
@@ -1588,7 +1411,7 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   error = s_pVcsImpl_->applyPatch(patchFile, static_cast<PatchMode>(mode), NULL);
+   error = s_pGit_->applyPatch(patchFile, static_cast<PatchMode>(mode), NULL);
 
    Error error2 = patchFile.remove();
    if (error2)
@@ -1611,7 +1434,7 @@ Error vcsHistoryCount(const json::JsonRpcRequest& request,
    boost::algorithm::trim(filterText);
 
    int count;
-   error = s_pVcsImpl_->logLength(rev, filterText, &count);
+   error = s_pGit_->logLength(rev, filterText, &count);
    if (error)
       return error;
 
@@ -1635,7 +1458,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    boost::algorithm::trim(filterText);
 
    std::vector<CommitInfo> commits;
-   error = s_pVcsImpl_->log(rev, skip, maxentries, filterText, &commits);
+   error = s_pGit_->log(rev, skip, maxentries, filterText, &commits);
    if (error)
       return error;
 
@@ -1695,7 +1518,7 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
       return error;
 
    command = shell_utils::sendStdErrToStdOut(shell_utils::join(
-         ShellCommand("cd") << s_pVcsImpl_->root(),
+         ShellCommand("cd") << s_pGit_->root(),
          command));
 
    boost::shared_ptr<ConsoleProcess> ptrProc =
@@ -1719,7 +1542,7 @@ Error vcsShow(const json::JsonRpcRequest& request,
       return error;
 
    std::string output;
-   s_pVcsImpl_->show(rev, &output);
+   s_pGit_->show(rev, &output);
    output = string_utils::filterControlChars(output);
 
    if (!noSizeWarning && output.size() > WARN_SIZE)
@@ -1832,7 +1655,7 @@ Error vcsHasRepo(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    FilePath gitDir =
-        GitVCSImpl::detectGitDir(projects::projectContext().directory());
+        Git::detectGitDir(projects::projectContext().directory());
 
    pResponse->setResult(!gitDir.empty());
 
@@ -2572,7 +2395,7 @@ Error statusToJson(const core::FilePath &path,
 {
    json::Object& obj = *pObject;
    obj["status"] = status.status();
-   obj["path"] = path.relativePath(s_pVcsImpl_->root());
+   obj["path"] = path.relativePath(s_pGit_->root());
    obj["raw_path"] = path.absolutePath();
    obj["discardable"] = status.status()[1] != ' ' && status.status()[1] != '?';
    return Success();
@@ -2620,13 +2443,13 @@ bool tryGit(const FilePath& workingDir)
 #endif
    }
 
-   FilePath gitDir = GitVCSImpl::detectGitDir(workingDir);
+   FilePath gitDir = Git::detectGitDir(workingDir);
    if (gitDir.empty())
       return false;
 
-   s_pVcsImpl_.reset(new GitVCSImpl(GitVCSImpl::detectGitDir(workingDir)));
+   s_pGit_.reset(new Git(Git::detectGitDir(workingDir)));
 
-   FilePath gitIgnore = s_pVcsImpl_->root().childPath(".gitignore");
+   FilePath gitIgnore = s_pGit_->root().childPath(".gitignore");
    Error error = augmentGitIgnore(gitIgnore);
    if (error)
       LOG_ERROR(error);
@@ -2659,7 +2482,7 @@ bool tryGit(const FilePath& workingDir)
 // query for what vcs our auto-detection logic indicates for the directory
 std::string detectedVcs(const FilePath& workingDir)
 {
-   FilePath gitDir = GitVCSImpl::detectGitDir(workingDir);
+   FilePath gitDir = Git::detectGitDir(workingDir);
    if (!gitDir.empty())
       return "git";
    else if (isSvnInstalled() && workingDir.childPath(".svn").isDirectory())
@@ -2687,27 +2510,15 @@ core::Error initialize()
          LOG_ERROR(vcsError);
    }
 
-   if (!userSettings().vcsEnabled())
-      s_pVcsImpl_.reset(new VCSImpl(workingDir));
-   else if (workingDir.empty())
-      s_pVcsImpl_.reset(new VCSImpl(workingDir));
+   if (!userSettings().vcsEnabled() || workingDir.empty())
+   {
+   }
    else if (vcsOptions.vcsOverride == "none" ||
             vcsOptions.vcsOverride == "svn")
    {
       // make sure we still detect the git bin dir (so isGitInstalled
       // will work correctly during client_init)
       initGitBinDir();
-
-      if ((vcsOptions.vcsOverride == "svn") &&
-          isSvnInstalled() &&
-          workingDir.childPath(".svn").isDirectory())
-      {
-         s_pVcsImpl_.reset(new SubversionVCSImpl(workingDir));
-      }
-      else
-      {
-         s_pVcsImpl_.reset(new VCSImpl(workingDir));
-      }
    }
    // NOTE: this codepath is here to prevent automatic svn detection
    // when the user has specified a "git" override
@@ -2717,19 +2528,11 @@ core::Error initialize()
       {
          // Intentionally blank. tryGit() has side effects.
       }
-      else
-      {
-         s_pVcsImpl_.reset(new VCSImpl(workingDir));
-      }
    }
    else if (tryGit(workingDir))
    {
       // Intentionally blank. tryGit() has side effects.
    }
-   else if (workingDir.childPath(".svn").isDirectory())
-      s_pVcsImpl_.reset(new SubversionVCSImpl(workingDir));
-   else
-      s_pVcsImpl_.reset(new VCSImpl(workingDir));
 
    bool interceptSsh;
    bool interceptAskPass;
