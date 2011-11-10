@@ -44,6 +44,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionFiles.cpp
    modules/SessionFilesListingMonitor.cpp
    modules/SessionFilesQuotas.cpp
+   modules/SessionGit.cpp
    modules/SessionHelp.cpp
    modules/SessionHistory.cpp
    modules/SessionLimits.cpp
@@ -52,7 +53,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
    modules/SessionSource.cpp
-   modules/SessionSourceControl.cpp
    modules/SessionTeX.cpp
    modules/SessionWorkbench.cpp
    modules/SessionWorkspace.cpp

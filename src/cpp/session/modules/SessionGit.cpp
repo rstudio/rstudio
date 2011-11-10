@@ -1,5 +1,5 @@
 /*
- * SessionSourceControl.cpp
+ * SessionGit.cpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-#include "SessionSourceControl.hpp"
+#include "SessionGit.hpp"
 
 #include <signal.h>
 
