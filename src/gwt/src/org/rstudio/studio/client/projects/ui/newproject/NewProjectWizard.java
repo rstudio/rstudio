@@ -15,13 +15,8 @@ package org.rstudio.studio.client.projects.ui.newproject;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
-import org.rstudio.core.client.widget.WizardPage;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-
-import com.google.gwt.user.client.ui.CheckBox;
-
 
 public class NewProjectWizard extends Wizard<FileSystemItem,NewProjectResult>
 {
@@ -37,38 +32,10 @@ public class NewProjectWizard extends Wizard<FileSystemItem,NewProjectResult>
     
       setOkButtonCaption("Create Project");
       
- 
-      openInNewWindow_ = new CheckBox("Open in new window");
-      addLeftWidget(openInNewWindow_);
-      openInNewWindow_.setVisible(false);
-      
-      
       addPage(new NewDirectoryPage());
       addPage(new ExistingDirectoryPage());
       
       if (sessionInfo.isVcsAvailable())
          addPage(new VersionControlPage());
-   }  
-   
-   @Override
-   protected void onPageActivated(
-                     WizardPage<FileSystemItem,NewProjectResult> page)
-   {
-      openInNewWindow_.setVisible(Desktop.isDesktop());
    }
-   
-   @Override
-   protected void onSelectorActivated()
-   {
-      openInNewWindow_.setVisible(false);
-   }
-   
-   @Override
-   protected NewProjectResult ammendInput(NewProjectResult result)
-   {
-      result.setOpenInNewWindow(openInNewWindow_.getValue());
-      return result;
-   }
-   
-   private final CheckBox openInNewWindow_;
 }
