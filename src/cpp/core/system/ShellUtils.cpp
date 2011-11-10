@@ -60,5 +60,39 @@ ShellCommand& ShellCommand::operator<<(const std::vector<FilePath> args)
    return *this;
 }
 
+ShellArgs& ShellArgs::operator<<(const std::string& arg)
+{
+   args_.push_back(arg);
+   return *this;
+}
+
+ShellArgs& ShellArgs::operator<<(const FilePath& path)
+{
+   args_.push_back(string_utils::utf8ToSystem(path.absolutePath()));
+   return *this;
+}
+
+ShellArgs& ShellArgs::operator<<(const std::vector<std::string> args)
+{
+   for (std::vector<std::string>::const_iterator it = args.begin();
+        it != args.end();
+        it++)
+   {
+      *this << *it;
+   }
+   return *this;
+}
+
+ShellArgs& ShellArgs::operator<<(const std::vector<FilePath> args)
+{
+   for (std::vector<FilePath>::const_iterator it = args.begin();
+        it != args.end();
+        it++)
+   {
+      *this << *it;
+   }
+   return *this;
+}
+
 }
 }

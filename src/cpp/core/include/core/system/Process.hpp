@@ -24,6 +24,7 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <core/system/Types.hpp>
+#include <core/FilePath.hpp>
 
 namespace core {
 
@@ -66,6 +67,8 @@ struct ProcessOptions
    // function to run within the child process immediately after the fork
    // NOTE: only supported on posix as there is no fork on Win32
    boost::function<void()> onAfterFork;
+
+   core::FilePath workingDir;
 };
 
 // Struct for returning output and exit status from a process

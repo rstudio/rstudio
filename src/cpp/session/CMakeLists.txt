@@ -23,6 +23,7 @@ set (SESSION_SOURCE_FILES
    SessionClientEvent.cpp
    SessionClientEventQueue.cpp
    SessionClientEventService.cpp
+   SessionSSH.cpp
    SessionMain.cpp
    SessionModuleContext.cpp
    SessionOptions.cpp

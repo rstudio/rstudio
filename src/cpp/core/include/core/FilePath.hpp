@@ -95,8 +95,11 @@ public:
    // last write time
    std::time_t lastWriteTime() const;
   
-   // full filesystem absolute path 
+   // full filesystem absolute path
    std::string absolutePath() const ;
+
+   // full filesystem absolute path in native format
+   std::string absolutePathNative() const ;
 
 #if _WIN32
    std::wstring absolutePathW() const;

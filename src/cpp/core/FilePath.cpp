@@ -58,6 +58,7 @@ namespace {
 
 #define BOOST_FS_STRING(path) toString((path).generic_wstring())
 #define BOOST_FS_PATH2STR(path) toString((path).generic_wstring())
+#define BOOST_FS_PATH2STRNATIVE(path) toString((path).wstring())
 #define BOOST_FS_COMPLETE(p, base) boost::filesystem::absolute(fromString(p), base)
 typedef boost::filesystem::directory_iterator dir_iterator;
 typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
@@ -66,6 +67,7 @@ typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
 
 #define BOOST_FS_STRING(path) ((path).generic_string())
 #define BOOST_FS_PATH2STR(path) ((path).generic_string())
+#define BOOST_FS_PATH2STRNATIVE(path) ((path).generic_string())
 #define BOOST_FS_COMPLETE(p, base) boost::filesystem::absolute(p, base)
 typedef boost::filesystem::directory_iterator dir_iterator;
 typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
@@ -74,6 +76,7 @@ typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
 
 #define BOOST_FS_STRING(str) (str)
 #define BOOST_FS_PATH2STR(str) ((str).string())
+#define BOOST_FS_PATH2STRNATIVE(str) ((str).string())
 #define BOOST_FS_COMPLETE(p, base) boost::filesystem::complete(p, base)
 typedef boost::filesystem::basic_directory_iterator<path_t> dir_iterator;
 typedef boost::filesystem::basic_recursive_directory_iterator<path_t> recursive_dir_iterator;
@@ -515,6 +518,14 @@ std::string FilePath::absolutePath() const
       return std::string();
    else
       return BOOST_FS_PATH2STR(pImpl_->path) ;
+}
+
+std::string FilePath::absolutePathNative() const
+{
+   if (empty())
+      return std::string();
+   else
+      return BOOST_FS_PATH2STRNATIVE(pImpl_->path) ;
 }
 
 #if _WIN32

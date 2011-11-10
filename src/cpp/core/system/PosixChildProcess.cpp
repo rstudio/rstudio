@@ -325,6 +325,14 @@ Error ChildProcess::run()
          // intentionally fail forward (see note above)
       }
 
+      if (!options_.workingDir.empty())
+      {
+         if (::chdir(options_.workingDir.absolutePath().c_str()))
+         {
+            LOG_ERROR(systemError(errno, "Error changing directory", ERROR_LOCATION));
+         }
+      }
+
       // build args (on heap so they stay around after exec)
       // create set of args to pass (needs to include the cmd)
       std::vector<std::string> args;

@@ -78,6 +78,28 @@ private:
    std::string output_;
 };
 
+class ShellArgs
+{
+public:
+   ShellArgs& operator<<(const std::string& arg);
+   ShellArgs& operator<<(const FilePath& path);
+   ShellArgs& operator<<(const std::vector<std::string> args);
+   ShellArgs& operator<<(const std::vector<FilePath> args);
+
+   operator std::vector<std::string>() const
+   {
+      return args_;
+   }
+
+   std::vector<std::string> args() const
+   {
+      return args_;
+   }
+
+private:
+   std::vector<std::string> args_;
+};
+
 }
 }
 

@@ -57,11 +57,6 @@
 #include <sys/stat.h>
 #endif
 
-// TODO: It's actually pretty easy to look in an id_rsa file and see if it's encrypted,
-//       use that to see if we even need to do ssh-agent stuff at all
-// TODO: We could use the "right" ssh key if we wanted to, by reading ~/.ssh/config:
-//       http://technosophos.com/content/ssh-host-configuration
-
 using namespace core;
 using namespace core::shell_utils;
 using session::modules::console_process::ConsoleProcess;
@@ -115,6 +110,8 @@ core::system::ProcessOptions procOptions()
    // add postback directory to PATH
    FilePath postbackDir = session::options().rpostbackPath().parent();
    core::system::addToPath(&childEnv, postbackDir.absolutePath());
+
+   options.workingDir = FilePath("/Users/jcheng");
 
    // on windows set HOME to USERPROFILE
 #ifdef _WIN32

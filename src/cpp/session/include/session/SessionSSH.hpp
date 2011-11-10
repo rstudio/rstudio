@@ -18,9 +18,6 @@
 #include <map>
 #include <string>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/foreach.hpp>
-
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/system/Process.hpp>
