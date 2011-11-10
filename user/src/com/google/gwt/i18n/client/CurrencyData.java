@@ -43,13 +43,6 @@ public interface CurrencyData {
   String getPortableCurrencySymbol();
 
   /**
-   * Returns the simplest symbol to use for this currency, which is not guaranteed
-   * to be unique -- for example, this might return "$" for both USD and CAD.  It
-   * is acceptable to return the same value as {@link #getCurrencySymbol()}.
-   */
-  String getSimpleCurrencySymbol();
-
-  /**
    * Returns true if this currency is deprecated and should not be returned by
    * default in currency lists.
    */

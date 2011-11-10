@@ -28,23 +28,21 @@ package com.google.gwt.i18n.client.constants;
  * use LocaleInfo.getCurrentLocale().getNumberConstants() instead.
  */
 public interface NumberConstants {
-  String notANumber();
-  String currencyPattern();
-  String decimalPattern();
-  String decimalSeparator();
-  String defCurrencyCode();
-  String exponentialSymbol();
-  String globalCurrencyPattern();
-  String groupingSeparator();
-  String infinity();
-  String minusSign();
-  String monetaryGroupingSeparator();
-  String monetarySeparator();
-  String percent();
-  String percentPattern();
-  String perMill();
-  String plusSign();
-  String scientificPattern();
-  String simpleCurrencyPattern();
-  String zeroDigit();
+  String   notANumber();
+  String   currencyPattern();
+  String   decimalPattern();
+  String   decimalSeparator();
+  String   defCurrencyCode();
+  String   exponentialSymbol();
+  String   groupingSeparator();
+  String   infinity();
+  String   minusSign();
+  String   monetaryGroupingSeparator();
+  String   monetarySeparator();
+  String   percent();
+  String   percentPattern();
+  String   perMill();
+  String   plusSign();
+  String   scientificPattern();
+  String   zeroDigit();
 }

@@ -27,60 +27,21 @@ import com.google.gwt.i18n.client.Constants;
  * locale. 
  */
 public interface NumberConstantsImpl extends Constants, NumberConstants  {
-  @Override
-  String notANumber();
-
-  @Override
-  String currencyPattern();
-
-  @Override
-  String decimalPattern();
-
-  @Override
-  String decimalSeparator();
-
-  @Override
-  String defCurrencyCode();
-
-  @Override
-  String exponentialSymbol();
-
-  @Override
-  String globalCurrencyPattern();
-
-  @Override
-  String groupingSeparator();
-
-  @Override
-  String infinity();
-
-  @Override
-  String minusSign();
-
-  @Override
-  String monetaryGroupingSeparator();
-
-  @Override
-  String monetarySeparator();
-
-  @Override
-  String percent();
-
-  @Override
-  String percentPattern();
-
-  @Override
-  String perMill();
-
-  @Override
-  String plusSign();
-
-  @Override
-  String scientificPattern();
-
-  @Override
-  String simpleCurrencyPattern();
-
-  @Override
-  String zeroDigit();
+  String   notANumber();
+  String   currencyPattern();
+  String   decimalPattern();
+  String   decimalSeparator();
+  String   defCurrencyCode();
+  String   exponentialSymbol();
+  String   groupingSeparator();
+  String   infinity();
+  String   minusSign();
+  String   monetaryGroupingSeparator();
+  String   monetarySeparator();
+  String   percent();
+  String   percentPattern();
+  String   perMill();
+  String   plusSign();
+  String   scientificPattern();
+  String   zeroDigit();
 }

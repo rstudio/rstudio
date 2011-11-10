@@ -32,7 +32,6 @@ import com.google.gwt.i18n.client.CurrencyData;
  *       d5:    space is forced, 0=no space present
  *       d6:    spacing around currency symbol is based on d5
  *   3 - portable currency symbol (optional)
- *   4 - simple currency symbol (optional)
  * </pre>
  */
 public final class CurrencyDataJso extends JavaScriptObject implements CurrencyData {
@@ -40,52 +39,38 @@ public final class CurrencyDataJso extends JavaScriptObject implements CurrencyD
   protected CurrencyDataJso() {
   }
 
-  @Override
   public native String getCurrencyCode() /*-{
     return this[0];
   }-*/;
 
-  @Override
   public native String getCurrencySymbol() /*-{
     return this[1];
   }-*/;
 
-  @Override
   public int getDefaultFractionDigits() {
     return CurrencyDataImpl.getDefaultFractionDigits(getFlagsAndPrecision());
   }
 
-  @Override
   public native String getPortableCurrencySymbol() /*-{
     return this[3] || this[1];
   }-*/;
 
-  @Override
-  public native String getSimpleCurrencySymbol() /*-{
-    return this[4] || this[1];
-  }-*/;
-
-  @Override
   public boolean isDeprecated() {
     return CurrencyDataImpl.isDeprecated(getFlagsAndPrecision());
   }
 
-  @Override
   public boolean isSpaceForced() {
     return CurrencyDataImpl.isSpaceForced(getFlagsAndPrecision());
   }
 
-  @Override
   public boolean isSpacingFixed() {
     return CurrencyDataImpl.isSpacingFixed(getFlagsAndPrecision());
   }
 
-  @Override
   public boolean isSymbolPositionFixed() {
     return CurrencyDataImpl.isSymbolPositionFixed(getFlagsAndPrecision());
   }
 
-  @Override
   public boolean isSymbolPrefix() {
     return CurrencyDataImpl.isSymbolPrefix(getFlagsAndPrecision());
   }

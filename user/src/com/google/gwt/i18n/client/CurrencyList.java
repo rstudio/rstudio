@@ -137,7 +137,6 @@ public class CurrencyList implements Iterable<CurrencyData> {
    * 
    * Deprecated currencies will not be included.
    */
-  @Override
   public final Iterator<CurrencyData> iterator() {
     return iterator(false);
   }
@@ -207,7 +206,7 @@ public class CurrencyList implements Iterable<CurrencyData> {
    * Generated implementations override this method.
    */
   protected CurrencyData getDefaultJava() {
-    return new CurrencyDataImpl("USD", "$", 2, "US$", "$");
+    return new CurrencyDataImpl("USD", "$", 2, "US$");
   }
 
   /**
@@ -226,10 +225,10 @@ public class CurrencyList implements Iterable<CurrencyData> {
    */
   protected HashMap<String, CurrencyData> loadCurrencyMapJava() {
     HashMap<String, CurrencyData> result = new HashMap<String, CurrencyData>();
-    result.put("USD", new CurrencyDataImpl("USD", "$", 2, "US$", "$"));
-    result.put("EUR", new CurrencyDataImpl("EUR", "€", 2, "€", "€"));
-    result.put("GBP", new CurrencyDataImpl("GBP", "UK£", 2, "UK£", "£"));
-    result.put("JPY", new CurrencyDataImpl("JPY", "¥", 0, "JP¥", "¥"));
+    result.put("USD", new CurrencyDataImpl("USD", "$", 2));
+    result.put("EUR", new CurrencyDataImpl("EUR", "€", 2));
+    result.put("GBP", new CurrencyDataImpl("GBP", "UK£", 2));
+    result.put("JPY", new CurrencyDataImpl("JPY", "¥", 0));
     return result;
   }
 

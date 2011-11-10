@@ -54,52 +54,38 @@ public class DefaultCurrencyData implements CurrencyData {
     this.fractionDigits = fractionDigits;
   }
 
-  @Override
   public String getCurrencyCode() {
     return currencyCode;
   }
 
-  @Override
   public String getCurrencySymbol() {
     return currencySymbol;
   }
 
-  @Override
   public int getDefaultFractionDigits() {
     return fractionDigits;
   }
 
-  @Override
   public String getPortableCurrencySymbol() {
     return getCurrencySymbol();
   }
 
-  @Override
-  public String getSimpleCurrencySymbol() {
-    return getCurrencySymbol();
-  }
-
-  @Override
   public boolean isDeprecated() {
     return false;
   }
 
-  @Override
   public boolean isSpaceForced() {
     return false;
   }
 
-  @Override
   public boolean isSpacingFixed() {
     return false;
   }
 
-  @Override
   public boolean isSymbolPositionFixed() {
     return false;
   }
 
-  @Override
   public boolean isSymbolPrefix() {
     return false;
   }

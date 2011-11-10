@@ -71,41 +71,25 @@ public final class CurrencyDataImpl extends DefaultCurrencyData {
   private final int flagsAndPrecision;
 
   /**
-   * Portable currency symbol, may be the same as {@link #getCurrencySymbol()}.
+   * Portable currency symbol, may be the same as {@link #currencySymbol}.
    */
   private final String portableCurrencySymbol;
 
   /**
-   * Simple currency symbol, may be the same as {@link #getCurrencySymbol()}.
-   */
-  private final String simpleCurrencySymbol;
-
-  /**
    * Create a new CurrencyData whose portable symbol is the same as its local
    * symbol.
    */
-  public CurrencyDataImpl(String currencyCode, String currencySymbol, int flagsAndPrecision) {
-    this(currencyCode, currencySymbol, flagsAndPrecision, null, null);
-  }
-
-  /**
-   * Create a new CurrencyData whose portable symbol is the same as its local
-   * symbol.
-   */
-  public CurrencyDataImpl(String currencyCode, String currencySymbol, int flagsAndPrecision,
-      String portableCurrencySymbol) {
-    this(currencyCode, currencySymbol, flagsAndPrecision, portableCurrencySymbol, null);
+  public CurrencyDataImpl(String currencyCode, String currencySymbol,
+      int flagsAndPrecision) {
+    this(currencyCode, currencySymbol, flagsAndPrecision, currencySymbol);
   }
 
   public CurrencyDataImpl(String currencyCode, String currencySymbol,
-      int flagsAndPrecision, String portableCurrencySymbol, String simpleCurrencySymbol) {
+      int flagsAndPrecision, String portableCurrencySymbol) {
     super(currencyCode, currencySymbol,
         getDefaultFractionDigits(flagsAndPrecision));
     this.flagsAndPrecision = flagsAndPrecision;
-    this.portableCurrencySymbol = portableCurrencySymbol == null ? currencySymbol
-        : portableCurrencySymbol;
-    this.simpleCurrencySymbol = simpleCurrencySymbol == null ? currencySymbol
-        : simpleCurrencySymbol;
+    this.portableCurrencySymbol = portableCurrencySymbol;
   }
 
   @Override
@@ -116,11 +100,6 @@ public final class CurrencyDataImpl extends DefaultCurrencyData {
   @Override
   public String getPortableCurrencySymbol() {
     return portableCurrencySymbol;
-  }
-
-  @Override
-  public String getSimpleCurrencySymbol() {
-    return simpleCurrencySymbol;
   }
 
   @Override

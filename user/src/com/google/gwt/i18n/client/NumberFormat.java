@@ -321,17 +321,17 @@ public class NumberFormat {
   private static NumberFormat cachedPercentFormat;
   private static NumberFormat cachedScientificFormat;
 
-  // Constants for characters used in programmatic (unlocalized) patterns.
-  private static final char CURRENCY_SIGN = '\u00A4';
-
   // Number constants mapped to use latin digits/separators.
   private static NumberConstants latinNumberConstants = null;
+
   // Localized characters for dot and comma in number patterns, used to produce
   // the latin mapping for arbitrary locales.  Any separator not in either of
   // these strings will be mapped to non-breaking space (U+00A0).
   private static final String LOCALIZED_COMMA_EQUIVALENTS = ",\u060C\u066B\u3001\uFE10\uFE11\uFE50\uFE51\uFF0C\uFF64";
-
   private static final String LOCALIZED_DOT_EQUIVALENTS = ".\u2024\u3002\uFE12\uFE52\uFF0E\uFF61";
+
+  // Constants for characters used in programmatic (unlocalized) patterns.
+  private static final char CURRENCY_SIGN = '\u00A4';
   private static final char PATTERN_DECIMAL_SEPARATOR = '.';
   private static final char PATTERN_DIGIT = '#';
   private static final char PATTERN_EXPONENT = 'E';
@@ -353,25 +353,26 @@ public class NumberFormat {
   }
 
   /**
-   * Provides the standard currency format for the current locale.
+   * Provides the standard currency format for the default locale.
    *
    * @return a <code>NumberFormat</code> capable of producing and consuming
    *         currency format for the default locale
    */
   public static NumberFormat getCurrencyFormat() {
     if (cachedCurrencyFormat == null) {
-      cachedCurrencyFormat = getCurrencyFormat(CurrencyList.get().getDefault());
+      cachedCurrencyFormat = new NumberFormat(
+          defaultNumberConstants.currencyPattern(), CurrencyList.get().getDefault(), false);
     }
     return cachedCurrencyFormat;
   }
 
   /**
-   * Provides the standard currency format for the current locale using a
+   * Provides the standard currency format for the default locale using a
    * specified currency.
    *
    * @param currencyData currency data to use
    * @return a <code>NumberFormat</code> capable of producing and consuming
-   *         currency format for the current locale
+   *         currency format for the default locale
    */
   public static NumberFormat getCurrencyFormat(CurrencyData currencyData) {
     return new NumberFormat(defaultNumberConstants.currencyPattern(),
@@ -379,19 +380,20 @@ public class NumberFormat {
   }
 
   /**
-   * Provides the standard currency format for the current locale using a
+   * Provides the standard currency format for the default locale using a
    * specified currency.
    *
    * @param currencyCode valid currency code, as defined in
    *     com.google.gwt.i18n.client.constants.CurrencyCodeMapConstants.properties
    * @return a <code>NumberFormat</code> capable of producing and consuming
-   *         currency format for the current locale
+   *         currency format for the default locale
    * @throws IllegalArgumentException if the currency code is unknown
    */
   public static NumberFormat getCurrencyFormat(String currencyCode) {
-    return getCurrencyFormat(lookupCurrency(currencyCode));
+    // TODO(jat): consider caching values per currency code.
+    return new NumberFormat(defaultNumberConstants.currencyPattern(),
+        lookupCurrency(currencyCode), false);
   }
-
 
   /**
    * Provides the standard decimal format for the default locale.
@@ -449,44 +451,6 @@ public class NumberFormat {
   }
 
   /**
-   * Provides the global currency format for the current locale, using its
-   * default currency.
-   * 
-   * @return a <code>NumberFormat</code> capable of producing and consuming
-   *         currency format for the current locale
-   */
-  public static NumberFormat getGlobalCurrencyFormat() {
-    return getGlobalCurrencyFormat(CurrencyList.get().getDefault());
-  }
-
-  /**
-   * Provides the global currency format for the current locale, using a
-   * specified currency.
-   *
-   * @param currencyData currency data to use
-   * @return a <code>NumberFormat</code> capable of producing and consuming
-   *         currency format for the current locale
-   */
-  public static NumberFormat getGlobalCurrencyFormat(CurrencyData currencyData) {
-    return new NumberFormat(defaultNumberConstants.globalCurrencyPattern(),
-        currencyData, false);
-  }
-  
-  /**
-   * Provides the global currency format for the current locale, using a
-   * specified currency.
-   *
-   * @param currencyCode valid currency code, as defined in
-   *     com.google.gwt.i18n.client.constants.CurrencyCodeMapConstants.properties
-   * @return a <code>NumberFormat</code> capable of producing and consuming
-   *         currency format for the current locale
-   * @throws IllegalArgumentException if the currency code is unknown
-   */
-  public static NumberFormat getGlobalCurrencyFormat(String currencyCode) {
-    return getGlobalCurrencyFormat(lookupCurrency(currencyCode));
-  }
-
-  /**
    * Provides the standard percent format for the default locale.
    *
    * @return a <code>NumberFormat</code> capable of producing and consuming
@@ -514,48 +478,6 @@ public class NumberFormat {
           CurrencyList.get().getDefault(), false);
     }
     return cachedScientificFormat;
-  }
-
-  /**
-   * Provides the simple currency format for the current locale using its
-   * default currency. Note that these formats may be ambiguous if the
-   * currency isn't clear from other content on the page.
-   *
-   * @return a <code>NumberFormat</code> capable of producing and consuming
-   *         currency format for the current locale
-   */
-  public static NumberFormat getSimpleCurrencyFormat() {
-    return getSimpleCurrencyFormat(CurrencyList.get().getDefault());
-  }
-
-  /**
-   * Provides the simple currency format for the current locale using a
-   * specified currency. Note that these formats may be ambiguous if the
-   * currency isn't clear from other content on the page.
-   *
-   * @param currencyData currency data to use
-   * @return a <code>NumberFormat</code> capable of producing and consuming
-   *         currency format for the current locale
-   */
-  public static NumberFormat getSimpleCurrencyFormat(CurrencyData currencyData) {
-    return new NumberFormat(defaultNumberConstants.simpleCurrencyPattern(),
-        currencyData, false);
-  }
-
-  /**
-   * Provides the simple currency format for the current locale using a
-   * specified currency. Note that these formats may be ambiguous if the
-   * currency isn't clear from other content on the page.
-   * 
-   * @param currencyCode valid currency code, as defined in
-   *        com.google.gwt.i18n.client
-   *        .constants.CurrencyCodeMapConstants.properties
-   * @return a <code>NumberFormat</code> capable of producing and consuming
-   *         currency format for the current locale
-   * @throws IllegalArgumentException if the currency code is unknown
-   */
-  public static NumberFormat getSimpleCurrencyFormat(String currencyCode) {
-    return getSimpleCurrencyFormat(lookupCurrency(currencyCode));
   }
 
   /**
@@ -601,97 +523,70 @@ public class NumberFormat {
     final String monetarySeparator = remapSeparator(
         orig.monetarySeparator());
     return new NumberConstants() {
-      @Override
       public String currencyPattern() {
         return orig.currencyPattern();
       }
 
-      @Override
       public String decimalPattern() {
         return orig.decimalPattern();
       }
 
-      @Override
       public String decimalSeparator() {
         return decimalSeparator;
       }
 
-      @Override
       public String defCurrencyCode() {
         return orig.defCurrencyCode();
       }
 
-      @Override
       public String exponentialSymbol() {
         return orig.exponentialSymbol();
       }
 
-      @Override
-      public String globalCurrencyPattern() {
-        return orig.globalCurrencyPattern();
-      }
-
-      @Override
       public String groupingSeparator() {
         return groupingSeparator;
       }
 
-      @Override
       public String infinity() {
         return orig.infinity();
       }
 
-      @Override
       public String minusSign() {
         return orig.minusSign();
       }
 
-      @Override
       public String monetaryGroupingSeparator() {
         return monetaryGroupingSeparator;
       }
 
-      @Override
       public String monetarySeparator() {
         return monetarySeparator;
       }
 
-      @Override
       public String notANumber() {
         return orig.notANumber();
       }
 
-      @Override
       public String percent() {
         return orig.percent();
       }
 
-      @Override
       public String percentPattern() {
         return orig.percentPattern();
       }
 
-      @Override
       public String perMill() {
         return orig.perMill();
       }
 
-      @Override
       public String plusSign() {
         return orig.plusSign();
       }
 
-      @Override
       public String scientificPattern() {
         return orig.scientificPattern();
       }
 
-      @Override
-      public String simpleCurrencyPattern() {
-        return orig.simpleCurrencyPattern();
-      }
-
-      @Override
       public String zeroDigit() {
         return "0";
       }
@@ -786,15 +681,14 @@ public class NumberFormat {
   }-*/;
 
   /**
-   * Information about the currency being used.
+   * The currency code.
    */
-  private CurrencyData currencyData;
+  private final String currencyCode;
 
   /**
-   * Holds the current decimal position during one call to
-   * {@link #format(boolean, StringBuilder, int)}.
+   * Currency symbol to use.
    */
-  private transient int decimalPosition;
+  private final String currencySymbol;
 
   /**
    * Forces the decimal separator to always appear in a formatted number.
@@ -802,30 +696,18 @@ public class NumberFormat {
   private boolean decimalSeparatorAlwaysShown = false;
 
   /**
-   * Holds the current digits length during one call to
-   * {@link #format(boolean, StringBuilder, int)}.
-   */
-  private transient int digitsLength;
-
-  /**
-   * Holds the current exponent during one call to
-   * {@link #format(boolean, StringBuilder, int)}.
-   */
-  private transient int exponent;
-  /**
    * The number of digits between grouping separators in the integer portion of
    * a number.
    */
   private int groupingSize = 3;
+
   private boolean isCurrencyFormat = false;
+
   private int maximumFractionDigits = 3; // invariant, >= minFractionDigits.
 
   private int maximumIntegerDigits = 40;
-
   private int minExponentDigits;
-
   private int minimumFractionDigits = 0;
-
   private int minimumIntegerDigits = 1;
 
   // The multiplier for use in percent, per mille, etc.
@@ -849,6 +731,24 @@ public class NumberFormat {
   private boolean useExponentialNotation = false;
 
   /**
+   * Holds the current exponent during one call to
+   * {@link #format(boolean, StringBuilder, int)}.
+   */
+  private transient int exponent;
+
+  /**
+   * Holds the current decimal position during one call to
+   * {@link #format(boolean, StringBuilder, int)}.
+   */
+  private transient int decimalPosition;
+
+  /**
+   * Holds the current digits length during one call to
+   * {@link #format(boolean, StringBuilder, int)}.
+   */
+  private transient int digitsLength;
+
+  /**
    * Constructs a format object based on the specified settings.
    *
    * @param numberConstants the locale-specific number constants to use for this
@@ -867,12 +767,13 @@ public class NumberFormat {
     }
     this.numberConstants = numberConstants;
     this.pattern = pattern;
-    currencyData = cdata;
+    currencyCode = cdata.getCurrencyCode();
+    currencySymbol = cdata.getCurrencySymbol();
 
     // TODO: handle per-currency flags, such as symbol prefix/suffix and spacing
     parsePattern(this.pattern);
     if (!userSuppliedPattern && isCurrencyFormat) {
-      minimumFractionDigits = currencyData.getDefaultFractionDigits();
+      minimumFractionDigits = cdata.getDefaultFractionDigits();
       maximumFractionDigits = minimumFractionDigits;
     }
   }
@@ -1467,15 +1368,9 @@ public class NumberFormat {
             isCurrencyFormat = true;
             if ((pos + 1) < len && pattern.charAt(pos + 1) == CURRENCY_SIGN) {
               ++pos;
-              if (pos < len - 3 && pattern.charAt(pos + 1) == CURRENCY_SIGN
-                  && pattern.charAt(pos + 2) == CURRENCY_SIGN) {
-                pos += 2;
-                affix.append(currencyData.getSimpleCurrencySymbol());
-              } else {
-                affix.append(currencyData.getCurrencyCode());
-              }
+              affix.append(currencyCode);
             } else {
-              affix.append(currencyData.getCurrencySymbol());
+              affix.append(currencySymbol);
             }
             break;
           case PATTERN_PERCENT:
