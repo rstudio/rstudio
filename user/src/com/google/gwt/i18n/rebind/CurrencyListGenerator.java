@@ -74,6 +74,8 @@ public class CurrencyListGenerator extends Generator {
 
     private final String symbol;
 
+    private String simpleSymbol;
+
     /**
      * Create an instance.
      * 
@@ -123,6 +125,7 @@ public class CurrencyListGenerator extends Generator {
       String[] currencySplit = SPLIT_VERTICALBAR.split(currencyData);
       String currencyDisplay = currencySplit[0];
       String currencySymbol = null;
+      String simpleCurrencySymbol = null;
       if (currencySplit.length > 1 && currencySplit[1].length() > 0) {
         currencySymbol = currencySplit[1];
       }
@@ -145,6 +148,7 @@ public class CurrencyListGenerator extends Generator {
         // 1 - space-separated flags regarding currency symbol
         // positioning/spacing
         // 2 - override of CLDR-derived currency symbol
+        // 3 - simple currency symbol
         String[] extraSplit = SPLIT_VERTICALBAR.split(extraData);
         currencyPortableSymbol = extraSplit[0];
         if (extraSplit.length > 1) {
@@ -166,6 +170,11 @@ public class CurrencyListGenerator extends Generator {
         if (extraSplit.length > 2 && extraSplit[2].length() > 0) {
           currencySymbol = extraSplit[2];
         }
+        // If a non-empty simple symbol is supplied, use it for the currency
+        // symbol.
+        if (extraSplit.length > 3 && extraSplit[3].length() > 0) {
+          simpleCurrencySymbol = extraSplit[3];
+        }
         // If we don't have a currency symbol yet, use the portable symbol if
         // supplied.
         if (currencySymbol == null && currencyPortableSymbol.length() > 0) {
@@ -176,10 +185,17 @@ public class CurrencyListGenerator extends Generator {
       if (currencySymbol == null) {
         currencySymbol = currencyCode;
       }
+      if (currencyPortableSymbol.length() == 0) {
+        currencyPortableSymbol = currencySymbol;
+      }
+      if (simpleCurrencySymbol == null) {
+        simpleCurrencySymbol = currencySymbol;
+      }
       displayName = currencyDisplay;
       symbol = currencySymbol;
       flags = currencyFlags;
       portableSymbol = currencyPortableSymbol;
+      simpleSymbol = simpleCurrencySymbol;
       obsolete = currencyObsolete;
     }
 
@@ -187,17 +203,12 @@ public class CurrencyListGenerator extends Generator {
       return displayName;
     }
 
-    public int getFlags() {
-      return flags;
-    }
-
     public String getJava() {
       StringBuilder buf = new StringBuilder();
       buf.append("new CurrencyDataImpl(\"").append(quote(code)).append("\", \"");
       buf.append(quote(symbol)).append("\", ").append(flags);
-      if (portableSymbol.length() > 0) {
-        buf.append(", \"").append(quote(portableSymbol)).append('\"');
-      }
+      buf.append(", \"").append(quote(portableSymbol)).append('\"');
+      buf.append(", \"").append(quote(simpleSymbol)).append('\"');
       return buf.append(')').toString();
     }
 
@@ -205,18 +216,9 @@ public class CurrencyListGenerator extends Generator {
       StringBuilder buf = new StringBuilder();
       buf.append("[ \"").append(quote(code)).append("\", \"");
       buf.append(quote(symbol)).append("\", ").append(flags);
-      if (portableSymbol.length() > 0) {
-        buf.append(", \"").append(quote(portableSymbol)).append('\"');
-      }
+      buf.append(", \"").append(quote(portableSymbol)).append('\"');
+      buf.append(", \"").append(quote(simpleSymbol)).append('\"');
       return buf.append(']').toString();
-    }
-
-    public String getSymbol() {
-      return symbol;
-    }
-
-    public boolean isObsolete() {
-      return obsolete;
     }
   }
 
@@ -667,12 +669,11 @@ public class CurrencyListGenerator extends Generator {
    * If no new currency data is added for this locale over its superclass, the
    * method is omitted entirely.
    * 
-   * @param allCurrencyData map of currency codes to currency data for the
-   *          current locale, including all inherited currencies data
-   * @param className name of the class we are generating
    * @param writer SourceWriter instance to use for writing the class
    * @param currencies array of valid currency names in the order they should be
    *          listed
+   * @param allCurrencyData map of currency codes to currency data for the
+   *          current locale, including all inherited currencies data
    */
   private void writeCurrencyMethodJava(SourceWriter writer,
       String[] currencies, Map<String, CurrencyInfo> allCurrencyData) {
@@ -707,12 +708,11 @@ public class CurrencyListGenerator extends Generator {
    * If no new currency data is added for this locale over its superclass, the
    * method is omitted entirely.
    * 
-   * @param allCurrencyData map of currency codes to currency data for the
-   *          current locale, including all inherited currencies data
-   * @param className name of the class we are generating
    * @param writer SourceWriter instance to use for writing the class
    * @param currencies array of valid currency names in the order they should be
    *          listed
+   * @param allCurrencyData map of currency codes to currency data for the
+   *          current locale, including all inherited currencies data
    */
   private void writeCurrencyMethodNative(SourceWriter writer,
       String[] currencies, Map<String, CurrencyInfo> allCurrencyData) {
@@ -754,10 +754,11 @@ public class CurrencyListGenerator extends Generator {
    * If no new names are added for this locale over its superclass, the method
    * is omitted entirely.
    * 
-   * @param className name of the class we are generating
    * @param writer SourceWriter instance to use for writing the class
    * @param currencies array of valid currency names in the order they should be
    *          listed
+   * @param allCurrencyData map of currency codes to currency data for the
+   *          current locale, including all inherited currencies data
    */
   private void writeNamesMethodJava(SourceWriter writer, String[] currencies,
       Map<String, CurrencyInfo> allCurrencyData) {
@@ -793,10 +794,11 @@ public class CurrencyListGenerator extends Generator {
    * If no new names are added for this locale over its superclass, the method
    * is omitted entirely.
    * 
-   * @param className name of the class we are generating
    * @param writer SourceWriter instance to use for writing the class
    * @param currencies array of valid currency names in the order they should be
    *          listed
+   * @param allCurrencyData map of currency codes to currency data for the
+   *          current locale, including all inherited currencies data
    */
   private void writeNamesMethodNative(SourceWriter writer, String[] currencies,
       Map<String, CurrencyInfo> allCurrencyData) {
