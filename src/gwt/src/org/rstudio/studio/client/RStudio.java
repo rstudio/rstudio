@@ -175,7 +175,20 @@ public class RStudio implements EntryPoint
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
 
-      RStudioGinjector.INSTANCE.getApplication().go(RootLayoutPanel.get(),
-                                                    dismissProgressAnimation);
+      
+      // load either the main application or the vcs application depending
+      // upon the "mode" url parameter
+      if ("vcs".equals(Window.Location.getParameter("mode")))
+      {
+         RStudioGinjector.INSTANCE.getVCSApplication().go(
+                                                RootLayoutPanel.get(),
+                                                dismissProgressAnimation);
+      }
+      else
+      {
+         RStudioGinjector.INSTANCE.getApplication().go(
+                                                RootLayoutPanel.get(),
+                                                dismissProgressAnimation);
+      }
    }
 }

@@ -32,6 +32,7 @@ import org.rstudio.core.client.jsonrpc.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.HttpLogEntry;
+import org.rstudio.studio.client.common.Satellite;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
@@ -107,6 +108,9 @@ public class RemoteServer implements Server
       
       // start event listener
       serverEventListener_.start();
+      
+      // register satallite callback
+      registerSatelliteCallback();
    }
    
    public void ensureListeningForEvents()
@@ -1681,6 +1685,18 @@ public class RemoteServer implements Server
                                 final boolean redactLog,
                                 final ServerRequestCallback<T> requestCallback)
    {
+      // if this is a satellite window then we handle this by proxying
+      // back through the main workbench window
+      if (Satellite.isSatellite())
+      {
+         sendRequestViaMainWorkbench(scope, 
+                                     method, 
+                                     params, 
+                                     redactLog, 
+                                     requestCallback);
+         return;
+      }
+      
       // retry handler (make the same call with the same params. ensure that
       // only one retry occurs by passing null as the retryHandler)
       RetryHandler retryHandler = new RetryHandler() {
@@ -1712,6 +1728,14 @@ public class RemoteServer implements Server
                               final ServerRequestCallback<T> requestCallback,
                               final RetryHandler retryHandler)
    {   
+      // satellite windows should use the higher level accessor which 
+      // dispatches to the correct protocol automatically
+      if (Satellite.isSatellite())
+      {
+         Debug.log("Satellite window called wrong sendRequest method!");
+         assert false;
+      }
+      
       // ensure we are listening for events. note that we do this here
       // because we are no longer so aggressive about retrying on failed
       // get_events calls. therefore, if we retry and fail a few times
@@ -1812,7 +1836,7 @@ public class RemoteServer implements Server
       // return the request
       return rpcRequest;
    }
-     
+
    private boolean eventsPending(RpcResponse response)
    {
       String eventsPending = response.getField("ep");
@@ -1920,12 +1944,150 @@ public class RemoteServer implements Server
          return false;
       } 
    }
-  
+   
    private void disconnect()
    {
       disconnected_ = true;
       serverEventListener_.stop();
    }
+   
+   // the following sequence of calls enables marsahlling of remote server
+   // requests from satellite windows back into the main workbench window
+   
+   // this code sets up the sendRemoteServerRequest global callback within
+   // the main workbench
+   private native void registerSatelliteCallback() /*-{
+      var server = this;     
+      $wnd.sendRemoteServerRequest = $entry(
+         function(scope, method, params, redactLog, responseCallback) {
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;)(scope, method, params, redactLog, responseCallback);
+         }
+      ); 
+   }-*/;
+
+   // this code runs in the main workbench and implements the server request
+   // and then calls back the satellite on the provided js responseCallback
+   private void sendRemoteServerRequest(String scope,
+                                        String method,
+                                        JavaScriptObject params,
+                                        boolean redactLog,
+                                        final JavaScriptObject responseCallback)
+   {
+      // create a new json array for the params -- for whatever reason 
+      // just calling new JSONArray(params) and passing that through wasn't
+      // successfully marshalling the array (it was getting passed as a 
+      // javascript object)
+      JSONArray inParams = new JSONArray(params);
+      JSONArray rpcParams = new JSONArray();
+      for (int i=0; i<inParams.size(); i++)
+         rpcParams.set(i, inParams.get(i));
+      
+      // create request
+      String rserverURL = getApplicationURL(scope) + "/" + method;
+      RpcRequest rpcRequest = new RpcRequest(rserverURL, 
+                                             method, 
+                                             rpcParams, 
+                                             null,
+                                             redactLog,
+                                             clientId_,
+                                             clientVersion_);
+
+      // send request
+      rpcRequest.send(new RpcRequestCallback() {
+         
+         @Override
+         public void onError(RpcRequest request, RpcError error)
+         {
+            if (disconnected_)
+               return;
+            
+            RpcResponse response = RpcResponse.create(error);
+            performCallback(responseCallback, response);
+         }
+         
+         @Override
+         public void onResponseReceived(RpcRequest request, 
+                                        RpcResponse response)
+         {
+            if (disconnected_)
+               return;
+            
+            if (response.getAsyncHandle() != null)
+            {
+               serverEventListener_.registerAsyncHandle(
+                     response.getAsyncHandle(),
+                     request,
+                     this);
+            }
+            else
+            {
+               performCallback(responseCallback, response);
+              
+               if (eventsPending(response))
+                  serverEventListener_.ensureEvents();
+            }  
+         }
+          
+         private native void performCallback(JavaScriptObject responseCallback,
+                                             RpcResponse response) /*-{
+            responseCallback.onResponse(response);
+         }-*/;
+      });
+   }
+   
+   // call made from satellite -- this delegates to a native method which
+   // sets up a javascript callback and then calls the main workbench
+   private <T> void sendRequestViaMainWorkbench(
+                               String scope,
+                               String method,
+                               JSONArray params,
+                               boolean redactLog,
+                               final ServerRequestCallback<T> requestCallback)
+   {
+      sendRequestViaMainWorkbench(
+            scope, 
+            method, 
+            params.getJavaScriptObject(), 
+            redactLog, 
+            new RpcResponseHandler() {
+               @Override
+               public void onResponseReceived(RpcResponse response)
+               {
+                  if (response.getError() != null)
+                  {
+                     RpcError error = response.getError();
+                     requestCallback.onError(new RemoteServerError(error));
+                  }
+                  else
+                  {
+                     T result = response.<T> getResult();
+                     requestCallback.onResponseReceived(result);
+                  }
+                  
+               }
+      });
+   }
+
+   // call from satellite to sendRemoteServerRequest method made available
+   // by main workbench
+   private native void sendRequestViaMainWorkbench(
+                                    String scope,
+                                    String method,
+                                    JavaScriptObject params,
+                                    boolean redactLog,
+                                    RpcResponseHandler handler) /*-{
+      
+      var responseCallback = new Object();
+      responseCallback.onResponse = $entry(function(response) {
+        handler.@org.rstudio.core.client.jsonrpc.RpcResponseHandler::onResponseReceived(Lorg/rstudio/core/client/jsonrpc/RpcResponse;)(response);
+      });
+
+      $wnd.opener.sendRemoteServerRequest(scope, 
+                                          method, 
+                                          params, 
+                                          redactLog,
+                                          responseCallback);
+   }-*/;
 
    private String clientId_;
    private double clientVersion_ = 0;

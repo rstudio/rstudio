@@ -35,6 +35,8 @@ import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
+import org.rstudio.studio.client.vcs.VCSApplicationView;
+import org.rstudio.studio.client.vcs.ui.VCSApplicationWindow;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
@@ -127,6 +129,9 @@ public class RStudioGinModule extends AbstractGinModule
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
+      
+      bind(VCSApplicationView.class).to(VCSApplicationWindow.class)
+            .in(Singleton.class);
       
       bind(Server.class).to(RemoteServer.class) ;
       bind(WorkbenchServerOperations.class).to(RemoteServer.class) ;
