@@ -111,7 +111,7 @@ core::system::ProcessOptions procOptions()
    FilePath postbackDir = session::options().rpostbackPath().parent();
    core::system::addToPath(&childEnv, postbackDir.absolutePath());
 
-   options.workingDir = FilePath("/Users/jcheng");
+   options.workingDir = projects::projectContext().directory();
 
    // on windows set HOME to USERPROFILE
 #ifdef _WIN32
@@ -165,6 +165,16 @@ ShellCommand git()
       return ShellCommand("git");
 }
 
+std::string gitBin()
+{
+   if (!s_gitBinDir.empty())
+   {
+      return FilePath(s_gitBinDir).childPath("git").absolutePathNative();
+   }
+   else
+      return "git";
+}
+
 void afterCommit(const FilePath& tempFile)
 {
    Error removeError = tempFile.remove();
@@ -207,71 +217,80 @@ private:
    FilePath root_;
 
 protected:
-   core::Error runCommand(const ShellCommand& command,
-                          std::vector<std::string>* pOutputLines=NULL)
+   core::Error runGit(const ShellArgs& args,
+                      std::string* pStdOut=NULL,
+                      std::string* pStdErr=NULL,
+                      int* pExitCode=NULL,
+                      bool errorOnNonZeroExitCode=true)
    {
-      std::string output;
-      Error error = runCommand(command, &output, NULL);
-      if (error)
-         return error;
+      using namespace core::system;
+      ProcessOptions options = procOptions();
+      options.workingDir = root_;
 
-      if (pOutputLines)
+      ProcessResult result;
+
+      runCommand(git() << args.args(), options, &result);
+
+      if (pStdOut)
+         *pStdOut = result.stdOut;
+      if (pStdErr)
+         *pStdErr = result.stdErr;
+      if (pExitCode)
+         *pExitCode = result.exitStatus;
+
+      if (errorOnNonZeroExitCode && result.exitStatus != EXIT_SUCCESS)
       {
-         boost::algorithm::split(*pOutputLines, output,
-                                 boost::algorithm::is_any_of("\r\n"));
+         // TODO: What is the proper error code to return here?
+         // TODO: Do more than just return an error?
+
+         return systemError(boost::system::errc::protocol_error,
+                            result.stdErr,
+                            ERROR_LOCATION);
       }
 
       return Success();
    }
 
-   core::Error runCommand(const ShellCommand& command,
-                          std::string* pOutput,
-                          std::string* pStdErr)
+   core::Error createConsoleProc(const ShellCommand& cmd,
+                                 const std::string& caption,
+                                 bool dialog,
+                                 std::string* pHandle)
    {
-      return runCommand(command.string(), pOutput, pStdErr);
-   }
+      using namespace session::modules::console_process;
 
-   std::string wrapWithCd(const ShellCommand& command)
-   {
-      return shell_utils::join(
-               ShellCommand("cd") << root_,
-               command);
-   }
+      system::ProcessOptions options = procOptions();
+      options.workingDir = root_;
 
-   core::Error runCommand(const std::string& command,
-                          std::string* pOutput,
-                          std::string* pStdErr)
-   {
-      std::string cmd = shell_utils::join(
-            ShellCommand(std::string("cd")) << root_,
-            command);
-
-      core::system::ProcessResult result;
-      Error error = core::system::runCommand(cmd,
-                                             procOptions(),
-                                             &result);
-      if (error)
-         return error;
-
-      if (pOutput)
-         *pOutput = result.stdOut;
-      if (pStdErr)
-         *pStdErr = result.stdErr;
-
+      boost::shared_ptr<ConsoleProcess> ptrCP =
+            ConsoleProcess::create(cmd.string(),
+                                   options,
+                                   caption,
+                                   dialog,
+                                   &enqueueRefreshEvent);
+      *pHandle = ptrCP->handle();
       return Success();
+   }
+
+   std::vector<std::string> split(const std::string& str)
+   {
+      std::vector<std::string> output;
+      boost::algorithm::split(output, str,
+                              boost::algorithm::is_any_of("\r\n"));
+      return output;
    }
 
 public:
    static FilePath detectGitDir(FilePath workingDir)
    {
-      std::string command = shell_utils::join_and(
-            ShellCommand("cd") << workingDir,
-            git() << "rev-parse" << "--show-toplevel");
+      system::ProcessOptions options = procOptions();
+      options.workingDir = workingDir;
+      options.detachSession = true;
 
       core::system::ProcessResult result;
-      Error error = core::system::runCommand(command,
-                                             procOptions(),
-                                             &result);
+      Error error = system::runCommand(git() << "rev-parse" << "--show-toplevel",
+                                       options,
+                                       &result);
+
       if (error)
          return FilePath();
 
@@ -307,11 +326,12 @@ public:
       args.push_back(string_utils::utf8ToSystem(dir.absolutePath()));
 
       std::vector<std::string> lines;
-      Error error = runCommand(
-            git() << "status" << "--porcelain" << "--" << dir,
-            &lines);
+      std::string output;
+      Error error = runGit(ShellArgs() << "status" << "--porcelain" << "--" << dir,
+                           &output);
       if (error)
          return error;
+      lines = split(output);
 
       for (std::vector<std::string>::iterator it = lines.begin();
            it != lines.end();
@@ -337,38 +357,24 @@ public:
       return Success();
    }
 
-   core::Error doSimpleCmd(const ShellCommand& command,
-                           std::string* pStdErr)
+   core::Error add(const std::vector<FilePath>& filePaths)
    {
-      return runCommand(command, NULL, pStdErr);
+      return runGit(ShellArgs() << "add" << "--" << filePaths);
    }
 
-   core::Error add(const std::vector<FilePath>& filePaths,
-                   std::string* pStdErr)
+   core::Error remove(const std::vector<FilePath>& filePaths)
    {
-      return doSimpleCmd(git() << "add" << "--" << filePaths,
-                         pStdErr);
+      return runGit(ShellArgs() << "rm" << "--" << filePaths);
    }
 
-   core::Error remove(const std::vector<FilePath>& filePaths,
-                      std::string* pStdErr)
-   {
-      return doSimpleCmd(git() << "rm" << "--" << filePaths,
-                         pStdErr);
-   }
-
-   core::Error discard(const std::vector<FilePath>& filePaths,
-                       std::string* pStdErr)
+   core::Error discard(const std::vector<FilePath>& filePaths)
    {
       std::vector<std::string> args;
       args.push_back("-f"); // don't fail on unmerged entries
-      return doSimpleCmd(
-            git() << "checkout" << "-f" << "--" << filePaths,
-            pStdErr);
+      return runGit(ShellArgs() << "checkout" << "-f" << "--" << filePaths);
    }
 
-   core::Error stage(const std::vector<FilePath> &filePaths,
-                     std::string *pStdErr)
+   core::Error stage(const std::vector<FilePath> &filePaths)
    {
       StatusResult statusResult;
       this->status(root_, &statusResult);
@@ -399,14 +405,14 @@ public:
 
       if (!filesToAdd.empty())
       {
-         error = this->add(filesToAdd, pStdErr);
+         error = this->add(filesToAdd);
          if (error)
             return error;
       }
 
       if (!filesToRm.empty())
       {
-         error = this->remove(filesToRm, pStdErr);
+         error = this->remove(filesToRm);
          if (error)
             return error;
       }
@@ -414,11 +420,9 @@ public:
       return Success();
    }
 
-   core::Error unstage(const std::vector<FilePath>& filePaths,
-                       std::string* pStdErr)
+   core::Error unstage(const std::vector<FilePath>& filePaths)
    {
-      return doSimpleCmd(git() << "reset" << "HEAD" << "--" << filePaths,
-                         pStdErr);
+      return runGit(ShellArgs() << "reset" << "HEAD" << "--" << filePaths);
    }
 
    core::Error listBranches(std::vector<std::string>* pBranches,
@@ -426,9 +430,11 @@ public:
    {
       std::vector<std::string> lines;
 
-      Error error = runCommand(git() << "branch", &lines);
+      std::string output;
+      Error error = runGit(ShellArgs() << "branch", &output);
       if (error)
          return error;
+      lines = split(output);
 
       for (size_t i = 0; i < lines.size(); i++)
       {
@@ -447,15 +453,10 @@ public:
    core::Error checkout(const std::string& id,
                         std::string* pHandle)
    {
-      boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::ConsoleProcess::create(wrapWithCd(git() << "checkout"
-                                                               << id << "--"),
-                                                    procOptions(),
-                                                    "Git Checkout",
-                                                    true,
-                                                    &enqueueRefreshEvent);
-      *pHandle = ptrProc->handle();
-      return Success();
+      return createConsoleProc(git() << "checkout" << id << "--",
+                               "Git Checkout",
+                               true,
+                               pHandle);
    }
 
    core::Error commit(const std::string& message, bool amend, bool signOff,
@@ -496,13 +497,10 @@ public:
       if (signOff)
          command << "--signoff";
 
-      boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::ConsoleProcess::create(
-                  wrapWithCd(command), procOptions(), "Git Commit", true,
-                  boost::bind(afterCommit, tempFile));
-
-      *pHandle = ptrProc->handle();
-      return Success();
+      return createConsoleProc(command,
+                               "Git Commit",
+                               true,
+                               pHandle);
    }
 
    core::Error clone(const std::string& url,
@@ -510,16 +508,17 @@ public:
                      const FilePath& parentPath,
                      std::string* pHandle)
    {
+      // SPECIAL: happens in different working directory than usual
 
-      std::string cmd = shell_utils::join_and(
-            ShellCommand("cd") << parentPath,
-            git() << "clone" << "--progress" << url << dirName);
+      system::ProcessOptions options = procOptions();
+      options.workingDir = parentPath;
 
       boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::ConsoleProcess::create(cmd,
-                                                    procOptions(),
-                                                    "Git Clone",
-                                                    true);
+            console_process::ConsoleProcess::create(
+                  git() << "clone" << "--progress" << url << dirName,
+                  options,
+                  "Git Clone",
+                  true);
 
       *pHandle = ptrProc->handle();
       return Success();
@@ -550,36 +549,33 @@ public:
                     std::string* pRemote,
                     std::string* pMerge)
    {
-      core::system::ProcessResult result;
-      Error error = core::system::runCommand(
-            wrapWithCd(git() << "config" << "--get" <<
-               "branch." + branch + ".remote"),
-            procOptions(),
-            &result);
+      int exitStatus;
+      Error error = runGit(ShellArgs() << "config" << "--get" << "branch." + branch + ".remote",
+                           pRemote,
+                           NULL,
+                           &exitStatus,
+                           false);
       if (error)
       {
          LOG_ERROR(error);
          return false;
       }
-      if (result.exitStatus != EXIT_SUCCESS)
+      if (exitStatus != EXIT_SUCCESS)
          return false;
-      *pRemote = result.stdOut;
       boost::algorithm::trim(*pRemote);
 
-      core::system::ProcessResult result2;
-      error = core::system::runCommand(
-            wrapWithCd(git() << "config" << "--get" <<
-               "branch." + branch + ".merge"),
-            procOptions(),
-            &result2);
+      error = runGit(ShellArgs() << "config" << "--get" << "branch." + branch + ".merge",
+                     pMerge,
+                     NULL,
+                     &exitStatus,
+                     false);
       if (error)
       {
          LOG_ERROR(error);
          return false;
       }
-      if (result2.exitStatus != EXIT_SUCCESS)
+      if (exitStatus != EXIT_SUCCESS)
          return false;
-      *pMerge = result2.stdOut;
       boost::algorithm::trim(*pMerge);
 
       return true;
@@ -600,28 +596,12 @@ public:
          cmd << remote << merge;
       }
 
-      boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::ConsoleProcess::create(wrapWithCd(cmd),
-                                                    procOptions(),
-                                                    "Git Push",
-                                                    true,
-                                                    &enqueueRefreshEvent);
-
-      *pHandle = ptrProc->handle();
-      return Success();
+      return createConsoleProc(cmd, "Git Push", true, pHandle);
    }
 
    core::Error pull(std::string* pHandle)
    {
-      boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::ConsoleProcess::create(wrapWithCd(git() << "pull"),
-                                                    procOptions(),
-                                                    "Git Pull",
-                                                    true,
-                                                    &enqueueRefreshEvent);
-
-      *pHandle = ptrProc->handle();
-      return Success();
+      return createConsoleProc(git() << "pull", "Git Pull", true, pHandle);
    }
 
    core::Error doDiffFile(const FilePath& filePath,
@@ -630,16 +610,16 @@ public:
                           int contextLines,
                           std::string* pOutput)
    {
-      ShellCommand command = git() << "diff";
-      command << "-U" + boost::lexical_cast<std::string>(contextLines);
+      ShellArgs args = ShellArgs() << "diff";
+      args << "-U" + boost::lexical_cast<std::string>(contextLines);
       if (mode == PatchModeStage)
-         command << "--cached";
-      command << "--";
+         args << "--cached";
+      args << "--";
       if (pCompareTo)
-         command << *pCompareTo;
-      command << filePath;
+         args << *pCompareTo;
+      args << filePath;
 
-      return runCommand(command, pOutput, NULL);
+      return runGit(args, pOutput);
    }
 
    core::Error diffFile(const FilePath& filePath,
@@ -695,16 +675,15 @@ public:
    }
 
    core::Error applyPatch(const FilePath& patchFile,
-                          PatchMode patchMode,
-                          std::string* pStdErr)
+                          PatchMode patchMode)
    {
-      ShellCommand cmd = git() << "apply";
+      ShellArgs args = ShellArgs() << "apply";
       if (patchMode == PatchModeStage)
-         cmd << "--cached";
-      cmd << "--";
-      cmd << patchFile;
+         args << "--cached";
+      args << "--";
+      args << patchFile;
 
-      return doSimpleCmd(cmd, pStdErr);
+      return runGit(args);
    }
 
    void parseCommitValue(const std::string& value,
@@ -749,27 +728,17 @@ public:
    {
       if (filterText.empty())
       {
-         ShellCommand cmd = git() << "log";
-         cmd << "--pretty=oneline";
+         ShellArgs args = ShellArgs() << "log";
+         args << "--pretty=oneline";
          if (!rev.empty())
-            cmd << rev;
-
-         ShellCommand wcCmd("wc");
-         if (!s_gitBinDir.empty())
-         {
-            FilePath fullPath = FilePath(s_gitBinDir).childPath("wc");
-            wcCmd = ShellCommand(fullPath);
-         }
-         wcCmd << "-l";
+            args << rev;
 
          std::string output;
-         Error error = runCommand(shell_utils::pipe(cmd, wcCmd),
-                                  &output, NULL);
+         Error error = runGit(args, &output);
          if (error)
             return error;
 
-         boost::algorithm::trim(output);
-         *pLength = safe_convert::stringTo<int>(output, 0);
+         *pLength = static_cast<int>(std::count(output.begin(), output.end(), '\n'));
          return Success();
       }
       else
@@ -789,12 +758,10 @@ public:
                    const std::string& filterText,
                    std::vector<CommitInfo>* pOutput)
    {
-      std::vector<std::string> outLines;
+      ShellArgs args = ShellArgs() << "log";
+      args << "--pretty=raw" << "--decorate=full" << "--date-order";
 
-      ShellCommand cmd = git() << "log";
-      cmd << "--pretty=raw" << "--decorate=full" << "--date-order";
-
-      ShellCommand revListCmd = git() << "rev-list" << "--date-order" << "--parents";
+      ShellArgs revListArgs = ShellArgs() << "rev-list" << "--date-order" << "--parents";
       int revListSkip = skip;
 
       if (filterText.empty())
@@ -803,43 +770,50 @@ public:
          // if we know that all commits are included.
          if (skip > 0)
          {
-            cmd << "--skip=" + boost::lexical_cast<std::string>(skip);
+            args << "--skip=" + boost::lexical_cast<std::string>(skip);
             skip = 0;
          }
          if (maxentries >= 0)
          {
-            cmd << "--max-count=" + boost::lexical_cast<std::string>(maxentries);
+            args << "--max-count=" + boost::lexical_cast<std::string>(maxentries);
             maxentries = -1;
 
-            revListCmd << "--max-count=" + boost::lexical_cast<std::string>(
+            revListArgs << "--max-count=" + boost::lexical_cast<std::string>(
                   (skip < 0 ? 0 : skip) + maxentries);
          }
       }
 
       if (!rev.empty())
       {
-         cmd << rev;
-         revListCmd << rev;
+         args << rev;
+         revListArgs << rev;
       }
       else
       {
-         revListCmd << "HEAD";
+         revListArgs << "HEAD";
       }
 
       if (maxentries < 0)
          maxentries = std::numeric_limits<int>::max();
 
-      Error error = runCommand(cmd, &outLines);
+      std::vector<std::string> outLines;
+      std::string output;
+      Error error = runGit(args, &output);
       if (error)
          return error;
+      outLines = split(output);
+      output.clear();
 
       std::vector<std::string> graphLines;
       if (filterText.empty())
       {
          std::vector<std::string> revOutLines;
-         error = runCommand(revListCmd, &revOutLines);
+         std::string revOutput;
+         error = runGit(revListArgs, &revOutput);
          if (error)
             return error;
+         revOutLines = split(revOutput);
+         revOutput.clear();
 
          gitgraph::GitGraph graph;
          for (size_t i = 0; i < revOutLines.size(); i++)
@@ -958,12 +932,12 @@ public:
    virtual core::Error show(const std::string& rev,
                             std::string* pOutput)
    {
-      ShellCommand cmd = git() << "show" << "--pretty=oneline" << "-M";
+      ShellArgs args = ShellArgs() << "show" << "--pretty=oneline" << "-M";
       if (s_gitVersion >= GIT_1_7_2)
-         cmd << "-c";
-      cmd << rev;
+         args << "-c";
+      args << rev;
 
-      return runCommand(cmd, pOutput, NULL);
+      return runGit(args, pOutput);
    }
 
    virtual core::Error hasRemote(bool *pHasRemote)
@@ -1100,7 +1074,7 @@ Error vcsAdd(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pGit_->add(resolveAliasedPaths(paths), NULL);
+   return s_pGit_->add(resolveAliasedPaths(paths));
 }
 
 Error vcsRemove(const json::JsonRpcRequest& request,
@@ -1113,7 +1087,7 @@ Error vcsRemove(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pGit_->remove(resolveAliasedPaths(paths), NULL);
+   return s_pGit_->remove(resolveAliasedPaths(paths));
 }
 
 Error vcsDiscard(const json::JsonRpcRequest& request,
@@ -1126,7 +1100,7 @@ Error vcsDiscard(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pGit_->discard(resolveAliasedPaths(paths), NULL);
+   return s_pGit_->discard(resolveAliasedPaths(paths));
 }
 
 Error vcsRevert(const json::JsonRpcRequest& request,
@@ -1139,10 +1113,10 @@ Error vcsRevert(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   error = s_pGit_->unstage(resolveAliasedPaths(paths, true, true), NULL);
+   error = s_pGit_->unstage(resolveAliasedPaths(paths, true, true));
    if (error)
       return error;
-   error = s_pGit_->discard(resolveAliasedPaths(paths, true, false), NULL);
+   error = s_pGit_->discard(resolveAliasedPaths(paths, true, false));
    if (error)
       return error;
 
@@ -1159,7 +1133,7 @@ Error vcsStage(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pGit_->stage(resolveAliasedPaths(paths), NULL);
+   return s_pGit_->stage(resolveAliasedPaths(paths));
 }
 
 Error vcsUnstage(const json::JsonRpcRequest& request,
@@ -1172,7 +1146,7 @@ Error vcsUnstage(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pGit_->unstage(resolveAliasedPaths(paths, true, true), NULL);
+   return s_pGit_->unstage(resolveAliasedPaths(paths, true, true));
 }
 
 Error vcsListBranches(const json::JsonRpcRequest& request,
@@ -1411,7 +1385,7 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   error = s_pGit_->applyPatch(patchFile, static_cast<PatchMode>(mode), NULL);
+   error = s_pGit_->applyPatch(patchFile, static_cast<PatchMode>(mode));
 
    Error error2 = patchFile.remove();
    if (error2)
