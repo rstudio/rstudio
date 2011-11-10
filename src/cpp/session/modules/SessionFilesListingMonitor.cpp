@@ -158,7 +158,7 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
          error = modules::source_control::statusToJson(filePath, status, &vcsObj);
          if (error)
             LOG_ERROR(error);
-         fileObject["vcs_status"] = vcsObj;
+         fileObject["git_status"] = vcsObj;
          pJsonFiles->push_back(fileObject) ;
       }
    }

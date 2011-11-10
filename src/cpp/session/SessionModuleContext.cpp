@@ -738,7 +738,7 @@ void enqueFileChangedEvent(const core::system::FileChangeEvent& event,
          FilePath(event.fileInfo().absolutePath()), vcsStatus, &vcsObj);
    if (error)
       LOG_ERROR(error);
-   fileSystemItem["vcs_status"] = vcsObj;
+   fileSystemItem["git_status"] = vcsObj;
    fileChange["file"] = fileSystemItem;
 
    // enque it

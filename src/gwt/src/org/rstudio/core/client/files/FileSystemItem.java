@@ -274,8 +274,8 @@ public class FileSystemItem extends JavaScriptObject
       return this.lastModified;
    }-*/;
 
-   public final native StatusAndPath getVCSStatus() /*-{
-      return this.vcs_status;
+   public final native StatusAndPath getGitStatus() /*-{
+      return this.git_status;
    }-*/;
 
    // NOTE: should be synced with mime type database in FilePath.cpp

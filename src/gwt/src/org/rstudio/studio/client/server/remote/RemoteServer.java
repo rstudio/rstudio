@@ -1253,7 +1253,7 @@ public class RemoteServer implements Server
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
-      sendRequest(RPC_SCOPE, VCS_ADD, params, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_ADD, params, requestCallback);
    }
 
    public void vcsRemove(ArrayList<String> paths,
@@ -1265,7 +1265,7 @@ public class RemoteServer implements Server
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
-      sendRequest(RPC_SCOPE, VCS_REMOVE, params, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_REMOVE, params, requestCallback);
    }
 
    public void vcsDiscard(ArrayList<String> paths,
@@ -1277,7 +1277,7 @@ public class RemoteServer implements Server
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
-      sendRequest(RPC_SCOPE, VCS_DISCARD, params, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_DISCARD, params, requestCallback);
    }
 
    public void vcsRevert(ArrayList<String> paths,
@@ -1289,7 +1289,7 @@ public class RemoteServer implements Server
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
-      sendRequest(RPC_SCOPE, VCS_REVERT, params, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_REVERT, params, requestCallback);
    }
 
    public void vcsStage(ArrayList<String> paths,
@@ -1301,7 +1301,7 @@ public class RemoteServer implements Server
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
-      sendRequest(RPC_SCOPE, VCS_STAGE, params, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_STAGE, params, requestCallback);
    }
 
    public void vcsUnstage(ArrayList<String> paths,
@@ -1313,32 +1313,32 @@ public class RemoteServer implements Server
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
-      sendRequest(RPC_SCOPE, VCS_UNSTAGE, params, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_UNSTAGE, params, requestCallback);
    }
 
    @Override
    public void vcsAllStatus(ServerRequestCallback<AllStatus> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_ALL_STATUS, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_ALL_STATUS, requestCallback);
    }
 
    @Override
    public void vcsFullStatus(ServerRequestCallback<JsArray<StatusAndPath>> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_FULL_STATUS, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_FULL_STATUS, requestCallback);
    }
 
    @Override
    public void vcsListBranches(ServerRequestCallback<BranchesInfo> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_LIST_BRANCHES, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_LIST_BRANCHES, requestCallback);
    }
 
    @Override
    public void vcsCheckout(String id,
                            ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_CHECKOUT, id,
+      sendRequest(RPC_SCOPE, GIT_CHECKOUT, id,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
@@ -1351,7 +1351,7 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(message));
       params.set(1, JSONBoolean.getInstance(amend));
       params.set(2, JSONBoolean.getInstance(signOff));
-      sendRequest(RPC_SCOPE, VCS_COMMIT_GIT, params,
+      sendRequest(RPC_SCOPE, GIT_COMMIT_GIT, params,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
@@ -1382,7 +1382,7 @@ public class RemoteServer implements Server
 
    public void vcsPush(ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_PUSH,
+      sendRequest(RPC_SCOPE, GIT_PUSH,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
@@ -1390,15 +1390,15 @@ public class RemoteServer implements Server
    public void vcsClone(VcsCloneOptions options,
                         ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      sendRequest(RPC_SCOPE, 
-                  VCS_CLONE, 
+      sendRequest(RPC_SCOPE,
+                  GIT_CLONE,
                   options,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
    public void vcsPull(ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_PULL,
+      sendRequest(RPC_SCOPE, GIT_PULL,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
@@ -1411,35 +1411,35 @@ public class RemoteServer implements Server
                                   : new JSONString(value));
       sendRequest(RPC_SCOPE, ASKPASS_COMPLETED, params, true, requestCallback);
    }
-   
+
    @Override
    public void vcsSshPublicKey(String privateKeyPath,
                                ServerRequestCallback<String> requestCallback)
    {
-      sendRequest(RPC_SCOPE, 
-                  VCS_SSH_PUBLIC_KEY, 
-                  privateKeyPath, 
+      sendRequest(RPC_SCOPE,
+                  GIT_SSH_PUBLIC_KEY,
+                  privateKeyPath,
                   requestCallback);
    }
-   
+
    @Override
    public void vcsCreateSshKey(
                   CreateKeyOptions options,
                   ServerRequestCallback<CreateKeyResult> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_CREATE_SSH_KEY, options, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_CREATE_SSH_KEY, options, requestCallback);
    }
-   
+
    @Override
    public void vcsHasRepo(ServerRequestCallback<Boolean> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_HAS_REPO, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_HAS_REPO, requestCallback);
    }
-   
+
    @Override
    public void vcsInitRepo(ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_INIT_REPO, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_INIT_REPO, requestCallback);
    }
 
    @Override
@@ -1454,7 +1454,7 @@ public class RemoteServer implements Server
       params.set(1, new JSONNumber(mode.getValue()));
       params.set(2, new JSONNumber(contextLines));
       params.set(3, JSONBoolean.getInstance(noSizeWarning));
-      sendRequest(RPC_SCOPE, VCS_DIFF_FILE, params, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_DIFF_FILE, params, requestCallback);
    }
 
    @Override
@@ -1465,7 +1465,7 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(patch));
       params.set(1, new JSONNumber(mode.getValue()));
-      sendRequest(RPC_SCOPE, VCS_APPLY_PATCH, params, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_APPLY_PATCH, params, requestCallback);
    }
 
    public void vcsHistoryCount(String spec,
@@ -1475,7 +1475,7 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(spec));
       params.set(1, new JSONString(filterText));
-      sendRequest(RPC_SCOPE, VCS_HISTORY_COUNT, params, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_HISTORY_COUNT, params, requestCallback);
    }
 
    @Override
@@ -1490,14 +1490,14 @@ public class RemoteServer implements Server
       params.set(1, new JSONNumber(skip));
       params.set(2, new JSONNumber(maxentries));
       params.set(3, new JSONString(StringUtil.notNull(filter)));
-      sendRequest(RPC_SCOPE, VCS_HISTORY, params, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_HISTORY, params, requestCallback);
    }
 
    @Override
    public void vcsExecuteCommand(String command,
                                  ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      sendRequest(RPC_SCOPE, VCS_EXECUTE_COMMAND, command,
+      sendRequest(RPC_SCOPE, GIT_EXECUTE_COMMAND, command,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
@@ -1510,7 +1510,7 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(rev));
       params.set(1, JSONBoolean.getInstance(noSizeWarning));
 
-      sendRequest(RPC_SCOPE, VCS_SHOW, params, requestCallback);
+      sendRequest(RPC_SCOPE, GIT_SHOW, params, requestCallback);
    }
 
    @Override
@@ -1520,7 +1520,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void listGet(String listName, 
+   public void listGet(String listName,
                        ServerRequestCallback<JsArrayString> requestCallback)
    {
       sendRequest(RPC_SCOPE, LIST_GET, listName, requestCallback);
@@ -1531,10 +1531,10 @@ public class RemoteServer implements Server
                                String value,
                                ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, 
-                  LIST_PREPEND_ITEM, 
-                  listName, 
-                  value, 
+      sendRequest(RPC_SCOPE,
+                  LIST_PREPEND_ITEM,
+                  listName,
+                  value,
                   requestCallback);
    }
 
@@ -1543,10 +1543,10 @@ public class RemoteServer implements Server
                               String value,
                               ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, 
-                  LIST_APPEND_ITEM, 
-                  listName, 
-                  value, 
+      sendRequest(RPC_SCOPE,
+                  LIST_APPEND_ITEM,
+                  listName,
+                  value,
                   requestCallback);
    }
 
@@ -1555,11 +1555,11 @@ public class RemoteServer implements Server
                               String value,
                               ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, 
-                  LIST_REMOVE_ITEM, 
-                  listName, 
-                  value, 
-                  requestCallback);  
+      sendRequest(RPC_SCOPE,
+                  LIST_REMOVE_ITEM,
+                  listName,
+                  value,
+                  requestCallback);
    }
 
    @Override
@@ -1568,18 +1568,18 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, LIST_CLEAR, listName, requestCallback);
    }
-   
+
    // package-visible methods for peer classes RemoteServerAuth and
    // RemoveServerEventListener
 
-   
+
    EventBus getEventBus()
    {
       return eventBus_;
    }
 
    RpcRequest getEvents(
-                  int lastEventId, 
+                  int lastEventId,
                   ServerRequestCallback<JsArray<ClientEvent>> requestCallback,
                   RetryHandler retryHandler)
    {
@@ -1592,33 +1592,33 @@ public class RemoteServer implements Server
       
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(lastEventId));
-      return sendRequest(EVENTS_SCOPE, 
-                         "get_events", 
+      return sendRequest(EVENTS_SCOPE,
+                         "get_events",
                          params,
                          false,
                          requestCallback,
                          retryHandler);
    }
-   
+
    void handleUnauthorizedError()
    {
       // disconnect
       disconnect();
-      
+
       // fire event
       UnauthorizedEvent event = new UnauthorizedEvent();
       eventBus_.fireEvent(event);
    }
-    
-   private <T> void sendRequest(String scope, 
+
+   private <T> void sendRequest(String scope,
                                 String method,
                                 ServerRequestCallback<T> requestCallback)
    {
       sendRequest(scope, method, new JSONArray(), requestCallback);
    }
 
-   private <T> void sendRequest(String scope, 
-                                String method, 
+   private <T> void sendRequest(String scope,
+                                String method,
                                 boolean param,
                                 ServerRequestCallback<T> requestCallback)
    {
@@ -1626,9 +1626,9 @@ public class RemoteServer implements Server
       params.set(0, JSONBoolean.getInstance(param));
       sendRequest(scope, method, params, requestCallback);
    }
-   
-   private <T> void sendRequest(String scope, 
-                                String method, 
+
+   private <T> void sendRequest(String scope,
+                                String method,
                                 long param,
                                 ServerRequestCallback<T> requestCallback)
    {
@@ -1636,24 +1636,24 @@ public class RemoteServer implements Server
       params.set(0, new JSONNumber(param));
       sendRequest(scope, method, params, requestCallback);
    }
-        
-   private <T> void sendRequest(String scope, 
-                                String method, 
+
+   private <T> void sendRequest(String scope,
+                                String method,
                                 String param,
                                 ServerRequestCallback<T> requestCallback)
    {
       JSONArray params = new JSONArray();
-     
+
       // pass JSONNull if the string is null
-      params.set(0, param != null ? 
-                     new JSONString(param) : 
+      params.set(0, param != null ?
+                     new JSONString(param) :
                      JSONNull.getInstance());
-      
+
       sendRequest(scope, method, params, requestCallback);
    }
-   
-   private <T> void sendRequest(String scope, 
-                                String method, 
+
+   private <T> void sendRequest(String scope,
+                                String method,
                                 String param1,
                                 String param2,
                                 ServerRequestCallback<T> requestCallback)
@@ -1661,33 +1661,33 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
 
       // pass JSONNull if the string is null
-      params.set(0, param1 != null ? new JSONString(param1) : 
+      params.set(0, param1 != null ? new JSONString(param1) :
                                     JSONNull.getInstance());
-      params.set(1, param2 != null ? new JSONString(param2) : 
+      params.set(1, param2 != null ? new JSONString(param2) :
                                     JSONNull.getInstance());
-      
+
 
       sendRequest(scope, method, params, requestCallback);
    }
 
-   
-   private <T> void sendRequest(String scope, 
-                                String method, 
+
+   private <T> void sendRequest(String scope,
+                                String method,
                                 JavaScriptObject param,
                                 ServerRequestCallback<T> requestCallback)
    {
       JSONArray params = new JSONArray();
 
       // pass JSONNull if the object is null
-      params.set(0, param != null ? new JSONObject(param) : 
+      params.set(0, param != null ? new JSONObject(param) :
                                     JSONNull.getInstance());
 
       sendRequest(scope, method, params, requestCallback);
    }
-   
-   
-   private <T> void sendRequest(final String scope, 
-                                final String method, 
+
+
+   private <T> void sendRequest(final String scope,
+                                final String method,
                                 final JSONArray params,
                                 final ServerRequestCallback<T> requestCallback)
    {
@@ -1725,12 +1725,12 @@ public class RemoteServer implements Server
       // retry handler (make the same call with the same params. ensure that
       // only one retry occurs by passing null as the retryHandler)
       RetryHandler retryHandler = new RetryHandler() {
-        
+
          public void onRetry()
          {
             // retry one time (passing null as last param ensures there
             // is no retry handler installed)
-            sendRequest(scope, 
+            sendRequest(scope,
                         method, 
                         params, 
                         redactLog, 
@@ -1744,7 +1744,7 @@ public class RemoteServer implements Server
             requestCallback.onError(new RemoteServerError(error));
          }
       };
-      
+
       // submit request (retry same request up to one time)
       sendRequest(scope, 
                   method, 
@@ -1753,12 +1753,12 @@ public class RemoteServer implements Server
                   requestCallback, 
                   retryHandler);
    }
-   
+
    // sendRequest method called for internal calls from main workbench
    // (as opposed to proxied calls from satellites)
    private <T> RpcRequest sendRequest(
-                              String scope, 
-                              String method, 
+                              String scope,
+                              String method,
                               JSONArray params,
                               boolean redactLog,
                               final ServerRequestCallback<T> requestCallback,
@@ -1793,7 +1793,7 @@ public class RemoteServer implements Server
                }
              },
              retryHandler);
-      
+
    }
    
    
@@ -1811,19 +1811,19 @@ public class RemoteServer implements Server
       // ensure we are listening for events. note that we do this here
       // because we are no longer so aggressive about retrying on failed
       // get_events calls. therefore, if we retry and fail a few times
-      // we may need to restart event listening. 
+      // we may need to restart event listening.
       ensureListeningForEvents();
- 
+
       // create request
       String rserverURL = getApplicationURL(scope) + "/" + method;
-      RpcRequest rpcRequest = new RpcRequest(rserverURL, 
-                                             method, 
-                                             params, 
+      RpcRequest rpcRequest = new RpcRequest(rserverURL,
+                                             method,
+                                             params,
                                              null,
                                              redactLog,
                                              clientId_,
                                              clientVersion_);
-      
+
       // send the request
       rpcRequest.send(new RpcRequestCallback() {
          public void onError(RpcRequest request, RpcError error)
@@ -1834,7 +1834,7 @@ public class RemoteServer implements Server
             
             // if we have a retry handler then see if we can resolve the
             // error and then retry
-            if ( resolveRpcErrorAndRetry(error, retryHandler) ) 
+            if ( resolveRpcErrorAndRetry(error, retryHandler) )
                return ;
 
             // first crack goes to globally registered rpc error handlers
@@ -1858,12 +1858,12 @@ public class RemoteServer implements Server
             {
                // ERROR: explicit error returned by server
                RpcError error = response.getError();
-               
+
                // if we have a retry handler then see if we can resolve the
                // error and then retry
-               if ( resolveRpcErrorAndRetry(error, retryHandler) ) 
+               if ( resolveRpcErrorAndRetry(error, retryHandler) )
                   return ;
-               
+
                // give first crack to internal handlers, then forward to caller
                if (!handleRpcErrorInternally(error))
                   responseHandler.onResponseReceived(response);
@@ -1890,7 +1890,7 @@ public class RemoteServer implements Server
             }
          }
       });
-      
+
       // return the request
       return rpcRequest;
    }
@@ -1923,25 +1923,25 @@ public class RemoteServer implements Server
       else
          return Boolean.parseBoolean(eventsPending);
    }
-   
+
    private boolean resolveRpcErrorAndRetry(final RpcError error,
                                            final RetryHandler retryHandler)
    {
       // won't even attempt resolve if we don't have a retryHandler
       if (retryHandler == null)
          return false;
-      
+
       // can attempt to resolve UNAUTHORIZED by updating credentials
       if (error.getCode() == RpcError.UNAUTHORIZED)
       {
-         // check credentials 
+         // check credentials
          serverAuth_.updateCredentials(new ServerRequestCallback<Integer>() {
 
             @Override
             public void onResponseReceived(Integer response)
             {
                // allow retry on success, otherwise handle unauthorized error
-               if (response.intValue() == 
+               if (response.intValue() ==
                                  RemoteServerAuth.CREDENTIALS_UPDATE_SUCCESS)
                {
                   retryHandler.onRetry();
@@ -1951,19 +1951,19 @@ public class RemoteServer implements Server
                   handleUnauthorizedError();
                }
             }
-            
+
             @Override
             public void onError(ServerError serverError)
             {
                // log the auth sequence error
                Debug.logError(serverError);
 
-               // unable to resolve unauthorized error through a 
+               // unable to resolve unauthorized error through a
                // credentials check -- treat as unauthorized
                handleUnauthorizedError();
             }
          });
-         
+
          // attempting to resolve
          return true;
       }
@@ -1974,7 +1974,7 @@ public class RemoteServer implements Server
    }
 
    private boolean handleRpcErrorInternally(RpcError error)
-   { 
+   {
       if (error.getCode() == RpcError.UNAUTHORIZED)
       {
          handleUnauthorizedError();
@@ -1984,11 +1984,11 @@ public class RemoteServer implements Server
       {
          // disconnect
          disconnect();
-         
+
          // fire event
          ClientDisconnectedEvent event = new ClientDisconnectedEvent();
          eventBus_.fireEvent(event);
-         
+
          // handled
          return true;
       }
@@ -1996,11 +1996,11 @@ public class RemoteServer implements Server
       {
          // disconnect
          disconnect();
-         
+
          // fire event
          InvalidClientVersionEvent event = new InvalidClientVersionEvent();
          eventBus_.fireEvent(event);
-         
+
          // handled
          return true;
       }
@@ -2008,21 +2008,21 @@ public class RemoteServer implements Server
       {
          // disconnect
          disconnect();
-         
+
          // fire event
          ServerOfflineEvent event = new ServerOfflineEvent();
          eventBus_.fireEvent(event);
-         
+
          // handled
          return true;
-         
+
       }
       else
       {
          return false;
-      } 
+      }
    }
-   
+
    private void disconnect()
    {
       disconnected_ = true;
@@ -2166,12 +2166,12 @@ public class RemoteServer implements Server
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
    private boolean disconnected_;
-   
+
    private final RemoteServerAuth serverAuth_;
    private final RemoteServerEventListener serverEventListener_ ;
 
    private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
-  
+
    private final Session session_;
    private final EventBus eventBus_;
    private final Satellite satellite_;
@@ -2182,18 +2182,18 @@ public class RemoteServer implements Server
    private static final String EVENTS_SCOPE = "events";
    private static final String UPLOAD_SCOPE = "upload";
    private static final String EXPORT_SCOPE = "export";
-   private static final String GRAPHICS_SCOPE = "graphics";   
+   private static final String GRAPHICS_SCOPE = "graphics";
    private static final String SOURCE_SCOPE = "source";
    private static final String LOG_SCOPE = "log";
    private static final String FILE_SHOW = "file_show";
-   
+
    // session methods
    private static final String CLIENT_INIT = "client_init";
    private static final String ACCEPT_AGREEMENT = "accept_agreement";
    private static final String SUSPEND_SESSION = "suspend_session";
    private static final String HANDLE_UNSAVED_CHANGES_COMPLETED = "handle_unsaved_changes_completed";
    private static final String QUIT_SESSION = "quit_session";
-   
+
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
    private static final String SET_PREFS = "set_prefs";
    private static final String SET_UI_PREFS = "set_ui_prefs";
@@ -2205,7 +2205,7 @@ public class RemoteServer implements Server
    private static final String GET_METHOD_DEFINITION = "get_method_definition";
    private static final String GET_FUNCTION_DEFINITION = "get_function_definition";
    private static final String FIND_FUNCTION_IN_SEARCH_PATH = "find_function_in_search_path";
-   
+
    private static final String CONSOLE_INPUT = "console_input";
    private static final String RESET_CONSOLE_ACTIONS = "reset_console_actions";
    private static final String INTERRUPT = "interrupt";
@@ -2232,7 +2232,7 @@ public class RemoteServer implements Server
 
    private static final String EDIT_COMPLETED = "edit_completed";
    private static final String CHOOSE_FILE_COMPLETED = "choose_file_completed";
-   
+
    private static final String LIST_PACKAGES = "list_packages";
    private static final String AVAILABLE_PACKAGES = "available_packages";
    private static final String CHECK_FOR_PACKAGE_UPDATES = "check_for_package_updates";
@@ -2302,31 +2302,31 @@ public class RemoteServer implements Server
    private static final String SEARCH_HISTORY_ARCHIVE = "search_history_archive";
    private static final String SEARCH_HISTORY_ARCHIVE_BY_PREFIX = "search_history_archive_by_prefix";
 
-   private static final String VCS_ADD = "vcs_add";
-   private static final String VCS_REMOVE = "vcs_remove";
-   private static final String VCS_DISCARD = "vcs_discard";
-   private static final String VCS_REVERT = "vcs_revert";
-   private static final String VCS_STAGE = "vcs_stage";
-   private static final String VCS_UNSTAGE = "vcs_unstage";
-   private static final String VCS_ALL_STATUS = "vcs_all_status";
-   private static final String VCS_FULL_STATUS = "vcs_full_status";
-   private static final String VCS_LIST_BRANCHES = "vcs_list_branches";
-   private static final String VCS_CHECKOUT = "vcs_checkout";
-   private static final String VCS_COMMIT_GIT = "vcs_commit_git";
-   private static final String VCS_CLONE = "vcs_clone";
-   private static final String VCS_PUSH = "vcs_push";
-   private static final String VCS_PULL = "vcs_pull";
+   private static final String GIT_ADD = "git_add";
+   private static final String GIT_REMOVE = "git_remove";
+   private static final String GIT_DISCARD = "git_discard";
+   private static final String GIT_REVERT = "git_revert";
+   private static final String GIT_STAGE = "git_stage";
+   private static final String GIT_UNSTAGE = "git_unstage";
+   private static final String GIT_ALL_STATUS = "git_all_status";
+   private static final String GIT_FULL_STATUS = "git_full_status";
+   private static final String GIT_LIST_BRANCHES = "git_list_branches";
+   private static final String GIT_CHECKOUT = "git_checkout";
+   private static final String GIT_COMMIT_GIT = "git_commit_git";
+   private static final String GIT_CLONE = "git_clone";
+   private static final String GIT_PUSH = "git_push";
+   private static final String GIT_PULL = "git_pull";
    private static final String ASKPASS_COMPLETED = "askpass_completed";
-   private static final String VCS_SSH_PUBLIC_KEY = "vcs_ssh_public_key";
-   private static final String VCS_CREATE_SSH_KEY = "vcs_create_ssh_key";
-   private static final String VCS_HAS_REPO = "vcs_has_repo";
-   private static final String VCS_INIT_REPO = "vcs_init_repo";
-   private static final String VCS_DIFF_FILE = "vcs_diff_file";
-   private static final String VCS_APPLY_PATCH = "vcs_apply_patch";
-   private static final String VCS_HISTORY_COUNT = "vcs_history_count";
-   private static final String VCS_HISTORY = "vcs_history";
-   private static final String VCS_EXECUTE_COMMAND = "vcs_execute_command";
-   private static final String VCS_SHOW = "vcs_show";
+   private static final String GIT_SSH_PUBLIC_KEY = "git_ssh_public_key";
+   private static final String GIT_CREATE_SSH_KEY = "git_create_ssh_key";
+   private static final String GIT_HAS_REPO = "git_has_repo";
+   private static final String GIT_INIT_REPO = "git_init_repo";
+   private static final String GIT_DIFF_FILE = "git_diff_file";
+   private static final String GIT_APPLY_PATCH = "git_apply_patch";
+   private static final String GIT_HISTORY_COUNT = "git_history_count";
+   private static final String GIT_HISTORY = "git_history";
+   private static final String GIT_EXECUTE_COMMAND = "git_execute_command";
+   private static final String GIT_SHOW = "git_show";
 
    private static final String GET_PUBLIC_KEY = "get_public_key";
    

@@ -89,7 +89,7 @@ public class VcsState
 
             FileChange fileChange = event.getFileChange();
             FileSystemItem file = fileChange.getFile();
-            StatusAndPath status = file.getVCSStatus();
+            StatusAndPath status = file.getGitStatus();
 
             if (file.getName().equalsIgnoreCase(".gitignore"))
             {
