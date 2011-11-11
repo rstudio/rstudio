@@ -17,8 +17,7 @@ import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 
 public interface Server extends ApplicationServerOperations,
-                                WorkbenchServerOperations,
-                                ServerEventSource
+                                WorkbenchServerOperations
                                
 {     
    /**

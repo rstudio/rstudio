@@ -16,14 +16,12 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
-import org.rstudio.studio.client.server.ServerEventSource;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
 import java.util.ArrayList;
 
-public interface FilesServerOperations extends ServerEventSource,
-                                               VCSServerOperations
+public interface FilesServerOperations extends VCSServerOperations
 {
    void stat(String path,
              ServerRequestCallback<FileSystemItem> requestCallback);
