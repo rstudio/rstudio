@@ -20,14 +20,6 @@ import com.google.inject.Singleton;
 
 // TODO: Pull and Push don't work from remote window
 
-// TODO: parameter type mismatch when attempting to revert
-// TODO: parameter type mismatch when attempting to stage (but can stage chunk)
-//  the issue here is arrays being marshalled as objects, see:
-//    
-//    JsArrayMixed
-//
-//
-
 // TODO: satellite window doesn't seem to be picking up font size ui pref
 // TODO: satellite window also has smaller commit font -- I think the issue
 //       is the FontSizer not being used/initialized

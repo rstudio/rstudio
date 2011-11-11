@@ -2038,7 +2038,7 @@ public class RemoteServer implements Server
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
          function(scope, method, params, redactLog, responseCallback) {
-            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;)(scope, method, params, redactLog, responseCallback);
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(scope, method, params, redactLog, responseCallback);
          }
       ); 
    }-*/;
@@ -2047,19 +2047,13 @@ public class RemoteServer implements Server
    // and then calls back the satellite on the provided js responseCallback
    private void sendRemoteServerRequest(final String scope,
                                         final String method,
-                                        final JavaScriptObject params,
+                                        final String params,
                                         final boolean redactLog,
                                         final JavaScriptObject responseCallback)
    {
-      // create a new json array for the params -- for whatever reason 
-      // just calling new JSONArray(params) and passing that through wasn't
-      // successfully marshalling the array (it was getting passed as a 
-      // javascript object)
-      JSONArray inParams = new JSONArray(params);
-      final JSONArray rpcParams = new JSONArray();
-      for (int i=0; i<inParams.size(); i++)
-         rpcParams.set(i, inParams.get(i));
-      
+      // get the json array from the string
+      final JSONArray jsonParams = JSONParser.parseStrict(params).isArray();
+           
       // setup an rpc response handler that proxies back to the js object
       class ResponseHandler extends RpcResponseHandler
       {
@@ -2092,7 +2086,7 @@ public class RemoteServer implements Server
             // is no retry handler installed)
             sendRequest(scope, 
                         method, 
-                        rpcParams, 
+                        jsonParams, 
                         redactLog, 
                         responseHandler, 
                         null);
@@ -2108,7 +2102,7 @@ public class RemoteServer implements Server
       // submit request (retry same request up to one time)
       sendRequest(scope, 
                   method, 
-                  rpcParams, 
+                  jsonParams, 
                   redactLog, 
                   responseHandler, 
                   retryHandler);
@@ -2126,7 +2120,7 @@ public class RemoteServer implements Server
       sendRequestViaMainWorkbench(
             scope, 
             method, 
-            params.getJavaScriptObject(), 
+            params.toString(),
             redactLog, 
             new RpcResponseHandler() {
                @Override
@@ -2152,7 +2146,7 @@ public class RemoteServer implements Server
    private native void sendRequestViaMainWorkbench(
                                     String scope,
                                     String method,
-                                    JavaScriptObject params,
+                                    String params,
                                     boolean redactLog,
                                     RpcResponseHandler handler) /*-{
       
