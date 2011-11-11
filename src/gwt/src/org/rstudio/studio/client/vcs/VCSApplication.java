@@ -2,7 +2,7 @@ package org.rstudio.studio.client.vcs;
 
 
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
-import org.rstudio.studio.client.common.SatelliteManager;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.RootLayoutPanel;

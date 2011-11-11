@@ -1,4 +1,4 @@
-package org.rstudio.studio.client.common;
+package org.rstudio.studio.client.common.satellite;
 
 import java.util.ArrayList;
 
@@ -81,7 +81,7 @@ public class SatelliteManager implements CloseHandler<Window>
       var manager = this;     
       $wnd.registerAsRStudioSatellite = $entry(
          function(satelliteWnd) {
-            manager.@org.rstudio.studio.client.common.SatelliteManager::registerAsSatellite(Lcom/google/gwt/core/client/JavaScriptObject;)(satelliteWnd);
+            manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::registerAsSatellite(Lcom/google/gwt/core/client/JavaScriptObject;)(satelliteWnd);
          }
       ); 
    }-*/;
