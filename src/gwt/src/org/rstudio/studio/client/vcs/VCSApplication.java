@@ -1,7 +1,7 @@
 package org.rstudio.studio.client.vcs;
 
 
-import org.rstudio.studio.client.common.Satellite;
+import org.rstudio.studio.client.common.SatelliteManager;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.Command;
@@ -14,9 +14,11 @@ import com.google.inject.Singleton;
 public class VCSApplication  
 {
    @Inject
-   public VCSApplication(VCSApplicationView view)
+   public VCSApplication(VCSApplicationView view,
+                         SatelliteManager satelliteManager)
    {
       view_ = view;
+      satelliteManager_ = satelliteManager;
       
    }
    
@@ -24,7 +26,7 @@ public class VCSApplication
                   final Command dismissLoadingProgress)
    {
       // indicate that we are a satellite window
-      Satellite.initialize();
+      satelliteManager_.registerAsSatelliteWindow();
       
       Widget w = view_.getWidget();
       rootPanel.add(w);
@@ -37,5 +39,6 @@ public class VCSApplication
    
    
    private final VCSApplicationView view_;
+   private final SatelliteManager satelliteManager_;
 
 }

@@ -43,6 +43,7 @@ import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SatelliteManager;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.*;
@@ -72,6 +73,7 @@ public class Application implements ApplicationEventHandlers,
                       Server server,
                       Session session,
                       Projects projects,
+                      SatelliteManager satelliteManager,
                       Provider<UIPrefs> uiPrefs,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
@@ -95,6 +97,9 @@ public class Application implements ApplicationEventHandlers,
 
       // bind to commands
       binder.bind(commands_, this);
+      
+      // register as main window
+      satelliteManager.registerAsMainWindow();
          
       // subscribe to events
       events.addHandler(LogoutRequestedEvent.TYPE, this);

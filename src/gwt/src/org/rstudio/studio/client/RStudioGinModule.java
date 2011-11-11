@@ -25,6 +25,7 @@ import org.rstudio.studio.client.application.ui.ApplicationWindow;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.DefaultGlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SatelliteManager;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
@@ -115,6 +116,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(EventBus.class).in(Singleton.class) ;
       bind(Session.class).in(Singleton.class) ;
       bind(Projects.class).in(Singleton.class);
+      bind(SatelliteManager.class).in(Singleton.class);
       bind(WorkbenchContext.class).asEagerSingleton();
       bind(WorkbenchListManager.class).asEagerSingleton();
       bind(ApplicationQuit.class).asEagerSingleton();
