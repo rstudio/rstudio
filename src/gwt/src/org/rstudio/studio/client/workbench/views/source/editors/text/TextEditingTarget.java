@@ -54,7 +54,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -180,7 +179,6 @@ public class TextEditingTarget implements EditingTarget
    @Inject
    public TextEditingTarget(Commands commands,
                             SourceServerOperations server,
-                            WorkbenchServerOperations server2,
                             EventBus events,
                             GlobalDisplay globalDisplay,
                             FileDialogs fileDialogs,
@@ -195,7 +193,6 @@ public class TextEditingTarget implements EditingTarget
    {
       commands_ = commands;
       server_ = server;
-      server2_ = server2;
       events_ = events;
       globalDisplay_ = globalDisplay;
       fileDialogs_ = fileDialogs;
@@ -911,7 +908,7 @@ public class TextEditingTarget implements EditingTarget
                         if (d.getValue().isSaveAsDefault())
                         {
                            prefs_.defaultEncoding().setGlobalValue(newEncoding);
-                           updateUIPrefs();
+                           prefs_.writeUIPrefs();
                         }
 
                         command.execute(newEncoding);
@@ -1482,7 +1479,7 @@ public class TextEditingTarget implements EditingTarget
       if (prefs_.sourceWithEcho().getValue() != echo)
       {
          prefs_.sourceWithEcho().setGlobalValue(echo, true);
-         updateUIPrefs();
+         prefs_.writeUIPrefs();
       }
    }
    
@@ -1724,13 +1721,6 @@ public class TextEditingTarget implements EditingTarget
             });
    }
    
-   private void updateUIPrefs()
-   {
-      server2_.setUiPrefs(
-            session_.getSessionInfo().getUiPrefs(), 
-            new SimpleRequestCallback<Void>("Error Saving Preference"));
-   }
-   
    private SourcePosition toSourcePosition(FunctionStart func)
    {
       Position pos = func.getPreamble();
@@ -1847,7 +1837,6 @@ public class TextEditingTarget implements EditingTarget
    private Display view_;
    private final Commands commands_;
    private SourceServerOperations server_;
-   private final WorkbenchServerOperations server2_;
    private EventBus events_;
    private final GlobalDisplay globalDisplay_;
    private final FileDialogs fileDialogs_;

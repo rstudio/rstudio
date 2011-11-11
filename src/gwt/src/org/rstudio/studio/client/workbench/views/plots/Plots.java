@@ -331,7 +331,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                                                 currentOptions.getValue()))
                        {
                           currentOptions.setGlobalValue(options);
-                          workbenchContext_.updateUIPrefs();      
+                          uiPrefs_.get().writeUIPrefs();    
                        }
                     }    
                  }) ;  
@@ -368,7 +368,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                             uiPrefs.exportPlotOptions().getValue()))
             {
                uiPrefs.exportPlotOptions().setGlobalValue(options);
-               workbenchContext_.updateUIPrefs();
+               uiPrefs.writeUIPrefs();
             }
          }
       };

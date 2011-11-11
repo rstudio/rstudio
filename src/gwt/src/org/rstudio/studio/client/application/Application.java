@@ -516,9 +516,7 @@ public class Application implements ApplicationEventHandlers
    private void setToolbarPref(boolean showToolbar)
    {
       uiPrefs_.get().toolbarVisible().setGlobalValue(showToolbar);
-      server_.setUiPrefs(
-               session_.getSessionInfo().getUiPrefs(), 
-               new SimpleRequestCallback<Void>("Error Saving Preference"));
+      uiPrefs_.get().writeUIPrefs();
    }
    
    private void showToolbar(boolean showToolbar)
