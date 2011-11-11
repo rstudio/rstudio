@@ -32,10 +32,14 @@ public class VCSApplication
       // initSatelliteWindow b/c it depends on Server)
       uncaughtExHandler_.register();
       
+      // create the widget
       Widget w = view_.getWidget();
       rootPanel.add(w);
       rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
+      
+      // show the view
+      view_.show();
    }
    
    

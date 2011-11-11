@@ -12,6 +12,17 @@ import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+// TODO: after suspend when trying to do a refresh of commit list it hangs 
+//       forever (perhaps something to do with console process management?).
+
+
+
+// TODO: parameter type mismatch when attempting to stage (but can stage chunk)
+
+// TODO: satellite window doesn't seem to be picking up font size ui pref
+// TODO: satellite window also has smaller commit font -- I think the issue
+//       is the FontSizer not being used/initialized
+
 // TODO: Implement for Desktop
 
 // TODO: re-activation of existing satellites (launch manager)
