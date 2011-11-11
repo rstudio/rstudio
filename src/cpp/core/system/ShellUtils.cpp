@@ -62,14 +62,13 @@ ShellCommand& ShellCommand::operator<<(const std::vector<FilePath> args)
 
 ShellArgs& ShellArgs::operator<<(const std::string& arg)
 {
-   args_.push_back(arg);
+   args_.push_back(escape(arg));
    return *this;
 }
 
 ShellArgs& ShellArgs::operator<<(const FilePath& path)
 {
-   args_.push_back(string_utils::utf8ToSystem(path.absolutePath()));
-   return *this;
+   return *this << string_utils::utf8ToSystem(path.absolutePath());
 }
 
 ShellArgs& ShellArgs::operator<<(const std::vector<std::string> args)

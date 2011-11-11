@@ -35,6 +35,8 @@ public:
    {
    }
 
+   // COPYING: Via compiler (copyable members)
+
    // Add an environment variable that should be added every time.
    // To explicitly unset an existing environment variable every
    // time, pass std::string() for value.

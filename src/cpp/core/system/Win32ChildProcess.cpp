@@ -370,7 +370,7 @@ Error ChildProcess::run()
       lpEnv = &envBlock[0];
    }
 
-   if (options_.detachSession)
+   if (options_.detachProcess)
    {
       dwFlags |= DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP;
       si.dwFlags |= STARTF_USESHOWWINDOW;

@@ -230,6 +230,8 @@ protected:
       using namespace core::system;
       ProcessOptions options = procOptions();
       options.workingDir = root_;
+      // Important to ensure SSH_ASKPASS works
+      options.detachProcess = true;
 
       ProcessResult result;
 
@@ -292,7 +294,7 @@ protected:
    }
 
 public:
-   static FilePath detectGitDir(FilePath workingDir)
+   static FilePath detectGitDir(const FilePath& workingDir)
    {
       system::ProcessOptions options = procOptions();
       options.workingDir = workingDir;
@@ -341,12 +343,6 @@ public:
       using namespace boost;
 
       std::vector<FileWithStatus> files;
-
-      std::vector<std::string> args;
-      args.push_back("status");
-      args.push_back("--porcelain");
-      args.push_back("--");
-      args.push_back(string_utils::utf8ToSystem(dir.absolutePath()));
 
       std::vector<std::string> lines;
       std::string output;
@@ -988,7 +984,7 @@ public:
 
 Git s_git_;
 
-FilePath resolveAliasedPath(std::string path)
+FilePath resolveAliasedPath(const std::string& path)
 {
    if (boost::algorithm::starts_with(path, "~/"))
       return module_context::resolveAliasedPath(path);
@@ -1047,7 +1043,10 @@ VCS activeVCS()
 
 std::string activeVCSName()
 {
-   return s_git_.name();
+   if (s_git_.root().empty())
+      return std::string();
+   else
+      return s_git_.name();
 }
 
 VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
@@ -1062,6 +1061,9 @@ VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
 
 core::Error status(const FilePath& dir, StatusResult* pStatusResult)
 {
+   if (activeVCSName().empty())
+      return Success();
+
    return s_git_.status(dir, pStatusResult);
 }
 

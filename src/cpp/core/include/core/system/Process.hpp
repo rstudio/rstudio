@@ -42,7 +42,7 @@ namespace system {
 struct ProcessOptions
 {
    ProcessOptions()
-      : terminateChildren(false), detachSession(false)
+      : terminateChildren(false), detachSession(false), detachProcess(false)
    {
    }
 
@@ -61,8 +61,11 @@ struct ProcessOptions
    // CreateJobObject/CREATE_BREAKAWAY_FROM_JOB to get the same effect
    bool terminateChildren;
 
-   // Calls ::setsid after fork (NOTE: no effect on Windows)
+   // Calls ::setsid after fork for POSIX (no effect on Windows)
    bool detachSession;
+
+   // Creates the process with DETACHED_PROCESS on Win32 (no effect on POSIX)
+   bool detachProcess;
 
    // function to run within the child process immediately after the fork
    // NOTE: only supported on posix as there is no fork on Win32
