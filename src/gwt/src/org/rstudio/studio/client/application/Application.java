@@ -87,6 +87,7 @@ public class Application implements ApplicationEventHandlers,
       events_ = events;
       session_ = session;
       commands_ = commands;
+      satelliteManager_ = satelliteManager;
       clientStateUpdater_ = clientStateUpdater;
       server_ = server;
       uiPrefs_ = uiPrefs;
@@ -603,6 +604,8 @@ public class Application implements ApplicationEventHandlers,
       
    private void cleanupWorkbench()
    {
+      satelliteManager_.closeAllSatellites();
+      
       if (clientStateUpdaterInstance_ != null)
       {
          clientStateUpdaterInstance_.suspend();
@@ -620,6 +623,7 @@ public class Application implements ApplicationEventHandlers,
    private final EventBus events_;
    private final Session session_;
    private final Commands commands_;
+   private final SatelliteManager satelliteManager_;
    private final Provider<ClientStateUpdater> clientStateUpdater_;
    private final Server server_;
    private final Provider<UIPrefs> uiPrefs_;

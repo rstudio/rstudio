@@ -20,6 +20,8 @@ public class SatelliteManager implements CloseHandler<Window>
       
    }
    
+   // the main window should call this method during startup to set itself
+   // up to manage and communicate with the satellite windows
    public void initMainWindow()
    {
       // export the registration hook used by satellites
@@ -27,24 +29,24 @@ public class SatelliteManager implements CloseHandler<Window>
       
       // handle onClosed to automatically close all satellites
       Window.addCloseHandler(this);
-      
    }
    
-   
-   
+   // satellite windows should call this during startup to setup a 
+   // communication channel with the main window
    public native void initSatelliteWindow() /*-{
       $wnd.isRStudioSatellite = true;
       $wnd.opener.registerAsRStudioSatellite($wnd);
    }-*/;
    
    
+   // check whether the current window is a satellite
    public native boolean isCurrentWindowSatellite() /*-{
       return !!$wnd.isRStudioSatellite;
    }-*/;
-
-   // close all satellites when we are closed
-   @Override
-   public void onClose(CloseEvent<Window> event)
+   
+   
+   // close all satellite windows
+   public void closeAllSatellites()
    {
       for (int i=0; i<satellites_.size(); i++)
       {
@@ -57,16 +59,24 @@ public class SatelliteManager implements CloseHandler<Window>
          {
          }
       } 
+      satellites_.clear();  
    }
    
+   // close all satellites when we are closed
+   @Override
+   public void onClose(CloseEvent<Window> event)
+   {
+      closeAllSatellites();
+   }
    
-   
+   // called by satellites to connect themselves with the main window
    private void registerAsSatellite(JavaScriptObject wnd)
    {
       WindowEx satelliteWnd = wnd.<WindowEx>cast();
       satellites_.add(satelliteWnd);
    }
    
+   // export the global function requried for satellites to register
    private native void exportSatelliteRegistrationCallback() /*-{
       var manager = this;     
       $wnd.registerAsRStudioSatellite = $entry(
