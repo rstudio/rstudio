@@ -370,6 +370,13 @@ Error ChildProcess::run()
       lpEnv = &envBlock[0];
    }
 
+   if (options_.detachSession)
+   {
+      dwFlags |= DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP;
+      si.dwFlags |= STARTF_USESHOWWINDOW;
+      si.wShowWindow = SW_HIDE;
+   }
+
    LPCSTR lpWorkingDir = NULL;
    if (!options_.workingDir.empty())
    {
