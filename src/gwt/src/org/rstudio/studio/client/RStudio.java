@@ -73,17 +73,31 @@ public class RStudio implements EntryPoint
    {
       Debug.injectDebug();
 
-      Document.get().getBody().getStyle().setBackgroundColor("#e1e2e5");
-
-      BrowserFence fence = GWT.create(BrowserFence.class);
-      fence.go(new Command()
+      // vcs mode short circuits all other loading progress/logic 
+      // (including pre-loading ace)
+      if ("vcs".equals(Window.Location.getParameter("mode")))
       {
-         public void execute()
+         ensureStylesInjected();
+         
+         RStudioGinjector.INSTANCE.getVCSApplication().go(
+                                                      RootLayoutPanel.get());
+      }
+      
+      // standard loading sequence
+      else
+      {
+         Document.get().getBody().getStyle().setBackgroundColor("#e1e2e5");
+   
+         BrowserFence fence = GWT.create(BrowserFence.class);
+         fence.go(new Command()
          {
-            Command dismissProgressAnimation = showProgress();
-            delayLoad(dismissProgressAnimation);
-         }
-      });
+            public void execute()
+            {
+               Command dismissProgressAnimation = showProgress();
+               delayLoad(dismissProgressAnimation);
+            }
+         });
+      }
    }
 
    private Command showProgress()
@@ -122,14 +136,18 @@ public class RStudio implements EntryPoint
             {
                public void execute()
                {
-                  load(dismissProgressAnimation);
+                  ensureStylesInjected();
+                  RStudioGinjector.INSTANCE.getApplication().go(
+                        RootLayoutPanel.get(),
+                        dismissProgressAnimation);;
                }
             });
          }
       });
    }
-
-   private void load(final Command dismissProgressAnimation)
+   
+   
+   private void ensureStylesInjected()
    {
       ThemeResources.INSTANCE.themeStyles().ensureInjected();
       CoreResources.INSTANCE.styles().ensureInjected();
@@ -174,21 +192,5 @@ public class RStudio implements EntryPoint
      
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
-
-      
-      // load either the main application or the vcs application depending
-      // upon the "mode" url parameter
-      if ("vcs".equals(Window.Location.getParameter("mode")))
-      {
-         RStudioGinjector.INSTANCE.getVCSApplication().go(
-                                                RootLayoutPanel.get(),
-                                                dismissProgressAnimation);
-      }
-      else
-      {
-         RStudioGinjector.INSTANCE.getApplication().go(
-                                                RootLayoutPanel.get(),
-                                                dismissProgressAnimation);
-      }
    }
 }

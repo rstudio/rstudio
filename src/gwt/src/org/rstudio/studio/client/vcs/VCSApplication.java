@@ -5,7 +5,6 @@ import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler
 import org.rstudio.studio.client.common.SatelliteManager;
 
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -24,8 +23,7 @@ public class VCSApplication
       uncaughtExHandler_ = uncaughtExHandler;
    }
    
-   public void go(RootLayoutPanel rootPanel, 
-                  final Command dismissLoadingProgress)
+   public void go(RootLayoutPanel rootPanel)
    {
       // indicate that we are a satellite window
       satelliteManager_.initSatelliteWindow();
@@ -38,9 +36,6 @@ public class VCSApplication
       rootPanel.add(w);
       rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
-
-     
-      dismissLoadingProgress.execute();
    }
    
    
