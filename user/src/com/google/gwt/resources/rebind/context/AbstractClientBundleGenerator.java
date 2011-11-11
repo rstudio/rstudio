@@ -50,6 +50,7 @@ import com.google.gwt.resources.rg.BundleResourceGenerator;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
+import java.beans.Beans;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.net.URL;
@@ -967,6 +968,11 @@ public abstract class AbstractClientBundleGenerator extends IncrementalGenerator
     }
 
     toReturn.append("_" + getClass().getSimpleName());
+
+    // If design time, generate new class each time to allow reloading.
+    if (Beans.isDesignTime()) {
+      toReturn.append("_designTime" + System.currentTimeMillis());
+    }
 
     return toReturn.toString();
   }
