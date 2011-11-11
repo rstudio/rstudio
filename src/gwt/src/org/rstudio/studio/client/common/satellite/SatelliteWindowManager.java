@@ -15,7 +15,7 @@ import com.google.inject.Singleton;
 // TODO: after suspend when trying to do a refresh of commit list it hangs 
 //       forever (perhaps something to do with console process management?).
 
-
+// TODO: Pull and Push don't work from remote window
 
 // TODO: parameter type mismatch when attempting to stage (but can stage chunk)
 
