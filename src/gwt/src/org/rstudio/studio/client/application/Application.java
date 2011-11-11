@@ -180,6 +180,7 @@ public class Application implements ApplicationEventHandlers
    
    public void onServerOffline(ServerOfflineEvent event)
    {
+      satelliteManager_.closeAllSatellites();
       view_.showApplicationOffline();
    }
     
@@ -460,6 +461,7 @@ public class Application implements ApplicationEventHandlers
    
    private void navigateWindowTo(String relativeUrl)
    {
+      satelliteManager_.closeAllSatellites();
       String url = GWT.getHostPageBaseURL() + relativeUrl;
       Window.Location.replace(url);
    }
