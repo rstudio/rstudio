@@ -370,6 +370,13 @@ Error ChildProcess::run()
       lpEnv = &envBlock[0];
    }
 
+   LPCSTR lpWorkingDir = NULL;
+   if (!options_.workingDir.empty())
+   {
+      lpWorkingDir = string_utils::utf8ToSystem(
+            options_.workingDir.absolutePathNative()).c_str();
+   }
+
    // Start the child process.
    PROCESS_INFORMATION pi;
    ::ZeroMemory( &pi, sizeof(PROCESS_INFORMATION));
@@ -381,7 +388,7 @@ Error ChildProcess::run()
      TRUE,            // Set handle inheritance to TRUE
      dwFlags,         // Creation flags
      lpEnv,           // Environment block
-     NULL,            // Use parent's starting directory
+     lpWorkingDir,    // Use parent's starting directory
      &si,             // Pointer to STARTUPINFO structure
      &pi );   // Pointer to PROCESS_INFORMATION structure
 

@@ -44,9 +44,27 @@ private:
          bool dialog,
          const boost::function<void()>& onExit);
 
+   ConsoleProcess(
+         const std::string& program,
+         const std::vector<std::string>& args,
+         const core::system::ProcessOptions& options,
+         const std::string& caption,
+         bool dialog,
+         const boost::function<void()>& onExit);
+
+   void commonInit();
+
 public:
    static boost::shared_ptr<ConsoleProcess> create(
          const std::string& command,
+         core::system::ProcessOptions options,
+         const std::string& caption,
+         bool dialog,
+         const boost::function<void()>& onExit=boost::function<void()>());
+
+   static boost::shared_ptr<ConsoleProcess> create(
+         const std::string& program,
+         const std::vector<std::string>& args,
          core::system::ProcessOptions options,
          const std::string& caption,
          bool dialog,
@@ -78,6 +96,8 @@ public:
 private:
    // Command and options that will be used when start() is called
    std::string command_;
+   std::string program_;
+   std::vector<std::string> args_;
    core::system::ProcessOptions options_;
 
    std::string caption_;

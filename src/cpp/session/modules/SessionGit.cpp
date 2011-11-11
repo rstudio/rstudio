@@ -151,7 +151,6 @@ void enqueueRefreshEvent()
 
 class Git;
 
-boost::scoped_ptr<Git> s_pGit_;
 std::vector<PidType> s_pidsToTerminate_;
 
 ShellCommand git()
@@ -169,7 +168,12 @@ std::string gitBin()
 {
    if (!s_gitBinDir.empty())
    {
-      return FilePath(s_gitBinDir).childPath("git").absolutePathNative();
+#ifdef _WIN32
+      std::string exe("git.exe");
+#else
+      std::string exe("git");
+#endif
+      return FilePath(s_gitBinDir).childPath(exe).absolutePathNative();
    }
    else
       return "git";
@@ -229,7 +233,13 @@ protected:
 
       ProcessResult result;
 
-      runCommand(git() << args.args(), options, &result);
+      Error error = runProgram(gitBin(),
+                               args.args(),
+                               "",
+                               options,
+                               &result);
+      if (error)
+         return error;
 
       if (pStdOut)
          *pStdOut = result.stdOut;
@@ -251,7 +261,8 @@ protected:
       return Success();
    }
 
-   core::Error createConsoleProc(const ShellCommand& cmd,
+   core::Error createConsoleProc(const std::string& program,
+                                 const ShellArgs& args,
                                  const std::string& caption,
                                  bool dialog,
                                  std::string* pHandle)
@@ -262,7 +273,8 @@ protected:
       options.workingDir = root_;
 
       boost::shared_ptr<ConsoleProcess> ptrCP =
-            ConsoleProcess::create(cmd.string(),
+            ConsoleProcess::create(program,
+                                   args.args(),
                                    options,
                                    caption,
                                    dialog,
@@ -287,9 +299,12 @@ public:
       options.detachSession = true;
 
       core::system::ProcessResult result;
-      Error error = system::runCommand(git() << "rev-parse" << "--show-toplevel",
-                                       options,
-                                       &result);
+      Error error = system::runProgram(
+               gitBin(),
+               ShellArgs() << "rev-parse" << "--show-toplevel",
+               "",
+               options,
+               &result);
 
       if (error)
          return FilePath();
@@ -300,9 +315,12 @@ public:
       return FilePath(boost::algorithm::trim_copy(result.stdOut));
    }
 
-   Git(FilePath repoDir)
+   Git() : root_(FilePath())
    {
-      root_ = repoDir;
+   }
+
+   Git(const FilePath& root) : root_(root)
+   {
    }
 
    VCS id() { return VCSGit; }
@@ -311,6 +329,11 @@ public:
    FilePath root() const
    {
       return root_;
+   }
+
+   void setRoot(const FilePath& path)
+   {
+      root_ = path;
    }
 
    core::Error status(const FilePath& dir, StatusResult* pStatusResult)
@@ -453,7 +476,8 @@ public:
    core::Error checkout(const std::string& id,
                         std::string* pHandle)
    {
-      return createConsoleProc(git() << "checkout" << id << "--",
+      return createConsoleProc(gitBin(),
+                               ShellArgs() << "checkout" << id << "--",
                                "Git Checkout",
                                true,
                                pHandle);
@@ -491,13 +515,14 @@ public:
       pStream->flush();
       pStream.reset();  // release file handle
 
-      ShellCommand command = git() << "commit" << "-F" << tempFile;
+      ShellArgs args = ShellArgs() << "commit" << "-F" << tempFile;
       if (amend)
-         command << "--amend";
+         args << "--amend";
       if (signOff)
-         command << "--signoff";
+         args << "--signoff";
 
-      return createConsoleProc(command,
+      return createConsoleProc(gitBin(),
+                               args,
                                "Git Commit",
                                true,
                                pHandle);
@@ -515,10 +540,11 @@ public:
 
       boost::shared_ptr<ConsoleProcess> ptrProc =
             console_process::ConsoleProcess::create(
-                  git() << "clone" << "--progress" << url << dirName,
-                  options,
-                  "Git Clone",
-                  true);
+               gitBin(),
+               ShellArgs() << "clone" << "--progress" << url << dirName,
+               options,
+               "Git Clone",
+               true);
 
       *pHandle = ptrProc->handle();
       return Success();
@@ -588,20 +614,21 @@ public:
       if (error)
          return error;
 
-      ShellCommand cmd = git() << "push";
+      ShellArgs args = ShellArgs() << "push";
 
       std::string remote, merge;
       if (remoteMerge(branch, &remote, &merge))
       {
-         cmd << remote << merge;
+         args << remote << merge;
       }
 
-      return createConsoleProc(cmd, "Git Push", true, pHandle);
+      return createConsoleProc(gitBin(), args, "Git Push", true, pHandle);
    }
 
    core::Error pull(std::string* pHandle)
    {
-      return createConsoleProc(git() << "pull", "Git Pull", true, pHandle);
+      return createConsoleProc(gitBin(), ShellArgs() << "pull",
+                               "Git Pull", true, pHandle);
    }
 
    core::Error doDiffFile(const FilePath& filePath,
@@ -959,12 +986,14 @@ public:
    }
 };
 
+Git s_git_;
+
 FilePath resolveAliasedPath(std::string path)
 {
    if (boost::algorithm::starts_with(path, "~/"))
       return module_context::resolveAliasedPath(path);
    else
-      return s_pGit_->root().childPath(path);
+      return s_git_.root().childPath(path);
 }
 
 bool splitRename(const std::string& path, std::string* pOld, std::string* pNew)
@@ -1013,12 +1042,12 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
 
 VCS activeVCS()
 {
-   return s_pGit_->id();
+   return s_git_.id();
 }
 
 std::string activeVCSName()
 {
-   return s_pGit_->name();
+   return s_git_.name();
 }
 
 VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
@@ -1033,7 +1062,7 @@ VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
 
 core::Error status(const FilePath& dir, StatusResult* pStatusResult)
 {
-   return s_pGit_->status(dir, pStatusResult);
+   return s_git_.status(dir, pStatusResult);
 }
 
 Error fileStatus(const FilePath& filePath, VCSStatus* pStatus)
@@ -1074,7 +1103,7 @@ Error vcsAdd(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pGit_->add(resolveAliasedPaths(paths));
+   return s_git_.add(resolveAliasedPaths(paths));
 }
 
 Error vcsRemove(const json::JsonRpcRequest& request,
@@ -1087,7 +1116,7 @@ Error vcsRemove(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pGit_->remove(resolveAliasedPaths(paths));
+   return s_git_.remove(resolveAliasedPaths(paths));
 }
 
 Error vcsDiscard(const json::JsonRpcRequest& request,
@@ -1100,7 +1129,7 @@ Error vcsDiscard(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pGit_->discard(resolveAliasedPaths(paths));
+   return s_git_.discard(resolveAliasedPaths(paths));
 }
 
 Error vcsRevert(const json::JsonRpcRequest& request,
@@ -1113,10 +1142,10 @@ Error vcsRevert(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   error = s_pGit_->unstage(resolveAliasedPaths(paths, true, true));
+   error = s_git_.unstage(resolveAliasedPaths(paths, true, true));
    if (error)
       return error;
-   error = s_pGit_->discard(resolveAliasedPaths(paths, true, false));
+   error = s_git_.discard(resolveAliasedPaths(paths, true, false));
    if (error)
       return error;
 
@@ -1133,7 +1162,7 @@ Error vcsStage(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pGit_->stage(resolveAliasedPaths(paths));
+   return s_git_.stage(resolveAliasedPaths(paths));
 }
 
 Error vcsUnstage(const json::JsonRpcRequest& request,
@@ -1146,7 +1175,7 @@ Error vcsUnstage(const json::JsonRpcRequest& request,
    if (error)
       return error ;
 
-   return s_pGit_->unstage(resolveAliasedPaths(paths, true, true));
+   return s_git_.unstage(resolveAliasedPaths(paths, true, true));
 }
 
 Error vcsListBranches(const json::JsonRpcRequest& request,
@@ -1154,7 +1183,7 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
 {
    std::vector<std::string> branches;
    boost::optional<size_t> activeIndex;
-   Error error = s_pGit_->listBranches(&branches, &activeIndex);
+   Error error = s_git_.listBranches(&branches, &activeIndex);
    if (error)
       return error;
 
@@ -1186,7 +1215,7 @@ Error vcsCheckout(const json::JsonRpcRequest& request,
       return error;
 
    std::string handle;
-   error = s_pGit_->checkout(id, &handle);
+   error = s_git_.checkout(id, &handle);
    if (error)
       return error;
 
@@ -1199,7 +1228,7 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
                     json::JsonRpcResponse* pResponse)
 {
    StatusResult statusResult;
-   Error error = s_pGit_->status(s_pGit_->root(), &statusResult);
+   Error error = s_git_.status(s_git_.root(), &statusResult);
    if (error)
       return error;
 
@@ -1240,7 +1269,7 @@ Error vcsAllStatus(const json::JsonRpcRequest& request,
    result["branches"] = tmp.result();
 
    bool hasRemote;
-   error = s_pGit_->hasRemote(&hasRemote);
+   error = s_git_.hasRemote(&hasRemote);
    if (error)
       return error;
    result["has_remote"] = hasRemote;
@@ -1262,7 +1291,7 @@ Error vcsCommitGit(const json::JsonRpcRequest& request,
       return error;
 
    std::string handle;
-   error = s_pGit_->commit(commitMsg, amend, signOff, &handle);
+   error = s_git_.commit(commitMsg, amend, signOff, &handle);
    if (error)
       return error;
 
@@ -1302,7 +1331,7 @@ Error vcsPush(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
    std::string handle;
-   Error error = s_pGit_->push(&handle);
+   Error error = s_git_.push(&handle);
    if (error)
       return error;
 
@@ -1315,7 +1344,7 @@ Error vcsPull(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
    std::string handle;
-   Error error = s_pGit_->pull(&handle);
+   Error error = s_git_.pull(&handle);
    if (error)
       return error;
 
@@ -1348,7 +1377,7 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
       splitRename(path, NULL, &path);
 
    std::string output;
-   error = s_pGit_->diffFile(resolveAliasedPath(path),
+   error = s_git_.diffFile(resolveAliasedPath(path),
                                  static_cast<PatchMode>(mode),
                                  contextLines,
                                  &output);
@@ -1385,7 +1414,7 @@ Error vcsApplyPatch(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   error = s_pGit_->applyPatch(patchFile, static_cast<PatchMode>(mode));
+   error = s_git_.applyPatch(patchFile, static_cast<PatchMode>(mode));
 
    Error error2 = patchFile.remove();
    if (error2)
@@ -1408,7 +1437,7 @@ Error vcsHistoryCount(const json::JsonRpcRequest& request,
    boost::algorithm::trim(filterText);
 
    int count;
-   error = s_pGit_->logLength(rev, filterText, &count);
+   error = s_git_.logLength(rev, filterText, &count);
    if (error)
       return error;
 
@@ -1432,7 +1461,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
    boost::algorithm::trim(filterText);
 
    std::vector<CommitInfo> commits;
-   error = s_pGit_->log(rev, skip, maxentries, filterText, &commits);
+   error = s_git_.log(rev, skip, maxentries, filterText, &commits);
    if (error)
       return error;
 
@@ -1492,7 +1521,7 @@ Error vcsExecuteCommand(const json::JsonRpcRequest& request,
       return error;
 
    command = shell_utils::sendStdErrToStdOut(shell_utils::join(
-         ShellCommand("cd") << s_pGit_->root(),
+         ShellCommand("cd") << s_git_.root(),
          command));
 
    boost::shared_ptr<ConsoleProcess> ptrProc =
@@ -1516,7 +1545,7 @@ Error vcsShow(const json::JsonRpcRequest& request,
       return error;
 
    std::string output;
-   s_pGit_->show(rev, &output);
+   s_git_.show(rev, &output);
    output = string_utils::filterControlChars(output);
 
    if (!noSizeWarning && output.size() > WARN_SIZE)
@@ -1640,6 +1669,8 @@ Error vcsHasRepo(const json::JsonRpcRequest& request,
 Error vcsInitRepo(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
+   // TODO: Change to runProgram
+
    // create command
    std::string cmd = shell_utils::join_and(
          ShellCommand("cd") << projects::projectContext().directory(),
@@ -2245,7 +2276,9 @@ bool isGitInstalled()
       return false;
 
    core::system::ProcessResult result;
-   Error error = core::system::runCommand(git() << "--version",
+   Error error = core::system::runProgram(gitBin(),
+                                          ShellArgs() << "--version",
+                                          "",
                                           procOptions(),
                                           &result);
    if (error)
@@ -2369,7 +2402,7 @@ Error statusToJson(const core::FilePath &path,
 {
    json::Object& obj = *pObject;
    obj["status"] = status.status();
-   obj["path"] = path.relativePath(s_pGit_->root());
+   obj["path"] = path.relativePath(s_git_.root());
    obj["raw_path"] = path.absolutePath();
    obj["discardable"] = status.status()[1] != ' ' && status.status()[1] != '?';
    return Success();
@@ -2421,9 +2454,9 @@ bool tryGit(const FilePath& workingDir)
    if (gitDir.empty())
       return false;
 
-   s_pGit_.reset(new Git(Git::detectGitDir(workingDir)));
+   s_git_.setRoot(gitDir);
 
-   FilePath gitIgnore = s_pGit_->root().childPath(".gitignore");
+   FilePath gitIgnore = s_git_.root().childPath(".gitignore");
    Error error = augmentGitIgnore(gitIgnore);
    if (error)
       LOG_ERROR(error);
@@ -2431,7 +2464,9 @@ bool tryGit(const FilePath& workingDir)
    // Save version
    s_gitVersion = GIT_1_7_2;
    core::system::ProcessResult result;
-   error = core::system::runCommand(git() << "--version",
+   error = core::system::runProgram(gitBin(),
+                                    ShellArgs() << "--version",
+                                    "",
                                     procOptions(),
                                     &result);
    if (error)

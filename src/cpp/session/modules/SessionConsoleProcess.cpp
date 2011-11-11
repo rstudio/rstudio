@@ -57,6 +57,24 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
      started_(false), interrupt_(false), outputBuffer_(OUTPUT_BUFFER_SIZE),
      onExit_(onExit)
 {
+   commonInit();
+}
+
+ConsoleProcess::ConsoleProcess(const std::string& program,
+                               const std::vector<std::string>& args,
+                               const core::system::ProcessOptions& options,
+                               const std::string& caption,
+                               bool dialog,
+                               const boost::function<void()>& onExit)
+   : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
+     started_(false), interrupt_(false), outputBuffer_(OUTPUT_BUFFER_SIZE),
+     onExit_(onExit)
+{
+   commonInit();
+}
+
+void ConsoleProcess::commonInit()
+{
    handle_ = core::system::generateUuid(false);
 
    // When we retrieve from outputBuffer, we only want complete lines. Add a
@@ -82,8 +100,17 @@ Error ConsoleProcess::start()
    if (started_)
       return Success();
 
-   Error error = module_context::processSupervisor().runCommand(
+   Error error;
+   if (!command_.empty())
+   {
+      error = module_context::processSupervisor().runCommand(
                                  command_, options_, createProcessCallbacks());
+   }
+   else
+   {
+      error = module_context::processSupervisor().runProgram(
+                          program_, args_, options_, createProcessCallbacks());
+   }
    if (!error)
       started_ = true;
    return error;
@@ -276,7 +303,7 @@ Error procReap(const json::JsonRpcRequest& request,
 }
 
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
-      const std::string &command,
+      const std::string& command,
       core::system::ProcessOptions options,
       const std::string& caption,
       bool dialog,
@@ -285,6 +312,21 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
    options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
          new ConsoleProcess(command, options, caption, dialog, onExit));
+   s_procs[ptrProc->handle()] = ptrProc;
+   return ptrProc;
+}
+
+boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
+      const std::string& program,
+      const std::vector<std::string>& args,
+      core::system::ProcessOptions options,
+      const std::string& caption,
+      bool dialog,
+      const boost::function<void()>& onExit)
+{
+   options.terminateChildren = true;
+   boost::shared_ptr<ConsoleProcess> ptrProc(
+         new ConsoleProcess(program, args, options, caption, dialog, onExit));
    s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
 }
