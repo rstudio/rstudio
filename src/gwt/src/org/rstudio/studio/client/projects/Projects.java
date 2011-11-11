@@ -403,8 +403,8 @@ public class Projects implements OpenProjectFileHandler,
          globalDisplay_.showMessage(
                MessageDialog.INFO, 
                "No Active Project", 
-               "Version control features can only accesssed from within an " +
-               "RStudio project. Note that if you have an exiting directory " +
+               "Version control features can only be accessed from within an " +
+               "RStudio project. Note that if you have an existing directory " +
                "under version control you can associate an RStudio project " +
                "with that directory using the New Project dialog.");
         
