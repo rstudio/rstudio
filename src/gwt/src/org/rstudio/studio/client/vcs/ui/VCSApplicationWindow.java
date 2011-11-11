@@ -1,11 +1,17 @@
 package org.rstudio.studio.client.vcs.ui;
 
 
+import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
+import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
+import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -26,7 +32,9 @@ public class VCSApplicationWindow extends Composite
 {
    @Inject
    public VCSApplicationWindow(Provider<ReviewPresenter> pReviewPresenter,
-                               Provider<HistoryPresenter> pHistoryPresenter)
+                               Provider<HistoryPresenter> pHistoryPresenter,
+                               EventBus eventBus,
+                               FontSizeManager fontSizeManager)
    {
       // save references
       pReviewPresenter_ = pReviewPresenter;
@@ -39,7 +47,16 @@ public class VCSApplicationWindow extends Composite
       // create application panel
       applicationPanel_ = new LayoutPanel();
       
-    
+      // react to font size changes
+      eventBus.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
+      {
+         public void onChangeFontSize(ChangeFontSizeEvent event)
+         {
+            FontSizer.setNormalFontSize(Document.get(), event.getFontSize());
+         }
+      });
+      FontSizer.setNormalFontSize(Document.get(), fontSizeManager.getSize());
+
       
       // init widget
       initWidget(applicationPanel_);

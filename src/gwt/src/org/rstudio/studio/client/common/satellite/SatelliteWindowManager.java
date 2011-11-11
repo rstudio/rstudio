@@ -20,9 +20,9 @@ import com.google.inject.Singleton;
 
 // TODO: Pull and Push don't work from remote window
 
-// TODO: satellite window doesn't seem to be picking up font size ui pref
-// TODO: satellite window also has smaller commit font -- I think the issue
-//       is the FontSizer not being used/initialized
+// TODO: exception during uiPrefs.checkForChanges -- null paneConfig
+//       (added null check but investigate root cause -- should there
+//        be a separate workbench specific checkForChanges codepath)
 
 // TODO: Implement for Desktop
 

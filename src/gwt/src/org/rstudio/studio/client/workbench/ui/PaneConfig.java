@@ -122,7 +122,8 @@ public class PaneConfig extends JavaScriptObject
    }
    
    public final native boolean isEqualTo(PaneConfig other)  /*-{
-      return this.panes.toString() == other.panes.toString() &&
+      return other != null &&
+             this.panes.toString() == other.panes.toString() &&
              this.tabSet1.toString() == other.tabSet1.toString() &&
              this.tabSet2.toString() == other.tabSet2.toString();
    }-*/;
