@@ -99,6 +99,13 @@ public class RemoteServer implements Server
    // complete initialization now that the workbench is ready
    public void onWorkbenchReady()
    {
+      // satellite windows should never call onWorkbenchReady
+      if (Satellite.isSatellite())
+      {
+         Debug.log("Satellite window cannot call onWorkbenchReady!");
+         assert false;
+      }
+      
       // update state
       workbenchReady_ = true;
       
@@ -1575,6 +1582,13 @@ public class RemoteServer implements Server
                   ServerRequestCallback<JsArray<ClientEvent>> requestCallback,
                   RetryHandler retryHandler)
    {
+      // satellite windows should never call getEvents directly!
+      if (Satellite.isSatellite())
+      {
+         Debug.log("Satellite window shoudl not call getEvents!");
+         assert false;
+      }
+      
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(lastEventId));
       return sendRequest(EVENTS_SCOPE, 
@@ -1683,20 +1697,30 @@ public class RemoteServer implements Server
                                 final String method,
                                 final JSONArray params,
                                 final boolean redactLog,
-                                final ServerRequestCallback<T> requestCallback)
+                                final ServerRequestCallback<T> cb)
    {
       // if this is a satellite window then we handle this by proxying
       // back through the main workbench window
       if (Satellite.isSatellite())
       {
-         sendRequestViaMainWorkbench(scope, 
-                                     method, 
-                                     params, 
-                                     redactLog, 
-                                     requestCallback);
-         return;
+         sendRequestViaMainWorkbench(scope, method, params, redactLog, cb);
+
+      }
+      // otherwise just a standard request with single retry
+      else
+      {
+         sendRequestWithRetry(scope, method, params, redactLog, cb); 
       }
       
+   }
+   
+   private <T> void sendRequestWithRetry(
+                                 final String scope,
+                                 final String method,
+                                 final JSONArray params,
+                                 final boolean redactLog,
+                                 final ServerRequestCallback<T> requestCallback)
+   {
       // retry handler (make the same call with the same params. ensure that
       // only one retry occurs by passing null as the retryHandler)
       RetryHandler retryHandler = new RetryHandler() {
@@ -1705,37 +1729,84 @@ public class RemoteServer implements Server
          {
             // retry one time (passing null as last param ensures there
             // is no retry handler installed)
-            sendRequest(scope, method, params, redactLog, requestCallback, null);
+            sendRequest(scope, 
+                        method, 
+                        params, 
+                        redactLog, 
+                        requestCallback, 
+                        null);
          }   
 
-         public void onError(ServerError error)
+         public void onError(RpcError error)
          {
             // propagate error which caused the retry to the caller
-            requestCallback.onError(error);
+            requestCallback.onError(new RemoteServerError(error));
          }
       };
       
       // submit request (retry same request up to one time)
-      sendRequest(scope, method, params, redactLog, requestCallback, retryHandler);
+      sendRequest(scope, 
+                  method, 
+                  params, 
+                  redactLog, 
+                  requestCallback, 
+                  retryHandler);
    }
-    
    
+   // sendRequest method called for internal calls from main workbench
+   // (as opposed to proxied calls from satellites)
    private <T> RpcRequest sendRequest(
                               String scope, 
                               String method, 
                               JSONArray params,
                               boolean redactLog,
                               final ServerRequestCallback<T> requestCallback,
-                              final RetryHandler retryHandler)
-   {   
-      // satellite windows should use the higher level accessor which 
-      // dispatches to the correct protocol automatically
-      if (Satellite.isSatellite())
-      {
-         Debug.log("Satellite window called wrong sendRequest method!");
-         assert false;
-      }
+                              RetryHandler retryHandler)
+   { 
+      return sendRequest(
+            scope,
+            method,
+            params,
+            redactLog,
+            new RpcResponseHandler() 
+            {
+               @Override
+               public void onResponseReceived(RpcResponse response)
+               {
+                  // ignore response if no request callback or
+                  // if it was cancelled
+                  if (requestCallback == null ||
+                      requestCallback.cancelled())
+                     return;
+                  
+                  if (response.getError() != null)
+                  {
+                     requestCallback.onError(
+                      new RemoteServerError(response.getError()));
+                  }
+                  else
+                  {
+                     T result = response.<T> getResult();
+                     requestCallback.onResponseReceived(result);
+                  }
+               }
+             },
+             retryHandler);
       
+   }
+   
+   
+   // lowest level sendRequest method -- called from the main workbench
+   // in two scenarios: direct internal call and servicing a proxied
+   // request from a satellite window
+   private RpcRequest sendRequest(
+                              String scope, 
+                              String method, 
+                              JSONArray params,
+                              boolean redactLog,
+                              final RpcResponseHandler responseHandler,
+                              final RetryHandler retryHandler)
+   {      
       // ensure we are listening for events. note that we do this here
       // because we are no longer so aggressive about retrying on failed
       // get_events calls. therefore, if we retry and fail a few times
@@ -1756,16 +1827,9 @@ public class RemoteServer implements Server
       rpcRequest.send(new RpcRequestCallback() {
          public void onError(RpcRequest request, RpcError error)
          {
-            // ignore errors if:
-            //   - we are disconnected;
-            //   - no response handler; or 
-            //   - handler was cancelled
-            if ( disconnected_                || 
-                 (requestCallback == null)    || 
-                 requestCallback.cancelled() )
-            {
+            // ignore errors if we are disconnected
+            if ( disconnected_)           
                return;
-            }
             
             // if we have a retry handler then see if we can resolve the
             // error and then retry
@@ -1776,23 +1840,17 @@ public class RemoteServer implements Server
             if (!handleRpcErrorInternally(error))
             {
                // no global handlers processed it, send on to caller
-               requestCallback.onError(new RemoteServerError(error));
+               responseHandler.onResponseReceived(RpcResponse.create(error));
             }
          }
 
          public void onResponseReceived(final RpcRequest request,
                                         RpcResponse response)
          {
-            // ignore response if:
-            //   - we are disconnected;
-            //   - no response handler; or 
+            // ignore response if we are disconnected
             //   - handler was cancelled
-            if ( disconnected_                 || 
-                 (requestCallback == null)     || 
-                 requestCallback.cancelled() )
-            {
+            if (disconnected_) 
                  return;
-            }
                    
             // check for error
             if (response.getError() != null)
@@ -1807,7 +1865,7 @@ public class RemoteServer implements Server
                
                // give first crack to internal handlers, then forward to caller
                if (!handleRpcErrorInternally(error))
-                  requestCallback.onError(new RemoteServerError(error));
+                  responseHandler.onResponseReceived(response);
             }
             else if (response.getAsyncHandle() != null)
             {
@@ -1819,9 +1877,8 @@ public class RemoteServer implements Server
             // no error, process the result
             else
             {
-               // no error, get the result
-               T result = response.<T> getResult();
-               requestCallback.onResponseReceived(result);
+               // no error, forward to caller
+               responseHandler.onResponseReceived(response);
                
                // always ensure that the event source receives events unless 
                // the server specifically flags us that no events are likely
@@ -1967,10 +2024,10 @@ public class RemoteServer implements Server
 
    // this code runs in the main workbench and implements the server request
    // and then calls back the satellite on the provided js responseCallback
-   private void sendRemoteServerRequest(String scope,
-                                        String method,
-                                        JavaScriptObject params,
-                                        boolean redactLog,
+   private void sendRemoteServerRequest(final String scope,
+                                        final String method,
+                                        final JavaScriptObject params,
+                                        final boolean redactLog,
                                         final JavaScriptObject responseCallback)
    {
       // create a new json array for the params -- for whatever reason 
@@ -1978,61 +2035,62 @@ public class RemoteServer implements Server
       // successfully marshalling the array (it was getting passed as a 
       // javascript object)
       JSONArray inParams = new JSONArray(params);
-      JSONArray rpcParams = new JSONArray();
+      final JSONArray rpcParams = new JSONArray();
       for (int i=0; i<inParams.size(); i++)
          rpcParams.set(i, inParams.get(i));
       
-      // create request
-      String rserverURL = getApplicationURL(scope) + "/" + method;
-      RpcRequest rpcRequest = new RpcRequest(rserverURL, 
-                                             method, 
-                                             rpcParams, 
-                                             null,
-                                             redactLog,
-                                             clientId_,
-                                             clientVersion_);
-
-      // send request
-      rpcRequest.send(new RpcRequestCallback() {
-         
+      // setup an rpc response handler that proxies back to the js object
+      class ResponseHandler extends RpcResponseHandler
+      {
          @Override
-         public void onError(RpcRequest request, RpcError error)
+         public void onResponseReceived(RpcResponse response)
          {
-            if (disconnected_)
-               return;
-            
-            RpcResponse response = RpcResponse.create(error);
             performCallback(responseCallback, response);
          }
          
-         @Override
-         public void onResponseReceived(RpcRequest request, 
-                                        RpcResponse response)
+         public void onError(RpcError error)
          {
-            if (disconnected_)
-               return;
-            
-            if (response.getAsyncHandle() != null)
-            {
-               serverEventListener_.registerAsyncHandle(
-                     response.getAsyncHandle(),
-                     request,
-                     this);
-            }
-            else
-            {
-               performCallback(responseCallback, response);
-              
-               if (eventsPending(response))
-                  serverEventListener_.ensureEvents();
-            }  
+            RpcResponse errorResponse = RpcResponse.create(error);
+            performCallback(responseCallback, errorResponse);
          }
-          
+         
          private native void performCallback(JavaScriptObject responseCallback,
                                              RpcResponse response) /*-{
             responseCallback.onResponse(response);
          }-*/;
-      });
+      };
+      final ResponseHandler responseHandler = new ResponseHandler();
+      
+      // setup a retry handler which will call back the second time with
+      // the same args (but no retryHandler, ensurin at most 1 retry)
+      RetryHandler retryHandler = new RetryHandler() {
+        
+         public void onRetry()
+         {
+            // retry one time (passing null as last param ensures there
+            // is no retry handler installed)
+            sendRequest(scope, 
+                        method, 
+                        rpcParams, 
+                        redactLog, 
+                        responseHandler, 
+                        null);
+         }   
+
+         public void onError(RpcError error)
+         {
+            // propagate error which caused the retry to the caller
+            responseHandler.onError(error);
+         }
+      };
+      
+      // submit request (retry same request up to one time)
+      sendRequest(scope, 
+                  method, 
+                  rpcParams, 
+                  redactLog, 
+                  responseHandler, 
+                  retryHandler);
    }
    
    // call made from satellite -- this delegates to a native method which

@@ -12,7 +12,7 @@
  */
 package org.rstudio.studio.client.server.remote;
 
-import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.core.client.jsonrpc.RpcError;
 
 interface RetryHandler
 {
@@ -22,5 +22,5 @@ interface RetryHandler
    // will be called with the original error that caused the retry attempt
    // if there is an error involving the retry mechanism itself (e.g. error
    // occurs during attempt to authenticate in response to UNAUTHORIZED)
-   void onError(ServerError error);
+   void onError(RpcError error);
 }

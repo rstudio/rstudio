@@ -23,6 +23,7 @@ import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.jsonrpc.RpcRequest;
 import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
@@ -445,7 +446,7 @@ class RemoteServerEventListener
             restart();
          }
          
-         public void onError(ServerError error)
+         public void onError(RpcError error)
          {
             // error while attempting to recover, to be on the safe side
             // we simply stop listening for events. if rather than stopping 
