@@ -3,6 +3,7 @@ package org.rstudio.studio.client.common.satellite;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -15,9 +16,9 @@ import com.google.inject.Singleton;
 public class SatelliteWindowManager implements CloseHandler<Window>
 {
    @Inject
-   public SatelliteWindowManager()
+   public SatelliteWindowManager(Session session)
    {
-      
+      session_ = session;
    }
    
    // the main window should call this method during startup to set itself
@@ -59,8 +60,12 @@ public class SatelliteWindowManager implements CloseHandler<Window>
    // called by satellites to connect themselves with the main window
    private void registerAsSatellite(JavaScriptObject wnd)
    {
+      // get the satellite and add it to our list
       WindowEx satelliteWnd = wnd.<WindowEx>cast();
       satellites_.add(satelliteWnd);
+      
+      // call setSessionInfo
+      callSetSessionInfo(satelliteWnd, session_.getSessionInfo());
    }
    
    // export the global function requried for satellites to register
@@ -73,6 +78,14 @@ public class SatelliteWindowManager implements CloseHandler<Window>
       ); 
    }-*/;
    
+   // call setSessionInfo on a satellite
+   private native void callSetSessionInfo(JavaScriptObject satellite,
+                                          JavaScriptObject sessionInfo) /*-{
+      satellite.setRStudioSatelliteSessionInfo(sessionInfo);
+   }-*/;
+   
+   
+   private final Session session_;
    private final ArrayList<WindowEx> satellites_ = new ArrayList<WindowEx>();
 
    
