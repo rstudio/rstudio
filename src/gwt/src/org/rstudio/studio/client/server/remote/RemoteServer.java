@@ -89,7 +89,7 @@ public class RemoteServer implements Server
       pConsoleProcessFactory_ = pConsoleProcessFactory;
       clientId_ = null;
       disconnected_ = false;
-      workbenchReady_ = false;
+      listeningForEvents_ = false;
       session_ = session;
       eventBus_ = eventBus;
       serverAuth_ = new RemoteServerAuth(this);
@@ -107,7 +107,7 @@ public class RemoteServer implements Server
       }
       
       // update state
-      workbenchReady_ = true;
+      listeningForEvents_ = true;
       
       // only check credentials if we are in server mode
       if (session_.getSessionInfo().getMode().equals(SessionInfo.SERVER_MODE))
@@ -119,27 +119,7 @@ public class RemoteServer implements Server
       // register satallite callback
       registerSatelliteCallback();
    }
-   
-   public void ensureListeningForEvents()
-   {
-      // if the workbench is ready then make sure we are listening for
-      // events (retry events up to 10 times). 
-      
-      // we need to check for workbenchReady_ because we don't want to cause
-      // events to flow prior to the workbench being instantiated and fully 
-      // initialized. since this method can be called at any time we need to
-      // protect ourselves against this "pre-workbench initialization" state
-      
-      // the retries are there to work around the fact that when we execute a
-      // network request which causes us to resume from a suspended session
-      // the first query for events often returns ServiceUnavailable because 
-      // the process isn't alive yet. by retrying we make certain that if
-      // the first attempts to listen fail we eventually get synced up
-      
-      if (workbenchReady_)
-         serverEventListener_.ensureListening(10);
-   }
-   
+     
    public void log(int logEntryType, 
                    String logEntry, 
                    ServerRequestCallback<Void> requestCallback)
@@ -1893,6 +1873,26 @@ public class RemoteServer implements Server
       // return the request
       return rpcRequest;
    }
+   
+   private void ensureListeningForEvents()
+   {
+      // if we are in a mode where we are listening for events (running
+      // as the main workbench) then ensure we are listening
+      
+      // we need the listeningForEvents_ flag because we don't want to cause
+      // events to flow prior to the workbench being instantiated and fully 
+      // initialized. since this method can be called at any time we need to
+      // protect ourselves against this "pre-workbench initialization" state
+      
+      // the retries are there to work around the fact that when we execute a
+      // network request which causes us to resume from a suspended session
+      // the first query for events often returns ServiceUnavailable because 
+      // the process isn't alive yet. by retrying we make certain that if
+      // the first attempts to listen fail we eventually get synced up
+      
+      if (listeningForEvents_)
+         serverEventListener_.ensureListening(10);
+   }
 
    private boolean eventsPending(RpcResponse response)
    {
@@ -2149,7 +2149,7 @@ public class RemoteServer implements Server
 
    private String clientId_;
    private double clientVersion_ = 0;
-   private boolean workbenchReady_;
+   private boolean listeningForEvents_;
    private boolean disconnected_;
    
    private final RemoteServerAuth serverAuth_;
