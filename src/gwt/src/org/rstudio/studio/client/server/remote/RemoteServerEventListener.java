@@ -13,136 +13,24 @@
 package org.rstudio.studio.client.server.remote;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
-import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcError;
-import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.jsonrpc.RpcRequest;
 import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.studio.client.application.events.*;
-import org.rstudio.studio.client.application.model.SaveAction;
-import org.rstudio.studio.client.application.model.SessionSerializationAction;
-import org.rstudio.studio.client.common.console.ServerConsoleOutputEvent;
-import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
-import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
-import org.rstudio.studio.client.projects.model.OpenProjectError;
-import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.events.*;
-import org.rstudio.studio.client.workbench.model.*;
-import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
-import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
-import org.rstudio.studio.client.workbench.views.console.events.*;
-import org.rstudio.studio.client.workbench.views.console.model.ConsolePrompt;
-import org.rstudio.studio.client.workbench.views.console.model.ConsoleResetHistory;
-import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
-import org.rstudio.studio.client.workbench.views.data.model.DataView;
-import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
-import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
-import org.rstudio.studio.client.workbench.views.files.model.FileChange;
-import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
-import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
-import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
-import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
-import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
-import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
-import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.PublishPdfEvent;
-import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
-import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
-import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
-import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
-import org.rstudio.studio.client.workbench.views.source.model.DataItem;
-import org.rstudio.studio.client.workbench.views.vcs.events.AskPassEvent;
-import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
-import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent.Reason;
-import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceObjectAssignedEvent;
-import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceObjectRemovedEvent;
-import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceRefreshEvent;
-import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceObjectInfo;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 
 class RemoteServerEventListener 
 {
-   static class ClientEvent extends JavaScriptObject
-   {   
-      public static final String Busy = "busy";
-      public static final String ConsolePrompt = "console_prompt";
-      public static final String ConsoleOutput = "console_output" ;
-      public static final String ConsoleError = "console_error";
-      public static final String ConsoleWritePrompt = "console_write_prompt";
-      public static final String ConsoleWriteInput = "console_write_input";
-      public static final String ShowErrorMessage = "show_error_message";
-      public static final String ShowHelp = "show_help" ;
-      public static final String BrowseUrl = "browse_url";
-      public static final String WorkspaceRefresh = "workspace_refresh";
-      public static final String WorkspaceAssign = "workspace_assign";
-      public static final String WorkspaceRemove = "workspace_remove";
-      public static final String ShowEditor = "show_editor";
-      public static final String ChooseFile = "choose_file";
-      public static final String AbendWarning = "abend_warning";
-      public static final String Quit = "quit";
-      public static final String Suicide = "suicide";
-      public static final String FileChanged = "file_changed";
-      public static final String WorkingDirChanged = "working_dir_changed";
-      public static final String PlotsStateChanged = "plots_state_changed";
-      public static final String ViewData = "view_data";
-      public static final String PackageStatusChanged = "package_status_changed";
-      public static final String InstalledPackagesChanged = "installed_packages_changed";
-      public static final String Locator = "locator";
-      public static final String ConsoleResetHistory = "console_reset_history";
-      public static final String SessionSerialization = "session_serialization";
-      public static final String HistoryEntriesAdded = "history_entries_added";
-      public static final String QuotaStatus = "quota_status";
-      public static final String OAuthApproval = "oauth_approval";
-      public static final String PublishPdf = "publish_pdf";
-      public static final String FileEdit = "file_edit";
-      public static final String ShowContent = "show_content";
-      public static final String ShowData = "show_data";
-      public static final String AsyncCompletion = "async_completion";
-      public static final String SaveActionChanged = "save_action_changed";
-      public static final String ShowWarningBar = "show_warning_bar";
-      public static final String OpenProjectError = "open_project_error";
-      public static final String VcsRefresh = "vcs_refresh";
-      public static final String AskPass = "ask_pass";
-      public static final String ConsoleProcessOutput = "console_process_output";
-      public static final String ConsoleProcessExit = "console_process_exit";
-      public static final String ListChanged = "list_changed";
-      public static final String UiPrefsChanged = "ui_prefs_changed";
-      public static final String HandleUnsavedChanges = "handle_unsaved_changes";
-
-      protected ClientEvent()
-      {
-      }
-      
-      public final native int getId() /*-{
-         return this.id;
-      }-*/;
-      
-      public final native String getType() /*-{
-         return this.type;
-      }-*/;
-      
-      public final native <T> T getData() /*-{
-         return this.data;
-      }-*/;
-   }
-
    /**
     * Stores the context needed to complete an async request.
     */
@@ -158,9 +46,12 @@ class RemoteServerEventListener
       public final RpcRequestCallback callback;
    }
 
-   public RemoteServerEventListener(RemoteServer server)
+   public RemoteServerEventListener(RemoteServer server,
+                                    ClientEventHandler externalEventHandler)
    {
       server_ = server;
+      externalEventHandler_ = externalEventHandler;
+      eventDispatcher_ = new ClientEventDispatcher(server_.getEventBus());
       lastEventId_ = -1;
       listenCount_ = 0;
       listenErrorCount_ = 0;
@@ -379,7 +270,7 @@ class RemoteServerEventListener
                      
                      // disppatch event
                      ClientEvent event = events.get(i);
-                     enqueueEventForDispatch(event);
+                     dispatchEvent(event);
                      lastEventId_ = event.getId();
                   }   
                }
@@ -461,295 +352,50 @@ class RemoteServerEventListener
                                          activeRequestCallback_,
                                          retryHandler);                             
    }
-
-   private void enqueueEventForDispatch(ClientEvent event)
-   {
-      pendingEvents_.add(event);
-      if (pendingEvents_.size() == 1)
-      {
-         Scheduler.get().scheduleIncremental(new RepeatingCommand()
-         {
-            public boolean execute()
-            {
-               final int MAX_EVENTS_AT_ONCE = 200;
-               for (int i = 0;
-                    i < MAX_EVENTS_AT_ONCE && pendingEvents_.size() > 0;
-                    i++)
-               {
-                  ClientEvent currentEvent = pendingEvents_.remove(0);
-                  dispatchEvent(currentEvent);
-               }
-               return pendingEvents_.size() > 0;
-            }
-         });
-      }
-   }
    
-   private void dispatchEvent(ClientEvent event) 
-   { 
+   
+   private void dispatchEvent(ClientEvent event)
+   {
+      // do some special handling before calling the standard dispatcher
       String type = event.getType();
-      EventBus eventBus = server_.getEventBus();
-      try
+      
+      // we handle async completions directly
+      if (type.equals(ClientEvent.AsyncCompletion))
       {
-         if (type.equals(ClientEvent.Busy))
+         AsyncCompletion completion = event.getData();
+         String handle = completion.getHandle();
+         AsyncRequestInfo req = asyncRequests_.remove(handle);
+         if (req != null)
          {
-            boolean busy = event.<Bool>getData().getValue();
-            eventBus.fireEvent(new BusyEvent(busy));
-         }
-         else if (type.equals(ClientEvent.ConsoleOutput))
-         {
-            String output = event.getData();
-            eventBus.fireEvent(new ConsoleWriteOutputEvent(output));
-         }
-         else if (type.equals(ClientEvent.ConsoleError))
-         {
-            String error = event.getData();
-            eventBus.fireEvent(new ConsoleWriteErrorEvent(error));
-         }
-         else if (type.equals(ClientEvent.ConsoleWritePrompt))
-         {
-            String prompt = event.getData();
-            eventBus.fireEvent(new ConsoleWritePromptEvent(prompt));
-         }
-         else if (type.equals(ClientEvent.ConsoleWriteInput))
-         {
-            String input = event.getData();
-            eventBus.fireEvent(new ConsoleWriteInputEvent(input));
-         }
-         else if (type.equals(ClientEvent.ConsolePrompt))
-         {
-            ConsolePrompt prompt = event.getData();
-            eventBus.fireEvent(new ConsolePromptEvent(prompt));
-         }
-         else if (type.equals(ClientEvent.ShowEditor))
-         {
-            String content = event.getData();
-            eventBus.fireEvent(new ShowEditorEvent(content));
-         }
-         else if (type.equals(ClientEvent.FileChanged))
-         {
-            FileChange fileChange = event.getData();
-            eventBus.fireEvent(new FileChangeEvent(fileChange));
-         }
-         else if (type.equals(ClientEvent.WorkingDirChanged))
-         {
-            String path = event.getData();
-            eventBus.fireEvent(new WorkingDirChangedEvent(path));
-         }
-         else if (type.equals(ClientEvent.WorkspaceRefresh))
-         {
-            eventBus.fireEvent(new WorkspaceRefreshEvent());
-         }
-         else if (type.equals(ClientEvent.WorkspaceAssign))
-         {
-            WorkspaceObjectInfo objectInfo = event.getData();
-            eventBus.fireEvent(new WorkspaceObjectAssignedEvent(objectInfo));
-         }
-         else if (type.equals(ClientEvent.WorkspaceRemove))
-         {
-            String objectName = event.getData();
-            eventBus.fireEvent(new WorkspaceObjectRemovedEvent(objectName));
-         }
-         else if (type.equals(ClientEvent.ShowHelp))
-         {
-            String helpUrl = event.getData();
-            eventBus.fireEvent(new ShowHelpEvent(helpUrl));
-         }
-         else if (type.equals(ClientEvent.ShowErrorMessage))
-         {
-            ErrorMessage errorMessage = event.getData();
-            eventBus.fireEvent(new ShowErrorMessageEvent(errorMessage));
-         }
-         else if (type.equals(ClientEvent.ChooseFile))
-         {
-            boolean newFile = event.<Bool>getData().getValue();
-            eventBus.fireEvent(new ChooseFileEvent(newFile));
-         }
-         else if (type.equals(ClientEvent.BrowseUrl))
-         {
-            BrowseUrlInfo urlInfo = event.getData();
-            eventBus.fireEvent(new BrowseUrlEvent(urlInfo));
-         }
-         else if (type.equals(ClientEvent.PlotsStateChanged))
-         {
-            PlotsState plotsState = event.getData();
-            eventBus.fireEvent(new PlotsChangedEvent(plotsState));
-         }
-         else if (type.equals(ClientEvent.ViewData))
-         {
-            DataView dataView = event.getData();
-            eventBus.fireEvent(new ViewDataEvent(dataView));
-         }
-         else if (type.equals(ClientEvent.InstalledPackagesChanged))
-         {
-            eventBus.fireEvent(new InstalledPackagesChangedEvent());
-         }
-         else if (type.equals(ClientEvent.PackageStatusChanged))
-         {
-            PackageStatus status = event.getData();
-            eventBus.fireEvent(new PackageStatusChangedEvent(status));
-         }
-         else if (type.equals(ClientEvent.Locator))
-         {
-            eventBus.fireEvent(new LocatorEvent());
-         }
-         else if (type.equals(ClientEvent.ConsoleResetHistory))
-         {
-            ConsoleResetHistory reset = event.getData();
-            eventBus.fireEvent(new ConsoleResetHistoryEvent(reset));
-         }
-         else if (type.equals(ClientEvent.SessionSerialization))
-         {
-            SessionSerializationAction action = event.getData();
-            eventBus.fireEvent(new SessionSerializationEvent(action));
-         }
-         else if (type.equals(ClientEvent.HistoryEntriesAdded))
-         {
-            RpcObjectList<HistoryEntry> entries = event.getData();
-            eventBus.fireEvent(new HistoryEntriesAddedEvent(entries));
-         }
-         else if (type.equals(ClientEvent.QuotaStatus))
-         {
-            QuotaStatus quotaStatus = event.getData();
-            eventBus.fireEvent(new QuotaStatusEvent(quotaStatus));
-         }
-         else if (type.equals(ClientEvent.OAuthApproval))
-         {
-            OAuthApproval oauthApproval = event.getData();
-            eventBus.fireEvent(new OAuthApprovalEvent(oauthApproval));
-         }
-         else if (type.equals(ClientEvent.PublishPdf))
-         {
-            String path = event.getData();
-            eventBus.fireEvent(new PublishPdfEvent(path));
-         }
-         else if (type.equals(ClientEvent.FileEdit))
-         {
-            FileSystemItem file = event.getData();
-            eventBus.fireEvent(new FileEditEvent(file));
-         }
-         else if (type.equals(ClientEvent.ShowContent))
-         {
-            ContentItem content = event.getData();
-            eventBus.fireEvent(new ShowContentEvent(content));
-         }
-         else if (type.equals(ClientEvent.ShowData))
-         {
-            DataItem data = event.getData();
-            eventBus.fireEvent(new ShowDataEvent(data));
-         }
-         else if (type.equals(ClientEvent.AbendWarning))
-         {            
-            eventBus.fireEvent(new SessionAbendWarningEvent());
-         }
-         else if (type.equals(ClientEvent.ShowWarningBar))
-         {
-            WarningBarMessage message = event.getData();
-            eventBus.fireEvent(new ShowWarningBarEvent(message));
-         }
-         else if (type.equals(ClientEvent.OpenProjectError))
-         {
-            OpenProjectError error = event.getData();
-            eventBus.fireEvent(new OpenProjectErrorEvent(error));
-         }
-         else if (type.equals(ClientEvent.VcsRefresh))
-         {
-            eventBus.fireEvent(new VcsRefreshEvent(Reason.NA));
-         }
-         else if (type.equals(ClientEvent.AskPass))
-         {
-            AskPassEvent.Data data = event.getData();
-            eventBus.fireEvent(new AskPassEvent(data.getPrompt()));
-         }
-         else if (type.equals(ClientEvent.ConsoleProcessOutput))
-         {
-            ServerConsoleOutputEvent.Data data = event.getData();
-            eventBus.fireEvent(new ServerConsoleOutputEvent(data.getHandle(),
-                                                            data.getOutput(),
-                                                            data.isError()));
-         }
-         else if (type.equals(ClientEvent.ConsoleProcessExit))
-         {
-            ServerProcessExitEvent.Data data = event.getData();
-            eventBus.fireEvent(new ServerProcessExitEvent(data.getHandle(),
-                                                          data.getExitCode()));
-         }
-         else if (type.equals(ClientEvent.ListChanged))
-         {
-            eventBus.fireEvent(new ListChangedEvent(event.<JsObject>getData()));
-         }
-         else if (type.equals(ClientEvent.UiPrefsChanged))
-         {
-            UiPrefsChangedEvent.Data data = event.getData();
-            eventBus.fireEvent(new UiPrefsChangedEvent(data));
-         }
-         else if (type.equals(ClientEvent.HandleUnsavedChanges))
-         {
-            eventBus.fireEvent(new HandleUnsavedChangesEvent());
-         }
-         else if (type.equals(ClientEvent.Quit))
-         {
-            // NOTE: we don't explicily stop listending for events here 
-            // for two reasons:
-            //
-            //   1) There could be additional console output events which
-            //      occur after Quit
-            //
-            //   2) We will automatically stop listening as a result of 
-            //      receiving ServiceUnavailable on the next listen()
-            //
-            
-            // set flag to avoid ensureListening/ensureEvents calls trying
-            // to spark the event stream back up after the user has quit
-            sessionWasQuit_ = true;
-        
-            // fire event
-            boolean switchProjects = event.<Bool>getData().getValue();
-            eventBus.fireEvent(new QuitEvent(switchProjects));
-         }
-         else if (type.equals(ClientEvent.Suicide))
-         {
-            // NOTE: we don't explicitly stop listening for events here
-            // for the reasons cited above in ClientEvent.Quit
-            
-            // fire event
-            String message = event.getData();
-            eventBus.fireEvent(new SuicideEvent(message));
-         }
-         else if (type.equals(ClientEvent.AsyncCompletion))
-         {
-            AsyncCompletion completion = event.getData();
-            String handle = completion.getHandle();
-            AsyncRequestInfo req = asyncRequests_.remove(handle);
-            if (req != null)
-            {
-               req.callback.onResponseReceived(req.request,
-                                               completion.getResponse());
-            }
-            else
-            {
-               // We haven't seen this request yet. Store it for later,
-               // maybe it's just taking a long time for the request
-               // to complete.
-               asyncResponses_.put(handle, completion.getResponse());
-            }
-         }
-         else if (type.equals(ClientEvent.SaveActionChanged))
-         {
-            SaveAction action = event.getData();
-            eventBus.fireEvent(new SaveActionChangedEvent(action));
+            req.callback.onResponseReceived(req.request,
+                                            completion.getResponse());
          }
          else
          {
-            GWT.log("WARNING: Server event not dispatched: " + type, null);
+            // We haven't seen this request yet. Store it for later,
+            // maybe it's just taking a long time for the request
+            // to complete.
+            asyncResponses_.put(handle, completion.getResponse());
          }
       }
-      catch(Throwable e)
+      else
       {
-         GWT.log("WARNING: Exception occured dispatching event: " + type, e);
+         // if there is a quit event then we set an internal flag to avoid 
+         // ensureListening/ensureEvents calls trying to spark the event 
+         // stream back up after the user has quit
+         if (type.equals(ClientEvent.Quit))
+            sessionWasQuit_ = true;
+        
+         // perform standard handling
+         eventDispatcher_.enqueEvent(event);
+         
+         // allow any external handler registered to see the event
+         if (externalEventHandler_ != null)
+            externalEventHandler_.onClientEvent(event);
       }
+      
    }
-   
+ 
    // NOTE: the design of the Watchdog likely results in more restarts of
    // the event service than is optimal. when an rpc call reports that 
    // events are pending and the Watchdog is invoked it is very likely
@@ -842,8 +488,10 @@ class RemoteServerEventListener
    private RpcRequest activeRequest_ ;
    private ServerRequestCallback<JsArray<ClientEvent>> activeRequestCallback_;
 
-   private final ArrayList<ClientEvent> pendingEvents_ = new ArrayList<ClientEvent>();
+   private final ClientEventDispatcher eventDispatcher_;
    
+   private final ClientEventHandler externalEventHandler_;
+     
    private Watchdog watchdog_ = new Watchdog();
 
    // Stores async requests that expect to be completed later.

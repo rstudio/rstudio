@@ -1,0 +1,67 @@
+package org.rstudio.studio.client.server.remote;
+
+import com.google.gwt.core.client.JavaScriptObject;
+
+class ClientEvent extends JavaScriptObject
+{   
+   public static final String Busy = "busy";
+   public static final String ConsolePrompt = "console_prompt";
+   public static final String ConsoleOutput = "console_output" ;
+   public static final String ConsoleError = "console_error";
+   public static final String ConsoleWritePrompt = "console_write_prompt";
+   public static final String ConsoleWriteInput = "console_write_input";
+   public static final String ShowErrorMessage = "show_error_message";
+   public static final String ShowHelp = "show_help" ;
+   public static final String BrowseUrl = "browse_url";
+   public static final String WorkspaceRefresh = "workspace_refresh";
+   public static final String WorkspaceAssign = "workspace_assign";
+   public static final String WorkspaceRemove = "workspace_remove";
+   public static final String ShowEditor = "show_editor";
+   public static final String ChooseFile = "choose_file";
+   public static final String AbendWarning = "abend_warning";
+   public static final String Quit = "quit";
+   public static final String Suicide = "suicide";
+   public static final String FileChanged = "file_changed";
+   public static final String WorkingDirChanged = "working_dir_changed";
+   public static final String PlotsStateChanged = "plots_state_changed";
+   public static final String ViewData = "view_data";
+   public static final String PackageStatusChanged = "package_status_changed";
+   public static final String InstalledPackagesChanged = "installed_packages_changed";
+   public static final String Locator = "locator";
+   public static final String ConsoleResetHistory = "console_reset_history";
+   public static final String SessionSerialization = "session_serialization";
+   public static final String HistoryEntriesAdded = "history_entries_added";
+   public static final String QuotaStatus = "quota_status";
+   public static final String OAuthApproval = "oauth_approval";
+   public static final String PublishPdf = "publish_pdf";
+   public static final String FileEdit = "file_edit";
+   public static final String ShowContent = "show_content";
+   public static final String ShowData = "show_data";
+   public static final String AsyncCompletion = "async_completion";
+   public static final String SaveActionChanged = "save_action_changed";
+   public static final String ShowWarningBar = "show_warning_bar";
+   public static final String OpenProjectError = "open_project_error";
+   public static final String VcsRefresh = "vcs_refresh";
+   public static final String AskPass = "ask_pass";
+   public static final String ConsoleProcessOutput = "console_process_output";
+   public static final String ConsoleProcessExit = "console_process_exit";
+   public static final String ListChanged = "list_changed";
+   public static final String UiPrefsChanged = "ui_prefs_changed";
+   public static final String HandleUnsavedChanges = "handle_unsaved_changes";
+
+   protected ClientEvent()
+   {
+   }
+   
+   public final native int getId() /*-{
+      return this.id;
+   }-*/;
+   
+   public final native String getType() /*-{
+      return this.type;
+   }-*/;
+   
+   public final native <T> T getData() /*-{
+      return this.data;
+   }-*/;
+}

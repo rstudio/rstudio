@@ -12,6 +12,14 @@ import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+// TODO: Implement for Desktop
+
+// TODO: re-activation of existing satellites (launch manager)
+
+// TODO: detect when satellites have gone away and remove them from our
+// list (could just wait until we see .closed or an exception during
+// event delivery)
+
 @Singleton
 public class SatelliteWindowManager implements CloseHandler<Window>
 {
@@ -50,6 +58,22 @@ public class SatelliteWindowManager implements CloseHandler<Window>
       satellites_.clear();  
    }
    
+   // dispatch an event to all satellites
+   public void dispatchEvent(JavaScriptObject clientEvent)
+   {
+      for (int i=0; i<satellites_.size(); i++)
+      {
+         try
+         {
+            WindowEx satelliteWnd = satellites_.get(i);
+            callDispatchEvent(satelliteWnd, clientEvent);
+         }
+         catch(Throwable e)
+         {
+         }
+      } 
+   }
+   
    // close all satellites when we are closed
    @Override
    public void onClose(CloseEvent<Window> event)
@@ -84,6 +108,11 @@ public class SatelliteWindowManager implements CloseHandler<Window>
       satellite.setRStudioSatelliteSessionInfo(sessionInfo);
    }-*/;
    
+   // dispatch event to a satellite
+   private native void callDispatchEvent(JavaScriptObject satellite,
+                                         JavaScriptObject clientEvent) /*-{
+      satellite.dispatchEventToRStudioSatellite(clientEvent);
+   }-*/;
    
    private final Session session_;
    private final ArrayList<WindowEx> satellites_ = new ArrayList<WindowEx>();

@@ -1,5 +1,7 @@
 package org.rstudio.studio.client.common.satellite;
 
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.server.remote.ClientEventDispatcher;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -14,10 +16,12 @@ public class SatelliteWindow
 {  
    @Inject
    public SatelliteWindow(Session session,
+                          EventBus eventBus,
                           Provider<UIPrefs> pUIPrefs)
    {
       session_ = session;
       pUIPrefs_ = pUIPrefs;
+      eventDispatcher_ = new ClientEventDispatcher(eventBus);
    }
    
    // satellite windows should call this during startup to setup a 
@@ -36,7 +40,11 @@ public class SatelliteWindow
       ); 
       
       // export event notification callback
-      
+      $wnd.dispatchEventToRStudioSatellite = $entry(
+         function(clientEvent) {
+            satellite.@org.rstudio.studio.client.common.satellite.SatelliteWindow::dispatchEvent(Lcom/google/gwt/core/client/JavaScriptObject;)(clientEvent);
+         }
+      ); 
       
       // register (this will call the setSessionInfo back)
       $wnd.opener.registerAsRStudioSatellite($wnd);
@@ -60,8 +68,14 @@ public class SatelliteWindow
       pUIPrefs_.get();
    }
    
+   // called by main window to deliver events
+   private void dispatchEvent(JavaScriptObject clientEvent)
+   {  
+      eventDispatcher_.enqueEventAsJso(clientEvent);
+   }
    
-
+   
    private final Session session_;
    private final Provider<UIPrefs> pUIPrefs_;
+   private final ClientEventDispatcher eventDispatcher_;
 }

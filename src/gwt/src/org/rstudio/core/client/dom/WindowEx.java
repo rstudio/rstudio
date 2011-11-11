@@ -98,6 +98,10 @@ public class WindowEx extends JavaScriptObject
    public final native void close() /*-{
       this.close();
    }-*/;
+   
+   public final native boolean isClosed() /*-{
+      return this.closed;
+   }-*/;
 
    public final native void resizeTo(int width, int height) /*-{
       this.resizeTo(width, height);

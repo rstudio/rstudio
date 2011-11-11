@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
+import org.rstudio.studio.client.common.satellite.SatelliteWindowManager;
 import org.rstudio.studio.client.common.vcs.AllStatus;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.CreateKeyOptions;
@@ -50,7 +51,6 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.server.remote.RemoteServerEventListener.ClientEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
@@ -86,6 +86,7 @@ public class RemoteServer implements Server
    public RemoteServer(Session session, 
                        EventBus eventBus,
                        SatelliteWindow satellite,
+                       final SatelliteWindowManager satelliteManager,
                        Provider<ConsoleProcessFactory> pConsoleProcessFactory)
    {
       pConsoleProcessFactory_ = pConsoleProcessFactory;
@@ -96,7 +97,24 @@ public class RemoteServer implements Server
       eventBus_ = eventBus;
       satellite_ = satellite;
       serverAuth_ = new RemoteServerAuth(this);
-      serverEventListener_ = new RemoteServerEventListener(this);
+      
+      // define external event listener if we are the main window
+      // (so we can forward to the satellites)
+      ClientEventHandler externalListener = null;
+      if (!satellite.isCurrentWindowSatellite())
+      {
+         externalListener = new ClientEventHandler() {
+            @Override
+            public void onClientEvent(JavaScriptObject clientEvent)
+            {
+               satelliteManager.dispatchEvent(clientEvent);     
+            } 
+         };
+      }
+      
+      // create server event listener
+      serverEventListener_ = new RemoteServerEventListener(this, 
+                                                           externalListener);
    }
    
    // complete initialization now that the workbench is ready
