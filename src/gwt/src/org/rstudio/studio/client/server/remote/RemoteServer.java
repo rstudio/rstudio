@@ -97,7 +97,7 @@ public class RemoteServer implements Server
    }
    
    // complete initialization now that the workbench is ready
-   public void onWorkbenchReady()
+   public void initializeForMainWorkbench()
    {
       // satellite windows should never call onWorkbenchReady
       if (Satellite.isSatellite())

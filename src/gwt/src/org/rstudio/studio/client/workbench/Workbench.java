@@ -105,7 +105,7 @@ public class Workbench implements BusyHandler,
 
    public void onWorkbenchLoaded(WorkbenchLoadedEvent event)
    {
-      server_.onWorkbenchReady();
+      server_.initializeForMainWorkbench();
    }
    
    public void onBusy(BusyEvent event)

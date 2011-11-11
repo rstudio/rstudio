@@ -54,7 +54,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    CryptoServerOperations,
                                                    WorkbenchListsServerOperations
 {   
-   void onWorkbenchReady();
+   void initializeForMainWorkbench();
    
    void setWorkbenchMetrics(WorkbenchMetrics clientMetrics,
                             ServerRequestCallback<Void> requestCallback);
