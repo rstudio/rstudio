@@ -99,7 +99,7 @@ public class Application implements ApplicationEventHandlers,
       binder.bind(commands_, this);
       
       // register as main window
-      satelliteManager.registerAsMainWindow();
+      satelliteManager.initMainWindow();
          
       // subscribe to events
       events.addHandler(LogoutRequestedEvent.TYPE, this);

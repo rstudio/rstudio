@@ -26,7 +26,7 @@ public class VCSApplication
                   final Command dismissLoadingProgress)
    {
       // indicate that we are a satellite window
-      satelliteManager_.registerAsSatelliteWindow();
+      satelliteManager_.initSatelliteWindow();
       
       Widget w = view_.getWidget();
       rootPanel.add(w);
