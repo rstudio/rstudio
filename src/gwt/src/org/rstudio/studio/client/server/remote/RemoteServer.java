@@ -36,7 +36,7 @@ import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
-import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.common.vcs.AllStatus;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.CreateKeyOptions;
@@ -85,7 +85,7 @@ public class RemoteServer implements Server
    @Inject
    public RemoteServer(Session session, 
                        EventBus eventBus,
-                       SatelliteManager satelliteManager,
+                       SatelliteWindow satellite,
                        Provider<ConsoleProcessFactory> pConsoleProcessFactory)
    {
       pConsoleProcessFactory_ = pConsoleProcessFactory;
@@ -94,7 +94,7 @@ public class RemoteServer implements Server
       listeningForEvents_ = false;
       session_ = session;
       eventBus_ = eventBus;
-      satelliteManager_ = satelliteManager;
+      satellite_ = satellite;
       serverAuth_ = new RemoteServerAuth(this);
       serverEventListener_ = new RemoteServerEventListener(this);
    }
@@ -103,7 +103,7 @@ public class RemoteServer implements Server
    public void initializeForMainWorkbench()
    {
       // satellite windows should never call onWorkbenchReady
-      if (satelliteManager_.isCurrentWindowSatellite())
+      if (satellite_.isCurrentWindowSatellite())
       {
          Debug.log("Satellite window cannot call onWorkbenchReady!");
          assert false;
@@ -1566,7 +1566,7 @@ public class RemoteServer implements Server
                   RetryHandler retryHandler)
    {
       // satellite windows should never call getEvents directly!
-      if (satelliteManager_.isCurrentWindowSatellite())
+      if (satellite_.isCurrentWindowSatellite())
       {
          Debug.log("Satellite window shoudl not call getEvents!");
          assert false;
@@ -1684,7 +1684,7 @@ public class RemoteServer implements Server
    {
       // if this is a satellite window then we handle this by proxying
       // back through the main workbench window
-      if (satelliteManager_.isCurrentWindowSatellite())
+      if (satellite_.isCurrentWindowSatellite())
       {
          sendRequestViaMainWorkbench(scope, method, params, redactLog, cb);
 
@@ -2162,7 +2162,7 @@ public class RemoteServer implements Server
   
    private final Session session_;
    private final EventBus eventBus_;
-   private final SatelliteManager satelliteManager_;
+   private final SatelliteWindow satellite_;
 
    // url scopes
    private static final String RPC_SCOPE = "rpc";

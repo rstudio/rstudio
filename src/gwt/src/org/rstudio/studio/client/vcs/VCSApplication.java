@@ -2,7 +2,7 @@ package org.rstudio.studio.client.vcs;
 
 
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
-import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
@@ -15,18 +15,18 @@ public class VCSApplication
 {
    @Inject
    public VCSApplication(VCSApplicationView view,
-                         SatelliteManager satelliteManager,
+                         SatelliteWindow satellite,
                          ApplicationUncaughtExceptionHandler uncaughtExHandler)
    {
       view_ = view;
-      satelliteManager_ = satelliteManager;
+      satellite_ = satellite;
       uncaughtExHandler_ = uncaughtExHandler;
    }
    
    public void go(RootLayoutPanel rootPanel)
    {
       // indicate that we are a satellite window
-      satelliteManager_.initSatelliteWindow();
+      satellite_.initialize();
       
       // register for uncaught exceptions (do this after calling 
       // initSatelliteWindow b/c it depends on Server)
@@ -40,7 +40,7 @@ public class VCSApplication
    
    
    private final VCSApplicationView view_;
-   private final SatelliteManager satelliteManager_;
+   private final SatelliteWindow satellite_;
    private final ApplicationUncaughtExceptionHandler uncaughtExHandler_;
 
 }

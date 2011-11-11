@@ -12,17 +12,17 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class SatelliteManager implements CloseHandler<Window>
+public class SatelliteWindowManager implements CloseHandler<Window>
 {
    @Inject
-   public SatelliteManager()
+   public SatelliteWindowManager()
    {
       
    }
    
    // the main window should call this method during startup to set itself
    // up to manage and communicate with the satellite windows
-   public void initMainWindow()
+   public void initialize()
    {
       // export the registration hook used by satellites
       exportSatelliteRegistrationCallback();
@@ -30,20 +30,7 @@ public class SatelliteManager implements CloseHandler<Window>
       // handle onClosed to automatically close all satellites
       Window.addCloseHandler(this);
    }
-   
-   // satellite windows should call this during startup to setup a 
-   // communication channel with the main window
-   public native void initSatelliteWindow() /*-{
-      $wnd.isRStudioSatellite = true;
-      $wnd.opener.registerAsRStudioSatellite($wnd);
-   }-*/;
-   
-   
-   // check whether the current window is a satellite
-   public native boolean isCurrentWindowSatellite() /*-{
-      return !!$wnd.isRStudioSatellite;
-   }-*/;
-   
+    
    
    // close all satellite windows
    public void closeAllSatellites()
@@ -81,7 +68,7 @@ public class SatelliteManager implements CloseHandler<Window>
       var manager = this;     
       $wnd.registerAsRStudioSatellite = $entry(
          function(satelliteWnd) {
-            manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::registerAsSatellite(Lcom/google/gwt/core/client/JavaScriptObject;)(satelliteWnd);
+            manager.@org.rstudio.studio.client.common.satellite.SatelliteWindowManager::registerAsSatellite(Lcom/google/gwt/core/client/JavaScriptObject;)(satelliteWnd);
          }
       ); 
    }-*/;
