@@ -382,8 +382,14 @@ Error processEvent(FileEventContext* pContext,
                                                  addWatchFunction(pContext),
                                                  &pContext->fileTree,
                                                  pFileChanges);
-            if (error)
+            // log the error if it wasn't no such file/dir (this can happen
+            // in the normal course of business if a file is deleted between
+            // the time the change is detected and we try to inspect it)
+            if (error &&
+               (error.code() != boost::system::errc::no_such_file_or_directory))
+            {
                LOG_ERROR(error);
+            }
             break;
          }
          case FileChangeEvent::FileModified:
