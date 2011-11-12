@@ -33,12 +33,14 @@ public class VCSApplicationWindow extends Composite
    @Inject
    public VCSApplicationWindow(Provider<ReviewPresenter> pReviewPresenter,
                                Provider<HistoryPresenter> pHistoryPresenter,
-                               EventBus eventBus,
-                               FontSizeManager fontSizeManager)
+                               Provider<EventBus> pEventBus,
+                               Provider<FontSizeManager> pFontSizeManager)
    {
       // save references
       pReviewPresenter_ = pReviewPresenter;
       pHistoryPresenter_ = pHistoryPresenter;
+      pEventBus_ = pEventBus;
+      pFontSizeManager_ = pFontSizeManager;
       
       // occupy full client area of the window
       Window.enableScrolling(false);
@@ -46,18 +48,7 @@ public class VCSApplicationWindow extends Composite
 
       // create application panel
       applicationPanel_ = new LayoutPanel();
-      
-      // react to font size changes
-      eventBus.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
-      {
-         public void onChangeFontSize(ChangeFontSizeEvent event)
-         {
-            FontSizer.setNormalFontSize(Document.get(), event.getFontSize());
-         }
-      });
-      FontSizer.setNormalFontSize(Document.get(), fontSizeManager.getSize());
-
-      
+       
       // init widget
       initWidget(applicationPanel_);
    }
@@ -66,6 +57,19 @@ public class VCSApplicationWindow extends Composite
    @Override
    public void show()
    {
+      // react to font size changes
+      EventBus eventBus = pEventBus_.get();
+      eventBus.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
+      {
+         public void onChangeFontSize(ChangeFontSizeEvent event)
+         {
+            FontSizer.setNormalFontSize(Document.get(), event.getFontSize());
+         }
+      });
+      FontSizeManager fontSizeManager = pFontSizeManager_.get();
+      FontSizer.setNormalFontSize(Document.get(), fontSizeManager.getSize());
+
+      // show the popup
       VCSPopup.show(pReviewPresenter_.get(),
                     pHistoryPresenter_.get(), 
                     false);
@@ -86,5 +90,7 @@ public class VCSApplicationWindow extends Composite
 
    private final Provider<ReviewPresenter> pReviewPresenter_;
    private final Provider<HistoryPresenter> pHistoryPresenter_;
+   private final Provider<EventBus> pEventBus_;
+   private final Provider<FontSizeManager> pFontSizeManager_;
    private LayoutPanel applicationPanel_;
 }
