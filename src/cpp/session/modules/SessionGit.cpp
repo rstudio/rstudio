@@ -164,20 +164,19 @@ ShellCommand git()
       return ShellCommand("git");
 }
 
+
+#ifdef _WIN32
 std::string gitBin()
 {
    if (!s_gitBinDir.empty())
    {
-#ifdef _WIN32
       std::string exe("git.exe");
-#else
-      std::string exe("git");
-#endif
       return FilePath(s_gitBinDir).childPath(exe).absolutePathNative();
    }
    else
-      return "git";
+      return "git.exe";
 }
+#endif
 
 void afterCommit(const FilePath& tempFile)
 {
@@ -235,11 +234,19 @@ protected:
 
       ProcessResult result;
 
+#ifdef _WIN32
       Error error = runProgram(gitBin(),
                                args.args(),
                                "",
                                options,
                                &result);
+#else
+      Error error = runCommand(git() << args.args(),
+                               "",
+                               options,
+                               &result);
+#endif
+
       if (error)
          return error;
 
@@ -263,17 +270,21 @@ protected:
       return Success();
    }
 
-   core::Error createConsoleProc(const std::string& program,
-                                 const ShellArgs& args,
+   core::Error createConsoleProc(const ShellArgs& args,
                                  const std::string& caption,
                                  bool dialog,
-                                 std::string* pHandle)
+                                 std::string* pHandle,
+                                 const boost::optional<FilePath>& workingDir=boost::optional<FilePath>())
    {
       using namespace session::modules::console_process;
 
       system::ProcessOptions options = procOptions();
-      options.workingDir = root_;
+      if (!workingDir)
+         options.workingDir = root_;
+      else if (!workingDir.get().empty())
+         options.workingDir = workingDir.get();
 
+#ifdef _WIN32
       boost::shared_ptr<ConsoleProcess> ptrCP =
             ConsoleProcess::create(program,
                                    args.args(),
@@ -281,6 +292,14 @@ protected:
                                    caption,
                                    dialog,
                                    &enqueueRefreshEvent);
+#else
+      boost::shared_ptr<ConsoleProcess> ptrCP =
+            ConsoleProcess::create(git() << args.args(),
+                                   options,
+                                   caption,
+                                   dialog,
+                                   &enqueueRefreshEvent);
+#endif
       *pHandle = ptrCP->handle();
       return Success();
    }
@@ -301,9 +320,8 @@ public:
       options.detachSession = true;
 
       core::system::ProcessResult result;
-      Error error = system::runProgram(
-               gitBin(),
-               ShellArgs() << "rev-parse" << "--show-toplevel",
+      Error error = system::runCommand(
+               git() << "rev-parse" << "--show-toplevel",
                "",
                options,
                &result);
@@ -472,8 +490,7 @@ public:
    core::Error checkout(const std::string& id,
                         std::string* pHandle)
    {
-      return createConsoleProc(gitBin(),
-                               ShellArgs() << "checkout" << id << "--",
+      return createConsoleProc(ShellArgs() << "checkout" << id << "--",
                                "Git Checkout",
                                true,
                                pHandle);
@@ -517,8 +534,7 @@ public:
       if (signOff)
          args << "--signoff";
 
-      return createConsoleProc(gitBin(),
-                               args,
+      return createConsoleProc(args,
                                "Git Commit",
                                true,
                                pHandle);
@@ -531,19 +547,12 @@ public:
    {
       // SPECIAL: happens in different working directory than usual
 
-      system::ProcessOptions options = procOptions();
-      options.workingDir = parentPath;
-
-      boost::shared_ptr<ConsoleProcess> ptrProc =
-            console_process::ConsoleProcess::create(
-               gitBin(),
-               ShellArgs() << "clone" << "--progress" << url << dirName,
-               options,
-               "Git Clone",
-               true);
-
-      *pHandle = ptrProc->handle();
-      return Success();
+      return
+            createConsoleProc(ShellArgs() << "clone" << "--progress" << url << dirName,
+                              "Git Clone",
+                              true,
+                              pHandle,
+                              boost::optional<FilePath>(parentPath));
    }
 
    Error currentBranch(std::string* pBranch)
@@ -618,12 +627,12 @@ public:
          args << remote << merge;
       }
 
-      return createConsoleProc(gitBin(), args, "Git Push", true, pHandle);
+      return createConsoleProc(args, "Git Push", true, pHandle);
    }
 
    core::Error pull(std::string* pHandle)
    {
-      return createConsoleProc(gitBin(), ShellArgs() << "pull",
+      return createConsoleProc(ShellArgs() << "pull",
                                "Git Pull", true, pHandle);
    }
 
@@ -2278,9 +2287,7 @@ bool isGitInstalled()
       return false;
 
    core::system::ProcessResult result;
-   Error error = core::system::runProgram(gitBin(),
-                                          ShellArgs() << "--version",
-                                          "",
+   Error error = core::system::runCommand(git() << "--version",
                                           procOptions(),
                                           &result);
    if (error)
@@ -2466,9 +2473,7 @@ bool tryGit(const FilePath& workingDir)
    // Save version
    s_gitVersion = GIT_1_7_2;
    core::system::ProcessResult result;
-   error = core::system::runProgram(gitBin(),
-                                    ShellArgs() << "--version",
-                                    "",
+   error = core::system::runCommand(git() << "--version",
                                     procOptions(),
                                     &result);
    if (error)
