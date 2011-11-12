@@ -85,7 +85,7 @@ void resolveCommand(std::string* pExecutable, std::vector<std::string>* pArgs)
                *pExecutable = cmdExePath;
 
                // manipulate args to have cmd.exe invoke the batch file
-               pArgs->insert(pArgs->begin(), "\""  + cmdPath + "\"");
+               pArgs->insert(pArgs->begin(), cmdPath);
                pArgs->insert(pArgs->begin(), "/C");
 
             }
@@ -250,7 +250,7 @@ void ChildProcess::init(const std::string& command,
 {
    exe_ = findOnPath("cmd.exe");
    args_.push_back("/C");
-   args_.push_back(command);
+   args_.push_back("(" + command + ")");
    options_ = options;
 }
 
@@ -344,7 +344,17 @@ Error ChildProcess::run()
    BOOST_FOREACH(std::string& arg, args_)
    {
       cmdLine.push_back(' ');
+
+      // This is kind of gross. Ideally we would be more deterministic
+      // than this.
+      bool quot = std::string::npos != arg.find(' ')
+            && std::string::npos == arg.find('"');
+
+      if (quot)
+         cmdLine.push_back('"');
       std::copy(arg.begin(), arg.end(), std::back_inserter(cmdLine));
+      if (quot)
+         cmdLine.push_back('"');
    }
    cmdLine.push_back('\0');
 

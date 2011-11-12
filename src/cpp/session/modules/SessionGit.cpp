@@ -286,7 +286,7 @@ protected:
 
 #ifdef _WIN32
       boost::shared_ptr<ConsoleProcess> ptrCP =
-            ConsoleProcess::create(program,
+            ConsoleProcess::create(gitBin(),
                                    args.args(),
                                    options,
                                    caption,
