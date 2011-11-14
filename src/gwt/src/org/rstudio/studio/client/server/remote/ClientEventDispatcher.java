@@ -274,7 +274,8 @@ public class ClientEventDispatcher
          else if (type.equals(ClientEvent.AskPass))
          {
             AskPassEvent.Data data = event.getData();
-            eventBus_.fireEvent(new AskPassEvent(data.getPrompt()));
+            eventBus_.fireEvent(new AskPassEvent(data.getPrompt(),
+                                                 data.getRememberPrompt()));
          }
          else if (type.equals(ClientEvent.ConsoleProcessOutput))
          {

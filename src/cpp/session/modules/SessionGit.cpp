@@ -1794,188 +1794,93 @@ FilePath verifiedSshKeyPath()
    }
 }
 
-// This is necessary to hook up the completion of ssh-add (which we
-// must run asynchronously) with the continuation passed into
-// postbackGitSSH. It's important that we pass the output along, as
-// it may contain the output from ssh-agent that is needed by the
-// postback-gitssh script.
-void postbackGitSSH_onSSHAddComplete(
-      const module_context::PostbackHandlerContinuation& cont,
-      const std::string& output,
-      const core::system::ProcessResult& result)
+bool ensureSSHAgentIsRunning()
 {
-   cont(result.exitStatus, output);
-}
-
-// If we fail to initialize ssh-agent, don't attempt to do it again
-bool s_suppressSshAgentStart = false;
-
-// This is a hook that runs whenever git calls into ssh. We prepare
-// ssh-agent and add the ssh key path, which may involve
-// prompting the user (a complex process which involves $SSH_ASKPASS
-// and rpostback-askpass, and calling into the client to show the
-// passphrase prompt).
-//
-// This function uses continuation-passing-style, which means the
-// "cont" param is a function that MUST be called. Failure to call
-// the param means the CPS operation will be stuck forever.
-//
-// TODO: Lots of failure modes here, all of which will *probably*
-// result in the user not succeeding in whatever they were trying
-// to do. Think about how to let them know what went wrong and how
-// they can go about making things work.
-void postbackGitSSH(const std::string& argument,
-                    const module_context::PostbackHandlerContinuation& cont)
-{
-   using namespace core::system;
-
-   FilePath key = verifiedSshKeyPath();
-   if (!key.exists())
-   {
-      // No default key, we're not going to know how to call ssh-add. Give up.
-      cont(EXIT_FAILURE, "");
-      return;
-   }
-
-   if (s_suppressSshAgentStart)
-   {
-      // I failed in an earlier attempt and told myself not to try again.
-      cont(EXIT_FAILURE, "");
-      return;
-   }
-
-   boost::shared_ptr<std::istream> pKeyStream;
-   Error error = key.open_r(&pKeyStream);
-   if (error)
-   {
-      LOG_ERROR(error);
-      // OK to continue in this case.
-   }
-   else
-   {
-      std::vector<char> buffer(300);
-      pKeyStream->read(&(buffer[0]), buffer.capacity());
-      if (!pKeyStream->fail())
-      {
-         buffer.resize(pKeyStream->gcount());
-         std::string data(buffer.begin(), buffer.end());
-         if (data.find("ENCRYPTED") == std::string::npos)
-         {
-            // The key was found to be unencrypted
-            cont(EXIT_SUCCESS, "");
-            return;
-         }
-      }
-   }
-
    // Use "ssh-add -l" to see if ssh-agent is running
-   ProcessResult result;
-   error = runCommand(shell_utils::sendStdErrToNull("ssh-add -l"),
-                      procOptions(), &result);
+   system::ProcessResult result;
+   Error error = runCommand(shell_utils::sendStdErrToNull("ssh-add -l"),
+                            procOptions(), &result);
    if (error)
    {
-      // We couldn't even launch ssh-add. Seems unlikely we'll be able to
-      // in the future.
-      s_suppressSshAgentStart = true;
-      LOG_ERROR(error);
-      cont(EXIT_FAILURE, "");
-      return;
+      // We couldn't even launch ssh-add.
+      return false;
    }
 
-   bool startSshAgent;
-   bool runSshAdd;
    if (result.exitStatus == 1)
    {
       // exitStatus == 1 means ssh-agent was running but no identities were
       // present.
-      startSshAgent = false;
-      runSshAdd = true;
+      return true;
    }
    else if (result.exitStatus == EXIT_SUCCESS)
    {
-      startSshAgent = false;
-      std::string keyPathSys =
-            core::string_utils::utf8ToSystem(toBashPath(key.absolutePath()));
-      runSshAdd = result.stdOut.find(keyPathSys) == std::string::npos;
-   }
-   else
-   {
-      startSshAgent = true;
-      runSshAdd = true;
+      return true;
    }
 
-   // This will hold the values we eventually will write to stdout by
-   // passing it into the continuation--specifically, the output of ssh-agent.
-   std::ostringstream output;
-
-   if (startSshAgent)
+   // Start ssh-agent using bash-style output
+   error = runCommand("ssh-agent -s", procOptions(), &result);
+   if (error)
    {
-      // Start ssh-agent using bash-style output
-      error = runCommand("ssh-agent -s", procOptions(), &result);
-      if (error)
-      {
-         // Failed to start ssh-agent, give up.
-         s_suppressSshAgentStart = true;
-         LOG_ERROR(error);
-         cont(EXIT_FAILURE, "");
-         return;
-      }
-      if (result.exitStatus != EXIT_SUCCESS)
-      {
-         // Failed to start ssh-agent, give up.
-         s_suppressSshAgentStart = true;
-         cont(result.exitStatus, "");
-         return;
-      }
+      // Failed to start ssh-agent, give up.
+      LOG_ERROR(error);
+      return false;
+   }
+   if (result.exitStatus != EXIT_SUCCESS)
+   {
+      return false;
+   }
 
-      // ssh-agent succeeded, so capture its output
-      output << result.stdOut;
+   // In addition to dumping the ssh-agent output, we also need to parse
+   // it so we can modify rsession's environment to use the new ssh-agent
+   // as well.
+   boost::sregex_iterator it(result.stdOut.begin(), result.stdOut.end(),
+                             boost::regex("^([A-Za-z0-9_]+)=([^;]+);"));
+   boost::sregex_iterator end;
+   for (; it != end; it++)
+   {
+      std::string name = (*it).str(1);
+      std::string value = (*it).str(2);
+      core::system::setenv(name, value);
 
-      // In addition to dumping the ssh-agent output, we also need to parse
-      // it so we can modify rsession's environment to use the new ssh-agent
-      // as well.
-      boost::sregex_iterator it(result.stdOut.begin(), result.stdOut.end(),
-                                boost::regex("^([A-Za-z0-9_]+)=([^;]+);"));
-      boost::sregex_iterator end;
-      for (; it != end; it++)
+      if (name == "SSH_AGENT_PID")
       {
-         std::string name = (*it).str(1);
-         std::string value = (*it).str(2);
-         core::system::setenv(name, value);
-
-         if (name == "SSH_AGENT_PID")
-         {
-            int pid = safe_convert::stringTo<int>(value, 0);
-            if (pid)
-               s_pidsToTerminate_.push_back(pid);
-         }
+         int pid = safe_convert::stringTo<int>(value, 0);
+         if (pid)
+            s_pidsToTerminate_.push_back(pid);
       }
    }
 
-   if (runSshAdd)
-   {
-      // Finally, call ssh-add, which will (probably) use git-
-      ShellCommand cmd("ssh-add");
-#ifdef __APPLE__
-      // Automatically use Keychain for passphrase
-      cmd << "-k";
-#endif
-      cmd << string_utils::utf8ToSystem(toBashPath(key.absolutePath()));
-      module_context::processSupervisor().runCommand(
-            shell_utils::sendAllOutputToNull(shell_utils::sendNullToStdIn(cmd)),
-            "", procOptions(),
-            boost::bind(postbackGitSSH_onSSHAddComplete,
-                        cont,
-                        output.str(),
-                        _1));
-   }
-   else
-   {
-      cont(EXIT_SUCCESS, output.str());
-      return;
-   }
+   return true;
 }
 
+void addKeyToSSHAgent_onCompleted(const system::ProcessResult& result)
+{
+   if (result.exitStatus != EXIT_SUCCESS)
+      LOG_ERROR_MESSAGE(result.stdErr);
+}
+
+void addKeyToSSHAgent(const FilePath& keyFile,
+                      const std::string& passphrase)
+{
+   system::ProcessOptions options = procOptions();
+   system::setenv(options.environment.get_ptr(),
+                  "__ASKPASS_PASSTHROUGH_RESULT",
+                  passphrase);
+   system::setenv(options.environment.get_ptr(),
+                  "SSH_ASKPASS",
+                  "askpass-passthrough");
+
+   ShellCommand cmd("ssh-add");
+   cmd << "--" << keyFile;
+
+   // Fire and forget. We don't care about the outcome.
+   // But we want to run it async in case it does somehow end up blocking;
+   // if we were running it synchronously, this would block the main thread.
+   module_context::processSupervisor().runCommand(
+         shell_utils::sendNullToStdIn(cmd),
+         options,
+         &addKeyToSSHAgent_onCompleted);
+}
 
 module_context::WaitForMethodFunction s_waitForAskPass;
 
@@ -2010,7 +1915,8 @@ void postbackSSHAskPass(const std::string& prompt,
    json::Object payload;
    payload["prompt"] = !prompt.empty() ? prompt
                                        : std::string("Enter passphrase:");
-   payload["remember"] = promptToRemember;
+   payload["remember_prompt"] = promptToRemember ? std::string("Remember passphrase")
+                                                 : std::string();
    ClientEvent askPassEvent(client_events::kAskPass, payload);
 
    // wait for method
@@ -2018,7 +1924,8 @@ void postbackSSHAskPass(const std::string& prompt,
    if (s_waitForAskPass(&request, askPassEvent))
    {
       json::Value value;
-      Error error = json::readParams(request.params, &value);
+      bool remember;
+      Error error = json::readParams(request.params, &value, &remember);
       if (!error)
       {
          if (json::isType<std::string>(value))
@@ -2041,6 +1948,12 @@ void postbackSSHAskPass(const std::string& prompt,
                }
             }
 #endif
+
+            if (remember)
+            {
+               ensureSSHAgentIsRunning();
+               addKeyToSSHAgent(keyFile, passphrase);
+            }
          }
       }
       else

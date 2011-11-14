@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.common.impl;
 
+import org.rstudio.core.client.MessageDisplay.PasswordResult;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -31,10 +33,12 @@ public class DesktopTextInput implements TextInput
                              ProgressOperationWithInput<String> okOperation,
                              Operation cancelOperation)
    {
-      String result = Desktop.getFrame().promptForText(title,
+      JsObject result = Desktop.getFrame().promptForText(title,
                                                        label,
                                                        initialValue,
                                                        usePasswordMask,
+                                                       "",
+                                                       false,
                                                        numbersOnly,
                                                        selectionStart,
                                                        selectionLength,
@@ -46,7 +50,46 @@ public class DesktopTextInput implements TextInput
       }
       else
       {
-         okOperation.execute(result,
+         okOperation.execute(result.getString("value"),
+                             RStudioGinjector.INSTANCE
+                                   .getGlobalDisplay()
+                                   .getProgressIndicator("Error"));
+      }
+   }
+
+   @Override
+   public void promptForPassword(String title,
+                                 String label,
+                                 String initialValue,
+                                 String rememberPasswordPrompt,
+                                 boolean rememberByDefault,
+                                 int selectionStart,
+                                 int selectionLength,
+                                 String okButtonCaption,
+                                 ProgressOperationWithInput<PasswordResult> okOperation,
+                                 Operation cancelOperation)
+   {
+      JsObject result = Desktop.getFrame().promptForText(title,
+                                                       label,
+                                                       initialValue,
+                                                       true,
+                                                       rememberPasswordPrompt,
+                                                       rememberByDefault,
+                                                       false,
+                                                       selectionStart,
+                                                       selectionLength,
+                                                       okButtonCaption);
+      if (result == null)
+      {
+         if (cancelOperation != null)
+            cancelOperation.execute();
+      }
+      else
+      {
+         PasswordResult presult = new PasswordResult();
+         presult.password = result.getString("value");
+         presult.remember = result.getBoolean("remember");
+         okOperation.execute(presult,
                              RStudioGinjector.INSTANCE
                                    .getGlobalDisplay()
                                    .getProgressIndicator("Error"));

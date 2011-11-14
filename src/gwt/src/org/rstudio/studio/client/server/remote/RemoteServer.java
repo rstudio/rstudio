@@ -1403,12 +1403,13 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void askpassCompleted(String value,
+   public void askpassCompleted(String value, boolean remember,
                                 ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, value == null ? JSONNull.getInstance()
                                   : new JSONString(value));
+      params.set(1, JSONBoolean.getInstance(remember));
       sendRequest(RPC_SCOPE, ASKPASS_COMPLETED, params, true, requestCallback);
    }
 

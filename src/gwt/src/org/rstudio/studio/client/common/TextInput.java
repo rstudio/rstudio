@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.common;
 
+import org.rstudio.core.client.MessageDisplay.PasswordResult;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 
@@ -27,4 +28,16 @@ public interface TextInput
                              String okButtonCaption,
                              ProgressOperationWithInput<String> okOperation,
                              Operation cancelOperation);
+
+   void promptForPassword(String title,
+                          String label,
+                          String initialValue,
+                          // Null or "" means don't prompt for remembering pw
+                          String rememberPasswordPrompt,
+                          boolean rememberByDefault,
+                          int selectionStart,
+                          int selectionLength,
+                          String okButtonCaption,
+                          ProgressOperationWithInput<PasswordResult> okOperation,
+                          Operation cancelOperation);
 }

@@ -14,6 +14,7 @@ package org.rstudio.studio.client.application;
 
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JavaScriptPassthrough;
+import org.rstudio.core.client.js.JsObject;
 
 /**
  * This is an interface straight through to a C++ object that lives
@@ -54,10 +55,12 @@ public interface DesktopFrame extends JavaScriptPassthrough
                       int defaultButton,
                       int cancelButton);
 
-   String promptForText(String title,
+   JsObject promptForText(String title,
                         String label,
                         String initialValue,
                         boolean usePasswordMask,
+                        String rememberPasswordPrompt,
+                        boolean rememberByDefault,
                         boolean numbersOnly,
                         int selectionStart,
                         int selectionLength, String okButtonCaption);

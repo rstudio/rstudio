@@ -30,13 +30,17 @@ public:
     ~InputDialog();
 
     QString caption();
-    void setCaption(QString caption);
+    void setCaption(const QString& caption);
     QString textValue();
-    void setTextValue(QString value);
+    void setTextValue(const QString& value);
     void setSelection(int offset, int length);
-    void setOkButtonLabel(QString label);
+    void setOkButtonLabel(const QString& label);
     void setEchoMode(QLineEdit::EchoMode mode);
     void setNumbersOnly(bool numbersOnly);
+    void setRememberPasswordPrompt(const QString& prompt);
+
+    void setRemember(bool remember);
+    bool remember();
 
 private:
     Ui::InputDialog *ui;

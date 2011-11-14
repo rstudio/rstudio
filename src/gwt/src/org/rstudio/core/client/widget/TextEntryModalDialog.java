@@ -13,6 +13,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.user.client.ui.*;
+import org.rstudio.core.client.StringUtil;
 
 public class TextEntryModalDialog extends ModalDialog<String>
 {
@@ -20,6 +21,8 @@ public class TextEntryModalDialog extends ModalDialog<String>
                                String caption,
                                String defaultValue,
                                boolean usePasswordMask,
+                               String rememberPasswordPrompt,
+                               boolean rememberByDefault,
                                boolean numbersOnly,
                                int selectionIndex,
                                int selectionLength, String okButtonCaption,
@@ -37,6 +40,11 @@ public class TextEntryModalDialog extends ModalDialog<String>
                  new TextBox();
       textBox_.setWidth("100%");
       captionLabel_ = new Label(caption);
+
+      rememberPassword_ = new CheckBox(StringUtil.notNull(rememberPasswordPrompt));
+      rememberPassword_.setVisible(
+            !StringUtil.isNullOrEmpty(rememberPasswordPrompt));
+      rememberPassword_.setValue(rememberByDefault);
       
       if (okButtonCaption != null)
          setOkButtonCaption(okButtonCaption);
@@ -72,6 +80,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
       verticalPanel.setWidth(width_ + "px");
       verticalPanel.add(captionLabel_);
       verticalPanel.add(textBox_);
+      verticalPanel.add(rememberPassword_);
       return verticalPanel;
    }
   
@@ -118,10 +127,17 @@ public class TextEntryModalDialog extends ModalDialog<String>
       return true ;
    }
 
+   public boolean remember()
+   {
+      return rememberPassword_.getValue() != null
+             && rememberPassword_.getValue();
+   }
+
 
    private int width_;
    private Label captionLabel_;
    private TextBox textBox_;
+   private CheckBox rememberPassword_;
    private final boolean numbersOnly_;
    private final int selectionIndex_;
    private final int selectionLength_;

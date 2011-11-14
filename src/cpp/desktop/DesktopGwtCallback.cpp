@@ -470,6 +470,8 @@ QVariant GwtCallback::promptForText(QString title,
                                    QString caption,
                                    QString defaultValue,
                                    bool usePasswordMask,
+                                   QString rememberPasswordPrompt,
+                                   bool rememberByDefault,
                                    bool numbersOnly,
                                    int selectionStart,
                                    int selectionLength)
@@ -479,6 +481,11 @@ QVariant GwtCallback::promptForText(QString title,
    dialog.setCaption(caption);
    if (usePasswordMask)
       dialog.setEchoMode(QLineEdit::Password);
+   if (!rememberPasswordPrompt.isEmpty())
+   {
+      dialog.setRememberPasswordPrompt(rememberPasswordPrompt);
+      dialog.setRemember(rememberByDefault);
+   }
    if (numbersOnly)
       dialog.setNumbersOnly(true);
    if (!defaultValue.isEmpty())
@@ -495,7 +502,14 @@ QVariant GwtCallback::promptForText(QString title,
    }
 
    if (dialog.exec() == QDialog::Accepted)
-      return QVariant(dialog.textValue());
+   {
+      QString value = dialog.textValue();
+      bool remember = dialog.remember();
+      QMap<QString, QVariant> values;
+      values.insert(QString::fromAscii("value"), value);
+      values.insert(QString::fromAscii("remember"), remember);
+      return values;
+   }
    else
       return QVariant();
 }

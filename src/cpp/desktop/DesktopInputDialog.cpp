@@ -41,7 +41,7 @@ QString InputDialog::caption()
    return ui->label->text();
 }
 
-void InputDialog::setCaption(QString caption)
+void InputDialog::setCaption(const QString& caption)
 {
    ui->label->setText(caption);
 }
@@ -51,7 +51,7 @@ QString InputDialog::textValue()
    return ui->lineEdit->text();
 }
 
-void InputDialog::setTextValue(QString value)
+void InputDialog::setTextValue(const QString& value)
 {
    ui->lineEdit->setText(value);
 }
@@ -65,7 +65,7 @@ void InputDialog::setSelection(int offset, int length)
    ui->lineEdit->setSelection(offset, length);
 }
 
-void InputDialog::setOkButtonLabel(QString label)
+void InputDialog::setOkButtonLabel(const QString& label)
 {
    pOK_->setText(label);
 }
@@ -81,4 +81,20 @@ void InputDialog::setNumbersOnly(bool numbersOnly)
       ui->lineEdit->setInputMask(QString::fromAscii("D99999999"));
    else
       ui->lineEdit->setInputMask(QString());
+}
+
+void InputDialog::setRememberPasswordPrompt(const QString& prompt)
+{
+   ui->remember->setVisible(!prompt.isEmpty());
+   ui->remember->setText(prompt);
+}
+
+void InputDialog::setRemember(bool remember)
+{
+   ui->remember->setCheckState(Qt::Checked);
+}
+
+bool InputDialog::remember()
+{
+   return ui->remember->checkState() == Qt::Checked;
 }

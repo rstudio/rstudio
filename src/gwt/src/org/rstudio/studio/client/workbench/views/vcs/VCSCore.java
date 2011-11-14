@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.MessageDisplay.PasswordResult;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.Operation;
@@ -74,15 +76,17 @@ public class VCSCore
                   "Password",
                   e.getPrompt(),
                   "",
-                  new ProgressOperationWithInput<String>()
+                  e.getRememberPasswordPrompt(),
+                  true,
+                  new ProgressOperationWithInput<PasswordResult>()
                   {
                      @Override
-                     public void execute(String input,
+                     public void execute(final PasswordResult result,
                                          final ProgressIndicator indicator)
                      {
                         RSAEncrypt.encrypt_ServerOnly(
                               server_,
-                              input,
+                              result.password,
                               new RSAEncrypt.ResponseCallback()
                               {
                                  @Override
@@ -90,6 +94,8 @@ public class VCSCore
                                  {
                                     server_.askpassCompleted(
                                      encryptedData,
+                                     !StringUtil.isNullOrEmpty(e.getRememberPasswordPrompt())
+                                         && result.remember,
                                      new VoidServerRequestCallback(indicator));
                                     
                                  }
@@ -108,7 +114,7 @@ public class VCSCore
                      public void execute()
                      {
                         server_.askpassCompleted(
-                                           null,
+                                           null, false,
                                            new SimpleRequestCallback<Void>());
                      }
                   });
