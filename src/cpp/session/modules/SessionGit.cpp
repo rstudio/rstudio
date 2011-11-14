@@ -279,6 +279,7 @@ protected:
       using namespace session::modules::console_process;
 
       system::ProcessOptions options = procOptions();
+      options.detachProcess = true;
       if (!workingDir)
          options.workingDir = root_;
       else if (!workingDir.get().empty())
@@ -1884,6 +1885,18 @@ void addKeyToSSHAgent(const FilePath& keyFile,
 
 module_context::WaitForMethodFunction s_waitForAskPass;
 
+std::string transformKeyPath(const std::string& path)
+{
+#ifdef _WIN32
+   boost::smatch match;
+   if (boost::regex_match(path, match, boost::regex("/([a-zA-Z])/.*")))
+   {
+      return match[1] + std::string(":") + path.substr(2);
+   }
+#endif
+   return path;
+}
+
 void postbackSSHAskPass(const std::string& prompt,
                         const module_context::PostbackHandlerContinuation& cont)
 {
@@ -1899,13 +1912,13 @@ void postbackSSHAskPass(const std::string& prompt,
    if (boost::regex_match(prompt, match, boost::regex("Enter passphrase for key '(.+)': ")))
    {
       promptToRemember = true;
-      keyFile = FilePath(match[1]);
+      keyFile = FilePath(transformKeyPath(match[1]));
    }
    // This is what the prompt looks like on OpenSSH_5.8p1 Debian-7ubuntu1 (Ubuntu 11.10)
    else if (boost::regex_match(prompt, match, boost::regex("Enter passphrase for (.+): ")))
    {
       promptToRemember = true;
-      keyFile = FilePath(match[1]);
+      keyFile = FilePath(transformKeyPath(match[1]));
    }
    else
       promptToRemember = false;
