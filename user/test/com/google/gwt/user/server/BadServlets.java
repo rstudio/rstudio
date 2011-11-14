@@ -109,8 +109,13 @@ public class BadServlets {
    */
   public static class StaticException extends HttpServlet {
     static {
-      @SuppressWarnings("unused")
-      int divideByZero = 1 / 0;
+      /**
+       * "if (true)" required to avoid compiler error: "initializer must be
+       * able to complete normally."
+       */
+      if (true) {
+        throw new ArithmeticException("/ by zero");
+      }
     }
   }
 }
