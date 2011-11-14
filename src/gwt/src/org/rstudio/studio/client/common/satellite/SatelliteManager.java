@@ -2,21 +2,20 @@ package org.rstudio.studio.client.common.satellite;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 // TODO: Implement for Desktop
-
-// TODO: make sure gwt url is passed to the popup window
-
-// TODO: re-activation of existing satellites (launch manager)
 
 
 @Singleton
@@ -39,16 +38,45 @@ public class SatelliteManager implements CloseHandler<Window>
       Window.addCloseHandler(this);
    }
     
+   // open a satellite window (re-activate existing if requested)
+   public void openSatellite(String name, 
+                             Size preferredSize,
+                             boolean activateExisting)
+   {
+      // if requested, first try to find an existing window
+      if (activateExisting)
+      {
+         for (ActiveSatellite satellite : satellites_)
+         {
+            if (satellite.getName().equals(name))
+            {
+               WindowEx window = satellite.getWindow();
+               if (!window.isClosed())
+               {
+                  window.focus();
+                  return;
+               }
+            }
+         }
+      }
+      
+      // open a new satellite (respect any existing URL params)
+      UrlBuilder urlBuilder = Window.Location.createUrlBuilder();
+      urlBuilder.setParameter("mode", name);
+      RStudioGinjector.INSTANCE.getGlobalDisplay().openMinimalWindow(
+                                              urlBuilder.buildString(),
+                                              preferredSize.width,
+                                              preferredSize.height);
+   }
    
    // close all satellite windows
    public void closeAllSatellites()
    {
-      for (int i=0; i<satellites_.size(); i++)
+      for (ActiveSatellite satellite : satellites_)
       {
          try
          {
-            WindowEx satelliteWnd = satellites_.get(i);
-            satelliteWnd.close();
+            satellite.getWindow().close();
          }
          catch(Throwable e)
          {
@@ -61,21 +89,23 @@ public class SatelliteManager implements CloseHandler<Window>
    public void dispatchEvent(JavaScriptObject clientEvent)
    {
       // list of windows to remove (because they were closed)
-      ArrayList<WindowEx> removeWindows = null;
+      ArrayList<ActiveSatellite> removeWindows = null;
         
       // iterate over the satellites (make a copy to avoid races if
       // for some reason firing an event creates or destroys a satellite)
       @SuppressWarnings("unchecked")
-      ArrayList<WindowEx> satellites = (ArrayList<WindowEx>)satellites_.clone();
-      for (WindowEx satelliteWnd : satellites)
+      ArrayList<ActiveSatellite> satellites = 
+                           (ArrayList<ActiveSatellite>)satellites_.clone();
+      for (ActiveSatellite satellite : satellites)
       {
          try
          {
+            WindowEx satelliteWnd = satellite.getWindow();
             if (satelliteWnd.isClosed())
             {
                if (removeWindows == null)
-                  removeWindows = new ArrayList<WindowEx>();
-               removeWindows.add(satelliteWnd);
+                  removeWindows = new ArrayList<ActiveSatellite>();
+               removeWindows.add(satellite);
             }
             else
             {
@@ -90,9 +120,9 @@ public class SatelliteManager implements CloseHandler<Window>
       // remove windows if necessary
       if (removeWindows != null)
       {
-         for (WindowEx satelliteWnd : removeWindows)
+         for (ActiveSatellite satellite : removeWindows)
          {
-            satellites_.remove(satelliteWnd);
+            satellites_.remove(satellite);
          }
       }
    }
@@ -105,11 +135,11 @@ public class SatelliteManager implements CloseHandler<Window>
    }
    
    // called by satellites to connect themselves with the main window
-   private void registerAsSatellite(JavaScriptObject wnd)
+   private void registerAsSatellite(String name, JavaScriptObject wnd)
    {
       // get the satellite and add it to our list
       WindowEx satelliteWnd = wnd.<WindowEx>cast();
-      satellites_.add(satelliteWnd);
+      satellites_.add(new ActiveSatellite(name, satelliteWnd));
       
       // call setSessionInfo
       callSetSessionInfo(satelliteWnd, session_.getSessionInfo());
@@ -119,8 +149,8 @@ public class SatelliteManager implements CloseHandler<Window>
    private native void exportSatelliteRegistrationCallback() /*-{
       var manager = this;     
       $wnd.registerAsRStudioSatellite = $entry(
-         function(satelliteWnd) {
-            manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::registerAsSatellite(Lcom/google/gwt/core/client/JavaScriptObject;)(satelliteWnd);
+         function(name, satelliteWnd) {
+            manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::registerAsSatellite(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;)(name, satelliteWnd);
          }
       ); 
    }-*/;
@@ -138,8 +168,30 @@ public class SatelliteManager implements CloseHandler<Window>
    }-*/;
    
    private final Session session_;
-   private final ArrayList<WindowEx> satellites_ = new ArrayList<WindowEx>();
+   private final ArrayList<ActiveSatellite> satellites_ = 
+                                          new ArrayList<ActiveSatellite>();
 
+   private class ActiveSatellite
+   {
+      public ActiveSatellite(String name, WindowEx window)
+      {
+         name_ = name;
+         window_ = window;
+      }
+      
+      public String getName()
+      {
+         return name_;
+      }
+      
+      public WindowEx getWindow()
+      {
+         return window_;
+      }
+      
+      private final String name_;
+      private final WindowEx window_;
+   }
    
 }
 

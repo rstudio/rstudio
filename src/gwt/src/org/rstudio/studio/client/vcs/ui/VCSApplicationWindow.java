@@ -10,6 +10,7 @@ import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
 
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -38,11 +39,15 @@ public class VCSApplicationWindow extends SatelliteWindow
    @Override
    protected void onInitialize(LayoutPanel mainPanel)
    {
+      // set our window title
+      Window.setTitle("RStudio - Review Changes");
+      
       // make sure vcs core is initialized
       pVCSCore_.get();
       
-      // show the popup
-      VCSPopup.show(pReviewPresenter_.get(),
+      // show the vcs ui in our main panel
+      VCSPopup.show(mainPanel,
+                    pReviewPresenter_.get(),
                     pHistoryPresenter_.get(), 
                     false);  
    }

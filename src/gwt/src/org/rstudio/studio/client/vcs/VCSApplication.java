@@ -28,7 +28,7 @@ public class VCSApplication
                   final Command dismissLoadingProgress)
    {
       // indicate that we are a satellite window
-      satellite_.initialize();
+      satellite_.initialize("vcs");
       
       // register for uncaught exceptions (do this after calling 
       // initSatelliteWindow b/c it depends on Server)

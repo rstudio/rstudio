@@ -81,7 +81,46 @@ public class VCSPopup
    {
    }
 
-   public static void show(final ReviewPresenter rpres,
+   public static void show(ReviewPresenter rpres,
+                           HistoryPresenter hpres,
+                           boolean showHistory)
+   {
+      final LayoutPanel swapContainer = new LayoutPanel();
+      
+      show(swapContainer, rpres, hpres, showHistory);
+      
+      ModalPopupPanel popup = new ModalPopupPanel(false, false, true);
+      Resources res = GWT.<Resources>create(Resources.class);
+      NineUpBorder border = new NineUpBorder(
+            res,
+            32, 20, 17, 20);
+      addCloseButton(popup, border);
+      border.setSize("100%", "100%");
+      border.setFillColor("white");
+      border.setWidget(swapContainer);
+      popup.setWidget(border);
+      popup.setGlassEnabled(true);
+
+      Style popupStyle = popup.getElement().getStyle();
+      popupStyle.setZIndex(1001);
+      popupStyle.setPosition(Style.Position.ABSOLUTE);
+      popupStyle.setTop(0, Unit.PX);
+      popupStyle.setBottom(0, Unit.PX);
+      popupStyle.setLeft(0, Unit.PX);
+      popupStyle.setRight(0, Unit.PX);
+
+      Style contentStyle =
+            ((Element) popup.getElement().getFirstChild()).getStyle();
+      contentStyle.setWidth(100, Unit.PCT);
+      contentStyle.setHeight(100, Unit.PCT);
+
+      popup.center();
+      
+   }
+   
+   
+   public static void show(final LayoutPanel swapContainer,
+                           final ReviewPresenter rpres,
                            final HistoryPresenter hpres,
                            boolean showHistory)
    {
@@ -91,7 +130,6 @@ public class VCSPopup
       final Widget history = hpres.asWidget();
       history.setSize("100%", "100%");
 
-      final LayoutPanel swapContainer = new LayoutPanel();
       swapContainer.setSize("100%", "100%");
       swapContainer.add(review);
       swapContainer.setWidgetLeftRight(review, 0, Unit.PX, 0, Unit.PX);
@@ -129,33 +167,6 @@ public class VCSPopup
             swapContainer.setWidgetVisible(history, false);
          }
       });
-
-      ModalPopupPanel popup = new ModalPopupPanel(false, false, true);
-      Resources res = GWT.<Resources>create(Resources.class);
-      NineUpBorder border = new NineUpBorder(
-            res,
-            32, 20, 17, 20);
-      addCloseButton(popup, border);
-      border.setSize("100%", "100%");
-      border.setFillColor("white");
-      border.setWidget(swapContainer);
-      popup.setWidget(border);
-      popup.setGlassEnabled(true);
-
-      Style popupStyle = popup.getElement().getStyle();
-      popupStyle.setZIndex(1001);
-      popupStyle.setPosition(Style.Position.ABSOLUTE);
-      popupStyle.setTop(0, Unit.PX);
-      popupStyle.setBottom(0, Unit.PX);
-      popupStyle.setLeft(0, Unit.PX);
-      popupStyle.setRight(0, Unit.PX);
-
-      Style contentStyle =
-            ((Element) popup.getElement().getFirstChild()).getStyle();
-      contentStyle.setWidth(100, Unit.PCT);
-      contentStyle.setHeight(100, Unit.PCT);
-
-      popup.center();
    }
 
    private static void addCloseButton(final ModalPopupPanel popupPanel,

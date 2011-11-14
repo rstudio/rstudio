@@ -15,12 +15,15 @@ package org.rstudio.studio.client.workbench.views.vcs;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -31,6 +34,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.Void;
@@ -76,7 +80,8 @@ public class VCS extends BasePresenter implements IsWidget
               VcsState vcsState,
               EventBus events,
               final GlobalDisplay globalDisplay,
-              final FileTypeRegistry fileTypeRegistry)
+              final FileTypeRegistry fileTypeRegistry,
+              SatelliteManager satelliteManager)
    {
       super(view);
       view_ = view;
@@ -87,6 +92,7 @@ public class VCS extends BasePresenter implements IsWidget
       vcsState_ = vcsState;
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
+      satelliteManager_ = satelliteManager;
 
       commandBinder.bind(commands, this);
 
@@ -179,15 +185,36 @@ public class VCS extends BasePresenter implements IsWidget
    {
       showReviewPane(false);
    }
-
+   
+  
    private void showReviewPane(boolean showHistory)
    {
-      ReviewPresenter rpres = pReviewPresenter_.get();
-      if (view_.getSelectedItemCount() > 0)
-         rpres.setSelectedPaths(view_.getSelectedItems());
-      VCSPopup.show(rpres,
-                    pHistoryPresenter_.get(),
-                    showHistory);
+      // show in external window if we shift-click
+      Event currentEvent = Event.getCurrentEvent();
+      if ((currentEvent != null) && currentEvent.getShiftKey())
+      {
+         satelliteManager_.openSatellite("vcs", 
+                                         getPreferredReviewPanelSize(), 
+                                         true);
+      }
+      else
+      {
+         ReviewPresenter rpres = pReviewPresenter_.get();
+         if (view_.getSelectedItemCount() > 0)
+            rpres.setSelectedPaths(view_.getSelectedItems());
+         VCSPopup.show(rpres,
+                       pHistoryPresenter_.get(),
+                       showHistory);
+      }
+   }
+   
+   private Size getPreferredReviewPanelSize()
+   { 
+      Size windowBounds = new Size(Window.getClientWidth(),
+                                   Window.getClientHeight());
+      
+      return new Size(Math.min(windowBounds.width - 25, 1000), 
+                      windowBounds.height - 50);
    }
 
    @Handler
@@ -247,4 +274,5 @@ public class VCS extends BasePresenter implements IsWidget
    private final VcsState vcsState_;
    private final GlobalDisplay globalDisplay_;
    private final FileTypeRegistry fileTypeRegistry_;
+   private final SatelliteManager satelliteManager_;
 }

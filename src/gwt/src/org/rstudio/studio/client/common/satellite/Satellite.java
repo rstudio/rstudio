@@ -26,7 +26,7 @@ public class Satellite
    
    // satellite windows should call this during startup to setup a 
    // communication channel with the main window
-   public native void initialize() /*-{
+   public native void initialize(String name) /*-{
       
       // global flag used to conditionalize behavior
       $wnd.isRStudioSatellite = true;
@@ -47,7 +47,7 @@ public class Satellite
       ); 
       
       // register (this will call the setSessionInfo back)
-      $wnd.opener.registerAsRStudioSatellite($wnd);
+      $wnd.opener.registerAsRStudioSatellite(name, $wnd);
    }-*/;
    
    
