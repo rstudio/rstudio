@@ -460,7 +460,8 @@ public:
 
    core::Error unstage(const std::vector<FilePath>& filePaths)
    {
-      return runGit(ShellArgs() << "reset" << "HEAD" << "--" << filePaths);
+      return runGit(ShellArgs() << "reset" << "HEAD" << "--" << filePaths,
+                    NULL, NULL, NULL, false);
    }
 
    core::Error listBranches(std::vector<std::string>* pBranches,
