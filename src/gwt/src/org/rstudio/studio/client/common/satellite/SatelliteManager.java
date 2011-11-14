@@ -18,9 +18,6 @@ import com.google.inject.Singleton;
 
 // TODO: re-activation of existing satellites (launch manager)
 
-// TODO: detect when satellites have gone away and remove them from our
-// list (could just wait until we see .closed or an exception during
-// event delivery)
 
 @Singleton
 public class SatelliteManager implements CloseHandler<Window>
@@ -63,17 +60,41 @@ public class SatelliteManager implements CloseHandler<Window>
    // dispatch an event to all satellites
    public void dispatchEvent(JavaScriptObject clientEvent)
    {
-      for (int i=0; i<satellites_.size(); i++)
+      // list of windows to remove (because they were closed)
+      ArrayList<WindowEx> removeWindows = null;
+        
+      // iterate over the satellites (make a copy to avoid races if
+      // for some reason firing an event creates or destroys a satellite)
+      @SuppressWarnings("unchecked")
+      ArrayList<WindowEx> satellites = (ArrayList<WindowEx>)satellites_.clone();
+      for (WindowEx satelliteWnd : satellites)
       {
          try
          {
-            WindowEx satelliteWnd = satellites_.get(i);
-            callDispatchEvent(satelliteWnd, clientEvent);
+            if (satelliteWnd.isClosed())
+            {
+               if (removeWindows == null)
+                  removeWindows = new ArrayList<WindowEx>();
+               removeWindows.add(satelliteWnd);
+            }
+            else
+            {
+               callDispatchEvent(satelliteWnd, clientEvent);
+            }
          }
          catch(Throwable e)
          {
          }
       } 
+      
+      // remove windows if necessary
+      if (removeWindows != null)
+      {
+         for (WindowEx satelliteWnd : removeWindows)
+         {
+            satellites_.remove(satelliteWnd);
+         }
+      }
    }
    
    // close all satellites when we are closed
