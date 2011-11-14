@@ -14,8 +14,6 @@ import com.google.inject.Singleton;
 
 // TODO: make sure gwt url is passed to the popup window
 
-// TODO: restore some loading progress / async loading (but no ace)
-
 // TODO: when trying to do a refresh of commit list it hangs 
 //       forever (perhaps something to do with console process management?).
 //       but then when you save it comes back

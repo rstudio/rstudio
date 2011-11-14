@@ -73,31 +73,21 @@ public class RStudio implements EntryPoint
    {
       Debug.injectDebug();
 
-      // vcs mode short circuits all other loading progress/logic 
-      // (including pre-loading ace)
-      if ("vcs".equals(Window.Location.getParameter("mode")))
+      Document.get().getBody().getStyle().setBackgroundColor("#e1e2e5");
+
+      BrowserFence fence = GWT.create(BrowserFence.class);
+      fence.go(new Command()
       {
-         ensureStylesInjected();
-         
-         RStudioGinjector.INSTANCE.getVCSApplication().go(
-                                                      RootLayoutPanel.get());
-      }
-      
-      // standard loading sequence
-      else
-      {
-         Document.get().getBody().getStyle().setBackgroundColor("#e1e2e5");
-   
-         BrowserFence fence = GWT.create(BrowserFence.class);
-         fence.go(new Command()
+         public void execute()
          {
-            public void execute()
-            {
-               Command dismissProgressAnimation = showProgress();
-               delayLoad(dismissProgressAnimation);
-            }
-         });
-      }
+            Command dismissProgressAnimation = showProgress();
+            
+            if ("vcs".equals(Window.Location.getParameter("mode")))
+               delayLoadVCSApplication(dismissProgressAnimation);
+            else
+               delayLoadApplication(dismissProgressAnimation);
+         }
+      });
    }
 
    private Command showProgress()
@@ -119,8 +109,8 @@ public class RStudio implements EntryPoint
          }
       };
    }
-
-   private void delayLoad(final Command dismissProgressAnimation)
+   
+   private void delayLoadApplication(final Command dismissProgressAnimation)
    {
       GWT.runAsync(new RunAsyncCallback()
       {
@@ -137,16 +127,37 @@ public class RStudio implements EntryPoint
                public void execute()
                {
                   ensureStylesInjected();
+                  
                   RStudioGinjector.INSTANCE.getApplication().go(
                         RootLayoutPanel.get(),
-                        dismissProgressAnimation);;
+                        dismissProgressAnimation);
                }
             });
          }
       });
    }
    
-   
+   private void delayLoadVCSApplication(final Command dismissProgressAnimation)
+   {
+      GWT.runAsync(new RunAsyncCallback()
+      {
+         public void onFailure(Throwable reason)
+         {
+            dismissProgressAnimation.execute();
+            Window.alert("Error: " + reason.getMessage());
+         }
+
+         public void onSuccess()
+         {
+            ensureStylesInjected();
+            
+            RStudioGinjector.INSTANCE.getVCSApplication().go(
+                        RootLayoutPanel.get(),
+                        dismissProgressAnimation);
+         }
+      });
+   }
+
    private void ensureStylesInjected()
    {
       ThemeResources.INSTANCE.themeStyles().ensureInjected();
