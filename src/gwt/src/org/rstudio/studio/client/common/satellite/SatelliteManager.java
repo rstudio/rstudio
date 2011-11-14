@@ -12,7 +12,6 @@ import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-// TODO: make sure gwt url is passed to the popup window
 
 // TODO: when trying to do a refresh of commit list it hangs 
 //       forever (perhaps something to do with console process management?).
@@ -20,11 +19,10 @@ import com.google.inject.Singleton;
 
 // TODO: Pull and Push don't work from remote window
 
-// TODO: exception during uiPrefs.checkForChanges -- null paneConfig
-//       (added null check but investigate root cause -- should there
-//        be a separate workbench specific checkForChanges codepath)
 
 // TODO: Implement for Desktop
+
+// TODO: make sure gwt url is passed to the popup window
 
 // TODO: re-activation of existing satellites (launch manager)
 
