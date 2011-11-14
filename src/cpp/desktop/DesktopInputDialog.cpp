@@ -29,6 +29,8 @@ InputDialog::InputDialog(QWidget *parent) :
 
    QPushButton* pCancel = new QPushButton(QString::fromAscii("Cancel"));
    ui->buttonBox->addButton(pCancel, QDialogButtonBox::RejectRole);
+
+   ui->remember->setVisible(false);
 }
 
 InputDialog::~InputDialog()
