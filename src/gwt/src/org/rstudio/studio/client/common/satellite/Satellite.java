@@ -12,12 +12,12 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class SatelliteWindow
+public class Satellite
 {  
    @Inject
-   public SatelliteWindow(Session session,
-                          EventBus eventBus,
-                          Provider<UIPrefs> pUIPrefs)
+   public Satellite(Session session,
+                    EventBus eventBus,
+                    Provider<UIPrefs> pUIPrefs)
    {
       session_ = session;
       pUIPrefs_ = pUIPrefs;
@@ -35,14 +35,14 @@ public class SatelliteWindow
       var satellite = this;     
       $wnd.setRStudioSatelliteSessionInfo = $entry(
          function(sessionInfo) {
-            satellite.@org.rstudio.studio.client.common.satellite.SatelliteWindow::setSessionInfo(Lcom/google/gwt/core/client/JavaScriptObject;)(sessionInfo);
+            satellite.@org.rstudio.studio.client.common.satellite.Satellite::setSessionInfo(Lcom/google/gwt/core/client/JavaScriptObject;)(sessionInfo);
          }
       ); 
       
       // export event notification callback
       $wnd.dispatchEventToRStudioSatellite = $entry(
          function(clientEvent) {
-            satellite.@org.rstudio.studio.client.common.satellite.SatelliteWindow::dispatchEvent(Lcom/google/gwt/core/client/JavaScriptObject;)(clientEvent);
+            satellite.@org.rstudio.studio.client.common.satellite.Satellite::dispatchEvent(Lcom/google/gwt/core/client/JavaScriptObject;)(clientEvent);
          }
       ); 
       

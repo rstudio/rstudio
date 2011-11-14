@@ -14,9 +14,6 @@ import com.google.inject.Singleton;
 
 // TODO: make sure gwt url is passed to the popup window
 
-// TODO: rename to Satellite and SatelliteManager (so we can use 
-//       SatelliteWindow elsewhere)
-
 // TODO: restore some loading progress / async loading (but no ace)
 
 // TODO: when trying to do a refresh of commit list it hangs 
@@ -38,10 +35,10 @@ import com.google.inject.Singleton;
 // event delivery)
 
 @Singleton
-public class SatelliteWindowManager implements CloseHandler<Window>
+public class SatelliteManager implements CloseHandler<Window>
 {
    @Inject
-   public SatelliteWindowManager(Session session)
+   public SatelliteManager(Session session)
    {
       session_ = session;
    }
@@ -114,7 +111,7 @@ public class SatelliteWindowManager implements CloseHandler<Window>
       var manager = this;     
       $wnd.registerAsRStudioSatellite = $entry(
          function(satelliteWnd) {
-            manager.@org.rstudio.studio.client.common.satellite.SatelliteWindowManager::registerAsSatellite(Lcom/google/gwt/core/client/JavaScriptObject;)(satelliteWnd);
+            manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::registerAsSatellite(Lcom/google/gwt/core/client/JavaScriptObject;)(satelliteWnd);
          }
       ); 
    }-*/;

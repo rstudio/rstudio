@@ -30,8 +30,8 @@ import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFac
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
-import org.rstudio.studio.client.common.satellite.SatelliteWindow;
-import org.rstudio.studio.client.common.satellite.SatelliteWindowManager;
+import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
@@ -117,8 +117,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(EventBus.class).in(Singleton.class) ;
       bind(Session.class).in(Singleton.class) ;
       bind(Projects.class).in(Singleton.class);
-      bind(SatelliteWindow.class).in(Singleton.class);
-      bind(SatelliteWindowManager.class).in(Singleton.class);
+      bind(Satellite.class).in(Singleton.class);
+      bind(SatelliteManager.class).in(Singleton.class);
       bind(WorkbenchContext.class).asEagerSingleton();
       bind(WorkbenchListManager.class).asEagerSingleton();
       bind(ApplicationQuit.class).asEagerSingleton();
