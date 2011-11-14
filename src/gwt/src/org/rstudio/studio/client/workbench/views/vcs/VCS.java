@@ -20,30 +20,23 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.rstudio.core.client.Debug;
+
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
-import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.vcs.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
@@ -73,7 +66,8 @@ public class VCS extends BasePresenter implements IsWidget
    }
 
    @Inject
-   public VCS(Display view,
+   public VCS(VCSCore vcsCore,
+              Display view,
               Provider<ReviewPresenter> pReviewPresenter,
               Provider<HistoryPresenter> pHistoryPresenter,
               VCSServerOperations server,
@@ -102,59 +96,6 @@ public class VCS extends BasePresenter implements IsWidget
          public void onVcsRefresh(VcsRefreshEvent event)
          {
             refresh();
-            boolean hasRemote = vcsState_.hasRemote();
-            commands.vcsPull().setEnabled(hasRemote);
-            commands.vcsPush().setEnabled(hasRemote);
-         }
-      });
-
-      events.addHandler(AskPassEvent.TYPE, new org.rstudio.studio.client.workbench.views.vcs.events.AskPassEvent.Handler()
-      {
-         @Override
-         public void onAskPass(final AskPassEvent e)
-         {
-            globalDisplay.promptForPassword(
-                  "Password",
-                  e.getPrompt(),
-                  "",
-                  new ProgressOperationWithInput<String>()
-                  {
-                     @Override
-                     public void execute(String input,
-                                         final ProgressIndicator indicator)
-                     {
-                        RSAEncrypt.encrypt_ServerOnly(
-                              server_,
-                              input,
-                              new RSAEncrypt.ResponseCallback()
-                              {
-                                 @Override
-                                 public void onSuccess(String encryptedData)
-                                 {
-                                    server_.askpassCompleted(
-                                     encryptedData,
-                                     new VoidServerRequestCallback(indicator));
-                                    
-                                 }
-
-                                 @Override
-                                 public void onFailure(ServerError error)
-                                 {
-                                    Debug.logError(error);
-                                 }
-                              });
-                     }
-                  },
-                  new Operation()
-                  {
-                     @Override
-                     public void execute()
-                     {
-                        server_.askpassCompleted(
-                                           null,
-                                           new SimpleRequestCallback<Void>());
-                     }
-                  });
          }
       });
 
@@ -284,40 +225,9 @@ public class VCS extends BasePresenter implements IsWidget
    }
 
    @Handler
-   void onVcsRefresh()
-   {
-      view_.onRefreshBegin();
-      vcsState_.refresh();
-   }
-
-   @Handler
    void onVcsShowHistory()
    {
       showReviewPane(true);
-   }
-
-   @Handler
-   void onVcsPull()
-   {
-      server_.vcsPull(new SimpleRequestCallback<ConsoleProcess>() {
-         @Override
-         public void onResponseReceived(ConsoleProcess proc)
-         {
-            new ConsoleProgressDialog("Git Pull", proc).showModal();
-         }
-      });
-   }
-
-   @Handler
-   void onVcsPush()
-   {
-      server_.vcsPush(new SimpleRequestCallback<ConsoleProcess>() {
-         @Override
-         public void onResponseReceived(ConsoleProcess proc)
-         {
-            new ConsoleProgressDialog("Git Push", proc).showModal();
-         }
-      });
    }
 
    private void refresh()

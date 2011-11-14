@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
@@ -71,7 +73,17 @@ public class VCSPane extends WorkbenchPane implements Display
             moreMenu));
 
       toolbar.addRightWidget(branchToolbarButton_);
-      toolbar.addRightWidget(commands_.vcsRefresh().createToolbarButton());
+      
+      toolbar.addRightWidget(new ToolbarButton(
+            commands_.vcsRefresh().getImageResource(),
+            new ClickHandler() {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  table_.showProgress();
+                  commands_.vcsRefresh().execute();
+               }
+            }));
       return toolbar;
    }
 

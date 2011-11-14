@@ -12,14 +12,6 @@ import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-
-// TODO: when trying to do a refresh of commit list it hangs 
-//       forever (perhaps something to do with console process management?).
-//       but then when you save it comes back
-
-// TODO: Pull and Push don't work from remote window
-
-
 // TODO: Implement for Desktop
 
 // TODO: make sure gwt url is passed to the popup window
