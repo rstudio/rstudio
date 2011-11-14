@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.common.impl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.user.client.Window;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.regex.Pattern;
@@ -37,6 +38,58 @@ public class WebWindowOpener implements WindowOpener
                                  int width,
                                  int height,
                                  boolean showLocation)
+   {
+      webOpenMinimalWindow(globalDisplay, 
+                           url, 
+                           options, 
+                           width, 
+                           height, 
+                           showLocation);
+   }
+   
+   public void openSatelliteWindow(GlobalDisplay globalDisplay,
+                                   String mode,
+                                   int width,
+                                   int height)
+   {
+      // build url
+      UrlBuilder urlBuilder = Window.Location.createUrlBuilder();
+      urlBuilder.setParameter("mode", mode);
+      
+      // setup options
+      NewWindowOptions options = new NewWindowOptions();
+      options.setName(getSatelliteWindowName(mode));
+      options.setFocus(true);
+      
+      // open window (force web codepath b/c desktop needs this so
+      // that window.opener is hooked up)
+      webOpenMinimalWindow(globalDisplay,
+                           urlBuilder.buildString(),
+                           options,
+                           width,
+                           height,
+                           false);
+   }
+   
+   
+   protected String getSatelliteWindowName(String mode)
+   {
+      return "_rstudio_satellite_" + mode;
+   }
+   
+   protected boolean showPopupBlockedMessage()
+   {
+      return true;
+   }
+   
+   // enable callers to prevent subclass implementations from taking
+   // the open window by calling this directly
+   private void webOpenMinimalWindow(GlobalDisplay globalDisplay,
+                                     String url,
+                                     NewWindowOptions options,
+                                     int width,
+                                     int height,
+                                     boolean showLocation)
    {
       String loc = showLocation ? "1" : "0";
       String features = "width=" + width + "," +
@@ -78,7 +131,7 @@ public class WebWindowOpener implements WindowOpener
 
       final String finalName = name;
       WindowEx window = doOpenWindow(absUrl, finalName, features, focus);
-      if (window == null)
+      if ((window == null) && showPopupBlockedMessage())
       {
          globalDisplay.showYesNoMessage(
                GlobalDisplay.MSG_POPUP_BLOCKED,

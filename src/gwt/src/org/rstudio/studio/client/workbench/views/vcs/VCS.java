@@ -193,9 +193,7 @@ public class VCS extends BasePresenter implements IsWidget
       Event currentEvent = Event.getCurrentEvent();
       if ((currentEvent != null) && currentEvent.getShiftKey())
       {
-         satelliteManager_.openSatellite("vcs", 
-                                         getPreferredReviewPanelSize(), 
-                                         true);
+         satelliteManager_.openSatellite("vcs", getPreferredReviewPanelSize());
       }
       else
       {

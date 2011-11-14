@@ -50,4 +50,22 @@ public class DesktopWindowOpener extends WebWindowOpener
                                            width,
                                            height);
    }
+   
+   @Override
+   public void openSatelliteWindow(GlobalDisplay globalDisplay,
+                                   String mode,
+                                   int width,
+                                   int height)
+   {  
+      String windowName = getSatelliteWindowName(mode);
+      Desktop.getFrame().prepareForSatelliteWindow(windowName, width, height);
+      super.openSatelliteWindow(globalDisplay, mode, width, height);
+   }
+   
+   @Override
+   protected boolean showPopupBlockedMessage()
+   {
+      return false;
+   }
+   
 }

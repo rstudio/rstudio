@@ -68,6 +68,8 @@ public slots:
 
    void close();
    void openMinimalWindow(QString name, QString url, int width, int height);
+   void prepareForSatelliteWindow(QString name, int width, int height);
+
 
    // Image coordinates are relative to the window contents
    void copyImageToClipboard(int left, int top, int width, int height);

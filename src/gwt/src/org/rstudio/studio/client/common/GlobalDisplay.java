@@ -91,6 +91,8 @@ public abstract class GlobalDisplay extends MessageDisplay
                                    int height,
                                    String name,
                                    boolean focus);
+   
+   public abstract void openSatelliteWindow(String name, int width, int height);
 
    public abstract void openEmailComposeWindow(String to, String subject);
    

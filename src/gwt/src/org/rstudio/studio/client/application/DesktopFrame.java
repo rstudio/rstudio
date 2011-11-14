@@ -39,6 +39,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void showFolder(String path);
    void close();
    void openMinimalWindow(String name, String url, int width, int height);
+   void prepareForSatelliteWindow(String name, int width, int height);
    void copyImageToClipboard(int clientLeft,
                              int clientTop,
                              int clientWidth,

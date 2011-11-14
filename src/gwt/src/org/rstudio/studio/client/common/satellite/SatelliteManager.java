@@ -5,18 +5,25 @@ import java.util.ArrayList;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-// TODO: Implement for Desktop
+// TODO: Fonts and Cursor are wrong in desktop mode
 
+// TODO: Pass parameters (show history, list of files, etc.)
+
+// TODO: Inject desktop object (and make sure windows activate, etc.)
+
+// TODO: Code splitting
+
+// TODO: Desktop load time seems worse, caching?
 
 @Singleton
 public class SatelliteManager implements CloseHandler<Window>
@@ -38,13 +45,14 @@ public class SatelliteManager implements CloseHandler<Window>
       Window.addCloseHandler(this);
    }
     
-   // open a satellite window (re-activate existing if requested)
-   public void openSatellite(String name, 
-                             Size preferredSize,
-                             boolean activateExisting)
+   // open a satellite window (re-activate existing if possible)
+   public void openSatellite(String name, Size preferredSize)
    {
-      // if requested, first try to find an existing window
-      if (activateExisting)
+      // in web mode try to activate any existing satellite of this name
+      // we have a special mechanism for doing this because if we relied
+      // on the default mechanism it would cause the target window to
+      // reload (NOTE: Desktop handles this with a special codepath)
+      if (!Desktop.isDesktop())
       {
          for (ActiveSatellite satellite : satellites_)
          {
@@ -60,11 +68,9 @@ public class SatelliteManager implements CloseHandler<Window>
          }
       }
       
-      // open a new satellite (respect any existing URL params)
-      UrlBuilder urlBuilder = Window.Location.createUrlBuilder();
-      urlBuilder.setParameter("mode", name);
-      RStudioGinjector.INSTANCE.getGlobalDisplay().openMinimalWindow(
-                                              urlBuilder.buildString(),
+      // open the satellite
+      RStudioGinjector.INSTANCE.getGlobalDisplay().openSatelliteWindow(
+                                              name,
                                               preferredSize.width,
                                               preferredSize.height);
    }

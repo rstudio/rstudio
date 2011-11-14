@@ -274,6 +274,13 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                                       height,
                                       showLocation);
    }
+   
+   @Override
+   public void openSatelliteWindow(String name, int width, int height)
+   {
+      windowOpener_.openSatelliteWindow(this, name, width, height);
+   }
+   
 
    @Override
    public void openEmailComposeWindow(String to, String subject)

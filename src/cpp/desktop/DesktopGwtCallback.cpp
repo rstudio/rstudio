@@ -383,6 +383,14 @@ void GwtCallback::openMinimalWindow(QString name,
    browser->activateWindow();
 }
 
+void GwtCallback::prepareForSatelliteWindow(QString name,
+                                            int width,
+                                            int height)
+{
+   pOwnerWindow_->webView()->prepareForSatelliteWindow(
+                                 PendingSatelliteWindow(name, width, height));
+}
+
 void GwtCallback::copyImageToClipboard(int left, int top, int width, int height)
 {
    pOwnerWindow_->webView()->page()->updatePositionDependentActions(

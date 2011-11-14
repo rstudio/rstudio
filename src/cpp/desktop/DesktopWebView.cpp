@@ -21,6 +21,7 @@
 #include "DesktopDownloadHelper.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopWebPage.hpp"
+#include "DesktopWindowTracker.hpp"
 
 namespace desktop {
 
@@ -57,13 +58,63 @@ void WebView::setBaseUrl(const QUrl& baseUrl)
    pWebPage_->setBaseUrl(baseUrl_);
 }
 
+void WebView::prepareForSatelliteWindow(
+                              const PendingSatelliteWindow& pendingWnd)
+{
+   pendingSatelliteWindow_ = pendingWnd;
+}
+
 
 
 QWebView* WebView::createWindow(QWebPage::WebWindowType)
 {
-   SecondaryWindow* pWindow = new SecondaryWindow(baseUrl_);
-   pWindow->show();
-   return pWindow->webView();
+   // check if this is a satellite window
+   if (!pendingSatelliteWindow_.isEmpty())
+   {
+      // capture pending window params then clear them (one time only)
+      QString name = pendingSatelliteWindow_.name;
+      int width = pendingSatelliteWindow_.width;
+      int height = pendingSatelliteWindow_.height;
+      pendingSatelliteWindow_ = PendingSatelliteWindow();
+
+      // check for an existing window of this name
+      static WindowTracker windowTracker;
+      BrowserWindow* pBrowser = windowTracker.getWindow(name);
+      if (pBrowser)
+      {
+         // activate the browser then return NULL to indicate
+         // we didn't create a new WebView
+         if (pBrowser->isMinimized())
+         {
+            pBrowser->setWindowState(
+                           pBrowser->windowState() & ~Qt::WindowMinimized);
+            pBrowser->raise();
+         }
+         pBrowser->activateWindow();
+         return NULL;
+      }
+      // create a new window if we didn't find one
+      else
+      {
+         pBrowser = new BrowserWindow(false, true);
+         pBrowser->setAttribute(Qt::WA_DeleteOnClose);
+         pBrowser->setAttribute(Qt::WA_QuitOnClose, false);
+         pBrowser->resize(width, height);
+
+         // add to tracker
+         windowTracker.addWindow(name, pBrowser);
+
+         // show and return the browser
+         pBrowser->show();
+         return pBrowser->webView();
+      }
+   }
+   else
+   {
+      SecondaryWindow* pWindow = new SecondaryWindow(baseUrl_);
+      pWindow->show();
+      return pWindow->webView();
+   }
 }
 
 QString WebView::promptForFilename(const QNetworkRequest& request,
