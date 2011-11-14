@@ -1986,9 +1986,31 @@ void postbackSSHAskPass(const std::string& prompt,
    int retcode = EXIT_FAILURE;
    std::string passphrase;
 
+   bool promptToRemember;
+   boost::smatch match;
+   FilePath keyFile;
+
+   // This is what the prompt looks like on OpenSSH_4.6p1 (Windows)
+   if (boost::regex_match(prompt, match, boost::regex("Enter passphrase for key '(.+)': ")))
+   {
+      promptToRemember = true;
+      keyFile = FilePath(match[1]);
+   }
+   // This is what the prompt looks like on OpenSSH_5.8p1 Debian-7ubuntu1 (Ubuntu 11.10)
+   else if (boost::regex_match(prompt, match, boost::regex("Enter passphrase for (.+): ")))
+   {
+      promptToRemember = true;
+      keyFile = FilePath(match[1]);
+   }
+   else
+      promptToRemember = false;
+
+   promptToRemember = promptToRemember && keyFile.exists();
+
    json::Object payload;
    payload["prompt"] = !prompt.empty() ? prompt
                                        : std::string("Enter passphrase:");
+   payload["remember"] = promptToRemember;
    ClientEvent askPassEvent(client_events::kAskPass, payload);
 
    // wait for method
@@ -2550,37 +2572,21 @@ core::Error initialize()
       // Intentionally blank. tryGit() has side effects.
    }
 
-   bool interceptSsh;
    bool interceptAskPass;
 
    if (options().programMode() == kSessionProgramModeServer)
    {
-      interceptSsh = true;
       interceptAskPass = true;
    }
    else
    {
 #ifdef _WIN32
       // Windows probably unlikely to have either ssh-agent or askpass
-      interceptSsh = true;
       interceptAskPass = true;
 #else
       // Everything fine on Mac and Linux
-      interceptSsh = false;
       interceptAskPass = false;
 #endif
-   }
-
-   if (interceptSsh)
-   {
-      std::string gitSshCmd;
-      error = module_context::registerPostbackHandler("gitssh",
-                                                      postbackGitSSH,
-                                                      &gitSshCmd);
-      if (error)
-         return error;
-      BOOST_ASSERT(boost::algorithm::ends_with(gitSshCmd, "rpostback-gitssh"));
-      core::system::setenv("GIT_SSH", "rpostback-gitssh");
    }
 
    if (interceptAskPass)
