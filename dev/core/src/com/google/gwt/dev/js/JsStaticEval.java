@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.js.ast.CanBooleanEval;
@@ -182,6 +183,17 @@ public class JsStaticEval {
         trySimplifyNe(x, arg1, arg2, ctx);
       } else if (op == JsBinaryOperator.ADD) {
         trySimplifyAdd(x, arg1, arg2, ctx);
+      } else  {
+       switch (op) {
+         case GT:
+         case GTE:
+         case LT:
+         case LTE:
+           trySimplifyCompare(x, arg1, arg2, op, ctx);
+           break;
+         default:
+           break;
+       }
       }
     }
 
@@ -563,6 +575,37 @@ public class JsStaticEval {
       return num;
     }
 
+    private JsExpression simplifyCompare(JsExpression original, JsExpression arg1,
+        JsExpression arg2, JsBinaryOperator op) {
+      assert (original != null);
+
+      // TODO(cromwellian) handle all types
+      if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
+          double num1 = ((JsNumberLiteral) arg1).getValue();
+          double num2 = ((JsNumberLiteral) arg2).getValue();
+          boolean result = false;
+          switch(op) {
+            case LT:
+              result = num1 < num2;
+              break;
+            case LTE:
+              result = num1 <= num2;
+              break;
+            case GT:
+              result = num1 > num2;
+              break;
+            case GTE:
+              result = num1 >= num2;
+              break;
+            default:
+              throw new InternalCompilerException("Can't handle simplify of op " + op);
+          }
+        return JsBooleanLiteral.get(result);
+      }
+      // no simplification made
+      return original;
+    }
+
     private JsExpression simplifyEq(JsExpression original, JsExpression arg1,
         JsExpression arg2) {
       assert (original != null);
@@ -575,6 +618,10 @@ public class JsStaticEval {
         return simplifyNullEq(original, arg1);
       }
 
+      if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
+          return JsBooleanLiteral.get(((JsNumberLiteral) arg1).getValue()
+           == ((JsNumberLiteral) arg2).getValue());
+      }
       // no simplification made
       return original;
     }
@@ -591,6 +638,10 @@ public class JsStaticEval {
         return simplifyNullNe(original, arg1);
       }
 
+      if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
+        return JsBooleanLiteral.get(((JsNumberLiteral) arg1).getValue()
+            != ((JsNumberLiteral) arg2).getValue());
+      }
       // no simplification made
       return original;
     }
@@ -749,6 +800,14 @@ public class JsStaticEval {
         }
       }
       return toReturn;
+    }
+
+    private void trySimplifyCompare(JsExpression original, JsExpression arg1,
+        JsExpression arg2, JsBinaryOperator op, JsContext ctx) {
+      JsExpression updated = simplifyCompare(original, arg1, arg2, op);
+      if (updated != original) {
+        ctx.replaceMe(updated);
+      }
     }
 
     private void trySimplifyEq(JsExpression original, JsExpression arg1,

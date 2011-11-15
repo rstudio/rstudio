@@ -124,6 +124,23 @@ public class JsStaticEvalTest extends OptimizerTestBase {
         optimize("if (a()) { b() } else { throw 1; }"));
   }
 
+  public void testLiteralCompares() throws Exception {
+    assertEquals("alert(false);", optimize("alert(2 != 2)"));
+    assertEquals("alert(false);", optimize("alert(2 == 3)"));
+    assertEquals("alert(true);", optimize("alert(2 == 2)"));
+    assertEquals("alert(true);", optimize("alert(2 != 3)"));
+    assertEquals("alert(true);", optimize("alert(2 < 3)"));
+    assertEquals("alert(true);", optimize("alert(3 <= 3)"));
+    assertEquals("alert(true);", optimize("alert(3 > 2)"));
+    assertEquals("alert(true);", optimize("alert(3 >= 3)"));
+    assertEquals("alert(false);", optimize("alert(2 > 3)"));
+    assertEquals("alert(false);", optimize("alert(2 >= 3)"));
+    assertEquals("alert(false);", optimize("alert(3 < 2)"));
+    assertEquals("alert(false);", optimize("alert(3 <= 2)"));
+    assertEquals("alert(false);", optimize("alert(1.8E+10308 < 1.9E+10308)"));
+    assertEquals("alert(false);", optimize("alert(1.8E+10308 > 1.9E+10308)"));
+  }
+
   public void testLiteralEqNull() throws Exception {
     assertEquals("alert(false);", optimize("alert('test' == null)"));
   }
