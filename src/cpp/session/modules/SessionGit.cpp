@@ -238,8 +238,7 @@ protected:
    core::Error runGit(const ShellArgs& args,
                       std::string* pStdOut=NULL,
                       std::string* pStdErr=NULL,
-                      int* pExitCode=NULL,
-                      bool errorOnNonZeroExitCode=true)
+                      int* pExitCode=NULL)
    {
       using namespace core::system;
       ProcessOptions options = procOptions();
@@ -274,14 +273,9 @@ protected:
       if (pExitCode)
          *pExitCode = result.exitStatus;
 
-      if (errorOnNonZeroExitCode && result.exitStatus != EXIT_SUCCESS)
+      if (result.exitStatus != EXIT_SUCCESS)
       {
-         // TODO: What is the proper error code to return here?
-         // TODO: Do more than just return an error?
-
-         return systemError(boost::system::errc::protocol_error,
-                            result.stdErr,
-                            ERROR_LOCATION);
+         LOG_DEBUG_MESSAGE(result.stdErr);
       }
 
       return Success();
@@ -482,7 +476,7 @@ public:
    core::Error unstage(const std::vector<FilePath>& filePaths)
    {
       return runGit(ShellArgs() << "reset" << "HEAD" << "--" << filePaths,
-                    NULL, NULL, NULL, false);
+                    NULL, NULL, NULL);
    }
 
    core::Error listBranches(std::vector<std::string>* pBranches,
@@ -607,8 +601,7 @@ public:
       Error error = runGit(ShellArgs() << "config" << "--get" << "branch." + branch + ".remote",
                            pRemote,
                            NULL,
-                           &exitStatus,
-                           false);
+                           &exitStatus);
       if (error)
       {
          LOG_ERROR(error);
@@ -621,8 +614,7 @@ public:
       error = runGit(ShellArgs() << "config" << "--get" << "branch." + branch + ".merge",
                      pMerge,
                      NULL,
-                     &exitStatus,
-                     false);
+                     &exitStatus);
       if (error)
       {
          LOG_ERROR(error);
@@ -674,7 +666,7 @@ public:
          args << *pCompareTo;
       args << filePath;
 
-      return runGit(args, pOutput, NULL, NULL, false);
+      return runGit(args, pOutput, NULL, NULL);
    }
 
    core::Error diffFile(const FilePath& filePath,
@@ -1956,7 +1948,7 @@ void postbackSSHAskPass(const std::string& prompt,
    json::Object payload;
    payload["prompt"] = !prompt.empty() ? prompt
                                        : std::string("Enter passphrase:");
-   payload["remember_prompt"] = promptToRemember ? std::string("Remember passphrase")
+   payload["remember_prompt"] = promptToRemember ? std::string("Remember passphrase for this session")
                                                  : std::string();
    payload["window"] = s_askPassWindow;
    ClientEvent askPassEvent(client_events::kAskPass, payload);
