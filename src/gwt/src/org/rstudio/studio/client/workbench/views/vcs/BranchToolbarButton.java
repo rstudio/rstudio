@@ -22,9 +22,10 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
-import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
-import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
-import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
+import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
 
 public class BranchToolbarButton extends ToolbarButton
 {

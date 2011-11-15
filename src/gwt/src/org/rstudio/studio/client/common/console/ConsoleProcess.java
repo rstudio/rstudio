@@ -29,7 +29,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
-import org.rstudio.studio.client.workbench.views.vcs.ConsoleProgressDialog;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                        ProcessExitEvent.HasHandlers

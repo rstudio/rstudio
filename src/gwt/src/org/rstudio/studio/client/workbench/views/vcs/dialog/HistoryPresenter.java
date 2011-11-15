@@ -32,12 +32,12 @@ import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.workbench.views.vcs.diff.UnifiedParser;
-import org.rstudio.studio.client.workbench.views.vcs.events.SwitchViewEvent;
-import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
-import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent.Reason;
-import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
-import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
+import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
 
 public class HistoryPresenter
 {

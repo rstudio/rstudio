@@ -41,8 +41,8 @@ import org.rstudio.core.client.theme.RStudioCellTableStyle;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageEvent;
-import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageHandler;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageHandler;
 
 import java.util.ArrayList;
 import java.util.Comparator;

@@ -62,8 +62,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.Code
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
-import org.rstudio.studio.client.workbench.views.vcs.ConsoleProgressDialog;
-import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportGoogleSpreadsheetDialog;
 

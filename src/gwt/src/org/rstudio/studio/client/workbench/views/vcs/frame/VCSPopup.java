@@ -25,7 +25,7 @@ import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.core.client.widget.NineUpBorder;
-import org.rstudio.studio.client.workbench.views.vcs.events.SwitchViewEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 

@@ -41,12 +41,12 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
-import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
-import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;
+import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
 
 import java.util.ArrayList;
 

@@ -1,7 +1,7 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
              xmlns:vcs='urn:import:org.rstudio.studio.client.workbench.views.vcs'
-             xmlns:vcs_diff='urn:import:org.rstudio.studio.client.workbench.views.vcs.diff'
+             xmlns:vcs_diff='urn:import:org.rstudio.studio.client.workbench.views.vcs.common.diff'
              xmlns:rs_widget='urn:import:org.rstudio.core.client.widget'>
 
    <ui:with field="res" type="org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPanel.Resources"/>

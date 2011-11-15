@@ -1,0 +1,12 @@
+@@ -0,0 +1,11 @@
++package org.rstudio.studio.client.workbench.views.vcs.common.diff;
++public class Range
++{
++   Range(int startRow, int rowCount)
++   {
++      this.startRow = startRow;
++      this.rowCount = rowCount;
++   }
++   public int startRow;
++   public int rowCount;
++}

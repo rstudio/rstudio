@@ -22,7 +22,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 
 public class DiffFrame extends Composite
 {

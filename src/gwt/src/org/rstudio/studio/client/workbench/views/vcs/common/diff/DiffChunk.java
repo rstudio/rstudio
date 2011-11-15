@@ -1,0 +1,69 @@
+/*
+ * DiffChunk.java
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+package org.rstudio.studio.client.workbench.views.vcs.common.diff;
+
+import java.util.ArrayList;
+
+public class DiffChunk
+{
+   public DiffChunk(Range[] ranges,
+                    String lineText,
+                    ArrayList<Line> diffLines,
+                    int diffIndex)
+   {
+      this.ranges_ = ranges;
+      this.lineText_ = lineText;
+      this.diffLines_ = diffLines;
+      diffIndex_ = diffIndex;
+   }
+
+   public DiffChunk reverse()
+   {
+      if (ranges_.length != 2)
+         throw new UnsupportedOperationException(
+               "Can't reverse a combined diff");
+
+      Range[] newRanges = new Range[2];
+      newRanges[0] = ranges_[1];
+      newRanges[1] = ranges_[0];
+
+      return new DiffChunk(newRanges,
+                           lineText_,
+                           Line.reverseLines(diffLines_), diffIndex_);
+   }
+
+   public ArrayList<Line> getLines()
+   {
+      return diffLines_;
+   }
+
+   public Range[] getRanges()
+   {
+      return ranges_;
+   }
+
+   public String getLineText()
+   {
+      return lineText_;
+   }
+
+   public int getDiffIndex()
+   {
+      return diffIndex_;
+   }
+
+   private final String lineText_;
+   private final ArrayList<Line> diffLines_;
+   private final int diffIndex_;
+   private final Range[] ranges_;
+}

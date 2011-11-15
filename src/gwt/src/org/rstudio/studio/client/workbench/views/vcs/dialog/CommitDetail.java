@@ -29,7 +29,7 @@ import org.rstudio.core.client.Point;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
-import org.rstudio.studio.client.workbench.views.vcs.diff.*;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.*;
 
 import java.util.ArrayList;
 

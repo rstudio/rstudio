@@ -45,11 +45,11 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.ChangelistTablePresenter;
-import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarFramePanel;
+import org.rstudio.studio.client.workbench.views.vcs.common.console.ConsoleBarFramePanel;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter.Display;
-import org.rstudio.studio.client.workbench.views.vcs.diff.ChunkOrLine;
-import org.rstudio.studio.client.workbench.views.vcs.diff.LineTablePresenter;
-import org.rstudio.studio.client.workbench.views.vcs.diff.LineTableView;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.ChunkOrLine;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 
 import java.util.ArrayList;
 

@@ -18,11 +18,11 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageEvent;
-import org.rstudio.studio.client.workbench.views.vcs.events.StageUnstageHandler;
-import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
-import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
-import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageHandler;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
+import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
 
 import java.util.ArrayList;
 

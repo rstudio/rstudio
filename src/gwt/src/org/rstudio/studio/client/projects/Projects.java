@@ -57,7 +57,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
-import org.rstudio.studio.client.workbench.views.vcs.ConsoleProgressDialog;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 @Singleton
 public class Projects implements OpenProjectFileHandler,
