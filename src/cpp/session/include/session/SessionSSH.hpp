@@ -1,5 +1,5 @@
 /*
- * SessionVersionControl.hpp
+ * SessionSSH.hpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *

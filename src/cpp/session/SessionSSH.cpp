@@ -21,71 +21,71 @@
 using namespace core;
 
 namespace session {
-   namespace ssh {
+namespace ssh {
 
-      void ProcessOptionsCreator::addEnv(const std::string& name, const std::string& value)
+void ProcessOptionsCreator::addEnv(const std::string& name, const std::string& value)
+{
+   env_[name] = value;
+}
+
+void ProcessOptionsCreator::rmEnv(const std::string& name)
+{
+   env_.erase(name);
+}
+
+void ProcessOptionsCreator::addToPath(const core::FilePath& dir)
+{
+   pathDirs_.push_back(dir);
+}
+
+void ProcessOptionsCreator::setWorkingDirectory(const core::FilePath& dir)
+{
+   workingDir_ = dir;
+}
+
+void ProcessOptionsCreator::clearWorkingDirectory()
+{
+   workingDir_ = FilePath();
+}
+
+core::system::ProcessOptions ProcessOptionsCreator::processOptions() const
+{
+   core::system::ProcessOptions options = baseOptions_;
+
+   // Set up environment
+   core::system::Options envOpts;
+   core::system::environment(&envOpts);
+   typedef std::pair<std::string, std::string> StringPair;
+   BOOST_FOREACH(StringPair var, env_)
+   {
+      if (var.second.empty())
+         core::system::unsetenv(&envOpts, var.first);
+      else
+         core::system::setenv(&envOpts, var.first, var.second);
+   }
+
+   if (!pathDirs_.empty())
+   {
+      std::string path = core::system::getenv(envOpts, "PATH");
+      BOOST_FOREACH(FilePath pathDir, pathDirs_)
       {
-         env_[name] = value;
-      }
-
-      void ProcessOptionsCreator::rmEnv(const std::string& name)
-      {
-         env_.erase(name);
-      }
-
-      void ProcessOptionsCreator::addToPath(const core::FilePath& dir)
-      {
-         pathDirs_.push_back(dir);
-      }
-
-      void ProcessOptionsCreator::setWorkingDirectory(const core::FilePath& dir)
-      {
-         workingDir_ = dir;
-      }
-
-      void ProcessOptionsCreator::clearWorkingDirectory()
-      {
-         workingDir_ = FilePath();
-      }
-
-      core::system::ProcessOptions ProcessOptionsCreator::processOptions() const
-      {
-         core::system::ProcessOptions options = baseOptions_;
-
-         // Set up environment
-         core::system::Options envOpts;
-         core::system::environment(&envOpts);
-         typedef std::pair<std::string, std::string> StringPair;
-         BOOST_FOREACH(StringPair var, env_)
-         {
-            if (var.second.empty())
-               core::system::unsetenv(&envOpts, var.first);
-            else
-               core::system::setenv(&envOpts, var.first, var.second);
-         }
-
-         if (!pathDirs_.empty())
-         {
-            std::string path = core::system::getenv(envOpts, "PATH");
-            BOOST_FOREACH(FilePath pathDir, pathDirs_)
-            {
 #ifdef _WIN32
-               path += ";";
+         path += ";";
 #else
-               path += ":";
+         path += ":";
 #endif
-               path += pathDir.absolutePathNative();
-            }
-            core::system::setenv(&envOpts, "PATH", path);
-         }
-
-         if (!workingDir_.empty())
-         {
-            options.workingDir = workingDir_;
-         }
-
-         return options;
+         path += pathDir.absolutePathNative();
       }
+      core::system::setenv(&envOpts, "PATH", path);
+   }
 
-   } // namespace ssh
+   if (!workingDir_.empty())
+   {
+      options.workingDir = workingDir_;
+   }
+
+   return options;
+}
+
+} // namespace ssh
 } // namespace session
