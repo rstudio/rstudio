@@ -37,6 +37,9 @@ import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;
 
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -99,6 +102,8 @@ public class VCSCore
             if (!handleAskPass(e.getWindow()))
                return;
             
+            askpassPending_ = true;
+            
             globalDisplay.promptForPassword(
                   "Password",
                   e.getPrompt(),
@@ -111,6 +116,8 @@ public class VCSCore
                      public void execute(final PasswordResult result,
                                          final ProgressIndicator indicator)
                      {
+                        askpassPending_ = false;
+                        
                         rememberByDefault_ = result.remember;
 
                         RSAEncrypt.encrypt_ServerOnly(
@@ -142,6 +149,8 @@ public class VCSCore
                      @Override
                      public void execute()
                      {
+                        askpassPending_ = false;
+                        
                         server_.askpassCompleted(
                                            null, false,
                                            new SimpleRequestCallback<Void>());
@@ -149,6 +158,26 @@ public class VCSCore
                   });
          }
       });
+      
+      // if there is an askpass pending when the window closes then send an
+      // askpass cancel
+      Window.addWindowClosingHandler(new ClosingHandler() {
+
+         @Override
+         public void onWindowClosing(ClosingEvent event)
+         {
+            if (askpassPending_)
+            {
+               askpassPending_ = false;
+               
+               server_.askpassCompleted(null, 
+                                        false,
+                                        new SimpleRequestCallback<Void>());
+            }
+            
+         } 
+      });
+
 
    }
 
@@ -186,4 +215,5 @@ public class VCSCore
    private final VCSServerOperations server_;
    private final VcsState vcsState_;
    private boolean rememberByDefault_ = true;
+   private boolean askpassPending_ = false;
 }

@@ -26,6 +26,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.*;
@@ -2040,20 +2041,23 @@ public class RemoteServer implements Server
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
          function(sourceWindow, scope, method, params, redactLog, responseCallback) {
-            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(sourceWindow, scope, method, params, redactLog, responseCallback);
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(sourceWindow, scope, method, params, redactLog, responseCallback);
          }
       ); 
    }-*/;
-
+   
    // this code runs in the main workbench and implements the server request
    // and then calls back the satellite on the provided js responseCallback
-   private void sendRemoteServerRequest(final String sourceWindow,
+   private void sendRemoteServerRequest(final JavaScriptObject sourceWindow,
                                         final String scope,
                                         final String method,
                                         final String params,
                                         final boolean redactLog,
                                         final JavaScriptObject responseCallback)
    {  
+      // get the WindowEx from the sourceWindow
+      final WindowEx srcWnd = sourceWindow.<WindowEx>cast();
+      
       // get the json array from the string
       final JSONArray jsonParams = JSONParser.parseStrict(params).isArray();
            
@@ -2063,13 +2067,15 @@ public class RemoteServer implements Server
          @Override
          public void onResponseReceived(RpcResponse response)
          {
-            performCallback(responseCallback, response);
+            if (!srcWnd.isClosed())
+               performCallback(responseCallback, response);
          }
          
          public void onError(RpcError error)
          {
             RpcResponse errorResponse = RpcResponse.create(error);
-            performCallback(responseCallback, errorResponse);
+            if (!srcWnd.isClosed())
+               performCallback(responseCallback, errorResponse);
          }
          
          private native void performCallback(JavaScriptObject responseCallback,
@@ -2087,7 +2093,7 @@ public class RemoteServer implements Server
          {
             // retry one time (passing null as last param ensures there
             // is no retry handler installed)
-            sendRequest(sourceWindow,
+            sendRequest(getSourceWindowName(sourceWindow),
                         scope, 
                         method, 
                         jsonParams, 
@@ -2104,7 +2110,7 @@ public class RemoteServer implements Server
       };
       
       // submit request (retry same request up to one time)
-      sendRequest(sourceWindow,
+      sendRequest(getSourceWindowName(sourceWindow),
                   scope, 
                   method, 
                   jsonParams, 
@@ -2112,6 +2118,10 @@ public class RemoteServer implements Server
                   responseHandler, 
                   retryHandler);
    }
+   
+   private native String getSourceWindowName(JavaScriptObject sourceWindow) /*-{
+      return sourceWindow.RStudioSatelliteName;
+   }-*/;
    
    // call made from satellite -- this delegates to a native method which
    // sets up a javascript callback and then calls the main workbench
@@ -2160,7 +2170,7 @@ public class RemoteServer implements Server
         handler.@org.rstudio.core.client.jsonrpc.RpcResponseHandler::onResponseReceived(Lorg/rstudio/core/client/jsonrpc/RpcResponse;)(response);
       });
 
-      $wnd.opener.sendRemoteServerRequest($wnd.RStudioSatelliteName,
+      $wnd.opener.sendRemoteServerRequest($wnd,
                                           scope, 
                                           method, 
                                           params, 
