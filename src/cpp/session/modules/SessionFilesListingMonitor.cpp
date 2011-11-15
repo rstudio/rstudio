@@ -30,7 +30,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "SessionSourceControl.hpp"
+#include "SessionVCS.hpp"
 
 using namespace core ;
 

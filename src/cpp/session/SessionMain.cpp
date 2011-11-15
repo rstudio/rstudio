@@ -97,7 +97,7 @@
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
 #include "modules/SessionSource.hpp"
-#include "modules/SessionSourceControl.hpp"
+#include "modules/SessionVCS.hpp"
 #include "modules/SessionTeX.hpp"
 #include "modules/SessionHistory.hpp"
 #include "modules/SessionLimits.hpp"

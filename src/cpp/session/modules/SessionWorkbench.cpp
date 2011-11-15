@@ -37,7 +37,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#include "SessionSourceControl.hpp"
+#include "SessionVCS.hpp"
 
 #include <R_ext/RStartup.h>
 extern "C" SA_TYPE SaveAction;

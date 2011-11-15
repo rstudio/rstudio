@@ -57,7 +57,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "modules/SessionContentUrls.hpp"
-#include "modules/SessionSourceControl.hpp"
+#include "modules/SessionVCS.hpp"
 #include "modules/SessionFiles.hpp"
 
 #include "config.h"
