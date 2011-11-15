@@ -40,7 +40,7 @@ public class VCSApplicationWindow extends SatelliteWindow
    protected void onInitialize(LayoutPanel mainPanel)
    {
       // set our window title
-      Window.setTitle("RStudio - Review Changes");
+      Window.setTitle("Review Changes");
       
       // make sure vcs core is initialized
       pVCSCore_.get();

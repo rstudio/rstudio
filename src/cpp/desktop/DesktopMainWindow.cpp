@@ -35,7 +35,7 @@ namespace desktop {
 MainWindow::MainWindow(QUrl url) :
       BrowserWindow(false, false, url, NULL),
       menuCallback_(this),
-      gwtCallback_(this),
+      gwtCallback_(this, this),
       updateChecker_(this),
       pCurrentSessionProcess_(NULL)
 {
@@ -99,10 +99,7 @@ void MainWindow::onWorkbenchInitialized()
    else
       setWindowTitle(QString::fromAscii("RStudio"));
 
-#ifdef Q_WS_MACX
-   webView()->page()->mainFrame()->evaluateJavaScript(
-         QString::fromAscii("document.body.className = document.body.className + ' avoid-move-cursor'"));
-#endif
+   avoidMoveCursorIfNecessary();
 
    // check for updates
    updateChecker_.performCheck(false);

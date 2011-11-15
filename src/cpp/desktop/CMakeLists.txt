@@ -66,6 +66,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopWebPage.cpp
   DesktopWebView.cpp
   DesktopWindowTracker.cpp
+  DesktopSatelliteWindow.cpp
   DesktopSecondaryWindow.cpp
   DesktopSessionLauncher.cpp
   DesktopSlotBinders.cpp

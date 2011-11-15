@@ -37,9 +37,12 @@ protected slots:
 
      void adjustTitle();
      void setProgress(int p);
-     void finishLoading(bool);
+     virtual void finishLoading(bool);
      virtual void onJavaScriptWindowObjectCleared() {}
      void printRequested(QWebFrame* frame);
+
+protected:
+     void avoidMoveCursorIfNecessary();
 
 protected:
      WebView* pView_;

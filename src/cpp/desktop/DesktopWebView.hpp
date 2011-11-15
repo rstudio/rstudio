@@ -18,24 +18,33 @@
 #include <QWebView>
 
 #include "DesktopWebPage.hpp"
+#include "DesktopGwtCallback.hpp"
 
 namespace desktop {
+
+class MainWindow;
 
 struct PendingSatelliteWindow
 {
    PendingSatelliteWindow()
-      : name(), width(-1), height(-1)
+      : name(), pMainWindow(NULL), width(-1), height(-1)
    {
    }
 
-   PendingSatelliteWindow(QString name, int width, int height)
-      : name(name), width(width), height(height)
+   PendingSatelliteWindow(QString name,
+                          MainWindow* pMainWindow,
+                          int width,
+                          int height)
+      : name(name), pMainWindow(pMainWindow), width(width), height(height)
    {
    }
 
    bool isEmpty() const { return name.isEmpty(); }
 
    QString name;
+
+   MainWindow* pMainWindow;
+
    int width;
    int height;
 };

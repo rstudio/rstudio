@@ -82,4 +82,12 @@ WebView* BrowserWindow::webView()
    return pView_;
 }
 
+void BrowserWindow::avoidMoveCursorIfNecessary()
+{
+#ifdef Q_WS_MACX
+   webView()->page()->mainFrame()->evaluateJavaScript(
+         QString::fromAscii("document.body.className = document.body.className + ' avoid-move-cursor'"));
+#endif
+}
+
 } // namespace desktop

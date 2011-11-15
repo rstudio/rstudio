@@ -2,6 +2,7 @@ package org.rstudio.studio.client.common.satellite;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -15,11 +16,9 @@ import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-// TODO: Fonts and Cursor are wrong in desktop mode
+// TODO: remember satellite window size
 
 // TODO: Pass parameters (show history, list of files, etc.)
-
-// TODO: Inject desktop object (and make sure windows activate, etc.)
 
 // TODO: Code splitting
 
@@ -48,6 +47,18 @@ public class SatelliteManager implements CloseHandler<Window>
    // open a satellite window (re-activate existing if possible)
    public void openSatellite(String name, Size preferredSize)
    {
+      // satellites can't launch other satellites -- this is because the 
+      // delegating/forwarding of remote server calls and events doesn't
+      // cascade correctly -- it wouldn't be totally out of the question
+      // to make htis work but we'd rather not have this complexity
+      // if we don't need to.
+      if (isCurrentWindowSatellite())
+      {
+         Debug.log("Satellite windows can't launch other satellites");
+         assert false;
+         return;
+      }
+ 
       // in web mode try to activate any existing satellite of this name
       // we have a special mechanism for doing this because if we relied
       // on the default mechanism it would cause the target window to
@@ -171,6 +182,13 @@ public class SatelliteManager implements CloseHandler<Window>
    private native void callDispatchEvent(JavaScriptObject satellite,
                                          JavaScriptObject clientEvent) /*-{
       satellite.dispatchEventToRStudioSatellite(clientEvent);
+   }-*/;
+   
+   // check whether the current window is a satellite (note this method
+   // is also implemeted in the Satellite class -- we don't want this class
+   // to depend on Satellite so we duplicate the definition)
+   private native boolean isCurrentWindowSatellite() /*-{
+      return !!$wnd.isRStudioSatellite;
    }-*/;
    
    private final Session session_;

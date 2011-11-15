@@ -18,6 +18,7 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include "DesktopSecondaryWindow.hpp"
+#include "DesktopSatelliteWindow.hpp"
 #include "DesktopDownloadHelper.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopWebPage.hpp"
@@ -73,40 +74,40 @@ QWebView* WebView::createWindow(QWebPage::WebWindowType)
    {
       // capture pending window params then clear them (one time only)
       QString name = pendingSatelliteWindow_.name;
+      MainWindow* pMainWindow = pendingSatelliteWindow_.pMainWindow;
       int width = pendingSatelliteWindow_.width;
       int height = pendingSatelliteWindow_.height;
       pendingSatelliteWindow_ = PendingSatelliteWindow();
 
       // check for an existing window of this name
       static WindowTracker windowTracker;
-      BrowserWindow* pBrowser = windowTracker.getWindow(name);
-      if (pBrowser)
+      BrowserWindow* pSatellite = windowTracker.getWindow(name);
+      if (pSatellite)
       {
          // activate the browser then return NULL to indicate
          // we didn't create a new WebView
-         if (pBrowser->isMinimized())
+         if (pSatellite->isMinimized())
          {
-            pBrowser->setWindowState(
-                           pBrowser->windowState() & ~Qt::WindowMinimized);
-            pBrowser->raise();
+            pSatellite->setWindowState(
+                           pSatellite->windowState() & ~Qt::WindowMinimized);
+            pSatellite->raise();
          }
-         pBrowser->activateWindow();
+         pSatellite->activateWindow();
          return NULL;
       }
       // create a new window if we didn't find one
       else
       {
-         pBrowser = new BrowserWindow(false, true);
-         pBrowser->setAttribute(Qt::WA_DeleteOnClose);
-         pBrowser->setAttribute(Qt::WA_QuitOnClose, false);
-         pBrowser->resize(width, height);
+         // create and size
+         pSatellite = new SatelliteWindow(pMainWindow);
+         pSatellite->resize(width, height);
 
          // add to tracker
-         windowTracker.addWindow(name, pBrowser);
+         windowTracker.addWindow(name, pSatellite);
 
          // show and return the browser
-         pBrowser->show();
-         return pBrowser->webView();
+         pSatellite->show();
+         return pSatellite->webView();
       }
    }
    else

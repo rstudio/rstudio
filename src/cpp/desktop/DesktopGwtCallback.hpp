@@ -20,6 +20,7 @@
 namespace desktop {
 
 class MainWindow;
+class BrowserWindow;
 
 class GwtCallback : public QObject
 {
@@ -28,8 +29,9 @@ class GwtCallback : public QObject
    Q_PROPERTY(QString fixedWidthFont READ fixedWidthFont)
 
 public:
-   GwtCallback(MainWindow* pOwnerWindow)
-      : pOwnerWindow_(pOwnerWindow),
+   GwtCallback(MainWindow* pMainWindow, BrowserWindow* pOwnerWindow)
+      : pMainWindow_(pMainWindow),
+        pOwnerWindow_(pOwnerWindow),
         switchToProjectPending_(false)
    {
    }
@@ -66,7 +68,6 @@ public slots:
    QString chooseRVersion();
    bool canChooseRVersion();
 
-   void close();
    void openMinimalWindow(QString name, QString url, int width, int height);
    void prepareForSatelliteWindow(QString name, int width, int height);
 
@@ -107,7 +108,8 @@ public slots:
 private:
    void doAction(QKeySequence::StandardKey key);
    QWebView* webView();
-   MainWindow* pOwnerWindow_;
+   MainWindow* pMainWindow_;
+   BrowserWindow* pOwnerWindow_;
    bool switchToProjectPending_;
 
 };

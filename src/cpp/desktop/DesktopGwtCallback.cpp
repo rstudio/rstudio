@@ -350,11 +350,6 @@ bool GwtCallback::canChooseRVersion()
 #endif
 }
 
-void GwtCallback::close()
-{
-   pOwnerWindow_->close();
-}
-
 void GwtCallback::openMinimalWindow(QString name,
                                     QString url,
                                     int width,
@@ -388,7 +383,7 @@ void GwtCallback::prepareForSatelliteWindow(QString name,
                                             int height)
 {
    pOwnerWindow_->webView()->prepareForSatelliteWindow(
-                                 PendingSatelliteWindow(name, width, height));
+                PendingSatelliteWindow(name, pMainWindow_, width, height));
 }
 
 void GwtCallback::copyImageToClipboard(int left, int top, int width, int height)
@@ -516,7 +511,7 @@ QVariant GwtCallback::promptForText(QString title,
 
 void GwtCallback::checkForUpdates()
 {
-   pOwnerWindow_->checkForUpdates();
+   pMainWindow_->checkForUpdates();
 }
 
 void GwtCallback::showAboutDialog()
