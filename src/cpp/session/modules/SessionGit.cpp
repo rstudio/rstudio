@@ -278,7 +278,7 @@ protected:
    {
       using namespace session::modules::console_process;
 
-      system::ProcessOptions options = procOptions();
+      core::system::ProcessOptions options = procOptions();
       options.detachProcess = true;
       if (!workingDir)
          options.workingDir = root_;
@@ -316,12 +316,12 @@ protected:
 public:
    static FilePath detectGitDir(const FilePath& workingDir)
    {
-      system::ProcessOptions options = procOptions();
+      core::system::ProcessOptions options = procOptions();
       options.workingDir = workingDir;
       options.detachSession = true;
 
       core::system::ProcessResult result;
-      Error error = system::runCommand(
+      Error error = core::system::runCommand(
                git() << "rev-parse" << "--show-toplevel",
                "",
                options,
@@ -1799,7 +1799,7 @@ FilePath verifiedSshKeyPath()
 bool ensureSSHAgentIsRunning()
 {
    // Use "ssh-add -l" to see if ssh-agent is running
-   system::ProcessResult result;
+   core::system::ProcessResult result;
    Error error = runCommand(shell_utils::sendStdErrToNull("ssh-add -l"),
                             procOptions(), &result);
    if (error)
@@ -1855,7 +1855,7 @@ bool ensureSSHAgentIsRunning()
    return true;
 }
 
-void addKeyToSSHAgent_onCompleted(const system::ProcessResult& result)
+void addKeyToSSHAgent_onCompleted(const core::system::ProcessResult& result)
 {
    if (result.exitStatus != EXIT_SUCCESS)
       LOG_ERROR_MESSAGE(result.stdErr);
@@ -1864,13 +1864,13 @@ void addKeyToSSHAgent_onCompleted(const system::ProcessResult& result)
 void addKeyToSSHAgent(const FilePath& keyFile,
                       const std::string& passphrase)
 {
-   system::ProcessOptions options = procOptions();
-   system::setenv(options.environment.get_ptr(),
-                  "__ASKPASS_PASSTHROUGH_RESULT",
-                  passphrase);
-   system::setenv(options.environment.get_ptr(),
-                  "SSH_ASKPASS",
-                  "askpass-passthrough");
+   core::system::ProcessOptions options = procOptions();
+   core::system::setenv(options.environment.get_ptr(),
+                        "__ASKPASS_PASSTHROUGH_RESULT",
+                        passphrase);
+   core::system::setenv(options.environment.get_ptr(),
+                        "SSH_ASKPASS",
+                        "askpass-passthrough");
 
    ShellCommand cmd("ssh-add");
    cmd << "--" << keyFile;
