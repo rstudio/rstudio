@@ -26,15 +26,15 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.vcs.VCS.Display;
+import org.rstudio.studio.client.workbench.views.vcs.GitPresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.console.ConsoleBarFramePanel;
 
 import java.util.ArrayList;
 
-public class VCSPane extends WorkbenchPane implements Display
+public class GitPane extends WorkbenchPane implements Display
 {
    @Inject
-   public VCSPane(ConsoleBarFramePanel consoleBarFrame,
+   public GitPane(ConsoleBarFramePanel consoleBarFrame,
                   ChangelistTablePresenter changelistTablePresenter,
                   Session session,
                   Commands commands,

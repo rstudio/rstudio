@@ -17,9 +17,9 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
-public class VCSTab extends DelayLoadWorkbenchTab<VCS>
+public class VCSTab extends DelayLoadWorkbenchTab<GitPresenter>
 {
-   public abstract static class VCSShim extends DelayLoadTabShim<VCS, VCSTab>
+   public abstract static class VCSShim extends DelayLoadTabShim<GitPresenter, VCSTab>
    {
    }
 

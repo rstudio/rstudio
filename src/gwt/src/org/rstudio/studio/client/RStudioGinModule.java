@@ -153,7 +153,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Packages.Display.class).to(PackagesPane.class);
       bind(Help.Display.class).to(HelpPane.class);
       bind(Edit.Display.class).to(EditView.class);
-      bind(VCS.Display.class).to(VCSPane.class);
+      bind(GitPresenter.Display.class).to(GitPane.class);
       bindTab("Workspace", WorkspaceTab.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);

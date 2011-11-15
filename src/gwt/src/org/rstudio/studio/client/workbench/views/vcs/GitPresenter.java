@@ -50,9 +50,9 @@ import org.rstudio.studio.client.workbench.views.vcs.model.VcsState;
 
 import java.util.ArrayList;
 
-public class VCS extends BasePresenter implements IsWidget
+public class GitPresenter extends BasePresenter implements IsWidget
 {
-   public interface Binder extends CommandBinder<Commands, VCS> {}
+   public interface Binder extends CommandBinder<Commands, GitPresenter> {}
 
    public interface Display extends WorkbenchView, IsWidget
    {
@@ -70,18 +70,18 @@ public class VCS extends BasePresenter implements IsWidget
    }
 
    @Inject
-   public VCS(VCSCore vcsCore,
-              Display view,
-              Provider<ReviewPresenter> pReviewPresenter,
-              Provider<HistoryPresenter> pHistoryPresenter,
-              VCSServerOperations server,
-              final Commands commands,
-              Binder commandBinder,
-              VcsState vcsState,
-              EventBus events,
-              final GlobalDisplay globalDisplay,
-              final FileTypeRegistry fileTypeRegistry,
-              SatelliteManager satelliteManager)
+   public GitPresenter(GitPresenterCore gitCore,
+                       Display view,
+                       Provider<ReviewPresenter> pReviewPresenter,
+                       Provider<HistoryPresenter> pHistoryPresenter,
+                       VCSServerOperations server,
+                       final Commands commands,
+                       Binder commandBinder,
+                       VcsState vcsState,
+                       EventBus events,
+                       final GlobalDisplay globalDisplay,
+                       final FileTypeRegistry fileTypeRegistry,
+                       SatelliteManager satelliteManager)
    {
       super(view);
       view_ = view;

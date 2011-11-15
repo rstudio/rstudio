@@ -5,7 +5,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
-import org.rstudio.studio.client.workbench.views.vcs.VCSCore;
+import org.rstudio.studio.client.workbench.views.vcs.GitPresenterCore;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
@@ -23,7 +23,7 @@ public class VCSApplicationWindow extends SatelliteWindow
                                   implements VCSApplicationView
 {
    @Inject
-   public VCSApplicationWindow(Provider<VCSCore> pVCSCore,
+   public VCSApplicationWindow(Provider<GitPresenterCore> pVCSCore,
                                Provider<ReviewPresenter> pReviewPresenter,
                                Provider<HistoryPresenter> pHistoryPresenter,
                                Provider<EventBus> pEventBus,
@@ -60,7 +60,7 @@ public class VCSApplicationWindow extends SatelliteWindow
    }
 
 
-   private final Provider<VCSCore> pVCSCore_;
+   private final Provider<GitPresenterCore> pVCSCore_;
    private final Provider<ReviewPresenter> pReviewPresenter_;
    private final Provider<HistoryPresenter> pHistoryPresenter_;
 }

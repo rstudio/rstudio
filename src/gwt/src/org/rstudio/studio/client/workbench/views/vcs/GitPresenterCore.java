@@ -44,19 +44,19 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class VCSCore
+public class GitPresenterCore
 {
-   public interface Binder extends CommandBinder<Commands, VCSCore> {}
+   public interface Binder extends CommandBinder<Commands, GitPresenterCore> {}
    
    @Inject
-   public VCSCore(VCSServerOperations server,
-                  VcsState vcsState,
-                  final Commands commands,
-                  Binder commandBinder,
-                  EventBus eventBus,
-                  final GlobalDisplay globalDisplay,
-                  final Satellite satellite,
-                  final SatelliteManager satelliteManager)
+   public GitPresenterCore(VCSServerOperations server,
+                           VcsState vcsState,
+                           final Commands commands,
+                           Binder commandBinder,
+                           EventBus eventBus,
+                           final GlobalDisplay globalDisplay,
+                           final Satellite satellite,
+                           final SatelliteManager satelliteManager)
    {
       server_ = server;
       vcsState_ = vcsState;
