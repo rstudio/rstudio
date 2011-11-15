@@ -25,6 +25,8 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.RSAEncrypt;
+import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
@@ -49,7 +51,9 @@ public class VCSCore
                   final Commands commands,
                   Binder commandBinder,
                   EventBus eventBus,
-                  final GlobalDisplay globalDisplay)
+                  final GlobalDisplay globalDisplay,
+                  final Satellite satellite,
+                  final SatelliteManager satelliteManager)
    {
       server_ = server;
       vcsState_ = vcsState;
@@ -69,9 +73,32 @@ public class VCSCore
 
       eventBus.addHandler(AskPassEvent.TYPE, new AskPassEvent.Handler()
       {
+         private boolean handleAskPass(String targetWindow)
+         {
+            // calculate the current window name
+            String window = StringUtil.notNull(satellite.getSatelliteName());
+            
+            // handle it if the target is us
+            if (window.equals(targetWindow))
+               return true;
+            
+            // also handle if we are the main window and the specified
+            // satellite doesn't exist
+            if (!satellite.isCurrentWindowSatellite() &&
+                !satelliteManager.satelliteWindowExists(targetWindow))
+               return true;
+            
+            // othewise don't handle
+            else
+               return false;
+         }
+         
          @Override
          public void onAskPass(final AskPassEvent e)
          {
+            if (!handleAskPass(e.getWindow()))
+               return;
+            
             globalDisplay.promptForPassword(
                   "Password",
                   e.getPrompt(),

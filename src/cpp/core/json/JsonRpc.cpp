@@ -70,6 +70,13 @@ Error parseJsonRpcRequest(const std::string& input, JsonRpcRequest* pRequest)
 
             pRequest->kwparams = fieldValue.get_obj();
          }
+         else if (fieldName == "sourceWnd")
+         {
+            if (fieldValue.type() != json::StringType)
+               return Error(errc::InvalidRequest, ERROR_LOCATION);
+
+            pRequest->sourceWindow = fieldValue.get_str();
+         }
          else if (fieldName == "clientId" )
          {
             if (fieldValue.type() != json::StringType)

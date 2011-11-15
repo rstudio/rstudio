@@ -35,6 +35,7 @@ public class RpcRequest
                      JSONArray params, 
                      JSONObject kwparams,
                      boolean redactLog,
+                     String sourceWindow,
                      String clientId,
                      double clientVersion)
    {
@@ -43,6 +44,10 @@ public class RpcRequest
       params_ = params ;
       kwparams_ = kwparams;
       redactLog_ = redactLog;
+      if (sourceWindow != null)
+         sourceWindow_ = new JSONString(sourceWindow);
+      else
+         sourceWindow_ = null;
       if (clientId != null)
          clientId_ = new JSONString(clientId);
       else
@@ -63,6 +68,10 @@ public class RpcRequest
          request.put("params", params_);  
       if ( kwparams_ != null)
          request.put("kwparams", kwparams_);
+      
+      // add src window if we have it
+      if (sourceWindow_ != null)
+         request.put("sourceWnd", sourceWindow_);
       
       // add client id if we have it
       if (clientId_ != null)
@@ -194,6 +203,7 @@ public class RpcRequest
    final private JSONArray params_ ;
    final private JSONObject kwparams_;
    private final boolean redactLog_;
+   final private JSONString sourceWindow_;
    final private JSONString clientId_;
    final private JSONNumber clientVersion_;
    private Request request_ = null;

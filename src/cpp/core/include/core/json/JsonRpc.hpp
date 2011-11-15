@@ -112,6 +112,7 @@ struct JsonRpcRequest
    std::string method ;
    json::Array params ;
    json::Object kwparams ;
+   std::string sourceWindow;
    std::string clientId ;
    double version;
    bool isBackgroundConnection ;

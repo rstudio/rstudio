@@ -1766,6 +1766,7 @@ public class RemoteServer implements Server
                               RetryHandler retryHandler)
    { 
       return sendRequest(
+            null,
             scope,
             method,
             params,
@@ -1796,18 +1797,17 @@ public class RemoteServer implements Server
              retryHandler);
 
    }
-   
-   
+      
    // lowest level sendRequest method -- called from the main workbench
    // in two scenarios: direct internal call and servicing a proxied
    // request from a satellite window
-   private RpcRequest sendRequest(
-                              String scope, 
-                              String method, 
-                              JSONArray params,
-                              boolean redactLog,
-                              final RpcResponseHandler responseHandler,
-                              final RetryHandler retryHandler)
+   private RpcRequest sendRequest(String sourceWindow,
+                                  String scope, 
+                                  String method, 
+                                  JSONArray params,
+                                  boolean redactLog,
+                                  final RpcResponseHandler responseHandler,
+                                  final RetryHandler retryHandler)
    {      
       // ensure we are listening for events. note that we do this here
       // because we are no longer so aggressive about retrying on failed
@@ -1822,6 +1822,7 @@ public class RemoteServer implements Server
                                              params,
                                              null,
                                              redactLog,
+                                             sourceWindow,
                                              clientId_,
                                              clientVersion_);
 
@@ -2038,20 +2039,21 @@ public class RemoteServer implements Server
    private native void registerSatelliteCallback() /*-{
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
-         function(scope, method, params, redactLog, responseCallback) {
-            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(scope, method, params, redactLog, responseCallback);
+         function(sourceWindow, scope, method, params, redactLog, responseCallback) {
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(sourceWindow, scope, method, params, redactLog, responseCallback);
          }
       ); 
    }-*/;
 
    // this code runs in the main workbench and implements the server request
    // and then calls back the satellite on the provided js responseCallback
-   private void sendRemoteServerRequest(final String scope,
+   private void sendRemoteServerRequest(final String sourceWindow,
+                                        final String scope,
                                         final String method,
                                         final String params,
                                         final boolean redactLog,
                                         final JavaScriptObject responseCallback)
-   {
+   {  
       // get the json array from the string
       final JSONArray jsonParams = JSONParser.parseStrict(params).isArray();
            
@@ -2085,7 +2087,8 @@ public class RemoteServer implements Server
          {
             // retry one time (passing null as last param ensures there
             // is no retry handler installed)
-            sendRequest(scope, 
+            sendRequest(sourceWindow,
+                        scope, 
                         method, 
                         jsonParams, 
                         redactLog, 
@@ -2101,7 +2104,8 @@ public class RemoteServer implements Server
       };
       
       // submit request (retry same request up to one time)
-      sendRequest(scope, 
+      sendRequest(sourceWindow,
+                  scope, 
                   method, 
                   jsonParams, 
                   redactLog, 
@@ -2156,7 +2160,8 @@ public class RemoteServer implements Server
         handler.@org.rstudio.core.client.jsonrpc.RpcResponseHandler::onResponseReceived(Lorg/rstudio/core/client/jsonrpc/RpcResponse;)(response);
       });
 
-      $wnd.opener.sendRemoteServerRequest(scope, 
+      $wnd.opener.sendRemoteServerRequest($wnd.RStudioSatelliteName,
+                                          scope, 
                                           method, 
                                           params, 
                                           redactLog,

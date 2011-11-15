@@ -34,12 +34,17 @@ public class AskPassEvent extends GwtEvent<AskPassEvent.Handler>
       public native final String getRememberPrompt() /*-{
          return this.remember_prompt;
       }-*/;
+      
+      public native final String getWindow() /*-{
+         return this.window;
+      }-*/;
    }
 
-   public AskPassEvent(String prompt, String rememberPrompt)
+   public AskPassEvent(AskPassEvent.Data data)
    {
-      prompt_ = prompt;
-      rememberPrompt_ = rememberPrompt;
+      prompt_ = data.getPrompt();
+      rememberPrompt_ = data.getRememberPrompt();
+      window_ = data.getWindow();
    }
 
    public String getPrompt()
@@ -50,6 +55,11 @@ public class AskPassEvent extends GwtEvent<AskPassEvent.Handler>
    public String getRememberPasswordPrompt()
    {
       return rememberPrompt_;
+   }
+   
+   public String getWindow()
+   {
+      return window_;
    }
 
    @Override
@@ -66,6 +76,7 @@ public class AskPassEvent extends GwtEvent<AskPassEvent.Handler>
 
    private final String prompt_;
    private final String rememberPrompt_;
+   private final String window_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

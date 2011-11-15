@@ -86,6 +86,15 @@ public class SatelliteManager implements CloseHandler<Window>
                                               preferredSize.height);
    }
    
+   public boolean satelliteWindowExists(String name)
+   {
+      for (ActiveSatellite satellite : satellites_)
+         if (satellite.getName().equals(name))
+            return true;
+      
+      return false;
+   }
+   
    // close all satellite windows
    public void closeAllSatellites()
    {

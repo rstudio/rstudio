@@ -92,6 +92,19 @@ const uint64_t GIT_1_7_2 = ((uint64_t)1 << 48) |
                            ((uint64_t)7 << 32) |
                            ((uint64_t)2 << 16);
 
+// window to direct the next ask_pass to (empty string for main window)
+std::string s_askPassWindow;
+
+void setAskPassWindow(const json::JsonRpcRequest& request)
+{
+   s_askPassWindow = request.sourceWindow;
+}
+
+void onClientInit()
+{
+   s_askPassWindow = "";
+}
+
 core::system::ProcessOptions procOptions()
 {
    core::system::ProcessOptions options;
@@ -1343,6 +1356,8 @@ Error vcsClone(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   setAskPassWindow(request);
+
    pResponse->setResult(handle);
 
    return Success();
@@ -1356,6 +1371,8 @@ Error vcsPush(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   setAskPassWindow(request);
+
    pResponse->setResult(handle);
 
    return Success();
@@ -1368,6 +1385,8 @@ Error vcsPull(const json::JsonRpcRequest& request,
    Error error = s_git_.pull(&handle);
    if (error)
       return error;
+
+   setAskPassWindow(request);
 
    pResponse->setResult(handle);
 
@@ -1939,6 +1958,7 @@ void postbackSSHAskPass(const std::string& prompt,
                                        : std::string("Enter passphrase:");
    payload["remember_prompt"] = promptToRemember ? std::string("Remember passphrase")
                                                  : std::string();
+   payload["window"] = s_askPassWindow;
    ClientEvent askPassEvent(client_events::kAskPass, payload);
 
    // wait for method
@@ -2471,6 +2491,7 @@ core::Error initialize()
    Error error;
 
    module_context::events().onShutdown.connect(onShutdown);
+   module_context::events().onClientInit.connect(onClientInit);
 
    const projects::ProjectContext& projContext = projects::projectContext();
    FilePath workingDir = projContext.directory();

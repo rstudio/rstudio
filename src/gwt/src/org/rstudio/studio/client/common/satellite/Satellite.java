@@ -30,6 +30,7 @@ public class Satellite
       
       // global flag used to conditionalize behavior
       $wnd.isRStudioSatellite = true;
+      $wnd.RStudioSatelliteName = name;
       
       // export setSessionInfo callback
       var satellite = this;     
@@ -56,6 +57,10 @@ public class Satellite
       return !!$wnd.isRStudioSatellite;
    }-*/;
    
+   // get the name of the current satellite window (null if not a satellite)
+   public native String getSatelliteName() /*-{
+      return $wnd.RStudioSatelliteName;
+   }-*/;
    
    // called by main window to initialize sessionInfo
    private void setSessionInfo(JavaScriptObject si)
