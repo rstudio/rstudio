@@ -16,6 +16,10 @@ import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+// TODO: investigate crash on the mac: open satellite, use window menu
+//       to switch between main and satellite, close satellite, then try
+//       to use the window menu again and we crash
+
 // TODO: remember satellite window size
 
 // TODO: Pass parameters (show history, list of files, etc.)
