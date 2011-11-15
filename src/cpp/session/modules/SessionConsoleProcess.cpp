@@ -34,7 +34,9 @@ namespace {
    core::system::ProcessOptions procOptions()
    {
       core::system::ProcessOptions options;
+#ifndef _WIN32
       options.detachSession = true;
+#endif
       return options;
    }
 } // anonymous namespace

@@ -387,11 +387,11 @@ Error ChildProcess::run()
       si.wShowWindow = SW_HIDE;
    }
 
-   LPCSTR lpWorkingDir = NULL;
+   std::string workingDir = NULL;
    if (!options_.workingDir.empty())
    {
-      lpWorkingDir = string_utils::utf8ToSystem(
-            options_.workingDir.absolutePathNative()).c_str();
+      workingDir = string_utils::utf8ToSystem(
+            options_.workingDir.absolutePathNative());
    }
 
    // Start the child process.
@@ -405,7 +405,7 @@ Error ChildProcess::run()
      TRUE,            // Set handle inheritance to TRUE
      dwFlags,         // Creation flags
      lpEnv,           // Environment block
-     lpWorkingDir,    // Use parent's starting directory
+     workingDir.c_str(),    // Use parent's starting directory
      &si,             // Pointer to STARTUPINFO structure
      &pi );   // Pointer to PROCESS_INFORMATION structure
 
