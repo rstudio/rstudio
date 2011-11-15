@@ -97,7 +97,9 @@ core::system::ProcessOptions procOptions()
    core::system::ProcessOptions options;
 
    // detach the session so there is no terminal
+#ifndef _WIN32
    options.detachSession = true;
+#endif
 
    // get current environment for modification prior to passing to child
    core::system::Options childEnv;
@@ -230,7 +232,9 @@ protected:
       ProcessOptions options = procOptions();
       options.workingDir = root_;
       // Important to ensure SSH_ASKPASS works
+#ifdef _WIN32
       options.detachProcess = true;
+#endif
 
       ProcessResult result;
 
@@ -279,7 +283,9 @@ protected:
       using namespace session::modules::console_process;
 
       core::system::ProcessOptions options = procOptions();
+#ifdef _WIN32
       options.detachProcess = true;
+#endif
       if (!workingDir)
          options.workingDir = root_;
       else if (!workingDir.get().empty())
@@ -318,7 +324,9 @@ public:
    {
       core::system::ProcessOptions options = procOptions();
       options.workingDir = workingDir;
+#ifndef _WIN32
       options.detachSession = true;
+#endif
 
       core::system::ProcessResult result;
       Error error = core::system::runCommand(
