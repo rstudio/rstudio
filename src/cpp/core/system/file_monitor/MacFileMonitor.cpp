@@ -113,8 +113,11 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
                                              pContext->filter,
                                              &(pContext->fileTree),
                                              pContext->callbacks.onFilesChanged);
-         if (error)
+         if (error &&
+            (error.code() != boost::system::errc::no_such_file_or_directory))
+         {
             LOG_ERROR(error);
+         }
       }
    }
 }
