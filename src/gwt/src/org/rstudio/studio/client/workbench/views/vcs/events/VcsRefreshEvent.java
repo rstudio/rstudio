@@ -19,17 +19,29 @@ public class VcsRefreshEvent extends GwtEvent<VcsRefreshHandler>
    public enum Reason { NA, FileChange, VcsOperation }
 
    private final Reason reason_;
+   private final int delayMs_;
 
    public static final Type<VcsRefreshHandler> TYPE = new Type<VcsRefreshHandler>();
 
    public VcsRefreshEvent(Reason reason)
    {
+      this(reason, 0);
+   }
+
+   public VcsRefreshEvent(Reason reason, int delayMs)
+   {
       reason_ = reason;
+      delayMs_ = delayMs;
    }
 
    public Reason getReason()
    {
       return reason_;
+   }
+
+   public int getDelayMs()
+   {
+      return delayMs_;
    }
 
    @Override

@@ -32,7 +32,12 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    {
       server_ = server;
       filterText_ = new Value<String>("");
+   }
 
+   @Override
+   public void addDataDisplay(HasData<CommitInfo> display)
+   {
+      super.addDataDisplay(display);
       refreshCount();
    }
 

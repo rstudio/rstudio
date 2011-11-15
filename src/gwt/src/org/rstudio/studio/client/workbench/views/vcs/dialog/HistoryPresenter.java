@@ -28,6 +28,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.TimeBufferedCommand;
+import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -79,7 +80,7 @@ public class HistoryPresenter
    public HistoryPresenter(VCSServerOperations server,
                            final Display view,
                            HistoryAsyncDataProvider provider,
-                           VcsState vcsState)
+                           final VcsState vcsState)
    {
       server_ = server;
       view_ = view;
@@ -123,15 +124,25 @@ public class HistoryPresenter
          }
       });
 
-      vcsState.bindRefreshHandler(view.asWidget(), new VcsRefreshHandler()
+      new WidgetHandlerRegistration(view_.asWidget())
       {
          @Override
-         public void onVcsRefresh(VcsRefreshEvent event)
+         protected HandlerRegistration doRegister()
          {
-            if (event.getReason() == Reason.VcsOperation)
-               refreshHistory();
+            return vcsState.addVcsRefreshHandler(new VcsRefreshHandler()
+            {
+               @Override
+               public void onVcsRefresh(VcsRefreshEvent event)
+               {
+                  if (event.getReason() == Reason.VcsOperation)
+                  {
+                     if (view_.asWidget().isVisible())
+                        refreshHistory();
+                  }
+               }
+            }, false);
          }
-      });
+      };
    }
 
    private void showCommitDetail(boolean noSizeWarning)

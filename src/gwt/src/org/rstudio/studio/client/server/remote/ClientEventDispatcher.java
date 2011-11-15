@@ -269,7 +269,9 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.VcsRefresh))
          {
-            eventBus_.fireEvent(new VcsRefreshEvent(Reason.NA));
+            JsObject data = event.getData();
+            eventBus_.fireEvent(new VcsRefreshEvent(Reason.NA,
+                                                    data.getInteger("delay")));
          }
          else if (type.equals(ClientEvent.AskPass))
          {

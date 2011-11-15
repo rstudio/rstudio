@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.vcs.model;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
@@ -63,20 +64,30 @@ public class VcsState
             if (!session.getSessionInfo().isVcsEnabled())
                registrations.removeHandler();
 
-            // Sometimes on commit, the subsequent request contains outdated
-            // status (i.e. as if the commit had not happened yet). No idea
-            // right now what is causing this.
-            // TODO: Figure it out. Request log: http://cl.ly/130g1H1X0o3j0v2s2I09
-            Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+            if (event.getDelayMs() > 0)
             {
-               @Override
-               public boolean execute()
+               Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
                {
-                  refresh(false);
+                  @Override
+                  public boolean execute()
+                  {
+                     refresh(false);
 
-                  return false;
-               }
-            }, 200);
+                     return false;
+                  }
+               }, event.getDelayMs());
+            }
+            else
+            {
+               Scheduler.get().scheduleDeferred(new ScheduledCommand()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     refresh(false);
+                  }
+               });
+            }
          }
       }));
       registrations.add(eventBus_.addHandler(FileChangeEvent.TYPE, new FileChangeHandler()
@@ -141,10 +152,16 @@ public class VcsState
 
    public HandlerRegistration addVcsRefreshHandler(VcsRefreshHandler handler)
    {
+      return addVcsRefreshHandler(handler, true);
+   }
+
+   public HandlerRegistration addVcsRefreshHandler(VcsRefreshHandler handler,
+                                                   boolean fireOnAdd)
+   {
       HandlerRegistration hreg = handlers_.addHandler(
             VcsRefreshEvent.TYPE, handler);
 
-      if (branches_ != null)
+      if (fireOnAdd && branches_ != null)
          handler.onVcsRefresh(new VcsRefreshEvent(Reason.VcsOperation));
 
       return hreg;

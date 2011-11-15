@@ -239,20 +239,6 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
       selectionModel_ = new SingleSelectionModel<CommitInfo>();
       setSelectionModel(selectionModel_);
 
-      addRangeChangeHandler(new RangeChangeEvent.Handler()
-      {
-         @Override
-         public void onRangeChange(RangeChangeEvent event)
-         {
-            if (selectionModel_.getSelectedObject() != null)
-            {
-               selectionModel_.setSelected(selectionModel_.getSelectedObject(),
-                                           false);
-            }
-            updateGraphColumnWidth();
-            maybePreselectFirstRow();
-         }
-      });
    }
 
    private void updateGraphColumnWidth()
@@ -277,6 +263,11 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
    @Override
    public void setRowData(int start, List<? extends CommitInfo> values)
    {
+      if (selectionModel_.getSelectedObject() != null)
+      {
+         selectionModel_.setSelected(selectionModel_.getSelectedObject(),
+                                     false);
+      }
       super.setRowData(start, values);
       updateGraphColumnWidth();
       maybePreselectFirstRow();
@@ -290,7 +281,8 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
          public void execute()
          {
             if (getVisibleItemCount() > 0
-                && selectionModel_.getSelectedObject() == null)
+                && (selectionModel_.getSelectedObject() == null ||
+                    selectionModel_.getSelectedObject().getId().equals(getVisibleItem(0).getId())))
             {
                selectionModel_.setSelected(getVisibleItem(0), true);
             }

@@ -192,25 +192,35 @@ public class ReviewPresenter implements IsWidget
       server_ = server;
       view_ = view;
       globalDisplay_ = globalDisplay;
+      vcsState_ = vcsState;
 
-      vcsState.bindRefreshHandler(view.asWidget(), new VcsRefreshHandler()
+      new WidgetHandlerRegistration(view.asWidget())
       {
          @Override
-         public void onVcsRefresh(VcsRefreshEvent event)
+         protected HandlerRegistration doRegister()
          {
-            if (event.getReason() == Reason.VcsOperation)
+            return vcsState_.addVcsRefreshHandler(new VcsRefreshHandler()
             {
-               Scheduler.get().scheduleDeferred(new ScheduledCommand()
+               @Override
+               public void onVcsRefresh(VcsRefreshEvent event)
                {
-                  @Override
-                  public void execute()
+                  if (event.getReason() == Reason.VcsOperation)
                   {
-                     updateDiff(true);
+                     Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                     {
+                        @Override
+                        public void execute()
+                        {
+                           updateDiff(true);
+
+                           initialized_ = true;
+                        }
+                     });
                   }
-               });
-            }
+               }
+            }, false);
          }
-      });
+      };
 
       new WidgetHandlerRegistration(view.asWidget())
       {
@@ -240,9 +250,6 @@ public class ReviewPresenter implements IsWidget
          }
       };
 
-      // Ensure that we're fresh
-      vcsState.refresh();
-
       view_.getChangelistTable().addSelectionChangeHandler(new Handler()
       {
          @Override
@@ -250,7 +257,8 @@ public class ReviewPresenter implements IsWidget
          {
             overrideSizeWarning_ = false;
             view_.setFilesCommandsEnabled(view_.getSelectedPaths().size() > 0);
-            updateDiff(true);
+            if (initialized_)
+               updateDiff(true);
          }
       });
       view_.getChangelistTable().addKeyDownHandler(new KeyDownHandler()
@@ -393,7 +401,8 @@ public class ReviewPresenter implements IsWidget
                @Override
                public void onValueChange(ValueChangeEvent<Boolean> event)
                {
-                  updateDiff(false);
+                  if (initialized_)
+                     updateDiff(false);
                }
             });
       view_.getLineTableDisplay().addDiffChunkActionHandler(new ApplyPatchHandler());
@@ -634,6 +643,9 @@ public class ReviewPresenter implements IsWidget
 
    public void onShow()
    {
+      // Ensure that we're fresh
+      vcsState_.refresh();
+
       view_.onShow();
    }
 
@@ -647,6 +659,8 @@ public class ReviewPresenter implements IsWidget
    // Hack to prevent us flipping to unstaged view when a line is unstaged
    // from staged view
    private boolean softModeSwitch_;
+   private VcsState vcsState_;
+   private boolean initialized_;
    private static final String MODULE_VCS = "vcs";
    private static final String KEY_CONTEXT_LINES = "context_lines";
 
