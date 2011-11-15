@@ -77,13 +77,15 @@ public class VCSCore
                   e.getPrompt(),
                   "",
                   e.getRememberPasswordPrompt(),
-                  true,
+                  rememberByDefault_,
                   new ProgressOperationWithInput<PasswordResult>()
                   {
                      @Override
                      public void execute(final PasswordResult result,
                                          final ProgressIndicator indicator)
                      {
+                        rememberByDefault_ = result.remember;
+
                         RSAEncrypt.encrypt_ServerOnly(
                               server_,
                               result.password,
@@ -156,4 +158,5 @@ public class VCSCore
     
    private final VCSServerOperations server_;
    private final VcsState vcsState_;
+   private boolean rememberByDefault_ = true;
 }
