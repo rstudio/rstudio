@@ -661,7 +661,7 @@ public:
          args << *pCompareTo;
       args << filePath;
 
-      return runGit(args, pOutput);
+      return runGit(args, pOutput, NULL, NULL, false);
    }
 
    core::Error diffFile(const FilePath& filePath,
