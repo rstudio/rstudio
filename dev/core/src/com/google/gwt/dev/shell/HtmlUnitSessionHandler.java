@@ -23,6 +23,7 @@ import com.google.gwt.dev.shell.BrowserChannel.Value.ValueType;
 import com.google.gwt.dev.shell.BrowserChannelClient.SessionHandlerClient;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
+import com.gargoylesoftware.htmlunit.ScriptException;
 import com.gargoylesoftware.htmlunit.ScriptResult;
 import com.gargoylesoftware.htmlunit.WebWindow;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
@@ -220,15 +221,26 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
           } while (webWindow != webWindow.getTopWindow());
         }
       }
-      result = jsEngine.callFunction(htmlPage, jsFunction, jsContext, window,
+      result = jsEngine.callFunction(htmlPage, jsFunction, window,
           jsThis, jsArgs);     
-    } catch (JavaScriptException ex) {
-      if (logger.isLoggable(TreeLogger.INFO)) {
-        logger.log(TreeLogger.INFO, "INVOKE: JavaScriptException " + ex
-            + ", message: " + ex.getMessage() + " when invoking " + methodName);
+    } catch (ScriptException se) {
+      if (se.getCause() instanceof JavaScriptException) {
+        JavaScriptException ex = (JavaScriptException) se.getCause();
+        if (logger.isLoggable(TreeLogger.INFO)) {
+          logger.log(TreeLogger.INFO, "INVOKE: JavaScriptException " + ex
+              + ", message: " + ex.getMessage() + " when invoking "
+              + methodName);
+        }
+        return new ExceptionOrReturnValue(true, makeValueFromJsval(jsContext,
+            ex.getValue()));
+      } else {
+        if (logger.isLoggable(TreeLogger.INFO)) {
+          logger.log(TreeLogger.INFO, "INVOKE: exception " + se + ", message: "
+            + se.getMessage() + " when invoking " + methodName);
+        }
+        return new ExceptionOrReturnValue(true, makeValueFromJsval(jsContext,
+          Undefined.instance));
       }
-      return new ExceptionOrReturnValue(true, makeValueFromJsval(jsContext,
-          ex.getValue()));
     } catch (Exception ex) {
       if (logger.isLoggable(TreeLogger.INFO)) {
         logger.log(TreeLogger.INFO, "INVOKE: exception " + ex + ", message: "

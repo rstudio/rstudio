@@ -25,10 +25,12 @@ import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.IncorrectnessListener;
 import com.gargoylesoftware.htmlunit.OnbeforeunloadHandler;
 import com.gargoylesoftware.htmlunit.Page;
+import com.gargoylesoftware.htmlunit.ScriptException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebWindow;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptEngine;
+import com.gargoylesoftware.htmlunit.javascript.JavaScriptErrorListener;
 import com.gargoylesoftware.htmlunit.javascript.host.Window;
 
 import net.sourceforge.htmlunit.corejs.javascript.ScriptableObject;
@@ -38,6 +40,7 @@ import org.w3c.css.sac.ErrorHandler;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -118,6 +121,37 @@ public class RunStyleHtmlUnit extends RunStyle {
       webClient.setThrowExceptionOnFailingStatusCode(false);
       webClient.setThrowExceptionOnScriptError(true);
       webClient.setOnbeforeunloadHandler(this);
+      webClient.setJavaScriptErrorListener(new JavaScriptErrorListener() {
+
+        @Override
+        public void loadScriptError(HtmlPage htmlPage, URL scriptUrl,
+            Exception exception) {
+            treeLogger.log(TreeLogger.ERROR,
+              "Load Script Error: " + exception, exception);
+        }
+
+        @Override
+        public void malformedScriptURL(HtmlPage htmlPage, String url,
+            MalformedURLException malformedURLException) {
+          treeLogger.log(TreeLogger.ERROR,
+              "Malformed Script URL: " + malformedURLException.getLocalizedMessage());
+        }
+
+        @Override
+        public void scriptException(HtmlPage htmlPage,
+            ScriptException scriptException) {
+          treeLogger.log(TreeLogger.DEBUG,
+              "Script Exception: " + scriptException.getLocalizedMessage() +
+               ", line " + scriptException.getFailingLine());
+        }
+
+        @Override
+        public void timeoutError(HtmlPage htmlPage, long allowedTime,
+            long executionTime) {
+          treeLogger.log(TreeLogger.ERROR,
+              "Script Timeout Error " + executionTime + " > " + allowedTime);
+        }
+      });
       setupWebClient(webClient);
       try {
         Page page = webClient.getPage(url);

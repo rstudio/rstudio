@@ -9,17 +9,17 @@
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.jar"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/tomcat/servlet-api-2.5.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpclient-4.0.1.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpcore-4.0.1.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpmime-4.0.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpclient-4.1.2.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpcore-4.1.2.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpmime-4.1.2.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/james/apache-mime4j-0.6.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-codec-1.3.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-collections-3.1.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-lang-2.4.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-lang-2.6.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-logging-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-io-1.4.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/cssparser/cssparser-0.9.5.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/nekohtml/nekohtml-1.9.13.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/nekohtml/nekohtml-1.9.15.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/selenium/selenium-java-client-driver.jar" sourcepath="/GWT_TOOLS/lib/selenium/selenium-java-client-driver-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/cup/java-cup-11a.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/xalan/xalan-2.7.1-nocup.jar"/>
@@ -33,8 +33,8 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/easymock/easymock-3.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/objectweb/asm-3.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-r5940.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-r5940-sources.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-core-js-r5940.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-core-js-r5940-sources.jar"/>
+        <classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.9/htmlunit-2.9.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-2.9/htmlunit-2.9-sources.jar"/>
+        <classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.9/htmlunit-core-js-2.9.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-2.9/htmlunit-core-js-2.9-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/redist/json/r2_20080312/json-1.5.jar" sourcepath="/GWT_TOOLS/redist/json/r2_20080312/json-src.jar"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA.jar" sourcepath="/GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
