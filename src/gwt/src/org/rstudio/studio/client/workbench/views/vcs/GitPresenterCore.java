@@ -1,5 +1,5 @@
 /*
- * VCSCore.java
+ * GitPresenterCore.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
