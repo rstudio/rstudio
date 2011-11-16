@@ -23,6 +23,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include "SessionSVN.hpp"
+
 using namespace core;
 
 namespace session {
@@ -195,7 +197,49 @@ std::string detectedVcs(const core::FilePath& workingDir)
 
 core::Error initialize()
 {
-   return git::initialize();
+   git::initialize();
+   svn::initialize();
+
+   // If VCS is disabled, or we're not in a project, do nothing
+   const projects::ProjectContext& projContext = projects::projectContext();
+   FilePath workingDir = projContext.directory();
+
+   if (!userSettings().vcsEnabled() || workingDir.empty())
+      return Success();
+
+
+   // If Git or SVN was explicitly specified, choose it if valid
+   projects::RProjectVcsOptions vcsOptions;
+   if (projContext.hasProject())
+   {
+      Error vcsError = projContext.readVcsOptions(&vcsOptions);
+      if (vcsError)
+         LOG_ERROR(vcsError);
+   }
+
+   if (vcsOptions.vcsOverride == "none")
+   {
+      return Success();
+   }
+   else if (vcsOptions.vcsOverride == "git")
+   {
+      if (git::isGitInstalled() && git::isGitDirectory(workingDir))
+         return git::initializeGit(workingDir);
+      return Success();
+   }
+   else if (vcsOptions.vcsOverride == "svn")
+   {
+      if (svn::isSvnInstalled() && svn::isSvnDirectory(workingDir))
+         return svn::initializeSvn(workingDir);
+      return Success();
+   }
+
+   if (git::isGitInstalled() && git::isGitDirectory(workingDir))
+      return git::initializeGit(workingDir);
+   else if (svn::isSvnInstalled() && svn::isSvnDirectory(workingDir))
+      return svn::initializeSvn(workingDir);
+   else
+      return Success();  // none specified or detected
 }
 
 } // namespace source_control
