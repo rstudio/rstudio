@@ -29,50 +29,50 @@ namespace svn {
 
 namespace {
 
-   system::ProcessOptions procOptions()
-   {
-      core::system::ProcessOptions options;
+core::system::ProcessOptions procOptions()
+{
+   core::system::ProcessOptions options;
 
-      // detach the session so there is no terminal
+   // detach the session so there is no terminal
 #ifndef _WIN32
-      options.detachSession = true;
+   options.detachSession = true;
 #endif
 
-      // get current environment for modification prior to passing to child
-      core::system::Options childEnv;
-      core::system::environment(&childEnv);
+   // get current environment for modification prior to passing to child
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
 
-      // TODO: Add Subversion bin dir to path if necessary
+   // TODO: Add Subversion bin dir to path if necessary
 
-      // add postback directory to PATH
-      FilePath postbackDir = session::options().rpostbackPath().parent();
-      core::system::addToPath(&childEnv, postbackDir.absolutePath());
+   // add postback directory to PATH
+   FilePath postbackDir = session::options().rpostbackPath().parent();
+   core::system::addToPath(&childEnv, postbackDir.absolutePath());
 
-      options.workingDir = projects::projectContext().directory();
+   options.workingDir = projects::projectContext().directory();
 
-      // on windows set HOME to USERPROFILE
+   // on windows set HOME to USERPROFILE
 #ifdef _WIN32
-      std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
-      core::system::setenv(&childEnv, "HOME", userProfile);
+   std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
+   core::system::setenv(&childEnv, "HOME", userProfile);
 #endif
 
-      // set custom environment
-      options.environment = childEnv;
+   // set custom environment
+   options.environment = childEnv;
 
-      return options;
-   }
+   return options;
+}
 
 } // namespace
 
 
 bool isSvnInstalled()
 {
-   system::ProcessResult result;
-   Error error = system::runProgram("svn",
-                                    ShellArgs() << "help",
-                                    "",
-                                    procOptions(),
-                                    &result);
+   core::system::ProcessResult result;
+   Error error = core::system::runProgram("svn",
+                                          ShellArgs() << "help",
+                                          "",
+                                          procOptions(),
+                                          &result);
 
    if (error)
    {
@@ -88,16 +88,16 @@ bool isSvnDirectory(const core::FilePath& workingDir)
    if (workingDir.empty())
       return false;
 
-   system::ProcessOptions options = procOptions();
+   core::system::ProcessOptions options = procOptions();
    options.workingDir = workingDir;
 
-   system::ProcessResult result;
+   core::system::ProcessResult result;
 
-   Error error = system::runProgram("svn",
-                                    ShellArgs() << "info",
-                                    "",
-                                    options,
-                                    &result);
+   Error error = core::system::runProgram("svn",
+                                          ShellArgs() << "info",
+                                          "",
+                                          options,
+                                          &result);
 
    if (error)
       return false;
