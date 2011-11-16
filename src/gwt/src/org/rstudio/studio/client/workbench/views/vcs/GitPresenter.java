@@ -20,7 +20,6 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
@@ -43,9 +42,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
-import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
 
 import java.util.ArrayList;
@@ -72,8 +68,6 @@ public class GitPresenter extends BasePresenter implements IsWidget
    @Inject
    public GitPresenter(GitPresenterCore gitCore,
                        Display view,
-                       Provider<ReviewPresenter> pReviewPresenter,
-                       Provider<HistoryPresenter> pHistoryPresenter,
                        VCSServerOperations server,
                        final Commands commands,
                        Binder commandBinder,
@@ -85,8 +79,6 @@ public class GitPresenter extends BasePresenter implements IsWidget
    {
       super(view);
       view_ = view;
-      pReviewPresenter_ = pReviewPresenter;
-      pHistoryPresenter_ = pHistoryPresenter;
       server_ = server;
       commands_ = commands;
       vcsState_ = vcsState;
@@ -259,8 +251,6 @@ public class GitPresenter extends BasePresenter implements IsWidget
    }
 
    private final Display view_;
-   private final Provider<ReviewPresenter> pReviewPresenter_;
-   private final Provider<HistoryPresenter> pHistoryPresenter_;
    private final VCSServerOperations server_;
    private final Commands commands_;
    private final VcsState vcsState_;
