@@ -33,8 +33,6 @@ import com.google.inject.Singleton;
 
 // TODO: test on all platforms
 
-// TODO: Code splitting
-
 // TODO: Desktop load time seems worse, caching?
 
 @Singleton
