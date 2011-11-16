@@ -15,7 +15,6 @@ package org.rstudio.studio.client.workbench.views.vcs;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -190,27 +189,15 @@ public class GitPresenter extends BasePresenter implements IsWidget
   
    private void showReviewPane(boolean showHistory)
    {
-      // show in external window if we shift-click
-      Event currentEvent = Event.getCurrentEvent();
-      if ((currentEvent != null) && currentEvent.getShiftKey())
-      {
-         
-         VCSApplicationParams params = VCSApplicationParams.create(
-                                             showHistory, 
-                                             view_.getSelectedItems());
-         satelliteManager_.openSatellite("review_changes",     
-                                         params,
-                                         getPreferredReviewPanelSize());
-      }
-      else
-      {
-         ReviewPresenter rpres = pReviewPresenter_.get();
-         if (view_.getSelectedItemCount() > 0)
-            rpres.setSelectedPaths(view_.getSelectedItems());
-         VCSPopup.show(rpres,
-                       pHistoryPresenter_.get(),
-                       showHistory);
-      }
+      // setup params
+      VCSApplicationParams params = VCSApplicationParams.create(
+                                          showHistory, 
+                                          view_.getSelectedItems());
+      
+      // open the window 
+      satelliteManager_.openSatellite("review_changes",     
+                                      params,
+                                      getPreferredReviewPanelSize()); 
    }
    
    private Size getPreferredReviewPanelSize()
