@@ -2256,22 +2256,10 @@ void onResume(const core::Settings&)
    enqueueRefreshEvent();
 }
 
-
-// called to initialize the s_gitBinDir directory for codepaths
-// which don't ever call tryGit
-void initGitBinDir()
+bool initGitBin()
 {
-   s_gitBinDir = userSettings().gitBinDir().absolutePath();
-   if (s_gitBinDir.empty())
-   {
-#ifdef _WIN32
-      detectAndSaveGitBinDir();
-#endif
-   }
-}
+   Error error;
 
-bool tryGit(const FilePath& workingDir)
-{
    // get the git bin dir from settings if it is there
    s_gitBinDir = userSettings().gitBinDir().absolutePath();
 
@@ -2279,7 +2267,7 @@ bool tryGit(const FilePath& workingDir)
    if (s_gitBinDir.empty())
    {
 #ifdef _WIN32
-      Error error = detectAndSaveGitBinDir();
+      error = detectAndSaveGitBinDir();
       if (error)
          return false; // no Git install detected
 #else
@@ -2288,17 +2276,6 @@ bool tryGit(const FilePath& workingDir)
          return false; // no Git install detected
 #endif
    }
-
-   FilePath gitDir = Git::detectGitDir(workingDir);
-   if (gitDir.empty())
-      return false;
-
-   s_git_.setRoot(gitDir);
-
-   FilePath gitIgnore = s_git_.root().childPath(".gitignore");
-   Error error = augmentGitIgnore(gitIgnore);
-   if (error)
-      LOG_ERROR(error);
 
    // Save version
    s_gitVersion = GIT_1_7_2;
@@ -2337,6 +2314,27 @@ std::string detectedVcs(const FilePath& workingDir)
       return "none";
 }
 
+bool isGitDirectory(const core::FilePath& workingDir)
+{
+   return !Git::detectGitDir(workingDir).empty();
+}
+
+core::Error initializeGit(const core::FilePath& workingDir)
+{
+   s_git_.setRoot(Git::detectGitDir(workingDir));
+
+   if (!s_git_.root().empty())
+   {
+      FilePath gitIgnore = s_git_.root().childPath(".gitignore");
+      Error error = augmentGitIgnore(gitIgnore);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   return Success();
+}
+
+
 core::Error initialize()
 {
    using namespace session::module_context;
@@ -2346,40 +2344,7 @@ core::Error initialize()
    module_context::events().onShutdown.connect(onShutdown);
    module_context::events().onClientInit.connect(onClientInit);
 
-   const projects::ProjectContext& projContext = projects::projectContext();
-   FilePath workingDir = projContext.directory();
-
-   projects::RProjectVcsOptions vcsOptions;
-   if (projContext.hasProject())
-   {
-      Error vcsError = projContext.readVcsOptions(&vcsOptions);
-      if (vcsError)
-         LOG_ERROR(vcsError);
-   }
-
-   if (!userSettings().vcsEnabled() || workingDir.empty())
-   {
-   }
-   else if (vcsOptions.vcsOverride == "none" ||
-            vcsOptions.vcsOverride == "svn")
-   {
-      // make sure we still detect the git bin dir (so isGitInstalled
-      // will work correctly during client_init)
-      initGitBinDir();
-   }
-   // NOTE: this codepath is here to prevent automatic svn detection
-   // when the user has specified a "git" override
-   else if (vcsOptions.vcsOverride == "git")
-   {
-      if (tryGit(workingDir))
-      {
-         // Intentionally blank. tryGit() has side effects.
-      }
-   }
-   else if (tryGit(workingDir))
-   {
-      // Intentionally blank. tryGit() has side effects.
-   }
+   initGitBin();
 
    bool interceptAskPass;
 

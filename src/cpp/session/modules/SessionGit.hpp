@@ -70,6 +70,9 @@ private:
 bool isGitInstalled();
 bool isGitEnabled();
 
+bool isGitDirectory(const core::FilePath& workingDir);
+core::Error initializeGit(const core::FilePath& workingDir);
+
 core::FilePath detectedGitBinDir();
 
 core::Error status(const core::FilePath& dir, StatusResult* pStatusResult);
