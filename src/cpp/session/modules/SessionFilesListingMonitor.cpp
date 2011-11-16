@@ -137,8 +137,8 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
       return error;
 
    // get source control status (merely log errors doing this)
-   source_control::StatusResult vcsStatus;
-   error = source_control::status(rootPath, &vcsStatus);
+   git::StatusResult vcsStatus;
+   error = git::status(rootPath, &vcsStatus);
    if (error)
       LOG_ERROR(error);
 
@@ -152,10 +152,10 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
       // are not end-user visible
       if (filePath.exists() && module_context::fileListingFilter(core::FileInfo(filePath)))
       {
-         source_control::VCSStatus status = vcsStatus.getStatus(filePath);
+         git::VCSStatus status = vcsStatus.getStatus(filePath);
          core::json::Object fileObject = module_context::createFileSystemItem(filePath);
          json::Object vcsObj;
-         error = modules::source_control::statusToJson(filePath, status, &vcsObj);
+         error = modules::git::statusToJson(filePath, status, &vcsObj);
          if (error)
             LOG_ERROR(error);
          fileObject["git_status"] = vcsObj;

@@ -211,7 +211,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    userSettings().beginUpdate();
    userSettings().setVcsEnabled(vcsEnabled);
    FilePath gitBinDirPath(gitBinDir);
-   if (gitBinDirPath == source_control::detectedGitBinDir())
+   if (gitBinDirPath == git::detectedGitBinDir())
       userSettings().setGitBinDir(FilePath());
    else
       userSettings().setGitBinDir(gitBinDirPath);
@@ -290,7 +290,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    sourceControlPrefs["vcs_enabled"] = userSettings().vcsEnabled();
    FilePath gitBinDir = userSettings().gitBinDir();
    if (gitBinDir.empty())
-      gitBinDir = source_control::detectedGitBinDir();
+      gitBinDir = git::detectedGitBinDir();
    sourceControlPrefs["git_bin_dir"] = gitBinDir.absolutePath();
    FilePath sshKeyPath = source_control::verifiedDefaultSshKeyPath();
    if (!sshKeyPath.empty())

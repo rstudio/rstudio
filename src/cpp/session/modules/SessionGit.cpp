@@ -50,6 +50,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "SessionConsoleProcess.hpp"
+#include "SessionVCS.hpp"
 
 #include "config.h"
 
@@ -60,25 +61,11 @@
 using namespace core;
 using namespace core::shell_utils;
 using session::modules::console_process::ConsoleProcess;
+using namespace session::modules::source_control;
 
 namespace session {
-
-namespace module_context {
-
-FilePath verifiedDefaultSshKeyPath()
-{
-   return session::modules::source_control::verifiedDefaultSshKeyPath();
-}
-
-std::string detectedVcs(const FilePath& workingDir)
-{
-   return session::modules::source_control::detectedVcs(workingDir);
-}
-
-} // namespace module_context
-
 namespace modules {
-namespace source_control {
+namespace git {
 
 namespace {
 
@@ -1068,19 +1055,6 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
 } // anonymous namespace
 
 
-VCS activeVCS()
-{
-   return s_git_.id();
-}
-
-std::string activeVCSName()
-{
-   if (s_git_.root().empty())
-      return std::string();
-   else
-      return s_git_.name();
-}
-
 VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
 {
    std::map<std::string, VCSStatus>::const_iterator found =
@@ -1093,7 +1067,7 @@ VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
 
 core::Error status(const FilePath& dir, StatusResult* pStatusResult)
 {
-   if (activeVCSName().empty())
+   if (s_git_.root().empty())
       return Success();
 
    return s_git_.status(dir, pStatusResult);
@@ -1102,7 +1076,7 @@ core::Error status(const FilePath& dir, StatusResult* pStatusResult)
 Error fileStatus(const FilePath& filePath, VCSStatus* pStatus)
 {
    StatusResult statusResult;
-   Error error = source_control::status(filePath.parent(), &statusResult);
+   Error error = git::status(filePath.parent(), &statusResult);
    if (error)
       return error;
 
@@ -1755,74 +1729,6 @@ std::string toBashPath(const std::string& path)
 #endif
 }
 
-FilePath getTrueHomeDir()
-{
-#if _WIN32
-   // On Windows, R's idea of "$HOME" is not, by default, the same as
-   // $USERPROFILE, which is what we want for ssh purposes
-   return FilePath(string_utils::systemToUtf8(core::system::getenv("USERPROFILE")));
-#else
-   return FilePath(string_utils::systemToUtf8(core::system::getenv("HOME")));
-#endif
-}
-
-
-// in RStudio Server mode ensure that there are no group or other permissions
-// set for the ssh key (ssh will fail if there are). we do this automagically
-// in server mode because often users will upload their ssh keys into the
-// .ssh folder (resulting in default permissions) and then still be in an
-// inoperable state. the users could figure out how to do system("chmod ...")
-// but many will probably end up getting stimied before trying that. we don't
-// consider this intrusive because we are resetting the permissions to what
-// they would be if the user called ssh-keygen directory and we can't think
-// of any good reason why you'd want an ssh key with incorrect/inoperable
-// permissions set on it
-void ensureCorrectPermissions(const FilePath& sshKeyPath)
-{
-#ifdef RSTUDIO_SERVER
-   const char * path = sshKeyPath.absolutePath().c_str();
-   struct stat st;
-   if (::stat(path, &st) == -1)
-   {
-      LOG_ERROR(systemError(errno, ERROR_LOCATION));
-      return;
-   }
-
-   // check if there are any permissions for group or other defined. if
-   // there are then remove them
-   mode_t mode = st.st_mode;
-   if (mode & S_IRWXG || mode & S_IRWXO)
-   {
-      mode &= ~S_IRWXG;
-      mode &= ~S_IRWXO;
-      core::system::safePosixCall<int>(boost::bind(::chmod, path, mode),
-                                       ERROR_LOCATION);
-   }
-#endif
-}
-
-
-// get the current active ssh key path -- first checks for a project
-// specific override then falls back to the verified default
-FilePath verifiedSshKeyPath()
-{
-   projects::RProjectVcsOptions vcsOptions;
-   Error error = projects::projectContext().readVcsOptions(&vcsOptions);
-   if (error)
-      LOG_ERROR(error);
-   if (!vcsOptions.sshKeyPathOverride.empty())
-   {
-      FilePath keyPath = module_context::resolveAliasedPath(
-                                             vcsOptions.sshKeyPathOverride);
-      ensureCorrectPermissions(keyPath);
-      return keyPath;
-   }
-   else
-   {
-      return source_control::verifiedDefaultSshKeyPath();
-   }
-}
-
 bool ensureSSHAgentIsRunning()
 {
    // Use "ssh-add -l" to see if ssh-agent is running
@@ -2272,6 +2178,11 @@ bool isGitInstalled()
    return result.exitStatus == EXIT_SUCCESS;
 }
 
+bool isGitEnabled()
+{
+   return !s_git_.root().empty();
+}
+
 FilePath detectedGitBinDir()
 {
 #ifdef _WIN32
@@ -2302,55 +2213,6 @@ FilePath detectedGitBinDir()
 #endif
 }
 
-FilePath verifiedDefaultSshKeyPath()
-{
-   // if there is user override first try that -- if the override is
-   // specified but doesn't exit then advance to auto-resolution logic
-   std::string sskKeyPathSetting = userSettings().sshKeyPath();
-   FilePath sshKeyPath;
-   if (!sskKeyPathSetting.empty())
-   {
-      sshKeyPath = module_context::resolveAliasedPath(sskKeyPathSetting);
-      if (!sshKeyPath.exists())
-         sshKeyPath = FilePath();
-   }
-
-   // if there isn't a valid user specified default then scan known locations
-   if (sshKeyPath.empty())
-   {
-      FilePath sshKeyDir = defaultSshKeyDir();
-      std::vector<FilePath> candidatePaths;
-      candidatePaths.push_back(sshKeyDir.childPath("id_rsa"));
-      candidatePaths.push_back(sshKeyDir.childPath("id_dsa"));
-      candidatePaths.push_back(sshKeyDir.childPath("identity"));
-      BOOST_FOREACH(const FilePath& path, candidatePaths)
-      {
-         if (path.exists())
-         {
-            sshKeyPath = path;
-            break;
-         }
-      }
-   }
-
-   // ensure permissions if we have a path to return
-   if (!sshKeyPath.empty())
-   {
-      ensureCorrectPermissions(sshKeyPath);
-      return sshKeyPath;
-   }
-   else
-   {
-      return FilePath();
-   }
-}
-
-
-FilePath defaultSshKeyDir()
-{
-   return getTrueHomeDir().childPath(".ssh");
-}
-
 void onUserSettingsChanged()
 {
    FilePath gitBinDir = userSettings().gitBinDir();
@@ -2371,15 +2233,6 @@ void onUserSettingsChanged()
       s_gitBinDir = "";
 #endif
    }
-}
-
-bool isSvnInstalled()
-{
-   if (!userSettings().vcsEnabled())
-      return false;
-
-   // TODO
-   return false;
 }
 
 Error statusToJson(const core::FilePath &path,
@@ -2607,6 +2460,6 @@ core::Error initialize()
    return Success();
 }
 
-} // namespace source_control
+} // namespace git
 } // namespace modules
 } // namespace session

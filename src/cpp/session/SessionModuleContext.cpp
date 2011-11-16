@@ -727,14 +727,14 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
 namespace {
 // enque file changed event
 void enqueFileChangedEvent(const core::system::FileChangeEvent& event,
-                           const modules::source_control::VCSStatus& vcsStatus)
+                           const modules::git::VCSStatus& vcsStatus)
 {
    // create file change object
    json::Object fileChange ;
    fileChange["type"] = event.type();
    json::Object fileSystemItem = createFileSystemItem(event.fileInfo());
    json::Object vcsObj;
-   Error error = modules::source_control::statusToJson(
+   Error error = modules::git::statusToJson(
          FilePath(event.fileInfo().absolutePath()), vcsStatus, &vcsObj);
    if (error)
       LOG_ERROR(error);
@@ -749,8 +749,8 @@ void enqueFileChangedEvent(const core::system::FileChangeEvent& event,
 
 void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
 {
-   modules::source_control::VCSStatus vcsStatus;
-   Error error = modules::source_control::fileStatus(
+   modules::git::VCSStatus vcsStatus;
+   Error error = modules::git::fileStatus(
          FilePath(event.fileInfo().absolutePath()), &vcsStatus);
    if (error)
       LOG_ERROR(error);
@@ -760,7 +760,7 @@ void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
 void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
                             const std::vector<core::system::FileChangeEvent>& events)
 {
-   using modules::source_control::VCSStatus;
+   using modules::git::VCSStatus;
 
    if (events.empty())
       return;
@@ -778,8 +778,8 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
    }
 
    // get vcs status in one shot
-   session::modules::source_control::StatusResult statusResult;
-   Error error = session::modules::source_control::status(commonParentPath,
+   session::modules::git::StatusResult statusResult;
+   Error error = session::modules::git::status(commonParentPath,
                                                           &statusResult);
    if (error)
       LOG_ERROR(error);

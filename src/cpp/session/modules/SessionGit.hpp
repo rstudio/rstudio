@@ -15,23 +15,14 @@
 #define SESSION_GIT_HPP
 
 #include <map>
+
+#include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
-namespace core {
-   class Error;
-}
-
 namespace session {
 namespace modules {
-namespace source_control {
-
-enum VCS
-{
-   VCSNone,
-   VCSGit,
-   VCSSubversion
-};
+namespace git {
 
 // Must stay in sync with VCSStatus enum in VCSStatus.java
 class VCSStatus
@@ -76,35 +67,23 @@ private:
    std::map<std::string, VCSStatus> filesByPath_;
 };
 
-VCS activeVCS();
-std::string activeVCSName();
+bool isGitInstalled();
+bool isGitEnabled();
+
+core::FilePath detectedGitBinDir();
+
 core::Error status(const core::FilePath& dir, StatusResult* pStatusResult);
 core::Error fileStatus(const core::FilePath& filePath, VCSStatus* pStatus);
 core::Error statusToJson(const core::FilePath& path,
                          const VCSStatus& status,
                          core::json::Object* pObject);
-bool isGitInstalled();
 
-core::FilePath detectedGitBinDir();
-
-// path to ssh key (return empty FilePath if the setting doesn't exist
-// or the file doesn't exist)
-core::FilePath verifiedDefaultSshKeyPath();
-
-// default directory for reading/writing ssh keys
-core::FilePath defaultSshKeyDir();
-
-// check if svn is installed
-bool isSvnInstalled();
-
-// query for what vcs our auto-detection logic indicates for the directory
 std::string detectedVcs(const core::FilePath& workingDir);
-
 
 core::Error initialize();
 
-} // namespace source_control
+} // namespace git
 } // namespace modules
-} // namesapce session
+} // namespace session
 
 #endif // SESSION_GIT_HPP

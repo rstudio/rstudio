@@ -36,7 +36,7 @@ namespace core {
 namespace session {
 namespace modules {
 
-   namespace source_control {
+   namespace git {
       class StatusResult;
    }
 
