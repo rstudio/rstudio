@@ -205,7 +205,8 @@ void WindowMenu::onAboutToShow()
       if (!pWindow->isVisible())
          continue;
 
-      QAction* pAction = new QAction(pWindow->windowTitle(), pWindow);
+      // construct with no parent (we free it manually)
+      QAction* pAction = new QAction(pWindow->windowTitle(), NULL);
       pAction->setData(QVariant::fromValue(pWindow));
       pAction->setCheckable(true);
       if (pWindow->isActiveWindow())
