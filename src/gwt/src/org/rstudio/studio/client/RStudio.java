@@ -82,7 +82,7 @@ public class RStudio implements EntryPoint
          {
             Command dismissProgressAnimation = showProgress();
             
-            if ("vcs".equals(Window.Location.getParameter("mode")))
+            if ("review_changes".equals(Window.Location.getParameter("view")))
                delayLoadVCSApplication(dismissProgressAnimation);
             else
                delayLoadApplication(dismissProgressAnimation);

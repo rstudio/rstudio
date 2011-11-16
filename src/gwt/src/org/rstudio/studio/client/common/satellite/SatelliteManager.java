@@ -32,6 +32,8 @@ import com.google.inject.Singleton;
 
 // TODO: Pass parameters (show history, list of files, etc.)
 
+// TODO: test on all platforms
+
 // TODO: Code splitting
 
 // TODO: Desktop load time seems worse, caching?

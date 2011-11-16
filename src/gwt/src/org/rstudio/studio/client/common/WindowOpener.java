@@ -28,7 +28,7 @@ public interface WindowOpener
                           boolean showLocation);
    
    void openSatelliteWindow(GlobalDisplay globalDisplay,
-                            String mode,
+                            String viewName,
                             int width,
                             int height);
 }

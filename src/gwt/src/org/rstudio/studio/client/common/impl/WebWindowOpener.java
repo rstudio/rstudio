@@ -48,17 +48,17 @@ public class WebWindowOpener implements WindowOpener
    }
    
    public void openSatelliteWindow(GlobalDisplay globalDisplay,
-                                   String mode,
+                                   String viewName,
                                    int width,
                                    int height)
    {
       // build url
       UrlBuilder urlBuilder = Window.Location.createUrlBuilder();
-      urlBuilder.setParameter("mode", mode);
+      urlBuilder.setParameter("view", viewName);
       
       // setup options
       NewWindowOptions options = new NewWindowOptions();
-      options.setName(getSatelliteWindowName(mode));
+      options.setName(getSatelliteWindowName(viewName));
       options.setFocus(true);
       
       // open window (force web codepath b/c desktop needs this so
