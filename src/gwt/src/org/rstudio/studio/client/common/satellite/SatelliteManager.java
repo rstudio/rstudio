@@ -31,7 +31,8 @@ import com.google.inject.Singleton;
 
 // TODO: Pass parameters on reactivation (show history, list of files, etc.)
 
-// TODO: Show History command not working on Mac desktop
+// TODO: Show History command not working on Mac desktop. Got to 
+//       WebWindowOpener.openWindowInternal
 
 // TODO: test on all platforms
 
