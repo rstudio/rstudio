@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.common.satellite;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.remote.ClientEventDispatcher;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -36,9 +37,16 @@ public class Satellite
       eventDispatcher_ = new ClientEventDispatcher(eventBus);
    }
    
+   public void initialize(String name, 
+                          CommandWithArg<JavaScriptObject> onReactivated)
+   {
+      onReactivated_ = onReactivated;
+      initializeNative(name);
+   }
+   
    // satellite windows should call this during startup to setup a 
    // communication channel with the main window
-   public native void initialize(String name) /*-{
+   private native void initializeNative(String name) /*-{
       
       // global flag used to conditionalize behavior
       $wnd.isRStudioSatellite = true;
@@ -49,6 +57,20 @@ public class Satellite
       $wnd.setRStudioSatelliteSessionInfo = $entry(
          function(sessionInfo) {
             satellite.@org.rstudio.studio.client.common.satellite.Satellite::setSessionInfo(Lcom/google/gwt/core/client/JavaScriptObject;)(sessionInfo);
+         }
+      ); 
+      
+      // export setParams callback
+      $wnd.setRStudioSatelliteParams = $entry(
+         function(params) {
+            satellite.@org.rstudio.studio.client.common.satellite.Satellite::setParams(Lcom/google/gwt/core/client/JavaScriptObject;)(params);
+         }
+      ); 
+      
+      // export notifyReactivated callback
+      $wnd.notifyRStudioSatelliteReactivated = $entry(
+         function(params) {
+            satellite.@org.rstudio.studio.client.common.satellite.Satellite::notifyReactivated(Lcom/google/gwt/core/client/JavaScriptObject;)(params);
          }
       ); 
       
@@ -74,6 +96,11 @@ public class Satellite
       return $wnd.RStudioSatelliteName;
    }-*/;
    
+   public JavaScriptObject getParams()
+   {
+      return params_;
+   }
+   
    // called by main window to initialize sessionInfo
    private void setSessionInfo(JavaScriptObject si)
    {
@@ -83,6 +110,21 @@ public class Satellite
   
       // ensure ui prefs initialize
       pUIPrefs_.get();
+   }
+   
+   // called by main window to setParams
+   private void setParams(JavaScriptObject params)
+   {
+      params_ = params;
+   }
+   
+   
+   // called by main window to notify us of reactivation with a new
+   // set of params
+   private void notifyReactivated(JavaScriptObject params)
+   {
+      if (onReactivated_ != null)
+         onReactivated_.execute(params);
    }
    
    // called by main window to deliver events
@@ -95,4 +137,6 @@ public class Satellite
    private final Session session_;
    private final Provider<UIPrefs> pUIPrefs_;
    private final ClientEventDispatcher eventDispatcher_;
+   private JavaScriptObject params_ = null;
+   private CommandWithArg<JavaScriptObject> onReactivated_ = null;
 }

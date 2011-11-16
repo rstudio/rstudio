@@ -38,6 +38,7 @@ import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -193,7 +194,12 @@ public class GitPresenter extends BasePresenter implements IsWidget
       Event currentEvent = Event.getCurrentEvent();
       if ((currentEvent != null) && currentEvent.getShiftKey())
       {
-         satelliteManager_.openSatellite("review_changes", 
+         
+         VCSApplicationParams params = VCSApplicationParams.create(
+                                             showHistory, 
+                                             view_.getSelectedItems());
+         satelliteManager_.openSatellite("review_changes",     
+                                         params,
                                          getPreferredReviewPanelSize());
       }
       else

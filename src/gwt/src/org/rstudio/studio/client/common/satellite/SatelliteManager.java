@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.common.satellite;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
@@ -27,8 +28,6 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
-// TODO: remember satellite window size
 
 // TODO: Pass parameters (show history, list of files, etc.)
 
@@ -59,7 +58,9 @@ public class SatelliteManager implements CloseHandler<Window>
    }
     
    // open a satellite window (re-activate existing if possible)
-   public void openSatellite(String name, Size preferredSize)
+   public void openSatellite(String name,
+                             JavaScriptObject params,
+                             Size preferredSize)
    {
       // satellites can't launch other satellites -- this is because the 
       // delegating/forwarding of remote server calls and events doesn't
@@ -72,7 +73,7 @@ public class SatelliteManager implements CloseHandler<Window>
          assert false;
          return;
       }
- 
+      
       // in web mode try to activate any existing satellite of this name
       // we have a special mechanism for doing this because if we relied
       // on the default mechanism it would cause the target window to
@@ -87,13 +88,19 @@ public class SatelliteManager implements CloseHandler<Window>
                if (!window.isClosed())
                {
                   window.focus();
+                  callNotifyReactivated(window, params);
                   return;
                }
             }
          }
       }
       
-      // open the satellite
+      // record satellite params for subsequent setting
+      if (params != null)
+         satelliteParams_.put(name, params);
+ 
+      // open the satellite - it will call us back on registerAsSatellite
+      // at which time we'll call setSessionInfo, setParams, etc.
       RStudioGinjector.INSTANCE.getGlobalDisplay().openSatelliteWindow(
                                               name,
                                               preferredSize.width,
@@ -183,6 +190,11 @@ public class SatelliteManager implements CloseHandler<Window>
       
       // call setSessionInfo
       callSetSessionInfo(satelliteWnd, session_.getSessionInfo());
+      
+      // call setParams
+      JavaScriptObject params = satelliteParams_.get(name);
+      if (params != null)
+         callSetParams(satelliteWnd, params);
    }
    
    // export the global function requried for satellites to register
@@ -201,6 +213,18 @@ public class SatelliteManager implements CloseHandler<Window>
       satellite.setRStudioSatelliteSessionInfo(sessionInfo);
    }-*/;
    
+   // call setParams on a satellite
+   private native void callSetParams(JavaScriptObject satellite,
+                                     JavaScriptObject params) /*-{
+      satellite.setRStudioSatelliteParams(params);
+   }-*/;
+   
+   // call notifyReactivated on a satellite
+   private native void callNotifyReactivated(JavaScriptObject satellite,
+                                         JavaScriptObject params) /*-{
+      satellite.notifyRStudioSatelliteReactivated(params);
+   }-*/;
+   
    // dispatch event to a satellite
    private native void callDispatchEvent(JavaScriptObject satellite,
                                          JavaScriptObject clientEvent) /*-{
@@ -217,6 +241,9 @@ public class SatelliteManager implements CloseHandler<Window>
    private final Session session_;
    private final ArrayList<ActiveSatellite> satellites_ = 
                                           new ArrayList<ActiveSatellite>();
+   
+   private final HashMap<String,JavaScriptObject> satelliteParams_ = 
+                                new HashMap<String,JavaScriptObject>();
 
    private class ActiveSatellite
    {

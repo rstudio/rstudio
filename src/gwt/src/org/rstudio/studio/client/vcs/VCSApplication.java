@@ -13,9 +13,11 @@
 package org.rstudio.studio.client.vcs;
 
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.common.satellite.Satellite;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
@@ -40,7 +42,14 @@ public class VCSApplication
                   final Command dismissLoadingProgress)
    {
       // indicate that we are a satellite window
-      satellite_.initialize("review_panel");
+      satellite_.initialize("review_changes",
+                            new CommandWithArg<JavaScriptObject> () {
+                               @Override
+                               public void execute(JavaScriptObject params)
+                               {
+                                  view_.reactivate(params);                
+                               }
+                            });
       
       // register for uncaught exceptions (do this after calling 
       // initSatelliteWindow b/c it depends on Server)
@@ -53,7 +62,7 @@ public class VCSApplication
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       
       // show the view
-      view_.show();
+      view_.show(satellite_.getParams());
       
       // dismiss loading progress
       dismissLoadingProgress.execute();

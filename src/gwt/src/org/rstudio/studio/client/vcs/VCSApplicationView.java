@@ -12,11 +12,13 @@
  */
 package org.rstudio.studio.client.vcs;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.ui.Widget;
 
 public interface VCSApplicationView
 {
    Widget getWidget() ;
    
-   void show();
+   void show(JavaScriptObject params);
+   void reactivate(JavaScriptObject params);
 }

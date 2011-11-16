@@ -19,6 +19,7 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
@@ -52,7 +53,7 @@ public abstract class SatelliteWindow extends Composite
    
    // show the satellite window (subclasses shouldn't override this method,
    // rather they should override the abstract onInitialize method)
-   public void show()
+   public void show(JavaScriptObject params)
    {
       // react to font size changes
       EventBus eventBus = pEventBus_.get();
@@ -67,7 +68,7 @@ public abstract class SatelliteWindow extends Composite
       FontSizer.setNormalFontSize(Document.get(), fontSizeManager.getSize());
 
       // allow subclasses to initialize
-      onInitialize(mainPanel_);
+      onInitialize(mainPanel_, params);
       
    }
 
@@ -77,7 +78,8 @@ public abstract class SatelliteWindow extends Composite
       mainPanel_.onResize(); 
    }
    
-   abstract protected void onInitialize(LayoutPanel mainPanel);
+   abstract protected void onInitialize(LayoutPanel mainPanel, 
+                                        JavaScriptObject params);
    
    protected LayoutPanel getMainPanel()
    {

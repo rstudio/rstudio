@@ -13,8 +13,12 @@
 package org.rstudio.studio.client.vcs.ui;
 
 
+import java.util.ArrayList;
+
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
+import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.vcs.GitPresenterCore;
@@ -22,6 +26,7 @@ import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -49,7 +54,8 @@ public class VCSApplicationWindow extends SatelliteWindow
    
    
    @Override
-   protected void onInitialize(LayoutPanel mainPanel)
+   protected void onInitialize(LayoutPanel mainPanel, 
+                               JavaScriptObject params)
    {
       // set our window title
       Window.setTitle("Review Changes");
@@ -58,10 +64,22 @@ public class VCSApplicationWindow extends SatelliteWindow
       pVCSCore_.get();
       
       // show the vcs ui in our main panel
+      VCSApplicationParams vcsParams = params.<VCSApplicationParams>cast();
+      ReviewPresenter rpres = pReviewPresenter_.get();
+      ArrayList<StatusAndPath> selected = vcsParams.getSelected();
+      if (selected.size() > 0)
+         rpres.setSelectedPaths(selected);
       VCSPopup.show(mainPanel,
-                    pReviewPresenter_.get(),
+                    rpres,
                     pHistoryPresenter_.get(), 
-                    false);  
+                    vcsParams.getShowHistory());  
+   }
+   
+   @Override
+   public void reactivate(JavaScriptObject params)
+   {
+     
+      
    }
    
   
@@ -75,4 +93,7 @@ public class VCSApplicationWindow extends SatelliteWindow
    private final Provider<GitPresenterCore> pVCSCore_;
    private final Provider<ReviewPresenter> pReviewPresenter_;
    private final Provider<HistoryPresenter> pHistoryPresenter_;
+
+
+  
 }
