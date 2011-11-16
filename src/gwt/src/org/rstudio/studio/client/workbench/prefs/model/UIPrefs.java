@@ -18,7 +18,6 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.satellite.SatelliteWindowPrefs;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
@@ -148,15 +147,6 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          {
             savePlotAsPdfOptions().setGlobalValue(
                          newUiPrefs.savePlotAsPdfOptions().getGlobalValue());
-         }
-         
-         // vcs window prefs
-         if (!SatelliteWindowPrefs.areEqual(
-                     newUiPrefs.vcsWindowPrefs().getGlobalValue(),
-                     vcsWindowPrefs().getGlobalValue()))
-         {
-            vcsWindowPrefs().setGlobalValue(
-                              newUiPrefs.vcsWindowPrefs().getGlobalValue());
          }
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))

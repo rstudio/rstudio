@@ -35,13 +35,11 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.common.satellite.SatelliteWindowPrefs;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
@@ -83,8 +81,7 @@ public class GitPresenter extends BasePresenter implements IsWidget
                        EventBus events,
                        final GlobalDisplay globalDisplay,
                        final FileTypeRegistry fileTypeRegistry,
-                       SatelliteManager satelliteManager,
-                       Provider<UIPrefs> pUIPrefs)
+                       SatelliteManager satelliteManager)
    {
       super(view);
       view_ = view;
@@ -96,7 +93,6 @@ public class GitPresenter extends BasePresenter implements IsWidget
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       satelliteManager_ = satelliteManager;
-      pUIPrefs_ = pUIPrefs;
 
       commandBinder.bind(commands, this);
 
@@ -213,33 +209,11 @@ public class GitPresenter extends BasePresenter implements IsWidget
    
    private Size getPreferredReviewPanelSize()
    { 
-      // get global window bounds
       Size windowBounds = new Size(Window.getClientWidth(),
                                    Window.getClientHeight());
       
-      // if we have saved prefs then use them (but still enforce boundaries)
-      UIPrefs uiPrefs = pUIPrefs_.get();
-      SatelliteWindowPrefs vcsPrefs = uiPrefs.vcsWindowPrefs().getValue();
-      if (!vcsPrefs.isEmpty())
-      {
-         // get prefs size (and defend against perversely small values)
-         Size prefsSize = new Size(vcsPrefs.getWidth(), vcsPrefs.getHeight());
-         prefsSize = new Size(Math.max(500,prefsSize.width),
-                              Math.max(500, prefsSize.height));
-         
-         // return prefs size (bounded by main window size)
-         return new Size(
-               Math.min(windowBounds.width - 25, vcsPrefs.getWidth()),
-               Math.min(windowBounds.height - 25, vcsPrefs.getHeight()));
-         
-      }
-      else
-      {
-         // default to 1000 pixels wide (capped by window width) and
-         // the full height of the window
-         return new Size(Math.min(windowBounds.width - 25, 1000), 
-                         windowBounds.height - 50);
-      }
+      return new Size(Math.min(windowBounds.width - 25, 1000), 
+                      windowBounds.height - 50);
    }
 
    @Handler
@@ -300,5 +274,4 @@ public class GitPresenter extends BasePresenter implements IsWidget
    private final GlobalDisplay globalDisplay_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final SatelliteManager satelliteManager_;
-   private final Provider<UIPrefs> pUIPrefs_;
 }

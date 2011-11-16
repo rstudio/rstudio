@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.prefs.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.studio.client.common.satellite.SatelliteWindowPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
@@ -123,11 +122,5 @@ public class UIPrefsAccessor extends Prefs
    {
       return object("save_plot_as_pdf_options",
                     SavePlotAsPdfOptions.createDefault());
-   }
-   
-   public PrefValue<SatelliteWindowPrefs> vcsWindowPrefs()
-   {
-      return object("vcs_window_prefs", 
-                    SatelliteWindowPrefs.createEmpty());
    }
 }
