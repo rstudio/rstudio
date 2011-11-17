@@ -146,7 +146,7 @@ struct CommitInfo
    std::string graph;
 };
 
-void enqueueRefreshEvent(int delay=0)
+void enqueRefreshEventWithDelay(int delay)
 {
    // Sometimes on commit, the subsequent request contains outdated
    // status (i.e. as if the commit had not happened yet). No idea
@@ -157,6 +157,11 @@ void enqueueRefreshEvent(int delay=0)
    data["delay"] = delay;
    module_context::enqueClientEvent(ClientEvent(client_events::kVcsRefresh,
                                                 data));
+}
+
+void enqueueRefreshEvent()
+{
+   enqueRefreshEventWithDelay(0);
 }
 
 class Git;
@@ -193,7 +198,7 @@ void afterCommit(const FilePath& tempFile)
    Error removeError = tempFile.remove();
    if (removeError)
       LOG_ERROR(removeError);
-   enqueueRefreshEvent(200);
+   enqueRefreshEventWithDelay(200);
 }
 
 bool commitIsMatch(const std::vector<std::string>& patterns,
