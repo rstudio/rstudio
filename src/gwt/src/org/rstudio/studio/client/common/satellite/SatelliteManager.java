@@ -34,6 +34,8 @@ import com.google.inject.Singleton;
 // TODO: Show History command not working on Mac desktop. Got to 
 //       WebWindowOpener.openWindowInternal
 
+// TODO: Cmd-W close window on Mac
+
 // TODO: test on all platforms
 
 // TODO: Desktop load: enable caching; eliminate spinner?
