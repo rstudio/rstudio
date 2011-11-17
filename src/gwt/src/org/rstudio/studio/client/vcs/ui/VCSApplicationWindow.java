@@ -69,20 +69,26 @@ public class VCSApplicationWindow extends SatelliteWindow
       ArrayList<StatusAndPath> selected = vcsParams.getSelected();
       if (selected.size() > 0)
          rpres.setSelectedPaths(selected);
-      VCSPopup.show(mainPanel,
-                    rpres,
-                    pHistoryPresenter_.get(), 
-                    vcsParams.getShowHistory());  
+      vcsPopupController_ = VCSPopup.show(mainPanel,
+                                          rpres,
+                                          pHistoryPresenter_.get(), 
+                                          vcsParams.getShowHistory());  
    }
    
    @Override
    public void reactivate(JavaScriptObject params)
    {
-     
-      
+      VCSApplicationParams vcsParams = params.<VCSApplicationParams>cast();
+      if (vcsParams.getShowHistory())
+      {
+         vcsPopupController_.switchToHistory();
+      }
+      else
+      {
+         vcsPopupController_.switchToReview(vcsParams.getSelected());
+      }
    }
    
-  
    @Override 
    public Widget getWidget()
    {
@@ -93,7 +99,6 @@ public class VCSApplicationWindow extends SatelliteWindow
    private final Provider<GitPresenterCore> pVCSCore_;
    private final Provider<ReviewPresenter> pReviewPresenter_;
    private final Provider<HistoryPresenter> pHistoryPresenter_;
-
-
-  
+   private VCSPopup.Controller vcsPopupController_ = null;
+ 
 }

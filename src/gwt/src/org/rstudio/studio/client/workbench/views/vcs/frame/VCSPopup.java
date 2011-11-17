@@ -12,19 +12,29 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.frame;
 
+import java.util.ArrayList;
+
 import com.google.gwt.dom.client.Style.Unit;
 
 import com.google.gwt.user.client.ui.*;
+
+import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 
 public class VCSPopup
 {
-   public static void show(final LayoutPanel swapContainer,
-                           final ReviewPresenter rpres,
-                           final HistoryPresenter hpres,
-                           boolean showHistory)
+   public interface Controller
+   {
+      void switchToHistory();
+      void switchToReview(ArrayList<StatusAndPath> selected);
+   }
+   
+   public static Controller show(final LayoutPanel swapContainer,
+                                 final ReviewPresenter rpres,
+                                 final HistoryPresenter hpres,
+                                 boolean showHistory)
    {
       final Widget review = rpres.asWidget();
       review.setSize("100%", "100%");
@@ -50,24 +60,47 @@ public class VCSPopup
          swapContainer.setWidgetVisible(history, false);
          rpres.onShow();
       }
+      
+      // create a controller used to implement switch view and to return 
+      final Controller controller = new Controller() {
+         @Override
+         public void switchToHistory()
+         {
+            hpres.onShow();
+            swapContainer.setWidgetVisible(history, true);
+            swapContainer.setWidgetVisible(review, false);    
+         }
+
+         @Override
+         public void switchToReview(ArrayList<StatusAndPath> selected)
+         {
+            if (selected != null)
+               rpres.setSelectedPaths(selected);
+            
+            rpres.onShow();
+            swapContainer.setWidgetVisible(review, true);
+            swapContainer.setWidgetVisible(history, false);
+         }
+         
+      };
 
       rpres.addSwitchViewHandler(new SwitchViewEvent.Handler() {
          @Override
          public void onSwitchView(SwitchViewEvent event)
          {
-            hpres.onShow();
-            swapContainer.setWidgetVisible(history, true);
-            swapContainer.setWidgetVisible(review, false);
+            controller.switchToHistory();
          }
       });
       hpres.addSwitchViewHandler(new SwitchViewEvent.Handler() {
          @Override
          public void onSwitchView(SwitchViewEvent event)
          {
-            rpres.onShow();
-            swapContainer.setWidgetVisible(review, true);
-            swapContainer.setWidgetVisible(history, false);
+            controller.switchToReview(null);
          }
       });
+      
+      return controller;
    }
+   
+   
 }
