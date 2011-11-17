@@ -13,68 +13,14 @@
 package org.rstudio.studio.client.workbench.views.vcs.frame;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.resources.client.ImageResource.ImageOptions;
-import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+
 import com.google.gwt.user.client.ui.*;
-import org.rstudio.core.client.widget.NineUpBorder;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
 
 public class VCSPopup
 {
-   interface Resources extends NineUpBorder.Resources, ClientBundle
-   {
-      @Override
-      @Source("../../../../../../core/client/widget/NineUpBorder.css")
-      Styles styles();
-
-      @Override
-      @Source("TopLeft.png")
-      ImageResource topLeft();
-
-      @Override
-      @Source("Top.png")
-      @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-      ImageResource top();
-
-      @Override
-      @Source("TopRight.png")
-      ImageResource topRight();
-
-      @Override
-      @Source("Left.png")
-      @ImageOptions(repeatStyle = RepeatStyle.Vertical)
-      ImageResource left();
-
-      @Override
-      @Source("Right.png")
-      @ImageOptions(repeatStyle = RepeatStyle.Vertical)
-      ImageResource right();
-
-      @Override
-      @Source("BottomLeft.png")
-      ImageResource bottomLeft();
-
-      @Override
-      @Source("Bottom.png")
-      @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-      ImageResource bottom();
-
-      @Override
-      @Source("BottomRight.png")
-      ImageResource bottomRight();
-
-      @Source("Close.png")
-      ImageResource close();
-   }
-
-   public interface Styles extends NineUpBorder.Styles
-   {
-   }
-
    public static void show(final LayoutPanel swapContainer,
                            final ReviewPresenter rpres,
                            final HistoryPresenter hpres,
