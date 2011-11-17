@@ -19,8 +19,21 @@
 
 using namespace core;
 
-NetworkAccessManager::NetworkAccessManager(QString secret, QObject *parent) :
-    QNetworkAccessManager(parent), secret_(secret)
+extern QString sharedSecret;
+
+namespace desktop {
+
+NetworkAccessManager* NetworkAccessManager::instance_ = NULL;
+
+NetworkAccessManager* NetworkAccessManager::instance()
+{
+   if (instance_ == NULL)
+      instance_ = new NetworkAccessManager(sharedSecret);
+   return instance_;
+}
+
+NetworkAccessManager::NetworkAccessManager(QString secret) :
+    QNetworkAccessManager(), secret_(secret)
 {
    setProxy(QNetworkProxy::NoProxy);
 
@@ -32,7 +45,7 @@ NetworkAccessManager::NetworkAccessManager(QString secret, QObject *parent) :
    Error error = browserCachePath.ensureDirectory();
    if (!error)
    {
-      QNetworkDiskCache* pCache = new QNetworkDiskCache(parent);
+      QNetworkDiskCache* pCache = new QNetworkDiskCache();
       QString browserCacheDir = QString::fromUtf8(
                                     browserCachePath.absolutePath().c_str());
       pCache->setCacheDirectory(browserCacheDir);
@@ -54,3 +67,5 @@ QNetworkReply* NetworkAccessManager::createRequest(
                      secret_.toAscii());
    return this->QNetworkAccessManager::createRequest(op, req2, outgoingData);
 }
+
+} // namespace desktop
