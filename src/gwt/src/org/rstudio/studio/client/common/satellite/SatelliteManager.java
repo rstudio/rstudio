@@ -29,8 +29,6 @@ import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-// TODO: Desktop load: enable caching; eliminate spinner?
-
 @Singleton
 public class SatelliteManager implements CloseHandler<Window>
 {
