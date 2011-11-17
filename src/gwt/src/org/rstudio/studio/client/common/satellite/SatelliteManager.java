@@ -29,15 +29,7 @@ import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-// TODO: font not correctly adjusted in console progress dialog
-//       when in satelite windows
-
-// TODO: Pass parameters on reactivation (show history, list of files, etc.)
-
-// TODO: test on all platforms
-
 // TODO: Desktop load: enable caching; eliminate spinner?
-
 
 @Singleton
 public class SatelliteManager implements CloseHandler<Window>
