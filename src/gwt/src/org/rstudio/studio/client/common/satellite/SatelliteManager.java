@@ -40,6 +40,9 @@ import com.google.inject.Singleton;
 
 // TODO: Desktop load: enable caching; eliminate spinner?
 
+// TODO: "5: Error occurred while executing method [system] No such file or directory" 
+
+
 @Singleton
 public class SatelliteManager implements CloseHandler<Window>
 {
