@@ -71,7 +71,7 @@ core::system::ProcessOptions procOptions()
 bool isSvnInstalled()
 {
    core::system::ProcessResult result;
-   Error error = system::runCommand("svn help", "", procOptions(), &result);
+   Error error = core::system::runCommand("svn help", "", procOptions(), &result);
 
    if (error)
    {
