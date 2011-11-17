@@ -197,8 +197,8 @@ public class GitPresenter extends BasePresenter implements IsWidget
       Size windowBounds = new Size(Window.getClientWidth(),
                                    Window.getClientHeight());
       
-      return new Size(Math.min(windowBounds.width - 25, 1000), 
-                      windowBounds.height - 50);
+      return new Size(Math.min(windowBounds.width - 100, 1000), 
+                      windowBounds.height - 25);
    }
 
    @Handler
