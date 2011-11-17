@@ -23,6 +23,8 @@ SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow) :
 {
    setAttribute(Qt::WA_QuitOnClose, false);
    setAttribute(Qt::WA_DeleteOnClose, true);
+
+   setWindowIcon(QIcon(QString::fromAscii(":/icons/RStudio.ico")));
 }
 
 void SatelliteWindow::onJavaScriptWindowObjectCleared()
