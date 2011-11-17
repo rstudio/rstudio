@@ -230,7 +230,7 @@ public class Projects implements OpenProjectFileHandler,
             {
                indicator.onProgress("Cloning git repoistory...");
                
-               server_.vcsClone(
+               server_.gitClone(
                      newProject.getVcsCloneOptions(),
                      new ServerRequestCallback<ConsoleProcess>() {
                         @Override

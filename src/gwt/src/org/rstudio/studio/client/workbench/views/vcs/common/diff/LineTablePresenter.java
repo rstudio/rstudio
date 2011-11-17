@@ -14,7 +14,7 @@ package org.rstudio.studio.client.workbench.views.vcs.common.diff;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.view.client.SelectionChangeEvent;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
+import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffLinesActionHandler;
 

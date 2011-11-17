@@ -36,7 +36,7 @@ import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 import org.rstudio.core.client.theme.RStudioCellTableStyle;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
+import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.Line.Type;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent;

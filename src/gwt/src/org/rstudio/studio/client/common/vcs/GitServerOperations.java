@@ -1,5 +1,5 @@
 /*
- * VCSServerOperations.java
+ * GitServerOperations.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -24,7 +24,7 @@ import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 
 import java.util.ArrayList;
 
-public interface VCSServerOperations extends CryptoServerOperations
+public interface GitServerOperations extends CryptoServerOperations
 {
    public enum PatchMode
    {
@@ -44,82 +44,82 @@ public interface VCSServerOperations extends CryptoServerOperations
       private final int intVal_;
    }
 
-   void vcsAdd(ArrayList<String> paths,
+   void gitAdd(ArrayList<String> paths,
                ServerRequestCallback<Void> requestCallback);
-   void vcsRemove(ArrayList<String> paths,
+   void gitRemove(ArrayList<String> paths,
                   ServerRequestCallback<Void> requestCallback);
-   void vcsDiscard(ArrayList<String> paths,
+   void gitDiscard(ArrayList<String> paths,
                    ServerRequestCallback<Void> requestCallback);
-   void vcsRevert(ArrayList<String> paths,
+   void gitRevert(ArrayList<String> paths,
                   ServerRequestCallback<Void> requestCallback);
-   void vcsStage(ArrayList<String> paths,
+   void gitStage(ArrayList<String> paths,
                  ServerRequestCallback<Void> requestCallback);
-   void vcsUnstage(ArrayList<String> paths,
+   void gitUnstage(ArrayList<String> paths,
                    ServerRequestCallback<Void> requestCallback);
 
-   void vcsAllStatus(
+   void gitAllStatus(
          ServerRequestCallback<AllStatus> requestCallback);
 
-   void vcsFullStatus(
+   void gitFullStatus(
          ServerRequestCallback<JsArray<StatusAndPath>> requestCallback);
 
-   void vcsListBranches(ServerRequestCallback<BranchesInfo> requestCallback);
+   void gitListBranches(ServerRequestCallback<BranchesInfo> requestCallback);
 
-   void vcsCheckout(String id,
+   void gitCheckout(String id,
                     ServerRequestCallback<ConsoleProcess> requestCallback);
 
-   void vcsCommitGit(String message,
-                     boolean amend,
-                     boolean signOff,
-                     ServerRequestCallback<ConsoleProcess> requestCallback);
+   void gitCommit(String message,
+                  boolean amend,
+                  boolean signOff,
+                  ServerRequestCallback<ConsoleProcess> requestCallback);
 
-   void vcsDiffFile(String path,
+   void gitDiffFile(String path,
                     PatchMode patchMode,
                     int contextLines,
                     boolean noSizeWarning,
                     ServerRequestCallback<String> requestCallback);
 
-   void vcsApplyPatch(String patch, PatchMode mode,
+   void gitApplyPatch(String patch, PatchMode mode,
                       ServerRequestCallback<Void> requestCallback);
 
-   void vcsHistoryCount(String spec, String filter,
+   void gitHistoryCount(String spec, String filter,
                         ServerRequestCallback<CommitCount> requestCallback);
    /**
     * @param spec Revision list or description. "" for default.
     * @param maxentries Limit the number of entries returned. -1 for no limit.
     */
-   void vcsHistory(String spec,
+   void gitHistory(String spec,
                    int skip,
                    int maxentries,
                    String filter,
                    ServerRequestCallback<RpcObjectList<CommitInfo>> requestCallback);
 
-   void vcsExecuteCommand(
+   void gitExecuteCommand(
          String command,
          ServerRequestCallback<ConsoleProcess> requestCallback);
 
-   void vcsShow(String rev,
+   void gitShow(String rev,
                 boolean noSizeWarning,
                 ServerRequestCallback<String> requestCallback);
 
-   void vcsClone(VcsCloneOptions options,
+   void gitClone(VcsCloneOptions options,
                  ServerRequestCallback<ConsoleProcess> requestCallback);
 
-   void vcsPush(ServerRequestCallback<ConsoleProcess> requestCallback);
+   void gitPush(ServerRequestCallback<ConsoleProcess> requestCallback);
 
-   void vcsPull(ServerRequestCallback<ConsoleProcess> requestCallback);
+   void gitPull(ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void askpassCompleted(String value, boolean remember,
                          ServerRequestCallback<Void> requestCallback);
    
-   void vcsSshPublicKey(String privateKeyPath,
+   void gitSshPublicKey(String privateKeyPath,
                         ServerRequestCallback<String> requestCallback);
    
-   void vcsCreateSshKey(CreateKeyOptions options,
+   void gitCreateSshKey(CreateKeyOptions options,
                         ServerRequestCallback<CreateKeyResult> requestCallback);
    
    
-   void vcsHasRepo(ServerRequestCallback<Boolean> requestCallback);
+   void gitHasRepo(ServerRequestCallback<Boolean> requestCallback);
    
-   void vcsInitRepo(ServerRequestCallback<Void> requestCallback);
+   void gitInitRepo(ServerRequestCallback<Void> requestCallback);
 }

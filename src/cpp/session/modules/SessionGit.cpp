@@ -1287,8 +1287,8 @@ Error vcsAllStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error vcsCommitGit(const json::JsonRpcRequest& request,
-                   json::JsonRpcResponse* pResponse)
+Error vcsCommit(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
 {
    RefreshOnExit refreshOnExit;
 
@@ -2404,7 +2404,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_checkout", vcsCheckout))
       (bind(registerRpcMethod, "git_full_status", vcsFullStatus))
       (bind(registerRpcMethod, "git_all_status", vcsAllStatus))
-      (bind(registerRpcMethod, "git_commit_git", vcsCommitGit))
+      (bind(registerRpcMethod, "git_commit", vcsCommit))
       (bind(registerRpcMethod, "git_clone", vcsClone))
       (bind(registerRpcMethod, "git_push", vcsPush))
       (bind(registerRpcMethod, "git_pull", vcsPull))

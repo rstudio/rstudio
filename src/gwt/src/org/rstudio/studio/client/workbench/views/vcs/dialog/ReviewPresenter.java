@@ -40,9 +40,9 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations.PatchMode;
+import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -119,11 +119,13 @@ public class ReviewPresenter implements IsWidget
          ArrayList<String> paths = view_.getSelectedPaths();
 
          if (patchMode_ == PatchMode.Stage && !reverse_)
-            server_.vcsStage(paths, new SimpleRequestCallback<Void>("Stage"));
+            server_.gitStage(paths, new SimpleRequestCallback<Void>("Stage"));
          else if (patchMode_ == PatchMode.Stage && reverse_)
-            server_.vcsUnstage(paths, new SimpleRequestCallback<Void>("Unstage"));
+            server_.gitUnstage(paths,
+                               new SimpleRequestCallback<Void>("Unstage"));
          else if (patchMode_ == PatchMode.Working && reverse_)
-            server_.vcsDiscard(paths, new SimpleRequestCallback<Void>("Discard"));
+            server_.gitDiscard(paths,
+                               new SimpleRequestCallback<Void>("Discard"));
          else
             throw new RuntimeException("Unknown patchMode and reverse combo");
 
@@ -162,15 +164,15 @@ public class ReviewPresenter implements IsWidget
          {
             case Stage:
                reverse = false;
-               patchMode = VCSServerOperations.PatchMode.Stage;
+               patchMode = GitServerOperations.PatchMode.Stage;
                break;
             case Unstage:
                reverse = true;
-               patchMode = VCSServerOperations.PatchMode.Stage;
+               patchMode = GitServerOperations.PatchMode.Stage;
                break;
             case Discard:
                reverse = true;
-               patchMode = VCSServerOperations.PatchMode.Working;
+               patchMode = GitServerOperations.PatchMode.Working;
                break;
             default:
                throw new IllegalArgumentException("Unhandled diff chunk action");
@@ -182,7 +184,7 @@ public class ReviewPresenter implements IsWidget
    }
 
    @Inject
-   public ReviewPresenter(VCSServerOperations server,
+   public ReviewPresenter(GitServerOperations server,
                           Display view,
                           final EventBus events,
                           final VcsState vcsState,
@@ -300,7 +302,7 @@ public class ReviewPresenter implements IsWidget
             ArrayList<String> paths = view_.getSelectedPaths();
             if (paths.size() == 0)
                return;
-            server_.vcsStage(paths, new SimpleRequestCallback<Void>());
+            server_.gitStage(paths, new SimpleRequestCallback<Void>());
          }
       });
 
@@ -325,7 +327,7 @@ public class ReviewPresenter implements IsWidget
                      {
                         view_.getChangelistTable().selectNextUnselectedItem();
 
-                        server_.vcsRevert(
+                        server_.gitRevert(
                               paths,
                               new SimpleRequestCallback<Void>("Revert Changes"));
                      }
@@ -339,7 +341,7 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> booleanValueChangeEvent)
          {
-            server_.vcsHistory("", 0, 1, null, new ServerRequestCallback<RpcObjectList<CommitInfo>>() {
+            server_.gitHistory("", 0, 1, null, new ServerRequestCallback<RpcObjectList<CommitInfo>>() {
                @Override
                public void onResponseReceived(RpcObjectList<CommitInfo> response)
                {
@@ -439,7 +441,7 @@ public class ReviewPresenter implements IsWidget
          @Override
          public void onClick(ClickEvent event)
          {
-            server_.vcsCommitGit(
+            server_.gitCommit(
                   view_.getCommitMessage().getText(),
                   view_.getCommitIsAmend().getValue(),
                   false,
@@ -498,7 +500,7 @@ public class ReviewPresenter implements IsWidget
       String patch = emitter.createPatch();
 
       softModeSwitch_ = true;
-      server_.vcsApplyPatch(patch, patchMode, new SimpleRequestCallback<Void>());
+      server_.gitApplyPatch(patch, patchMode, new SimpleRequestCallback<Void>());
    }
 
    private void updateDiff(boolean allowModeSwitch)
@@ -559,7 +561,7 @@ public class ReviewPresenter implements IsWidget
       final PatchMode patchMode = view_.getStagedCheckBox().getValue()
                                   ? PatchMode.Stage
                                   : PatchMode.Working;
-      server_.vcsDiffFile(
+      server_.gitDiffFile(
             item.getPath(),
             patchMode,
             view_.getContextLines().getValue(),
@@ -584,7 +586,7 @@ public class ReviewPresenter implements IsWidget
 
                   activeChunks_.clear();
                   for (DiffChunk chunk;
-                       null != (chunk = parser.nextChunk()); )
+                       null != (chunk = parser.nextChunk());)
                   {
                      activeChunks_.add(chunk);
                      allLines.add(new ChunkOrLine(chunk));
@@ -650,7 +652,7 @@ public class ReviewPresenter implements IsWidget
    }
 
    private final Invalidation diffInvalidation_ = new Invalidation();
-   private final VCSServerOperations server_;
+   private final GitServerOperations server_;
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();

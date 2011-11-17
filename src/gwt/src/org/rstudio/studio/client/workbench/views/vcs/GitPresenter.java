@@ -34,7 +34,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -68,7 +68,7 @@ public class GitPresenter extends BasePresenter implements IsWidget
    @Inject
    public GitPresenter(GitPresenterCore gitCore,
                        Display view,
-                       VCSServerOperations server,
+                       GitServerOperations server,
                        final Commands commands,
                        Binder commandBinder,
                        VcsState vcsState,
@@ -221,7 +221,7 @@ public class GitPresenter extends BasePresenter implements IsWidget
                {
                   view_.getChangelistTable().selectNextUnselectedItem();
 
-                  server_.vcsRevert(
+                  server_.gitRevert(
                         paths,
                         new SimpleRequestCallback<Void>("Revert Changes"));
                }
@@ -251,7 +251,7 @@ public class GitPresenter extends BasePresenter implements IsWidget
    }
 
    private final Display view_;
-   private final VCSServerOperations server_;
+   private final GitServerOperations server_;
    private final Commands commands_;
    private final VcsState vcsState_;
    private final GlobalDisplay globalDisplay_;

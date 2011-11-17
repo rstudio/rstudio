@@ -1245,7 +1245,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SEARCH_HISTORY_ARCHIVE_BY_PREFIX, params, requestCallback);
    }
    
-   public void vcsAdd(ArrayList<String> paths,
+   public void gitAdd(ArrayList<String> paths,
                       ServerRequestCallback<Void> requestCallback)
    {
       JSONArray jsonPaths = new JSONArray();
@@ -1257,7 +1257,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GIT_ADD, params, requestCallback);
    }
 
-   public void vcsRemove(ArrayList<String> paths,
+   public void gitRemove(ArrayList<String> paths,
                          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray jsonPaths = new JSONArray();
@@ -1269,7 +1269,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GIT_REMOVE, params, requestCallback);
    }
 
-   public void vcsDiscard(ArrayList<String> paths,
+   public void gitDiscard(ArrayList<String> paths,
                           ServerRequestCallback<Void> requestCallback)
    {
       JSONArray jsonPaths = new JSONArray();
@@ -1281,7 +1281,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GIT_DISCARD, params, requestCallback);
    }
 
-   public void vcsRevert(ArrayList<String> paths,
+   public void gitRevert(ArrayList<String> paths,
                          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray jsonPaths = new JSONArray();
@@ -1293,7 +1293,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GIT_REVERT, params, requestCallback);
    }
 
-   public void vcsStage(ArrayList<String> paths,
+   public void gitStage(ArrayList<String> paths,
                         ServerRequestCallback<Void> requestCallback)
    {
       JSONArray jsonPaths = new JSONArray();
@@ -1305,7 +1305,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GIT_STAGE, params, requestCallback);
    }
 
-   public void vcsUnstage(ArrayList<String> paths,
+   public void gitUnstage(ArrayList<String> paths,
                           ServerRequestCallback<Void> requestCallback)
    {
       JSONArray jsonPaths = new JSONArray();
@@ -1318,41 +1318,41 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void vcsAllStatus(ServerRequestCallback<AllStatus> requestCallback)
+   public void gitAllStatus(ServerRequestCallback<AllStatus> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_ALL_STATUS, requestCallback);
    }
 
    @Override
-   public void vcsFullStatus(ServerRequestCallback<JsArray<StatusAndPath>> requestCallback)
+   public void gitFullStatus(ServerRequestCallback<JsArray<StatusAndPath>> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_FULL_STATUS, requestCallback);
    }
 
    @Override
-   public void vcsListBranches(ServerRequestCallback<BranchesInfo> requestCallback)
+   public void gitListBranches(ServerRequestCallback<BranchesInfo> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_LIST_BRANCHES, requestCallback);
    }
 
    @Override
-   public void vcsCheckout(String id,
+   public void gitCheckout(String id,
                            ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_CHECKOUT, id,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
-   public void vcsCommitGit(String message,
-                            boolean amend,
-                            boolean signOff,
-                            ServerRequestCallback<ConsoleProcess> requestCallback)
+   public void gitCommit(String message,
+                         boolean amend,
+                         boolean signOff,
+                         ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(message));
       params.set(1, JSONBoolean.getInstance(amend));
       params.set(2, JSONBoolean.getInstance(signOff));
-      sendRequest(RPC_SCOPE, GIT_COMMIT_GIT, params,
+      sendRequest(RPC_SCOPE, GIT_COMMIT, params,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
@@ -1381,14 +1381,14 @@ public class RemoteServer implements Server
       private final ServerRequestCallback<ConsoleProcess> callback_;
    }
 
-   public void vcsPush(ServerRequestCallback<ConsoleProcess> requestCallback)
+   public void gitPush(ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_PUSH,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
    @Override
-   public void vcsClone(VcsCloneOptions options,
+   public void gitClone(VcsCloneOptions options,
                         ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       sendRequest(RPC_SCOPE,
@@ -1397,7 +1397,7 @@ public class RemoteServer implements Server
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
-   public void vcsPull(ServerRequestCallback<ConsoleProcess> requestCallback)
+   public void gitPull(ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_PULL,
                   new ConsoleProcessCallbackAdapter(requestCallback));
@@ -1415,7 +1415,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void vcsSshPublicKey(String privateKeyPath,
+   public void gitSshPublicKey(String privateKeyPath,
                                ServerRequestCallback<String> requestCallback)
    {
       sendRequest(RPC_SCOPE,
@@ -1425,27 +1425,27 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void vcsCreateSshKey(
-                  CreateKeyOptions options,
-                  ServerRequestCallback<CreateKeyResult> requestCallback)
+   public void gitCreateSshKey(
+         CreateKeyOptions options,
+         ServerRequestCallback<CreateKeyResult> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_CREATE_SSH_KEY, options, requestCallback);
    }
 
    @Override
-   public void vcsHasRepo(ServerRequestCallback<Boolean> requestCallback)
+   public void gitHasRepo(ServerRequestCallback<Boolean> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_HAS_REPO, requestCallback);
    }
 
    @Override
-   public void vcsInitRepo(ServerRequestCallback<Void> requestCallback)
+   public void gitInitRepo(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_INIT_REPO, requestCallback);
    }
 
    @Override
-   public void vcsDiffFile(String path,
+   public void gitDiffFile(String path,
                            PatchMode mode,
                            int contextLines,
                            boolean noSizeWarning,
@@ -1460,7 +1460,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void vcsApplyPatch(String patch,
+   public void gitApplyPatch(String patch,
                              PatchMode mode,
                              ServerRequestCallback<Void> requestCallback)
    {
@@ -1470,7 +1470,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GIT_APPLY_PATCH, params, requestCallback);
    }
 
-   public void vcsHistoryCount(String spec,
+   public void gitHistoryCount(String spec,
                                String filterText,
                                ServerRequestCallback<CommitCount> requestCallback)
    {
@@ -1481,7 +1481,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void vcsHistory(String spec,
+   public void gitHistory(String spec,
                           int skip,
                           int maxentries,
                           String filter,
@@ -1496,7 +1496,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void vcsExecuteCommand(String command,
+   public void gitExecuteCommand(String command,
                                  ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_EXECUTE_COMMAND, command,
@@ -1504,7 +1504,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void vcsShow(String rev,
+   public void gitShow(String rev,
                        boolean noSizeWarning,
                        ServerRequestCallback<String> requestCallback)
    {
@@ -2328,7 +2328,7 @@ public class RemoteServer implements Server
    private static final String GIT_FULL_STATUS = "git_full_status";
    private static final String GIT_LIST_BRANCHES = "git_list_branches";
    private static final String GIT_CHECKOUT = "git_checkout";
-   private static final String GIT_COMMIT_GIT = "git_commit_git";
+   private static final String GIT_COMMIT = "git_commit";
    private static final String GIT_CLONE = "git_clone";
    private static final String GIT_PUSH = "git_push";
    private static final String GIT_PULL = "git_pull";

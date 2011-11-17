@@ -21,14 +21,14 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
 {
    @Inject
-   public HistoryAsyncDataProvider(VCSServerOperations server)
+   public HistoryAsyncDataProvider(GitServerOperations server)
    {
       server_ = server;
       filterText_ = new Value<String>("");
@@ -48,7 +48,7 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
 
    public void refreshCount()
    {
-      server_.vcsHistoryCount("", filterText_.getValue(), new ServerRequestCallback<CommitCount>()
+      server_.gitHistoryCount("", filterText_.getValue(), new ServerRequestCallback<CommitCount>()
       {
          @Override
          public void onResponseReceived(CommitCount response)
@@ -68,7 +68,7 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
    protected void onRangeChanged(final HasData<CommitInfo> display)
    {
       final Range rng = display.getVisibleRange();
-      server_.vcsHistory(
+      server_.gitHistory(
             "", rng.getStart(), rng.getLength(), filterText_.getValue(),
             new SimpleRequestCallback<RpcObjectList<CommitInfo>>("Error Fetching History")
             {
@@ -81,6 +81,6 @@ public class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
             });
    }
 
-   private final VCSServerOperations server_;
+   private final GitServerOperations server_;
    private HasValue<String> filterText_;
 }

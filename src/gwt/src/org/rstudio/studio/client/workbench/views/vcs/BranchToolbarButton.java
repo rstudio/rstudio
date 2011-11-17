@@ -21,7 +21,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.icons.StandardIcons;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
@@ -31,7 +31,7 @@ public class BranchToolbarButton extends ToolbarButton
 {
    @Inject
    public BranchToolbarButton(final VcsState vcsState,
-                              final VCSServerOperations server)
+                              final GitServerOperations server)
    {
       super("",
             StandardIcons.INSTANCE.empty_command(),
@@ -62,7 +62,7 @@ public class BranchToolbarButton extends ToolbarButton
                   @Override
                   public void execute()
                   {
-                     server.vcsCheckout(
+                     server.gitCheckout(
                            branch,
                            new SimpleRequestCallback<ConsoleProcess>()
                            {

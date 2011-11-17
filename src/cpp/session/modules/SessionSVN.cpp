@@ -29,6 +29,9 @@ namespace svn {
 
 namespace {
 
+/** GLOBAL STATE **/
+FilePath s_workingDir;
+
 core::system::ProcessOptions procOptions()
 {
    core::system::ProcessOptions options;
@@ -68,11 +71,7 @@ core::system::ProcessOptions procOptions()
 bool isSvnInstalled()
 {
    core::system::ProcessResult result;
-   Error error = core::system::runProgram("svn",
-                                          ShellArgs() << "help",
-                                          "",
-                                          procOptions(),
-                                          &result);
+   Error error = system::runCommand("svn help", "", procOptions(), &result);
 
    if (error)
    {
@@ -93,8 +92,7 @@ bool isSvnDirectory(const core::FilePath& workingDir)
 
    core::system::ProcessResult result;
 
-   Error error = core::system::runProgram("svn",
-                                          ShellArgs() << "info",
+   Error error = core::system::runCommand("svn info",
                                           "",
                                           options,
                                           &result);
@@ -105,6 +103,11 @@ bool isSvnDirectory(const core::FilePath& workingDir)
    return result.exitStatus == EXIT_SUCCESS;
 }
 
+bool isSvnEnabled()
+{
+   return !s_workingDir.empty();
+}
+
 Error initialize()
 {
    return Success();
@@ -112,6 +115,7 @@ Error initialize()
 
 Error initializeSvn(const core::FilePath& workingDir)
 {
+   s_workingDir = workingDir;
    return Success();
 }
 

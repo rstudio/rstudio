@@ -16,7 +16,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageHandler;
@@ -29,7 +29,7 @@ import java.util.ArrayList;
 public class ChangelistTablePresenter
 {
    @Inject
-   public ChangelistTablePresenter(VCSServerOperations server,
+   public ChangelistTablePresenter(GitServerOperations server,
                                    ChangelistTable view,
                                    VcsState vcsState)
    {
@@ -48,12 +48,12 @@ public class ChangelistTablePresenter
 
             if (event.isUnstage())
             {
-               server_.vcsUnstage(paths,
+               server_.gitUnstage(paths,
                                   new SimpleRequestCallback<Void>());
             }
             else
             {
-               server_.vcsStage(paths,
+               server_.gitStage(paths,
                                 new SimpleRequestCallback<Void>());
             }
          }
@@ -83,7 +83,7 @@ public class ChangelistTablePresenter
       return view_;
    }
 
-   private final VCSServerOperations server_;
+   private final GitServerOperations server_;
    private final ChangelistTable view_;
    private final VcsState vcsState_;
 }

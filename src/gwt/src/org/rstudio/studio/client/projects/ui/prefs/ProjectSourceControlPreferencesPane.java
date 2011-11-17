@@ -20,9 +20,9 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SshKeyChooser;
 import org.rstudio.studio.client.common.vcs.VCSHelpLink;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
@@ -45,7 +45,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    public ProjectSourceControlPreferencesPane(final Session session,
                                               GlobalDisplay globalDisplay,
                                               EventBus eventBus,
-                                              VCSServerOperations server)
+                                              GitServerOperations server)
    {
       session_ = session;
       globalDisplay_ = globalDisplay;
@@ -192,7 +192,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       final ProgressIndicator indicator = getProgressIndicator();
       indicator.onProgress("Checking for git repository...");
       
-      server_.vcsHasRepo(new ServerRequestCallback<Boolean>() {
+      server_.gitHasRepo(new ServerRequestCallback<Boolean>() {
 
          @Override
          public void onResponseReceived(Boolean result)
@@ -215,7 +215,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
                      @Override
                      public void execute()
                      {
-                        server_.vcsInitRepo(
+                        server_.gitInitRepo(
                           new VoidServerRequestCallback(indicator) {
                              @Override
                              public void onSuccess()
@@ -292,7 +292,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
-   private final VCSServerOperations server_;
+   private final GitServerOperations server_;
    
    private SelectWidget vcsSelect_;
    private SshKeyChooser sshKeyChooser_;

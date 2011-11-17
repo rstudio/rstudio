@@ -55,6 +55,8 @@ std::string activeVCSName()
 {
    if (git::isGitEnabled())
       return "Git";
+   else if (svn::isSvnEnabled())
+      return "Subversion";
    else
       return std::string();
 }
@@ -66,11 +68,7 @@ bool isGitInstalled()
 
 bool isSvnInstalled()
 {
-   if (!userSettings().vcsEnabled())
-      return false;
-
-   // TODO
-   return false;
+   return svn::isSvnInstalled();
 }
 
 FilePath getTrueHomeDir()
@@ -227,17 +225,21 @@ core::Error initialize()
          return git::initializeGit(workingDir);
       return Success();
    }
+#ifdef SUBVERSION
    else if (vcsOptions.vcsOverride == "svn")
    {
       if (svn::isSvnInstalled() && svn::isSvnDirectory(workingDir))
          return svn::initializeSvn(workingDir);
       return Success();
    }
+#endif
 
    if (git::isGitInstalled() && git::isGitDirectory(workingDir))
       return git::initializeGit(workingDir);
+#ifdef SUBVERSION
    else if (svn::isSvnInstalled() && svn::isSvnDirectory(workingDir))
       return svn::initializeSvn(workingDir);
+#endif
    else
       return Success();  // none specified or detected
 }

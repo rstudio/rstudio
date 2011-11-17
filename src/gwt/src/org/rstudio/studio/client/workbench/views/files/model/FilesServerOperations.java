@@ -15,13 +15,13 @@ package org.rstudio.studio.client.workbench.views.files.model;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
 import java.util.ArrayList;
 
-public interface FilesServerOperations extends VCSServerOperations
+public interface FilesServerOperations extends GitServerOperations
 {
    void stat(String path,
              ServerRequestCallback<FileSystemItem> requestCallback);

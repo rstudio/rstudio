@@ -62,7 +62,7 @@ public class SshKeyChooser extends Composite
       return !Desktop.isDesktop() || BrowseCap.isWindows();  
    }
    
-   public SshKeyChooser(VCSServerOperations server, 
+   public SshKeyChooser(GitServerOperations server,
                         String defaultSshKeyDir,
                         String textWidth)
                        
@@ -191,7 +191,7 @@ public class SshKeyChooser extends Composite
       FileSystemItem keyDir = privKey.getParentPath();
       final String keyPath = keyDir.completePath(privKey.getStem() + ".pub");
       
-      server_.vcsSshPublicKey(keyPath,
+      server_.gitSshPublicKey(keyPath,
                               new ServerRequestCallback<String> () {
          
          @Override
@@ -303,6 +303,6 @@ public class SshKeyChooser extends Composite
    private TextBoxWithButton sshKeyPathChooser_;
    private SmallButton createKeyButton_;
    
-   private final VCSServerOperations server_;
+   private final GitServerOperations server_;
    private ProgressIndicator progressIndicator_;
 }

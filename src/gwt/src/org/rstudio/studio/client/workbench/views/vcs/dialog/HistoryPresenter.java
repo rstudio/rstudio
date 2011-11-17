@@ -30,7 +30,7 @@ import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
@@ -77,7 +77,7 @@ public class HistoryPresenter
    }
 
    @Inject
-   public HistoryPresenter(VCSServerOperations server,
+   public HistoryPresenter(GitServerOperations server,
                            final Display view,
                            HistoryAsyncDataProvider provider,
                            final VcsState vcsState)
@@ -159,7 +159,7 @@ public class HistoryPresenter
 
       final Token token = invalidation_.getInvalidationToken();
 
-      server_.vcsShow(
+      server_.gitShow(
             commitInfo.getId(),
             noSizeWarning,
             new SimpleRequestCallback<String>()
@@ -233,7 +233,7 @@ public class HistoryPresenter
       }
    };
 
-   private final VCSServerOperations server_;
+   private final GitServerOperations server_;
    private final Display view_;
    private final HistoryAsyncDataProvider provider_;
    private final Invalidation invalidation_ = new Invalidation();

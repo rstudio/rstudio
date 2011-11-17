@@ -45,7 +45,7 @@ import com.google.gwt.user.client.ui.Widget;
 public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 {
    public CreateKeyDialog(String defaultSshKeyPath,
-                          final VCSServerOperations server,
+                          final GitServerOperations server,
                           final OperationWithInput<String> onSuccess)
    {
       super("Create SSH Key", new ProgressOperationWithInput<CreateKeyOptions>() {
@@ -69,7 +69,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
                                                             encryptedData);
                      
                      // call server to create the key
-                     server.vcsCreateSshKey(
+                     server.gitCreateSshKey(
                         options, 
                         new ServerRequestCallback<CreateKeyResult>() {
    

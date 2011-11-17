@@ -25,7 +25,7 @@ import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.console.ProcessExitEvent.Handler;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
@@ -52,7 +52,7 @@ public class ConsoleBarPresenter
    @Inject
    public ConsoleBarPresenter(Display consoleBarView,
                               OutputDisplay outputView,
-                              VCSServerOperations server)
+                              GitServerOperations server)
    {
       consoleBarView_ = consoleBarView;
       outputView_ = outputView;
@@ -115,7 +115,7 @@ public class ConsoleBarPresenter
 
       outputView_.addCommand(command);
 
-      server_.vcsExecuteCommand(command, new SimpleRequestCallback<ConsoleProcess>()
+      server_.gitExecuteCommand(command, new SimpleRequestCallback<ConsoleProcess>()
       {
          @Override
          public void onResponseReceived(final ConsoleProcess response)
@@ -162,5 +162,5 @@ public class ConsoleBarPresenter
    private final String defaultText_ = "git ";
    private final Display consoleBarView_;
    private final OutputDisplay outputView_;
-   private final VCSServerOperations server_;
+   private final GitServerOperations server_;
 }

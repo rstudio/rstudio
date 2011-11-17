@@ -29,9 +29,9 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SshKeyChooser;
 import org.rstudio.studio.client.common.vcs.VCSHelpLink;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
@@ -43,7 +43,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    public SourceControlPreferencesPane(PreferencesDialogResources res,
                                        Session session,
                                        final GlobalDisplay globalDisplay,
-                                       VCSServerOperations server,
+                                       GitServerOperations server,
                                        RemoteFileSystemContext fsContext,
                                        FileDialogs fileDialogs)
    {
@@ -217,7 +217,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
 
    private final PreferencesDialogResources res_;
    
-   private final VCSServerOperations server_;
+   private final GitServerOperations server_;
  
    
    private final CheckBox chkVcsEnabled_;

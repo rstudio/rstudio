@@ -31,8 +31,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.AllStatus;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -47,7 +47,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHan
 public class VcsState
 {
    @Inject
-   public VcsState(VCSServerOperations server,
+   public VcsState(GitServerOperations server,
                    EventBus eventBus,
                    GlobalDisplay globalDisplay,
                    final Session session)
@@ -189,7 +189,7 @@ public class VcsState
 
    public void refresh(final boolean showError)
    {
-      server_.vcsAllStatus(new ServerRequestCallback<AllStatus>()
+      server_.gitAllStatus(new ServerRequestCallback<AllStatus>()
       {
          @Override
          public void onResponseReceived(AllStatus response)
@@ -215,7 +215,7 @@ public class VcsState
    private JsArray<StatusAndPath> status_;
    private BranchesInfo branches_;
    private boolean hasRemote_;
-   private final VCSServerOperations server_;
+   private final GitServerOperations server_;
    private final EventBus eventBus_;
    private final GlobalDisplay globalDisplay_;
 }

@@ -27,7 +27,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.common.vcs.VCSServerOperations;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -50,7 +50,7 @@ public class GitPresenterCore
    public interface Binder extends CommandBinder<Commands, GitPresenterCore> {}
    
    @Inject
-   public GitPresenterCore(VCSServerOperations server,
+   public GitPresenterCore(GitServerOperations server,
                            VcsState vcsState,
                            final Commands commands,
                            Binder commandBinder,
@@ -192,7 +192,8 @@ public class GitPresenterCore
    @Handler
    void onVcsPull()
    {
-      server_.vcsPull(new SimpleRequestCallback<ConsoleProcess>() {
+      server_.gitPull(new SimpleRequestCallback<ConsoleProcess>()
+      {
          @Override
          public void onResponseReceived(ConsoleProcess proc)
          {
@@ -204,7 +205,8 @@ public class GitPresenterCore
    @Handler
    void onVcsPush()
    {
-      server_.vcsPush(new SimpleRequestCallback<ConsoleProcess>() {
+      server_.gitPush(new SimpleRequestCallback<ConsoleProcess>()
+      {
          @Override
          public void onResponseReceived(ConsoleProcess proc)
          {
@@ -213,7 +215,7 @@ public class GitPresenterCore
       });
    }
     
-   private final VCSServerOperations server_;
+   private final GitServerOperations server_;
    private final VcsState vcsState_;
    private boolean rememberByDefault_ = true;
    private boolean askpassPending_ = false;
