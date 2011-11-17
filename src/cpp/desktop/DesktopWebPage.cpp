@@ -26,6 +26,7 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent) :
       navigated_(false)
 {
    //settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
+   settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, true);
    setNetworkAccessManager(new NetworkAccessManager(sharedSecret, parent));
 }
 
