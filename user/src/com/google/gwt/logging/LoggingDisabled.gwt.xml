@@ -18,13 +18,20 @@
   <inherits name="com.google.gwt.logging.LogImpl"/>
   <source path="client" />
   <source path="shared" />
-  
+
   <replace-with class="com.google.gwt.logging.client.LogConfiguration.LogConfigurationImplRegular">
     <when-type-is class="com.google.gwt.logging.client.LogConfiguration.LogConfigurationImplNull"/>
     <when-property-is name="gwt.logging.enabled" value="TRUE" />
   </replace-with>
+  <replace-with class="com.google.gwt.logging.client.LogConfiguration.LogConfigurationImplSevere">
+    <when-type-is class="com.google.gwt.logging.client.LogConfiguration.LogConfigurationImplNull"/>
+    <when-property-is name="gwt.logging.enabled" value="SEVERE" />
+  </replace-with>
+  <replace-with class="com.google.gwt.logging.client.LogConfiguration.LogConfigurationImplWarning">
+    <when-type-is class="com.google.gwt.logging.client.LogConfiguration.LogConfigurationImplNull"/>
+    <when-property-is name="gwt.logging.enabled" value="WARNING" />
+  </replace-with>
 
-  
   <!-- Set up and handle the gwt.logging.logLevel property -->
   <define-property name="gwt.logging.logLevel" values="ALL, FINEST, FINER, FINE, CONFIG, INFO, WARNING, SEVERE" />
   <replace-with class="com.google.gwt.logging.client.DefaultLevel.All">

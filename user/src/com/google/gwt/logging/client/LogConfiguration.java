@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,13 +30,14 @@ import java.util.logging.Logger;
  * Configures client side logging using the query params and gwt.xml settings.
  */
 public class LogConfiguration implements EntryPoint {
-    
+
   private interface LogConfigurationImpl {
     void configureClientSideLogging();
     boolean loggingIsEnabled();
+    boolean loggingIsEnabled(Level level);
   }
-  
-  /** 
+
+  /**
    * Implementation which does nothing and compiles out if logging is disabled.
    */
   private static class LogConfigurationImplNull
@@ -46,9 +47,13 @@ public class LogConfiguration implements EntryPoint {
     public boolean loggingIsEnabled() {
       return false;
     }
+
+    public boolean loggingIsEnabled(Level level) {
+      return false;
+    }
   }
-  
-  /** 
+
+  /**
    * Implementation which is used when logging is enabled.
    */
   private static class LogConfigurationImplRegular
@@ -68,17 +73,24 @@ public class LogConfiguration implements EntryPoint {
       setLevels(root);
       setDefaultHandlers(root);
     }
-  
+
     public boolean loggingIsEnabled() {
       return true;
     }
-   
+
+    /**
+     * Returns whether logging enabled for the passed in level.
+     */
+    public boolean loggingIsEnabled(Level level) {
+      return true;
+    }
+
     private void addHandlerIfNotNull(Logger l, Handler h) {
       if (!(h instanceof NullLogHandler)) {
         l.addHandler(h);
       }
     }
-    
+
     private Level parseLevel(String s) {
       if (s == null) {
         return null;
@@ -104,7 +116,7 @@ public class LogConfiguration implements EntryPoint {
       }
       return null;
     }
-  
+
     private void setDefaultHandlers(Logger l) {
       // Add the default handlers. If users want some of these disabled, they
       // will specify that in the gwt.xml file, which will replace the handler
@@ -137,17 +149,43 @@ public class LogConfiguration implements EntryPoint {
       }
     }
   }
-  
+
+  /**
+   * Implementation which is used when logging.enabled is set to SEVERE.
+   */
+  private static class LogConfigurationImplSevere
+  extends LogConfigurationImplRegular {
+    @Override
+    public boolean loggingIsEnabled(Level level) {
+      return level.intValue() >= 1000;
+    }
+  }
+
+  /**
+   * Implementation which is used when logging.enabled is set to WARNING.
+   */
+  private static class LogConfigurationImplWarning
+  extends LogConfigurationImplRegular {
+    @Override
+    public boolean loggingIsEnabled(Level level) {
+      return level.intValue() >= 900;
+    }
+  }
+
   private static LogConfigurationImpl impl =
     GWT.create(LogConfigurationImplNull.class);
-  
+
   public static boolean loggingIsEnabled() {
     return impl.loggingIsEnabled();
   }
 
+  public static boolean loggingIsEnabled(Level level) {
+    return impl.loggingIsEnabled(level);
+  }
+
   public void onModuleLoad() {
     impl.configureClientSideLogging();
-    
+
     if (impl.loggingIsEnabled()) {
       if (GWT.getUncaughtExceptionHandler() == null) {
         final Logger log = Logger.getLogger(LogConfiguration.class.getName());

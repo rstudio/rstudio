@@ -29,43 +29,83 @@ import java.io.Serializable;
  */
 public class Level implements Serializable {
   private static LevelImpl staticImpl = GWT.create(LevelImplNull.class); 
-  public static Level ALL = staticImpl.all();
-  public static Level CONFIG = staticImpl.config(); 
-  public static Level FINE = staticImpl.fine(); 
-  public static Level FINER = staticImpl.finer(); 
-  public static Level FINEST = staticImpl.finest(); 
-  public static Level INFO = staticImpl.info(); 
-  public static Level OFF = staticImpl.off(); 
-  public static Level SEVERE = staticImpl.severe(); 
-  public static Level WARNING = staticImpl.warning();
+  public static Level ALL = GWT.create(LevelAll.class);
+  public static Level CONFIG = GWT.create(LevelConfig.class); 
+  public static Level FINE = GWT.create(LevelFine.class); 
+  public static Level FINER = GWT.create(LevelFiner.class); 
+  public static Level FINEST = GWT.create(LevelFinest.class); 
+  public static Level INFO = GWT.create(LevelInfo.class); 
+  public static Level OFF = GWT.create(LevelOff.class); 
+  public static Level SEVERE = GWT.create(LevelSevere.class); 
+  public static Level WARNING = GWT.create(LevelWarning.class);
   
+  private static class LevelAll extends Level {
+    @Override public String getName() { return "ALL"; }
+    @Override public int intValue() { return Integer.MIN_VALUE; }
+  }
+
+  private static class LevelConfig extends Level {
+    @Override public String getName() { return "CONFIG"; }
+    @Override public int intValue() { return 700; }
+  }
+  
+  private static class LevelFine extends Level {
+    @Override public String getName() { return "FINE"; }
+    @Override public int intValue() { return 500; }
+  }
+
+  private static class LevelFiner extends Level {
+    @Override public String getName() { return "FINER"; }
+    @Override public int intValue() { return 400; }
+  }
+
+  private static class LevelFinest extends Level {
+    @Override public String getName() { return "FINEST"; }
+    @Override public int intValue() { return 300; }
+  }  
+  
+  private static class LevelInfo extends Level {
+    @Override public String getName() { return "INFO"; }
+    @Override public int intValue() { return 800; }
+  }
+  
+  private static class LevelOff extends Level {
+    @Override public String getName() { return "OFF"; }
+    @Override public int intValue() { return Integer.MAX_VALUE; }
+  }
+
+  private static class LevelNull extends Level {
+    @Override public String getName() { return null; }
+    @Override public int intValue() { return -1; }
+  }
+  
+  private static class LevelSevere extends Level {
+    @Override public String getName() { return "SEVERE"; }
+    @Override public int intValue() { return 1000; }
+  }
+
+  private static class LevelWarning extends Level {
+    @Override public String getName() { return "WARNING"; }
+    @Override public int intValue() { return 900; }
+  }
+
   public static Level parse(String name) {
     return staticImpl.parse(name);
   } 
-  
-  private transient LevelImpl impl;
 
-  protected Level(String name, int value) {
-    impl = GWT.create(LevelImplNull.class);
-    impl.setName(name);
-    impl.setValue(value);
-  }
+  protected Level() { }
   
-  protected Level() {
-    // For serialization
-  }
-
   public String getName() {
-    return impl.getName();
+    return "DUMMY";
   }
   
   public int intValue() {
-    return impl.intValue();
+    return -1;
   }
     
   @Override
   public String toString() {
-    return impl.toString();
+    return getName();
   }
   
   /* Not Implemented */
@@ -74,5 +114,4 @@ public class Level implements Serializable {
   // public String getLocalizedName() {}
   // public String getResourceBundleName() {} 
   // public int  hashCode() {}
-  
 }
