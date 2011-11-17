@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.views.vcs.svn;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
