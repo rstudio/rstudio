@@ -16,8 +16,6 @@
 #include <QtDebug>
 #include "DesktopNetworkAccessManager.hpp"
 
-extern QString sharedSecret;
-
 namespace desktop {
 
 WebPage::WebPage(QUrl baseUrl, QWidget *parent) :
@@ -27,7 +25,7 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent) :
 {
    //settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
    settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, true);
-   setNetworkAccessManager(new NetworkAccessManager(sharedSecret, parent));
+   setNetworkAccessManager(NetworkAccessManager::instance());
 }
 
 void WebPage::setBaseUrl(const QUrl& baseUrl)
