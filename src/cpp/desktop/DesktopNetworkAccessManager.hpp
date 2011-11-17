@@ -17,17 +17,12 @@
 #include <QObject>
 #include <QtNetwork>
 
-
-namespace desktop {
-
 class NetworkAccessManager : public QNetworkAccessManager
 {
-public:
-    static NetworkAccessManager* instance();
-
     Q_OBJECT
-private:
-    explicit NetworkAccessManager(QString secret);
+public:
+    explicit NetworkAccessManager(QString secret,
+                                  QObject *parent = 0);
 
 protected:
     QNetworkReply* createRequest(Operation op,
@@ -36,9 +31,6 @@ protected:
 
 private:
     QString secret_;
-    static NetworkAccessManager* instance_;
 };
-
-} // namespace desktop
 
 #endif // DESKTOP_NETWORK_ACCESS_MANAGER_HPP
