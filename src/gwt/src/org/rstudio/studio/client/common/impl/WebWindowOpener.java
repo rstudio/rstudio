@@ -131,47 +131,50 @@ public class WebWindowOpener implements WindowOpener
 
       final String finalName = name;
       WindowEx window = doOpenWindow(absUrl, finalName, features, focus);
-      if ((window == null) && showPopupBlockedMessage())
+      if (window == null)
       {
-         globalDisplay.showYesNoMessage(
-               GlobalDisplay.MSG_POPUP_BLOCKED,
-               "Popup Blocked",
-               "We attempted to open an external browser window, but " +
-               "the action was prevented by your popup blocker. You " +
-               "can attempt to open the window again by pressing the " +
-               "\"Try Again\" button below.\n\n" +
-               "NOTE: To prevent seeing this message in the future, you " +
-               "should configure your browser to allow popup windows " +
-               "for " + Window.Location.getHostName() + ".",
-               false,
-               new Operation()
-               {
-                  public void execute()
+         if (showPopupBlockedMessage())
+         {
+            globalDisplay.showYesNoMessage(
+                  GlobalDisplay.MSG_POPUP_BLOCKED,
+                  "Popup Blocked",
+                  "We attempted to open an external browser window, but " +
+                  "the action was prevented by your popup blocker. You " +
+                  "can attempt to open the window again by pressing the " +
+                  "\"Try Again\" button below.\n\n" +
+                  "NOTE: To prevent seeing this message in the future, you " +
+                  "should configure your browser to allow popup windows " +
+                  "for " + Window.Location.getHostName() + ".",
+                  false,
+                  new Operation()
                   {
-                     WindowEx window = doOpenWindow(absUrl,
-                                                    finalName,
-                                                    features,
-                                                    focus);
-                     if (window != null)
+                     public void execute()
                      {
-                        if (width > 0 && height > 0)
-                           window.resizeInnerTo(width, height);
-                        if (openOperation != null)
-                           openOperation.execute(window);
+                        WindowEx window = doOpenWindow(absUrl,
+                                                       finalName,
+                                                       features,
+                                                       focus);
+                        if (window != null)
+                        {
+                           if (width > 0 && height > 0)
+                              window.resizeInnerTo(width, height);
+                           if (openOperation != null)
+                              openOperation.execute(window);
+                        }
                      }
-                  }
-               },
-               new Operation()
-               {
-                  public void execute()
+                  },
+                  new Operation()
                   {
-
-                  }
-               },
-               null,
-               "Try Again",
-               "Cancel",
-               true);
+                     public void execute()
+                     {
+   
+                     }
+                  },
+                  null,
+                  "Try Again",
+                  "Cancel",
+                  true);
+            }
       }
       else
       {
