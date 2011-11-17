@@ -62,6 +62,7 @@ public:
    void prepareForSatelliteWindow(const PendingSatelliteWindow& pendingWnd);
 
 signals:
+  void onCloseWindowShortcut();
 
 public slots:
 

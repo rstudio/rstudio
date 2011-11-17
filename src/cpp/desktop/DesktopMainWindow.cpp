@@ -68,6 +68,9 @@ MainWindow::MainWindow(QUrl url) :
    connect(&gwtCallback_, SIGNAL(workbenchInitialized()),
            this, SLOT(onWorkbenchInitialized()));
 
+   connect(webView(), SIGNAL(onCloseWindowShortcut()),
+           this, SLOT(onCloseWindowShortcut()));
+
    setWindowIcon(QIcon(QString::fromAscii(":/icons/RStudio.ico")));
 
    setWindowTitle(QString::fromAscii("RStudio"));
@@ -80,6 +83,19 @@ MainWindow::MainWindow(QUrl url) :
    //setContentsMargins(10000, 0, -10000, 0);
    setStyleSheet(QString::fromAscii("QMainWindow { background: #e1e2e5; }"));
 }
+
+void MainWindow::onCloseWindowShortcut()
+{
+   QWebFrame* pMainFrame = webView()->page()->mainFrame();
+
+   bool closeSourceDocEnabled = pMainFrame->evaluateJavaScript(
+      QString::fromAscii(
+         "window.desktopHooks.isCommandEnabled('closeSourceDoc')")).toBool();
+
+   if (!closeSourceDocEnabled)
+      close();
+}
+
 
 void MainWindow::onWorkbenchInitialized()
 {

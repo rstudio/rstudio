@@ -34,6 +34,7 @@ public slots:
 
 
 protected slots:
+   void onCloseWindowShortcut();
    void finishLoading(bool ok);
    void onJavaScriptWindowObjectCleared();
 

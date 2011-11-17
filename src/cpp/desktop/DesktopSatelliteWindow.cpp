@@ -31,6 +31,14 @@ void SatelliteWindow::onJavaScriptWindowObjectCleared()
          QString::fromAscii("desktop"),
          &gwtCallback_,
          QScriptEngine::QtOwnership);
+
+   connect(webView(), SIGNAL(onCloseWindowShortcut()),
+           this, SLOT(onCloseWindowShortcut()));
+}
+
+void SatelliteWindow::onCloseWindowShortcut()
+{
+   close();
 }
 
 void SatelliteWindow::finishLoading(bool ok)

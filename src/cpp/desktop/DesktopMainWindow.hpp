@@ -42,6 +42,7 @@ signals:
    void firstWorkbenchInitialized();
 
 protected slots:
+   void onCloseWindowShortcut();
    void onJavaScriptWindowObjectCleared();
    void onWorkbenchInitialized();
    void resetMargins();

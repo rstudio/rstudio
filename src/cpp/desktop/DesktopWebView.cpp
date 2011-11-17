@@ -23,6 +23,7 @@
 #include "DesktopOptions.hpp"
 #include "DesktopWebPage.hpp"
 #include "DesktopWindowTracker.hpp"
+#include "DesktopUtils.hpp"
 
 namespace desktop {
 
@@ -143,6 +144,22 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
 
 void WebView::keyPressEvent(QKeyEvent* pEv)
 {
+   // emit close window shortcut signal if appropriate
+#ifndef _WIN32
+   if (pEv->key() == 'W')
+   {
+#ifdef Q_WS_MAC
+      Qt::KeyboardModifier modifier = Qt::MetaModifier;
+#else
+      Qt::KeyboardModifier modifier = Qt::ControlModifier;
+#endif
+
+      // check modifier and emit signal
+      if (pEv->modifiers() & modifier)
+         onCloseWindowShortcut();
+   }
+#endif
+
    // Work around bugs in QtWebKit that result in numpad key
    // presses resulting in keyCode=0 in the DOM's keydown events.
    // This is due to some missing switch cases in the case
