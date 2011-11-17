@@ -12,11 +12,36 @@
  */
 
 #include "DesktopNetworkAccessManager.hpp"
+#include <QNetworkDiskCache>
+#include <QDesktopServices>
+
+#include <core/FilePath.hpp>
+
+using namespace core;
 
 NetworkAccessManager::NetworkAccessManager(QString secret, QObject *parent) :
     QNetworkAccessManager(parent), secret_(secret)
 {
    setProxy(QNetworkProxy::NoProxy);
+
+   // initialize cache
+   QString cacheDir =
+         QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
+   FilePath cachePath(cacheDir.toUtf8().constData());
+   FilePath browserCachePath = cachePath.complete("RStudioWebkit");
+   Error error = browserCachePath.ensureDirectory();
+   if (!error)
+   {
+      QNetworkDiskCache* pCache = new QNetworkDiskCache(parent);
+      QString browserCacheDir = QString::fromUtf8(
+                                    browserCachePath.absolutePath().c_str());
+      pCache->setCacheDirectory(browserCacheDir);
+      setCache(pCache);
+   }
+   else
+   {
+      LOG_ERROR(error);
+   }
 }
 
 QNetworkReply* NetworkAccessManager::createRequest(
