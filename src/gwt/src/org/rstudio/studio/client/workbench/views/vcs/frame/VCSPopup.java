@@ -12,18 +12,12 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.frame;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.user.client.ui.*;
-import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.core.client.widget.NineUpBorder;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
@@ -81,44 +75,6 @@ public class VCSPopup
    {
    }
 
-   public static void show(ReviewPresenter rpres,
-                           HistoryPresenter hpres,
-                           boolean showHistory)
-   {
-      final LayoutPanel swapContainer = new LayoutPanel();
-      
-      show(swapContainer, rpres, hpres, showHistory);
-      
-      ModalPopupPanel popup = new ModalPopupPanel(false, false, true);
-      Resources res = GWT.<Resources>create(Resources.class);
-      NineUpBorder border = new NineUpBorder(
-            res,
-            32, 20, 17, 20);
-      addCloseButton(popup, border);
-      border.setSize("100%", "100%");
-      border.setFillColor("white");
-      border.setWidget(swapContainer);
-      popup.setWidget(border);
-      popup.setGlassEnabled(true);
-
-      Style popupStyle = popup.getElement().getStyle();
-      popupStyle.setZIndex(1001);
-      popupStyle.setPosition(Style.Position.ABSOLUTE);
-      popupStyle.setTop(0, Unit.PX);
-      popupStyle.setBottom(0, Unit.PX);
-      popupStyle.setLeft(0, Unit.PX);
-      popupStyle.setRight(0, Unit.PX);
-
-      Style contentStyle =
-            ((Element) popup.getElement().getFirstChild()).getStyle();
-      contentStyle.setWidth(100, Unit.PCT);
-      contentStyle.setHeight(100, Unit.PCT);
-
-      popup.center();
-      
-   }
-   
-   
    public static void show(final LayoutPanel swapContainer,
                            final ReviewPresenter rpres,
                            final HistoryPresenter hpres,
@@ -167,30 +123,5 @@ public class VCSPopup
             swapContainer.setWidgetVisible(history, false);
          }
       });
-   }
-
-   private static void addCloseButton(final ModalPopupPanel popupPanel,
-                                      NineUpBorder border)
-   {
-      Resources res = GWT.create(Resources.class);
-      Image closeIcon = new Image(res.close());
-      closeIcon.getElement().getStyle().setCursor(Style.Cursor.POINTER);
-      closeIcon.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            popupPanel.close();
-         }
-      });
-
-      LayoutPanel layoutPanel = border.getLayoutPanel();
-      layoutPanel.add(closeIcon);
-      layoutPanel.setWidgetTopHeight(closeIcon,
-                                     15, Unit.PX,
-                                     closeIcon.getHeight(), Unit.PX);
-      layoutPanel.setWidgetRightWidth(closeIcon,
-                                      27, Unit.PX,
-                                      closeIcon.getWidth(), Unit.PX);
    }
 }
