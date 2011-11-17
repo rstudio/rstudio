@@ -24,6 +24,7 @@
 #include "DesktopWebPage.hpp"
 #include "DesktopWindowTracker.hpp"
 #include "DesktopUtils.hpp"
+#include "DesktopMainWindow.hpp"
 
 namespace desktop {
 
@@ -102,6 +103,8 @@ QWebView* WebView::createWindow(QWebPage::WebWindowType)
          // create and size
          pSatellite = new SatelliteWindow(pMainWindow);
          pSatellite->resize(width, height);
+         pSatellite->move(pMainWindow->x() + 25,
+                          pMainWindow->y() + 25);
 
          // add to tracker
          windowTracker.addWindow(name, pSatellite);

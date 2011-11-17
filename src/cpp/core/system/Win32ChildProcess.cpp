@@ -387,7 +387,7 @@ Error ChildProcess::run()
       si.wShowWindow = SW_HIDE;
    }
 
-   std::string workingDir = NULL;
+   std::string workingDir;
    if (!options_.workingDir.empty())
    {
       workingDir = string_utils::utf8ToSystem(
@@ -405,7 +405,8 @@ Error ChildProcess::run()
      TRUE,            // Set handle inheritance to TRUE
      dwFlags,         // Creation flags
      lpEnv,           // Environment block
-     workingDir.c_str(),    // Use parent's starting directory
+                      // Use parent's starting directory
+     workingDir.empty() ? NULL : workingDir.c_str(),
      &si,             // Pointer to STARTUPINFO structure
      &pi );   // Pointer to PROCESS_INFORMATION structure
 
