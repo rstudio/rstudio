@@ -19,8 +19,10 @@
 
 #ifdef __APPLE__
 #include <util.h>
+#include <sys/ttycom.h>
 #else
 #include <pty.h>
+#include <asm/ioctls.h>
 #endif
 
 #include <sys/wait.h>
@@ -301,16 +303,31 @@ Error ChildProcess::run()
    // pseudoterminal mode: fork using the special forkpty call
    if (options_.pseudoterminal)
    {
-      char* nullName = NULL;
+      // TODO: ioctl (fd, TIOCSIG, SIGINT) on interrupt (or if this
+      // isn't supported may just need to send SIGINT to the
+      // child process group)
+
+      // define window size -- setting ws_row to 1 prevents full screen
+      // applications like vim from trying to run full screen (although
+      // you still need to SIGINT to get out of them)
+      //
+      // TODO: accept number of columns as a parameter
+      // TOOD: issue ioctl TIOCSWINSZ for dynamic terminal size changes
+      struct winsize winSize;
+      winSize.ws_col = 60;
+      winSize.ws_row = 1;
+      winSize.ws_xpixel = 0;
+      winSize.ws_ypixel = 0;
 #ifdef __APPLE__
       struct termios* nullTermp = NULL;
-      struct winsize* nullWinp = NULL;
+      struct winsize* pWinSize = &winSize;
 #else
       const struct termios* nullTermp = NULL;
-      const struct winsize* nullWinp = NULL;
+      const struct winsize* pWinSize = &winSize;
 #endif
+      char* nullName = NULL;
       Error error = posixCall<pid_t>(
-         boost::bind(::forkpty, &fdMaster, nullName, nullTermp, nullWinp),
+         boost::bind(::forkpty, &fdMaster, nullName, nullTermp, pWinSize),
          ERROR_LOCATION,
          &pid);
       if (error)
