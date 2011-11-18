@@ -975,6 +975,37 @@ public class NumberFormat {
   }
 
   /**
+   * Change the number of fractional digits used for formatting with this
+   * instance.
+   * 
+   * @param digits the exact number of fractional digits for formatted
+   *     values; must be >= 0
+   * @return {@code this}, for chaining purposes
+   */
+  public NumberFormat overrideFractionDigits(int digits) {
+    return overrideFractionDigits(digits, digits);
+  }
+
+  /**
+   * Change the number of fractional digits used for formatting with this
+   * instance. Digits after {@code minDigits} that are zero will be omitted from
+   * the formatted value.
+   * 
+   * @param minDigits the minimum number of fractional digits for formatted
+   *     values; must be >= 0
+   * @param maxDigits the maximum number of fractional digits for formatted
+   *     values; must be >= {@code minDigits}
+   * @return {@code this}, for chaining purposes
+   */
+  public NumberFormat overrideFractionDigits(int minDigits, int maxDigits) {
+    assert minDigits >= 0;
+    assert maxDigits >= minDigits;
+    minimumFractionDigits = minDigits;
+    maximumFractionDigits = maxDigits;
+    return this;
+  }
+
+  /**
    * Parses text to produce a numeric value. A {@link NumberFormatException} is
    * thrown if either the text is empty or if the parse does not consume all
    * characters of the text.

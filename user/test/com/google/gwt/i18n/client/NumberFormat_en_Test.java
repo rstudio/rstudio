@@ -152,6 +152,16 @@ public class NumberFormat_en_Test extends GWTTestCase {
     assertEquals("¥1,235 JPY", str);
     str = NumberFormat.getGlobalCurrencyFormat("CNY").format(1234.75);
     assertEquals("¥1,234.75 CNY", str);
+
+    // Test overriding the number of fractional digits
+    formatter = NumberFormat.getCurrencyFormat("USD").overrideFractionDigits(0);
+    str = formatter.format(1234.556);
+    assertEquals("$1,235", str);
+    formatter = NumberFormat.getCurrencyFormat("USD").overrideFractionDigits(3, 4);
+    str = formatter.format(1234.556);
+    assertEquals("$1,234.556", str);
+    str = formatter.format(1234.55637);
+    assertEquals("$1,234.5564", str);
   }
 
   public void testExponential() {
