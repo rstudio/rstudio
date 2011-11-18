@@ -89,6 +89,7 @@ if (UNIX)
    # find packages and libraries
    find_library(PTHREAD_LIBRARIES pthread)
    if(NOT APPLE)
+      find_library(UTIL_LIBRARIES util)
       find_library(UUID_LIBRARIES uuid)
    endif()
    find_package(ZLIB REQUIRED QUIET)
@@ -101,6 +102,7 @@ if (UNIX)
    # include directories and libraries
    set (CORE_SYSTEM_LIBRARIES
       ${PTHREAD_LIBRARIES}
+      ${UTIL_LIBRARIES}
       ${UUID_LIBRARIES}
       ${ZLIB_LIBRARIES}
       ${CORE_SERVICES_LIBRARY}

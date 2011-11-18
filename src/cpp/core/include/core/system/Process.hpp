@@ -45,7 +45,9 @@ struct ProcessOptions
 #ifdef _WIN32
       : terminateChildren(false), detachProcess(false)
 #else
-      : terminateChildren(false), detachSession(false)
+      : terminateChildren(false),
+        detachSession(false),
+        pseudoterminal(false)
 #endif
    {
    }
@@ -68,6 +70,9 @@ struct ProcessOptions
 #ifndef _WIN32
    // Calls ::setsid after fork for POSIX (no effect on Windows)
    bool detachSession;
+
+   // attach the child process to pseudoterminal pipes
+   bool pseudoterminal;
 #endif
 
 #ifdef _WIN32

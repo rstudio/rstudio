@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
+#include <pty.h>
 #include <sys/wait.h>
 #include <sys/types.h>
 
@@ -82,6 +83,16 @@ Error readPipe(int pipeFd, std::string* pOutput, bool *pEOF = NULL)
       {
          if (errno == EAGAIN) // carve-out for O_NONBLOCK pipes
             return Success();
+
+         // on linux slave terminals return EIO rather than bytesRead == 0
+         // to indicate end of file
+         else if ((errno == EIO) && ::isatty(pipeFd))
+         {
+            if (pEOF)
+               *pEOF = true;
+
+            return Success();
+         }
          else
             return systemError(errno, ERROR_LOCATION);
       }
@@ -107,24 +118,74 @@ Error readPipe(int pipeFd, std::string* pOutput, bool *pEOF = NULL)
    return Success();
 }
 
+void configureSlaveTerminal(int termFd)
+{
+   // configure no-echo behavior for terminal
+   struct termios termp;
+   Error error = posixCall<int>(
+      boost::bind(::tcgetattr, termFd, &termp),
+      ERROR_LOCATION);
+   if (!error)
+   {
+      termp.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL);
+      termp.c_oflag &= ~(ONLCR);
+      safePosixCall<int>(
+            boost::bind(::tcsetattr, termFd, TCSANOW, &termp),
+            ERROR_LOCATION);
+   }
+   else
+   {
+      LOG_ERROR(error);
+   }
+}
+
 } // anonymous namespace
 
 
 
 struct ChildProcess::Impl
 {
-   Impl() : pid(-1), fdStdin(-1), fdStdout(-1), fdStderr(-1) {}
+   Impl() : pid(-1), fdStdin(-1), fdStdout(-1), fdStderr(-1), fdMaster(-1) {}
    pid_t pid;
    int fdStdin;
    int fdStdout;
    int fdStderr;
+   int fdMaster;
+
+   void init(pid_t pid, int fdStdin, int fdStdout, int fdStderr)
+   {
+      this->pid = pid;
+      this->fdStdin = fdStdin;
+      this->fdStdout = fdStdout;
+      this->fdStderr = fdStderr;
+      this->fdMaster = -1;
+   }
+
+   void init(pid_t pid, int fdMaster)
+   {
+      this->pid = pid;
+      this->fdStdin = fdMaster;
+      this->fdStdout = fdMaster;
+      this->fdStderr = -1;
+      this->fdMaster = fdMaster;
+   }
 
    void closeAll(const ErrorLocation& location)
    {
       pid = -1;
-      closeFD(&fdStdin, location);
-      closeFD(&fdStdout, location);
-      closeFD(&fdStderr, location);
+
+      if (fdMaster != -1)
+      {
+         closeFD(&fdMaster, location);
+         fdStdin = -1;
+         fdStdout = -1;
+      }
+      else
+      {
+         closeFD(&fdStdin, location);
+         closeFD(&fdStdout, location);
+         closeFD(&fdStderr, location);
+      }
    }
 
    void closeFD(int* pFD, const ErrorLocation& location)
@@ -198,8 +259,12 @@ Error ChildProcess::terminate()
 
    // determine target pid (kill just this pid or pid + children)
    pid_t pid = pImpl_->pid;
-   if (options_.detachSession || options_.terminateChildren)
+   if (options_.pseudoterminal ||
+       options_.detachSession ||
+       options_.terminateChildren)
+   {
       pid = -pid;
+   }
 
    // send signal
    if (::kill(pid, SIGTERM) == -1)
@@ -220,44 +285,63 @@ Error ChildProcess::terminate()
 
 Error ChildProcess::run()
 {  
-   // standard input
-   int fdInput[2];
-   Error error = posixCall<int>(boost::bind(::pipe, fdInput), ERROR_LOCATION);
-   if (error)
-      return error;
-
-   // standard output
-   int fdOutput[2];
-   error = posixCall<int>(boost::bind(::pipe, fdOutput), ERROR_LOCATION);
-   if (error)
-   {
-      closePipe(fdInput, ERROR_LOCATION);
-      return error;
-   }
-
-   // standard error
-   int fdError[2];
-   error = posixCall<int>(boost::bind(::pipe, fdError), ERROR_LOCATION);
-   if (error)
-   {
-      closePipe(fdInput, ERROR_LOCATION);
-      closePipe(fdOutput, ERROR_LOCATION);
-      return error;
-   }
-
-   // fork
+   // declarations
    pid_t pid;
-   error = posixCall<pid_t>(::fork, ERROR_LOCATION, &pid);
-   if (error)
+   int fdInput[2], fdOutput[2], fdError[2];
+   int fdMaster;
+
+   // pseudoterminal mode: fork using the special forkpty call
+   if (options_.pseudoterminal)
    {
-      closePipe(fdInput, ERROR_LOCATION);
-      closePipe(fdOutput, ERROR_LOCATION);
-      closePipe(fdError, ERROR_LOCATION);
-      return error;
+      char* nullName = NULL;
+      const struct termios* nullTermp = NULL;
+      const struct winsize* nullWinp = NULL;
+      Error error = posixCall<pid_t>(
+         boost::bind(::forkpty, &fdMaster, nullName, nullTermp, nullWinp),
+         ERROR_LOCATION,
+         &pid);
+      if (error)
+         return error;
+   }
+
+   // standard mode: use conventional fork + stream redirection
+   else
+   {
+      // standard input
+      Error error = posixCall<int>(boost::bind(::pipe, fdInput), ERROR_LOCATION);
+      if (error)
+         return error;
+
+      // standard output
+      error = posixCall<int>(boost::bind(::pipe, fdOutput), ERROR_LOCATION);
+      if (error)
+      {
+         closePipe(fdInput, ERROR_LOCATION);
+         return error;
+      }
+
+      // standard error
+      error = posixCall<int>(boost::bind(::pipe, fdError), ERROR_LOCATION);
+      if (error)
+      {
+         closePipe(fdInput, ERROR_LOCATION);
+         closePipe(fdOutput, ERROR_LOCATION);
+         return error;
+      }
+
+      // fork
+      error = posixCall<pid_t>(::fork, ERROR_LOCATION, &pid);
+      if (error)
+      {
+         closePipe(fdInput, ERROR_LOCATION);
+         closePipe(fdOutput, ERROR_LOCATION);
+         closePipe(fdError, ERROR_LOCATION);
+         return error;
+      }
    }
 
    // child
-   else if (pid == 0)
+   if (pid == 0)
    {
       // NOTE: within the child we want to make sure in all cases that
       // we call ::execv to execute the program. as a result if any
@@ -297,25 +381,36 @@ Error ChildProcess::run()
       }
 
       // clear the child signal mask
-      error = core::system::clearSignalMask();
+      Error error = core::system::clearSignalMask();
       if (error)
       {
          LOG_ERROR(error);
          // intentionally fail forward (see note above)
       }  
 
-      // close unused pipes -- intentionally fail forward (see note above)
-      closePipe(fdInput[WRITE], ERROR_LOCATION);
-      closePipe(fdOutput[READ], ERROR_LOCATION);
-      closePipe(fdError[READ], ERROR_LOCATION);
+      // pseudoterminal mode: file descriptor work is already handled
+      // by forkpty, all we need to do is configure terminal behavior
+      if (options_.pseudoterminal)
+      {
+         configureSlaveTerminal(STDIN_FILENO);
+      }
 
-      // wire standard streams (intentionally fail forward)
-      safePosixCall<int>(boost::bind(::dup2, fdInput[READ], STDIN_FILENO),
-                         ERROR_LOCATION);
-      safePosixCall<int>(boost::bind(::dup2, fdOutput[WRITE], STDOUT_FILENO),
-                         ERROR_LOCATION);
-      safePosixCall<int>(boost::bind(::dup2, fdError[WRITE], STDERR_FILENO),
-                         ERROR_LOCATION);
+      // standard mode: close/redirect pipes
+      else
+      {
+         // close unused pipes -- intentionally fail forward (see note above)
+         closePipe(fdInput[WRITE], ERROR_LOCATION);
+         closePipe(fdOutput[READ], ERROR_LOCATION);
+         closePipe(fdError[READ], ERROR_LOCATION);
+
+         // wire standard streams (intentionally fail forward)
+         safePosixCall<int>(boost::bind(::dup2, fdInput[READ], STDIN_FILENO),
+                            ERROR_LOCATION);
+         safePosixCall<int>(boost::bind(::dup2, fdOutput[WRITE], STDOUT_FILENO),
+                            ERROR_LOCATION);
+         safePosixCall<int>(boost::bind(::dup2, fdError[WRITE], STDERR_FILENO),
+                            ERROR_LOCATION);
+      }
 
       // close all open file descriptors other than std streams
       error = core::system::closeNonStdFileDescriptors();
@@ -372,16 +467,25 @@ Error ChildProcess::run()
    // parent
    else
    {
-      // close unused pipes
-      closePipe(fdInput[READ], ERROR_LOCATION);
-      closePipe(fdOutput[WRITE], ERROR_LOCATION);
-      closePipe(fdError[WRITE], ERROR_LOCATION);
+      // pseudoterminal mode: wire input/output streams to fdMaster
+      // returned from forkpty
+      if (options_.pseudoterminal)
+      {
+         // record masterFd as our handles
+         pImpl_->init(pid, fdMaster);
+      }
 
-      // record pid and pipe handles
-      pImpl_->pid = pid;
-      pImpl_->fdStdin = fdInput[WRITE];
-      pImpl_->fdStdout = fdOutput[READ];
-      pImpl_->fdStderr = fdError[READ];
+      // standard mode: close unused pipes & wire streams to approprite fds
+      else
+      {
+         // close unused pipes
+         closePipe(fdInput[READ], ERROR_LOCATION);
+         closePipe(fdOutput[WRITE], ERROR_LOCATION);
+         closePipe(fdError[WRITE], ERROR_LOCATION);
+
+         // record pipe handles
+         pImpl_->init(pid, fdInput[WRITE], fdOutput[READ], fdError[READ]);
+      }
 
       return Success();
    }
@@ -469,7 +573,13 @@ void AsyncChildProcess::poll()
    {
       // make sure the output pipes are setup for async reading
       setPipeNonBlocking(pImpl_->fdStdout);
-      setPipeNonBlocking(pImpl_->fdStderr);
+
+      // if we are providing a pseudoterminal then stderr is disabled
+      // so mark it finished. otherwise, configure it for non-blocking io
+      if (options().pseudoterminal)
+         pAsyncImpl_->finishedStderr_ = true;
+      else
+         setPipeNonBlocking(pImpl_->fdStderr);         
 
       if (callbacks_.onStarted)
          callbacks_.onStarted(*this);

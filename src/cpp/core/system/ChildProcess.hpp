@@ -55,6 +55,8 @@ public:
 protected:
    Error run();
 
+   const ProcessOptions& options() const { return options_; }
+
 protected:
    // platform specific impl
    struct Impl;
@@ -89,6 +91,15 @@ public:
 
    Error run(const std::string& input, ProcessResult* pResult)
    {
+      // sync child processes don't support pseudoterminal mode
+#ifndef _WIN32
+      if (options().pseudoterminal)
+      {
+         return systemError(boost::system::errc::not_supported,
+                            ERROR_LOCATION);
+      }
+#endif
+
       // run the process
       Error error = ChildProcess::run();
       if (error)
