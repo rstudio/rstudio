@@ -233,7 +233,7 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
       if (symbolData != null) {
         // jsniIdent, className, memberName, sourceUri, sourceLine
         String[] parts = symbolData.split(",");
-        assert parts.length == 5 : "Expected 5, have " + parts.length;
+        assert parts.length == 6 : "Expected 6, have " + parts.length;
 
         JsniRef ref = JsniRef.parse(parts[0].substring(0,
             parts[0].lastIndexOf(')') + 1));

@@ -29,9 +29,19 @@ public abstract class AbstractTextOutput implements TextOutput {
   private boolean justNewlined;
   private PrintWriter out;
   private int position = 0;
+  private int line = 0;
+  private int column = 0;
 
   protected AbstractTextOutput(boolean compact) {
     this.compact = compact;
+  }
+
+  public int getColumn() {
+    return column;
+  }
+
+  public int getLine() {
+    return line;
   }
 
   public int getPosition() {
@@ -63,6 +73,8 @@ public abstract class AbstractTextOutput implements TextOutput {
       out.print('\n');
     }
     position++;
+    line++;
+    column = 0;
     justNewlined = true;
   }
 
@@ -70,6 +82,8 @@ public abstract class AbstractTextOutput implements TextOutput {
     if (!compact) {
       out.print('\n');
       position++;
+      line++;
+      column = 0;
       justNewlined = true;
     }
   }
@@ -78,6 +92,7 @@ public abstract class AbstractTextOutput implements TextOutput {
     maybeIndent();
     out.print(c);
     position++;
+    column++;
     justNewlined = false;
   }
 
@@ -98,6 +113,7 @@ public abstract class AbstractTextOutput implements TextOutput {
       maybeIndent();
       out.print(c);
       position += 1;
+      column++;
     }
   }
 
@@ -128,6 +144,7 @@ public abstract class AbstractTextOutput implements TextOutput {
 
   private void printAndCount(char[] chars) {
     position += chars.length;
+    column += chars.length;
     out.print(chars);
   }
 }

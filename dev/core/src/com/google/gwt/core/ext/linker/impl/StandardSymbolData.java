@@ -57,6 +57,7 @@ public class StandardSymbolData implements SymbolData {
   }
 
   private String className;
+  private int fragmentNumber = -1;
   private String memberName;
   private String methodSig;
   private int sourceLine;
@@ -89,6 +90,10 @@ public class StandardSymbolData implements SymbolData {
 
   public String getClassName() {
     return className;
+  }
+
+  public int getFragmentNumber() {
+    return fragmentNumber;
   }
 
   public String getJsniIdent() {
@@ -137,6 +142,10 @@ public class StandardSymbolData implements SymbolData {
     return methodSig != null;
   }
 
+  public void setFragmentNumber(int fragNum) {
+    fragmentNumber = fragNum;
+  }
+
   public void setSymbolName(String symbolName) {
     this.symbolName = symbolName;
   }
@@ -168,6 +177,7 @@ public class StandardSymbolData implements SymbolData {
     queryId = in.readInt();
     castableTypeMap = (CastableTypeMap) in.readObject();
     seedId = in.readInt();
+    fragmentNumber = in.readInt();
   }
 
   /**
@@ -197,5 +207,7 @@ public class StandardSymbolData implements SymbolData {
     out.writeInt(queryId);
     out.writeObject(castableTypeMap);
     out.writeInt(seedId);
+    out.writeInt(fragmentNumber);
   }
+
 }

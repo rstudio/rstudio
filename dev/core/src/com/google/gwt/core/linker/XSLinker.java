@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,9 +17,10 @@ package com.google.gwt.core.linker;
 
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.LinkerOrder;
-import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
+import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.js.JsToStringGenerationVisitor;
@@ -34,19 +35,6 @@ public class XSLinker extends SelectionScriptLinker {
   @Override
   public String getDescription() {
     return "Cross-Site";
-  }
-
-  @Override
-  protected String generateDeferredFragment(TreeLogger logger,
-      LinkerContext context, int fragment, String js) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(context.getModuleFunctionName());
-    sb.append(".runAsyncCallback");
-    sb.append(fragment);
-    sb.append("(");
-    sb.append(JsToStringGenerationVisitor.javaScriptString(js));
-    sb.append(");\n");
-    return sb.toString();
   }
 
   @Override
@@ -92,6 +80,15 @@ public class XSLinker extends SelectionScriptLinker {
   protected String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) {
     return "com/google/gwt/core/linker/XSTemplate.js";
+  }
+
+   @Override
+  protected String wrapDeferredFragment(TreeLogger logger,
+      LinkerContext context, int fragment, String js, ArtifactSet artifacts) {
+    return String.format("%s.runAsyncCallback%d(%s)\n",
+        context.getModuleFunctionName(),
+        fragment,
+        JsToStringGenerationVisitor.javaScriptString(js));
   }
 
   private String getModulePrefix(LinkerContext context, String strongName,

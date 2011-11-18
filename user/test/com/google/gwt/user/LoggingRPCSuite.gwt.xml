@@ -21,5 +21,32 @@
 
   <servlet path='/loggingrpc'
     class='com.google.gwt.user.server.rpc.LoggingRPCTestServiceImpl' />
+  <servlet path="/remote_logging" class="com.google.gwt.logging.server.RemoteLoggingServiceImpl"/>
+
+  <set-property name="gwt.logging.logLevel" value="WARNING"/>
+  <set-property name="gwt.logging.enabled" value="TRUE"/>
+  <set-property name="gwt.logging.consoleHandler" value="ENABLED"/>
+  <set-property name="gwt.logging.simpleRemoteHandler" value="ENABLED" />
+
+
+  <set-property name="compiler.useSourceMaps" value="true"/>
+
+
+  <!-- Turn off emulation to test non-sourcemap mode -->
+  <set-property name="compiler.stackMode" value="native"/> 
+  <!-- when Chrome is enabled, turn off stack trace emulation -->
+  <set-property name="compiler.stackMode" value="strip"> 
+    <when-property-is name="user.agent" value="safari"/>
+  </set-property>
+
+  <!-- when stack trace stripping is enabled, we need to replace the Null collector 
+       with one that does something for Chrome -->
+  <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorChrome">
+    <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
+    <!-- For now, only Chrome provides Error.stack support, so we hijack the
+         entire WebKit permutation -->
+    <when-property-is name="user.agent" value="safari" />
+    <when-property-is name="compiler.useSourceMaps" value="true" />
+  </replace-with>
 
 </module>

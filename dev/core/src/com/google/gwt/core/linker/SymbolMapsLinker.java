@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,39 +15,176 @@
  */
 package com.google.gwt.core.linker;
 
+import com.google.debugging.sourcemap.SourceMapGeneratorV3;
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.AbstractLinker;
+import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.SymbolData;
-import com.google.gwt.core.ext.linker.LinkerOrder.Order;
+import com.google.gwt.core.ext.linker.SyntheticArtifact;
+import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.collect.HashMap;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
 /**
- * This Linker exports the symbol maps associated with each compilation result
- * as a private file. The names of the symbol maps files are computed by
- * appending {@value #STRONG_NAME_SUFFIX} to the value returned by
- * {@link CompilationResult#getStrongName()}.
+ * This Linker exports the symbol maps associated with each compilation result as a private file.
+ * The names of the symbol maps files are computed by appending {@value #STRONG_NAME_SUFFIX} to the
+ * value returned by {@link CompilationResult#getStrongName()}.
  */
 @LinkerOrder(Order.POST)
 @Shardable
 public class SymbolMapsLinker extends AbstractLinker {
 
+
   /**
-   * This value is appended to the strong name of the CompilationResult to form
-   * the symbol map's filename.
+   * Artifact to record insertions or deletions made to Javascript fragments.
+   */
+  public static class ScriptFragmentEditsArtifact extends Artifact<ScriptFragmentEditsArtifact> {
+
+    /**
+     * Operation type performed on script.
+     */
+    public enum Edit {
+      PREFIX, INSERT, REMOVE;
+    }
+
+    private static class EditOperation {
+
+      public static EditOperation insert(int lineNumber, String data) {
+        return new EditOperation(Edit.INSERT, lineNumber, data);
+      }
+
+      public static EditOperation prefix(String data) {
+        return new EditOperation(Edit.PREFIX, 0, data);
+      }
+
+      public static EditOperation remove(int lineNumber) {
+        return new EditOperation(Edit.REMOVE, lineNumber, null);
+      }
+
+      Edit op;
+      int lineNumber;
+      int numLines;
+
+      public EditOperation(
+          Edit op, int lineNumber, String data) {
+        this.op = op;
+        this.lineNumber = lineNumber;
+        this.numLines = countNewLines(data);
+      }
+
+      public int getLineNumber() {
+        return lineNumber;
+      }
+
+      public int getNumLines() {
+        return numLines;
+      }
+
+      public Edit getOp() {
+        return op;
+      }
+
+      private int countNewLines(String chunkJs) {
+        int newLineCount = 0;
+        for (int j = 0; j < chunkJs.length(); j++) {
+          if (chunkJs.charAt(j) == '\n') {
+            newLineCount++;
+          }
+        }
+        return newLineCount;
+      }
+    }
+
+    private List<EditOperation> editOperations = new ArrayList<EditOperation>();
+
+    private String strongName;
+    private int fragment;
+
+    public ScriptFragmentEditsArtifact(String strongName,
+        int fragment) {
+      super(SymbolMapsLinker.class);
+      this.strongName = strongName;
+      this.fragment = fragment;
+    }
+
+    public int getFragment() {
+      return fragment;
+    }
+
+    public String getStrongName() {
+      return strongName;
+    }
+
+    @Override
+    public int hashCode() {
+      return (strongName + fragment).hashCode();
+    }
+
+    public void insertLinesBefore(int position, String lines) {
+      editOperations.add(EditOperation.insert(position, lines));
+    }
+
+    public void prefixLines(String lines) {
+      editOperations.add(EditOperation.prefix(lines));
+    }
+
+    @Override
+    protected int compareToComparableArtifact(SymbolMapsLinker.ScriptFragmentEditsArtifact o) {
+      int result = (strongName + fragment).compareTo(strongName + fragment);
+      return result;
+    }
+
+    @Override
+    protected Class<ScriptFragmentEditsArtifact> getComparableArtifactType() {
+      return ScriptFragmentEditsArtifact.class;
+    }
+  }
+
+  /**
+   * Artifact to represent a sourcemap file to be processed by SymbolMapsLinker.
+   */
+  public static class SourceMapArtifact extends SyntheticArtifact {
+
+    private int permutationId;
+    private int fragment;
+    private byte[] js;
+
+    public SourceMapArtifact(int permutationId, int fragment, byte[] js) {
+      super(SymbolMapsLinker.class, permutationId + "/sourceMap" + fragment + ".json", js);
+      this.permutationId = permutationId;
+      this.fragment = fragment;
+      this.js = js;
+    }
+
+    public int getFragment() {
+      return fragment;
+    }
+
+    public int getPermutationId() {
+      return permutationId;
+    }
+  }
+
+  /**
+   * This value is appended to the strong name of the CompilationResult to form the symbol map's
+   * filename.
    */
   public static final String STRONG_NAME_SUFFIX = ".symbolMap";
 
@@ -98,16 +235,58 @@ public class SymbolMapsLinker extends AbstractLinker {
       throws UnableToCompleteException {
     if (onePermutation) {
       artifacts = new ArtifactSet(artifacts);
-
+      Map<Integer, String> permMap = new HashMap<Integer, String>();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       for (CompilationResult result : artifacts.find(CompilationResult.class)) {
         PrintWriter pw = new PrintWriter(out);
-
+        permMap.put(result.getPermutationId(), result.getStrongName());
         doWriteSymbolMap(logger, result, pw);
         pw.close();
 
         doEmitSymbolMap(logger, artifacts, result, out);
         out.reset();
+      }
+
+      for (SourceMapArtifact se : artifacts.find(SourceMapArtifact.class)) {
+        // filename is permutation_id/sourceMap<fragmentNumber>.json
+        String sourceMapString = Util.readStreamAsString(se.getContents(logger));
+        String strongName = permMap.get(se.getPermutationId());
+        String partialPath = strongName + "_sourceMap" + se.getFragment() + ".json";
+
+        int fragment = se.getFragment();
+        ScriptFragmentEditsArtifact editArtifact = null;
+        for (ScriptFragmentEditsArtifact mp : artifacts.find(ScriptFragmentEditsArtifact.class)) {
+          if (mp.getStrongName().equals(strongName) && mp.getFragment() == fragment) {
+            editArtifact = mp;
+            artifacts.remove(editArtifact);
+            break;
+          }
+        }
+
+        SyntheticArtifact emArt = null;
+        // no need to adjust source map
+        if (editArtifact == null) {
+          emArt = emitSourceMapString(logger, sourceMapString, partialPath);
+        } else {
+          SourceMapGeneratorV3 sourceMapGenerator = new SourceMapGeneratorV3();
+          try {
+            int totalPrefixLines = 0;
+            for (ScriptFragmentEditsArtifact.EditOperation op : editArtifact.editOperations) {
+              if (op.getOp() == ScriptFragmentEditsArtifact.Edit.PREFIX) {
+                totalPrefixLines += op.getNumLines();
+              }
+            }
+            // TODO(cromwellian): apply insert and remove edits
+            sourceMapGenerator.mergeMapSection(totalPrefixLines, 0, sourceMapString);
+            StringWriter stringWriter = new StringWriter();
+            sourceMapGenerator.appendTo(stringWriter, "sourceMap");
+            emArt = emitSourceMapString(logger, stringWriter.toString(), partialPath);
+          } catch (Exception e) {
+            logger.log(TreeLogger.Type.WARN, "Can't write source map " + partialPath, e);
+          }
+        }
+        artifacts.add(emArt);
+        artifacts.remove(se);
       }
     }
     return artifacts;
@@ -128,11 +307,10 @@ public class SymbolMapsLinker extends AbstractLinker {
 
   /**
    * Override to change the format of the symbol map.
-   * 
+   *
    * @param logger the logger to write to
    * @param result the compilation result
-   * @param pw the output PrintWriter
-   *
+   * @param pw     the output PrintWriter
    * @throws UnableToCompleteException if an error occurs
    */
   protected void doWriteSymbolMap(TreeLogger logger, CompilationResult result,
@@ -145,7 +323,7 @@ public class SymbolMapsLinker extends AbstractLinker {
       pw.println(" }");
     }
 
-    pw.println("# jsName, jsniIdent, className, memberName, sourceUri, sourceLine");
+    pw.println("# jsName, jsniIdent, className, memberName, sourceUri, sourceLine, fragmentNumber");
     StringBuilder sb = new StringBuilder(1024);
     char[] buf = new char[1024];
     for (SymbolData symbol : result.getSymbolMap()) {
@@ -170,6 +348,8 @@ public class SymbolMapsLinker extends AbstractLinker {
       }
       sb.append(',');
       sb.append(symbol.getSourceLine());
+      sb.append(',');
+      sb.append(symbol.getFragmentNumber());
       sb.append('\n');
 
       int sbLen = sb.length();
@@ -184,5 +364,12 @@ public class SymbolMapsLinker extends AbstractLinker {
       pw.write(buf, 0, sbLen);
       sb.setLength(0);
     }
+  }
+
+  protected SyntheticArtifact emitSourceMapString(TreeLogger logger, String contents,
+      String partialPath) throws UnableToCompleteException {
+    SyntheticArtifact emArt = emitString(logger, contents, partialPath);
+    emArt.setVisibility(Visibility.LegacyDeploy);
+    return emArt;
   }
 }
