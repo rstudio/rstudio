@@ -126,15 +126,15 @@ Error readPipe(int pipeFd, std::string* pOutput, bool *pEOF = NULL)
 
 void configureSlaveTerminal(int termFd)
 {
-   // configure no-echo behavior for terminal
+   // get current attributes
    struct termios termp;
    Error error = posixCall<int>(
       boost::bind(::tcgetattr, termFd, &termp),
       ERROR_LOCATION);
    if (!error)
    {
-      termp.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL);
-      termp.c_oflag &= ~(ONLCR);
+      // make a raw version of the terminal attribs and set them
+      ::cfmakeraw(&termp);
       safePosixCall<int>(
             boost::bind(::tcsetattr, termFd, TCSANOW, &termp),
             ERROR_LOCATION);
