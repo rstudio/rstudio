@@ -16,7 +16,13 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
+
+#ifdef __APPLE__
+#include <util.h>
+#else
 #include <pty.h>
+#endif
+
 #include <sys/wait.h>
 #include <sys/types.h>
 
@@ -294,8 +300,13 @@ Error ChildProcess::run()
    if (options_.pseudoterminal)
    {
       char* nullName = NULL;
+#ifdef __APPLE__
+      struct termios* nullTermp = NULL;
+      struct winsize* nullWinp = NULL;
+#else
       const struct termios* nullTermp = NULL;
       const struct winsize* nullWinp = NULL;
+#endif
       Error error = posixCall<pid_t>(
          boost::bind(::forkpty, &fdMaster, nullName, nullTermp, nullWinp),
          ERROR_LOCATION,
