@@ -22,6 +22,11 @@ import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+
 /**
  * This class is used by the byte code rewriting which happens in DevMode only.
  * We rewrite all calls that create and access loggers by name to include a 
@@ -86,6 +91,25 @@ public class DevModeLoggingFixes {
   public static Logger logManagerGetLogger(LogManager manager, String name) {
     return manager.getLogger(addLoggerPrefix(name));
   }
+
+  /**
+   * Replaces all LogManager.getLoggerNames() calls, deleting the thread specific
+   * prefix which is appended to all logger names in dev mode in order to
+   * maintain a pseudo tree of loggers for each thread.  Also deletes all logger
+   * names that do not start with the prefix since those belong to the server
+   * and should not be returned in this function.
+   */
+  public static Enumeration<String> logManagerGetLoggerNames(LogManager manager) {
+    Enumeration<String> loggerList = manager.getLoggerNames();
+    List<String> newList = new ArrayList<String>();
+    while (loggerList.hasMoreElements()) {
+      String name = loggerList.nextElement();
+      if (startsWithLoggerPrefix(name)) {
+        newList.add(removeLoggerPrefix(name));
+      }
+    }
+    return Collections.enumeration(newList);
+  }
   
   private static String addLoggerPrefix(String name) {
     return getLoggerPrefix() + name;
@@ -101,5 +125,9 @@ public class DevModeLoggingFixes {
   
   private static String removeLoggerPrefix(String name) {
     return name.replaceFirst("^" + getLoggerPrefix(), "");
+  }
+
+  private static boolean startsWithLoggerPrefix(String name) {
+    return name.startsWith(getLoggerPrefix());
   }
 }

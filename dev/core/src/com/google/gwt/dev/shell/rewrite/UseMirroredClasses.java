@@ -56,6 +56,9 @@ public class UseMirroredClasses extends ClassAdapter {
         logManagerMethods.put(
             "getLogger",
             "com/google/gwt/logging/impl/DevModeLoggingFixes:logManagerGetLogger");
+        logManagerMethods.put(
+            "getLoggerNames",
+            "com/google/gwt/logging/impl/DevModeLoggingFixes:logManagerGetLoggerNames");
         mirrorMap.put("java/util/logging/LogManager", logManagerMethods);
         
         HashMap<String, String> loggerMethods = new HashMap<String, String>();
