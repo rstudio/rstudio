@@ -133,8 +133,10 @@ void configureSlaveTerminal(int termFd)
       ERROR_LOCATION);
    if (!error)
    {
-      // make a raw version of the terminal attribs and set them
+      // specify raw mode
       ::cfmakeraw(&termp);
+
+      // set attribs
       safePosixCall<int>(
             boost::bind(::tcsetattr, termFd, TCSANOW, &termp),
             ERROR_LOCATION);
