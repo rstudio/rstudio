@@ -288,12 +288,18 @@ Error ChildProcess::ptyInterrupt()
    if (!options().pseudoterminal)
       return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 
+   // TODO: figure out how to make this work (TIOSIG requires a too recent
+   // version of the kernel so we can't use it)
+   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+
+   /*
    // send SIGINT
    int res = ::ioctl(pImpl_->fdMaster, TIOCSIG, SIGINT);
    if (res == -1)
       return systemError(errno, ERROR_LOCATION);
    else
       return Success();
+   */
 }
 
 Error ChildProcess::terminate()
