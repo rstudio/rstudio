@@ -344,21 +344,15 @@ Error ChildProcess::run()
    // pseudoterminal mode: fork using the special forkpty call
    if (options_.pseudoterminal)
    {
+      char* nullName = NULL;
+      struct termios* nullTermp = NULL;
       struct winsize winSize;
       winSize.ws_col = options_.pseudoterminal.get().cols;
       winSize.ws_row = options_.pseudoterminal.get().rows;
       winSize.ws_xpixel = 0;
       winSize.ws_ypixel = 0;
-#ifdef __APPLE__
-      struct termios* nullTermp = NULL;
-      struct winsize* pWinSize = &winSize;
-#else
-      const struct termios* nullTermp = NULL;
-      const struct winsize* pWinSize = &winSize;
-#endif
-      char* nullName = NULL;
       Error error = posixCall<pid_t>(
-         boost::bind(::forkpty, &fdMaster, nullName, nullTermp, pWinSize),
+         boost::bind(::forkpty, &fdMaster, nullName, nullTermp, &winSize),
          ERROR_LOCATION,
          &pid);
       if (error)
