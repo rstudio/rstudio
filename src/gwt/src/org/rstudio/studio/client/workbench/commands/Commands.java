@@ -170,6 +170,7 @@ public abstract class
    public abstract AppCommand versionControlProjectSetup();
    
    // Tools
+   public abstract AppCommand showShellDialog();
    public abstract AppCommand showOptions();
 
    // Help

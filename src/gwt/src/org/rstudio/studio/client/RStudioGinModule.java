@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.shell.ShellDialog;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
@@ -129,6 +130,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Commands.class).in(Singleton.class);
       bind(DefaultCRANMirror.class).in(Singleton.class);
       bind(ChooseFile.class).in(Singleton.class);
+      bind(ShellDialog.class).in(Singleton.class);
       bind(ConsoleDispatcher.class).in(Singleton.class);
       bind(FileTypeCommands.class).in(Singleton.class);
       
