@@ -88,13 +88,7 @@ QWebView* WebView::createWindow(QWebPage::WebWindowType)
       {
          // activate the browser then return NULL to indicate
          // we didn't create a new WebView
-         if (pSatellite->isMinimized())
-         {
-            pSatellite->setWindowState(
-                           pSatellite->windowState() & ~Qt::WindowMinimized);
-            pSatellite->raise();
-         }
-         pSatellite->activateWindow();
+         desktop::raiseAndActivateWindow(pSatellite);
          return NULL;
       }
       // create a new window if we didn't find one

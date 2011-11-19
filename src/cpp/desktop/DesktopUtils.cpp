@@ -20,6 +20,17 @@
 
 namespace desktop {
 
+void raiseAndActivateWindow(QWidget* pWindow)
+{
+   if (pWindow->isMinimized())
+   {
+      pWindow->setWindowState(
+                     pWindow->windowState() & ~Qt::WindowMinimized);
+      pWindow->raise();
+   }
+   pWindow->activateWindow();
+}
+
 QMessageBox::Icon safeMessageBoxIcon(QMessageBox::Icon icon)
 {
    // if a gtk theme has a missing or corrupt icon for one of the stock

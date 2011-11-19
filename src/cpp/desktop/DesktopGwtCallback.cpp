@@ -522,6 +522,11 @@ void GwtCallback::showAboutDialog()
    about->show();
 }
 
+void GwtCallback::bringMainFrameToFront()
+{
+   desktop::raiseAndActivateWindow(pMainWindow_);
+}
+
 bool GwtCallback::suppressSyntaxHighlighting()
 {
 #ifdef Q_WS_X11

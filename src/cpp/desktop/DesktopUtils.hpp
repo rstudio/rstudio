@@ -18,6 +18,8 @@
 
 namespace desktop {
 
+void raiseAndActivateWindow(QWidget* pWindow);
+
 QMessageBox::Icon safeMessageBoxIcon(QMessageBox::Icon icon);
 
 bool showYesNoDialog(QMessageBox::Icon icon,

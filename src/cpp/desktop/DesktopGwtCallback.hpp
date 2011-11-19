@@ -96,6 +96,7 @@ public slots:
 
    void checkForUpdates();
    void showAboutDialog();
+   void bringMainFrameToFront();
    bool suppressSyntaxHighlighting();
    QString filterText(QString text);
 

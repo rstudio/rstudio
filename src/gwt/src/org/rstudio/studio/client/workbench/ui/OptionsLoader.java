@@ -16,6 +16,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.AsyncShim;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
@@ -70,6 +71,11 @@ public class OptionsLoader
                if (activateSourceControl)
                   prefDialog.activateSourceControl();
                prefDialog.showModal();
+               
+               // activate main window if we are in desktop mode (because on
+               // the mac you can actually show prefs from a satellite window)
+               if (Desktop.isDesktop())
+                  Desktop.getFrame().bringMainFrameToFront();
             }
 
             @Override
