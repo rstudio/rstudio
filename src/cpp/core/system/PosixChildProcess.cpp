@@ -384,29 +384,36 @@ Error ChildProcess::run()
        if (options_.onAfterFork)
           options_.onAfterFork();
 
-      // If options.detachSession is requested then separate
-      if (options_.detachSession)
+      // if we didn't create a pseudoterminal then check the detachSession
+      // and terminateChildren options to see whether we need to setsid
+      // or setpgid(0,0). we skip the check for pseudoterminals because
+      // forkpty calls setsid internally
+      if (!options_.pseudoterminal)
       {
-         if (::setsid() == -1)
+         // If options.detachSession is requested then separate.
+         if (options_.detachSession)
          {
-            LOG_ERROR(systemError(errno, ERROR_LOCATION));
-            // intentionally fail forward (see note above)
+            if (::setsid() == -1)
+            {
+               LOG_ERROR(systemError(errno, ERROR_LOCATION));
+               // intentionally fail forward (see note above)
+            }
          }
-      }
-      else if (options_.terminateChildren)
-      {
-         // No need to call ::setpgid(0,0) if ::setsid() was already called
-
-         // if options.terminateChildren is requested then obtain a new process
-         // group (using our own process id). this enables terminate to
-         // specify -pid to kill which will kill this process and all of its
-         // children. note that another side-effect is that this process
-         // will not automatically die with its parent, so the parent
-         // may want to kill all children from the processSupervisor on exit
-         if (::setpgid(0,0) == -1)
+         else if (options_.terminateChildren)
          {
-            LOG_ERROR(systemError(errno, ERROR_LOCATION));
-            // intentionally fail forward (see note above)
+            // No need to call ::setpgid(0,0) if ::setsid() was already called
+
+            // if options.terminateChildren is requested then obtain a new
+            // process group (using our own process id). this enables terminate
+            // to specify -pid to kill which will kill this process and all of
+            // its children. note that another side-effect is that this process
+            // will not automatically die with its parent, so the parent
+            // may want to kill all children from the processSupervisor on exit
+            if (::setpgid(0,0) == -1)
+            {
+               LOG_ERROR(systemError(errno, ERROR_LOCATION));
+               // intentionally fail forward (see note above)
+            }
          }
       }
 
