@@ -2247,8 +2247,9 @@ Error statusToJson(const core::FilePath &path,
    json::Object& obj = *pObject;
    obj["status"] = status.status();
    obj["path"] = path.relativePath(s_git_.root());
-   obj["raw_path"] = path.absolutePath();
+   obj["raw_path"] = module_context::createAliasedPath(path);
    obj["discardable"] = status.status()[1] != ' ' && status.status()[1] != '?';
+   obj["is_directory"] = path.isDirectory();
    return Success();
 }
 

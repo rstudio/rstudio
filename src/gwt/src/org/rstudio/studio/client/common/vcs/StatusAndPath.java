@@ -34,6 +34,10 @@ public class StatusAndPath extends JavaScriptObject
    public native final boolean isDiscardable() /*-{
       return this.discardable;
    }-*/;
+   
+   public native final boolean isDirectory() /*-{
+      return this.is_directory;
+   }-*/;
 
    public final boolean isFineGrainedActionable()
    {

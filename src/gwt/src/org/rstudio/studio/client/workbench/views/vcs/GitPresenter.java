@@ -40,6 +40,7 @@ import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
@@ -81,6 +82,7 @@ public class GitPresenter extends BasePresenter implements IsWidget
       view_ = view;
       server_ = server;
       commands_ = commands;
+      eventBus_ = events;
       vcsState_ = vcsState;
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -155,8 +157,17 @@ public class GitPresenter extends BasePresenter implements IsWidget
       ArrayList<StatusAndPath> items = view_.getSelectedItems();
       for (StatusAndPath item : items)
       {
-         fileTypeRegistry_.openFile(FileSystemItem.createFile(
-               item.getRawPath()));
+         if (!item.isDirectory())
+         {
+            fileTypeRegistry_.openFile(
+                           FileSystemItem.createFile(item.getRawPath()));
+         }
+         else 
+         { 
+            eventBus_.fireEvent(new DirectoryNavigateEvent(
+                           FileSystemItem.createDir(item.getRawPath())));
+            commands_.activateFiles().execute();
+         }
       }
    }
 
@@ -255,6 +266,7 @@ public class GitPresenter extends BasePresenter implements IsWidget
    private final Commands commands_;
    private final VcsState vcsState_;
    private final GlobalDisplay globalDisplay_;
+   private final EventBus eventBus_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final SatelliteManager satelliteManager_;
 }
