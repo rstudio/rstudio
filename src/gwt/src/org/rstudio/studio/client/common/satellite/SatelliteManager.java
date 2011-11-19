@@ -66,28 +66,36 @@ public class SatelliteManager implements CloseHandler<Window>
          return;
       }
       
-      // in web mode try to activate any existing satellite of this name
-      // we have a special mechanism for doing this because if we relied
-      // on the default mechanism it would cause the target window to
-      // reload (NOTE: Desktop handles this with a special codepath)
-      if (!Desktop.isDesktop())
+      // check for a re-activation of an existing window
+      for (ActiveSatellite satellite : satellites_)
       {
-         for (ActiveSatellite satellite : satellites_)
+         if (satellite.getName().equals(name))
          {
-            if (satellite.getName().equals(name))
+            WindowEx window = satellite.getWindow();
+            if (!window.isClosed())
             {
-               WindowEx window = satellite.getWindow();
-               if (!window.isClosed())
+               // for web mode  bring the window to the front, notify
+               // it that it has been reactivated, then exit
+               if (!Desktop.isDesktop())
                {
                   window.focus();
                   callNotifyReactivated(window, params);
                   return;
                }
+               // for desktop mode we just notify the window it is being
+               // re-activated -- the actual re-activation is handled
+               // by a different codepath within DesktopWebView so we 
+               // continue on with processing after callNotifyReactivated
+               else
+               {
+                  callNotifyReactivated(window, params);
+               }
             }
          }
       }
       
-      // record satellite params for subsequent setting
+      // record satellite params for subsequent setting (this value is read
+      // by the satellite within the call to registerAsSatellite)
       if (params != null)
          satelliteParams_.put(name, params);
  
