@@ -49,6 +49,12 @@ public:
    // write (synchronously) to std input
    virtual Error writeToStdin(const std::string& input, bool eof);
 
+   // set the size of the pseudoterminal
+   virtual Error ptySetSize(int cols, int rows);
+
+   // interrupt the pseudoterminal
+   virtual Error ptyInterrupt();
+
    // terminate the process
    virtual Error terminate();
 

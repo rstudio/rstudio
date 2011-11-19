@@ -280,6 +280,16 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
       return Success();
 }
 
+Error ChildProcess::ptySetSize(int cols, int rows)
+{
+   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+}
+
+Error ChildProcess::ptyInterrupt()
+{
+   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+}
+
 
 Error ChildProcess::terminate()
 {

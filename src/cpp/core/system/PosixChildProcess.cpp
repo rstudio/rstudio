@@ -260,6 +260,40 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
    return Success();
 }
 
+Error ChildProcess::ptySetSize(int cols, int rows)
+{
+   // verify we are dealing with a pseudoterminal
+   if (!options().pseudoterminal)
+      return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+
+   // define winsize structure
+   struct winsize winp;
+   winp.ws_col = cols;
+   winp.ws_row = rows;
+   winp.ws_xpixel = 0;
+   winp.ws_ypixel = 0;
+
+   // set it
+   int res = ::ioctl(pImpl_->fdMaster, TIOCSWINSZ, &winp);
+   if (res == -1)
+      return systemError(errno, ERROR_LOCATION);
+   else
+      return Success();
+}
+
+Error ChildProcess::ptyInterrupt()
+{
+   // verify we are dealing with a pseudoterminal
+   if (!options().pseudoterminal)
+      return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+
+   // send SIGINT
+   int res = ::ioctl(pImpl_->fdMaster, TIOCSIG, SIGINT);
+   if (res == -1)
+      return systemError(errno, ERROR_LOCATION);
+   else
+      return Success();
+}
 
 Error ChildProcess::terminate()
 {
@@ -303,19 +337,9 @@ Error ChildProcess::run()
    // pseudoterminal mode: fork using the special forkpty call
    if (options_.pseudoterminal)
    {
-      // TODO: ioctl (fd, TIOCSIG, SIGINT) on interrupt (or if this
-      // isn't supported may just need to send SIGINT to the
-      // child process group)
-
-      // define window size -- setting ws_row to 1 prevents full screen
-      // applications like vim from trying to run full screen (although
-      // you still need to SIGINT to get out of them)
-      //
-      // TODO: accept number of columns as a parameter
-      // TOOD: issue ioctl TIOCSWINSZ for dynamic terminal size changes
       struct winsize winSize;
-      winSize.ws_col = 60;
-      winSize.ws_row = 1;
+      winSize.ws_col = options_.pseudoterminal.get().cols;
+      winSize.ws_row = options_.pseudoterminal.get().rows;
       winSize.ws_xpixel = 0;
       winSize.ws_ypixel = 0;
 #ifdef __APPLE__

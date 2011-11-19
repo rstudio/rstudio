@@ -38,6 +38,18 @@ namespace system {
 //
 //
 
+// Struct for speicfying pseudoterminal options
+struct Pseudoterminal
+{
+   Pseudoterminal(int cols, int rows)
+      : cols(cols), rows(rows)
+   {
+   }
+
+   int cols;
+   int rows;
+};
+
 // Struct for specifying process options
 struct ProcessOptions
 {
@@ -46,8 +58,7 @@ struct ProcessOptions
       : terminateChildren(false), detachProcess(false)
 #else
       : terminateChildren(false),
-        detachSession(false),
-        pseudoterminal(false)
+        detachSession(false)
 #endif
    {
    }
@@ -72,7 +83,7 @@ struct ProcessOptions
    bool detachSession;
 
    // attach the child process to pseudoterminal pipes
-   bool pseudoterminal;
+   boost::optional<Pseudoterminal> pseudoterminal;
 #endif
 
 #ifdef _WIN32
@@ -164,6 +175,11 @@ public:
 
    // Write (synchronously) to standard input
    virtual Error writeToStdin(const std::string& input, bool eof) = 0;
+
+   // Operations which apply to Pseudoterminals (only available
+   // if ProcessOptions::pseudoterminal is specified)
+   virtual Error ptySetSize(int cols, int rows) = 0;
+   virtual Error ptyInterrupt() = 0;
 
    // Terminate the process (SIGTERM)
    virtual Error terminate() = 0;
