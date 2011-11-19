@@ -20,6 +20,7 @@
 #ifdef __APPLE__
 #include <util.h>
 #include <sys/ttycom.h>
+#include <sys/ioctl.h>
 #else
 #include <pty.h>
 #include <asm/ioctls.h>
