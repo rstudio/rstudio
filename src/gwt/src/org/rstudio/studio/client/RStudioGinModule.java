@@ -30,9 +30,9 @@ import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFac
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
+import org.rstudio.studio.client.common.posixshell.PosixShell;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.common.shell.ShellDialogLoader;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
@@ -130,7 +130,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Commands.class).in(Singleton.class);
       bind(DefaultCRANMirror.class).in(Singleton.class);
       bind(ChooseFile.class).in(Singleton.class);
-      bind(ShellDialogLoader.class).in(Singleton.class);
+      bind(PosixShell.class).in(Singleton.class);
       bind(ConsoleDispatcher.class).in(Singleton.class);
       bind(FileTypeCommands.class).in(Singleton.class);
       

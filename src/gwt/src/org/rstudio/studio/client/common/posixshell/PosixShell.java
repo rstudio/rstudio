@@ -1,4 +1,4 @@
-package org.rstudio.studio.client.common.shell;
+package org.rstudio.studio.client.common.posixshell;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -12,12 +12,12 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ShellDialogLoader
+public class PosixShell
 {
-   interface Binder extends CommandBinder<Commands, ShellDialogLoader> {}
+   interface Binder extends CommandBinder<Commands, PosixShell> {}
    
    @Inject
-   public ShellDialogLoader(GlobalDisplay globalDisplay,
+   public PosixShell(GlobalDisplay globalDisplay,
                             Commands commands)
    {
       globalDisplay_ = globalDisplay;
