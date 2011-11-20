@@ -17,6 +17,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.widget.FontSizer;
 
 public class DomMetrics
 { 
@@ -39,6 +40,13 @@ public class DomMetrics
       
       // return the size
       return textSize; 
+   }
+   
+   public static Size measureCode(String code)
+   {
+      return DomMetrics.measureHTML(
+            "<pre>" + DomUtils.textToPreHtml(code) + "</pre>",
+            "ace_editor " + FontSizer.getNormalFontSizeClass());
    }
    
    public static Size adjustedElementSize(Size contentSize, 

@@ -19,7 +19,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -56,13 +55,6 @@ public class EditDialog extends ModalDialogBase
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
    }
 
-   private static Size measureText(String text)
-   {
-      return DomMetrics.measureHTML(
-            "<pre>" + DomUtils.textToPreHtml(text) + "</pre>",
-            "ace_editor " + FontSizer.getNormalFontSizeClass());
-   }
-
    @Override
    protected Widget createMainWidget()
    {
@@ -70,7 +62,7 @@ public class EditDialog extends ModalDialogBase
       final int LINE_NUMBERS_WIDTH = 100;
 
       // calculate the size of the text the adjust for line numbers
-      Size textSize = measureText(sourceText_);
+      Size textSize = DomMetrics.measureCode(sourceText_);
       textSize = new Size(textSize.width + LINE_NUMBERS_WIDTH,
                           textSize.height);
 
