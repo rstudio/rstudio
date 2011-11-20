@@ -12,13 +12,13 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ShellDialog
+public class ShellDialogLoader
 {
-   interface Binder extends CommandBinder<Commands, ShellDialog> {}
+   interface Binder extends CommandBinder<Commands, ShellDialogLoader> {}
    
    @Inject
-   public ShellDialog(GlobalDisplay globalDisplay,
-                      Commands commands)
+   public ShellDialogLoader(GlobalDisplay globalDisplay,
+                            Commands commands)
    {
       globalDisplay_ = globalDisplay;
       

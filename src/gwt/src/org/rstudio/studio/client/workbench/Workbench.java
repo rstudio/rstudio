@@ -28,7 +28,7 @@ import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
-import org.rstudio.studio.client.common.shell.ShellDialog;
+import org.rstudio.studio.client.common.shell.ShellDialogLoader;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -61,7 +61,7 @@ public class Workbench implements BusyHandler,
                     FileDialogs fileDialogs,
                     ConsoleDispatcher consoleDispatcher,
                     ChooseFile chooseFile,   // required to force gin to create
-                    ShellDialog shellDialog) // required to force gin to create
+                    ShellDialogLoader shellDialog) // required to force gin to create
    {
       view_ = view;
       workbenchContext_ = workbenchContext;
