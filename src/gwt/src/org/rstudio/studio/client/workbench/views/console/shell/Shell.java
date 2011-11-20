@@ -27,6 +27,7 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -66,28 +67,10 @@ public class Shell implements ConsoleInputHandler,
    {
    }
 
-   public interface Display extends HasKeyPressHandlers
-   {
-      void consoleWriteError(String string) ;
-      void consoleWriteOutput(String output) ;
-      void consoleWriteInput(String input);
-      void consoleWritePrompt(String prompt);
-      void consolePrompt(String prompt) ;
-      void ensureInputVisible() ;
-      InputEditorDisplay getInputEditorDisplay() ;
-      void clearOutput() ;
-      String processCommandEntry() ;
-      void setFocus(boolean focused) ;
-      int getCharacterWidth() ;
-      boolean isPromptEmpty();
-
-      void playbackActions(RpcObjectList<ConsoleAction> actions);
-
-      void setMaxOutputLines(int maxLines);
-
-      HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler);
+   public interface Display extends ShellDisplay
+   {   
    }
-
+   
    @Inject
    public Shell(ConsoleServerOperations server, 
                 EventBus eventBus,
