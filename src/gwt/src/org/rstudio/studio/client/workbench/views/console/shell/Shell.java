@@ -18,7 +18,6 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.CommandBinder;
