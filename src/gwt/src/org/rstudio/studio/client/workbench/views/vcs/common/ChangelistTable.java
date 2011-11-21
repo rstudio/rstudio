@@ -46,7 +46,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ChangelistTable extends Composite
+public abstract class ChangelistTable extends Composite
    implements HasKeyDownHandlers, HasClickHandlers, HasMouseDownHandlers
 {
    public interface ChangelistTableCellTableResources extends CellTable.Resources
@@ -135,7 +135,7 @@ public class ChangelistTable extends Composite
       table_.setSelectionModel(selectionModel_);
       dataProvider_.addDataDisplay(table_);
 
-      configureTable(new GitStatusRenderer());
+      configureTable();
 
       table_.setSize("100%", "auto");
 
@@ -155,24 +155,11 @@ public class ChangelistTable extends Composite
       initWidget(layout_);
    }
 
+   protected abstract SafeHtmlRenderer<String> getStatusRenderer();
+
    public void setSelectFirstItemByDefault(boolean selectFirstItemByDefault)
    {
       selectFirstItemByDefault_ = selectFirstItemByDefault;
-   }
-
-   public void toggleStaged(boolean moveSelection)
-   {
-      ArrayList<StatusAndPath> items = getSelectedItems();
-      if (items.size() > 0)
-      {
-         boolean unstage = items.get(0).getStatus().charAt(1) == ' ';
-         fireEvent(new StageUnstageEvent(unstage, items));
-
-         if (moveSelection)
-         {
-            moveSelectionDown();
-         }
-      }
    }
 
    public void moveSelectionDown()
@@ -202,51 +189,10 @@ public class ChangelistTable extends Composite
       }
    }
 
-   private void configureTable(SafeHtmlRenderer<String> statusRenderer)
+   protected void configureTable()
    {
-      final Column<StatusAndPath, Boolean> stagedColumn = new Column<StatusAndPath, Boolean>(
-            new TriStateCheckboxCell<StatusAndPath>(selectionModel_))
-      {
-         @Override
-         public Boolean getValue(StatusAndPath object)
-         {
-            return "??".equals(object.getStatus()) ? Boolean.FALSE :
-                   object.getStatus().charAt(1) == ' ' ? Boolean.TRUE :
-                   object.getStatus().charAt(0) == ' ' ? Boolean.FALSE :
-                   null;
-         }
-      };
-
-      stagedColumn.setHorizontalAlignment(Column.ALIGN_CENTER);
-      stagedColumn.setFieldUpdater(new FieldUpdater<StatusAndPath, Boolean>()
-      {
-         @Override
-         public void update(final int index,
-                            final StatusAndPath object,
-                            Boolean value)
-         {
-            fireEvent(new StageUnstageEvent(!value, getSelectedItems()));
-         }
-      });
-      stagedColumn.setSortable(true);
-      sortHandler_.setComparator(stagedColumn, new Comparator<StatusAndPath>()
-      {
-         @Override
-         public int compare(StatusAndPath a, StatusAndPath b)
-         {
-            Boolean a1 = stagedColumn.getValue(a);
-            Boolean b1 = stagedColumn.getValue(b);
-            int a2 = a1 == null ? 0 : a1 ? -1 : 1;
-            int b2 = b1 == null ? 0 : b1 ? -1 : 1;
-            return a2 - b2;
-         }
-      });
-      table_.addColumn(stagedColumn, "Staged");
-      table_.setColumnWidth(stagedColumn, "46px");
-
-
       Column<StatusAndPath, String> statusColumn = new Column<StatusAndPath, String>(
-            new NotEditingTextCell(statusRenderer))
+            new NotEditingTextCell(getStatusRenderer()))
       {
          @Override
          public String getValue(StatusAndPath object)
@@ -402,26 +348,6 @@ public class ChangelistTable extends Composite
       }
    }
 
-   public HandlerRegistration addStageUnstageHandler(StageUnstageHandler handler)
-   {
-      return addHandler(handler, StageUnstageEvent.TYPE);
-   }
-
-   public void setSortOrder(JsArray<ColumnSortInfo> sortInfoArray)
-   {
-      ColumnSortInfo.setSortList(table_, sortInfoArray);
-   }
-
-   public JsArray<ColumnSortInfo> getSortOrder()
-   {
-      return ColumnSortInfo.getSortList(table_);
-   }
-
-   public int getSortOrderHashCode()
-   {
-      return table_.getColumnSortList().hashCode();
-   }
-
    @Override
    public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
    {
@@ -445,9 +371,9 @@ public class ChangelistTable extends Composite
       table_.setFocus(true);
    }
 
-   private final MultiSelectCellTable<StatusAndPath> table_;
-   private final MultiSelectionModel<StatusAndPath> selectionModel_;
-   private final ColumnSortEvent.ListHandler<StatusAndPath> sortHandler_;
+   protected final MultiSelectCellTable<StatusAndPath> table_;
+   protected final MultiSelectionModel<StatusAndPath> selectionModel_;
+   protected final ColumnSortEvent.ListHandler<StatusAndPath> sortHandler_;
    private final ListDataProvider<StatusAndPath> dataProvider_;
    private final ProgressPanel progressPanel_;
    private LayoutPanel layout_;

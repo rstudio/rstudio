@@ -39,17 +39,17 @@ import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
+import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
-import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.console.ConsoleBarFramePanel;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.ChunkOrLine;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter.Display;
+import org.rstudio.studio.client.workbench.views.vcs.git.GitChangelistTablePresenter;
 
 import java.util.ArrayList;
 
@@ -195,7 +195,7 @@ public class ReviewPanel extends Composite implements Display
    }
 
    @Inject
-   public ReviewPanel(ChangelistTablePresenter changelist,
+   public ReviewPanel(GitChangelistTablePresenter changelist,
                       LineTableView diffPane,
                       ConsoleBarFramePanel consoleBarFramePanel,
                       final Commands commands,

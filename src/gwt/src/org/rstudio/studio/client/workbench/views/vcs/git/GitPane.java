@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.vcs;
+package org.rstudio.studio.client.workbench.views.vcs.git;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -26,9 +26,8 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.vcs.GitPresenter.Display;
-import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
-import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTablePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
+import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.common.console.ConsoleBarFramePanel;
 
 import java.util.ArrayList;
@@ -37,7 +36,7 @@ public class GitPane extends WorkbenchPane implements Display
 {
    @Inject
    public GitPane(ConsoleBarFramePanel consoleBarFrame,
-                  ChangelistTablePresenter changelistTablePresenter,
+                  GitChangelistTablePresenter changelistTablePresenter,
                   Session session,
                   Commands commands,
                   BranchToolbarButton branchToolbarButton)
@@ -132,13 +131,13 @@ public class GitPane extends WorkbenchPane implements Display
    }
 
    @Override
-   public ChangelistTable getChangelistTable()
+   public GitChangelistTable getChangelistTable()
    {
       return table_;
    }
 
    private final Commands commands_;
    private final BranchToolbarButton branchToolbarButton_;
-   private ChangelistTable table_;
+   private GitChangelistTable table_;
    private ConsoleBarFramePanel consoleBarFrame_;
 }

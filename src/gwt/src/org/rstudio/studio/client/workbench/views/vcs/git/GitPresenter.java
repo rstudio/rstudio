@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.vcs;
+package org.rstudio.studio.client.workbench.views.vcs.git;
 
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -40,7 +40,6 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
@@ -63,7 +62,7 @@ public class GitPresenter extends BasePresenter implements IsWidget
       HandlerRegistration addSelectionChangeHandler(
                                           SelectionChangeEvent.Handler handler);
 
-      ChangelistTable getChangelistTable();
+      GitChangelistTable getChangelistTable();
    }
 
    @Inject

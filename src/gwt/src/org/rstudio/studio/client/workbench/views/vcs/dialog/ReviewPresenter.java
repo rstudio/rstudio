@@ -41,8 +41,8 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
-import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
+import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -57,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent.Action;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
+import org.rstudio.studio.client.workbench.views.vcs.git.GitChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
 
 import java.util.ArrayList;
@@ -275,7 +276,7 @@ public class ReviewPresenter implements IsWidget
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER
                 || event.getNativeKeyCode() == ' ')
             {
-               view_.getChangelistTable().toggleStaged(
+               getTable().toggleStaged(
                      event.getNativeKeyCode() == KeyCodes.KEY_ENTER);
             }
          }
@@ -290,7 +291,7 @@ public class ReviewPresenter implements IsWidget
             {
                event.preventDefault();
                event.stopPropagation();
-               view_.getChangelistTable().toggleStaged(false);
+               getTable().toggleStaged(false);
             }
          }
       });
@@ -475,6 +476,11 @@ public class ReviewPresenter implements IsWidget
             updateDiff(false);
          }
       });
+   }
+
+   private GitChangelistTable getTable()
+   {
+      return (GitChangelistTable) view_.getChangelistTable();
    }
 
    private void applyPatch(ArrayList<DiffChunk> chunks,

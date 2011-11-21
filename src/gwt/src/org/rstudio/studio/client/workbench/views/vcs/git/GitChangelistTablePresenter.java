@@ -1,5 +1,5 @@
 /*
- * ChangelistTablePresenter.java
+ * GitChangelistTablePresenter.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,12 +10,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.vcs.common;
+package org.rstudio.studio.client.workbench.views.vcs.git;
 
 import com.google.inject.Inject;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageHandler;
@@ -25,12 +25,12 @@ import org.rstudio.studio.client.workbench.views.vcs.git.model.VcsState;
 
 import java.util.ArrayList;
 
-public class ChangelistTablePresenter
+public class GitChangelistTablePresenter
 {
    @Inject
-   public ChangelistTablePresenter(GitServerOperations server,
-                                   ChangelistTable view,
-                                   VcsState vcsState)
+   public GitChangelistTablePresenter(GitServerOperations server,
+                                      GitChangelistTable view,
+                                      VcsState vcsState)
    {
       server_ = server;
       view_ = view;
@@ -73,12 +73,12 @@ public class ChangelistTablePresenter
       view_.setSelectFirstItemByDefault(selectFirstItemByDefault);
    }
 
-   public ChangelistTable getView()
+   public GitChangelistTable getView()
    {
       return view_;
    }
 
    private final GitServerOperations server_;
-   private final ChangelistTable view_;
+   private final GitChangelistTable view_;
    private final VcsState vcsState_;
 }
