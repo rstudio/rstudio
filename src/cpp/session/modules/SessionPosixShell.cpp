@@ -15,8 +15,6 @@
 
 // TODO: ability to interrupt slave
 
-// TODO: ability to terminate slave via kill
-
 // TODO: ui chrome (consider console dialog style hanging from top)
 // TODO: border for shell widget
 

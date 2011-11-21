@@ -308,29 +308,37 @@ Error ChildProcess::terminate()
    if (pImpl_->pid == -1)
       return systemError(ESRCH, ERROR_LOCATION);
 
-   // determine target pid (kill just this pid or pid + children)
-   pid_t pid = pImpl_->pid;
-   if (options_.pseudoterminal ||
-       options_.detachSession ||
-       options_.terminateChildren)
+   // special code path for pseudoterminal
+   if (options_.pseudoterminal)
    {
-      pid = -pid;
-   }
-
-   // send signal
-   if (::kill(pid, SIGTERM) == -1)
-   {
-      // when killing an entire process group EPERM can be returned if even
-      // a single one of the subprocesses couldn't be killed. in this case
-      // the signal is still delivered and other subprocesses may have been
-      // killed so we don't log an error
-      if (pid < 0 && errno == EPERM)
-         return Success();
-      else
-         return systemError(errno, ERROR_LOCATION);
+      return posixCall<int>(
+                  boost::bind(::killpg, ::getpgid(pImpl_->pid), SIGTERM),
+                  ERROR_LOCATION);
    }
    else
-      return Success();
+   {
+      // determine target pid (kill just this pid or pid + children)
+      pid_t pid = pImpl_->pid;
+      if (options_.detachSession || options_.terminateChildren)
+      {
+         pid = -pid;
+      }
+
+      // send signal
+      if (::kill(pid, SIGTERM) == -1)
+      {
+         // when killing an entire process group EPERM can be returned if even
+         // a single one of the subprocesses couldn't be killed. in this case
+         // the signal is still delivered and other subprocesses may have been
+         // killed so we don't log an error
+         if (pid < 0 && errno == EPERM)
+            return Success();
+         else
+            return systemError(errno, ERROR_LOCATION);
+      }
+      else
+         return Success();
+   }
 }
 
 
