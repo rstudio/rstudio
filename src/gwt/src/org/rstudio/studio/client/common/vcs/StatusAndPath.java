@@ -12,35 +12,95 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
-public class StatusAndPath extends JavaScriptObject
+import java.util.ArrayList;
+
+public class StatusAndPath
 {
-   protected StatusAndPath()
-   {}
+   public static ArrayList<StatusAndPath> fromInfos(
+         JsArray<StatusAndPathInfo> infos)
+   {
+      if (infos == null)
+         return null;
 
-   public native final String getStatus() /*-{
-      return this.status;
-   }-*/;
+      ArrayList<StatusAndPath> result = new ArrayList<StatusAndPath>();
+      for (int i = 0; i < infos.length(); i++)
+      {
+         result.add(new StatusAndPath(infos.get(i)));
+      }
+      return result;
+   }
 
-   public native final String getPath() /*-{
-      return this.path;
-   }-*/;
+   public static StatusAndPath fromInfo(StatusAndPathInfo info)
+   {
+      return info == null ? null : new StatusAndPath(info);
+   }
 
-   public native final String getRawPath() /*-{
-      return this.raw_path;
-   }-*/;
+   private StatusAndPath(StatusAndPathInfo info)
+   {
+      status_ = info.getStatus();
+      path_ = info.getPath();
+      rawPath_ = info.getRawPath();
+      this.discardable_ = info.isDiscardable();
+      this.directory_ = info.isDirectory();
+   }
 
-   public native final boolean isDiscardable() /*-{
-      return this.discardable;
-   }-*/;
-   
-   public native final boolean isDirectory() /*-{
-      return this.is_directory;
-   }-*/;
+   public String getStatus()
+   {
+      return status_;
+   }
 
-   public final boolean isFineGrainedActionable()
+   public String getPath()
+   {
+      return path_;
+   }
+
+   public String getRawPath()
+   {
+      return rawPath_;
+   }
+
+   public boolean isDiscardable()
+   {
+      return discardable_;
+   }
+
+   public boolean isDirectory()
+   {
+      return directory_;
+   }
+
+   public boolean isFineGrainedActionable()
    {
       return !"??".equals(getStatus());
    }
+
+   @Override
+   public boolean equals(Object o)
+   {
+      StatusAndPath that = (StatusAndPath) o;
+      return path_ != null ? path_.equals(that.path_) : that.path_ == null;
+   }
+
+   @Override
+   public int hashCode()
+   {
+      return path_ != null ? path_.hashCode() : 0;
+   }
+
+   public StatusAndPathInfo toInfo()
+   {
+      return StatusAndPathInfo.create(status_,
+                                      path_,
+                                      rawPath_,
+                                      discardable_,
+                                      directory_);
+   }
+
+   String status_;
+   String path_;
+   String rawPath_;
+   boolean discardable_;
+   boolean directory_;
 }

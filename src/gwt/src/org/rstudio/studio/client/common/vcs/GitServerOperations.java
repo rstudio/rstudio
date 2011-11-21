@@ -61,7 +61,7 @@ public interface GitServerOperations extends CryptoServerOperations
          ServerRequestCallback<AllStatus> requestCallback);
 
    void gitFullStatus(
-         ServerRequestCallback<JsArray<StatusAndPath>> requestCallback);
+         ServerRequestCallback<JsArray<StatusAndPathInfo>> requestCallback);
 
    void gitListBranches(ServerRequestCallback<BranchesInfo> requestCallback);
 

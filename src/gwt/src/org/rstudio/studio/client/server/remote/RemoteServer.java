@@ -13,11 +13,7 @@
 
 package org.rstudio.studio.client.server.remote;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayNumber;
-import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.*;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.*;
 import com.google.gwt.user.client.Random;
@@ -39,22 +35,15 @@ import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFac
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.common.vcs.AllStatus;
-import org.rstudio.studio.client.common.vcs.BranchesInfo;
-import org.rstudio.studio.client.common.vcs.CreateKeyOptions;
-import org.rstudio.studio.client.common.vcs.CreateKeyResult;
-import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.common.vcs.*;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.VcsCloneOptions;
-import org.rstudio.studio.client.server.Bool;
-import org.rstudio.studio.client.server.Server;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
-import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
+import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -66,8 +55,8 @@ import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.PublishPdfResult;
@@ -1324,7 +1313,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void gitFullStatus(ServerRequestCallback<JsArray<StatusAndPath>> requestCallback)
+   public void gitFullStatus(ServerRequestCallback<JsArray<StatusAndPathInfo>> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_FULL_STATUS, requestCallback);
    }

@@ -242,7 +242,8 @@ public class ReviewPresenter implements IsWidget
                      return;
                   }
 
-                  StatusAndPath vcsStatus = event.getFileChange().getFile().getGitStatus();
+                  StatusAndPath vcsStatus = StatusAndPath.fromInfo(
+                        event.getFileChange().getFile().getGitStatus());
                   if (paths.get(0).getRawPath().equals(vcsStatus.getRawPath()))
                   {
                      vcsState.refresh(false);

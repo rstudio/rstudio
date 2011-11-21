@@ -19,7 +19,7 @@ public class AllStatus extends JavaScriptObject
 {
    protected AllStatus() {}
 
-   public native final JsArray<StatusAndPath> getStatus() /*-{
+   public native final JsArray<StatusAndPathInfo> getStatus() /*-{
       return this.status;
    }-*/;
 

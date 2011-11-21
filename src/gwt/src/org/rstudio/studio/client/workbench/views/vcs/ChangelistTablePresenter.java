@@ -64,11 +64,7 @@ public class ChangelistTablePresenter
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
          {
-            JsArray<StatusAndPath> status = vcsState_.getStatus();
-            ArrayList<StatusAndPath> list = new ArrayList<StatusAndPath>();
-            for (int i = 0; i < status.length(); i++)
-               list.add(status.get(i));
-            view_.setItems(list);
+            view_.setItems(vcsState_.getStatus());
          }
       });
    }

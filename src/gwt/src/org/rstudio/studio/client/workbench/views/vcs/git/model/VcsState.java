@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git.model;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -25,7 +24,6 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -42,6 +40,8 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
+
+import java.util.ArrayList;
 
 @Singleton
 public class VcsState
@@ -100,7 +100,7 @@ public class VcsState
 
             FileChange fileChange = event.getFileChange();
             FileSystemItem file = fileChange.getFile();
-            StatusAndPath status = file.getGitStatus();
+            StatusAndPath status = StatusAndPath.fromInfo(file.getGitStatus());
 
             if (file.getName().equalsIgnoreCase(".gitignore"))
             {
@@ -110,12 +110,12 @@ public class VcsState
 
             if (status_ != null)
             {
-               for (int i = 0; i < status_.length(); i++)
+               for (int i = 0; i < status_.size(); i++)
                {
                   if (status.getRawPath().equals(status_.get(i).getRawPath()))
                   {
                      if (StringUtil.notNull(status.getStatus()).trim().length() == 0)
-                        DomUtils.splice(status_, i, 1);
+                        status_.remove(i);
                      else
                         status_.set(i, status);
                      handlers_.fireEvent(new VcsRefreshEvent(Reason.FileChange));
@@ -125,7 +125,7 @@ public class VcsState
 
                if (status.getStatus().trim().length() != 0)
                {
-                  status_.push(status);
+                  status_.add(status);
                   handlers_.fireEvent(new VcsRefreshEvent(Reason.FileChange));
                   return;
                }
@@ -167,7 +167,7 @@ public class VcsState
       return hreg;
    }
 
-   public JsArray<StatusAndPath> getStatus()
+   public ArrayList<StatusAndPath> getStatus()
    {
       return status_;
    }
@@ -194,7 +194,7 @@ public class VcsState
          @Override
          public void onResponseReceived(AllStatus response)
          {
-            status_ = response.getStatus();
+            status_ = StatusAndPath.fromInfos(response.getStatus());
             branches_ = response.getBranches();
             hasRemote_ = response.hasRemote();
             handlers_.fireEvent(new VcsRefreshEvent(Reason.VcsOperation));
@@ -212,7 +212,7 @@ public class VcsState
    }
 
    private final HandlerManager handlers_ = new HandlerManager(this);
-   private JsArray<StatusAndPath> status_;
+   private ArrayList<StatusAndPath> status_;
    private BranchesInfo branches_;
    private boolean hasRemote_;
    private final GitServerOperations server_;

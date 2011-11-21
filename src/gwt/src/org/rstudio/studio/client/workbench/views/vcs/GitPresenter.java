@@ -254,11 +254,7 @@ public class GitPresenter extends BasePresenter implements IsWidget
 
    private void refresh()
    {
-      JsArray<StatusAndPath> status = vcsState_.getStatus();
-      ArrayList<StatusAndPath> list = new ArrayList<StatusAndPath>();
-      for (int i = 0; i < status.length(); i++)
-         list.add(status.get(i));
-      view_.setItems(list);
+      view_.setItems(vcsState_.getStatus());
    }
 
    private final Display view_;
