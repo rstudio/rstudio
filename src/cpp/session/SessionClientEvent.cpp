@@ -72,6 +72,8 @@ const int kListChanged = 45;
 const int kConsoleProcessCreated = 46;
 const int kUiPrefsChanged = 47;
 const int kHandleUnsavedChanges = 48;
+const int kPosixShellOutput = 49;
+const int kPosixShellExit = 50;
 }   
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -181,6 +183,10 @@ std::string ClientEvent::typeName() const
          return "ui_prefs_changed";
       case client_events::kHandleUnsavedChanges:
          return "handle_unsaved_changes";
+      case client_events::kPosixShellOutput:
+         return "posix_shell_output";
+      case client_events::kPosixShellExit:
+         return "posix_shell_exit";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

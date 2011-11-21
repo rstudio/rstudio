@@ -1570,6 +1570,37 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, LIST_CLEAR, listName, requestCallback);
    }
+   
+   @Override
+   public void startPosixShell(int width,
+                               int maxLines,
+                               ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(width));
+      params.set(1, new JSONNumber(maxLines));
+      sendRequest(RPC_SCOPE, START_POSIX_SHELL, params, requestCallback);
+   }
+   
+   @Override
+   public void interruptPosixShell(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, INTERRUPT_POSIX_SHELL, requestCallback);
+   }
+   
+   @Override
+   public void sendInputToPosixShell(
+                              String input, 
+                              ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, SEND_INPUT_TO_POSIX_SHELL, input, requestCallback);
+   }
+   
+   @Override
+   public void terminatePosixShell(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, TERMINATE_POSIX_SHELL, requestCallback);
+   }
 
    // package-visible methods for peer classes RemoteServerAuth and
    // RemoveServerEventListener
@@ -2351,6 +2382,11 @@ public class RemoteServer implements Server
    private static final String LIST_APPEND_ITEM = "list_append_item";
    private static final String LIST_REMOVE_ITEM = "list_remove_item";
    private static final String LIST_CLEAR = "list_clear";
+   
+   private static final String START_POSIX_SHELL = "start_posix_shell";
+   private static final String INTERRUPT_POSIX_SHELL = "interrupt_posix_shell";
+   private static final String SEND_INPUT_TO_POSIX_SHELL = "send_input_to_posix_shell";
+   private static final String TERMINATE_POSIX_SHELL = "terminate_posix_shell";
    
    private static final String LOG = "log";
 

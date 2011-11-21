@@ -60,6 +60,8 @@ class ClientEvent extends JavaScriptObject
    public static final String ListChanged = "list_changed";
    public static final String UiPrefsChanged = "ui_prefs_changed";
    public static final String HandleUnsavedChanges = "handle_unsaved_changes";
+   public static final String PosixShellOutput = "posix_shell_output";
+   public static final String PosixShellExit = "posix_shell_exit";
 
    protected ClientEvent()
    {

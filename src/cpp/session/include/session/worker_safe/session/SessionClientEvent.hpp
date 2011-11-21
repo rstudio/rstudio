@@ -71,6 +71,8 @@ extern const int kListChanged;
 extern const int kConsoleProcessCreated;
 extern const int kUiPrefsChanged;
 extern const int kHandleUnsavedChanges;
+extern const int kPosixShellOutput;
+extern const int kPosixShellExit;
 }
    
 class ClientEvent

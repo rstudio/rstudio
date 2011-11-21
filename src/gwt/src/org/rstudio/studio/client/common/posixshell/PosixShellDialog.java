@@ -1,3 +1,15 @@
+/*
+ * PosixShellDialog.java
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.studio.client.common.posixshell;
 
 import org.rstudio.core.client.widget.CanFocus;
@@ -22,6 +34,10 @@ public class PosixShellDialog extends ModalDialogBase
       
       ThemedButton closeButton = new ThemedButton("Close", new ClickHandler() {
          public void onClick(ClickEvent event) {
+            
+            if (posixShell_ != null)
+               posixShell_.terminate();
+            
             closeDialog();
          }
       });
@@ -34,7 +50,7 @@ public class PosixShellDialog extends ModalDialogBase
    protected Widget createMainWidget()
    {
       posixShell_ = pPosixShell_.get();
-      posixShell_.SetObserver(this);
+      posixShell_.setObserver(this);
       
       
       
@@ -42,14 +58,30 @@ public class PosixShellDialog extends ModalDialogBase
       shellWidget.setSize("500px", "400px");
       return shellWidget;
    }
-
+   
    @Override
    protected void onDialogShown()
    { 
       ((CanFocus)posixShell_.getWidget()).focus();
    }
    
+   @Override
+   public void onShellExited()
+   {
+      closeDialog();
+   }
+   
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+      if (posixShell_ != null)
+         posixShell_.detachEventBusHandlers();
+   }
+   
   
    private final Provider<PosixShell> pPosixShell_;
    private PosixShell posixShell_;
+   
+  
 }
