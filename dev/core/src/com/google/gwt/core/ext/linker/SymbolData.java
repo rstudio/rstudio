@@ -92,11 +92,6 @@ public interface SymbolData extends Serializable {
   String getClassName();
 
   /**
-   * Returns the fragment number in which the symbol is declared (for a method).
-   */
-  int getFragmentNumber();
-
-  /**
    * Returns a JSNI-like identifier for the symbol if it a method or field,
    * otherwise <code>null</code>.
    */

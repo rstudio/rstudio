@@ -55,21 +55,7 @@ public final class Range {
   };
 
   final int end;
-  final int endLine;
-  final int endColumn;
   final int start;
-  final int startLine;
-  final int startColumn;
-
-  /**
-   * Constructor.
-   *
-   * @param start must be non-negative
-   * @param end must be greater than or equal to <code>start</code>
-   */
-  public Range(int start, int end) {
-    this(start, end, 0, 0, 0, 0);
-  }
 
   /**
    * Constructor.
@@ -77,17 +63,11 @@ public final class Range {
    * @param start must be non-negative
    * @param end must be greater than or equal to <code>start</code>
    */
-  public Range(int start, int end, int startLine, int startColumn, int endLine, int endColumn) {
-
+  public Range(int start, int end) {
     assert start >= 0;
     assert start <= end;
-
     this.start = start;
     this.end = end;
-    this.startLine = startLine;
-    this.startColumn = startColumn;
-    this.endLine = endLine;
-    this.endColumn = endColumn;
   }
 
   /**
@@ -110,24 +90,8 @@ public final class Range {
     return end;
   }
 
-  public int getEndColumn() {
-    return endColumn;
-  }
-
-  public int getEndLine() {
-    return endLine;
-  }
-
   public int getStart() {
     return start;
-  }
-
-  public int getStartColumn() {
-    return startColumn;
-  }
-
-  public int getStartLine() {
-    return startLine;
   }
 
   @Override

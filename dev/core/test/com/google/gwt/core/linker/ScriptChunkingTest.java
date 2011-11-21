@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,11 +15,6 @@
  */
 package com.google.gwt.core.linker;
 
-import com.google.gwt.core.ext.LinkerContext;
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.linker.ConfigurationProperty;
-import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.core.ext.linker.impl.StandardStatementRanges;
@@ -27,92 +22,16 @@ import com.google.gwt.core.ext.linker.impl.StandardStatementRanges;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * Tests the script chunking in the {@link SelectionScriptLinker}.
  */
 public class ScriptChunkingTest extends TestCase {
-
-  private static class MockLinkerContext implements LinkerContext {
-
-    @Override
-    public SortedSet<ConfigurationProperty> getConfigurationProperties() {
-      return new TreeSet<ConfigurationProperty>();
-    }
-
-    @Override
-    public String getModuleFunctionName() {
-      return "mockFunc";
-    }
-
-    @Override
-    public long getModuleLastModified() {
-      return 0;
-    }
-
-    @Override
-    public String getModuleName() {
-      return "mock";
-    }
-
-    @Override
-    public SortedSet<SelectionProperty> getProperties() {
-      SelectionProperty mockSourceMapProperty = new SelectionProperty() {
-
-        @Override
-        public String getName() {
-          return SelectionScriptLinker.USE_SOURCE_MAPS_PROPERTY;
-        }
-
-        @Override
-        public String getFallbackValue() {
-          return "";
-        }
-
-        @Override
-        public SortedSet<String> getPossibleValues() {
-          return new TreeSet<String>(Arrays.asList("true", "false"));
-        }
-
-        @Override
-        public String getPropertyProvider(TreeLogger logger,
-            SortedSet<ConfigurationProperty> configProperties) throws UnableToCompleteException {
-          return null;
-        }
-
-        @Override
-        public boolean isDerived() {
-          return false;
-        }
-
-        @Override
-        public String tryGetValue() {
-          return "false";
-        }
-      };
-      return new TreeSet<SelectionProperty>(Arrays.asList(mockSourceMapProperty));
-    }
-
-    @Override
-    public boolean isOutputCompact() {
-      return false;
-    }
-
-    @Override
-    public String optimizeJavaScript(TreeLogger logger, String jsProgram)
-        throws UnableToCompleteException {
-      return "";
-    }
-  }
-
   /**
-   * A class for building up JavaScript that has statements and non-statement code interleaved.
+   * A class for building up JavaScript that has statements and non-statement
+   * code interleaved.
    */
   private static class ScriptWithRangesBuilder {
-
     private final ArrayList<Integer> ends = new ArrayList<Integer>();
     private final StringBuffer script = new StringBuffer();
     private final ArrayList<Integer> starts = new ArrayList<Integer>();
@@ -155,12 +74,12 @@ public class ScriptChunkingTest extends TestCase {
 
     String split = SelectionScriptLinker.splitPrimaryJavaScript(builder.getRanges(),
         builder.getJavaScript(), stmt1.length() + stmt2.length(),
-        IFrameLinker.SCRIPT_CHUNK_SEPARATOR, new MockLinkerContext());
+        IFrameLinker.SCRIPT_CHUNK_SEPARATOR);
     assertEquals(stmt1 + stmt2 + IFrameLinker.SCRIPT_CHUNK_SEPARATOR + stmt3
         + ';' + stmt4, split);
   }
 
-
+  
   /**
    * Test that with the default chunk separator (""), splitting is a no-op.
    */
@@ -180,10 +99,10 @@ public class ScriptChunkingTest extends TestCase {
     builder.addNonStatement("}");
 
     String split = SelectionScriptLinker.splitPrimaryJavaScript(builder.getRanges(),
-        builder.getJavaScript(), stmt1.length() + stmt2.length(), "", new MockLinkerContext());
+        builder.getJavaScript(), stmt1.length() + stmt2.length(), "");
     assertEquals(stmt1 + stmt2 + stmt3 + ';' + stmt4, split);
   }
-
+  
   /**
    * Test a chunk size large enough that no splitting happens.
    */
@@ -203,8 +122,7 @@ public class ScriptChunkingTest extends TestCase {
     builder.addNonStatement("}");
 
     String split = SelectionScriptLinker.splitPrimaryJavaScript(builder.getRanges(),
-        builder.getJavaScript(), 10000, IFrameLinker.SCRIPT_CHUNK_SEPARATOR,
-        new MockLinkerContext());
+        builder.getJavaScript(), 10000, IFrameLinker.SCRIPT_CHUNK_SEPARATOR);
     assertEquals(stmt1 + stmt2 + stmt3 + ';' + stmt4, split);
   }
 
@@ -223,7 +141,7 @@ public class ScriptChunkingTest extends TestCase {
     builder.addNonStatement("}");
 
     String split = SelectionScriptLinker.splitPrimaryJavaScript(builder.getRanges(),
-        builder.getJavaScript(), -1, IFrameLinker.SCRIPT_CHUNK_SEPARATOR, new MockLinkerContext());
+        builder.getJavaScript(), -1, IFrameLinker.SCRIPT_CHUNK_SEPARATOR);
     assertEquals(builder.getJavaScript(), split);
   }
 
@@ -242,7 +160,7 @@ public class ScriptChunkingTest extends TestCase {
     builder.addNonStatement("}");
 
     String split = SelectionScriptLinker.splitPrimaryJavaScript(null,
-        builder.getJavaScript(), 5, IFrameLinker.SCRIPT_CHUNK_SEPARATOR, new MockLinkerContext());
+        builder.getJavaScript(), 5, IFrameLinker.SCRIPT_CHUNK_SEPARATOR);
     assertEquals(builder.getJavaScript(), split);
   }
 }

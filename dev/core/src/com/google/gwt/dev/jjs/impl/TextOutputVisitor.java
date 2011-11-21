@@ -30,16 +30,6 @@ public class TextOutputVisitor extends JVisitor implements TextOutput {
     this.textOutput = textOutput;
   }
 
-  @Override
-  public int getColumn() {
-    return textOutput.getColumn();
-  }
-
-  @Override
-  public int getLine() {
-    return textOutput.getLine();
-  }
-
   public int getPosition() {
     return textOutput.getPosition();
   }

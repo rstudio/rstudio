@@ -50,13 +50,10 @@ public class JsReportGenerationVisitor extends
   protected <T extends JsVisitable> T doAccept(T node) {
     boolean addEntry = node instanceof HasSourceInfo;
     int start = addEntry ? out.getPosition() : 0;
-    int sLine = out.getLine();
-    int sCol = out.getColumn();
     T toReturn = super.doAccept(node);
     if (addEntry) {
       SourceInfo info = ((HasSourceInfo) node).getSourceInfo();
-      sourceInfoMap.put(new Range(start, out.getPosition(),
-          sLine, sCol, out.getLine(), out.getColumn()), info);
+      sourceInfoMap.put(new Range(start, out.getPosition()), info);
     }
     return toReturn;
   }

@@ -71,16 +71,12 @@ public class JsonLogRecordServerUtil {
     Throwable cause =
       throwableFromJson(t.getString("cause"));
     StackTraceElement[] stackTrace = null;
-    if (t.has("stackTrace")) {
-      JSONArray st = t.getJSONArray("stackTrace");
-      if (st.length() > 0) {
-        stackTrace = new StackTraceElement[st.length()];
-        for (int i = 0; i < st.length(); i++) {
-          stackTrace[i] = stackTraceElementFromJson(st.getString(i));
-        }
+    JSONArray st = t.getJSONArray("stackTrace");
+    if (st.length() > 0) {
+      stackTrace = new StackTraceElement[st.length()];
+      for (int i = 0; i < st.length(); i++) {
+        stackTrace[i] = stackTraceElementFromJson(st.getString(i));
       }
-    } else {
-      stackTrace = new StackTraceElement[0];
     }
     Throwable thrown = new Throwable(message, cause);
     thrown.setStackTrace(stackTrace);

@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.Shardable;
-import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.core.linker.SymbolMapsLinker;
 
 import java.io.ByteArrayOutputStream;
@@ -32,15 +31,12 @@ import java.io.ByteArrayOutputStream;
  */
 @Shardable
 public class JUnitSymbolMapsLinker extends SymbolMapsLinker {
-
-  public static final String SYMBOL_MAP_DIR = ".junit_symbolMaps/";
-
   @Override
   protected void doEmitSymbolMap(TreeLogger logger, ArtifactSet artifacts,
       CompilationResult result, ByteArrayOutputStream out)
       throws UnableToCompleteException {
     // Collaborate with JUnitHostImpl.loadSymbolMap
-    String partialPath = SYMBOL_MAP_DIR + result.getStrongName()
+    String partialPath = ".junit_symbolMaps/" + result.getStrongName()
         + STRONG_NAME_SUFFIX;
 
     EmittedArtifact symbolMapArtifact = emitBytes(logger, out.toByteArray(),
@@ -49,9 +45,4 @@ public class JUnitSymbolMapsLinker extends SymbolMapsLinker {
     artifacts.add(symbolMapArtifact);
   }
 
-  @Override
-  protected SyntheticArtifact emitSourceMapString(TreeLogger logger, String contents,
-      String partialPath) throws UnableToCompleteException {
-    return emitString(logger, contents, SYMBOL_MAP_DIR + partialPath);
-  }
 }

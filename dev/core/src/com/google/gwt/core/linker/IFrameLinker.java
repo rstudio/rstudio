@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,12 +18,15 @@ package com.google.gwt.core.linker;
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.util.DefaultTextOutput;
+import com.google.gwt.dev.util.Util;
 
 /**
  * Implements the canonical GWT bootstrap sequence that loads the GWT module in
@@ -43,6 +46,26 @@ public class IFrameLinker extends SelectionScriptLinker {
     return "Standard";
   }
 
+  /*
+   * This implementation divides the code of the initial fragment into multiple
+   * script tags. These chunked script tags loads faster on Firefox even when
+   * the data is cached. Additionally, having the script tags separated means
+   * that the early ones can be evaluated before the later ones have finished
+   * downloading. As a result of this parallelism, the overall time to get the
+   * JavaScript downloaded and evaluated can lower.
+   */
+  @Override
+  protected byte[] generatePrimaryFragment(TreeLogger logger,
+      LinkerContext context, CompilationResult result, String[] js,
+      ArtifactSet artifacts) throws UnableToCompleteException {
+    StringBuffer b = new StringBuffer();
+    b.append(getModulePrefix(logger, context, result.getStrongName(), js.length));
+    b.append(splitPrimaryJavaScript(result.getStatementRanges()[0], js[0],
+        charsPerChunk(context, logger), getScriptChunkSeparator(logger, context)));
+    b.append(getModuleSuffix(logger, context));
+    return Util.getBytes(b.toString());
+  }
+  
   @Override
   protected String getCompilationExtension(TreeLogger logger,
       LinkerContext context) {
@@ -95,7 +118,7 @@ public class IFrameLinker extends SelectionScriptLinker {
   protected String getSelectionScriptTemplate(TreeLogger logger, LinkerContext context) {
     return "com/google/gwt/core/linker/IFrameTemplate.js";
   }
-
+  
   protected String modifyPrimaryJavaScript(String js) {
     return js;
   }

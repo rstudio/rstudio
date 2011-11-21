@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,7 +27,6 @@ import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.SoftPermutation;
 import com.google.gwt.core.ext.linker.StatementRanges;
-import com.google.gwt.core.linker.SymbolMapsLinker;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.Util;
@@ -47,12 +46,20 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 
 /**
- * A base class for Linkers that use an external script to boostrap the GWT module. This
- * implementation injects JavaScript Snippets into a JS program defined in an external file.
+ * A base class for Linkers that use an external script to boostrap the GWT
+ * module. This implementation injects JavaScript Snippets into a JS program
+ * defined in an external file.
  */
 public abstract class SelectionScriptLinker extends AbstractLinker {
+  /**
+   * TODO(bobv): Move this class into c.g.g.core.linker when HostedModeLinker
+   * goes away?
+   */
 
-  public static final String USE_SOURCE_MAPS_PROPERTY = "compiler.useSourceMaps";
+  /**
+   * A configuration property indicating how large each script tag should be.
+   */
+  private static final String CHUNK_SIZE_PROPERTY = "iframe.linker.script.chunk.size";
 
   /**
    * File name for computeScriptBase.js.
@@ -80,45 +87,34 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   protected static final String PROCESS_METAS_JS = "com/google/gwt/core/ext/linker/impl/processMetasOld.js";
 
   /**
-   * TODO(bobv): Move this class into c.g.g.core.linker when HostedModeLinker
-   * goes away?
-   */
-
-  /**
-   * A configuration property indicating how large each script tag should be.
-   */
-  private static final String CHUNK_SIZE_PROPERTY = "iframe.linker.script.chunk.size";
-
-  /**
-   * A configuration property that can be used to have the linker load from somewhere other than
-   * {@link #FRAGMENT_SUBDIR}.
+   * A configuration property that can be used to have the linker load from
+   * somewhere other than {@link #FRAGMENT_SUBDIR}.
    */
   private static final String PROP_FRAGMENT_SUBDIR_OVERRIDE = "iframe.linker.deferredjs.subdir";
 
+  protected static void replaceAll(StringBuffer buf, String search,
+      String replace) {
+    int len = search.length();
+    for (int pos = buf.indexOf(search); pos >= 0; pos = buf.indexOf(search,
+        pos + 1)) {
+      buf.replace(pos, pos + len, replace);
+    }
+  }
+
   /**
-   * Split a JavaScript string into multiple chunks, at statement boundaries. This method is made
-   * default access for testing.
-   *
-   * @param ranges               Describes where the statements are located within the JavaScript
-   *                             code. If <code>null</code>, then return <code>js</code> unchanged.
-   * @param js                   The JavaScript code to be split up.
-   * @param charsPerChunk        The number of characters to be put in each script tag.
+   * Split a JavaScript string into multiple chunks, at statement boundaries.
+   * This method is made default access for testing.
+   * 
+   * @param ranges Describes where the statements are located within the
+   *          JavaScript code. If <code>null</code>, then return <code>js</code>
+   *          unchanged.
+   * @param js The JavaScript code to be split up.
+   * @param charsPerChunk The number of characters to be put in each script tag.
    * @param scriptChunkSeparator The string to insert between chunks.
-   * @param context
    */
   public static String splitPrimaryJavaScript(StatementRanges ranges, String js,
-      int charsPerChunk, String scriptChunkSeparator, LinkerContext context) {
-    boolean useSourceMaps = false;
-    for (SelectionProperty prop : context.getProperties()) {
-      if (USE_SOURCE_MAPS_PROPERTY.equals(prop.getName())) {
-        String str = prop.tryGetValue();
-        useSourceMaps = str == null ? false : Boolean.parseBoolean(str);
-        break;
-      }
-    }
-
-    // TODO(cromwellian) enable chunking with sourcemaps
-    if (charsPerChunk < 0 || ranges == null || useSourceMaps) {
+      int charsPerChunk, String scriptChunkSeparator) {
+    if (charsPerChunk < 0 || ranges == null) {
       return js;
     }
 
@@ -151,22 +147,13 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     return sb.toString();
   }
 
-  protected static void replaceAll(StringBuffer buf, String search,
-      String replace) {
-    int len = search.length();
-    for (int pos = buf.indexOf(search); pos >= 0; pos = buf.indexOf(search,
-        pos + 1)) {
-      buf.replace(pos, pos + len, replace);
-    }
-  }
-
   private static char lastChar(StringBuilder sb) {
     return sb.charAt(sb.length() - 1);
   }
 
   /**
-   * This method is left in place for existing subclasses of SelectionScriptLinker that have not
-   * been upgraded for the sharding API.
+   * This method is left in place for existing subclasses of
+   * SelectionScriptLinker that have not been upgraded for the sharding API.
    */
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
@@ -182,25 +169,14 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       throws UnableToCompleteException {
     if (onePermutation) {
       ArtifactSet toReturn = new ArtifactSet(artifacts);
-      ArtifactSet writableArtifacts = new ArtifactSet(artifacts);
 
       /*
        * Support having multiple compilation results because this method is also
        * called from the legacy link method.
        */
       for (CompilationResult compilation : toReturn.find(CompilationResult.class)) {
-        // pass a writable set so that other stages can use this set for temporary storage
-        toReturn.addAll(doEmitCompilation(logger, context, compilation, writableArtifacts));
+        toReturn.addAll(doEmitCompilation(logger, context, compilation, artifacts));
         maybeAddHostedModeFile(logger, context, toReturn, compilation);
-      }
-      /*
-       * Find edit artifacts added during linking and add them. This is done as a way of returning
-       * arbitrary extra outputs from within the linker methods without having to modify
-       * their return signatures to pass extra return data around.
-       */
-      for (SymbolMapsLinker.ScriptFragmentEditsArtifact ea : writableArtifacts.find(
-          SymbolMapsLinker.ScriptFragmentEditsArtifact.class)) {
-        toReturn.add(ea);
       }
       return toReturn;
     } else {
@@ -222,8 +198,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   }
 
   /**
-   * Extract via {@link #CHUNK_SIZE_PROPERTY} the number of characters to be included in each
-   * chunk.
+   * Extract via {@link #CHUNK_SIZE_PROPERTY} the number of characters to be
+   * included in each chunk.
    */
   protected int charsPerChunk(LinkerContext context, TreeLogger logger) {
     SortedSet<ConfigurationProperty> configProps = context.getConfigurationProperties();
@@ -247,10 +223,9 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     String[] js = result.getJavaScript();
     byte[][] bytes = new byte[js.length][];
     bytes[0] = generatePrimaryFragment(logger, context, result, js, artifacts);
-
     for (int i = 1; i < js.length; i++) {
-      bytes[i] = Util.getBytes(generateDeferredFragment(logger, context, i, js[i], artifacts,
-          result));
+      bytes[i] = Util.getBytes(generateDeferredFragment(logger, context, i,
+          js[i]));
     }
 
     Collection<Artifact<?>> toReturn = new ArrayList<Artifact<?>>();
@@ -262,6 +237,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     }
 
     toReturn.addAll(emitSelectionInformation(result.getStrongName(), result));
+ 
     return toReturn;
   }
 
@@ -284,10 +260,10 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     return emitString(logger, ss, context.getModuleName()
         + ".nocache.js", lastModified);
   }
-
+  
   /**
-   * Generate a selection script. The selection information should previously have been scanned
-   * using {@link PermutationsUtil#setupPermutationsMap(ArtifactSet)}.
+   * Generate a selection script. The selection information should previously
+   * have been scanned using {@link PermutationsUtil#setupPermutationsMap(ArtifactSet)}.
    */
   protected String fillSelectionScriptTemplate(StringBuffer selectionScript,
       TreeLogger logger, LinkerContext context, ArtifactSet artifacts,
@@ -305,10 +281,10 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     }
     replaceAll(selectionScript, "__COMPUTE_SCRIPT_BASE__", computeScriptBase);
     replaceAll(selectionScript, "__PROCESS_METAS__", processMetas);
-
+    
     selectionScript = ResourceInjectionUtil.injectResources(selectionScript, artifacts);
     permutationsUtil.addPermutationsJs(selectionScript, logger, context);
-
+    
     replaceAll(selectionScript, "__MODULE_FUNC__",
         context.getModuleFunctionName());
     replaceAll(selectionScript, "__MODULE_NAME__", context.getModuleName());
@@ -316,98 +292,71 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
 
     return selectionScript.toString();
   }
-
+  
   /**
-   * @param logger   a TreeLogger
-   * @param context  a LinkerContext
+   * @param logger a TreeLogger
+   * @param context a LinkerContext
    * @param fragment the fragment number
    */
   protected String generateDeferredFragment(TreeLogger logger,
-      LinkerContext context, int fragment, String js, ArtifactSet artifacts,
-      CompilationResult result)
-      throws UnableToCompleteException {
-    StringBuilder b = new StringBuilder();
-    String strongName = result == null ? "" : result.getStrongName();
-    String prefix = getDeferredFragmentPrefix(logger, context, fragment);
-    b.append(prefix);
-    b.append(js);
-    b.append(getDeferredFragmentSuffix(logger, context, fragment));
-    SymbolMapsLinker.ScriptFragmentEditsArtifact editsArtifact
-        = new SymbolMapsLinker.ScriptFragmentEditsArtifact(strongName, fragment);
-    editsArtifact.prefixLines(prefix);
-    artifacts.add(editsArtifact);
-    return wrapDeferredFragment(logger, context, fragment, b.toString(), artifacts);
+      LinkerContext context, int fragment, String js) {
+    return js;
   }
 
   /**
-   * Generate the primary fragment. The default implementation is based on {@link
-   * #getModulePrefix(TreeLogger, LinkerContext, String, int)} and {@link
-   * #getModuleSuffix(TreeLogger, LinkerContext)}.
+   * Generate the primary fragment. The default implementation is based on
+   * {@link #getModulePrefix(TreeLogger, LinkerContext, String, int)} and
+   * {@link #getModuleSuffix(TreeLogger, LinkerContext)}.
    */
   protected byte[] generatePrimaryFragment(TreeLogger logger,
       LinkerContext context, CompilationResult result, String[] js,
       ArtifactSet artifacts) throws UnableToCompleteException {
     TextOutput to = new DefaultTextOutput(context.isOutputCompact());
     String temp = splitPrimaryJavaScript(result.getStatementRanges()[0], js[0],
-        charsPerChunk(context, logger), getScriptChunkSeparator(logger, context), context);
+        charsPerChunk(context, logger), getScriptChunkSeparator(logger, context));
     to.print(generatePrimaryFragmentString(
         logger, context, result, temp, js.length, artifacts));
     return Util.getBytes(to.toString());
   }
-
+  
   protected String generatePrimaryFragmentString(TreeLogger logger,
       LinkerContext context, CompilationResult result, String js, int length,
-      ArtifactSet artifacts)
-      throws UnableToCompleteException {
+      ArtifactSet artifacts) 
+  throws UnableToCompleteException {
     StringBuffer b = new StringBuffer();
     String strongName = result == null ? "" : result.getStrongName();
-
-    String modulePrefix = getModulePrefix(logger, context, strongName, length);
-    SymbolMapsLinker.ScriptFragmentEditsArtifact editsArtifact
-        = new SymbolMapsLinker.ScriptFragmentEditsArtifact(strongName, 0);
-    editsArtifact.prefixLines(modulePrefix);
-    artifacts.add(editsArtifact);
-    b.append(modulePrefix);
+    b.append(getModulePrefix(logger, context, strongName, length));
     b.append(js);
     b.append(getModuleSuffix(logger, context));
     return wrapPrimaryFragment(logger, context, b.toString(), artifacts, result);
   }
-
+  
   protected String generateSelectionScript(TreeLogger logger,
       LinkerContext context, ArtifactSet artifacts) throws UnableToCompleteException {
     return generateSelectionScript(logger, context, artifacts, null);
   }
-
+  
   protected String generateSelectionScript(TreeLogger logger,
-      LinkerContext context, ArtifactSet artifacts, CompilationResult result)
-      throws UnableToCompleteException {
+        LinkerContext context, ArtifactSet artifacts, CompilationResult result)
+        throws UnableToCompleteException {
     String selectionScriptText;
     StringBuffer buffer = readFileToStringBuffer(
-        getSelectionScriptTemplate(logger, context), logger);
+        getSelectionScriptTemplate(logger,context), logger);
     selectionScriptText = fillSelectionScriptTemplate(
         buffer, logger, context, artifacts, result);
     selectionScriptText =
-        context.optimizeJavaScript(logger, selectionScriptText);
+      context.optimizeJavaScript(logger, selectionScriptText);
     return selectionScriptText;
   }
-
+  
   protected abstract String getCompilationExtension(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
 
-  protected String getDeferredFragmentPrefix(TreeLogger logger, LinkerContext context,
-      int fragment) {
-    return "";
-  }
-
-  protected String getDeferredFragmentSuffix(TreeLogger logger, LinkerContext context,
-      int fragment) {
-    return "";
-  }
-
   /**
-   * Returns the subdirectory name to be used by getModulPrefix when requesting a runAsync module.
-   * It is specified by {@link #PROP_FRAGMENT_SUBDIR_OVERRIDE} and, aside from test cases, is always
-   * {@link #FRAGMENT_SUBDIR}.
+   * Returns the subdirectory name to be used by getModulPrefix when requesting
+   * a runAsync module. It is specified by
+   * {@link #PROP_FRAGMENT_SUBDIR_OVERRIDE} and, aside from test cases, is
+   * always {@link #FRAGMENT_SUBDIR}.
    */
   protected final String getFragmentSubdir(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException {
@@ -426,25 +375,27 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
 
     return subdir;
   }
-
+  
   protected String getHostedFilename() {
     return "";
   }
-
+  
   /**
-   * Compute the beginning of a JavaScript file that will hold the main module implementation.
+   * Compute the beginning of a JavaScript file that will hold the main module
+   * implementation.
    */
   protected abstract String getModulePrefix(TreeLogger logger,
       LinkerContext context, String strongName)
       throws UnableToCompleteException;
-
+  
   /**
-   * Compute the beginning of a JavaScript file that will hold the main module implementation. By
-   * default, calls {@link #getModulePrefix(TreeLogger, LinkerContext, String)}.
-   *
-   * @param strongName   strong name of the module being emitted
-   * @param numFragments the number of fragments for this module, including the main fragment
-   *                     (fragment 0)
+   * Compute the beginning of a JavaScript file that will hold the main module
+   * implementation. By default, calls
+   * {@link #getModulePrefix(TreeLogger, LinkerContext, String)}.
+   * 
+   * @param strongName strong name of the module being emitted
+   * @param numFragments the number of fragments for this module, including the
+   *          main fragment (fragment 0)
    */
   protected String getModulePrefix(TreeLogger logger, LinkerContext context,
       String strongName, int numFragments) throws UnableToCompleteException {
@@ -455,9 +406,9 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       LinkerContext context) throws UnableToCompleteException;
 
   /**
-   * Some subclasses support "chunking" of the primary fragment. If chunking will be supported, this
-   * function should be overridden to return the string which should be inserted between each
-   * chunk.
+   * Some subclasses support "chunking" of the primary fragment. If chunking will
+   * be supported, this function should be overridden to return the string which
+   * should be inserted between each chunk.
    */
   protected String getScriptChunkSeparator(TreeLogger logger, LinkerContext context) {
     return "";
@@ -465,11 +416,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
 
   protected abstract String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
-
+  
   /**
    * Add the Development Mode file to the artifact set.
    */
-  protected void maybeAddHostedModeFile(TreeLogger logger,
+  protected void maybeAddHostedModeFile(TreeLogger logger, 
       LinkerContext context, ArtifactSet artifacts, CompilationResult result)
       throws UnableToCompleteException {
     String hostedFilename = getHostedFilename();
@@ -526,12 +477,6 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       throw new UnableToCompleteException();
     }
     return buffer;
-  }
-
-  protected String wrapDeferredFragment(TreeLogger logger,
-      LinkerContext context, int fragment, String script, ArtifactSet artifacts)
-      throws UnableToCompleteException {
-    return script;
   }
 
   protected String wrapPrimaryFragment(TreeLogger logger,

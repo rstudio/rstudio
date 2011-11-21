@@ -75,10 +75,4 @@
     is-multi-valued="false" />
   <set-configuration-property name="iframe.linker.deferredjs.subdir"
     value="deferredjs" />
-
-  <!--
-     Specifies whether a given permutation has source map support enabled.
-  -->
-  <define-property name="compiler.useSourceMaps" values="true,false"/>
-  <set-property name="compiler.useSourceMaps" value="false"/>
 </module>

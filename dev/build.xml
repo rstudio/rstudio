@@ -59,7 +59,6 @@
           <include name="apache/ant-1.6.5.jar" />
           <include name="eclipse/jdt-3.4.2.jar" />
           <include name="guava/guava-r06/guava-r06-rebased-2.jar" />
-          <include name="jscomp/sourcemap-rebased.jar" />
           <include name="jetty/jetty-6.1.11.jar" />
           <include name="icu4j/4.4.2/icu4j.jar" />
           <include name="protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar" />
@@ -112,7 +111,6 @@
           <!-- htmlunit dependencies not already included: END -->
           <include name="sun/swingworker/swing-worker-1.1.jar" />
           <include name="guava/guava-r06/guava-r06-rebased-2.jar" />
-          <include name="jscomp/sourcemap-rebased.jar" />
         </fileset>
         <fileset file="build.xml"/>
       </sourcefiles>
@@ -125,7 +123,6 @@
           <zipfileset src="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
           <zipfileset src="${gwt.tools.lib}/eclipse/jdt-3.4.2.jar" />
           <zipfileset src="${gwt.tools.lib}/guava/guava-r06/guava-r06-rebased-2.jar" />
-          <zipfileset src="${gwt.tools.lib}/jscomp/sourcemap-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/jetty/jetty-6.1.11.jar" />
           <zipfileset src="${gwt.tools.lib}/icu4j/4.4.2/icu4j.jar" />
           <zipfileset src="${gwt.tools.lib}/protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar" />
@@ -178,7 +175,6 @@
           <!-- htmlunit dependencies not already included: END -->
           <zipfileset src="${gwt.tools.lib}/sun/swingworker/swing-worker-1.1.jar" />
           <zipfileset src="${gwt.tools.lib}/guava/guava-r06/guava-r06-rebased-2.jar" />
-          <zipfileset src="${gwt.tools.lib}/jscomp/sourcemap-rebased.jar" />
         </gwt.jar>
       </sequential>
     </outofdate>
@@ -220,7 +216,6 @@
           <pathelement location="${gwt.tools.lib}/eclipse/jdt-3.4.2.jar" />
           <pathelement location="${gwt.tools.lib}/tomcat/commons-collections-3.1.jar" />
           <pathelement location="${gwt.tools.lib}/guava/guava-r06/guava-r06-rebased-2.jar" />
-          <pathelement location="${gwt.tools.lib}/jscomp/sourcemap-rebased.jar" />
       </classpath>
     </gwt.javac>
   </target>
