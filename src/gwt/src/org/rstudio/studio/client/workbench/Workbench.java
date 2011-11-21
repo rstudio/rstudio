@@ -23,12 +23,13 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
-import org.rstudio.studio.client.common.posixshell.PosixShell;
+import org.rstudio.studio.client.common.posixshell.PosixShellDialog;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -59,9 +60,9 @@ public class Workbench implements BusyHandler,
                     Server server,
                     RemoteFileSystemContext fsContext,
                     FileDialogs fileDialogs,
+                    Provider<PosixShellDialog> pPosixShellDialog,
                     ConsoleDispatcher consoleDispatcher,
-                    ChooseFile chooseFile,   // required to force gin to create
-                    PosixShell shellDialog) // required to force gin to create
+                    ChooseFile chooseFile)  // required to force gin to create
    {
       view_ = view;
       workbenchContext_ = workbenchContext;
@@ -72,6 +73,7 @@ public class Workbench implements BusyHandler,
       server_ = server;
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
+      pPosixShellDialog_ = pPosixShellDialog;
       consoleDispatcher_ = consoleDispatcher;
       
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
@@ -98,6 +100,9 @@ public class Workbench implements BusyHandler,
                                         new VoidServerRequestCallback());
          }
       };
+      
+      if (Desktop.isDesktop())
+         commands_.showShellDialog().remove();
    }
 
    public WorkbenchMainView getMainView()
@@ -258,6 +263,13 @@ public class Workbench implements BusyHandler,
                }
             });
    }
+   
+   
+   @Handler
+   public void onShowShellDialog()
+   {
+      pPosixShellDialog_.get().showModal();
+   }
 
    private final Server server_;
    private final EventBus eventBus_;
@@ -267,6 +279,7 @@ public class Workbench implements BusyHandler,
    private final Commands commands_;
    private final RemoteFileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
+   private final Provider<PosixShellDialog> pPosixShellDialog_;
    private final WorkbenchContext workbenchContext_;
    private final ConsoleDispatcher consoleDispatcher_;
    private final TimeBufferedCommand metricsChangedCommand_;

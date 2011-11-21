@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.posixshell.PosixShell;
+import org.rstudio.studio.client.common.posixshell.PosixShellWidget;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
@@ -130,7 +131,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Commands.class).in(Singleton.class);
       bind(DefaultCRANMirror.class).in(Singleton.class);
       bind(ChooseFile.class).in(Singleton.class);
-      bind(PosixShell.class).in(Singleton.class);
       bind(ConsoleDispatcher.class).in(Singleton.class);
       bind(FileTypeCommands.class).in(Singleton.class);
       
@@ -169,6 +169,8 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("VCS", VCSTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
+      
+      bind(PosixShell.Display.class).to(PosixShellWidget.class);
       
       bind(HelpSearch.Display.class).to(HelpSearchWidget.class) ;
       bind(CodeSearch.Display.class).to(CodeSearchWidget.class);

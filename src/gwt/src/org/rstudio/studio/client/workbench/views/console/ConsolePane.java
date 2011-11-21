@@ -41,14 +41,9 @@ public class ConsolePane extends ToolbarPane
 
    public void focus()
    {
-      setFocus(true);
+      shell_.getDisplay().focus();
    }
 
-   public void setFocus(boolean focused)
-   {
-      shell_.getDisplay().setFocus(focused);
-   }
-   
    public int getCharacterWidth()
    {
       return shell_.getDisplay().getCharacterWidth();

@@ -1,14 +1,16 @@
 package org.rstudio.studio.client.common.shell;
 
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 
 import com.google.gwt.event.dom.client.HasKeyPressHandlers;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.Widget;
 
-public interface ShellDisplay extends HasKeyPressHandlers
+public interface ShellDisplay extends CanFocus, HasKeyPressHandlers
 {
    void consoleWriteError(String string) ;
    void consoleWriteOutput(String output) ;
@@ -19,7 +21,6 @@ public interface ShellDisplay extends HasKeyPressHandlers
    InputEditorDisplay getInputEditorDisplay() ;
    void clearOutput() ;
    String processCommandEntry() ;
-   void setFocus(boolean focused) ;
    int getCharacterWidth() ;
    boolean isPromptEmpty();
 
@@ -28,4 +29,6 @@ public interface ShellDisplay extends HasKeyPressHandlers
    void setMaxOutputLines(int maxLines);
 
    HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler);
+   
+   Widget getShellWidget();
 }

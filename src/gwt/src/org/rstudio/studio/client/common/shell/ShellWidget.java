@@ -194,7 +194,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          }
       });
    }
-
+   
    public void consoleWriteError(String error)
    {
       output(error, styles_.error(), false);
@@ -403,9 +403,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
       });
    }
 
-   public void setFocus(boolean focused)
+   public void focus()
    {
-      input_.setFocus(focused) ;
+      input_.setFocus(true) ;
    }
    
    /**
@@ -602,6 +602,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       maxLines_ = maxLines;
       trimExcess();
+   }
+   
+   @Override
+   public Widget getShellWidget()
+   {
+      return this;
    }
 
    public void onResize()

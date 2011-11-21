@@ -1,44 +1,46 @@
 package org.rstudio.studio.client.common.posixshell;
 
-import org.rstudio.core.client.command.CommandBinder;
-import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.common.shell.ShellDisplay;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
-@Singleton
 public class PosixShell
 {
-   interface Binder extends CommandBinder<Commands, PosixShell> {}
+   public interface Display extends ShellDisplay
+   { 
+   }
+   
+   public interface Observer 
+   {
+      
+   }
    
    @Inject
-   public PosixShell(GlobalDisplay globalDisplay,
-                            Commands commands)
+   public PosixShell(Display display)
    {
-      globalDisplay_ = globalDisplay;
+      display_ = display;
+   
       
-      if (Desktop.isDesktop())
-         commands.showShellDialog().remove();
       
-      ((Binder)GWT.create(Binder.class)).bind(commands, this);
+     
       
+   }
+   
+   public void SetObserver(Observer observer)
+   {
+      observer_ = observer;
+   }
+   
+   public Widget getWidget()
+   {
+      return display_.getShellWidget();
    }
    
    
    
-   @Handler
-   public void onShowShellDialog()
-   {
-      globalDisplay_.showMessage(MessageDialog.INFO,
-                                 "Not Yet Implemented",
-                                 "This feature is still under construction.");
-   }
-
-   
-   private final GlobalDisplay globalDisplay_;
+  
+   private final Display display_;
+   @SuppressWarnings("unused")
+   private Observer observer_ = null;
 }

@@ -41,6 +41,7 @@ import org.rstudio.studio.client.application.ui.serializationprogress.Applicatio
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
+import org.rstudio.studio.client.common.posixshell.PosixShellWidget;
 import org.rstudio.studio.client.common.vcs.CreateKeyDialog;
 import org.rstudio.studio.client.common.vcs.SshKeyChooser;
 import org.rstudio.studio.client.impl.BrowserFence;
@@ -200,6 +201,7 @@ public class RStudio implements EntryPoint
       SshKeyChooser.ensureStylesInjected();
       WizardResources.INSTANCE.styles().ensureInjected();
       NewProjectResources.INSTANCE.styles().ensureInjected();
+      PosixShellWidget.ensureStylesInjected();
      
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
