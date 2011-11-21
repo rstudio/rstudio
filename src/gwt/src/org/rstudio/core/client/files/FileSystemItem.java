@@ -16,8 +16,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -274,7 +274,7 @@ public class FileSystemItem extends JavaScriptObject
       return this.lastModified;
    }-*/;
 
-   public final native StatusAndPath getGitStatus() /*-{
+   public final native StatusAndPathInfo getGitStatus() /*-{
       return this.git_status;
    }-*/;
 

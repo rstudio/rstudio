@@ -1,6 +1,6 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:vcs='urn:import:org.rstudio.studio.client.workbench.views.vcs'
+             xmlns:vcs='urn:import:org.rstudio.studio.client.workbench.views.vcs.common'
              xmlns:vcs_diff='urn:import:org.rstudio.studio.client.workbench.views.vcs.common.diff'
              xmlns:rs_widget='urn:import:org.rstudio.core.client.widget'>
 

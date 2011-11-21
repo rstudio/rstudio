@@ -27,6 +27,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.vcs.GitPresenter.Display;
+import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
+import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.console.ConsoleBarFramePanel;
 
 import java.util.ArrayList;

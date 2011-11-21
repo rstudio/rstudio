@@ -18,6 +18,7 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 
 public class VCSApplicationParams extends JavaScriptObject
 {
@@ -29,20 +30,20 @@ public class VCSApplicationParams extends JavaScriptObject
                                           boolean showHistory,
                                           ArrayList<StatusAndPath> selected)
    {
-      JsArray<StatusAndPath> jsSelected = 
-            JavaScriptObject.createArray().<JsArray<StatusAndPath>>cast();
+      JsArray<StatusAndPathInfo> jsSelected =
+            JavaScriptObject.createArray().cast();
       
       jsSelected.setLength(selected.size());
       
       for (int i=0; i<selected.size(); i++)
-         jsSelected.set(i, selected.get(i));
+         jsSelected.set(i, selected.get(i).toInfo());
       
       return createNative(showHistory, jsSelected);
    }
    
    private final static native VCSApplicationParams createNative(
                                        boolean showHistory,
-                                       JsArray<StatusAndPath> selected) /*-{
+                                       JsArray<StatusAndPathInfo> selected) /*-{
       var params = new Object();
       params.show_history = showHistory;
       params.selected = selected;
@@ -57,14 +58,10 @@ public class VCSApplicationParams extends JavaScriptObject
 
    public final ArrayList<StatusAndPath> getSelected()
    {
-      JsArray<StatusAndPath> jsSelected = getSelectedNative();
-      ArrayList<StatusAndPath> selected = new ArrayList<StatusAndPath>();
-      for (int i=0; i<jsSelected.length(); i++)
-         selected.add(jsSelected.get(i));
-      return selected;
+      return StatusAndPath.fromInfos(getSelectedNative());
    }
    
-   private final native JsArray<StatusAndPath> getSelectedNative() /*-{
+   private final native JsArray<StatusAndPathInfo> getSelectedNative() /*-{
       return this.selected;
    }-*/;
 

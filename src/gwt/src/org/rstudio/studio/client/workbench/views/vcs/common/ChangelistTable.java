@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.vcs;
+package org.rstudio.studio.client.workbench.views.vcs.common;
 
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
@@ -23,14 +23,10 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -43,6 +39,7 @@ import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageHandler;
+import org.rstudio.studio.client.workbench.views.vcs.git.GitStatusRenderer;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -54,15 +51,6 @@ public class ChangelistTable extends Composite
 {
    public interface ChangelistTableCellTableResources extends CellTable.Resources
    {
-      ImageResource statusAdded();
-      ImageResource statusDeleted();
-      ImageResource statusModified();
-      ImageResource statusNone();
-      ImageResource statusCopied();
-      ImageResource statusUntracked();
-      ImageResource statusUnmerged();
-      ImageResource statusRenamed();
-
       @Override
       @Source("ascendingArrow.png")
       ImageResource cellTableSortAscending();
@@ -77,7 +65,7 @@ public class ChangelistTable extends Composite
       ChangelistTableCellTableStyle cellTableStyle();
    }
 
-   protected interface ChangelistTableCellTableStyle extends CellTable.Style
+   public interface ChangelistTableCellTableStyle extends CellTable.Style
    {
       String status();
    }
@@ -126,74 +114,6 @@ public class ChangelistTable extends Composite
       private Set<String> consumedEvents_ = new HashSet<String>();
    }
 
-   private class StatusRenderer implements SafeHtmlRenderer<String>
-   {
-
-      @Override
-      public SafeHtml render(String str)
-      {
-         if (str.length() != 2)
-            return null;
-
-         ImageResource indexImg = imgForStatus(str.charAt(0));
-         ImageResource treeImg = imgForStatus(str.charAt(1));
-
-         SafeHtmlBuilder builder = new SafeHtmlBuilder();
-         builder.append(SafeHtmlUtils.fromTrustedString(
-               "<span " +
-               "class=\"" + resources_.cellTableStyle().status() + "\" " +
-               "title=\"" +
-               SafeHtmlUtils.htmlEscape(descForStatus(str)) +
-               "\">"));
-
-         builder.append(SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(indexImg).getHTML()));
-         builder.append(SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(treeImg).getHTML()));
-
-         builder.appendHtmlConstant("</span>");
-
-         return builder.toSafeHtml();
-      }
-
-      private String descForStatus(String str)
-      {
-         // TODO: Provide a suitable tooltip value for status
-         return "";
-      }
-
-      private ImageResource imgForStatus(char c)
-      {
-         switch (c)
-         {
-            case 'A':
-               return resources_.statusAdded();
-            case 'M':
-               return resources_.statusModified();
-            case 'D':
-               return resources_.statusDeleted();
-            case 'R':
-               return resources_.statusRenamed();
-            case 'C':
-               return resources_.statusCopied();
-            case '?':
-               return resources_.statusUntracked();
-            case 'U':
-               return resources_.statusUnmerged();
-            case ' ':
-               return resources_.statusNone();
-            default:
-               return resources_.statusNone();
-         }
-      }
-
-      @Override
-      public void render(String str, SafeHtmlBuilder builder)
-      {
-         SafeHtml safeHtml = render(str);
-         if (safeHtml != null)
-            builder.append(safeHtml);
-      }
-   }
-
    public ChangelistTable()
    {
       table_ = new MultiSelectCellTable<StatusAndPath>(100, resources_);
@@ -215,7 +135,7 @@ public class ChangelistTable extends Composite
       table_.setSelectionModel(selectionModel_);
       dataProvider_.addDataDisplay(table_);
 
-      configureTable();
+      configureTable(new GitStatusRenderer());
 
       table_.setSize("100%", "auto");
 
@@ -282,7 +202,7 @@ public class ChangelistTable extends Composite
       }
    }
 
-   private void configureTable()
+   private void configureTable(SafeHtmlRenderer<String> statusRenderer)
    {
       final Column<StatusAndPath, Boolean> stagedColumn = new Column<StatusAndPath, Boolean>(
             new TriStateCheckboxCell<StatusAndPath>(selectionModel_))
@@ -326,7 +246,7 @@ public class ChangelistTable extends Composite
 
 
       Column<StatusAndPath, String> statusColumn = new Column<StatusAndPath, String>(
-            new NotEditingTextCell(new StatusRenderer()))
+            new NotEditingTextCell(statusRenderer))
       {
          @Override
          public String getValue(StatusAndPath object)
