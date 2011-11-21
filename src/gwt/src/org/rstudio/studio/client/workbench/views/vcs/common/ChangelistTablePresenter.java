@@ -10,9 +10,8 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.vcs;
+package org.rstudio.studio.client.workbench.views.vcs.common;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;

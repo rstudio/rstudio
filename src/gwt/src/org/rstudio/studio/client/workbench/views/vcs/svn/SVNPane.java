@@ -18,7 +18,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.vcs.ChangelistTablePresenter;
+import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenter.Display;
 
 public class SVNPane extends WorkbenchPane implements Display
