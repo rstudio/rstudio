@@ -136,8 +136,10 @@ void configureSlaveTerminal(int termFd)
       ERROR_LOCATION);
    if (!error)
    {
-      // specify raw mode
+      // specify raw mode (but don't ignore signals -- this is done
+      // so we can send Ctrl-C for interrupts)
       ::cfmakeraw(&termp);
+      termp.c_lflag |= ISIG;
 
       // set attribs
       safePosixCall<int>(
@@ -288,18 +290,11 @@ Error ChildProcess::ptyInterrupt()
    if (!options().pseudoterminal)
       return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 
-   // TODO: figure out how to make this work (TIOSIG requires a too recent
-   // version of the kernel so we can't use it)
-   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
-
-   /*
-   // send SIGINT
-   int res = ::ioctl(pImpl_->fdMaster, TIOCSIG, SIGINT);
-   if (res == -1)
-      return systemError(errno, ERROR_LOCATION);
-   else
-      return Success();
-   */
+   // write control-c to the slave
+   char ctrlC = 0x03;
+   return posixCall<int>(
+         boost::bind(::write, pImpl_->fdMaster, &ctrlC, sizeof(ctrlC)),
+         ERROR_LOCATION);
 }
 
 Error ChildProcess::terminate()

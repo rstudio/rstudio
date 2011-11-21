@@ -166,6 +166,16 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
             server_.sendInputToPosixShell(input, 
                                           new VoidServerRequestCallback());
          }
+         else if (modifiers == KeyboardShortcut.CTRL && keyCode == 'C')
+         {
+            event.preventDefault();
+            event.stopPropagation();
+         
+            if (display_.isPromptEmpty())
+               display_.consoleWriteOutput("^C");
+            
+            server_.interruptPosixShell(new VoidServerRequestCallback());
+         }
       }
    }
    

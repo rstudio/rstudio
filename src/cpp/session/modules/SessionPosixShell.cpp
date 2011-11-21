@@ -13,10 +13,17 @@
 
 // TODO: set sane initial size for shell dialog
 
-// TODO: ability to interrupt slave
-
 // TODO: ui chrome (consider console dialog style hanging from top)
 // TODO: border for shell widget
+
+// TODO: painting issue where ace below dialog paints above (Ctrl-C
+// off of sleep 1000 repros)
+
+// TODO: vim and more behave oddly -- any way to full disable?
+
+// TODO: on termination we get this error message printed:
+//   Cannot set tty process group (Inappropriate ioctl for device)
+// is there any way to terminate cleanly (perhaps another ctrl signal)
 
 // TODO: up-arrow history
 
