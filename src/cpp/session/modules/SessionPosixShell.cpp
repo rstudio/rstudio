@@ -58,13 +58,13 @@ public:
    {
       boost::shared_ptr<PosixShell> pShell(new PosixShell(maxLines));
 
-      system::ProcessCallbacks cb;
+      core::system::ProcessCallbacks cb;
       cb.onContinue = boost::bind(&PosixShell::onContinue, pShell, _1);
       cb.onStdout = boost::bind(&PosixShell::onStdout, pShell, _2);
       cb.onExit = boost::bind(&PosixShell::onExit, pShell, _1);
 
-      system::ProcessOptions options;
-      options.pseudoterminal = system::Pseudoterminal(width, 1);
+      core::system::ProcessOptions options;
+      options.pseudoterminal = core::system::Pseudoterminal(width, 1);
       Error error = module_context::processSupervisor().runCommand("/bin/sh",
                                                                    options,
                                                                    cb);
