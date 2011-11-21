@@ -11,9 +11,14 @@
  *
  */
 
-// TODO: set sane initial size for shell dialog
+// TODO: order of initialization for starting shell (and handling
+// failure cases at startup)
 
-// TODO: ui chrome (consider console dialog style hanging from top)
+// TODO: for passphrase / password / etc. we may want to
+// encrypt transmission (encrypt all?) and don't echo the password
+
+// TODO: gesture to open shell from vcs tabs?
+
 // TODO: border for shell widget
 
 // TODO: painting issue where ace below dialog paints above (Ctrl-C

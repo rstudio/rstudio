@@ -64,11 +64,6 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
             eventBus.addHandler(PosixShellOutputEvent.TYPE, this));
       eventBusHandlers_.add(
             eventBus.addHandler(PosixShellExitEvent.TYPE, this));
-      
-      // startup the shell
-      int width = 60;
-      server.startPosixShell(width, maxLines, new VoidServerRequestCallback());
-      
    }
    
    public void setObserver(Observer observer)
@@ -79,6 +74,13 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
    public Widget getWidget()
    {
       return display_.getShellWidget();
+   }
+   
+   public void start(int width)
+   {
+      server_.startPosixShell(width,
+                              display_.getMaxOutputLines(), 
+                              new VoidServerRequestCallback());
    }
    
    public void terminate()
@@ -120,6 +122,8 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
    @Override
    public void onPosixShellExit(PosixShellExitEvent event)
    {
+      detachEventBusHandlers();
+      
       if (observer_ != null)
          observer_.onShellExited();    
    }

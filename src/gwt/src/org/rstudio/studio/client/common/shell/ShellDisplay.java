@@ -26,6 +26,7 @@ public interface ShellDisplay extends CanFocus, HasKeyPressHandlers
 
    void playbackActions(RpcObjectList<ConsoleAction> actions);
 
+   int getMaxOutputLines();
    void setMaxOutputLines(int maxLines);
 
    HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler);
