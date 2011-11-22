@@ -1,5 +1,5 @@
 /*
- * CryptoServerOperations.java
+ * PublicKeyInfo.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -12,9 +12,17 @@
  */
 package org.rstudio.studio.client.common.crypto;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import com.google.gwt.core.client.JavaScriptObject;
 
-public interface CryptoServerOperations
+public class PublicKeyInfo extends JavaScriptObject
 {
-   void getPublicKey(ServerRequestCallback<PublicKeyInfo> requestCallback);
+   protected PublicKeyInfo() {}
+
+   public native final String getExponent() /*-{
+      return this.exponent;
+   }-*/;
+
+   public native final String getModulo() /*-{
+      return this.modulo;
+   }-*/;
 }

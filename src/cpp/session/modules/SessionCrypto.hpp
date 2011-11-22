@@ -14,6 +14,8 @@
 #ifndef SESSION_CRYPTO_HPP
 #define SESSION_CRYPTO_HPP
 
+#include <core/json/Json.hpp>
+
 namespace core {
    class Error;
 }
@@ -22,6 +24,8 @@ namespace session {
 namespace modules { 
 namespace crypto {
    
+core::json::Object publicKeyInfoJson();
+
 core::Error initialize();
                        
 } // namespace crypto

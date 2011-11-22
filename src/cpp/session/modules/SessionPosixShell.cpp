@@ -11,17 +11,16 @@
  *
  */
 
-// TODO: for passphrase / password / etc. we may want to
-// encrypt transmission (encrypt all?) and don't echo the password
+// TODO: for passphrase / password / don't echo the password
 
 // TODO: border for shell widget
 
 // TODO: painting issue where ace below dialog paints above (Ctrl-C
 // off of sleep 1000 repros)
 
-// TODO: cap output lines sent on the server
-
 // TODO: get prompted every time for passphrase in shell mode
+
+// TODO: cap output lines sent on the server
 
 #include "SessionPosixShell.hpp"
 
@@ -32,8 +31,11 @@
 #include <core/Exec.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/Crypto.hpp>
 
 #include <session/SessionModuleContext.hpp>
+
+#include "SessionCrypto.hpp"
 
 using namespace core ;
 
@@ -187,6 +189,9 @@ Error startPosixShell(const json::JsonRpcRequest& request,
       s_pActiveShell.reset();
    }
 
+   // set public key info
+   pResponse->setResult(crypto::publicKeyInfoJson());
+
    // start a new shell
    return PosixShell::create(width, maxLines, &s_pActiveShell);
 }
@@ -216,8 +221,14 @@ Error sendInputToPosixShell(const json::JsonRpcRequest& request,
    if (!s_pActiveShell)
       return Error(json::errc::MethodUnexpected, ERROR_LOCATION);
 
+   // decrypt input
+   std::string decryptedInput;
+   error = core::system::crypto::rsaPrivateDecrypt(input, &decryptedInput);
+   if (error)
+      return error;
+
    // send input
-   s_pActiveShell->enqueueInput(input);
+   s_pActiveShell->enqueueInput(decryptedInput);
 
    return Success();
 }

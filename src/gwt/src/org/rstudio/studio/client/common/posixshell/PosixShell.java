@@ -14,6 +14,7 @@ package org.rstudio.studio.client.common.posixshell;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
@@ -21,6 +22,8 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
+import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.common.posixshell.events.PosixShellExitEvent;
 import org.rstudio.studio.client.common.posixshell.events.PosixShellOutputEvent;
 import org.rstudio.studio.client.common.posixshell.model.PosixShellServerOperations;
@@ -98,11 +101,12 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
       server_.startPosixShell(
             width,
             display_.getMaxOutputLines(), 
-            new ServerRequestCallback<Void>()
+            new ServerRequestCallback<PublicKeyInfo>()
             {
                @Override 
-               public void onResponseReceived(Void resp)
+               public void onResponseReceived(PublicKeyInfo publicKeyInfo)
                {
+                  publicKeyInfo_ = publicKeyInfo;
                   progressIndicator.onCompleted();
                }
 
@@ -238,35 +242,7 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
             event.preventDefault();
             event.stopPropagation();
 
-            // get the current prompt text
-            String promptText = display_.getPromptText();
-            
-            // process command entry 
-            String commandEntry = display_.processCommandEntry();
-            if (addToHistory_)
-               historyManager_.addToHistory(commandEntry);
-            
-            // input is entry + newline
-            String input = commandEntry + "\n";
-            
-            // update console with prompt and input
-            display_.consoleWritePrompt(promptText);
-            display_.consoleWriteInput(input);
-            
-            // send input to server
-            server_.sendInputToPosixShell(
-               input, 
-               new ServerRequestCallback<Void>() {
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     // show the error in the console then re-prompt
-                     display_.consoleWriteError(
-                           "Error: " + error.getUserMessage() + "\n");
-                     if (lastPromptText_ != null)
-                        consolePrompt(lastPromptText_, false);
-                  }
-               });
+            processCommandEntry();
          }
          else if (modifiers == KeyboardShortcut.CTRL && keyCode == 'C')
          {
@@ -288,10 +264,53 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
       }
    }
    
+   private void processCommandEntry()
+   {
+      // get the current prompt text
+      String promptText = display_.getPromptText();
+      
+      // process command entry 
+      String commandEntry = display_.processCommandEntry();
+      if (addToHistory_)
+         historyManager_.addToHistory(commandEntry);
+      
+      // input is entry + newline
+      String input = commandEntry + "\n";
+      
+      // update console with prompt and input
+      display_.consoleWritePrompt(promptText);
+      display_.consoleWriteInput(input);
+      
+      // encrypt input and send it to the to server
+      RSAEncrypt.encrypt_ServerOnly(
+         publicKeyInfo_, 
+         input, 
+         new CommandWithArg<String>() {
+            @Override
+            public void execute(String encryptedInput)
+            {
+               server_.sendInputToPosixShell(
+                  encryptedInput, 
+                  new ServerRequestCallback<Void>() {
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        // show the error in the console then re-prompt
+                        display_.consoleWriteError(
+                              "Error: " + error.getUserMessage() + "\n");
+                        if (lastPromptText_ != null)
+                           consolePrompt(lastPromptText_, false);
+                     }
+                  });
+            }
+       });
+   }
+   
    private final Display display_;
    private final GlobalDisplay globalDisplay_;
    private Observer observer_ = null;
    private final PosixShellServerOperations server_;
+   private PublicKeyInfo publicKeyInfo_;
  
    // indicates whether the next command should be added to history
    private boolean addToHistory_ ;

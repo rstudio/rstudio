@@ -33,8 +33,20 @@ namespace session {
 namespace modules { 
 namespace crypto {
 
+namespace {
+
 Error getPublicKey(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(publicKeyInfoJson());
+
+   return Success();
+}
+
+} // anonymous namespace
+
+
+json::Object publicKeyInfoJson()
 {
    std::string exponent;
    std::string modulo;
@@ -43,9 +55,7 @@ Error getPublicKey(const json::JsonRpcRequest& request,
    json::Object result;
    result["exponent"] = exponent;
    result["modulo"] = modulo;
-   pResponse->setResult(result);
-
-   return Success();
+   return result;
 }
 
 Error initialize()

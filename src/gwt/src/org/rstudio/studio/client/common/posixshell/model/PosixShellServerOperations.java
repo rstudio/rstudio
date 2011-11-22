@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.common.posixshell.model;
 
+import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
@@ -19,7 +20,7 @@ public interface PosixShellServerOperations
 {
    void startPosixShell(int width,
                         int maxLines,
-                        ServerRequestCallback<Void> requestCallback);
+                        ServerRequestCallback<PublicKeyInfo> requestCallback);
    
    void interruptPosixShell(ServerRequestCallback<Void> requestCallback);
    

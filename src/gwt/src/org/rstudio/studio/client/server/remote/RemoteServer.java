@@ -32,6 +32,7 @@ import org.rstudio.studio.client.application.model.HttpLogEntry;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
+import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -1561,9 +1562,10 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void startPosixShell(int width,
-                               int maxLines,
-                               ServerRequestCallback<Void> requestCallback)
+   public void startPosixShell(
+                         int width,
+                         int maxLines,
+                         ServerRequestCallback<PublicKeyInfo> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(width));

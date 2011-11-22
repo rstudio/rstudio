@@ -12,10 +12,10 @@
  */
 package org.rstudio.studio.client.common.crypto;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.common.crypto.CryptoServerOperations.PublicKeyInfo;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
@@ -66,7 +66,31 @@ public class RSAEncrypt
       });
    }
    
+   public static void encrypt_ServerOnly(final PublicKeyInfo publicKeyInfo,
+                                         final String input,
+                                         final CommandWithArg<String> callback)
+   {
+      if (Desktop.isDesktop())
+      {
+         // Don't encrypt for desktop, Windows can't decrypt it.
+         callback.execute(input);
+         return;
+      }
 
+      loader_.addCallback(new Callback()
+      {
+         @Override
+         public void onLoaded()
+         { 
+            callback.execute(encrypt(input, 
+                                     publicKeyInfo.getExponent(),
+                                     publicKeyInfo.getModulo()));
+           
+         }
+      });
+   }
+   
+  
    private static native String encrypt(String value,
                                         String exponent,
                                         String modulo) /*-{
