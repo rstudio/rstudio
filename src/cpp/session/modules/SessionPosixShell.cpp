@@ -15,12 +15,13 @@
 
 // TODO: border for shell widget
 
-// TODO: painting issue where ace below dialog paints above (Ctrl-C
-// off of sleep 1000 repros)
+// TODO: launch /bin/sh or something else?
 
-// TODO: get prompted every time for passphrase in shell mode
+// TODO: set prompt
 
 // TODO: cap output lines sent on the server
+
+// TODO: vcsRefresh on exit from console
 
 #include "SessionPosixShell.hpp"
 
