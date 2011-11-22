@@ -19,6 +19,8 @@ import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 
+import java.util.ArrayList;
+
 public class SVNChangelistTablePresenter
 {
    @Inject
@@ -39,6 +41,11 @@ public class SVNChangelistTablePresenter
    public SVNChangelistTable getView()
    {
       return view_;
+   }
+
+   public ArrayList<StatusAndPath> getSelectedItems()
+   {
+      return view_.getSelectedItems();
    }
 
    private final SVNChangelistTable view_;

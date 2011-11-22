@@ -12,14 +12,19 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitChangelistTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenter.Display;
+
+import java.util.ArrayList;
 
 public class SVNPane extends WorkbenchPane implements Display
 {
@@ -32,6 +37,15 @@ public class SVNPane extends WorkbenchPane implements Display
 
       changelistTablePresenter_ = changelistTablePresenter;
       commands_ = commands;
+
+      addFilesButton_ = new ToolbarButton(
+            "Add",
+            commands_.vcsAddFiles().getImageResource(),
+            (ClickHandler)null);
+      revertFilesButton_ = new ToolbarButton(
+            "Revert",
+            commands_.vcsRevertFiles().getImageResource(),
+            (ClickHandler)null);
    }
 
    @Override
@@ -49,11 +63,30 @@ public class SVNPane extends WorkbenchPane implements Display
    {
       Toolbar toolbar = new Toolbar();
 
-      toolbar.addLeftWidget(commands_.vcsRevert().createToolbarButton());
+      toolbar.addLeftWidget(addFilesButton_);
+      toolbar.addLeftWidget(revertFilesButton_);
 
       toolbar.addRightWidget(commands_.vcsRefresh().createToolbarButton());
 
       return toolbar;
+   }
+
+   @Override
+   public ToolbarButton getAddFilesButton()
+   {
+      return addFilesButton_;
+   }
+
+   @Override
+   public ToolbarButton getRevertFilesButton()
+   {
+      return revertFilesButton_;
+   }
+
+   @Override
+   public ArrayList<StatusAndPath> getSelectedItems()
+   {
+      return changelistTablePresenter_.getSelectedItems();
    }
 
    @Override
@@ -74,4 +107,6 @@ public class SVNPane extends WorkbenchPane implements Display
 
    private final SVNChangelistTablePresenter changelistTablePresenter_;
    private final Commands commands_;
+   private final ToolbarButton addFilesButton_;
+   private final ToolbarButton revertFilesButton_;
 }

@@ -137,8 +137,8 @@ std::string translateItemStatus(const std::string& status)
       return " ";
    if (status == "normal")      // ??
       return " ";
-   if (status == "obstructed")  // ??
-      return "!";
+   if (status == "obstructed")
+      return "~";
    if (status == "replaced")
       return "~";
    if (status == "unversioned")
@@ -147,12 +147,82 @@ std::string translateItemStatus(const std::string& status)
    return " ";
 }
 
+#define FOREACH_NODE(parent, varname, name) \
+   for (rapidxml::xml_node<>* varname = parent->first_node(name); \
+        varname; \
+        varname = varname->next_sibling(name))
+
+std::string attr_value(rapidxml::xml_node<>* pNode, const std::string& attrName)
+{
+   if (!pNode)
+      return std::string();
+   rapidxml::xml_attribute<>* pAttr = pNode->first_attribute(attrName.c_str());
+   if (!pAttr)
+      return std::string();
+   return std::string(pAttr->value());
+}
+
+FilePath resolveAliasedJsonPath(const json::Value& value)
+{
+   return module_context::resolveAliasedPath(value.get_str());
+}
+
+Error svnAdd(const json::JsonRpcRequest& request,
+             json::JsonRpcResponse* pResponse)
+{
+   json::Array files;
+   Error error = json::readParams(request.params, &files);
+   if (error)
+      return error;
+
+   std::vector<FilePath> paths;
+   std::transform(files.begin(), files.end(), std::back_inserter(paths),
+                  &resolveAliasedJsonPath);
+
+   core::system::ProcessResult result;
+   error = core::system::runCommand(
+         ShellCommand("svn") << "add" << "--" << paths,
+         "",
+         procOptions(),
+         &result);
+
+   if (error)
+      return error;
+
+   return Success();
+}
+
+Error svnRevert(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   json::Array files;
+   Error error = json::readParams(request.params, &files);
+   if (error)
+      return error;
+
+   std::vector<FilePath> paths;
+   std::transform(files.begin(), files.end(), std::back_inserter(paths),
+                  &resolveAliasedJsonPath);
+
+   core::system::ProcessResult result;
+   error = core::system::runCommand(
+         ShellCommand("svn") << "revert" << "--" << paths,
+         "",
+         procOptions(),
+         &result);
+
+   if (error)
+      return error;
+
+   return Success();
+}
+
 Error svnStatus(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
    core::system::ProcessResult result;
    Error error = core::system::runCommand(
-         ShellCommand("svn") << "status" << "--xml",
+         ShellCommand("svn") << "status" << "--xml" << "--ignore-externals",
          "",
          procOptions(),
          &result);
@@ -182,19 +252,16 @@ Error svnStatus(const json::JsonRpcRequest& request,
    xml_node<>* pStatus = doc.first_node("status");
    if (pStatus)
    {
-      xml_node<>* pList = pStatus->first_node();
-      for (; pList; pList = pList->next_sibling())
+      FOREACH_NODE(pStatus, pList,)
       {
-         xml_node<>* pEntry = pList->first_node("entry");
-         for (; pEntry; pEntry = pEntry->next_sibling("entry"))
+         FOREACH_NODE(pList, pEntry, "entry")
          {
-            xml_attribute<>* pPath = pEntry->first_attribute("path");
-            if (!pPath)
+            std::string path = attr_value(pEntry, "path");
+            if (path.empty())
             {
                LOG_ERROR_MESSAGE("Path attribute not found");
                continue;
             }
-            std::string path(pPath->value());
 
             xml_node<>* pStatus = pEntry->first_node("wc-status");
             if (!pStatus)
@@ -203,13 +270,12 @@ Error svnStatus(const json::JsonRpcRequest& request,
                continue;
             }
 
-            xml_attribute<>* pItem = pStatus->first_attribute("item");
-            if (!pItem)
+            std::string item = attr_value(pStatus, "item");
+            if (item.empty())
             {
                LOG_ERROR_MESSAGE("Item attribute not found");
                continue;
             }
-            std::string item(pItem->value());
 
             json::Object info;
             info["status"] = translateItemStatus(item);
@@ -234,6 +300,8 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "svn_add", svnAdd))
+      (bind(registerRpcMethod, "svn_revert", svnRevert))
       (bind(registerRpcMethod, "svn_status", svnStatus));
    Error error = initBlock.execute();
    if (error)
