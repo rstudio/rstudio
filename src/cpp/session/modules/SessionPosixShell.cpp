@@ -11,8 +11,6 @@
  *
  */
 
-// TODO: for passphrase / password / don't echo the password
-
 #include "SessionPosixShell.hpp"
 
 #include <boost/shared_ptr.hpp>
