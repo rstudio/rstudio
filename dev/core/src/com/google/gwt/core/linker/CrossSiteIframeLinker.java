@@ -61,22 +61,6 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   private static final String FAIL_IF_SCRIPT_TAG_PROPERTY = "xsiframe.failIfScriptTag";
 
   @Override
-  protected String generateDeferredFragment(TreeLogger logger,
-      LinkerContext context, int fragment, String js) {
-    // TODO(unnurg): This assumes that the xsiframe linker is using the
-    // ScriptTagLoadingStrategy (since it is also xs compatible).  However,
-    // it should be completely valid to use the XhrLoadingStrategy with this
-    // linker, in which case we would not want to wrap the deferred fragment
-    // in this way.  Ideally, we should make a way for this code to be dependent
-    // on what strategy is being used. Otherwise, we should make a property which
-    // users can set to turn this wrapping off if they override the loading strategy.
-    return String.format("$wnd.%s.runAsyncCallback%d(%s)\n",
-        context.getModuleFunctionName(),
-        fragment,
-        JsToStringGenerationVisitor.javaScriptString(js));
-  }
-  
-  @Override
   public String getDescription() {
     return "Cross-Site-Iframe";
   }
@@ -103,7 +87,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     // Must do permutations before providers
     includeJs(ss, logger, getJsPermutations(context), "__PERMUTATIONS__");
     includeJs(ss, logger, getJsProperties(context), "__PROPERTIES__");
-    
+
     // Order doesn't matter for the rest
     includeJs(ss, logger, getJsProcessMetas(context), "__PROCESS_METAS__");
     includeJs(ss, logger, getJsInstallLocation(context), "__INSTALL_LOCATION__");
@@ -187,6 +171,11 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   @Override
   protected String getCompilationExtension(TreeLogger logger, LinkerContext context) {
     return ".cache.js";
+  }
+
+   protected String getDeferredFragmentSuffix(TreeLogger logger, LinkerContext context,
+      int fragment) {
+    return "\n//@ sourceURL=" + fragment + ".js\n";
   }
 
   @Override
@@ -303,7 +292,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   protected String getJsProperties(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/properties.js";
   }
-  
+
   /**
    * Returns the name of the {@code JsRunAsync} script.  By default,
    * returns {@code "com/google/gwt/core/ext/linker/impl/runAsync.js"}.
@@ -362,7 +351,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     out.newlineOpt();
     out.print("function __gwtInstallCode(code) {return __gwtModuleFunction.__installRunAsyncCode(code);}");
     out.newlineOpt();
-    
+
     // Even though we call the $sendStats function in the code written in this
     // linker, some of the compilation code still needs the $stats and
     // $sessionId
@@ -386,7 +375,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
         + "__gwtModuleFunction.__computePropValue);");
     out.newlineOpt();
     out.print("$sendStats('moduleStartup', 'end');");
-
+    out.print("\n//@ sourceURL=0.js\n");
     return out.toString();
   }
 
@@ -506,6 +495,22 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   }
 
   @Override
+  protected String wrapDeferredFragment(TreeLogger logger,
+      LinkerContext context, int fragment, String js, ArtifactSet artifacts) {
+    // TODO(unnurg): This assumes that the xsiframe linker is using the
+    // ScriptTagLoadingStrategy (since it is also xs compatible).  However,
+    // it should be completely valid to use the XhrLoadingStrategy with this
+    // linker, in which case we would not want to wrap the deferred fragment
+    // in this way.  Ideally, we should make a way for this code to be dependent
+    // on what strategy is being used. Otherwise, we should make a property which
+    // users can set to turn this wrapping off if they override the loading strategy.
+    return String.format("$wnd.%s.runAsyncCallback%d(%s)\n",
+        context.getModuleFunctionName(),
+        fragment,
+        JsToStringGenerationVisitor.javaScriptString(js));
+  }
+
+  @Override
   protected String wrapPrimaryFragment(TreeLogger logger, LinkerContext context, String script,
       ArtifactSet artifacts, CompilationResult result) throws UnableToCompleteException {
     StringBuffer out = new StringBuffer();
@@ -529,5 +534,4 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     }
     return out.toString();
   }
-
 }

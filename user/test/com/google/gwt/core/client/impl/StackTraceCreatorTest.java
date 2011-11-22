@@ -185,12 +185,12 @@ public class StackTraceCreatorTest extends GWTTestCase {
   public void testChromeExtractName() {
     CollectorChrome c = new CollectorChrome();
 
-    assertEquals("anonymous", c.extractName(" at file.js:1:2"));
-    assertEquals("functionName",
+    assertEquals("anonymous@@file.js:1:2", c.extractName(" at file.js:1:2"));
+    assertEquals("functionName@@file.js:1:2",
         c.extractName(" at functionName (file.js:1:2)"));
-    assertEquals("functionName",
+    assertEquals("functionName@@file.js:1:2",
         c.extractName(" at Type.functionName (file.js:1:2)"));
-    assertEquals("functionName",
+    assertEquals("functionName@@file.js:1:2",
         c.extractName(" at Type.functionName [as methodName] (file.js:1:2)"));
   }
 }

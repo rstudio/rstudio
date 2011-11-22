@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,6 +26,19 @@ import com.google.gwt.core.client.JsArrayString;
  * Production Mode.
  */
 public class StackTraceCreator {
+
+  /**
+   * Line number used in a stack trace when it is unknown.
+   */
+  public static final int LINE_NUMBER_UNKNOWN = -1;
+
+  /**
+   * Used to encode a (column, line) pair into a line number (since LogRecord only stores line
+   * numbers). We store line, col as line + col * max_line, and use division and modulus to
+   * recover on the server side.
+   */
+  public static final int MAX_LINE_NUMBER = 100000;
+
   /**
    * This class acts as a deferred-binding hook point to allow more optimal
    * versions to be substituted. This base version simply crawls
@@ -107,7 +120,7 @@ public class StackTraceCreator {
     /**
      * Attempt to infer the stack from an unknown JavaScriptObject that had been
      * thrown. The default implementation just returns an empty array.
-     * 
+     *
      * @param e a JavaScriptObject
      */
     public JsArrayString inferFrom(JavaScriptObject e) {
@@ -245,12 +258,12 @@ public class StackTraceCreator {
 
   /**
    * Chrome uses a slightly different format to Mozilla.
-   * 
+   *
    * See http://code.google.com/p/v8/source/browse/branches/bleeding_edge/src/
    * messages.js?r=2340#712 for formatting code.
-   * 
+   *
    * Function calls can be of the four following forms:
-   * 
+   *
    * <pre>
    * at file.js:1:2
    * at functionName (file.js:1:2)
@@ -259,6 +272,7 @@ public class StackTraceCreator {
    * </pre>
    */
   static class CollectorChrome extends CollectorMoz {
+
     @Override
     public JsArrayString collect() {
       JsArrayString res = super.collect();
@@ -270,6 +284,18 @@ public class StackTraceCreator {
         res = splice(new Collector().collect(), 1);
       }
       return res;
+    }
+
+    @Override
+    public void createStackTrace(JavaScriptException e) {
+      JsArrayString stack = inferFrom(e.getException());
+      parseStackTrace(e, stack);
+    }
+
+    @Override
+    public void fillInStackTrace(Throwable t) {
+      JsArrayString stack = StackTraceCreator.createStackTrace();
+      parseStackTrace(t, stack);
     }
 
     @Override
@@ -286,8 +312,11 @@ public class StackTraceCreator {
 
     @Override
     protected String extractName(String fnToString) {
+      String extractedName = "anonymous";
+      String location = "";
+
       if (fnToString.length() == 0) {
-        return "anonymous";
+        return extractedName;
       }
 
       String toReturn = fnToString.trim();
@@ -297,33 +326,69 @@ public class StackTraceCreator {
         toReturn = toReturn.substring(3);
       }
 
-      // Strip bracketed items from the end:
+      // Strip square bracketed items from the end:
       int index = toReturn.indexOf("[");
-      if (index == -1) {
-        index = toReturn.indexOf("(");
+      if (index != -1) {
+        toReturn = toReturn.substring(0, index).trim() +
+            toReturn.substring(toReturn.indexOf("]", index) + 1).trim();
       }
+
+      index = toReturn.indexOf("(");
       if (index == -1) {
-        // No bracketed items found, hence no function name available:
-        return "anonymous";
+        // No bracketed items found, hence no function name available
+        location = toReturn;
+        toReturn = "";
       } else {
-        // Bracketed items found: strip them off.
+        // Bracketed items found: strip them off, parse location info
+        int closeParen = toReturn.indexOf(")", index);
+        location = toReturn.substring(index + 1, closeParen);
         toReturn = toReturn.substring(0, index).trim();
       }
 
-      // Strip the Type off to leave just the functionName:
+      // Strip the Type off t
       index = toReturn.indexOf('.');
       if (index != -1) {
         toReturn = toReturn.substring(index + 1);
       }
-
-      return toReturn.length() > 0 ? toReturn : "anonymous";
+      return (toReturn.length() > 0 ? toReturn : "anonymous") + "@@" + location;
     }
 
     @Override
     protected int toSplice() {
       return 3;
     }
+
+    private void parseStackTrace(Throwable e, JsArrayString stack) {
+      StackTraceElement[] stackTrace = new StackTraceElement[stack.length()];
+      for (int i = 0, j = stackTrace.length; i < j; i++) {
+        String stackElements[] = stack.get(i).split("@@");
+
+        int line = LINE_NUMBER_UNKNOWN;
+        int col = -1;
+        String fileName = "Unknown";
+        if (stackElements.length == 2 && stackElements[1] != null) {
+          String location = stackElements[1];
+          // colon between line and column
+          int lastColon = location.lastIndexOf(':');
+          // colon between file url and line number
+          int endFileUrl = location.lastIndexOf(':', lastColon - 1);
+          fileName = location.substring(0, endFileUrl);
+
+          if (lastColon != -1 && endFileUrl != -1) {
+              line = parseInt(location.substring(endFileUrl + 1, lastColon));
+              col = parseInt(location.substring(lastColon + 1));
+          }
+        }
+        stackTrace[i] = new StackTraceElement("Unknown", stackElements[0], fileName,
+            line < 0 ? -1 : col * MAX_LINE_NUMBER + line);
+      }
+      e.setStackTrace(stackTrace);
+    }
   }
+
+  private static native int parseInt(String number) /*-{
+    return parseInt(number) || -1;
+  }-*/;
 
   /**
    * Opera encodes stack trace information in the error's message.
@@ -392,8 +457,6 @@ public class StackTraceCreator {
       // empty, since Throwable.getStackTrace() properly handles null
     }
   }
-  
-  private static final int LINE_NUMBER_UNKNOWN = -1;
 
   /**
    * Create a stack trace based on a JavaScriptException. This method should
