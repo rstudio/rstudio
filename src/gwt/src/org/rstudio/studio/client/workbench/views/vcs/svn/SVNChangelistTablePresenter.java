@@ -12,14 +12,28 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.vcs.SVNServerOperations;
+import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 
 public class SVNChangelistTablePresenter
 {
    @Inject
-   public SVNChangelistTablePresenter(SVNChangelistTable view)
+   public SVNChangelistTablePresenter(final SVNChangelistTable view,
+                                      SVNServerOperations server)
    {
       view_ = view;
+      server.svnStatus(new SimpleRequestCallback<JsArray<StatusAndPathInfo>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<StatusAndPathInfo> response)
+         {
+            view.setItems(StatusAndPath.fromInfos(response));
+         }
+      });
    }
 
    public SVNChangelistTable getView()

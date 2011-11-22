@@ -18,6 +18,7 @@ import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.posixshell.model.PosixShellServerOperations;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -49,6 +50,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    HistoryServerOperations,
                                                    MirrorsServerOperations,
                                                    GitServerOperations,
+                                                   SVNServerOperations,
                                                    PrefsServerOperations,
                                                    ProjectsServerOperations,
                                                    CodeSearchServerOperations,

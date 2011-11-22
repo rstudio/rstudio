@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.vcs.svn;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 
 public class SVNStatusRenderer implements SafeHtmlRenderer<String>
@@ -21,7 +22,7 @@ public class SVNStatusRenderer implements SafeHtmlRenderer<String>
    @Override
    public SafeHtml render(String object)
    {
-      return null;
+      return SafeHtmlUtils.fromString(object);
    }
 
    @Override

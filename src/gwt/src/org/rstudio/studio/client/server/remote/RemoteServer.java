@@ -2198,6 +2198,46 @@ public class RemoteServer implements Server
                                           responseCallback);
    }-*/;
 
+   @Override
+   public void svnAdd(JsArrayString paths,
+                      ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONArray(paths));
+      sendRequest(RPC_SCOPE, SVN_ADD, params, requestCallback);
+   }
+
+   @Override
+   public void svnDelete(JsArrayString paths,
+                         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONArray(paths));
+      sendRequest(RPC_SCOPE, SVN_DELETE, params, requestCallback);
+   }
+
+   @Override
+   public void svnRevert(JsArrayString paths,
+                         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONArray(paths));
+      sendRequest(RPC_SCOPE, SVN_REVERT, params, requestCallback);
+   }
+
+   @Override
+   public void svnStatus(ServerRequestCallback<JsArray<StatusAndPathInfo>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, SVN_STATUS, requestCallback);
+   }
+
+   @Override
+   public void svnDiff(String path,
+                       ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, SVN_DIFF, path, requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -2363,6 +2403,12 @@ public class RemoteServer implements Server
    private static final String GIT_HISTORY = "git_history";
    private static final String GIT_EXECUTE_COMMAND = "git_execute_command";
    private static final String GIT_SHOW = "git_show";
+
+   private static final String SVN_ADD = "svn_add";
+   private static final String SVN_DELETE = "svn_delete";
+   private static final String SVN_REVERT = "svn_revert";
+   private static final String SVN_STATUS = "svn_status";
+   private static final String SVN_DIFF = "svn_diff";
 
    private static final String GET_PUBLIC_KEY = "get_public_key";
    

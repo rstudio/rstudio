@@ -12,23 +12,40 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.vcs.SVNServerOperations;
+import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 
 public class SVNPresenter extends BasePresenter
 {
+   interface Binder extends CommandBinder<Commands, SVNPresenter>
+   {
+   }
+
    public interface Display extends WorkbenchView, IsWidget
    {
    }
 
    @Inject
-   public SVNPresenter(Display view)
+   public SVNPresenter(Display view,
+                       Commands commands,
+                       SVNServerOperations server)
    {
       super(view);
       view_ = view;
+      server_ = server;
+
+      GWT.<Binder>create(Binder.class).bind(commands, this);
    }
 
    @Override
@@ -37,5 +54,12 @@ public class SVNPresenter extends BasePresenter
       return view_.asWidget();
    }
 
+   @Handler
+   void onVcsRefresh()
+   {
+      server_.svnStatus(new SimpleRequestCallback<JsArray<StatusAndPathInfo>>());
+   }
+
    private final Display view_;
+   private final SVNServerOperations server_;
 }
