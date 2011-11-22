@@ -191,6 +191,30 @@ std::string translateItemStatus(const std::string& status)
    return " ";
 }
 
+int rankItemStatus(const std::string& status)
+{
+   if (status == " " || status.empty())
+      return 10;
+
+   if (status == "I")
+      return 7;
+
+   if (status == "M")
+      return 1;
+
+   if (status == "C")
+      return 0;
+
+   return 5;
+}
+
+std::string topStatus(const std::string& a, const std::string& b)
+{
+   if (rankItemStatus(a) <= rankItemStatus(b))
+      return a;
+   return b;
+}
+
 #define FOREACH_NODE(parent, varname, name) \
    for (rapidxml::xml_node<>* varname = parent->first_node(name); \
         varname; \
@@ -327,9 +351,20 @@ Error svnStatus(const json::JsonRpcRequest& request,
                LOG_ERROR_MESSAGE("Item attribute not found");
                continue;
             }
+            item = translateItemStatus(item);
+
+            std::string props = attr_value(pStatus, "props");
+            if (props.empty())
+            {
+               LOG_ERROR_MESSAGE("Item properties not found");
+               continue;
+            }
+            props = translateItemStatus(props);
+
+            std::string status = topStatus(item, props);
 
             json::Object info;
-            info["status"] = translateItemStatus(item);
+            info["status"] = status;
             // TODO: escape path relative to <target>
             info["path"] = path;
             info["raw_path"] = module_context::createAliasedPath(
