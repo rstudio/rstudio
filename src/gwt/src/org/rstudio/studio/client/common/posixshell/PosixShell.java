@@ -18,6 +18,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.posixshell.events.PosixShellExitEvent;
 import org.rstudio.studio.client.common.posixshell.events.PosixShellOutputEvent;
@@ -27,6 +28,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -66,6 +68,10 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
    
       // subscribe to display events
       display_.addCapturingKeyDownHandler(new InputKeyDownHandler());
+      
+      // hookup input editor display and command line history
+      input_ = display_.getInputEditorDisplay();
+      historyManager_ = new CommandLineHistory(input_);
       
       // subscribe to server events
       eventBusHandlers_.add(
@@ -148,11 +154,11 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
          if (lastLoc != -1)
          {
             display_.consoleWriteOutput(output.substring(0, lastLoc));
-            display_.consolePrompt(output.substring(lastLoc + 1));
+            consolePrompt(output.substring(lastLoc + 1), true);
          }
          else
          {
-            display_.consolePrompt(output);
+            consolePrompt(output, true);
          }
       }
    }
@@ -173,6 +179,21 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
       eventBusHandlers_.clear();
    }
    
+   private void consolePrompt(String prompt, boolean addToHistory)
+   {
+      display_.consolePrompt(prompt) ;
+
+      addToHistory_ = addToHistory;
+      historyManager_.resetPosition();
+      lastPromptText_ = prompt ;
+   }
+   
+   private void navigateHistory(int offset)
+   {
+      historyManager_.navigateHistory(offset);
+      display_.ensureInputVisible();
+   }
+   
    private final class InputKeyDownHandler implements KeyDownHandler
    {
       public void onKeyDown(KeyDownEvent event)
@@ -181,7 +202,27 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
          int modifiers = KeyboardShortcut.getModifierValue(
                                                 event.getNativeEvent());
          
-         if (keyCode == KeyCodes.KEY_ENTER && modifiers == 0)
+         if (event.isUpArrow() && modifiers == 0)
+         {
+            if (input_.getCurrentLineNum() == 0)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+
+               navigateHistory(-1);
+            }
+         }
+         else if (event.isDownArrow() && modifiers == 0)
+         {
+            if (input_.getCurrentLineNum() == input_.getCurrentLineCount() - 1)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+
+               navigateHistory(1);
+            }
+         }
+         else if (keyCode == KeyCodes.KEY_ENTER && modifiers == 0)
          {
             event.preventDefault();
             event.stopPropagation();
@@ -189,16 +230,32 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
             // get the current prompt text
             String promptText = display_.getPromptText();
             
-            // process command entry and capture input
-            String input = display_.processCommandEntry() + "\n";
+            // process command entry 
+            String commandEntry = display_.processCommandEntry();
+            if (addToHistory_)
+               historyManager_.addToHistory(commandEntry);
+            
+            // input is entry + newline
+            String input = commandEntry + "\n";
             
             // update console with prompt and input
             display_.consoleWritePrompt(promptText);
             display_.consoleWriteInput(input);
             
             // send input to server
-            server_.sendInputToPosixShell(input, 
-                                          new VoidServerRequestCallback());
+            server_.sendInputToPosixShell(
+               input, 
+               new ServerRequestCallback<Void>() {
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     // show the error in the console then re-prompt
+                     display_.consoleWriteError(
+                           "Error: " + error.getUserMessage() + "\n");
+                     if (lastPromptText_ != null)
+                        consolePrompt(lastPromptText_, false);
+                  }
+               });
          }
          else if (modifiers == KeyboardShortcut.CTRL && keyCode == 'C')
          {
@@ -210,6 +267,13 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
             
             server_.interruptPosixShell(new VoidServerRequestCallback());
          }
+         else if (modifiers == KeyboardShortcut.CTRL && keyCode == 'L')
+         {
+            event.preventDefault();
+            event.stopPropagation();
+           
+            display_.clearOutput();
+         }
       }
    }
    
@@ -217,8 +281,13 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
    private final GlobalDisplay globalDisplay_;
    private Observer observer_ = null;
    private final PosixShellServerOperations server_;
-  
+ 
+   // indicates whether the next command should be added to history
+   private boolean addToHistory_ ;
+   private String lastPromptText_ ;
 
+   private final InputEditorDisplay input_ ;
+   private final CommandLineHistory historyManager_;
    
    private ArrayList<HandlerRegistration> eventBusHandlers_ = 
                                     new ArrayList<HandlerRegistration>();

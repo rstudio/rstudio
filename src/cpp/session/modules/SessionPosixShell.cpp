@@ -19,10 +19,6 @@
 // TODO: painting issue where ace below dialog paints above (Ctrl-C
 // off of sleep 1000 repros)
 
-// TODO: up-arrow history
-
-// TODO: other editing shortcuts (completion manager?)
-
 // TODO: cap output lines sent on the server
 
 
