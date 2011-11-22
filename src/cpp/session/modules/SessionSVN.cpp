@@ -229,6 +229,25 @@ Error svnAdd(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error svnDelete(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   json::Array files;
+   Error error = json::readParams(request.params, &files);
+   if (error)
+      return error;
+
+   std::vector<FilePath> paths;
+   std::transform(files.begin(), files.end(), std::back_inserter(paths),
+                  &resolveAliasedJsonPath);
+
+   error = runSvn(ShellArgs() << "delete" << "--" << paths);
+   if (error)
+      return error;
+
+   return Success();
+}
+
 Error svnRevert(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
@@ -332,6 +351,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "svn_add", svnAdd))
+      (bind(registerRpcMethod, "svn_delete", svnDelete))
       (bind(registerRpcMethod, "svn_revert", svnRevert))
       (bind(registerRpcMethod, "svn_status", svnStatus));
    Error error = initBlock.execute();
