@@ -148,11 +148,11 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
          if (lastLoc != -1)
          {
             display_.consoleWriteOutput(output.substring(0, lastLoc));
-            consolePrompt(output.substring(lastLoc + 1));
+            display_.consolePrompt(output.substring(lastLoc + 1));
          }
          else
          {
-            consolePrompt(output);
+            display_.consolePrompt(output);
          }
       }
    }
@@ -173,15 +173,6 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
       eventBusHandlers_.clear();
    }
    
-   
-   private void consolePrompt(String prompt)
-   {
-      lastPrompt_ = prompt;
-      display_.consolePrompt(prompt);
-   }
-   
-   
-   
    private final class InputKeyDownHandler implements KeyDownHandler
    {
       public void onKeyDown(KeyDownEvent event)
@@ -195,16 +186,17 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
             event.preventDefault();
             event.stopPropagation();
 
+            // get the current prompt text
+            String promptText = display_.getPromptText();
+            
+            // process command entry and capture input
             String input = display_.processCommandEntry() + "\n";
             
-            if (lastPrompt_ != null)
-            {
-               display_.consoleWritePrompt(lastPrompt_);
-               lastPrompt_ = null;
-            }
-               
+            // update console with prompt and input
+            display_.consoleWritePrompt(promptText);
             display_.consoleWriteInput(input);
             
+            // send input to server
             server_.sendInputToPosixShell(input, 
                                           new VoidServerRequestCallback());
          }
@@ -220,8 +212,6 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
          }
       }
    }
-   
-   private String lastPrompt_ = null;
    
    private final Display display_;
    private final GlobalDisplay globalDisplay_;

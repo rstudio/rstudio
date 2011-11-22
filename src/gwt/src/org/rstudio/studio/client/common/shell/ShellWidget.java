@@ -597,6 +597,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       return StringUtil.isNullOrEmpty(prompt_.getText());
    }
+   
+   public String getPromptText()
+   {
+      return StringUtil.notNull(prompt_.getText());
+   }
 
    public int getMaxOutputLines()
    {

@@ -35,6 +35,7 @@ public interface ShellDisplay extends CanFocus, HasKeyPressHandlers
    String processCommandEntry() ;
    int getCharacterWidth() ;
    boolean isPromptEmpty();
+   String getPromptText();
 
    void playbackActions(RpcObjectList<ConsoleAction> actions);
 
