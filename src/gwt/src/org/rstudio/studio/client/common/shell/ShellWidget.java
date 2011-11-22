@@ -234,6 +234,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
       int promptLines = StringUtil.notNull(prompt).split("\\n").length;
       input_.asWidget().getElement().getStyle().setPaddingTop((promptLines - 1) * 15,
                                                    Unit.PX);
+      
+      if (showInput)
+         input_.asWidget().getElement().getStyle().setMarginLeft(0, Unit.PX);
+      else
+         input_.asWidget().getElement().getStyle().setMarginLeft(-1000, Unit.PX);
    }
 
    public void ensureInputVisible()
