@@ -15,9 +15,7 @@
 
 // TODO: border for shell widget
 
-// TODO: launch /bin/sh or something else?
-
-// TODO: set prompt
+// TODO: paint bug
 
 // TODO: cap output lines sent on the server
 
@@ -33,6 +31,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Crypto.hpp>
+#include <core/system/ShellUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -45,6 +44,11 @@ namespace modules {
 namespace posix_shell {
 
 namespace {
+
+std::string aliasedCurrentPath()
+{
+   return module_context::createAliasedPath(module_context::safeCurrentPath());
+}
 
 class PosixShell;
 boost::shared_ptr<PosixShell> s_pActiveShell;
@@ -67,12 +71,18 @@ public:
       core::system::Options shellEnv;
       core::system::environment(&shellEnv);
       core::system::setenv(&shellEnv, "TERM", "dumb");
+      core::system::setenv(
+            &shellEnv,
+            "PS1",
+             (aliasedCurrentPath().length() > 30) ? "\\W$ " : "\\w$ ");
+      core::shell_utils::ShellCommand bashCommand("/bin/bash");
+      bashCommand << "--norc";
 
       // set options and run process
       core::system::ProcessOptions options;
       options.pseudoterminal = core::system::Pseudoterminal(width, 1);
       options.environment = shellEnv;
-      Error error = module_context::processSupervisor().runCommand("/bin/sh",
+      Error error = module_context::processSupervisor().runCommand(bashCommand,
                                                                    options,
                                                                    cb);
       if (!error)
