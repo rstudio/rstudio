@@ -221,7 +221,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       scrollToBottomAsync();
    }
 
-   public void consolePrompt(String prompt)
+   public void consolePrompt(String prompt, boolean showInput)
    {
       if (prompt != null)
          prompt = VirtualConsole.consolify(prompt);

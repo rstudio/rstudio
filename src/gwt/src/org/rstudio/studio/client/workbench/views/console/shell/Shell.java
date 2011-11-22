@@ -261,7 +261,7 @@ public class Shell implements ConsoleInputHandler,
 
    private void consolePrompt(String prompt, boolean addToHistory)
    {
-      view_.consolePrompt(prompt) ;
+      view_.consolePrompt(prompt, true) ;
 
       if (lastPromptText_ == null
             && initialInput_ != null

@@ -219,11 +219,17 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
     
    private void consolePrompt(String prompt, boolean addToHistory)
    {
-      display_.consolePrompt(prompt) ;
+      boolean showInput = showInputForPrompt(prompt);
+      display_.consolePrompt(prompt, showInput) ;
 
-      addToHistory_ = addToHistory;
+      addToHistory_ = addToHistory && showInput;
       historyManager_.resetPosition();
       lastPromptText_ = prompt ;
+   }
+   
+   private boolean showInputForPrompt(String prompt)
+   {
+      return !prompt.contains("password") && !prompt.contains("passphrase");
    }
    
    private void navigateHistory(int offset)
@@ -302,7 +308,10 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
       
       // update console with prompt and input
       display_.consoleWritePrompt(promptText);
-      display_.consoleWriteInput(input);
+      if (showInputForPrompt(promptText))
+         display_.consoleWriteInput(input);
+      else
+         display_.consoleWriteInput("\n");
       
       // encrypt input and send it to the to server
       RSAEncrypt.encrypt_ServerOnly(
