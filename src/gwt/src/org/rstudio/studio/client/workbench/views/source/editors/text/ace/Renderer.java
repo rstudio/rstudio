@@ -109,4 +109,21 @@ public class Renderer extends JavaScriptObject
       this.scroller.style.top = "0";
       this.content.style.top = "0";
    }-*/;
+
+   public native final void setPasswordMode(boolean passwordMode) /*-{
+
+      if (passwordMode)
+      {
+         this.characterWidth = 0;
+         this.$textLayer.element.style.visibility = 'hidden';
+         this.$renderChanges(this.CHANGE_FULL);
+      }
+      else
+      {
+         this.characterWidth = this.$textLayer.getCharacterWidth();
+         this.$textLayer.element.style.visibility = 'visible';
+         this.$renderChanges(this.CHANGE_FULL);
+      }
+   }-*/;
+
 }

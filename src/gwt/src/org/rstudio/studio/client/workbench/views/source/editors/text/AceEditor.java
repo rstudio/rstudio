@@ -1144,6 +1144,11 @@ public class AceEditor implements DocDisplay,
       getSession().setNewLineMode(mode.getType());
    }
 
+   public void setPasswordMode(boolean passwordMode)
+   {
+      widget_.getEditor().getRenderer().setPasswordMode(passwordMode);
+   }
+
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private CompletionManager completionManager_;
