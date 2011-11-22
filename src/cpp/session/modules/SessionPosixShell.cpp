@@ -17,18 +17,10 @@
 // TODO: for passphrase / password / etc. we may want to
 // encrypt transmission (encrypt all?) and don't echo the password
 
-// TODO: gesture to open shell from vcs tabs?
-
 // TODO: border for shell widget
 
 // TODO: painting issue where ace below dialog paints above (Ctrl-C
 // off of sleep 1000 repros)
-
-// TODO: vim and more behave oddly -- any way to full disable?
-
-// TODO: on termination we get this error message printed:
-//   Cannot set tty process group (Inappropriate ioctl for device)
-// is there any way to terminate cleanly (perhaps another ctrl signal)
 
 // TODO: up-arrow history
 
