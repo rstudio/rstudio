@@ -29,8 +29,10 @@ read -e -p"GWT version for Maven (ex: 2.4.0): " gwtVersion
 case $gwtVersion in
   *.*.* )
     ;;
+  *.*.*-* )
+    ;;
   * )
-    echo "Please enter a version of the form x.y.z" 
+    echo "Please enter a version of the form x.y.z or x.y.z-abc" 
     exit 1;;
 esac
 
