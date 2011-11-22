@@ -146,24 +146,6 @@ struct CommitInfo
    std::string graph;
 };
 
-void enqueRefreshEventWithDelay(int delay)
-{
-   // Sometimes on commit, the subsequent request contains outdated
-   // status (i.e. as if the commit had not happened yet). No idea
-   // right now what is causing this. Add a delay for commits to make
-   // sure the correct state is shown.
-
-   json::Object data;
-   data["delay"] = delay;
-   module_context::enqueClientEvent(ClientEvent(client_events::kVcsRefresh,
-                                                data));
-}
-
-void enqueueRefreshEvent()
-{
-   enqueRefreshEventWithDelay(0);
-}
-
 class Git;
 
 std::vector<PidType> s_pidsToTerminate_;

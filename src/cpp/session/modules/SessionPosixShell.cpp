@@ -19,8 +19,6 @@
 
 // TODO: cap output lines sent on the server
 
-// TODO: vcsRefresh on exit from console
-
 #include "SessionPosixShell.hpp"
 
 #include <boost/shared_ptr.hpp>
@@ -36,6 +34,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionCrypto.hpp"
+#include "SessionVCS.hpp"
 
 using namespace core ;
 
@@ -174,6 +173,11 @@ private:
          ClientEvent event(client_events::kPosixShellExit, eventData);
          module_context::enqueClientEvent(event);
       }
+
+      // always enque a vcs refresh event after the posix shell exits
+      // (in case manipulations inside the shell caused underlying
+      // vcs state changes)
+      source_control::enqueueRefreshEvent();
    }
 
 private:
