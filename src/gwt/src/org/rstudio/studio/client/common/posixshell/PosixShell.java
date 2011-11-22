@@ -15,6 +15,7 @@ package org.rstudio.studio.client.common.posixshell;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -154,11 +155,11 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
          if (lastLoc != -1)
          {
             display_.consoleWriteOutput(output.substring(0, lastLoc));
-            consolePrompt(output.substring(lastLoc + 1), true);
+            maybeConsolePrompt(output.substring(lastLoc + 1));
          }
          else
          {
-            consolePrompt(output, true);
+            maybeConsolePrompt(output);
          }
       }
    }
@@ -179,6 +180,16 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
       eventBusHandlers_.clear();
    }
    
+   // prompt as long as there are no special control characters
+   // (otherwise treat it as output)
+   private void maybeConsolePrompt(String output)
+   {
+      if (CONTROL_SPECIAL.match(output, 0) == null)
+         consolePrompt(output, true);
+      else
+         display_.consoleWriteOutput(output);
+   }
+    
    private void consolePrompt(String prompt, boolean addToHistory)
    {
       display_.consolePrompt(prompt) ;
@@ -291,7 +302,6 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
    
    private ArrayList<HandlerRegistration> eventBusHandlers_ = 
                                     new ArrayList<HandlerRegistration>();
-
    
-   
+   private static final Pattern CONTROL_SPECIAL = Pattern.create("[\r\b]");
 }
