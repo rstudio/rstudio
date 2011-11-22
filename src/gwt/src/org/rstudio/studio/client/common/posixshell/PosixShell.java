@@ -189,9 +189,32 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
    private void maybeConsolePrompt(String output)
    {
       if (CONTROL_SPECIAL.match(output, 0) == null)
-         consolePrompt(output, true);
+      {
+         // determine whether we should add this to the history
+         boolean addToHistory = false;
+        
+         // figure out what the suffix of the default prompt is by inspecting
+         // the first prompt which comes our way
+         if (defaultPromptSuffix_ == null)
+         {
+            if (output.length() > 1)
+               defaultPromptSuffix_ = output.substring(output.length()-2);
+            else if (output.length() > 0)
+               defaultPromptSuffix_ = output;
+            
+            addToHistory = true;
+         }
+         else if (output.endsWith(defaultPromptSuffix_))
+         {
+            addToHistory = true;
+         }
+         
+         consolePrompt(output, addToHistory);
+      }
       else
+      {
          display_.consoleWriteOutput(output);
+      }
    }
     
    private void consolePrompt(String prompt, boolean addToHistory)
@@ -315,6 +338,7 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
    // indicates whether the next command should be added to history
    private boolean addToHistory_ ;
    private String lastPromptText_ ;
+   private String defaultPromptSuffix_ = null;
 
    private final InputEditorDisplay input_ ;
    private final CommandLineHistory historyManager_;
