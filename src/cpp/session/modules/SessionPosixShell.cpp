@@ -13,10 +13,6 @@
 
 // TODO: for passphrase / password / don't echo the password
 
-// TODO: border for shell widget
-
-// TODO: paint bug
-
 // TODO: cap output lines sent on the server
 
 #include "SessionPosixShell.hpp"

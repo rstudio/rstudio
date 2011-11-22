@@ -1,5 +1,5 @@
 /*
- * PosixShellWidget.java
+ * PosixShellResources.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -12,20 +12,24 @@
  */
 package org.rstudio.studio.client.common.posixshell;
 
-import org.rstudio.studio.client.common.shell.ShellWidget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 
-import com.google.inject.Inject;
-
-public class PosixShellWidget extends ShellWidget implements PosixShell.Display
+public interface PosixShellResources extends ClientBundle
 {
-   @Inject
-   public PosixShellWidget(AceEditor editor)
+
+   interface Styles extends CssResource
    {
-      super(editor);
-      
-     
+      String shellWidget();
    }
    
+   @Source("PosixShellStyles.css")
+   Styles styles();
+
+   
+
   
+   static PosixShellResources INSTANCE = GWT.create(PosixShellResources.class);
+
 }

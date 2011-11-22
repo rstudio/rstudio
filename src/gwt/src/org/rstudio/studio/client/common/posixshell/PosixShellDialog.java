@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.ThemedButton;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -55,6 +56,9 @@ public class PosixShellDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
+      SimplePanel outerWidget = new SimplePanel();
+      outerWidget.addStyleName(RES.styles().shellWidget());
+      
       // create the shell and its observer
       posixShell_ = pPosixShell_.get();
       
@@ -76,7 +80,9 @@ public class PosixShellDialog extends ModalDialogBase
       // start the shell
       posixShell_.start(80, this, progressIndicator_);
       
-      return shellWidget;
+      // set and return widget
+      outerWidget.setWidget(shellWidget); 
+      return outerWidget;
    }
    
    @Override
@@ -105,5 +111,5 @@ public class PosixShellDialog extends ModalDialogBase
    
    private final ProgressIndicator progressIndicator_;
    
-  
+   private static final PosixShellResources RES = PosixShellResources.INSTANCE;
 }

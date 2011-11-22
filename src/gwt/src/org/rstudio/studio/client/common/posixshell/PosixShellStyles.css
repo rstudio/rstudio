@@ -2,4 +2,5 @@
 
 .shellWidget {
    background-color: white;
-} 
+   border: #cfd2d4 solid 1px;
+}
