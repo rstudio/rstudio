@@ -147,6 +147,8 @@ inline bool stringNotEmpty(const std::string& str)
    return !str.empty();
 }
 
+void trimLeadingLines(int maxLines, std::string* pLines);
+
 } // namespace string_utils
 } // namespace core 
 

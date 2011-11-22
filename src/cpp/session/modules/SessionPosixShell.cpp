@@ -13,8 +13,6 @@
 
 // TODO: for passphrase / password / don't echo the password
 
-// TODO: cap output lines sent on the server
-
 #include "SessionPosixShell.hpp"
 
 #include <boost/shared_ptr.hpp>
@@ -149,7 +147,14 @@ private:
       // if we are the active shell then emit output event
       if (s_pActiveShell.get() == this)
       {
-         ClientEvent event(client_events::kPosixShellOutput, output);
+         // If there's more output than the client can even show, then
+         // truncate it to the amount that the client can show. Too much
+         // output can overwhelm the client, making it unresponsive.
+         std::string trimmedOutput = output;
+         string_utils::trimLeadingLines(maxLines_, &trimmedOutput);
+
+         // fire the event
+         ClientEvent event(client_events::kPosixShellOutput, trimmedOutput);
          module_context::enqueClientEvent(event);
       }
    }

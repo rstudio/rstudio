@@ -320,6 +320,27 @@ bool parseVersion(const std::string& str, uint64_t* pVersion)
    return true;
 }
 
+void trimLeadingLines(int maxLines, std::string* pLines)
+{
+   if (pLines->length() > static_cast<unsigned int>(maxLines*2))
+   {
+      int lineCount = 0;
+      std::string::const_iterator begin = pLines->begin();
+      std::string::iterator pos = pLines->end();
+      while (--pos >= begin)
+      {
+         if (*pos == '\n')
+         {
+            if (++lineCount > maxLines)
+            {
+               pLines->erase(pLines->begin(), pos);
+               break;
+            }
+         }
+      }
+   }
+}
+
 } // namespace string_utils
 } // namespace core 
 
