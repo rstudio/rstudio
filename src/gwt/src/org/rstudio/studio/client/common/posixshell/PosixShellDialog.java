@@ -16,6 +16,7 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -47,6 +48,8 @@ public class PosixShellDialog extends ModalDialogBase
 
       addCancelButton(closeButton); 
       
+      progressIndicator_ = addProgressIndicator(false);
+      
    }
 
    @Override
@@ -54,7 +57,6 @@ public class PosixShellDialog extends ModalDialogBase
    {
       // create the shell and its observer
       posixShell_ = pPosixShell_.get();
-      posixShell_.setObserver(this);
       
       // pick a reasonable size for the widget (90 chars wide, then we'll
       // send 85 as the width of the console in our call to start)
@@ -71,7 +73,7 @@ public class PosixShellDialog extends ModalDialogBase
       shellWidget.setSize(editorSize.width + "px", editorSize.height + "px");
       
       // start the shell
-      posixShell_.start(85);
+      posixShell_.start(85, this, progressIndicator_);
       
       return shellWidget;
    }
@@ -83,7 +85,7 @@ public class PosixShellDialog extends ModalDialogBase
    }
    
    @Override
-   public void onShellExited()
+   public void onShellTerminated()
    {
       closeDialog();
    }
@@ -99,6 +101,8 @@ public class PosixShellDialog extends ModalDialogBase
   
    private final Provider<PosixShell> pPosixShell_;
    private PosixShell posixShell_;
+   
+   private final ProgressIndicator progressIndicator_;
    
   
 }

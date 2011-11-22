@@ -15,11 +15,17 @@ package org.rstudio.studio.client.common.posixshell;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.posixshell.events.PosixShellExitEvent;
 import org.rstudio.studio.client.common.posixshell.events.PosixShellOutputEvent;
 import org.rstudio.studio.client.common.posixshell.model.PosixShellServerOperations;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -39,17 +45,19 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
    
    public interface Observer 
    {
-      void onShellExited();
+      void onShellTerminated();
    }
    
   
    @Inject
    public PosixShell(Display display,
+                     GlobalDisplay globalDisplay,
                      EventBus eventBus,
                      PosixShellServerOperations server)
    {
       // save references
       display_ = display;
+      globalDisplay_ = globalDisplay;
       server_ = server;
       
       // set max lines
@@ -66,21 +74,51 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
             eventBus.addHandler(PosixShellExitEvent.TYPE, this));
    }
    
-   public void setObserver(Observer observer)
-   {
-      observer_ = observer;
-   }
    
    public Widget getWidget()
    {
       return display_.getShellWidget();
    }
    
-   public void start(int width)
+   public void start(int width, 
+                     final Observer observer, 
+                     final ProgressIndicator progressIndicator)
    {
-      server_.startPosixShell(width,
-                              display_.getMaxOutputLines(), 
-                              new VoidServerRequestCallback());
+      observer_ = observer;
+      
+      progressIndicator.onProgress("Starting shell...");
+      
+      server_.startPosixShell(
+            width,
+            display_.getMaxOutputLines(), 
+            new ServerRequestCallback<Void>()
+            {
+               @Override 
+               public void onResponseReceived(Void resp)
+               {
+                  progressIndicator.onCompleted();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  progressIndicator.onCompleted();
+                  
+                  globalDisplay_.showErrorMessage(
+                        "Error Starting Shell",
+                        error.getUserMessage(),
+                        new Operation() {
+                           @Override
+                           public void execute()
+                           {
+                              if (observer_ != null)
+                                 observer_.onShellTerminated();
+                           }
+                           
+                        });
+               }
+
+            });
    }
    
    public void terminate()
@@ -125,7 +163,7 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
       detachEventBusHandlers();
       
       if (observer_ != null)
-         observer_.onShellExited();    
+         observer_.onShellTerminated();    
    }
 
    public void detachEventBusHandlers()
@@ -186,6 +224,7 @@ public class PosixShell implements PosixShellOutputEvent.Handler,
    private String lastPrompt_ = null;
    
    private final Display display_;
+   private final GlobalDisplay globalDisplay_;
    private Observer observer_ = null;
    private final PosixShellServerOperations server_;
   

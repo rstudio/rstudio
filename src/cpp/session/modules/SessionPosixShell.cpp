@@ -11,9 +11,6 @@
  *
  */
 
-// TODO: order of initialization for starting shell (and handling
-// failure cases at startup)
-
 // TODO: for passphrase / password / etc. we may want to
 // encrypt transmission (encrypt all?) and don't echo the password
 
