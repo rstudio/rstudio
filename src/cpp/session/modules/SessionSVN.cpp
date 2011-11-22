@@ -56,7 +56,10 @@ core::system::ProcessOptions procOptions()
    FilePath postbackDir = session::options().rpostbackPath().parent();
    core::system::addToPath(&childEnv, postbackDir.absolutePath());
 
-   options.workingDir = projects::projectContext().directory();
+   if (!s_workingDir.empty())
+      options.workingDir = s_workingDir;
+   else
+      options.workingDir = projects::projectContext().directory();
 
    // on windows set HOME to USERPROFILE
 #ifdef _WIN32
@@ -70,13 +73,53 @@ core::system::ProcessOptions procOptions()
    return options;
 }
 
+Error runSvn(const ShellArgs& args,
+             std::string* pStdOut=NULL,
+             std::string* pStdErr=NULL,
+             int* pExitCode=NULL)
+{
+   core::system::ProcessOptions options = procOptions();
+#ifdef _WIN32
+   options.detachProcess = true;
+#endif
+
+   core::system::ProcessResult result;
+
+#ifdef _WIN32
+   Error error = core::system::runProgram("svn.exe",
+                                          args.args(),
+                                          options,
+                                          &result);
+#else
+   Error error = core::system::runCommand(ShellCommand("svn") << args.args(),
+                                          options,
+                                          &result);
+#endif
+   if (error)
+      return error;
+
+   if (pStdOut)
+      *pStdOut = result.stdOut;
+   if (pStdErr)
+      *pStdErr = result.stdErr;
+   if (pExitCode)
+      *pExitCode = result.exitStatus;
+
+   if (result.exitStatus != EXIT_SUCCESS)
+   {
+      LOG_DEBUG_MESSAGE(result.stdErr);
+   }
+
+   return Success();
+}
+
 } // namespace
 
 
 bool isSvnInstalled()
 {
-   core::system::ProcessResult result;
-   Error error = core::system::runCommand("svn help", "", procOptions(), &result);
+   int exitCode;
+   Error error = runSvn(ShellArgs() << "help", NULL, NULL, &exitCode);
 
    if (error)
    {
@@ -84,7 +127,7 @@ bool isSvnInstalled()
       return false;
    }
 
-   return result.exitStatus == EXIT_SUCCESS;
+   return exitCode == EXIT_SUCCESS;
 }
 
 bool isSvnDirectory(const core::FilePath& workingDir)
@@ -179,13 +222,7 @@ Error svnAdd(const json::JsonRpcRequest& request,
    std::transform(files.begin(), files.end(), std::back_inserter(paths),
                   &resolveAliasedJsonPath);
 
-   core::system::ProcessResult result;
-   error = core::system::runCommand(
-         ShellCommand("svn") << "add" << "--" << paths,
-         "",
-         procOptions(),
-         &result);
-
+   error = runSvn(ShellArgs() << "add" << "--" << paths);
    if (error)
       return error;
 
@@ -204,13 +241,7 @@ Error svnRevert(const json::JsonRpcRequest& request,
    std::transform(files.begin(), files.end(), std::back_inserter(paths),
                   &resolveAliasedJsonPath);
 
-   core::system::ProcessResult result;
-   error = core::system::runCommand(
-         ShellCommand("svn") << "revert" << "--" << paths,
-         "",
-         procOptions(),
-         &result);
-
+   error = runSvn(ShellArgs() << "revert" << "--" << paths);
    if (error)
       return error;
 
@@ -220,26 +251,26 @@ Error svnRevert(const json::JsonRpcRequest& request,
 Error svnStatus(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
-   core::system::ProcessResult result;
-   Error error = core::system::runCommand(
-         ShellCommand("svn") << "status" << "--xml" << "--ignore-externals",
-         "",
-         procOptions(),
-         &result);
-
+   std::string stdOut, stdErr;
+   int exitCode;
+   Error error = runSvn(
+         ShellArgs() << "status" << "--xml" << "--ignore-externals",
+         &stdOut,
+         &stdErr,
+         &exitCode);
    if (error)
       return error;
 
-   if (result.exitStatus != EXIT_SUCCESS)
+   if (exitCode != EXIT_SUCCESS)
    {
-      LOG_ERROR_MESSAGE(result.stdErr);
+      LOG_ERROR_MESSAGE(stdErr);
       return Success();
    }
 
    std::vector<char> xmlData;
-   xmlData.reserve(result.stdOut.size() + 1);
-   std::copy(result.stdOut.begin(),
-             result.stdOut.end(),
+   xmlData.reserve(stdOut.size() + 1);
+   std::copy(stdOut.begin(),
+             stdOut.end(),
              std::back_inserter(xmlData));
    xmlData.push_back(NULL); // null terminator
 
