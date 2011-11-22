@@ -127,43 +127,30 @@ Error readPipe(int pipeFd, std::string* pOutput, bool *pEOF = NULL)
    return Success();
 }
 
-void configureSlaveTerminal(int termFd)
-{
-   // get current attributes
-   struct termios termp;
-   Error error = posixCall<int>(
-      boost::bind(::tcgetattr, termFd, &termp),
-      ERROR_LOCATION);
-   if (!error)
-   {
-      // specify raw mode (but don't ignore signals -- this is done
-      // so we can send Ctrl-C for interrupts)
-      ::cfmakeraw(&termp);
-      termp.c_lflag |= ISIG;
-
-      // set attribs
-      safePosixCall<int>(
-            boost::bind(::tcsetattr, termFd, TCSANOW, &termp),
-            ERROR_LOCATION);
-   }
-   else
-   {
-      LOG_ERROR(error);
-   }
-}
-
 } // anonymous namespace
 
 
 
 struct ChildProcess::Impl
 {
-   Impl() : pid(-1), fdStdin(-1), fdStdout(-1), fdStderr(-1), fdMaster(-1) {}
+   Impl() :
+      pid(-1),
+      fdStdin(-1),
+      fdStdout(-1),
+      fdStderr(-1),
+      fdMaster(-1),
+      ctrlC(0x03)
+   {
+   }
+
    pid_t pid;
    int fdStdin;
    int fdStdout;
    int fdStderr;
+
+   // pty related
    int fdMaster;
+   char ctrlC;
 
    void init(pid_t pid, int fdStdin, int fdStdout, int fdStderr)
    {
@@ -291,10 +278,11 @@ Error ChildProcess::ptyInterrupt()
       return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 
    // write control-c to the slave
-   char ctrlC = 0x03;
-   return posixCall<int>(
-         boost::bind(::write, pImpl_->fdMaster, &ctrlC, sizeof(ctrlC)),
-         ERROR_LOCATION);
+   return posixCall<int>(boost::bind(::write,
+                                       pImpl_->fdMaster,
+                                       &pImpl_->ctrlC,
+                                       sizeof(pImpl_->ctrlC)),
+                         ERROR_LOCATION);
 }
 
 Error ChildProcess::terminate()
@@ -457,7 +445,30 @@ Error ChildProcess::run()
       // by forkpty, all we need to do is configure terminal behavior
       if (options_.pseudoterminal)
       {
-         configureSlaveTerminal(STDIN_FILENO);
+         // get current attributes
+         struct termios termp;
+         Error error = posixCall<int>(
+            boost::bind(::tcgetattr, STDIN_FILENO, &termp),
+            ERROR_LOCATION);
+         if (!error)
+         {
+            // specify raw mode (but don't ignore signals -- this is done
+            // so we can send Ctrl-C for interrupts)
+            ::cfmakeraw(&termp);
+            termp.c_lflag |= ISIG;
+
+            // set attribs
+            safePosixCall<int>(
+                  boost::bind(::tcsetattr, STDIN_FILENO, TCSANOW, &termp),
+                  ERROR_LOCATION);
+
+            // save the VINTR character
+            pImpl_->ctrlC = termp.c_cc[VINTR];
+         }
+         else
+         {
+            LOG_ERROR(error);
+         }
       }
 
       // standard mode: close/redirect pipes
