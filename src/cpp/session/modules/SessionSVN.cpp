@@ -292,7 +292,7 @@ Error svnStatus(const json::JsonRpcRequest& request,
    std::copy(stdOut.begin(),
              stdOut.end(),
              std::back_inserter(xmlData));
-   xmlData.push_back(NULL); // null terminator
+   xmlData.push_back('\0'); // null terminator
 
    using namespace rapidxml;
    xml_document<> doc;
