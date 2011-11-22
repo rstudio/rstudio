@@ -21,7 +21,6 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.vcs.git.GitChangelistTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenter.Display;
 
 import java.util.ArrayList;

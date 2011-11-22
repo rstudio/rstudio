@@ -12,10 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
@@ -31,15 +29,10 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.*;
-import org.rstudio.core.client.cellview.ColumnSortInfo;
-import org.rstudio.core.client.cellview.TriStateCheckboxCell;
 import org.rstudio.core.client.theme.RStudioCellTableStyle;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageHandler;
-import org.rstudio.studio.client.workbench.views.vcs.git.GitStatusRenderer;
 
 import java.util.ArrayList;
 import java.util.Comparator;
