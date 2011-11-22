@@ -88,6 +88,7 @@ Error runSvn(const ShellArgs& args,
 #ifdef _WIN32
    Error error = core::system::runProgram("svn.exe",
                                           args.args(),
+                                          std::string(),
                                           options,
                                           &result);
 #else
