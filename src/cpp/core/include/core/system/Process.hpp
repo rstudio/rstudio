@@ -57,8 +57,7 @@ struct ProcessOptions
 #ifdef _WIN32
       : terminateChildren(false), detachProcess(false)
 #else
-      : terminateChildren(false),
-        detachSession(false)
+      : terminateChildren(false), detachSession(false)
 #endif
    {
    }

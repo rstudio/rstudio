@@ -45,6 +45,7 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/Environment.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -66,15 +67,22 @@ public:
                        int maxLines,
                        boost::shared_ptr<PosixShell>* ppPosixShell)
    {
+      // create posix shell and bind callbacks
       boost::shared_ptr<PosixShell> pShell(new PosixShell(maxLines));
-
       core::system::ProcessCallbacks cb;
       cb.onContinue = boost::bind(&PosixShell::onContinue, pShell, _1);
       cb.onStdout = boost::bind(&PosixShell::onStdout, pShell, _2);
       cb.onExit = boost::bind(&PosixShell::onExit, pShell, _1);
 
+      // configure environment for shell
+      core::system::Options shellEnv;
+      core::system::environment(&shellEnv);
+      core::system::setenv(&shellEnv, "TERM", "dumb");
+
+      // set options and run process
       core::system::ProcessOptions options;
       options.pseudoterminal = core::system::Pseudoterminal(width, 1);
+      options.environment = shellEnv;
       Error error = module_context::processSupervisor().runCommand("/bin/sh",
                                                                    options,
                                                                    cb);
