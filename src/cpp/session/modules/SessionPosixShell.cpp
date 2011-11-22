@@ -21,6 +21,7 @@
 
 // TODO: cap output lines sent on the server
 
+// TODO: get prompted every time for passphrase in shell mode
 
 #include "SessionPosixShell.hpp"
 

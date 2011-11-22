@@ -58,9 +58,10 @@ public class PosixShellDialog extends ModalDialogBase
       // create the shell and its observer
       posixShell_ = pPosixShell_.get();
       
-      // pick a reasonable size for the widget (90 chars wide, then we'll
-      // send 85 as the width of the console in our call to start)
-      int preferredWidth = DomMetrics.measureCode("0123456789").width * 9;
+      // size the widget to accomodate 80 characters
+      final int ESTIMATED_SCROLLBAR_WIDTH = 19;
+      int preferredWidth = (DomMetrics.measureCode("0123456789").width * 8) +
+                            ESTIMATED_SCROLLBAR_WIDTH;
       Size preferredSize = new Size(preferredWidth, 
                                     Window.getClientHeight());
 
@@ -68,12 +69,12 @@ public class PosixShellDialog extends ModalDialogBase
       Size editorSize = DomMetrics.adjustedElementSize(preferredSize,
                                                        preferredSize,
                                                        25,   // pad
-                                                       150); // client margin
+                                                       125); // client margin
       Widget shellWidget = posixShell_.getWidget();
       shellWidget.setSize(editorSize.width + "px", editorSize.height + "px");
       
       // start the shell
-      posixShell_.start(85, this, progressIndicator_);
+      posixShell_.start(80, this, progressIndicator_);
       
       return shellWidget;
    }
