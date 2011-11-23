@@ -125,6 +125,16 @@ void SessionLauncher::onRSessionExited()
 {
    if (pMainWindow_->collectPendingSwitchToProjectRequest())
    {
+      // close all satellite windows
+      QWidgetList topLevels = QApplication::topLevelWidgets();
+      for (int i = 0; i < topLevels.size(); i++)
+      {
+         QWidget* pWindow = topLevels.at(i);
+         if (pWindow != pMainWindow_)
+           pWindow->close();
+      }
+
+      // launch next session
       Error error = launchNextSession();
       if (error)
       {
