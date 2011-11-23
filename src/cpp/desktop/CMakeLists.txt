@@ -55,6 +55,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopCommandInvoker.cpp
   DesktopDownloadHelper.cpp
   DesktopGwtCallback.cpp
+  DesktopGwtWindow.cpp
   DesktopInputDialog.cpp
   DesktopMain.cpp
   DesktopMainWindow.cpp

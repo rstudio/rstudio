@@ -19,7 +19,8 @@ namespace desktop {
 
 
 SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow) :
-    BrowserWindow(false, true), gwtCallback_(pMainWindow, this)
+    GwtWindow(false, true),
+    gwtCallback_(pMainWindow, this)
 {
    setAttribute(Qt::WA_QuitOnClose, false);
    setAttribute(Qt::WA_DeleteOnClose, true);
@@ -49,6 +50,13 @@ void SatelliteWindow::finishLoading(bool ok)
 
    if (ok)
       avoidMoveCursorIfNecessary();
+}
+
+void SatelliteWindow::onActivated()
+{
+   webView()->page()->mainFrame()->evaluateJavaScript(QString::fromAscii(
+         "if (window.notifyRStudioSatelliteReactivated) "
+         "   window.notifyRStudioSatelliteReactivated(null);"));
 }
 
 

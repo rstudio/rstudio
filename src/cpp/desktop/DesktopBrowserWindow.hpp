@@ -11,8 +11,8 @@
  *
  */
 
-#ifndef SESSION_BROWSER_WINDOW_HPP
-#define SESSION_BROWSER_WINDOW_HPP
+#ifndef DESKTOP_BROWSER_WINDOW_HPP
+#define DESKTOP_BROWSER_WINDOW_HPP
 
 #include <QAction>
 #include <QMainWindow>
@@ -55,4 +55,4 @@ private:
 
 } // namespace desktop
 
-#endif // SESSION_BROWSER_WINDOW_HPP
+#endif // DESKTOP_BROWSER_WINDOW_HPP

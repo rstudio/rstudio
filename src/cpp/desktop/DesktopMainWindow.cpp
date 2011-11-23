@@ -33,7 +33,7 @@ using namespace core;
 namespace desktop {
 
 MainWindow::MainWindow(QUrl url) :
-      BrowserWindow(false, false, url, NULL),
+      GwtWindow(false, false, url, NULL),
       menuCallback_(this),
       gwtCallback_(this, this),
       updateChecker_(this),
@@ -229,6 +229,18 @@ void MainWindow::setSessionProcess(QProcess* pSessionProcess)
 bool MainWindow::collectPendingSwitchToProjectRequest()
 {
    return gwtCallback_.collectPendingSwitchToProjectRequest();
+}
+
+bool MainWindow::desktopHooksAvailable()
+{
+   return webView()->page()->mainFrame()->evaluateJavaScript(
+                        QString::fromAscii("!!window.desktopHooks")).toBool();
+}
+
+void MainWindow::onActivated()
+{
+   if (desktopHooksAvailable())
+      invokeCommand(QString::fromAscii("vcsRefresh"));
 }
 
 } // namespace desktop

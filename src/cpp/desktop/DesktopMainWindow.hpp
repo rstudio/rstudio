@@ -17,13 +17,13 @@
 #include <QProcess>
 #include <QtGui>
 #include "DesktopGwtCallback.hpp"
+#include "DesktopGwtWindow.hpp"
 #include "DesktopMenuCallback.hpp"
-#include "DesktopBrowserWindow.hpp"
 #include "DesktopUpdateChecker.hpp"
 
 namespace desktop {
 
-class MainWindow : public BrowserWindow
+class MainWindow : public GwtWindow
 {
    Q_OBJECT
 
@@ -60,6 +60,10 @@ private:
 
    // allow SessionLauncher to collect switch requests from GwtCallback
    bool collectPendingSwitchToProjectRequest();
+
+   bool desktopHooksAvailable();
+
+   virtual void onActivated();
 
 private:
    bool quitConfirmed_;

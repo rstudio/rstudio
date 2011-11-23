@@ -20,6 +20,7 @@ import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenterCore;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
@@ -43,6 +44,7 @@ public class VCSApplicationWindow extends SatelliteWindow
    public VCSApplicationWindow(Provider<GitPresenterCore> pVCSCore,
                                Provider<ReviewPresenter> pReviewPresenter,
                                Provider<HistoryPresenter> pHistoryPresenter,
+                               Provider<Commands> pCommands,
                                Provider<EventBus> pEventBus,
                                Provider<FontSizeManager> pFontSizeManager)
    {
@@ -50,6 +52,7 @@ public class VCSApplicationWindow extends SatelliteWindow
       pVCSCore_ = pVCSCore;
       pReviewPresenter_ = pReviewPresenter;
       pHistoryPresenter_ = pHistoryPresenter;
+      pCommands_ = pCommands;
    }
    
    
@@ -78,14 +81,23 @@ public class VCSApplicationWindow extends SatelliteWindow
    @Override
    public void reactivate(JavaScriptObject params)
    {
-      VCSApplicationParams vcsParams = params.<VCSApplicationParams>cast();
-      if (vcsParams.getShowHistory())
-      {
-         vcsPopupController_.switchToHistory();
+      // respect parameters if they were passed
+      if (params != null)
+      { 
+         VCSApplicationParams vcsParams = params.<VCSApplicationParams>cast();
+         if (vcsParams.getShowHistory())
+         {
+            vcsPopupController_.switchToHistory();
+         }
+         else
+         {
+            vcsPopupController_.switchToReview(vcsParams.getSelected());
+         }
       }
+      // for no parameters passed we still want to do a refresh
       else
       {
-         vcsPopupController_.switchToReview(vcsParams.getSelected());
+         pCommands_.get().vcsRefresh().execute();
       }
    }
    
@@ -99,6 +111,7 @@ public class VCSApplicationWindow extends SatelliteWindow
    private final Provider<GitPresenterCore> pVCSCore_;
    private final Provider<ReviewPresenter> pReviewPresenter_;
    private final Provider<HistoryPresenter> pHistoryPresenter_;
+   private final Provider<Commands> pCommands_;
    private VCSPopup.Controller vcsPopupController_ = null;
  
 }

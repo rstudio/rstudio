@@ -16,13 +16,13 @@
 
 #include <QMainWindow>
 #include <QtWebKit>
-#include "DesktopBrowserWindow.hpp"
+#include "DesktopGwtWindow.hpp"
 
 namespace desktop {
 
 class MainWindow;
 
-class SatelliteWindow : public BrowserWindow
+class SatelliteWindow : public GwtWindow
 {
     Q_OBJECT
 public:
@@ -37,6 +37,10 @@ protected slots:
    void onCloseWindowShortcut();
    void finishLoading(bool ok);
    void onJavaScriptWindowObjectCleared();
+
+private:
+   virtual void onActivated();
+
 
 private:
    GwtCallback gwtCallback_;

@@ -43,6 +43,7 @@ public abstract class VcsState
    {
       eventBus_ = eventBus;
       globalDisplay_ = globalDisplay;
+      session_ = session;
       final HandlerRegistrations registrations = new HandlerRegistrations();
       registrations.add(eventBus_.addHandler(VcsRefreshEvent.TYPE, new VcsRefreshHandler()
       {
@@ -168,7 +169,8 @@ public abstract class VcsState
 
    public void refresh()
    {
-      refresh(true);
+      if (session_.getSessionInfo().isVcsEnabled())
+         refresh(true);
    }
 
    public abstract void refresh(final boolean showError);
@@ -179,4 +181,5 @@ public abstract class VcsState
    protected ArrayList<StatusAndPath> status_;
    protected final EventBus eventBus_;
    protected final GlobalDisplay globalDisplay_;
+   protected final Session session_;
 }
