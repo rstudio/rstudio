@@ -33,6 +33,7 @@ import org.rstudio.core.client.theme.RStudioCellTableStyle;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.common.vcs.StatusAndPath.PathComparator;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -216,31 +217,7 @@ public abstract class ChangelistTable extends Composite
          }
       };
       pathColumn.setSortable(true);
-      sortHandler_.setComparator(pathColumn, new Comparator<StatusAndPath>()
-      {
-         private String[] splitDirAndName(String path)
-         {
-            int index = path.lastIndexOf("/");
-            if (index < 0)
-               index = path.lastIndexOf("\\");
-            if (index < 0)
-               return new String[] { "", path };
-            else
-               return new String[] { path.substring(0, index),
-                                     path.substring(index + 1) };
-         }
-
-         @Override
-         public int compare(StatusAndPath a, StatusAndPath b)
-         {
-            String[] splitA = splitDirAndName(a.getPath());
-            String[] splitB = splitDirAndName(b.getPath());
-            int result = splitA[0].compareTo(splitB[0]);
-            if (result == 0)
-               result = splitA[1].compareTo(splitB[1]);
-            return result;
-         }
-      });
+      sortHandler_.setComparator(pathColumn, new StatusAndPath.PathComparator());
       table_.addColumn(pathColumn, "Path");
 
       table_.getColumnSortList().push(pathColumn);

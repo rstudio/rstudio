@@ -15,9 +15,36 @@ package org.rstudio.studio.client.common.vcs;
 import com.google.gwt.core.client.JsArray;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 public class StatusAndPath
 {
+   public static class PathComparator implements Comparator<StatusAndPath>
+   {
+      private String[] splitDirAndName(String path)
+      {
+         int index = path.lastIndexOf("/");
+         if (index < 0)
+            index = path.lastIndexOf("\\");
+         if (index < 0)
+            return new String[] { "", path };
+         else
+            return new String[] { path.substring(0, index),
+                                  path.substring(index + 1) };
+      }
+
+      @Override
+      public int compare(StatusAndPath a, StatusAndPath b)
+      {
+         String[] splitA = splitDirAndName(a.getPath());
+         String[] splitB = splitDirAndName(b.getPath());
+         int result = splitA[0].compareTo(splitB[0]);
+         if (result == 0)
+            result = splitA[1].compareTo(splitB[1]);
+         return result;
+      }
+   }
+
    public static ArrayList<StatusAndPath> fromInfos(
          JsArray<StatusAndPathInfo> infos)
    {
@@ -42,8 +69,9 @@ public class StatusAndPath
       status_ = info.getStatus();
       path_ = info.getPath();
       rawPath_ = info.getRawPath();
-      this.discardable_ = info.isDiscardable();
-      this.directory_ = info.isDirectory();
+      changelist_ = info.getChangelist();
+      discardable_ = info.isDiscardable();
+      directory_ = info.isDirectory();
    }
 
    public String getStatus()
@@ -59,6 +87,11 @@ public class StatusAndPath
    public String getRawPath()
    {
       return rawPath_;
+   }
+
+   public String getChangelist()
+   {
+      return changelist_;
    }
 
    public boolean isDiscardable()
@@ -98,9 +131,10 @@ public class StatusAndPath
                                       directory_);
    }
 
-   String status_;
-   String path_;
-   String rawPath_;
-   boolean discardable_;
-   boolean directory_;
+   private final String status_;
+   private final String path_;
+   private final String rawPath_;
+   private final boolean discardable_;
+   private final boolean directory_;
+   private final String changelist_;
 }

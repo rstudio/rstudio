@@ -331,6 +331,8 @@ Error svnStatus(const json::JsonRpcRequest& request,
    xml_document<> doc;
    doc.parse<0>(&(xmlData[0]));
 
+   const std::string CHANGELIST_NAME("changelist");
+
    json::Array results;
 
    xml_node<>* pStatus = doc.first_node("status");
@@ -338,6 +340,12 @@ Error svnStatus(const json::JsonRpcRequest& request,
    {
       FOREACH_NODE(pStatus, pList,)
       {
+         std::string changelist;
+         if (pList->name() == CHANGELIST_NAME)
+         {
+            changelist = attr_value(pList, "name");
+         }
+
          FOREACH_NODE(pList, pEntry, "entry")
          {
             std::string path = attr_value(pEntry, "path");
@@ -378,6 +386,7 @@ Error svnStatus(const json::JsonRpcRequest& request,
             info["path"] = path;
             info["raw_path"] = module_context::createAliasedPath(
                   projects::projectContext().directory().childPath(path));
+            info["changelist"] = changelist;
             results.push_back(info);
          }
       }

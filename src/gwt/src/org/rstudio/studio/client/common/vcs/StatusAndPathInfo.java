@@ -31,6 +31,10 @@ public class StatusAndPathInfo extends JavaScriptObject
       return this.raw_path;
    }-*/;
 
+   public native final String getChangelist() /*-{
+      return this.changelist;
+   }-*/;
+
    public native final boolean isDiscardable() /*-{
       return !!this.discardable;
    }-*/;

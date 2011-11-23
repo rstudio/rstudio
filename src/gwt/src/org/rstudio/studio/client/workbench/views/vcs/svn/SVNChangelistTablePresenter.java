@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
 import com.google.inject.Inject;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
@@ -33,7 +34,18 @@ public class SVNChangelistTablePresenter
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
          {
-            view.setItems(svnState.getStatus());
+            ArrayList<StatusAndPath> items = svnState.getStatus();
+            boolean usesChangelists = false;
+            for (StatusAndPath item : items)
+            {
+               if (!StringUtil.isNullOrEmpty(item.getChangelist()))
+               {
+                  usesChangelists = true;
+                  break;
+               }
+            }
+            view.setItems(items);
+            view.setChangelistColumnVisible(usesChangelists);
          }
       });
 
