@@ -33,7 +33,6 @@ import org.rstudio.core.client.theme.RStudioCellTableStyle;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.common.vcs.StatusAndPath.PathComparator;
 
 import java.util.ArrayList;
 import java.util.Comparator;

@@ -44,7 +44,6 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
-import org.rstudio.studio.client.workbench.views.vcs.common.console.ConsoleBarFramePanel;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.ChunkOrLine;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
@@ -197,7 +196,6 @@ public class ReviewPanel extends Composite implements Display
    @Inject
    public ReviewPanel(GitChangelistTablePresenter changelist,
                       LineTableView diffPane,
-                      ConsoleBarFramePanel consoleBarFramePanel,
                       final Commands commands,
                       FileTypeRegistry fileTypeRegistry,
                       BranchToolbarButton branchToolbarButton)
@@ -218,9 +216,7 @@ public class ReviewPanel extends Composite implements Display
       changelist.setSelectFirstItemByDefault(true);
 
       Widget widget = GWT.<Binder>create(Binder.class).createAndBindUi(this);
-      consoleBarFramePanel.setWidget(widget);
-
-      initWidget(consoleBarFramePanel);
+      initWidget(widget);
 
       topToolbar_.addStyleName(RES.styles().toolbar());
 

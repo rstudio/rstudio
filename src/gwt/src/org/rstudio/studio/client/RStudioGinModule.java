@@ -99,9 +99,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.vcs.*;
-import org.rstudio.studio.client.workbench.views.vcs.common.console.ConsoleBarPresenter;
-import org.rstudio.studio.client.workbench.views.vcs.common.console.ConsoleBarView;
-import org.rstudio.studio.client.workbench.views.vcs.common.console.ConsoleOutputPane;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPanel;
@@ -182,9 +179,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ReviewPresenter.Display.class).to(ReviewPanel.class);
       bind(LineTablePresenter.Display.class).to(LineTableView.class);
       bind(HistoryPresenter.Display.class).to(HistoryPanel.class);
-      bind(ConsoleBarPresenter.Display.class).to(ConsoleBarView.class);
-      bind(ConsoleBarPresenter.OutputDisplay.class).to(ConsoleOutputPane.class);
-
+      
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)
             .in(Singleton.class) ;

@@ -28,26 +28,22 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.vcs.BranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenter.Display;
-import org.rstudio.studio.client.workbench.views.vcs.common.console.ConsoleBarFramePanel;
 
 import java.util.ArrayList;
 
 public class GitPane extends WorkbenchPane implements Display
 {
    @Inject
-   public GitPane(ConsoleBarFramePanel consoleBarFrame,
-                  GitChangelistTablePresenter changelistTablePresenter,
+   public GitPane(GitChangelistTablePresenter changelistTablePresenter,
                   Session session,
                   Commands commands,
                   BranchToolbarButton branchToolbarButton)
    {
       super(session.getSessionInfo().getVcsName());
-      consoleBarFrame_ = consoleBarFrame;
       commands_ = commands;
       branchToolbarButton_ = branchToolbarButton;
 
       table_ = changelistTablePresenter.getView();
-      consoleBarFrame_.setWidget(table_);
    }
 
    @Override
@@ -93,7 +89,7 @@ public class GitPane extends WorkbenchPane implements Display
    @Override
    protected Widget createMainWidget()
    {
-      return consoleBarFrame_;
+      return table_;
    }
 
    @Override
@@ -141,5 +137,4 @@ public class GitPane extends WorkbenchPane implements Display
    private final Commands commands_;
    private final BranchToolbarButton branchToolbarButton_;
    private GitChangelistTable table_;
-   private ConsoleBarFramePanel consoleBarFrame_;
 }
