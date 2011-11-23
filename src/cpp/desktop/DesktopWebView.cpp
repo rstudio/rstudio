@@ -97,8 +97,23 @@ QWebView* WebView::createWindow(QWebPage::WebWindowType)
          // create and size
          pSatellite = new SatelliteWindow(pMainWindow);
          pSatellite->resize(width, height);
-         pSatellite->move(pMainWindow->x() + 25,
-                          pMainWindow->y() + 25);
+
+         // calculate location to move to
+
+         // y always attempts to be 25 pixels above then faults back
+         // to 25 pixels below if that would be offscreen
+         const int OVERLAP = 25;
+         int moveY = pMainWindow->y() - OVERLAP;
+         if (moveY < 0)
+            moveY = pMainWindow->y() + OVERLAP;
+
+         // x is based on centering over main window
+         int moveX = pMainWindow->x() +
+                     (pMainWindow->width() / 2) -
+                     (width / 2);
+
+         // perform movve
+         pSatellite->move(moveX, moveY);
 
          // add to tracker
          windowTracker.addWindow(name, pSatellite);
